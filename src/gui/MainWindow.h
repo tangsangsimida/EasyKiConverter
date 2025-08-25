@@ -2,58 +2,62 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QSettings>
+#include <QThread>
+#include <QStyleFactory>
+#include <QGroupBox>
+#include <QPropertyAnimation>
 #include <QLineEdit>
-#include <QTextEdit>
 #include <QPushButton>
 #include <QCheckBox>
 #include <QProgressBar>
 #include <QLabel>
+#include <QTextEdit>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
-#include <QWidget>
-#include <QThread>
-#include <QFileDialog>
 #include <QMessageBox>
-#include <QSettings>
+#include <QFileDialog>
 #include <QClipboard>
 #include <QApplication>
-#include <QTimer>
-#include <QStringList>
-#include <vector>
-#include <string>
+#include "easyeda/EasyedaApi.h"
+#include "kicad/KicadSymbolExporter.h"
 
-// 修复包含路径
-#include "../easyeda/EasyedaApi.h"
-#include "../kicad/KicadSymbolExporter.h"
-#include "../easyeda/EasyedaImporter.h"
+class ConverterWorker : public QObject
+{
+    Q_OBJECT
+    
+public:
+    explicit ConverterWorker(QObject *parent = nullptr);
+    
+public slots:
+    void processConversion(const QStringList& componentIds,
+                           const QString& filePrefix,
+                           const QString& exportPath,
+                           bool exportSymbol,
+                           bool exportFootprint,
+                           bool export3dModel);
+    
+signals:
+    void progressUpdated(int value);
+    void conversionFinished(const QString& message);
+    void conversionError(const QString& error);
+    void finished();
+};
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
-
-class ConverterWorker;
+namespace Ui {
+class MainWindow;
+}
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private slots:
-    void onConvertClicked();
-    void onBrowseClicked();
-    void onSelectAllClicked();
-    void onClearClicked();
-    void onPasteClicked();
-    void onExportFinished(const QString& message);
-    void onUpdateProgress(int value);
-    void onConversionError(const QString& error);
-
 signals:
-    // 添加startConversion信号
     void startConversion(const QStringList& componentIds,
                         const QString& filePrefix,
                         const QString& exportPath,
@@ -61,60 +65,41 @@ signals:
                         bool exportFootprint,
                         bool export3dModel);
 
+private slots:
+    void onConvertClicked();
+    void onBrowseClicked();
+    void onSelectAllClicked();
+    void onClearClicked();
+    void onPasteClicked();
+    
+    void onUpdateProgress(int value);
+    void onExportFinished(const QString& message);
+    void onConversionError(const QString& error);
+
 private:
-    // UI elements
+    Ui::MainWindow *ui;
+    QSettings* settings;
     QLineEdit* componentIdsEdit;
     QLineEdit* exportPathEdit;
     QLineEdit* filePrefixEdit;
-    QTextEdit* logTextEdit;
-    QPushButton* convertButton;
     QPushButton* browseButton;
+    QPushButton* convertButton;
     QPushButton* selectAllButton;
     QPushButton* clearButton;
     QPushButton* pasteButton;
-    QProgressBar* progressBar;
     QCheckBox* symbolCheckBox;
     QCheckBox* footprintCheckBox;
     QCheckBox* model3dCheckBox;
+    QProgressBar* progressBar;
     QLabel* statusLabel;
-    
-    // Worker thread
+    QTextEdit* logTextEdit;
     ConverterWorker* worker;
     QThread* workerThread;
     
-    // Settings
-    QSettings* settings;
-    
-    // Methods
+    QStringList parseComponentIds(const QString& text) const;
     void setupUI();
     void loadSettings();
     void saveSettings();
-    QStringList parseComponentIds(const QString& text) const;
-};
-
-// Worker class for performing conversion in a separate thread
-class ConverterWorker : public QObject
-{
-    Q_OBJECT
-
-public:
-    explicit ConverterWorker(QObject *parent = nullptr);
-
-public slots:
-    // 使用QStringList替代std::vector<std::string>
-    void processConversion(const QStringList& componentIds, 
-                          const QString& filePrefix, 
-                          const QString& exportPath,
-                          bool exportSymbol,
-                          bool exportFootprint,
-                          bool export3dModel);
-    void moveToThread(QThread* thread) { QObject::moveToThread(thread); }
-
-signals:
-    void progressUpdated(int value);
-    void conversionFinished(const QString& message);
-    void conversionError(const QString& error);
-    void finished();
 };
 
 #endif // MAINWINDOW_H

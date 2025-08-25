@@ -8,6 +8,7 @@
 #include <fstream>
 #include <thread>
 #include <chrono>
+#include <QScreen>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,6 +21,31 @@ MainWindow::MainWindow(QWidget *parent)
     settings = new QSettings("EasyKiConverter", "EasyKiConverter");
     setupUI();
     loadSettings();
+    
+    // 应用现代化的Fusion样式
+    qApp->setStyle(QStyleFactory::create("Fusion"));
+    
+    // 初始化深色主题调色板
+    QPalette darkPalette;
+    darkPalette.setColor(QPalette::Window, QColor(53, 53, 53));
+    darkPalette.setColor(QPalette::WindowText, Qt::white);
+    darkPalette.setColor(QPalette::Base, QColor(25, 25, 25));
+    darkPalette.setColor(QPalette::AlternateBase, QColor(53, 53, 53));
+    darkPalette.setColor(QPalette::ToolTipBase, Qt::white);
+    darkPalette.setColor(QPalette::ToolTipText, Qt::white);
+    darkPalette.setColor(QPalette::Text, Qt::white);
+    darkPalette.setColor(QPalette::Disabled, QPalette::Text, QColor(128, 128, 128));
+    darkPalette.setColor(QPalette::Button, QColor(53, 53, 53));
+    darkPalette.setColor(QPalette::ButtonText, Qt::white);
+    darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(128, 128, 128));
+    darkPalette.setColor(QPalette::BrightText, Qt::red);
+    darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
+    darkPalette.setColor(QPalette::Highlight, QColor(42, 130, 218));
+    darkPalette.setColor(QPalette::HighlightedText, Qt::black);
+    darkPalette.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(128, 128, 128));
+    
+    qApp->setPalette(darkPalette);
+    qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
     
     // Initialize worker in a separate thread
     workerThread = new QThread(this);
@@ -56,8 +82,13 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Resize and center window
     resize(800, 600);
-    QDesktopWidget *desktop = QApplication::desktop();
-    move((desktop->width() - width()) / 2, (desktop->height() - height()) / 2);
+    // 使用新的屏幕API来居中窗口
+    if (qApp->primaryScreen()) {
+        QRect screenGeometry = qApp->primaryScreen()->geometry();
+        int x = (screenGeometry.width() - width()) / 2;
+        int y = (screenGeometry.height() - height()) / 2;
+        move(x, y);
+    }
 }
 
 MainWindow::~MainWindow()
@@ -81,6 +112,8 @@ void MainWindow::setupUI()
     setCentralWidget(centralWidget);
     
     QVBoxLayout* mainLayout = new QVBoxLayout(centralWidget);
+    mainLayout->setSpacing(10);
+    mainLayout->setContentsMargins(15, 15, 15, 15);
     
     // Component IDs input
     QHBoxLayout* componentLayout = new QHBoxLayout();
@@ -89,16 +122,40 @@ void MainWindow::setupUI()
     componentIdsEdit->setPlaceholderText("Enter LCSC IDs separated by commas (e.g., C12345, C67890)");
     componentLayout->addWidget(componentIdsEdit);
     pasteButton = new QPushButton("Paste");
+    // 添加图标和样式
+    pasteButton->setStyleSheet("QPushButton {"
+                               "  background-color: #2196F3;"
+                               "  color: white;"
+                               "  border: none;"
+                               "  padding: 8px;"
+                               "  border-radius: 4px;"
+                               "} "
+                               "QPushButton:hover {"
+                               "  background-color: #1976D2;"
+                               "}");
     componentLayout->addWidget(pasteButton);
     mainLayout->addLayout(componentLayout);
     
     // Export options
-    QFormLayout* optionsLayout = new QFormLayout();
+    QGroupBox* optionsGroup = new QGroupBox("Export Options");
+    QFormLayout* optionsLayout = new QFormLayout(optionsGroup);
+    optionsLayout->setSpacing(10);
     
     // Export path
     QHBoxLayout* pathLayout = new QHBoxLayout();
     exportPathEdit = new QLineEdit();
     browseButton = new QPushButton("Browse");
+    // 添加样式
+    browseButton->setStyleSheet("QPushButton {"
+                                "  background-color: #4CAF50;"
+                                "  color: white;"
+                                "  border: none;"
+                                "  padding: 8px;"
+                                "  border-radius: 4px;"
+                                "} "
+                                "QPushButton:hover {"
+                                "  background-color: #388E3C;"
+                                "}");
     pathLayout->addWidget(exportPathEdit);
     pathLayout->addWidget(browseButton);
     optionsLayout->addRow("Export Path:", pathLayout);
@@ -107,7 +164,7 @@ void MainWindow::setupUI()
     filePrefixEdit = new QLineEdit();
     optionsLayout->addRow("File Prefix:", filePrefixEdit);
     
-    mainLayout->addLayout(optionsLayout);
+    mainLayout->addWidget(optionsGroup);
     
     // Export type checkboxes
     QHBoxLayout* checkboxesLayout = new QHBoxLayout();
@@ -138,18 +195,40 @@ void MainWindow::setupUI()
     progressBar = new QProgressBar();
     progressBar->setValue(0);
     progressBar->setVisible(false);
+    // 添加样式
+    progressBar->setStyleSheet("QProgressBar {"
+                               "  border: 2px solid grey;"
+                               "  border-radius: 5px;"
+                               "  text-align: center;"
+                               "} "
+                               "QProgressBar::chunk {"
+                               "  background-color: #4CAF50;"
+                               "  width: 20px;"
+                               "}");
     mainLayout->addWidget(progressBar);
     
     // Status label
     statusLabel = new QLabel("Ready");
+    statusLabel->setStyleSheet("QLabel {"
+                               "  font-weight: bold;"
+                               "  color: #4CAF50;"
+                               "}");
     mainLayout->addWidget(statusLabel);
     
     // Log text area
     logTextEdit = new QTextEdit();
     logTextEdit->setReadOnly(true);
     logTextEdit->setMaximumHeight(200);
+    logTextEdit->setStyleSheet("QTextEdit {"
+                               "  background-color: #1E1E1E;"
+                               "  color: #FFFFFF;"
+                               "  border: 1px solid #555;"
+                               "}");
     mainLayout->addWidget(new QLabel("Log:"));
     mainLayout->addWidget(logTextEdit);
+    
+    // 移除未定义的动画函数调用
+    // animateWidget函数未在代码中定义，如果确实需要动画效果，需要实现该函数
 }
 
 void MainWindow::loadSettings()
