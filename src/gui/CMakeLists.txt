@@ -9,10 +9,12 @@ set(CMAKE_AUTORCC ON)
 # 显式指定需要moc处理的文件
 set(GUI_SOURCES
     MainWindow.cpp
+    ComponentManager.cpp
 )
 
 set(GUI_HEADERS
     MainWindow.h
+    ComponentManager.h
 )
 
 # 添加库

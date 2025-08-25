@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "ComponentManager.h"
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QStandardPaths>
@@ -14,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , worker(nullptr)
     , workerThread(nullptr)
+    , componentManager(new ComponentManager(this))
 {
     // 注册元类型以支持在信号槽中传递
     qRegisterMetaType<QStringList>();
@@ -45,6 +47,8 @@ MainWindow::MainWindow(QWidget *parent)
         connect(selectAllButton, &QPushButton::clicked, this, &MainWindow::onSelectAllClicked);
         connect(clearButton, &QPushButton::clicked, this, &MainWindow::onClearClicked);
         connect(pasteButton, &QPushButton::clicked, this, &MainWindow::onPasteClicked);
+        connect(addComponentButton, &QPushButton::clicked, this, &MainWindow::onAddComponentClicked);
+        connect(removeComponentButton, &QPushButton::clicked, this, &MainWindow::onRemoveComponentClicked);
         
         // 使用QueuedConnection避免线程问题
         connect(this, &MainWindow::startConversion, worker, &ConverterWorker::processConversion, Qt::QueuedConnection);
@@ -113,22 +117,24 @@ void MainWindow::setupUI()
     QHBoxLayout* componentLayout = new QHBoxLayout();
     componentLayout->addWidget(new QLabel("Component IDs:"));
     componentIdsEdit = new QLineEdit();
-    componentIdsEdit->setPlaceholderText("Enter LCSC IDs separated by commas (e.g., C12345, C67890)");
+    componentIdsEdit->setPlaceholderText("Enter LCSC ID (e.g., C12345)");
     componentLayout->addWidget(componentIdsEdit);
-    pasteButton = new QPushButton("Paste");
-    // 添加图标和样式
-    pasteButton->setStyleSheet("QPushButton {"
-                               "  background-color: #2196F3;"
-                               "  color: white;"
-                               "  border: none;"
-                               "  padding: 8px;"
-                               "  border-radius: 4px;"
-                               "} "
-                               "QPushButton:hover {"
-                               "  background-color: #1976D2;"
-                               "}");
+    
+    addComponentButton = new QPushButton("Add");
+    componentLayout->addWidget(addComponentButton);
+    pasteButton = new QPushButton("Paste All");
     componentLayout->addWidget(pasteButton);
     mainLayout->addLayout(componentLayout);
+    
+    // Component list
+    componentListWidget = new QListWidget();
+    componentListWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    mainLayout->addWidget(new QLabel("Component List:"));
+    mainLayout->addWidget(componentListWidget);
+    
+    // Remove button for component list
+    removeComponentButton = new QPushButton("Remove Selected");
+    mainLayout->addWidget(removeComponentButton);
     
     // Export options
     QGroupBox* optionsGroup = new QGroupBox("Export Options");
@@ -588,9 +594,9 @@ QStringList MainWindow::parseComponentIds(const QString& text) const
 
 void MainWindow::onConvertClicked()
 {
-    QString componentIdsText = componentIdsEdit->text();
-    if (componentIdsText.isEmpty()) {
-        QMessageBox::warning(this, "Invalid Input", "Please enter at least one component ID.");
+    QStringList componentIds = componentManager->getComponents();
+    if (componentIds.isEmpty()) {
+        QMessageBox::warning(this, "Invalid Input", "Please add at least one component ID.");
         return;
     }
     
@@ -607,13 +613,6 @@ void MainWindow::onConvertClicked()
             QMessageBox::warning(this, "Invalid Path", "Cannot create export directory.");
             return;
         }
-    }
-    
-    // Parse component IDs
-    QStringList componentIds = parseComponentIds(componentIdsText);
-    if (componentIds.isEmpty()) {
-        QMessageBox::warning(this, "Invalid Input", "No valid component IDs found.");
-        return;
     }
     
     // Disable UI during conversion
@@ -650,10 +649,32 @@ void MainWindow::onSelectAllClicked()
     model3dCheckBox->setChecked(true);
 }
 
-void MainWindow::onClearClicked()
+void MainWindow::onAddComponentClicked()
 {
-    componentIdsEdit->clear();
-    logTextEdit->clear();
+    QString componentId = componentIdsEdit->text().trimmed();
+    if (!componentId.isEmpty()) {
+        componentManager->addComponent(componentId);
+        updateComponentList();
+        componentIdsEdit->clear();
+    }
+}
+
+void MainWindow::onRemoveComponentClicked()
+{
+    QList<QListWidgetItem*> selectedItems = componentListWidget->selectedItems();
+    for (QListWidgetItem* item : selectedItems) {
+        componentManager->removeComponent(item->text());
+    }
+    updateComponentList();
+}
+
+void MainWindow::updateComponentList()
+{
+    componentListWidget->clear();
+    QStringList components = componentManager->getComponents();
+    for (const QString& component : components) {
+        componentListWidget->addItem(component);
+    }
 }
 
 void MainWindow::onPasteClicked()
@@ -661,8 +682,18 @@ void MainWindow::onPasteClicked()
     QClipboard* clipboard = QApplication::clipboard();
     QString text = clipboard->text();
     if (!text.isEmpty()) {
-        componentIdsEdit->setText(text);
+        componentManager->parseAndAddComponents(text);
+        updateComponentList();
+        componentIdsEdit->clear();
     }
+}
+
+void MainWindow::onClearClicked()
+{
+    componentManager->clearComponents();
+    updateComponentList();
+    logTextEdit->clear();
+    componentIdsEdit->clear();
 }
 
 void MainWindow::onExportFinished(const QString& message)
