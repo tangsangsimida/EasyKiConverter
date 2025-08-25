@@ -47,10 +47,3 @@ target_link_libraries(easykiconverter-gui
     ${ZLIB_LIBRARIES}
 )
 
-# 链接CURL库到命令行应用程序
-target_link_libraries(easykiconverter
-    easyeda
-    kicad
-    ${CURL_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-)
