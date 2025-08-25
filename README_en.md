@@ -10,6 +10,9 @@ EasyKiConverter is a powerful tool for converting electronic components from Eas
 - Support for symbols, footprints, and 3D models
 - Batch processing capabilities
 - User-friendly graphical interface
+  - Support for light and dark themes
+  - Improved multi-component management interface
+  - Visual component list and operations
 - Command-line interface for automation
 - Cross-platform support (Windows, Linux, macOS)
 

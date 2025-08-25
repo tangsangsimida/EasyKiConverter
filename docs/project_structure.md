@@ -19,7 +19,9 @@ EasyKiConverter/
 │   │   └── export_kicad_3d_model.cpp # 3D模型导出器（待实现）
 │   └── gui/                          # Qt GUI界面
 │       ├── MainWindow.cpp            # 主窗口实现
-│       └── MainWindow.h              # 主窗口头文件
+│       ├── MainWindow.h              # 主窗口头文件
+│       ├── ComponentManager.cpp      # 组件管理器实现
+│       └── ComponentManager.h        # 组件管理器头文件
 ├── docs/                              # 详细文档目录
 │   ├── README.md                     # 文档索引
 │   ├── project_structure.md          # 项目结构详细说明
@@ -52,6 +54,7 @@ EasyKiConverter/
 | 文件 | 功能描述 |
 |------|----------|
 | **MainWindow.cpp/.h** | Qt主窗口实现，提供图形用户界面和用户交互功能 |
+| **ComponentManager.cpp/.h** | 组件管理器，负责管理组件列表和相关操作 |
 
 ### 📚 文档目录
 | 文件 | 功能描述 |

@@ -68,25 +68,6 @@ ctest
 ## 📂 Directory Structure
 Refer to [Project Structure](project_structure_en.md) document
 
-## 🌐 Web UI Development
-
-```bash
-# Start development server
-cd EasyKiConverter/Web_Ui
-python app.py
-
-# Access development interface
-# http://localhost:8000
-```
-
-**Frontend Development:**
-- Modify `index.html` - Page structure
-- Modify `css/styles.css` - Styles and animations
-- Modify `js/script.js` - Interaction logic
-
-**Backend Development:**
-- Modify `app.py` - API interfaces and routing
-- Core conversion logic in `../` directory
 
 ## 🛠️ Command Line Development
 
@@ -104,9 +85,8 @@ python main.py --lcsc_id C13377 --model3d --debug    # Test 3D models
 
 - **easyeda/** - EasyEDA API and data processing
 - **kicad/** - KiCad format export engines
-- **Web_Ui/** - Flask web application
-- **main.py** - Command-line entry point
-- **helpers.py** - Shared utility functions
+- **main.cpp** - Command-line entry point
+- **gui_main.cpp** - GUI entry point
 
 ## 🔧 Command Line Options
 

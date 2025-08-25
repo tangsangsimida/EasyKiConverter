@@ -17,7 +17,9 @@ EasyKiConverter/
 │   │   └── export_kicad_3d_model.cpp # 3D model exporter (to be implemented)
 │   └── gui/                          # Qt GUI interface
 │       ├── MainWindow.cpp            # Main window implementation
-│       └── MainWindow.h              # Main window header
+│       ├── MainWindow.h              # Main window header
+│       ├── ComponentManager.cpp      # Component manager implementation
+│       └── ComponentManager.h        # Component manager header
 ├── docs/                              # Documentation directory
 │   ├── README.md                     # Documentation index
 │   ├── project_structure.md          # Project structure detailed description
@@ -50,6 +52,7 @@ EasyKiConverter/
 | File | Description |
 |------|-------------|
 | **MainWindow.cpp/.h** | Qt main window implementation, provides graphical user interface and user interaction functionality |
+| **ComponentManager.cpp/.h** | Component manager, responsible for managing component lists and related operations |
 
 ### 📚 Documentation Directory
 | File | Description |

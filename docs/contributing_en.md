@@ -61,46 +61,6 @@ git push origin feature/your-feature-name
 ## 📂 Directory Structure
 Refer to [Project Structure](project_structure_en.md) document
 
-# 🤝 Contributing
-
-We welcome all forms of contributions! Please follow the standard GitHub collaboration workflow:
-
-## 🔄 Development Workflow
-
-1. **Fork the Project**
-   ```bash
-   # Fork the main repository to your GitHub account
-   # Then clone your fork
-   git clone https://github.com/your-username/EasyKiConverter.git
-   cd EasyKiConverter
-   ```
-
-2. **Switch to Development Branch**
-   ```bash
-   # Switch to dev branch (development branch)
-   git checkout dev
-   
-   # Create your feature branch
-   git checkout -b feature/your-feature-name
-   ```
-
-3. **Development**
-   - Develop on the `feature/your-feature-name` branch
-   - Follow existing code style and conventions
-   - Add necessary tests and documentation
-
-4. **Commit Changes**
-   ```bash
-   git add .
-   git commit -m "feat: add new feature description"
-   git push origin feature/your-feature-name
-   ```
-
-5. **Create Pull Request**
-   - Create PR on GitHub
-   - **Target Branch**: `dev` (Important: All PRs should be merged into dev branch)
-   - Provide clear PR description and change summary
-
 ## 📋 Contribution Types
 
 - 🐛 **Bug Fixes**: Fix existing functionality issues
