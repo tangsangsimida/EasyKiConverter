@@ -118,3 +118,4 @@ easyeda2kicad_config.json
 
 # Reference project (exclude from main project)
 EasyKiConverter.deb
+EasyKiConverter-deb

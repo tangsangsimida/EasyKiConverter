@@ -17,26 +17,13 @@ add_subdirectory(easyeda)
 add_subdirectory(kicad)
 add_subdirectory(gui)
 
-# 创建可执行文件 - 命令行版本
-add_executable(easykiconverter
-    main.cpp
-)
-
-# 链接库 - 命令行版本
-target_link_libraries(easykiconverter
-    easyeda
-    kicad
-    ${CURL_LIBRARIES}
-    ZLIB::ZLIB
-)
-
 # 创建可执行文件 - GUI版本
-add_executable(easykiconverter-gui
+add_executable(EasyKiConverter
     gui_main.cpp
 )
 
 # 链接库 - GUI版本
-target_link_libraries(easykiconverter-gui
+target_link_libraries(EasyKiConverter
     easyeda
     kicad
     gui
@@ -47,7 +34,7 @@ target_link_libraries(easykiconverter-gui
 )
 
 # 设置输出目录
-set_target_properties(easykiconverter easykiconverter-gui
+set_target_properties(EasyKiConverter
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )

@@ -31,12 +31,11 @@ find_package(ZLIB REQUIRED)
 # 包含目录
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-
 # 添加子目录
 add_subdirectory(src)
 
 # 链接Qt5和CURL库到GUI应用程序
-target_link_libraries(easykiconverter-gui 
+target_link_libraries(EasyKiConverter
     gui
     easyeda
     kicad
@@ -47,4 +46,3 @@ target_link_libraries(easykiconverter-gui
     ${CURL_LIBRARIES}
     ${ZLIB_LIBRARIES}
 )
-
