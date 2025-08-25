@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cmath>
 #include <algorithm>
+#include <filesystem>
 
 KicadSymbolExporter::KicadSymbolExporter(KicadVersion version) : kicad_version(version) {}
 
@@ -224,6 +225,49 @@ bool KicadSymbolExporter::exportSymbol(const json& easyeda_data, const std::stri
         return true;
     } catch (const std::exception& e) {
         std::cerr << "Error exporting symbol: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+bool KicadSymbolExporter::ensureDirectoryExists(const std::string& path) {
+    try {
+        std::filesystem::create_directories(path);
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Error creating directory: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+bool KicadSymbolExporter::exportSymbolToLibrary(const json& easyeda_data, const std::string& export_path, 
+                                               const std::string& library_name) {
+    try {
+        // 创建库目录结构
+        std::string footprint_lib_dir = export_path + "/" + library_name + ".pretty";
+        std::string model3d_lib_dir = export_path + "/" + library_name + ".3dshapes";
+        
+        // 确保目录存在
+        if (!ensureDirectoryExists(export_path)) {
+            std::cerr << "Failed to create export directory: " << export_path << std::endl;
+            return false;
+        }
+        
+        if (!ensureDirectoryExists(footprint_lib_dir)) {
+            std::cerr << "Failed to create footprint library directory: " << footprint_lib_dir << std::endl;
+            return false;
+        }
+        
+        if (!ensureDirectoryExists(model3d_lib_dir)) {
+            std::cerr << "Failed to create 3D model library directory: " << model3d_lib_dir << std::endl;
+            return false;
+        }
+        
+        // 导出符号到顶层目录中的符号文件
+        std::string symbol_file_path = export_path + "/" + library_name + ".kicad_sym";
+        return exportSymbol(easyeda_data, symbol_file_path);
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Error exporting symbol to library: " << e.what() << std::endl;
         return false;
     }
 }

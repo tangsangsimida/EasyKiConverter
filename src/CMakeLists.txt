@@ -46,21 +46,8 @@ target_link_libraries(easykiconverter-gui
     Qt5::Widgets
 )
 
-# 创建可执行文件 - JSON解析测试版本
-add_executable(test-json-parsing
-    test_json_parsing.cpp
-)
-
-# 链接库 - JSON解析测试版本
-target_link_libraries(test-json-parsing
-    easyeda
-    kicad
-    ${CURL_LIBRARIES}
-    ZLIB::ZLIB
-)
-
 # 设置输出目录
-set_target_properties(easykiconverter easykiconverter-gui test-json-parsing
+set_target_properties(easykiconverter easykiconverter-gui
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )

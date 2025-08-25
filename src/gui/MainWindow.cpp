@@ -327,6 +327,16 @@ void ConverterWorker::processConversion(const QStringList& componentIds,
     try {
         EasyedaApi api;
         
+        // 使用新的库导出方式，创建统一的库目录结构
+        std::string exportPathStd = exportPath.toStdString();
+        std::string filePrefixStd = filePrefix.toStdString();
+        
+        // 确保导出目录存在
+        QDir exportDir(exportPath);
+        if (!exportDir.exists()) {
+            exportDir.mkpath(".");
+        }
+        
         for (const QString& componentId : componentIds) {
             // Update progress
             int progress = (processedComponents * 100) / totalComponents;
@@ -343,48 +353,39 @@ void ConverterWorker::processConversion(const QStringList& componentIds,
                 continue;
             }
             
-            // Create export directory for this component
-            QString componentDir = exportPath + "/" + filePrefix + "_" + componentId;
-            QDir dir(componentDir);
-            if (!dir.exists()) {
-                if (!dir.mkpath(".")) {
-                    logMessage += QString("  Error: Failed to create directory %1\n").arg(componentDir);
-                    processedComponents++;
-                    continue;
-                }
-            }
-            
-            // Export symbol
+            // Export symbol to library structure
             if (exportSymbol) {
-                logMessage += QString("  Exporting symbol...\n");
-                // 实际导出符号的实现
+                logMessage += QString("  Exporting symbol to library...\n");
                 try {
-                    // 导出符号
                     KicadSymbolExporter exporter(KicadVersion::v6);
-                    QString symbolFilePath = QString("%1/%2_%3.kicad_sym")
-                        .arg(componentDir)
-                        .arg(filePrefix)
-                        .arg(componentId);
-                    
-                    if (exporter.exportSymbol(cadData, symbolFilePath.toStdString())) {
-                        logMessage += QString("  Symbol exported to: %1\n").arg(symbolFilePath);
+                    if (exporter.exportSymbolToLibrary(cadData, exportPathStd, filePrefixStd)) {
+                        logMessage += QString("  Symbol library created at: %1/%2.kicad_sym\n")
+                            .arg(exportPath).arg(filePrefix);
                     } else {
-                        logMessage += QString("  Error: Failed to export symbol\n");
+                        logMessage += QString("  Error: Failed to export symbol library\n");
                     }
                 } catch (const std::exception& e) {
-                    logMessage += QString("  Error exporting symbol: %1\n").arg(e.what());
+                    logMessage += QString("  Error exporting symbol library: %1\n").arg(e.what());
                 }
             }
             
             // Export footprint
             if (exportFootprint) {
                 logMessage += QString("  Exporting footprint...\n");
-                // 实际导出封装的实现
                 try {
-                    // 导出封装 (暂时只是占位符)
-                    QString footprintFilePath = QString("%1/%2_%3.kicad_mod")
-                        .arg(componentDir)
-                        .arg(filePrefix)
+                    // 创建封装库目录
+                    QString footprintLibDir = QString("%1/%2.pretty")
+                        .arg(exportPath)
+                        .arg(filePrefix);
+                    
+                    QDir dir(footprintLibDir);
+                    if (!dir.exists()) {
+                        dir.mkpath(".");
+                    }
+                    
+                    // 导出封装到封装库目录
+                    QString footprintFilePath = QString("%1/%2.kicad_mod")
+                        .arg(footprintLibDir)
                         .arg(componentId);
                     
                     std::ofstream outFile(footprintFilePath.toStdString());
@@ -406,12 +407,20 @@ void ConverterWorker::processConversion(const QStringList& componentIds,
             // Export 3D model
             if (export3dModel) {
                 logMessage += QString("  Exporting 3D model...\n");
-                // 实际导出3D模型的实现
                 try {
-                    // 导出3D模型 (暂时只是占位符)
-                    QString modelFilePath = QString("%1/%2_%3.step")
-                        .arg(componentDir)
-                        .arg(filePrefix)
+                    // 创建3D模型库目录
+                    QString model3dLibDir = QString("%1/%2.3dshapes")
+                        .arg(exportPath)
+                        .arg(filePrefix);
+                    
+                    QDir dir(model3dLibDir);
+                    if (!dir.exists()) {
+                        dir.mkpath(".");
+                    }
+                    
+                    // 导出3D模型到模型库目录
+                    QString modelFilePath = QString("%1/%2.step")
+                        .arg(model3dLibDir)
                         .arg(componentId);
                     
                     std::ofstream outFile(modelFilePath.toStdString());
@@ -431,8 +440,12 @@ void ConverterWorker::processConversion(const QStringList& componentIds,
             processedComponents++;
         }
         
-        logMessage += QString("\nSuccessfully processed %1 out of %2 components.")
+        logMessage += QString("\nSuccessfully processed %1 out of %2 components.\n")
                          .arg(processedComponents).arg(totalComponents);
+        logMessage += QString("Library structure created at: %1\n").arg(exportPath);
+        logMessage += QString("  - %1.3dshapes/ (3D models)\n").arg(filePrefix);
+        logMessage += QString("  - %1.kicad_sym (Symbols file)\n").arg(filePrefix);
+        logMessage += QString("  - %1.pretty/ (Footprints)\n").arg(filePrefix);
         
         emit conversionFinished(logMessage);
     } catch (const std::exception& e) {

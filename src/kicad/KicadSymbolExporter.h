@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <nlohmann/json.hpp>
+#include <filesystem>
 
 using json = nlohmann::json;
 
@@ -304,6 +305,13 @@ public:
      * Export symbol to KiCad file
      */
     bool exportSymbol(const json& easyeda_data, const std::string& file_path);
+    
+    /**
+     * @brief 导出符号到KiCad库文件
+     * Export symbol to KiCad library file with proper directory structure
+     */
+    bool exportSymbolToLibrary(const json& easyeda_data, const std::string& export_path, 
+                              const std::string& library_name);
 
 private:
     KicadVersion kicad_version; ///< KiCad版本 / KiCad version
@@ -319,6 +327,12 @@ private:
      * Convert pixels to millimeters
      */
     double px_to_mm(double dim);
+    
+    /**
+     * @brief 确保目录存在
+     * Ensure directory exists
+     */
+    bool ensureDirectoryExists(const std::string& path);
 };
 
 #endif // EASYKI_CONVERTER_KICAD_SYMBOL_EXPORTER_H
