@@ -1,26 +1,24 @@
-# 📝 系统要求
+# 📋 系统要求
 
-## 基本要求
-- **Python 3.7+** （推荐 3.8+）
-- **网络连接** （访问 EasyEDA/LCSC API）
-- **KiCad 5.x 或 6.x+** （使用生成的库文件）
+[English Version](system_requirements_en.md)
 
-## Python 依赖
-- **Flask 2.0+** （Web UI）
-- **Flask-CORS** （跨域支持）
-- **requests** （HTTP 请求）
-- **其他依赖** 见 requirements.txt
+## 🌟 支持的平台
+- **Windows**: Windows 10 或更高版本
+- **Linux**: Ubuntu 20.04 或更高版本
+- **macOS**: macOS 10.15 (Catalina) 或更高版本
 
-## 支持的操作系统
-- ✅ Windows 10/11
-- ✅ macOS 10.14+
-- ✅ Linux (Ubuntu 18.04+)
+## 🔧 必要的软件
+- **编译器**:
+  - GCC >= 7.0（Linux/macOS）
+  - MSVC >= 2019（Windows）
+- **构建工具**: CMake >= 3.10
+- **Qt版本**: Qt5
+- **其他依赖**: zlib, curl
 
-## 🎯 支持的元件类型
+## 📦 支持的元件类型
+- **符号**: KiCad 符号格式
+- **封装**: KiCad 封装格式
+- **3D模型**: KiCad 3D 模型格式
 
-- 🔌 **连接器** - 各种插头和端子
-- 🔧 **分立元件** - 电阻、电容、电感、二极管等
-- 💾 **集成电路** - MCU、存储器、运放等
-- ⚡ **电源管理** - 稳压器、开关电源芯片等
-- 📡 **RF元件** - 天线、滤波器等
-- 🔍 **传感器** - 温度、压力、光学传感器等
+## 📂 目录结构
+参照 [项目结构](project_structure.md) 文档

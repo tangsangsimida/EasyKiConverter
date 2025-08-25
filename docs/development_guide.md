@@ -1,20 +1,74 @@
-# 🛠️ 开发指南
+# 📚 开发指南
 
-## 设置开发环境
+[English Version](development_guide_en.md)
 
+## 🌟 开发环境设置
+
+### 🛠️ 工具链
+- **编译器**: GCC (Linux/macOS), MSVC (Windows)
+- **构建工具**: CMake >= 3.10
+- **依赖管理**: vcpkg 或系统包管理器
+- **Qt版本**: Qt5 (建议使用系统安装的Qt库)
+
+### 📦 必要的依赖项
 ```bash
-# 克隆项目
-git clone https://github.com/tangsangsimida/EasyKiConverter.git
-cd EasyKiConverter
+# Linux/macOS
+sudo apt-get install build-essential cmake qt5-default
 
-# 创建虚拟环境
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
-
-# 安装依赖
-pip install -r EasyKiConverter/Web_Ui/requirements.txt
+# Windows
+# 使用vcpkg安装依赖
+./vcpkg install qt5
 ```
+
+## 🚀 开发流程
+
+### 1. 克隆仓库
+```bash
+git clone <repository-url>
+cd EasyKiConverter
+```
+
+### 2. 创建构建目录
+```bash
+mkdir build
+cd build
+```
+
+### 3. 配置CMake
+```bash
+cmake ..
+```
+
+### 4. 构建项目
+```bash
+make
+```
+
+### 5. 运行测试程序（可选）
+```bash
+# 在build目录下运行测试程序
+ctest
+```
+
+## 🖥️ IDE 设置
+
+- **Visual Studio Code**:
+  - 安装 C/C++ 扩展
+  - 配置 CMake Tools 扩展
+  - 配置 launch.json 以支持调试
+
+- **CLion**:
+  - 导入项目时选择CMakeLists.txt
+  - 自动配置构建环境
+
+## 🧪 调试技巧
+
+- 使用 GDB 或 LLDB 进行调试
+- 配置 VSCode 的 launch.json 文件以支持断点调试
+- 使用 CMake 的 Debug 模式构建项目
+
+## 📂 目录结构
+参照 [项目结构](project_structure.md) 文档
 
 ## 🌐 Web UI 开发
 

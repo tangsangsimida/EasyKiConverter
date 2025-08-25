@@ -1,104 +1,53 @@
 # EasyKiConverter 🔄
 
-**[English](README_en.md)** | [中文](README.md)
+[English](README_en.md) | 中文
 
-一个强大的 Python 工具，用于将嘉立创（LCSC）和 EasyEDA 元件转换为 KiCad 格式，支持符号、封装和 3D 模型的完整转换。提供现代化的 Web UI 界面，让元件转换变得简单高效。
+EasyKiConverter 是一个功能强大的工具，用于将电子元件从 EasyEDA/LCSC 格式转换为 KiCad 格式。它支持转换符号、封装和 3D 模型，使您能够直接在 KiCad 项目中使用 LCSC 的元件。
 
-## ✨ 功能特性
+## 🌟 功能特点
 
-### 🎯 核心功能
-- **符号转换**：将 EasyEDA 符号转换为 KiCad 符号库（.kicad_sym）
-- **封装生成**：从 EasyEDA 封装创建 KiCad 封装（.kicad_mod）
-- **3D模型支持**：自动下载并转换 3D 模型（支持多种格式）
-- **批量处理**：支持多个元件同时转换
-- **多线程优化**：并行处理多个元件，显著提升转换效率
-- **版本兼容**：支持 KiCad 5.x 和 6.x+ 版本
-
-### 🌐 Web UI 界面
-- **现代化界面**：美观的毛玻璃效果设计
-- **实时进度**：转换过程可视化进度条，支持并行处理状态显示
-- **灵活输入**：支持 LCSC 编号或嘉立创链接
-- **选择性导出**：可选择导出符号、封装或 3D 模型
-- **即时预览**：转换结果实时显示，包含处理时间和文件统计
-- **智能配置**：自动保存导出配置，支持剪贴板快速输入
-
-### 🛠️ 易用性设计
-- **一键启动**：双击启动脚本即可运行 Web UI
-- **无需配置**：开箱即用，无需复杂设置
-- **跨平台支持**：支持 Windows、macOS 和 Linux 系统
+- 将 EasyEDA/LCSC 元件转换为 KiCad 格式
+- 支持符号、封装和 3D 模型转换
+- 批处理功能
+- 用户友好的图形界面
+- 命令行界面，便于自动化
+- 跨平台支持（Windows、Linux、macOS）
 
 ## 🚀 快速开始
 
-### 💻 安装与启动
-
 ```bash
 # 克隆仓库
-git clone https://github.com/tangsangsimida/EasyKiConverter.git
+git clone <repository-url>
 cd EasyKiConverter
+
+# 构建项目
+mkdir build
+cd build
+cmake ..
+make
+
+# 运行命令行工具
+cd bin
+./easykiconverter --help
+
+# 运行图形界面工具
+./easykiconverter-gui
 ```
 
-> 💡 **提示**：启动脚本会自动检查并安装所需依赖，无需手动安装
+## 📖 文档
 
-### 🚀 启动 Web UI
-
-```bash
-# 使用启动脚本（推荐）
-# Windows 用户
-start_webui.bat
-
-# Linux/macOS 用户
-./start_webui.sh
-```
-
-启动后在浏览器中访问：**http://localhost:8000**
-
-
-
-## 📚 详细文档
-
-更多详细信息，请参阅 `docs` 目录下的文档：
+有关详细文档，请参阅 [docs](docs) 目录中的文件：
 
 - [项目结构](docs/project_structure.md) - 详细的项目结构和模块说明
-- [开发指南](docs/development_guide.md) - 开发环境设置和开发流程
-- [贡献指南](docs/contributing.md) - 如何参与项目贡献
-- [性能优化](docs/performance.md) - 多线程并行处理和性能提升
+- [开发指南](docs/development_guide.md) - 开发环境设置和工作流程
+- [贡献指南](docs/contributing.md) - 如何为项目做贡献
+- [性能指南](docs/performance.md) - 性能优化技术
 - [系统要求](docs/system_requirements.md) - 系统要求和支持的元件类型
+
+## 🤝 贡献
+
+欢迎贡献！请阅读我们的[贡献指南](docs/contributing.md)了解如何为该项目做贡献。
 
 ## 📄 许可证
 
-本项目采用 **GNU General Public License v3.0 (GPL-3.0)** 许可证。
-
-- ✅ 商业使用
-- ✅ 修改
-- ✅ 分发
-- ✅ 专利使用
-- ❌ 责任
-- ❌ 保证
-
-查看 [LICENSE](LICENSE) 文件了解完整许可证条款。
-
----
-
-## 🙏 致谢
-
-### 🌟 特别感谢
-
-本项目基于 **[uPesy/easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py)** 项目衍生而来。感谢原作者提供的优秀基础框架和核心转换算法，为本项目的开发奠定了坚实的基础。
-
-### 🤝 其他致谢
-
-感谢 [GitHub](https://github.com/) 平台以及所有为本项目提供贡献的贡献者。
-
-我们要向所有贡献者表示诚挚的感谢。
-
-<a href="https://github.com/tangsangsimida/EasyKiConverter/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=tangsangsimida/EasyKiConverter" />
-</a>
-
-感谢 [EasyEDA](https://easyeda.com/) 和 [嘉立创](https://www.szlcsc.com/) 提供的开放 API。
-
-感谢 [KiCad](https://www.kicad.org/) 开源电路设计软件。
-
----
-
-**⭐ 如果这个项目对您有帮助，请给我们一个 Star！**
+本项目采用 GPL-3.0 许可证 - 有关详细信息，请参阅 [LICENSE](LICENSE) 文件。

@@ -1,19 +1,37 @@
-# ⚡ Performance Optimization
+# 🚀 Performance Optimization Guide
 
-## 🚀 Multi-threading Parallel Processing
-- **Smart Thread Pool**: Automatically adjusts concurrent thread count based on CPU cores (maximum 8 threads)
-- **Parallel Conversion**: Multiple components processed simultaneously, significantly reducing batch conversion time
-- **Thread Safety**: File operations and symbol library writes use locking mechanisms to ensure data integrity
-- **Resource Optimization**: Single components processed directly to avoid unnecessary thread overhead
+## 📊 Optimization Goals
+- Improve data parsing speed
+- Reduce memory usage
+- Accelerate file generation process
 
-## 📊 Performance Improvement Effects
-- **Batch Processing**: Dramatically reduced conversion time for multiple components (improvement depends on component count and system configuration)
-- **CPU Utilization**: Full utilization of multi-core processor performance
-- **User Experience**: Real-time progress display with processing time and parallel status information
-- **Smart Scheduling**: Parallelized execution of network requests and file I/O operations
+## 🔧 Optimization Strategies
 
-## 🔧 Technical Features
-- **Thread Pool Management**: Implemented using `concurrent.futures.ThreadPoolExecutor`
-- **Locking Mechanism**: Independent locks assigned to each symbol library file to avoid write conflicts
-- **Error Isolation**: Single component processing failure does not affect other component conversions
-- **Memory Optimization**: Reasonable control of concurrency count, balancing performance and resource usage
+1. **Multithreading**
+   - Use C++11's std::thread or Qt's QThread to implement multithreading
+   - Move time-consuming operations (such as network requests, data parsing) to worker threads
+
+2. **Data Structure Optimization**
+   - Use more efficient data structures (e.g., std::unordered_map instead of std::map)
+   - Avoid unnecessary object copies
+
+3. **IO Optimization**
+   - Use buffered IO operations
+   - Batch write files to reduce disk access times
+
+4. **Compiler Optimization**
+   - Enable compiler optimization (-O2 or -O3) in release builds
+   - Use Profile-Guided Optimization (PGO)
+
+5. **Debugging Tools**
+   - Use gprof for performance profiling
+   - Use Valgrind to check for memory leaks
+
+## 📈 Performance Testing
+
+- Use Google Benchmark for benchmarking
+- Write unit tests to verify the performance of critical functions
+- Run performance tests regularly to monitor changes
+
+## 📂 Directory Structure
+Refer to [Project Structure](project_structure_en.md) document

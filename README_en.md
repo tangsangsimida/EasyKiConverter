@@ -2,80 +2,55 @@
 
 **[English](README_en.md)** | [中文](README.md)
 
-A powerful Python tool for converting LCSC and EasyEDA components to KiCad format, supporting complete conversion of symbols, footprints, and 3D models. Features a modern Web UI interface that makes component conversion simple and efficient.
+EasyKiConverter is a powerful tool for converting electronic components from EasyEDA/LCSC format to KiCad format. It supports converting symbols, footprints, and 3D models, making it easy to use components from LCSC directly in KiCad projects.
 
-## ✨ Features
+## 🌟 Features
 
-### 🎯 Core Functions
-- **Symbol Conversion**: Convert EasyEDA symbols to KiCad symbol libraries (.kicad_sym)
-- **Footprint Generation**: Create KiCad footprints from EasyEDA packages (.kicad_mod)
-- **3D Model Support**: Automatically download and convert 3D models (multiple formats supported)
-- **Batch Processing**: Support simultaneous conversion of multiple components
-- **Multi-threading Optimization**: Parallel processing of multiple components for significantly improved efficiency
-- **Version Compatibility**: Support KiCad 5.x and 6.x+ versions
-
-### 🌐 Web UI Interface
-- **Modern Interface**: Beautiful frosted glass effect design
-- **Real-time Progress**: Visual progress bar for conversion process with parallel processing status
-- **Flexible Input**: Support LCSC part numbers or LCSC links
-- **Selective Export**: Choose to export symbols, footprints, or 3D models
-- **Instant Preview**: Real-time display of conversion results with processing time and file statistics
-- **Smart Configuration**: Auto-save export settings with clipboard quick input support
-
-### 🛠️ User-Friendly Design
-- **One-Click Launch**: Start Web UI with a simple double-click
-- **Zero Configuration**: Ready to use out of the box
-- **Cross-Platform**: Supports Windows, macOS, and Linux systems
+- Convert EasyEDA/LCSC components to KiCad format
+- Support for symbols, footprints, and 3D models
+- Batch processing capabilities
+- User-friendly graphical interface
+- Command-line interface for automation
+- Cross-platform support (Windows, Linux, macOS)
 
 ## 🚀 Quick Start
 
-### 💻 Installation & Setup
-
 ```bash
 # Clone the repository
-git clone https://github.com/tangsangsimida/EasyKiConverter.git
+git clone <repository-url>
 cd EasyKiConverter
+
+# Build the project
+mkdir build
+cd build
+cmake ..
+make
+
+# Run the command-line tool
+cd bin
+./easykiconverter --help
+
+# Run the GUI tool
+./easykiconverter-gui
 ```
 
-> 💡 **Tip**: The startup script will automatically check and install required dependencies
+## 📖 Documentation
 
-### 🚀 Launch Web UI
+For detailed documentation, please refer to the files in the [docs](docs) directory:
 
-```bash
-# Use startup script (Recommended)
-# Windows users
-start_webui.bat
+- [Project Structure](docs/project_structure_en.md) - Detailed project structure and module descriptions
+- [Development Guide](docs/development_guide_en.md) - Development environment setup and workflow
+- [Contribution Guide](docs/contributing_en.md) - How to contribute to the project
+- [Performance Guide](docs/performance_en.md) - Performance optimization techniques
+- [System Requirements](docs/system_requirements_en.md) - System requirements and supported component types
 
-# Linux/macOS users
-./start_webui.sh
-```
+## 🤝 Contributing
 
-After startup, visit in browser: **http://localhost:8000**
-
-
-
-## 📚 Detailed Documentation
-
-For more detailed information, please refer to the documentation in the `docs` directory:
-
-- [Project Structure](docs/project_structure.md) - Detailed project structure and module descriptions
-- [Development Guide](docs/development_guide.md) - Development environment setup and workflow
-- [Contributing Guide](docs/contributing.md) - How to contribute to the project
-- [Performance Optimization](docs/performance.md) - Multi-threading parallel processing and performance improvements
-- [System Requirements](docs/system_requirements.md) - System requirements and supported component types
+Contributions are welcome! Please read our [Contributing Guide](docs/contributing_en.md) for details on how to contribute to this project.
 
 ## 📄 License
 
-This project is licensed under **GNU General Public License v3.0 (GPL-3.0)**.
-
-- ✅ Commercial use
-- ✅ Modification
-- ✅ Distribution
-- ✅ Patent use
-- ❌ Liability
-- ❌ Warranty
-
-See [LICENSE](LICENSE) file for complete license terms.
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.
 
 ---
 

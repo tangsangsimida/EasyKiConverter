@@ -1,20 +1,72 @@
 # 🛠️ Development Guide
 
-## Setting up Development Environment
+## 🌟 Development Environment Setup
 
+### 🛠️ Toolchain
+- **Compiler**: GCC (Linux/macOS), MSVC (Windows)
+- **Build System**: CMake >= 3.10
+- **Dependency Management**: vcpkg or system package manager
+- **Qt Version**: Qt5 (recommended to use system-installed Qt libraries)
+
+### 📦 Required Dependencies
 ```bash
-# Clone project
-git clone https://github.com/tangsangsimida/EasyKiConverter.git
-cd EasyKiConverter
+# Linux/macOS
+sudo apt-get install build-essential cmake qt5-default
 
-# Create virtual environment
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
-
-# Install dependencies
-pip install -r EasyKiConverter/Web_Ui/requirements.txt
+# Windows
+# Use vcpkg to install dependencies
+./vcpkg install qt5
 ```
+
+## 🚀 Development Workflow
+
+### 1. Clone the Repository
+```bash
+git clone <repository-url>
+cd EasyKiConverter
+```
+
+### 2. Create Build Directory
+```bash
+mkdir build
+cd build
+```
+
+### 3. Configure CMake
+```bash
+cmake ..
+```
+
+### 4. Build the Project
+```bash
+make
+```
+
+### 5. Run Test Programs (Optional)
+```bash
+# Run test programs in the build directory
+ctest
+```
+
+## 🖥️ IDE Setup
+
+- **Visual Studio Code**:
+  - Install C/C++ extension
+  - Configure CMake Tools extension
+  - Configure launch.json for debugging support
+
+- **CLion**:
+  - Import project by selecting CMakeLists.txt
+  - Automatically configure build environment
+
+## 🧪 Debugging Tips
+
+- Use GDB or LLDB for debugging
+- Configure VSCode's launch.json file to support breakpoint debugging
+- Use CMake's Debug mode to build the project
+
+## 📂 Directory Structure
+Refer to [Project Structure](project_structure_en.md) document
 
 ## 🌐 Web UI Development
 
