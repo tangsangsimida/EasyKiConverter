@@ -34,6 +34,41 @@ cd bin
 ./easykiconverter-gui
 ```
 
+## 📦 打包与分发
+
+### Windows
+- 使用 NSIS 创建安装程序。
+- 确保安装了 Visual Studio 和 Qt。
+- 清理和构建项目：
+  ```bash
+  mkdir build
+  cd build
+  cmake ..
+  cmake --build . --config Release
+  ```
+
+### Linux
+- 使用 `.deb` 包管理器格式。
+- 确保安装了 GCC 和 Qt。
+- 清理和构建项目：
+  ```bash
+  mkdir build
+  cd build
+  cmake ..
+  make
+  ```
+
+### macOS
+- 使用 `.dmg` 格式。
+- 确保安装了 Xcode 和 Qt。
+- 清理和构建项目：
+  ```bash
+  mkdir build
+  cd build
+  cmake ..
+  make
+  ```
+
 ## 📖 文档
 
 有关详细文档，请参阅 [docs](docs) 目录中的文件：
