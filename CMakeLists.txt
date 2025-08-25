@@ -35,7 +35,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
 add_subdirectory(src)
 
 # 链接Qt5和CURL库到GUI应用程序
-target_link_libraries(EasyKiConverter
+target_link_libraries(easykiconverter
     gui
     easyeda
     kicad
