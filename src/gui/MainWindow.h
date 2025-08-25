@@ -20,6 +20,9 @@
 #include <QFileDialog>
 #include <QClipboard>
 #include <QApplication>
+#include <QAction>
+#include <QMenu>
+#include <QMenuBar>
 #include "easyeda/EasyedaApi.h"
 #include "kicad/KicadSymbolExporter.h"
 
@@ -75,6 +78,10 @@ private slots:
     void onUpdateProgress(int value);
     void onExportFinished(const QString& message);
     void onConversionError(const QString& error);
+    
+    // 主题切换槽函数
+    void switchToLightTheme();
+    void switchToDarkTheme();
 
 private:
     Ui::MainWindow *ui;
@@ -96,10 +103,18 @@ private:
     ConverterWorker* worker;
     QThread* workerThread;
     
+    // 主题菜单动作
+    QAction* lightThemeAction;
+    QAction* darkThemeAction;
+    
     QStringList parseComponentIds(const QString& text) const;
     void setupUI();
     void loadSettings();
     void saveSettings();
+    
+    // 主题设置函数
+    void setupLightTheme();
+    void setupDarkTheme();
 };
 
 #endif // MAINWINDOW_H

@@ -25,27 +25,8 @@ MainWindow::MainWindow(QWidget *parent)
     // 应用现代化的Fusion样式
     qApp->setStyle(QStyleFactory::create("Fusion"));
     
-    // 初始化深色主题调色板
-    QPalette darkPalette;
-    darkPalette.setColor(QPalette::Window, QColor(53, 53, 53));
-    darkPalette.setColor(QPalette::WindowText, Qt::white);
-    darkPalette.setColor(QPalette::Base, QColor(25, 25, 25));
-    darkPalette.setColor(QPalette::AlternateBase, QColor(53, 53, 53));
-    darkPalette.setColor(QPalette::ToolTipBase, Qt::white);
-    darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-    darkPalette.setColor(QPalette::Text, Qt::white);
-    darkPalette.setColor(QPalette::Disabled, QPalette::Text, QColor(128, 128, 128));
-    darkPalette.setColor(QPalette::Button, QColor(53, 53, 53));
-    darkPalette.setColor(QPalette::ButtonText, Qt::white);
-    darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(128, 128, 128));
-    darkPalette.setColor(QPalette::BrightText, Qt::red);
-    darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
-    darkPalette.setColor(QPalette::Highlight, QColor(42, 130, 218));
-    darkPalette.setColor(QPalette::HighlightedText, Qt::black);
-    darkPalette.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(128, 128, 128));
-    
-    qApp->setPalette(darkPalette);
-    qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
+    // 默认使用明亮主题
+    setupLightTheme();
     
     // Initialize worker in a separate thread
     workerThread = new QThread(this);
@@ -107,6 +88,19 @@ void MainWindow::setupUI()
 {
     setWindowTitle("EasyKiConverter - C++ GUI");
     
+    // 创建菜单栏
+    QMenuBar* menuBar = new QMenuBar(this);
+    setMenuBar(menuBar);
+    
+    // 创建主题菜单
+    QMenu* themeMenu = menuBar->addMenu("&Theme");
+    lightThemeAction = themeMenu->addAction("&Light Theme");
+    darkThemeAction = themeMenu->addAction("&Dark Theme");
+    
+    // 连接主题切换动作
+    connect(lightThemeAction, &QAction::triggered, this, &MainWindow::switchToLightTheme);
+    connect(darkThemeAction, &QAction::triggered, this, &MainWindow::switchToDarkTheme);
+    
     // Create central widget and main layout
     QWidget* centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
@@ -167,17 +161,39 @@ void MainWindow::setupUI()
     mainLayout->addWidget(optionsGroup);
     
     // Export type checkboxes
-    QHBoxLayout* checkboxesLayout = new QHBoxLayout();
+    QGroupBox* exportTypesGroup = new QGroupBox("Export Types");
+    QHBoxLayout* checkboxesLayout = new QHBoxLayout(exportTypesGroup);
     symbolCheckBox = new QCheckBox("Export Symbols");
     footprintCheckBox = new QCheckBox("Export Footprints");
     model3dCheckBox = new QCheckBox("Export 3D Models");
     symbolCheckBox->setChecked(true);
     footprintCheckBox->setChecked(true);
     model3dCheckBox->setChecked(true);
+    
+    // 添加样式
+    QString checkBoxStyle = "QCheckBox {"
+                            "  spacing: 5px;"
+                            "} "
+                            "QCheckBox::indicator {"
+                            "  width: 18px;"
+                            "  height: 18px;"
+                            "} "
+                            "QCheckBox::indicator:unchecked {"
+                            "  border: 2px solid #555;"
+                            "  background-color: #222;"
+                            "} "
+                            "QCheckBox::indicator:checked {"
+                            "  border: 2px solid #4CAF50;"
+                            "  background-color: #4CAF50;"
+                            "}";
+    symbolCheckBox->setStyleSheet(checkBoxStyle);
+    footprintCheckBox->setStyleSheet(checkBoxStyle);
+    model3dCheckBox->setStyleSheet(checkBoxStyle);
+    
     checkboxesLayout->addWidget(symbolCheckBox);
     checkboxesLayout->addWidget(footprintCheckBox);
     checkboxesLayout->addWidget(model3dCheckBox);
-    mainLayout->addLayout(checkboxesLayout);
+    mainLayout->addWidget(exportTypesGroup);
     
     // Buttons
     QHBoxLayout* buttonsLayout = new QHBoxLayout();
@@ -185,6 +201,42 @@ void MainWindow::setupUI()
     convertButton->setDefault(true);
     selectAllButton = new QPushButton("Select All");
     clearButton = new QPushButton("Clear");
+    
+    // 添加样式
+    convertButton->setStyleSheet("QPushButton {"
+                                 "  background-color: #2196F3;"
+                                 "  color: white;"
+                                 "  border: none;"
+                                 "  padding: 10px;"
+                                 "  font-weight: bold;"
+                                 "  border-radius: 4px;"
+                                 "} "
+                                 "QPushButton:hover {"
+                                 "  background-color: #1976D2;"
+                                 "}");
+    
+    selectAllButton->setStyleSheet("QPushButton {"
+                                   "  background-color: #FF9800;"
+                                   "  color: white;"
+                                   "  border: none;"
+                                   "  padding: 10px;"
+                                   "  border-radius: 4px;"
+                                   "} "
+                                   "QPushButton:hover {"
+                                   "  background-color: #F57C00;"
+                                   "}");
+    
+    clearButton->setStyleSheet("QPushButton {"
+                               "  background-color: #F44336;"
+                               "  color: white;"
+                               "  border: none;"
+                               "  padding: 10px;"
+                               "  border-radius: 4px;"
+                               "} "
+                               "QPushButton:hover {"
+                               "  background-color: #D32F2F;"
+                               "}");
+    
     buttonsLayout->addWidget(convertButton);
     buttonsLayout->addWidget(selectAllButton);
     buttonsLayout->addWidget(clearButton);
@@ -226,9 +278,266 @@ void MainWindow::setupUI()
                                "}");
     mainLayout->addWidget(new QLabel("Log:"));
     mainLayout->addWidget(logTextEdit);
+}
+
+void MainWindow::setupLightTheme()
+{
+    // 设置明亮主题调色板
+    QPalette lightPalette;
+    lightPalette.setColor(QPalette::Window, QColor(240, 240, 240));
+    lightPalette.setColor(QPalette::WindowText, Qt::black);
+    lightPalette.setColor(QPalette::Base, Qt::white);
+    lightPalette.setColor(QPalette::AlternateBase, QColor(240, 240, 240));
+    lightPalette.setColor(QPalette::ToolTipBase, Qt::white);
+    lightPalette.setColor(QPalette::ToolTipText, Qt::black);
+    lightPalette.setColor(QPalette::Text, Qt::black);
+    lightPalette.setColor(QPalette::Disabled, QPalette::Text, QColor(128, 128, 128));
+    lightPalette.setColor(QPalette::Button, QColor(240, 240, 240));
+    lightPalette.setColor(QPalette::ButtonText, Qt::black);
+    lightPalette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(128, 128, 128));
+    lightPalette.setColor(QPalette::BrightText, Qt::red);
+    lightPalette.setColor(QPalette::Link, QColor(42, 130, 218));
+    lightPalette.setColor(QPalette::Highlight, QColor(42, 130, 218));
+    lightPalette.setColor(QPalette::HighlightedText, Qt::white);
+    lightPalette.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(128, 128, 128));
     
-    // 移除未定义的动画函数调用
-    // animateWidget函数未在代码中定义，如果确实需要动画效果，需要实现该函数
+    qApp->setPalette(lightPalette);
+    qApp->setStyleSheet("QToolTip { color: #000000; background-color: #ffffff; border: 1px solid black; }");
+    
+    // 更新控件样式
+    pasteButton->setStyleSheet("QPushButton {"
+                               "  background-color: #2196F3;"
+                               "  color: white;"
+                               "  border: none;"
+                               "  padding: 8px;"
+                               "  border-radius: 4px;"
+                               "} "
+                               "QPushButton:hover {"
+                               "  background-color: #1976D2;"
+                               "}");
+    
+    browseButton->setStyleSheet("QPushButton {"
+                                "  background-color: #4CAF50;"
+                                "  color: white;"
+                                "  border: none;"
+                                "  padding: 8px;"
+                                "  border-radius: 4px;"
+                                "} "
+                                "QPushButton:hover {"
+                                "  background-color: #388E3C;"
+                                "}");
+    
+    convertButton->setStyleSheet("QPushButton {"
+                                 "  background-color: #2196F3;"
+                                 "  color: white;"
+                                 "  border: none;"
+                                 "  padding: 10px;"
+                                 "  font-weight: bold;"
+                                 "  border-radius: 4px;"
+                                 "} "
+                                 "QPushButton:hover {"
+                                 "  background-color: #1976D2;"
+                                 "}");
+    
+    selectAllButton->setStyleSheet("QPushButton {"
+                                   "  background-color: #FF9800;"
+                                   "  color: white;"
+                                   "  border: none;"
+                                   "  padding: 10px;"
+                                   "  border-radius: 4px;"
+                                   "} "
+                                   "QPushButton:hover {"
+                                   "  background-color: #F57C00;"
+                                   "}");
+    
+    clearButton->setStyleSheet("QPushButton {"
+                               "  background-color: #F44336;"
+                               "  color: white;"
+                               "  border: none;"
+                               "  padding: 10px;"
+                               "  border-radius: 4px;"
+                               "} "
+                               "QPushButton:hover {"
+                               "  background-color: #D32F2F;"
+                               "}");
+    
+    progressBar->setStyleSheet("QProgressBar {"
+                               "  border: 2px solid grey;"
+                               "  border-radius: 5px;"
+                               "  text-align: center;"
+                               "} "
+                               "QProgressBar::chunk {"
+                               "  background-color: #4CAF50;"
+                               "  width: 20px;"
+                               "}");
+    
+    statusLabel->setStyleSheet("QLabel {"
+                               "  font-weight: bold;"
+                               "  color: #4CAF50;"
+                               "}");
+    
+    logTextEdit->setStyleSheet("QTextEdit {"
+                               "  background-color: #FFFFFF;"
+                               "  color: #000000;"
+                               "  border: 1px solid #CCCCCC;"
+                               "}");
+    
+    // 更新复选框样式
+    QString checkBoxStyle = "QCheckBox {"
+                            "  spacing: 5px;"
+                            "} "
+                            "QCheckBox::indicator {"
+                            "  width: 18px;"
+                            "  height: 18px;"
+                            "} "
+                            "QCheckBox::indicator:unchecked {"
+                            "  border: 2px solid #888;"
+                            "  background-color: #FFF;"
+                            "} "
+                            "QCheckBox::indicator:checked {"
+                            "  border: 2px solid #4CAF50;"
+                            "  background-color: #4CAF50;"
+                            "}";
+    symbolCheckBox->setStyleSheet(checkBoxStyle);
+    footprintCheckBox->setStyleSheet(checkBoxStyle);
+    model3dCheckBox->setStyleSheet(checkBoxStyle);
+}
+
+void MainWindow::setupDarkTheme()
+{
+    // 初始化深色主题调色板
+    QPalette darkPalette;
+    darkPalette.setColor(QPalette::Window, QColor(53, 53, 53));
+    darkPalette.setColor(QPalette::WindowText, Qt::white);
+    darkPalette.setColor(QPalette::Base, QColor(25, 25, 25));
+    darkPalette.setColor(QPalette::AlternateBase, QColor(53, 53, 53));
+    darkPalette.setColor(QPalette::ToolTipBase, Qt::white);
+    darkPalette.setColor(QPalette::ToolTipText, Qt::white);
+    darkPalette.setColor(QPalette::Text, Qt::white);
+    darkPalette.setColor(QPalette::Disabled, QPalette::Text, QColor(128, 128, 128));
+    darkPalette.setColor(QPalette::Button, QColor(53, 53, 53));
+    darkPalette.setColor(QPalette::ButtonText, Qt::white);
+    darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(128, 128, 128));
+    darkPalette.setColor(QPalette::BrightText, Qt::red);
+    darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
+    darkPalette.setColor(QPalette::Highlight, QColor(42, 130, 218));
+    darkPalette.setColor(QPalette::HighlightedText, Qt::black);
+    darkPalette.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(128, 128, 128));
+    
+    qApp->setPalette(darkPalette);
+    qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
+    
+    // 更新控件样式
+    pasteButton->setStyleSheet("QPushButton {"
+                               "  background-color: #2196F3;"
+                               "  color: white;"
+                               "  border: none;"
+                               "  padding: 8px;"
+                               "  border-radius: 4px;"
+                               "} "
+                               "QPushButton:hover {"
+                               "  background-color: #1976D2;"
+                               "}");
+    
+    browseButton->setStyleSheet("QPushButton {"
+                                "  background-color: #4CAF50;"
+                                "  color: white;"
+                                "  border: none;"
+                                "  padding: 8px;"
+                                "  border-radius: 4px;"
+                                "} "
+                                "QPushButton:hover {"
+                                "  background-color: #388E3C;"
+                                "}");
+    
+    convertButton->setStyleSheet("QPushButton {"
+                                 "  background-color: #2196F3;"
+                                 "  color: white;"
+                                 "  border: none;"
+                                 "  padding: 10px;"
+                                 "  font-weight: bold;"
+                                 "  border-radius: 4px;"
+                                 "} "
+                                 "QPushButton:hover {"
+                                 "  background-color: #1976D2;"
+                                 "}");
+    
+    selectAllButton->setStyleSheet("QPushButton {"
+                                   "  background-color: #FF9800;"
+                                   "  color: white;"
+                                   "  border: none;"
+                                   "  padding: 10px;"
+                                   "  border-radius: 4px;"
+                                   "} "
+                                   "QPushButton:hover {"
+                                   "  background-color: #F57C00;"
+                                   "}");
+    
+    clearButton->setStyleSheet("QPushButton {"
+                               "  background-color: #F44336;"
+                               "  color: white;"
+                               "  border: none;"
+                               "  padding: 10px;"
+                               "  border-radius: 4px;"
+                               "} "
+                               "QPushButton:hover {"
+                               "  background-color: #D32F2F;"
+                               "}");
+    
+    progressBar->setStyleSheet("QProgressBar {"
+                               "  border: 2px solid grey;"
+                               "  border-radius: 5px;"
+                               "  text-align: center;"
+                               "} "
+                               "QProgressBar::chunk {"
+                               "  background-color: #4CAF50;"
+                               "  width: 20px;"
+                               "}");
+    
+    statusLabel->setStyleSheet("QLabel {"
+                               "  font-weight: bold;"
+                               "  color: #4CAF50;"
+                               "}");
+    
+    logTextEdit->setStyleSheet("QTextEdit {"
+                               "  background-color: #1E1E1E;"
+                               "  color: #FFFFFF;"
+                               "  border: 1px solid #555;"
+                               "}");
+    
+    // 更新复选框样式
+    QString checkBoxStyle = "QCheckBox {"
+                            "  spacing: 5px;"
+                            "} "
+                            "QCheckBox::indicator {"
+                            "  width: 18px;"
+                            "  height: 18px;"
+                            "} "
+                            "QCheckBox::indicator:unchecked {"
+                            "  border: 2px solid #555;"
+                            "  background-color: #222;"
+                            "} "
+                            "QCheckBox::indicator:checked {"
+                            "  border: 2px solid #4CAF50;"
+                            "  background-color: #4CAF50;"
+                            "}";
+    symbolCheckBox->setStyleSheet(checkBoxStyle);
+    footprintCheckBox->setStyleSheet(checkBoxStyle);
+    model3dCheckBox->setStyleSheet(checkBoxStyle);
+}
+
+void MainWindow::switchToLightTheme()
+{
+    setupLightTheme();
+    // 保存主题设置
+    settings->setValue("theme", "light");
+}
+
+void MainWindow::switchToDarkTheme()
+{
+    setupDarkTheme();
+    // 保存主题设置
+    settings->setValue("theme", "dark");
 }
 
 void MainWindow::loadSettings()
@@ -239,6 +548,14 @@ void MainWindow::loadSettings()
     symbolCheckBox->setChecked(settings->value("exportSymbol", true).toBool());
     footprintCheckBox->setChecked(settings->value("exportFootprint", true).toBool());
     model3dCheckBox->setChecked(settings->value("export3dModel", true).toBool());
+    
+    // 加载主题设置，默认使用明亮主题
+    QString theme = settings->value("theme", "light").toString();
+    if (theme == "dark") {
+        setupDarkTheme();
+    } else {
+        setupLightTheme();
+    }
 }
 
 void MainWindow::saveSettings()
