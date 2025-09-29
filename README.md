@@ -1,8 +1,20 @@
+
+---
+
 # EasyKiConverter 🔄
+
+> ⚠️ **重要提示：本项目（WebUI 版）已停止维护！**  
+> 由于 Web 技术在桌面电子设计工具场景中的局限性，我们已对项目进行全面重构。  
+> **新版本采用 PyQt6 原生桌面 UI，功能更强、体验更佳！**  
+> 👉 请访问新项目：[https://github.com/tangsangsimida/EasyKiConverter_QT](https://github.com/tangsangsimida/EasyKiConverter_QT)
+
+---
 
 **[English](README_en.md)** | [中文](README.md)
 
 一个强大的 Python 工具，用于将嘉立创（LCSC）和 EasyEDA 元件转换为 KiCad 格式，支持符号、封装和 3D 模型的完整转换。提供现代化的 Web UI 界面，让元件转换变得简单高效。
+
+> 💡 **注意**：本文档仅适用于旧版 WebUI 版本。新项目使用 Qt 桌面应用，不再基于 Web 技术。
 
 ## ✨ 功能特性
 
@@ -52,7 +64,7 @@ start_webui.bat
 
 启动后在浏览器中访问：**http://localhost:8000**
 
-
+> ⚠️ **再次提醒**：此 WebUI 版本已不再更新。如需长期使用或获取新功能，请迁移到 [EasyKiConverter_QT](https://github.com/tangsangsimida/EasyKiConverter_QT)。
 
 ## 📚 详细文档
 
@@ -101,4 +113,7 @@ start_webui.bat
 
 ---
 
-**⭐ 如果这个项目对您有帮助，请给我们一个 Star！**
+**⭐ 如果这个项目对您有帮助，请给我们一个 Star！**  
+（但更推荐您关注并 Star 新项目 👉 [EasyKiConverter_QT](https://github.com/tangsangsimida/EasyKiConverter_QT)）
+
+---
