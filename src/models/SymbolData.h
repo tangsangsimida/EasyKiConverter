@@ -1,0 +1,371 @@
+#ifndef SYMBOLDATA_H
+#define SYMBOLDATA_H
+
+#include <QString>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QList>
+#include <QPointF>
+#include <QRectF>
+
+namespace EasyKiConverter {
+
+// ==================== 枚举类型 ====================
+
+/**
+ * @brief 引脚类型枚举
+ */
+enum class PinType {
+    Unspecified = 0,
+    Input = 1,
+    Output = 2,
+    Bidirectional = 3,
+    Power = 4
+};
+
+/**
+ * @brief 引脚样式枚举
+ */
+enum class PinStyle {
+    Line,
+    Inverted,
+    Clock,
+    InvertedClock,
+    InputLow,
+    ClockLow,
+    OutputLow,
+    EdgeClockHigh,
+    NonLogic
+};
+
+// ==================== 符号信息 ====================
+
+/**
+ * @brief 符号信息
+ */
+struct SymbolInfo {
+    QString name;
+    QString prefix;
+    QString package;
+    QString manufacturer;
+    QString datasheet;
+    QString lcscId;
+    QString jlcId;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+// ==================== 边界框 ====================
+
+/**
+ * @brief 边界框
+ */
+struct SymbolBBox {
+    double x;
+    double y;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+// ==================== 引脚相关数据结构 ====================
+
+/**
+ * @brief 引脚设置
+ */
+struct SymbolPinSettings {
+    bool isDisplayed;
+    PinType type;
+    QString spicePinNumber;
+    double posX;
+    double posY;
+    int rotation;
+    QString id;
+    bool isLocked;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 引脚点
+ */
+struct SymbolPinDot {
+    double dotX;
+    double dotY;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 引脚路径
+ */
+struct SymbolPinPath {
+    QString path;
+    QString color;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 引脚名称
+ */
+struct SymbolPinName {
+    bool isDisplayed;
+    double posX;
+    double posY;
+    int rotation;
+    QString text;
+    QString textAnchor;
+    QString font;
+    double fontSize;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 引脚圆点（第二个）
+ */
+struct SymbolPinDotBis {
+    bool isDisplayed;
+    double circleX;
+    double circleY;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 引脚时钟
+ */
+struct SymbolPinClock {
+    bool isDisplayed;
+    QString path;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 引脚
+ */
+struct SymbolPin {
+    SymbolPinSettings settings;
+    SymbolPinDot pinDot;
+    SymbolPinPath pinPath;
+    SymbolPinName name;
+    SymbolPinDotBis dot;
+    SymbolPinClock clock;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+// ==================== 图形元素 ====================
+
+/**
+ * @brief 矩形
+ */
+struct SymbolRectangle {
+    double posX;
+    double posY;
+    double rx;
+    double ry;
+    double width;
+    double height;
+    QString strokeColor;
+    double strokeWidth;
+    QString strokeStyle;
+    QString fillColor;
+    QString id;
+    bool isLocked;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 圆
+ */
+struct SymbolCircle {
+    double centerX;
+    double centerY;
+    double radius;
+    QString strokeColor;
+    double strokeWidth;
+    QString strokeStyle;
+    bool fillColor;
+    QString id;
+    bool isLocked;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 圆弧
+ */
+struct SymbolArc {
+    QList<QPointF> path;
+    QString helperDots;
+    QString strokeColor;
+    double strokeWidth;
+    QString strokeStyle;
+    bool fillColor;
+    QString id;
+    bool isLocked;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 椭圆
+ */
+struct SymbolEllipse {
+    double centerX;
+    double centerY;
+    double radiusX;
+    double radiusY;
+    QString strokeColor;
+    double strokeWidth;
+    QString strokeStyle;
+    bool fillColor;
+    QString id;
+    bool isLocked;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 多段线
+ */
+struct SymbolPolyline {
+    QString points;
+    QString strokeColor;
+    double strokeWidth;
+    QString strokeStyle;
+    bool fillColor;
+    QString id;
+    bool isLocked;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 多边形
+ */
+struct SymbolPolygon {
+    QString points;
+    QString strokeColor;
+    double strokeWidth;
+    QString strokeStyle;
+    bool fillColor;
+    QString id;
+    bool isLocked;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+/**
+ * @brief 路径
+ */
+struct SymbolPath {
+    QString paths;
+    QString strokeColor;
+    double strokeWidth;
+    QString strokeStyle;
+    bool fillColor;
+    QString id;
+    bool isLocked;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+// ==================== 符号数据 ====================
+
+/**
+ * @brief 符号数据类
+ *
+ * 包含符号的所有信息，包括引脚和各种图形元素
+ */
+class SymbolData
+{
+public:
+    SymbolData();
+    ~SymbolData() = default;
+
+    // Getter 和 Setter 方法
+    SymbolInfo info() const { return m_info; }
+    void setInfo(const SymbolInfo &info) { m_info = info; }
+
+    SymbolBBox bbox() const { return m_bbox; }
+    void setBbox(const SymbolBBox &bbox) { m_bbox = bbox; }
+
+    QList<SymbolPin> pins() const { return m_pins; }
+    void setPins(const QList<SymbolPin> &pins) { m_pins = pins; }
+    void addPin(const SymbolPin &pin) { m_pins.append(pin); }
+
+    QList<SymbolRectangle> rectangles() const { return m_rectangles; }
+    void setRectangles(const QList<SymbolRectangle> &rectangles) { m_rectangles = rectangles; }
+    void addRectangle(const SymbolRectangle &rect) { m_rectangles.append(rect); }
+
+    QList<SymbolCircle> circles() const { return m_circles; }
+    void setCircles(const QList<SymbolCircle> &circles) { m_circles = circles; }
+    void addCircle(const SymbolCircle &circle) { m_circles.append(circle); }
+
+    QList<SymbolArc> arcs() const { return m_arcs; }
+    void setArcs(const QList<SymbolArc> &arcs) { m_arcs = arcs; }
+    void addArc(const SymbolArc &arc) { m_arcs.append(arc); }
+
+    QList<SymbolEllipse> ellipses() const { return m_ellipses; }
+    void setEllipses(const QList<SymbolEllipse> &ellipses) { m_ellipses = ellipses; }
+    void addEllipse(const SymbolEllipse &ellipse) { m_ellipses.append(ellipse); }
+
+    QList<SymbolPolyline> polylines() const { return m_polylines; }
+    void setPolylines(const QList<SymbolPolyline> &polylines) { m_polylines = polylines; }
+    void addPolyline(const SymbolPolyline &polyline) { m_polylines.append(polyline); }
+
+    QList<SymbolPolygon> polygons() const { return m_polygons; }
+    void setPolygons(const QList<SymbolPolygon> &polygons) { m_polygons = polygons; }
+    void addPolygon(const SymbolPolygon &polygon) { m_polygons.append(polygon); }
+
+    QList<SymbolPath> paths() const { return m_paths; }
+    void setPaths(const QList<SymbolPath> &paths) { m_paths = paths; }
+    void addPath(const SymbolPath &path) { m_paths.append(path); }
+
+    // JSON 序列化
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+
+    // 数据验证
+    bool isValid() const;
+    QString validate() const;
+
+    // 清空数据
+    void clear();
+
+private:
+    SymbolInfo m_info;
+    SymbolBBox m_bbox;
+    QList<SymbolPin> m_pins;
+    QList<SymbolRectangle> m_rectangles;
+    QList<SymbolCircle> m_circles;
+    QList<SymbolArc> m_arcs;
+    QList<SymbolEllipse> m_ellipses;
+    QList<SymbolPolyline> m_polylines;
+    QList<SymbolPolygon> m_polygons;
+    QList<SymbolPath> m_paths;
+};
+
+} // namespace EasyKiConverter
+
+#endif // SYMBOLDATA_H

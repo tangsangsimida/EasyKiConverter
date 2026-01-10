@@ -1,0 +1,169 @@
+cmake_minimum_required(VERSION 3.16)
+
+project(EasyKiconverter_Cpp_Version VERSION 0.1 LANGUAGES CXX)
+
+# 设置 C++ 标准
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# 设置构建类型
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+# 设置输出目录
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# 查找 Qt 6 组件
+find_package(Qt6 REQUIRED COMPONENTS Quick Network Core Gui Widgets QuickControls2)
+
+# 尝试查找 zlib 库
+# 在 Windows + MinGW 环境下，Qt 的 zlib 库通常在 Qt 安装目录中
+find_package(ZLIB QUIET)
+
+# 如果找不到标准的 zlib，使用 Qt 的 zlib 库
+if(NOT ZLIB_FOUND)
+    # 使用 Qt 的 zlib 库（在 MinGW 环境下通常可用）
+    message(STATUS "Using Qt's zlib library")
+    set(ZLIB_FOUND TRUE)
+    set(ZLIB_INCLUDE_DIR "")
+    set(ZLIB_LIBRARY z)
+endif()
+
+message(STATUS "ZLIB_FOUND: ${ZLIB_FOUND}")
+message(STATUS "ZLIB_LIBRARY: ${ZLIB_LIBRARY}")
+
+qt_standard_project_setup(REQUIRES 6.8)
+
+# 源文件列表
+set(SOURCES
+    main.cpp
+    src/models/ComponentData.cpp
+    src/models/SymbolData.cpp
+    src/models/FootprintData.cpp
+    src/models/Model3DData.cpp
+    src/core/utils/GeometryUtils.cpp
+    src/core/utils/NetworkUtils.cpp
+    src/ui/utils/ConfigManager.cpp
+    src/ui/controllers/MainController.cpp
+    src/core/easyeda/EasyedaApi.cpp
+    src/core/easyeda/EasyedaImporter.cpp
+    src/core/easyeda/JLCDatasheet.cpp
+    src/core/kicad/ExporterSymbol.cpp
+    src/core/kicad/ExporterFootprint.cpp
+    src/core/kicad/Exporter3DModel.cpp
+    src/workers/ExportWorker.cpp
+    src/workers/NetworkWorker.cpp
+)
+
+# 头文件列表
+set(HEADERS
+    src/models/ComponentData.h
+    src/models/SymbolData.h
+    src/models/FootprintData.h
+    src/models/Model3DData.h
+    src/core/utils/GeometryUtils.h
+    src/core/utils/NetworkUtils.h
+    src/ui/utils/ConfigManager.h
+    src/ui/controllers/MainController.h
+    src/core/easyeda/EasyedaApi.h
+    src/core/easyeda/EasyedaImporter.h
+    src/core/easyeda/JLCDatasheet.h
+    src/core/kicad/ExporterSymbol.h
+    src/core/kicad/ExporterFootprint.h
+    src/core/kicad/Exporter3DModel.h
+    src/workers/ExportWorker.h
+    src/workers/NetworkWorker.h
+)
+
+# QML 文件列表
+set(QML_FILES
+    Main.qml
+    src/ui/qml/MainWindow.qml
+    src/ui/qml/components/Card.qml
+    src/ui/qml/components/ComponentListItem.qml
+    src/ui/qml/components/ResultListItem.qml
+    src/ui/qml/styles/AppStyle.qml
+)
+
+# 创建可执行文件
+qt_add_executable(appEasyKiconverter_Cpp_Version
+    ${SOURCES}
+    ${HEADERS}
+)
+
+# 添加 QML 模块
+qt_add_qml_module(appEasyKiconverter_Cpp_Version
+    URI EasyKiconverter_Cpp_Version
+    VERSION 1.0
+    QML_FILES
+        ${QML_FILES}
+        src/ui/qml/components/Icon.qml
+        src/ui/qml/components/ModernButton.qml
+    RESOURCES
+        resources/icons/app_icon.icns
+        resources/icons/app_icon.ico
+        resources/icons/app_icon.png
+        resources/icons/app_icon.svg
+        resources/icons/play.svg
+        resources/icons/folder.svg
+        resources/icons/trash.svg
+        resources/icons/upload.svg
+        resources/icons/add.svg
+        resources/imgs/background.jpg
+        src/ui/qml/styles/qmldir
+)
+
+# 设置目标属性
+set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
+    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    MACOSX_BUNDLE TRUE
+    WIN32_EXECUTABLE TRUE
+    OUTPUT_NAME "EasyKiConverter"
+)
+
+# 链接 Qt 库
+target_link_libraries(appEasyKiconverter_Cpp_Version
+    PRIVATE
+        Qt6::Quick
+        Qt6::Network
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
+        Qt6::QuickControls2
+        ${ZLIB_LIBRARY}
+)
+
+# 包含目录
+target_include_directories(appEasyKiconverter_Cpp_Version
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/core
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/models
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/ui
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/workers
+)
+
+# 编译选项
+if(MSVC)
+    target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE /W4)
+else()
+    target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# 安装规则
+include(GNUInstallDirs)
+install(TARGETS appEasyKiconverter_Cpp_Version
+    BUNDLE DESTINATION .
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# 打印配置信息
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "Qt version: ${Qt6_VERSION}")

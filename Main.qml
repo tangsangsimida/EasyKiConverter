@@ -1,0 +1,18 @@
+import QtQuick
+import QtQuick.Controls
+
+ApplicationWindow {
+    id: appWindow
+    width: 1600
+    height: 1000
+    minimumWidth: 1200
+    minimumHeight: 800
+    visible: true
+    title: "EasyKiConverter - EDA转换工具"
+
+    // 加载主窗口内容
+    Loader {
+        anchors.fill: parent
+        source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/MainWindow.qml"
+    }
+}
