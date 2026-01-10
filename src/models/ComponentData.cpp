@@ -129,7 +129,7 @@ QString ComponentData::validate() const
     }
 
     bool ok;
-    int num = m_lcscId.mid(1).toInt(&ok);
+    m_lcscId.mid(1).toInt(&ok);
     if (!ok && m_lcscId.length() > 1) {
         return QString("LCSC ID must be in format 'C' followed by numbers: %1").arg(m_lcscId);
     }

@@ -160,7 +160,6 @@ bool ExportWorker::exportFootprintLibrary(const QString &model3DPath)
         bool success = exporterFootprint.exportFootprint(
             *m_footprintData,
             footprintFilePath,
-            static_cast<ExporterFootprint::KicadVersion>(m_kicadVersion),
             model3DPath
         );
         

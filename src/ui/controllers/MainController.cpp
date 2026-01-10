@@ -519,8 +519,7 @@ void MainController::handleCadDataFetched(const QJsonObject &data)
     if (m_exportFootprint) {
         QString footprintFilePath = QString("%1/%2.pretty/%3.kicad_mod")
                                         .arg(m_outputPath, m_libName, footprintData->info().name);
-        if (m_exporterFootprint->exportFootprint(*footprintData, footprintFilePath,
-            ExporterFootprint::KicadVersion::V6, model3DPath)) {
+        if (m_exporterFootprint->exportFootprint(*footprintData, footprintFilePath, model3DPath)) {
             qDebug() << "Footprint exported for:" << componentId;
         }
     }
@@ -732,7 +731,6 @@ bool MainController::exportAllCollectedData()
                 continue;
             }
             
-            ExporterFootprint::KicadVersion version = ExporterFootprint::KicadVersion::V6;
             QString model3DPath;
             
             if (m_exportModel3D && !data.footprintData.model3D().uuid().isEmpty()) {
@@ -743,7 +741,7 @@ bool MainController::exportAllCollectedData()
                                   .arg(m_outputPath, m_libName, sanitizedName);
             }
             
-            if (!m_exporterFootprint->exportFootprint(data.footprintData, footprintPath, version, model3DPath)) {
+            if (!m_exporterFootprint->exportFootprint(data.footprintData, footprintPath, model3DPath)) {
                 qWarning() << "Failed to export footprint:" << data.footprintData.info().name;
                 // 继续处理其他封装
             } else {

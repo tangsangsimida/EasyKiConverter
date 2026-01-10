@@ -27,7 +27,7 @@ ExporterFootprint::KicadVersion ExporterFootprint::getKicadVersion() const
     return m_kicadVersion;
 }
 
-bool ExporterFootprint::exportFootprint(const FootprintData &footprintData, const QString &filePath, KicadVersion version, const QString &model3DPath)
+bool ExporterFootprint::exportFootprint(const FootprintData &footprintData, const QString &filePath, const QString &model3DPath)
 {
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -39,7 +39,7 @@ bool ExporterFootprint::exportFootprint(const FootprintData &footprintData, cons
     out.setEncoding(QStringConverter::Utf8);
 
     // Generate footprint content with 3D model path
-    QString content = generateFootprintContent(footprintData, version, model3DPath);
+    QString content = generateFootprintContent(footprintData, model3DPath);
 
     out << content;
     file.flush();
@@ -49,7 +49,7 @@ bool ExporterFootprint::exportFootprint(const FootprintData &footprintData, cons
     return true;
 }
 
-bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData> &footprints, const QString &libName, const QString &filePath, KicadVersion version)
+bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData> &footprints, const QString &libName, const QString &filePath)
 {
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -61,17 +61,15 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData> &footp
     out.setEncoding(QStringConverter::Utf8);
 
     // Generate header
-    out << generateHeader(libName, version);
+    out << generateHeader(libName);
 
     // Generate all footprints
     for (const FootprintData &footprint : footprints) {
-        out << generateFootprintContent(footprint, version);
+        out << generateFootprintContent(footprint);
     }
 
-    // Generate footer
-    if (version == KicadVersion::V6) {
-        out << "\n";
-    }
+    // Generate footer (KiCad 6.x format)
+    out << "\n";
 
     file.close();
 
@@ -79,21 +77,16 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData> &footp
     return true;
 }
 
-QString ExporterFootprint::generateHeader(const QString &libName, KicadVersion version) const
+QString ExporterFootprint::generateHeader(const QString &libName) const
 {
-    if (version == KicadVersion::V6) {
-        return QString("(kicad_pcb (version 20221018) (generator easyeda2kicad)\n"
-                       "  (version 6)\n"
-                       "  (generator \"EasyKiConverter\")\n"
-                       "  (name \"%1\")\n\n").arg(libName);
-    } else {
-        return QString("PCBNEW-LibModule-V1  %1 2024-01-01 23:59:59\n"
-                       "# encoding utf-8\n"
-                       "#\n# %1\n#\n").arg(libName);
-    }
+    // KiCad 6.x format
+    return QString("(kicad_pcb (version 20221018) (generator easyeda2kicad)\n"
+                   "  (version 6)\n"
+                   "  (generator \"EasyKiConverter\")\n"
+                   "  (name \"%1\")\n\n").arg(libName);
 }
 
-QString ExporterFootprint::generateFootprintContent(const FootprintData &footprintData, KicadVersion version, const QString &model3DPath) const
+QString ExporterFootprint::generateFootprintContent(const FootprintData &footprintData, const QString &model3DPath) const
 {
     QString content;
 
@@ -137,47 +130,47 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
 
     // Generate tracks and rectangles
     for (const FootprintTrack &track : footprintData.tracks()) {
-        content += generateTrack(track, version, bboxX, bboxY);
+        content += generateTrack(track, bboxX, bboxY);
     }
     for (const FootprintRectangle &rect : footprintData.rectangles()) {
-        content += generateRectangle(rect, version, bboxX, bboxY);
+        content += generateRectangle(rect, bboxX, bboxY);
     }
 
     // Generate pads
     for (const FootprintPad &pad : footprintData.pads()) {
-        content += generatePad(pad, version, bboxX, bboxY);
+        content += generatePad(pad, bboxX, bboxY);
     }
 
     // Generate holes
     for (const FootprintHole &hole : footprintData.holes()) {
-        content += generateHole(hole, version, bboxX, bboxY);
+        content += generateHole(hole, bboxX, bboxY);
     }
 
     // Generate circles
     for (const FootprintCircle &circle : footprintData.circles()) {
-        content += generateCircle(circle, version, bboxX, bboxY);
+        content += generateCircle(circle, bboxX, bboxY);
     }
 
     // Generate arcs
     for (const FootprintArc &arc : footprintData.arcs()) {
-        content += generateArc(arc, version, bboxX, bboxY);
+        content += generateArc(arc, bboxX, bboxY);
     }
 
     // Generate texts
     for (const FootprintText &text : footprintData.texts()) {
-        content += generateText(text, version, bboxX, bboxY);
+        content += generateText(text, bboxX, bboxY);
     }
 
     // Generate 3D model reference
         if (!footprintData.model3D().name().isEmpty()) {
-            content += generateModel3D(footprintData.model3D(), version, bboxX, bboxY, model3DPath);
+            content += generateModel3D(footprintData.model3D(), bboxX, bboxY, model3DPath);
         }
     
         content += ")\n";
         
         return content;
     }
-QString ExporterFootprint::generatePad(const FootprintPad &pad, KicadVersion version, double bboxX, double bboxY) const
+QString ExporterFootprint::generatePad(const FootprintPad &pad, double bboxX, double bboxY) const
 {
     QString content;
     double x = pxToMm(pad.centerX - bboxX);
@@ -230,7 +223,7 @@ QString ExporterFootprint::generatePad(const FootprintPad &pad, KicadVersion ver
     return content;
 }
 
-QString ExporterFootprint::generateTrack(const FootprintTrack &track, KicadVersion version, double bboxX, double bboxY) const
+QString ExporterFootprint::generateTrack(const FootprintTrack &track, double bboxX, double bboxY) const
 {
     QString content;
     
@@ -256,7 +249,7 @@ QString ExporterFootprint::generateTrack(const FootprintTrack &track, KicadVersi
     return content;
 }
 
-QString ExporterFootprint::generateHole(const FootprintHole &hole, KicadVersion version, double bboxX, double bboxY) const
+QString ExporterFootprint::generateHole(const FootprintHole &hole, double bboxX, double bboxY) const
 {
     QString content;
     double cx = pxToMm(hole.centerX - bboxX);
@@ -272,7 +265,7 @@ QString ExporterFootprint::generateHole(const FootprintHole &hole, KicadVersion 
     return content;
 }
 
-QString ExporterFootprint::generateCircle(const FootprintCircle &circle, KicadVersion version, double bboxX, double bboxY) const
+QString ExporterFootprint::generateCircle(const FootprintCircle &circle, double bboxX, double bboxY) const
 {
     QString content;
     double cx = pxToMm(circle.cx - bboxX);
@@ -290,7 +283,7 @@ QString ExporterFootprint::generateCircle(const FootprintCircle &circle, KicadVe
 
     return content;
 }
-QString ExporterFootprint::generateRectangle(const FootprintRectangle &rectangle, KicadVersion version, double bboxX, double bboxY) const
+QString ExporterFootprint::generateRectangle(const FootprintRectangle &rectangle, double bboxX, double bboxY) const
 {
     QString content;
     double x = pxToMm(rectangle.x - bboxX);
@@ -310,7 +303,7 @@ QString ExporterFootprint::generateRectangle(const FootprintRectangle &rectangle
     return content;
 }
 
-QString ExporterFootprint::generateArc(const FootprintArc &arc, KicadVersion version, double bboxX, double bboxY) const
+QString ExporterFootprint::generateArc(const FootprintArc &arc, double bboxX, double bboxY) const
 {
     QString content;
     
@@ -339,7 +332,7 @@ QString ExporterFootprint::generateArc(const FootprintArc &arc, KicadVersion ver
     return content;
 }
 
-QString ExporterFootprint::generateText(const FootprintText &text, KicadVersion version, double bboxX, double bboxY) const
+QString ExporterFootprint::generateText(const FootprintText &text, double bboxX, double bboxY) const
 {
     QString content;
     double x = pxToMm(text.centerX - bboxX);
@@ -363,7 +356,7 @@ QString ExporterFootprint::generateText(const FootprintText &text, KicadVersion 
     return content;
 }
 
-QString ExporterFootprint::generateModel3D(const Model3DData &model3D, KicadVersion version, double bboxX, double bboxY, const QString &model3DPath) const
+QString ExporterFootprint::generateModel3D(const Model3DData &model3D, double bboxX, double bboxY, const QString &model3DPath) const
 {
     QString content;
     
