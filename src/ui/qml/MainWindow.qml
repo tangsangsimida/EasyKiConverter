@@ -78,22 +78,26 @@ Item {
         ScrollBar.vertical.policy: ScrollBar.AlwaysOff
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-        // 内容区域
-        ColumnLayout {
-            id: contentLayout
+        // 内容容器（添加左右边距）
+        Item {
             width: scrollView.width
-            spacing: 30
+            implicitHeight: contentLayout.implicitHeight
 
-            // 顶部边距
-            Item {
-                Layout.preferredHeight: 40
-            }
+            // 内容区域
+            ColumnLayout {
+                id: contentLayout
+                width: parent.width - AppStyle.spacing.huge * 2
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 30
+
+                // 顶部边距
+                Item {
+                    Layout.preferredHeight: 40
+                }
 
             // 欢迎标题
             Text {
                 Layout.fillWidth: true
-                Layout.leftMargin: 20
-                Layout.rightMargin: 20
                 text: "EasyKiConverter"
                 font.pixelSize: 48
                 font.bold: true
@@ -103,8 +107,6 @@ Item {
 
             Text {
                 Layout.fillWidth: true
-                Layout.leftMargin: 20
-                Layout.rightMargin: 20
                 text: "将嘉立创EDA元器件转换为KiCad格式"
                 font.pixelSize: 18
                 color: "#64748b"
@@ -773,5 +775,6 @@ Item {
                 Layout.preferredHeight: 40
             }
         }
+        } // 关闭内容容器 Item
     }
 }
