@@ -99,6 +99,7 @@ QtObject {
         readonly property int fast: 150
         readonly property int normal: 300
         readonly property int slow: 500
+        readonly property int themeSwitch: 600  // 主题切换动画时长
     }
 
     // 缓动函数

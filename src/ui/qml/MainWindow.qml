@@ -67,6 +67,20 @@ Item {
         anchors.fill: parent
         color: AppStyle.isDarkMode ? "#000000" : "#ffffff"
         opacity: AppStyle.isDarkMode ? 0.3 : 0.5
+
+        Behavior on color {
+            ColorAnimation {
+                duration: AppStyle.durations.themeSwitch
+                easing.type: AppStyle.easings.easeOut
+            }
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: AppStyle.durations.themeSwitch
+                easing.type: AppStyle.easings.easeOut
+            }
+        }
     }
 
     // 主滚动区域
@@ -160,7 +174,7 @@ Item {
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: AppStyle.durations.normal
+                                duration: AppStyle.durations.themeSwitch
                                 easing.type: AppStyle.easings.easeOut
                             }
                         }
@@ -179,14 +193,14 @@ Item {
 
                             Behavior on x {
                                 NumberAnimation {
-                                    duration: AppStyle.durations.normal
+                                    duration: AppStyle.durations.themeSwitch
                                     easing.type: AppStyle.easings.easeOut
                                 }
                             }
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: AppStyle.durations.normal
+                                    duration: AppStyle.durations.themeSwitch
                                     easing.type: AppStyle.easings.easeOut
                                 }
                             }
