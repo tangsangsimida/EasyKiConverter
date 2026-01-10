@@ -51,7 +51,8 @@ Item {
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: true
-        
+        enabled: false  // 不拦截鼠标事件
+
         // 添加加载状态检查
         onStatusChanged: {
             if (status === Image.Error) {
@@ -67,6 +68,7 @@ Item {
         anchors.fill: parent
         color: AppStyle.isDarkMode ? "#000000" : "#ffffff"
         opacity: AppStyle.isDarkMode ? 0.3 : 0.5
+        enabled: false  // 不拦截鼠标事件
 
         Behavior on color {
             ColorAnimation {
@@ -88,6 +90,7 @@ Item {
         id: scrollView
         anchors.fill: parent
         clip: true
+        enabled: true  // 确保能传递鼠标事件
 
         ScrollBar.vertical.policy: ScrollBar.AlwaysOff
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
@@ -96,6 +99,7 @@ Item {
         Item {
             width: scrollView.width
             implicitHeight: contentLayout.implicitHeight
+            enabled: true  // 确保能传递鼠标事件
 
             // 内容区域
             ColumnLayout {
@@ -131,26 +135,85 @@ Item {
             RowLayout {
                 Layout.alignment: Qt.AlignRight
                 spacing: AppStyle.spacing.sm
+                z: 10  // 确保在其他元素之上
 
                 // GitHub 图标按钮
                 MouseArea {
-                    Layout.preferredWidth: 28
-                    Layout.preferredHeight: 28
+                    id: githubButton
+                    Layout.preferredWidth: 32
+                    Layout.preferredHeight: 32
                     cursorShape: Qt.PointingHandCursor
                     hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton
+                    z: 100  // 确保在其他元素之上
 
-                    Image {
+                    Rectangle {
                         anchors.fill: parent
-                        anchors.margins: 2
-                        source: AppStyle.isDarkMode ? 
-                                "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark-white.svg" :
-                                "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark.svg"
-                        fillMode: Image.PreserveAspectFit
-                        opacity: parent.pressed ? 0.7 : (parent.hovered ? 1.0 : 0.8)
+                        radius: 8
+                        color: githubButton.containsMouse ? (AppStyle.isDarkMode ? "#334155" : "#e2e8f0") : "transparent"
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: AppStyle.durations.fast
+                                easing.type: AppStyle.easings.easeOut
+                            }
+                        }
+                    }
+
+                    // 发光效果
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: parent.width + 10
+                        height: parent.height + 10
+                        radius: 12
+                        color: AppStyle.isDarkMode ? "#ffffff" : "#000000"
+                        opacity: githubButton.containsMouse ? 0.15 : 0.0
+                        scale: githubButton.containsMouse ? 1.3 : 0.8
 
                         Behavior on opacity {
                             NumberAnimation {
                                 duration: AppStyle.durations.fast
+                                easing.type: AppStyle.easings.easeOut
+                            }
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: AppStyle.durations.normal
+                                easing.type: AppStyle.easings.easeOut
+                            }
+                        }
+                    }
+
+                    Image {
+                        anchors.centerIn: parent
+                        width: 22
+                        height: 22
+                        source: AppStyle.isDarkMode ?
+                                "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark-white.svg" :
+                                "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark.svg"
+                        fillMode: Image.PreserveAspectFit
+                        opacity: githubButton.pressed ? 0.7 : (githubButton.containsMouse ? 1.0 : 0.8)
+                        scale: githubButton.containsMouse ? 1.2 : 1.0
+                        rotation: githubButton.containsMouse ? 8 : 0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: AppStyle.durations.fast
+                                easing.type: AppStyle.easings.easeOut
+                            }
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: AppStyle.durations.fast
+                                easing.type: AppStyle.easings.easeOut
+                            }
+                        }
+
+                        Behavior on rotation {
+                            NumberAnimation {
+                                duration: AppStyle.durations.normal
                                 easing.type: AppStyle.easings.easeOut
                             }
                         }
@@ -164,66 +227,91 @@ Item {
                 // 深色模式切换按钮（灯泡图标）
                 MouseArea {
                     id: themeSwitchButton
-                    Layout.preferredWidth: 28
-                    Layout.preferredHeight: 28
+                    Layout.preferredWidth: 32
+                    Layout.preferredHeight: 32
                     cursorShape: Qt.PointingHandCursor
                     hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton
+                    z: 100  // 确保在其他元素之上
 
                     Rectangle {
+                        id: themeSwitchBackground
                         anchors.fill: parent
-                        color: "transparent"
+                        radius: 8
+                        color: themeSwitchButton.containsMouse ? (AppStyle.isDarkMode ? "#334155" : "#e2e8f0") : "transparent"
 
-                        Image {
-                            id: themeSwitchIcon
-                            anchors.centerIn: parent
-                            width: parent.width - 4
-                            height: parent.height - 4
-                            source: AppStyle.isDarkMode ? 
-                                    "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/Grey_light_bulb.svg" :
-                                    "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/Blue_light_bulb.svg"
-                            fillMode: Image.PreserveAspectFit
-                            opacity: 0.85
-                            scale: 1.0
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: AppStyle.durations.fast
-                                    easing.type: AppStyle.easings.easeOut
-                                }
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: AppStyle.durations.fast
+                                easing.type: AppStyle.easings.easeOut
                             }
+                        }
+                    }
 
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: AppStyle.durations.fast
-                                    easing.type: AppStyle.easings.easeOut
-                                }
-                            }
+                    // 发光效果
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: parent.width + 10
+                        height: parent.height + 10
+                        radius: 12
+                        color: AppStyle.isDarkMode ? "#fbbf24" : "#3b82f6"
+                        opacity: themeSwitchButton.containsMouse ? 0.2 : 0.0
+                        scale: themeSwitchButton.containsMouse ? 1.3 : 0.8
 
-                            Behavior on source {
-                                PropertyAnimation {
-                                    duration: 0
-                                }
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: AppStyle.durations.fast
+                                easing.type: AppStyle.easings.easeOut
                             }
                         }
 
-                        // 悬停和点击效果
-                        states: [
-                            State {
-                                name: "normal"
-                                when: !themeSwitchButton.hovered && !themeSwitchButton.pressed
-                                PropertyChanges { target: themeSwitchIcon; opacity: 0.85; scale: 1.0 }
-                            },
-                            State {
-                                name: "hovered"
-                                when: themeSwitchButton.hovered && !themeSwitchButton.pressed
-                                PropertyChanges { target: themeSwitchIcon; opacity: 1.0; scale: 1.15 }
-                            },
-                            State {
-                                name: "pressed"
-                                when: themeSwitchButton.pressed
-                                PropertyChanges { target: themeSwitchIcon; opacity: 0.7; scale: 0.95 }
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: AppStyle.durations.normal
+                                easing.type: AppStyle.easings.easeOut
                             }
-                        ]
+                        }
+                    }
+
+                    Image {
+                        id: themeSwitchIcon
+                        anchors.centerIn: parent
+                        width: 22
+                        height: 22
+                        source: AppStyle.isDarkMode ?
+                                "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/Grey_light_bulb.svg" :
+                                "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/Blue_light_bulb.svg"
+                        fillMode: Image.PreserveAspectFit
+                        opacity: themeSwitchButton.pressed ? 0.7 : (themeSwitchButton.containsMouse ? 1.0 : 0.85)
+                        scale: themeSwitchButton.containsMouse ? 1.2 : 1.0
+                        rotation: themeSwitchButton.containsMouse ? -12 : 0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: AppStyle.durations.fast
+                                easing.type: AppStyle.easings.easeOut
+                            }
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: AppStyle.durations.fast
+                                easing.type: AppStyle.easings.easeOut
+                            }
+                        }
+
+                        Behavior on rotation {
+                            NumberAnimation {
+                                duration: AppStyle.durations.normal
+                                easing.type: AppStyle.easings.easeOut
+                            }
+                        }
+
+                        Behavior on source {
+                            PropertyAnimation {
+                                duration: 0
+                            }
+                        }
                     }
 
                     onClicked: {
