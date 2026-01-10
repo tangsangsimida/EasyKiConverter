@@ -7,6 +7,8 @@
 #include <QDir>
 #include <QTimer>
 #include <QEventLoop>
+#include <QGuiApplication>
+#include <QClipboard>
 #include <zlib.h>
 #include "src/core/kicad/ExporterSymbol.h"
 #include "src/core/kicad/ExporterFootprint.h"
@@ -136,15 +138,16 @@ void MainController::addComponent(const QString &componentId)
         qWarning() << "Invalid component ID format:" << trimmedId;
 
         // 尝试从文本中智能提取元件编号
-        QString extractedId = extractComponentIdFromText(trimmedId);
-        if (extractedId.isEmpty()) {
+        QStringList extractedIds = extractComponentIdFromText(trimmedId);
+        if (extractedIds.isEmpty()) {
             qWarning() << "Failed to extract component ID from text:" << trimmedId;
             emit componentExported(trimmedId, false, "Invalid LCSC component ID format and failed to extract from text.");
             return;
         }
 
-        qDebug() << "Extracted component ID:" << extractedId;
-        trimmedId = extractedId;
+        // 如果提取到多个元件ID，只使用第一个
+        qDebug() << "Extracted component ID:" << extractedIds.first();
+        trimmedId = extractedIds.first();
     }
 
     // 检查是否已存在
@@ -180,6 +183,47 @@ void MainController::clearComponentList()
         emit componentListChanged();
         emit componentCountChanged();
         qDebug() << "Component list cleared";
+    }
+}
+
+void MainController::pasteFromClipboard()
+{
+    // 获取剪贴板内容
+    QClipboard *clipboard = QGuiApplication::clipboard();
+    QString clipboardText = clipboard->text();
+
+    if (clipboardText.isEmpty()) {
+        qWarning() << "Clipboard is empty";
+        return;
+    }
+
+    qDebug() << "Clipboard content:" << clipboardText;
+
+    // 使用智能提取方法识别元器件编号
+    QStringList extractedIds = extractComponentIdFromText(clipboardText);
+
+    if (extractedIds.isEmpty()) {
+        qWarning() << "No valid component IDs found in clipboard";
+        return;
+    }
+
+    qDebug() << "Extracted component IDs:" << extractedIds;
+
+    // 添加到列表
+    int addedCount = 0;
+    for (const QString &componentId : extractedIds) {
+        if (!componentExists(componentId)) {
+            m_componentList.append(componentId);
+            addedCount++;
+        }
+    }
+
+    if (addedCount > 0) {
+        emit componentListChanged();
+        emit componentCountChanged();
+        qDebug() << "Added" << addedCount << "components from clipboard";
+    } else {
+        qDebug() << "All components already exist in the list";
     }
 }
 
@@ -887,18 +931,20 @@ void MainController::handleComponentExportFinished(const QString &componentId, b
 
 bool MainController::validateComponentId(const QString &componentId) const
 {
-    // 验证元件ID格式：C + 数字
-    QRegularExpression regex("^C\\d+$");
+    // 验证元件ID格式：C 或 c + 至少 6 位数字
+    QRegularExpression regex("^[Cc]\\d{6,}$");
     return regex.match(componentId).hasMatch();
 }
 
-QString MainController::extractComponentIdFromText(const QString &text) const
+QStringList MainController::extractComponentIdFromText(const QString &text) const
 {
+    QStringList extractedIds;
     QString trimmedText = text.trimmed();
 
     // 如果已经是有效的元件ID格式，直接返回
     if (validateComponentId(trimmedText)) {
-        return trimmedText;
+        extractedIds.append(trimmedText);
+        return extractedIds;
     }
 
     // 尝试从文本中提取元件编号
@@ -906,41 +952,51 @@ QString MainController::extractComponentIdFromText(const QString &text) const
     // 1. "编号：C7420375" 或 "编号:C7420375"
     // 2. "LCSC Part: C7420375" 或 "LCSC Part：C7420375"
     // 3. "C7420375"（直接提取）
+    // 4. 多个元件编号，用逗号、空格或换行分隔
+    // 注意：元器件编号必须在 C 或 c 后面至少有 6 个连续的数字
 
-    // 模式1：中文冒号或英文冒号后跟C+数字
-    QRegularExpression pattern1("[编号：:][：:]?\\s*(C\\d+)");
-    QRegularExpressionMatch match1 = pattern1.match(trimmedText);
-    if (match1.hasMatch()) {
-        QString extracted = match1.captured(1);
-        qDebug() << "Extracted component ID from pattern 1:" << extracted;
-        return extracted;
-    }
-
-    // 模式2：LCSC Part 后跟C+数字
-    QRegularExpression pattern2("[Ll][Cc][Ss][Cc]\\s*[Pp][Aa][Rr][Tt]\\s*[：:]\\s*(C\\d+)");
-    QRegularExpressionMatch match2 = pattern2.match(trimmedText);
-    if (match2.hasMatch()) {
-        QString extracted = match2.captured(1);
-        qDebug() << "Extracted component ID from pattern 2:" << extracted;
-        return extracted;
-    }
-
-    // 模式3：直接查找 C+数字
-    QRegularExpression pattern3("(C\\d+)");
-    QRegularExpressionMatchIterator it = pattern3.globalMatch(trimmedText);
-    while (it.hasNext()) {
-        QRegularExpressionMatch match = it.next();
+    // 模式1：中文冒号或英文冒号后跟C+至少6位数字
+    QRegularExpression pattern1("[编号：:][：:]?\\s*([Cc]\\d{6,})");
+    QRegularExpressionMatchIterator it1 = pattern1.globalMatch(trimmedText);
+    while (it1.hasNext()) {
+        QRegularExpressionMatch match = it1.next();
         QString extracted = match.captured(1);
-        // 验证提取的是否是有效的元件ID
-        if (validateComponentId(extracted)) {
+        if (validateComponentId(extracted) && !extractedIds.contains(extracted)) {
+            extractedIds.append(extracted);
+            qDebug() << "Extracted component ID from pattern 1:" << extracted;
+        }
+    }
+
+    // 模式2：LCSC Part 后跟C+至少6位数字
+    QRegularExpression pattern2("[Ll][Cc][Ss][Cc]\\s*[Pp][Aa][Rr][Tt]\\s*[：:]\\s*([Cc]\\d{6,})");
+    QRegularExpressionMatchIterator it2 = pattern2.globalMatch(trimmedText);
+    while (it2.hasNext()) {
+        QRegularExpressionMatch match = it2.next();
+        QString extracted = match.captured(1);
+        if (validateComponentId(extracted) && !extractedIds.contains(extracted)) {
+            extractedIds.append(extracted);
+            qDebug() << "Extracted component ID from pattern 2:" << extracted;
+        }
+    }
+
+    // 模式3：直接查找所有 C+至少6位数字
+    QRegularExpression pattern3("([Cc]\\d{6,})");
+    QRegularExpressionMatchIterator it3 = pattern3.globalMatch(trimmedText);
+    while (it3.hasNext()) {
+        QRegularExpressionMatch match = it3.next();
+        QString extracted = match.captured(1);
+        if (validateComponentId(extracted) && !extractedIds.contains(extracted)) {
+            extractedIds.append(extracted);
             qDebug() << "Extracted component ID from pattern 3:" << extracted;
-            return extracted;
         }
     }
 
     // 未找到有效的元件编号
-    qWarning() << "Failed to extract component ID from text:" << trimmedText;
-    return QString();
+    if (extractedIds.isEmpty()) {
+        qWarning() << "Failed to extract component ID from text:" << trimmedText;
+    }
+
+    return extractedIds;
 }
 
 bool MainController::componentExists(const QString &componentId) const

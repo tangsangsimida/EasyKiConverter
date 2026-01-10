@@ -380,6 +380,18 @@ Item {
                             }
                         }
                     }
+
+                    ModernButton {
+                        text: "粘贴"
+                        iconName: "folder"
+                        backgroundColor: AppStyle.colors.textSecondary
+                        hoverColor: AppStyle.colors.textPrimary
+                        pressedColor: AppStyle.colors.textPrimary
+
+                        onClicked: {
+                            controller.pasteFromClipboard()
+                        }
+                    }
                 }
             }
 

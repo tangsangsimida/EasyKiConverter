@@ -151,6 +151,11 @@ public slots:
     Q_INVOKABLE void clearComponentList();
 
     /**
+     * @brief 从剪贴板粘贴元器件编号
+     */
+    Q_INVOKABLE void pasteFromClipboard();
+
+    /**
      * @brief 选择BOM文件
      * @param filePath 文件路径
      */
@@ -204,9 +209,9 @@ private:
     /**
      * @brief 从文本中智能提取元件编号
      * @param text 输入文本
-     * @return QString 提取的元件编号，如果未找到则返回空字符串
+     * @return QStringList 提取的元件编号列表，如果未找到则返回空列表
      */
-    QString extractComponentIdFromText(const QString &text) const;
+    QStringList extractComponentIdFromText(const QString &text) const;
 
     /**
      * @brief 检查元件是否已存在
