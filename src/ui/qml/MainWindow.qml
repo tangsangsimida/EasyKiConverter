@@ -161,69 +161,73 @@ Item {
                     }
                 }
 
-                // 深色模式切换按钮
-                Item {
-                    Layout.preferredWidth: 52
+                // 深色模式切换按钮（灯泡图标）
+                MouseArea {
+                    id: themeSwitchButton
+                    Layout.preferredWidth: 28
                     Layout.preferredHeight: 28
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
 
                     Rectangle {
-                        id: switchBackground
                         anchors.fill: parent
-                        radius: height / 2
-                        color: AppStyle.isDarkMode ? "#3b82f6" : "#cbd5e1"
+                        color: "transparent"
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppStyle.durations.themeSwitch
-                                easing.type: AppStyle.easings.easeOut
-                            }
-                        }
+                        Image {
+                            id: themeSwitchIcon
+                            anchors.centerIn: parent
+                            width: parent.width - 4
+                            height: parent.height - 4
+                            source: AppStyle.isDarkMode ? 
+                                    "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/Grey_light_bulb.svg" :
+                                    "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/Blue_light_bulb.svg"
+                            fillMode: Image.PreserveAspectFit
+                            opacity: 0.85
+                            scale: 1.0
 
-                        // 小球
-                        Rectangle {
-                            id: switchThumb
-                            width: 24
-                            height: 24
-                            radius: width / 2
-                            color: AppStyle.isDarkMode ? "#1e293b" : "#ffffff"
-
-                            // 位置动画
-                            x: AppStyle.isDarkMode ? parent.width - width - 2 : 2
-                            y: (parent.height - height) / 2
-
-                            Behavior on x {
+                            Behavior on opacity {
                                 NumberAnimation {
-                                    duration: AppStyle.durations.themeSwitch
+                                    duration: AppStyle.durations.fast
                                     easing.type: AppStyle.easings.easeOut
                                 }
                             }
 
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: AppStyle.durations.themeSwitch
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: AppStyle.durations.fast
                                     easing.type: AppStyle.easings.easeOut
+                                }
+                            }
+
+                            Behavior on source {
+                                PropertyAnimation {
+                                    duration: 0
                                 }
                             }
                         }
 
-                        // 点击区域
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            hoverEnabled: true
-
-                            onEntered: {
-                                switchBackground.color = AppStyle.isDarkMode ? "#2563eb" : "#94a3b8"
+                        // 悬停和点击效果
+                        states: [
+                            State {
+                                name: "normal"
+                                when: !themeSwitchButton.hovered && !themeSwitchButton.pressed
+                                PropertyChanges { target: themeSwitchIcon; opacity: 0.85; scale: 1.0 }
+                            },
+                            State {
+                                name: "hovered"
+                                when: themeSwitchButton.hovered && !themeSwitchButton.pressed
+                                PropertyChanges { target: themeSwitchIcon; opacity: 1.0; scale: 1.15 }
+                            },
+                            State {
+                                name: "pressed"
+                                when: themeSwitchButton.pressed
+                                PropertyChanges { target: themeSwitchIcon; opacity: 0.7; scale: 0.95 }
                             }
+                        ]
+                    }
 
-                            onExited: {
-                                switchBackground.color = AppStyle.isDarkMode ? "#3b82f6" : "#cbd5e1"
-                            }
-
-                            onClicked: {
-                                controller.setDarkMode(!AppStyle.isDarkMode)
-                            }
-                        }
+                    onClicked: {
+                        controller.setDarkMode(!AppStyle.isDarkMode)
                     }
                 }
             }

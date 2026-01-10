@@ -115,6 +115,8 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/icons/add.svg
         resources/icons/github-mark.svg
         resources/icons/github-mark-white.svg
+        resources/icons/Blue_light_bulb.svg
+        resources/icons/Grey_light_bulb.svg
         resources/imgs/background.jpg
         src/ui/qml/styles/qmldir
 )
