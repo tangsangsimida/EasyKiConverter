@@ -102,7 +102,7 @@ Item {
                 font.pixelSize: 48
                 font.bold: true
                 color: "#1e293b"
-                horizontalAlignment: Text.AlignLeft
+                horizontalAlignment: Text.AlignHCenter
             }
 
             Text {
@@ -110,46 +110,53 @@ Item {
                 text: "将嘉立创EDA元器件转换为KiCad格式"
                 font.pixelSize: 18
                 color: "#64748b"
-                horizontalAlignment: Text.AlignLeft
+                horizontalAlignment: Text.AlignHCenter
             }
 
-            // 深色模式切换按钮
-            Item {
+            // 深色模式切换按钮和 GitHub 图标
+            RowLayout {
                 Layout.alignment: Qt.AlignRight
-                Layout.preferredWidth: 52
-                Layout.preferredHeight: 28
+                spacing: AppStyle.spacing.sm
 
-                Rectangle {
-                    id: switchBackground
-                    anchors.fill: parent
-                    radius: height / 2
-                    color: AppStyle.isDarkMode ? "#3b82f6" : "#cbd5e1"
+                // GitHub 图标按钮
+                MouseArea {
+                    Layout.preferredWidth: 28
+                    Layout.preferredHeight: 28
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
 
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppStyle.durations.normal
-                            easing.type: AppStyle.easings.easeOut
-                        }
-                    }
+                    Image {
+                        anchors.fill: parent
+                        anchors.margins: 2
+                        source: AppStyle.isDarkMode ? 
+                                "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark-white.svg" :
+                                "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark.svg"
+                        fillMode: Image.PreserveAspectFit
+                        opacity: parent.pressed ? 0.7 : (parent.hovered ? 1.0 : 0.8)
 
-                    // 小球
-                    Rectangle {
-                        id: switchThumb
-                        width: 24
-                        height: 24
-                        radius: width / 2
-                        color: AppStyle.isDarkMode ? "#1e293b" : "#ffffff"
-
-                        // 位置动画
-                        x: AppStyle.isDarkMode ? parent.width - width - 2 : 2
-                        y: (parent.height - height) / 2
-
-                        Behavior on x {
+                        Behavior on opacity {
                             NumberAnimation {
-                                duration: AppStyle.durations.normal
+                                duration: AppStyle.durations.fast
                                 easing.type: AppStyle.easings.easeOut
                             }
                         }
+                    }
+
+                    onClicked: {
+                        Qt.openUrlExternally("https://github.com/tangsangsimida/EasyKiConverter_QT")
+                    }
+                }
+
+                // 深色模式切换按钮
+                Item {
+                    Layout.preferredWidth: 52
+                    Layout.preferredHeight: 28
+
+                    Rectangle {
+                        id: switchBackground
+                        anchors.fill: parent
+                        radius: height / 2
+                        color: AppStyle.isDarkMode ? "#3b82f6" : "#cbd5e1"
 
                         Behavior on color {
                             ColorAnimation {
@@ -157,24 +164,51 @@ Item {
                                 easing.type: AppStyle.easings.easeOut
                             }
                         }
-                    }
 
-                    // 点击区域
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
+                        // 小球
+                        Rectangle {
+                            id: switchThumb
+                            width: 24
+                            height: 24
+                            radius: width / 2
+                            color: AppStyle.isDarkMode ? "#1e293b" : "#ffffff"
 
-                        onEntered: {
-                            switchBackground.color = AppStyle.isDarkMode ? "#2563eb" : "#94a3b8"
+                            // 位置动画
+                            x: AppStyle.isDarkMode ? parent.width - width - 2 : 2
+                            y: (parent.height - height) / 2
+
+                            Behavior on x {
+                                NumberAnimation {
+                                    duration: AppStyle.durations.normal
+                                    easing.type: AppStyle.easings.easeOut
+                                }
+                            }
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: AppStyle.durations.normal
+                                    easing.type: AppStyle.easings.easeOut
+                                }
+                            }
                         }
 
-                        onExited: {
-                            switchBackground.color = AppStyle.isDarkMode ? "#3b82f6" : "#cbd5e1"
-                        }
+                        // 点击区域
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            hoverEnabled: true
 
-                        onClicked: {
-                            controller.setDarkMode(!AppStyle.isDarkMode)
+                            onEntered: {
+                                switchBackground.color = AppStyle.isDarkMode ? "#2563eb" : "#94a3b8"
+                            }
+
+                            onExited: {
+                                switchBackground.color = AppStyle.isDarkMode ? "#3b82f6" : "#cbd5e1"
+                            }
+
+                            onClicked: {
+                                controller.setDarkMode(!AppStyle.isDarkMode)
+                            }
                         }
                     }
                 }
@@ -265,25 +299,48 @@ Item {
                     }
 
                     Text {
-                        id: bomFileLabel
-                        Layout.fillWidth: true
-                        text: controller.bomFilePath.length > 0 ? controller.bomFilePath.split("/").pop() : "未选择文件"
-                        font.pixelSize: AppStyle.fontSizes.sm
-                        color: AppStyle.colors.textSecondary
-                        elide: Text.ElideMiddle
-                    }
-                }
 
-                // BOM导入结果
-                Text {
-                    id: bomResultLabel
-                    Layout.fillWidth: true
-                    Layout.topMargin: AppStyle.spacing.md
-                    text: controller.bomResult
-                    font.pixelSize: AppStyle.fontSizes.sm
-                    color: AppStyle.colors.success
-                    visible: controller.bomResult.length > 0
-                }            }
+                                            id: bomFileLabel
+
+                                            Layout.fillWidth: true
+
+                                            text: controller.bomFilePath.length > 0 ? controller.bomFilePath.split("/").pop() : "未选择文件"
+
+                                            font.pixelSize: AppStyle.fontSizes.sm
+
+                                            color: AppStyle.colors.textSecondary
+
+                                            horizontalAlignment: Text.AlignHCenter
+
+                                            elide: Text.ElideMiddle
+
+                                        }
+
+                                    }
+
+                    
+
+                                    // BOM导入结果
+
+                                    Text {
+
+                                        id: bomResultLabel
+
+                                        Layout.fillWidth: true
+
+                                        Layout.topMargin: AppStyle.spacing.md
+
+                                        text: controller.bomResult
+
+                                        font.pixelSize: AppStyle.fontSizes.sm
+
+                                        color: AppStyle.colors.success
+
+                                        horizontalAlignment: Text.AlignHCenter
+
+                                        visible: controller.bomResult.length > 0
+
+                                    }            }
 
             // 元件列表卡片
             Card {
@@ -320,19 +377,23 @@ Item {
                     }
                 }
 
-                // 元件列表视图
-                ListView {
+                // 元件列表视图（两列网格）
+                GridView {
                     id: componentList
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.topMargin: AppStyle.spacing.md
                     clip: true
-                    spacing: AppStyle.spacing.md
+                    cellWidth: (width - AppStyle.spacing.md) / 2
+                    cellHeight: 56
+                    flow: GridView.FlowLeftToRight
+                    layoutDirection: Qt.LeftToRight
 
                     model: controller.componentList
 
                     delegate: ComponentListItem {
-                        width: componentList.width
+                        width: componentList.cellWidth - AppStyle.spacing.md
+                        anchors.horizontalCenter: parent ? undefined : undefined
                         componentId: modelData
                         onDeleteClicked: {
                             controller.removeComponent(index)
@@ -419,6 +480,7 @@ Item {
                             color: "#64748b"
                             Layout.fillWidth: true
                             wrapMode: Text.WordWrap
+                            horizontalAlignment: Text.AlignHCenter
                         }
                     }
 
@@ -449,6 +511,7 @@ Item {
                             color: "#64748b"
                             Layout.fillWidth: true
                             wrapMode: Text.WordWrap
+                            horizontalAlignment: Text.AlignHCenter
                         }
                     }
 
@@ -479,6 +542,7 @@ Item {
                             color: "#64748b"
                             Layout.fillWidth: true
                             wrapMode: Text.WordWrap
+                            horizontalAlignment: Text.AlignHCenter
                         }
                     }
                 }
@@ -505,6 +569,7 @@ Item {
                             font.pixelSize: 14
                             font.bold: true
                             color: "#1e293b"
+                            horizontalAlignment: Text.AlignHCenter
                         }
 
                         RowLayout {
@@ -552,6 +617,7 @@ Item {
                             font.pixelSize: 14
                             font.bold: true
                             color: "#1e293b"
+                            horizontalAlignment: Text.AlignHCenter
                         }
 
                         TextField {
@@ -619,6 +685,7 @@ Item {
                         text: controller.status
                         font.pixelSize: 14
                         color: "#64748b"
+                        horizontalAlignment: Text.AlignHCenter
                         visible: controller.status.length > 0
                     }
                 }

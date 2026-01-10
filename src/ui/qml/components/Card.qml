@@ -87,6 +87,7 @@ Rectangle {
             font.pixelSize: AppStyle.fontSizes.xl
             font.bold: true
             color: AppStyle.colors.textPrimary
+            horizontalAlignment: Text.AlignHCenter
         }
 
         // 分隔线
