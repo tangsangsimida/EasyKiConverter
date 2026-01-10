@@ -7,6 +7,16 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# 调试选项：启用符号和封装解析数据导出
+option(ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT "Enable debug export for symbol and footprint data" OFF)
+
+if(ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT)
+    message(STATUS "Symbol and footprint debug export is ENABLED")
+    add_compile_definitions(ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT)
+else()
+    message(STATUS "Symbol and footprint debug export is DISABLED")
+endif()
+
 # 设置构建类型
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)

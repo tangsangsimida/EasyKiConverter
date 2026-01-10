@@ -521,13 +521,61 @@ void MainController::handleCadDataFetched(const QJsonObject &data)
     QString componentId = m_componentList.at(m_currentComponentIndex);
     qDebug() << "CAD data fetched for:" << componentId;
 
+#ifdef ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
+    // 保存原始 JSON 数据
+    QJsonDocument jsonDoc(data);
+    saveDebugData(componentId, "raw", "cad_data.json", jsonDoc.toJson(QJsonDocument::Indented));
+#endif
+
     // 导入符号和封装数据
     QSharedPointer<SymbolData> symbolData = m_easyedaImporter->importSymbolData(data);
     QSharedPointer<FootprintData> footprintData = m_easyedaImporter->importFootprintData(data);
 
+#ifdef ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
+    // 保存解析的符号数据
+    QString symbolDebugInfo;
+    QTextStream symbolStream(&symbolDebugInfo);
+    symbolStream << "=== Symbol Data ===\n";
+    symbolStream << "Name: " << symbolData->info().name << "\n";
+    symbolStream << "Prefix: " << symbolData->info().prefix << "\n";
+    symbolStream << "Package: " << symbolData->info().package << "\n";
+    symbolStream << "Manufacturer: " << symbolData->info().manufacturer << "\n";
+    symbolStream << "LCSC ID: " << symbolData->info().lcscId << "\n";
+    symbolStream << "Pins count: " << symbolData->pins().count() << "\n";
+    symbolStream << "Rectangles count: " << symbolData->rectangles().count() << "\n";
+    symbolStream << "Circles count: " << symbolData->circles().count() << "\n";
+    symbolStream << "Arcs count: " << symbolData->arcs().count() << "\n";
+    symbolStream << "Polygons count: " << symbolData->polygons().count() << "\n";
+    symbolStream << "Polylines count: " << symbolData->polylines().count() << "\n";
+    symbolStream << "Paths count: " << symbolData->paths().count() << "\n";
+    symbolStream << "Ellipses count: " << symbolData->ellipses().count() << "\n";
+    symbolStream << "BBox: x=" << symbolData->bbox().x << ", y=" << symbolData->bbox().y << "\n";
+    saveDebugData(componentId, "parsed", "symbol_data.txt", symbolDebugInfo);
+
+    // 保存解析的封装数据
+    QString footprintDebugInfo;
+    QTextStream footprintStream(&footprintDebugInfo);
+    footprintStream << "=== Footprint Data ===\n";
+    footprintStream << "Name: " << footprintData->info().name << "\n";
+    footprintStream << "Type: " << footprintData->info().type << "\n";
+    footprintStream << "3D Model Name: " << footprintData->info().model3DName << "\n";
+    footprintStream << "Pads count: " << footprintData->pads().count() << "\n";
+    footprintStream << "Tracks count: " << footprintData->tracks().count() << "\n";
+    footprintStream << "Holes count: " << footprintData->holes().count() << "\n";
+    footprintStream << "Circles count: " << footprintData->circles().count() << "\n";
+    footprintStream << "Rectangles count: " << footprintData->rectangles().count() << "\n";
+    footprintStream << "Arcs count: " << footprintData->arcs().count() << "\n";
+    footprintStream << "Texts count: " << footprintData->texts().count() << "\n";
+    footprintStream << "3D Model UUID: " << footprintData->model3D().uuid() << "\n";
+    footprintStream << "3D Model Name: " << footprintData->model3D().name() << "\n";
+    footprintStream << "BBox: x=" << footprintData->bbox().x << ", y=" << footprintData->bbox().y << "\n";
+    saveDebugData(componentId, "parsed", "footprint_data.txt", footprintDebugInfo);
+#endif
+
     // 导出符号
     qDebug() << "=== Symbol Export Check ===";
     qDebug() << "m_exportSymbol:" << m_exportSymbol;
+    QString exportedSymbolContent;
     if (m_exportSymbol) {
         qDebug() << "Starting symbol export...";
         QString symbolFilePath = QString("%1/%2.kicad_sym").arg(m_outputPath, m_libName);
@@ -538,6 +586,16 @@ void MainController::handleCadDataFetched(const QJsonObject &data)
         if (m_exporterSymbol->exportSymbolLibrary(symbolList, m_libName, symbolFilePath,
             ExporterSymbol::KicadVersion::V6)) {
             qDebug() << "Symbol library exported for:" << componentId;
+
+#ifdef ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
+            // 读取并保存导出的符号内容
+            QFile symbolFile(symbolFilePath);
+            if (symbolFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                exportedSymbolContent = QTextStream(&symbolFile).readAll();
+                symbolFile.close();
+                saveDebugData(componentId, "exported", "symbol_export.kicad_sym", exportedSymbolContent);
+            }
+#endif
         } else {
             qDebug() << "Symbol library export FAILED for:" << componentId;
         }
@@ -549,20 +607,34 @@ void MainController::handleCadDataFetched(const QJsonObject &data)
     QString model3DPath;
     if (m_exportModel3D && footprintData->model3D().uuid().isEmpty() == false) {
         Model3DData* model3D = new Model3DData(footprintData->model3D());
-        
+
         // 清理模型名称，移除文件系统不支持的字符（符合 Python 版本规范）
         QString sanitizedName = model3D->name();
         sanitizedName.replace(QRegularExpression("[<>:\"/\\\\|?*]"), "_");
-        
+
         // 计算 3D 模型导出路径
         model3DPath = QString("%1/%2.3dshapes/%3.wrl")
                           .arg(m_outputPath, m_libName, sanitizedName);
     }
-    
+
     // 导出封装
+    QString exportedFootprintContent;
     if (m_exportFootprint) {
         QString footprintFilePath = QString("%1/%2.pretty/%3.kicad_mod")
                                         .arg(m_outputPath, m_libName, footprintData->info().name);
+        if (m_exporterFootprint->exportFootprint(*footprintData, footprintFilePath, model3DPath)) {
+            qDebug() << "Footprint exported for:" << componentId;
+
+#ifdef ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
+            // 读取并保存导出的封装内容
+            QFile footprintFile(footprintFilePath);
+            if (footprintFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                exportedFootprintContent = QTextStream(&footprintFile).readAll();
+                footprintFile.close();
+                saveDebugData(componentId, "exported", "footprint_export.kicad_mod", exportedFootprintContent);
+            }
+#endif
+        }
         if (m_exporterFootprint->exportFootprint(*footprintData, footprintFilePath, model3DPath)) {
             qDebug() << "Footprint exported for:" << componentId;
         }
@@ -1465,5 +1537,34 @@ void ComponentExportTask::run()
         emit dataCollected(m_componentId, false, "Unknown exception occurred");
     }
 }
+
+#ifdef ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
+QString MainController::getDebugDataDir(const QString &componentId) const
+{
+    QString debugDir = QString("%1/debug_data/%2").arg(m_outputPath, componentId);
+    QDir dir;
+    if (!dir.exists(debugDir)) {
+        dir.mkpath(debugDir);
+    }
+    return debugDir;
+}
+
+void MainController::saveDebugData(const QString &componentId, const QString &dataType, const QString &filename, const QString &content)
+{
+    QString debugDir = getDebugDataDir(componentId);
+    QString filePath = QString("%1/%2_%3").arg(debugDir, dataType, filename);
+
+    QFile file(filePath);
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&file);
+        out.setEncoding(QStringConverter::Utf8);
+        out << content;
+        file.close();
+        qDebug() << "Debug data saved to:" << filePath;
+    } else {
+        qWarning() << "Failed to save debug data to:" << filePath;
+    }
+}
+#endif
 
 } // namespace EasyKiConverter

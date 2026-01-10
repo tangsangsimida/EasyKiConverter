@@ -19,6 +19,15 @@
 
 namespace EasyKiConverter {
 
+// 调试宏定义 - 用于导出解析过程中的数据
+// 定义该宏后，会在导出目录的 debug_data 文件夹中保存：
+// - 原始 JSON 数据
+// - 解析的符号数据
+// - 解析的封装数据
+// - 导出的符号数据
+// - 导出的封装数据
+#define ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
+
 // 前置声明
 class MainController;
 
@@ -288,6 +297,24 @@ private:
      * @brief 导出所有收集到的组件数据
      */
     bool exportAllCollectedData();
+
+#ifdef ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
+    /**
+     * @brief 保存调试数据到文件
+     * @param componentId 元件ID
+     * @param dataType 数据类型标识
+     * @param filename 文件名
+     * @param content 文件内容
+     */
+    void saveDebugData(const QString &componentId, const QString &dataType, const QString &filename, const QString &content);
+
+    /**
+     * @brief 获取调试数据目录路径
+     * @param componentId 元件ID
+     * @return QString 调试数据目录路径
+     */
+    QString getDebugDataDir(const QString &componentId) const;
+#endif
 
 private:
     ConfigManager *m_configManager;
