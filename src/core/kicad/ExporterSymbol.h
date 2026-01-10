@@ -208,6 +208,14 @@ private:
      */
     QString rotationToKicadOrientation(int rotation) const;
 
+    /**
+     * @brief 根据引脚名称智能推断电气类型
+     *
+     * @param pinName 引脚名称
+     * @return PinType 推断的引脚电气类型
+     */
+    PinType inferPinType(const QString &pinName) const;
+
 private:
     KicadVersion m_kicadVersion;
     mutable SymbolBBox m_currentBBox;  // 当前处理的边界框

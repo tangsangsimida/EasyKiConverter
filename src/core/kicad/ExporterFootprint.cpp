@@ -92,8 +92,25 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
 
     // KiCad 6.x format - use module syntax (compatible with KiCad 6+)
     content += QString("(module easyeda2kicad:%1 (layer F.Cu) (tedit 5DC5F6A4)\n").arg(footprintData.info().name);
-    
-    if (!footprintData.info().type.isEmpty()) {
+
+    // 判断是否为通孔器件：如果有焊盘有孔（holeRadius > 0），则为通孔
+    bool isThroughHole = false;
+    for (const FootprintPad &pad : footprintData.pads()) {
+        if (pad.holeRadius > 0) {
+            isThroughHole = true;
+            break;
+        }
+    }
+
+    // 设置正确的属性
+    if (isThroughHole) {
+        content += "\t(attr through_hole)\n";
+    } else {
+        content += "\t(attr smd)\n";
+    }
+
+    // 如果有自定义类型，也保留（但不应与 through_hole/smd 冲突）
+    if (!footprintData.info().type.isEmpty() && footprintData.info().type != "through_hole" && footprintData.info().type != "smd") {
         content += QString("\t(attr %1)\n").arg(footprintData.info().type);
     }
 
@@ -179,7 +196,14 @@ QString ExporterFootprint::generatePad(const FootprintPad &pad, double bboxX, do
     double height = pxToMm(pad.height);
     double holeRadius = pxToMm(pad.holeRadius);
 
-    QString kicadShape = padShapeToKicad(pad.shape);
+    // 智能判断焊盘形状：当 width 和 height 相等时使用 circle
+    QString kicadShape;
+    if (qAbs(width - height) < 1e-3) {
+        kicadShape = "circle";
+    } else {
+        kicadShape = padShapeToKicad(pad.shape);
+    }
+
     QString kicadType = padTypeToKicad(pad.layerId);
     QString layers = padLayersToKicad(pad.layerId);
     
@@ -359,10 +383,10 @@ QString ExporterFootprint::generateText(const FootprintText &text, double bboxX,
 QString ExporterFootprint::generateModel3D(const Model3DData &model3D, double bboxX, double bboxY, const QString &model3DPath) const
 {
     QString content;
-    
+
     // Use the provided 3D model path if available, otherwise use the model name
     QString finalPath = model3DPath.isEmpty() ? model3D.name() : model3DPath;
-    
+
     // KiCad 6.x format - use absolute path (match Python version)
     content += QString("\t(model \"%1\"\n").arg(finalPath);
     content += QString("\t\t(offset (xyz %1 %2 %3))\n")
@@ -375,7 +399,7 @@ QString ExporterFootprint::generateModel3D(const Model3DData &model3D, double bb
         .arg(model3D.rotation().y, 0, 'f', 0)
         .arg(model3D.rotation().z, 0, 'f', 0);
     content += "\t)\n";
-    
+
     return content;
 }
 double ExporterFootprint::pxToMm(double px) const

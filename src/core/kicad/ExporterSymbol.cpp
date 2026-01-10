@@ -359,7 +359,12 @@ QString ExporterSymbol::generatePin(const SymbolPin &pin, const SymbolBBox &bbox
         length = 2.54; // 默认引脚长度（100mil）
     }
 
-    QString kicadPinType = pinTypeToKicad(pin.settings.type);
+    // 智能推断引脚电气类型：如果原始类型为 unspecified，则根据引脚名称推断
+    PinType inferredType = pin.settings.type;
+    if (inferredType == PinType::Unspecified) {
+        inferredType = inferPinType(pin.name.text);
+    }
+    QString kicadPinType = pinTypeToKicad(inferredType);
 
     // 动态计算引脚样式（根据 dot 和 clock 的显示状态）
     PinStyle pinStyle = PinStyle::Line;
@@ -730,6 +735,56 @@ QString ExporterSymbol::rotationToKicadOrientation(int rotation) const
         default:
             return "right";
     }
+}
+
+PinType ExporterSymbol::inferPinType(const QString &pinName) const
+{
+    // 转换为大写进行比较
+    QString nameUpper = pinName.toUpper();
+
+    // 电源引脚
+    if (nameUpper.contains("VCC") || nameUpper.contains("VDD") ||
+        nameUpper.contains("V+") || nameUpper.contains("+5V") ||
+        nameUpper.contains("+3.3V") || nameUpper.contains("+3V3") ||
+        nameUpper.contains("AVDD") || nameUpper.contains("DVDD")) {
+        return PinType::Power;
+    }
+
+    // 地引脚
+    if (nameUpper.contains("GND") || nameUpper.contains("VSS") ||
+        nameUpper.contains("V-") || nameUpper.contains("AGND") ||
+        nameUpper.contains("DGND") || nameUpper.contains("VSS")) {
+        return PinType::Power;
+    }
+
+    // 继电器/开关触点（被动类型）
+    if (nameUpper.contains("COM") || nameUpper.contains("NO") ||
+        nameUpper.contains("NC") || nameUpper.contains("COIL") ||
+        nameUpper.contains("CONTACT")) {
+        return PinType::Unspecified;
+    }
+
+    // 输入引脚
+    if (nameUpper.startsWith("IN") || nameUpper.contains("INPUT") ||
+        nameUpper.contains("DIN") || nameUpper.contains("AIN")) {
+        return PinType::Input;
+    }
+
+    // 输出引脚
+    if (nameUpper.startsWith("OUT") || nameUpper.contains("OUTPUT") ||
+        nameUpper.contains("DOUT") || nameUpper.contains("AOUT")) {
+        return PinType::Output;
+    }
+
+    // 双向引脚
+    if (nameUpper.contains("IO") || nameUpper.contains("BIDIR") ||
+        nameUpper.contains("DATA") || nameUpper.contains("SDA") ||
+        nameUpper.contains("SCL")) {
+        return PinType::Bidirectional;
+    }
+
+    // 默认为未指定类型
+    return PinType::Unspecified;
 }
 
 } // namespace EasyKiConverter
