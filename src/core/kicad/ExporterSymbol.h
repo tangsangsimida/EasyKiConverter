@@ -51,15 +51,16 @@ public:
     bool exportSymbol(const SymbolData &symbolData, const QString &filePath, KicadVersion version = KicadVersion::V6);
 
     /**
-     * @brief 导出多个符号为 KiCad 符号库
+     * @brief 导出多个符号为 KiCad 符号库（追加模式）
      *
      * @param symbols 符号列表
      * @param libName 库名称
      * @param filePath 输出文件路径
      * @param version KiCad 版本
+     * @param appendMode 是否使用追加模式（默认 true）
      * @return bool 是否成功
      */
-    bool exportSymbolLibrary(const QList<SymbolData> &symbols, const QString &libName, const QString &filePath, KicadVersion version = KicadVersion::V6);
+    bool exportSymbolLibrary(const QList<SymbolData> &symbols, const QString &libName, const QString &filePath, KicadVersion version = KicadVersion::V6, bool appendMode = true);
 
     /**
      * @brief 设置 KiCad 版本

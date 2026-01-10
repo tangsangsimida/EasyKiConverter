@@ -206,6 +206,21 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
                         FootprintText text = importFootprintTextData(shapeString);
                         footprintData->addText(text);
                         qDebug() << "Imported text:" << text.text;
+                    } else if (designator == "POLYLINE" || designator == "PL") {
+                        // 导入多段线（可能是丝印）
+                        FootprintTrack track = importTrackData(shapeString); // 复用 track 格式
+                        footprintData->addTrack(track);
+                        qDebug() << "Imported polyline (layer" << track.layerId << ")";
+                    } else if (designator == "POLYGON" || designator == "PG") {
+                        // 导入多边形（可能是丝印）
+                        FootprintTrack track = importTrackData(shapeString); // 复用 track 格式
+                        footprintData->addTrack(track);
+                        qDebug() << "Imported polygon (layer" << track.layerId << ")";
+                    } else if (designator == "PATH" || designator == "PT") {
+                        // 导入路径（可能是丝印）
+                        FootprintTrack track = importTrackData(shapeString); // 复用 track 格式
+                        footprintData->addTrack(track);
+                        qDebug() << "Imported path (layer" << track.layerId << ")";
                     } else if (designator == "SVGNODE") {
                         // 导入 3D 模型
                         qDebug() << "Found SVGNODE, parsing 3D model...";

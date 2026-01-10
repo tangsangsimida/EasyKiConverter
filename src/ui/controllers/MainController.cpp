@@ -448,11 +448,62 @@ void MainController::startExport()
 void MainController::processNextComponent()
 {
     if (!m_isExporting || m_currentComponentIndex >= m_componentList.count()) {
-        // 导出完成
+        // 导出完成，一次性导出所有符号
         m_isExporting = false;
         emit isExportingChanged();
         updateProgress(100, 100);
         updateStatus("Export completed");
+
+        // 导出符号库（一次性导出所有符号，使用追加模式）
+        if (m_exportSymbol && !m_allSymbols.isEmpty()) {
+            qDebug() << "=== Exporting Symbol Library ===";
+            qDebug() << "Total symbols to export:" << m_allSymbols.count();
+            QString symbolFilePath = QString("%1/%2.kicad_sym").arg(m_outputPath, m_libName);
+            
+            // 检查文件是否存在，如果存在则读取现有符号名称
+            QSet<QString> existingSymbolNames;
+            if (QFile::exists(symbolFilePath)) {
+                qDebug() << "Symbol library already exists, reading existing symbol names...";
+                QFile file(symbolFilePath);
+                if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                    QString content = QTextStream(&file).readAll();
+                    file.close();
+                    
+                    // 提取现有符号名称
+                    QRegularExpression symbolRegex("\\(symbol\\s+\"([^\"]+)\"\\s");
+                    QRegularExpressionMatchIterator it = symbolRegex.globalMatch(content);
+                    while (it.hasNext()) {
+                        QRegularExpressionMatch match = it.next();
+                        QString symbolName = match.captured(1);
+                        existingSymbolNames.insert(symbolName);
+                        qDebug() << "Found existing symbol:" << symbolName;
+                    }
+                }
+                qDebug() << "Total existing symbols:" << existingSymbolNames.count();
+            }
+            
+            // 过滤出新符号（不在现有库中的符号）
+            QList<SymbolData> newSymbols;
+            for (const SymbolData &symbol : m_allSymbols) {
+                if (!existingSymbolNames.contains(symbol.info().name)) {
+                    newSymbols.append(symbol);
+                    qDebug() << "Adding new symbol:" << symbol.info().name;
+                } else {
+                    qDebug() << "Symbol already exists, skipping:" << symbol.info().name;
+                }
+            }
+            
+            qDebug() << "Exporting" << newSymbols.count() << "new symbols";
+            
+            if (m_exporterSymbol->exportSymbolLibrary(newSymbols, m_libName, symbolFilePath,
+                ExporterSymbol::KicadVersion::V6, true)) { // true = 追加模式
+                qDebug() << "Symbol library exported successfully";
+            } else {
+                qDebug() << "Symbol library export FAILED";
+            }
+            // 清空符号列表
+            m_allSymbols.clear();
+        }
 
         emit exportCompleted(m_componentList.count(), m_successCount);
 
@@ -572,33 +623,13 @@ void MainController::handleCadDataFetched(const QJsonObject &data)
     saveDebugData(componentId, "parsed", "footprint_data.txt", footprintDebugInfo);
 #endif
 
-    // 导出符号
-    qDebug() << "=== Symbol Export Check ===";
+    // 导出符号（改为收集所有符号，最后一次性导出）
+    qDebug() << "=== Symbol Collection ===";
     qDebug() << "m_exportSymbol:" << m_exportSymbol;
-    QString exportedSymbolContent;
     if (m_exportSymbol) {
-        qDebug() << "Starting symbol export...";
-        QString symbolFilePath = QString("%1/%2.kicad_sym").arg(m_outputPath, m_libName);
-        qDebug() << "Symbol file path:" << symbolFilePath;
-        QList<SymbolData> symbolList;
-        symbolList.append(*symbolData);
-        qDebug() << "Calling exportSymbolLibrary...";
-        if (m_exporterSymbol->exportSymbolLibrary(symbolList, m_libName, symbolFilePath,
-            ExporterSymbol::KicadVersion::V6)) {
-            qDebug() << "Symbol library exported for:" << componentId;
-
-#ifdef ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
-            // 读取并保存导出的符号内容
-            QFile symbolFile(symbolFilePath);
-            if (symbolFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                exportedSymbolContent = QTextStream(&symbolFile).readAll();
-                symbolFile.close();
-                saveDebugData(componentId, "exported", "symbol_export.kicad_sym", exportedSymbolContent);
-            }
-#endif
-        } else {
-            qDebug() << "Symbol library export FAILED for:" << componentId;
-        }
+        qDebug() << "Collecting symbol data for:" << componentId;
+        m_allSymbols.append(*symbolData);
+        qDebug() << "Total symbols collected:" << m_allSymbols.count();
     } else {
         qDebug() << "Symbol export is disabled (m_exportSymbol is false)";
     }

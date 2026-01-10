@@ -3,6 +3,7 @@
 #include <QTextStream>
 #include <QDebug>
 #include <QFileInfo>
+#include <QDir>
 #include "src/core/utils/GeometryUtils.h"
 
 namespace EasyKiConverter {
@@ -51,29 +52,74 @@ bool ExporterFootprint::exportFootprint(const FootprintData &footprintData, cons
 
 bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData> &footprints, const QString &libName, const QString &filePath)
 {
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qWarning() << "Failed to open file for writing:" << filePath;
-        return false;
+    qDebug() << "=== Export Footprint Library ===";
+    qDebug() << "Library name:" << libName;
+    qDebug() << "Output path:" << filePath;
+    qDebug() << "Footprint count:" << footprints.count();
+
+    // filePath 应该是指向 .pretty 文件夹的路径
+    QDir libDir(filePath);
+
+    // 如果文件夹不存在，创建它
+    if (!libDir.exists()) {
+        qDebug() << "Creating footprint library directory:" << filePath;
+        if (!libDir.mkpath(".")) {
+            qWarning() << "Failed to create footprint library directory:" << filePath;
+            return false;
+        }
     }
 
-    QTextStream out(&file);
-    out.setEncoding(QStringConverter::Utf8);
+    // 读取现有的封装文件名
+    QSet<QString> existingFootprintNames;
+    QStringList existingFiles = libDir.entryList(QStringList("*.kicad_mod"), QDir::Files);
+    for (const QString &fileName : existingFiles) {
+        // 从文件名中提取封装名称（去掉 .kicad_mod 后缀）
+        QString footprintName = fileName;
+        footprintName.remove(".kicad_mod");
+        existingFootprintNames.insert(footprintName);
+        qDebug() << "Found existing footprint:" << footprintName;
+    }
 
-    // Generate header
-    out << generateHeader(libName);
+    qDebug() << "Existing footprints count:" << existingFootprintNames.count();
 
-    // Generate all footprints
+    // 导出每个封装
+    int exportedCount = 0;
+    int overwrittenCount = 0;
     for (const FootprintData &footprint : footprints) {
-        out << generateFootprintContent(footprint);
+        QString footprintName = footprint.info().name;
+        QString fileName = footprintName + ".kicad_mod";
+        QString fullPath = libDir.filePath(fileName);
+
+        bool exists = existingFootprintNames.contains(footprintName);
+        if (exists) {
+            qDebug() << "Overwriting existing footprint:" << footprintName;
+            overwrittenCount++;
+        } else {
+            qDebug() << "Exporting new footprint:" << footprintName;
+            exportedCount++;
+        }
+
+        // 生成封装内容
+        QString content = generateFootprintContent(footprint);
+
+        // 写入文件
+        QFile file(fullPath);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            qWarning() << "Failed to open file for writing:" << fullPath;
+            continue;
+        }
+
+        QTextStream out(&file);
+        out.setEncoding(QStringConverter::Utf8);
+        out << content;
+        file.close();
+
+        qDebug() << "  Exported to:" << fullPath;
     }
 
-    // Generate footer (KiCad 6.x format)
-    out << "\n";
-
-    file.close();
-
+    qDebug() << "Export complete - New:" << exportedCount << "Overwritten:" << overwrittenCount;
     qDebug() << "Footprint library exported to:" << filePath;
+
     return true;
 }
 
@@ -92,7 +138,7 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
 
     // KiCad 6.x format - use module syntax (compatible with KiCad 6+)
     content += QString("(module easyeda2kicad:%1 (layer F.Cu) (tedit 5DC5F6A4)\n").arg(footprintData.info().name);
-
+    
     // 判断是否为通孔器件：如果有焊盘有孔（holeRadius > 0），则为通孔
     bool isThroughHole = false;
     for (const FootprintPad &pad : footprintData.pads()) {
@@ -103,16 +149,17 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
     }
 
     // 设置正确的属性
+    // KiCad只允许以下属性值：through_hole、smd、virtual、board_only、exclude_from_pos_files、exclude_from_bom、allow_solder_mask_bridges
     if (isThroughHole) {
         content += "\t(attr through_hole)\n";
     } else {
         content += "\t(attr smd)\n";
     }
 
-    // 如果有自定义类型，也保留（但不应与 through_hole/smd 冲突）
-    if (!footprintData.info().type.isEmpty() && footprintData.info().type != "through_hole" && footprintData.info().type != "smd") {
-        content += QString("\t(attr %1)\n").arg(footprintData.info().type);
-    }
+    // KiCad的attr属性只允许特定的值，不能随意添加自定义类型
+    // 如果需要额外的属性，必须使用KiCad支持的属性名
+    // 这里我们忽略EasyEDA的自定义类型，只使用through_hole或smd
+    // 如果将来需要支持其他属性（如virtual、board_only等），需要根据实际需求添加
 
     // Calculate Y positions for reference and value text
     double yLow = 0;
@@ -145,12 +192,211 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
     content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
     content += "\t)\n";
 
-    // Generate tracks and rectangles
+    // 检查丝印层是否只有文字
+    bool silkScreenHasAnyGraphics = false;
+    int silkScreenGraphicsCount = 0;
+
+    // 检查丝印层是否有任何图形元素（tracks, circles, rectangles, arcs）
     for (const FootprintTrack &track : footprintData.tracks()) {
-        content += generateTrack(track, bboxX, bboxY);
+        if (track.layerId == 3 || track.layerId == 4) { // F.SilkS 或 B.SilkS
+            silkScreenHasAnyGraphics = true;
+            silkScreenGraphicsCount++;
+        }
+    }
+    for (const FootprintCircle &circle : footprintData.circles()) {
+        if (circle.layerId == 3 || circle.layerId == 4) {
+            silkScreenHasAnyGraphics = true;
+            silkScreenGraphicsCount++;
+        }
     }
     for (const FootprintRectangle &rect : footprintData.rectangles()) {
-        content += generateRectangle(rect, bboxX, bboxY);
+        if (rect.layerId == 3 || rect.layerId == 4) {
+            silkScreenHasAnyGraphics = true;
+            silkScreenGraphicsCount++;
+        }
+    }
+    for (const FootprintArc &arc : footprintData.arcs()) {
+        if (arc.layerId == 3 || arc.layerId == 4) {
+            silkScreenHasAnyGraphics = true;
+            silkScreenGraphicsCount++;
+        }
+    }
+
+    qDebug() << "Silkscreen check - Has graphics:" << silkScreenHasAnyGraphics << "Count:" << silkScreenGraphicsCount;
+
+    // 检查 Fab 层有多少图形元素
+    int fabGraphicsCount = 0;
+    for (const FootprintTrack &track : footprintData.tracks()) {
+        if (track.layerId == 13) fabGraphicsCount++;
+    }
+    for (const FootprintCircle &circle : footprintData.circles()) {
+        if (circle.layerId == 13) fabGraphicsCount++;
+    }
+    for (const FootprintRectangle &rect : footprintData.rectangles()) {
+        if (rect.layerId == 13) fabGraphicsCount++;
+    }
+    for (const FootprintArc &arc : footprintData.arcs()) {
+        if (arc.layerId == 13) fabGraphicsCount++;
+    }
+
+    qDebug() << "Fab layer graphics count:" << fabGraphicsCount;
+
+    // 生成丝印层图形元素
+    for (const FootprintTrack &track : footprintData.tracks()) {
+        if (track.layerId == 3 || track.layerId == 4) { // F.SilkS 或 B.SilkS
+            content += generateTrack(track, bboxX, bboxY);
+        }
+    }
+    for (const FootprintCircle &circle : footprintData.circles()) {
+        if (circle.layerId == 3 || circle.layerId == 4) {
+            content += generateCircle(circle, bboxX, bboxY);
+        }
+    }
+    for (const FootprintRectangle &rect : footprintData.rectangles()) {
+        if (rect.layerId == 3 || rect.layerId == 4) {
+            content += generateRectangle(rect, bboxX, bboxY);
+        }
+    }
+    for (const FootprintArc &arc : footprintData.arcs()) {
+        if (arc.layerId == 3 || arc.layerId == 4) {
+            content += generateArc(arc, bboxX, bboxY);
+        }
+    }
+
+    // 如果丝印层没有图形元素，将其他层的图形复制到 F.SilkS 层
+    if (!silkScreenHasAnyGraphics) {
+        qDebug() << "Silkscreen has no graphics, duplicating graphics from other layers to F.SilkS";
+
+        int duplicatedCount = 0;
+
+        // 检查所有层，打印有图形的层
+        qDebug() << "=== Checking all layers for graphics ===";
+        QSet<int> layersWithGraphics;
+        for (const FootprintTrack &track : footprintData.tracks()) {
+            if (track.layerId != 3 && track.layerId != 4 && !track.points.isEmpty()) {
+                layersWithGraphics.insert(track.layerId);
+            }
+        }
+        for (const FootprintCircle &circle : footprintData.circles()) {
+            if (circle.layerId != 3 && circle.layerId != 4) {
+                layersWithGraphics.insert(circle.layerId);
+            }
+        }
+        for (const FootprintRectangle &rect : footprintData.rectangles()) {
+            if (rect.layerId != 3 && rect.layerId != 4) {
+                layersWithGraphics.insert(rect.layerId);
+            }
+        }
+        for (const FootprintArc &arc : footprintData.arcs()) {
+            if (arc.layerId != 3 && arc.layerId != 4 && !arc.path.isEmpty()) {
+                layersWithGraphics.insert(arc.layerId);
+            }
+        }
+
+        if (!layersWithGraphics.isEmpty()) {
+            qDebug() << "Layers with graphics:";
+            for (int layerId : layersWithGraphics) {
+                QString layerName = layerIdToKicad(layerId);
+                int trackCount = 0, circleCount = 0, rectCount = 0, arcCount = 0;
+                
+                // 统计每种图形的数量
+                for (const FootprintTrack &track : footprintData.tracks()) {
+                    if (track.layerId == layerId && !track.points.isEmpty()) trackCount++;
+                }
+                for (const FootprintCircle &circle : footprintData.circles()) {
+                    if (circle.layerId == layerId) circleCount++;
+                }
+                for (const FootprintRectangle &rect : footprintData.rectangles()) {
+                    if (rect.layerId == layerId) rectCount++;
+                }
+                for (const FootprintArc &arc : footprintData.arcs()) {
+                    if (arc.layerId == layerId && !arc.path.isEmpty()) arcCount++;
+                }
+                
+                int totalCount = trackCount + circleCount + rectCount + arcCount;
+                qDebug() << "  Layer" << layerId << "(" << layerName << "):" 
+                         << totalCount << "graphics"
+                         << "[tracks:" << trackCount 
+                         << " circles:" << circleCount 
+                         << " rects:" << rectCount 
+                         << " arcs:" << arcCount << "]";
+            }
+        } else {
+            qDebug() << "No graphics found in any layer!";
+        }
+        qDebug() << "=== End layer check ===";
+
+        // 判断一个层是否应该复制到丝印层（非铜层、非丝印层、非Mask层、非Paste层）
+        auto shouldDuplicateLayer = [](int layerId) -> bool {
+            // 不复制铜层（1, 2, 9, 10, 11）
+            if (layerId >= 1 && layerId <= 2) return false;
+            if (layerId >= 9 && layerId <= 11) return false;
+            // 不复制丝印层（3, 4）
+            if (layerId == 3 || layerId == 4) return false;
+            // 不复制Paste层（5, 6）
+            if (layerId == 5 || layerId == 6) return false;
+            // 不复制Mask层（7, 8）
+            if (layerId == 7 || layerId == 8) return false;
+            // 不复制边缘切割层（14）
+            if (layerId == 14) return false;
+            // 其他层（如0, 12, 13, 15, 20, 21, 22, 100, 101等）都复制
+            return true;
+        };
+
+        // 复制符合条件的层的 tracks（线条）
+        for (const FootprintTrack &track : footprintData.tracks()) {
+            if (shouldDuplicateLayer(track.layerId) && !track.points.isEmpty()) {
+                FootprintTrack tempTrack = track;
+                tempTrack.layerId = 3; // F.SilkS
+                content += generateTrack(tempTrack, bboxX, bboxY);
+                duplicatedCount++;
+                qDebug() << "  Duplicated track from layer" << track.layerId << "to F.SilkS";
+            }
+        }
+        // 复制符合条件的层的 circles（圆）
+        for (const FootprintCircle &circle : footprintData.circles()) {
+            if (shouldDuplicateLayer(circle.layerId)) {
+                FootprintCircle tempCircle = circle;
+                tempCircle.layerId = 3;
+                content += generateCircle(tempCircle, bboxX, bboxY);
+                duplicatedCount++;
+                qDebug() << "  Duplicated circle from layer" << circle.layerId << "to F.SilkS";
+            }
+        }
+        // 复制符合条件的层的 rectangles（矩形）
+        for (const FootprintRectangle &rect : footprintData.rectangles()) {
+            if (shouldDuplicateLayer(rect.layerId)) {
+                FootprintRectangle tempRect = rect;
+                tempRect.layerId = 3;
+                content += generateRectangle(tempRect, bboxX, bboxY);
+                duplicatedCount++;
+                qDebug() << "  Duplicated rectangle from layer" << rect.layerId << "to F.SilkS";
+            }
+        }
+        // 复制符合条件的层的 arcs（圆弧）
+        for (const FootprintArc &arc : footprintData.arcs()) {
+            if (shouldDuplicateLayer(arc.layerId) && !arc.path.isEmpty()) {
+                FootprintArc tempArc = arc;
+                tempArc.layerId = 3;
+                content += generateArc(tempArc, bboxX, bboxY);
+                duplicatedCount++;
+                qDebug() << "  Duplicated arc from layer" << arc.layerId << "to F.SilkS";
+            }
+        }
+
+        qDebug() << "Total duplicated graphics to F.SilkS:" << duplicatedCount;
+    }
+
+    // 生成 Fab 层图形元素（非丝印层）
+    for (const FootprintTrack &track : footprintData.tracks()) {
+        if (track.layerId != 3 && track.layerId != 4) { // 非丝印层
+            content += generateTrack(track, bboxX, bboxY);
+        }
+    }
+    for (const FootprintRectangle &rect : footprintData.rectangles()) {
+        if (rect.layerId != 3 && rect.layerId != 4) {
+            content += generateRectangle(rect, bboxX, bboxY);
+        }
     }
 
     // Generate pads
@@ -163,14 +409,18 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
         content += generateHole(hole, bboxX, bboxY);
     }
 
-    // Generate circles
+    // Generate circles (非丝印层)
     for (const FootprintCircle &circle : footprintData.circles()) {
-        content += generateCircle(circle, bboxX, bboxY);
+        if (circle.layerId != 3 && circle.layerId != 4) {
+            content += generateCircle(circle, bboxX, bboxY);
+        }
     }
 
-    // Generate arcs
+    // Generate arcs (非丝印层)
     for (const FootprintArc &arc : footprintData.arcs()) {
-        content += generateArc(arc, bboxX, bboxY);
+        if (arc.layerId != 3 && arc.layerId != 4) {
+            content += generateArc(arc, bboxX, bboxY);
+        }
     }
 
     // Generate texts
@@ -186,8 +436,7 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
         content += ")\n";
         
         return content;
-    }
-QString ExporterFootprint::generatePad(const FootprintPad &pad, double bboxX, double bboxY) const
+    }QString ExporterFootprint::generatePad(const FootprintPad &pad, double bboxX, double bboxY) const
 {
     QString content;
     double x = pxToMm(pad.centerX - bboxX);
@@ -490,18 +739,44 @@ QString ExporterFootprint::layerIdToKicad(int layerId) const
     // Layer mapping for graphical elements
     switch (layerId) {
         case 1:
-            return "F.Cu";
+            return "F.Cu";           // Top Layer
         case 2:
-            return "B.Cu";
+            return "B.Cu";           // Bottom Layer
         case 3:
-            return "F.SilkS";
+            return "F.SilkS";        // Top Silkscreen
+        case 4:
+            return "B.SilkS";        // Bottom Silkscreen
+        case 5:
+            return "F.Paste";        // Top Solder Paste
+        case 6:
+            return "B.Paste";        // Bottom Solder Paste
+        case 7:
+            return "F.Mask";         // Top Solder Mask
+        case 8:
+            return "B.Mask";         // Bottom Solder Mask
+        case 9:
+            return "F.Cu";           // Top Layer (alternative)
+        case 10:
+            return "B.Cu";           // Bottom Layer (alternative)
         case 11:
-            return "*.Cu";
+            return "*.Cu";           // All Copper Layers
+        case 12:
+            return "B.Fab";          // Bottom Fabrication
         case 13:
-            return "F.Fab";
+            return "F.Fab";          // Top Fabrication
+        case 14:
+            return "Edge.Cuts";      // Board Outline
         case 15:
-            return "Dwgs.User";
+            return "Dwgs.User";      // Documentation
+        case 20:
+            return "Cmts.User";      // Comments
+        case 21:
+            return "Eco1.User";      // Eco1
+        case 22:
+            return "Eco2.User";      // Eco2
         default:
+            // 默认使用 F.Fab 层，避免丢失数据
+            qWarning() << "Unknown layer ID:" << layerId << ", defaulting to F.Fab";
             return "F.Fab";
     }
 }

@@ -47,42 +47,302 @@ bool ExporterSymbol::exportSymbol(const SymbolData &symbolData, const QString &f
     return true;
 }
 
-bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData> &symbols, const QString &libName, const QString &filePath, KicadVersion version)
+bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData> &symbols, const QString &libName, const QString &filePath, KicadVersion version, bool appendMode)
+
 {
+
     qDebug() << "=== Export Symbol Library ===";
+
     qDebug() << "Library name:" << libName;
+
     qDebug() << "Output path:" << filePath;
+
     qDebug() << "Symbol count:" << symbols.count();
+
     qDebug() << "KiCad version:" << (version == KicadVersion::V6 ? "V6" : "V5");
-    
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qWarning() << "Failed to open file for writing:" << filePath;
-        return false;
+
+    qDebug() << "Append mode:" << appendMode;
+
+
+
+    QList<SymbolData> finalSymbols = symbols;
+
+
+
+    // 如果启用追加模式且文件已存在，读取现有符号名称
+
+    if (appendMode && QFile::exists(filePath)) {
+
+        qDebug() << "Existing library found, reading existing symbol names...";
+
+        QSet<QString> existingSymbolNames;
+
+        
+
+        QFile file(filePath);
+
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+
+            QString content = QTextStream(&file).readAll();
+
+            file.close();
+
+            
+
+            // 提取现有符号名称
+
+            QRegularExpression symbolRegex("\\(symbol\\s+\"([^\"]+)\"\\s");
+
+            QRegularExpressionMatchIterator it = symbolRegex.globalMatch(content);
+
+            while (it.hasNext()) {
+
+                QRegularExpressionMatch match = it.next();
+
+                QString symbolName = match.captured(1);
+
+                existingSymbolNames.insert(symbolName);
+
+                qDebug() << "Found existing symbol:" << symbolName;
+
+            }
+
+        }
+
+        
+
+        qDebug() << "Existing symbols count:" << existingSymbolNames.count();
+
+        
+
+        // 过滤掉已存在的符号
+
+        QList<SymbolData> filteredSymbols;
+
+        for (const SymbolData &symbol : symbols) {
+
+            if (!existingSymbolNames.contains(symbol.info().name)) {
+
+                filteredSymbols.append(symbol);
+
+            } else {
+
+                qDebug() << "Symbol already exists, skipping:" << symbol.info().name;
+
+            }
+
+        }
+
+        
+
+        finalSymbols = filteredSymbols;
+
+        qDebug() << "Filtered symbols count (new only):" << finalSymbols.count();
+
     }
 
-    QTextStream out(&file);
-    out.setEncoding(QStringConverter::Utf8);
 
-    // 生成头部
-    qDebug() << "Generating header...";
-    out << generateHeader(libName, version);
+
+    QFile file(filePath);
+
+
+
+        bool fileExists = file.exists();
+
+
+
+        
+
+
+
+        // 追加模式：如果文件存在，读取现有内容
+
+
+
+        QString existingContent;
+
+
+
+        if (appendMode && fileExists) {
+
+
+
+            qDebug() << "Reading existing library content for append mode...";
+
+
+
+            if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+
+
+
+                existingContent = QTextStream(&file).readAll();
+
+
+
+                file.close();
+
+
+
+                qDebug() << "Read" << existingContent.length() << "bytes from existing library";
+
+
+
+            }
+
+
+
+        }
+
+
+
+        
+
+
+
+        // 打开文件进行写入（覆盖模式）
+
+
+
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+
+
+
+            qWarning() << "Failed to open file for writing:" << filePath;
+
+
+
+            return false;
+
+
+
+        }
+
+
+
+    
+
+
+
+        QTextStream out(&file);
+
+
+
+        out.setEncoding(QStringConverter::Utf8);
+
+
+
+    
+
+
+
+        // 生成头部（仅当文件不存在或非追加模式时）
+
+
+
+        if (!fileExists || !appendMode) {
+
+
+
+            qDebug() << "Generating header...";
+
+
+
+            out << generateHeader(libName, version);
+
+
+
+        } else {
+
+
+
+            qDebug() << "Reusing existing header (append mode)";
+
+
+
+            // 写入现有内容（去掉最后的闭合括号）
+
+
+
+            if (!existingContent.isEmpty()) {
+
+
+
+                // 找到最后一个闭合括号的位置
+
+
+
+                int lastParenIndex = existingContent.lastIndexOf(')');
+
+
+
+                if (lastParenIndex >= 0) {
+
+
+
+                    out << existingContent.left(lastParenIndex);
+
+
+
+                } else {
+
+
+
+                    // 如果没有找到闭合括号，直接写入全部内容
+
+
+
+                    out << existingContent;
+
+
+
+                }
+
+
+
+            }
+
+
+
+        }
+
+
 
     // 生成所有符号
+
     int index = 0;
-    for (const SymbolData &symbol : symbols) {
-        qDebug() << "Exporting symbol" << (++index) << "of" << symbols.count() << ":" << symbol.info().name;
+
+    for (const SymbolData &symbol : finalSymbols) {
+
+        qDebug() << "Exporting symbol" << (++index) << "of" << finalSymbols.count() << ":" << symbol.info().name;
+
         out << generateSymbolContent(symbol, libName, version);
+
     }
-    // 生成尾部
-    if (version == KicadVersion::V6) {
-        out << ")\n"; // 闭合 kicad_symbol_lib
-    }
+
+    // 生成尾部（仅在非追加模式或文件不存在时添加闭合括号）
+
+        if (version == KicadVersion::V6 && (!appendMode || !fileExists)) {
+
+            out << ")\n"; // 闭合 kicad_symbol_lib
+
+        } else if (version == KicadVersion::V6 && appendMode && fileExists) {
+
+            // 追加模式：添加闭合括号
+
+            out << "\n)\n"; // 闭合 kicad_symbol_lib
+
+        }
+
+
 
     file.close();
 
+
+
     qDebug() << "Symbol library exported successfully to:" << filePath;
+
     return true;
+
 }
 
 QString ExporterSymbol::generateHeader(const QString &libName, KicadVersion version) const
@@ -91,7 +351,7 @@ QString ExporterSymbol::generateHeader(const QString &libName, KicadVersion vers
     if (version == KicadVersion::V6) {
         return QString("(kicad_symbol_lib\n"
                        "  (version 20211014)\n"
-                       "  (generator https://github.com/tangsangsimida/EasyKiConverter)");
+                       "  (generator https://github.com/tangsangsimida/EasyKiConverter)\n");
     } else {
         return QString("EESchema-LIBRARY Version 2.4\n"
                        "#encoding utf-8\n"
@@ -482,20 +742,61 @@ QString ExporterSymbol::generateCircle(const SymbolCircle &circle, KicadVersion 
 
 QString ExporterSymbol::generateArc(const SymbolArc &arc, KicadVersion version) const
 {
-    Q_UNUSED(arc);
     QString content;
 
-    // 圆弧需要计算起点和终点
-    // 这里简化处理，实际需要根据路径数据计算
     if (version == KicadVersion::V6) {
-        content += "    (arc (start 0 0) (end 0 0)\n";
-        content += "      (radius 0)\n";
-        content += "      (start-angle 0)\n";
-        content += "      (end-angle 0)\n";
-        content += "      (stroke (width 0.127) (type default))\n";
-        content += "      (fill (type none))\n";
-        content += "    )\n";
+        // KiCad V6 使用三点法定义圆弧：start、mid、end
+        if (arc.path.size() >= 3) {
+            // 提取起点、中点、终点
+            QPointF startPoint = arc.path.first();
+            QPointF endPoint = arc.path.last();
+            
+            // 计算中点（取中间的点）
+            int midIndex = arc.path.size() / 2;
+            QPointF midPoint = arc.path[midIndex];
+            
+            // 转换为相对于边界框的坐标，并转换为毫米
+            double startX = pxToMm(startPoint.x() - m_currentBBox.x);
+            double startY = -pxToMm(startPoint.y() - m_currentBBox.y); // Y 轴翻转
+            double midX = pxToMm(midPoint.x() - m_currentBBox.x);
+            double midY = -pxToMm(midPoint.y() - m_currentBBox.y); // Y 轴翻转
+            double endX = pxToMm(endPoint.x() - m_currentBBox.x);
+            double endY = -pxToMm(endPoint.y() - m_currentBBox.y); // Y 轴翻转
+            
+            content += "    (arc\n";
+            content += QString("      (start %1 %2)\n").arg(startX, 0, 'f', 2).arg(startY, 0, 'f', 2);
+            content += QString("      (mid %1 %2)\n").arg(midX, 0, 'f', 2).arg(midY, 0, 'f', 2);
+            content += QString("      (end %1 %2)\n").arg(endX, 0, 'f', 2).arg(endY, 0, 'f', 2);
+            content += "      (stroke (width 0.127) (type default))\n";
+            content += "      (fill (type none))\n";
+            content += "    )\n";
+        } else if (arc.path.size() == 2) {
+            // 只有两个点，计算中点
+            QPointF startPoint = arc.path.first();
+            QPointF endPoint = arc.path.last();
+            QPointF midPoint = (startPoint + endPoint) / 2;
+            
+            // 转换为相对于边界框的坐标，并转换为毫米
+            double startX = pxToMm(startPoint.x() - m_currentBBox.x);
+            double startY = -pxToMm(startPoint.y() - m_currentBBox.y); // Y 轴翻转
+            double midX = pxToMm(midPoint.x() - m_currentBBox.x);
+            double midY = -pxToMm(midPoint.y() - m_currentBBox.y); // Y 轴翻转
+            double endX = pxToMm(endPoint.x() - m_currentBBox.x);
+            double endY = -pxToMm(endPoint.y() - m_currentBBox.y); // Y 轴翻转
+            
+            content += "    (arc\n";
+            content += QString("      (start %1 %2)\n").arg(startX, 0, 'f', 2).arg(startY, 0, 'f', 2);
+            content += QString("      (mid %1 %2)\n").arg(midX, 0, 'f', 2).arg(midY, 0, 'f', 2);
+            content += QString("      (end %1 %2)\n").arg(endX, 0, 'f', 2).arg(endY, 0, 'f', 2);
+            content += "      (stroke (width 0.127) (type default))\n";
+            content += "      (fill (type none))\n";
+            content += "    )\n";
+        } else {
+            // 点数不足，跳过或生成一个默认的arc
+            qDebug() << "Warning: Arc has insufficient points (" << arc.path.size() << "), skipping";
+        }
     } else {
+        // V5 格式（如果需要支持）
         content += "A 0 0 0 0 0 0 1 0 N\n";
     }
 

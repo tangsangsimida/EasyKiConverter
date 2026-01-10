@@ -365,6 +365,9 @@ private:
     };
     QList<CollectedComponentData> m_collectedComponents; // 收集到的组件数据
     bool m_isCollectingData; // 是否正在收集数据
+
+    // 符号库导出支持
+    QList<SymbolData> m_allSymbols; // 收集所有符号数据，用于一次性导出
 };
 
 } // namespace EasyKiConverter
