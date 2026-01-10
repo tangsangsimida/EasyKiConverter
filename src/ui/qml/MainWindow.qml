@@ -12,6 +12,13 @@ Item {
     // 连接到 MainController
     property var controller: mainController
 
+    // 绑定 AppStyle.isDarkMode 到 mainController.isDarkMode
+    Binding {
+        target: AppStyle
+        property: "isDarkMode"
+        value: mainController.isDarkMode
+    }
+
     // BOM 文件选择对话框
     FileDialog {
         id: bomFileDialog
@@ -105,45 +112,65 @@ Item {
             }
 
             // 深色模式切换按钮
-            RowLayout {
+            Item {
                 Layout.alignment: Qt.AlignRight
-                spacing: AppStyle.spacing.sm
-
-                Text {
-                    text: AppStyle.isDarkMode ? "深色模式" : "浅色模式"
-                    font.pixelSize: AppStyle.fontSizes.sm
-                    color: AppStyle.colors.textSecondary
-                }
+                Layout.preferredWidth: 52
+                Layout.preferredHeight: 28
 
                 Rectangle {
-                    Layout.preferredWidth: 44
-                    Layout.preferredHeight: 24
-                    radius: AppStyle.radius.sm
-                    color: AppStyle.isDarkMode ? "#334155" : "#e2e8f0"
+                    id: switchBackground
+                    anchors.fill: parent
+                    radius: height / 2
+                    color: AppStyle.isDarkMode ? "#3b82f6" : "#cbd5e1"
 
                     Behavior on color {
                         ColorAnimation {
                             duration: AppStyle.durations.normal
+                            easing.type: AppStyle.easings.easeOut
                         }
                     }
 
+                    // 小球
                     Rectangle {
-                        width: 20
-                        height: 20
-                        radius: 10
-                        color: AppStyle.isDarkMode ? "#fbbf24" : "#64748b"
-                        anchors.centerIn: parent
+                        id: switchThumb
+                        width: 24
+                        height: 24
+                        radius: width / 2
+                        color: AppStyle.isDarkMode ? "#1e293b" : "#ffffff"
+
+                        // 位置动画
+                        x: AppStyle.isDarkMode ? parent.width - width - 2 : 2
+                        y: (parent.height - height) / 2
+
+                        Behavior on x {
+                            NumberAnimation {
+                                duration: AppStyle.durations.normal
+                                easing.type: AppStyle.easings.easeOut
+                            }
+                        }
 
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppStyle.durations.normal
+                                easing.type: AppStyle.easings.easeOut
                             }
                         }
                     }
 
+                    // 点击区域
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+
+                        onEntered: {
+                            switchBackground.color = AppStyle.isDarkMode ? "#2563eb" : "#94a3b8"
+                        }
+
+                        onExited: {
+                            switchBackground.color = AppStyle.isDarkMode ? "#3b82f6" : "#cbd5e1"
+                        }
+
                         onClicked: {
                             controller.setDarkMode(!AppStyle.isDarkMode)
                         }
