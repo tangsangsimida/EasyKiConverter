@@ -209,7 +209,9 @@ QString ExporterFootprint::generatePad(const FootprintPad &pad, double bboxX, do
     
     QString drillStr;
     if (holeRadius > 0) {
-        drillStr = QString(" (drill %1)").arg(holeRadius * 2);
+        double drillDiameter = holeRadius * 2;
+        // 限制为2位小数，避免精度冗余（如 2.30002）
+        drillStr = QString(" (drill %1)").arg(drillDiameter, 0, 'f', 2);
     }
 
     // Process pad number: extract content between parentheses if present
@@ -314,15 +316,38 @@ QString ExporterFootprint::generateRectangle(const FootprintRectangle &rectangle
     double y = pxToMm(rectangle.y - bboxY);
     double width = pxToMm(rectangle.width);
     double height = pxToMm(rectangle.height);
+    QString layer = layerIdToKicad(rectangle.layerId);
+    double strokeWidth = pxToMm(rectangle.strokeWidth);
 
-    // KiCad 5.x format (use fp_line for rectangle)
-    content += QString("\t(fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
+    // KiCad 5.x format - 生成完整的矩形外框（4条线）
+    // 上边
+    content += QString("\t(fp_line (start %1 %2) (end %3 %2) (layer %4) (width %5))\n")
         .arg(x, 0, 'f', 2)
         .arg(y, 0, 'f', 2)
         .arg(x + width, 0, 'f', 2)
+        .arg(layer)
+        .arg(strokeWidth, 0, 'f', 2);
+    // 右边
+    content += QString("\t(fp_line (start %1 %2) (end %1 %3) (layer %4) (width %5))\n")
+        .arg(x + width, 0, 'f', 2)
+        .arg(y, 0, 'f', 2)
         .arg(y + height, 0, 'f', 2)
-        .arg(layerIdToKicad(rectangle.layerId))
-        .arg(pxToMm(rectangle.strokeWidth), 0, 'f', 2);
+        .arg(layer)
+        .arg(strokeWidth, 0, 'f', 2);
+    // 下边
+    content += QString("\t(fp_line (start %1 %2) (end %3 %2) (layer %4) (width %5))\n")
+        .arg(x, 0, 'f', 2)
+        .arg(y + height, 0, 'f', 2)
+        .arg(x + width, 0, 'f', 2)
+        .arg(layer)
+        .arg(strokeWidth, 0, 'f', 2);
+    // 左边
+    content += QString("\t(fp_line (start %1 %2) (end %1 %3) (layer %4) (width %5))\n")
+        .arg(x, 0, 'f', 2)
+        .arg(y, 0, 'f', 2)
+        .arg(y + height, 0, 'f', 2)
+        .arg(layer)
+        .arg(strokeWidth, 0, 'f', 2);
 
     return content;
 }
@@ -444,13 +469,13 @@ QString ExporterFootprint::padLayersToKicad(int layerId) const
     // Layer mapping based on Python version
     switch (layerId) {
         case 1:
-            return "F.Cu F.Paste F.Mask";
+            return "F.Cu F.Paste F.Mask"; // Top SMD
         case 2:
-            return "B.Cu B.Paste B.Mask";
+            return "B.Cu B.Paste B.Mask"; // Bottom SMD
         case 3:
             return "F.SilkS";
         case 11:
-            return "*.Cu *.Paste *.Mask";
+            return "*.Cu *.Mask"; // Through hole - 不包含 Paste 层
         case 13:
             return "F.Fab";
         case 15:
