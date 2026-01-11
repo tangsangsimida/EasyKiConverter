@@ -167,6 +167,38 @@ public:
      */
     FootprintText importFootprintTextData(const QString &textData);
 
+    /**
+     * @brief 导入实体填充区域数据
+     *
+     * @param solidRegionData 实体填充区域数据字符串
+     * @return FootprintSolidRegion 实体填充区域数据
+     */
+    FootprintSolidRegion importSolidRegionData(const QString &solidRegionData);
+
+    /**
+     * @brief 解析 SVGNODE 数据（区分 3D 模型和外形轮廓）
+     *
+     * @param svgNodeData SVGNODE 数据字符串
+     * @param footprintData 封装数据指针
+     */
+    void importSvgNodeData(const QString &svgNodeData, QSharedPointer<FootprintData> footprintData);
+
+    /**
+     * @brief 解析层定义数据
+     *
+     * @param layerString 层定义字符串
+     * @return LayerDefinition 层定义数据
+     */
+    LayerDefinition parseLayerDefinition(const QString &layerString);
+
+    /**
+     * @brief 解析对象可见性配置
+     *
+     * @param objectString 对象可见性字符串
+     * @return ObjectVisibility 对象可见性数据
+     */
+    ObjectVisibility parseObjectVisibility(const QString &objectString);
+
 private:
     /**
      * @brief 解析字符串数据

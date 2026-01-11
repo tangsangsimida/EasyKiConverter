@@ -222,72 +222,53 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
                         footprintData->addTrack(track);
                         qDebug() << "Imported path (layer" << track.layerId << ")";
                     } else if (designator == "SVGNODE") {
-                        // 导入 3D 模型
-                        qDebug() << "Found SVGNODE, parsing 3D model...";
-                        if (parts.size() >= 2) {
-                            QJsonDocument doc = QJsonDocument::fromJson(parts[1].toUtf8());
-                            if (doc.isObject()) {
-                                QJsonObject root = doc.object();
-                                if (root.contains("attrs")) {
-                                    QJsonObject attrs = root["attrs"].toObject();
-                                    Model3DData model3D;
-                                    model3D.setName(attrs["title"].toString());
-                                    model3D.setUuid(attrs["uuid"].toString());
-
-                                    qDebug() << "3D model info - Name:" << model3D.name() << "UUID:" << model3D.uuid();
-
-                                    // 解析平移
-                                    if (attrs.contains("c_origin")) {
-                                        QString c_origin = attrs["c_origin"].toString();
-                                        QStringList originParts = c_origin.split(",");
-                                        if (originParts.size() >= 2) {
-                                            Model3DBase translation;
-                                            translation.x = originParts[0].toDouble();
-                                            translation.y = originParts[1].toDouble();
-                                            translation.z = attrs["z"].toDouble();
-                                            model3D.setTranslation(translation);
-                                            qDebug() << "3D model translation:" << translation.x << translation.y << translation.z;
-                                        }
-                                    }
-
-                                    // 解析旋转
-                                    if (attrs.contains("c_rotation")) {
-                                        QString c_rotation = attrs["c_rotation"].toString();
-                                        QStringList rotationParts = c_rotation.split(",");
-                                        if (rotationParts.size() >= 3) {
-                                            Model3DBase rotation;
-                                            rotation.x = rotationParts[0].toDouble();
-                                            rotation.y = rotationParts[1].toDouble();
-                                            rotation.z = rotationParts[2].toDouble();
-                                            model3D.setRotation(rotation);
-                                            qDebug() << "3D model rotation:" << rotation.x << rotation.y << rotation.z;
-                                        }
-                                    }
-
-                                    footprintData->setModel3D(model3D);
-                                    qDebug() << "Imported 3D model - Name:" << model3D.name() << "UUID:" << model3D.uuid();
-                                }
-                            } else {
-                                qDebug() << "Failed to parse SVGNODE JSON";
-                            }
-                        }
-                    }
-                }
-
-                qDebug() << "Footprint imported - Pads:" << footprintData->pads().count()
-                         << "Tracks:" << footprintData->tracks().count()
-                         << "Holes:" << footprintData->holes().count()
-                         << "Circles:" << footprintData->circles().count()
-                         << "Has 3D model:" << (footprintData->model3D().uuid().isEmpty() == false);
-            }
-        }
-    } else {
-        qWarning() << "packageDetail NOT found in CAD data";
-    }
-
-    return footprintData;
-}
-
+                                              // 导入 SVGNODE（可能是 3D 模型或外形轮廓）
+                                              qDebug() << "Found SVGNODE, parsing...";
+                                              importSvgNodeData(shapeString, footprintData);
+                                          } else if (designator == "SOLIDREGION") {
+                                              // 导入实体填充区域（禁止布线区）
+                                              FootprintSolidRegion solidRegion = importSolidRegionData(shapeString);
+                                              footprintData->addSolidRegion(solidRegion);
+                                              qDebug() << "Imported solid region";
+                                          }
+                                      }
+                    
+                                      // 导入层定义
+                                      if (dataStr.contains("layers")) {
+                                          QJsonArray layers = dataStr["layers"].toArray();
+                                          qDebug() << "Found" << layers.size() << "layers";
+                                          for (const QJsonValue &layerValue : layers) {
+                                              LayerDefinition layer = parseLayerDefinition(layerValue.toString());
+                                              footprintData->addLayer(layer);
+                                          }
+                                      }
+                    
+                                      // 导入对象可见性配置
+                                      if (dataStr.contains("objects")) {
+                                          QJsonArray objects = dataStr["objects"].toArray();
+                                          qDebug() << "Found" << objects.size() << "object visibility settings";
+                                          for (const QJsonValue &objectValue : objects) {
+                                              ObjectVisibility visibility = parseObjectVisibility(objectValue.toString());
+                                              footprintData->addObjectVisibility(visibility);
+                                          }
+                                      }
+                    
+                                      qDebug() << "Footprint imported - Pads:" << footprintData->pads().count()
+                                               << "Tracks:" << footprintData->tracks().count()
+                                               << "Holes:" << footprintData->holes().count()
+                                               << "Circles:" << footprintData->circles().count()
+                                               << "SolidRegions:" << footprintData->solidRegions().count()
+                                               << "Outlines:" << footprintData->outlines().count()
+                                               << "Layers:" << footprintData->layers().count()
+                                               << "Has 3D model:" << (footprintData->model3D().uuid().isEmpty() == false);
+                                  }
+                              }
+                          } else {
+                              qWarning() << "packageDetail NOT found in CAD data";
+                          }
+                    
+                          return footprintData;
+                      }
 SymbolPin EasyedaImporter::importPinData(const QString &pinData)
 {
     SymbolPin pin;
@@ -674,6 +655,174 @@ QList<QStringList> EasyedaImporter::parsePinDataString(const QString &pinData) c
     }
 
     return result;
+}
+
+FootprintSolidRegion EasyedaImporter::importSolidRegionData(const QString &solidRegionData)
+{
+    FootprintSolidRegion region;
+    QStringList fields = parseDataString(solidRegionData);
+
+    // SOLIDREGION~layerId~~path~fillStyle~id~~~~isLocked
+    // 示例: SOLIDREGION~99~~M 3984.1457 2975.3938 L 4046.5657 2975.3938 L 4046.5657 3024.6063 L 3984.1457 3024.6063 Z~solid~gge55~~~~0
+    if (fields.size() >= 6) {
+        region.layerId = fields[1].toInt();
+        region.path = fields[3];  // 路径数据（如 "M x y L x y Z"）
+        region.fillStyle = fields[4];
+        region.id = fields[5];
+        region.isLocked = fields.size() > 7 ? stringToBool(fields[7]) : false;
+
+        // 判断是否为禁止布线区（通常在 ComponentShapeLayer，ID=99）
+        region.isKeepOut = (region.layerId == 99);
+
+        qDebug() << "Imported solid region - Layer:" << region.layerId 
+                 << "IsKeepOut:" << region.isKeepOut 
+                 << "Path length:" << region.path.length();
+    }
+
+    return region;
+}
+
+void EasyedaImporter::importSvgNodeData(const QString &svgNodeData, QSharedPointer<FootprintData> footprintData)
+{
+    QStringList parts = svgNodeData.split("~");
+    if (parts.size() < 2) {
+        qWarning() << "Invalid SVGNODE data format";
+        return;
+    }
+
+    QJsonDocument doc = QJsonDocument::fromJson(parts[1].toUtf8());
+    if (!doc.isObject()) {
+        qWarning() << "Failed to parse SVGNODE JSON";
+        return;
+    }
+
+    QJsonObject root = doc.object();
+    if (!root.contains("attrs")) {
+        qWarning() << "SVGNODE missing attrs";
+        return;
+    }
+
+    QJsonObject attrs = root["attrs"].toObject();
+
+    // 检查是否为外形轮廓（c_etype == "outline3D"）
+    if (attrs.contains("c_etype") && attrs["c_etype"].toString() == "outline3D") {
+        // 这是外形轮廓，不是 3D 模型
+        FootprintOutline outline;
+        outline.id = attrs["id"].toString();
+        outline.strokeWidth = attrs.contains("c_width") ? attrs["c_width"].toString().toDouble() : 0.0;
+        outline.isLocked = false;
+
+        // 获取层 ID
+        if (attrs.contains("layerid")) {
+            outline.layerId = attrs["layerid"].toString().toInt();
+        } else {
+            outline.layerId = 19;  // 默认为 3DModel 层
+        }
+
+        // 解析 SVG 路径
+        if (root.contains("childNodes")) {
+            QJsonArray childNodes = root["childNodes"].toArray();
+            for (const QJsonValue &child : childNodes) {
+                QJsonObject childObj = child.toObject();
+                if (childObj.contains("attrs")) {
+                    QJsonObject childAttrs = childObj["attrs"].toObject();
+                    if (childAttrs.contains("points")) {
+                        outline.path = childAttrs["points"].toString();
+                        break;  // 只取第一个路径
+                    }
+                }
+            }
+        }
+
+        footprintData->addOutline(outline);
+        qDebug() << "Imported outline - Layer:" << outline.layerId 
+                 << "Path length:" << outline.path.length();
+    } else {
+        // 这是 3D 模型
+        Model3DData model3D;
+        model3D.setName(attrs.contains("title") ? attrs["title"].toString() : "");
+        model3D.setUuid(attrs.contains("uuid") ? attrs["uuid"].toString() : "");
+
+        qDebug() << "3D model info - Name:" << model3D.name() << "UUID:" << model3D.uuid();
+
+        // 解析平移
+        if (attrs.contains("c_origin")) {
+            QString c_origin = attrs["c_origin"].toString();
+            QStringList originParts = c_origin.split(",");
+            if (originParts.size() >= 2) {
+                Model3DBase translation;
+                translation.x = originParts[0].toDouble();
+                translation.y = originParts[1].toDouble();
+                translation.z = attrs.contains("z") ? attrs["z"].toDouble() : 0.0;
+                model3D.setTranslation(translation);
+                qDebug() << "3D model translation:" << translation.x << translation.y << translation.z;
+            }
+        }
+
+        // 解析旋转
+        if (attrs.contains("c_rotation")) {
+            QString c_rotation = attrs["c_rotation"].toString();
+            QStringList rotationParts = c_rotation.split(",");
+            if (rotationParts.size() >= 3) {
+                Model3DBase rotation;
+                rotation.x = rotationParts[0].toDouble();
+                rotation.y = rotationParts[1].toDouble();
+                rotation.z = rotationParts[2].toDouble();
+                model3D.setRotation(rotation);
+                qDebug() << "3D model rotation:" << rotation.x << rotation.y << rotation.z;
+            }
+        }
+
+        footprintData->setModel3D(model3D);
+        qDebug() << "Imported 3D model - Name:" << model3D.name() << "UUID:" << model3D.uuid();
+    }
+}
+
+LayerDefinition EasyedaImporter::parseLayerDefinition(const QString &layerString)
+{
+    LayerDefinition layer;
+    // 格式: layerId~name~color~isVisible~isUsedForManufacturing~~expansion
+    // 示例: 1~TopLayer~#FF0000~true~true~~
+    QStringList fields = layerString.split("~");
+
+    if (fields.size() >= 5) {
+        layer.layerId = fields[0].toInt();
+        layer.name = fields[1];
+        layer.color = fields[2];
+        layer.isVisible = (fields[3] == "true");
+        layer.isUsedForManufacturing = (fields[4] == "true");
+
+        // 解析扩展值（如阻焊层扩展）
+        if (fields.size() >= 7) {
+            layer.expansion = fields[6].toDouble();
+        }
+
+        qDebug() << "Parsed layer - ID:" << layer.layerId 
+                 << "Name:" << layer.name 
+                 << "Color:" << layer.color;
+    }
+
+    return layer;
+}
+
+ObjectVisibility EasyedaImporter::parseObjectVisibility(const QString &objectString)
+{
+    ObjectVisibility visibility;
+    // 格式: objectType~isEnabled~isVisible
+    // 示例: Text~true~false
+    QStringList fields = objectString.split("~");
+
+    if (fields.size() >= 3) {
+        visibility.objectType = fields[0];
+        visibility.isEnabled = (fields[1] == "true");
+        visibility.isVisible = (fields[2] == "true");
+
+        qDebug() << "Parsed object visibility - Type:" << visibility.objectType 
+                 << "Enabled:" << visibility.isEnabled 
+                 << "Visible:" << visibility.isVisible;
+    }
+
+    return visibility;
 }
 
 bool EasyedaImporter::stringToBool(const QString &str) const

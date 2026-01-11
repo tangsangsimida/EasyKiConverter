@@ -256,6 +256,98 @@ bool FootprintText::fromJson(const QJsonObject &json)
     return true;
 }
 
+// ==================== FootprintSolidRegion ====================
+
+QJsonObject FootprintSolidRegion::toJson() const
+{
+    QJsonObject json;
+    json["path"] = path;
+    json["layer_id"] = layerId;
+    json["fill_style"] = fillStyle;
+    json["id"] = id;
+    json["is_keep_out"] = isKeepOut;
+    json["is_locked"] = isLocked;
+    return json;
+}
+
+bool FootprintSolidRegion::fromJson(const QJsonObject &json)
+{
+    path = json["path"].toString();
+    layerId = json["layer_id"].toInt();
+    fillStyle = json["fill_style"].toString();
+    id = json["id"].toString();
+    isKeepOut = json["is_keep_out"].toBool();
+    isLocked = json["is_locked"].toBool();
+    return true;
+}
+
+// ==================== FootprintOutline ====================
+
+QJsonObject FootprintOutline::toJson() const
+{
+    QJsonObject json;
+    json["path"] = path;
+    json["layer_id"] = layerId;
+    json["stroke_width"] = strokeWidth;
+    json["id"] = id;
+    json["is_locked"] = isLocked;
+    return json;
+}
+
+bool FootprintOutline::fromJson(const QJsonObject &json)
+{
+    path = json["path"].toString();
+    layerId = json["layer_id"].toInt();
+    strokeWidth = json["stroke_width"].toDouble();
+    id = json["id"].toString();
+    isLocked = json["is_locked"].toBool();
+    return true;
+}
+
+// ==================== LayerDefinition ====================
+
+QJsonObject LayerDefinition::toJson() const
+{
+    QJsonObject json;
+    json["layer_id"] = layerId;
+    json["name"] = name;
+    json["color"] = color;
+    json["is_visible"] = isVisible;
+    json["is_used_for_manufacturing"] = isUsedForManufacturing;
+    json["expansion"] = expansion;
+    return json;
+}
+
+bool LayerDefinition::fromJson(const QJsonObject &json)
+{
+    layerId = json["layer_id"].toInt();
+    name = json["name"].toString();
+    color = json["color"].toString();
+    isVisible = json["is_visible"].toBool();
+    isUsedForManufacturing = json["is_used_for_manufacturing"].toBool();
+    expansion = json["expansion"].toDouble();
+    return true;
+}
+
+// ==================== ObjectVisibility ====================
+
+QJsonObject ObjectVisibility::toJson() const
+{
+    QJsonObject json;
+    json["object_type"] = objectType;
+    json["is_enabled"] = isEnabled;
+    json["is_visible"] = isVisible;
+    return json;
+}
+
+bool ObjectVisibility::fromJson(const QJsonObject &json)
+{
+    objectType = json["object_type"].toString();
+    isEnabled = json["is_enabled"].toBool();
+    isVisible = json["is_visible"].toBool();
+    return true;
+}
+
 // ==================== FootprintData ====================
 
 FootprintData::FootprintData()
@@ -320,6 +412,34 @@ QJsonObject FootprintData::toJson() const
         textsArray.append(text.toJson());
     }
     json["texts"] = textsArray;
+
+    // 实体填充区域
+    QJsonArray solidRegionsArray;
+    for (const FootprintSolidRegion &solidRegion : m_solidRegions) {
+        solidRegionsArray.append(solidRegion.toJson());
+    }
+    json["solid_regions"] = solidRegionsArray;
+
+    // 外形轮廓
+    QJsonArray outlinesArray;
+    for (const FootprintOutline &outline : m_outlines) {
+        outlinesArray.append(outline.toJson());
+    }
+    json["outlines"] = outlinesArray;
+
+    // 层定义
+    QJsonArray layersArray;
+    for (const LayerDefinition &layer : m_layers) {
+        layersArray.append(layer.toJson());
+    }
+    json["layers"] = layersArray;
+
+    // 对象可见性
+    QJsonArray objectVisibilitiesArray;
+    for (const ObjectVisibility &visibility : m_objectVisibilities) {
+        objectVisibilitiesArray.append(visibility.toJson());
+    }
+    json["object_visibilities"] = objectVisibilitiesArray;
 
     return json;
 }
@@ -440,6 +560,62 @@ bool FootprintData::fromJson(const QJsonObject &json)
         }
     }
 
+    // 读取实体填充区域
+    if (json.contains("solid_regions") && json["solid_regions"].isArray()) {
+        QJsonArray solidRegionsArray = json["solid_regions"].toArray();
+        m_solidRegions.clear();
+        for (const QJsonValue &value : solidRegionsArray) {
+            if (value.isObject()) {
+                FootprintSolidRegion solidRegion;
+                if (solidRegion.fromJson(value.toObject())) {
+                    m_solidRegions.append(solidRegion);
+                }
+            }
+        }
+    }
+
+    // 读取外形轮廓
+    if (json.contains("outlines") && json["outlines"].isArray()) {
+        QJsonArray outlinesArray = json["outlines"].toArray();
+        m_outlines.clear();
+        for (const QJsonValue &value : outlinesArray) {
+            if (value.isObject()) {
+                FootprintOutline outline;
+                if (outline.fromJson(value.toObject())) {
+                    m_outlines.append(outline);
+                }
+            }
+        }
+    }
+
+    // 读取层定义
+    if (json.contains("layers") && json["layers"].isArray()) {
+        QJsonArray layersArray = json["layers"].toArray();
+        m_layers.clear();
+        for (const QJsonValue &value : layersArray) {
+            if (value.isObject()) {
+                LayerDefinition layer;
+                if (layer.fromJson(value.toObject())) {
+                    m_layers.append(layer);
+                }
+            }
+        }
+    }
+
+    // 读取对象可见性
+    if (json.contains("object_visibilities") && json["object_visibilities"].isArray()) {
+        QJsonArray objectVisibilitiesArray = json["object_visibilities"].toArray();
+        m_objectVisibilities.clear();
+        for (const QJsonValue &value : objectVisibilitiesArray) {
+            if (value.isObject()) {
+                ObjectVisibility visibility;
+                if (visibility.fromJson(value.toObject())) {
+                    m_objectVisibilities.append(visibility);
+                }
+            }
+        }
+    }
+
     return true;
 }
 
@@ -490,6 +666,10 @@ void FootprintData::clear()
     m_rectangles.clear();
     m_arcs.clear();
     m_texts.clear();
+    m_solidRegions.clear();
+    m_outlines.clear();
+    m_layers.clear();
+    m_objectVisibilities.clear();
 }
 
 } // namespace EasyKiConverter

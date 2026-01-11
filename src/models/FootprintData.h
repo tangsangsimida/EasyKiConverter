@@ -150,6 +150,66 @@ struct FootprintText {
     bool fromJson(const QJsonObject &json);
 };
 
+// ==================== 实体填充区域 ====================
+/**
+ * @brief 实体填充区域，用于禁止布线区或元件占位区
+ */
+struct FootprintSolidRegion {
+    QString path;           // 路径数据（如 "M x y L x y Z"）
+    int layerId;            // 所属层（通常是 ComponentShapeLayer，ID=99）
+    QString fillStyle;      // 填充样式（solid, none等）
+    QString id;             // 唯一标识
+    bool isKeepOut;         // 是否为禁止布线区
+    bool isLocked;          // 是否锁定
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+// ==================== 外形轮廓 ====================
+/**
+ * @brief 器件外形轮廓，用于丝印标识和装配
+ */
+struct FootprintOutline {
+    QString path;           // SVG 路径或多边形点序列
+    int layerId;            // 所属层（通常是 TopSilkLayer 或 3DModel 层）
+    double strokeWidth;     // 线宽
+    QString id;             // 唯一标识
+    bool isLocked;          // 是否锁定
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+// ==================== 层定义 ====================
+/**
+ * @brief PCB 层定义信息
+ */
+struct LayerDefinition {
+    int layerId;            // 层 ID
+    QString name;           // 层名称
+    QString color;          // 层颜色（#RRGGBB）
+    bool isVisible;         // 是否可见
+    bool isUsedForManufacturing;  // 是否用于制造
+    double expansion;       // 扩展值（如阻焊层扩展）
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
+// ==================== 对象可见性配置 ====================
+/**
+ * @brief 对象类型可见性配置
+ */
+struct ObjectVisibility {
+    QString objectType;     // 对象类型（Pad, Track, Text等）
+    bool isEnabled;         // 是否启用
+    bool isVisible;         // 是否可见
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
 // ==================== 封装数据 ====================
 
 class FootprintData
@@ -193,6 +253,22 @@ public:
     void setTexts(const QList<FootprintText> &texts) { m_texts = texts; }
     void addText(const FootprintText &text) { m_texts.append(text); }
 
+    QList<FootprintSolidRegion> solidRegions() const { return m_solidRegions; }
+    void setSolidRegions(const QList<FootprintSolidRegion> &solidRegions) { m_solidRegions = solidRegions; }
+    void addSolidRegion(const FootprintSolidRegion &solidRegion) { m_solidRegions.append(solidRegion); }
+
+    QList<FootprintOutline> outlines() const { return m_outlines; }
+    void setOutlines(const QList<FootprintOutline> &outlines) { m_outlines = outlines; }
+    void addOutline(const FootprintOutline &outline) { m_outlines.append(outline); }
+
+    QList<LayerDefinition> layers() const { return m_layers; }
+    void setLayers(const QList<LayerDefinition> &layers) { m_layers = layers; }
+    void addLayer(const LayerDefinition &layer) { m_layers.append(layer); }
+
+    QList<ObjectVisibility> objectVisibilities() const { return m_objectVisibilities; }
+    void setObjectVisibilities(const QList<ObjectVisibility> &objectVisibilities) { m_objectVisibilities = objectVisibilities; }
+    void addObjectVisibility(const ObjectVisibility &objectVisibility) { m_objectVisibilities.append(objectVisibility); }
+
     Model3DData model3D() const { return m_model3D; }
     void setModel3D(const Model3DData &model3D) { m_model3D = model3D; }
 
@@ -217,6 +293,10 @@ private:
     QList<FootprintRectangle> m_rectangles;
     QList<FootprintArc> m_arcs;
     QList<FootprintText> m_texts;
+    QList<FootprintSolidRegion> m_solidRegions;
+    QList<FootprintOutline> m_outlines;
+    QList<LayerDefinition> m_layers;
+    QList<ObjectVisibility> m_objectVisibilities;
     Model3DData m_model3D;
 };
 
