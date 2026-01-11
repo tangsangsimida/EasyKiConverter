@@ -99,8 +99,8 @@ private:
      *
      * @param pad 焊盘数据
      * @param version KiCad 版本
-     * @param bboxX 边界框 X 偏移
-     * @param bboxY 边界框 Y 偏移
+     * @param bboxX 边界框中心 X 偏移
+     * @param bboxY 边界框中心 Y 偏移
      * @return QString 焊盘文本
      */
     QString generatePad(const FootprintPad &pad, double bboxX = 0, double bboxY = 0) const;
@@ -110,8 +110,8 @@ private:
      *
      * @param track 走线数据
      * @param version KiCad 版本
-     * @param bboxX 边界框 X 偏移
-     * @param bboxY 边界框 Y 偏移
+     * @param bboxX 边界框中心 X 偏移
+     * @param bboxY 边界框中心 Y 偏移
      * @return QString 走线文本
      */
     QString generateTrack(const FootprintTrack &track, double bboxX = 0, double bboxY = 0) const;
@@ -121,8 +121,8 @@ private:
      *
      * @param hole 孔数据
      * @param version KiCad 版本
-     * @param bboxX 边界框 X 偏移
-     * @param bboxY 边界框 Y 偏移
+     * @param bboxX 边界框中心 X 偏移
+     * @param bboxY 边界框中心 Y 偏移
      * @return QString 孔文本
      */
     QString generateHole(const FootprintHole &hole, double bboxX = 0, double bboxY = 0) const;
@@ -132,8 +132,8 @@ private:
      *
      * @param circle 圆数据
      * @param version KiCad 版本
-     * @param bboxX 边界框 X 偏移
-     * @param bboxY 边界框 Y 偏移
+     * @param bboxX 边界框中心 X 偏移
+     * @param bboxY 边界框中心 Y 偏移
      * @return QString 圆文本
      */
     QString generateCircle(const FootprintCircle &circle, double bboxX = 0, double bboxY = 0) const;
@@ -142,8 +142,8 @@ private:
      * @brief 生成 KiCad 矩形（封装）
      *
      * @param rectangle 矩形数据
-     * @param bboxX 边界框 X 偏移
-     * @param bboxY 边界框 Y 偏移
+     * @param bboxX 边界框中心 X 偏移
+     * @param bboxY 边界框中心 Y 偏移
      * @return QString 矩形文本
      */
     QString generateRectangle(const FootprintRectangle &rectangle, double bboxX = 0, double bboxY = 0) const;
@@ -152,8 +152,8 @@ private:
      * @brief 生成 KiCad 圆弧（封装）
      *
      * @param arc 圆弧数据
-     * @param bboxX 边界框 X 偏移
-     * @param bboxY 边界框 Y 偏移
+     * @param bboxX 边界框中心 X 偏移
+     * @param bboxY 边界框中心 Y 偏移
      * @return QString 圆弧文本
      */
     QString generateArc(const FootprintArc &arc, double bboxX = 0, double bboxY = 0) const;
@@ -162,8 +162,8 @@ private:
      * @brief 生成 KiCad 文本（封装）
      *
      * @param text 文本数据
-     * @param bboxX 边界框 X 偏移
-     * @param bboxY 边界框 Y 偏移
+     * @param bboxX 边界框中心 X 偏移
+     * @param bboxY 边界框中心 Y 偏移
      * @return QString 文本文本
      */
     QString generateText(const FootprintText &text, double bboxX = 0, double bboxY = 0) const;
@@ -172,8 +172,8 @@ private:
      * @brief 生成 KiCad 3D 模型引用
      *
      * @param model3D 3D 模型数据
-     * @param bboxX 边界框 X 偏移
-     * @param bboxY 边界框 Y 偏移
+     * @param bboxX 边界框中心 X 偏移
+     * @param bboxY 边界框中心 Y 偏移
      * @return QString 3D 模型引用文本
      */
     QString generateModel3D(const Model3DData &model3D, double bboxX = 0, double bboxY = 0, const QString &model3DPath = QString()) const;

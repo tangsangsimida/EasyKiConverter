@@ -30,7 +30,7 @@ QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject &
                 info.name = c_para["name"].toString();
                 info.prefix = c_para["pre"].toString();
                 info.package = c_para["package"].toString();
-                info.manufacturer = c_para["BOM_Manufacturer"].toString();
+                info.manufacturer = c_para["Manufacturer"].toString();
                 info.lcscId = c_para["Supplier Part"].toString();
                 info.jlcId = c_para["BOM_JLCPCB Part Class"].toString();
 
@@ -49,13 +49,26 @@ QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject &
     // 导入边界框
     if (cadData.contains("dataStr")) {
         QJsonObject dataStr = cadData["dataStr"].toObject();
-        if (dataStr.contains("head")) {
+        SymbolBBox symbolBbox;
+        if (dataStr.contains("BBox")) {
+            // 从 dataStr.BBox 中读取边界框数据
+            QJsonObject bbox = dataStr["BBox"].toObject();
+            symbolBbox.x = bbox["x"].toDouble();
+            symbolBbox.y = bbox["y"].toDouble();
+            symbolBbox.width = bbox["width"].toDouble();
+            symbolBbox.height = bbox["height"].toDouble();
+            qDebug() << "Symbol BBox from dataStr.BBox - x:" << symbolBbox.x << "y:" << symbolBbox.y
+                     << "width:" << symbolBbox.width << "height:" << symbolBbox.height;
+        } else if (dataStr.contains("head")) {
+            // 如果没有 BBox，使用 head.x 和 head.y 作为中心点，width 和 height 设为 0
             QJsonObject head = dataStr["head"].toObject();
-            SymbolBBox symbolBbox;
             symbolBbox.x = head["x"].toDouble();
             symbolBbox.y = head["y"].toDouble();
-            symbolData->setBbox(symbolBbox);
+            symbolBbox.width = 0;
+            symbolBbox.height = 0;
+            qWarning() << "Symbol BBox not found in dataStr, using head.x/y as center point";
         }
+        symbolData->setBbox(symbolBbox);
     }
 
     // 导入几何数据（引脚、矩形、圆、圆弧、多边形、路径、文本等）
@@ -149,12 +162,23 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
                 }
             }
 
-            // 导入边界框
+            // 导入边界框（包围盒）
             if (dataStr.contains("head")) {
                 QJsonObject head = dataStr["head"].toObject();
                 FootprintBBox footprintBbox;
-                footprintBbox.x = head["x"].toDouble();
-                footprintBbox.y = head["y"].toDouble();
+                if (dataStr.contains("BBox")) {
+                    QJsonObject bbox = dataStr["BBox"].toObject();
+                    footprintBbox.x = bbox["x"].toDouble();
+                    footprintBbox.y = bbox["y"].toDouble();
+                    footprintBbox.width = bbox["width"].toDouble();
+                    footprintBbox.height = bbox["height"].toDouble();
+                } else {
+                    // 如果没有 BBox，使用 head.x 和 head.y 作为中心点
+                    footprintBbox.x = head["x"].toDouble();
+                    footprintBbox.y = head["y"].toDouble();
+                    footprintBbox.width = 0;
+                    footprintBbox.height = 0;
+                }
                 footprintData->setBbox(footprintBbox);
             }
 
@@ -251,6 +275,21 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
                                               ObjectVisibility visibility = parseObjectVisibility(objectValue.toString());
                                               footprintData->addObjectVisibility(visibility);
                                           }
+                                      }
+                    
+                                      // 修正类型判断：检查焊盘是否有孔
+                                      bool hasHole = false;
+                                      for (const FootprintPad &pad : footprintData->pads()) {
+                                          if (pad.holeRadius > 0 || pad.holeLength > 0) {
+                                              hasHole = true;
+                                              break;
+                                          }
+                                      }
+                                      if (hasHole) {
+                                          FootprintInfo info = footprintData->info();
+                                          info.type = "tht";
+                                          footprintData->setInfo(info);
+                                          qDebug() << "Corrected type to THT (through-hole) because pads have holes";
                                       }
                     
                                       qDebug() << "Footprint imported - Pads:" << footprintData->pads().count()
@@ -580,14 +619,15 @@ FootprintRectangle EasyedaImporter::importFootprintRectangleData(const QString &
     QStringList fields = parseDataString(rectangleData);
 
     // 跳过第一个字段（设计器），从第二个字段开始解析
+    // 格式: RECT~x~y~width~height~layerId~id~strokeWidth~isLocked~fillColor~strokeStyle~...
     if (fields.size() >= 8) {
         rectangle.x = fields[1].toDouble();
         rectangle.y = fields[2].toDouble();
         rectangle.width = fields[3].toDouble();
         rectangle.height = fields[4].toDouble();
-        rectangle.strokeWidth = fields[5].toDouble();
+        rectangle.layerId = fields[5].toInt();  // layerId 在第 6 个字段
         rectangle.id = fields[6];
-        rectangle.layerId = fields[7].toInt();
+        rectangle.strokeWidth = fields[7].toDouble();  // strokeWidth 在第 8 个字段
         rectangle.isLocked = fields.size() > 8 ? stringToBool(fields[8]) : false;
     }
 
@@ -706,7 +746,45 @@ void EasyedaImporter::importSvgNodeData(const QString &svgNodeData, QSharedPoint
 
     // 检查是否为外形轮廓（c_etype == "outline3D"）
     if (attrs.contains("c_etype") && attrs["c_etype"].toString() == "outline3D") {
-        // 这是外形轮廓，不是 3D 模型
+        // 这是外形轮廓，但同时也包含 3D 模型的 UUID
+        // 先提取 3D 模型的 UUID（从 SVGNODE attrs.uuid）
+        Model3DData model3D;
+        if (attrs.contains("uuid")) {
+            QString modelUuid = attrs["uuid"].toString();
+            model3D.setUuid(modelUuid);
+            model3D.setName(attrs.contains("title") ? attrs["title"].toString() : "");
+            
+            // 解析平移
+            if (attrs.contains("c_origin")) {
+                QString c_origin = attrs["c_origin"].toString();
+                QStringList originParts = c_origin.split(",");
+                if (originParts.size() >= 2) {
+                    Model3DBase translation;
+                    translation.x = originParts[0].toDouble();
+                    translation.y = originParts[1].toDouble();
+                    translation.z = attrs.contains("z") ? attrs["z"].toDouble() : 0.0;
+                    model3D.setTranslation(translation);
+                }
+            }
+            
+            // 解析旋转
+            if (attrs.contains("c_rotation")) {
+                QString c_rotation = attrs["c_rotation"].toString();
+                QStringList rotationParts = c_rotation.split(",");
+                if (rotationParts.size() >= 3) {
+                    Model3DBase rotation;
+                    rotation.x = rotationParts[0].toDouble();
+                    rotation.y = rotationParts[1].toDouble();
+                    rotation.z = rotationParts[2].toDouble();
+                    model3D.setRotation(rotation);
+                }
+            }
+            
+            footprintData->setModel3D(model3D);
+            qDebug() << "3D model info (from SVGNODE) - Name:" << model3D.name() << "UUID:" << model3D.uuid();
+        }
+        
+        // 然后解析外形轮廓
         FootprintOutline outline;
         outline.id = attrs["id"].toString();
         outline.strokeWidth = attrs.contains("c_width") ? attrs["c_width"].toString().toDouble() : 0.0;
@@ -738,7 +816,7 @@ void EasyedaImporter::importSvgNodeData(const QString &svgNodeData, QSharedPoint
         qDebug() << "Imported outline - Layer:" << outline.layerId 
                  << "Path length:" << outline.path.length();
     } else {
-        // 这是 3D 模型
+        // 这是 3D 模型（非 outline3D 类型）
         Model3DData model3D;
         model3D.setName(attrs.contains("title") ? attrs["title"].toString() : "");
         model3D.setUuid(attrs.contains("uuid") ? attrs["uuid"].toString() : "");

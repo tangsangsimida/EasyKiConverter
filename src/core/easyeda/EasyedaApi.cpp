@@ -5,7 +5,7 @@
 namespace EasyKiConverter {
 
 // API 端点
-static const QString API_ENDPOINT = "https://easyeda.com/api/products/%1/components?version=6.4.19.5";
+static const QString API_ENDPOINT = "https://easyeda.com/api/products/%1/components?version=6.5.51";
 static const QString ENDPOINT_3D_MODEL = "https://modules.easyeda.com/3dmodel/%1";
 static const QString ENDPOINT_3D_MODEL_STEP = "https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1";
 

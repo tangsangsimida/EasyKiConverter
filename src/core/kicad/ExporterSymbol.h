@@ -20,10 +20,9 @@ class ExporterSymbol : public QObject
 
 public:
     /**
-     * @brief KiCad 版本枚举
+     * @brief KiCad 版本枚举（仅支持 V6）
      */
     enum class KicadVersion {
-        V5 = 5,
         V6 = 6
     };
     Q_ENUM(KicadVersion)
@@ -45,10 +44,9 @@ public:
      *
      * @param symbolData 符号数据
      * @param filePath 输出文件路径
-     * @param version KiCad 版本
      * @return bool 是否成功
      */
-    bool exportSymbol(const SymbolData &symbolData, const QString &filePath, KicadVersion version = KicadVersion::V6);
+    bool exportSymbol(const SymbolData &symbolData, const QString &filePath);
 
     /**
      * @brief 导出多个符号为 KiCad 符号库（追加模式）
@@ -56,118 +54,93 @@ public:
      * @param symbols 符号列表
      * @param libName 库名称
      * @param filePath 输出文件路径
-     * @param version KiCad 版本
      * @param appendMode 是否使用追加模式（默认 true）
      * @return bool 是否成功
      */
-    bool exportSymbolLibrary(const QList<SymbolData> &symbols, const QString &libName, const QString &filePath, KicadVersion version = KicadVersion::V6, bool appendMode = true);
-
-    /**
-     * @brief 设置 KiCad 版本
-     *
-     * @param version KiCad 版本
-     */
-    void setKicadVersion(KicadVersion version);
-
-    /**
-     * @brief 获取 KiCad 版本
-     *
-     * @return KicadVersion KiCad 版本
-     */
-    KicadVersion getKicadVersion() const;
+    bool exportSymbolLibrary(const QList<SymbolData> &symbols, const QString &libName, const QString &filePath, bool appendMode = true);
 
 private:
     /**
      * @brief 生成 KiCad 符号头
      *
      * @param libName 库名称
-     * @param version KiCad 版本
      * @return QString 头部文本
      */
-    QString generateHeader(const QString &libName, KicadVersion version) const;
+    QString generateHeader(const QString &libName) const;
 
     /**
      * @brief 生成 KiCad 符号内容
      *
      * @param symbolData 符号数据
      * @param libName 库名称（用于 Footprint 前缀）
-     * @param version KiCad 版本
      * @return QString 符号内容
      */
-    QString generateSymbolContent(const SymbolData &symbolData, const QString &libName, KicadVersion version) const;
+    QString generateSymbolContent(const SymbolData &symbolData, const QString &libName) const;
 
     /**
      * @brief 生成 KiCad 引脚
      *
      * @param pin 引脚数据
      * @param bbox 边界框
-     * @param version KiCad 版本
      * @return QString 引脚文本
      */
-    QString generatePin(const SymbolPin &pin, const SymbolBBox &bbox, KicadVersion version) const;
+    QString generatePin(const SymbolPin &pin, const SymbolBBox &bbox) const;
 
     /**
      * @brief 生成 KiCad 矩形
      *
      * @param rect 矩形数据
-     * @param version KiCad 版本
      * @return QString 矩形文本
      */
-    QString generateRectangle(const SymbolRectangle &rect, KicadVersion version) const;
+    QString generateRectangle(const SymbolRectangle &rect) const;
 
     /**
      * @brief 生成 KiCad 圆
      *
      * @param circle 圆数据
-     * @param version KiCad 版本
      * @return QString 圆文本
      */
-    QString generateCircle(const SymbolCircle &circle, KicadVersion version) const;
+    QString generateCircle(const SymbolCircle &circle) const;
 
     /**
      * @brief 生成 KiCad 圆弧
      *
      * @param arc 圆弧数据
-     * @param version KiCad 版本
      * @return QString 圆弧文本
      */
-    QString generateArc(const SymbolArc &arc, KicadVersion version) const;
+    QString generateArc(const SymbolArc &arc) const;
 
     /**
      * @brief 生成 KiCad 椭圆
      *
      * @param ellipse 椭圆数据
-     * @param version KiCad 版本
      * @return QString 椭圆文本
      */
-    QString generateEllipse(const SymbolEllipse &ellipse, KicadVersion version) const;
+    QString generateEllipse(const SymbolEllipse &ellipse) const;
 
     /**
      * @brief 生成 KiCad 多边形
      *
      * @param polygon 多边形数据
-     * @param version KiCad 版本
      * @return QString 多边形文本
      */
-    QString generatePolygon(const SymbolPolygon &polygon, KicadVersion version) const;
+    QString generatePolygon(const SymbolPolygon &polygon) const;
 
     /**
      * @brief 生成 KiCad 多段线
      *
      * @param polyline 多段线数据
-     * @param version KiCad 版本
      * @return QString 多段线文本
      */
-    QString generatePolyline(const SymbolPolyline &polyline, KicadVersion version) const;
+    QString generatePolyline(const SymbolPolyline &polyline) const;
 
     /**
      * @brief 生成 KiCad 路径
      *
      * @param path 路径数据
-     * @param version KiCad 版本
      * @return QString 路径文本
      */
-    QString generatePath(const SymbolPath &path, KicadVersion version) const;
+    QString generatePath(const SymbolPath &path) const;
 
     /**
      * @brief 将像素转换为 mil
@@ -209,16 +182,7 @@ private:
      */
     QString rotationToKicadOrientation(int rotation) const;
 
-    /**
-     * @brief 根据引脚名称智能推断电气类型
-     *
-     * @param pinName 引脚名称
-     * @return PinType 推断的引脚电气类型
-     */
-    PinType inferPinType(const QString &pinName) const;
-
-private:
-    KicadVersion m_kicadVersion;
+    private:
     mutable SymbolBBox m_currentBBox;  // 当前处理的边界框
 };
 

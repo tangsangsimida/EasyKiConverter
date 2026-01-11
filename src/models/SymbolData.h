@@ -64,6 +64,8 @@ struct SymbolInfo {
 struct SymbolBBox {
     double x;
     double y;
+    double width;
+    double height;
 
     QJsonObject toJson() const;
     bool fromJson(const QJsonObject &json);

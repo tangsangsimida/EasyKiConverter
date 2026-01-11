@@ -129,7 +129,7 @@ bool ExportWorker::exportSymbolLibrary()
             symbolList,
             m_libName,
             symbolFilePath,
-            static_cast<ExporterSymbol::KicadVersion>(m_kicadVersion)
+            true  // appendMode
         );
         
         if (success) {

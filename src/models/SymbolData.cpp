@@ -177,6 +177,8 @@ QJsonObject SymbolBBox::toJson() const
     QJsonObject json;
     json["x"] = x;
     json["y"] = y;
+    json["width"] = width;
+    json["height"] = height;
     return json;
 }
 
@@ -184,6 +186,8 @@ bool SymbolBBox::fromJson(const QJsonObject &json)
 {
     x = json["x"].toDouble(0.0);
     y = json["y"].toDouble(0.0);
+    width = json["width"].toDouble(0.0);
+    height = json["height"].toDouble(0.0);
     return true;
 }
 

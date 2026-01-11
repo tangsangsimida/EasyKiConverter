@@ -19,15 +19,6 @@
 
 namespace EasyKiConverter {
 
-// 临时调试宏定义(非必要不使用) - 用于导出解析过程中的数据
-// 定义该宏后，会在导出目录的 debug_data 文件夹中保存：
-// - 原始 JSON 数据
-// - 解析的符号数据
-// - 解析的封装数据
-// - 导出的符号数据
-// - 导出的封装数据
-#define ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
-
 // 前置声明
 class MainController;
 

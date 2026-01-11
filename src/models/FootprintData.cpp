@@ -29,6 +29,8 @@ QJsonObject FootprintBBox::toJson() const
     QJsonObject json;
     json["x"] = x;
     json["y"] = y;
+    json["width"] = width;
+    json["height"] = height;
     return json;
 }
 
@@ -36,6 +38,8 @@ bool FootprintBBox::fromJson(const QJsonObject &json)
 {
     x = json["x"].toDouble();
     y = json["y"].toDouble();
+    width = json["width"].toDouble();
+    height = json["height"].toDouble();
     return true;
 }
 

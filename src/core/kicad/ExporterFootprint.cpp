@@ -173,9 +173,9 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
         }
     }
 
-    // Get bounding box offset
-    double bboxX = footprintData.bbox().x;
-    double bboxY = footprintData.bbox().y;
+    // Get bounding box center offset (use center as origin instead of top-left corner)
+    double bboxX = footprintData.bbox().x + footprintData.bbox().width / 2;
+    double bboxY = footprintData.bbox().y + footprintData.bbox().height / 2;
 
     // Reference text
     content += QString("\t(fp_text reference REF** (at 0 %1) (layer F.SilkS)\n").arg(pxToMm(yLow - bboxY - 4));
@@ -197,26 +197,32 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
     int silkScreenGraphicsCount = 0;
 
     // 检查丝印层是否有任何图形元素（tracks, circles, rectangles, arcs）
+    // 使用 layerIdToKicad 函数来判断哪些层应该被视为丝印层
+    auto isSilkScreenLayer = [this](int layerId) -> bool {
+        QString kicadLayer = layerIdToKicad(layerId);
+        return kicadLayer == "F.SilkS" || kicadLayer == "B.SilkS";
+    };
+
     for (const FootprintTrack &track : footprintData.tracks()) {
-        if (track.layerId == 3 || track.layerId == 4) { // F.SilkS 或 B.SilkS
+        if (isSilkScreenLayer(track.layerId)) {
             silkScreenHasAnyGraphics = true;
             silkScreenGraphicsCount++;
         }
     }
     for (const FootprintCircle &circle : footprintData.circles()) {
-        if (circle.layerId == 3 || circle.layerId == 4) {
+        if (isSilkScreenLayer(circle.layerId)) {
             silkScreenHasAnyGraphics = true;
             silkScreenGraphicsCount++;
         }
     }
     for (const FootprintRectangle &rect : footprintData.rectangles()) {
-        if (rect.layerId == 3 || rect.layerId == 4) {
+        if (isSilkScreenLayer(rect.layerId)) {
             silkScreenHasAnyGraphics = true;
             silkScreenGraphicsCount++;
         }
     }
     for (const FootprintArc &arc : footprintData.arcs()) {
-        if (arc.layerId == 3 || arc.layerId == 4) {
+        if (isSilkScreenLayer(arc.layerId)) {
             silkScreenHasAnyGraphics = true;
             silkScreenGraphicsCount++;
         }
@@ -243,23 +249,42 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
 
     // 生成丝印层图形元素
     for (const FootprintTrack &track : footprintData.tracks()) {
-        if (track.layerId == 3 || track.layerId == 4) { // F.SilkS 或 B.SilkS
+        if (isSilkScreenLayer(track.layerId)) {
             content += generateTrack(track, bboxX, bboxY);
         }
     }
     for (const FootprintCircle &circle : footprintData.circles()) {
-        if (circle.layerId == 3 || circle.layerId == 4) {
+        if (isSilkScreenLayer(circle.layerId)) {
             content += generateCircle(circle, bboxX, bboxY);
         }
     }
     for (const FootprintRectangle &rect : footprintData.rectangles()) {
-        if (rect.layerId == 3 || rect.layerId == 4) {
+        if (isSilkScreenLayer(rect.layerId)) {
             content += generateRectangle(rect, bboxX, bboxY);
         }
     }
     for (const FootprintArc &arc : footprintData.arcs()) {
-        if (arc.layerId == 3 || arc.layerId == 4) {
+        if (isSilkScreenLayer(arc.layerId)) {
             content += generateArc(arc, bboxX, bboxY);
+        }
+    }
+
+    // 为 layer=100 (LeadShapeLayer) 的 CIRCLE 额外生成 F.SilkS 版本（引脚丝印标记）
+    // 为 layer=101 (ComponentPolarityLayer) 的 CIRCLE 放大直径（极性标记）
+    for (const FootprintCircle &circle : footprintData.circles()) {
+        if (circle.layerId == 100) {
+            // 复制 circle 并修改 layerId 为 3 (F.SilkS)
+            FootprintCircle silkCircle = circle;
+            silkCircle.layerId = 3;
+            content += generateCircle(silkCircle, bboxX, bboxY);
+            qDebug() << "  Duplicated circle from layer 100 (LeadShapeLayer) to F.SilkS";
+        } else if (circle.layerId == 101) {
+            // 极性标记圆，放大直径到 0.5mm
+            FootprintCircle enlargedCircle = circle;
+            enlargedCircle.radius = 0.25; // 半径 0.25mm，直径 0.5mm
+            enlargedCircle.strokeWidth = 0.06; // 线宽 0.06mm
+            content += generateCircle(enlargedCircle, bboxX, bboxY);
+            qDebug() << "  Enlarged polarity circle from layer 101 to 0.5mm diameter";
         }
     }
 
@@ -774,6 +799,10 @@ QString ExporterFootprint::layerIdToKicad(int layerId) const
             return "Eco1.User";      // Eco1
         case 22:
             return "Eco2.User";      // Eco2
+        case 100:
+            return "F.Fab";          // Lead Shape Layer (引脚形状层) - 同时也会生成 F.SilkS 版本
+        case 101:
+            return "F.SilkS";        // Component Polarity Layer (极性标记层)
         default:
             // 默认使用 F.Fab 层，避免丢失数据
             qWarning() << "Unknown layer ID:" << layerId << ", defaulting to F.Fab";

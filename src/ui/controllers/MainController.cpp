@@ -495,8 +495,7 @@ void MainController::processNextComponent()
             
             qDebug() << "Exporting" << newSymbols.count() << "new symbols";
             
-            if (m_exporterSymbol->exportSymbolLibrary(newSymbols, m_libName, symbolFilePath,
-                ExporterSymbol::KicadVersion::V6, true)) { // true = 追加模式
+            if (m_exporterSymbol->exportSymbolLibrary(newSymbols, m_libName, symbolFilePath, true)) { // true = 追加模式
                 qDebug() << "Symbol library exported successfully";
             } else {
                 qDebug() << "Symbol library export FAILED";
@@ -573,9 +572,13 @@ void MainController::handleCadDataFetched(const QJsonObject &data)
     qDebug() << "CAD data fetched for:" << componentId;
 
 #ifdef ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
+    qDebug() << "DEBUG EXPORT IS ENABLED";
     // 保存原始 JSON 数据
     QJsonDocument jsonDoc(data);
+    qDebug() << "About to call saveDebugData for:" << componentId;
     saveDebugData(componentId, "raw", "cad_data.json", jsonDoc.toJson(QJsonDocument::Indented));
+#else
+    qDebug() << "DEBUG EXPORT IS DISABLED!";
 #endif
 
     // 导入符号和封装数据
@@ -600,7 +603,8 @@ void MainController::handleCadDataFetched(const QJsonObject &data)
     symbolStream << "Polylines count: " << symbolData->polylines().count() << "\n";
     symbolStream << "Paths count: " << symbolData->paths().count() << "\n";
     symbolStream << "Ellipses count: " << symbolData->ellipses().count() << "\n";
-    symbolStream << "BBox: x=" << symbolData->bbox().x << ", y=" << symbolData->bbox().y << "\n";
+    symbolStream << "BBox: x=" << symbolData->bbox().x << ", y=" << symbolData->bbox().y 
+                 << ", width=" << symbolData->bbox().width << ", height=" << symbolData->bbox().height << "\n";
     saveDebugData(componentId, "parsed", "symbol_data.txt", symbolDebugInfo);
 
     // 保存解析的封装数据
@@ -619,7 +623,8 @@ void MainController::handleCadDataFetched(const QJsonObject &data)
     footprintStream << "Texts count: " << footprintData->texts().count() << "\n";
     footprintStream << "3D Model UUID: " << footprintData->model3D().uuid() << "\n";
     footprintStream << "3D Model Name: " << footprintData->model3D().name() << "\n";
-    footprintStream << "BBox: x=" << footprintData->bbox().x << ", y=" << footprintData->bbox().y << "\n";
+    footprintStream << "BBox: x=" << footprintData->bbox().x << ", y=" << footprintData->bbox().y 
+                    << ", width=" << footprintData->bbox().width << ", height=" << footprintData->bbox().height << "\n";
     saveDebugData(componentId, "parsed", "footprint_data.txt", footprintDebugInfo);
 #endif
 
@@ -816,7 +821,6 @@ bool MainController::exportAllCollectedData()
             qWarning() << "No symbols to export";
         } else {
             QString symbolPath = QString("%1/%2.kicad_sym").arg(m_outputPath, m_libName);
-            ExporterSymbol::KicadVersion version = ExporterSymbol::KicadVersion::V6;
             
             // 检查符号库是否已存在
             QSet<QString> existingSymbols;
@@ -853,7 +857,7 @@ bool MainController::exportAllCollectedData()
                 qDebug() << "No new symbols to export";
             } else {
                 qDebug() << "Exporting" << symbolsToExport.size() << "new symbols";
-                if (!m_exporterSymbol->exportSymbolLibrary(symbolsToExport, m_libName, symbolPath, version)) {
+                if (!m_exporterSymbol->exportSymbolLibrary(symbolsToExport, m_libName, symbolPath, true)) {
                     qWarning() << "Failed to export symbol library";
                     return false;
                 }
@@ -1436,19 +1440,141 @@ void ComponentExportTask::run()
         // 导入数据
         QSharedPointer<SymbolData> symbolDataPtr = importer->importSymbolData(resultData);
         QSharedPointer<FootprintData> footprintDataPtr = importer->importFootprintData(resultData);
-        
+
         if (!symbolDataPtr || !footprintDataPtr) {
             emit dataCollected(m_componentId, false, "Failed to import component data");
             delete api;
             delete importer;
             return;
         }
-        
+
         SymbolData symbolData = *symbolDataPtr;
         FootprintData footprintData = *footprintDataPtr;
-        
+
         qDebug() << "Imported symbol - Name:" << symbolData.info().name;
         qDebug() << "Imported footprint - Name:" << footprintData.info().name;
+
+#ifdef ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
+        qDebug() << "DEBUG EXPORT IS ENABLED in ComponentExportTask";
+        // 保存原始 JSON 数据
+        QJsonDocument jsonDoc(resultData);
+        m_controller->saveDebugData(m_componentId, "raw", "cad_data.json", jsonDoc.toJson(QJsonDocument::Indented));
+        qDebug() << "About to call saveDebugData for:" << m_componentId;
+
+        // 保存解析的符号数据
+        QString symbolDebugInfo;
+        QTextStream symbolStream(&symbolDebugInfo);
+        symbolStream << "=== Symbol Data ===\n";
+        symbolStream << "Name: " << symbolData.info().name << "\n";
+        symbolStream << "Prefix: " << symbolData.info().prefix << "\n";
+        symbolStream << "Package: " << symbolData.info().package << "\n";
+        symbolStream << "Manufacturer: " << symbolData.info().manufacturer << "\n";
+        symbolStream << "LCSC ID: " << symbolData.info().lcscId << "\n";
+        symbolStream << "Datasheet: " << symbolData.info().datasheet << "\n";
+        symbolStream << "\n=== BBox ===\n";
+        symbolStream << "x=" << symbolData.bbox().x << ", y=" << symbolData.bbox().y
+                     << ", width=" << symbolData.bbox().width << ", height=" << symbolData.bbox().height << "\n";
+        symbolStream << "\n=== Pins (" << symbolData.pins().count() << ") ===\n";
+        for (int i = 0; i < symbolData.pins().count(); ++i) {
+            auto pin = symbolData.pins()[i];
+            symbolStream << "  [" << i << "] Number:" << pin.settings.spicePinNumber
+                         << " Name:" << pin.name.text
+                         << " Pos:(" << pin.settings.posX << "," << pin.settings.posY << ")"
+                         << " Rotation:" << pin.settings.rotation << "\n";
+        }
+        symbolStream << "\n=== Rectangles (" << symbolData.rectangles().count() << ") ===\n";
+        for (int i = 0; i < symbolData.rectangles().count(); ++i) {
+            auto rect = symbolData.rectangles()[i];
+            symbolStream << "  [" << i << "] Pos:(" << rect.posX << "," << rect.posY << ")"
+                         << " Size:" << rect.width << "x" << rect.height
+                         << " Color:" << rect.strokeColor << " Fill:" << rect.fillColor << "\n";
+        }
+        symbolStream << "\n=== Circles (" << symbolData.circles().count() << ") ===\n";
+        for (int i = 0; i < symbolData.circles().count(); ++i) {
+            auto circle = symbolData.circles()[i];
+            symbolStream << "  [" << i << "] Center:(" << circle.centerX << "," << circle.centerY << ")"
+                         << " Radius:" << circle.radius
+                         << " Color:" << circle.strokeColor << " Fill:" << circle.fillColor << "\n";
+        }
+        symbolStream << "\n=== Polylines (" << symbolData.polylines().count() << ") ===\n";
+        for (int i = 0; i < symbolData.polylines().count(); ++i) {
+            auto polyline = symbolData.polylines()[i];
+            symbolStream << "  [" << i << "] Points:" << polyline.points
+                         << " Color:" << polyline.strokeColor << " Width:" << polyline.strokeWidth << "\n";
+        }
+        symbolStream << "\n=== Summary ===\n";
+        symbolStream << "Pins:" << symbolData.pins().count()
+                     << " Rectangles:" << symbolData.rectangles().count()
+                     << " Circles:" << symbolData.circles().count()
+                     << " Arcs:" << symbolData.arcs().count()
+                     << " Polygons:" << symbolData.polygons().count()
+                     << " Polylines:" << symbolData.polylines().count()
+                     << " Paths:" << symbolData.paths().count()
+                     << " Ellipses:" << symbolData.ellipses().count() << "\n";
+        m_controller->saveDebugData(m_componentId, "parsed", "symbol_data.txt", symbolDebugInfo);
+
+        // 保存解析的封装数据
+        QString footprintDebugInfo;
+        QTextStream footprintStream(&footprintDebugInfo);
+        footprintStream << "=== Footprint Data ===\n";
+        footprintStream << "Name: " << footprintData.info().name << "\n";
+        footprintStream << "Type: " << footprintData.info().type << "\n";
+        footprintStream << "3D Model Name: " << footprintData.info().model3DName << "\n";
+        footprintStream << "\n=== BBox ===\n";
+        footprintStream << "x=" << footprintData.bbox().x << ", y=" << footprintData.bbox().y
+                        << ", width=" << footprintData.bbox().width << ", height=" << footprintData.bbox().height << "\n";
+        footprintStream << "\n=== Pads (" << footprintData.pads().count() << ") ===\n";
+        for (int i = 0; i < footprintData.pads().count(); ++i) {
+            auto pad = footprintData.pads()[i];
+            footprintStream << "  [" << i << "] Number:" << pad.number
+                           << " Pos:(" << pad.centerX << "," << pad.centerY << ")"
+                           << " Size:" << pad.width << "x" << pad.height
+                           << " Shape:" << pad.shape << " Layer:" << pad.layerId << "\n";
+        }
+        footprintStream << "\n=== Tracks (" << footprintData.tracks().count() << ") ===\n";
+        for (int i = 0; i < qMin(5, footprintData.tracks().count()); ++i) {
+            auto track = footprintData.tracks()[i];
+            footprintStream << "  [" << i << "] Points:" << track.points
+                           << " Width:" << track.strokeWidth << " Layer:" << track.layerId << "\n";
+        }
+        if (footprintData.tracks().count() > 5) {
+            footprintStream << "  ... and " << (footprintData.tracks().count() - 5) << " more tracks\n";
+        }
+        footprintStream << "\n=== Circles (" << footprintData.circles().count() << ") ===\n";
+        for (int i = 0; i < qMin(5, footprintData.circles().count()); ++i) {
+            auto circle = footprintData.circles()[i];
+            footprintStream << "  [" << i << "] Center:(" << circle.cx << "," << circle.cy << ")"
+                           << " Radius:" << circle.radius << " Layer:" << circle.layerId << "\n";
+        }
+        if (footprintData.circles().count() > 5) {
+            footprintStream << "  ... and " << (footprintData.circles().count() - 5) << " more circles\n";
+        }
+        footprintStream << "\n=== Rectangles (" << footprintData.rectangles().count() << ") ===\n";
+        for (int i = 0; i < qMin(5, footprintData.rectangles().count()); ++i) {
+            auto rect = footprintData.rectangles()[i];
+            footprintStream << "  [" << i << "] Pos:(" << rect.x << "," << rect.y << ")"
+                           << " Size:" << rect.width << "x" << rect.height << " Layer:" << rect.layerId << "\n";
+        }
+        if (footprintData.rectangles().count() > 5) {
+            footprintStream << "  ... and " << (footprintData.rectangles().count() - 5) << " more rectangles\n";
+        }
+        footprintStream << "\n=== 3D Model ===\n";
+        footprintStream << "UUID: " << footprintData.model3D().uuid() << "\n";
+        footprintStream << "Name: " << footprintData.model3D().name() << "\n";
+        footprintStream << "\n=== Summary ===\n";
+        footprintStream << "Pads:" << footprintData.pads().count()
+                       << " Tracks:" << footprintData.tracks().count()
+                       << " Holes:" << footprintData.holes().count()
+                       << " Circles:" << footprintData.circles().count()
+                       << " Rectangles:" << footprintData.rectangles().count()
+                       << " Arcs:" << footprintData.arcs().count()
+                       << " Texts:" << footprintData.texts().count()
+                       << " SolidRegions:" << footprintData.solidRegions().count()
+                       << " Outlines:" << footprintData.outlines().count() << "\n";
+        m_controller->saveDebugData(m_componentId, "parsed", "footprint_data.txt", footprintDebugInfo);
+#else
+        qDebug() << "DEBUG EXPORT IS DISABLED in ComponentExportTask!";
+#endif
 
         // 收集 3D 模型数据
         QByteArray objData;
@@ -1572,10 +1698,14 @@ void ComponentExportTask::run()
 #ifdef ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
 QString MainController::getDebugDataDir(const QString &componentId) const
 {
-    QString debugDir = QString("%1/debug_data/%2").arg(m_outputPath, componentId);
+    // 如果 m_outputPath 为空，使用当前工作目录
+    QString basePath = m_outputPath.isEmpty() ? QDir::currentPath() : m_outputPath;
+    QString debugDir = QString("%1/debug_data/%2").arg(basePath, componentId);
     QDir dir;
     if (!dir.exists(debugDir)) {
-        dir.mkpath(debugDir);
+        if (!dir.mkpath(debugDir)) {
+            qWarning() << "Failed to create debug directory:" << debugDir;
+        }
     }
     return debugDir;
 }
@@ -1585,15 +1715,19 @@ void MainController::saveDebugData(const QString &componentId, const QString &da
     QString debugDir = getDebugDataDir(componentId);
     QString filePath = QString("%1/%2_%3").arg(debugDir, dataType, filename);
 
+    qDebug() << "Attempting to save debug data to:" << filePath;
+    qDebug() << "Content length:" << content.length();
+
     QFile file(filePath);
     if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream out(&file);
         out.setEncoding(QStringConverter::Utf8);
         out << content;
         file.close();
-        qDebug() << "Debug data saved to:" << filePath;
+        qDebug() << "Debug data saved successfully to:" << filePath;
     } else {
         qWarning() << "Failed to save debug data to:" << filePath;
+        qWarning() << "Error:" << file.errorString();
     }
 }
 #endif

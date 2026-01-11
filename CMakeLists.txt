@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # 调试选项：启用符号和封装解析数据导出
-option(ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT "Enable debug export for symbol and footprint data" OFF)
+option(ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT "Enable debug export for symbol and footprint data" ON)
 
 if(ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT)
     message(STATUS "Symbol and footprint debug export is ENABLED")
@@ -104,6 +104,14 @@ qt_add_executable(appEasyKiconverter_Cpp_Version
     ${SOURCES}
     ${HEADERS}
 )
+
+# 添加编译定义
+if(ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT)
+    message(STATUS "Symbol and footprint debug export is ENABLED")
+    target_compile_definitions(appEasyKiconverter_Cpp_Version PRIVATE ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT)
+else()
+    message(STATUS "Symbol and footprint debug export is DISABLED")
+endif()
 
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
