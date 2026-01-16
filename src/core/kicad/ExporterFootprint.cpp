@@ -8,9 +8,6 @@
 
 namespace EasyKiConverter {
 
-// 初始化静态成员：默认只复制板框层（层10）
-QSet<int> ExporterFootprint::s_silkscreenDuplicateLayers = {10};
-
 ExporterFootprint::ExporterFootprint(QObject *parent)
     : QObject(parent)
 {
@@ -18,23 +15,6 @@ ExporterFootprint::ExporterFootprint(QObject *parent)
 
 ExporterFootprint::~ExporterFootprint()
 {
-}
-
-void ExporterFootprint::setSilkscreenDuplicateLayers(const QSet<int> &layers)
-{
-    s_silkscreenDuplicateLayers = layers;
-    qDebug() << "Silkscreen duplicate layers set to:" << layers;
-}
-
-QSet<int> ExporterFootprint::getSilkscreenDuplicateLayers()
-{
-    return s_silkscreenDuplicateLayers;
-}
-
-void ExporterFootprint::resetDuplicateLayersToDefault()
-{
-    s_silkscreenDuplicateLayers = {10}; // 默认只复制板框层
-    qDebug() << "Silkscreen duplicate layers reset to default (BoardOutLine only)";
 }
 
 bool ExporterFootprint::exportFootprint(const FootprintData &footprintData, const QString &filePath, const QString &model3DPath)
@@ -199,236 +179,15 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
     // User reference (Fab layer)
     content += "\t(fp_text user %R (at 0 0) (layer F.Fab)\n";
     content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
-    content += "\t)\n";
-
-    // 检查丝印层是否只有文字
-    bool silkScreenHasAnyGraphics = false;
-    int silkScreenGraphicsCount = 0;
-
-    // 检查丝印层是否有任何图形元素（tracks, circles, rectangles, arcs）
-    // 使用 layerIdToKicad 函数来判断哪些层应该被视为丝印层
-    auto isSilkScreenLayer = [this](int layerId) -> bool {
-        QString kicadLayer = layerIdToKicad(layerId);
-        return kicadLayer == "F.SilkS" || kicadLayer == "B.SilkS";
-    };
-
-    for (const FootprintTrack &track : footprintData.tracks()) {
-        if (isSilkScreenLayer(track.layerId)) {
-            silkScreenHasAnyGraphics = true;
-            silkScreenGraphicsCount++;
-        }
-    }
-    for (const FootprintCircle &circle : footprintData.circles()) {
-        if (isSilkScreenLayer(circle.layerId)) {
-            silkScreenHasAnyGraphics = true;
-            silkScreenGraphicsCount++;
-        }
-    }
-    for (const FootprintRectangle &rect : footprintData.rectangles()) {
-        if (isSilkScreenLayer(rect.layerId)) {
-            silkScreenHasAnyGraphics = true;
-            silkScreenGraphicsCount++;
-        }
-    }
-    for (const FootprintArc &arc : footprintData.arcs()) {
-        if (isSilkScreenLayer(arc.layerId)) {
-            silkScreenHasAnyGraphics = true;
-            silkScreenGraphicsCount++;
-        }
-    }
-
-    qDebug() << "Silkscreen check - Has graphics:" << silkScreenHasAnyGraphics << "Count:" << silkScreenGraphicsCount;
-
-    // 检查 Fab 层有多少图形元素
-    int fabGraphicsCount = 0;
-    for (const FootprintTrack &track : footprintData.tracks()) {
-        if (track.layerId == 13) fabGraphicsCount++;
-    }
-    for (const FootprintCircle &circle : footprintData.circles()) {
-        if (circle.layerId == 13) fabGraphicsCount++;
-    }
-    for (const FootprintRectangle &rect : footprintData.rectangles()) {
-        if (rect.layerId == 13) fabGraphicsCount++;
-    }
-    for (const FootprintArc &arc : footprintData.arcs()) {
-        if (arc.layerId == 13) fabGraphicsCount++;
-    }
-
-    qDebug() << "Fab layer graphics count:" << fabGraphicsCount;
-
-    // 生成丝印层图形元素
-    for (const FootprintTrack &track : footprintData.tracks()) {
-        if (isSilkScreenLayer(track.layerId)) {
+        content += "\t)\n";
+    
+        // 生成所有图形元素（tracks + rectangles）
+        for (const FootprintTrack &track : footprintData.tracks()) {
             content += generateTrack(track, bboxX, bboxY);
         }
-    }
-    for (const FootprintCircle &circle : footprintData.circles()) {
-        if (isSilkScreenLayer(circle.layerId)) {
-            content += generateCircle(circle, bboxX, bboxY);
-        }
-    }
-    for (const FootprintRectangle &rect : footprintData.rectangles()) {
-        if (isSilkScreenLayer(rect.layerId)) {
+        for (const FootprintRectangle &rect : footprintData.rectangles()) {
             content += generateRectangle(rect, bboxX, bboxY);
         }
-    }
-    for (const FootprintArc &arc : footprintData.arcs()) {
-        if (isSilkScreenLayer(arc.layerId)) {
-            content += generateArc(arc, bboxX, bboxY);
-        }
-    }
-
-    // 为 layer=100 (LeadShapeLayer) 的 CIRCLE 额外生成 F.SilkS 版本（引脚丝印标记）
-    // 为 layer=101 (ComponentPolarityLayer) 的 CIRCLE 放大直径（极性标记）
-    for (const FootprintCircle &circle : footprintData.circles()) {
-        if (circle.layerId == 100) {
-            // 复制 circle 并修改 layerId 为 3 (F.SilkS)
-            FootprintCircle silkCircle = circle;
-            silkCircle.layerId = 3;
-            content += generateCircle(silkCircle, bboxX, bboxY);
-            qDebug() << "  Duplicated circle from layer 100 (LeadShapeLayer) to F.SilkS";
-        } else if (circle.layerId == 101) {
-            // 极性标记圆，放大直径到 0.5mm
-            FootprintCircle enlargedCircle = circle;
-            enlargedCircle.radius = 0.25; // 半径 0.25mm，直径 0.5mm
-            enlargedCircle.strokeWidth = 0.06; // 线宽 0.06mm
-            content += generateCircle(enlargedCircle, bboxX, bboxY);
-            qDebug() << "  Enlarged polarity circle from layer 101 to 0.5mm diameter";
-        }
-    }
-
-    // 如果丝印层没有图形元素，将其他层的图形复制到 F.SilkS 层
-    if (!silkScreenHasAnyGraphics) {
-        qDebug() << "Silkscreen has no graphics, duplicating graphics from other layers to F.SilkS";
-
-        int duplicatedCount = 0;
-
-        // 检查所有层，打印有图形的层
-        qDebug() << "=== Checking all layers for graphics ===";
-        QSet<int> layersWithGraphics;
-        for (const FootprintTrack &track : footprintData.tracks()) {
-            if (track.layerId != 3 && track.layerId != 4 && !track.points.isEmpty()) {
-                layersWithGraphics.insert(track.layerId);
-            }
-        }
-        for (const FootprintCircle &circle : footprintData.circles()) {
-            if (circle.layerId != 3 && circle.layerId != 4) {
-                layersWithGraphics.insert(circle.layerId);
-            }
-        }
-        for (const FootprintRectangle &rect : footprintData.rectangles()) {
-            if (rect.layerId != 3 && rect.layerId != 4) {
-                layersWithGraphics.insert(rect.layerId);
-            }
-        }
-        for (const FootprintArc &arc : footprintData.arcs()) {
-            if (arc.layerId != 3 && arc.layerId != 4 && !arc.path.isEmpty()) {
-                layersWithGraphics.insert(arc.layerId);
-            }
-        }
-
-        if (!layersWithGraphics.isEmpty()) {
-            qDebug() << "Layers with graphics:";
-            for (int layerId : layersWithGraphics) {
-                QString layerName = layerIdToKicad(layerId);
-                int trackCount = 0, circleCount = 0, rectCount = 0, arcCount = 0;
-                
-                // 统计每种图形的数量
-                for (const FootprintTrack &track : footprintData.tracks()) {
-                    if (track.layerId == layerId && !track.points.isEmpty()) trackCount++;
-                }
-                for (const FootprintCircle &circle : footprintData.circles()) {
-                    if (circle.layerId == layerId) circleCount++;
-                }
-                for (const FootprintRectangle &rect : footprintData.rectangles()) {
-                    if (rect.layerId == layerId) rectCount++;
-                }
-                for (const FootprintArc &arc : footprintData.arcs()) {
-                    if (arc.layerId == layerId && !arc.path.isEmpty()) arcCount++;
-                }
-                
-                int totalCount = trackCount + circleCount + rectCount + arcCount;
-                qDebug() << "  Layer" << layerId << "(" << layerName << "):" 
-                         << totalCount << "graphics"
-                         << "[tracks:" << trackCount 
-                         << " circles:" << circleCount 
-                         << " rects:" << rectCount 
-                         << " arcs:" << arcCount << "]";
-            }
-        } else {
-            qDebug() << "No graphics found in any layer!";
-        }
-        qDebug() << "=== End layer check ===";
-
-        // 打印当前配置的复制层列表
-        qDebug() << "=== Silkscreen duplicate layers configuration ===";
-        qDebug() << "Configured layers:" << s_silkscreenDuplicateLayers;
-        for (int layerId : s_silkscreenDuplicateLayers) {
-            QString layerName = layerIdToKicad(layerId);
-            qDebug() << "  - Layer" << layerId << "(" << layerName << ")";
-        }
-        qDebug() << "=== End configuration ===";
-
-        // 判断一个层是否应该复制到丝印层（根据配置）
-        auto shouldDuplicateLayer = [](int layerId) -> bool {
-            return s_silkscreenDuplicateLayers.contains(layerId);
-        };
-
-        // 复制符合条件的层的 tracks（线条）
-        for (const FootprintTrack &track : footprintData.tracks()) {
-            if (shouldDuplicateLayer(track.layerId) && !track.points.isEmpty()) {
-                FootprintTrack tempTrack = track;
-                tempTrack.layerId = 3; // F.SilkS
-                content += generateTrack(tempTrack, bboxX, bboxY);
-                duplicatedCount++;
-                qDebug() << "  Duplicated track from layer" << track.layerId << "to F.SilkS";
-            }
-        }
-        // 复制符合条件的层的 circles（圆）
-        for (const FootprintCircle &circle : footprintData.circles()) {
-            if (shouldDuplicateLayer(circle.layerId)) {
-                FootprintCircle tempCircle = circle;
-                tempCircle.layerId = 3;
-                content += generateCircle(tempCircle, bboxX, bboxY);
-                duplicatedCount++;
-                qDebug() << "  Duplicated circle from layer" << circle.layerId << "to F.SilkS";
-            }
-        }
-        // 复制符合条件的层的 rectangles（矩形）
-        for (const FootprintRectangle &rect : footprintData.rectangles()) {
-            if (shouldDuplicateLayer(rect.layerId)) {
-                FootprintRectangle tempRect = rect;
-                tempRect.layerId = 3;
-                content += generateRectangle(tempRect, bboxX, bboxY);
-                duplicatedCount++;
-                qDebug() << "  Duplicated rectangle from layer" << rect.layerId << "to F.SilkS";
-            }
-        }
-        // 复制符合条件的层的 arcs（圆弧）
-        for (const FootprintArc &arc : footprintData.arcs()) {
-            if (shouldDuplicateLayer(arc.layerId) && !arc.path.isEmpty()) {
-                FootprintArc tempArc = arc;
-                tempArc.layerId = 3;
-                content += generateArc(tempArc, bboxX, bboxY);
-                duplicatedCount++;
-                qDebug() << "  Duplicated arc from layer" << arc.layerId << "to F.SilkS";
-            }
-        }
-
-        qDebug() << "Total duplicated graphics to F.SilkS:" << duplicatedCount;
-    }
-
-    // 生成 Fab 层图形元素（非丝印层）
-    for (const FootprintTrack &track : footprintData.tracks()) {
-        if (track.layerId != 3 && track.layerId != 4) { // 非丝印层
-            content += generateTrack(track, bboxX, bboxY);
-        }
-    }
-    for (const FootprintRectangle &rect : footprintData.rectangles()) {
-        if (rect.layerId != 3 && rect.layerId != 4) {
-            content += generateRectangle(rect, bboxX, bboxY);
-        }
-    }
 
     // Generate pads
     for (const FootprintPad &pad : footprintData.pads()) {
@@ -476,24 +235,6 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
     double height = pxToMm(pad.height);
     double holeRadius = pxToMm(pad.holeRadius);
 
-    // 智能判断焊盘形状：当 width 和 height 相等时使用 circle
-    QString kicadShape;
-    if (qAbs(width - height) < 1e-3) {
-        kicadShape = "circle";
-    } else {
-        kicadShape = padShapeToKicad(pad.shape);
-    }
-
-    QString kicadType = padTypeToKicad(pad.layerId);
-    QString layers = padLayersToKicad(pad.layerId);
-    
-    QString drillStr;
-    if (holeRadius > 0) {
-        double drillDiameter = holeRadius * 2;
-        // 限制为2位小数，避免精度冗余（如 2.30002）
-        drillStr = QString(" (drill %1)").arg(drillDiameter, 0, 'f', 2);
-    }
-
     // Process pad number: extract content between parentheses if present
     QString padNumber = pad.number;
     if (padNumber.contains("(") && padNumber.contains(")")) {
@@ -508,13 +249,72 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
         rotation = rotation - 360.0;
     }
 
-    // Ensure minimum size
-    width = qMax(width, 0.01);
-    height = qMax(height, 0.01);
+    // Check if this is a custom polygon pad
+    bool isCustomShape = (padShapeToKicad(pad.shape) == "custom");
+    QString polygonStr;
+
+    if (isCustomShape) {
+        // Parse points for custom polygon
+        QStringList pointList = pad.points.split(" ", Qt::SkipEmptyParts);
+
+        if (pointList.isEmpty()) {
+            qWarning() << "Pad" << pad.id << "is a custom polygon, but has no points defined";
+        } else {
+            // Set the pad width and height to the smallest value allowed by KiCad
+            // KiCad tries to draw a pad that forms the base of the polygon,
+            // but this is often unnecessary and should be disabled
+            width = 0.005;
+            height = 0.005;
+
+            // The points of the polygon always seem to correspond to coordinates when orientation=0
+            rotation = 0.0;
+
+            // Generate polygon with coordinates relative to the base pad's position
+            // Convert points from pixels to mm and make them relative to pad position
+            QString path;
+            for (int i = 0; i < pointList.size(); i += 2) {
+                if (i + 1 < pointList.size()) {
+                    double px = pointList[i].toDouble();
+                    double py = pointList[i + 1].toDouble();
+
+                    // Convert to mm and make relative to pad position
+                    double relX = pxToMm(px - bboxX) - x;
+                    double relY = pxToMm(py - bboxY) - y;
+
+                    path += QString("(xy %1 %2) ").arg(relX, 0, 'f', 2).arg(relY, 0, 'f', 2);
+                }
+            }
+
+            polygonStr = QString("\n\t\t(primitives \n\t\t\t(gr_poly \n\t\t\t\t(pts %1) \n\t\t\t\t(width 0.1) \n\t\t)\n\t)\n\t").arg(path);
+        }
+    } else {
+        // 智能判断焊盘形状：当 width 和 height 相等时使用 circle
+        width = qMax(width, 0.01);
+        height = qMax(height, 0.01);
+    }
+
+    QString kicadShape;
+    if (isCustomShape) {
+        kicadShape = "custom";
+    } else if (qAbs(width - height) < 1e-3) {
+        kicadShape = "circle";
+    } else {
+        kicadShape = padShapeToKicad(pad.shape);
+    }
+
+    QString kicadType = padTypeToKicad(pad.layerId);
+    QString layers = padLayersToKicad(pad.layerId);
+
+    QString drillStr;
+    if (holeRadius > 0) {
+        double drillDiameter = holeRadius * 2;
+        // 限制为2位小数，避免精度冗余（如 2.30002）
+        drillStr = QString(" (drill %1)").arg(drillDiameter, 0, 'f', 2);
+    }
 
     // KiCad 6.x format - match Python version exactly
-    // Note: No quotes around pad number, use rect instead of custom
-    content += QString("\t(pad %1 %2 %3 (at %4 %5 %6) (size %7 %8) (layers %9)%10)\n")
+    // Note: No quotes around pad number
+    content += QString("\t(pad %1 %2 %3 (at %4 %5 %6) (size %7 %8) (layers %9)%10%11)\n")
         .arg(padNumber)
         .arg(kicadType)
         .arg(kicadShape)
@@ -524,7 +324,8 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
         .arg(width, 0, 'f', 2)
         .arg(height, 0, 'f', 2)
         .arg(layers)
-        .arg(drillStr);
+        .arg(drillStr)
+        .arg(polygonStr);
 
     return content;
 }
@@ -635,28 +436,67 @@ QString ExporterFootprint::generateRectangle(const FootprintRectangle &rectangle
 QString ExporterFootprint::generateArc(const FootprintArc &arc, double bboxX, double bboxY) const
 {
     QString content;
-    
-    // Parse path string to extract arc points (simplified - just use first and last points)
-    QStringList pointList = arc.path.split(" ", Qt::SkipEmptyParts);
-    
-    // KiCad 5.x format (simplified - just a line for now)
-    if (pointList.size() >= 4) {
-        bool ok1, ok2, ok3, ok4;
-        double startX = pxToMm(pointList[0].toDouble(&ok1) - bboxX);
-        double startY = pxToMm(pointList[1].toDouble(&ok2) - bboxY);
-        double endX = pxToMm(pointList[pointList.size() - 2].toDouble(&ok3) - bboxX);
-        double endY = pxToMm(pointList[pointList.size() - 1].toDouble(&ok4) - bboxY);
-        
-        if (ok1 && ok2 && ok3 && ok4) {
-            content += QString("\t(fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
-                .arg(startX, 0, 'f', 2)
-                .arg(startY, 0, 'f', 2)
-                .arg(endX, 0, 'f', 2)
-                .arg(endY, 0, 'f', 2)
-                .arg(layerIdToKicad(arc.layerId))
-                .arg(pxToMm(arc.strokeWidth), 0, 'f', 2);
-        }
+
+    // Parse SVG arc path: "M startX startY A radiusX radiusY x_axis_rotation large_arc_flag sweep_flag endX endY"
+    QString arcPath = arc.path;
+    arcPath.replace(",", " ").replace("M ", "M").replace("A ", "A");
+
+    // Split the path to extract components
+    QStringList pathParts = arcPath.split("A", Qt::SkipEmptyParts);
+    if (pathParts.size() < 2) {
+        qWarning() << "Invalid arc path format:" << arc.path;
+        return content;
     }
+
+    // Extract start point
+    QString startPart = pathParts[0].mid(1); // Remove "M"
+    QStringList startCoords = startPart.split(" ", Qt::SkipEmptyParts);
+    if (startCoords.size() < 2) {
+        qWarning() << "Invalid start point in arc path:" << arc.path;
+        return content;
+    }
+
+    double startX = pxToMm(startCoords[0].toDouble() - bboxX);
+    double startY = pxToMm(startCoords[1].toDouble() - bboxY);
+
+    // Extract arc parameters
+    QString arcParams = pathParts[1].replace("  ", " ");
+    QStringList paramParts = arcParams.split(" ", Qt::SkipEmptyParts);
+    if (paramParts.size() < 7) {
+        qWarning() << "Invalid arc parameters in arc path:" << arc.path;
+        return content;
+    }
+
+    double svgRx = pxToMm(paramParts[0].toDouble());
+    double svgRy = pxToMm(paramParts[1].toDouble());
+    double xAxisRotation = paramParts[2].toDouble();
+    bool largeArcFlag = (paramParts[3] == "1");
+    bool sweepFlag = (paramParts[4] == "1");
+    double endX = pxToMm(paramParts[5].toDouble() - bboxX);
+    double endY = pxToMm(paramParts[6].toDouble() - bboxY);
+
+    // Compute arc center and angle extent
+    double centerX, centerY, angleExtent;
+    if (svgRy != 0.0) {
+        GeometryUtils::computeArc(startX, startY, svgRx, svgRy, xAxisRotation,
+                                  largeArcFlag, sweepFlag, endX, endY,
+                                  centerX, centerY, angleExtent);
+    } else {
+        // Degenerate case: Y radius is zero
+        centerX = 0.0;
+        centerY = 0.0;
+        angleExtent = 0.0;
+    }
+
+    // KiCad format: (fp_arc (start cx cy) (end endX endY) (angle angle) (layer layer) (width width))
+    content += QString("\t(fp_arc (start %1 %2) (end %3 %4) (angle %5) (layer %6) (width %7))\n")
+        .arg(centerX, 0, 'f', 2)
+        .arg(centerY, 0, 'f', 2)
+        .arg(endX, 0, 'f', 2)
+        .arg(endY, 0, 'f', 2)
+        .arg(angleExtent, 0, 'f', 2)
+        .arg(layerIdToKicad(arc.layerId))
+        .arg(pxToMm(arc.strokeWidth), 0, 'f', 2);
 
     return content;
 }
@@ -666,21 +506,44 @@ QString ExporterFootprint::generateText(const FootprintText &text, double bboxX,
     QString content;
     double x = pxToMm(text.centerX - bboxX);
     double y = pxToMm(text.centerY - bboxY);
-    
-    // KiCad 5.x format
-    content += QString("\t(fp_text user \"%1\" (at %2 %3 %4) (layer %5)%6\n")
+
+    // Get the layer name
+    QString layer = layerIdToKicad(text.layerId);
+
+    // If text type is "N", replace .SilkS with .Fab (match Python version)
+    if (text.type == "N") {
+        layer = layer.replace(".SilkS", ".Fab");
+    }
+
+    // Check if this is a bottom layer text (starts with "B")
+    bool isBottomLayer = layer.startsWith("B");
+    QString mirrorStr = isBottomLayer ? " mirror" : "";
+
+    // Check if text should be hidden
+    QString displayStr = text.isDisplayed ? "" : " hide";
+
+    // KiCad format - match Python version
+    content += QString("\t(fp_text user %1 (at %2 %3 %4) (layer %5)%6\n")
         .arg(text.text)
         .arg(x, 0, 'f', 2)
         .arg(y, 0, 'f', 2)
         .arg(double(text.rotation), 0, 'f', 2)
-        .arg(layerIdToKicad(text.layerId));
-    
-    if (!text.isDisplayed) {
-        content += "\n\t\t(effects (font (size 1 1) (thickness 0.15)) (justify left))";
-    } else {
-        content += "\n\t\t(effects (font (size 1 1) (thickness 0.15)) (justify left))";
-    }
-    content += "\n\t)\n";
+        .arg(layer)
+        .arg(displayStr);
+
+    // Font effects
+    double fontSize = pxToMm(text.fontSize);
+    double thickness = pxToMm(text.strokeWidth);
+    fontSize = qMax(fontSize, 1.0);  // Ensure minimum font size
+    thickness = qMax(thickness, 0.01);  // Ensure minimum thickness
+
+    content += QString("\t\t(effects (font (size %1 %2) (thickness %3)) (justify left%4))\n")
+        .arg(fontSize, 0, 'f', 2)
+        .arg(fontSize, 0, 'f', 2)
+        .arg(thickness, 0, 'f', 2)
+        .arg(mirrorStr);
+
+    content += "\t)\n";
 
     return content;
 }
@@ -767,7 +630,7 @@ QString ExporterFootprint::padLayersToKicad(int layerId) const
 
 QString ExporterFootprint::layerIdToKicad(int layerId) const
 {
-    // Layer mapping for graphical elements
+    // Layer mapping for graphical elements - matched with Python version
     switch (layerId) {
         case 1:
             return "F.Cu";           // Top Layer
@@ -788,19 +651,19 @@ QString ExporterFootprint::layerIdToKicad(int layerId) const
         case 9:
             return "F.Cu";           // Top Layer (alternative)
         case 10:
-            return "B.Cu";           // Bottom Layer (alternative)
+            return "Edge.Cuts";      // Board Outline (板框层)
         case 11:
-            return "*.Cu";           // All Copper Layers
+            return "Edge.Cuts";      // Board Outline (板框层)
         case 12:
-            return "B.Fab";          // Bottom Fabrication
+            return "Cmts.User";      // Comments (注释层)
         case 13:
             return "F.Fab";          // Top Fabrication
         case 14:
-            return "Edge.Cuts";      // Board Outline
+            return "B.Fab";          // Bottom Fabrication
         case 15:
             return "Dwgs.User";      // Documentation
         case 20:
-            return "Cmts.User";      // Comments
+            return "Cmts.User";      // Comments (alternative)
         case 21:
             return "Eco1.User";      // Eco1
         case 22:

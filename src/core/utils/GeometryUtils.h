@@ -115,6 +115,33 @@ public:
      * @return double 规范化后的角度（弧度）
      */
     static double normalizeAngle(double angle);
+
+    /**
+     * @brief 计算 SVG 椭圆弧的圆心和角度范围
+     *
+     * 基于 SVG 规范的椭圆弧转换算法
+     * https://www.w3.org/TR/SVG11/implnote.html#ArcConversionEndpointToCenter
+     *
+     * @param startX 起点 X 坐标
+     * @param startY 起点 Y 坐标
+     * @param radiusX X 半径
+     * @param radiusY Y 半径
+     * @param angle 旋转角度（度）
+     * @param largeArcFlag 大圆弧标志（true=大圆弧，false=小圆弧）
+     * @param sweepFlag 扫描标志（true=顺时针，false=逆时针）
+     * @param endX 终点 X 坐标
+     * @param endY 终点 Y 坐标
+     * @param centerX 输出：圆心 X 坐标
+     * @param centerY 输出：圆心 Y 坐标
+     * @param angleExtent 输出：角度范围（度）
+     */
+    static void computeArc(double startX, double startY,
+                          double radiusX, double radiusY,
+                          double angle,
+                          bool largeArcFlag, bool sweepFlag,
+                          double endX, double endY,
+                          double &centerX, double &centerY,
+                          double &angleExtent);
 };
 
 } // namespace EasyKiConverter

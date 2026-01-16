@@ -132,4 +132,96 @@ double GeometryUtils::normalizeAngle(double angle)
     return angle;
 }
 
+void GeometryUtils::computeArc(double startX, double startY,
+                              double radiusX, double radiusY,
+                              double angle,
+                              bool largeArcFlag, bool sweepFlag,
+                              double endX, double endY,
+                              double &centerX, double &centerY,
+                              double &angleExtent)
+{
+    // Compute the half distance between the current and the final point
+    double dx2 = (startX - endX) / 2.0;
+    double dy2 = (startY - endY) / 2.0;
+
+    // Convert angle from degrees to radians
+    angle = degreesToRadians(std::fmod(angle, 360.0));
+    double cosAngle = std::cos(angle);
+    double sinAngle = std::sin(angle);
+
+    // Step 1: Compute (x1, y1)
+    double x1 = cosAngle * dx2 + sinAngle * dy2;
+    double y1 = -sinAngle * dx2 + cosAngle * dy2;
+
+    // Ensure radii are large enough
+    radiusX = std::abs(radiusX);
+    radiusY = std::abs(radiusY);
+    double PradiusX = radiusX * radiusX;
+    double PradiusY = radiusY * radiusY;
+    double Px1 = x1 * x1;
+    double Py1 = y1 * y1;
+
+    // Check that radii are large enough
+    double radiiCheck = 0.0;
+    if (PradiusX != 0.0 && PradiusY != 0.0) {
+        radiiCheck = Px1 / PradiusX + Py1 / PradiusY;
+    }
+
+    if (radiiCheck > 1.0) {
+        radiusX = std::sqrt(radiiCheck) * radiusX;
+        radiusY = std::sqrt(radiiCheck) * radiusY;
+        PradiusX = radiusX * radiusX;
+        PradiusY = radiusY * radiusY;
+    }
+
+    // Step 2: Compute (cx1, cy1)
+    int sign = (largeArcFlag == sweepFlag) ? -1 : 1;
+    double sq = 0.0;
+    if (PradiusX * Py1 + PradiusY * Px1 > 0.0) {
+        sq = (PradiusX * PradiusY - PradiusX * Py1 - PradiusY * Px1) /
+             (PradiusX * Py1 + PradiusY * Px1);
+    }
+    sq = std::max(sq, 0.0);
+    double coef = sign * std::sqrt(sq);
+    double cx1 = coef * ((radiusX * y1) / radiusY);
+    double cy1 = (radiusX != 0.0) ? coef * -((radiusY * x1) / radiusX) : 0.0;
+
+    // Step 3: Compute (cx, cy) from (cx1, cy1)
+    double sx2 = (startX + endX) / 2.0;
+    double sy2 = (startY + endY) / 2.0;
+    centerX = sx2 + (cosAngle * cx1 - sinAngle * cy1);
+    centerY = sy2 + (sinAngle * cx1 + cosAngle * cy1);
+
+    // Step 4: Compute the angle_extent (dangle)
+    double ux = (radiusX != 0.0) ? (x1 - cx1) / radiusX : 0.0;
+    double uy = (radiusY != 0.0) ? (y1 - cy1) / radiusY : 0.0;
+    double vx = (radiusX != 0.0) ? (-x1 - cx1) / radiusX : 0.0;
+    double vy = (radiusY != 0.0) ? (-y1 - cy1) / radiusY : 0.0;
+
+    // Compute the angle extent
+    double n = std::sqrt((ux * ux + uy * uy) * (vx * vx + vy * vy));
+    double p = ux * vx + uy * vy;
+    sign = ((ux * vy - uy * vx) < 0.0) ? -1 : 1;
+
+    if (n != 0.0) {
+        double ratio = p / n;
+        if (std::abs(ratio) < 1.0) {
+            angleExtent = radiansToDegrees(sign * std::acos(ratio));
+        } else {
+            angleExtent = 360.0 + 359.0;
+        }
+    } else {
+        angleExtent = 360.0 + 359.0;
+    }
+
+    if (!sweepFlag && angleExtent > 0.0) {
+        angleExtent -= 360.0;
+    } else if (sweepFlag && angleExtent < 0.0) {
+        angleExtent += 360.0;
+    }
+
+    int angleExtentSign = (angleExtent < 0.0) ? 1 : -1;
+    angleExtent = (std::abs(angleExtent) / 360.0) * 360.0 * angleExtentSign;
+}
+
 } // namespace EasyKiConverter
