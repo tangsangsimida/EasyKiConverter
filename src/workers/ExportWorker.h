@@ -31,7 +31,6 @@ public:
      * @param exportSymbol 是否导出符号
      * @param exportFootprint 是否导出封装
      * @param exportModel3D 是否导出3D模型
-     * @param kicadVersion KiCad版本
      * @param parent 父对象
      */
     explicit ExportWorker(
@@ -43,7 +42,6 @@ public:
         bool exportSymbol,
         bool exportFootprint,
         bool exportModel3D,
-        int kicadVersion,
         QObject *parent = nullptr);
 
     /**
@@ -109,7 +107,6 @@ private:
     bool m_exportSymbol;
     bool m_exportFootprint;
     bool m_exportModel3D;
-    int m_kicadVersion;
 };
 
 } // namespace EasyKiConverter

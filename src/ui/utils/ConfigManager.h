@@ -101,20 +101,6 @@ public:
     void setExportOptions(const QJsonObject &options);
 
     /**
-     * @brief 获取 KiCad 版本
-     *
-     * @return int KiCad 版本（5 或 6）
-     */
-    int getKicadVersion() const;
-
-    /**
-     * @brief 设置 KiCad 版本
-     *
-     * @param version KiCad 版本（5 或 6）
-     */
-    void setKicadVersion(int version);
-
-    /**
      * @brief 重置配置为默认值
      */
     void resetToDefaults();

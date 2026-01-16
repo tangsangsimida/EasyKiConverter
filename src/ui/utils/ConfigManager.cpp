@@ -54,10 +54,6 @@ bool ConfigManager::save()
         QJsonValue model3dValue = exportOptions.value("model3d");
         m_settings->setValue("export/export_3d_model", model3dValue.isUndefined() ? true : model3dValue.toBool());
 
-        // 保存 KiCad 版本
-        QJsonValue kicadVersionValue = m_config.value("kicad_version");
-        m_settings->setValue("kicad/version", kicadVersionValue.isUndefined() ? 6 : kicadVersionValue.toInt());
-
         // 同步到磁盘
         m_settings->sync();
 
@@ -82,9 +78,6 @@ bool ConfigManager::load()
         exportOptions["footprint"] = m_settings->value("export/export_footprint", true).toBool();
         exportOptions["model3d"] = m_settings->value("export/export_3d_model", true).toBool();
         m_config["export_options"] = exportOptions;
-
-        // 加载 KiCad 版本
-        m_config["kicad_version"] = m_settings->value("kicad/version", 6).toInt();
 
         qDebug() << "Configuration loaded successfully";
         return true;
@@ -141,18 +134,6 @@ void ConfigManager::setExportOptions(const QJsonObject &options)
     emit configChanged();
 }
 
-int ConfigManager::getKicadVersion() const
-{
-    QJsonValue value = m_config.value("kicad_version");
-    return value.isUndefined() ? 6 : value.toInt();
-}
-
-void ConfigManager::setKicadVersion(int version)
-{
-    m_config["kicad_version"] = version;
-    emit configChanged();
-}
-
 void ConfigManager::resetToDefaults()
 {
     initDefaults();
@@ -173,9 +154,6 @@ void ConfigManager::initDefaults()
     exportOptions["footprint"] = true;
     exportOptions["model3d"] = true;
     m_config["export_options"] = exportOptions;
-
-    // 设置默认 KiCad 版本
-    m_config["kicad_version"] = 6;
 
     qDebug() << "Default configuration initialized";
 }

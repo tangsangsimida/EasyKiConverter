@@ -12,7 +12,6 @@ A powerful Python tool for converting LCSC and EasyEDA components to KiCad forma
 - **3D Model Support**: Automatically download and convert 3D models (multiple formats supported)
 - **Batch Processing**: Support simultaneous conversion of multiple components
 - **Multi-threading Optimization**: Parallel processing of multiple components for significantly improved efficiency
-- **Version Compatibility**: Support KiCad 5.x and 6.x+ versions
 
 ### 🖥️ PyQt6 Desktop Interface
 - **Modern Interface**: Beautiful modern design with card-based layout

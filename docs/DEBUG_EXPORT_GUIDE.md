@@ -11,11 +11,15 @@
 #### 1. 原始数据
 - `raw_cad_data.json` - 从 EasyEDA API 获取的原始 JSON 数据
 
-#### 2. 解析数据
+#### 2. 解析数据（摘要）
 - `parsed_symbol_data.txt` - 解析后的符号数据摘要信息
 - `parsed_footprint_data.txt` - 解析后的封装数据摘要信息
 
-#### 3. 导出数据
+#### 3. 解析数据（详细 JSON）
+- `parsed_symbol_data_detail.json` - 符号数据的完整详细信息（JSON 格式）
+- `parsed_footprint_data_detail.json` - 封装数据的完整详细信息（JSON 格式）
+
+#### 4. 导出数据
 - `exported_symbol_export.kicad_sym` - 导出的 KiCad 符号库文件内容
 - `exported_footprint_export.kicad_mod` - 导出的 KiCad 封装文件内容
 
@@ -82,8 +86,10 @@ D:/output/
 └── debug_data/                           # 调试数据文件夹
     └── C596524/                          # 元器件 ID
         ├── raw_cad_data.json             # 原始 JSON 数据
-        ├── parsed_symbol_data.txt        # 解析的符号数据
-        ├── parsed_footprint_data.txt     # 解析的封装数据
+        ├── parsed_symbol_data.txt        # 解析的符号数据（摘要）
+        ├── parsed_symbol_data_detail.json # 解析的符号数据（详细 JSON）
+        ├── parsed_footprint_data.txt     # 解析的封装数据（摘要）
+        ├── parsed_footprint_data_detail.json # 解析的封装数据（详细 JSON）
         ├── exported_symbol_export.kicad_sym  # 导出的符号内容
         └── exported_footprint_export.kicad_mod # 导出的封装内容
 ```
@@ -107,6 +113,26 @@ D:/output/
 - 各种几何图形数量（矩形、圆、圆弧、多边形等）
 - 边界框坐标
 
+### parsed_symbol_data_detail.json
+
+包含解析后的符号数据完整详细信息（JSON 格式），包括：
+- **info**: 符号基本信息（名称、前缀、封装、制造商、LCSC ID 等）
+- **bbox**: 边界框详细信息（x, y, width, height）
+- **pins**: 引脚详细信息数组，每个引脚包含：
+  - settings: 引脚设置（位置、旋转、类型等）
+  - dot: 引脚圆点信息
+  - path: 引脚路径信息
+  - name: 引脚名称信息
+  - dotBis: 第二个引脚圆点信息
+  - clock: 引脚时钟信息
+- **polygons**: 多边形详细信息数组
+- **polylines**: 多段线详细信息数组
+- **circles**: 圆详细信息数组
+- **arcs**: 圆弧详细信息数组
+- **rectangles**: 矩形详细信息数组
+- **ellipses**: 椭圆详细信息数组
+- **paths**: 路径详细信息数组
+
 ### parsed_footprint_data.txt
 
 包含解析后的封装数据摘要：
@@ -115,6 +141,32 @@ D:/output/
 - 各种几何图形数量
 - 3D 模型 UUID 和名称
 - 边界框坐标
+
+### parsed_footprint_data_detail.json
+
+包含解析后的封装数据完整详细信息（JSON 格式），包括：
+- **info**: 封装基本信息（名称、类型、3D 模型名称）
+- **bbox**: 边界框详细信息（x, y, width, height）
+- **model3D**: 3D 模型详细信息（UUID、名称、类型）
+- **pads**: 焊盘详细信息数组，每个焊盘包含：
+  - shape: 焊盘形状
+  - centerX, centerY: 焊盘中心坐标
+  - width, height: 焊盘尺寸
+  - layerId: 层 ID
+  - net: 网络
+  - number: 焊盘编号
+  - holeRadius: 孔半径
+  - points: 坐标点
+  - rotation: 旋转角度
+  - holeLength: 孔长度
+  - isPlated: 是否金属化
+- **tracks**: 走线详细信息数组
+- **holes**: 孔详细信息数组
+- **circles**: 圆详细信息数组
+- **rectangles**: 矩形详细信息数组
+- **arcs**: 圆弧详细信息数组
+- **texts**: 文本详细信息数组
+- **polygons**: 多边形详细信息数组
 
 ### exported_symbol_export.kicad_sym
 

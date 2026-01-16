@@ -17,7 +17,6 @@ ExportWorker::ExportWorker(
     bool exportSymbol,
     bool exportFootprint,
     bool exportModel3D,
-    int kicadVersion,
     QObject *parent)
     : QObject(parent)
     , QRunnable()
@@ -29,7 +28,6 @@ ExportWorker::ExportWorker(
     , m_exportSymbol(exportSymbol)
     , m_exportFootprint(exportFootprint)
     , m_exportModel3D(exportModel3D)
-    , m_kicadVersion(kicadVersion)
 {
     setAutoDelete(true); // 任务完成后自动删除
 }

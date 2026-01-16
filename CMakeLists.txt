@@ -189,3 +189,6 @@ install(TARGETS appEasyKiconverter_Cpp_Version
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "Qt version: ${Qt6_VERSION}")
+
+# 生成 compile_commands.json 用于 VS Code IntelliSense
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

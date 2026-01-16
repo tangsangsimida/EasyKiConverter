@@ -586,7 +586,7 @@ void MainController::handleCadDataFetched(const QJsonObject &data)
     QSharedPointer<FootprintData> footprintData = m_easyedaImporter->importFootprintData(data);
 
 #ifdef ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT
-    // 保存解析的符号数据
+    // 保存解析的符号数据（摘要）
     QString symbolDebugInfo;
     QTextStream symbolStream(&symbolDebugInfo);
     symbolStream << "=== Symbol Data ===\n";
@@ -607,7 +607,85 @@ void MainController::handleCadDataFetched(const QJsonObject &data)
                  << ", width=" << symbolData->bbox().width << ", height=" << symbolData->bbox().height << "\n";
     saveDebugData(componentId, "parsed", "symbol_data.txt", symbolDebugInfo);
 
-    // 保存解析的封装数据
+    // 保存符号详细数据（JSON 格式）
+    QJsonObject symbolDetailJson;
+    symbolDetailJson["info"] = symbolData->info().toJson();
+    
+    // 保存 BBox
+    QJsonObject symbolBBoxJson;
+    symbolBBoxJson["x"] = symbolData->bbox().x;
+    symbolBBoxJson["y"] = symbolData->bbox().y;
+    symbolBBoxJson["width"] = symbolData->bbox().width;
+    symbolBBoxJson["height"] = symbolData->bbox().height;
+    symbolDetailJson["bbox"] = symbolBBoxJson;
+    
+    // 保存引脚详细信息
+    QJsonArray pinsArray;
+    for (const auto &pin : symbolData->pins()) {
+        QJsonObject pinJson;
+        pinJson["settings"] = pin.settings.toJson();
+        pinJson["dot"] = pin.pinDot.toJson();
+        pinJson["path"] = pin.pinPath.toJson();
+        pinJson["name"] = pin.name.toJson();
+        pinJson["dotBis"] = pin.dot.toJson();
+        pinJson["clock"] = pin.clock.toJson();
+        pinsArray.append(pinJson);
+    }
+    symbolDetailJson["pins"] = pinsArray;
+    
+    // 保存多边形详细信息
+    QJsonArray polygonsArray;
+    for (const auto &polygon : symbolData->polygons()) {
+        polygonsArray.append(polygon.toJson());
+    }
+    symbolDetailJson["polygons"] = polygonsArray;
+    
+    // 保存多段线详细信息
+    QJsonArray polylinesArray;
+    for (const auto &polyline : symbolData->polylines()) {
+        polylinesArray.append(polyline.toJson());
+    }
+    symbolDetailJson["polylines"] = polylinesArray;
+    
+    // 保存圆详细信息
+    QJsonArray circlesArray;
+    for (const auto &circle : symbolData->circles()) {
+        circlesArray.append(circle.toJson());
+    }
+    symbolDetailJson["circles"] = circlesArray;
+    
+    // 保存圆弧详细信息
+    QJsonArray arcsArray;
+    for (const auto &arc : symbolData->arcs()) {
+        arcsArray.append(arc.toJson());
+    }
+    symbolDetailJson["arcs"] = arcsArray;
+    
+    // 保存矩形详细信息
+    QJsonArray rectanglesArray;
+    for (const auto &rect : symbolData->rectangles()) {
+        rectanglesArray.append(rect.toJson());
+    }
+    symbolDetailJson["rectangles"] = rectanglesArray;
+    
+    // 保存椭圆详细信息
+    QJsonArray ellipsesArray;
+    for (const auto &ellipse : symbolData->ellipses()) {
+        ellipsesArray.append(ellipse.toJson());
+    }
+    symbolDetailJson["ellipses"] = ellipsesArray;
+    
+    // 保存路径详细信息
+    QJsonArray pathsArray;
+    for (const auto &path : symbolData->paths()) {
+        pathsArray.append(path.toJson());
+    }
+    symbolDetailJson["paths"] = pathsArray;
+    
+    QJsonDocument symbolDetailDoc(symbolDetailJson);
+    saveDebugData(componentId, "parsed", "symbol_data_detail.json", symbolDetailDoc.toJson(QJsonDocument::Indented));
+
+    // 保存解析的封装数据（摘要）
     QString footprintDebugInfo;
     QTextStream footprintStream(&footprintDebugInfo);
     footprintStream << "=== Footprint Data ===\n";
@@ -626,6 +704,87 @@ void MainController::handleCadDataFetched(const QJsonObject &data)
     footprintStream << "BBox: x=" << footprintData->bbox().x << ", y=" << footprintData->bbox().y 
                     << ", width=" << footprintData->bbox().width << ", height=" << footprintData->bbox().height << "\n";
     saveDebugData(componentId, "parsed", "footprint_data.txt", footprintDebugInfo);
+
+    // 保存封装详细数据（JSON 格式）
+    QJsonObject footprintDetailJson;
+    footprintDetailJson["info"] = footprintData->info().toJson();
+    
+    // 保存 BBox
+    QJsonObject footprintBBoxJson;
+    footprintBBoxJson["x"] = footprintData->bbox().x;
+    footprintBBoxJson["y"] = footprintData->bbox().y;
+    footprintBBoxJson["width"] = footprintData->bbox().width;
+    footprintBBoxJson["height"] = footprintData->bbox().height;
+    footprintDetailJson["bbox"] = footprintBBoxJson;
+    
+    // 保存 3D 模型信息
+    footprintDetailJson["model3D"] = footprintData->model3D().toJson();
+    
+    // 保存焊盘详细信息
+    QJsonArray padsArray;
+    for (const auto &pad : footprintData->pads()) {
+        padsArray.append(pad.toJson());
+    }
+    footprintDetailJson["pads"] = padsArray;
+    
+    // 保存走线详细信息
+    QJsonArray tracksArray;
+    for (const auto &track : footprintData->tracks()) {
+        tracksArray.append(track.toJson());
+    }
+    footprintDetailJson["tracks"] = tracksArray;
+    
+    // 保存孔详细信息
+    QJsonArray holesArray;
+    for (const auto &hole : footprintData->holes()) {
+        holesArray.append(hole.toJson());
+    }
+    footprintDetailJson["holes"] = holesArray;
+    
+    // 保存圆详细信息
+    QJsonArray footprintCirclesArray;
+    for (const auto &circle : footprintData->circles()) {
+        footprintCirclesArray.append(circle.toJson());
+    }
+    footprintDetailJson["circles"] = footprintCirclesArray;
+    
+    // 保存矩形详细信息
+    QJsonArray footprintRectanglesArray;
+    for (const auto &rect : footprintData->rectangles()) {
+        footprintRectanglesArray.append(rect.toJson());
+    }
+    footprintDetailJson["rectangles"] = footprintRectanglesArray;
+    
+    // 保存圆弧详细信息
+    QJsonArray footprintArcsArray;
+    for (const auto &arc : footprintData->arcs()) {
+        footprintArcsArray.append(arc.toJson());
+    }
+    footprintDetailJson["arcs"] = footprintArcsArray;
+    
+    // 保存文本详细信息
+    QJsonArray textsArray;
+    for (const auto &text : footprintData->texts()) {
+        textsArray.append(text.toJson());
+    }
+    footprintDetailJson["texts"] = textsArray;
+    
+    // 保存实体区域详细信息
+    QJsonArray solidRegionsArray;
+    for (const auto &solidRegion : footprintData->solidRegions()) {
+        solidRegionsArray.append(solidRegion.toJson());
+    }
+    footprintDetailJson["solidRegions"] = solidRegionsArray;
+    
+    // 保存轮廓详细信息
+    QJsonArray outlinesArray;
+    for (const auto &outline : footprintData->outlines()) {
+        outlinesArray.append(outline.toJson());
+    }
+    footprintDetailJson["outlines"] = outlinesArray;
+    
+    QJsonDocument footprintDetailDoc(footprintDetailJson);
+    saveDebugData(componentId, "parsed", "footprint_data_detail.json", footprintDetailDoc.toJson(QJsonDocument::Indented));
 #endif
 
     // 导出符号（改为收集所有符号，最后一次性导出）
@@ -1513,6 +1672,84 @@ void ComponentExportTask::run()
                      << " Ellipses:" << symbolData.ellipses().count() << "\n";
         m_controller->saveDebugData(m_componentId, "parsed", "symbol_data.txt", symbolDebugInfo);
 
+        // 保存符号详细数据（JSON 格式）
+        QJsonObject symbolDetailJson;
+        symbolDetailJson["info"] = symbolData.info().toJson();
+        
+        // 保存 BBox
+        QJsonObject symbolBBoxJson;
+        symbolBBoxJson["x"] = symbolData.bbox().x;
+        symbolBBoxJson["y"] = symbolData.bbox().y;
+        symbolBBoxJson["width"] = symbolData.bbox().width;
+        symbolBBoxJson["height"] = symbolData.bbox().height;
+        symbolDetailJson["bbox"] = symbolBBoxJson;
+        
+        // 保存引脚详细信息
+        QJsonArray pinsArray;
+        for (const auto &pin : symbolData.pins()) {
+            QJsonObject pinJson;
+            pinJson["settings"] = pin.settings.toJson();
+            pinJson["dot"] = pin.pinDot.toJson();
+            pinJson["path"] = pin.pinPath.toJson();
+            pinJson["name"] = pin.name.toJson();
+            pinJson["dotBis"] = pin.dot.toJson();
+            pinJson["clock"] = pin.clock.toJson();
+            pinsArray.append(pinJson);
+        }
+        symbolDetailJson["pins"] = pinsArray;
+        
+        // 保存多边形详细信息
+        QJsonArray polygonsArray;
+        for (const auto &polygon : symbolData.polygons()) {
+            polygonsArray.append(polygon.toJson());
+        }
+        symbolDetailJson["polygons"] = polygonsArray;
+        
+        // 保存多段线详细信息
+        QJsonArray polylinesArray;
+        for (const auto &polyline : symbolData.polylines()) {
+            polylinesArray.append(polyline.toJson());
+        }
+        symbolDetailJson["polylines"] = polylinesArray;
+        
+        // 保存圆详细信息
+        QJsonArray circlesArray;
+        for (const auto &circle : symbolData.circles()) {
+            circlesArray.append(circle.toJson());
+        }
+        symbolDetailJson["circles"] = circlesArray;
+        
+        // 保存圆弧详细信息
+        QJsonArray arcsArray;
+        for (const auto &arc : symbolData.arcs()) {
+            arcsArray.append(arc.toJson());
+        }
+        symbolDetailJson["arcs"] = arcsArray;
+        
+        // 保存矩形详细信息
+        QJsonArray rectanglesArray;
+        for (const auto &rect : symbolData.rectangles()) {
+            rectanglesArray.append(rect.toJson());
+        }
+        symbolDetailJson["rectangles"] = rectanglesArray;
+        
+        // 保存椭圆详细信息
+        QJsonArray ellipsesArray;
+        for (const auto &ellipse : symbolData.ellipses()) {
+            ellipsesArray.append(ellipse.toJson());
+        }
+        symbolDetailJson["ellipses"] = ellipsesArray;
+        
+        // 保存路径详细信息
+        QJsonArray pathsArray;
+        for (const auto &path : symbolData.paths()) {
+            pathsArray.append(path.toJson());
+        }
+        symbolDetailJson["paths"] = pathsArray;
+        
+        QJsonDocument symbolDetailDoc(symbolDetailJson);
+        m_controller->saveDebugData(m_componentId, "parsed", "symbol_data_detail.json", symbolDetailDoc.toJson(QJsonDocument::Indented));
+
         // 保存解析的封装数据
         QString footprintDebugInfo;
         QTextStream footprintStream(&footprintDebugInfo);
@@ -1572,6 +1809,87 @@ void ComponentExportTask::run()
                        << " SolidRegions:" << footprintData.solidRegions().count()
                        << " Outlines:" << footprintData.outlines().count() << "\n";
         m_controller->saveDebugData(m_componentId, "parsed", "footprint_data.txt", footprintDebugInfo);
+
+        // 保存封装详细数据（JSON 格式）
+        QJsonObject footprintDetailJson;
+        footprintDetailJson["info"] = footprintData.info().toJson();
+        
+        // 保存 BBox
+        QJsonObject footprintBBoxJson;
+        footprintBBoxJson["x"] = footprintData.bbox().x;
+        footprintBBoxJson["y"] = footprintData.bbox().y;
+        footprintBBoxJson["width"] = footprintData.bbox().width;
+        footprintBBoxJson["height"] = footprintData.bbox().height;
+        footprintDetailJson["bbox"] = footprintBBoxJson;
+        
+        // 保存 3D 模型信息
+        footprintDetailJson["model3D"] = footprintData.model3D().toJson();
+        
+        // 保存焊盘详细信息
+        QJsonArray padsArray;
+        for (const auto &pad : footprintData.pads()) {
+            padsArray.append(pad.toJson());
+        }
+        footprintDetailJson["pads"] = padsArray;
+        
+        // 保存走线详细信息
+        QJsonArray tracksArray;
+        for (const auto &track : footprintData.tracks()) {
+            tracksArray.append(track.toJson());
+        }
+        footprintDetailJson["tracks"] = tracksArray;
+        
+        // 保存孔详细信息
+        QJsonArray holesArray;
+        for (const auto &hole : footprintData.holes()) {
+            holesArray.append(hole.toJson());
+        }
+        footprintDetailJson["holes"] = holesArray;
+        
+        // 保存圆详细信息
+        QJsonArray footprintCirclesArray;
+        for (const auto &circle : footprintData.circles()) {
+            footprintCirclesArray.append(circle.toJson());
+        }
+        footprintDetailJson["circles"] = footprintCirclesArray;
+        
+        // 保存矩形详细信息
+        QJsonArray footprintRectanglesArray;
+        for (const auto &rect : footprintData.rectangles()) {
+            footprintRectanglesArray.append(rect.toJson());
+        }
+        footprintDetailJson["rectangles"] = footprintRectanglesArray;
+        
+        // 保存圆弧详细信息
+        QJsonArray footprintArcsArray;
+        for (const auto &arc : footprintData.arcs()) {
+            footprintArcsArray.append(arc.toJson());
+        }
+        footprintDetailJson["arcs"] = footprintArcsArray;
+        
+        // 保存文本详细信息
+        QJsonArray textsArray;
+        for (const auto &text : footprintData.texts()) {
+            textsArray.append(text.toJson());
+        }
+        footprintDetailJson["texts"] = textsArray;
+        
+        // 保存实体区域详细信息
+        QJsonArray solidRegionsArray;
+        for (const auto &solidRegion : footprintData.solidRegions()) {
+            solidRegionsArray.append(solidRegion.toJson());
+        }
+        footprintDetailJson["solidRegions"] = solidRegionsArray;
+        
+        // 保存轮廓详细信息
+        QJsonArray outlinesArray;
+        for (const auto &outline : footprintData.outlines()) {
+            outlinesArray.append(outline.toJson());
+        }
+        footprintDetailJson["outlines"] = outlinesArray;
+        
+        QJsonDocument footprintDetailDoc(footprintDetailJson);
+        m_controller->saveDebugData(m_componentId, "parsed", "footprint_data_detail.json", footprintDetailDoc.toJson(QJsonDocument::Indented));
 #else
         qDebug() << "DEBUG EXPORT IS DISABLED in ComponentExportTask!";
 #endif

@@ -10,22 +10,11 @@ namespace EasyKiConverter {
 
 ExporterFootprint::ExporterFootprint(QObject *parent)
     : QObject(parent)
-    , m_kicadVersion(KicadVersion::V6)
 {
 }
 
 ExporterFootprint::~ExporterFootprint()
 {
-}
-
-void ExporterFootprint::setKicadVersion(KicadVersion version)
-{
-    m_kicadVersion = version;
-}
-
-ExporterFootprint::KicadVersion ExporterFootprint::getKicadVersion() const
-{
-    return m_kicadVersion;
 }
 
 bool ExporterFootprint::exportFootprint(const FootprintData &footprintData, const QString &filePath, const QString &model3DPath)

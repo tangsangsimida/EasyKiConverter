@@ -20,14 +20,6 @@ class ExporterSymbol : public QObject
 
 public:
     /**
-     * @brief KiCad 版本枚举（仅支持 V6）
-     */
-    enum class KicadVersion {
-        V6 = 6
-    };
-    Q_ENUM(KicadVersion)
-
-    /**
      * @brief 构造函数
      *
      * @param parent 父对象
