@@ -19,7 +19,7 @@ namespace EasyKiConverter
     class ExporterFootprint : public QObject
     {
         Q_OBJECT
-
+    
     public:
         /**
          * @brief 构造函数
@@ -27,12 +27,12 @@ namespace EasyKiConverter
          * @param parent 父对象
          */
         explicit ExporterFootprint(QObject *parent = nullptr);
-
+    
         /**
          * @brief 析构函数
          */
         ~ExporterFootprint() override;
-
+    
         /**
          * @brief 导出封装为 KiCad 格式
          *
@@ -41,7 +41,7 @@ namespace EasyKiConverter
          * @return bool 是否成功
          */
         bool exportFootprint(const FootprintData &footprintData, const QString &filePath, const QString &model3DPath = QString());
-
+    
         /**
          * @brief 导出多个封装为 KiCad 封装库
          *
@@ -51,7 +51,25 @@ namespace EasyKiConverter
          * @return bool 是否成功
          */
         bool exportFootprintLibrary(const QList<FootprintData> &footprints, const QString &libName, const QString &filePath);
-
+    
+        /**
+         * @brief 设置需要复制到丝印层的层列表
+         *
+         * @param layers 层 ID 列表
+         */
+        static void setSilkscreenDuplicateLayers(const QSet<int> &layers);
+    
+        /**
+         * @brief 获取当前需要复制到丝印层的层列表
+         *
+         * @return QSet<int> 层 ID 列表
+         */
+        static QSet<int> getSilkscreenDuplicateLayers();
+    
+        /**
+         * @brief 重置为默认配置（只复制板框层）
+         */
+        static void resetDuplicateLayersToDefault();
     private:
         /**
          * @brief 生成 KiCad 封装头
@@ -188,6 +206,14 @@ namespace EasyKiConverter
          * @return QString KiCad 层名称
          */
         QString layerIdToKicad(int layerId) const;
+
+    private:
+        /**
+         * @brief 需要复制到丝印层的层 ID 列表
+         * 
+         * 默认只包含板框层（层10）
+         */
+        static QSet<int> s_silkscreenDuplicateLayers;
     };
 
 } // namespace EasyKiConverter

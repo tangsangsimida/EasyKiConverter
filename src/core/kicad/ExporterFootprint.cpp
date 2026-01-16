@@ -8,6 +8,9 @@
 
 namespace EasyKiConverter {
 
+// 初始化静态成员：默认只复制板框层（层10）
+QSet<int> ExporterFootprint::s_silkscreenDuplicateLayers = {10};
+
 ExporterFootprint::ExporterFootprint(QObject *parent)
     : QObject(parent)
 {
@@ -15,6 +18,23 @@ ExporterFootprint::ExporterFootprint(QObject *parent)
 
 ExporterFootprint::~ExporterFootprint()
 {
+}
+
+void ExporterFootprint::setSilkscreenDuplicateLayers(const QSet<int> &layers)
+{
+    s_silkscreenDuplicateLayers = layers;
+    qDebug() << "Silkscreen duplicate layers set to:" << layers;
+}
+
+QSet<int> ExporterFootprint::getSilkscreenDuplicateLayers()
+{
+    return s_silkscreenDuplicateLayers;
+}
+
+void ExporterFootprint::resetDuplicateLayersToDefault()
+{
+    s_silkscreenDuplicateLayers = {10}; // 默认只复制板框层
+    qDebug() << "Silkscreen duplicate layers reset to default (BoardOutLine only)";
 }
 
 bool ExporterFootprint::exportFootprint(const FootprintData &footprintData, const QString &filePath, const QString &model3DPath)
@@ -340,21 +360,18 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData &footpri
         }
         qDebug() << "=== End layer check ===";
 
-        // 判断一个层是否应该复制到丝印层（非铜层、非丝印层、非Mask层、非Paste层）
+        // 打印当前配置的复制层列表
+        qDebug() << "=== Silkscreen duplicate layers configuration ===";
+        qDebug() << "Configured layers:" << s_silkscreenDuplicateLayers;
+        for (int layerId : s_silkscreenDuplicateLayers) {
+            QString layerName = layerIdToKicad(layerId);
+            qDebug() << "  - Layer" << layerId << "(" << layerName << ")";
+        }
+        qDebug() << "=== End configuration ===";
+
+        // 判断一个层是否应该复制到丝印层（根据配置）
         auto shouldDuplicateLayer = [](int layerId) -> bool {
-            // 不复制铜层（1, 2, 9, 10, 11）
-            if (layerId >= 1 && layerId <= 2) return false;
-            if (layerId >= 9 && layerId <= 11) return false;
-            // 不复制丝印层（3, 4）
-            if (layerId == 3 || layerId == 4) return false;
-            // 不复制Paste层（5, 6）
-            if (layerId == 5 || layerId == 6) return false;
-            // 不复制Mask层（7, 8）
-            if (layerId == 7 || layerId == 8) return false;
-            // 不复制边缘切割层（14）
-            if (layerId == 14) return false;
-            // 其他层（如0, 12, 13, 15, 20, 21, 22, 100, 101等）都复制
-            return true;
+            return s_silkscreenDuplicateLayers.contains(layerId);
         };
 
         // 复制符合条件的层的 tracks（线条）
