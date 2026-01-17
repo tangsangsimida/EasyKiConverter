@@ -46,6 +46,14 @@ namespace EasyKiConverter
         void fetchComponentData(const QString &componentId, bool fetch3DModel = true);
 
         /**
+         * @brief 并行获取多个元件的数据
+         *
+         * @param componentIds 元件ID列表
+         * @param fetch3DModel 是否获取3D模型
+         */
+        void fetchMultipleComponentsData(const QStringList &componentIds, bool fetch3DModel = true);
+
+        /**
          * @brief 验证元件ID格式
          *
          * @param componentId 元件ID
@@ -145,6 +153,13 @@ namespace EasyKiConverter
          */
         void componentDataFetchFailed(const QString &componentId, const QString &error);
 
+        /**
+         * @brief 所有元件数据收集完成信号
+         *
+         * @param componentDataList 元件数据列表
+         */
+        void allComponentsDataCollected(const QList<ComponentData> &componentDataList);
+
     private slots:
         /**
          * @brief 处理组件信息获取成功
@@ -196,6 +211,22 @@ namespace EasyKiConverter
          */
         void handleFetchErrorForComponent(const QString &componentId, const QString &error);
 
+        /**
+         * @brief 处理并行数据收集完成
+         *
+         * @param componentId 元件ID
+         * @param data 元件数据
+         */
+        void handleParallelDataCollected(const QString &componentId, const ComponentData &data);
+
+        /**
+         * @brief 处理并行获取错误
+         *
+         * @param componentId 元件ID
+         * @param error 错误信息
+         */
+        void handleParallelFetchError(const QString &componentId, const QString &error);
+
     private:
         // 核心API和导入器
         class EasyedaApi *m_api;
@@ -228,6 +259,14 @@ namespace EasyKiConverter
         
         // 是否已经下载了 WRL 格式
         bool m_hasDownloadedWrl;
+        
+        // 并行数据收集状态
+        QMap<QString, ComponentData> m_parallelCollectedData; // 已收集的数据
+        QMap<QString, bool> m_parallelFetchingStatus; // 元件ID -> 是否正在获取
+        QStringList m_parallelPendingComponents; // 待获取的元件列表
+        int m_parallelTotalCount; // 总元件数
+        int m_parallelCompletedCount; // 已完成数
+        bool m_parallelFetching; // 是否正在并行获取
         
         // 输出路径
         QString m_outputPath;

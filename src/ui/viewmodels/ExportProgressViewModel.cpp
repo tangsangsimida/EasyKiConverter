@@ -26,6 +26,7 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService *exportService, C
     // 连接 ComponentService 信号
     if (m_componentService) {
         connect(m_componentService, &ComponentService::cadDataReady, this, &ExportProgressViewModel::handleComponentDataFetched);
+        connect(m_componentService, &ComponentService::allComponentsDataCollected, this, &ExportProgressViewModel::handleAllComponentsDataCollected);
     }
 }
 
@@ -35,7 +36,7 @@ ExportProgressViewModel::~ExportProgressViewModel()
 
 void ExportProgressViewModel::startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles)
 {
-    qDebug() << "Starting export for" << componentIds.size() << "components";
+    qDebug() << "Starting parallel export for" << componentIds.size() << "components";
     qDebug() << "Options - Path:" << outputPath << "Lib:" << libName << "Symbol:" << exportSymbol << "Footprint:" << exportFootprint << "3D:" << exportModel3D << "Overwrite:" << overwriteExistingFiles;
     
     if (m_isExporting) {
@@ -55,7 +56,7 @@ void ExportProgressViewModel::startExport(const QStringList &componentIds, const
     m_fetchedCount = 0;
     m_componentIds = componentIds;
     m_collectedData.clear();
-    m_status = "Fetching component data...";
+    m_status = "Fetching component data in parallel...";
     
     // 保存导出选项
     m_exportOptions.outputPath = outputPath;
@@ -72,10 +73,8 @@ void ExportProgressViewModel::startExport(const QStringList &componentIds, const
     // 设置组件服务的输出路径
     m_componentService->setOutputPath(outputPath);
     
-    // 串行收集数据（由于 EasyedaApi 不支持并发）
-    if (!m_componentIds.isEmpty()) {
-        m_componentService->fetchComponentData(m_componentIds.first(), exportModel3D);
-    }
+    // 并行收集数据
+    m_componentService->fetchMultipleComponentsData(componentIds, exportModel3D);
 }
 
 void ExportProgressViewModel::cancelExport()
@@ -123,47 +122,25 @@ void ExportProgressViewModel::handleComponentExported(const QString &componentId
 
 void ExportProgressViewModel::handleComponentDataFetched(const QString &componentId, const ComponentData &data)
 {
-    bool hasSymbol = data.symbolData() && !data.symbolData()->info().name.isEmpty();
-    bool hasFootprint = data.footprintData() && !data.footprintData()->info().name.isEmpty();
-    bool hasModel3D = data.model3DData() && !data.model3DData()->uuid().isEmpty();
+    qDebug() << "Component data fetched for:" << componentId 
+             << "Symbol:" << (data.symbolData() && !data.symbolData()->info().name.isEmpty())
+             << "Footprint:" << (data.footprintData() && !data.footprintData()->info().name.isEmpty())
+             << "3D Model:" << (data.model3DData() && !data.model3DData()->uuid().isEmpty());
     
-    qDebug() << "Component data fetched for:" << componentId
-             << "Symbol:" << hasSymbol
-             << "Footprint:" << hasFootprint
-             << "3D Model:" << hasModel3D;
+    // 这个方法现在不应该被调用，因为我们使用并行数据收集
+    // 如果被调用，说明有错误
+    qWarning() << "handleComponentDataFetched called in parallel mode, this should not happen";
+}
+
+void ExportProgressViewModel::handleAllComponentsDataCollected(const QList<ComponentData> &componentDataList)
+{
+    qDebug() << "All components data collected in parallel:" << componentDataList.size() << "components";
     
-    // 存储收集到的数据
-    m_collectedData.append(data);
-    m_fetchedCount++;
+    m_status = "Exporting components in parallel...";
+    emit statusChanged();
     
-    qDebug() << "Fetched count:" << m_fetchedCount << "/" << m_componentIds.size();
-    
-    // 更新进度
-    int progress = (m_fetchedCount * 50) / m_componentIds.size(); // 数据收集占50%的进度
-    if (m_progress != progress) {
-        m_progress = progress;
-        emit progressChanged();
-    }
-    
-    // 检查是否还有更多元件需要收集
-    if (m_fetchedCount < m_componentIds.size()) {
-        qDebug() << "Fetching next component, index:" << m_fetchedCount;
-        // 收集下一个元件的数据
-        int nextIndex = m_fetchedCount;
-        if (nextIndex < m_componentIds.size()) {
-            m_componentService->fetchComponentData(m_componentIds[nextIndex], m_exportOptions.exportModel3D);
-        }
-    } else {
-        qDebug() << "All components collected, starting export...";
-        // 所有元件数据都已收集完成
-        m_status = "Exporting components...";
-        emit statusChanged();
-        
-        qDebug() << "All component data collected, starting export with" << m_collectedData.size() << "components";
-        
-        // 使用收集到的数据执行导出流程
-        m_exportService->executeExportPipelineWithData(m_collectedData, m_exportOptions);
-    }
+    // 使用并行导出流程
+    m_exportService->executeExportPipelineWithDataParallel(componentDataList, m_exportOptions);
 }
 
 void ExportProgressViewModel::handleExportCompleted(int totalCount, int successCount)

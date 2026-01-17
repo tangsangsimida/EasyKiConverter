@@ -114,6 +114,21 @@ private slots:
      */
     void handleNetworkError(const QString &errorMessage);
 
+    /**
+     * @brief 处理请求成功（支持并行请求）
+     */
+    void handleRequestSuccess(NetworkUtils *networkUtils, const QString &lcscId, const QJsonObject &data);
+
+    /**
+     * @brief 处理请求错误（支持并行请求）
+     */
+    void handleRequestError(NetworkUtils *networkUtils, const QString &lcscId, const QString &error);
+
+    /**
+     * @brief 处理二进制数据（支持并行请求）
+     */
+    void handleBinaryDataFetched(NetworkUtils *networkUtils, const QString &lcscId, const QByteArray &data);
+
 private:
     /**
      * @brief 请求类型枚举

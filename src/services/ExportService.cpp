@@ -5,6 +5,7 @@
 #include "src/core/kicad/ExporterSymbol.h"
 #include "src/core/kicad/ExporterFootprint.h"
 #include "src/core/kicad/Exporter3DModel.h"
+#include "ComponentExportTask.h"
 
 namespace EasyKiConverter
 {
@@ -21,6 +22,9 @@ ExportService::ExportService(QObject *parent)
     , m_totalProgress(0)
     , m_successCount(0)
     , m_failureCount(0)
+    , m_parallelExporting(false)
+    , m_parallelCompletedCount(0)
+    , m_parallelTotalCount(0)
 {
 }
 
@@ -183,7 +187,7 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData> &co
     }
     
     // 导出3D模型（需要在导出封装库之前完成）
-    QString modelsDirPath = QString("%1/3dmodels").arg(m_options.outputPath, m_options.libName);
+    QString modelsDirPath = QString("%1/3dmodels").arg(m_options.outputPath);
     if (m_options.exportModel3D && !allModels.isEmpty()) {
         // 创建 3D 模型目录
         if (!createOutputDirectory(modelsDirPath)) {
@@ -478,6 +482,194 @@ void ExportService::processNextExport()
     
     // 导出成功
     handleExportTaskFinished(componentId, true, "Export successful");
+}
+
+void ExportService::executeExportPipelineWithDataParallel(const QList<ComponentData> &componentDataList, const ExportOptions &options)
+{
+    qDebug() << "Executing parallel export pipeline with data for" << componentDataList.size() << "components";
+    
+    QMutexLocker locker(m_mutex);
+    
+    if (m_isExporting) {
+        qWarning() << "Export already in progress";
+        return;
+    }
+    
+    m_isExporting = true;
+    m_parallelExporting = true;
+    m_options = options;
+    m_currentProgress = 0;
+    m_totalProgress = componentDataList.size();
+    m_successCount = 0;
+    m_failureCount = 0;
+    m_parallelCompletedCount = 0;
+    m_parallelTotalCount = componentDataList.size();
+    m_parallelExportStatus.clear();
+    
+    locker.unlock();
+    
+    // 发送导出开始信号
+    // emit exportStarted(m_totalProgress); // 暂时注释掉，因为没有这个信号
+    
+    // 创建输出目录
+    if (!createOutputDirectory(m_options.outputPath)) {
+        qWarning() << "Failed to create output directory:" << m_options.outputPath;
+        m_isExporting = false;
+        m_parallelExporting = false;
+        emit exportFailed("Failed to create output directory");
+        return;
+    }
+    
+    // 收集所有符号、封装和3D模型数据
+    QList<SymbolData> allSymbols;
+    QList<FootprintData> allFootprints;
+    QList<Model3DData> allModels;
+    
+    for (const auto &componentData : componentDataList) {
+        if (componentData.symbolData()) {
+            allSymbols.append(*componentData.symbolData());
+        }
+        if (componentData.footprintData()) {
+            allFootprints.append(*componentData.footprintData());
+        }
+        if (componentData.model3DData()) {
+            allModels.append(*componentData.model3DData());
+        }
+    }
+    
+    // 导出符号库
+    if (m_options.exportSymbol && !allSymbols.isEmpty()) {
+        QString symbolLibPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, m_options.libName);
+        if (exportSymbolLibrary(allSymbols, m_options.libName, symbolLibPath)) {
+            qDebug() << "Symbol library exported successfully:" << symbolLibPath;
+            m_successCount += allSymbols.size();
+        } else {
+            qWarning() << "Failed to export symbol library";
+            m_failureCount += allSymbols.size();
+        }
+    }
+    
+    // 导出3D模型（需要在导出封装库之前完成）
+    QString modelsDirPath = QString("%1/3dmodels").arg(m_options.outputPath);
+    if (m_options.exportModel3D && !allModels.isEmpty()) {
+        // 创建 3D 模型目录
+        if (!createOutputDirectory(modelsDirPath)) {
+            qWarning() << "Failed to create 3D models directory:" << modelsDirPath;
+        } else {
+            // 为每个 3D 模型设置文件名（使用封装名称）
+            QMap<QString, QString> modelPathMap; // UUID -> 文件路径映射
+            
+            for (auto &model : allModels) {
+                // 查找对应的封装名称
+                QString footprintName;
+                for (const auto &componentData : componentDataList) {
+                    if (componentData.model3DData() && componentData.model3DData()->uuid() == model.uuid() && 
+                        componentData.footprintData() && !componentData.footprintData()->info().name.isEmpty()) {
+                        footprintName = componentData.footprintData()->info().name;
+                        break;
+                    }
+                }
+                
+                // 使用封装名称作为文件名
+                QString modelName = footprintName.isEmpty() ? model.uuid() : footprintName;
+                QString wrlPath = QString("%1/%2.wrl").arg(modelsDirPath, modelName);
+                QString stepPath = QString("%1/%2.step").arg(modelsDirPath, modelName);
+                
+                // 保存 WRL 模型
+                if (!model.rawObj().isEmpty()) {
+                    if (!m_options.overwriteExistingFiles && QFile::exists(wrlPath)) {
+                        qWarning() << "WRL model file already exists:" << wrlPath;
+                    } else {
+                        if (m_modelExporter->exportToWrl(model, wrlPath)) {
+                            qDebug() << "WRL model exported successfully:" << wrlPath;
+                        } else {
+                            qWarning() << "Failed to export WRL model:" << modelName;
+                        }
+                    }
+                }
+                
+                // 保存 STEP 模型
+                if (!model.step().isEmpty() && model.step().size() > 100) {
+                    if (!m_options.overwriteExistingFiles && QFile::exists(stepPath)) {
+                        qWarning() << "STEP model file already exists:" << stepPath;
+                    } else {
+                        if (m_modelExporter->exportToStep(model, stepPath)) {
+                            qDebug() << "STEP model exported successfully:" << stepPath;
+                        } else {
+                            qWarning() << "Failed to export STEP model:" << modelName;
+                        }
+                    }
+                }
+                
+                // 保存模型路径映射（使用相对路径，相对于封装库目录）
+                QString relativePath = QString("${KIPRJMOD}/3dmodels/%1").arg(modelName);
+                modelPathMap[model.uuid()] = relativePath;
+            }
+            
+            // 更新封装数据中的 3D 模型路径
+            for (auto &footprint : allFootprints) {
+                if (!footprint.model3D().uuid().isEmpty() && modelPathMap.contains(footprint.model3D().uuid())) {
+                    Model3DData updatedModel = footprint.model3D();
+                    updatedModel.setName(modelPathMap[footprint.model3D().uuid()]);
+                    footprint.setModel3D(updatedModel);
+                }
+            }
+        }
+    }
+    
+    // 创建封装库目录
+    QString footprintDirPath = QString("%1/%2.pretty").arg(m_options.outputPath, m_options.libName);
+    if (m_options.exportFootprint && !allFootprints.isEmpty()) {
+        if (exportFootprintLibrary(allFootprints, m_options.libName, footprintDirPath)) {
+            qDebug() << "Footprint library exported successfully with 3D model paths:" << footprintDirPath;
+            m_successCount += allFootprints.size();
+        } else {
+            m_failureCount += allFootprints.size();
+        }
+    }
+    
+    // 更新进度和统计
+    m_currentProgress = m_totalProgress;
+    
+    // 发送导出完成信号
+    m_isExporting = false;
+    m_parallelExporting = false;
+    emit exportProgress(m_currentProgress, m_totalProgress);
+    emit exportCompleted(m_totalProgress, m_successCount);
+}
+
+void ExportService::handleParallelExportTaskFinished(const QString &componentId, bool success, const QString &message)
+{
+    qDebug() << "Parallel export task finished for:" << componentId << "Success:" << success;
+    
+    QMutexLocker locker(m_mutex);
+    
+    // 更新统计信息
+    if (success) {
+        m_successCount++;
+    } else {
+        m_failureCount++;
+    }
+    
+    // 更新状态
+    m_parallelExportStatus[componentId] = false;
+    m_parallelCompletedCount++;
+    
+    // 更新进度
+    m_currentProgress++;
+    locker.unlock();
+    
+    emit exportProgress(m_currentProgress, m_totalProgress);
+    emit componentExported(componentId, success, message);
+    
+    // 检查是否所有任务都已完成
+    if (m_parallelCompletedCount >= m_parallelTotalCount) {
+        qDebug() << "All parallel export tasks completed:" << m_successCount << "success," << m_failureCount << "failed";
+        
+        m_isExporting = false;
+        m_parallelExporting = false;
+        emit exportCompleted(m_totalProgress, m_successCount);
+    }
 }
 
 } // namespace EasyKiConverter

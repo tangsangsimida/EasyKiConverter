@@ -2,170 +2,116 @@
 #include "src/core/kicad/ExporterSymbol.h"
 #include "src/core/kicad/ExporterFootprint.h"
 #include "src/core/kicad/Exporter3DModel.h"
-#include <QDir>
-#include <QFile>
 #include <QDebug>
+#include <QFile>
+#include <QDir>
 
 namespace EasyKiConverter
 {
 
-    ComponentExportTask::ComponentExportTask(
-        const QString &componentId,
-        const ComponentData &componentData,
-        const ExportOptions &options,
-        QObject *parent)
-        : QObject(parent), QRunnable(), m_componentId(componentId), m_componentData(componentData), m_options(options)
-    {
-        setAutoDelete(true); // 任务完成后自动删除
-    }
+ComponentExportTask::ComponentExportTask(const ComponentData &componentData,
+                                         const ExportOptions &options,
+                                         ExporterSymbol *symbolExporter,
+                                         ExporterFootprint *footprintExporter,
+                                         Exporter3DModel *modelExporter,
+                                         QObject *parent)
+    : QObject(parent)
+    , QRunnable()
+    , m_componentData(componentData)
+    , m_options(options)
+    , m_symbolExporter(symbolExporter)
+    , m_footprintExporter(footprintExporter)
+    , m_modelExporter(modelExporter)
+{
+    setAutoDelete(true);
+}
 
-    ComponentExportTask::~ComponentExportTask()
-    {
-        qDebug() << "ComponentExportTask destroyed for:" << m_componentId;
-    }
+ComponentExportTask::~ComponentExportTask()
+{
+}
 
-    void ComponentExportTask::run()
-    {
-        qDebug() << "Starting export task for component:" << m_componentId;
-
-        bool success = executeExport();
-
-        QString message = success
-                              ? "Export completed successfully"
-                              : "Export failed";
-
-        emit exportFinished(m_componentId, success, message);
-
-        qDebug() << "Export task finished for component:" << m_componentId
-                 << "- Success:" << success;
-    }
-
-    bool ComponentExportTask::executeExport()
-    {
+void ComponentExportTask::run()
+{
+    qDebug() << "Running export task for:" << m_componentData.lcscId();
+    
+    QString componentId = m_componentData.lcscId();
+    bool success = true;
+    QString message;
+    
+    try {
         // 创建输出目录
-        if (!createOutputDirectory())
-        {
-            qWarning() << "Failed to create output directory for component:" << m_componentId;
-            return false;
-        }
-
-        bool allSuccess = true;
-
-        // 导出符号
-        if (m_options.exportSymbol)
-        {
-            ExporterSymbol symbolExporter;
-            QString symbolPath = getSymbolFilePath();
-
-            if (!symbolExporter.exportSymbol(*m_componentData.symbolData(), symbolPath))
-            {
-                qWarning() << "Failed to export symbol for component:" << m_componentId;
-                allSuccess = false;
+        QDir dir;
+        if (!dir.exists(m_options.outputPath)) {
+            if (!dir.mkpath(m_options.outputPath)) {
+                throw QString("Failed to create output directory");
             }
-            else
-            {
+        }
+        
+        // 导出符号
+        if (m_options.exportSymbol && m_componentData.symbolData() && !m_componentData.symbolData()->info().name.isEmpty()) {
+            QString symbolPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, componentId);
+            if (!m_options.overwriteExistingFiles && QFile::exists(symbolPath)) {
+                qWarning() << "Symbol file already exists:" << symbolPath;
+            } else {
+                if (!m_symbolExporter->exportSymbol(*m_componentData.symbolData(), symbolPath)) {
+                    throw QString("Failed to export symbol");
+                }
                 qDebug() << "Symbol exported successfully:" << symbolPath;
             }
         }
-
-        // 导出封装
-        if (m_options.exportFootprint)
-        {
-            ExporterFootprint footprintExporter;
-            QString footprintPath = getFootprintFilePath();
-
-            if (!footprintExporter.exportFootprint(*m_componentData.footprintData(), footprintPath))
-            {
-                qWarning() << "Failed to export footprint for component:" << m_componentId;
-                allSuccess = false;
+        
+        // 导出3D模型（需要在导出封装之前完成）
+        QString model3DPath;
+        if (m_options.exportModel3D && m_componentData.model3DData() && !m_componentData.model3DData()->uuid().isEmpty()) {
+            // 使用封装名称作为文件名
+            QString footprintName = m_componentData.footprintData() ? m_componentData.footprintData()->info().name : m_componentData.model3DData()->name();
+            if (footprintName.isEmpty()) {
+                footprintName = m_componentData.model3DData()->uuid();
             }
-            else
-            {
+            
+            // 创建 3D 模型目录
+            QString modelsDirPath = QString("%1/3dmodels").arg(m_options.outputPath);
+            if (!dir.exists(modelsDirPath)) {
+                if (!dir.mkpath(modelsDirPath)) {
+                    throw QString("Failed to create 3D models directory");
+                }
+            }
+            
+            QString modelPath = QString("%1/3dmodels/%2.wrl").arg(m_options.outputPath, footprintName);
+            if (!m_options.overwriteExistingFiles && QFile::exists(modelPath)) {
+                qWarning() << "3D model file already exists:" << modelPath;
+            } else {
+                if (!m_modelExporter->exportToWrl(*m_componentData.model3DData(), modelPath)) {
+                    throw QString("Failed to export 3D model");
+                }
+                qDebug() << "3D model exported successfully:" << modelPath;
+            }
+            
+            // 设置相对路径用于封装
+            model3DPath = QString("${KIPRJMOD}/3dmodels/%1").arg(footprintName);
+        }
+        
+        // 导出封装
+        if (m_options.exportFootprint && m_componentData.footprintData() && !m_componentData.footprintData()->info().name.isEmpty()) {
+            QString footprintPath = QString("%1/%2.kicad_mod").arg(m_options.outputPath, componentId);
+            if (!m_options.overwriteExistingFiles && QFile::exists(footprintPath)) {
+                qWarning() << "Footprint file already exists:" << footprintPath;
+            } else {
+                if (!m_footprintExporter->exportFootprint(*m_componentData.footprintData(), footprintPath, model3DPath)) {
+                    throw QString("Failed to export footprint");
+                }
                 qDebug() << "Footprint exported successfully:" << footprintPath;
             }
         }
-
-        // 导出3D模型
-        if (m_options.exportModel3D)
-        {
-            Exporter3DModel modelExporter;
-            QString modelPath = getModel3DFilePath();
-
-            if (!modelExporter.exportToWrl(*m_componentData.model3DData(), modelPath))
-            {
-                qWarning() << "Failed to export 3D model for component:" << m_componentId;
-                // 3D模型导出失败不影响整体结果
-            }
-            else
-            {
-                qDebug() << "3D model exported successfully:" << modelPath;
-            }
-        }
-
-        return allSuccess;
+        
+        message = "Export successful";
+    } catch (const QString &error) {
+        success = false;
+        message = error;
+        qWarning() << "Export task failed for:" << componentId << error;
     }
-
-    QString ComponentExportTask::getSymbolFilePath() const
-    {
-        QString dirPath = m_options.outputPath + "/symbols";
-        QDir dir(dirPath);
-
-        if (!dir.exists())
-        {
-            dir.mkpath(".");
-        }
-
-        return dirPath + "/" + m_options.libName + ".kicad_sym";
-    }
-
-    QString ComponentExportTask::getFootprintFilePath() const
-    {
-        QString dirPath = m_options.outputPath + "/footprints";
-        QDir dir(dirPath);
-
-        if (!dir.exists())
-        {
-            dir.mkpath(".");
-        }
-
-        return dirPath + "/" + m_options.libName + ".pretty/" + m_componentId + ".kicad_mod";
-    }
-
-    QString ComponentExportTask::getModel3DFilePath() const
-    {
-        QString dirPath = m_options.outputPath + "/3D";
-        QDir dir(dirPath);
-
-        if (!dir.exists())
-        {
-            dir.mkpath(".");
-        }
-
-        const Model3DData &model3D = *m_componentData.model3DData();
-        QString uuid = model3D.uuid();
-
-        if (uuid.isEmpty())
-        {
-            return QString();
-        }
-
-        return dirPath + "/" + uuid + ".step";
-    }
-
-    bool ComponentExportTask::createOutputDirectory() const
-    {
-        QDir dir(m_options.outputPath);
-
-        if (!dir.exists())
-        {
-            if (!dir.mkpath("."))
-            {
-                qWarning() << "Failed to create output directory:" << m_options.outputPath;
-                return false;
-            }
-        }
-
-        return true;
-    }
+    
+    emit exportFinished(componentId, success, message);
+}
 
 } // namespace EasyKiConverter

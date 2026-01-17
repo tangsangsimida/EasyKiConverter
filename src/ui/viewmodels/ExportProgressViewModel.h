@@ -53,6 +53,7 @@ namespace EasyKiConverter
         void handleExportFailed(const QString &error);
         void handleComponentExported(const QString &componentId, bool success, const QString &message);
         void handleComponentDataFetched(const QString &componentId, const ComponentData &data);
+        void handleAllComponentsDataCollected(const QList<ComponentData> &componentDataList);
 
     private:
         ExportService *m_exportService;

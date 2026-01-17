@@ -99,6 +99,14 @@ namespace EasyKiConverter
         void executeExportPipelineWithData(const QList<ComponentData> &componentDataList, const ExportOptions &options);
 
         /**
+         * @brief 使用已收集的数据执行并行批量导出流程
+         *
+         * @param componentDataList 元件数据列表
+         * @param options 导出选项
+         */
+        void executeExportPipelineWithDataParallel(const QList<ComponentData> &componentDataList, const ExportOptions &options);
+
+        /**
          * @brief 取消导出
          */
         void cancelExport();
@@ -166,6 +174,15 @@ namespace EasyKiConverter
          * @param message 消息
          */
         void handleExportTaskFinished(const QString &componentId, bool success, const QString &message);
+
+        /**
+         * @brief 处理并行导出任务完成
+         *
+         * @param componentId 元件ID
+         * @param success 是否成功
+         * @param message 消息
+         */
+        void handleParallelExportTaskFinished(const QString &componentId, bool success, const QString &message);
 
     private:
         /**
@@ -257,6 +274,12 @@ namespace EasyKiConverter
             QString errorMessage;
         };
         QList<ExportData> m_exportDataList;
+        
+        // 并行导出状态
+        bool m_parallelExporting;
+        int m_parallelCompletedCount;
+        int m_parallelTotalCount;
+        QMap<QString, bool> m_parallelExportStatus;
     };
 
 } // namespace EasyKiConverter
