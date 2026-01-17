@@ -1023,14 +1023,15 @@ Item {
                 enabled: componentListController.componentCount > 0 && !exportProgressController.isExporting
 
                 onClicked: {
-                    exportProgressController.startExport(componentListController.componentList, {
-                        outputPath: exportSettingsController.outputPath,
-                        libName: exportSettingsController.libName,
-                        exportSymbol: exportSettingsController.exportSymbol,
-                        exportFootprint: exportSettingsController.exportFootprint,
-                        exportModel3D: exportSettingsController.exportModel3D,
-                        overwriteExistingFiles: exportSettingsController.overwriteExistingFiles
-                    })
+                    exportProgressController.startExport(
+                        componentListController.componentList,
+                        exportSettingsController.outputPath,
+                        exportSettingsController.libName,
+                        exportSettingsController.exportSymbol,
+                        exportSettingsController.exportFootprint,
+                        exportSettingsController.exportModel3D,
+                        exportSettingsController.overwriteExistingFiles
+                    )
                 }
             }
 
