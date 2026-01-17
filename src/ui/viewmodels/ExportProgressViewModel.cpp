@@ -116,7 +116,9 @@ void ExportProgressViewModel::handleExportCompleted(int totalCount, int successC
 {
     qDebug() << "Export completed:" << successCount << "/" << totalCount << "success";
     
+    m_isExporting = false;
     m_status = "Export completed";
+    emit isExportingChanged();
     emit statusChanged();
     emit exportCompleted(totalCount, successCount);
 }
