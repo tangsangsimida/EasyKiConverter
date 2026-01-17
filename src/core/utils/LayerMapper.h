@@ -192,6 +192,44 @@ public:
     static bool isMechanicalLayer(int kicadLayerId);
 
     /**
+     * @brief 判断是否为元件外形层（边界层）
+     *
+     * 元件外形层用于布局避让，应映射到 F.CrtYd 或 B.CrtYd
+     * 参考 LCKiConverter: src/jlc/pro_footprint.ts isCourtYard()
+     *
+     * @param easyedaLayerId 嘉立创 EDA 图层 ID
+     * @return bool 是否为元件外形层
+     */
+    static bool isCourtYardLayer(int easyedaLayerId);
+
+    /**
+     * @brief 判断是否为内层
+     *
+     * @param easyedaLayerId 嘉立创 EDA 图层 ID
+     * @return bool 是否为内层
+     */
+    static bool isInnerLayer(int easyedaLayerId);
+
+    /**
+     * @brief 判断是否为焊盘层
+     *
+     * @param easyedaLayerId 嘉立创 EDA 图层 ID
+     * @return bool 是否为焊盘层
+     */
+    static bool isPadLayer(int easyedaLayerId);
+
+    /**
+     * @brief 获取元件外形层对应的 KiCad 图层
+     *
+     * 元件外形层应映射到 F.CrtYd（顶层）或 B.CrtYd（底层）
+     * 参考 LCKiConverter: src/jlc/pro_footprint.ts isCourtYard()
+     *
+     * @param easyedaLayerId 嘉立创 EDA 图层 ID
+     * @return QString KiCad 图层名称，如果不是元件外形层则返回空字符串
+     */
+    static QString getCourtYardLayerName(int easyedaLayerId);
+
+    /**
      * @brief 获取图层映射说明
      *
      * @return QString 映射说明

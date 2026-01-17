@@ -355,7 +355,7 @@ namespace EasyKiConverter
         QString drillStr;
         if (holeRadius > 0 && pad.holeLength > 0)
         {
-            // 椭圆钻孔支持（与 Python 版本一致）
+            // 椭圆钻孔支持
             double holeLengthMm = pxToMmRounded(pad.holeLength);
             double maxDistanceHole = qMax(holeRadius * 2, holeLengthMm);
             double pos0 = height - maxDistanceHole;
@@ -363,10 +363,13 @@ namespace EasyKiConverter
             double maxDistance = qMax(pos0, pos90);
 
             // 根据焊盘尺寸判断椭圆钻孔方向
-            if (qAbs(maxDistance - pos0) < qAbs(maxDistance - pos90)) {
+            if (qAbs(maxDistance - pos0) < qAbs(maxDistance - pos90))
+            {
                 // 椭圆长轴在 Y 方向
                 drillStr = QString(" (drill oval %1 %2)").arg(holeRadius * 2, 0, 'f', 2).arg(holeLengthMm, 0, 'f', 2);
-            } else {
+            }
+            else
+            {
                 // 椭圆长轴在 X 方向
                 drillStr = QString(" (drill oval %1 %2)").arg(holeLengthMm, 0, 'f', 2).arg(holeRadius * 2, 0, 'f', 2);
             }
@@ -590,35 +593,82 @@ namespace EasyKiConverter
             layer = layer.replace(".SilkS", ".Fab");
         }
 
-        // Check if this is a bottom layer text (starts with "B")
-        bool isBottomLayer = layer.startsWith("B");
-        QString mirrorStr = isBottomLayer ? " mirror" : "";
-
         // Check if text should be hidden
         QString displayStr = text.isDisplayed ? "" : " hide";
-
-        // KiCad format - match Python version
-        content += QString("\t(fp_text user %1 (at %2 %3 %4) (layer %5)%6\n")
-                       .arg(text.text)
-                       .arg(x, 0, 'f', 2)
-                       .arg(y, 0, 'f', 2)
-                       .arg(double(text.rotation), 0, 'f', 2)
-                       .arg(layer)
-                       .arg(displayStr);
-
-        // Font effects
-        double fontSize = pxToMmRounded(text.fontSize);
-        double thickness = pxToMmRounded(text.strokeWidth);
-        fontSize = qMax(fontSize, 1.0);    // Ensure minimum font size
-        thickness = qMax(thickness, 0.01); // Ensure minimum thickness
-
-        content += QString("\t\t(effects (font (size %1 %2) (thickness %3)) (justify left%4))\n")
-                       .arg(fontSize, 0, 'f', 2)
-                       .arg(fontSize, 0, 'f', 2)
-                       .arg(thickness, 0, 'f', 2)
-                       .arg(mirrorStr);
-
-        content += "\t)\n";
+        // 检查是否为非 ASCII 文本
+        bool isNonASCII = false;
+        for (int i = 0; i < text.text.length(); ++i)
+        {
+            if (text.text[i].unicode() > 127)
+            {
+                isNonASCII = true;
+                break;
+            }
+        }
+        if (isNonASCII && !text.textPath.isEmpty())
+        {
+            // 非 ASCII 文本转换为多边形
+            qWarning() << "Warning: Converting non-ASCII text to polygon:" << text.text;
+            // 解析路径字符串（格式如 "M x y L x y ... M x y L x y ..."）
+            QStringList paths = text.textPath.split("M", Qt::SkipEmptyParts);
+            for (const QString &pathStr : paths)
+            {
+                if (pathStr.trimmed().isEmpty())
+                    continue;
+                // 解析点数据
+                QStringList tokens = pathStr.split(QRegularExpression("[\\s,]+"), Qt::SkipEmptyParts);
+                QList<QPointF> points;
+                for (int i = 0; i + 1 < tokens.size(); i += 2)
+                {
+                    double px = tokens[i].toDouble();
+                    double py = tokens[i + 1].toDouble();
+                    // 转换为相对于边界框的坐标
+                    double relX = pxToMmRounded(px - bboxX);
+                    double relY = pxToMmRounded(py - bboxY);
+                    points.append(QPointF(relX, relY));
+                }
+                // 生成多段线
+                if (points.size() >= 2)
+                {
+                    for (int i = 1; i < points.size(); ++i)
+                    {
+                        content += QString("\t(fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
+                                       .arg(points[i - 1].x(), 0, 'f', 2)
+                                       .arg(points[i - 1].y(), 0, 'f', 2)
+                                       .arg(points[i].x(), 0, 'f', 2)
+                                       .arg(points[i].y(), 0, 'f', 2)
+                                       .arg(layer)
+                                       .arg(pxToMmRounded(text.strokeWidth) * 0.8, 0, 'f', 2);
+                    }
+                }
+            }
+        }
+        else
+        {
+            // ASCII 文本使用 fp_text 元素
+            // Check if this is a bottom layer text (starts with "B")
+            bool isBottomLayer = layer.startsWith("B");
+            QString mirrorStr = isBottomLayer ? " mirror" : "";
+            // KiCad format - match Python version
+            content += QString("\t(fp_text user %1 (at %2 %3 %4) (layer %5)%6\n")
+                           .arg(text.text)
+                           .arg(x, 0, 'f', 2)
+                           .arg(y, 0, 'f', 2)
+                           .arg(double(text.rotation), 0, 'f', 2)
+                           .arg(layer)
+                           .arg(displayStr);
+            // Font effects
+            double fontSize = pxToMmRounded(text.fontSize);
+            double thickness = pxToMmRounded(text.strokeWidth);
+            fontSize = qMax(fontSize, 1.0);    // Ensure minimum font size
+            thickness = qMax(thickness, 0.01); // Ensure minimum thickness
+            content += QString("\t\t(effects (font (size %1 %2) (thickness %3)) (justify left%4))\n")
+                           .arg(fontSize, 0, 'f', 2)
+                           .arg(fontSize, 0, 'f', 2)
+                           .arg(thickness, 0, 'f', 2)
+                           .arg(mirrorStr);
+            content += "\t)\n";
+        }
 
         return content;
     }
@@ -632,19 +682,25 @@ namespace EasyKiConverter
 
         // 修复 Z 轴处理：SMD 器件 Z 轴取反，THT 器件 Z 轴设为 0（与 Python 版本一致）
         double z = pxToMmRounded(model3D.translation().z);
-        if (fpType == "smd") {
+        if (fpType == "smd")
+        {
             z = -z;
-        } else {
+        }
+        else
+        {
             z = 0.0;
         }
 
         // 修复旋转处理：使用 (360 - rotation) % 360 公式（与 Python 版本一致）
         double rotX = (360.0 - model3D.rotation().x);
-        while (rotX >= 360.0) rotX -= 360.0;
+        while (rotX >= 360.0)
+            rotX -= 360.0;
         double rotY = (360.0 - model3D.rotation().y);
-        while (rotY >= 360.0) rotY -= 360.0;
+        while (rotY >= 360.0)
+            rotY -= 360.0;
         double rotZ = (360.0 - model3D.rotation().z);
-        while (rotZ >= 360.0) rotZ -= 360.0;
+        while (rotZ >= 360.0)
+            rotZ -= 360.0;
 
         // KiCad 6.x format - use absolute path (match Python version)
         content += QString("\t(model \"%1\"\n").arg(finalPath);
@@ -721,26 +777,49 @@ namespace EasyKiConverter
 
     QString ExporterFootprint::padLayersToKicad(int layerId) const
     {
-        // Layer mapping based on Python version
+        // 焊盘层映射规则：
+        // 1. SMD 焊盘（顶层/底层）需要包含 Paste 层（用于钢网印刷）
+        // 2. 通孔焊盘（多层）不应包含 Paste 层（通孔元件不需要钢网）
+        // 3. 丝印层、装配层等不需要 Paste
+        //
+        // 参考：src/jlc/pro_footprint.ts getLayers() 函数
+        // case '1':return ["F.Cu", "F.Paste", "F.Mask"];  // 顶层SMD
+        // case '2':return ["B.Cu", "B.Paste", "B.Mask"];  // 底层SMD
+        // case '12':return ["*.Cu", "*.Mask"];            // 通孔焊盘（不包含Paste）
+
         switch (layerId)
         {
         case 1:
-            return "F.Cu F.Paste F.Mask"; // Top SMD
+            // 顶层SMD焊盘：需要Paste层用于钢网印刷
+            return "F.Cu F.Paste F.Mask";
         case 2:
-            return "B.Cu B.Paste B.Mask"; // Bottom SMD
+            // 底层SMD焊盘：需要Paste层用于钢网印刷
+            return "B.Cu B.Paste B.Mask";
         case 3:
+            // 顶层丝印：不需要Paste
             return "F.SilkS";
+        case 4:
+            // 底层丝印：不需要Paste
+            return "B.SilkS";
         case 11:
-            return "*.Cu *.Mask"; // Through hole - 不包含 Paste 层
+            // 通孔焊盘（多层）：不应包含Paste层
+            // 通孔元件不需要钢网印刷，避免锡膏进入孔内
+            return "*.Cu *.Mask";
         case 13:
+            // 顶层装配层：不需要Paste
             return "F.Fab";
+        case 14:
+            // 底层装配层：不需要Paste
+            return "B.Fab";
         case 15:
+            // 文档层：不需要Paste
             return "Dwgs.User";
         default:
+            // 默认使用通孔焊盘配置（不包含Paste）
+            qWarning() << "Unknown pad layer ID:" << layerId << ", using default thru-hole configuration";
             return "*.Cu *.Mask";
         }
     }
-
     QString ExporterFootprint::layerIdToKicad(int layerId) const
     {
         // Layer mapping for graphical elements - matched with Python version
@@ -769,7 +848,7 @@ namespace EasyKiConverter
         case 11:
             return "Edge.Cuts"; // Board Outline (板框层)
         case 12:
-            return "Cmts.User"; // Comments (注释层)
+            return "Dwgs.User"; // Document (文档层)
         case 13:
             return "F.Fab"; // Top Fabrication
         case 14:
