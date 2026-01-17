@@ -531,118 +531,183 @@ QString ExporterSymbol::generateEllipse(const SymbolEllipse &ellipse) const
 }
 
 QString ExporterSymbol::generatePolygon(const SymbolPolygon &polygon) const
-{
-    QString content;
+    {
+        QString content;
 
-    // 解析点数据
-    QStringList points = polygon.points.split(" ");
-    // 过滤掉空字符串
-    points.removeAll("");
-    
-    // 至少需要 2 个有效的点（4 个坐标值）
-    if (points.size() >= 4) {
-        // KiCad V6 不支持 polygon 元素，使用 polyline 代替
-        content += "    (polyline\n";
-        content += "      (pts";
-        // 存储第一个点以便在最后重复
-        QString firstPoint;
-        QString lastPoint; // 用于检测重复点
-        for (int i = 0; i < points.size(); i += 2) {
-            if (i + 1 < points.size()) {
-                // 转换为相对于边界框的坐标，并转换为毫米
-                double x = pxToMm(points[i].toDouble() - m_currentBBox.x);
-                double y = -pxToMm(points[i + 1].toDouble() - m_currentBBox.y);
-                QString point = QString(" (xy %1 %2)").arg(x, 0, 'f', 2).arg(y, 0, 'f', 2);
-                
-                // 避免重复点
-                if (point != lastPoint) {
-                    content += point;
-                    if (i == 0) {
-                        firstPoint = point;
+        // 解析点数据
+        QStringList points = polygon.points.split(" ");
+        // 过滤掉空字符串
+        points.removeAll("");
+        
+        // 至少需要 2 个有效的点（4 个坐标值）
+        if (points.size() >= 4) {
+            // KiCad V6 不支持 polygon 元素，使用 polyline 代替
+            content += "    (polyline\n";
+            content += "      (pts";
+            // 存储第一个点以便在最后重复
+            QString firstPoint;
+            QString lastPoint; // 用于检测重复点
+            for (int i = 0; i < points.size(); i += 2) {
+                if (i + 1 < points.size()) {
+                    // 转换为相对于边界框的坐标，并转换为毫米
+                    double x = pxToMm(points[i].toDouble() - m_currentBBox.x);
+                    double y = -pxToMm(points[i + 1].toDouble() - m_currentBBox.y);
+                    QString point = QString(" (xy %1 %2)").arg(x, 0, 'f', 2).arg(y, 0, 'f', 2);
+                    
+                    // 避免重复点
+                    if (point != lastPoint) {
+                        content += point;
+                        if (i == 0) {
+                            firstPoint = point;
+                        }
+                        lastPoint = point;
                     }
-                    lastPoint = point;
                 }
             }
+            // 多边形总是重复第一个点以闭合
+            if (!firstPoint.isEmpty() && firstPoint != lastPoint) {
+                content += firstPoint;
+            }
+            content += ")\n";
+            content += "      (stroke (width 0.254) (type default))\n";
+            // 根据 fillColor 属性设置填充类型（与 Python 版本一致）
+            if (polygon.fillColor) {
+                content += "      (fill (type background))\n";
+            } else {
+                content += "      (fill (type none))\n";
+            }
+            content += "    )\n";
         }
-        // 多边形总是重复第一个点以闭合
-        if (!firstPoint.isEmpty() && firstPoint != lastPoint) {
-            content += firstPoint;
-        }
-        content += ")\n";
-        content += "      (stroke (width 0.254) (type default))\n";
-        // 多边形总是使用 none 填充（符合KiCad规范）
-        content += "      (fill (type none))\n";
-        content += "    )\n";
+
+        return content;
     }
-
-    return content;
-}
-
 QString ExporterSymbol::generatePolyline(const SymbolPolyline &polyline) const
-{
-    QString content;
+    {
+        QString content;
 
-    // 解析点数据
-    QStringList points = polyline.points.split(" ");
-    // 过滤掉空字符串
-    points.removeAll("");
-    
-    // 至少需要 2 个有效的点（4 个坐标值）
-    if (points.size() >= 4) {
-        content += "    (polyline\n";
-        content += "      (pts";
-        // 存储第一个点
-        QString firstPoint;
-        QString lastPoint; // 用于检测重复点
-        for (int i = 0; i < points.size(); i += 2) {
-            if (i + 1 < points.size()) {
-                // 转换为相对于边界框的坐标，并转换为毫米
-                double x = pxToMm(points[i].toDouble() - m_currentBBox.x);
-                double y = -pxToMm(points[i + 1].toDouble() - m_currentBBox.y);
-                QString point = QString(" (xy %1 %2)").arg(x, 0, 'f', 2).arg(y, 0, 'f', 2);
+        // 解析点数据
+        QStringList points = polyline.points.split(" ");
+        // 过滤掉空字符串
+        points.removeAll("");
+        
+        // 至少需要 2 个有效的点（4 个坐标值）
+        if (points.size() >= 4) {
+            content += "    (polyline\n";
+            content += "      (pts";
+            // 存储第一个点
+            QString firstPoint;
+            QString lastPoint; // 用于检测重复点
+            for (int i = 0; i < points.size(); i += 2) {
+                if (i + 1 < points.size()) {
+                    // 转换为相对于边界框的坐标，并转换为毫米
+                    double x = pxToMm(points[i].toDouble() - m_currentBBox.x);
+                    double y = -pxToMm(points[i + 1].toDouble() - m_currentBBox.y);
+                    QString point = QString(" (xy %1 %2)").arg(x, 0, 'f', 2).arg(y, 0, 'f', 2);
+                    
+                    // 避免重复点
+                    if (point != lastPoint) {
+                        content += point;
+                        if (i == 0) {
+                            firstPoint = point;
+                        }
+                        lastPoint = point;
+                    }
+                }
+            }
+            // 只有当 fillColor 为 true 时才重复第一个点（与 Python 版本一致）
+            if (polyline.fillColor && !firstPoint.isEmpty() && firstPoint != lastPoint) {
+                content += firstPoint;
+            }
+            content += ")\n";
+            content += "      (stroke (width 0.254) (type default))\n";
+            // 填充类型由 fillColor 决定（与 Python 版本一致）
+            if (polyline.fillColor) {
+                content += "      (fill (type background))\n";
+            } else {
+                content += "      (fill (type none))\n";
+            }
+            content += "    )\n";
+        }
+
+        return content;
+    }
+QString ExporterSymbol::generatePath(const SymbolPath &path) const
+    {
+        QString content;
+
+        // 解析 SVG 路径（支持 M、L、Z 命令，与 Python 版本一致）
+        QStringList rawPts = path.paths.split(" ");
+        // 过滤掉空字符串
+        rawPts.removeAll("");
+
+        QList<double> xPoints;
+        QList<double> yPoints;
+
+        // 解析路径命令
+        for (int i = 0; i < rawPts.size(); ++i) {
+            QString token = rawPts[i];
+
+            if (token == "M" || token == "L") {
+                // MoveTo 或 LineTo 命令
+                if (i + 2 < rawPts.size()) {
+                    double x = pxToMm(rawPts[i + 1].toDouble() - m_currentBBox.x);
+                    double y = -pxToMm(rawPts[i + 2].toDouble() - m_currentBBox.y); // Y 轴翻转
+                    xPoints.append(x);
+                    yPoints.append(y);
+                    i += 2; // 跳过已处理的坐标
+                }
+            } else if (token == "Z" || token == "z") {
+                // ClosePath 命令：重复第一个点以闭合路径
+                if (!xPoints.isEmpty() && !yPoints.isEmpty()) {
+                    xPoints.append(xPoints.first());
+                    yPoints.append(yPoints.first());
+                }
+            } else if (token == "C") {
+                // Bezier 曲线（暂不支持，跳过）
+                // TODO: 添加 Bezier 曲线支持
+                i += 6; // 跳过 Bezier 控制点和终点
+            }
+        }
+
+        // 生成 polyline
+        if (!xPoints.isEmpty() && !yPoints.isEmpty()) {
+            content += "    (polyline\n";
+            content += "      (pts";
+            
+            QString lastPoint;
+            for (int i = 0; i < qMin(xPoints.size(), yPoints.size()); ++i) {
+                QString point = QString(" (xy %1 %2)")
+                                    .arg(xPoints[i], 0, 'f', 2)
+                                    .arg(yPoints[i], 0, 'f', 2);
                 
                 // 避免重复点
                 if (point != lastPoint) {
                     content += point;
-                    if (i == 0) {
-                        firstPoint = point;
-                    }
                     lastPoint = point;
                 }
             }
-        }
-        // 只有当 fillColor 为 true 时才重复第一个点
-        if (polyline.fillColor && !firstPoint.isEmpty() && firstPoint != lastPoint) {
-            content += firstPoint;
-        }
-        content += ")\n";
-        content += "      (stroke (width 0.254) (type default))\n";
-        // 填充类型由 fillColor 决定
-        if (polyline.fillColor) {
-            content += "      (fill (type solid))\n";
+            
+            content += ")\n";
+            content += "      (stroke (width 0.127) (type default))\n";
+            
+            // 填充类型由 fillColor 决定
+            if (path.fillColor) {
+                content += "      (fill (type background))\n";
+            } else {
+                content += "      (fill (type none))\n";
+            }
+            
+            content += "    )\n";
         } else {
+            // 如果没有有效点，生成占位符
+            content += "    (polyline (pts (xy 0 0))\n";
+            content += "      (stroke (width 0.127) (type default))\n";
             content += "      (fill (type none))\n";
+            content += "    )\n";
         }
-        content += "    )\n";
+
+        return content;
     }
-
-    return content;
-}
-
-QString ExporterSymbol::generatePath(const SymbolPath &path) const
-{
-    Q_UNUSED(path);
-    QString content;
-
-    // 路径需要特殊处理，这里简化处理
-    content += "    (polyline (pts (xy 0 0))\n";
-    content += "      (stroke (width 0.127) (type default))\n";
-    content += "      (fill (type none))\n";
-    content += "    )\n";
-
-    return content;
-}
-
 double ExporterSymbol::pxToMil(double px) const
 {
     return 10.0 * px;

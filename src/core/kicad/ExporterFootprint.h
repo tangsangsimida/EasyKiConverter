@@ -143,9 +143,11 @@ namespace EasyKiConverter
          * @param model3D 3D 模型数据
          * @param bboxX 边界框中心 X 偏移
          * @param bboxY 边界框中心 Y 偏移
+         * @param model3DPath 3D 模型路径
+         * @param fpType 封装类型（"smd" 或 "tht"）
          * @return QString 3D 模型引用文本
          */
-        QString generateModel3D(const Model3DData &model3D, double bboxX = 0, double bboxY = 0, const QString &model3DPath = QString()) const;
+        QString generateModel3D(const Model3DData &model3D, double bboxX = 0, double bboxY = 0, const QString &model3DPath = QString(), const QString &fpType = QString()) const;
 
         /**
          * @brief 将像素转换为毫米
@@ -154,6 +156,14 @@ namespace EasyKiConverter
          * @return double 毫米值
          */
         double pxToMm(double px) const;
+
+        /**
+         * @brief 将像素转换为毫米（带四舍五入）
+         *
+         * @param px 像素值
+         * @return double 毫米值（四舍五入到 2 位小数）
+         */
+        double pxToMmRounded(double px) const;
 
         /**
          * @brief 将焊盘形状转换为 KiCad 焊盘形状
