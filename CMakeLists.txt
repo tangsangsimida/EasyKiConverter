@@ -7,6 +7,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# 启用多线程编译
+if(MSVC)
+    # MSVC 使用 /MP 选项
+    add_compile_options(/MP)
+endif()
+
 # 调试选项：启用符号和封装解析数据导出
 option(ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT "Enable debug export for symbol and footprint data" ON)
 

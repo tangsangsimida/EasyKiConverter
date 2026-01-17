@@ -25,7 +25,7 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService *exportService, C
     
     // 连接 ComponentService 信号
     if (m_componentService) {
-        connect(m_componentService, &ComponentService::componentDataFetched, this, &ExportProgressViewModel::handleComponentDataFetched);
+        connect(m_componentService, &ComponentService::cadDataReady, this, &ExportProgressViewModel::handleComponentDataFetched);
     }
 }
 
