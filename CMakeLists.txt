@@ -11,6 +11,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if(MSVC)
     # MSVC 使用 /MP 选项，自动使用最大可用线程
     add_compile_options(/MP)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    # GCC 使用 -j 选项，但需要通过 make 的 -j 参数来控制
+    # 这里不添加编译选项，而是在构建时使用 make -j
+    message(STATUS "GCC compiler detected. Use 'make -j' or 'cmake --build . --parallel' for parallel compilation")
 endif()
 
 # 调试选项：启用符号和封装解析数据导出
