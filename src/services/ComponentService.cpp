@@ -30,6 +30,7 @@ void ComponentService::fetchComponentData(const QString &componentId, bool fetch
 {
     qDebug() << "Fetching component data for:" << componentId << "Fetch 3D:" << fetch3DModel;
     
+    // 暂时存储当前请求的元件ID和3D模型标志
     m_currentComponentId = componentId;
     m_fetch3DModel = fetch3DModel;
     

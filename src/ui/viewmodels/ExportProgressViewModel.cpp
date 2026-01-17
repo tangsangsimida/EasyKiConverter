@@ -72,9 +72,9 @@ void ExportProgressViewModel::startExport(const QStringList &componentIds, const
     // 设置组件服务的输出路径
     m_componentService->setOutputPath(outputPath);
     
-    // 开始收集所有元件的数据
-    for (const QString &componentId : componentIds) {
-        m_componentService->fetchComponentData(componentId, exportModel3D);
+    // 串行收集数据（由于 EasyedaApi 不支持并发）
+    if (!m_componentIds.isEmpty()) {
+        m_componentService->fetchComponentData(m_componentIds.first(), exportModel3D);
     }
 }
 
@@ -143,8 +143,15 @@ void ExportProgressViewModel::handleComponentDataFetched(const QString &componen
         emit progressChanged();
     }
     
-    // 检查是否所有元件数据都已收集完成
-    if (m_fetchedCount >= m_componentIds.size()) {
+    // 检查是否还有更多元件需要收集
+    if (m_fetchedCount < m_componentIds.size()) {
+        // 收集下一个元件的数据
+        int nextIndex = m_fetchedCount;
+        if (nextIndex < m_componentIds.size()) {
+            m_componentService->fetchComponentData(m_componentIds[nextIndex], m_exportOptions.exportModel3D);
+        }
+    } else {
+        // 所有元件数据都已收集完成
         m_status = "Exporting components...";
         emit statusChanged();
         

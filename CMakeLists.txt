@@ -9,7 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # 启用多线程编译
 if(MSVC)
-    # MSVC 使用 /MP 选项
+    # MSVC 使用 /MP 选项，自动使用最大可用线程
     add_compile_options(/MP)
 endif()
 
