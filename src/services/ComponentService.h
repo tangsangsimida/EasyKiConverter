@@ -223,6 +223,12 @@ namespace EasyKiConverter
         // 待处理的组件数据（用于等待 3D 模型数据）
         ComponentData m_pendingComponentData;
         
+        // 待处理的 3D 模型 UUID
+        QString m_pendingModelUuid;
+        
+        // 是否已经下载了 WRL 格式
+        bool m_hasDownloadedWrl;
+        
         // 输出路径
         QString m_outputPath;
         

@@ -124,9 +124,14 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData> &co
     // 清空之前的数据
     m_exportDataList.clear();
     
+    // 收集所有符号和封装数据
+    QList<SymbolData> allSymbols;
+    QList<FootprintData> allFootprints;
+    QList<Model3DData> allModels;
+    
     locker.unlock();
     
-    // 为每个元件创建导出任务，并填充数据
+    // 为每个元件收集数据
     for (const ComponentData &componentData : componentDataList) {
         ExportData exportData;
         exportData.componentId = componentData.lcscId();
@@ -134,16 +139,19 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData> &co
         // 检查并复制符号数据
         if (componentData.symbolData() && !componentData.symbolData()->info().name.isEmpty()) {
             exportData.symbolData = *componentData.symbolData();
+            allSymbols.append(exportData.symbolData);
         }
         
         // 检查并复制封装数据
         if (componentData.footprintData() && !componentData.footprintData()->info().name.isEmpty()) {
             exportData.footprintData = *componentData.footprintData();
+            allFootprints.append(exportData.footprintData);
         }
         
         // 检查并复制3D模型数据
         if (componentData.model3DData() && !componentData.model3DData()->uuid().isEmpty()) {
             exportData.model3DData = *componentData.model3DData();
+            allModels.append(exportData.model3DData);
         }
         
         exportData.success = false;
@@ -155,8 +163,118 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData> &co
                  << "3D Model:" << !exportData.model3DData.uuid().isEmpty();
     }
     
-    // 开始处理第一个元件
-    processNextExport();
+    // 创建输出目录
+    if (!createOutputDirectory(m_options.outputPath)) {
+        qWarning() << "Failed to create output directory:" << m_options.outputPath;
+        m_isExporting = false;
+        emit exportFailed("Failed to create output directory");
+        return;
+    }
+    
+    // 导出符号库
+    if (m_options.exportSymbol && !allSymbols.isEmpty()) {
+        QString symbolLibPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, m_options.libName);
+        if (exportSymbolLibrary(allSymbols, m_options.libName, symbolLibPath)) {
+            qDebug() << "Symbol library exported successfully:" << symbolLibPath;
+        } else {
+            qWarning() << "Failed to export symbol library";
+            m_failureCount += allSymbols.size();
+        }
+    }
+    
+    // 导出3D模型（需要在导出封装库之前完成）
+    QString modelsDirPath = QString("%1/3dmodels").arg(m_options.outputPath, m_options.libName);
+    if (m_options.exportModel3D && !allModels.isEmpty()) {
+        // 创建 3D 模型目录
+        if (!createOutputDirectory(modelsDirPath)) {
+            qWarning() << "Failed to create 3D models directory:" << modelsDirPath;
+        } else {
+            // 为每个 3D 模型设置文件名（使用封装名称）
+            QMap<QString, QString> modelPathMap; // UUID -> 文件路径映射
+            
+            for (auto &model : allModels) {
+                // 查找对应的封装名称
+                QString footprintName;
+                for (const auto &exportData : m_exportDataList) {
+                    if (exportData.model3DData.uuid() == model.uuid() && !exportData.footprintData.info().name.isEmpty()) {
+                        footprintName = exportData.footprintData.info().name;
+                        break;
+                    }
+                }
+                
+                // 使用封装名称作为文件名
+                QString modelName = footprintName.isEmpty() ? model.uuid() : footprintName;
+                QString wrlPath = QString("%1/%2.wrl").arg(modelsDirPath, modelName);
+                QString stepPath = QString("%1/%2.step").arg(modelsDirPath, modelName);
+                
+                // 保存 WRL 模型
+                if (!model.rawObj().isEmpty()) {
+                    if (!m_options.overwriteExistingFiles && QFile::exists(wrlPath)) {
+                        qWarning() << "WRL model file already exists:" << wrlPath;
+                    } else {
+                        if (m_modelExporter->exportToWrl(model, wrlPath)) {
+                            qDebug() << "WRL model exported successfully:" << wrlPath;
+                        } else {
+                            qWarning() << "Failed to export WRL model:" << modelName;
+                        }
+                    }
+                }
+                
+                // 保存 STEP 模型
+                if (!model.step().isEmpty() && model.step().size() > 100) {
+                    if (!m_options.overwriteExistingFiles && QFile::exists(stepPath)) {
+                        qWarning() << "STEP model file already exists:" << stepPath;
+                    } else {
+                        if (m_modelExporter->exportToStep(model, stepPath)) {
+                            qDebug() << "STEP model exported successfully:" << stepPath;
+                        } else {
+                            qWarning() << "Failed to export STEP model:" << modelName;
+                        }
+                    }
+                }
+                
+                // 保存模型路径映射（使用相对路径，相对于封装库目录）
+                QString relativePath = QString("${KIPRJMOD}/3dmodels/%1").arg(modelName);
+                modelPathMap[model.uuid()] = relativePath;
+            }
+            
+            // 更新封装数据中的 3D 模型路径
+            for (auto &footprint : allFootprints) {
+                if (!footprint.model3D().uuid().isEmpty() && modelPathMap.contains(footprint.model3D().uuid())) {
+                    Model3DData updatedModel = footprint.model3D();
+                    updatedModel.setName(modelPathMap[footprint.model3D().uuid()]);
+                    footprint.setModel3D(updatedModel);
+                }
+            }
+        }
+    }
+    
+    // 创建封装库目录
+    QString footprintDirPath = QString("%1/%2.pretty").arg(m_options.outputPath, m_options.libName);
+    if (m_options.exportFootprint && !allFootprints.isEmpty()) {
+        if (exportFootprintLibrary(allFootprints, m_options.libName, footprintDirPath)) {
+            qDebug() << "Footprint library exported successfully with 3D model paths:" << footprintDirPath;
+        } else {
+            m_failureCount += allFootprints.size();
+        }
+    }
+    
+    // 更新进度和统计
+    m_successCount = m_totalProgress - m_failureCount;
+    m_currentProgress = m_totalProgress;
+    
+    // 发送导出完成信号
+    emit exportProgress(m_currentProgress, m_totalProgress);
+    
+    // 为每个元件发送导出成功信号
+    for (const ExportData &exportData : m_exportDataList) {
+        emit componentExported(exportData.componentId, true, "Export successful");
+    }
+    
+    // 完成导出
+    m_isExporting = false;
+    qDebug() << "Export pipeline completed:" << m_successCount << "success," << m_failureCount << "failed";
+    emit exportCompleted(m_totalProgress, m_successCount);
 }
 
 void ExportService::cancelExport()

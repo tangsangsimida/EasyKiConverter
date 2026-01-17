@@ -116,6 +116,20 @@ private slots:
 
 private:
     /**
+     * @brief 请求类型枚举
+     */
+    enum class RequestType {
+        None,
+        ComponentInfo,
+        CadData
+    };
+
+    /**
+     * @brief 处理请求成功
+     */
+    void handleRequestSuccess(const QJsonObject &data);
+
+    /**
      * @brief 重置请求状态
      */
     void resetRequestState();
@@ -157,6 +171,7 @@ private:
     QString m_currentLcscId;
     QString m_currentUuid;
     bool m_isFetching;
+    RequestType m_requestType;
 };
 
 } // namespace EasyKiConverter

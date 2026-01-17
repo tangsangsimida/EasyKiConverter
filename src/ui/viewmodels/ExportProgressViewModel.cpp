@@ -136,6 +136,8 @@ void ExportProgressViewModel::handleComponentDataFetched(const QString &componen
     m_collectedData.append(data);
     m_fetchedCount++;
     
+    qDebug() << "Fetched count:" << m_fetchedCount << "/" << m_componentIds.size();
+    
     // 更新进度
     int progress = (m_fetchedCount * 50) / m_componentIds.size(); // 数据收集占50%的进度
     if (m_progress != progress) {
@@ -145,12 +147,14 @@ void ExportProgressViewModel::handleComponentDataFetched(const QString &componen
     
     // 检查是否还有更多元件需要收集
     if (m_fetchedCount < m_componentIds.size()) {
+        qDebug() << "Fetching next component, index:" << m_fetchedCount;
         // 收集下一个元件的数据
         int nextIndex = m_fetchedCount;
         if (nextIndex < m_componentIds.size()) {
             m_componentService->fetchComponentData(m_componentIds[nextIndex], m_exportOptions.exportModel3D);
         }
     } else {
+        qDebug() << "All components collected, starting export...";
         // 所有元件数据都已收集完成
         m_status = "Exporting components...";
         emit statusChanged();

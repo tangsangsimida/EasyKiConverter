@@ -14,6 +14,7 @@ ComponentService::ComponentService(QObject *parent)
     , m_api(new EasyedaApi(this))
     , m_importer(new EasyedaImporter(this))
     , m_currentComponentId()
+    , m_hasDownloadedWrl(false)
 {
     // 连接 API 信号
     connect(m_api, &EasyedaApi::componentInfoFetched, this, &ComponentService::handleComponentInfoFetched);
@@ -122,27 +123,44 @@ void ComponentService::handleCadDataFetched(const QJsonObject &data)
     }
     
     // 检查是否需要获取 3D 模型
-    if (m_fetch3DModel && footprintData && footprintData->model3D().uuid().isEmpty()) {
-        // 从 CAD 数据中提取 3D 模型 UUID
-        if (resultData.contains("head")) {
+    if (m_fetch3DModel && footprintData) {
+        // 检查封装数据中是否包含 3D 模型 UUID
+        QString modelUuid = footprintData->model3D().uuid();
+        
+        // 如果封装数据中没有 UUID，尝试从 head.uuid_3d 字段中提取
+        if (modelUuid.isEmpty() && resultData.contains("head")) {
             QJsonObject head = resultData["head"].toObject();
             if (head.contains("uuid_3d")) {
-                QString uuid = head["uuid_3d"].toString();
-                if (!uuid.isEmpty()) {
-                    qDebug() << "Fetching 3D model with UUID:" << uuid;
-                    // 更新 Model3DData 的 UUID
-                    QSharedPointer<Model3DData> model3DData(new Model3DData());
-                    model3DData->setUuid(uuid);
-                    componentData.setModel3DData(model3DData);
-                    
-                    // 保存当前组件数据，等待 3D 模型数据
-                    m_pendingComponentData = componentData;
-                    
-                    // 获取 OBJ 格式的 3D 模型
-                    m_api->fetch3DModelObj(uuid);
-                    return; // 等待 3D 模型数据
-                }
+                modelUuid = head["uuid_3d"].toString();
             }
+        }
+        
+        if (!modelUuid.isEmpty()) {
+            qDebug() << "Fetching 3D model with UUID:" << modelUuid;
+            
+            // 创建 Model3DData 对象
+            QSharedPointer<Model3DData> model3DData(new Model3DData());
+            model3DData->setUuid(modelUuid);
+            
+            // 如果封装数据中有 3D 模型信息，复制平移和旋转
+            if (!footprintData->model3D().uuid().isEmpty()) {
+                model3DData->setName(footprintData->model3D().name());
+                model3DData->setTranslation(footprintData->model3D().translation());
+                model3DData->setRotation(footprintData->model3D().rotation());
+            }
+            
+            componentData.setModel3DData(model3DData);
+            
+            // 保存当前组件数据，等待 3D 模型数据
+            m_pendingComponentData = componentData;
+            m_pendingModelUuid = modelUuid;
+            m_hasDownloadedWrl = false;
+            
+            // 获取 WRL 格式的 3D 模型
+            m_api->fetch3DModelObj(modelUuid);
+            return; // 等待 3D 模型数据
+        } else {
+            qDebug() << "No 3D model UUID found for:" << m_currentComponentId;
         }
     }
     
@@ -156,15 +174,30 @@ void ComponentService::handleModel3DFetched(const QString &uuid, const QByteArra
     
     // 更新待处理的组件数据
     if (m_pendingComponentData.model3DData() && m_pendingComponentData.model3DData()->uuid() == uuid) {
-        // 保存 OBJ 数据
-        m_pendingComponentData.model3DData()->setRawObj(QString::fromUtf8(data));
-        qDebug() << "OBJ data saved for:" << uuid;
-        
-        // 发送完成信号
-        emit cadDataReady(m_currentComponentId, m_pendingComponentData);
-        
-        // 清空待处理数据
-        m_pendingComponentData = ComponentData();
+        if (!m_hasDownloadedWrl) {
+            // 这是 WRL 格式的 3D 模型
+            m_pendingComponentData.model3DData()->setRawObj(QString::fromUtf8(data));
+            qDebug() << "WRL data saved for:" << uuid << "Size:" << data.size();
+            
+            // 标记已经下载了 WRL 格式
+            m_hasDownloadedWrl = true;
+            
+            // 继续下载 STEP 格式的 3D 模型
+            qDebug() << "Fetching STEP model with UUID:" << uuid;
+            m_api->fetch3DModelStep(uuid);
+        } else {
+            // 这是 STEP 格式的 3D 模型
+            m_pendingComponentData.model3DData()->setStep(data);
+            qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
+            
+            // 发送完成信号
+            emit cadDataReady(m_currentComponentId, m_pendingComponentData);
+            
+            // 清空待处理数据
+            m_pendingComponentData = ComponentData();
+            m_pendingModelUuid.clear();
+            m_hasDownloadedWrl = false;
+        }
     } else {
         qWarning() << "Received 3D model data for unexpected UUID:" << uuid;
     }

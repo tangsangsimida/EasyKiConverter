@@ -13,10 +13,11 @@ EasyedaApi::EasyedaApi(QObject *parent)
     : QObject(parent)
     , m_networkUtils(new NetworkUtils(this))
     , m_isFetching(false)
+    , m_requestType(RequestType::None)
 {
     // 连接 NetworkUtils 的信号
     connect(m_networkUtils, &NetworkUtils::requestSuccess,
-            this, &EasyedaApi::handleComponentInfoResponse);
+            this, &EasyedaApi::handleRequestSuccess);
     connect(m_networkUtils, &NetworkUtils::requestError,
             this, &EasyedaApi::handleNetworkError);
     connect(m_networkUtils, &NetworkUtils::binaryDataFetched, this, [this](const QByteArray &binaryData) {
@@ -59,6 +60,7 @@ void EasyedaApi::fetchComponentInfo(const QString &lcscId)
     resetRequestState();
     m_currentLcscId = lcscId;
     m_isFetching = true;
+    m_requestType = RequestType::ComponentInfo;
 
     QString apiUrl = buildComponentApiUrl(lcscId);
     qDebug() << "Fetching component info from:" << apiUrl;
@@ -83,6 +85,7 @@ void EasyedaApi::fetchCadData(const QString &lcscId)
     resetRequestState();
     m_currentLcscId = lcscId;
     m_isFetching = true;
+    m_requestType = RequestType::CadData;
 
     QString apiUrl = buildComponentApiUrl(lcscId);
     qDebug() << "Fetching CAD data from:" << apiUrl;
@@ -142,6 +145,23 @@ void EasyedaApi::fetch3DModelStep(const QString &uuid)
     m_networkUtils->setExpectBinaryData(true);
 
     m_networkUtils->sendGetRequest(apiUrl, 30, 3);
+}
+
+void EasyedaApi::handleRequestSuccess(const QJsonObject &data)
+{
+    // 根据请求类型调用相应的处理函数
+    switch (m_requestType) {
+        case RequestType::ComponentInfo:
+            handleComponentInfoResponse(data);
+            break;
+        case RequestType::CadData:
+            handleCadDataResponse(data);
+            break;
+        default:
+            qWarning() << "Unknown request type";
+            emit fetchError("Unknown request type");
+            break;
+    }
 }
 
 void EasyedaApi::cancelRequest()
