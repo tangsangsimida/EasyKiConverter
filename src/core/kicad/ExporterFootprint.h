@@ -19,7 +19,7 @@ namespace EasyKiConverter
     class ExporterFootprint : public QObject
     {
         Q_OBJECT
-    
+
     public:
         /**
          * @brief 构造函数
@@ -27,12 +27,12 @@ namespace EasyKiConverter
          * @param parent 父对象
          */
         explicit ExporterFootprint(QObject *parent = nullptr);
-    
+
         /**
          * @brief 析构函数
          */
         ~ExporterFootprint() override;
-    
+
         /**
          * @brief 导出封装为 KiCad 格式
          *
@@ -41,16 +41,18 @@ namespace EasyKiConverter
          * @return bool 是否成功
          */
         bool exportFootprint(const FootprintData &footprintData, const QString &filePath, const QString &model3DPath = QString());
-    
+
         /**
-                 * @brief 导出多个封装为 KiCad 封装库
-                 *
-                 * @param footprints 封装列表
-                 * @param libName 库名称
-                 * @param filePath 输出文件路径
-                 * @return bool 是否成功
-                 */
-                bool exportFootprintLibrary(const QList<FootprintData> &footprints, const QString &libName, const QString &filePath);    private:
+         * @brief 导出多个封装为 KiCad 封装库
+         *
+         * @param footprints 封装列表
+         * @param libName 库名称
+         * @param filePath 输出文件路径
+         * @return bool 是否成功
+         */
+        bool exportFootprintLibrary(const QList<FootprintData> &footprints, const QString &libName, const QString &filePath);
+
+    private:
         /**
          * @brief 生成 KiCad 封装头
          *
@@ -148,6 +150,26 @@ namespace EasyKiConverter
          * @return QString 3D 模型引用文本
          */
         QString generateModel3D(const Model3DData &model3D, double bboxX = 0, double bboxY = 0, const QString &model3DPath = QString(), const QString &fpType = QString()) const;
+
+        /**
+         * @brief 生成 KiCad 实体填充区域
+         *
+         * @param region 实体填充区域数据
+         * @param bboxX 边界框中心 X 偏移
+         * @param bboxY 边界框中心 Y 偏移
+         * @return QString 实体填充区域文本
+         */
+        QString generateSolidRegion(const FootprintSolidRegion &region, double bboxX = 0, double bboxY = 0) const;
+
+        /**
+         * @brief 从边界框自动生成 courtyard
+         *
+         * @param bbox 边界框数据
+         * @param bboxX 边界框中心 X 偏移
+         * @param bboxY 边界框中心 Y 偏移
+         * @return QString courtyard 文本
+         */
+        QString generateCourtyardFromBBox(const FootprintBBox &bbox, double bboxX = 0, double bboxY = 0) const;
 
         /**
          * @brief 将像素转换为毫米

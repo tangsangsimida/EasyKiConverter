@@ -223,28 +223,41 @@ namespace EasyKiConverter
             content += generateHole(hole, bboxX, bboxY);
         }
 
-        // Generate circles (非丝印层)
+        // Generate circles (所有层，包括丝印层)
         for (const FootprintCircle &circle : footprintData.circles())
         {
-            if (circle.layerId != 3 && circle.layerId != 4)
-            {
-                content += generateCircle(circle, bboxX, bboxY);
-            }
+            content += generateCircle(circle, bboxX, bboxY);
         }
 
-        // Generate arcs (非丝印层)
+        // Generate arcs (所有层，包括丝印层)
         for (const FootprintArc &arc : footprintData.arcs())
         {
-            if (arc.layerId != 3 && arc.layerId != 4)
-            {
-                content += generateArc(arc, bboxX, bboxY);
-            }
+            content += generateArc(arc, bboxX, bboxY);
         }
 
         // Generate texts
         for (const FootprintText &text : footprintData.texts())
         {
             content += generateText(text, bboxX, bboxY);
+        }
+
+        // Generate solid regions (包括 courtyard 层)
+        bool hasCourtYard = false;
+        for (const FootprintSolidRegion &region : footprintData.solidRegions())
+        {
+            QString regionContent = generateSolidRegion(region, bboxX, bboxY);
+            content += regionContent;
+            if (region.layerId == 99)
+            {
+                hasCourtYard = true;
+            }
+        }
+
+        // 如果没有找到 courtyard，使用 BBox 自动生成
+        if (!hasCourtYard && footprintData.bbox().width > 0 && footprintData.bbox().height > 0)
+        {
+            content += generateCourtyardFromBBox(footprintData.bbox(), bboxX, bboxY);
+            qWarning() << "Warning: No courtyard found, generated from BBox";
         }
 
         // Generate 3D model reference
@@ -325,7 +338,7 @@ namespace EasyKiConverter
                     }
                 }
 
-                polygonStr = QString("\n\t\t(primitives \n\t\t\t(gr_poly \n\t\t\t\t(pts %1) \n\t\t\t\t(width 0.1) \n\t\t)\n\t)\n\t").arg(path);
+                polygonStr = QString("\n\t\t(primitives \n\t\t\t(gr_poly \n\t\t\t\t(pts %1) \n\t\t\t\t(width 0.1) \n\t\t\t)\n\t\t\t(zone_connect 0)\n\t\t\t(options (clearance outline) (anchor circle))\n\t)\n\t").arg(path);
             }
         }
         else
@@ -508,76 +521,84 @@ namespace EasyKiConverter
     {
         QString content;
 
-        // Parse SVG arc path: "M startX startY A radiusX radiusY x_axis_rotation large_arc_flag sweep_flag endX endY"
-        QString arcPath = arc.path;
-        arcPath.replace(",", " ").replace("M ", "M").replace("A ", "A");
+        // 使用完整的 SVG 弧解析算法
+        // 构造 SVG 弧参数字符串
+        QString arcParam = "M " + arc.path; // 添加 "M" 前缀
 
-        // Split the path to extract components
-        QStringList pathParts = arcPath.split("A", Qt::SkipEmptyParts);
-        if (pathParts.size() < 2)
+        // 解析 SVG 弧
+        GeometryUtils::SvgArcResult svgArc = GeometryUtils::solveSvgArc(arcParam);
+
+        // 转换坐标为相对于边界框的坐标
+        double cx = pxToMmRounded(svgArc.cx - bboxX);
+        double cy = -pxToMmRounded(svgArc.cy - bboxY); // Y 轴翻转
+
+        // 处理大圆弧（>180° 拆分为多个小圆弧）
+        if (svgArc.rx == svgArc.ry && svgArc.rx > 0)
         {
-            qWarning() << "Invalid arc path format:" << arc.path;
-            return content;
-        }
+            // 拆分大圆弧
+            double startAngle = svgArc.startAngle;
+            double deltaAngle = svgArc.deltaAngle;
+            double step = 180.0;
 
-        // Extract start point
-        QString startPart = pathParts[0].mid(1); // Remove "M"
-        QStringList startCoords = startPart.split(" ", Qt::SkipEmptyParts);
-        if (startCoords.size() < 2)
-        {
-            qWarning() << "Invalid start point in arc path:" << arc.path;
-            return content;
-        }
+            if (deltaAngle < 0)
+            {
+                startAngle = startAngle + deltaAngle;
+                deltaAngle = -deltaAngle;
+            }
 
-        double startX = pxToMmRounded(startCoords[0].toDouble() - bboxX);
-        double startY = pxToMmRounded(startCoords[1].toDouble() - bboxY);
+            while (deltaAngle > 0.1)
+            {
+                if (deltaAngle < step)
+                {
+                    step = deltaAngle;
+                }
 
-        // Extract arc parameters
-        QString arcParams = pathParts[1].replace("  ", " ");
-        QStringList paramParts = arcParams.split(" ", Qt::SkipEmptyParts);
-        if (paramParts.size() < 7)
-        {
-            qWarning() << "Invalid arc parameters in arc path:" << arc.path;
-            return content;
-        }
+                svgArc.startAngle = startAngle;
+                svgArc.deltaAngle = step;
 
-        double svgRx = pxToMmRounded(paramParts[0].toDouble());
-        double svgRy = pxToMmRounded(paramParts[1].toDouble());
-        double xAxisRotation = paramParts[2].toDouble();
-        bool largeArcFlag = (paramParts[3] == "1");
-        bool sweepFlag = (paramParts[4] == "1");
-        double endX = pxToMmRounded(paramParts[5].toDouble() - bboxX);
-        double endY = pxToMmRounded(paramParts[6].toDouble() - bboxY);
+                GeometryUtils::SvgArcEndpoints pt = GeometryUtils::calcSvgArc(svgArc);
 
-        // Compute arc center and angle extent
-        double centerX, centerY, angleExtent;
-        if (svgRy != 0.0)
-        {
-            GeometryUtils::computeArc(startX, startY, svgRx, svgRy, xAxisRotation,
-                                      largeArcFlag, sweepFlag, endX, endY,
-                                      centerX, centerY, angleExtent);
+                double kiEndAngle = svgArc.startAngle;
+                if (step == 180.0)
+                    kiEndAngle += 0.1;
+
+                content += QString("\t(fp_arc (start %1 %2) (end %3 %4) (angle %5) (layer %6) (width %7))\n")
+                               .arg(cx, 0, 'f', 2)
+                               .arg(cy, 0, 'f', 2)
+                               .arg(pxToMmRounded(pt.x2 - bboxX), 0, 'f', 2)
+                               .arg(-pxToMmRounded(pt.y2 - bboxY), 0, 'f', 2)
+                               .arg(-kiEndAngle, 0, 'f', 2)
+                               .arg(layerIdToKicad(arc.layerId))
+                               .arg(pxToMmRounded(arc.strokeWidth), 0, 'f', 2);
+
+                deltaAngle -= step;
+                startAngle += step;
+            }
         }
         else
         {
-            // Degenerate case: Y radius is zero
-            centerX = 0.0;
-            centerY = 0.0;
-            angleExtent = 0.0;
-        }
+            // 椭圆弧：转换为路径
+            QList<GeometryUtils::SvgPoint> points = GeometryUtils::arcToPath(svgArc, false);
 
-        // KiCad format: (fp_arc (start cx cy) (end endX endY) (angle angle) (layer layer) (width width))
-        content += QString("\t(fp_arc (start %1 %2) (end %3 %4) (angle %5) (layer %6) (width %7))\n")
-                       .arg(centerX, 0, 'f', 2)
-                       .arg(centerY, 0, 'f', 2)
-                       .arg(endX, 0, 'f', 2)
-                       .arg(endY, 0, 'f', 2)
-                       .arg(angleExtent, 0, 'f', 2)
-                       .arg(layerIdToKicad(arc.layerId))
-                       .arg(pxToMmRounded(arc.strokeWidth), 0, 'f', 2);
+            for (int i = 1; i < points.size(); ++i)
+            {
+                double x1 = pxToMmRounded(points[i - 1].x - bboxX);
+                double y1 = -pxToMmRounded(points[i - 1].y - bboxY);
+                double x2 = pxToMmRounded(points[i].x - bboxX);
+                double y2 = -pxToMmRounded(points[i].y - bboxY);
+
+                content += QString("\t(fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
+                               .arg(x1, 0, 'f', 2)
+                               .arg(y1, 0, 'f', 2)
+                               .arg(x2, 0, 'f', 2)
+                               .arg(y2, 0, 'f', 2)
+                               .arg(layerIdToKicad(arc.layerId))
+                               .arg(pxToMmRounded(arc.strokeWidth), 0, 'f', 2);
+            }
+        }
 
         return content;
     }
-
     QString ExporterFootprint::generateText(const FootprintText &text, double bboxX, double bboxY) const
     {
         QString content;
@@ -724,7 +745,156 @@ namespace EasyKiConverter
 
     double ExporterFootprint::pxToMmRounded(double px) const
     {
-        return qRound(GeometryUtils::convertToMm(px) * 100.0) / 100.0;
+        return std::floor(GeometryUtils::convertToMm(px) * 100.0) / 100.0;
+    }
+
+    QString ExporterFootprint::generateSolidRegion(const FootprintSolidRegion &region, double bboxX, double bboxY) const
+    {
+        QString content;
+
+        // 判断是否为 courtyard 层（层 ID 99）
+        bool isCourtYard = (region.layerId == 99);
+        QString layer;
+
+        if (isCourtYard)
+        {
+            layer = "F.CrtYd"; // Courtyard 层
+        }
+        else if (region.layerId == 100)
+        {
+            layer = "F.Fab"; // 引脚形状层
+        }
+        else if (region.layerId == 101)
+        {
+            layer = "F.SilkS"; // 极性标记层
+        }
+        else
+        {
+            layer = layerIdToKicad(region.layerId);
+        }
+
+        // 解析 SVG 路径（格式如 "M x y L x y Z"）
+        QStringList tokens = region.path.split(QRegularExpression("[\\s,]+"), Qt::SkipEmptyParts);
+        QList<QPointF> points;
+
+        for (int i = 0; i < tokens.size();)
+        {
+            QString token = tokens[i].toUpper();
+
+            if (token == "M")
+            {
+                // MoveTo 命令
+                if (i + 2 < tokens.size())
+                {
+                    double x = tokens[i + 1].toDouble();
+                    double y = tokens[i + 2].toDouble();
+                    points.append(QPointF(pxToMmRounded(x - bboxX), pxToMmRounded(y - bboxY)));
+                    i += 3;
+                }
+                else
+                {
+                    i++;
+                }
+            }
+            else if (token == "L")
+            {
+                // LineTo 命令
+                if (i + 2 < tokens.size())
+                {
+                    double x = tokens[i + 1].toDouble();
+                    double y = tokens[i + 2].toDouble();
+                    points.append(QPointF(pxToMmRounded(x - bboxX), pxToMmRounded(y - bboxY)));
+                    i += 3;
+                }
+                else
+                {
+                    i++;
+                }
+            }
+            else if (token == "Z")
+            {
+                // ClosePath 命令：重复第一个点
+                if (!points.isEmpty())
+                {
+                    points.append(points.first());
+                }
+                i++;
+            }
+            else
+            {
+                // 坐标值
+                i++;
+            }
+        }
+
+        // 生成多边形或多段线
+        if (points.size() >= 2)
+        {
+            if (isCourtYard || region.isKeepOut)
+            {
+                // Courtyard 或禁止布线区：拆分为多条线段
+                for (int i = 1; i < points.size(); ++i)
+                {
+                    content += QString("\t(fp_line (start %1 %2) (end %3 %4) (layer %5) (width 0.05))\n")
+                                   .arg(points[i - 1].x(), 0, 'f', 2)
+                                   .arg(points[i - 1].y(), 0, 'f', 2)
+                                   .arg(points[i].x(), 0, 'f', 2)
+                                   .arg(points[i].y(), 0, 'f', 2)
+                                   .arg(layer);
+                }
+            }
+            else
+            {
+                // 其他区域：使用多边形
+                content += "\t(fp_poly\n";
+                content += "\t\t(pts";
+                for (const QPointF &pt : points)
+                {
+                    content += QString(" (xy %1 %2)").arg(pt.x(), 0, 'f', 2).arg(pt.y(), 0, 'f', 2);
+                }
+                content += ")\n";
+                content += QString("\t\t(layer %1)\n").arg(layer);
+                content += "\t\t(width 0.1)\n";
+                if (region.fillStyle == "solid")
+                {
+                    content += "\t\t(fill solid)\n";
+                }
+                content += "\t)\n";
+            }
+        }
+
+        return content;
+    }
+
+    QString ExporterFootprint::generateCourtyardFromBBox(const FootprintBBox &bbox, double bboxX, double bboxY) const
+    {
+        QString content;
+
+        // 从 BBox 生成矩形 courtyard
+        double x1 = pxToMmRounded(bbox.x - bboxX);
+        double y1 = pxToMmRounded(bbox.y - bboxY);
+        double x2 = pxToMmRounded(bbox.x + bbox.width - bboxX);
+        double y2 = pxToMmRounded(bbox.y + bbox.height - bboxY);
+
+        // 生成四条边
+        content += QString("\t(fp_line (start %1 %2) (end %3 %2) (layer F.CrtYd) (width 0.05))\n")
+                       .arg(x1, 0, 'f', 2)
+                       .arg(y1, 0, 'f', 2)
+                       .arg(x2, 0, 'f', 2);
+        content += QString("\t(fp_line (start %3 %2) (end %3 %4) (layer F.CrtYd) (width 0.05))\n")
+                       .arg(x2, 0, 'f', 2)
+                       .arg(y1, 0, 'f', 2)
+                       .arg(y2, 0, 'f', 2);
+        content += QString("\t(fp_line (start %3 %4) (end %1 %4) (layer F.CrtYd) (width 0.05))\n")
+                       .arg(x1, 0, 'f', 2)
+                       .arg(x2, 0, 'f', 2)
+                       .arg(y2, 0, 'f', 2);
+        content += QString("\t(fp_line (start %1 %4) (end %1 %2) (layer F.CrtYd) (width 0.05))\n")
+                       .arg(x1, 0, 'f', 2)
+                       .arg(y1, 0, 'f', 2)
+                       .arg(y2, 0, 'f', 2);
+
+        return content;
     }
 
     QString ExporterFootprint::padShapeToKicad(const QString &shape) const
@@ -782,7 +952,6 @@ namespace EasyKiConverter
         // 2. 通孔焊盘（多层）不应包含 Paste 层（通孔元件不需要钢网）
         // 3. 丝印层、装配层等不需要 Paste
         //
-        // 参考：src/jlc/pro_footprint.ts getLayers() 函数
         // case '1':return ["F.Cu", "F.Paste", "F.Mask"];  // 顶层SMD
         // case '2':return ["B.Cu", "B.Paste", "B.Mask"];  // 底层SMD
         // case '12':return ["*.Cu", "*.Mask"];            // 通孔焊盘（不包含Paste）
