@@ -733,21 +733,7 @@ namespace EasyKiConverter
         }
 
         // 同时导出 STEP 和 WRL 模型
-        // STEP 模型（优先）
-        QString stepPath = modelName + ".step";
-        content += QString("\t(model \"%1\"\n").arg(stepPath);
-        content += QString("\t\t(offset (xyz %1 %2 %3))\n")
-                       .arg(pxToMmRounded(model3D.translation().x - bboxX), 0, 'f', 3)
-                       .arg(-pxToMmRounded(model3D.translation().y - bboxY), 0, 'f', 3)
-                       .arg(z, 0, 'f', 3);
-        content += "\t\t(scale (xyz 1 1 1))\n";
-        content += QString("\t\t(rotate (xyz %1 %2 %3))\n")
-                       .arg(rotX, 0, 'f', 0)
-                       .arg(rotY, 0, 'f', 0)
-                       .arg(rotZ, 0, 'f', 0);
-        content += "\t)\n";
-
-        // WRL 模型（备用）
+        // 注意：如果 STEP 数据为空或无效，EasyEDA API 可能返回空数据
         QString wrlPath = modelName + ".wrl";
         content += QString("\t(model \"%1\"\n").arg(wrlPath);
         content += QString("\t\t(offset (xyz %1 %2 %3))\n")
@@ -760,6 +746,28 @@ namespace EasyKiConverter
                        .arg(rotY, 0, 'f', 0)
                        .arg(rotZ, 0, 'f', 0);
         content += "\t)\n";
+
+        // STEP 模型（优先，但需要检查数据是否有效）
+        // 如果 model3D 有 step 数据且数据不为空，则导出 STEP 模型
+        if (!model3D.step().isEmpty() && model3D.step().size() > 100)
+        {
+            QString stepPath = modelName + ".step";
+            content += QString("\t(model \"%1\"\n").arg(stepPath);
+            content += QString("\t\t(offset (xyz %1 %2 %3))\n")
+                           .arg(pxToMmRounded(model3D.translation().x - bboxX), 0, 'f', 3)
+                           .arg(-pxToMmRounded(model3D.translation().y - bboxY), 0, 'f', 3)
+                           .arg(z, 0, 'f', 3);
+            content += "\t\t(scale (xyz 1 1 1))\n";
+            content += QString("\t\t(rotate (xyz %1 %2 %3))\n")
+                           .arg(rotX, 0, 'f', 0)
+                           .arg(rotY, 0, 'f', 0)
+                           .arg(rotZ, 0, 'f', 0);
+            content += "\t)\n";
+        }
+        else
+        {
+            qDebug() << "STEP data is empty or too small, skipping STEP model export for:" << modelName;
+        }
 
         return content;
     }
