@@ -1197,8 +1197,9 @@ void MainController::handleComponentExportFinished(const QString &componentId, b
 
 bool MainController::validateComponentId(const QString &componentId) const
 {
-    // 验证元件ID格式：C 或 c + 至少 6 位数字
-    QRegularExpression regex("^[Cc]\\d{6,}$");
+    // 验证元件ID格式：C 或 c + 至少 4 位数字
+    // 注意：LCSC 元件编号通常是 C + 4-7 位数字
+    QRegularExpression regex("^[Cc]\\d{4,}$");
     return regex.match(componentId).hasMatch();
 }
 
@@ -1219,10 +1220,11 @@ QStringList MainController::extractComponentIdFromText(const QString &text) cons
     // 2. "LCSC Part: C7420375" 或 "LCSC Part：C7420375"
     // 3. "C7420375"（直接提取）
     // 4. 多个元件编号，用逗号、空格或换行分隔
-    // 注意：元器件编号必须在 C 或 c 后面至少有 6 个连续的数字
+    // 注意：元器件编号必须在 C 或 c 后面至少有 4 个连续的数字
+    // 例如：C72273（5位）、C7420375（7位）都是有效的
 
-    // 模式1：中文冒号或英文冒号后跟C+至少6位数字
-    QRegularExpression pattern1("[编号：:][：:]?\\s*([Cc]\\d{6,})");
+    // 模式1：中文冒号或英文冒号后跟C+至少4位数字
+    QRegularExpression pattern1("[编号：:][：:]?\\s*([Cc]\\d{4,})");
     QRegularExpressionMatchIterator it1 = pattern1.globalMatch(trimmedText);
     while (it1.hasNext()) {
         QRegularExpressionMatch match = it1.next();
@@ -1233,8 +1235,8 @@ QStringList MainController::extractComponentIdFromText(const QString &text) cons
         }
     }
 
-    // 模式2：LCSC Part 后跟C+至少6位数字
-    QRegularExpression pattern2("[Ll][Cc][Ss][Cc]\\s*[Pp][Aa][Rr][Tt]\\s*[：:]\\s*([Cc]\\d{6,})");
+    // 模式2：LCSC Part 后跟C+至少4位数字
+    QRegularExpression pattern2("[Ll][Cc][Ss][Cc]\\s*[Pp][Aa][Rr][Tt]\\s*[：:]\\s*([Cc]\\d{4,})");
     QRegularExpressionMatchIterator it2 = pattern2.globalMatch(trimmedText);
     while (it2.hasNext()) {
         QRegularExpressionMatch match = it2.next();
@@ -1245,8 +1247,8 @@ QStringList MainController::extractComponentIdFromText(const QString &text) cons
         }
     }
 
-    // 模式3：直接查找所有 C+至少6位数字
-    QRegularExpression pattern3("([Cc]\\d{6,})");
+    // 模式3：直接查找所有 C+至少4位数字
+    QRegularExpression pattern3("([Cc]\\d{4,})");
     QRegularExpressionMatchIterator it3 = pattern3.globalMatch(trimmedText);
     while (it3.hasNext()) {
         QRegularExpressionMatch match = it3.next();
