@@ -273,7 +273,7 @@ namespace EasyKiConverter
     QString ExporterFootprint::generatePad(const FootprintPad &pad, double bboxX, double bboxY) const
     {
         QString content;
-        // 使用带四舍五入的坐标计算（与 Python 版本一致）
+        // 使用带四舍五入的坐标计算
         double x = pxToMmRounded(pad.centerX - bboxX);
         double y = pxToMmRounded(pad.centerY - bboxY);
         double width = pxToMmRounded(pad.width);
@@ -699,7 +699,7 @@ namespace EasyKiConverter
         // Use the provided 3D model path if available, otherwise use the model name
         QString finalPath = model3DPath.isEmpty() ? model3D.name() : model3DPath;
 
-        // 修复 Z 轴处理：SMD 器件 Z 轴取反，THT 器件 Z 轴设为 0（与 Python 版本一致）
+        // 修复 Z 轴处理：SMD 器件 Z 轴取反，THT 器件 Z 轴设为 0
         double z = pxToMmRounded(model3D.translation().z);
         if (fpType == "smd")
         {
@@ -710,7 +710,7 @@ namespace EasyKiConverter
             z = 0.0;
         }
 
-        // 修复旋转处理：使用 (360 - rotation) % 360 公式（与 Python 版本一致）
+        // 修复旋转处理：使用 (360 - rotation) % 360 公式
         double rotX = (360.0 - model3D.rotation().x);
         while (rotX >= 360.0)
             rotX -= 360.0;
@@ -721,8 +721,35 @@ namespace EasyKiConverter
         while (rotZ >= 360.0)
             rotZ -= 360.0;
 
-        // KiCad 6.x format - use absolute path (match Python version)
-        content += QString("\t(model \"%1\"\n").arg(finalPath);
+        // 提取模型名称（去掉扩展名）
+        QString modelName = finalPath;
+        if (modelName.endsWith(".wrl"))
+        {
+            modelName = modelName.left(modelName.length() - 4);
+        }
+        else if (modelName.endsWith(".step"))
+        {
+            modelName = modelName.left(modelName.length() - 5);
+        }
+
+        // 同时导出 STEP 和 WRL 模型
+        // STEP 模型（优先）
+        QString stepPath = modelName + ".step";
+        content += QString("\t(model \"%1\"\n").arg(stepPath);
+        content += QString("\t\t(offset (xyz %1 %2 %3))\n")
+                       .arg(pxToMmRounded(model3D.translation().x - bboxX), 0, 'f', 3)
+                       .arg(-pxToMmRounded(model3D.translation().y - bboxY), 0, 'f', 3)
+                       .arg(z, 0, 'f', 3);
+        content += "\t\t(scale (xyz 1 1 1))\n";
+        content += QString("\t\t(rotate (xyz %1 %2 %3))\n")
+                       .arg(rotX, 0, 'f', 0)
+                       .arg(rotY, 0, 'f', 0)
+                       .arg(rotZ, 0, 'f', 0);
+        content += "\t)\n";
+
+        // WRL 模型（备用）
+        QString wrlPath = modelName + ".wrl";
+        content += QString("\t(model \"%1\"\n").arg(wrlPath);
         content += QString("\t\t(offset (xyz %1 %2 %3))\n")
                        .arg(pxToMmRounded(model3D.translation().x - bboxX), 0, 'f', 3)
                        .arg(-pxToMmRounded(model3D.translation().y - bboxY), 0, 'f', 3)
