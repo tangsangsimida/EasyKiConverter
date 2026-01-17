@@ -420,8 +420,8 @@ namespace EasyKiConverter
         // Parse points from the string
         QStringList pointList = track.points.split(" ", Qt::SkipEmptyParts);
 
-        // KiCad 5.x format - generate line segments from points
-        for (int i = 0; i < pointList.size() - 3; i += 2)
+        // 遍历所有点，生成从点到点的线段
+        for (int i = 0; i + 3 < pointList.size(); i += 2)
         {
             double startX = pxToMmRounded(pointList[i].toDouble() - bboxX);
             double startY = pxToMmRounded(pointList[i + 1].toDouble() - bboxY);
@@ -447,7 +447,6 @@ namespace EasyKiConverter
         double cy = pxToMmRounded(hole.centerY - bboxY);
         double radius = pxToMmRounded(hole.radius);
 
-        // KiCad 5.x format
         content += QString("\t(pad \"\" thru_hole circle (at %1 %2) (size %3 %3) (drill %3) (layers *.Cu *.Mask))\n")
                        .arg(cx, 0, 'f', 2)
                        .arg(cy, 0, 'f', 2)
@@ -463,7 +462,6 @@ namespace EasyKiConverter
         double cy = pxToMmRounded(circle.cy - bboxY);
         double radius = pxToMmRounded(circle.radius);
 
-        // KiCad 5.x format
         content += QString("\t(fp_circle (center %1 %2) (end %3 %4) (layer %5) (width %6))\n")
                        .arg(cx, 0, 'f', 2)
                        .arg(cy, 0, 'f', 2)
@@ -484,7 +482,7 @@ namespace EasyKiConverter
         QString layer = layerIdToKicad(rectangle.layerId);
         double strokeWidth = pxToMmRounded(rectangle.strokeWidth);
 
-        // KiCad 5.x format - 生成完整的矩形外框（4条线）
+        // 生成完整的矩形外框（4条线）
         // 上边
         content += QString("\t(fp_line (start %1 %2) (end %3 %2) (layer %4) (width %5))\n")
                        .arg(x, 0, 'f', 2)
