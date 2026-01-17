@@ -57,6 +57,7 @@ set(SOURCES
     src/models/Model3DData.cpp
     src/core/utils/GeometryUtils.cpp
     src/core/utils/NetworkUtils.cpp
+    src/core/utils/LayerMapper.cpp
     src/ui/utils/ConfigManager.cpp
     src/ui/controllers/MainController.cpp
     src/core/easyeda/EasyedaApi.cpp
@@ -67,6 +68,17 @@ set(SOURCES
     src/core/kicad/Exporter3DModel.cpp
     src/workers/ExportWorker.cpp
     src/workers/NetworkWorker.cpp
+    # Service 层
+    src/services/ComponentService.cpp
+    src/services/ExportService.cpp
+    src/services/ConfigService.cpp
+    src/services/ComponentDataCollector.cpp
+    src/services/ComponentExportTask.cpp
+    # ViewModel 层
+    src/ui/viewmodels/ComponentListViewModel.cpp
+    src/ui/viewmodels/ExportSettingsViewModel.cpp
+    src/ui/viewmodels/ExportProgressViewModel.cpp
+    src/ui/viewmodels/ThemeSettingsViewModel.cpp
 )
 
 # 头文件列表
@@ -77,6 +89,7 @@ set(HEADERS
     src/models/Model3DData.h
     src/core/utils/GeometryUtils.h
     src/core/utils/NetworkUtils.h
+    src/core/utils/LayerMapper.h
     src/ui/utils/ConfigManager.h
     src/ui/controllers/MainController.h
     src/core/easyeda/EasyedaApi.h
@@ -87,6 +100,17 @@ set(HEADERS
     src/core/kicad/Exporter3DModel.h
     src/workers/ExportWorker.h
     src/workers/NetworkWorker.h
+    # Service 层
+    src/services/ComponentService.h
+    src/services/ExportService.h
+    src/services/ConfigService.h
+    src/services/ComponentDataCollector.h
+    src/services/ComponentExportTask.h
+    # ViewModel 层
+    src/ui/viewmodels/ComponentListViewModel.h
+    src/ui/viewmodels/ExportSettingsViewModel.h
+    src/ui/viewmodels/ExportProgressViewModel.h
+    src/ui/viewmodels/ThemeSettingsViewModel.h
 )
 
 # QML 文件列表

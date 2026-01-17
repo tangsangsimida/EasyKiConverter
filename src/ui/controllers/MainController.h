@@ -16,59 +16,24 @@
 #include "src/core/kicad/ExporterSymbol.h"
 #include "src/core/kicad/ExporterFootprint.h"
 #include "src/core/kicad/Exporter3DModel.h"
+#include "src/services/ComponentExportTask.h"
 
 namespace EasyKiConverter {
 
 // 前置声明
 class MainController;
-
-/**
- * @brief 元件导出任务类
- *
- * 用于在后台线程中执行单个元件的数据收集任务
- */
-class ComponentExportTask : public QObject, public QRunnable
-{
-    Q_OBJECT
-
-public:
-    explicit ComponentExportTask(
-        const QString &componentId,
-        const QString &outputPath,
-        const QString &libName,
-        bool exportSymbol,
-        bool exportFootprint,
-        bool exportModel3D,
-        MainController *controller,
-        QObject *parent = nullptr);
-
-    ~ComponentExportTask() override;
-    void run() override;
-
-signals:
-    void exportFinished(const QString &componentId, bool success, const QString &message);
-    void dataCollected(const QString &componentId, bool success, const QString &message);
-
-private:
-    QString m_componentId;
-    QString m_outputPath;
-    QString m_libName;
-    bool m_exportSymbol;
-    bool m_exportFootprint;
-    bool m_exportModel3D;
-    MainController *m_controller;
-};
+class ComponentExportTask;
 
 /**
  * @brief 主控制器类
  *
  * 用于连接 QML 界面和 C++ 业务逻辑
+ * 
+ * 注意：此类已重构为向后兼容层，主要功能已迁移到 ViewModel 和 Service 层
  */
 class MainController : public QObject
 {
     Q_OBJECT
-    // 声明 ComponentExportTask 为友元类，使其能够访问私有成员
-    friend class ComponentExportTask;
     Q_PROPERTY(QStringList componentList READ componentList NOTIFY componentListChanged)
     Q_PROPERTY(int componentCount READ componentCount NOTIFY componentCountChanged)
     Q_PROPERTY(QString bomFilePath READ bomFilePath NOTIFY bomFilePathChanged)

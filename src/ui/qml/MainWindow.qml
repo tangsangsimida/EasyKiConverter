@@ -9,14 +9,17 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.components
 Item {
     id: window
 
-    // 连接到 MainController
-    property var controller: mainController
+    // 连接到 ViewModel
+    property var componentListController: componentListViewModel
+    property var exportSettingsController: exportSettingsViewModel
+    property var exportProgressController: exportProgressViewModel
+    property var themeController: themeSettingsViewModel
 
-    // 绑定 AppStyle.isDarkMode 到 mainController.isDarkMode
+    // 绑定 AppStyle.isDarkMode 到 themeSettingsViewModel.isDarkMode
     Binding {
         target: AppStyle
         property: "isDarkMode"
-        value: mainController.isDarkMode
+        value: themeSettingsViewModel.isDarkMode
     }
 
     // BOM 文件选择对话框
@@ -25,7 +28,7 @@ Item {
         title: "选择 BOM 文件"
         nameFilters: ["Text files (*.txt)", "CSV files (*.csv)", "All files (*.*)"]
         onAccepted: {
-            controller.selectBomFile(selectedFile)
+            componentListController.selectBomFile(selectedFile)
         }
     }
 
