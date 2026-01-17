@@ -54,7 +54,16 @@ void ExportProgressViewModel::startExport(const QStringList &componentIds, const
     m_failureCount = 0;
     m_fetchedCount = 0;
     m_componentIds = componentIds;
+    m_collectedData.clear();
     m_status = "Fetching component data...";
+    
+    // 保存导出选项
+    m_exportOptions.outputPath = outputPath;
+    m_exportOptions.libName = libName;
+    m_exportOptions.exportSymbol = exportSymbol;
+    m_exportOptions.exportFootprint = exportFootprint;
+    m_exportOptions.exportModel3D = exportModel3D;
+    m_exportOptions.overwriteExistingFiles = overwriteExistingFiles;
     
     emit isExportingChanged();
     emit progressChanged();
@@ -114,8 +123,17 @@ void ExportProgressViewModel::handleComponentExported(const QString &componentId
 
 void ExportProgressViewModel::handleComponentDataFetched(const QString &componentId, const ComponentData &data)
 {
-    qDebug() << "Component data fetched for:" << componentId;
+    bool hasSymbol = data.symbolData() && !data.symbolData()->info().name.isEmpty();
+    bool hasFootprint = data.footprintData() && !data.footprintData()->info().name.isEmpty();
+    bool hasModel3D = data.model3DData() && !data.model3DData()->uuid().isEmpty();
     
+    qDebug() << "Component data fetched for:" << componentId
+             << "Symbol:" << hasSymbol
+             << "Footprint:" << hasFootprint
+             << "3D Model:" << hasModel3D;
+    
+    // 存储收集到的数据
+    m_collectedData.append(data);
     m_fetchedCount++;
     
     // 更新进度
@@ -130,17 +148,10 @@ void ExportProgressViewModel::handleComponentDataFetched(const QString &componen
         m_status = "Exporting components...";
         emit statusChanged();
         
-        // 构建导出选项（这里使用默认值，实际应该在调用时传递）
-        ExportOptions options;
-        options.outputPath = m_componentService->getOutputPath();
-        options.libName = "MyLibrary";
-        options.exportSymbol = true;
-        options.exportFootprint = true;
-        options.exportModel3D = true;
-        options.overwriteExistingFiles = false;
+        qDebug() << "All component data collected, starting export with" << m_collectedData.size() << "components";
         
-        // 调用 ExportService 执行导出流程
-        m_exportService->executeExportPipeline(m_componentIds, options);
+        // 使用收集到的数据执行导出流程
+        m_exportService->executeExportPipelineWithData(m_collectedData, m_exportOptions);
     }
 }
 

@@ -64,6 +64,8 @@ namespace EasyKiConverter
         int m_failureCount;
         QStringList m_componentIds;
         int m_fetchedCount;
+        QList<ComponentData> m_collectedData;
+        ExportOptions m_exportOptions;
     };
 
 } // namespace EasyKiConverter

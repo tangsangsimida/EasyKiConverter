@@ -103,6 +103,62 @@ void ExportService::executeExportPipeline(const QStringList &componentIds, const
     processNextExport();
 }
 
+void ExportService::executeExportPipelineWithData(const QList<ComponentData> &componentDataList, const ExportOptions &options)
+{
+    qDebug() << "Executing export pipeline with data for" << componentDataList.size() << "components";
+    
+    QMutexLocker locker(m_mutex);
+    
+    if (m_isExporting) {
+        qWarning() << "Export already in progress";
+        return;
+    }
+    
+    m_isExporting = true;
+    m_options = options;
+    m_currentProgress = 0;
+    m_totalProgress = componentDataList.size();
+    m_successCount = 0;
+    m_failureCount = 0;
+    
+    // 清空之前的数据
+    m_exportDataList.clear();
+    
+    locker.unlock();
+    
+    // 为每个元件创建导出任务，并填充数据
+    for (const ComponentData &componentData : componentDataList) {
+        ExportData exportData;
+        exportData.componentId = componentData.lcscId();
+        
+        // 检查并复制符号数据
+        if (componentData.symbolData() && !componentData.symbolData()->info().name.isEmpty()) {
+            exportData.symbolData = *componentData.symbolData();
+        }
+        
+        // 检查并复制封装数据
+        if (componentData.footprintData() && !componentData.footprintData()->info().name.isEmpty()) {
+            exportData.footprintData = *componentData.footprintData();
+        }
+        
+        // 检查并复制3D模型数据
+        if (componentData.model3DData() && !componentData.model3DData()->uuid().isEmpty()) {
+            exportData.model3DData = *componentData.model3DData();
+        }
+        
+        exportData.success = false;
+        m_exportDataList.append(exportData);
+        
+        qDebug() << "Added export data for:" << exportData.componentId 
+                 << "Symbol:" << !exportData.symbolData.info().name.isEmpty()
+                 << "Footprint:" << !exportData.footprintData.info().name.isEmpty()
+                 << "3D Model:" << !exportData.model3DData.uuid().isEmpty();
+    }
+    
+    // 开始处理第一个元件
+    processNextExport();
+}
+
 void ExportService::cancelExport()
 {
     QMutexLocker locker(m_mutex);

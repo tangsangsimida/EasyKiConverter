@@ -91,6 +91,14 @@ namespace EasyKiConverter
         void executeExportPipeline(const QStringList &componentIds, const ExportOptions &options);
 
         /**
+         * @brief 使用已收集的数据执行批量导出流程
+         *
+         * @param componentDataList 元件数据列表
+         * @param options 导出选项
+         */
+        void executeExportPipelineWithData(const QList<ComponentData> &componentDataList, const ExportOptions &options);
+
+        /**
          * @brief 取消导出
          */
         void cancelExport();
