@@ -153,8 +153,11 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/icons/trash.svg
         resources/icons/upload.svg
         resources/icons/add.svg
+        resources/icons/loading.svg
         resources/icons/github-mark.svg
         resources/icons/github-mark-white.svg
+        resources/icons/github-mark.png
+        resources/icons/github-mark-white.png
         resources/icons/Blue_light_bulb.svg
         resources/icons/Grey_light_bulb.svg
         resources/imgs/background.jpg

@@ -254,8 +254,26 @@ void ExportService::processNextExport()
     QString componentId = exportData.componentId;
     locker.unlock();
     
+    // 检查是否有数据可以导出
+    bool hasSymbolData = !exportData.symbolData.info().name.isEmpty();
+    bool hasFootprintData = !exportData.footprintData.info().name.isEmpty();
+    bool hasModel3DData = !exportData.model3DData.uuid().isEmpty();
+    
+    if (!hasSymbolData && !hasFootprintData && !hasModel3DData) {
+        qWarning() << "No data available for export:" << componentId;
+        handleExportTaskFinished(componentId, false, "No data available for export");
+        return;
+    }
+    
+    // 创建输出目录
+    if (!createOutputDirectory(m_options.outputPath)) {
+        qWarning() << "Failed to create output directory:" << m_options.outputPath;
+        handleExportTaskFinished(componentId, false, "Failed to create output directory");
+        return;
+    }
+    
     // 导出符号
-    if (m_options.exportSymbol && exportData.symbolData.info().name.isEmpty() == false) {
+    if (m_options.exportSymbol && hasSymbolData) {
         QString symbolPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, componentId);
         if (!exportSymbol(exportData.symbolData, symbolPath)) {
             qWarning() << "Failed to export symbol for:" << componentId;
@@ -265,7 +283,7 @@ void ExportService::processNextExport()
     }
     
     // 导出封装
-    if (m_options.exportFootprint && exportData.footprintData.info().name.isEmpty() == false) {
+    if (m_options.exportFootprint && hasFootprintData) {
         QString footprintPath = QString("%1/%2.kicad_mod").arg(m_options.outputPath, componentId);
         if (!exportFootprint(exportData.footprintData, footprintPath)) {
             qWarning() << "Failed to export footprint for:" << componentId;
@@ -275,7 +293,7 @@ void ExportService::processNextExport()
     }
     
     // 导出3D模型
-    if (m_options.exportModel3D && !exportData.model3DData.uuid().isEmpty()) {
+    if (m_options.exportModel3D && hasModel3DData) {
         QString modelPath = QString("%1/%2.wrl").arg(m_options.outputPath, exportData.model3DData.uuid());
         if (!export3DModel(exportData.model3DData, modelPath)) {
             qWarning() << "Failed to export 3D model for:" << componentId;

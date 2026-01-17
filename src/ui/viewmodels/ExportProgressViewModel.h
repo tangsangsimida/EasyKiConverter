@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include "src/services/ExportService.h"
+#include "src/services/ComponentService.h"
 
 namespace EasyKiConverter
 {
@@ -23,7 +24,7 @@ namespace EasyKiConverter
         Q_PROPERTY(int failureCount READ failureCount NOTIFY failureCountChanged)
 
     public:
-        explicit ExportProgressViewModel(ExportService *service, QObject *parent = nullptr);
+        explicit ExportProgressViewModel(ExportService *exportService, ComponentService *componentService, QObject *parent = nullptr);
         ~ExportProgressViewModel() override;
 
         // Getter 方法
@@ -51,14 +52,18 @@ namespace EasyKiConverter
         void handleExportCompleted(int totalCount, int successCount);
         void handleExportFailed(const QString &error);
         void handleComponentExported(const QString &componentId, bool success, const QString &message);
+        void handleComponentDataFetched(const QString &componentId, const ComponentData &data);
 
     private:
-        ExportService *m_service;
+        ExportService *m_exportService;
+        ComponentService *m_componentService;
         int m_progress;
         QString m_status;
         bool m_isExporting;
         int m_successCount;
         int m_failureCount;
+        QStringList m_componentIds;
+        int m_fetchedCount;
     };
 
 } // namespace EasyKiConverter

@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     // 创建 ViewModel 实例
     EasyKiConverter::ComponentListViewModel *componentListViewModel = new EasyKiConverter::ComponentListViewModel(componentService, &app);
     EasyKiConverter::ExportSettingsViewModel *exportSettingsViewModel = new EasyKiConverter::ExportSettingsViewModel(&app);
-    EasyKiConverter::ExportProgressViewModel *exportProgressViewModel = new EasyKiConverter::ExportProgressViewModel(exportService, &app);
+    EasyKiConverter::ExportProgressViewModel *exportProgressViewModel = new EasyKiConverter::ExportProgressViewModel(exportService, componentService, &app);
     EasyKiConverter::ThemeSettingsViewModel *themeSettingsViewModel = new EasyKiConverter::ThemeSettingsViewModel(&app);
 
     // 创建 QML 引擎

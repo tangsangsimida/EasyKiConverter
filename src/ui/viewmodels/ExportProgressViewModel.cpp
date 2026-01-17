@@ -4,21 +4,28 @@
 namespace EasyKiConverter
 {
 
-ExportProgressViewModel::ExportProgressViewModel(ExportService *service, QObject *parent)
+ExportProgressViewModel::ExportProgressViewModel(ExportService *exportService, ComponentService *componentService, QObject *parent)
     : QObject(parent)
-    , m_service(service)
+    , m_exportService(exportService)
+    , m_componentService(componentService)
     , m_progress(0)
     , m_isExporting(false)
     , m_successCount(0)
     , m_failureCount(0)
     , m_status("Ready")
+    , m_fetchedCount(0)
 {
-    // 连接 Service 信号
-    if (m_service) {
-        connect(m_service, &ExportService::exportProgress, this, &ExportProgressViewModel::handleExportProgress);
-        connect(m_service, &ExportService::componentExported, this, &ExportProgressViewModel::handleComponentExported);
-        connect(m_service, &ExportService::exportCompleted, this, &ExportProgressViewModel::handleExportCompleted);
-        connect(m_service, &ExportService::exportFailed, this, &ExportProgressViewModel::handleExportFailed);
+    // 连接 ExportService 信号
+    if (m_exportService) {
+        connect(m_exportService, &ExportService::exportProgress, this, &ExportProgressViewModel::handleExportProgress);
+        connect(m_exportService, &ExportService::componentExported, this, &ExportProgressViewModel::handleComponentExported);
+        connect(m_exportService, &ExportService::exportCompleted, this, &ExportProgressViewModel::handleExportCompleted);
+        connect(m_exportService, &ExportService::exportFailed, this, &ExportProgressViewModel::handleExportFailed);
+    }
+    
+    // 连接 ComponentService 信号
+    if (m_componentService) {
+        connect(m_componentService, &ComponentService::componentDataFetched, this, &ExportProgressViewModel::handleComponentDataFetched);
     }
 }
 
@@ -36,8 +43,8 @@ void ExportProgressViewModel::startExport(const QStringList &componentIds, const
         return;
     }
     
-    if (!m_service) {
-        qWarning() << "Export service not initialized";
+    if (!m_exportService || !m_componentService) {
+        qWarning() << "Services not initialized";
         return;
     }
     
@@ -45,35 +52,28 @@ void ExportProgressViewModel::startExport(const QStringList &componentIds, const
     m_progress = 0;
     m_successCount = 0;
     m_failureCount = 0;
-    m_status = "Exporting...";
+    m_fetchedCount = 0;
+    m_componentIds = componentIds;
+    m_status = "Fetching component data...";
     
     emit isExportingChanged();
     emit progressChanged();
-    
-    // 创建 ExportOptions 对象
-    ExportOptions options;
-    options.outputPath = outputPath;
-    options.libName = libName;
-    options.exportSymbol = exportSymbol;
-    options.exportFootprint = exportFootprint;
-    options.exportModel3D = exportModel3D;
-    options.overwriteExistingFiles = overwriteExistingFiles;
-    
-    // 调用导出服务
-    m_service->executeExportPipeline(componentIds, options);
-    emit successCountChanged();
-    emit failureCountChanged();
     emit statusChanged();
     
-    // TODO: 调用 ExportService 执行导出
-    // m_service->executeExportPipeline(componentIds, options);
+    // 设置组件服务的输出路径
+    m_componentService->setOutputPath(outputPath);
+    
+    // 开始收集所有元件的数据
+    for (const QString &componentId : componentIds) {
+        m_componentService->fetchComponentData(componentId, exportModel3D);
+    }
 }
 
 void ExportProgressViewModel::cancelExport()
 {
     qDebug() << "Canceling export";
     
-    if (!m_service) {
+    if (!m_exportService) {
         qWarning() << "Export service not initialized";
         return;
     }
@@ -85,7 +85,7 @@ void ExportProgressViewModel::cancelExport()
     emit statusChanged();
     
     // TODO: 调用 ExportService 取消导出
-    // m_service->cancelExport();
+    // m_exportService->cancelExport();
 }
 
 void ExportProgressViewModel::handleExportProgress(int current, int total)
@@ -110,6 +110,38 @@ void ExportProgressViewModel::handleComponentExported(const QString &componentId
     }
     
     emit componentExported(componentId, success, message);
+}
+
+void ExportProgressViewModel::handleComponentDataFetched(const QString &componentId, const ComponentData &data)
+{
+    qDebug() << "Component data fetched for:" << componentId;
+    
+    m_fetchedCount++;
+    
+    // 更新进度
+    int progress = (m_fetchedCount * 50) / m_componentIds.size(); // 数据收集占50%的进度
+    if (m_progress != progress) {
+        m_progress = progress;
+        emit progressChanged();
+    }
+    
+    // 检查是否所有元件数据都已收集完成
+    if (m_fetchedCount >= m_componentIds.size()) {
+        m_status = "Exporting components...";
+        emit statusChanged();
+        
+        // 构建导出选项（这里使用默认值，实际应该在调用时传递）
+        ExportOptions options;
+        options.outputPath = m_componentService->getOutputPath();
+        options.libName = "MyLibrary";
+        options.exportSymbol = true;
+        options.exportFootprint = true;
+        options.exportModel3D = true;
+        options.overwriteExistingFiles = false;
+        
+        // 调用 ExportService 执行导出流程
+        m_exportService->executeExportPipeline(m_componentIds, options);
+    }
 }
 
 void ExportProgressViewModel::handleExportCompleted(int totalCount, int successCount)
