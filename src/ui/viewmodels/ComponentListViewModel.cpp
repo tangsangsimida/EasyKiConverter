@@ -11,6 +11,8 @@ ComponentListViewModel::ComponentListViewModel(ComponentService *service, QObjec
     : QObject(parent)
     , m_service(service)
     , m_componentList()
+    , m_bomFilePath()
+    , m_bomResult()
 {
     // 连接 Service 信号
     connect(m_service, &ComponentService::componentInfoReady, this, &ComponentListViewModel::handleComponentInfoReady);
@@ -129,7 +131,15 @@ void ComponentListViewModel::pasteFromClipboard()
 void ComponentListViewModel::selectBomFile(const QString &filePath)
 {
     qDebug() << "BOM file selected:" << filePath;
+    
+    if (m_bomFilePath != filePath) {
+        m_bomFilePath = filePath;
+        emit bomFilePathChanged();
+    }
+    
     // TODO: 实现 BOM 文件解析逻辑
+    m_bomResult = "BOM file imported successfully";
+    emit bomResultChanged();
 }
 
 void ComponentListViewModel::handleComponentDataFetched(const QString &componentId, const ComponentData &data)

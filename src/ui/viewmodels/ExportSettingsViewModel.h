@@ -38,13 +38,13 @@ namespace EasyKiConverter
         int progress() const { return m_progress; }
         QString status() const { return m_status; }
 
-        // Setter 方法
-        void setOutputPath(const QString &path);
-        void setLibName(const QString &name);
-        void setExportSymbol(bool enabled);
-        void setExportFootprint(bool enabled);
-        void setExportModel3D(bool enabled);
-        void setOverwriteExistingFiles(bool enabled);
+        // Setter 方法（标记为 Q_INVOKABLE 以便在 QML 中调用）
+        Q_INVOKABLE void setOutputPath(const QString &path);
+        Q_INVOKABLE void setLibName(const QString &name);
+        Q_INVOKABLE void setExportSymbol(bool enabled);
+        Q_INVOKABLE void setExportFootprint(bool enabled);
+        Q_INVOKABLE void setExportModel3D(bool enabled);
+        Q_INVOKABLE void setOverwriteExistingFiles(bool enabled);
 
     public slots:
         Q_INVOKABLE void saveConfig();

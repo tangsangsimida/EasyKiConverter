@@ -19,6 +19,8 @@ namespace EasyKiConverter
         Q_OBJECT
         Q_PROPERTY(QStringList componentList READ componentList NOTIFY componentListChanged)
         Q_PROPERTY(int componentCount READ componentCount NOTIFY componentCountChanged)
+        Q_PROPERTY(QString bomFilePath READ bomFilePath NOTIFY bomFilePathChanged)
+        Q_PROPERTY(QString bomResult READ bomResult NOTIFY bomResultChanged)
 
     public:
         /**
@@ -37,6 +39,8 @@ namespace EasyKiConverter
         // Getter 方法
         QStringList componentList() const { return m_componentList; }
         int componentCount() const { return m_componentList.count(); }
+        QString bomFilePath() const { return m_bomFilePath; }
+        QString bomResult() const { return m_bomResult; }
 
     public slots:
         /**
@@ -95,6 +99,8 @@ namespace EasyKiConverter
     signals:
         void componentListChanged();
         void componentCountChanged();
+        void bomFilePathChanged();
+        void bomResultChanged();
         void componentAdded(const QString &componentId, bool success, const QString &message);
         void componentRemoved(const QString &componentId);
         void listCleared();
@@ -179,6 +185,8 @@ namespace EasyKiConverter
         ComponentService *m_service;
         QStringList m_componentList;
         QString m_outputPath;
+        QString m_bomFilePath;
+        QString m_bomResult;
     };
 
 } // namespace EasyKiConverter

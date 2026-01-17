@@ -26,9 +26,10 @@ ExportProgressViewModel::~ExportProgressViewModel()
 {
 }
 
-void ExportProgressViewModel::startExport(const QStringList &componentIds, const ExportOptions &options)
+void ExportProgressViewModel::startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles)
 {
     qDebug() << "Starting export for" << componentIds.size() << "components";
+    qDebug() << "Options - Path:" << outputPath << "Lib:" << libName << "Symbol:" << exportSymbol << "Footprint:" << exportFootprint << "3D:" << exportModel3D << "Overwrite:" << overwriteExistingFiles;
     
     if (m_isExporting) {
         qWarning() << "Export already in progress";
@@ -48,6 +49,18 @@ void ExportProgressViewModel::startExport(const QStringList &componentIds, const
     
     emit isExportingChanged();
     emit progressChanged();
+    
+    // 创建 ExportOptions 对象
+    ExportOptions options;
+    options.outputPath = outputPath;
+    options.libName = libName;
+    options.exportSymbol = exportSymbol;
+    options.exportFootprint = exportFootprint;
+    options.exportModel3D = exportModel3D;
+    options.overwriteExistingFiles = overwriteExistingFiles;
+    
+    // 调用导出服务
+    m_service->executeExportPipeline(componentIds, options);
     emit successCountChanged();
     emit failureCountChanged();
     emit statusChanged();

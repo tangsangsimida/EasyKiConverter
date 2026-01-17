@@ -34,7 +34,7 @@ namespace EasyKiConverter
         int failureCount() const { return m_failureCount; }
 
     public slots:
-        Q_INVOKABLE void startExport(const QStringList &componentIds, const ExportOptions &options);
+        Q_INVOKABLE void startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles);
         Q_INVOKABLE void cancelExport();
 
     signals:
