@@ -611,6 +611,13 @@ void ExportService::executeExportPipelineWithDataParallel(const QList<ComponentD
                 if (!footprint.model3D().uuid().isEmpty() && modelPathMap.contains(footprint.model3D().uuid())) {
                     Model3DData updatedModel = footprint.model3D();
                     updatedModel.setName(modelPathMap[footprint.model3D().uuid()]);
+                    // 保留 STEP 数据
+                    for (const auto &model : allModels) {
+                        if (model.uuid() == footprint.model3D().uuid()) {
+                            updatedModel.setStep(model.step());
+                            break;
+                        }
+                    }
                     footprint.setModel3D(updatedModel);
                 }
             }
