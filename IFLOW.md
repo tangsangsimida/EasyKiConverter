@@ -5,8 +5,9 @@
 EasyKiConverter 是一个基于 Qt 6 Quick 的现代化桌面应用程序,旨在将嘉立创(LCSC)和 EasyEDA 元件转换为 KiCad 格式。本项目采用 C++17 和 Qt 6 Quick 技术栈,提供高性能的符号转换、封装生成和 3D 模型支持功能。
 
 **当前版本**: 3.0.0
-**开发状态**: 第五阶段(测试和优化)进行中
-**完成进度**: 约 90%(4/6 阶段已完成,核心功能已实现)
+**开发状态**: 重构完成，进入优化阶段
+**完成进度**: 约 95%（核心功能已实现，架构重构完成）
+**架构模式**: MVVM (Model-View-ViewModel)
 **最后更新**: 2026年1月17日
 **当前分支**: EasyKiconverter_C_Plus_Plus
 
@@ -57,7 +58,9 @@ EasyKiConverter 是一个基于 Qt 6 Quick 的现代化桌面应用程序,旨在
    - 采用高效的 C++ 架构设计
    - 使用 Qt Quick 提供流畅的 UI 体验
    - 改进错误处理和异常管理
-   - 使用 MVC 模式分离关注点
+   - 使用 MVVM (Model-View-ViewModel) 模式分离关注点
+   - 引入 Service 层处理业务逻辑
+   - 引入 ViewModel 层管理 UI 状态
 
 5. **用户体验**:
    - 提供深色/浅色主题切换
@@ -73,7 +76,8 @@ EasyKiConverter 是一个基于 Qt 6 Quick 的现代化桌面应用程序,旨在
 - **UI 框架**: Qt 6.10.1(Qt Quick + Qt Quick Controls 2)
 - **构建系统**: CMake 3.16+
 - **编译器**: MinGW 13.10(Windows 平台)
-- **架构模式**: MVC(Model-View-Controller)
+- **架构模式**: MVVM (Model-View-ViewModel)
+- **设计模式**: 状态机模式、两阶段导出策略
 - **网络库**: Qt Network(带重试机制和 GZIP 支持)
 - **样式系统**: Material Design 风格的 QML 样式系统
 - **多线程**: QThreadPool + QRunnable + QMutex
@@ -101,7 +105,13 @@ EasyKiConverter_QT/
 │   ├── MIGRATION_QUICKREF.md   # 快速参考卡片
 │   ├── DEBUG_EXPORT_GUIDE.md   # 调试数据导出功能使用指南
 │   ├── FIX_FOOTPRINT_PARSING.md # 封装解析修复说明
-│   └── LAYER_MAPPING.md        # 嘉立创 EDA -> KiCad 图层映射说明
+│   ├── LAYER_MAPPING.md        # 嘉立创 EDA -> KiCad 图层映射说明
+│   ├── REFACTORING_PLAN.md     # MVVM 重构计划
+│   ├── MAINCONTROLLER_MIGRATION_PLAN.md  # MainController 迁移计划
+│   ├── MAINCONTROLLER_CLEANUP_PLAN.md    # MainController 清理计划
+│   ├── QML_MIGRATION_GUIDE.md  # QML 迁移指南
+│   ├── REFACTORING_SUMMARY.md  # 重构总结
+│   └── DOCUMENTATION_UPDATE_GUIDE.md     # 文档更新指南
 ├── resources/                  # 资源文件
 │   ├── icons/                  # 应用图标
 │   │   ├── app_icon.icns       # macOS 图标
@@ -141,9 +151,13 @@ EasyKiConverter_QT/
 │   │   ├── SymbolData.h/cpp             # 符号数据模型
 │   │   ├── FootprintData.h/cpp          # 封装数据模型
 │   │   └── Model3DData.h/cpp            # 3D 模型数据模型
+│   ├── services/               # 服务层（业务逻辑）
+│   │   ├── ComponentService.h/cpp       # 元件服务
+│   │   ├── ExportService.h/cpp          # 导出服务
+│   │   ├── ConfigService.h/cpp          # 配置服务
+│   │   ├── ComponentDataCollector.h/cpp # 元件数据收集器
+│   │   └── ComponentExportTask.h/cpp    # 元件导出任务
 │   ├── ui/                     # UI 层
-│   │   ├── controllers/        # 控制器
-│   │   │   └── MainController.h/cpp     # 主控制器(连接 QML 和 C++)
 │   │   ├── qml/                # QML 界面
 │   │   │   ├── MainWindow.qml           # 主窗口
 │   │   │   ├── components/              # 可复用组件
@@ -155,6 +169,11 @@ EasyKiConverter_QT/
 │   │   │   └── styles/         # 样式系统
 │   │   │       ├── AppStyle.qml         # 全局样式(支持深色模式)
 │   │   │       └── qmldir               # QML 模块定义
+│   │   ├── viewmodels/         # 视图模型层
+│   │   │   ├── ComponentListViewModel.h/cpp    # 元件列表视图模型
+│   │   │   ├── ExportSettingsViewModel.h/cpp   # 导出设置视图模型
+│   │   │   ├── ExportProgressViewModel.h/cpp   # 导出进度视图模型
+│   │   │   └── ThemeSettingsViewModel.h/cpp    # 主题设置视图模型
 │   │   └── utils/              # UI 工具
 │   │       └── ConfigManager.h/cpp      # 配置管理器
 │   └── workers/                # 工作线程
@@ -163,7 +182,16 @@ EasyKiConverter_QT/
 └── tests/                      # 测试目录
     ├── CMakeLists.txt          # 测试构建配置
     ├── test_layer_mapping.cpp  # 图层映射测试程序
-    └── test_uuid_extraction.cpp # UUID 提取测试程序
+    ├── test_uuid_extraction.cpp # UUID 提取测试程序
+    ├── test_component_service.cpp  # 元件服务测试程序
+    ├── test_export_service.cpp     # 导出服务测试程序
+    ├── test_config_service.cpp     # 配置服务测试程序
+    ├── test_component_data_collector.cpp  # 元件数据收集器测试程序
+    ├── test_integration.cpp        # 集成测试程序
+    ├── test_performance.cpp        # 性能测试程序
+    ├── TESTING_GUIDE.md            # 单元测试指南
+    ├── INTEGRATION_TEST_GUIDE.md   # 集成测试指南
+    └── PERFORMANCE_TEST_GUIDE.md   # 性能测试指南
 ```
 
 ## 📚 项目文档
@@ -180,8 +208,14 @@ EasyKiConverter_QT/
 | **ARCHITECTURE.md** | 架构设计文档 | 开发者 |
 | **FIX_FOOTPRINT_PARSING.md** | 封装解析修复说明 | 开发者 |
 | **LAYER_MAPPING.md** | 嘉立创 EDA -> KiCad 图层映射说明 | 开发者 |
+| **REFACTORING_PLAN.md** | MVVM 重构计划 | 开发者 |
+| **MAINCONTROLLER_MIGRATION_PLAN.md** | MainController 迁移计划 | 开发者 |
+| **MAINCONTROLLER_CLEANUP_PLAN.md** | MainController 清理计划 | 开发者 |
+| **QML_MIGRATION_GUIDE.md** | QML 迁移指南 | 开发者 |
+| **REFACTORING_SUMMARY.md** | 重构总结 | 开发者 |
+| **DOCUMENTATION_UPDATE_GUIDE.md** | 文档更新指南 | 开发者 |
 
-**当前开发阶段**: 第五阶段(测试和优化)进行中
+**当前开发阶段**: 重构完成，进入优化阶段
 
 ### 文档使用指南
 
@@ -189,6 +223,12 @@ EasyKiConverter_QT/
 - **调试功能**: 阅读 `DEBUG_EXPORT_GUIDE.md` 了解调试数据导出功能
 - **开始移植工作**: 阅读 `MIGRATION_PLAN.md` 了解详细计划
 - **执行开发任务**: 按照 `MIGRATION_CHECKLIST.md` 逐个完成任务
+- **了解架构重构**: 阅读 `REFACTORING_PLAN.md` 了解 MVVM 重构计划
+- **迁移 MainController**: 阅读 `MAINCONTROLLER_MIGRATION_PLAN.md` 了解迁移步骤
+- **清理 MainController**: 阅读 `MAINCONTROLLER_CLEANUP_PLAN.md` 了解清理步骤
+- **迁移 QML 代码**: 阅读 `QML_MIGRATION_GUIDE.md` 了解 QML 迁移步骤
+- **了解重构成果**: 阅读 `REFACTORING_SUMMARY.md` 了解重构总结
+- **更新文档**: 阅读 `DOCUMENTATION_UPDATE_GUIDE.md` 了解文档更新步骤
 - **快速查找信息**: 参考 `MIGRATION_QUICKREF.md` 快速查找关键信息
 - **了解架构设计**: 阅读 `ARCHITECTURE.md` 了解系统架构
 - **封装解析问题**: 阅读 `FIX_FOOTPRINT_PARSING.md` 了解封装解析的修复方案
@@ -377,23 +417,35 @@ cmake --build build
 - ✅ 元件ID验证规则调整(支持更短的LCSC编号)
 - ✅ 修复封装和符号导出与Python版本V6的一致性问题
 
-#### ⏳ 第五阶段:测试和优化(进行中)
+#### ✅ 第五阶段:架构重构(已完成)
+- ✅ MVVM 架构设计
+- ✅ Service 层实现(ComponentService, ExportService, ConfigService)
+- ✅ ViewModel 层实现(ComponentListViewModel, ExportSettingsViewModel, ExportProgressViewModel, ThemeSettingsViewModel)
+- ✅ 状态机模式实现(ComponentDataCollector)
+- ✅ QML 文件迁移到 ViewModel
+- ✅ MainController 移除
+- ✅ 单元测试框架(6个测试程序)
+- ✅ 集成测试框架
+- ✅ 性能测试框架
+- ✅ 文档更新(9个技术文档)
+
+#### ⏳ 第六阶段:测试和优化(进行中)
 - ✅ 单元测试(核心转换逻辑)
 - ✅ 图层映射测试(test_layer_mapping.cpp)
 - ✅ UUID 提取测试(test_uuid_extraction.cpp)
+- ✅ Service 层测试(test_component_service, test_export_service, test_config_service)
 - ⏳ 集成测试(完整转换流程)
 - ⏳ 性能测试和优化(对比 Python 版本)
 - ⏳ 内存使用优化
 - ⏳ 网络请求测试和优化
 - ⏳ UI 自动化测试
 
-#### ⏳ 第六阶段:打包和发布(待开发)
-- ⏳ 可执行文件打包(windeployqt、macdeployqt、linuxdeployqt)
-- ⏳ 安装程序制作(NSIS、WiX 或 Inno Setup)
-- ⏳ 发布和分发(GitHub Releases)
-- ⏳ 文档完善(用户手册、开发文档)
-- ⏳ 许可证和版权信息
-- ⏳ 多语言支持
+#### ⏳ 第六阶段:测试和优化(进行中)
+- ⏳ 集成测试(完整转换流程)
+- ⏳ 性能测试和优化(对比 Python 版本)
+- ⏳ 内存使用优化
+- ⏳ 网络请求测试和优化
+- ⏳ UI 自动化测试
 
 ### 核心技术特性
 
@@ -695,7 +747,7 @@ cmake --build build
 
 ### 下一步计划
 
-1. **第五阶段:测试和优化(进行中)**
+1. **第五阶段:架构重构(已完成)**
    - ✅ 实现 UI 界面布局和组件
    - ✅ 实现深色模式切换功能
    - ✅ 实现导出选项配置界面
@@ -722,6 +774,15 @@ cmake --build build
    - ✅ 实现非ASCII文本转换为多边形
    - ✅ 调整元件ID验证规则
    - ✅ 修复与Python版本V6一致性问题
+   - ✅ 实现 MVVM 架构重构
+   - ✅ 实现 Service 层(ComponentService, ExportService, ConfigService)
+   - ✅ 实现 ViewModel 层(ComponentListViewModel, ExportSettingsViewModel, ExportProgressViewModel, ThemeSettingsViewModel)
+   - ✅ 实现状态机模式(ComponentDataCollector)
+   - ✅ QML 文件迁移到 ViewModel
+   - ✅ 移除 MainController
+   - ✅ 添加完整的测试框架
+
+2. **第六阶段:测试和优化(进行中)**
    - ⏳ 进行集成测试(完整转换流程)
    - ⏳ 优化性能和内存使用
    - ⏳ 测试并行转换性能
@@ -956,8 +1017,9 @@ cmake --build build
 
 - **当前版本**: 3.0.0
 - **最后更新**: 2026年1月17日
-- **开发状态**: 第五阶段(测试和优化)进行中
-- **完成进度**: 约 90%(4/6 阶段已完成,核心功能已实现)
+- **开发状态**: 重构完成，进入优化阶段
+- **完成进度**: 约 95%（核心功能已实现，架构重构完成）
+- **架构模式**: MVVM (Model-View-ViewModel)
 - **当前分支**: EasyKiconverter_C_Plus_Plus
 
 ## 项目状态总结
@@ -967,7 +1029,7 @@ cmake --build build
 - ✅ 核心转换引擎(EasyEDA API、KiCad 导出器)
 - ✅ 现代化 UI 界面(卡片式布局、深色模式、动画效果)
 - ✅ 数据模型和工具类
-- ✅ 主控制器和配置管理
+- ✅ 配置管理
 - ✅ 网络请求优化(重试机制、GZIP 解压缩)
 - ✅ 深色模式支持
 - ✅ 背景图片支持
@@ -987,6 +1049,19 @@ cmake --build build
 - ✅ 椭圆弧计算(完整移植 Python 版本算法)
 - ✅ 文本层处理逻辑(类型 "N" 和镜像文本)
 - ✅ 覆盖已存在文件功能
+- ✅ 3D 模型处理改进
+- ✅ 所有图层圆弧和实体区域导出
+- ✅ 非ASCII文本处理
+- ✅ 元件ID验证规则调整
+- ✅ 与Python版本V6一致性问题修复
+- ✅ MVVM 架构重构
+- ✅ Service 层实现(ComponentService, ExportService, ConfigService)
+- ✅ ViewModel 层实现(ComponentListViewModel, ExportSettingsViewModel, ExportProgressViewModel, ThemeSettingsViewModel)
+- ✅ 状态机模式实现(ComponentDataCollector)
+- ✅ QML 文件迁移到 ViewModel
+- ✅ MainController 移除
+- ✅ 完整的测试框架(6个测试程序)
+- ✅ 完整的文档体系(9个技术文档)
 - ✅ 3D 模型处理逻辑改进
 - ✅ 支持所有图层圆弧和实体区域导出
 - ✅ 非ASCII文本转换为多边形并优化层映射
@@ -998,7 +1073,7 @@ cmake --build build
 - ⏳ 集成测试(完整转换流程)
 - ⏳ 性能测试和优化
 - ⏳ 兼容性测试
-- ⏳ 验证封装解析修复效果
+- ⏳ 验证架构重构效果
 - ⏳ 对比 Python 版本性能
 
 ### 待开发的功能

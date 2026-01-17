@@ -59,7 +59,6 @@ set(SOURCES
     src/core/utils/NetworkUtils.cpp
     src/core/utils/LayerMapper.cpp
     src/ui/utils/ConfigManager.cpp
-    src/ui/controllers/MainController.cpp
     src/core/easyeda/EasyedaApi.cpp
     src/core/easyeda/EasyedaImporter.cpp
     src/core/easyeda/JLCDatasheet.cpp
@@ -91,7 +90,6 @@ set(HEADERS
     src/core/utils/NetworkUtils.h
     src/core/utils/LayerMapper.h
     src/ui/utils/ConfigManager.h
-    src/ui/controllers/MainController.h
     src/core/easyeda/EasyedaApi.h
     src/core/easyeda/EasyedaImporter.h
     src/core/easyeda/JLCDatasheet.h

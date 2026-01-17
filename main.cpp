@@ -7,7 +7,6 @@
 #include <QDebug>
 #include <QQuickStyle>
 #include <QUrl>
-#include "src/ui/controllers/MainController.h"
 #include "src/ui/viewmodels/ComponentListViewModel.h"
 #include "src/ui/viewmodels/ExportSettingsViewModel.h"
 #include "src/ui/viewmodels/ExportProgressViewModel.h"
@@ -45,9 +44,6 @@ int main(int argc, char *argv[])
     // 初始化配置服务
     EasyKiConverter::ConfigService::instance()->loadConfig();
 
-    // 创建主控制器（保留用于向后兼容）
-    EasyKiConverter::MainController *controller = new EasyKiConverter::MainController(&app);
-
     // 创建 Service 实例
     EasyKiConverter::ComponentService *componentService = new EasyKiConverter::ComponentService(&app);
     EasyKiConverter::ExportService *exportService = new EasyKiConverter::ExportService(&app);
@@ -62,12 +58,9 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
 
     // 注册 AppStyle 单例类型
-    qmlRegisterSingletonType(QUrl("qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/styles/AppStyle.qml"), 
-                          "EasyKiconverter_Cpp_Version.src.ui.qml.styles", 
+    qmlRegisterSingletonType(QUrl("qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/styles/AppStyle.qml"),
+                          "EasyKiconverter_Cpp_Version.src.ui.qml.styles",
                           1, 0, "AppStyle");
-
-    // 将控制器注册到 QML 上下文（保留用于向后兼容）
-    engine.rootContext()->setContextProperty("mainController", controller);
 
     // 将 ViewModel 注册到 QML 上下文
     engine.rootContext()->setContextProperty("componentListViewModel", componentListViewModel);

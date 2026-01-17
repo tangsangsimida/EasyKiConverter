@@ -42,7 +42,7 @@ Item {
             if (path.startsWith("file:///")) {
                 path = path.substring(8) // 移除 "file:///" 前缀
             }
-            controller.selectOutputPath(path)
+            exportSettingsController.setOutputPath(path)
         }
     }
 
@@ -318,7 +318,7 @@ Item {
                     }
 
                     onClicked: {
-                        controller.setDarkMode(!AppStyle.isDarkMode)
+                        themeController.setDarkMode(!AppStyle.isDarkMode)
                     }
                 }
             }
@@ -366,7 +366,7 @@ Item {
 
                         onAccepted: {
                             if (componentInput.text.length > 0) {
-                                controller.addComponent(componentInput.text)
+                                componentListController.addComponent(componentInput.text)
                             }
                         }
                     }
@@ -378,7 +378,7 @@ Item {
 
                         onClicked: {
                             if (componentInput.text.length > 0) {
-                                controller.addComponent(componentInput.text)
+                                componentListController.addComponent(componentInput.text)
                                 componentInput.text = ""
                             }
                         }
@@ -392,7 +392,7 @@ Item {
                         pressedColor: AppStyle.colors.textPrimary
 
                         onClicked: {
-                            controller.pasteFromClipboard()
+                            componentListController.pasteFromClipboard()
                         }
                     }
                 }
@@ -425,7 +425,7 @@ Item {
 
                                             Layout.fillWidth: true
 
-                                            text: controller.bomFilePath.length > 0 ? controller.bomFilePath.split("/").pop() : "未选择文件"
+                                            text: componentListController.bomFilePath.length > 0 ? componentListController.bomFilePath.split("/").pop() : "未选择文件"
 
                                             font.pixelSize: AppStyle.fontSizes.sm
 
@@ -451,7 +451,7 @@ Item {
 
                                         Layout.topMargin: AppStyle.spacing.md
 
-                                        text: controller.bomResult
+                                        text: componentListController.bomResult
 
                                         font.pixelSize: AppStyle.fontSizes.sm
 
@@ -459,7 +459,7 @@ Item {
 
                                         horizontalAlignment: Text.AlignHCenter
 
-                                        visible: controller.bomResult.length > 0
+                                        visible: componentListController.bomResult.length > 0
 
                                     }            }
 
@@ -475,7 +475,7 @@ Item {
 
                     Text {
                         id: componentCountLabel
-                        text: "共 " + controller.componentCount + " 个元器件"
+                        text: "共 " + componentListController.componentCount + " 个元器件"
                         font.pixelSize: 14
                         color: "#64748b"
                     }
@@ -493,7 +493,7 @@ Item {
                         pressedColor: AppStyle.colors.dangerDark
 
                         onClicked: {
-                            controller.clearComponentList()
+                            componentListController.clearComponentList()
                         }
                     }
                 }
@@ -510,14 +510,14 @@ Item {
                     flow: GridView.FlowLeftToRight
                     layoutDirection: Qt.LeftToRight
 
-                    model: controller.componentList
+                    model: componentListController.componentList
 
                     delegate: ComponentListItem {
                         width: componentList.cellWidth - AppStyle.spacing.md
                         anchors.horizontalCenter: parent ? undefined : undefined
                         componentId: modelData
                         onDeleteClicked: {
-                            controller.removeComponent(index)
+                            componentListController.removeComponent(index)
                         }
                     }
 
@@ -582,8 +582,8 @@ Item {
                         CheckBox {
                             id: symbolCheckbox
                             text: "符号库"
-                            checked: controller.exportSymbol
-                            onCheckedChanged: controller.exportSymbol = checked
+                            checked: exportSettingsController.exportSymbol
+                            onCheckedChanged: exportSettingsController.setExportSymbol(checked)
                             font.pixelSize: 16
 
                             contentItem: Text {
@@ -613,8 +613,8 @@ Item {
                         CheckBox {
                             id: footprintCheckbox
                             text: "封装库"
-                            checked: controller.exportFootprint
-                            onCheckedChanged: controller.exportFootprint = checked
+                            checked: exportSettingsController.exportFootprint
+                            onCheckedChanged: exportSettingsController.setExportFootprint(checked)
                             font.pixelSize: 16
 
                             contentItem: Text {
@@ -644,8 +644,8 @@ Item {
                         CheckBox {
                             id: model3dCheckbox
                             text: "3D模型"
-                            checked: controller.exportModel3D
-                            onCheckedChanged: controller.exportModel3D = checked
+                            checked: exportSettingsController.exportModel3D
+                            onCheckedChanged: exportSettingsController.setExportModel3D(checked)
                             font.pixelSize: 16
 
                             contentItem: Text {
@@ -670,10 +670,10 @@ Item {
                         CheckBox {
                             id: overwriteCheckbox
                             text: "覆盖已存在文件"
-                            checked: controller.overwriteExistingFiles
+                            checked: exportSettingsController.overwriteExistingFiles
                             onCheckedChanged: {
                                 console.log("Overwrite checkbox changed to:", checked)
-                                controller.setOverwriteExistingFiles(checked)
+                                exportSettingsController.setOverwriteExistingFiles(checked)
                             }
                             font.pixelSize: 16
 
@@ -729,8 +729,8 @@ Item {
                             TextField {
                                 id: outputPathInput
                                 Layout.fillWidth: true
-                                text: controller.outputPath
-                                onTextChanged: controller.outputPath = text
+                                text: exportSettingsController.outputPath
+                                onTextChanged: exportSettingsController.setOutputPath(text)
                                 placeholderText: "选择输出目录"
                                 font.pixelSize: 14
 
@@ -773,8 +773,8 @@ Item {
                         TextField {
                             id: libNameInput
                             Layout.fillWidth: true
-                            text: controller.libName
-                            onTextChanged: controller.libName = text
+                            text: exportSettingsController.libName
+                            onTextChanged: exportSettingsController.setLibName(text)
                             placeholderText: "输入库名称 (例如: MyLibrary)"
                             font.pixelSize: 14
 
@@ -800,44 +800,84 @@ Item {
                     spacing: 12
 
                     ProgressBar {
-                        id: progressBar
-                        Layout.fillWidth: true
-                        from: 0
-                        to: 100
-                        value: controller.progress
-                        visible: controller.isExporting
 
-                        background: Rectangle {
-                            color: AppStyle.colors.border
-                            radius: AppStyle.radius.md
-                        }
+                                            id: progressBar
 
-                        contentItem: Item {
-                            Rectangle {
-                                width: progressBar.visualPosition * parent.width
-                                height: parent.height
-                                radius: AppStyle.radius.md
-                                color: AppStyle.colors.primary
+                                            Layout.fillWidth: true
 
-                                Behavior on width {
-                                    NumberAnimation {
-                                        duration: AppStyle.durations.normal
-                                        easing.type: AppStyle.easings.easeOut
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                            from: 0
 
-                    Text {
-                        id: statusLabel
-                        Layout.fillWidth: true
-                        text: controller.status
-                        font.pixelSize: 14
-                        color: "#64748b"
-                        horizontalAlignment: Text.AlignHCenter
-                        visible: controller.status.length > 0
-                    }
+                                            to: 100
+
+                                            value: exportProgressController.progress
+
+                                            visible: exportProgressController.isExporting
+
+                    
+
+                                            background: Rectangle {
+
+                                                color: AppStyle.colors.border
+
+                    
+
+                                                radius: AppStyle.radius.md
+
+                                            }
+
+                    
+
+                                            contentItem: Item {
+
+                                                Rectangle {
+
+                                                    width: progressBar.visualPosition * parent.width
+
+                                                    height: parent.height
+
+                                                    radius: AppStyle.radius.md
+
+                                                    color: AppStyle.colors.primary
+
+                    
+
+                                                    Behavior on width {
+
+                                                        NumberAnimation {
+
+                                                            duration: AppStyle.durations.normal
+
+                                                            easing.type: AppStyle.easings.easeOut
+
+                                                        }
+
+                                                    }
+
+                                                }
+
+                                            }
+
+                                        }
+
+                    
+
+                                        Text {
+
+                                            id: statusLabel
+
+                                            Layout.fillWidth: true
+
+                                            text: exportProgressController.status
+
+                                            font.pixelSize: 14
+
+                                            color: "#64748b"
+
+                                            horizontalAlignment: Text.AlignHCenter
+
+                                            visible: exportProgressController.status.length > 0
+
+                                        }
                 }
             }
 
@@ -955,7 +995,7 @@ Item {
                             clip: true
                             spacing: AppStyle.spacing.md
 
-                            model: controller.resultsList
+                            model: exportProgressController.resultsList
 
                             delegate: ResultListItem {
                                 width: resultsList.width
@@ -977,13 +1017,20 @@ Item {
                 id: exportButton
                 Layout.preferredHeight: 56
                 Layout.fillWidth: true
-                text: controller.isExporting ? "转换中..." : "开始转换"
-                iconName: controller.isExporting ? "loading" : "play"
+                text: exportProgressController.isExporting ? "转换中..." : "开始转换"
+                iconName: exportProgressController.isExporting ? "loading" : "play"
                 font.pixelSize: AppStyle.fontSizes.xxl
-                enabled: controller.componentCount > 0 && !controller.isExporting
+                enabled: componentListController.componentCount > 0 && !exportProgressController.isExporting
 
                 onClicked: {
-                    controller.startExport()
+                    exportProgressController.startExport(componentListController.componentList, {
+                        outputPath: exportSettingsController.outputPath,
+                        libName: exportSettingsController.libName,
+                        exportSymbol: exportSettingsController.exportSymbol,
+                        exportFootprint: exportSettingsController.exportFootprint,
+                        exportModel3D: exportSettingsController.exportModel3D,
+                        overwriteExistingFiles: exportSettingsController.overwriteExistingFiles
+                    })
                 }
             }
 
