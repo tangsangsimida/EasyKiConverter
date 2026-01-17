@@ -19,7 +19,7 @@ namespace EasyKiConverter
 {
 
     MainController::MainController(QObject *parent)
-        : QObject(parent), m_configManager(new ConfigManager(this)), m_exportSymbol(true), m_exportFootprint(true), m_exportModel3D(true), m_progress(0), m_isExporting(false), m_isDarkMode(false), m_currentComponentIndex(0), m_successCount(0), m_failureCount(0), m_pending3DModel(nullptr), m_objDownloaded(false), m_threadPool(new QThreadPool(this)), m_mutex(new QMutex()), m_useParallelExport(true)
+        : QObject(parent), m_configManager(new ConfigManager(this)), m_exportSymbol(true), m_exportFootprint(true), m_exportModel3D(true), m_overwriteExistingFiles(false), m_progress(0), m_isExporting(false), m_isDarkMode(false), m_currentComponentIndex(0), m_successCount(0), m_failureCount(0), m_pending3DModel(nullptr), m_objDownloaded(false), m_threadPool(new QThreadPool(this)), m_mutex(new QMutex()), m_useParallelExport(true)
     {
         // 初始化核心转换引擎
         m_easyedaApi = new EasyedaApi(this);
@@ -90,6 +90,16 @@ namespace EasyKiConverter
         {
             m_exportModel3D = enabled;
             emit exportModel3DChanged();
+        }
+    }
+
+    void MainController::setOverwriteExistingFiles(bool enabled)
+    {
+        if (m_overwriteExistingFiles != enabled)
+        {
+            m_overwriteExistingFiles = enabled;
+            emit overwriteExistingFilesChanged();
+            qDebug() << "Overwrite existing files changed to:" << enabled;
         }
     }
 
@@ -501,7 +511,7 @@ namespace EasyKiConverter
 
                 // 检查文件是否存在，如果存在则读取现有符号名称
                 QSet<QString> existingSymbolNames;
-                if (QFile::exists(symbolFilePath))
+                if (QFile::exists(symbolFilePath) && !m_overwriteExistingFiles)
                 {
                     qDebug() << "Symbol library already exists, reading existing symbol names...";
                     QFile file(symbolFilePath);
@@ -1143,6 +1153,7 @@ namespace EasyKiConverter
         if (m_exportFootprint)
         {
             qDebug() << "Exporting footprint library with" << m_collectedComponents.count() << "footprints";
+            qDebug() << "m_overwriteExistingFiles:" << m_overwriteExistingFiles;
 
             for (const auto &data : m_collectedComponents)
             {
@@ -1152,11 +1163,18 @@ namespace EasyKiConverter
                 QString footprintPath = QString("%1/%2.pretty/%3.kicad_mod")
                                             .arg(m_outputPath, m_libName, data.footprintData.info().name);
 
+                qDebug() << "Checking footprint:" << data.footprintData.info().name << "at" << footprintPath;
+                qDebug() << "File exists:" << QFile::exists(footprintPath);
+
                 // 检查封装文件是否已存在
-                if (QFile::exists(footprintPath))
+                if (QFile::exists(footprintPath) && !m_overwriteExistingFiles)
                 {
                     qDebug() << "Footprint already exists, skipping:" << data.footprintData.info().name;
                     continue;
+                }
+                else if (QFile::exists(footprintPath) && m_overwriteExistingFiles)
+                {
+                    qDebug() << "Footprint already exists, overwriting:" << data.footprintData.info().name;
                 }
 
                 QString model3DPath;

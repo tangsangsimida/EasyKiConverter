@@ -82,6 +82,7 @@ class MainController : public QObject
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
     Q_PROPERTY(bool isExporting READ isExporting NOTIFY isExportingChanged)
     Q_PROPERTY(bool isDarkMode READ isDarkMode WRITE setDarkMode NOTIFY darkModeChanged)
+    Q_PROPERTY(bool overwriteExistingFiles READ overwriteExistingFiles WRITE setOverwriteExistingFiles NOTIFY overwriteExistingFilesChanged)
 
 public:
     explicit MainController(QObject *parent = nullptr);
@@ -97,6 +98,7 @@ public:
     bool exportSymbol() const { return m_exportSymbol; }
     bool exportFootprint() const { return m_exportFootprint; }
     bool exportModel3D() const { return m_exportModel3D; }
+    bool overwriteExistingFiles() const { return m_overwriteExistingFiles; }
     int progress() const { return m_progress; }
     QString status() const { return m_status; }
     bool isExporting() const { return m_isExporting; }
@@ -115,6 +117,7 @@ public:
     void setExportSymbol(bool enabled);
     void setExportFootprint(bool enabled);
     void setExportModel3D(bool enabled);
+    Q_INVOKABLE void setOverwriteExistingFiles(bool enabled);
 
     /**
      * @brief 设置深色模式
@@ -188,6 +191,7 @@ signals:
     void exportSymbolChanged();
     void exportFootprintChanged();
     void exportModel3DChanged();
+    void overwriteExistingFilesChanged();
     void progressChanged();
     void statusChanged();
     void isExportingChanged();
@@ -317,6 +321,7 @@ private:
     bool m_exportSymbol;
     bool m_exportFootprint;
     bool m_exportModel3D;
+    bool m_overwriteExistingFiles;
     int m_progress;
     QString m_status;
     bool m_isExporting;

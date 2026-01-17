@@ -662,6 +662,35 @@ Item {
                             wrapMode: Text.WordWrap
                             horizontalAlignment: Text.AlignHCenter
                         }
+
+                        // 覆盖已存在文件复选框
+                        CheckBox {
+                            id: overwriteCheckbox
+                            text: "覆盖已存在文件"
+                            checked: controller.overwriteExistingFiles
+                            onCheckedChanged: {
+                                console.log("Overwrite checkbox changed to:", checked)
+                                controller.setOverwriteExistingFiles(checked)
+                            }
+                            font.pixelSize: 16
+
+                            contentItem: Text {
+                                text: parent.text
+                                font: parent.font
+                                color: "#1e293b"
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: parent.indicator.width + parent.spacing
+                            }
+                        }
+
+                        Text {
+                            text: "覆盖已升级到 KiCad V9 格式的文件"
+                            font.pixelSize: 12
+                            color: "#64748b"
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            horizontalAlignment: Text.AlignHCenter
+                        }
                     }
                 }
             }
