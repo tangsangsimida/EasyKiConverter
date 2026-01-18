@@ -2,7 +2,15 @@
 
 [English](README_en.md) | 中文
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter_QT)![GitHub all releases](https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/total)![GitHub](https://img.shields.io/github/license/tangsangsimida/EasyKiConverter_QT)![GitHub stars](https://img.shields.io/github/stars/tangsangsimida/EasyKiConverter_QT)![GitHub forks](https://img.shields.io/github/forks/tangsangsimida/EasyKiConverter_QT)
+
 A powerful C++ desktop application based on Qt 6 Quick and MVVM architecture for converting LCSC and EasyEDA components to KiCad format.
+
+## Interface Preview
+
+![EasyKiConverter Interface](https://via.placeholder.com/800x500?text=EasyKiConverter+Interface+Preview)
+
+> Add application screenshots or GIF animations to showcase core features and usage flow.
 
 ## Introduction
 
