@@ -89,9 +89,19 @@ See [LICENSE](LICENSE) file for complete license terms.
 
 ## Acknowledgments
 
+### Reference Project
+
 This project references the design and algorithms from [uPesy/easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py). Thank you to the original author for providing an excellent foundation framework and core conversion algorithms.
 
 Note: This project is an independent C++ implementation and does not contain Python code. The Python version is only referenced for design and algorithms.
+
+### Contributors
+
+Thank you to all developers who have contributed to the EasyKiConverter project!
+
+![Contributors](https://contrib.rocks/image?repo=tangsangsimida/EasyKiConverter_QT&max=100)
+
+View all contributors: [Contributors List](https://github.com/tangsangsimida/EasyKiConverter_QT/graphs/contributors)
 
 ## Contact
 

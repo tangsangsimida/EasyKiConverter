@@ -4,7 +4,7 @@
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter_QT)![GitHub all releases](https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/total)![GitHub](https://img.shields.io/github/license/tangsangsimida/EasyKiConverter_QT)![GitHub stars](https://img.shields.io/github/stars/tangsangsimida/EasyKiConverter_QT)![GitHub forks](https://img.shields.io/github/forks/tangsangsimida/EasyKiConverter_QT)
 
-一个基于 Qt 6 Quick 和 MVVM 架构的 C++ 桌面应用程序，用于将嘉立创（LCSC）和 EasyEDA 元件转换为 KiCad 格式。
+一个基于 Qt 6 Quick 和 MVVM 架构的 C++ 桌面应用程序，用于将嘉立创（LCSC）和 EasyEDA 元件导出为Kicad库。
 
 ## 简介
 
@@ -83,9 +83,19 @@ EasyKiConverter 提供符号、封装和 3D 模型的完整转换功能，具有
 
 ## 致谢
 
+### 参考项目
+
 本项目参考了 [uPesy/easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py) 项目的设计和算法。感谢原作者提供的优秀基础框架和核心转换算法。
 
 注意：本项目是一个独立的 C++ 实现，不包含 Python 代码。Python 版本仅作为设计和算法的参考。
+
+### 贡献者
+
+感谢所有为 EasyKiConverter 项目做出贡献的开发者！
+
+![Contributors](https://contrib.rocks/image?repo=tangsangsimida/EasyKiConverter_QT&max=30)
+
+查看所有贡献者：[贡献者列表](https://github.com/tangsangsimida/EasyKiConverter_QT/graphs/contributors)
 
 ## 联系方式
 
