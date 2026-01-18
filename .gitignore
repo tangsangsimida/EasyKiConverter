@@ -95,6 +95,4 @@ SOT-23-3P_L2.9-W1.3-H1.0-LS2.4-P0.95.wrl
 .vscode
 temp_project
 tests/build
-
-# 项目文档（不提交到仓库）
 IFLOW.md

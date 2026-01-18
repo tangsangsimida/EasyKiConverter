@@ -947,9 +947,13 @@ EasyKiconverter_Cpp_Version/
 │   │   ├── SymbolData.h/cpp
 │   │   ├── FootprintData.h/cpp
 │   │   └── Model3DData.h/cpp
+│   ├── services/               # 服务层
+│   │   ├── ComponentService.h/cpp
+│   │   ├── ExportService.h/cpp
+│   │   ├── ConfigService.h/cpp
+│   │   ├── ComponentDataCollector.h/cpp
+│   │   └── ComponentExportTask.h/cpp
 │   ├── ui/                     # UI 层
-│   │   ├── controllers/        # 控制器
-│   │   │   └── MainController.h/cpp
 │   │   ├── qml/                # QML 界面
 │   │   │   ├── MainWindow.qml
 │   │   │   ├── components/     # 可复用组件
@@ -961,6 +965,11 @@ EasyKiconverter_Cpp_Version/
 │   │   │   └── styles/         # 样式系统
 │   │   │       ├── AppStyle.qml
 │   │   │       └── qmldir
+│   │   ├── viewmodels/         # 视图模型层
+│   │   │   ├── ComponentListViewModel.h/cpp
+│   │   │   ├── ExportSettingsViewModel.h/cpp
+│   │   │   ├── ExportProgressViewModel.h/cpp
+│   │   │   └── ThemeSettingsViewModel.h/cpp
 │   │   └── utils/              # UI 工具
 │   │       └── ConfigManager.h/cpp
 │   └── workers/                # 工作线程
