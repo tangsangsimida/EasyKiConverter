@@ -1,12 +1,12 @@
 # EasyKiConverter
 
-English | [中文](README.md)
+[English](README_en.md) | 中文
 
-A C++ desktop application based on Qt 6 Quick and MVVM architecture for converting LCSC and EasyEDA components to KiCad format.
+A powerful C++ desktop application based on Qt 6 Quick and MVVM architecture for converting LCSC and EasyEDA components to KiCad format.
 
 ## Introduction
 
-EasyKiConverter provides complete conversion functionality for symbols, footprints, and 3D models with a modern user interface and efficient conversion performance.
+EasyKiConverter provides complete conversion of symbols, footprints, and 3D models with a modern user interface and efficient conversion performance.
 
 ## Key Features
 
@@ -20,80 +20,74 @@ EasyKiConverter provides complete conversion functionality for symbols, footprin
 - Smart Extraction: Support intelligent extraction of component numbers from clipboard text
 - BOM Import: Support importing BOM files for batch component conversion
 
-For detailed features, see: [Features Documentation](docs/FEATURES.md)
+For detailed features, please refer to: [Features Documentation](docs/user/FEATURES_en.md)
 
 ## Quick Start
 
-```bash
-# Clone repository
-git clone https://github.com/tangsangsimida/EasyKiConverter_QT.git
-cd EasyKiConverter_QT
+### Installation
 
-# Create build directory
-mkdir build
-cd build
+#### Windows
 
-# Configure project (Windows + MinGW)
-cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64"
+1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases)
+2. Extract the downloaded archive
+3. Double-click `EasyKiConverter.exe` to run the application
 
-# Build project
-cmake --build . --config Debug
+#### macOS
 
-# Run application
-./bin/EasyKiConverter.exe
-```
+1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases)
+2. Extract the downloaded archive
+3. Double-click `EasyKiConverter.app` to run the application
 
-For detailed build instructions, see: [Getting Started Guide](docs/GETTING_STARTED.md)
+#### Linux
+
+1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases)
+2. Extract the downloaded archive
+3. Run `./EasyKiConverter` to launch the application
+
+### Building from Source
+
+For detailed build instructions, please refer to: [Build Guide](docs/developer/BUILD_en.md)
 
 ## Documentation
 
-### Project Documentation
+### For Users
 
-- [Project Overview](IFLOW.md) - Project overview and development status
-- [Features](docs/FEATURES.md) - Detailed feature descriptions
-- [Getting Started](docs/GETTING_STARTED.md) - Quick start guide
-- [Architecture Documentation](docs/ARCHITECTURE.md) - MVVM architecture design documentation
-- [Layer Mapping](docs/LAYER_MAPPING.md) - EasyEDA to KiCad layer mapping description
+- [User Guide](docs/user/USER_GUIDE_en.md) - Detailed usage instructions
+- [Getting Started](docs/user/GETTING_STARTED_en.md) - Quick start guide
+- [FAQ](docs/user/FAQ_en.md) - Frequently asked questions
+- [Features](docs/user/FEATURES_en.md) - Detailed feature descriptions
 
-### Development Documentation
+### For Developers
 
-- [Contributing Guidelines](docs/CONTRIBUTING.md) - How to contribute
-- [Debug Data Export](docs/DEBUG_EXPORT_GUIDE.md) - Debug data export feature usage guide
-- [Footprint Parsing Fix](docs/FIX_FOOTPRINT_PARSING.md) - Footprint parsing fix description
+- [Build Guide](docs/developer/BUILD_en.md) - Build from source
+- [Contributing Guide](docs/developer/CONTRIBUTING_en.md) - How to contribute code
+- [Architecture Documentation](docs/developer/ARCHITECTURE_en.md) - Project architecture design
 
-### Refactoring Documentation
+### Project Planning
 
-- [Refactoring Plan](docs/REFACTORING_PLAN.md) - MVVM refactoring plan
-- [Refactoring Summary](docs/REFACTORING_SUMMARY.md) - Refactoring summary and results
-- [MainController Migration Plan](docs/MAINCONTROLLER_MIGRATION_PLAN.md) - MainController migration steps
-- [MainController Cleanup Plan](docs/MAINCONTROLLER_CLEANUP_PLAN.md) - MainController cleanup steps
-- [QML Migration Guide](docs/QML_MIGRATION_GUIDE.md) - QML file migration guide
-
-### Testing Documentation
-
-- [Unit Testing Guide](tests/TESTING_GUIDE.md) - Unit testing guide
-- [Integration Testing Guide](tests/INTEGRATION_TEST_GUIDE.md) - Integration testing guide
-- [Performance Testing Guide](tests/PERFORMANCE_TEST_GUIDE.md) - Performance testing guide
+- [Changelog](CHANGELOG_en.md) - Version update records
+- [Roadmap](docs/project/ROADMAP_en.md) - Future development directions
+- [Architecture Decision Records](docs/project/adr/) - Technical decision records
 
 ## Contributing
 
-Contributions are welcome! Please read the [Contributing Guidelines](docs/CONTRIBUTING.md) to learn how to participate in project development.
+Contributions are welcome! Please read the [Contributing Guide](docs/developer/CONTRIBUTING_en.md) to learn how to participate in project development.
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
+This project is licensed under GNU General Public License v3.0 (GPL-3.0).
 
-See the [LICENSE](LICENSE) file for complete license terms.
+See [LICENSE](LICENSE) file for complete license terms.
 
 ## Acknowledgments
 
-This project references the design and algorithms from [uPesy/easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py). We thank the original author for providing an excellent foundation framework and core conversion algorithms.
+This project references the design and algorithms from [uPesy/easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py). Thank you to the original author for providing an excellent foundation framework and core conversion algorithms.
 
 Note: This project is an independent C++ implementation and does not contain Python code. The Python version is only referenced for design and algorithms.
 
 ## Contact
 
-For questions or suggestions, please contact the project maintainers through GitHub Issues.
+If you have any questions or suggestions, please contact the project maintainers through GitHub Issues.
 
 ## Project Homepage
 

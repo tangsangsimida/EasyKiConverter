@@ -20,64 +20,58 @@ EasyKiConverter 提供符号、封装和 3D 模型的完整转换功能，具有
 - 智能提取：支持从剪贴板文本中智能提取元件编号
 - BOM 导入：支持导入 BOM 文件批量转换元件
 
-详细功能特性请参考：[功能特性文档](docs/FEATURES.md)
+详细功能特性请参考：[功能特性文档](docs/user/FEATURES.md)
 
 ## 快速开始
 
-```bash
-# Clone 仓库
-git clone https://github.com/tangsangsimida/EasyKiConverter_QT.git
-cd EasyKiConverter_QT
+### 安装
 
-# 创建构建目录
-mkdir build
-cd build
+#### Windows
 
-# 配置项目 (Windows + MinGW)
-cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64"
+1. 从 [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 下载最新版本
+2. 解压下载的压缩包
+3. 双击 `EasyKiConverter.exe` 运行应用程序
 
-# 编译项目
-cmake --build . --config Debug
+#### macOS
 
-# 运行应用程序
-./bin/EasyKiConverter.exe
-```
+1. 从 [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 下载最新版本
+2. 解压下载的压缩包
+3. 双击 `EasyKiConverter.app` 运行应用程序
 
-详细构建说明请参考：[快速开始文档](docs/GETTING_STARTED.md)
+#### Linux
+
+1. 从 [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 下载最新版本
+2. 解压下载的压缩包
+3. 运行 `./EasyKiConverter` 启动应用程序
+
+### 从源代码构建
+
+详细的构建说明请参考：[构建指南](docs/developer/BUILD.md)
 
 ## 文档
 
-### 项目文档
+### 面向用户
 
-- [项目概述](IFLOW.md) - 项目概述和开发状态
-- [功能特性](docs/FEATURES.md) - 详细的功能特性说明
-- [快速开始](docs/GETTING_STARTED.md) - 快速开始指南
-- [架构文档](docs/ARCHITECTURE.md) - MVVM 架构设计文档
-- [图层映射](docs/LAYER_MAPPING.md) - 嘉立创 EDA 到 KiCad 图层映射说明
+- [用户手册](docs/user/USER_GUIDE.md) - 详细的使用说明
+- [快速开始](docs/user/GETTING_STARTED.md) - 快速入门指南
+- [常见问题](docs/user/FAQ.md) - 常见问题解答
+- [功能特性](docs/user/FEATURES.md) - 详细的功能特性说明
 
-### 开发文档
+### 面向开发者
 
-- [贡献指南](docs/CONTRIBUTING.md) - 如何贡献代码
-- [调试数据导出](docs/DEBUG_EXPORT_GUIDE.md) - 调试数据导出功能使用指南
-- [封装解析修复](docs/FIX_FOOTPRINT_PARSING.md) - 封装解析修复说明
+- [构建指南](docs/developer/BUILD.md) - 从源代码构建
+- [贡献指南](docs/developer/CONTRIBUTING.md) - 如何贡献代码
+- [架构文档](docs/developer/ARCHITECTURE.md) - 项目架构设计
 
-### 重构文档
+### 项目规划
 
-- [重构计划](docs/REFACTORING_PLAN.md) - MVVM 重构计划
-- [重构总结](docs/REFACTORING_SUMMARY.md) - 重构总结和成果
-- [MainController 迁移计划](docs/MAINCONTROLLER_MIGRATION_PLAN.md) - MainController 迁移步骤
-- [MainController 清理计划](docs/MAINCONTROLLER_CLEANUP_PLAN.md) - MainController 清理步骤
-- [QML 迁移指南](docs/QML_MIGRATION_GUIDE.md) - QML 文件迁移指南
-
-### 测试文档
-
-- [单元测试指南](tests/TESTING_GUIDE.md) - 单元测试指南
-- [集成测试指南](tests/INTEGRATION_TEST_GUIDE.md) - 集成测试指南
-- [性能测试指南](tests/PERFORMANCE_TEST_GUIDE.md) - 性能测试指南
+- [更新日志](CHANGELOG.md) - 版本更新记录
+- [项目路线图](docs/project/ROADMAP.md) - 未来发展方向
+- [架构决策记录](docs/project/adr/) - 技术决策记录
 
 ## 贡献
 
-欢迎贡献！请阅读 [贡献指南](docs/CONTRIBUTING.md) 了解如何参与项目开发。
+欢迎贡献！请阅读 [贡献指南](docs/developer/CONTRIBUTING.md) 了解如何参与项目开发。
 
 ## 许可证
 
