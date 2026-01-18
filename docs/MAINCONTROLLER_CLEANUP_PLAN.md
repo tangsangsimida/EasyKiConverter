@@ -1,4 +1,4 @@
-# MainController 清理计划
+﻿# MainController 清理计划
 
 ## 概述
 
@@ -38,29 +38,29 @@
 
 ### 步骤 1: 创建备份
 
-```bash
+bash
 # 创建备份分支
 git checkout -b backup/maincontroller
 
 # 提交当前状态
 git add .
 git commit -m "Backup before removing MainController"
-```
+
 
 ### 步骤 2: 更新 main.cpp
 
 **当前代码**:
-```cpp
+cpp
 // 注册 MainController
 qmlRegisterType<MainController>("EasyKiConverter", 1, 0, "MainController");
 
 // 创建 MainController
 MainController *controller = new MainController(&engine);
 engine.rootContext()->setContextProperty("mainController", controller);
-```
+
 
 **目标代码**:
-```cpp
+cpp
 // 注册 ViewModel
 qmlRegisterType<ComponentListViewModel>("EasyKiConverter", 1, 0, "ComponentListViewModel");
 qmlRegisterType<ExportSettingsViewModel>("EasyKiConverter", 1, 0, "ExportSettingsViewModel");
@@ -79,19 +79,19 @@ engine.rootContext()->setContextProperty("exportProgressViewModel", exportProgre
 
 ThemeSettingsViewModel *themeSettingsViewModel = new ThemeSettingsViewModel(&engine);
 engine.rootContext()->setContextProperty("themeSettingsViewModel", themeSettingsViewModel);
-```
+
 
 ### 步骤 3: 更新 CMakeLists.txt
 
 **移除 MainController 相关文件**:
-```cmake
+cmake
 # 移除以下行
 # src/ui/controllers/MainController.h
 # src/ui/controllers/MainController.cpp
-```
+
 
 **添加 ViewModel 相关文件**:
-```cmake
+cmake
 # 添加 ViewModel 文件
 set(UI_VIEWMODEL_SOURCES
     src/ui/viewmodels/ComponentListViewModel.cpp
@@ -101,12 +101,12 @@ set(UI_VIEWMODEL_SOURCES
 )
 
 target_sources(appEasyKiconverter_Cpp_Version PRIVATE ${UI_VIEWMODEL_SOURCES})
-```
+
 
 ### 步骤 4: 更新 QML 文件
 
 **MainWindow.qml**:
-```qml
+qml
 // 移除 MainController 导入
 // import EasyKiConverter 1.0
 
@@ -126,27 +126,27 @@ ExportProgressViewModel {
 ThemeSettingsViewModel {
     id: themeSettingsViewModel
 }
-```
+
 
 ### 步骤 5: 删除 MainController 文件
 
-```bash
+bash
 # 删除文件
 rm src/ui/controllers/MainController.h
 rm src/ui/controllers/MainController.cpp
-```
+
 
 ### 步骤 6: 更新文档
 
 **更新以下文档**:
-- `README.md` - 移除 MainController 相关说明
-- `docs/ARCHITECTURE.md` - 更新架构图
-- `docs/IFLOW.md` - 更新项目概述
-- `docs/REFACTORING_PLAN.md` - 标记重构完成
+- README.md - 移除 MainController 相关说明
+- docs/ARCHITECTURE.md - 更新架构图
+- docs/IFLOW.md - 更新项目概述
+- docs/REFACTORING_PLAN.md - 标记重构完成
 
 ### 步骤 7: 编译和测试
 
-```bash
+bash
 # 清理构建
 cd build
 cmake --build . --target clean
@@ -159,7 +159,7 @@ cmake --build . --config Debug
 
 # 运行测试
 ./bin/EasyKiConverter.exe
-```
+
 
 ### 步骤 8: 验证功能
 
@@ -183,7 +183,7 @@ cmake --build . --config Debug
 
 ### 步骤 10: 提交更改
 
-```bash
+bash
 # 添加更改
 git add .
 
@@ -200,13 +200,13 @@ All functionality has been migrated to ViewModel and Service layers."
 
 # 推送到远程仓库
 git push origin main
-```
+
 
 ## 回滚计划
 
 如果出现问题，可以回滚到备份分支：
 
-```bash
+bash
 # 切换到备份分支
 git checkout backup/maincontroller
 
@@ -219,7 +219,7 @@ git checkout -b fix/maincontroller-removal
 # 合并到主分支
 git checkout main
 git merge fix/maincontroller-removal
-```
+
 
 ## 风险评估
 
@@ -251,19 +251,19 @@ git merge fix/maincontroller-removal
 
 ## 成功标准
 
-### 功能完整性 ✅
+### 功能完整性 
 
 - [x] 所有现有功能正常工作
 - [x] UI 响应速度无明显下降
 - [x] 内存使用无明显增加
 
-### 代码质量 ✅
+### 代码质量 
 
 - [x] 代码可读性提高
 - [x] 代码可维护性提高
 - [x] 代码可测试性提高
 
-### 性能指标 ✅
+### 性能指标 
 
 - [x] 启动时间 < 3 秒
 - [x] UI 响应时间 < 100ms
@@ -273,41 +273,41 @@ git merge fix/maincontroller-removal
 
 ### 架构图
 
-```
-┌─────────────────────────────────────────┐
-│              View Layer                  │
-│         (QML Components)                 │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│          ViewModel Layer                │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentListViewModel          │   │
-│  │ ExportSettingsViewModel         │   │
-│  │ ExportProgressViewModel         │   │
-│  │ ThemeSettingsViewModel          │   │
-│  └──────────────────────────────────┘   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│           Service Layer                  │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentService                 │   │
-│  │ ExportService                    │   │
-│  │ ConfigService                    │   │
-│  └──────────────────────────────────┘   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│            Model Layer                   │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentData                    │   │
-│  │ SymbolData                       │   │
-│  │ FootprintData                    │   │
-│  │ Model3DData                      │   │
-│  └──────────────────────────────────┘   │
-└─────────────────────────────────────────┘
-```
+
+
+              View Layer                  
+         (QML Components)                 
+
+               
+
+          ViewModel Layer                
+     
+   ComponentListViewModel             
+   ExportSettingsViewModel            
+   ExportProgressViewModel            
+   ThemeSettingsViewModel             
+     
+
+               
+
+           Service Layer                  
+     
+   ComponentService                    
+   ExportService                       
+   ConfigService                       
+     
+
+               
+
+            Model Layer                   
+     
+   ComponentData                       
+   SymbolData                          
+   FootprintData                       
+   Model3DData                         
+     
+
+
 
 ### 代码统计
 
@@ -323,14 +323,14 @@ git merge fix/maincontroller-removal
 ### 依赖关系
 
 **清理前**:
-```
+
 QML → MainController → Service/Model
-```
+
 
 **清理后**:
-```
+
 QML → ViewModel → Service → Model
-```
+
 
 ## 相关文档
 
@@ -350,10 +350,10 @@ QML → ViewModel → Service → Model
 
 移除 MainController 是重构的最后一步，标志着项目从"上帝对象"架构成功迁移到清晰的 MVVM 架构。这个过程将：
 
-1. **提高代码质量**: 更清晰的职责分离 ✅
-2. **提高可维护性**: 更容易理解和修改 ✅
-3. **提高可测试性**: 更容易编写测试 ✅
-4. **提升性能**: 更好的资源管理 ✅
+1. **提高代码质量**: 更清晰的职责分离 
+2. **提高可维护性**: 更容易理解和修改 
+3. **提高可测试性**: 更容易编写测试 
+4. **提升性能**: 更好的资源管理 
 
 完成后，项目将拥有一个现代化、可维护、可扩展的架构。
 

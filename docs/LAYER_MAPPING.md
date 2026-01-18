@@ -1,4 +1,4 @@
-# 嘉立创 EDA -> KiCad 图层映射说明
+﻿# 嘉立创 EDA -> KiCad 图层映射说明
 
 ## 概述
 
@@ -39,7 +39,7 @@
 | 8 | BottomSolderMaskLayer | 35 | B.Mask | 底层阻焊（绿油开窗） |
 
 **重要**：
-- 阻焊层扩展值（如 `~0.3`）表示 0.3 mil，需转换为 mm：`0.3 * 0.0254 = 0.00762 mm`
+- 阻焊层扩展值（如 ~0.3）表示 0.3 mil，需转换为 mm：0.3 * 0.0254 = 0.00762 mm
 
 ### 四、助焊层
 
@@ -80,17 +80,17 @@
 
 ### mil 转 mm
 
-```cpp
+cpp
 double milValue = 9.8425;  // 焊盘直径（mil）
 double mmValue = milValue * 0.0254;  // = 0.25 mm
-```
+
 
 ### mm 转 mil
 
-```cpp
+cpp
 double mmValue = 2.54;  // 焊盘直径（mm）
 double milValue = mmValue * 39.3701;  // = 100 mil
-```
+
 
 ### 常用转换示例
 
@@ -107,7 +107,7 @@ double milValue = mmValue * 39.3701;  // = 100 mil
 
 ### C++ 代码示例
 
-```cpp
+cpp
 #include "src/core/utils/LayerMapper.h"
 
 using namespace EasyKiConverter;
@@ -133,11 +133,11 @@ if (mapper.isSignalLayer(kicadLayerId)) {
 } else if (mapper.isSilkLayer(kicadLayerId)) {
     qDebug() << "This is a silk screen layer";
 }
-```
+
 
 ### 导出时的处理
 
-```cpp
+cpp
 // 导出焊盘时转换单位
 FootprintPad pad = footprintData.pads()[0];
 double padDiameterMm = LayerMapper::milToMm(pad.width);
@@ -150,7 +150,7 @@ QString padLine = QString("(pad %1 smd circle (at %2 %3) (size %4 %5) (layers %6
     .arg(padDiameterMm)
     .arg(padDiameterMm)
     .arg(mapper.getKiCadLayerName(pad.layerId));
-```
+
 
 ## 特殊情况处理
 
@@ -158,19 +158,19 @@ QString padLine = QString("(pad %1 smd circle (at %2 %3) (size %4 %5) (layers %6
 
 嘉立创的 Multi-Layer 层（ID=11）表示通孔焊盘，在 KiCad 中需要特殊处理：
 
-```cpp
+cpp
 int easyedaLayerId = 11;
 int kicadLayerId = mapper.mapToKiCadLayer(easyedaLayerId);  // 返回 F.Cu (0)
 
 // KiCad 中通孔焊盘需要使用 '*' 表示所有层
 QString kicadPadLayers = "*";  // 或者 "F.Cu B.Cu In1.Cu In2.Cu ..."
-```
+
 
 ### 2. 内层的使用
 
 内层（Inner1-32）仅在多层板中有效：
 
-```cpp
+cpp
 int easyedaLayerId = 21;  // Inner1
 int kicadLayerId = mapper.mapToKiCadLayer(easyedaLayerId);  // 返回 In1.Cu (1)
 
@@ -180,45 +180,45 @@ if (kicadLayerId >= In1_Cu && kicadLayerId <= In30_Cu) {
     int innerLayerIndex = kicadLayerId - In1_Cu + 1;  // 1-32
     qDebug() << "Inner layer index:" << innerLayerIndex;
 }
-```
+
 
 ### 3. 未知图层的处理
 
 如果遇到未知图层，默认映射到 Dwgs.User 层：
 
-```cpp
+cpp
 int unknownLayerId = 999;
 int kicadLayerId = mapper.mapToKiCadLayer(unknownLayerId);  // 返回 Dwgs.User (49)
 qWarning() << "Unknown layer mapped to Dwgs.User";
-```
+
 
 ## 完整的映射关系图
 
-```
+
 嘉立创 EDA 图层                  KiCad 图层
-┌────────────────────┐           ┌────────────────────┐
-│ 1. TopLayer        │──────────>│ 0. F.Cu            │
-│ 2. BottomLayer     │──────────>│ 31. B.Cu           │
-│ 21-52. Inner1-32   │──────────>│ 1-30. In1.Cu~In30.Cu│
-├────────────────────┤           ├────────────────────┤
-│ 3. TopSilkLayer    │──────────>│ 32. F.SilkS         │
-│ 4. BottomSilkLayer │──────────>│ 33. B.SilkS         │
-├────────────────────┤           ├────────────────────┤
-│ 5. TopPasteMask    │──────────>│ 36. F.Paste         │
-│ 6. BottomPasteMask │──────────>│ 37. B.Paste         │
-├────────────────────┤           ├────────────────────┤
-│ 7. TopSolderMask   │──────────>│ 34. F.Mask          │
-│ 8. BottomSolderMask│──────────>│ 35. B.Mask          │
-├────────────────────┤           ├────────────────────┤
-│ 10. BoardOutLine   │──────────>│ 44. Edge.Cuts       │
-│ 99. ComponentShape │──────────>│ 45. F.CrtYd         │
-│ 101. Polarity      │──────────>│ 32. F.SilkS         │
-├────────────────────┤           ├────────────────────┤
-│ 11. Multi-Layer    │──────────>│ 0. F.Cu (through)   │
-│ 102. Hole          │──────────>│ 49. Dwgs.User       │
-│ 103. DRCError      │──────────>│ 50. Cmts.User       │
-└────────────────────┘           └────────────────────┘
-```
+           
+ 1. TopLayer        > 0. F.Cu            
+ 2. BottomLayer     > 31. B.Cu           
+ 21-52. Inner1-32   > 1-30. In1.Cu~In30.Cu
+           
+ 3. TopSilkLayer    > 32. F.SilkS         
+ 4. BottomSilkLayer > 33. B.SilkS         
+           
+ 5. TopPasteMask    > 36. F.Paste         
+ 6. BottomPasteMask > 37. B.Paste         
+           
+ 7. TopSolderMask   > 34. F.Mask          
+ 8. BottomSolderMask> 35. B.Mask          
+           
+ 10. BoardOutLine   > 44. Edge.Cuts       
+ 99. ComponentShape > 45. F.CrtYd         
+ 101. Polarity      > 32. F.SilkS         
+           
+ 11. Multi-Layer    > 0. F.Cu (through)   
+ 102. Hole          > 49. Dwgs.User       
+ 103. DRCError      > 50. Cmts.User       
+           
+
 
 ## 注意事项
 
@@ -227,20 +227,20 @@ qWarning() << "Unknown layer mapped to Dwgs.User";
    - 内层（Inner1-32）仅在多层板中有效
 
 2. **通孔焊盘**：
-   - Multi-Layer 层的焊盘在 KiCad 中需要设置为 `through` 类型
-   - 使用 `*` 表示所有层，或列出所有铜层
+   - Multi-Layer 层的焊盘在 KiCad 中需要设置为 through 类型
+   - 使用 * 表示所有层，或列出所有铜层
 
 3. **阻焊扩展值**：
-   - 原始数据中的阻焊扩展值（如 `~0.3`）单位为 mil
-   - 导出时必须转换为 mm（`0.3 * 0.0254 = 0.00762 mm`）
+   - 原始数据中的阻焊扩展值（如 ~0.3）单位为 mil
+   - 导出时必须转换为 mm（0.3 * 0.0254 = 0.00762 mm）
 
 4. **未知图层**：
-   - 遇到未知图层时，默认映射到 `Dwgs.User` 层
+   - 遇到未知图层时，默认映射到 Dwgs.User 层
    - 建议记录警告信息，便于调试
 
 5. **3D 模型**：
    - 3D 模型本身不存储在任何图层
-   - SVGNODE 中的 `3DModel` 层只是引用信息
+   - SVGNODE 中的 3DModel 层只是引用信息
    - 实际 3D 模型数据通过 UUID 单独下载
 
 ## 参考资源

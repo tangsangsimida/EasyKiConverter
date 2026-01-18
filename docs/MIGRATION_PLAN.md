@@ -1,4 +1,4 @@
-# EasyKiConverter Python 到 C++ 移植计划
+﻿# EasyKiConverter Python 到 C++ 移植计划
 
 ## 📋 项目概述
 
@@ -15,54 +15,54 @@
 
 ### 核心模块结构
 
-```
+
 src/core/
-├── easyeda/                    # EasyEDA API 和数据处理
-│   ├── easyeda_api.py         # API 客户端（带重试机制）
-│   ├── easyeda_importer.py    # 数据导入器
-│   ├── jlc_datasheet.py       # 数据手册下载
-│   ├── parameters_easyeda.py  # EasyEDA 参数定义
-│   └── svg_path_parser.py     # SVG 路径解析器
-├── kicad/                      # KiCad 导出引擎
-│   ├── export_kicad_symbol.py    # 符号导出器
-│   ├── export_kicad_footprint.py # 封装导出器
-│   ├── export_kicad_3d_model.py  # 3D 模型导出器
-│   ├── parameters_kicad_symbol.py  # KiCad 符号参数
-│   └── parameters_kicad_footprint.py # KiCad 封装参数
-└── utils/                      # 工具函数
-    ├── geometry_utils.py      # 几何计算工具
-    └── symbol_lib_utils.py    # 符号库工具
-```
+ easyeda/                    # EasyEDA API 和数据处理
+    easyeda_api.py         # API 客户端（带重试机制）
+    easyeda_importer.py    # 数据导入器
+    jlc_datasheet.py       # 数据手册下载
+    parameters_easyeda.py  # EasyEDA 参数定义
+    svg_path_parser.py     # SVG 路径解析器
+ kicad/                      # KiCad 导出引擎
+    export_kicad_symbol.py    # 符号导出器
+    export_kicad_footprint.py # 封装导出器
+    export_kicad_3d_model.py  # 3D 模型导出器
+    parameters_kicad_symbol.py  # KiCad 符号参数
+    parameters_kicad_footprint.py # KiCad 封装参数
+ utils/                      # 工具函数
+     geometry_utils.py      # 几何计算工具
+     symbol_lib_utils.py    # 符号库工具
+
 
 ### UI 模块结构
 
-```
+
 src/ui/pyqt6/
-├── app_main.py                # 主程序入口
-├── base_main_window.py        # 基础主窗口
-├── widgets/                   # UI 组件
-│   ├── component_input_widget.py
-│   ├── conversion_results_widget.py
-│   ├── modern_export_options_widget.py
-│   └── progress_widget.py
-├── utils/                     # UI 工具
-│   ├── bom_parser.py         # BOM 文件解析器
-│   ├── clipboard_processor.py # 剪贴板处理器
-│   ├── component_validator.py # 元件验证器
-│   ├── config_manager.py     # 配置管理器
-│   └── modern_ui_components.py # 现代化 UI 组件
-└── workers/                   # 工作线程
-    └── export_worker.py      # 导出工作线程
-```
+ app_main.py                # 主程序入口
+ base_main_window.py        # 基础主窗口
+ widgets/                   # UI 组件
+    component_input_widget.py
+    conversion_results_widget.py
+    modern_export_options_widget.py
+    progress_widget.py
+ utils/                     # UI 工具
+    bom_parser.py         # BOM 文件解析器
+    clipboard_processor.py # 剪贴板处理器
+    component_validator.py # 元件验证器
+    config_manager.py     # 配置管理器
+    modern_ui_components.py # 现代化 UI 组件
+ workers/                   # 工作线程
+     export_worker.py      # 导出工作线程
+
 
 ### 关键依赖
 
-- **网络请求**：`requests` 库（带重试机制）
-- **数据处理**：`json`、`pandas`、`numpy`
-- **Excel 处理**：`openpyxl`
-- **数据验证**：`pydantic`
-- **UI 框架**：`PyQt6`
-- **多线程**：`concurrent.futures.ThreadPoolExecutor`
+- **网络请求**：requests 库（带重试机制）
+- **数据处理**：json、pandas、numpy
+- **Excel 处理**：openpyxl
+- **数据验证**：pydantic
+- **UI 框架**：PyQt6
+- **多线程**：concurrent.futures.ThreadPoolExecutor
 
 ## 🏗️ C++ 版本架构设计
 
@@ -80,67 +80,67 @@ src/ui/pyqt6/
 
 ### C++ 项目目录结构
 
-```
+
 EasyKiconverter_Cpp_Version/
-├── CMakeLists.txt              # 主 CMake 配置
-├── main.cpp                    # 主程序入口
-├── src/                        # 源代码目录
-│   ├── core/                   # 核心转换引擎
-│   │   ├── easyeda/           # EasyEDA 模块
-│   │   │   ├── EasyedaApi.h/cpp         # API 客户端
-│   │   │   ├── EasyedaImporter.h/cpp    # 数据导入器
-│   │   │   ├── JLCDatasheet.h/cpp       # 数据手册下载
-│   │   │   ├── ParametersEasyeda.h      # 参数定义
-│   │   │   └── SvgPathParser.h/cpp      # SVG 路径解析
-│   │   ├── kicad/             # KiCad 导出模块
-│   │   │   ├── ExporterSymbol.h/cpp     # 符号导出器
-│   │   │   ├── ExporterFootprint.h/cpp  # 封装导出器
-│   │   │   ├── Exporter3DModel.h/cpp    # 3D 模型导出器
-│   │   │   ├── ParametersKicadSymbol.h  # KiCad 符号参数
-│   │   │   └── ParametersKicadFootprint.h # KiCad 封装参数
-│   │   └── utils/             # 工具模块
-│   │       ├── GeometryUtils.h/cpp      # 几何计算
-│   │       ├── SymbolLibUtils.h/cpp     # 符号库工具
-│   │       └── NetworkUtils.h/cpp       # 网络工具（重试机制）
-│   ├── models/                # 数据模型
-│   │   ├── ComponentData.h            # 元件数据模型
-│   │   ├── SymbolData.h               # 符号数据模型
-│   │   ├── FootprintData.h            # 封装数据模型
-│   │   └── Model3DData.h              # 3D 模型数据模型
-│   ├── ui/                    # UI 模块
-│   │   ├── qml/               # QML 文件
-│   │   │   ├── Main.qml                 # 主界面
-│   │   │   ├── components/             # QML 组件
-│   │   │   │   ├── ComponentInput.qml
-│   │   │   │   ├── ConversionResults.qml
-│   │   │   │   ├── ExportOptions.qml
-│   │   │   │   └── ProgressBar.qml
-│   │   │   └── styles/                 # 样式文件
-│   │   ├── controllers/       # QML 控制器
-│   │   │   ├── MainController.h/cpp    # 主控制器
-│   │   │   ├── ExportController.h/cpp  # 导出控制器
-│   │   │   └── ConfigController.h/cpp  # 配置控制器
-│   │   └── utils/             # UI 工具
-│   │       ├── BOMParser.h/cpp         # BOM 解析器
-│   │       ├── ClipboardProcessor.h/cpp # 剪贴板处理器
-│   │       ├── ComponentValidator.h/cpp # 元件验证器
-│   │       └── ConfigManager.h/cpp     # 配置管理器
-│   └── workers/               # 工作线程
-│       ├── ExportWorker.h/cpp         # 导出工作线程
-│       └── NetworkWorker.h/cpp        # 网络请求工作线程
-├── resources/                  # 资源文件
-│   ├── icons/                 # 图标
-│   ├── styles/                # 样式
-│   └── translations/          # 翻译文件
-├── tests/                      # 测试代码
-│   ├── unit/                  # 单元测试
-│   └── integration/           # 集成测试
-├── docs/                       # 文档
-│   ├── architecture.md        # 架构文档
-│   ├── api.md                 # API 文档
-│   └── migration.md           # 移植文档（本文件）
-└── build/                      # 构建输出
-```
+ CMakeLists.txt              # 主 CMake 配置
+ main.cpp                    # 主程序入口
+ src/                        # 源代码目录
+    core/                   # 核心转换引擎
+       easyeda/           # EasyEDA 模块
+          EasyedaApi.h/cpp         # API 客户端
+          EasyedaImporter.h/cpp    # 数据导入器
+          JLCDatasheet.h/cpp       # 数据手册下载
+          ParametersEasyeda.h      # 参数定义
+          SvgPathParser.h/cpp      # SVG 路径解析
+       kicad/             # KiCad 导出模块
+          ExporterSymbol.h/cpp     # 符号导出器
+          ExporterFootprint.h/cpp  # 封装导出器
+          Exporter3DModel.h/cpp    # 3D 模型导出器
+          ParametersKicadSymbol.h  # KiCad 符号参数
+          ParametersKicadFootprint.h # KiCad 封装参数
+       utils/             # 工具模块
+           GeometryUtils.h/cpp      # 几何计算
+           SymbolLibUtils.h/cpp     # 符号库工具
+           NetworkUtils.h/cpp       # 网络工具（重试机制）
+    models/                # 数据模型
+       ComponentData.h            # 元件数据模型
+       SymbolData.h               # 符号数据模型
+       FootprintData.h            # 封装数据模型
+       Model3DData.h              # 3D 模型数据模型
+    ui/                    # UI 模块
+       qml/               # QML 文件
+          Main.qml                 # 主界面
+          components/             # QML 组件
+             ComponentInput.qml
+             ConversionResults.qml
+             ExportOptions.qml
+             ProgressBar.qml
+          styles/                 # 样式文件
+       controllers/       # QML 控制器
+          MainController.h/cpp    # 主控制器
+          ExportController.h/cpp  # 导出控制器
+          ConfigController.h/cpp  # 配置控制器
+       utils/             # UI 工具
+           BOMParser.h/cpp         # BOM 解析器
+           ClipboardProcessor.h/cpp # 剪贴板处理器
+           ComponentValidator.h/cpp # 元件验证器
+           ConfigManager.h/cpp     # 配置管理器
+    workers/               # 工作线程
+        ExportWorker.h/cpp         # 导出工作线程
+        NetworkWorker.h/cpp        # 网络请求工作线程
+ resources/                  # 资源文件
+    icons/                 # 图标
+    styles/                # 样式
+    translations/          # 翻译文件
+ tests/                      # 测试代码
+    unit/                  # 单元测试
+    integration/           # 集成测试
+ docs/                       # 文档
+    architecture.md        # 架构文档
+    api.md                 # API 文档
+    migration.md           # 移植文档（本文件）
+ build/                      # 构建输出
+
 
 ## 🔄 移植顺序和依赖关系
 
@@ -217,11 +217,11 @@ EasyKiconverter_Cpp_Version/
 
 ---
 
-### 阶段 3：UI 模块开发（第 7-10 周）✅ 已完成
+### 阶段 3：UI 模块开发（第 7-10 周） 已完成
 
 **优先级：高**
 
-#### 3.1 QML 界面开发 ✅
+#### 3.1 QML 界面开发 
 - [x] 实现主界面（Main.qml）
   - 卡片式布局
   - 响应式设计
@@ -243,18 +243,18 @@ EasyKiconverter_Cpp_Version/
   - 成功/失败列表
   - 详细错误信息
 
-#### 3.2 C++ 控制器 ✅
-- [x] 实现 MainController ✅ (已迁移到 ViewModel)
+#### 3.2 C++ 控制器 
+- [x] 实现 MainController  (已迁移到 ViewModel)
   - 管理应用程序状态
   - 协调各个组件
-- [x] 实现 ExportController ✅ (已迁移到 ExportService)
+- [x] 实现 ExportController  (已迁移到 ExportService)
   - 管理导出流程
   - 处理用户输入
-- [x] 实现 ConfigController ✅ (已迁移到 ConfigService)
+- [x] 实现 ConfigController  (已迁移到 ConfigService)
   - 管理配置文件
   - 保存/加载设置
 
-#### 3.3 UI 工具 ✅
+#### 3.3 UI 工具 
 - [x] 实现 BOMParser（BOM 解析器）
 - [x] 实现 ClipboardProcessor（剪贴板处理器）
 - [x] 实现 ComponentValidator（元件验证器）
@@ -382,7 +382,7 @@ EasyKiconverter_Cpp_Version/
 ### 模块 1：EasyedaApi（网络 API 客户端）
 
 #### Python 版本分析
-```python
+python
 class EasyedaApi:
     def __init__(self):
         self.headers = {...}
@@ -392,10 +392,10 @@ class EasyedaApi:
         # 带重试机制的 HTTP GET 请求
         r = self.session.get(url=api_url, headers=self.headers, timeout=30)
         return r.json()
-```
+
 
 #### C++ 实现方案
-```cpp
+cpp
 // EasyedaApi.h
 class EasyedaApi : public QObject {
     Q_OBJECT
@@ -417,20 +417,20 @@ private:
     void handleResponse();
     void handleError();
 };
-```
+
 
 #### 关键技术点
-1. 使用 `QNetworkAccessManager` 替代 `requests`
+1. 使用 QNetworkAccessManager 替代 requests
 2. 实现重试机制（使用定时器延迟重试）
 3. 使用信号槽机制异步处理响应
-4. JSON 解析使用 `QJsonDocument`
+4. JSON 解析使用 QJsonDocument
 
 ---
 
 ### 模块 2：ExporterSymbol（符号导出器）
 
 #### Python 版本分析
-```python
+python
 class ExporterSymbolKicad:
     def __init__(self, ee_symbol, kicad_version):
         self.ee_symbol = ee_symbol
@@ -440,10 +440,10 @@ class ExporterSymbolKicad:
         # 转换符号数据
         # 生成 .kicad_sym 文件
         pass
-```
+
 
 #### C++ 实现方案
-```cpp
+cpp
 // ExporterSymbol.h
 class ExporterSymbol : public QObject {
     Q_OBJECT
@@ -463,7 +463,7 @@ private:
     QString convertRectangle(const RectangleData &rect);
     // ... 其他转换方法
 };
-```
+
 
 #### 关键技术点
 1. 使用字符串拼接生成 KiCad 格式文件
@@ -476,7 +476,7 @@ private:
 ### 模块 3：MainController（主控制器）
 
 #### C++ 实现方案
-```cpp
+cpp
 // MainController.h
 class MainController : public QObject {
     Q_OBJECT
@@ -506,11 +506,11 @@ private:
     
     void validateComponentId(const QString &id);
 };
-```
+
 
 #### 关键技术点
-1. 使用 `Q_PROPERTY` 暴露属性给 QML
-2. 使用 `Q_INVOKABLE` 暴露方法给 QML
+1. 使用 Q_PROPERTY 暴露属性给 QML
+2. 使用 Q_INVOKABLE 暴露方法给 QML
 3. 使用信号槽机制与 QML 通信
 4. 管理工作线程生命周期
 
@@ -563,38 +563,38 @@ private:
 ### 打包工具
 
 **Windows**：
-- 使用 `windeployqt` 打包 Qt 依赖
+- 使用 windeployqt 打包 Qt 依赖
 - 使用 NSIS 或 WiX 创建安装程序
 
 ### 打包清单
 
-```
+
 EasyKiConverter/
-├── EasyKiConverter.exe        # 主程序
-├── Qt6Core.dll                # Qt 核心库
-├── Qt6Gui.dll                 # Qt GUI 库
-├── Qt6Qml.dll                 # Qt QML 库
-├── Qt6Quick.dll               # Qt Quick 库
-├── Qt6Network.dll             # Qt 网络库
-├── platforms/                 # 平台插件
-│   └── qwindows.dll
-├── resources/                 # 资源文件
-│   ├── icons/
-│   └── styles/
-└── README.txt                 # 使用说明
-```
+ EasyKiConverter.exe        # 主程序
+ Qt6Core.dll                # Qt 核心库
+ Qt6Gui.dll                 # Qt GUI 库
+ Qt6Qml.dll                 # Qt QML 库
+ Qt6Quick.dll               # Qt Quick 库
+ Qt6Network.dll             # Qt 网络库
+ platforms/                 # 平台插件
+    qwindows.dll
+ resources/                 # 资源文件
+    icons/
+    styles/
+ README.txt                 # 使用说明
+
 
 ### 发布流程
 
 1. **构建 Release 版本**
-   ```bash
+   bash
    cmake --build build --config Release
-   ```
+   
 
 2. **打包 Qt 依赖**
-   ```bash
+   bash
    windeployqt --release --no-translations build/appEasyKiconverter.exe
-   ```
+   
 
 3. **创建安装程序**
    - 使用 NSIS 脚本
@@ -615,19 +615,19 @@ EasyKiConverter/
 
 | 阶段 | 任务 | 预计时间 | 里程碑 | 状态 |
 |------|------|----------|--------|------|
-| 阶段 1 | 基础架构搭建 | 2 周 | 基础框架完成 | ✅ 已完成 |
-| 阶段 2 | 核心转换引擎 | 4 周 | 核心功能完成 | ✅ 已完成 |
-| 阶段 3 | UI 模块开发 | 4 周 | UI 完成 | ✅ 已完成 |
-| 阶段 4 | 工作线程和并发 | 2 周 | 并发处理完成 | ✅ 已完成 |
-| 阶段 5 | 集成和测试 | 2 周 | 测试通过 | ✅ 已完成 |
-| 阶段 6 | 打包和发布 | 2 周 | 发布版本 | ⏳ 进行中 |
+| 阶段 1 | 基础架构搭建 | 2 周 | 基础框架完成 |  已完成 |
+| 阶段 2 | 核心转换引擎 | 4 周 | 核心功能完成 |  已完成 |
+| 阶段 3 | UI 模块开发 | 4 周 | UI 完成 |  已完成 |
+| 阶段 4 | 工作线程和并发 | 2 周 | 并发处理完成 |  已完成 |
+| 阶段 5 | 集成和测试 | 2 周 | 测试通过 |  已完成 |
+| 阶段 6 | 打包和发布 | 2 周 | 发布版本 |  进行中 |
 
 **总计**：约 16 周（4 个月）
 **实际完成**：前5个阶段已完成（15周），第6阶段进行中
 
 ---
 
-## ⚠️ 风险和挑战
+## ️ 风险和挑战
 
 ### 技术风险
 
@@ -674,15 +674,15 @@ EasyKiConverter/
 - [KiCad 文档](https://docs.kicad.org/)
 
 ### Python 版本代码
-- `EasyKiConverter_QT/src/core/` - 核心转换逻辑
-- `EasyKiConverter_QT/src/ui/` - UI 实现
+- EasyKiConverter_QT/src/core/ - 核心转换逻辑
+- EasyKiConverter_QT/src/ui/ - UI 实现
 
 ### 相关项目
 - [uPesy/easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py) - 原始 Python 实现
 
 ---
 
-## ✅ 验收标准
+##  验收标准
 
 ### 功能验收
 - [ ] 所有 Python 版本功能已实现

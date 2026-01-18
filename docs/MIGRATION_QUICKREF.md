@@ -1,4 +1,4 @@
-# EasyKiConverter 移植快速参考
+﻿# EasyKiConverter 移植快速参考
 
 ## 🎯 项目目标
 
@@ -8,10 +8,10 @@
 
 | 文件 | 说明 |
 |------|------|
-| `MIGRATION_PLAN.md` | 详细的移植计划文档（16 周，6 个阶段） |
-| `MIGRATION_CHECKLIST.md` | 可执行的任务清单 |
-| `MIGRATION_QUICKREF.md` | 本文件（快速参考） |
-| `IFLOW.md` | 项目概述文档 |
+| MIGRATION_PLAN.md | 详细的移植计划文档（16 周，6 个阶段） |
+| MIGRATION_CHECKLIST.md | 可执行的任务清单 |
+| MIGRATION_QUICKREF.md | 本文件（快速参考） |
+| IFLOW.md | 项目概述文档 |
 
 ## 🔄 6 个阶段总览
 
@@ -28,20 +28,20 @@
 
 ## 🏗️ C++ 目录结构
 
-```
+
 src/
-├── core/                   # 核心转换引擎
-│   ├── easyeda/           # EasyEDA 模块
-│   ├── kicad/             # KiCad 导出模块
-│   └── utils/             # 工具模块
-├── models/                # 数据模型
-├── ui/                    # UI 模块
-│   ├── qml/               # QML 文件
-│   ├── controllers/       # QML 控制器
-│   └── utils/             # UI 工具
-├── workers/               # 工作线程
-└── resources/             # 资源文件
-```
+ core/                   # 核心转换引擎
+    easyeda/           # EasyEDA 模块
+    kicad/             # KiCad 导出模块
+    utils/             # 工具模块
+ models/                # 数据模型
+ ui/                    # UI 模块
+    qml/               # QML 文件
+    controllers/       # QML 控制器
+    utils/             # UI 工具
+ workers/               # 工作线程
+ resources/             # 资源文件
+
 
 ## 🛠️ 技术栈映射
 
@@ -75,7 +75,7 @@ src/
 10. UI 工具（BOMParser, ClipboardProcessor 等）
 11. 配置管理
 
-## ✅ 验收标准
+##  验收标准
 
 ### 功能验收
 - [ ] 所有 Python 版本功能已实现
@@ -94,7 +94,7 @@ src/
 - [ ] 无严重 Bug
 - [ ] 代码符合 Qt 编码规范
 
-## ⚠️ 关键风险
+## ️ 关键风险
 
 1. **网络请求处理**：Qt Network 与 requests 的行为差异
 2. **JSON 解析**：复杂数据结构的解析
@@ -111,8 +111,8 @@ src/
 - [KiCad 文档](https://docs.kicad.org/)
 
 ### Python 版本代码
-- `EasyKiConverter_QT/src/core/` - 核心转换逻辑
-- `EasyKiConverter_QT/src/ui/` - UI 实现
+- EasyKiConverter_QT/src/core/ - 核心转换逻辑
+- EasyKiConverter_QT/src/ui/ - UI 实现
 
 ### 相关项目
 - [uPesy/easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py) - 原始 Python 实现
@@ -120,9 +120,9 @@ src/
 ## 🚀 快速开始
 
 ### 第一步：阅读文档
-1. 阅读 `MIGRATION_PLAN.md` 了解详细计划
-2. 阅读 `MIGRATION_CHECKLIST.md` 了解任务清单
-3. 参考 `IFLOW.md` 了解项目概述
+1. 阅读 MIGRATION_PLAN.md 了解详细计划
+2. 阅读 MIGRATION_CHECKLIST.md 了解任务清单
+3. 参考 IFLOW.md 了解项目概述
 
 ### 第二步：环境准备
 1. 安装 Qt 6.8+
@@ -131,7 +131,7 @@ src/
 4. 配置 Qt Creator
 
 ### 第三步：开始开发
-1. 从阶段 1 开始，按照 `MIGRATION_CHECKLIST.md` 逐个完成任务
+1. 从阶段 1 开始，按照 MIGRATION_CHECKLIST.md 逐个完成任务
 2. 每完成一个阶段，进行测试验证
 3. 定期更新文档和代码注释
 
@@ -151,7 +151,7 @@ src/
 ## 📞 获取帮助
 
 如果遇到问题：
-1. 查看 `MIGRATION_PLAN.md` 中的详细说明
+1. 查看 MIGRATION_PLAN.md 中的详细说明
 2. 参考 Python 版本的实现代码
 3. 查阅 Qt 官方文档
 4. 通过 GitHub Issues 提交问题

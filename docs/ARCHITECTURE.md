@@ -1,4 +1,4 @@
-# EasyKiConverter C++ 版本架构分析
+﻿# EasyKiConverter C++ 版本架构分析
 
 ## 文档信息
 
@@ -22,105 +22,105 @@
 
 当前程序采用了 **MVC 架构 + 并行处理 + 信号/槽机制** 的设计：
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    UI Layer (View)                      │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │  QML Interface (MainWindow.qml, Card.qml, etc.) │  │
-│  └──────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│              Controller Layer (Controller)              │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │  MainController                                  │  │
-│  │  - ComponentExportTask (QRunnable)               │  │
-│  │  - QThreadPool (并行处理)                         │  │
-│  │  - QMutex (线程同步)                             │  │
-│  └──────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                  Model Layer (Model)                    │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │  Data Models:                                    │  │
-│  │  - ComponentData, SymbolData, FootprintData      │  │
-│  │  - Model3DData                                   │  │
-│  └──────────────────────────────────────────────────┘  │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │  Core Engine:                                    │  │
-│  │  - EasyedaApi, NetworkUtils                      │  │
-│  │  - EasyedaImporter                                │  │
-│  │  - ExporterSymbol, ExporterFootprint,            │  │
-│  │    Exporter3DModel                               │  │
-│  └──────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-```
+
+
+                    UI Layer (View)                      
+    
+    QML Interface (MainWindow.qml, Card.qml, etc.)   
+    
+
+                          
+                          
+
+              Controller Layer (Controller)              
+    
+    MainController                                    
+    - ComponentExportTask (QRunnable)                 
+    - QThreadPool (并行处理)                           
+    - QMutex (线程同步)                               
+    
+
+                          
+                          
+
+                  Model Layer (Model)                    
+    
+    Data Models:                                      
+    - ComponentData, SymbolData, FootprintData        
+    - Model3DData                                     
+    
+    
+    Core Engine:                                      
+    - EasyedaApi, NetworkUtils                        
+    - EasyedaImporter                                  
+    - ExporterSymbol, ExporterFootprint,              
+      Exporter3DModel                                 
+    
+
+
 
 ### 核心设计模式
 
 #### 1. MVC 架构模式
 
 - **Model（模型层）**：数据模型和业务逻辑
-  - 数据模型：`ComponentData`, `SymbolData`, `FootprintData`, `Model3DData`
-  - 核心引擎：`EasyedaApi`, `EasyedaImporter`, `ExporterSymbol`, `ExporterFootprint`, `Exporter3DModel`
+  - 数据模型：ComponentData, SymbolData, FootprintData, Model3DData
+  - 核心引擎：EasyedaApi, EasyedaImporter, ExporterSymbol, ExporterFootprint, Exporter3DModel
   
 - **View（视图层）**：用户界面
-  - QML 界面：`MainWindow.qml`, `Card.qml`, `ModernButton.qml` 等
+  - QML 界面：MainWindow.qml, Card.qml, ModernButton.qml 等
   - 组件化设计：可复用的 UI 组件
 
 - **Controller（控制器层）**：协调 Model 和 View
-  - 主控制器：`MainController`
-  - 任务管理：`ComponentExportTask`
-  - 线程管理：`QThreadPool`, `QMutex`
+  - 主控制器：MainController
+  - 任务管理：ComponentExportTask
+  - 线程管理：QThreadPool, QMutex
 
 #### 2. 两阶段导出策略
 
-```
+
 阶段一：数据收集（并行）
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│ Component 1 │    │ Component 2 │    │ Component 3 │
-│  ┌───────┐  │    │  ┌───────┐  │    │  ┌───────┐  │
-│  │ Task  │  │    │  │ Task  │  │    │  │ Task  │  │
-│  └───────┘  │    │  └───────┘  │    │  └───────┘  │
-└──────┬──────┘    └──────┬──────┘    └──────┬──────┘
-       │                  │                  │
-       └──────────────────┼──────────────────┘
-                          ▼
-              ┌───────────────────────┐
-              │  Collected Data Store  │
-              │  (m_collectedComponents) │
-              └───────────────────────┘
+        
+ Component 1      Component 2      Component 3 
+                    
+   Task           Task           Task    
+                    
+        
+                                           
+       
+                          
+              
+                Collected Data Store  
+                (m_collectedComponents) 
+              
 
 阶段二：数据导出（串行）
-              ┌───────────────────────┐
-              │  Collected Data Store  │
-              └───────────┬───────────┘
-                          │
-           ┌──────────────┼──────────────┐
-           ▼              ▼              ▼
-    ┌──────────┐   ┌──────────┐   ┌──────────┐
-    │ Symbol   │   │Footprint │   │ 3D Model │
-    │ Library  │   │ Library  │   │  Export  │
-    └──────────┘   └──────────┘   └──────────┘
-```
+              
+                Collected Data Store  
+              
+                          
+           
+                                       
+          
+     Symbol      Footprint     3D Model 
+     Library      Library       Export  
+          
+
 
 #### 3. 信号/槽机制
 
-```
-┌──────────────┐         Signal         ┌──────────────┐
-│ EasyedaApi   │ ──────────────────────> │ MainController│
-│              │ model3DFetched(uuid, data)│              │
-└──────────────┘                        └──────────────┘
-                                               │
-                                               ▼
-                                      ┌──────────────────┐
-                                      │ ComponentExport  │
-                                      │      Task         │
-                                      └──────────────────┘
-```
+
+         Signal         
+ EasyedaApi    >  MainController
+               model3DFetched(uuid, data)              
+                        
+                                               
+                                               
+                                      
+                                       ComponentExport  
+                                            Task         
+                                      
+
 
 ---
 
@@ -128,135 +128,135 @@
 
 ### 1. 性能优化 - 并行处理
 
-#### ✅ 两阶段导出策略
+####  两阶段导出策略
 - **数据收集阶段**：所有任务并行执行，充分利用多核 CPU
 - **导出阶段**：所有数据收集完成后统一导出，避免文件访问冲突
 - **性能提升**：相比串行处理，性能提升 2-3 倍（取决于 CPU 核心数）
 
-#### ✅ 线程池管理
-```cpp
+####  线程池管理
+cpp
 // 使用 QThreadPool 复用线程
 QThreadPool::globalInstance()->setMaxThreadCount(QThread::idealThreadCount());
 
 // 任务提交到线程池
 QThreadPool::globalInstance()->start(new ComponentExportTask(...));
-```
+
 - **线程复用**：避免频繁创建和销毁线程
 - **资源优化**：自动管理线程生命周期
 - **负载均衡**：自动分配任务到可用线程
 
-#### ✅ 网络请求并行化
+####  网络请求并行化
 - **同时下载**：多个元件的数据同时从 EasyEDA API 下载
 - **带宽利用**：充分利用网络带宽
 - **时间节省**：3 个元件的下载时间接近 1 个元件的时间
 
 ### 2. 架构清晰 - MVC 模式
 
-#### ✅ 职责分离
+####  职责分离
 - **UI 层**：只负责显示和用户交互，不包含业务逻辑
 - **Controller 层**：协调 UI 和 Model，管理任务流程
 - **Model 层**：数据模型和业务逻辑，可独立测试
 
-#### ✅ 易于维护
-```cpp
+####  易于维护
+cpp
 // 修改 UI 不影响业务逻辑
 // 修改业务逻辑不影响 UI
 // 各层独立开发和测试
-```
 
-#### ✅ 可测试性
+
+####  可测试性
 - **单元测试**：每个模块可独立测试
 - **集成测试**：各层接口清晰，易于集成
 - **Mock 测试**：可轻松创建 Mock 对象
 
 ### 3. 解耦设计 - 信号/槽机制
 
-#### ✅ 松耦合
-```cpp
+####  松耦合
+cpp
 // EasyedaApi 不需要知道 MainController 的存在
 connect(api, &EasyedaApi::model3DFetched, 
         this, &MainController::handleModel3DFetched);
-```
+
 - **模块独立**：模块间通过信号通信，降低依赖
 - **易于替换**：可轻松替换某个模块而不影响其他模块
 
-#### ✅ 异步处理
+####  异步处理
 - **非阻塞**：网络请求不阻塞主线程
 - **响应式**：事件驱动，响应迅速
 - **流畅体验**：UI 保持响应，用户体验好
 
-#### ✅ 事件驱动
+####  事件驱动
 - **扩展性强**：添加新功能只需连接新信号
 - **灵活配置**：可动态连接/断开信号
 - **易于调试**：信号/槽连接可追踪
 
 ### 4. 错误处理
 
-#### ✅ 线程安全
-```cpp
+####  线程安全
+cpp
 // 使用 QMutex 保护共享数据
 QMutexLocker locker(m_mutex);
 m_collectedComponents.append(collectedData);
-```
+
 - **数据保护**：防止多线程同时访问共享数据
 - **死锁避免**：使用 QMutexLocker 自动释放锁
 - **性能优化**：锁的粒度小，减少等待时间
 
-#### ✅ 异常捕获
-```cpp
+####  异常捕获
+cpp
 try {
     // 业务逻辑
 } catch (const std::exception &e) {
     qWarning() << "Exception:" << e.what();
     emit dataCollected(componentId, false, e.what());
 }
-```
+
 - **防止崩溃**：捕获异常，防止程序崩溃
 - **错误上报**：将错误信息传递给 UI
 - **日志记录**：记录异常信息便于调试
 
-#### ✅ 状态管理
-```cpp
+####  状态管理
+cpp
 // 使用标志位管理请求状态
 if (m_isFetching) {
     qWarning() << "Already fetching";
     return;
 }
 m_isFetching = true;
-```
+
 - **状态追踪**：清晰追踪每个请求的状态
 - **避免重复**：防止重复请求
 - **资源保护**：防止资源竞争
 
 ### 5. 代码复用
 
-#### ✅ 独立 API 类
-```cpp
+####  独立 API 类
+cpp
 // EasyedaApi 可复用
 EasyedaApi *api = new EasyedaApi();
 api->fetchComponentInfo(lcscId);
-```
+
 - **通用接口**：提供统一的 API 接口
 - **易于扩展**：可添加新的 API 方法
 - **独立测试**：可独立测试 API 功能
 
-#### ✅ 模块化设计
-```cpp
+####  模块化设计
+cpp
 // 各导出器独立，易于扩展
 class ExporterSymbol { /* ... */ };
 class ExporterFootprint { /* ... */ };
 class Exporter3DModel { /* ... */ };
-```
+
 - **功能独立**：每个导出器负责一种格式
 - **易于扩展**：添加新格式只需创建新导出器
 - **易于维护**：修改一个导出器不影响其他
 
-#### ✅ 工具类封装
-```cpp
+####  工具类封装
+cpp
 // NetworkUtils, GeometryUtils 等工具类
 NetworkUtils::sendGetRequest(url, timeout, maxRetries);
 GeometryUtils::calculateDistance(p1, p2);
-```
+
 - **代码复用**：常用功能封装成工具类
 - **易于测试**：工具类可独立测试
 - **易于维护**：修改工具类自动应用到所有使用处
@@ -267,8 +267,8 @@ GeometryUtils::calculateDistance(p1, p2);
 
 ### 1. 同步机制问题
 
-#### ❌ QEventLoop 阻塞
-```cpp
+####  QEventLoop 阻塞
+cpp
 // 当前实现（阻塞）
 QEventLoop objLoop;
 connect(api, &EasyedaApi::model3DFetched, [&](const QString &uuid, const QByteArray &data) {
@@ -277,7 +277,7 @@ connect(api, &EasyedaApi::model3DFetched, [&](const QString &uuid, const QByteAr
     objLoop.quit();  // 退出事件循环
 });
 objLoop.exec();  // 阻塞等待，浪费时间
-```
+
 
 **问题**：
 - **假异步**：虽然使用了信号/槽，但 QEventLoop 让它变成了同步等待
@@ -289,14 +289,14 @@ objLoop.exec();  // 阻塞等待，浪费时间
 - **资源浪费**：线程在等待时被阻塞，无法处理其他任务
 - **用户体验差**：UI 可能短暂卡顿
 
-#### ❌ 频繁阻塞
-```cpp
+####  频繁阻塞
+cpp
 // 每个下载操作都创建 QEventLoop
 QEventLoop objLoop;   // OBJ 下载
 objLoop.exec();
 QEventLoop stepLoop;  // STEP 下载
 stepLoop.exec();
-```
+
 
 **问题**：
 - **多次阻塞**：每个下载操作都阻塞一次
@@ -305,8 +305,8 @@ stepLoop.exec();
 
 ### 2. 资源管理问题
 
-#### ❌ 频繁创建删除
-```cpp
+####  频繁创建删除
+cpp
 // 为每个请求创建 EasyedaApi 实例
 EasyedaApi *objApi = new EasyedaApi();
 // ...
@@ -315,7 +315,7 @@ objApi->deleteLater();  // 频繁创建删除
 EasyedaApi *stepApi = new EasyedaApi();
 // ...
 stepApi->deleteLater();  // 频繁创建删除
-```
+
 
 **问题**：
 - **内存开销**：频繁创建删除增加内存开销
@@ -327,14 +327,14 @@ stepApi->deleteLater();  // 频繁创建删除
 - **性能下降**：创建和销毁对象需要时间
 - **系统压力**：频繁分配释放给系统带来压力
 
-#### ❌ 连接泄漏风险
-```cpp
+####  连接泄漏风险
+cpp
 // 信号/槽连接可能未正确断开
 connect(api, &EasyedaApi::model3DFetched, [&](...) {
     // ...
 });
 // 如果对象删除前未断开连接，可能导致泄漏
-```
+
 
 **问题**：
 - **连接泄漏**：信号/槽连接可能未正确断开
@@ -343,11 +343,11 @@ connect(api, &EasyedaApi::model3DFetched, [&](...) {
 
 ### 3. 错误处理不够健壮
 
-#### ❌ 超时处理简单
-```cpp
+####  超时处理简单
+cpp
 // 只设置固定超时，没有重试策略
 m_networkUtils->sendGetRequest(apiUrl, 30, 3);  // 30秒超时，3次重试
-```
+
 
 **问题**：
 - **固定超时**：超时时间固定，不能根据网络状况调整
@@ -359,25 +359,25 @@ m_networkUtils->sendGetRequest(apiUrl, 30, 3);  // 30秒超时，3次重试
 - **用户体验差**：用户需要手动重试
 - **资源浪费**：无效的重试浪费资源
 
-#### ❌ 错误信息不详细
-```cpp
+####  错误信息不详细
+cpp
 // 部分错误信息不够具体
 emit fetchError("Failed to download data");  // 错误信息太笼统
-```
+
 
 **问题**：
 - **调试困难**：错误信息不详细，难以定位问题
 - **用户体验差**：用户不知道具体出了什么问题
 - **日志不完整**：日志信息不完整，难以分析
 
-#### ❌ 状态不一致
-```cpp
+####  状态不一致
+cpp
 // 多个状态标志可能导致不一致
 bool m_isFetching;
 bool m_isRequesting;
 bool m_expectBinaryData;
 // 多个标志位可能不同步
-```
+
 
 **问题**：
 - **状态复杂**：多个状态标志难以维护
@@ -386,12 +386,12 @@ bool m_expectBinaryData;
 
 ### 4. 可扩展性问题
 
-#### ❌ 硬编码配置
-```cpp
+####  硬编码配置
+cpp
 // 超时时间、重试次数等硬编码
 const int DEFAULT_TIMEOUT = 30;
 const int DEFAULT_MAX_RETRIES = 3;
-```
+
 
 **问题**：
 - **配置不灵活**：配置硬编码，无法动态调整
@@ -403,22 +403,22 @@ const int DEFAULT_MAX_RETRIES = 3;
 - **维护成本高**：修改配置需要重新编译
 - **用户体验差**：用户无法自定义配置
 
-#### ❌ 缺乏配置管理
-```cpp
+####  缺乏配置管理
+cpp
 // 没有统一的配置文件
 // 所有配置都硬编码在代码中
-```
+
 
 **问题**：
 - **配置分散**：配置分散在代码各处
 - **管理困难**：配置管理困难
 - **版本控制**：配置版本控制困难
 
-#### ❌ 插件化困难
-```cpp
+####  插件化困难
+cpp
 // 添加新功能需要修改核心代码
 // 没有插件机制
-```
+
 
 **问题**：
 - **扩展困难**：添加新功能需要修改核心代码
@@ -427,33 +427,33 @@ const int DEFAULT_MAX_RETRIES = 3;
 
 ### 5. 调试困难
 
-#### ❌ 异步调试复杂
-```cpp
+####  异步调试复杂
+cpp
 // 多线程异步流程难以调试
 // 信号/槽连接难以追踪
-```
+
 
 **问题**：
 - **流程复杂**：异步流程难以理解
 - **断点无效**：断点在异步流程中可能无效
 - **日志分散**：日志信息分散在各个模块
 
-#### ❌ 日志分散
-```cpp
+####  日志分散
+cpp
 // 日志信息分散在各个模块
 // 没有统一的日志管理
-```
+
 
 **问题**：
 - **日志分散**：日志信息分散在各个模块
 - **级别不统一**：日志级别不统一
 - **格式不统一**：日志格式不统一
 
-#### ❌ 状态追踪困难
-```cpp
+####  状态追踪困难
+cpp
 // 难以追踪完整的状态变化
 // 没有状态机管理
-```
+
 
 **问题**：
 - **状态变化复杂**：状态变化难以追踪
@@ -462,11 +462,11 @@ const int DEFAULT_MAX_RETRIES = 3;
 
 ### 6. 性能瓶颈
 
-#### ❌ Gzip 解压缩
-```cpp
+####  Gzip 解压缩
+cpp
 // 所有数据都需要解压缩，增加 CPU 开销
 QByteArray decompressedData = decompressGzip(compressedData);
-```
+
 
 **问题**：
 - **CPU 开销**：Gzip 解压缩增加 CPU 开销
@@ -478,23 +478,23 @@ QByteArray decompressedData = decompressGzip(compressedData);
 - **内存占用**：内存占用增加
 - **CPU 使用率高**：CPU 使用率高
 
-#### ❌ 字符串处理
-```cpp
+####  字符串处理
+cpp
 // 大量字符串操作，效率不高
 QString objString = QString::fromUtf8(decompressedData);
 QStringList lines = objString.split('\n');
-```
+
 
 **问题**：
 - **性能低**：字符串操作效率不高
 - **内存占用**：字符串占用大量内存
 - **性能影响**：影响整体性能
 
-#### ❌ 内存占用
-```cpp
+####  内存占用
+cpp
 // 所有数据都加载到内存，大文件可能内存不足
 QByteArray decompressedData = decompressGzip(compressedData);
-```
+
 
 **问题**：
 - **内存占用高**：所有数据都加载到内存
@@ -508,17 +508,17 @@ QByteArray decompressedData = decompressGzip(compressedData);
 ### 1. 改用真正的异步架构
 
 #### 当前实现（阻塞）
-```cpp
+cpp
 QEventLoop loop;
 connect(api, &EasyedaApi::model3DFetched, [&](const QString &uuid, const QByteArray &data) {
     objData = data;
     loop.quit();
 });
 loop.exec();  // 阻塞等待
-```
+
 
 #### 改进方案（真正的异步）
-```cpp
+cpp
 // 使用状态机管理异步流程
 class ComponentExportTask : public QObject {
     Q_OBJECT
@@ -562,7 +562,7 @@ private:
     EasyedaApi *m_objApi;
     EasyedaApi *m_stepApi;
 };
-```
+
 
 **优势**：
 - **真正的异步**：不阻塞线程，充分利用并发
@@ -572,7 +572,7 @@ private:
 ### 2. 使用对象池
 
 #### 当前实现（频繁创建删除）
-```cpp
+cpp
 EasyedaApi *objApi = new EasyedaApi();
 // ...
 objApi->deleteLater();
@@ -580,10 +580,10 @@ objApi->deleteLater();
 EasyedaApi *stepApi = new EasyedaApi();
 // ...
 stepApi->deleteLater();
-```
+
 
 #### 改进方案（对象池）
-```cpp
+cpp
 class EasyedaApiPool {
 public:
     EasyedaApiPool(int maxSize = 10) : m_maxSize(maxSize) {}
@@ -627,7 +627,7 @@ EasyedaApiPool apiPool;
 EasyedaApi* api = apiPool.acquire();
 // ...
 apiPool.release(api);
-```
+
 
 **优势**：
 - **减少内存开销**：复用对象，减少内存分配
@@ -637,12 +637,12 @@ apiPool.release(api);
 ### 3. 改进错误处理
 
 #### 当前实现（简单重试）
-```cpp
+cpp
 m_networkUtils->sendGetRequest(apiUrl, 30, 3);  // 30秒超时，3次重试
-```
+
 
 #### 改进方案（智能重试）
-```cpp
+cpp
 class RetryPolicy {
 public:
     int maxRetries = 3;
@@ -708,7 +708,7 @@ private:
     RetryPolicy m_policy;
     NetworkUtils* m_networkUtils;
 };
-```
+
 
 **优势**：
 - **智能重试**：指数退避，提高成功率
@@ -718,13 +718,13 @@ private:
 ### 4. 添加配置管理
 
 #### 当前实现（硬编码）
-```cpp
+cpp
 const int DEFAULT_TIMEOUT = 30;
 const int DEFAULT_MAX_RETRIES = 3;
-```
+
 
 #### 改进方案（配置文件）
-```cpp
+cpp
 // config.json
 {
     "network": {
@@ -786,7 +786,7 @@ private:
 // 使用配置
 int timeout = ConfigManager::instance().getTimeout();
 int maxRetries = ConfigManager::instance().getMaxRetries();
-```
+
 
 **优势**：
 - **配置灵活**：可动态调整配置
@@ -796,13 +796,13 @@ int maxRetries = ConfigManager::instance().getMaxRetries();
 ### 5. 优化数据处理
 
 #### 当前实现（全部加载到内存）
-```cpp
+cpp
 QByteArray decompressedData = decompressGzip(compressedData);
 QString objString = QString::fromUtf8(decompressedData);
-```
+
 
 #### 改进方案（流式处理）
-```cpp
+cpp
 class StreamProcessor {
 public:
     void processGzipStream(const QString& inputPath, const QString& outputPath) {
@@ -858,7 +858,7 @@ processor.processGzipStream("input.gz", "output.obj");
 processor.processObjStream("output.obj", [](const QByteArray& data) {
     // 处理每一行数据
 });
-```
+
 
 **优势**：
 - **内存优化**：不需要全部加载到内存
@@ -901,83 +901,83 @@ processor.processObjStream("output.obj", [](const QByteArray& data) {
 
 ## 项目结构
 
-```
+
 EasyKiconverter_Cpp_Version/
-├── CMakeLists.txt              # CMake 构建配置
-├── main.cpp                    # 主程序入口
-├── Main.qml                    # QML 主入口
-├── README.md                   # 项目说明文档
-├── LICENSE                     # 开源协议
-├── .gitignore                  # Git 忽略规则
-├── docs/                       # 项目文档
-│   ├── IFLOW.md                # 项目概述文档
-│   ├── MIGRATION_PLAN.md       # 详细的移植计划
-│   ├── MIGRATION_CHECKLIST.md  # 可执行的任务清单
-│   ├── MIGRATION_QUICKREF.md   # 快速参考卡片
-│   └── ARCHITECTURE.md         # 架构分析文档（本文档）
-├── resources/                  # 资源文件
-│   ├── icons/                  # 应用图标
-│   │   ├── add.svg
-│   │   ├── app_icon.icns
-│   │   ├── app_icon.ico
-│   │   ├── app_icon.png
-│   │   ├── app_icon.svg
-│   │   ├── folder.svg
-│   │   ├── play.svg
-│   │   ├── trash.svg
-│   │   └── upload.svg
-│   ├── imgs/                   # 图片资源
-│   │   └── background.jpg
-│   └── styles/                 # 样式文件
-├── src/
-│   ├── core/                   # 核心转换引擎
-│   │   ├── easyeda/            # EasyEDA API 和导入器
-│   │   │   ├── EasyedaApi.h/cpp
-│   │   │   ├── EasyedaImporter.h/cpp
-│   │   │   └── JLCDatasheet.h/cpp
-│   │   ├── kicad/              # KiCad 导出器
-│   │   │   ├── ExporterSymbol.h/cpp
-│   │   │   ├── ExporterFootprint.h/cpp
-│   │   │   └── Exporter3DModel.h/cpp
-│   │   └── utils/              # 工具类
-│   │       ├── GeometryUtils.h/cpp
-│   │       └── NetworkUtils.h/cpp
-│   ├── models/                 # 数据模型
-│   │   ├── ComponentData.h/cpp
-│   │   ├── SymbolData.h/cpp
-│   │   ├── FootprintData.h/cpp
-│   │   └── Model3DData.h/cpp
-│   ├── services/               # 服务层
-│   │   ├── ComponentService.h/cpp
-│   │   ├── ExportService.h/cpp
-│   │   ├── ConfigService.h/cpp
-│   │   ├── ComponentDataCollector.h/cpp
-│   │   └── ComponentExportTask.h/cpp
-│   ├── ui/                     # UI 层
-│   │   ├── qml/                # QML 界面
-│   │   │   ├── MainWindow.qml
-│   │   │   ├── components/     # 可复用组件
-│   │   │   │   ├── Card.qml
-│   │   │   │   ├── ModernButton.qml
-│   │   │   │   ├── Icon.qml
-│   │   │   │   ├── ComponentListItem.qml
-│   │   │   │   └── ResultListItem.qml
-│   │   │   └── styles/         # 样式系统
-│   │   │       ├── AppStyle.qml
-│   │   │       └── qmldir
-│   │   ├── viewmodels/         # 视图模型层
-│   │   │   ├── ComponentListViewModel.h/cpp
-│   │   │   ├── ExportSettingsViewModel.h/cpp
-│   │   │   ├── ExportProgressViewModel.h/cpp
-│   │   │   └── ThemeSettingsViewModel.h/cpp
-│   │   └── utils/              # UI 工具
-│   │       └── ConfigManager.h/cpp
-│   └── workers/                # 工作线程
-│       ├── ExportWorker.h/cpp
-│       └── NetworkWorker.h/cpp
-├── build/                      # 构建输出目录
-└── EasyKiConverter_QT/         # Python 版本参考实现
-```
+ CMakeLists.txt              # CMake 构建配置
+ main.cpp                    # 主程序入口
+ Main.qml                    # QML 主入口
+ README.md                   # 项目说明文档
+ LICENSE                     # 开源协议
+ .gitignore                  # Git 忽略规则
+ docs/                       # 项目文档
+    IFLOW.md                # 项目概述文档
+    MIGRATION_PLAN.md       # 详细的移植计划
+    MIGRATION_CHECKLIST.md  # 可执行的任务清单
+    MIGRATION_QUICKREF.md   # 快速参考卡片
+    ARCHITECTURE.md         # 架构分析文档（本文档）
+ resources/                  # 资源文件
+    icons/                  # 应用图标
+       add.svg
+       app_icon.icns
+       app_icon.ico
+       app_icon.png
+       app_icon.svg
+       folder.svg
+       play.svg
+       trash.svg
+       upload.svg
+    imgs/                   # 图片资源
+       background.jpg
+    styles/                 # 样式文件
+ src/
+    core/                   # 核心转换引擎
+       easyeda/            # EasyEDA API 和导入器
+          EasyedaApi.h/cpp
+          EasyedaImporter.h/cpp
+          JLCDatasheet.h/cpp
+       kicad/              # KiCad 导出器
+          ExporterSymbol.h/cpp
+          ExporterFootprint.h/cpp
+          Exporter3DModel.h/cpp
+       utils/              # 工具类
+           GeometryUtils.h/cpp
+           NetworkUtils.h/cpp
+    models/                 # 数据模型
+       ComponentData.h/cpp
+       SymbolData.h/cpp
+       FootprintData.h/cpp
+       Model3DData.h/cpp
+    services/               # 服务层
+       ComponentService.h/cpp
+       ExportService.h/cpp
+       ConfigService.h/cpp
+       ComponentDataCollector.h/cpp
+       ComponentExportTask.h/cpp
+    ui/                     # UI 层
+       qml/                # QML 界面
+          MainWindow.qml
+          components/     # 可复用组件
+             Card.qml
+             ModernButton.qml
+             Icon.qml
+             ComponentListItem.qml
+             ResultListItem.qml
+          styles/         # 样式系统
+              AppStyle.qml
+              qmldir
+       viewmodels/         # 视图模型层
+          ComponentListViewModel.h/cpp
+          ExportSettingsViewModel.h/cpp
+          ExportProgressViewModel.h/cpp
+          ThemeSettingsViewModel.h/cpp
+       utils/              # UI 工具
+           ConfigManager.h/cpp
+    workers/                # 工作线程
+        ExportWorker.h/cpp
+        NetworkWorker.h/cpp
+ build/                      # 构建输出目录
+ EasyKiConverter_QT/         # Python 版本参考实现
+
 
 ---
 
@@ -985,7 +985,7 @@ EasyKiconverter_Cpp_Version/
 
 ### 当前架构评分
 
-⭐⭐⭐⭐☆ (4/5)
+ (4/5)
 
 ### 优点
 

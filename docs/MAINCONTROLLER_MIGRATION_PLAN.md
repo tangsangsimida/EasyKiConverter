@@ -1,4 +1,4 @@
-# MainController 迁移计划
+﻿# MainController 迁移计划
 
 ## 概述
 
@@ -11,72 +11,72 @@
 **当前实现**: MainController 直接管理元件列表
 
 **相关方法**:
-- `addComponent()`
-- `removeComponent()`
-- `clearComponentList()`
-- `pasteFromClipboard()`
-- `selectBomFile()`
+- addComponent()
+- removeComponent()
+- clearComponentList()
+- pasteFromClipboard()
+- selectBomFile()
 
 **目标 ViewModel**: ComponentListViewModel
 
-**迁移状态**: ✅ 已完成 - ComponentListViewModel 已实现所有功能
+**迁移状态**:  已完成 - ComponentListViewModel 已实现所有功能
 
 ### 2. 导出设置管理
 
 **当前实现**: MainController 直接管理导出设置
 
 **相关方法**:
-- `setOutputPath()`
-- `setLibName()`
-- `setExportSymbol()`
-- `setExportFootprint()`
-- `setExportModel3D()`
-- `setOverwriteExistingFiles()`
-- `saveConfig()`
-- `resetConfig()`
+- setOutputPath()
+- setLibName()
+- setExportSymbol()
+- setExportFootprint()
+- setExportModel3D()
+- setOverwriteExistingFiles()
+- saveConfig()
+- resetConfig()
 
 **目标 ViewModel**: ExportSettingsViewModel
 
-**迁移状态**: ✅ 已完成 - ExportSettingsViewModel 已实现所有功能
+**迁移状态**:  已完成 - ExportSettingsViewModel 已实现所有功能
 
 ### 3. 导出进度管理
 
 **当前实现**: MainController 直接管理导出进度
 
 **相关方法**:
-- `startExport()`
-- `cancelExport()`
-- `progress` 属性
-- `status` 属性
-- `isExporting` 属性
+- startExport()
+- cancelExport()
+- progress 属性
+- status 属性
+- isExporting 属性
 
 **目标 ViewModel**: ExportProgressViewModel
 
-**迁移状态**: ✅ 已完成 - ExportProgressViewModel 已实现所有功能
+**迁移状态**:  已完成 - ExportProgressViewModel 已实现所有功能
 
 ### 4. 深色模式管理
 
 **当前实现**: MainController 管理深色模式状态
 
 **相关方法**:
-- `setDarkMode()`
-- `isDarkMode` 属性
+- setDarkMode()
+- isDarkMode 属性
 
 **目标 ViewModel**: ThemeSettingsViewModel
 
-**迁移状态**: ✅ 已完成 - ThemeSettingsViewModel 已实现所有功能
+**迁移状态**:  已完成 - ThemeSettingsViewModel 已实现所有功能
 
 ### 5. 配置管理
 
 **当前实现**: MainController 使用 ConfigManager 管理配置
 
 **相关方法**:
-- `saveConfig()`
-- `resetConfig()`
+- saveConfig()
+- resetConfig()
 
 **目标 Service**: ConfigService
 
-**迁移状态**: ✅ 已完成 - ConfigService 已实现配置管理
+**迁移状态**:  已完成 - ConfigService 已实现配置管理
 
 ### 6. 元件数据获取
 
@@ -87,7 +87,7 @@
 
 **目标 Service**: ComponentService
 
-**迁移状态**: ✅ 已完成 - ComponentService 已实现数据获取
+**迁移状态**:  已完成 - ComponentService 已实现数据获取
 
 ### 7. 导出功能
 
@@ -98,7 +98,7 @@
 
 **目标 Service**: ExportService
 
-**迁移状态**: ✅ 已完成 - ExportService 已实现导出功能
+**迁移状态**:  已完成 - ExportService 已实现导出功能
 
 ## 迁移策略
 
@@ -121,7 +121,7 @@
 2. 更新所有 QML 组件的绑定
 3. 测试 UI 功能
 
-**当前状态**: ⏳ 需要更新 QML 文件
+**当前状态**:  需要更新 QML 文件
 
 ### 阶段 3: 简化 MainController（待开始）
 
@@ -132,7 +132,7 @@
 2. 将实现委托给 ViewModel
 3. 添加弃用警告
 
-**当前状态**: ⏳ 待开始
+**当前状态**:  待开始
 
 ### 阶段 4: 移除冗余代码（待开始）
 
@@ -143,14 +143,14 @@
 2. 移除 MainController
 3. 更新文档
 
-**当前状态**: ⏳ 待开始
+**当前状态**:  待开始
 
 ## QML 迁移指南
 
 ### 更新 MainWindow.qml
 
 **当前绑定**:
-```qml
+qml
 MainController {
     id: controller
     
@@ -158,10 +158,10 @@ MainController {
     outputPath: controller.outputPath
     // ... 其他绑定
 }
-```
+
 
 **目标绑定**:
-```qml
+qml
 ComponentListViewModel {
     id: componentListViewModel
 }
@@ -177,12 +177,12 @@ ExportProgressViewModel {
 ThemeSettingsViewModel {
     id: themeSettingsViewModel
 }
-```
+
 
 ### 更新组件绑定
 
 **元件列表组件**:
-```qml
+qml
 // 旧方式
 ListView {
     model: controller.componentList
@@ -194,10 +194,10 @@ ListView {
     model: componentListViewModel.componentList
     onAddClicked: componentListViewModel.addComponent(id)
 }
-```
+
 
 **导出设置组件**:
-```qml
+qml
 // 旧方式
 TextField {
     text: controller.outputPath
@@ -209,7 +209,7 @@ TextField {
     text: exportSettingsViewModel.outputPath
     onTextChanged: exportSettingsViewModel.setOutputPath(text)
 }
-```
+
 
 ## MainController 向后兼容层设计
 
@@ -221,7 +221,7 @@ TextField {
 
 ### 实现示例
 
-```cpp
+cpp
 class MainController : public QObject {
     Q_OBJECT
     Q_PROPERTY(QStringList componentList READ componentList NOTIFY componentListChanged)
@@ -256,45 +256,45 @@ private:
     ExportProgressViewModel *m_exportProgressViewModel;
     ThemeSettingsViewModel *m_themeSettingsViewModel;
 };
-```
+
 
 ## 迁移检查清单
 
 ### ComponentListViewModel
 
-- [x] `addComponent()` - 已实现
-- [x] `removeComponent()` - 已实现
-- [x] `clearComponentList()` - 已实现
-- [x] `pasteFromClipboard()` - 已实现
-- [x] `selectBomFile()` - 已实现
-- [x] `componentList` 属性 - 已实现
-- [x] `componentCount` 属性 - 已实现
+- [x] addComponent() - 已实现
+- [x] removeComponent() - 已实现
+- [x] clearComponentList() - 已实现
+- [x] pasteFromClipboard() - 已实现
+- [x] selectBomFile() - 已实现
+- [x] componentList 属性 - 已实现
+- [x] componentCount 属性 - 已实现
 
 ### ExportSettingsViewModel
 
-- [x] `setOutputPath()` - 已实现
-- [x] `setLibName()` - 已实现
-- [x] `setExportSymbol()` - 已实现
-- [x] `setExportFootprint()` - 已实现
-- [x] `setExportModel3D()` - 已实现
-- [x] `setOverwriteExistingFiles()` - 已实现
-- [x] `saveConfig()` - 已实现
-- [x] `resetConfig()` - 已实现
-- [x] `startExport()` - 已实现
-- [x] `cancelExport()` - 已实现
+- [x] setOutputPath() - 已实现
+- [x] setLibName() - 已实现
+- [x] setExportSymbol() - 已实现
+- [x] setExportFootprint() - 已实现
+- [x] setExportModel3D() - 已实现
+- [x] setOverwriteExistingFiles() - 已实现
+- [x] saveConfig() - 已实现
+- [x] resetConfig() - 已实现
+- [x] startExport() - 已实现
+- [x] cancelExport() - 已实现
 
 ### ExportProgressViewModel
 
-- [x] `progress` 属性 - 已实现
-- [x] `status` 属性 - 已实现
-- [x] `isExporting` 属性 - 已实现
-- [x] `successCount` 属性 - 已实现
-- [x] `failureCount` 属性 - 已实现
+- [x] progress 属性 - 已实现
+- [x] status 属性 - 已实现
+- [x] isExporting 属性 - 已实现
+- [x] successCount 属性 - 已实现
+- [x] failureCount 属性 - 已实现
 
 ### ThemeSettingsViewModel
 
-- [x] `isDarkMode` 属性 - 已实现
-- [x] `setDarkMode()` - 已实现
+- [x] isDarkMode 属性 - 已实现
+- [x] setDarkMode() - 已实现
 
 ## 迁移时间表
 
@@ -375,9 +375,9 @@ private:
 
 ## 下一步行动
 
-1. ✅ **立即行动**: 更新 QML 文件使用 ViewModel（已完成）
-2. ✅ **短期目标**: 完成向后兼容层实现（已完成）
-3. ✅ **长期目标**: 完全移除 MainController（已完成）
+1.  **立即行动**: 更新 QML 文件使用 ViewModel（已完成）
+2.  **短期目标**: 完成向后兼容层实现（已完成）
+3.  **长期目标**: 完全移除 MainController（已完成）
 
 ## 总结
 

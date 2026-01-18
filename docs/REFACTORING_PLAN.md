@@ -1,4 +1,4 @@
-# MainController 重构方案
+﻿# MainController 重构方案
 
 ## 文档信息
 
@@ -56,72 +56,72 @@ MainController 当前承担了以下职责:
 
 采用 **MVVM (Model-View-ViewModel) + Service Layer** 架构:
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    UI Layer (View)                      │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │  QML Interface (MainWindow.qml, Card.qml, etc.) │  │
-│  └──────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│              ViewModel Layer (ViewModel)               │
-│  ┌──────────────────┐  ┌──────────────────┐            │
-│  │ComponentListVM   │  │ExportSettingsVM  │            │
-│  │- componentList   │  │- exportOptions   │            │
-│  │- addComponent()  │  │- outputPath      │            │
-│  │- removeComponent()│ │- startExport()   │            │
-│  └──────────────────┘  └──────────────────┘            │
-│  ┌──────────────────┐  ┌──────────────────┐            │
-│  │ExportProgressVM  │  │ThemeSettingsVM   │            │
-│  │- progress        │  │- isDarkMode      │            │
-│  │- status          │  │- toggleTheme()   │            │
-│  │- results         │  │                  │            │
-│  └──────────────────┘  └──────────────────┘            │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│              Service Layer (Service)                    │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │  ComponentService                                │  │
-│  │  - fetchComponentData()                          │  │
-│  │  - validateComponentId()                         │  │
-│  │  - parseBomFile()                                │  │
-│  └──────────────────────────────────────────────────┘  │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │  ExportService                                   │  │
-│  │  - exportSymbol()                                │  │
-│  │  - exportFootprint()                             │  │
-│  │  - export3DModel()                               │  │
-│  │  - executeExportPipeline()                       │  │
-│  └──────────────────────────────────────────────────┘  │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │  ConfigService                                   │  │
-│  │  - loadConfig()                                  │  │
-│  │  - saveConfig()                                  │  │
-│  │  - resetConfig()                                 │  │
-│  └──────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                  Model Layer (Model)                    │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │  Data Models:                                    │  │
-│  │  - ComponentData, SymbolData, FootprintData      │  │
-│  │  - Model3DData                                   │  │
-│  └──────────────────────────────────────────────────┘  │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │  Core Engine:                                    │  │
-│  │  - EasyedaApi, NetworkUtils                      │  │
-│  │  - EasyedaImporter                                │  │
-│  │  - ExporterSymbol, ExporterFootprint,            │  │
-│  │    Exporter3DModel                               │  │
-│  └──────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-```
+
+
+                    UI Layer (View)                      
+    
+    QML Interface (MainWindow.qml, Card.qml, etc.)   
+    
+
+                          
+                          
+
+              ViewModel Layer (ViewModel)               
+                
+  ComponentListVM     ExportSettingsVM              
+  - componentList     - exportOptions               
+  - addComponent()    - outputPath                  
+  - removeComponent() - startExport()               
+                
+                
+  ExportProgressVM    ThemeSettingsVM               
+  - progress          - isDarkMode                  
+  - status            - toggleTheme()               
+  - results                                         
+                
+
+                          
+                          
+
+              Service Layer (Service)                    
+    
+    ComponentService                                  
+    - fetchComponentData()                            
+    - validateComponentId()                           
+    - parseBomFile()                                  
+    
+    
+    ExportService                                     
+    - exportSymbol()                                  
+    - exportFootprint()                               
+    - export3DModel()                                 
+    - executeExportPipeline()                         
+    
+    
+    ConfigService                                     
+    - loadConfig()                                    
+    - saveConfig()                                    
+    - resetConfig()                                   
+    
+
+                          
+                          
+
+                  Model Layer (Model)                    
+    
+    Data Models:                                      
+    - ComponentData, SymbolData, FootprintData        
+    - Model3DData                                     
+    
+    
+    Core Engine:                                      
+    - EasyedaApi, NetworkUtils                        
+    - EasyedaImporter                                  
+    - ExporterSymbol, ExporterFootprint,              
+      Exporter3DModel                                 
+    
+
+
 
 ### 详细设计
 
@@ -131,7 +131,7 @@ MainController 当前承担了以下职责:
 
 负责管理元件列表相关的 UI 状态和操作。
 
-```cpp
+cpp
 // src/ui/viewmodels/ComponentListViewModel.h
 class ComponentListViewModel : public QObject
 {
@@ -158,13 +158,13 @@ private:
     ComponentService *m_service;
     QStringList m_componentList;
 };
-```
+
 
 ##### 1.2 ExportSettingsViewModel
 
 负责管理导出设置相关的 UI 状态和操作。
 
-```cpp
+cpp
 // src/ui/viewmodels/ExportSettingsViewModel.h
 class ExportSettingsViewModel : public QObject
 {
@@ -199,13 +199,13 @@ private:
     bool m_exportModel3D;
     bool m_overwriteExistingFiles;
 };
-```
+
 
 ##### 1.3 ExportProgressViewModel
 
 负责管理导出进度和结果相关的 UI 状态。
 
-```cpp
+cpp
 // src/ui/viewmodels/ExportProgressViewModel.h
 class ExportProgressViewModel : public QObject
 {
@@ -244,13 +244,13 @@ private:
     int m_successCount;
     int m_failureCount;
 };
-```
+
 
 ##### 1.4 ThemeSettingsViewModel
 
 负责管理主题设置相关的 UI 状态。
 
-```cpp
+cpp
 // src/ui/viewmodels/ThemeSettingsViewModel.h
 class ThemeSettingsViewModel : public QObject
 {
@@ -266,7 +266,7 @@ signals:
 private:
     bool m_isDarkMode;
 };
-```
+
 
 #### 2. Service 层
 
@@ -274,7 +274,7 @@ private:
 
 负责处理与元件相关的业务逻辑,不依赖任何 UI 组件。
 
-```cpp
+cpp
 // src/services/ComponentService.h
 class ComponentService : public QObject
 {
@@ -303,13 +303,13 @@ private:
     EasyedaImporter *m_importer;
     QMap<QString, ComponentData> m_componentCache;
 };
-```
+
 
 ##### 2.2 ExportService
 
 负责处理导出相关的业务逻辑,实现真正的异步处理。
 
-```cpp
+cpp
 // src/services/ExportService.h
 class ExportService : public QObject
 {
@@ -344,13 +344,13 @@ private:
     bool m_isExporting;
     ExportOptions m_options;
 };
-```
+
 
 ##### 2.3 ConfigService
 
 负责配置管理。
 
-```cpp
+cpp
 // src/services/ConfigService.h
 class ConfigService : public QObject
 {
@@ -396,24 +396,24 @@ private:
     QJsonObject m_config;
     QString m_configPath;
 };
-```
+
 
 #### 3. 重构异步操作
 
 ##### 3.1 移除 QEventLoop
 
 当前实现(阻塞):
-```cpp
+cpp
 QEventLoop loop;
 connect(api, &EasyedaApi::model3DFetched, [&](const QString &uuid, const QByteArray &data) {
     objData = data;
     loop.quit();
 });
 loop.exec();  // 阻塞等待
-```
+
 
 改进方案(真正的异步):
-```cpp
+cpp
 // 使用状态机管理异步流程
 class ComponentDataCollector : public QObject
 {
@@ -496,19 +496,19 @@ private:
     QString m_uuid;
     bool m_export3DModel;
 };
-```
+
 
 ##### 3.2 解耦任务与控制器
 
 当前实现:
-```cpp
+cpp
 class ComponentExportTask : public QObject, public QRunnable {
     MainController *m_controller;  // 直接依赖 MainController
 };
-```
+
 
 改进方案:
-```cpp
+cpp
 class ComponentExportTask : public QObject, public QRunnable {
     Q_OBJECT
     
@@ -527,88 +527,88 @@ private:
     ExportOptions m_options;
     ComponentDataCollector *m_collector;
 };
-```
+
 
 ### 重构步骤
 
-#### 阶段 1: 创建 Service 层 (1-2 周) ✅ 已完成
+#### 阶段 1: 创建 Service 层 (1-2 周)  已完成
 
-1. **创建 ComponentService** ✅
-   - ✅ 从 MainController 中提取元件相关的业务逻辑
-   - ✅ 实现数据获取、验证和解析功能
-   - ✅ 添加单元测试
+1. **创建 ComponentService** 
+   -  从 MainController 中提取元件相关的业务逻辑
+   -  实现数据获取、验证和解析功能
+   -  添加单元测试
 
-2. **创建 ExportService** ✅
-   - ✅ 从 MainController 中提取导出相关的业务逻辑
-   - ✅ 实现真正的异步导出流程
-   - ✅ 添加单元测试
+2. **创建 ExportService** 
+   -  从 MainController 中提取导出相关的业务逻辑
+   -  实现真正的异步导出流程
+   -  添加单元测试
 
-3. **创建 ConfigService** ✅
-   - ✅ 从 MainController 中提取配置管理逻辑
-   - ✅ 实现配置的加载、保存和重置
-   - ✅ 添加单元测试
+3. **创建 ConfigService** 
+   -  从 MainController 中提取配置管理逻辑
+   -  实现配置的加载、保存和重置
+   -  添加单元测试
 
-#### 阶段 2: 创建 ViewModel 层 (1-2 周) ✅ 已完成
+#### 阶段 2: 创建 ViewModel 层 (1-2 周)  已完成
 
-1. **创建 ComponentListViewModel** ✅
-   - ✅ 从 MainController 中提取元件列表相关的 UI 逻辑
-   - ✅ 连接到 ComponentService
-   - ✅ 添加 UI 测试
+1. **创建 ComponentListViewModel** 
+   -  从 MainController 中提取元件列表相关的 UI 逻辑
+   -  连接到 ComponentService
+   -  添加 UI 测试
 
-2. **创建 ExportSettingsViewModel** ✅
-   - ✅ 从 MainController 中提取导出设置相关的 UI 逻辑
-   - ✅ 连接到 ConfigService
-   - ✅ 添加 UI 测试
+2. **创建 ExportSettingsViewModel** 
+   -  从 MainController 中提取导出设置相关的 UI 逻辑
+   -  连接到 ConfigService
+   -  添加 UI 测试
 
-3. **创建 ExportProgressViewModel** ✅
-   - ✅ 从 MainController 中提取导出进度相关的 UI 逻辑
-   - ✅ 连接到 ExportService
-   - ✅ 添加 UI 测试
+3. **创建 ExportProgressViewModel** 
+   -  从 MainController 中提取导出进度相关的 UI 逻辑
+   -  连接到 ExportService
+   -  添加 UI 测试
 
-4. **创建 ThemeSettingsViewModel** ✅
-   - ✅ 从 MainController 中提取主题设置相关的 UI 逻辑
-   - ✅ 连接到 ConfigService
-   - ✅ 添加 UI 测试
+4. **创建 ThemeSettingsViewModel** 
+   -  从 MainController 中提取主题设置相关的 UI 逻辑
+   -  连接到 ConfigService
+   -  添加 UI 测试
 
-#### 阶段 3: 重构异步操作 (1 周) ✅ 已完成
+#### 阶段 3: 重构异步操作 (1 周)  已完成
 
-1. **创建 ComponentDataCollector** ✅
-   - ✅ 实现基于状态机的异步数据收集
-   - ✅ 移除 QEventLoop 阻塞
-   - ✅ 添加单元测试
+1. **创建 ComponentDataCollector** 
+   -  实现基于状态机的异步数据收集
+   -  移除 QEventLoop 阻塞
+   -  添加单元测试
 
-2. **重构 ComponentExportTask** ✅
-   - ✅ 移除对 MainController 的直接依赖
-   - ✅ 使用信号/槽机制传递结果
-   - ✅ 添加单元测试
+2. **重构 ComponentExportTask** 
+   -  移除对 MainController 的直接依赖
+   -  使用信号/槽机制传递结果
+   -  添加单元测试
 
-#### 阶段 4: 迁移 QML 界面 (1 周) ✅ 已完成
+#### 阶段 4: 迁移 QML 界面 (1 周)  已完成
 
-1. **更新 MainWindow.qml** ✅
-   - ✅ 将 MainController 替换为多个 ViewModel
-   - ✅ 更新属性绑定和方法调用
-   - ✅ 测试 UI 功能
+1. **更新 MainWindow.qml** 
+   -  将 MainController 替换为多个 ViewModel
+   -  更新属性绑定和方法调用
+   -  测试 UI 功能
 
-2. **更新其他 QML 组件** ✅
-   - ✅ 更新组件间的数据传递
-   - ✅ 测试组件功能
+2. **更新其他 QML 组件** 
+   -  更新组件间的数据传递
+   -  测试组件功能
 
-#### 阶段 5: 清理和优化 (1 周) ✅ 已完成
+#### 阶段 5: 清理和优化 (1 周)  已完成
 
-1. **删除 MainController** ✅
-   - ✅ 确保所有功能已迁移
-   - ✅ 删除 MainController 类
-   - ✅ 更新文档
+1. **删除 MainController** 
+   -  确保所有功能已迁移
+   -  删除 MainController 类
+   -  更新文档
 
-2. **性能优化** ✅
-   - ✅ 优化异步流程
-   - ✅ 优化资源管理
-   - ✅ 添加性能测试
+2. **性能优化** 
+   -  优化异步流程
+   -  优化资源管理
+   -  添加性能测试
 
-3. **代码审查** ✅
-   - ✅ 进行代码审查
-   - ✅ 修复发现的问题
-   - ✅ 更新文档
+3. **代码审查** 
+   -  进行代码审查
+   -  修复发现的问题
+   -  更新文档
 
 ## 预期收益
 
