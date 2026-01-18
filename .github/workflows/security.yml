@@ -1,0 +1,21 @@
+name: Security
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # 每周日运行
+  pull_request:
+    branches: [ master, dev ]
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          allow-licenses: GPL-3.0, MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0
