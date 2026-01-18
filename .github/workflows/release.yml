@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.10.1'
+        host: 'windows'
+        arch: 'mingw_64'
+        cache: true
+
+    - name: Setup CMake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.28.x'
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="${{ steps.setup-qt.outputs.qt-dir }}/mingw_64" -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: |
+        cmake --build build --config Release
+
+    - name: Package
+      run: |
+        cd build/bin
+        windeployqt EasyKiConverter.exe
+        Compress-Archive -Path * -DestinationPath EasyKiConverter-Windows-x64.zip
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: build/bin/EasyKiConverter-Windows-x64.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

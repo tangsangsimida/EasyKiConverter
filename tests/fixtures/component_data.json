@@ -1,0 +1,13 @@
+{
+  "uuid": "test-uuid-12345",
+  "name": "Test Resistor",
+  "title": "Test Resistor 10k",
+  "lcsc_id": "C12345",
+  "package": "0805",
+  "package_type": "smd",
+  "description": "10k Resistor 1%",
+  "manufacturer": "Test Manufacturer",
+  "datasheet_url": "https://example.com/datasheet.pdf",
+  "stock": 1000,
+  "price": 0.01
+}

@@ -1,0 +1,57 @@
+{
+  "uuid": "test-uuid-12345",
+  "dataStr": {
+    "BBox": {
+      "x": 0,
+      "y": 0,
+      "width": 200,
+      "height": 100
+    },
+    "pads": [
+      {
+        "type": "smd",
+        "x": 0,
+        "y": 50,
+        "width": 60,
+        "height": 40,
+        "holeRadius": 0,
+        "holeLength": 0,
+        "rotation": 0,
+        "layerid": 1,
+        "number": "1",
+        "shape": "rect"
+      },
+      {
+        "type": "smd",
+        "x": 200,
+        "y": 50,
+        "width": 60,
+        "height": 40,
+        "holeRadius": 0,
+        "holeLength": 0,
+        "rotation": 0,
+        "layerid": 1,
+        "number": "2",
+        "shape": "rect"
+      }
+    ],
+    "tracks": [],
+    "holes": [],
+    "circles": [],
+    "rectangles": [
+      {
+        "x": 50,
+        "y": 30,
+        "width": 100,
+        "height": 40,
+        "layerid": 21
+      }
+    ],
+    "arcs": [],
+    "texts": []
+  },
+  "head": {
+    "uuid_3d": "test-3d-uuid-67890",
+    "name": "Test Resistor 3D Model"
+  }
+}

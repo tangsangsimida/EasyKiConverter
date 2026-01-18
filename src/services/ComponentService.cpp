@@ -20,10 +20,27 @@ ComponentService::ComponentService(QObject *parent)
     , m_parallelFetching(false)
 {
     // 连接 API 信号
-    connect(m_api, &EasyedaApi::componentInfoFetched, this, &ComponentService::handleComponentInfoFetched);
-    connect(m_api, &EasyedaApi::cadDataFetched, this, &ComponentService::handleCadDataFetched);
-    connect(m_api, &EasyedaApi::model3DFetched, this, &ComponentService::handleModel3DFetched);
-    connect(m_api, &EasyedaApi::fetchError, this, &ComponentService::handleFetchError);
+    connect(m_api, &IEasyedaApi::componentInfoFetched, this, &ComponentService::handleComponentInfoFetched);
+    connect(m_api, &IEasyedaApi::cadDataFetched, this, &ComponentService::handleCadDataFetched);
+    connect(m_api, &IEasyedaApi::model3DFetched, this, &ComponentService::handleModel3DFetched);
+    connect(m_api, &IEasyedaApi::fetchError, this, &ComponentService::handleFetchError);
+}
+
+ComponentService::ComponentService(IEasyedaApi *api, QObject *parent)
+    : QObject(parent)
+    , m_api(api)
+    , m_importer(new EasyedaImporter(this))
+    , m_currentComponentId()
+    , m_hasDownloadedWrl(false)
+    , m_parallelTotalCount(0)
+    , m_parallelCompletedCount(0)
+    , m_parallelFetching(false)
+{
+    // 连接 API 信号
+    connect(m_api, &IEasyedaApi::componentInfoFetched, this, &ComponentService::handleComponentInfoFetched);
+    connect(m_api, &IEasyedaApi::cadDataFetched, this, &ComponentService::handleCadDataFetched);
+    connect(m_api, &IEasyedaApi::model3DFetched, this, &ComponentService::handleModel3DFetched);
+    connect(m_api, &IEasyedaApi::fetchError, this, &ComponentService::handleFetchError);
 }
 
 ComponentService::~ComponentService()

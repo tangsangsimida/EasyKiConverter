@@ -6,6 +6,7 @@
 #include <QNetworkReply>
 #include <QJsonObject>
 #include <QTimer>
+#include "src/core/interfaces/INetworkUtils.h"
 
 namespace EasyKiConverter {
 
@@ -13,8 +14,9 @@ namespace EasyKiConverter {
  * @brief 网络工具类
  *
  * 提供带重试机制的网络请求功能
+ * 实现 INetworkUtils 接口
  */
-class NetworkUtils : public QObject
+class NetworkUtils : public INetworkUtils
 {
     Q_OBJECT
 

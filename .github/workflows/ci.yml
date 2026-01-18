@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master, dev ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest]
+        qt-version: ['6.10.1']
+        include:
+          - os: windows-latest
+            qt-version: '6.10.1'
+            arch: 'mingw_64'
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ matrix.qt-version }}
+        host: ${{ matrix.os }}
+        arch: ${{ matrix.arch }}
+        cache: true
+
+    - name: Setup CMake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.28.x'
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="${{ steps.setup-qt.outputs.qt-dir }}/${{ matrix.arch }}" -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=ON
+
+    - name: Build
+      run: |
+        cmake --build build --config Release
+
+    - name: Run Tests
+      run: |
+        cd build
+        ctest --output-on-failure
+
+    - name: Generate Coverage
+      run: |
+        cd build
+        cmake --build . --target coverage
+      if: matrix.os == 'windows-latest'
+
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./build/coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+      if: matrix.os == 'windows-latest'

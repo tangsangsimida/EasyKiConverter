@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QJsonObject>
+#include "src/core/interfaces/IEasyedaApi.h"
 #include "src/core/utils/NetworkUtils.h"
 
 namespace EasyKiConverter {
@@ -12,8 +13,9 @@ namespace EasyKiConverter {
  * @brief EasyEDA API 客户端类
  *
  * 用于与 EasyEDA 服务器通信，获取组件数据
+ * 实现 IEasyedaApi 接口
  */
-class EasyedaApi : public QObject
+class EasyedaApi : public IEasyedaApi
 {
     Q_OBJECT
 

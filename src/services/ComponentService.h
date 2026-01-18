@@ -6,6 +6,7 @@
 #include <QStringList>
 #include <QJsonObject>
 #include <QMap>
+#include "core/interfaces/IEasyedaApi.h"
 #include "models/ComponentData.h"
 #include "models/SymbolData.h"
 #include "models/FootprintData.h"
@@ -26,17 +27,24 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 构造函数
-         *
-         * @param parent 父对象
-         */
-        explicit ComponentService(QObject *parent = nullptr);
-
-        /**
-         * @brief 析构函数
-         */
-        ~ComponentService() override;
-
+             * @brief 构造函数（默认，内部创建 EasyedaApi）
+             *
+             * @param parent 父对象
+             */
+            explicit ComponentService(QObject *parent = nullptr);
+        
+            /**
+             * @brief 构造函数（依赖注入，用于测试）
+             *
+             * @param api EasyedaApi 接口实现
+             * @param parent 父对象
+             */
+            explicit ComponentService(IEasyedaApi *api, QObject *parent = nullptr);
+        
+            /**
+             * @brief 析构函数
+             */
+            ~ComponentService() override;
         /**
          * @brief 获取元件数据
          *
@@ -229,7 +237,7 @@ namespace EasyKiConverter
 
     private:
         // 核心API和导入器
-        class EasyedaApi *m_api;
+        IEasyedaApi *m_api;
         class EasyedaImporter *m_importer;
 
         // 数据缓存

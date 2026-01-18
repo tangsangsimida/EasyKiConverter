@@ -10,7 +10,7 @@ static const QString ENDPOINT_3D_MODEL = "https://modules.easyeda.com/3dmodel/%1
 static const QString ENDPOINT_3D_MODEL_STEP = "https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1";
 
 EasyedaApi::EasyedaApi(QObject *parent)
-    : QObject(parent)
+    : IEasyedaApi(parent)
     , m_networkUtils(new NetworkUtils(this))
     , m_isFetching(false)
     , m_requestType(RequestType::None)

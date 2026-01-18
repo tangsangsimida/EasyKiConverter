@@ -2,6 +2,20 @@ cmake_minimum_required(VERSION 3.16)
 
 project(EasyKiconverter_Cpp_Version VERSION 0.1 LANGUAGES CXX)
 
+# 测试覆盖率选项
+option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
+
+if(ENABLE_COVERAGE)
+    message(STATUS "Code coverage is ENABLED")
+    # GCC/MinGW 的覆盖率编译选项
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        add_compile_options(--coverage)
+        add_link_options(--coverage)
+    endif()
+else()
+    message(STATUS "Code coverage is DISABLED")
+endif()
+
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -88,6 +102,12 @@ set(SOURCES
     src/ui/viewmodels/ExportSettingsViewModel.cpp
     src/ui/viewmodels/ExportProgressViewModel.cpp
     src/ui/viewmodels/ThemeSettingsViewModel.cpp
+    # 接口层
+    src/core/interfaces/IEasyedaApi.cpp
+    src/core/interfaces/INetworkUtils.cpp
+    src/core/interfaces/IExporterSymbol.cpp
+    src/core/interfaces/IExporterFootprint.cpp
+    src/core/interfaces/IExporter3DModel.cpp
 )
 
 # 头文件列表
