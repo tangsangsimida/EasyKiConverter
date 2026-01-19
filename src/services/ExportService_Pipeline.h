@@ -4,6 +4,7 @@
 #include "ExportService.h"
 #include "src/utils/BoundedThreadSafeQueue.h"
 #include "src/models/ComponentExportStatus.h"
+#include "src/models/SymbolData.h"
 #include <QNetworkAccessManager>
 #include <QThreadPool>
 #include <QMutex>
@@ -150,6 +151,9 @@ private:
 
     // 临时文件列表（用于合并符号库）
     QStringList m_tempSymbolFiles;
+
+    // 符号数据列表（用于合并符号库）
+    QList<SymbolData> m_symbols;
 
     // 结果统计
     int m_successCount;

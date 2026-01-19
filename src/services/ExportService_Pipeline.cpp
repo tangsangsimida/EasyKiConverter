@@ -7,6 +7,7 @@
 #include <QTextStream>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTimer>
 #include <QDebug>
 
 namespace EasyKiConverter {
@@ -145,7 +146,13 @@ void ExportServicePipeline::handleWriteCompleted(const ComponentExportStatus &st
     if (status.writeSuccess) {
         m_successCount++;
 
-        // 如果导出了符号，将临时文件加入列表
+        // 如果导出了符号，将符号数据加入列表
+        if (m_options.exportSymbol && status.symbolData) {
+            m_symbols.append(*status.symbolData);
+            qDebug() << "Added symbol to merge list:" << status.symbolData->info().name;
+        }
+
+        // 如果导出了符号，将临时文件加入列表（用于清理）
         if (m_options.exportSymbol && status.symbolData) {
             QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, status.componentId);
             if (QFile::exists(tempFilePath)) {
@@ -198,12 +205,14 @@ void ExportServicePipeline::startProcessStage()
                     continue;
                 }
 
-                // 创建ProcessWorker处理数据
-                ProcessWorker *worker = new ProcessWorker(status, this);
+                // 创建ProcessWorker处理数据（不设置parent以避免线程警告）
+                ProcessWorker *worker = new ProcessWorker(status, nullptr);
                 connect(worker, &ProcessWorker::processCompleted,
-                        this, &ExportServicePipeline::handleProcessCompleted);
+                        this, &ExportServicePipeline::handleProcessCompleted,
+                        Qt::QueuedConnection);
+                connect(worker, &ProcessWorker::processCompleted,
+                        worker, &QObject::deleteLater);
                 worker->run();
-                worker->deleteLater();
             }
         });
 
@@ -228,7 +237,7 @@ void ExportServicePipeline::startWriteStage()
                     continue;
                 }
 
-                // 创建WriteWorker写入数据
+                // 创建WriteWorker写入数据（不设置parent以避免线程警告）
                 WriteWorker *worker = new WriteWorker(
                     status,
                     m_options.outputPath,
@@ -236,12 +245,14 @@ void ExportServicePipeline::startWriteStage()
                     m_options.exportSymbol,
                     m_options.exportFootprint,
                     m_options.exportModel3D,
-                    this);
+                    nullptr);
 
                 connect(worker, &WriteWorker::writeCompleted,
-                        this, &ExportServicePipeline::handleWriteCompleted);
+                        this, &ExportServicePipeline::handleWriteCompleted,
+                        Qt::QueuedConnection);
+                connect(worker, &WriteWorker::writeCompleted,
+                        worker, &QObject::deleteLater);
                 worker->run();
-                worker->deleteLater();
             }
         });
 
@@ -267,7 +278,7 @@ void ExportServicePipeline::checkPipelineCompletion()
     qDebug() << "Pipeline completed. Success:" << m_successCount << "Failed:" << m_failureCount;
 
     // 合并符号库
-    if (m_options.exportSymbol && !m_tempSymbolFiles.isEmpty()) {
+    if (m_options.exportSymbol && !m_symbols.isEmpty()) {
         mergeSymbolLibrary();
     }
 
@@ -275,12 +286,16 @@ void ExportServicePipeline::checkPipelineCompletion()
     for (const QString &tempFile : m_tempSymbolFiles) {
         QFile::remove(tempFile);
     }
+    m_tempSymbolFiles.clear();
+    m_symbols.clear();
 
     // 发送完成信号
     emit exportCompleted(m_pipelineProgress.totalTasks, m_successCount);
 
-    // 清理流水线
-    cleanupPipeline();
+    // 清理流水线（使用QTimer::singleShot延迟执行，避免在信号处理中清理）
+    QTimer::singleShot(0, this, [this]() {
+        cleanupPipeline();
+    });
 }
 
 void ExportServicePipeline::cleanupPipeline()
@@ -308,42 +323,9 @@ void ExportServicePipeline::cleanupPipeline()
 
 bool ExportServicePipeline::mergeSymbolLibrary()
 {
-    qDebug() << "Merging symbol library from" << m_tempSymbolFiles.size() << "temp files";
+    qDebug() << "Merging symbol library from" << m_symbols.size() << "symbols";
 
-    QList<SymbolData> symbols;
-
-    // 读取所有临时文件
-    for (const QString &tempFile : m_tempSymbolFiles) {
-        QFile file(tempFile);
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            qWarning() << "Failed to open temp file:" << tempFile;
-            continue;
-        }
-
-        QTextStream in(&file);
-        QString content = in.readAll();
-        file.close();
-
-        // 解析符号数据
-        QRegularExpression symbolRegex(R"(\(symbol\s+\"([^\"]+)\"\s*(.*?)\s*\))", QRegularExpression::DotMatchesEverythingOption);
-        QRegularExpressionMatchIterator it = symbolRegex.globalMatch(content);
-
-        while (it.hasNext()) {
-            QRegularExpressionMatch match = it.next();
-            QString symbolName = match.captured(1);
-            QString symbolContent = match.captured(2);
-
-            // 创建SymbolData（这里简化处理，实际应该完整解析）
-            SymbolData symbol;
-            SymbolInfo info;
-            info.name = symbolName;
-            symbol.setInfo(info);
-
-            symbols.append(symbol);
-        }
-    }
-
-    if (symbols.isEmpty()) {
+    if (m_symbols.isEmpty()) {
         qDebug() << "No symbols to merge";
         return true;
     }
@@ -354,7 +336,7 @@ bool ExportServicePipeline::mergeSymbolLibrary()
 
     // 使用ExporterSymbol直接导出
     ExporterSymbol exporter;
-    bool success = exporter.exportSymbolLibrary(symbols, m_options.libName, libraryPath, appendMode);
+    bool success = exporter.exportSymbolLibrary(m_symbols, m_options.libName, libraryPath, appendMode);
 
     if (success) {
         qDebug() << "Symbol library merged successfully:" << libraryPath;

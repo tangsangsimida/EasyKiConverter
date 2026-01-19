@@ -50,27 +50,6 @@ signals:
 
 private:
     /**
-     * @brief 抓取组件信息
-     * @param status 导出状态
-     * @return bool 是否成功
-     */
-    bool fetchComponentInfo(ComponentExportStatus &status);
-
-    /**
-     * @brief 抓取CAD数据
-     * @param status 导出状态
-     * @return bool 是否成功
-     */
-    bool fetchCadData(ComponentExportStatus &status);
-
-    /**
-     * @brief 抓取3D模型数据
-     * @param status 导出状态
-     * @return bool 是否成功
-     */
-    bool fetch3DModelData(ComponentExportStatus &status);
-
-    /**
      * @brief 执行HTTP GET请求
      * @param url URL
      * @param timeoutMs 超时时间（毫秒）
@@ -88,6 +67,7 @@ private:
 private:
     QString m_componentId;
     QNetworkAccessManager *m_networkAccessManager;
+    QNetworkAccessManager *m_ownNetworkManager;
     bool m_need3DModel;
 };
 

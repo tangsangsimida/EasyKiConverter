@@ -1,5 +1,9 @@
 #include "WriteWorker.h"
-#include <QTextStream>
+#include "src/core/kicad/ExporterSymbol.h"
+#include "src/core/kicad/ExporterFootprint.h"
+#include "src/core/kicad/Exporter3DModel.h"
+#include <QDir>
+#include <QFile>
 #include <QDebug>
 
 namespace EasyKiConverter {
@@ -19,6 +23,9 @@ WriteWorker::WriteWorker(
     , m_exportSymbol(exportSymbol)
     , m_exportFootprint(exportFootprint)
     , m_exportModel3D(exportModel3D)
+    , m_symbolExporter()
+    , m_footprintExporter()
+    , m_model3DExporter()
 {
 }
 
@@ -59,7 +66,7 @@ void WriteWorker::run()
     }
 
     // 写入3D模型文件
-    if (m_exportModel3D && m_status.model3DData && !m_status.model3DData->rawObj().isEmpty()) {
+    if (m_exportModel3D && m_status.model3DData && !m_status.model3DObjRaw.isEmpty()) {
         if (!write3DModelFile(m_status)) {
             m_status.writeSuccess = false;
             m_status.writeMessage = "Failed to write 3D model file";
@@ -81,7 +88,7 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus &status)
         return true;
     }
 
-    // 写入临时文件
+    // 创建临时符号文件
     QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_outputPath, status.componentId);
     
     if (!m_symbolExporter.exportSymbol(*status.symbolData, tempFilePath)) {
@@ -113,12 +120,33 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus &status)
     }
 
     // 写入封装文件
-    QString filePath = QString("%1/%2.kicad_mod").arg(footprintLibPath, status.componentId);
-    QString model3DPath = m_exportModel3D ? QString("${KIPRJMOD}/%1.3dmodels/%2").arg(m_libName, status.componentId) : QString();
+    QString footprintName = status.footprintData->info().name;
+    QString filePath = QString("%1/%2.kicad_mod").arg(footprintLibPath, footprintName);
+    
+    // 准备3D模型路径
+    QString model3DWrlPath;
+    QString model3DStepPath;
+    if (m_exportModel3D && status.model3DData && !status.model3DData->uuid().isEmpty()) {
+        model3DWrlPath = QString("${KIPRJMOD}/%1.3dmodels/%2.wrl")
+                           .arg(m_libName, footprintName);
+        
+        if (!status.model3DStepRaw.isEmpty()) {
+            model3DStepPath = QString("${KIPRJMOD}/%1.3dmodels/%2.step")
+                               .arg(m_libName, footprintName);
+        }
+    }
 
-    if (!m_footprintExporter.exportFootprint(*status.footprintData, filePath, model3DPath)) {
-        qWarning() << "Failed to write footprint file:" << filePath;
-        return false;
+    // 使用两个3D模型路径导出封装
+    if (!model3DStepPath.isEmpty()) {
+        if (!m_footprintExporter.exportFootprint(*status.footprintData, filePath, model3DWrlPath, model3DStepPath)) {
+            qWarning() << "Failed to write footprint file:" << filePath;
+            return false;
+        }
+    } else {
+        if (!m_footprintExporter.exportFootprint(*status.footprintData, filePath, model3DWrlPath)) {
+            qWarning() << "Failed to write footprint file:" << filePath;
+            return false;
+        }
     }
 
     qDebug() << "Footprint file written:" << filePath;
@@ -127,7 +155,7 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus &status)
 
 bool WriteWorker::write3DModelFile(ComponentExportStatus &status)
 {
-    if (!status.model3DData || status.model3DData->rawObj().isEmpty()) {
+    if (!status.model3DData || status.model3DObjRaw.isEmpty()) {
         return true;
     }
 
@@ -138,19 +166,30 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus &status)
         return false;
     }
 
-    // 写入OBJ文件
-    QString objFilePath = QString("%1/%2.obj").arg(modelsDirPath, status.componentId);
-    QFile objFile(objFilePath);
-    if (!objFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qWarning() << "Failed to open OBJ file for writing:" << objFilePath;
-        return false;
+    // 使用封装名称作为文件名
+    QString footprintName = status.footprintData ? status.footprintData->info().name : status.componentId;
+    
+    // 写入WRL文件
+    QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
+    if (!m_model3DExporter.exportToWrl(*status.model3DData, wrlFilePath)) {
+        qWarning() << "Failed to write WRL file:" << wrlFilePath;
+    } else {
+        qDebug() << "3D model WRL file written:" << wrlFilePath;
     }
 
-    QTextStream objStream(&objFile);
-    objStream << status.model3DData->rawObj();
-    objFile.close();
+    // 写入STEP文件（如果有）
+    if (!status.model3DStepRaw.isEmpty()) {
+        QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
+        QFile stepFile(stepFilePath);
+        if (stepFile.open(QIODevice::WriteOnly)) {
+            stepFile.write(status.model3DStepRaw);
+            stepFile.close();
+            qDebug() << "3D model STEP file written:" << stepFilePath;
+        } else {
+            qWarning() << "Failed to write STEP file:" << stepFilePath;
+        }
+    }
 
-    qDebug() << "3D model file written:" << objFilePath;
     return true;
 }
 

@@ -23,7 +23,7 @@ struct ComponentExportStatus
     QByteArray componentInfoRaw;  // 组件信息原始数据
     QByteArray cadDataRaw;        // CAD数据原始数据
     QByteArray model3DObjRaw;     // 3D模型OBJ原始数据
-    QByteArray model3DMtlRaw;     // 3D模型MTL原始数据
+    QByteArray model3DStepRaw;    // 3D模型STEP原始数据
     
     // 解析后的数据（处理阶段）
     QSharedPointer<ComponentData> componentData;

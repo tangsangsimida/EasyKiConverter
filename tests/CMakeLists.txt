@@ -57,6 +57,30 @@ target_sources(test_export_service PRIVATE
 
 target_link_libraries(test_export_service Qt6::Core Qt6::Test)
 
+# ========== ExportServicePipeline 测试 ==========
+add_executable(test_export_service_pipeline test_export_service_pipeline.cpp)
+
+# 添加源文件
+target_sources(test_export_service_pipeline PRIVATE
+    ${CMAKE_SOURCE_DIR}/../src/services/ExportService.cpp
+    ${CMAKE_SOURCE_DIR}/../src/services/ExportService_Pipeline.cpp
+    ${CMAKE_SOURCE_DIR}/../src/services/ComponentExportTask.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/ExporterSymbol.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/ExporterFootprint.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/Exporter3DModel.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/ComponentData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/SymbolData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/FootprintData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/Model3DData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/GeometryUtils.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/LayerMapper.cpp
+    ${CMAKE_SOURCE_DIR}/../src/workers/FetchWorker.cpp
+    ${CMAKE_SOURCE_DIR}/../src/workers/ProcessWorker.cpp
+    ${CMAKE_SOURCE_DIR}/../src/workers/WriteWorker.cpp
+)
+
+target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network)
+
 # ========== ConfigService 测试 ==========
 add_executable(test_config_service test_config_service.cpp)
 

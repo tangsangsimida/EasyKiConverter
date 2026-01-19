@@ -41,6 +41,29 @@ namespace EasyKiConverter
         return true;
     }
 
+    bool ExporterFootprint::exportFootprint(const FootprintData &footprintData, const QString &filePath, const QString &model3DWrlPath, const QString &model3DStepPath)
+    {
+        QFile file(filePath);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            qWarning() << "Failed to open file for writing:" << filePath;
+            return false;
+        }
+
+        QTextStream out(&file);
+        out.setEncoding(QStringConverter::Utf8);
+
+        // Generate footprint content with two 3D model paths
+        QString content = generateFootprintContent(footprintData, model3DWrlPath, model3DStepPath);
+
+        out << content;
+        file.flush();
+        file.close();
+
+        qDebug() << "Footprint exported to:" << filePath << "with 2 3D models";
+        return true;
+    }
+
     bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData> &footprints, const QString &libName, const QString &filePath)
     {
         qDebug() << "=== Export Footprint Library ===";
@@ -270,6 +293,149 @@ namespace EasyKiConverter
 
         return content;
     }
+
+    QString ExporterFootprint::generateFootprintContent(const FootprintData &footprintData, const QString &model3DWrlPath, const QString &model3DStepPath) const
+    {
+        QString content;
+
+        // KiCad 6.x format - use module syntax (compatible with KiCad 6+)
+        content += QString("(module easykiconverter:%1 (layer F.Cu) (tedit 5DC5F6A4)\n").arg(footprintData.info().name);
+
+        // 判断是否为通孔器件：如果有焊盘有孔（holeRadius > 0），则为通孔
+        bool isThroughHole = false;
+        for (const FootprintPad &pad : footprintData.pads())
+        {
+            if (pad.holeRadius > 0)
+            {
+                isThroughHole = true;
+                break;
+            }
+        }
+
+        // 设置正确的属性
+        if (isThroughHole)
+        {
+            content += "\t(attr through_hole)\n";
+        }
+        else
+        {
+            content += "\t(attr smd)\n";
+        }
+
+        // Calculate Y positions for reference and value text
+        double yLow = 0;
+        double yHigh = 0;
+        if (!footprintData.pads().isEmpty())
+        {
+            yLow = footprintData.pads().first().centerY;
+            yHigh = footprintData.pads().first().centerY;
+            for (const FootprintPad &pad : footprintData.pads())
+            {
+                if (pad.centerY < yLow)
+                    yLow = pad.centerY;
+                if (pad.centerY > yHigh)
+                    yHigh = pad.centerY;
+            }
+        }
+
+        // Get bounding box offset (use top-left corner as origin, match Python version)
+        double bboxX = footprintData.bbox().x;
+        double bboxY = footprintData.bbox().y;
+
+        // Reference text
+        content += QString("\t(fp_text reference REF** (at 0 %1) (layer F.SilkS)\n").arg(pxToMm(yLow - bboxY - 4));
+        content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
+        content += "\t)\n";
+
+        // Value text
+        content += QString("\t(fp_text value %1 (at 0 %2) (layer F.Fab)\n").arg(footprintData.info().name).arg(pxToMm(yHigh - bboxY + 4));
+        content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
+        content += "\t)\n";
+
+        // User reference (Fab layer)
+        content += "\t(fp_text user %R (at 0 0) (layer F.Fab)\n";
+        content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
+        content += "\t)\n";
+
+        // 生成所有图形元素（tracks + rectangles）
+        for (const FootprintTrack &track : footprintData.tracks())
+        {
+            content += generateTrack(track, bboxX, bboxY);
+        }
+        for (const FootprintRectangle &rect : footprintData.rectangles())
+        {
+            content += generateRectangle(rect, bboxX, bboxY);
+        }
+
+        // Generate pads
+        for (const FootprintPad &pad : footprintData.pads())
+        {
+            content += generatePad(pad, bboxX, bboxY);
+        }
+
+        // Generate holes
+        for (const FootprintHole &hole : footprintData.holes())
+        {
+            content += generateHole(hole, bboxX, bboxY);
+        }
+
+        // Generate circles (所有层，包括丝印层)
+        for (const FootprintCircle &circle : footprintData.circles())
+        {
+            content += generateCircle(circle, bboxX, bboxY);
+        }
+
+        // Generate arcs (所有层，包括丝印层)
+        for (const FootprintArc &arc : footprintData.arcs())
+        {
+            content += generateArc(arc, bboxX, bboxY);
+        }
+
+        // Generate texts
+        for (const FootprintText &text : footprintData.texts())
+        {
+            content += generateText(text, bboxX, bboxY);
+        }
+
+        // Generate solid regions (包括 courtyard 层)
+        bool hasCourtYard = false;
+        for (const FootprintSolidRegion &region : footprintData.solidRegions())
+        {
+            QString regionContent = generateSolidRegion(region, bboxX, bboxY);
+            content += regionContent;
+            if (region.layerId == 99)
+            {
+                hasCourtYard = true;
+            }
+        }
+
+        // 如果没有找到 courtyard，使用 BBox 自动生成
+        if (!hasCourtYard && footprintData.bbox().width > 0 && footprintData.bbox().height > 0)
+        {
+            content += generateCourtyardFromBBox(footprintData.bbox(), bboxX, bboxY);
+            qWarning() << "Warning: No courtyard found, generated from BBox";
+        }
+
+        // Generate 3D model references (both WRL and STEP)
+        if (!footprintData.model3D().name().isEmpty())
+        {
+            // Add WRL model
+            if (!model3DWrlPath.isEmpty())
+            {
+                content += generateModel3D(footprintData.model3D(), bboxX, bboxY, model3DWrlPath, footprintData.info().type);
+            }
+            // Add STEP model
+            if (!model3DStepPath.isEmpty())
+            {
+                content += generateModel3D(footprintData.model3D(), bboxX, bboxY, model3DStepPath, footprintData.info().type);
+            }
+        }
+
+        content += ")\n";
+
+        return content;
+    }
+
     QString ExporterFootprint::generatePad(const FootprintPad &pad, double bboxX, double bboxY) const
     {
         QString content;

@@ -1,10 +1,8 @@
-#ifndef WRITESHWORKER_H
-#define WRITESHWORKER_H
+#ifndef WRITEWORKER_H
+#define WRITEWORKER_H
 
 #include <QObject>
 #include <QRunnable>
-#include <QFile>
-#include <QDir>
 #include "src/models/ComponentExportStatus.h"
 #include "src/core/kicad/ExporterSymbol.h"
 #include "src/core/kicad/ExporterFootprint.h"
@@ -15,7 +13,7 @@ namespace EasyKiConverter {
 /**
  * @brief 写入工作线程
  *
- * 负责将处理后的数据写入文件（磁盘I/O密集型任务）
+ * 负责将数据写入文件（磁盘I/O密集型任务）
  */
 class WriteWorker : public QObject, public QRunnable
 {
@@ -24,7 +22,7 @@ class WriteWorker : public QObject, public QRunnable
 public:
     /**
      * @brief 构造函数
-     * @param status 从ProcessWorker接收的状态
+     * @param status 导出状态
      * @param outputPath 输出路径
      * @param libName 库名称
      * @param exportSymbol 是否导出符号
@@ -94,13 +92,12 @@ private:
     bool m_exportSymbol;
     bool m_exportFootprint;
     bool m_exportModel3D;
-
-    // 导出器
+    
     ExporterSymbol m_symbolExporter;
     ExporterFootprint m_footprintExporter;
-    Exporter3DModel m_modelExporter;
+    Exporter3DModel m_model3DExporter;
 };
 
 } // namespace EasyKiConverter
 
-#endif // WRITESHWORKER_H
+#endif // WRITEWORKER_H
