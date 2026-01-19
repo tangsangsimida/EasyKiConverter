@@ -24,8 +24,8 @@ namespace EasyKiConverter
         // Getter 方法
         bool isDarkMode() const { return m_isDarkMode; }
 
-        // Setter 方法
-        void setDarkMode(bool darkMode);
+        // Setter 方法（标记为 Q_INVOKABLE 以便在 QML 中调用）
+        Q_INVOKABLE void setDarkMode(bool darkMode);
 
     signals:
         void darkModeChanged();

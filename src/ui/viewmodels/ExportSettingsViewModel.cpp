@@ -12,6 +12,7 @@ ExportSettingsViewModel::ExportSettingsViewModel(QObject *parent)
     , m_exportFootprint(true)
     , m_exportModel3D(true)
     , m_overwriteExistingFiles(false)
+    , m_exportMode(0)  // 默认为追加模式
 {
     loadFromConfig();
 }
@@ -65,6 +66,15 @@ void ExportSettingsViewModel::setOverwriteExistingFiles(bool enabled)
     if (m_overwriteExistingFiles != enabled) {
         m_overwriteExistingFiles = enabled;
         emit overwriteExistingFilesChanged();
+    }
+}
+
+void ExportSettingsViewModel::setExportMode(int mode)
+{
+    if (m_exportMode != mode) {
+        m_exportMode = mode;
+        emit exportModeChanged();
+        qDebug() << "Export mode changed to:" << mode << "(0=append, 1=update)";
     }
 }
 
@@ -170,6 +180,7 @@ void ExportSettingsViewModel::resetConfig()
     m_exportFootprint = true;
     m_exportModel3D = true;
     m_overwriteExistingFiles = false;
+    m_exportMode = 0;  // 重置为追加模式
     
     emit outputPathChanged();
     emit libNameChanged();
@@ -177,6 +188,7 @@ void ExportSettingsViewModel::resetConfig()
     emit exportFootprintChanged();
     emit exportModel3DChanged();
     emit overwriteExistingFilesChanged();
+    emit exportModeChanged();
     
     qDebug() << "Configuration reset to defaults";
 }

@@ -570,7 +570,7 @@ Item {
 
                 GridLayout {
                     width: parent.width
-                    columns: 3
+                    columns: 4
                     columnSpacing: 20
                     rowSpacing: 12
 
@@ -594,15 +594,6 @@ Item {
                                 leftPadding: parent.indicator.width + parent.spacing
                             }
                         }
-
-                        Text {
-                            text: "导出 KiCad 符号库文件"
-                            font.pixelSize: 12
-                            color: "#64748b"
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignHCenter
-                        }
                     }
 
                     // 封装库选项
@@ -624,15 +615,6 @@ Item {
                                 verticalAlignment: Text.AlignVCenter
                                 leftPadding: parent.indicator.width + parent.spacing
                             }
-                        }
-
-                        Text {
-                            text: "导出 KiCad 封装库文件"
-                            font.pixelSize: 12
-                            color: "#64748b"
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignHCenter
                         }
                     }
 
@@ -656,43 +638,85 @@ Item {
                                 leftPadding: parent.indicator.width + parent.spacing
                             }
                         }
+                    }
+
+                    // 导出模式选项
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
 
                         Text {
-                            text: "导出 3D 模型文件 (WRL/STEP)"
-                            font.pixelSize: 12
-                            color: "#64748b"
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
+                            text: "导出模式"
+                            font.pixelSize: 14
+                            font.bold: true
+                            color: "#1e293b"
                             horizontalAlignment: Text.AlignHCenter
                         }
 
-                        // 覆盖已存在文件复选框
-                        CheckBox {
-                            id: overwriteCheckbox
-                            text: "覆盖已存在文件"
-                            checked: exportSettingsController.overwriteExistingFiles
-                            onCheckedChanged: {
-                                console.log("Overwrite checkbox changed to:", checked)
-                                exportSettingsController.setOverwriteExistingFiles(checked)
-                            }
-                            font.pixelSize: 16
+                        ColumnLayout {
+                            spacing: 6
 
-                            contentItem: Text {
-                                text: parent.text
-                                font: parent.font
-                                color: "#1e293b"
-                                verticalAlignment: Text.AlignVCenter
-                                leftPadding: parent.indicator.width + parent.spacing
-                            }
-                        }
+                            // 追加模式
+                            RowLayout {
+                                spacing: 8
 
-                        Text {
-                            text: "覆盖已升级到 KiCad V9 格式的文件"
-                            font.pixelSize: 12
-                            color: "#64748b"
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignHCenter
+                                RadioButton {
+                                    id: appendModeRadio
+                                    text: "追加"
+                                    checked: exportSettingsController.exportMode === 0
+                                    onCheckedChanged: {
+                                        if (checked) {
+                                            exportSettingsController.setExportMode(0)
+                                        }
+                                    }
+                                    font.pixelSize: 14
+
+                                    contentItem: Text {
+                                        text: parent.text
+                                        font: parent.font
+                                        color: "#1e293b"
+                                        verticalAlignment: Text.AlignVCenter
+                                        leftPadding: parent.indicator.width + parent.spacing
+                                    }
+                                }
+
+                                Text {
+                                    text: "保留已存在的元器件"
+                                    font.pixelSize: 11
+                                    color: "#94a3b8"
+                                }
+                            }
+
+                            // 更新模式
+                            RowLayout {
+                                spacing: 8
+
+                                RadioButton {
+                                    id: updateModeRadio
+                                    text: "更新"
+                                    checked: exportSettingsController.exportMode === 1
+                                    onCheckedChanged: {
+                                        if (checked) {
+                                            exportSettingsController.setExportMode(1)
+                                        }
+                                    }
+                                    font.pixelSize: 14
+
+                                    contentItem: Text {
+                                        text: parent.text
+                                        font: parent.font
+                                        color: "#1e293b"
+                                        verticalAlignment: Text.AlignVCenter
+                                        leftPadding: parent.indicator.width + parent.spacing
+                                    }
+                                }
+
+                                Text {
+                                    text: "覆盖已存在的元器件"
+                                    font.pixelSize: 11
+                                    color: "#94a3b8"
+                                }
+                            }
                         }
                     }
                 }
