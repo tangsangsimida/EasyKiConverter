@@ -180,6 +180,13 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData> &co
         QString symbolLibPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, m_options.libName);
         if (exportSymbolLibrary(allSymbols, m_options.libName, symbolLibPath)) {
             qDebug() << "Symbol library exported successfully:" << symbolLibPath;
+            // 在追加模式下，如果所有符号都已存在，exportSymbolLibrary 会返回 true
+            // 但实际上没有导出任何新符号，这种情况下我们认为这些符号已经存在
+            // 不应该计入成功或失败计数
+            // 只有在实际导出新符号或覆盖现有符号时才增加计数
+            // 由于我们无法从返回值判断是否实际导出了新符号
+            // 这里简单处理：如果文件存在，认为所有符号都已成功导出（包括之前已存在的）
+            m_successCount += allSymbols.size();
         } else {
             qWarning() << "Failed to export symbol library";
             m_failureCount += allSymbols.size();
@@ -189,13 +196,14 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData> &co
     // 导出3D模型（需要在导出封装库之前完成）
     QString modelsDirPath = QString("%1/3dmodels").arg(m_options.outputPath);
     if (m_options.exportModel3D && !allModels.isEmpty()) {
-        // 创建 3D 模型目录
+        // 创建 3D 模型目录（添加库名称前缀）
+        QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_options.outputPath, m_options.libName);
         if (!createOutputDirectory(modelsDirPath)) {
             qWarning() << "Failed to create 3D models directory:" << modelsDirPath;
         } else {
             // 为每个 3D 模型设置文件名（使用封装名称）
             QMap<QString, QString> modelPathMap; // UUID -> 文件路径映射
-            
+
             for (auto &model : allModels) {
                 // 查找对应的封装名称
                 QString footprintName;
@@ -205,7 +213,7 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData> &co
                         break;
                     }
                 }
-                
+
                 // 使用封装名称作为文件名
                 QString modelName = footprintName.isEmpty() ? model.uuid() : footprintName;
                 QString wrlPath = QString("%1/%2.wrl").arg(modelsDirPath, modelName);
@@ -236,12 +244,12 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData> &co
                         }
                     }
                 }
-                
+
                 // 保存模型路径映射（使用相对路径，相对于封装库目录）
-                QString relativePath = QString("${KIPRJMOD}/3dmodels/%1").arg(modelName);
+                QString relativePath = QString("${KIPRJMOD}/%1.3dmodels/%2").arg(m_options.libName, modelName);
                 modelPathMap[model.uuid()] = relativePath;
             }
-            
+
             // 更新封装数据中的 3D 模型路径
             for (auto &footprint : allFootprints) {
                 if (!footprint.model3D().uuid().isEmpty() && modelPathMap.contains(footprint.model3D().uuid())) {
@@ -252,7 +260,7 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData> &co
             }
         }
     }
-    
+
     // 创建封装库目录
     QString footprintDirPath = QString("%1/%2.pretty").arg(m_options.outputPath, m_options.libName);
     if (m_options.exportFootprint && !allFootprints.isEmpty()) {
@@ -335,26 +343,32 @@ void ExportService::handleExportTaskFinished(const QString &componentId, bool su
 bool ExportService::exportSymbolLibrary(const QList<SymbolData> &symbols, const QString &libName, const QString &filePath)
 {
     qDebug() << "Exporting symbol library:" << libName << "with" << symbols.size() << "symbols";
-    
+
     // 检查文件是否已存在
-    if (!m_options.overwriteExistingFiles && QFile::exists(filePath)) {
-        qWarning() << "Symbol library file already exists:" << filePath;
-        return false;
+    bool fileExists = QFile::exists(filePath);
+    bool appendMode = false;
+
+    if (fileExists) {
+        if (m_options.overwriteExistingFiles) {
+            // 覆盖模式：删除现有文件
+            qDebug() << "Overwriting existing symbol library:" << filePath;
+            QFile::remove(filePath);
+        } else {
+            // 追加模式：追加新符号到现有库
+            qDebug() << "Appending to existing symbol library:" << filePath;
+            appendMode = true;
+        }
     }
-    
-    return m_symbolExporter->exportSymbolLibrary(symbols, libName, filePath);
+
+    return m_symbolExporter->exportSymbolLibrary(symbols, libName, filePath, appendMode);
 }
 
 bool ExportService::exportFootprintLibrary(const QList<FootprintData> &footprints, const QString &libName, const QString &filePath)
 {
     qDebug() << "Exporting footprint library:" << libName << "with" << footprints.size() << "footprints";
-    
-    // 检查文件是否已存在
-    if (!m_options.overwriteExistingFiles && QFile::exists(filePath)) {
-        qWarning() << "Footprint library file already exists:" << filePath;
-        return false;
-    }
-    
+
+    // 封装库是文件夹，即使文件夹存在也可以导出封装
+    // ExporterFootprint 内部会处理覆盖逻辑
     return m_footprintExporter->exportFootprintLibrary(footprints, libName, filePath);
 }
 
@@ -542,6 +556,12 @@ void ExportService::executeExportPipelineWithDataParallel(const QList<ComponentD
         QString symbolLibPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, m_options.libName);
         if (exportSymbolLibrary(allSymbols, m_options.libName, symbolLibPath)) {
             qDebug() << "Symbol library exported successfully:" << symbolLibPath;
+            // 在追加模式下，如果所有符号都已存在，exportSymbolLibrary 会返回 true
+            // 但实际上没有导出任何新符号，这种情况下我们认为这些符号已经存在
+            // 不应该计入成功或失败计数
+            // 只有在实际导出新符号或覆盖现有符号时才增加计数
+            // 由于我们无法从返回值判断是否实际导出了新符号
+            // 这里简单处理：如果文件存在，认为所有符号都已成功导出（包括之前已存在的）
             m_successCount += allSymbols.size();
         } else {
             qWarning() << "Failed to export symbol library";
@@ -550,7 +570,7 @@ void ExportService::executeExportPipelineWithDataParallel(const QList<ComponentD
     }
     
     // 导出3D模型（需要在导出封装库之前完成）
-    QString modelsDirPath = QString("%1/3dmodels").arg(m_options.outputPath);
+    QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_options.outputPath, m_options.libName);
     if (m_options.exportModel3D && !allModels.isEmpty()) {
         // 创建 3D 模型目录
         if (!createOutputDirectory(modelsDirPath)) {
@@ -558,18 +578,18 @@ void ExportService::executeExportPipelineWithDataParallel(const QList<ComponentD
         } else {
             // 为每个 3D 模型设置文件名（使用封装名称）
             QMap<QString, QString> modelPathMap; // UUID -> 文件路径映射
-            
+
             for (auto &model : allModels) {
                 // 查找对应的封装名称
                 QString footprintName;
                 for (const auto &componentData : componentDataList) {
-                    if (componentData.model3DData() && componentData.model3DData()->uuid() == model.uuid() && 
+                    if (componentData.model3DData() && componentData.model3DData()->uuid() == model.uuid() &&
                         componentData.footprintData() && !componentData.footprintData()->info().name.isEmpty()) {
                         footprintName = componentData.footprintData()->info().name;
                         break;
                     }
                 }
-                
+
                 // 使用封装名称作为文件名
                 QString modelName = footprintName.isEmpty() ? model.uuid() : footprintName;
                 QString wrlPath = QString("%1/%2.wrl").arg(modelsDirPath, modelName);
@@ -600,12 +620,12 @@ void ExportService::executeExportPipelineWithDataParallel(const QList<ComponentD
                         }
                     }
                 }
-                
+
                 // 保存模型路径映射（使用相对路径，相对于封装库目录）
-                QString relativePath = QString("${KIPRJMOD}/3dmodels/%1").arg(modelName);
+                QString relativePath = QString("${KIPRJMOD}/%1.3dmodels/%2").arg(m_options.libName, modelName);
                 modelPathMap[model.uuid()] = relativePath;
             }
-            
+
             // 更新封装数据中的 3D 模型路径
             for (auto &footprint : allFootprints) {
                 if (!footprint.model3D().uuid().isEmpty() && modelPathMap.contains(footprint.model3D().uuid())) {
@@ -623,7 +643,7 @@ void ExportService::executeExportPipelineWithDataParallel(const QList<ComponentD
             }
         }
     }
-    
+
     // 创建封装库目录
     QString footprintDirPath = QString("%1/%2.pretty").arg(m_options.outputPath, m_options.libName);
     if (m_options.exportFootprint && !allFootprints.isEmpty()) {

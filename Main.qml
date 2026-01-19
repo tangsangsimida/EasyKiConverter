@@ -8,7 +8,7 @@ ApplicationWindow {
     minimumWidth: 1200
     minimumHeight: 800
     visible: true
-    title: "EasyKiConverter - EDA转换工具"
+    title: "EasyKiConverter - 元器件转换工具"
 
     // 加载主窗口内容
     Loader {

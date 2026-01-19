@@ -46,126 +46,166 @@ namespace EasyKiConverter
         qDebug() << "Symbol count:" << symbols.count();
         qDebug() << "KiCad version: V6";
         qDebug() << "Append mode:" << appendMode;
-
-        QList<SymbolData> finalSymbols = symbols;
-
-        // 如果启用追加模式且文件已存在，读取现有符号名称
-        if (appendMode && QFile::exists(filePath))
+    
+        QFile file(filePath);
+        bool fileExists = file.exists();
+    
+        // 如果文件不存在，直接创建新库
+        if (!fileExists)
         {
-            qDebug() << "Existing library found, reading existing symbol names...";
-            QSet<QString> existingSymbolNames;
-
-            QFile file(filePath);
-            if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+            qDebug() << "Creating new symbol library...";
+            if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
             {
-                QString content = QTextStream(&file).readAll();
-                file.close();
-
-                // 提取现有符号名称
-                QRegularExpression symbolRegex("\\(symbol\\s+\"([^\"]+)\"\\s");
-                QRegularExpressionMatchIterator it = symbolRegex.globalMatch(content);
-                while (it.hasNext())
-                {
-                    QRegularExpressionMatch match = it.next();
-                    QString symbolName = match.captured(1);
-                    existingSymbolNames.insert(symbolName);
-                    qDebug() << "Found existing symbol:" << symbolName;
-                }
+                qWarning() << "Failed to open file for writing:" << filePath;
+                return false;
             }
-
-            qDebug() << "Existing symbols count:" << existingSymbolNames.count();
-
-            // 过滤掉已存在的符号
-            QList<SymbolData> filteredSymbols;
+    
+            QTextStream out(&file);
+            out.setEncoding(QStringConverter::Utf8);
+    
+            // 生成头部
+            out << generateHeader(libName);
+    
+            // 生成所有符号
+            int index = 0;
             for (const SymbolData &symbol : symbols)
             {
-                if (!existingSymbolNames.contains(symbol.info().name))
+                qDebug() << "Exporting symbol" << (++index) << "of" << symbols.count() << ":" << symbol.info().name;
+                out << generateSymbolContent(symbol, libName);
+            }
+    
+            // 生成尾部
+            out << ")\n"; // 闭合 kicad_symbol_lib
+    
+            file.close();
+            qDebug() << "Symbol library created successfully:" << filePath;
+            return true;
+        }
+    
+        // 文件存在，需要处理追加或覆盖
+        qDebug() << "Existing library found, reading content...";
+    
+        // 读取现有库内容
+        QString existingContent;
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            existingContent = QTextStream(&file).readAll();
+            file.close();
+            qDebug() << "Read" << existingContent.length() << "bytes from existing library";
+        }
+        else
+        {
+            qWarning() << "Failed to open existing library for reading:" << filePath;
+            return false;
+        }
+    
+        // 提取现有符号
+        QMap<QString, QString> existingSymbols; // 符号名 -> 符号内容
+        QRegularExpression symbolRegex(R"(\(symbol\s+"([^"]+)\"\s*(.*?)\n\s*\))", QRegularExpression::DotMatchesEverythingOption);
+        QRegularExpressionMatchIterator it = symbolRegex.globalMatch(existingContent);
+    
+        while (it.hasNext())
+        {
+            QRegularExpressionMatch match = it.next();
+            QString symbolName = match.captured(1);
+            QString symbolContent = match.captured(0); // 完整的符号定义
+            existingSymbols[symbolName] = symbolContent;
+            qDebug() << "Found existing symbol:" << symbolName;
+        }
+    
+        qDebug() << "Existing symbols count:" << existingSymbols.count();
+    
+        // 确定要导出的符号
+        QList<SymbolData> symbolsToExport;
+        int overwriteCount = 0;
+        int appendCount = 0;
+    
+        for (const SymbolData &symbol : symbols)
+        {
+            QString symbolName = symbol.info().name;
+    
+            if (existingSymbols.contains(symbolName))
+            {
+                if (appendMode)
                 {
-                    filteredSymbols.append(symbol);
+                    // 追加模式：跳过已存在的符号
+                    qDebug() << "Symbol already exists, skipping (append mode):" << symbolName;
+                    continue;
                 }
                 else
                 {
-                    qDebug() << "Symbol already exists, skipping:" << symbol.info().name;
+                    // 覆盖模式：覆盖已存在的符号
+                    qDebug() << "Symbol already exists, overwriting:" << symbolName;
+                    overwriteCount++;
+                    symbolsToExport.append(symbol);
                 }
             }
-
-            finalSymbols = filteredSymbols;
-            qDebug() << "Filtered symbols count (new only):" << finalSymbols.count();
-        }
-
-        QFile file(filePath);
-        bool fileExists = file.exists();
-
-        // 追加模式：如果文件存在，读取现有内容
-        QString existingContent;
-        if (appendMode && fileExists)
-        {
-            qDebug() << "Reading existing library content for append mode...";
-            if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+            else
             {
-                existingContent = QTextStream(&file).readAll();
-                file.close();
-                qDebug() << "Read" << existingContent.length() << "bytes from existing library";
+                // 新符号
+                qDebug() << "New symbol, adding:" << symbolName;
+                appendCount++;
+                symbolsToExport.append(symbol);
             }
         }
-
-        // 打开文件进行写入（覆盖模式）
+    
+        qDebug() << "Symbols to export:" << symbolsToExport.count() << "(Overwrite:" << overwriteCount << ", Append:" << appendCount << ")";
+    
+        // 如果没有符号需要导出，直接返回
+        if (symbolsToExport.isEmpty())
+        {
+            qDebug() << "No symbols to export, skipping";
+            return true;
+        }
+    
+        // 打开文件进行写入
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
         {
             qWarning() << "Failed to open file for writing:" << filePath;
             return false;
         }
-
+    
         QTextStream out(&file);
         out.setEncoding(QStringConverter::Utf8);
-
-        // 生成头部（仅当文件不存在或非追加模式时）
-        if (!fileExists || !appendMode)
+    
+        // 生成头部
+        out << generateHeader(libName);
+    
+        // 生成所有符号（包括未覆盖的现有符号和新导出的符号）
+        int index = 0;
+    
+        // 先导出未覆盖的现有符号
+        for (const QString &symbolName : existingSymbols.keys())
         {
-            qDebug() << "Generating header...";
-            out << generateHeader(libName);
-        }
-        else
-        {
-            qDebug() << "Reusing existing header (append mode)";
-            // 写入现有内容（去掉最后的闭合括号）
-            if (!existingContent.isEmpty())
+            bool isOverwritten = false;
+            for (const SymbolData &symbol : symbolsToExport)
             {
-                // 找到最后一个闭合括号的位置
-                int lastParenIndex = existingContent.lastIndexOf(')');
-                if (lastParenIndex >= 0)
+                if (symbol.info().name == symbolName)
                 {
-                    out << existingContent.left(lastParenIndex);
-                }
-                else
-                {
-                    // 如果没有找到闭合括号，直接写入全部内容
-                    out << existingContent;
+                    isOverwritten = true;
+                    break;
                 }
             }
+    
+            if (!isOverwritten)
+            {
+                out << existingSymbols[symbolName];
+                qDebug() << "Keeping existing symbol:" << symbolName;
+            }
         }
-
-        // 生成所有符号
-        int index = 0;
-        for (const SymbolData &symbol : finalSymbols)
+    
+        // 再导出新符号和被覆盖的符号
+        for (const SymbolData &symbol : symbolsToExport)
         {
-            qDebug() << "Exporting symbol" << (++index) << "of" << finalSymbols.count() << ":" << symbol.info().name;
+            qDebug() << "Exporting symbol" << (++index) << "of" << symbolsToExport.count() << ":" << symbol.info().name;
             out << generateSymbolContent(symbol, libName);
         }
-
-        // 生成尾部（仅在非追加模式或文件不存在时添加闭合括号）
-        if (!appendMode || !fileExists)
-        {
-            out << ")\n"; // 闭合 kicad_symbol_lib
-        }
-        else
-        {
-            // 追加模式：添加闭合括号
-            out << "\n)\n"; // 闭合 kicad_symbol_lib
-        }
-
+    
+        // 生成尾部
+        out << ")\n"; // 闭合 kicad_symbol_lib
+    
         file.close();
-        qDebug() << "Symbol library exported successfully to:" << filePath;
+        qDebug() << "Symbol library exported successfully:" << filePath;
         return true;
     }
 
@@ -545,11 +585,12 @@ namespace EasyKiConverter
         double y0 = -pxToMm(rect.posY - m_currentBBox.y); // Y 轴翻转
         double x1 = pxToMm(rect.posX + rect.width - m_currentBBox.x);
         double y1 = -pxToMm(rect.posY + rect.height - m_currentBBox.y); // Y 轴翻转
+        double strokeWidth = pxToMm(rect.strokeWidth);
 
         content += "    (rectangle\n";
         content += QString("      (start %1 %2)\n").arg(x0, 0, 'f', 2).arg(y0, 0, 'f', 2);
         content += QString("      (end %1 %2)\n").arg(x1, 0, 'f', 2).arg(y1, 0, 'f', 2);
-        content += "      (stroke (width 0.254) (type default))\n";
+        content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
         content += "      (fill (type none))\n";
         content += "    )\n";
 
@@ -564,11 +605,12 @@ namespace EasyKiConverter
         double cx = pxToMm(circle.centerX - m_currentBBox.x);
         double cy = -pxToMm(circle.centerY - m_currentBBox.y); // Y 轴翻转
         double radius = pxToMm(circle.radius);
+        double strokeWidth = pxToMm(circle.strokeWidth);
 
         content += "    (circle\n";
         content += QString("      (center %1 %2)\n").arg(cx, 0, 'f', 2).arg(cy, 0, 'f', 2);
         content += QString("      (radius %1)\n").arg(radius, 0, 'f', 2);
-        content += "      (stroke (width 0.127) (type default))\n";
+        content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
         content += "      (fill (type none))\n";
         content += "    )\n";
 
@@ -578,6 +620,7 @@ namespace EasyKiConverter
     QString ExporterSymbol::generateArc(const SymbolArc &arc) const
     {
         QString content;
+        double strokeWidth = pxToMm(arc.strokeWidth);
 
         // KiCad V6 使用三点法定义圆弧：start、mid、end
         if (arc.path.size() >= 3)
@@ -603,7 +646,7 @@ namespace EasyKiConverter
             content += QString("      (start %1 %2)\n").arg(startX, 0, 'f', 2).arg(startY, 0, 'f', 2);
             content += QString("      (mid %1 %2)\n").arg(midX, 0, 'f', 2).arg(midY, 0, 'f', 2);
             content += QString("      (end %1 %2)\n").arg(endX, 0, 'f', 2).arg(endY, 0, 'f', 2);
-            content += "      (stroke (width 0.127) (type default))\n";
+            content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
             content += "      (fill (type none))\n";
             content += "    )\n";
         }
@@ -627,7 +670,7 @@ namespace EasyKiConverter
             content += QString("      (start %1 %2)\n").arg(startX, 0, 'f', 2).arg(startY, 0, 'f', 2);
             content += QString("      (mid %1 %2)\n").arg(midX, 0, 'f', 2).arg(midY, 0, 'f', 2);
             content += QString("      (end %1 %2)\n").arg(endX, 0, 'f', 2).arg(endY, 0, 'f', 2);
-            content += "      (stroke (width 0.127) (type default))\n";
+            content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
             content += "      (fill (type none))\n";
             content += "    )\n";
         }
@@ -649,6 +692,7 @@ namespace EasyKiConverter
         double cy = -pxToMm(ellipse.centerY - m_currentBBox.y); // Y 轴翻转
         double radiusX = pxToMm(ellipse.radiusX);
         double radiusY = pxToMm(ellipse.radiusY);
+        double strokeWidth = pxToMm(ellipse.strokeWidth);
 
         // 如果是圆形（radiusX ≈ radiusY），使用 circle 元素
         if (qAbs(radiusX - radiusY) < 0.01)
@@ -656,7 +700,7 @@ namespace EasyKiConverter
             content += "    (circle\n";
             content += QString("      (center %1 %2)\n").arg(cx, 0, 'f', 2).arg(cy, 0, 'f', 2);
             content += QString("      (radius %1)\n").arg(radiusX, 0, 'f', 2);
-            content += "      (stroke (width 0.127) (type default))\n";
+            content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
             content += "      (fill (type none))\n";
             content += "    )\n";
         }
@@ -677,7 +721,7 @@ namespace EasyKiConverter
             }
 
             content += ")\n";
-            content += "      (stroke (width 0.127) (type default))\n";
+            content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
 
             // 根据 fillColor 属性设置填充类型
             if (ellipse.fillColor)
@@ -697,6 +741,7 @@ namespace EasyKiConverter
     QString ExporterSymbol::generatePolygon(const SymbolPolygon &polygon) const
     {
         QString content;
+        double strokeWidth = pxToMm(polygon.strokeWidth);
 
         // 解析点数据
         QStringList points = polygon.points.split(" ");
@@ -739,7 +784,7 @@ namespace EasyKiConverter
                 content += firstPoint;
             }
             content += ")\n";
-            content += "      (stroke (width 0.254) (type default))\n";
+            content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
             // 根据 fillColor 属性设置填充类型（与 Python 版本一致）
             if (polygon.fillColor)
             {
@@ -757,6 +802,7 @@ namespace EasyKiConverter
     QString ExporterSymbol::generatePolyline(const SymbolPolyline &polyline) const
     {
         QString content;
+        double strokeWidth = pxToMm(polyline.strokeWidth);
 
         // 解析点数据
         QStringList points = polyline.points.split(" ");
@@ -798,7 +844,7 @@ namespace EasyKiConverter
                 content += firstPoint;
             }
             content += ")\n";
-            content += "      (stroke (width 0.254) (type default))\n";
+            content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
             // 填充类型由 fillColor 决定（与 Python 版本一致）
             if (polyline.fillColor)
             {
@@ -881,7 +927,7 @@ namespace EasyKiConverter
             }
 
             content += ")\n";
-            content += "      (stroke (width 0.127) (type default))\n";
+            content += QString("      (stroke (width %1) (type default))\n").arg(pxToMm(path.strokeWidth), 0, 'f', 3);
 
             // 填充类型由 fillColor 决定
             if (path.fillColor)

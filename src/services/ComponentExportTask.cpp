@@ -69,15 +69,15 @@ void ComponentExportTask::run()
                 footprintName = m_componentData.model3DData()->uuid();
             }
             
-            // 创建 3D 模型目录
-            QString modelsDirPath = QString("%1/3dmodels").arg(m_options.outputPath);
+            // 创建 3D 模型目录（添加库名称前缀）
+            QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_options.outputPath, m_options.libName);
             if (!dir.exists(modelsDirPath)) {
                 if (!dir.mkpath(modelsDirPath)) {
                     throw QString("Failed to create 3D models directory");
                 }
             }
-            
-            QString modelPath = QString("%1/3dmodels/%2.wrl").arg(m_options.outputPath, footprintName);
+
+            QString modelPath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
             if (!m_options.overwriteExistingFiles && QFile::exists(modelPath)) {
                 qWarning() << "3D model file already exists:" << modelPath;
             } else {
@@ -86,9 +86,9 @@ void ComponentExportTask::run()
                 }
                 qDebug() << "3D model exported successfully:" << modelPath;
             }
-            
+
             // 设置相对路径用于封装
-            model3DPath = QString("${KIPRJMOD}/3dmodels/%1").arg(footprintName);
+            model3DPath = QString("${KIPRJMOD}/%1.3dmodels/%2").arg(m_options.libName, footprintName);
         }
         
         // 导出封装

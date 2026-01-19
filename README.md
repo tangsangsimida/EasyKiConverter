@@ -67,7 +67,7 @@ EasyKiConverter 提供符号、封装和 3D 模型的完整转换功能，具有
 
 ### 项目规划
 
-- [更新日志](CHANGELOG.md) - 版本更新记录
+- [更新日志](docs/developer/CHANGELOG.md) - 版本更新记录
 - [项目路线图](docs/project/ROADMAP.md) - 未来发展方向
 - [架构决策记录](docs/project/adr/) - 技术决策记录
 
