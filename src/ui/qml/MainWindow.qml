@@ -1349,7 +1349,7 @@ Item {
             Loader {
                 id: resultsLoader
                 Layout.fillWidth: true
-                active: false
+                active: exportProgressController.isExporting || exportProgressController.resultsList.length > 0
 
                 sourceComponent: Card {
                     title: "转换结果"
@@ -1454,7 +1454,8 @@ Item {
                         ListView {
                             id: resultsList
                             Layout.fillWidth: true
-                            Layout.fillHeight: true
+                            Layout.minimumHeight: 200
+                            Layout.preferredHeight: Math.min(resultsList.contentHeight + 20, 400)
                             Layout.topMargin: AppStyle.spacing.md
                             clip: true
                             spacing: AppStyle.spacing.md
@@ -1463,9 +1464,9 @@ Item {
 
                             delegate: ResultListItem {
                                 width: resultsList.width
-                                componentId: model.componentId
-                                status: model.status
-                                message: model.message
+                                componentId: modelData.componentId || ""
+                                status: modelData.status || "pending"
+                                message: modelData.message || ""
                             }
 
                             ScrollBar.vertical: ScrollBar {

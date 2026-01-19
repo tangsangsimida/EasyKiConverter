@@ -6,7 +6,7 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 Rectangle {
     id: item
     property string componentId
-    property string status // "success", "failed", "partial"
+    property string status // "fetching", "fetch_completed", "processing", "process_completed", "writing", "write_completed", "success", "failed"
     property string message
 
     height: message.length > 0 ? 72 : 48
@@ -31,19 +31,26 @@ Rectangle {
         spacing: AppStyle.spacing.md
 
         // 状态图标
-        Rectangle {
-            Layout.preferredWidth: 10
-            Layout.preferredHeight: 10
-            radius: 5
-            color: {
-                if (status === "success") return AppStyle.colors.success
-                if (status === "failed") return AppStyle.colors.danger
-                if (status === "partial") return AppStyle.colors.warning
-                return AppStyle.colors.textSecondary
+        Text {
+            Layout.preferredWidth: 20
+            Layout.preferredHeight: 20
+            font.pixelSize: 16
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            text: {
+                if (status === "fetching") return "⏳"
+                if (status === "fetch_completed") return "✅"
+                if (status === "processing") return "⚙️"
+                if (status === "process_completed") return "✅"
+                if (status === "writing") return "💾"
+                if (status === "write_completed") return "✅"
+                if (status === "success") return "🌟"
+                if (status === "failed") return "❌"
+                return "⏳"
             }
 
-            Behavior on color {
-                ColorAnimation {
+            Behavior on text {
+                NumberAnimation {
                     duration: AppStyle.durations.fast
                 }
             }

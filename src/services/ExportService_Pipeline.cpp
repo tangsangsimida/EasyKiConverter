@@ -62,6 +62,7 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList &c
     m_successCount = 0;
     m_failureCount = 0;
     m_tempSymbolFiles.clear();
+    m_symbols.clear();
     m_isPipelineRunning = true;
 
     // 创建输出目录
@@ -69,6 +70,12 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList &c
     if (!dir.exists(m_options.outputPath)) {
         dir.mkpath(m_options.outputPath);
     }
+
+    // 释放互斥锁以允许其他线程工作
+    locker.unlock();
+
+    // 发出开始导出信号
+    emit exportProgress(0, m_pipelineProgress.totalTasks);
 
     // 启动抓取阶段
     startFetchStage();
@@ -98,13 +105,20 @@ void ExportServicePipeline::handleFetchCompleted(const ComponentExportStatus &st
     if (status.fetchSuccess) {
         // 将数据放入处理队列
         m_fetchProcessQueue->push(status);
+        // 发送抓取完成信号
+        emit componentExported(status.componentId, true, "Fetch completed");
     } else {
         // 抓取失败，直接记录失败
         m_failureCount++;
         qDebug() << "Fetch failed for component:" << status.componentId << "Error:" << status.fetchMessage;
+        emit componentExported(status.componentId, false, status.fetchMessage);
     }
 
     emit pipelineProgressUpdated(m_pipelineProgress);
+
+    qDebug() << "Pipeline progress emitted (fetch) - Fetch:" << m_pipelineProgress.fetchCompleted << "/" << m_pipelineProgress.totalTasks
+             << "Process:" << m_pipelineProgress.processCompleted << "/" << m_pipelineProgress.totalTasks
+             << "Write:" << m_pipelineProgress.writeCompleted << "/" << m_pipelineProgress.totalTasks;
 
     // 检查是否完成
     checkPipelineCompletion();
@@ -122,13 +136,20 @@ void ExportServicePipeline::handleProcessCompleted(const ComponentExportStatus &
     if (status.processSuccess) {
         // 将数据放入写入队列
         m_processWriteQueue->push(status);
+        // 发送处理完成信号
+        emit componentExported(status.componentId, true, "Process completed");
     } else {
         // 处理失败，直接记录失败
         m_failureCount++;
         qDebug() << "Process failed for component:" << status.componentId << "Error:" << status.processMessage;
+        emit componentExported(status.componentId, false, status.processMessage);
     }
 
     emit pipelineProgressUpdated(m_pipelineProgress);
+
+    qDebug() << "Pipeline progress emitted (process) - Fetch:" << m_pipelineProgress.fetchCompleted << "/" << m_pipelineProgress.totalTasks
+             << "Process:" << m_pipelineProgress.processCompleted << "/" << m_pipelineProgress.totalTasks
+             << "Write:" << m_pipelineProgress.writeCompleted << "/" << m_pipelineProgress.totalTasks;
 
     // 检查是否完成
     checkPipelineCompletion();
@@ -159,12 +180,20 @@ void ExportServicePipeline::handleWriteCompleted(const ComponentExportStatus &st
                 m_tempSymbolFiles.append(tempFilePath);
             }
         }
+        
+        // 发送写入完成信号
+        emit componentExported(status.componentId, true, "Export completed successfully");
     } else {
         m_failureCount++;
         qDebug() << "Write failed for component:" << status.componentId << "Error:" << status.writeMessage;
+        emit componentExported(status.componentId, false, status.writeMessage);
     }
 
     emit pipelineProgressUpdated(m_pipelineProgress);
+
+    qDebug() << "Pipeline progress emitted (write) - Fetch:" << m_pipelineProgress.fetchCompleted << "/" << m_pipelineProgress.totalTasks
+             << "Process:" << m_pipelineProgress.processCompleted << "/" << m_pipelineProgress.totalTasks
+             << "Write:" << m_pipelineProgress.writeCompleted << "/" << m_pipelineProgress.totalTasks;
 
     // 检查是否完成
     checkPipelineCompletion();
@@ -179,10 +208,15 @@ void ExportServicePipeline::startFetchStage()
             componentId,
             m_networkAccessManager,
             m_options.exportModel3D,
-            this);
+            nullptr);  // 不设置parent，避免线程问题
 
         connect(worker, &FetchWorker::fetchCompleted,
-                this, &ExportServicePipeline::handleFetchCompleted);
+                this, &ExportServicePipeline::handleFetchCompleted,
+                Qt::QueuedConnection);  // 使用队列连接确保线程安全
+
+        connect(worker, &FetchWorker::fetchCompleted,
+                worker, &QObject::deleteLater,
+                Qt::QueuedConnection);  // 自动删除worker
 
         m_fetchThreadPool->start(worker);
     }
@@ -211,7 +245,8 @@ void ExportServicePipeline::startProcessStage()
                         this, &ExportServicePipeline::handleProcessCompleted,
                         Qt::QueuedConnection);
                 connect(worker, &ProcessWorker::processCompleted,
-                        worker, &QObject::deleteLater);
+                        worker, &QObject::deleteLater,
+                        Qt::QueuedConnection);
                 worker->run();
             }
         });
@@ -251,7 +286,8 @@ void ExportServicePipeline::startWriteStage()
                         this, &ExportServicePipeline::handleWriteCompleted,
                         Qt::QueuedConnection);
                 connect(worker, &WriteWorker::writeCompleted,
-                        worker, &QObject::deleteLater);
+                        worker, &QObject::deleteLater,
+                        Qt::QueuedConnection);
                 worker->run();
             }
         });

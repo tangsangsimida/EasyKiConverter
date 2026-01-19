@@ -142,7 +142,31 @@ void ExportProgressViewModel::handleExportProgress(int current, int total)
 
 void ExportProgressViewModel::handleComponentExported(const QString &componentId, bool success, const QString &message)
 {
-    qDebug() << "Component exported:" << componentId << "Success:" << success;
+    qDebug() << "Component exported:" << componentId << "Success:" << success << "Message:" << message;
+    
+    // 更新结果列表
+    QVariantMap result;
+    result["componentId"] = componentId;
+    result["status"] = success ? "success" : "failed";
+    result["message"] = message;
+    
+    // 查找并更新现有结果
+    bool found = false;
+    for (int i = 0; i < m_resultsList.size(); ++i) {
+        QVariantMap existingResult = m_resultsList[i].toMap();
+        if (existingResult["componentId"].toString() == componentId) {
+            m_resultsList[i] = result;
+            found = true;
+            break;
+        }
+    }
+    
+    // 如果没找到，添加新结果
+    if (!found) {
+        m_resultsList.append(result);
+    }
+    
+    emit resultsListChanged();
     
     if (success) {
         m_successCount++;
@@ -199,19 +223,27 @@ void ExportProgressViewModel::handleExportFailed(const QString &error)
 
 void ExportProgressViewModel::handlePipelineProgressUpdated(const PipelineProgress &progress)
 {
+    qDebug() << "Pipeline progress updated - Fetch:" << progress.fetchProgress()
+             << "Process:" << progress.processProgress()
+             << "Write:" << progress.writeProgress()
+             << "Overall:" << progress.overallProgress();
+
     if (m_fetchProgress != progress.fetchProgress()) {
         m_fetchProgress = progress.fetchProgress();
         emit fetchProgressChanged();
+        qDebug() << "Fetch progress changed to:" << m_fetchProgress;
     }
     
     if (m_processProgress != progress.processProgress()) {
         m_processProgress = progress.processProgress();
         emit processProgressChanged();
+        qDebug() << "Process progress changed to:" << m_processProgress;
     }
     
     if (m_writeProgress != progress.writeProgress()) {
         m_writeProgress = progress.writeProgress();
         emit writeProgressChanged();
+        qDebug() << "Write progress changed to:" << m_writeProgress;
     }
     
     // 更新总进度
@@ -219,6 +251,7 @@ void ExportProgressViewModel::handlePipelineProgressUpdated(const PipelineProgre
     if (m_progress != newProgress) {
         m_progress = newProgress;
         emit progressChanged();
+        qDebug() << "Overall progress changed to:" << m_progress;
     }
 }
 
