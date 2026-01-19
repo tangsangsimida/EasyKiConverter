@@ -1,0 +1,161 @@
+#ifndef EXPORTSERVICE_PIPELINE_H
+#define EXPORTSERVICE_PIPELINE_H
+
+#include "ExportService.h"
+#include "src/utils/BoundedThreadSafeQueue.h"
+#include "src/models/ComponentExportStatus.h"
+#include <QNetworkAccessManager>
+#include <QThreadPool>
+#include <QMutex>
+#include <QMap>
+
+namespace EasyKiConverter
+{
+
+/**
+ * @brief 流水线阶段进度
+ */
+struct PipelineProgress
+{
+    int fetchCompleted = 0;      // 抓取完成数
+    int processCompleted = 0;    // 处理完成数
+    int writeCompleted = 0;      // 写入完成数
+    int totalTasks = 0;          // 总任务数
+
+    // 计算各阶段进度（0-100）
+    int fetchProgress() const { return totalTasks > 0 ? (fetchCompleted * 100 / totalTasks) : 0; }
+    int processProgress() const { return totalTasks > 0 ? (processCompleted * 100 / totalTasks) : 0; }
+    int writeProgress() const { return totalTasks > 0 ? (writeCompleted * 100 / totalTasks) : 0; }
+
+    // 计算加权总进度（抓取30%，处理50%，写入20%）
+    int overallProgress() const
+    {
+        return (fetchProgress() * 30 + processProgress() * 50 + writeProgress() * 20) / 100;
+    }
+};
+
+/**
+ * @brief 流水线导出服务类
+ *
+ * 扩展ExportService，支持多阶段流水线并行架构
+ */
+class ExportServicePipeline : public ExportService
+{
+    Q_OBJECT
+
+public:
+    /**
+     * @brief 构造函数
+     * @param parent 父对象
+     */
+    explicit ExportServicePipeline(QObject *parent = nullptr);
+
+    /**
+     * @brief 析构函数
+     */
+    ~ExportServicePipeline() override;
+
+    /**
+     * @brief 使用流水线架构执行批量导出
+     * @param componentIds 元件ID列表
+     * @param options 导出选项
+     */
+    void executeExportPipelineWithStages(const QStringList &componentIds, const ExportOptions &options);
+
+    /**
+     * @brief 获取流水线进度
+     * @return PipelineProgress 流水线进度
+     */
+    PipelineProgress getPipelineProgress() const;
+
+signals:
+    /**
+     * @brief 流水线进度更新信号
+     * @param progress 流水线进度
+     */
+    void pipelineProgressUpdated(const PipelineProgress &progress);
+
+private slots:
+    /**
+     * @brief 处理抓取完成
+     * @param status 导出状态
+     */
+    void handleFetchCompleted(const ComponentExportStatus &status);
+
+    /**
+     * @brief 处理处理完成
+     * @param status 导出状态
+     */
+    void handleProcessCompleted(const ComponentExportStatus &status);
+
+    /**
+     * @brief 处理写入完成
+     * @param status 导出状态
+     */
+    void handleWriteCompleted(const ComponentExportStatus &status);
+
+private:
+    /**
+     * @brief 启动抓取阶段
+     */
+    void startFetchStage();
+
+    /**
+     * @brief 启动处理阶段
+     */
+    void startProcessStage();
+
+    /**
+     * @brief 启动写入阶段
+     */
+    void startWriteStage();
+
+    /**
+     * @brief 检查流水线是否完成
+     */
+    void checkPipelineCompletion();
+
+    /**
+     * @brief 清理流水线资源
+     */
+    void cleanupPipeline();
+
+    /**
+     * @brief 合并符号库
+     * @return bool 是否成功
+     */
+    bool mergeSymbolLibrary();
+
+private:
+    // 线程池
+    QThreadPool *m_fetchThreadPool;      // 抓取线程池（I/O密集型，32个线程）
+    QThreadPool *m_processThreadPool;    // 处理线程池（CPU密集型，等于核心数）
+    QThreadPool *m_writeThreadPool;      // 写入线程池（磁盘I/O密集型，8个线程）
+
+    // 线程安全队列
+    BoundedThreadSafeQueue<ComponentExportStatus> *m_fetchProcessQueue;  // 抓取->处理队列
+    BoundedThreadSafeQueue<ComponentExportStatus> *m_processWriteQueue;  // 处理->写入队列
+
+    // 网络访问管理器（共享）
+    QNetworkAccessManager *m_networkAccessManager;
+
+    // 流水线状态
+    PipelineProgress m_pipelineProgress;
+    QStringList m_componentIds;
+    ExportOptions m_options;
+    bool m_isPipelineRunning;
+
+    // 互斥锁
+    QMutex *m_mutex;
+
+    // 临时文件列表（用于合并符号库）
+    QStringList m_tempSymbolFiles;
+
+    // 结果统计
+    int m_successCount;
+    int m_failureCount;
+};
+
+} // namespace EasyKiConverter
+
+#endif // EXPORTSERVICE_PIPELINE_H

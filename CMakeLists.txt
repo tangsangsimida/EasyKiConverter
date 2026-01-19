@@ -77,9 +77,14 @@ set(SOURCES
     src/core/kicad/Exporter3DModel.cpp
     src/workers/ExportWorker.cpp
     src/workers/NetworkWorker.cpp
+    # 流水线架构 Workers
+    src/workers/FetchWorker.cpp
+    src/workers/ProcessWorker.cpp
+    src/workers/WriteWorker.cpp
     # Service 层
     src/services/ComponentService.cpp
     src/services/ExportService.cpp
+    src/services/ExportService_Pipeline.cpp
     src/services/ConfigService.cpp
     src/services/ComponentDataCollector.cpp
     src/services/ComponentExportTask.cpp
@@ -96,9 +101,11 @@ set(HEADERS
     src/models/SymbolData.h
     src/models/FootprintData.h
     src/models/Model3DData.h
+    src/models/ComponentExportStatus.h
     src/core/utils/GeometryUtils.h
     src/core/utils/NetworkUtils.h
     src/core/utils/LayerMapper.h
+    src/utils/BoundedThreadSafeQueue.h
     src/ui/utils/ConfigManager.h
     src/core/easyeda/EasyedaApi.h
     src/core/easyeda/EasyedaImporter.h
@@ -108,9 +115,14 @@ set(HEADERS
     src/core/kicad/Exporter3DModel.h
     src/workers/ExportWorker.h
     src/workers/NetworkWorker.h
+    # 流水线架构 Workers
+    src/workers/FetchWorker.h
+    src/workers/ProcessWorker.h
+    src/workers/WriteWorker.h
     # Service 层
     src/services/ComponentService.h
     src/services/ExportService.h
+    src/services/ExportService_Pipeline.h
     src/services/ConfigService.h
     src/services/ComponentDataCollector.h
     src/services/ComponentExportTask.h

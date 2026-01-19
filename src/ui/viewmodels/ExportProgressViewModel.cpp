@@ -1,4 +1,5 @@
 #include "ExportProgressViewModel.h"
+#include "src/services/ExportService_Pipeline.h"
 #include <QDebug>
 
 namespace EasyKiConverter
@@ -14,6 +15,10 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService *exportService, C
     , m_failureCount(0)
     , m_status("Ready")
     , m_fetchedCount(0)
+    , m_fetchProgress(0)
+    , m_processProgress(0)
+    , m_writeProgress(0)
+    , m_usePipelineMode(false)
 {
     // 连接 ExportService 信号
     if (m_exportService) {
@@ -21,6 +26,13 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService *exportService, C
         connect(m_exportService, &ExportService::componentExported, this, &ExportProgressViewModel::handleComponentExported);
         connect(m_exportService, &ExportService::exportCompleted, this, &ExportProgressViewModel::handleExportCompleted);
         connect(m_exportService, &ExportService::exportFailed, this, &ExportProgressViewModel::handleExportFailed);
+
+        // 连接流水线信号（如果使用流水线模式）
+        if (auto *pipelineService = qobject_cast<ExportServicePipeline*>(m_exportService)) {
+            connect(pipelineService, &ExportServicePipeline::pipelineProgressUpdated,
+                    this, &ExportProgressViewModel::handlePipelineProgressUpdated);
+            m_usePipelineMode = true;
+        }
     }
     
     // 连接 ComponentService 信号
@@ -30,14 +42,20 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService *exportService, C
     }
 }
 
+void ExportProgressViewModel::setUsePipelineMode(bool usePipeline)
+{
+    m_usePipelineMode = usePipeline;
+}
+
 ExportProgressViewModel::~ExportProgressViewModel()
 {
 }
 
 void ExportProgressViewModel::startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles)
 {
-    qDebug() << "Starting parallel export for" << componentIds.size() << "components";
+    qDebug() << "Starting export for" << componentIds.size() << "components";
     qDebug() << "Options - Path:" << outputPath << "Lib:" << libName << "Symbol:" << exportSymbol << "Footprint:" << exportFootprint << "3D:" << exportModel3D << "Overwrite:" << overwriteExistingFiles;
+    qDebug() << "Using pipeline mode:" << m_usePipelineMode;
     
     if (m_isExporting) {
         qWarning() << "Export already in progress";
@@ -54,9 +72,12 @@ void ExportProgressViewModel::startExport(const QStringList &componentIds, const
     m_successCount = 0;
     m_failureCount = 0;
     m_fetchedCount = 0;
+    m_fetchProgress = 0;
+    m_processProgress = 0;
+    m_writeProgress = 0;
     m_componentIds = componentIds;
     m_collectedData.clear();
-    m_status = "Fetching component data in parallel...";
+    m_status = "Starting export...";
     
     // 保存导出选项
     m_exportOptions.outputPath = outputPath;
@@ -68,6 +89,20 @@ void ExportProgressViewModel::startExport(const QStringList &componentIds, const
     
     emit isExportingChanged();
     emit progressChanged();
+    emit statusChanged();
+    
+    // 如果使用流水线模式，直接调用流水线导出
+    if (m_usePipelineMode && qobject_cast<ExportServicePipeline*>(m_exportService)) {
+        m_status = "Running pipeline export...";
+        emit statusChanged();
+        
+        auto *pipelineService = qobject_cast<ExportServicePipeline*>(m_exportService);
+        pipelineService->executeExportPipelineWithStages(componentIds, m_exportOptions);
+        return;
+    }
+    
+    // 否则使用原有的并行数据收集模式
+    m_status = "Fetching component data in parallel...";
     emit statusChanged();
     
     // 设置组件服务的输出路径
@@ -160,6 +195,31 @@ void ExportProgressViewModel::handleExportFailed(const QString &error)
     
     m_status = "Export failed: " + error;
     emit statusChanged();
+}
+
+void ExportProgressViewModel::handlePipelineProgressUpdated(const PipelineProgress &progress)
+{
+    if (m_fetchProgress != progress.fetchProgress()) {
+        m_fetchProgress = progress.fetchProgress();
+        emit fetchProgressChanged();
+    }
+    
+    if (m_processProgress != progress.processProgress()) {
+        m_processProgress = progress.processProgress();
+        emit processProgressChanged();
+    }
+    
+    if (m_writeProgress != progress.writeProgress()) {
+        m_writeProgress = progress.writeProgress();
+        emit writeProgressChanged();
+    }
+    
+    // 更新总进度
+    int newProgress = progress.overallProgress();
+    if (m_progress != newProgress) {
+        m_progress = newProgress;
+        emit progressChanged();
+    }
 }
 
 } // namespace EasyKiConverter

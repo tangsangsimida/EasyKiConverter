@@ -844,18 +844,196 @@ Item {
             }
 
             // 进度显示卡片
-            Card {
-                Layout.fillWidth: true
-                title: "转换进度"
-                visible: progressBar.visible
 
-                ColumnLayout {
-                    width: parent.width
-                    spacing: 12
+                        Card {
 
-                    ProgressBar {
+                            Layout.fillWidth: true
 
-                                            id: progressBar
+                            title: "转换进度"
+
+                            visible: progressBar.visible
+
+            
+
+                            ColumnLayout {
+
+                                width: parent.width
+
+                                spacing: 12
+
+            
+
+                                // 总进度条
+
+                                Text {
+
+                                    text: "总进度: " + Math.round(exportProgressController.progress) + "%"
+
+                                    font.pixelSize: 14
+
+                                    font.bold: true
+
+                                    color: AppStyle.colors.textPrimary
+
+                                }
+
+            
+
+                                ProgressBar {
+
+                                    id: progressBar
+
+            
+
+                                    Layout.fillWidth: true
+
+            
+
+                                    from: 0
+
+            
+
+                                    to: 100
+
+            
+
+                                    value: exportProgressController.progress
+
+            
+
+                                    visible: exportProgressController.isExporting
+
+            
+
+            
+
+            
+
+                                    background: Rectangle {
+
+            
+
+                                        color: AppStyle.colors.border
+
+            
+
+            
+
+            
+
+                                        radius: AppStyle.radius.md
+
+            
+
+                                    }
+
+            
+
+            
+
+            
+
+                                    contentItem: Item {
+
+            
+
+                                        Rectangle {
+
+            
+
+                                            width: progressBar.visualPosition * parent.width
+
+            
+
+                                            height: parent.height
+
+            
+
+                                            radius: AppStyle.radius.md
+
+            
+
+                                            color: AppStyle.colors.primary
+
+            
+
+            
+
+            
+
+                                            Behavior on width {
+
+            
+
+                                                NumberAnimation {
+
+            
+
+                                                    duration: AppStyle.durations.normal
+
+            
+
+                                                    easing.type: AppStyle.easings.easeOut
+
+            
+
+                                                }
+
+            
+
+                                            }
+
+            
+
+                                        }
+
+            
+
+                                    }
+
+            
+
+                                }
+
+            
+
+                                // 分段进度条
+
+                                ColumnLayout {
+
+                                    Layout.fillWidth: true
+
+                                    spacing: 8
+
+                                    visible: exportProgressController.isExporting
+
+            
+
+                                    // 抓取阶段进度
+
+                                    RowLayout {
+
+                                        Layout.fillWidth: true
+
+                                        spacing: 8
+
+            
+
+                                        Text {
+
+                                            text: "抓取"
+
+                                            font.pixelSize: 12
+
+                                            color: AppStyle.colors.textSecondary
+
+                                            Layout.preferredWidth: 40
+
+                                        }
+
+            
+
+                                        ProgressBar {
 
                                             Layout.fillWidth: true
 
@@ -863,37 +1041,33 @@ Item {
 
                                             to: 100
 
-                                            value: exportProgressController.progress
+                                            value: exportProgressController.fetchProgress
 
-                                            visible: exportProgressController.isExporting
-
-                    
+            
 
                                             background: Rectangle {
 
                                                 color: AppStyle.colors.border
 
-                    
-
-                                                radius: AppStyle.radius.md
+                                                radius: AppStyle.radius.sm
 
                                             }
 
-                    
+            
 
                                             contentItem: Item {
 
                                                 Rectangle {
 
-                                                    width: progressBar.visualPosition * parent.width
+                                                    width: parent.visualPosition * parent.width
 
                                                     height: parent.height
 
-                                                    radius: AppStyle.radius.md
+                                                    radius: AppStyle.radius.sm
 
-                                                    color: AppStyle.colors.primary
+                                                    color: "#22c55e"  // 绿色
 
-                    
+            
 
                                                     Behavior on width {
 
@@ -913,41 +1087,261 @@ Item {
 
                                         }
 
-                    
+            
 
                                         Text {
 
-                    
+                                            text: Math.round(exportProgressController.fetchProgress) + "%"
 
-                                                                                    id: statusLabel
+                                            font.pixelSize: 12
 
-                    
+                                            color: AppStyle.colors.textSecondary
 
-                                                                                    Layout.fillWidth: true
+                                            Layout.preferredWidth: 35
 
-                    
+                                            horizontalAlignment: Text.AlignRight
 
-                                                                                    text: exportProgressController.status
+                                        }
 
-                    
+                                    }
 
-                                                                                    font.pixelSize: 14
+            
 
-                    
+                                    // 处理阶段进度
 
-                                                                                    color: AppStyle.colors.textSecondary
+                                    RowLayout {
 
-                    
+                                        Layout.fillWidth: true
 
-                                                                                    horizontalAlignment: Text.AlignHCenter
+                                        spacing: 8
 
-                    
+            
 
-                                                                                    visible: exportProgressController.status.length > 0
+                                        Text {
 
-                    
+                                            text: "处理"
 
-                                                                                }
+                                            font.pixelSize: 12
+
+                                            color: AppStyle.colors.textSecondary
+
+                                            Layout.preferredWidth: 40
+
+                                        }
+
+            
+
+                                        ProgressBar {
+
+                                            Layout.fillWidth: true
+
+                                            from: 0
+
+                                            to: 100
+
+                                            value: exportProgressController.processProgress
+
+            
+
+                                            background: Rectangle {
+
+                                                color: AppStyle.colors.border
+
+                                                radius: AppStyle.radius.sm
+
+                                            }
+
+            
+
+                                            contentItem: Item {
+
+                                                Rectangle {
+
+                                                    width: parent.visualPosition * parent.width
+
+                                                    height: parent.height
+
+                                                    radius: AppStyle.radius.sm
+
+                                                    color: "#3b82f6"  // 蓝色
+
+            
+
+                                                    Behavior on width {
+
+                                                        NumberAnimation {
+
+                                                            duration: AppStyle.durations.normal
+
+                                                            easing.type: AppStyle.easings.easeOut
+
+                                                        }
+
+                                                    }
+
+                                                }
+
+                                            }
+
+                                        }
+
+            
+
+                                        Text {
+
+                                            text: Math.round(exportProgressController.processProgress) + "%"
+
+                                            font.pixelSize: 12
+
+                                            color: AppStyle.colors.textSecondary
+
+                                            Layout.preferredWidth: 35
+
+                                            horizontalAlignment: Text.AlignRight
+
+                                        }
+
+                                    }
+
+            
+
+                                    // 写入阶段进度
+
+                                    RowLayout {
+
+                                        Layout.fillWidth: true
+
+                                        spacing: 8
+
+            
+
+                                        Text {
+
+                                            text: "写入"
+
+                                            font.pixelSize: 12
+
+                                            color: AppStyle.colors.textSecondary
+
+                                            Layout.preferredWidth: 40
+
+                                        }
+
+            
+
+                                        ProgressBar {
+
+                                            Layout.fillWidth: true
+
+                                            from: 0
+
+                                            to: 100
+
+                                            value: exportProgressController.writeProgress
+
+            
+
+                                            background: Rectangle {
+
+                                                color: AppStyle.colors.border
+
+                                                radius: AppStyle.radius.sm
+
+                                            }
+
+            
+
+                                            contentItem: Item {
+
+                                                Rectangle {
+
+                                                    width: parent.visualPosition * parent.width
+
+                                                    height: parent.height
+
+                                                    radius: AppStyle.radius.sm
+
+                                                    color: "#f59e0b"  // 橙色
+
+            
+
+                                                    Behavior on width {
+
+                                                        NumberAnimation {
+
+                                                            duration: AppStyle.durations.normal
+
+                                                            easing.type: AppStyle.easings.easeOut
+
+                                                        }
+
+                                                    }
+
+                                                }
+
+                                            }
+
+                                        }
+
+            
+
+                                        Text {
+
+                                            text: Math.round(exportProgressController.writeProgress) + "%"
+
+                                            font.pixelSize: 12
+
+                                            color: AppStyle.colors.textSecondary
+
+                                            Layout.preferredWidth: 35
+
+                                            horizontalAlignment: Text.AlignRight
+
+                                        }
+
+                                    }
+
+                                }
+
+            
+
+                                
+
+            
+
+                                                    Text {
+
+            
+
+                                                        id: statusLabel
+
+            
+
+                                                        Layout.fillWidth: true
+
+            
+
+                                                        text: exportProgressController.status
+
+            
+
+                                                        font.pixelSize: 14
+
+            
+
+                                                        color: AppStyle.colors.textSecondary
+
+            
+
+                                                        horizontalAlignment: Text.AlignHCenter
+
+            
+
+                                                        visible: exportProgressController.status.length > 0
+
+            
+
+                                                    }
                 }
             }
 

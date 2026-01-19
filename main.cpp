@@ -12,6 +12,7 @@
 #include "src/ui/viewmodels/ExportProgressViewModel.h"
 #include "src/ui/viewmodels/ThemeSettingsViewModel.h"
 #include "src/services/ConfigService.h"
+#include "src/services/ExportService_Pipeline.h"
 
 int main(int argc, char *argv[])
 {
@@ -44,9 +45,9 @@ int main(int argc, char *argv[])
     // 初始化配置服务
     EasyKiConverter::ConfigService::instance()->loadConfig();
 
-    // 创建 Service 实例
+    // 创建 Service 实例（使用流水线架构）
     EasyKiConverter::ComponentService *componentService = new EasyKiConverter::ComponentService(&app);
-    EasyKiConverter::ExportService *exportService = new EasyKiConverter::ExportService(&app);
+    EasyKiConverter::ExportServicePipeline *exportService = new EasyKiConverter::ExportServicePipeline(&app);
 
     // 创建 ViewModel 实例
     EasyKiConverter::ComponentListViewModel *componentListViewModel = new EasyKiConverter::ComponentListViewModel(componentService, &app);
@@ -87,7 +88,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    qDebug() << "EasyKiConverter started successfully";
+    qDebug() << "EasyKiConverter started successfully with Pipeline Architecture";
 
     return app.exec();
 }
