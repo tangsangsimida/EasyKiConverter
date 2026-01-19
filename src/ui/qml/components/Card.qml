@@ -10,10 +10,38 @@ Rectangle {
 
     implicitHeight: contentColumn.implicitHeight + 48
 
-    color: AppStyle.colors.surface
+    // 根据主题模式动态计算颜色
+    color: {
+        if (AppStyle.isDarkMode) {
+            return Qt.rgba(0, 0, 0, 0.5)
+        } else {
+            return Qt.rgba(255, 255, 255, 0.5)
+        }
+    }
     radius: AppStyle.radius.lg
-    border.color: AppStyle.colors.border
+    border.color: {
+        if (AppStyle.isDarkMode) {
+            return Qt.rgba(255, 255, 255, 0.15)
+        } else {
+            return Qt.rgba(0, 0, 0, 0.08)
+        }
+    }
     border.width: 1
+
+    // 颜色变化动画
+    Behavior on color {
+        ColorAnimation {
+            duration: AppStyle.durations.themeSwitch
+            easing.type: AppStyle.easings.easeOut
+        }
+    }
+
+    Behavior on border.color {
+        ColorAnimation {
+            duration: AppStyle.durations.themeSwitch
+            easing.type: AppStyle.easings.easeOut
+        }
+    }
 
     // 进入动画
     opacity: 0
@@ -63,15 +91,6 @@ Rectangle {
         onContainsMouseChanged: {
             card.state = containsMouse ? "hovered" : "normal"
         }
-    }
-
-    // 简化的阴影效果（使用边框模拟）
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: -2
-        radius: card.radius + 2
-        color: AppStyle.shadows.md.color
-        z: -1
     }
 
     ColumnLayout {

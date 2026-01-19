@@ -122,7 +122,7 @@ Item {
                 text: "EasyKiConverter"
                 font.pixelSize: 48
                 font.bold: true
-                color: "#1e293b"
+                color: AppStyle.colors.textPrimary
                 horizontalAlignment: Text.AlignHCenter
             }
 
@@ -130,7 +130,7 @@ Item {
                 Layout.fillWidth: true
                 text: "将嘉立创EDA元器件转换为KiCad格式"
                 font.pixelSize: 18
-                color: "#64748b"
+                color: AppStyle.colors.textSecondary
                 horizontalAlignment: Text.AlignHCenter
             }
 
@@ -344,6 +344,8 @@ Item {
                         Layout.fillWidth: true
                         placeholderText: "输入LCSC元件编号 (例如: C2040)"
                         font.pixelSize: AppStyle.fontSizes.md
+                        color: AppStyle.colors.textPrimary
+                        placeholderTextColor: AppStyle.colors.textSecondary
 
                         background: Rectangle {
                             color: componentInput.enabled ? AppStyle.colors.surface : AppStyle.colors.background
@@ -477,7 +479,7 @@ Item {
                         id: componentCountLabel
                         text: "共 " + componentListController.componentCount + " 个元器件"
                         font.pixelSize: 14
-                        color: "#64748b"
+                        color: AppStyle.colors.textSecondary
                     }
 
                     Item {
@@ -589,7 +591,7 @@ Item {
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
-                                color: "#1e293b"
+                                color: AppStyle.colors.textPrimary
                                 verticalAlignment: Text.AlignVCenter
                                 leftPadding: parent.indicator.width + parent.spacing
                             }
@@ -611,7 +613,7 @@ Item {
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
-                                color: "#1e293b"
+                                color: AppStyle.colors.textPrimary
                                 verticalAlignment: Text.AlignVCenter
                                 leftPadding: parent.indicator.width + parent.spacing
                             }
@@ -633,7 +635,7 @@ Item {
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
-                                color: "#1e293b"
+                                color: AppStyle.colors.textPrimary
                                 verticalAlignment: Text.AlignVCenter
                                 leftPadding: parent.indicator.width + parent.spacing
                             }
@@ -649,7 +651,7 @@ Item {
                             text: "导出模式"
                             font.pixelSize: 14
                             font.bold: true
-                            color: "#1e293b"
+                            color: AppStyle.colors.textPrimary
                             horizontalAlignment: Text.AlignHCenter
                         }
 
@@ -674,7 +676,7 @@ Item {
                                     contentItem: Text {
                                         text: parent.text
                                         font: parent.font
-                                        color: "#1e293b"
+                                        color: AppStyle.colors.textPrimary
                                         verticalAlignment: Text.AlignVCenter
                                         leftPadding: parent.indicator.width + parent.spacing
                                     }
@@ -705,7 +707,7 @@ Item {
                                     contentItem: Text {
                                         text: parent.text
                                         font: parent.font
-                                        color: "#1e293b"
+                                        color: AppStyle.colors.textPrimary
                                         verticalAlignment: Text.AlignVCenter
                                         leftPadding: parent.indicator.width + parent.spacing
                                     }
@@ -742,7 +744,7 @@ Item {
                             text: "输出路径"
                             font.pixelSize: 14
                             font.bold: true
-                            color: "#1e293b"
+                            color: AppStyle.colors.textPrimary
                             horizontalAlignment: Text.AlignHCenter
                         }
 
@@ -757,12 +759,26 @@ Item {
                                 onTextChanged: exportSettingsController.setOutputPath(text)
                                 placeholderText: "选择输出目录"
                                 font.pixelSize: 14
+                                color: AppStyle.colors.textPrimary
+                                placeholderTextColor: AppStyle.colors.textSecondary
 
                                 background: Rectangle {
-                                    color: "#ffffff"
-                                    border.color: "#cbd5e1"
-                                    border.width: 2
-                                    radius: 8
+                                    color: AppStyle.colors.surface
+                                    border.color: outputPathInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                                    border.width: outputPathInput.focus ? 2 : 1
+                                    radius: AppStyle.radius.md
+
+                                    Behavior on border.color {
+                                        ColorAnimation {
+                                            duration: AppStyle.durations.fast
+                                        }
+                                    }
+
+                                    Behavior on border.width {
+                                        NumberAnimation {
+                                            duration: AppStyle.durations.fast
+                                        }
+                                    }
                                 }
                             }
 
@@ -790,7 +806,7 @@ Item {
                             text: "库名称"
                             font.pixelSize: 14
                             font.bold: true
-                            color: "#1e293b"
+                            color: AppStyle.colors.textPrimary
                             horizontalAlignment: Text.AlignHCenter
                         }
 
@@ -801,12 +817,26 @@ Item {
                             onTextChanged: exportSettingsController.setLibName(text)
                             placeholderText: "输入库名称 (例如: MyLibrary)"
                             font.pixelSize: 14
+                            color: AppStyle.colors.textPrimary
+                            placeholderTextColor: AppStyle.colors.textSecondary
 
                             background: Rectangle {
-                                color: "#ffffff"
-                                border.color: "#cbd5e1"
-                                border.width: 2
-                                radius: 8
+                                color: AppStyle.colors.surface
+                                border.color: libNameInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                                border.width: libNameInput.focus ? 2 : 1
+                                radius: AppStyle.radius.md
+
+                                Behavior on border.color {
+                                    ColorAnimation {
+                                        duration: AppStyle.durations.fast
+                                    }
+                                }
+
+                                Behavior on border.width {
+                                    NumberAnimation {
+                                        duration: AppStyle.durations.fast
+                                    }
+                                }
                             }
                         }
                     }
@@ -887,21 +917,37 @@ Item {
 
                                         Text {
 
-                                            id: statusLabel
+                    
 
-                                            Layout.fillWidth: true
+                                                                                    id: statusLabel
 
-                                            text: exportProgressController.status
+                    
 
-                                            font.pixelSize: 14
+                                                                                    Layout.fillWidth: true
 
-                                            color: "#64748b"
+                    
 
-                                            horizontalAlignment: Text.AlignHCenter
+                                                                                    text: exportProgressController.status
 
-                                            visible: exportProgressController.status.length > 0
+                    
 
-                                        }
+                                                                                    font.pixelSize: 14
+
+                    
+
+                                                                                    color: AppStyle.colors.textSecondary
+
+                    
+
+                                                                                    horizontalAlignment: Text.AlignHCenter
+
+                    
+
+                                                                                    visible: exportProgressController.status.length > 0
+
+                    
+
+                                                                                }
                 }
             }
 
