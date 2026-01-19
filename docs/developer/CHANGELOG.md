@@ -44,12 +44,25 @@
 - ViewModel 层（ComponentListViewModel、ExportSettingsViewModel、ExportProgressViewModel、ThemeSettingsViewModel）
 - 状态机模式（ComponentDataCollector）
 - MainController 移除
+- **多阶段流水线并行架构（ExportServicePipeline）**
+  - **Fetch Stage**：I/O 密集型，32 线程并发下载
+  - **Process Stage**：CPU 密集型，CPU 核心数线程并发处理
+  - **Write Stage**：磁盘 I/O 密集型，8 线程并发写入
+  - **线程安全的有界队列（BoundedThreadSafeQueue）**用于阶段间通信
+  - **实时进度反馈**（三阶段进度条：抓取 30%、处理 50%、写入 20%）
+  - **详细失败诊断**（精确识别失败阶段和原因）
+  - **零拷贝解析优化**（QByteArrayView）
+  - **HTTP/2 支持**（网络请求多路复用）
 
 #### 测试
 - 完整的测试框架
 - 单元测试（8 个测试程序）
 - 集成测试框架
 - 性能测试框架
+- **流水线架构测试**
+  - BoundedThreadSafeQueue 并发测试
+  - ExportServicePipeline 集成测试
+  - 多阶段并发测试
 
 #### 文档
 - 完整的文档体系（14 个技术文档）
@@ -58,6 +71,7 @@
 - 架构文档
 - 构建指南
 - 贡献指南
+- **ADR-002：流水线并行架构决策记录**
 
 ### 修复
 - 修复封装解析 Type 判断错误

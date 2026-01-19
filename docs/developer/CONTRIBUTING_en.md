@@ -136,6 +136,34 @@ Follow Qt coding standards:
 - **Code formatting**: 4-space indentation
 - **Comments**: Use `//` for single-line comments
 
+## Architecture Requirements
+
+### MVVM Architecture
+
+Follow the MVVM architecture pattern:
+
+- **View Layer (QML)**: Responsible for UI display only
+- **ViewModel Layer**: Manages UI state and business logic coordination
+- **Service Layer**: Implements business logic
+- **Model Layer**: Handles data storage
+
+### Export Service Architecture
+
+Use multi-stage pipeline parallelism architecture (ExportServicePipeline):
+
+- **Fetch Stage**: I/O-intensive, 32 threads
+- **Process Stage**: CPU-intensive, CPU core count threads
+- **Write Stage**: Disk I/O-intensive, 8 threads
+- Stages communicate via thread-safe bounded queues
+- See: [ADR-002: Pipeline Parallelism](../project/adr/002-pipeline-parallelism-for-export_en.md)
+
+## Testing Requirements
+
+- Add unit tests for new features
+- Ensure all tests pass
+- Do not reduce test coverage
+- Follow testing guide: [../tests/TESTING_GUIDE.md](../tests/TESTING_GUIDE.md)
+
 ## Development Workflow
 
 ### 1. Make Changes

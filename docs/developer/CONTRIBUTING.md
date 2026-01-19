@@ -83,6 +83,15 @@ git checkout -b feature/your-feature-name
 - Service 层负责业务逻辑
 - Model 层负责数据存储
 
+**导出服务架构**：
+
+- 使用多阶段流水线并行架构（ExportServicePipeline）
+- Fetch Stage：I/O 密集型，32 线程
+- Process Stage：CPU 密集型，CPU 核心数线程
+- Write Stage：磁盘 I/O 密集型，8 线程
+- 阶段间通过线程安全的有界队列通信
+- 详见：[ADR-002: 流水线并行架构](../project/adr/002-pipeline-parallelism-for-export.md)
+
 #### 测试要求
 
 - 为新功能添加单元测试

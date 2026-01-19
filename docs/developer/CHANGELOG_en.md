@@ -44,12 +44,25 @@ This document records the additions, fixes, and changes in each version of EasyK
 - ViewModel layer (ComponentListViewModel, ExportSettingsViewModel, ExportProgressViewModel, ThemeSettingsViewModel)
 - State machine pattern (ComponentDataCollector)
 - MainController removal
+- **Multi-stage pipeline parallelism architecture (ExportServicePipeline)**
+  - **Fetch Stage**: I/O-intensive, 32 threads for concurrent downloads
+  - **Process Stage**: CPU-intensive, CPU core count threads for concurrent processing
+  - **Write Stage**: Disk I/O-intensive, 8 threads for concurrent writes
+  - **Thread-safe bounded queues (BoundedThreadSafeQueue)** for inter-stage communication
+  - **Real-time progress feedback** (three-stage progress bars: Fetch 30%, Process 50%, Write 20%)
+  - **Detailed failure diagnostics** (precise identification of failed stage and cause)
+  - **Zero-copy parsing optimization** (QByteArrayView)
+  - **HTTP/2 support** (network request multiplexing)
 
 #### Testing
 - Complete testing framework
 - Unit tests (8 test programs)
 - Integration testing framework
 - Performance testing framework
+- **Pipeline architecture testing**
+  - BoundedThreadSafeQueue concurrency tests
+  - ExportServicePipeline integration tests
+  - Multi-stage concurrent tests
 
 #### Documentation
 - Complete documentation system (14 technical documents)
@@ -58,6 +71,7 @@ This document records the additions, fixes, and changes in each version of EasyK
 - Architecture documentation
 - Build guide
 - Contributing guide
+- **ADR-002: Pipeline Parallelism Architecture Decision Record**
 
 ### Fixed
 - Fixed footprint parsing Type judgment error
