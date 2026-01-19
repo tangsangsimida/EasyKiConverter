@@ -26,7 +26,7 @@ Item {
     FileDialog {
         id: bomFileDialog
         title: "选择 BOM 文件"
-        nameFilters: ["Text files (*.txt)", "CSV files (*.csv)", "All files (*.*)"]
+        nameFilters: ["Supported files (*.txt *.csv *.xlsx *.xls)", "Text files (*.txt)", "CSV files (*.csv)", "Excel files (*.xlsx *.xls)", "All files (*.*)"]
         onAccepted: {
             componentListController.selectBomFile(selectedFile)
         }
