@@ -224,12 +224,7 @@ private:
      */
     bool stringToBool(const QString &str) const;
 
-    /**
-     * @brief 智能检测并分割多部分符号
-     *
-     * @param symbolData 符号数据
-     */
-    void detectAndSplitMultiPartSymbol(QSharedPointer<SymbolData> symbolData);
+
 };
 
 } // namespace EasyKiConverter
