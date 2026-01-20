@@ -75,6 +75,17 @@ void ExportSettingsViewModel::setExportMode(int mode)
         m_exportMode = mode;
         emit exportModeChanged();
         qDebug() << "Export mode changed to:" << mode << "(0=append, 1=update)";
+        
+        // 同步更新 overwriteExistingFiles
+        // 0 = 追加模式（保留已存在的元器件，跳过重复的）-> overwriteExistingFiles = false
+        // 1 = 更新模式（替换相同的元器件，保留不同的元器件，添加新的元器件）-> overwriteExistingFiles = false
+        // 注意：更新模式不删除整个文件，而是智能合并
+        bool newOverwrite = false; // 两种模式都不删除整个文件
+        if (m_overwriteExistingFiles != newOverwrite) {
+            m_overwriteExistingFiles = newOverwrite;
+            emit overwriteExistingFilesChanged();
+            qDebug() << "overwriteExistingFiles changed to:" << newOverwrite;
+        }
     }
 }
 

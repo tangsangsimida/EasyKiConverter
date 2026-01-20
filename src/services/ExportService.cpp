@@ -354,13 +354,13 @@ bool ExportService::exportSymbolLibrary(const QList<SymbolData> &symbols, const 
             qDebug() << "Overwriting existing symbol library:" << filePath;
             QFile::remove(filePath);
         } else {
-            // 追加模式：追加新符号到现有库
-            qDebug() << "Appending to existing symbol library:" << filePath;
+            // 追加模式或更新模式：追加/更新新符号到现有库
+            qDebug() << "Appending/Updating to existing symbol library:" << filePath;
             appendMode = true;
         }
     }
 
-    return m_symbolExporter->exportSymbolLibrary(symbols, libName, filePath, appendMode);
+    return m_symbolExporter->exportSymbolLibrary(symbols, libName, filePath, appendMode, m_options.updateMode);
 }
 
 bool ExportService::exportFootprintLibrary(const QList<FootprintData> &footprints, const QString &libName, const QString &filePath)

@@ -1495,7 +1495,8 @@ Item {
                         exportSettingsController.exportSymbol,
                         exportSettingsController.exportFootprint,
                         exportSettingsController.exportModel3D,
-                        exportSettingsController.overwriteExistingFiles
+                        exportSettingsController.overwriteExistingFiles,
+                        exportSettingsController.exportMode === 1  // exportMode === 1 表示更新模式
                     )
                 }
             }

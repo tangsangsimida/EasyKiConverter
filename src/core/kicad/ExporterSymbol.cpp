@@ -38,7 +38,7 @@ namespace EasyKiConverter
         return true;
     }
 
-    bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData> &symbols, const QString &libName, const QString &filePath, bool appendMode)
+    bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData> &symbols, const QString &libName, const QString &filePath, bool appendMode, bool updateMode)
     {
         qDebug() << "=== Export Symbol Library ===";
         qDebug() << "Library name:" << libName;
@@ -46,10 +46,11 @@ namespace EasyKiConverter
         qDebug() << "Symbol count:" << symbols.count();
         qDebug() << "KiCad version: V6";
         qDebug() << "Append mode:" << appendMode;
-    
+        qDebug() << "Update mode:" << updateMode;
+        
         QFile file(filePath);
         bool fileExists = file.exists();
-    
+        
         // 如果文件不存在，直接创建新库
         if (!fileExists)
         {
@@ -59,13 +60,13 @@ namespace EasyKiConverter
                 qWarning() << "Failed to open file for writing:" << filePath;
                 return false;
             }
-    
+        
             QTextStream out(&file);
             out.setEncoding(QStringConverter::Utf8);
-    
+        
             // 生成头部
             out << generateHeader(libName);
-    
+        
             // 生成所有符号
             int index = 0;
             for (const SymbolData &symbol : symbols)
@@ -73,18 +74,18 @@ namespace EasyKiConverter
                 qDebug() << "Exporting symbol" << (++index) << "of" << symbols.count() << ":" << symbol.info().name;
                 out << generateSymbolContent(symbol, libName);
             }
-    
+        
             // 生成尾部
             out << ")\n"; // 闭合 kicad_symbol_lib
-    
+        
             file.close();
             qDebug() << "Symbol library created successfully:" << filePath;
             return true;
         }
-    
-        // 文件存在，需要处理追加或覆盖
+        
+        // 文件存在，需要处理追加或更新
         qDebug() << "Existing library found, reading content...";
-    
+        
         // 读取现有库内容
         QString existingContent;
         if (file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -98,44 +99,87 @@ namespace EasyKiConverter
             qWarning() << "Failed to open existing library for reading:" << filePath;
             return false;
         }
-    
+        
         // 提取现有符号
         QMap<QString, QString> existingSymbols; // 符号名 -> 符号内容
-        QRegularExpression symbolRegex(R"(\(symbol\s+"([^"]+)\"\s*(.*?)\n\s*\))", QRegularExpression::DotMatchesEverythingOption);
-        QRegularExpressionMatchIterator it = symbolRegex.globalMatch(existingContent);
-    
-        while (it.hasNext())
+        
+        // 使用更可靠的方法来提取符号：手动解析括号匹配
+        QStringList lines = existingContent.split('\n');
+        int symbolStart = -1;
+        QString currentSymbolName;
+        int braceCount = 0;
+        
+        for (int i = 0; i < lines.size(); ++i)
         {
-            QRegularExpressionMatch match = it.next();
-            QString symbolName = match.captured(1);
-            QString symbolContent = match.captured(0); // 完整的符号定义
-            existingSymbols[symbolName] = symbolContent;
-            qDebug() << "Found existing symbol:" << symbolName;
+            QString line = lines[i].trimmed();
+            
+            // 检查是否是符号定义的开始
+            if (line.startsWith("(symbol \""))
+            {
+                // 提取符号名
+                int nameStart = line.indexOf("\"") + 1;
+                int nameEnd = line.indexOf("\"", nameStart);
+                if (nameEnd > nameStart)
+                {
+                    currentSymbolName = line.mid(nameStart, nameEnd - nameStart);
+                    symbolStart = i;
+                    braceCount = 1; // 计算括号数量
+                }
+            }
+            else if (symbolStart >= 0)
+            {
+                // 计算括号数量
+                for (int j = 0; j < line.length(); ++j)
+                {
+                    if (line[j] == '(')
+                        braceCount++;
+                    else if (line[j] == ')')
+                        braceCount--;
+                }
+                
+                // 当括号数量归零时，符号定义结束
+                if (braceCount == 0)
+                {
+                    // 提取完整的符号内容
+                    QString symbolContent;
+                    for (int k = symbolStart; k <= i; ++k)
+                    {
+                        symbolContent += lines[k] + "\n";
+                    }
+                    existingSymbols[currentSymbolName] = symbolContent;
+                    qDebug() << "Found existing symbol:" << currentSymbolName << "at lines" << symbolStart << "-" << i;
+                    
+                    // 重置状态
+                    symbolStart = -1;
+                    currentSymbolName.clear();
+                }
+            }
         }
-    
+        
         qDebug() << "Existing symbols count:" << existingSymbols.count();
-    
+        
         // 确定要导出的符号
         QList<SymbolData> symbolsToExport;
         int overwriteCount = 0;
         int appendCount = 0;
-    
+        int skipCount = 0;
+        
         for (const SymbolData &symbol : symbols)
         {
             QString symbolName = symbol.info().name;
-    
+        
             if (existingSymbols.contains(symbolName))
             {
-                if (appendMode)
+                if (appendMode && !updateMode)
                 {
-                    // 追加模式：跳过已存在的符号
+                    // 追加模式（非更新）：跳过已存在的符号
                     qDebug() << "Symbol already exists, skipping (append mode):" << symbolName;
-                    continue;
+                    skipCount++;
                 }
                 else
                 {
-                    // 覆盖模式：覆盖已存在的符号
-                    qDebug() << "Symbol already exists, overwriting:" << symbolName;
+                    // 更新模式或覆盖模式：替换已存在的符号
+                    qDebug() << "Symbol already exists, overwriting (update mode):" << symbolName;
                     overwriteCount++;
                     symbolsToExport.append(symbol);
                 }
@@ -148,32 +192,32 @@ namespace EasyKiConverter
                 symbolsToExport.append(symbol);
             }
         }
-    
-        qDebug() << "Symbols to export:" << symbolsToExport.count() << "(Overwrite:" << overwriteCount << ", Append:" << appendCount << ")";
-    
+        
+        qDebug() << "Symbols to export:" << symbolsToExport.count() << "(Overwrite:" << overwriteCount << ", Append:" << appendCount << ", Skip:" << skipCount << ")";
+        
         // 如果没有符号需要导出，直接返回
         if (symbolsToExport.isEmpty())
         {
             qDebug() << "No symbols to export, skipping";
             return true;
         }
-    
+        
         // 打开文件进行写入
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
         {
             qWarning() << "Failed to open file for writing:" << filePath;
             return false;
         }
-    
+        
         QTextStream out(&file);
         out.setEncoding(QStringConverter::Utf8);
-    
+        
         // 生成头部
         out << generateHeader(libName);
-    
+        
         // 生成所有符号（包括未覆盖的现有符号和新导出的符号）
         int index = 0;
-    
+        
         // 先导出未覆盖的现有符号
         for (const QString &symbolName : existingSymbols.keys())
         {
@@ -186,29 +230,28 @@ namespace EasyKiConverter
                     break;
                 }
             }
-    
+        
             if (!isOverwritten)
             {
                 out << existingSymbols[symbolName];
                 qDebug() << "Keeping existing symbol:" << symbolName;
             }
         }
-    
+        
         // 再导出新符号和被覆盖的符号
         for (const SymbolData &symbol : symbolsToExport)
         {
             qDebug() << "Exporting symbol" << (++index) << "of" << symbolsToExport.count() << ":" << symbol.info().name;
             out << generateSymbolContent(symbol, libName);
         }
-    
+        
         // 生成尾部
         out << ")\n"; // 闭合 kicad_symbol_lib
-    
+        
         file.close();
         qDebug() << "Symbol library exported successfully:" << filePath;
         return true;
     }
-
     QString ExporterSymbol::generateHeader(const QString &libName) const
     {
         Q_UNUSED(libName);

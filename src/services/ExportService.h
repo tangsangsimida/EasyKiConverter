@@ -25,9 +25,10 @@ namespace EasyKiConverter
         bool exportFootprint;
         bool exportModel3D;
         bool overwriteExistingFiles;
+        bool updateMode; // 更新模式：替换相同符号，保留不同符号
 
         ExportOptions()
-            : exportSymbol(true), exportFootprint(true), exportModel3D(true), overwriteExistingFiles(false)
+            : exportSymbol(true), exportFootprint(true), exportModel3D(true), overwriteExistingFiles(false), updateMode(false)
         {
         }
     };

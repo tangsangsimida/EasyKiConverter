@@ -45,7 +45,7 @@ namespace EasyKiConverter
     void setUsePipelineMode(bool usePipeline);
 
 public slots:
-    Q_INVOKABLE void startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles);
+    Q_INVOKABLE void startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles, bool updateMode);
     Q_INVOKABLE void cancelExport();
 
     signals:

@@ -159,8 +159,9 @@ namespace EasyKiConverter
     {
         QString content;
 
-        // KiCad 6.x format - use module syntax (compatible with KiCad 6+)
-        content += QString("(module easykiconverter:%1 (layer F.Cu) (tedit 5DC5F6A4)\n").arg(footprintData.info().name);
+        // KiCad 6.x format - use footprint syntax (not module)
+        content += QString("(footprint easykiconverter:%1\n").arg(footprintData.info().name);
+        content += "  (version 20221018)\n";
 
         // 判断是否为通孔器件：如果有焊盘有孔（holeRadius > 0），则为通孔
         bool isThroughHole = false;
@@ -177,11 +178,11 @@ namespace EasyKiConverter
         // KiCad只允许以下属性值：through_hole、smd、virtual、board_only、exclude_from_pos_files、exclude_from_bom、allow_solder_mask_bridges
         if (isThroughHole)
         {
-            content += "\t(attr through_hole)\n";
+            content += "  (attr through_hole)\n";
         }
         else
         {
-            content += "\t(attr smd)\n";
+            content += "  (attr smd)\n";
         }
 
         // KiCad的attr属性只允许特定的值，不能随意添加自定义类型
@@ -210,19 +211,19 @@ namespace EasyKiConverter
         double bboxY = footprintData.bbox().y;
 
         // Reference text
-        content += QString("\t(fp_text reference REF** (at 0 %1) (layer F.SilkS)\n").arg(pxToMm(yLow - bboxY - 4));
-        content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
-        content += "\t)\n";
+        content += QString("  (fp_text reference REF** (at 0 %1) (layer F.SilkS)\n").arg(pxToMm(yLow - bboxY - 4));
+        content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
+        content += "  )\n";
 
         // Value text
-        content += QString("\t(fp_text value %1 (at 0 %2) (layer F.Fab)\n").arg(footprintData.info().name).arg(pxToMm(yHigh - bboxY + 4));
-        content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
-        content += "\t)\n";
+        content += QString("  (fp_text value %1 (at 0 %2) (layer F.Fab)\n").arg(footprintData.info().name).arg(pxToMm(yHigh - bboxY + 4));
+        content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
+        content += "  )\n";
 
         // User reference (Fab layer)
-        content += "\t(fp_text user %R (at 0 0) (layer F.Fab)\n";
-        content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
-        content += "\t)\n";
+        content += "  (fp_text user %R (at 0 0) (layer F.Fab)\n";
+        content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
+        content += "  )\n";
 
         // 生成所有图形元素（tracks + rectangles）
         for (const FootprintTrack &track : footprintData.tracks())
@@ -298,8 +299,9 @@ namespace EasyKiConverter
     {
         QString content;
 
-        // KiCad 6.x format - use module syntax (compatible with KiCad 6+)
-        content += QString("(module easykiconverter:%1 (layer F.Cu) (tedit 5DC5F6A4)\n").arg(footprintData.info().name);
+        // KiCad 6.x format - use footprint syntax (not module)
+        content += QString("(footprint easykiconverter:%1\n").arg(footprintData.info().name);
+        content += "  (version 20221018)\n";
 
         // 判断是否为通孔器件：如果有焊盘有孔（holeRadius > 0），则为通孔
         bool isThroughHole = false;
@@ -357,82 +359,81 @@ namespace EasyKiConverter
         content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
         content += "\t)\n";
 
-        // 生成所有图形元素（tracks + rectangles）
-        for (const FootprintTrack &track : footprintData.tracks())
-        {
-            content += generateTrack(track, bboxX, bboxY);
-        }
-        for (const FootprintRectangle &rect : footprintData.rectangles())
-        {
-            content += generateRectangle(rect, bboxX, bboxY);
-        }
-
-        // Generate pads
-        for (const FootprintPad &pad : footprintData.pads())
-        {
-            content += generatePad(pad, bboxX, bboxY);
-        }
-
-        // Generate holes
-        for (const FootprintHole &hole : footprintData.holes())
-        {
-            content += generateHole(hole, bboxX, bboxY);
-        }
-
-        // Generate circles (所有层，包括丝印层)
-        for (const FootprintCircle &circle : footprintData.circles())
-        {
-            content += generateCircle(circle, bboxX, bboxY);
-        }
-
-        // Generate arcs (所有层，包括丝印层)
-        for (const FootprintArc &arc : footprintData.arcs())
-        {
-            content += generateArc(arc, bboxX, bboxY);
-        }
-
-        // Generate texts
-        for (const FootprintText &text : footprintData.texts())
-        {
-            content += generateText(text, bboxX, bboxY);
-        }
-
-        // Generate solid regions (包括 courtyard 层)
-        bool hasCourtYard = false;
-        for (const FootprintSolidRegion &region : footprintData.solidRegions())
-        {
-            QString regionContent = generateSolidRegion(region, bboxX, bboxY);
-            content += regionContent;
-            if (region.layerId == 99)
-            {
-                hasCourtYard = true;
-            }
-        }
-
-        // 如果没有找到 courtyard，使用 BBox 自动生成
-        if (!hasCourtYard && footprintData.bbox().width > 0 && footprintData.bbox().height > 0)
-        {
-            content += generateCourtyardFromBBox(footprintData.bbox(), bboxX, bboxY);
-            qWarning() << "Warning: No courtyard found, generated from BBox";
-        }
-
-        // Generate 3D model references (both WRL and STEP)
-        if (!footprintData.model3D().name().isEmpty())
-        {
-            // Add WRL model
-            if (!model3DWrlPath.isEmpty())
-            {
-                content += generateModel3D(footprintData.model3D(), bboxX, bboxY, model3DWrlPath, footprintData.info().type);
-            }
-            // Add STEP model
-            if (!model3DStepPath.isEmpty())
-            {
-                content += generateModel3D(footprintData.model3D(), bboxX, bboxY, model3DStepPath, footprintData.info().type);
-            }
-        }
-
-        content += ")\n";
-
+                // 生成所有图形元素（tracks + rectangles）
+                for (const FootprintTrack &track : footprintData.tracks())
+                {
+                    content += generateTrack(track, bboxX, bboxY);
+                }
+                for (const FootprintRectangle &rect : footprintData.rectangles())
+                {
+                    content += generateRectangle(rect, bboxX, bboxY);
+                }
+        
+                // Generate pads
+                for (const FootprintPad &pad : footprintData.pads())
+                {
+                    content += generatePad(pad, bboxX, bboxY);
+                }
+        
+                // Generate holes
+                for (const FootprintHole &hole : footprintData.holes())
+                {
+                    content += generateHole(hole, bboxX, bboxY);
+                }
+        
+                // Generate circles (所有层，包括丝印层)
+                for (const FootprintCircle &circle : footprintData.circles())
+                {
+                    content += generateCircle(circle, bboxX, bboxY);
+                }
+        
+                // Generate arcs (所有层，包括丝印层)
+                for (const FootprintArc &arc : footprintData.arcs())
+                {
+                    content += generateArc(arc, bboxX, bboxY);
+                }
+        
+                // Generate texts
+                for (const FootprintText &text : footprintData.texts())
+                {
+                    content += generateText(text, bboxX, bboxY);
+                }
+        
+                // Generate solid regions (包括 courtyard 层)
+                bool hasCourtYard = false;
+                for (const FootprintSolidRegion &region : footprintData.solidRegions())
+                {
+                    QString regionContent = generateSolidRegion(region, bboxX, bboxY);
+                    content += regionContent;
+                    if (region.layerId == 99)
+                    {
+                        hasCourtYard = true;
+                    }
+                }
+        
+                // 如果没有找到 courtyard，使用 BBox 自动生成
+                if (!hasCourtYard && footprintData.bbox().width > 0 && footprintData.bbox().height > 0)
+                {
+                    content += generateCourtyardFromBBox(footprintData.bbox(), bboxX, bboxY);
+                    qWarning() << "Warning: No courtyard found, generated from BBox";
+                }
+        
+                // Generate 3D model references (both WRL and STEP)
+                if (!footprintData.model3D().name().isEmpty())
+                {
+                    // Add WRL model
+                    if (!model3DWrlPath.isEmpty())
+                    {
+                        content += generateModel3D(footprintData.model3D(), bboxX, bboxY, model3DWrlPath, footprintData.info().type);
+                    }
+                    // Add STEP model
+                    if (!model3DStepPath.isEmpty())
+                    {
+                        content += generateModel3D(footprintData.model3D(), bboxX, bboxY, model3DStepPath, footprintData.info().type);
+                    }
+                }
+        
+                content += ")\n";
         return content;
     }
 
@@ -504,12 +505,13 @@ namespace EasyKiConverter
                     }
                 }
 
-                polygonStr = QString("\n\t\t(primitives \n\t\t\t(gr_poly \n\t\t\t\t(pts %1) \n\t\t\t\t(width 0.1) \n\t\t\t)\n\t\t\t(zone_connect 0)\n\t\t\t(options (clearance outline) (anchor circle))\n\t)\n\t").arg(path);
+                polygonStr = QString("\n    (primitives\n      (gr_poly\n        (pts %1)\n        (width 0.1)\n        (fill none)\n      )\n    )\n  ").arg(path);
             }
         }
         else
         {
-            // 智能判断焊盘形状：当 width 和 height 相等时使用 circle
+            // 直接使用原始shape，不进行智能判断
+            // 这样可以避免矩形焊盘被错误地判断为圆形
             width = qMax(width, 0.01);
             height = qMax(height, 0.01);
         }
@@ -519,12 +521,9 @@ namespace EasyKiConverter
         {
             kicadShape = "custom";
         }
-        else if (qAbs(width - height) < 1e-3)
-        {
-            kicadShape = "circle";
-        }
         else
         {
+            // 直接使用原始shape转换，不根据宽高自动判断
             kicadShape = padShapeToKicad(pad.shape);
         }
 
@@ -563,7 +562,7 @@ namespace EasyKiConverter
 
         // KiCad 6.x format - match Python version exactly
         // Note: No quotes around pad number
-        content += QString("\t(pad %1 %2 %3 (at %4 %5 %6) (size %7 %8) (layers %9)%10%11)\n")
+        content += QString("  (pad %1 %2 %3 (at %4 %5 %6) (size %7 %8) (layers %9)%10%11)\n")
                        .arg(padNumber)
                        .arg(kicadType)
                        .arg(kicadShape)
@@ -594,7 +593,7 @@ namespace EasyKiConverter
             double endX = pxToMmRounded(pointList[i + 2].toDouble() - bboxX);
             double endY = pxToMmRounded(pointList[i + 3].toDouble() - bboxY);
 
-            content += QString("\t(fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
+            content += QString("  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
                            .arg(startX, 0, 'f', 2)
                            .arg(startY, 0, 'f', 2)
                            .arg(endX, 0, 'f', 2)
@@ -613,7 +612,7 @@ namespace EasyKiConverter
         double cy = pxToMmRounded(hole.centerY - bboxY);
         double radius = pxToMmRounded(hole.radius);
 
-        content += QString("\t(pad \"\" thru_hole circle (at %1 %2) (size %3 %3) (drill %3) (layers *.Cu *.Mask))\n")
+        content += QString("  (pad \"\" thru_hole circle (at %1 %2) (size %3 %3) (drill %3) (layers *.Cu *.Mask))\n")
                        .arg(cx, 0, 'f', 2)
                        .arg(cy, 0, 'f', 2)
                        .arg(radius * 2, 0, 'f', 2);
@@ -628,7 +627,7 @@ namespace EasyKiConverter
         double cy = pxToMmRounded(circle.cy - bboxY);
         double radius = pxToMmRounded(circle.radius);
 
-        content += QString("\t(fp_circle (center %1 %2) (end %3 %4) (layer %5) (width %6))\n")
+        content += QString("  (fp_circle (center %1 %2) (end %3 %4) (layer %5) (width %6))\n")
                        .arg(cx, 0, 'f', 2)
                        .arg(cy, 0, 'f', 2)
                        .arg(cx + radius, 0, 'f', 2)
@@ -650,28 +649,28 @@ namespace EasyKiConverter
 
         // 生成完整的矩形外框（4条线）
         // 上边
-        content += QString("\t(fp_line (start %1 %2) (end %3 %2) (layer %4) (width %5))\n")
+        content += QString("  (fp_line (start %1 %2) (end %3 %2) (layer %4) (width %5))\n")
                        .arg(x, 0, 'f', 2)
                        .arg(y, 0, 'f', 2)
                        .arg(x + width, 0, 'f', 2)
                        .arg(layer)
                        .arg(strokeWidth, 0, 'f', 2);
         // 右边
-        content += QString("\t(fp_line (start %1 %2) (end %1 %3) (layer %4) (width %5))\n")
+        content += QString("  (fp_line (start %1 %2) (end %1 %3) (layer %4) (width %5))\n")
                        .arg(x + width, 0, 'f', 2)
                        .arg(y, 0, 'f', 2)
                        .arg(y + height, 0, 'f', 2)
                        .arg(layer)
                        .arg(strokeWidth, 0, 'f', 2);
         // 下边
-        content += QString("\t(fp_line (start %1 %2) (end %3 %2) (layer %4) (width %5))\n")
+        content += QString("  (fp_line (start %1 %2) (end %3 %2) (layer %4) (width %5))\n")
                        .arg(x, 0, 'f', 2)
                        .arg(y + height, 0, 'f', 2)
                        .arg(x + width, 0, 'f', 2)
                        .arg(layer)
                        .arg(strokeWidth, 0, 'f', 2);
         // 左边
-        content += QString("\t(fp_line (start %1 %2) (end %1 %3) (layer %4) (width %5))\n")
+        content += QString("  (fp_line (start %1 %2) (end %1 %3) (layer %4) (width %5))\n")
                        .arg(x, 0, 'f', 2)
                        .arg(y, 0, 'f', 2)
                        .arg(y + height, 0, 'f', 2)
@@ -726,7 +725,7 @@ namespace EasyKiConverter
                 if (step == 180.0)
                     kiEndAngle += 0.1;
 
-                content += QString("\t(fp_arc (start %1 %2) (end %3 %4) (angle %5) (layer %6) (width %7))\n")
+                content += QString("  (fp_arc (start %1 %2) (end %3 %4) (angle %5) (layer %6) (width %7))\n")
                                .arg(cx, 0, 'f', 2)
                                .arg(cy, 0, 'f', 2)
                                .arg(pxToMmRounded(pt.x2 - bboxX), 0, 'f', 2)
@@ -751,7 +750,7 @@ namespace EasyKiConverter
                 double x2 = pxToMmRounded(points[i].x - bboxX);
                 double y2 = -pxToMmRounded(points[i].y - bboxY);
 
-                content += QString("\t(fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
+                content += QString("  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
                                .arg(x1, 0, 'f', 2)
                                .arg(y1, 0, 'f', 2)
                                .arg(x2, 0, 'f', 2)
@@ -817,7 +816,7 @@ namespace EasyKiConverter
                 {
                     for (int i = 1; i < points.size(); ++i)
                     {
-                        content += QString("\t(fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
+                        content += QString("  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
                                        .arg(points[i - 1].x(), 0, 'f', 2)
                                        .arg(points[i - 1].y(), 0, 'f', 2)
                                        .arg(points[i].x(), 0, 'f', 2)
@@ -835,7 +834,7 @@ namespace EasyKiConverter
             bool isBottomLayer = layer.startsWith("B");
             QString mirrorStr = isBottomLayer ? " mirror" : "";
             // KiCad format - match Python version
-            content += QString("\t(fp_text user %1 (at %2 %3 %4) (layer %5)%6\n")
+            content += QString("  (fp_text user %1 (at %2 %3 %4) (layer %5)%6\n")
                            .arg(text.text)
                            .arg(x, 0, 'f', 2)
                            .arg(y, 0, 'f', 2)
@@ -847,12 +846,12 @@ namespace EasyKiConverter
             double thickness = pxToMmRounded(text.strokeWidth);
             fontSize = qMax(fontSize, 1.0);    // Ensure minimum font size
             thickness = qMax(thickness, 0.01); // Ensure minimum thickness
-            content += QString("\t\t(effects (font (size %1 %2) (thickness %3)) (justify left%4))\n")
+            content += QString("    (effects (font (size %1 %2) (thickness %3)) (justify left%4))\n")
                            .arg(fontSize, 0, 'f', 2)
                            .arg(fontSize, 0, 'f', 2)
                            .arg(thickness, 0, 'f', 2)
                            .arg(mirrorStr);
-            content += "\t)\n";
+            content += "  )\n";
         }
 
         return content;
@@ -901,34 +900,34 @@ namespace EasyKiConverter
         // 同时导出 STEP 和 WRL 模型
         // 注意：如果 STEP 数据为空或无效，EasyEDA API 可能返回空数据
         QString wrlPath = modelName + ".wrl";
-        content += QString("\t(model \"%1\"\n").arg(wrlPath);
-        content += QString("\t\t(offset (xyz %1 %2 %3))\n")
+        content += QString("  (model \"%1\"\n").arg(wrlPath);
+        content += QString("    (offset (xyz %1 %2 %3))\n")
                        .arg(pxToMmRounded(model3D.translation().x - bboxX), 0, 'f', 3)
                        .arg(-pxToMmRounded(model3D.translation().y - bboxY), 0, 'f', 3)
                        .arg(z, 0, 'f', 3);
-        content += "\t\t(scale (xyz 1 1 1))\n";
-        content += QString("\t\t(rotate (xyz %1 %2 %3))\n")
+        content += "    (scale (xyz 1 1 1))\n";
+        content += QString("    (rotate (xyz %1 %2 %3))\n")
                        .arg(rotX, 0, 'f', 0)
                        .arg(rotY, 0, 'f', 0)
                        .arg(rotZ, 0, 'f', 0);
-        content += "\t)\n";
+        content += "  )\n";
 
         // STEP 模型（优先，但需要检查数据是否有效）
         // 如果 model3D 有 step 数据且数据不为空，则导出 STEP 模型
         if (!model3D.step().isEmpty() && model3D.step().size() > 100)
         {
             QString stepPath = modelName + ".step";
-            content += QString("\t(model \"%1\"\n").arg(stepPath);
-            content += QString("\t\t(offset (xyz %1 %2 %3))\n")
+            content += QString("  (model \"%1\"\n").arg(stepPath);
+            content += QString("    (offset (xyz %1 %2 %3))\n")
                            .arg(pxToMmRounded(model3D.translation().x - bboxX), 0, 'f', 3)
                            .arg(-pxToMmRounded(model3D.translation().y - bboxY), 0, 'f', 3)
                            .arg(z, 0, 'f', 3);
-            content += "\t\t(scale (xyz 1 1 1))\n";
-            content += QString("\t\t(rotate (xyz %1 %2 %3))\n")
+            content += "    (scale (xyz 1 1 1))\n";
+            content += QString("    (rotate (xyz %1 %2 %3))\n")
                            .arg(rotX, 0, 'f', 0)
                            .arg(rotY, 0, 'f', 0)
                            .arg(rotZ, 0, 'f', 0);
-            content += "\t)\n";
+            content += "  )\n";
         }
         else
         {
@@ -1034,7 +1033,7 @@ namespace EasyKiConverter
                 // Courtyard 或禁止布线区：拆分为多条线段
                 for (int i = 1; i < points.size(); ++i)
                 {
-                    content += QString("\t(fp_line (start %1 %2) (end %3 %4) (layer %5) (width 0.05))\n")
+                    content += QString("  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width 0.05))\n")
                                    .arg(points[i - 1].x(), 0, 'f', 2)
                                    .arg(points[i - 1].y(), 0, 'f', 2)
                                    .arg(points[i].x(), 0, 'f', 2)
@@ -1045,20 +1044,20 @@ namespace EasyKiConverter
             else
             {
                 // 其他区域：使用多边形
-                content += "\t(fp_poly\n";
-                content += "\t\t(pts";
+                content += "  (fp_poly\n";
+                content += "    (pts";
                 for (const QPointF &pt : points)
                 {
                     content += QString(" (xy %1 %2)").arg(pt.x(), 0, 'f', 2).arg(pt.y(), 0, 'f', 2);
                 }
                 content += ")\n";
-                content += QString("\t\t(layer %1)\n").arg(layer);
-                content += "\t\t(width 0.1)\n";
+                content += QString("    (layer %1)\n").arg(layer);
+                content += "    (width 0.1)\n";
                 if (region.fillStyle == "solid")
                 {
-                    content += "\t\t(fill solid)\n";
+                    content += "    (fill solid)\n";
                 }
-                content += "\t)\n";
+                content += "  )\n";
             }
         }
 
@@ -1076,19 +1075,19 @@ namespace EasyKiConverter
         double y2 = pxToMmRounded(bbox.y + bbox.height - bboxY);
 
         // 生成四条边
-        content += QString("\t(fp_line (start %1 %2) (end %3 %2) (layer F.CrtYd) (width 0.05))\n")
+        content += QString("  (fp_line (start %1 %2) (end %3 %2) (layer F.CrtYd) (width 0.05))\n")
                        .arg(x1, 0, 'f', 2)
                        .arg(y1, 0, 'f', 2)
                        .arg(x2, 0, 'f', 2);
-        content += QString("\t(fp_line (start %3 %2) (end %3 %4) (layer F.CrtYd) (width 0.05))\n")
+        content += QString("  (fp_line (start %3 %2) (end %3 %4) (layer F.CrtYd) (width 0.05))\n")
                        .arg(x2, 0, 'f', 2)
                        .arg(y1, 0, 'f', 2)
                        .arg(y2, 0, 'f', 2);
-        content += QString("\t(fp_line (start %3 %4) (end %1 %4) (layer F.CrtYd) (width 0.05))\n")
+        content += QString("  (fp_line (start %3 %4) (end %1 %4) (layer F.CrtYd) (width 0.05))\n")
                        .arg(x1, 0, 'f', 2)
                        .arg(x2, 0, 'f', 2)
                        .arg(y2, 0, 'f', 2);
-        content += QString("\t(fp_line (start %1 %4) (end %1 %2) (layer F.CrtYd) (width 0.05))\n")
+        content += QString("  (fp_line (start %1 %4) (end %1 %2) (layer F.CrtYd) (width 0.05))\n")
                        .arg(x1, 0, 'f', 2)
                        .arg(y1, 0, 'f', 2)
                        .arg(y2, 0, 'f', 2);
