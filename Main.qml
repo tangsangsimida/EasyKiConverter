@@ -5,6 +5,8 @@ ApplicationWindow {
     id: appWindow
     width: 1600
     height: 1000
+    x: (Screen.width - width) / 2
+    y: (Screen.height - height) / 2
     minimumWidth: 1200
     minimumHeight: 800
     visible: true
