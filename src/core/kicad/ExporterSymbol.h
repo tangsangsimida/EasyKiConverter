@@ -136,6 +136,27 @@ private:
     QString generatePath(const SymbolPath &path) const;
 
     /**
+     * @brief 生成 KiCad 子符号（用于多部分符号）
+     *
+     * @param symbolData 符号数据
+     * @param part 部分数据
+     * @param symbolName 符号名称
+     * @param libName 库名称
+     * @return QString 子符号文本
+     */
+    QString generateSubSymbol(const SymbolData &symbolData, const SymbolPart &part, const QString &symbolName, const QString &libName) const;
+
+    /**
+     * @brief 生成 KiCad 子符号（用于单部分符号）
+     *
+     * @param symbolData 符号数据
+     * @param symbolName 符号名称
+     * @param libName 库名称
+     * @return QString 子符号文本
+     */
+    QString generateSubSymbol(const SymbolData &symbolData, const QString &symbolName, const QString &libName) const;
+
+    /**
      * @brief 将像素转换为 mil
      *
      * @param px 像素值

@@ -506,6 +506,13 @@ QJsonObject SymbolData::toJson() const
     }
     json["paths"] = pathsArray;
 
+    // 添加多部分符号的部分
+    QJsonArray partsArray;
+    for (const SymbolPart &part : m_parts) {
+        partsArray.append(part.toJson());
+    }
+    json["parts"] = partsArray;
+
     return json;
 }
 
@@ -639,6 +646,20 @@ bool SymbolData::fromJson(const QJsonObject &json)
         }
     }
 
+    // 读取多部分符号的部分
+    if (json.contains("parts") && json["parts"].isArray()) {
+        QJsonArray partsArray = json["parts"].toArray();
+        m_parts.clear();
+        for (const QJsonValue &value : partsArray) {
+            if (value.isObject()) {
+                SymbolPart part;
+                if (part.fromJson(value.toObject())) {
+                    m_parts.append(part);
+                }
+            }
+        }
+    }
+
     return true;
 }
 
@@ -687,6 +708,160 @@ void SymbolData::clear()
     m_polylines.clear();
     m_polygons.clear();
     m_paths.clear();
+    m_parts.clear();
+}
+
+// ==================== SymbolPart ====================
+
+QJsonObject SymbolPart::toJson() const
+{
+    QJsonObject json;
+    json["unit_number"] = unitNumber;
+
+    QJsonArray pinsArray;
+    for (const SymbolPin &pin : pins) {
+        pinsArray.append(pin.toJson());
+    }
+    json["pins"] = pinsArray;
+
+    QJsonArray rectanglesArray;
+    for (const SymbolRectangle &rect : rectangles) {
+        rectanglesArray.append(rect.toJson());
+    }
+    json["rectangles"] = rectanglesArray;
+
+    QJsonArray circlesArray;
+    for (const SymbolCircle &circle : circles) {
+        circlesArray.append(circle.toJson());
+    }
+    json["circles"] = circlesArray;
+
+    QJsonArray arcsArray;
+    for (const SymbolArc &arc : arcs) {
+        arcsArray.append(arc.toJson());
+    }
+    json["arcs"] = arcsArray;
+
+    QJsonArray ellipsesArray;
+    for (const SymbolEllipse &ellipse : ellipses) {
+        ellipsesArray.append(ellipse.toJson());
+    }
+    json["ellipses"] = ellipsesArray;
+
+    QJsonArray polylinesArray;
+    for (const SymbolPolyline &polyline : polylines) {
+        polylinesArray.append(polyline.toJson());
+    }
+    json["polylines"] = polylinesArray;
+
+    QJsonArray polygonsArray;
+    for (const SymbolPolygon &polygon : polygons) {
+        polygonsArray.append(polygon.toJson());
+    }
+    json["polygons"] = polygonsArray;
+
+    QJsonArray pathsArray;
+    for (const SymbolPath &path : paths) {
+        pathsArray.append(path.toJson());
+    }
+    json["paths"] = pathsArray;
+
+    return json;
+}
+
+bool SymbolPart::fromJson(const QJsonObject &json)
+{
+    unitNumber = json["unit_number"].toInt(0);
+
+    if (json.contains("pins")) {
+        QJsonArray pinsArray = json["pins"].toArray();
+        pins.clear();
+        for (const QJsonValue &value : pinsArray) {
+            SymbolPin pin;
+            if (pin.fromJson(value.toObject())) {
+                pins.append(pin);
+            }
+        }
+    }
+
+    if (json.contains("rectangles")) {
+        QJsonArray rectanglesArray = json["rectangles"].toArray();
+        rectangles.clear();
+        for (const QJsonValue &value : rectanglesArray) {
+            SymbolRectangle rect;
+            if (rect.fromJson(value.toObject())) {
+                rectangles.append(rect);
+            }
+        }
+    }
+
+    if (json.contains("circles")) {
+        QJsonArray circlesArray = json["circles"].toArray();
+        circles.clear();
+        for (const QJsonValue &value : circlesArray) {
+            SymbolCircle circle;
+            if (circle.fromJson(value.toObject())) {
+                circles.append(circle);
+            }
+        }
+    }
+
+    if (json.contains("arcs")) {
+        QJsonArray arcsArray = json["arcs"].toArray();
+        arcs.clear();
+        for (const QJsonValue &value : arcsArray) {
+            SymbolArc arc;
+            if (arc.fromJson(value.toObject())) {
+                arcs.append(arc);
+            }
+        }
+    }
+
+    if (json.contains("ellipses")) {
+        QJsonArray ellipsesArray = json["ellipses"].toArray();
+        ellipses.clear();
+        for (const QJsonValue &value : ellipsesArray) {
+            SymbolEllipse ellipse;
+            if (ellipse.fromJson(value.toObject())) {
+                ellipses.append(ellipse);
+            }
+        }
+    }
+
+    if (json.contains("polylines")) {
+        QJsonArray polylinesArray = json["polylines"].toArray();
+        polylines.clear();
+        for (const QJsonValue &value : polylinesArray) {
+            SymbolPolyline polyline;
+            if (polyline.fromJson(value.toObject())) {
+                polylines.append(polyline);
+            }
+        }
+    }
+
+    if (json.contains("polygons")) {
+        QJsonArray polygonsArray = json["polygons"].toArray();
+        polygons.clear();
+        for (const QJsonValue &value : polygonsArray) {
+            SymbolPolygon polygon;
+            if (polygon.fromJson(value.toObject())) {
+                polygons.append(polygon);
+            }
+        }
+    }
+
+    if (json.contains("paths")) {
+        QJsonArray pathsArray = json["paths"].toArray();
+        paths.clear();
+        for (const QJsonValue &value : pathsArray) {
+            SymbolPath path;
+            if (path.fromJson(value.toObject())) {
+                paths.append(path);
+            }
+        }
+    }
+
+    return true;
 }
 
 } // namespace EasyKiConverter

@@ -292,6 +292,26 @@ struct SymbolPath {
     bool fromJson(const QJsonObject &json);
 };
 
+// ==================== 符号部分 ====================
+
+/**
+ * @brief 符号部分（用于多部分符号）
+ */
+struct SymbolPart {
+    int unitNumber;  // 部分编号（从 0 开始）
+    QList<SymbolPin> pins;
+    QList<SymbolRectangle> rectangles;
+    QList<SymbolCircle> circles;
+    QList<SymbolArc> arcs;
+    QList<SymbolEllipse> ellipses;
+    QList<SymbolPolyline> polylines;
+    QList<SymbolPolygon> polygons;
+    QList<SymbolPath> paths;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
 // ==================== 符号数据 ====================
 
 /**
@@ -312,6 +332,7 @@ public:
     SymbolBBox bbox() const { return m_bbox; }
     void setBbox(const SymbolBBox &bbox) { m_bbox = bbox; }
 
+    // 单部分符号的兼容接口（向后兼容）
     QList<SymbolPin> pins() const { return m_pins; }
     void setPins(const QList<SymbolPin> &pins) { m_pins = pins; }
     void addPin(const SymbolPin &pin) { m_pins.append(pin); }
@@ -344,6 +365,12 @@ public:
     void setPaths(const QList<SymbolPath> &paths) { m_paths = paths; }
     void addPath(const SymbolPath &path) { m_paths.append(path); }
 
+    // 多部分符号接口
+    QList<SymbolPart> parts() const { return m_parts; }
+    void setParts(const QList<SymbolPart> &parts) { m_parts = parts; }
+    void addPart(const SymbolPart &part) { m_parts.append(part); }
+    bool isMultiPart() const { return m_parts.size() > 1; }
+
     // JSON 序列化
     QJsonObject toJson() const;
     bool fromJson(const QJsonObject &json);
@@ -358,7 +385,7 @@ public:
 private:
     SymbolInfo m_info;
     SymbolBBox m_bbox;
-    QList<SymbolPin> m_pins;
+    QList<SymbolPin> m_pins;  // 单部分符号的引脚（向后兼容）
     QList<SymbolRectangle> m_rectangles;
     QList<SymbolCircle> m_circles;
     QList<SymbolArc> m_arcs;
@@ -366,6 +393,7 @@ private:
     QList<SymbolPolyline> m_polylines;
     QList<SymbolPolygon> m_polygons;
     QList<SymbolPath> m_paths;
+    QList<SymbolPart> m_parts;  // 多部分符号的部分列表
 };
 
 } // namespace EasyKiConverter

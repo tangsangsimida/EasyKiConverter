@@ -1,5 +1,5 @@
 #include "EasyedaApi.h"
-#include <QDebug>
+#include <qDebug>
 #include <QJsonDocument>
 
 namespace EasyKiConverter {
@@ -49,7 +49,7 @@ void EasyedaApi::fetchComponentInfo(const QString &lcscId)
     m_requestType = RequestType::ComponentInfo;
 
     QString apiUrl = buildComponentApiUrl(lcscId);
-    qDebug() << "Fetching component info from:" << apiUrl;
+    //qDebug() << "Fetching component info from:" << apiUrl;
 
     m_networkUtils->sendGetRequest(apiUrl, 30, 3);
 }
@@ -85,7 +85,7 @@ void EasyedaApi::fetchCadData(const QString &lcscId)
     m_requestType = RequestType::CadData;
 
     QString apiUrl = buildComponentApiUrl(lcscId);
-    qDebug() << "Fetching CAD data from:" << apiUrl;
+    // //qDebug() << "Fetching CAD data from:" << apiUrl;
 
     networkUtils->sendGetRequest(apiUrl, 30, 3);
 }
@@ -118,7 +118,7 @@ void EasyedaApi::fetch3DModelObj(const QString &uuid)
     networkUtils->setExpectBinaryData(true);
 
     QString apiUrl = build3DModelObjUrl(uuid);
-    qDebug() << "Fetching 3D model (OBJ) from:" << apiUrl;
+    //qDebug() << "Fetching 3D model (OBJ) from:" << apiUrl;
 
     networkUtils->sendGetRequest(apiUrl, 30, 3);
 }
@@ -151,7 +151,7 @@ void EasyedaApi::fetch3DModelStep(const QString &uuid)
     networkUtils->setExpectBinaryData(true);
 
     QString apiUrl = build3DModelStepUrl(uuid);
-    qDebug() << "Fetching 3D model (STEP) from:" << apiUrl;
+    //qDebug() << "Fetching 3D model (STEP) from:" << apiUrl;
 
     networkUtils->sendGetRequest(apiUrl, 30, 3);
 }
@@ -198,7 +198,7 @@ void EasyedaApi::handleRequestError(NetworkUtils *networkUtils, const QString &l
 
 void EasyedaApi::handleBinaryDataFetched(NetworkUtils *networkUtils, const QString &lcscId, const QByteArray &data)
 {
-    qDebug() << "Binary data fetched for:" << lcscId << "Size:" << data.size();
+    //qDebug() << "Binary data fetched for:" << lcscId << "Size:" << data.size();
     emit model3DFetched(lcscId, data);
     networkUtils->deleteLater();
 }
@@ -286,7 +286,7 @@ void EasyedaApi::resetRequestState()
 {
     // 重置 NetworkUtils 的期望数据类型为 JSON（非二进制）
     m_networkUtils->setExpectBinaryData(false);
-    qDebug() << "Request state reset - expecting JSON data";
+    //qDebug() << "Request state reset - expecting JSON data";
 }
 
 QString EasyedaApi::buildComponentApiUrl(const QString &lcscId) const

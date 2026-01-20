@@ -102,12 +102,14 @@ namespace EasyKiConverter
         
         // 提取现有符号
         QMap<QString, QString> existingSymbols; // 符号名 -> 符号内容
+        QSet<QString> subSymbolNames; // 属于分体式符号的子符号名称
         
         // 使用更可靠的方法来提取符号：手动解析括号匹配
         QStringList lines = existingContent.split('\n');
         int symbolStart = -1;
         QString currentSymbolName;
         int braceCount = 0;
+        int parentSymbolDepth = 0; // 父符号的深度（用于识别子符号）
         
         for (int i = 0; i < lines.size(); ++i)
         {
@@ -121,9 +123,22 @@ namespace EasyKiConverter
                 int nameEnd = line.indexOf("\"", nameStart);
                 if (nameEnd > nameStart)
                 {
-                    currentSymbolName = line.mid(nameStart, nameEnd - nameStart);
-                    symbolStart = i;
-                    braceCount = 1; // 计算括号数量
+                    QString symbolName = line.mid(nameStart, nameEnd - nameStart);
+                    
+                    if (symbolStart >= 0)
+                    {
+                        // 这是一个嵌套的符号定义（子符号）
+                        subSymbolNames.insert(symbolName);
+                        qDebug() << "Found sub-symbol:" << symbolName << "inside parent symbol";
+                    }
+                    else
+                    {
+                        // 这是一个顶层符号定义
+                        currentSymbolName = symbolName;
+                        symbolStart = i;
+                        braceCount = 1;
+                        parentSymbolDepth = 0;
+                    }
                 }
             }
             else if (symbolStart >= 0)
@@ -132,15 +147,24 @@ namespace EasyKiConverter
                 for (int j = 0; j < line.length(); ++j)
                 {
                     if (line[j] == '(')
+                    {
                         braceCount++;
+                        // 如果括号深度大于 1，说明我们在父符号内部
+                        if (braceCount > 1)
+                            parentSymbolDepth++;
+                    }
                     else if (line[j] == ')')
+                    {
                         braceCount--;
+                        if (parentSymbolDepth > 0)
+                            parentSymbolDepth--;
+                    }
                 }
                 
                 // 当括号数量归零时，符号定义结束
                 if (braceCount == 0)
                 {
-                    // 提取完整的符号内容
+                    // 只保存顶层符号，不保存子符号
                     QString symbolContent;
                     for (int k = symbolStart; k <= i; ++k)
                     {
@@ -152,9 +176,13 @@ namespace EasyKiConverter
                     // 重置状态
                     symbolStart = -1;
                     currentSymbolName.clear();
+                    parentSymbolDepth = 0;
                 }
             }
         }
+        
+        qDebug() << "Existing symbols count:" << existingSymbols.count();
+        qDebug() << "Sub-symbol names:" << subSymbolNames;
         
         qDebug() << "Existing symbols count:" << existingSymbols.count();
         
@@ -265,8 +293,10 @@ namespace EasyKiConverter
         QString content;
 
         // V6 格式 - 主符号定义（包含属性）
+        // 在更新模式下，保持符号名称不变；在新符号中，替换空格为下划线
         QString cleanSymbolName = symbolData.info().name;
-        cleanSymbolName.replace(" ", "_"); // 替换空格为下划线
+        // 注意：KiCad 6.x 允许符号名称中包含空格，所以不需要替换
+        // 保持原始名称以确保更新模式下能正确匹配和替换
         content += QString("  (symbol \"%1\"\n").arg(cleanSymbolName);
         content += "    (in_bom yes)\n";
         content += "    (on_board yes)\n";
@@ -381,90 +411,143 @@ namespace EasyKiConverter
             content += "    )\n";
         }
 
-        // 生成子符号（包含图形元素和引脚）
-        content += QString("    (symbol \"%1_0_1\"\n").arg(cleanSymbolName);
+        // 检查是否为多部分符号
+        bool isMultiPart = symbolData.isMultiPart();
+        qDebug() << "=== Symbol Type Check ===";
+        qDebug() << "Symbol name:" << cleanSymbolName;
+        qDebug() << "Parts count:" << symbolData.parts().size();
+        qDebug() << "Is multi-part:" << isMultiPart;
+        
+        if (isMultiPart) {
+            qDebug() << "Exporting multi-part symbol with" << symbolData.parts().size() << "parts";
+            
+            // 为每个部分生成子符号
+            for (const SymbolPart &part : symbolData.parts()) {
+                qDebug() << "Generating sub-symbol" << part.unitNumber << "with" << part.pins.size() << "pins";
+                content += generateSubSymbol(symbolData, part, cleanSymbolName, libName);
+            }
+        } else {
+            // 单部分符号：直接在主符号中包含图形元素，不使用子符号
+            qDebug() << "Exporting single-part symbol";
+            
+            // 生成图形元素
+            for (const SymbolRectangle &rect : symbolData.rectangles()) {
+                content += generateRectangle(rect);
+            }
+            for (const SymbolCircle &circle : symbolData.circles()) {
+                content += generateCircle(circle);
+            }
+            for (const SymbolArc &arc : symbolData.arcs()) {
+                content += generateArc(arc);
+            }
+            for (const SymbolEllipse &ellipse : symbolData.ellipses()) {
+                content += generateEllipse(ellipse);
+            }
+            for (const SymbolPolygon &polygon : symbolData.polygons()) {
+                content += generatePolygon(polygon);
+            }
+            for (const SymbolPolyline &polyline : symbolData.polylines()) {
+                content += generatePolyline(polyline);
+            }
+            for (const SymbolPath &path : symbolData.paths()) {
+                content += generatePath(path);
+            }
+            
+            // 生成引脚
+                    for (const SymbolPin &pin : symbolData.pins()) {
+                        content += generatePin(pin, symbolData.bbox());
+                    }        }
 
-        // 生成图形元素（矩形、圆等）
-        qDebug() << "=== Symbol Export Debug ===";
-        qDebug() << "Symbol name:" << symbolData.info().name;
-        qDebug() << "Rectangle count:" << symbolData.rectangles().count();
-        const auto rectangles = symbolData.rectangles();
-        if (!rectangles.isEmpty())
-        {
-            qDebug() << "First rectangle - width:" << rectangles.first().width
-                     << "height:" << rectangles.first().height;
-        }
-        qDebug() << "BBox - x:" << m_currentBBox.x << "y:" << m_currentBBox.y;
-        qDebug() << "Pin count:" << pins.count();
-        qDebug() << "yHigh:" << yHigh << "yLow:" << yLow;
+        content += "  )\n";   // 结束主符号
 
-        // 只使用原始矩形数据（如果有）
-        for (const SymbolRectangle &rect : rectangles)
-        {
-            qDebug() << "Rectangle - posX:" << rect.posX << "posY:" << rect.posY
-                     << "width:" << rect.width << "height:" << rect.height;
+        qDebug() << "=== Generated Symbol Content ===";
+        qDebug() << "Content length:" << content.length();
+        qDebug() << "Content contains sub-symbol 0:" << content.contains("MCIMX6Y2CVM08AB_0_1");
+        qDebug() << "Content contains sub-symbol 1:" << content.contains("MCIMX6Y2CVM08AB_1_1");
+        qDebug() << "Content preview (first 1000 chars):" << content.left(1000);
+        qDebug() << "Content preview (last 1000 chars):" << content.right(1000);
+
+        return content;
+    }
+
+    QString ExporterSymbol::generateSubSymbol(const SymbolData &symbolData, const QString &symbolName, const QString &libName) const
+    {
+        QString content;
+        
+        // 单部分符号：使用 _0_1 作为子符号名称
+        content += QString("    (symbol \"%1_0_1\"\n").arg(symbolName);
+
+        // 生成图形元素（直接生成，不添加任何属性）
+        for (const SymbolRectangle &rect : symbolData.rectangles()) {
             content += generateRectangle(rect);
         }
-
-        const auto circles = symbolData.circles();
-        qDebug() << "Circle count:" << circles.count();
-        // 生成圆
-        for (const SymbolCircle &circle : circles)
-        {
+        for (const SymbolCircle &circle : symbolData.circles()) {
             content += generateCircle(circle);
         }
-
-        const auto arcs = symbolData.arcs();
-        qDebug() << "Arc count:" << arcs.count();
-        // 生成圆弧
-        for (const SymbolArc &arc : arcs)
-        {
+        for (const SymbolArc &arc : symbolData.arcs()) {
             content += generateArc(arc);
         }
-
-        const auto ellipses = symbolData.ellipses();
-        qDebug() << "Ellipse count:" << ellipses.count();
-        // 生成椭圆
-        for (const SymbolEllipse &ellipse : ellipses)
-        {
+        for (const SymbolEllipse &ellipse : symbolData.ellipses()) {
             content += generateEllipse(ellipse);
         }
-
-        const auto polygons = symbolData.polygons();
-        qDebug() << "Polygon count:" << polygons.count();
-        // 生成多边形
-        for (const SymbolPolygon &polygon : polygons)
-        {
+        for (const SymbolPolygon &polygon : symbolData.polygons()) {
             content += generatePolygon(polygon);
         }
-
-        const auto polylines = symbolData.polylines();
-        qDebug() << "Polyline count:" << polylines.count();
-        // 生成多段线
-        for (const SymbolPolyline &polyline : polylines)
-        {
+        for (const SymbolPolyline &polyline : symbolData.polylines()) {
             content += generatePolyline(polyline);
         }
-
-        const auto paths = symbolData.paths();
-        qDebug() << "Path count:" << paths.count();
-        // 生成路径
-        for (const SymbolPath &path : paths)
-        {
+        for (const SymbolPath &path : symbolData.paths()) {
             content += generatePath(path);
         }
 
-        qDebug() << "Generating" << pins.count() << "pins...";
-
         // 生成引脚
-        for (const SymbolPin &pin : symbolData.pins())
-        {
+        for (const SymbolPin &pin : symbolData.pins()) {
             content += generatePin(pin, symbolData.bbox());
         }
 
         content += "    )\n"; // 结束子符号
-        content += "  )\n";   // 结束主符号
+        
+        return content;
+    }
 
+    QString ExporterSymbol::generateSubSymbol(const SymbolData &symbolData, const SymbolPart &part, const QString &symbolName, const QString &libName) const
+    {
+        QString content;
+        
+        // 多部分符号：使用 _{unitNumber}_1 作为子符号名称
+        // 注意：Unit 编号必须从 1 开始，而不是从 0 开始
+        content += QString("    (symbol \"%1_%2_1\"\n").arg(symbolName).arg(part.unitNumber + 1);
+
+        // 生成图形元素（直接生成，不添加任何属性）
+        for (const SymbolRectangle &rect : part.rectangles) {
+            content += generateRectangle(rect);
+        }
+        for (const SymbolCircle &circle : part.circles) {
+            content += generateCircle(circle);
+        }
+        for (const SymbolArc &arc : part.arcs) {
+            content += generateArc(arc);
+        }
+        for (const SymbolEllipse &ellipse : part.ellipses) {
+            content += generateEllipse(ellipse);
+        }
+        for (const SymbolPolygon &polygon : part.polygons) {
+            content += generatePolygon(polygon);
+        }
+        for (const SymbolPolyline &polyline : part.polylines) {
+            content += generatePolyline(polyline);
+        }
+        for (const SymbolPath &path : part.paths) {
+            content += generatePath(path);
+        }
+
+        // 生成引脚
+        for (const SymbolPin &pin : part.pins) {
+            content += generatePin(pin, symbolData.bbox());
+        }
+
+        content += "    )\n"; // 结束子符号
+        
         return content;
     }
 
@@ -607,6 +690,20 @@ namespace EasyKiConverter
         double kicadOrientation = (180.0 + orientation);
         while (kicadOrientation >= 360.0)
             kicadOrientation -= 360.0;
+
+        // 规范化为 KiCad 要求的标准角度：0, 90, 180, 270
+        // 找到最接近的标准角度
+        double standardAngles[] = {0.0, 90.0, 180.0, 270.0};
+        double closestAngle = 0.0;
+        double minDiff = 360.0;
+        for (double angle : standardAngles) {
+            double diff = qAbs(kicadOrientation - angle);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestAngle = angle;
+            }
+        }
+        kicadOrientation = closestAngle;
 
         content += QString("    (pin %1 %2\n").arg(kicadPinType, kicadPinStyle);
         content += QString("      (at %1 %2 %3)\n").arg(x, 0, 'f', 2).arg(y, 0, 'f', 2).arg(kicadOrientation, 0, 'f', 0);

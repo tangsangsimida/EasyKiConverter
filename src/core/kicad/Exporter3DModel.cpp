@@ -88,9 +88,9 @@ bool Exporter3DModel::exportToWrl(const Model3DData &modelData, const QString &s
     // 生成 WRL 文件内容
     QString content = generateWrlContent(modelData, objData);
 
-    qDebug() << "Generated WRL content size:" << content.size();
-    qDebug() << "WRL content preview (first 500 chars):" << content.left(500);
-    qDebug() << "WRL content preview (last 500 chars):" << content.right(500);
+    // qDebug() << "Generated WRL content size:" << content.size();
+    // qDebug() << "WRL content preview (first 500 chars):" << content.left(500);
+    // qDebug() << "WRL content preview (last 500 chars):" << content.right(500);
 
     out << content;
     file.flush(); // 确保数据被写入
@@ -178,9 +178,9 @@ QString Exporter3DModel::generateWrlContent(const Model3DData &modelData, const 
             QJsonArray shapePoints = shape["points"].toArray();
             QJsonArray coordIndex = shape["coordIndex"].toArray();
 
-            qDebug() << "Processing shape - materialId:" << materialId
-                     << "points:" << shapePoints.size()
-                     << "coordIndex:" << coordIndex.size();
+            // qDebug() << "Processing shape - materialId:" << materialId
+            //          << "points:" << shapePoints.size()
+            //          << "coordIndex:" << coordIndex.size();
 
             // 关键步骤：在倒数第二个位置插入最后一个点的副本（与 Python 版本保持一致）
             if (shapePoints.size() > 0) {
