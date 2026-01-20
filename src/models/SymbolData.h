@@ -48,9 +48,44 @@ struct SymbolInfo {
     QString prefix;
     QString package;
     QString manufacturer;
+    QString description;
     QString datasheet;
     QString lcscId;
     QString jlcId;
+    
+    // EasyEDA API 原始字段
+    QString uuid;
+    QString title;
+    QString docType;
+    QString type;
+    QString thumb;
+    QString datastrid;
+    bool jlcOnSale;
+    bool writable;
+    bool isFavorite;
+    bool verify;
+    bool smt;
+    
+    // 时间戳
+    qint64 updateTime;
+    QString updatedAt;
+    
+    // 编辑器信息
+    QString editorVersion;
+    
+    // 项目信息
+    QString puuid;
+    qint64 utime;
+    bool importFlag;
+    bool hasIdFlag;
+    
+    // 附加参数
+    QString timeStamp;
+    QString subpartNo;
+    QString supplierPart;
+    QString supplier;
+    QString manufacturerPart;
+    QString jlcpcbPartClass;
 
     QJsonObject toJson() const;
     bool fromJson(const QJsonObject &json);

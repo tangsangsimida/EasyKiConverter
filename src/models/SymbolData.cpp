@@ -200,9 +200,45 @@ QJsonObject SymbolInfo::toJson() const
     json["prefix"] = prefix;
     json["package"] = package;
     json["manufacturer"] = manufacturer;
+    json["description"] = description;
     json["datasheet"] = datasheet;
     json["lcsc_id"] = lcscId;
     json["jlc_id"] = jlcId;
+    
+    // EasyEDA API 原始字段
+    json["uuid"] = uuid;
+    json["title"] = title;
+    json["doc_type"] = docType;
+    json["type"] = type;
+    json["thumb"] = thumb;
+    json["datastrid"] = datastrid;
+    json["jlc_on_sale"] = jlcOnSale;
+    json["writable"] = writable;
+    json["is_favorite"] = isFavorite;
+    json["verify"] = verify;
+    json["smt"] = smt;
+    
+    // 时间戳
+    json["update_time"] = updateTime;
+    json["updated_at"] = updatedAt;
+    
+    // 编辑器信息
+    json["editor_version"] = editorVersion;
+    
+    // 项目信息
+    json["puuid"] = puuid;
+    json["utime"] = utime;
+    json["import_flag"] = importFlag;
+    json["has_id_flag"] = hasIdFlag;
+    
+    // 附加参数
+    json["time_stamp"] = timeStamp;
+    json["subpart_no"] = subpartNo;
+    json["supplier_part"] = supplierPart;
+    json["supplier"] = supplier;
+    json["manufacturer_part"] = manufacturerPart;
+    json["jlcpcb_part_class"] = jlcpcbPartClass;
+    
     return json;
 }
 
@@ -212,9 +248,45 @@ bool SymbolInfo::fromJson(const QJsonObject &json)
     prefix = json["prefix"].toString();
     package = json["package"].toString();
     manufacturer = json["manufacturer"].toString();
+    description = json["description"].toString();
     datasheet = json["datasheet"].toString();
     lcscId = json["lcsc_id"].toString();
     jlcId = json["jlc_id"].toString();
+    
+    // EasyEDA API 原始字段
+    uuid = json["uuid"].toString();
+    title = json["title"].toString();
+    docType = json["doc_type"].toString();
+    type = json["type"].toString();
+    thumb = json["thumb"].toString();
+    datastrid = json["datastrid"].toString();
+    jlcOnSale = json["jlc_on_sale"].toBool(false);
+    writable = json["writable"].toBool(false);
+    isFavorite = json["is_favorite"].toBool(false);
+    verify = json["verify"].toBool(false);
+    smt = json["smt"].toBool(false);
+    
+    // 时间戳
+    updateTime = json["update_time"].toVariant().toLongLong();
+    updatedAt = json["updated_at"].toString();
+    
+    // 编辑器信息
+    editorVersion = json["editor_version"].toString();
+    
+    // 项目信息
+    puuid = json["puuid"].toString();
+    utime = json["utime"].toVariant().toLongLong();
+    importFlag = json["import_flag"].toBool(false);
+    hasIdFlag = json["has_id_flag"].toBool(false);
+    
+    // 附加参数
+    timeStamp = json["time_stamp"].toString();
+    subpartNo = json["subpart_no"].toString();
+    supplierPart = json["supplier_part"].toString();
+    supplier = json["supplier"].toString();
+    manufacturerPart = json["manufacturer_part"].toString();
+    jlcpcbPartClass = json["jlcpcb_part_class"].toString();
+    
     return true;
 }
 

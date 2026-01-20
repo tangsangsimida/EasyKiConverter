@@ -28,6 +28,7 @@ public:
      * @param exportSymbol 是否导出符号
      * @param exportFootprint 是否导出封装
      * @param exportModel3D 是否导出3D模型
+     * @param debugMode 是否启用调试模式
      * @param parent 父对象
      */
     explicit WriteWorker(
@@ -37,6 +38,7 @@ public:
         bool exportSymbol,
         bool exportFootprint,
         bool exportModel3D,
+        bool debugMode,
         QObject *parent = nullptr);
 
     /**
@@ -85,6 +87,13 @@ private:
      */
     bool createOutputDirectory(const QString &path);
 
+    /**
+     * @brief 导出调试数据
+     * @param status 导出状态
+     * @return bool 是否成功
+     */
+    bool exportDebugData(ComponentExportStatus &status);
+
 private:
     ComponentExportStatus m_status;
     QString m_outputPath;
@@ -92,6 +101,7 @@ private:
     bool m_exportSymbol;
     bool m_exportFootprint;
     bool m_exportModel3D;
+    bool m_debugMode;
     
     ExporterSymbol m_symbolExporter;
     ExporterFootprint m_footprintExporter;

@@ -26,9 +26,10 @@ namespace EasyKiConverter
         bool exportModel3D;
         bool overwriteExistingFiles;
         bool updateMode; // 更新模式：替换相同符号，保留不同符号
+        bool debugMode;  // 调试模式：导出调试数据到 debug 文件夹
 
         ExportOptions()
-            : exportSymbol(true), exportFootprint(true), exportModel3D(true), overwriteExistingFiles(false), updateMode(false)
+            : exportSymbol(true), exportFootprint(true), exportModel3D(true), overwriteExistingFiles(false), updateMode(false), debugMode(false)
         {
         }
     };

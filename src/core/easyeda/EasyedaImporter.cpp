@@ -17,8 +17,29 @@ namespace EasyKiConverter
     }
 
     QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject &cadData)
+
     {
+
         auto symbolData = QSharedPointer<SymbolData>::create();
+
+    
+
+        // 导入顶层字段（result 对象的根字段）
+
+        SymbolInfo info;        info.uuid = cadData["uuid"].toString();
+        info.title = cadData["title"].toString();
+        info.description = cadData["description"].toString();
+        info.docType = QString::number(cadData["docType"].toInt());
+        info.type = QString::number(cadData["type"].toInt());
+        info.thumb = cadData["thumb"].toString();
+        info.datastrid = cadData["datastrid"].toString();
+        info.jlcOnSale = cadData["jlcOnSale"].toBool(false);
+        info.writable = cadData["writable"].toBool(false);
+        info.isFavorite = cadData["isFavorite"].toBool(false);
+        info.verify = cadData["verify"].toBool(false);
+        info.smt = cadData["SMT"].toBool(false);
+        info.updateTime = cadData["updateTime"].toVariant().toLongLong();
+        info.updatedAt = cadData["updated_at"].toString();
 
         // 导入符号信息（从 dataStr.head.c_para 中获取）
         if (cadData.contains("dataStr"))
@@ -27,29 +48,45 @@ namespace EasyKiConverter
             if (dataStr.contains("head"))
             {
                 QJsonObject head = dataStr["head"].toObject();
+                
+                // 编辑器信息
+                info.editorVersion = head["editorVersion"].toString();
+                
+                // 项目信息
+                info.puuid = head["puuid"].toString();
+                info.utime = head["utime"].toVariant().toLongLong();
+                info.importFlag = head["importFlag"].toBool(false);
+                info.hasIdFlag = head["hasIdFlag"].toBool(false);
+                
                 if (head.contains("c_para"))
                 {
                     QJsonObject c_para = head["c_para"].toObject();
-                    SymbolInfo info;
                     info.name = c_para["name"].toString();
                     info.prefix = c_para["pre"].toString();
                     info.package = c_para["package"].toString();
                     info.manufacturer = c_para["Manufacturer"].toString();
                     info.lcscId = c_para["Supplier Part"].toString();
-                    info.jlcId = c_para["BOM_JLCPCB Part Class"].toString();
-
-                    // 从 lcsc 字段获取数据手册 URL
-                    if (cadData.contains("lcsc"))
-                    {
-                        QJsonObject lcsc = cadData["lcsc"].toObject();
-                        info.datasheet = lcsc["url"].toString();
-                    }
-
-                    symbolData->setInfo(info);
-                    // qDebug() << "Symbol info imported - Name:" << info.name << "Prefix:" << info.prefix;
+                    info.jlcId = c_para["JLCPCB Part Class"].toString();
+                    
+                    // 附加参数
+                    info.timeStamp = c_para["timeStamp"].toString();
+                    info.subpartNo = c_para["subpart_no"].toString();
+                    info.supplierPart = c_para["Supplier Part"].toString();
+                    info.supplier = c_para["Supplier"].toString();
+                    info.manufacturerPart = c_para["Manufacturer Part"].toString();
+                    info.jlcpcbPartClass = c_para["JLCPCB Part Class"].toString();
                 }
             }
+
+            // 从 lcsc 字段获取数据手册 URL
+            if (cadData.contains("lcsc"))
+            {
+                QJsonObject lcsc = cadData["lcsc"].toObject();
+                info.datasheet = lcsc["url"].toString();
+            }
         }
+
+        symbolData->setInfo(info);
 
         // 导入边界框
         if (cadData.contains("dataStr"))
@@ -89,7 +126,15 @@ namespace EasyKiConverter
             if (cadData.contains("subparts") && cadData["subparts"].isArray())
             {
                 QJsonArray subparts = cadData["subparts"].toArray();
-                qDebug() << "Found" << subparts.size() << "subparts in symbol";
+                
+                // 如果 subparts 数组为空，则按单部分符号处理
+                if (subparts.isEmpty())
+                {
+                    qDebug() << "Subparts array is empty, treating as single-part symbol";
+                }
+                else
+                {
+                    qDebug() << "Found" << subparts.size() << "subparts in symbol";
 
                 // 导入每个子部分
                 for (int i = 0; i < subparts.size(); ++i)
@@ -174,77 +219,111 @@ namespace EasyKiConverter
                         qDebug() << "Imported subpart" << i << "with" << part.pins.size() << "pins," << part.rectangles.size() << "rectangles";
                     }
                 }
-            }
-            else
-            {
-                // 单部分符号：导入主符号的图形元素
-                if (dataStr.contains("shape"))
+                
+                // 如果 subparts 不为空，则跳过单部分符号的处理
+                if (!subparts.isEmpty())
                 {
-                    QJsonArray shapes = dataStr["shape"].toArray();
+                    qDebug() << "Multi-part symbol processed, skipping single-part symbol processing";
+                    return symbolData;
+                }
+            }
+            
+            // 单部分符号：导入主符号的图形元素
+            if (dataStr.contains("shape"))
+            {
+                QJsonArray shapes = dataStr["shape"].toArray();
+                qDebug() << "=== Symbol Shape Parsing ===";
+                qDebug() << "Total shapes in dataStr.shape:" << shapes.size();
 
-                    for (const QJsonValue &shapeValue : shapes)
+                for (const QJsonValue &shapeValue : shapes)
+                {
+                    QString shapeString = shapeValue.toString();
+                    QStringList parts = shapeString.split("~");
+
+                    if (parts.isEmpty())
+                        continue;
+
+                    QString designator = parts[0];
+                    qDebug() << "Processing shape with designator:" << designator;
+
+                    if (designator == "P")
                     {
-                        QString shapeString = shapeValue.toString();
-                        QStringList parts = shapeString.split("~");
-
-                        if (parts.isEmpty())
-                            continue;
-
-                        QString designator = parts[0];
-
-                        if (designator == "P")
-                        {
-                            // 导入引脚
-                            SymbolPin pin = importPinData(shapeString);
-                            symbolData->addPin(pin);
-                        }
-                        else if (designator == "R")
-                        {
-                            // 导入矩形
-                            SymbolRectangle rectangle = importRectangleData(shapeString);
-                            symbolData->addRectangle(rectangle);
-                        }
-                        else if (designator == "C")
-                        {
-                            // 导入圆
-                            SymbolCircle circle = importCircleData(shapeString);
-                            symbolData->addCircle(circle);
-                        }
-                        else if (designator == "A")
-                        {
-                            // 导入圆弧
-                            SymbolArc arc = importArcData(shapeString);
-                            symbolData->addArc(arc);
-                        }
-                        else if (designator == "PL")
-                        {
-                            // 导入多段线
-                            SymbolPolyline polyline = importPolylineData(shapeString);
-                            symbolData->addPolyline(polyline);
-                        }
-                        else if (designator == "PG")
+                        qDebug() << "  -> Processing pin data...";
+                        // 导入引脚
+                        SymbolPin pin = importPinData(shapeString);
+                        qDebug() << "  -> Pin parsed, name:" << pin.name.text;
+                        symbolData->addPin(pin);
+                        qDebug() << "  -> Added pin:" << pin.name.text;
+                    }
+                    else if (designator == "R")
+                    {
+                        // 导入矩形
+                        SymbolRectangle rectangle = importRectangleData(shapeString);
+                        symbolData->addRectangle(rectangle);
+                        qDebug() << "  -> Added rectangle";
+                    }
+                    else if (designator == "C")
+                    {
+                        // 导入圆
+                        SymbolCircle circle = importCircleData(shapeString);
+                        symbolData->addCircle(circle);
+                        qDebug() << "  -> Added circle";
+                    }
+                    else if (designator == "A")
+                    {
+                        // 导入圆弧
+                        SymbolArc arc = importArcData(shapeString);
+                        symbolData->addArc(arc);
+                        qDebug() << "  -> Added arc";
+                    }
+                    else if (designator == "PL")
+                    {
+                        // 导入多段线
+                        SymbolPolyline polyline = importPolylineData(shapeString);
+                        symbolData->addPolyline(polyline);
+                        qDebug() << "  -> Added polyline";
+                    }
+                    else if (designator == "PG")
                         {
                             // 导入多边形
                             SymbolPolygon polygon = importPolygonData(shapeString);
                             symbolData->addPolygon(polygon);
+                            qDebug() << "  -> Added polygon";
                         }
                         else if (designator == "PT")
                         {
                             // 导入路径
                             SymbolPath path = importPathData(shapeString);
                             symbolData->addPath(path);
+                            qDebug() << "  -> Added path";
                         }
                         else if (designator == "T")
                         {
                             // 文本元素的处理逻辑 - 目前只是简单记录
+                            qDebug() << "  -> Skipped text element";
                         }
                         else if (designator == "E")
                         {
                             // 导入椭圆
                             SymbolEllipse ellipse = importEllipseData(shapeString);
                             symbolData->addEllipse(ellipse);
+                            qDebug() << "  -> Added ellipse";
+                        }
+                        else
+                        {
+                            qDebug() << "  -> Unknown designator:" << designator;
                         }
                     }
+                    qDebug() << "Symbol shape parsing completed";
+                    qDebug() << "Final counts - Pins:" << symbolData->pins().size() 
+                             << "Rectangles:" << symbolData->rectangles().size()
+                             << "Circles:" << symbolData->circles().size();
+                    qDebug() << "============================";
+                }
+                else
+                {
+                    qDebug() << "WARNING: dataStr does not contain 'shape' field!";
+                    qDebug() << "Available keys in dataStr:" << dataStr.keys();
                 }
             }
         }
@@ -260,20 +339,37 @@ namespace EasyKiConverter
         if (cadData.contains("packageDetail"))
         {
             QJsonObject packageDetail = cadData["packageDetail"].toObject();
-            // qDebug() << "packageDetail found, importing footprint data";
+            
+            // packageDetail 顶层字段
+            FootprintInfo info;
+            info.uuid = packageDetail["uuid"].toString();
+            info.docType = QString::number(packageDetail["docType"].toInt());
+            info.datastrid = packageDetail["datastrid"].toString();
+            info.writable = packageDetail["writable"].toBool(false);
+            info.updateTime = packageDetail["updateTime"].toVariant().toLongLong();
 
             if (packageDetail.contains("dataStr"))
             {
                 QJsonObject dataStr = packageDetail["dataStr"].toObject();
 
-                // 从 dataStr.head.c_para 中获取封装名称
+                // 从 dataStr.head 中获取封装信息
                 if (dataStr.contains("head"))
                 {
                     QJsonObject head = dataStr["head"].toObject();
+                    
+                    // 编辑器信息
+                    info.editorVersion = head["editorVersion"].toString();
+                    
+                    // 项目信息
+                    info.puuid = head["puuid"].toString();
+                    info.utime = head["utime"].toVariant().toLongLong();
+                    info.importFlag = head["importFlag"].toBool(false);
+                    info.hasIdFlag = head["hasIdFlag"].toBool(false);
+                    info.newgId = head["newgId"].toBool(false);
+                    
                     if (head.contains("c_para"))
                     {
                         QJsonObject c_para = head["c_para"].toObject();
-                        FootprintInfo info;
                         info.name = c_para["package"].toString();
 
                         // 判断是否为 SMD
@@ -285,10 +381,41 @@ namespace EasyKiConverter
                         {
                             info.model3DName = c_para["3DModel"].toString();
                         }
-
-                        footprintData->setInfo(info);
-
-                        // qDebug() << "Footprint info imported - Name:" << info.name << "Type:" << info.type << "3DModel:" << info.model3DName;
+                        
+                        // 附加参数
+                        info.link = c_para["link"].toString();
+                        info.contributor = c_para["Contributor"].toString();
+                        info.uuid3d = head["uuid_3d"].toString();
+                    }
+                    
+                    // 保存画布信息
+                    if (dataStr.contains("canvas"))
+                    {
+                        info.canvas = dataStr["canvas"].toString();
+                    }
+                    
+                    // 保存层定义
+                    if (dataStr.contains("layers"))
+                    {
+                        QJsonArray layersArray = dataStr["layers"].toArray();
+                        QStringList layers;
+                        for (const QJsonValue &layerValue : layersArray)
+                        {
+                            layers.append(layerValue.toString());
+                        }
+                        info.layers = layers.join("\n");
+                    }
+                    
+                    // 保存对象可见性
+                    if (dataStr.contains("objects"))
+                    {
+                        QJsonArray objectsArray = dataStr["objects"].toArray();
+                        QStringList objects;
+                        for (const QJsonValue &objectValue : objectsArray)
+                        {
+                            objects.append(objectValue.toString());
+                        }
+                        info.objects = objects.join("\n");
                     }
                 }
 
@@ -453,48 +580,22 @@ namespace EasyKiConverter
                     }
                     if (hasHole)
                     {
-                        FootprintInfo info = footprintData->info();
                         info.type = "tht";
-                        footprintData->setInfo(info);
                         // qDebug() << "Corrected type to THT (through-hole) because pads have holes";
                     }
-
-                    // qDebug() << "Footprint imported - Pads:" << footprintData->pads().count()
-                    // << "Tracks:" << footprintData->tracks().count()
-                    // << "Holes:" << footprintData->holes().count()
-                    // << "Circles:" << footprintData->circles().count()
-                    // << "SolidRegions:" << footprintData->solidRegions().count()
-                    // << "Outlines:" << footprintData->outlines().count()
-                    // << "Layers:" << footprintData->layers().count()
-                    // << "Has 3D model:" << (footprintData->model3D().uuid().isEmpty() == false);
                 }
+
+                footprintData->setInfo(info);
             }
-        }
-        else
-        {
-            qWarning() << "packageDetail NOT found in CAD data";
         }
 
         return footprintData;
     }
+
     SymbolPin EasyedaImporter::importPinData(const QString &pinData)
     {
         SymbolPin pin;
         QList<QStringList> segments = parsePinDataString(pinData);
-
-        // 调试日志：输出分割结果
-        qDebug() << "=== Pin Parsing Debug ===";
-        qDebug() << "Total segments:" << segments.size();
-        if (segments.size() > 5)
-        {
-            qDebug() << "Segment 5 size:" << segments[5].size();
-            qDebug() << "Segment 5 content:" << segments[5];
-            if (segments[5].size() >= 5)
-            {
-                qDebug() << "Segment 5[4] (BGA Pin Number):" << segments[5][4];
-            }
-        }
-        qDebug() << "========================";
 
         if (segments.size() >= 7)
         {
@@ -948,27 +1049,12 @@ namespace EasyKiConverter
             segments.append(pinData.mid(start));
         }
 
-        // 调试日志：输出所有段
-        qDebug() << "=== parsePinDataString Debug ===";
-        qDebug() << "Total segments by ^^:" << segments.size();
-        for (int i = 0; i < segments.size(); ++i)
-        {
-            qDebug() << "Segment" << i << "(raw):" << segments[i];
-        }
-
         // 对每个段按 ~ 分割
         for (const QString &segment : segments)
         {
             QStringList subSegments = segment.split("~", Qt::KeepEmptyParts);
             result.append(subSegments);
         }
-
-        qDebug() << "Total segments after ~ split:" << result.size();
-        for (int i = 0; i < result.size(); ++i)
-        {
-            qDebug() << "Segment" << i << "(split by ~):" << result[i];
-        }
-        qDebug() << "================================";
 
         return result;
     }

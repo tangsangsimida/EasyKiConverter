@@ -45,7 +45,7 @@ namespace EasyKiConverter
     void setUsePipelineMode(bool usePipeline);
 
 public slots:
-    Q_INVOKABLE void startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles, bool updateMode);
+    Q_INVOKABLE void startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles, bool updateMode, bool debugMode);
     Q_INVOKABLE void cancelExport();
 
     signals:
@@ -71,8 +71,8 @@ public slots:
     private:
         ExportService *m_exportService;
         ComponentService *m_componentService;
-        int m_progress;
         QString m_status;
+        int m_progress;
         bool m_isExporting;
         int m_successCount;
         int m_failureCount;
@@ -81,10 +81,10 @@ public slots:
         QList<ComponentData> m_collectedData;
         ExportOptions m_exportOptions;
         int m_fetchProgress;
-            int m_processProgress;
-            int m_writeProgress;
-            bool m_usePipelineMode;
-            QVariantList m_resultsList;    };
+        int m_processProgress;
+        int m_writeProgress;
+        bool m_usePipelineMode;
+        QVariantList m_resultsList;    };
 } // namespace EasyKiConverter
 
 #endif // EXPORTPROGRESSVIEWMODEL_H

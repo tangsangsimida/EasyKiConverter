@@ -30,7 +30,7 @@ ProcessWorker::~ProcessWorker()
 
 void ProcessWorker::run()
 {
-    qDebug() << "ProcessWorker started for component:" << m_status.componentId;
+    m_status.addDebugLog(QString("ProcessWorker started for component: %1").arg(m_status.componentId));
 
     // 在工作线程中创建 QNetworkAccessManager
     m_networkAccessManager = new QNetworkAccessManager();
@@ -43,6 +43,7 @@ void ProcessWorker::run()
     if (!parseComponentInfo(m_status)) {
         m_status.processSuccess = false;
         m_status.processMessage = "Failed to parse component info";
+        m_status.addDebugLog("ERROR: Failed to parse component info");
         emit processCompleted(m_status);
         cleanup();
         return;
@@ -52,6 +53,7 @@ void ProcessWorker::run()
     if (!parseCadData(m_status)) {
         m_status.processSuccess = false;
         m_status.processMessage = "Failed to parse CAD data";
+        m_status.addDebugLog("ERROR: Failed to parse CAD data");
         emit processCompleted(m_status);
         cleanup();
         return;
@@ -59,13 +61,14 @@ void ProcessWorker::run()
 
     // 下载3D模型数据（如果需要）
     if (m_status.need3DModel && m_status.footprintData && !m_status.footprintData->model3D().uuid().isEmpty()) {
+        m_status.addDebugLog(QString("Fetching 3D model data, UUID: %1").arg(m_status.footprintData->model3D().uuid()));
         if (!fetch3DModelData(m_status)) {
-            qWarning() << "Failed to fetch 3D model data for:" << m_status.componentId;
+            m_status.addDebugLog(QString("WARNING: Failed to fetch 3D model data for: %1").arg(m_status.componentId));
             // 3D模型下载失败不影响整体流程
         } else {
             // 解析3D模型数据
             if (!parse3DModelData(m_status)) {
-                qWarning() << "Failed to parse 3D model data for:" << m_status.componentId;
+                m_status.addDebugLog(QString("WARNING: Failed to parse 3D model data for: %1").arg(m_status.componentId));
                 // 3D模型解析失败不影响整体流程
             }
         }
@@ -73,7 +76,7 @@ void ProcessWorker::run()
 
     m_status.processSuccess = true;
     m_status.processMessage = "Process completed successfully";
-    qDebug() << "ProcessWorker completed successfully for component:" << m_status.componentId;
+    m_status.addDebugLog(QString("ProcessWorker completed successfully for component: %1").arg(m_status.componentId));
 
     emit processCompleted(m_status);
     cleanup();
@@ -90,7 +93,7 @@ bool ProcessWorker::parseComponentInfo(ComponentExportStatus &status)
     QJsonParseError parseError;
     QJsonDocument doc = QJsonDocument::fromJson(status.componentInfoRaw, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
-        qWarning() << "Failed to parse component info JSON:" << parseError.errorString();
+        status.addDebugLog(QString("ERROR: Failed to parse component info JSON: %1").arg(parseError.errorString()));
         return false;
     }
 
@@ -114,17 +117,17 @@ bool ProcessWorker::parseCadData(ComponentExportStatus &status)
     QJsonParseError parseError;
     QJsonDocument doc = QJsonDocument::fromJson(status.cadDataRaw, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
-        qWarning() << "Failed to parse CAD data JSON:" << parseError.errorString();
+        status.addDebugLog(QString("ERROR: Failed to parse CAD data JSON: %1").arg(parseError.errorString()));
         return false;
     }
 
     QJsonObject rootObj = doc.object();
-    
+
     // API 返回的数据在 result 字段中，需要提取出来
     QJsonObject obj;
     if (rootObj.contains("result") && rootObj["result"].isObject()) {
         obj = rootObj["result"].toObject();
-        qDebug() << "Extracted CAD data from 'result' field";
+        status.addDebugLog("Extracted CAD data from 'result' field");
     } else {
         // 如果没有 result 字段，直接使用根对象
         obj = rootObj;
@@ -145,56 +148,58 @@ bool ProcessWorker::parseCadData(ComponentExportStatus &status)
 bool ProcessWorker::fetch3DModelData(ComponentExportStatus &status)
 {
     if (!status.footprintData || status.footprintData->model3D().uuid().isEmpty()) {
-        qDebug() << "No 3D model UUID available";
+        status.addDebugLog("No 3D model UUID available");
         return false;
     }
 
     QString uuid = status.footprintData->model3D().uuid();
-    qDebug() << "Fetching 3D model for UUID:" << uuid;
+    status.addDebugLog(QString("Fetching 3D model for UUID: %1").arg(uuid));
 
     // 下载OBJ格式的3D模型
     QString objUrl = QString("https://modules.easyeda.com/3dmodel/%1").arg(uuid);
+    status.addDebugLog(QString("Downloading 3D model from: %1").arg(objUrl));
     QByteArray objData = httpGet(objUrl, 60000); // 60秒超时
 
     if (objData.isEmpty()) {
-        qWarning() << "Failed to download 3D model from:" << objUrl;
+        status.addDebugLog(QString("ERROR: Failed to download 3D model from: %1").arg(objUrl));
         return false;
     }
 
-    qDebug() << "Downloaded 3D model data size:" << objData.size();
+    status.addDebugLog(QString("Downloaded 3D model data size: %1 bytes").arg(objData.size()));
 
     // 检查是否是ZIP格式（ZIP文件以PK开头）
     QByteArray actualObjData = objData;
     if (objData.size() >= 2 && objData[0] == 0x50 && objData[1] == 0x4B) {
-        qDebug() << "3D model data is ZIP compressed, decompressing...";
+        status.addDebugLog("3D model data is ZIP compressed, decompressing...");
         actualObjData = decompressZip(objData);
-        qDebug() << "Decompressed 3D model data size:" << actualObjData.size();
+        status.addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
     }
 
     // 检查是否是gzip格式
     if (actualObjData.size() >= 2 && (unsigned char)actualObjData[0] == 0x1f && (unsigned char)actualObjData[1] == 0x8b) {
-        qDebug() << "3D model data is gzip compressed, decompressing...";
+        status.addDebugLog("3D model data is gzip compressed, decompressing...");
         actualObjData = decompressGzip(actualObjData);
-        qDebug() << "Decompressed 3D model data size:" << actualObjData.size();
+        status.addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
     }
 
     if (actualObjData.isEmpty()) {
-        qWarning() << "Failed to decompress 3D model data";
+        status.addDebugLog("ERROR: Failed to decompress 3D model data");
         return false;
     }
 
     status.model3DObjRaw = actualObjData;
-    qDebug() << "3D model (OBJ) data fetched successfully for:" << status.componentId;
+    status.addDebugLog(QString("3D model (OBJ) data fetched successfully for: %1").arg(status.componentId));
 
     // 下载STEP格式的3D模型
     QString stepUrl = QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(uuid);
+    status.addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));
     QByteArray stepData = httpGet(stepUrl, 60000); // 60秒超时
 
     if (!stepData.isEmpty() && stepData.size() > 100) { // STEP文件通常大于100字节
         status.model3DStepRaw = stepData;
-        qDebug() << "3D model (STEP) data fetched successfully for:" << status.componentId << "Size:" << stepData.size();
+        status.addDebugLog(QString("3D model (STEP) data fetched successfully for: %1, Size: %2 bytes").arg(status.componentId).arg(stepData.size()));
     } else {
-        qWarning() << "Failed to download STEP model or STEP data too small for:" << status.componentId;
+        status.addDebugLog(QString("WARNING: Failed to download STEP model or STEP data too small for: %1").arg(status.componentId));
     }
 
     return true;
@@ -213,7 +218,7 @@ bool ProcessWorker::parse3DModelData(ComponentExportStatus &status)
     // 从 footprintData 的 model3D 中获取 UUID
     if (status.footprintData && !status.footprintData->model3D().uuid().isEmpty()) {
         status.model3DData->setUuid(status.footprintData->model3D().uuid());
-        qDebug() << "Using 3D model UUID from footprintData:" << status.model3DData->uuid();
+        status.addDebugLog(QString("Using 3D model UUID from footprintData: %1").arg(status.model3DData->uuid()));
     }
 
     return true;

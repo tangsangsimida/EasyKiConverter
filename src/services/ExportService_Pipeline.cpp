@@ -280,6 +280,7 @@ void ExportServicePipeline::startWriteStage()
                     m_options.exportSymbol,
                     m_options.exportFootprint,
                     m_options.exportModel3D,
+                    m_options.debugMode,
                     nullptr);
 
                 connect(worker, &WriteWorker::writeCompleted,

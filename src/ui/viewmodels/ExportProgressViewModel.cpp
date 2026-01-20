@@ -9,11 +9,11 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService *exportService, C
     : QObject(parent)
     , m_exportService(exportService)
     , m_componentService(componentService)
+    , m_status("Ready")
     , m_progress(0)
     , m_isExporting(false)
     , m_successCount(0)
     , m_failureCount(0)
-    , m_status("Ready")
     , m_fetchedCount(0)
     , m_fetchProgress(0)
     , m_processProgress(0)
@@ -51,10 +51,10 @@ ExportProgressViewModel::~ExportProgressViewModel()
 {
 }
 
-void ExportProgressViewModel::startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles, bool updateMode)
+void ExportProgressViewModel::startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles, bool updateMode, bool debugMode)
 {
     qDebug() << "Starting export for" << componentIds.size() << "components";
-    qDebug() << "Options - Path:" << outputPath << "Lib:" << libName << "Symbol:" << exportSymbol << "Footprint:" << exportFootprint << "3D:" << exportModel3D << "Overwrite:" << overwriteExistingFiles << "Update:" << updateMode;
+    qDebug() << "Options - Path:" << outputPath << "Lib:" << libName << "Symbol:" << exportSymbol << "Footprint:" << exportFootprint << "3D:" << exportModel3D << "Overwrite:" << overwriteExistingFiles << "Update:" << updateMode << "Debug:" << debugMode;
     qDebug() << "Using pipeline mode:" << m_usePipelineMode;
     
     if (m_isExporting) {
@@ -87,6 +87,7 @@ void ExportProgressViewModel::startExport(const QStringList &componentIds, const
     m_exportOptions.exportModel3D = exportModel3D;
     m_exportOptions.overwriteExistingFiles = overwriteExistingFiles;
     m_exportOptions.updateMode = updateMode;
+    m_exportOptions.debugMode = debugMode;
     
     emit isExportingChanged();
     emit progressChanged();

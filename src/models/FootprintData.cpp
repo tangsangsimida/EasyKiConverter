@@ -11,6 +11,38 @@ QJsonObject FootprintInfo::toJson() const
     json["name"] = name;
     json["type"] = type;
     json["model_3d_name"] = model3DName;
+    
+    // EasyEDA API 原始字段
+    json["uuid"] = uuid;
+    json["doc_type"] = docType;
+    json["datastrid"] = datastrid;
+    json["writable"] = writable;
+    json["update_time"] = updateTime;
+    
+    // 编辑器信息
+    json["editor_version"] = editorVersion;
+    
+    // 项目信息
+    json["puuid"] = puuid;
+    json["utime"] = utime;
+    json["import_flag"] = importFlag;
+    json["has_id_flag"] = hasIdFlag;
+    json["newg_id"] = newgId;
+    
+    // 附加参数
+    json["link"] = link;
+    json["contributor"] = contributor;
+    json["uuid_3d"] = uuid3d;
+    
+    // 画布信息
+    json["canvas"] = canvas;
+    
+    // 层定义
+    json["layers"] = layers;
+    
+    // 对象可见性
+    json["objects"] = objects;
+    
     return json;
 }
 
@@ -19,6 +51,38 @@ bool FootprintInfo::fromJson(const QJsonObject &json)
     name = json["name"].toString();
     type = json["type"].toString();
     model3DName = json["model_3d_name"].toString();
+    
+    // EasyEDA API 原始字段
+    uuid = json["uuid"].toString();
+    docType = json["doc_type"].toString();
+    datastrid = json["datastrid"].toString();
+    writable = json["writable"].toBool(false);
+    updateTime = json["update_time"].toVariant().toLongLong();
+    
+    // 编辑器信息
+    editorVersion = json["editor_version"].toString();
+    
+    // 项目信息
+    puuid = json["puuid"].toString();
+    utime = json["utime"].toVariant().toLongLong();
+    importFlag = json["import_flag"].toBool(false);
+    hasIdFlag = json["has_id_flag"].toBool(false);
+    newgId = json["newg_id"].toBool(false);
+    
+    // 附加参数
+    link = json["link"].toString();
+    contributor = json["contributor"].toString();
+    uuid3d = json["uuid_3d"].toString();
+    
+    // 画布信息
+    canvas = json["canvas"].toString();
+    
+    // 层定义
+    layers = json["layers"].toString();
+    
+    // 对象可见性
+    objects = json["objects"].toString();
+    
     return true;
 }
 

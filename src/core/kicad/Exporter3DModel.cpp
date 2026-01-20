@@ -45,7 +45,7 @@ void Exporter3DModel::downloadObjModel(const QString &uuid, const QString &saveP
     m_savePath = savePath;
 
     QString url = getModelUrl(uuid, ModelFormat::OBJ);
-    qDebug() << "Downloading 3D model (OBJ) from:" << url;
+    // qDebug() << "Downloading 3D model (OBJ) from:" << url;
 
     m_networkUtils->sendGetRequest(url, 60, 3);
 }
@@ -63,7 +63,7 @@ void Exporter3DModel::downloadStepModel(const QString &uuid, const QString &save
     m_savePath = savePath;
 
     QString url = getModelUrl(uuid, ModelFormat::STEP);
-    qDebug() << "Downloading 3D model (STEP) from:" << url;
+    // qDebug() << "Downloading 3D model (STEP) from:" << url;
 
     m_networkUtils->sendGetRequest(url, 60, 3);
 }
@@ -82,8 +82,8 @@ bool Exporter3DModel::exportToWrl(const Model3DData &modelData, const QString &s
     // 获取 OBJ 数据
     QByteArray objData = modelData.rawObj().toUtf8();
 
-    qDebug() << "OBJ data size:" << objData.size();
-    qDebug() << "OBJ data preview:" << QString::fromUtf8(objData.left(200));
+    // qDebug() << "OBJ data size:" << objData.size();
+    // qDebug() << "OBJ data preview:" << QString::fromUtf8(objData.left(200));
 
     // 生成 WRL 文件内容
     QString content = generateWrlContent(modelData, objData);
@@ -96,11 +96,11 @@ bool Exporter3DModel::exportToWrl(const Model3DData &modelData, const QString &s
     file.flush(); // 确保数据被写入
     file.close();
 
-    qDebug() << "3D model exported to:" << savePath;
+    // qDebug() << "3D model exported to:" << savePath;
     
     // 验证文件大小
     QFileInfo fileInfo(savePath);
-    qDebug() << "Exported file size:" << fileInfo.size() << "bytes";
+    // qDebug() << "Exported file size:" << fileInfo.size() << "bytes";
     
     return true;
 }
@@ -117,7 +117,7 @@ bool Exporter3DModel::exportToStep(const Model3DData &modelData, const QString &
     file.write(modelData.step());
     file.close();
 
-    qDebug() << "3D model STEP exported to:" << savePath;
+    // qDebug() << "3D model STEP exported to:" << savePath;
     return true;
 }
 
@@ -160,10 +160,10 @@ QString Exporter3DModel::generateWrlContent(const Model3DData &modelData, const 
     QJsonObject materials = parsedData["materials"].toObject();
     QJsonArray shapes = parsedData["shapes"].toArray();
 
-    qDebug() << "Generating WRL content - vertices:" << vertices.size()
-             << "faces:" << faces.size()
-             << "materials:" << materials.size()
-             << "shapes:" << shapes.size();
+    // qDebug() << "Generating WRL content - vertices:" << vertices.size()
+    //          << "faces:" << faces.size()
+    //          << "materials:" << materials.size()
+    //          << "shapes:" << shapes.size();
 
     // WRL 文件头部
     content += "#VRML V2.0 utf8\n";
@@ -185,7 +185,7 @@ QString Exporter3DModel::generateWrlContent(const Model3DData &modelData, const 
             // 关键步骤：在倒数第二个位置插入最后一个点的副本（与 Python 版本保持一致）
             if (shapePoints.size() > 0) {
                 shapePoints.insert(shapePoints.size() - 1, shapePoints.last());
-                qDebug() << "Inserted duplicate of last point, new size:" << shapePoints.size();
+                // qDebug() << "Inserted duplicate of last point, new size:" << shapePoints.size();
             }
 
             // 获取材质信息
@@ -243,7 +243,7 @@ QString Exporter3DModel::generateWrlContent(const Model3DData &modelData, const 
             content += "}\n";
         }
     } else {
-        qDebug() << "No shapes found, using simple Transform mode";
+        // qDebug() << "No shapes found, using simple Transform mode";
         // 如果没有形状数据，使用简单的 Transform 包装
         // 获取平移和旋转
         Model3DBase translation = modelData.translation();
@@ -323,16 +323,16 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray &objData)
     QString objString = QString::fromUtf8(objData);
     QStringList lines = objString.split('\n');
 
-    qDebug() << "=== OBJ Data Debug ===";
-    qDebug() << "OBJ data size:" << objData.size();
-    qDebug() << "OBJ string size:" << objString.size();
-    qDebug() << "Total lines:" << lines.size();
-    qDebug() << "First 500 chars:" << objString.left(500);
-    qDebug() << "First 20 lines:";
-    for (int i = 0; i < qMin(20, lines.size()); ++i) {
-        qDebug() << "  Line" << i << ":" << lines[i].left(100);
-    }
-    qDebug() << "===================";
+    // qDebug() << "=== OBJ Data Debug ===";
+    // qDebug() << "OBJ data size:" << objData.size();
+    // qDebug() << "OBJ string size:" << objString.size();
+    // qDebug() << "Total lines:" << lines.size();
+    // qDebug() << "First 500 chars:" << objString.left(500);
+    // qDebug() << "First 20 lines:";
+    // for (int i = 0; i < qMin(20, lines.size()); ++i) {
+    //     qDebug() << "  Line" << i << ":" << lines[i].left(100);
+    // }
+    // qDebug() << "===================";
 
     // 第一遍：提取材质信息
     QString currentMaterialId;
@@ -397,7 +397,7 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray &objData)
         materials[currentMaterialId] = currentMaterial;
     }
 
-    qDebug() << "Found" << materials.size() << "materials";
+    // qDebug() << "Found" << materials.size() << "materials";
 
     // 第二遍：提取顶点数据（存储为字符串，用于 WRL 输出）
     QStringList vertexStrings; // 存储顶点坐标字符串
@@ -432,7 +432,7 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray &objData)
         }
     }
 
-    qDebug() << "Found" << vertices.size() << "vertices";
+    // qDebug() << "Found" << vertices.size() << "vertices";
 
     // 第三遍：按材质分割形状并提取面数据
     QString currentShapeMaterial = "default";
@@ -503,7 +503,7 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray &objData)
         shapes.append(shape);
     }
 
-    qDebug() << "Found" << shapes.size() << "shapes";
+    // qDebug() << "Found" << shapes.size() << "shapes";
 
     result["vertices"] = vertices;
     result["faces"] = faces;

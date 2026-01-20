@@ -21,7 +21,10 @@ struct ComponentExportStatus
     
     // 原始数据（抓取阶段）
     QByteArray componentInfoRaw;  // 组件信息原始数据
+    QByteArray cinfoJsonRaw;      // cinfo JSON 原始数据
     QByteArray cadDataRaw;        // CAD数据原始数据
+    QByteArray cadJsonRaw;        // cad JSON 原始数据
+    QByteArray advJsonRaw;        // adv JSON 原始数据
     QByteArray model3DObjRaw;     // 3D模型OBJ原始数据
     QByteArray model3DStepRaw;    // 3D模型STEP原始数据
     
@@ -42,7 +45,10 @@ struct ComponentExportStatus
     // 写入阶段状态
     bool writeSuccess = false;
     QString writeMessage;
-    
+
+    // 调试日志（仅在调试模式下使用）
+    QStringList debugLog;
+
     // 是否需要导出3D模型
     bool need3DModel = false;
     
@@ -65,6 +71,15 @@ struct ComponentExportStatus
         if (!processSuccess) return "Process";
         if (!writeSuccess) return "Write";
         return "";
+    }
+
+    /**
+     * @brief 添加调试日志
+     * @param message 日志消息
+     */
+    void addDebugLog(const QString &message)
+    {
+        debugLog.append(message);
     }
 };
 

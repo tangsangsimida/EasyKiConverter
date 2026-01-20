@@ -148,6 +148,20 @@ namespace EasyKiConverter
          */
         void setDarkMode(bool enabled);
 
+        /**
+         * @brief 是否启用调试模式
+         *
+         * @return bool 是否启用调试模式
+         */
+        bool getDebugMode() const;
+
+        /**
+         * @brief 设置是否启用调试模式
+         *
+         * @param enabled 是否启用
+         */
+        void setDebugMode(bool enabled);
+
     signals:
         /**
          * @brief 配置改变信号

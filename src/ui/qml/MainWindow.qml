@@ -642,6 +642,36 @@ Item {
                         }
                     }
 
+                    // 调试模式选项
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        CheckBox {
+                            id: debugModeCheckbox
+                            text: "调试模式 (导出debug文件夹)"
+                            checked: exportSettingsController.debugMode
+                            onCheckedChanged: exportSettingsController.setDebugMode(checked)
+                            font.pixelSize: 16
+
+                            contentItem: Text {
+                                text: parent.text
+                                font: parent.font
+                                color: AppStyle.colors.textPrimary
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: parent.indicator.width + parent.spacing
+                            }
+                        }
+
+                        Text {
+                            text: "启用后将在输出目录创建debug文件夹，包含API原始数据和解析后的调试信息"
+                            font.pixelSize: 12
+                            color: AppStyle.colors.textSecondary
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                        }
+                    }
+
                     // 导出模式选项
                     ColumnLayout {
                         Layout.fillWidth: true
@@ -1496,7 +1526,8 @@ Item {
                         exportSettingsController.exportFootprint,
                         exportSettingsController.exportModel3D,
                         exportSettingsController.overwriteExistingFiles,
-                        exportSettingsController.exportMode === 1  // exportMode === 1 表示更新模式
+                        exportSettingsController.exportMode === 1,  // exportMode === 1 表示更新模式
+                        exportSettingsController.debugMode  // 调试模式
                     )
                 }
             }

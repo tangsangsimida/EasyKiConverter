@@ -33,8 +33,6 @@ FetchWorker::~FetchWorker()
 
 void FetchWorker::run()
 {
-    qDebug() << "FetchWorker started for component:" << m_componentId;
-
     // 在工作线程中创建自己的 QNetworkAccessManager
     m_ownNetworkManager = new QNetworkAccessManager();
     m_ownNetworkManager->moveToThread(QThread::currentThread());
@@ -43,21 +41,28 @@ void FetchWorker::run()
     status.componentId = m_componentId;
     status.need3DModel = m_need3DModel;
 
+    status.addDebugLog(QString("FetchWorker started for component: %1").arg(m_componentId));
+
     // 使用同步方式获取数据（避免QEventLoop死锁）
     bool hasError = false;
     QString errorMessage;
 
     // 1. 获取组件信息（包含CAD数据）
     QString componentInfoUrl = QString("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(m_componentId);
+    status.addDebugLog(QString("Fetching component info from: %1").arg(componentInfoUrl));
+
     QByteArray componentInfoData = httpGet(componentInfoUrl, 30000);
-    
+
     if (componentInfoData.isEmpty()) {
         hasError = true;
         errorMessage = "Failed to fetch component info";
+        status.addDebugLog(QString("ERROR: %1").arg(errorMessage));
     } else {
         status.componentInfoRaw = componentInfoData;
-        status.cadDataRaw = componentInfoData; // CAD数据和组件信息在同一个响应中
-        qDebug() << "Component info (including CAD) fetched for:" << m_componentId << "Size:" << componentInfoData.size();
+        status.cinfoJsonRaw = componentInfoData;  // cinfo JSON 原始数据
+        status.cadDataRaw = componentInfoData;    // CAD数据和组件信息在同一个响应中
+        status.cadJsonRaw = componentInfoData;    // cad JSON 原始数据
+        status.addDebugLog(QString("Component info (including CAD) fetched for: %1, Size: %2 bytes").arg(m_componentId).arg(componentInfoData.size()));
     }
 
     // 清理网络管理器
@@ -70,11 +75,11 @@ void FetchWorker::run()
     if (hasError) {
         status.fetchSuccess = false;
         status.fetchMessage = errorMessage;
-        qDebug() << "FetchWorker failed for component:" << m_componentId << "Error:" << errorMessage;
+        status.addDebugLog(QString("FetchWorker failed for component: %1, Error: %2").arg(m_componentId).arg(errorMessage));
     } else {
         status.fetchSuccess = true;
         status.fetchMessage = "Fetch completed successfully";
-        qDebug() << "FetchWorker completed successfully for component:" << m_componentId;
+        status.addDebugLog(QString("FetchWorker completed successfully for component: %1").arg(m_componentId));
     }
 
     emit fetchCompleted(status);

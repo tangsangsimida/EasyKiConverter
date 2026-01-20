@@ -16,6 +16,37 @@ struct FootprintInfo {
     QString name;
     QString type;
     QString model3DName;
+    
+    // EasyEDA API 原始字段
+    QString uuid;
+    QString docType;
+    QString datastrid;
+    bool writable;
+    qint64 updateTime;
+    
+    // 编辑器信息
+    QString editorVersion;
+    
+    // 项目信息
+    QString puuid;
+    qint64 utime;
+    bool importFlag;
+    bool hasIdFlag;
+    bool newgId;
+    
+    // 附加参数
+    QString link;
+    QString contributor;
+    QString uuid3d;
+    
+    // 画布信息
+    QString canvas;
+    
+    // 层定义
+    QString layers;
+    
+    // 对象可见性
+    QString objects;
 
     QJsonObject toJson() const;
     bool fromJson(const QJsonObject &json);
