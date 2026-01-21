@@ -250,27 +250,27 @@ namespace EasyKiConverter
 
         // 当前处理的元件ID
         QString m_currentComponentId;
-        
+
         // 待处理的组件数据（用于等待 3D 模型数据）
         ComponentData m_pendingComponentData;
-        
+
         // 待处理的 3D 模型 UUID
         QString m_pendingModelUuid;
-        
+
         // 是否已经下载了 WRL 格式
         bool m_hasDownloadedWrl;
-        
+
         // 并行数据收集状态
         QMap<QString, ComponentData> m_parallelCollectedData; // 已收集的数据
-        QMap<QString, bool> m_parallelFetchingStatus; // 元件ID -> 是否正在获取
-        QStringList m_parallelPendingComponents; // 待获取的元件列表
-        int m_parallelTotalCount; // 总元件数
-        int m_parallelCompletedCount; // 已完成数
-        bool m_parallelFetching; // 是否正在并行获取
-        
+        QMap<QString, bool> m_parallelFetchingStatus;         // 元件ID -> 是否正在获取
+        QStringList m_parallelPendingComponents;              // 待获取的元件列表
+        int m_parallelTotalCount;                             // 总元件数
+        int m_parallelCompletedCount;                         // 已完成数
+        bool m_parallelFetching;                              // 是否正在并行获取
+
         // 输出路径
         QString m_outputPath;
-        
+
         // 是否获取3D模型
         bool m_fetch3DModel;
     };

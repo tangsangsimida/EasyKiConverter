@@ -359,81 +359,81 @@ namespace EasyKiConverter
         content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
         content += "\t)\n";
 
-                // 生成所有图形元素（tracks + rectangles）
-                for (const FootprintTrack &track : footprintData.tracks())
-                {
-                    content += generateTrack(track, bboxX, bboxY);
-                }
-                for (const FootprintRectangle &rect : footprintData.rectangles())
-                {
-                    content += generateRectangle(rect, bboxX, bboxY);
-                }
-        
-                // Generate pads
-                for (const FootprintPad &pad : footprintData.pads())
-                {
-                    content += generatePad(pad, bboxX, bboxY);
-                }
-        
-                // Generate holes
-                for (const FootprintHole &hole : footprintData.holes())
-                {
-                    content += generateHole(hole, bboxX, bboxY);
-                }
-        
-                // Generate circles (所有层，包括丝印层)
-                for (const FootprintCircle &circle : footprintData.circles())
-                {
-                    content += generateCircle(circle, bboxX, bboxY);
-                }
-        
-                // Generate arcs (所有层，包括丝印层)
-                for (const FootprintArc &arc : footprintData.arcs())
-                {
-                    content += generateArc(arc, bboxX, bboxY);
-                }
-        
-                // Generate texts
-                for (const FootprintText &text : footprintData.texts())
-                {
-                    content += generateText(text, bboxX, bboxY);
-                }
-        
-                // Generate solid regions (包括 courtyard 层)
-                bool hasCourtYard = false;
-                for (const FootprintSolidRegion &region : footprintData.solidRegions())
-                {
-                    QString regionContent = generateSolidRegion(region, bboxX, bboxY);
-                    content += regionContent;
-                    if (region.layerId == 99)
-                    {
-                        hasCourtYard = true;
-                    }
-                }
-        
-                // 如果没有找到 courtyard，使用 BBox 自动生成
-                if (!hasCourtYard && footprintData.bbox().width > 0 && footprintData.bbox().height > 0)
-                {
-                    content += generateCourtyardFromBBox(footprintData.bbox(), bboxX, bboxY);
-                    qWarning() << "Warning: No courtyard found, generated from BBox";
-                }
-        
-                // Generate 3D model references (both WRL and STEP)
-                if (!footprintData.model3D().name().isEmpty())
-                {
-                    // Add WRL model
-                    if (!model3DWrlPath.isEmpty())
-                    {
-                        content += generateModel3D(footprintData.model3D(), bboxX, bboxY, model3DWrlPath, footprintData.info().type);
-                    }
-                    // Add STEP model
-                    if (!model3DStepPath.isEmpty())
-                    {
-                        content += generateModel3D(footprintData.model3D(), bboxX, bboxY, model3DStepPath, footprintData.info().type);
-                    }
-                }
-        
-                content += ")\n";
+        // 生成所有图形元素（tracks + rectangles）
+        for (const FootprintTrack &track : footprintData.tracks())
+        {
+            content += generateTrack(track, bboxX, bboxY);
+        }
+        for (const FootprintRectangle &rect : footprintData.rectangles())
+        {
+            content += generateRectangle(rect, bboxX, bboxY);
+        }
+
+        // Generate pads
+        for (const FootprintPad &pad : footprintData.pads())
+        {
+            content += generatePad(pad, bboxX, bboxY);
+        }
+
+        // Generate holes
+        for (const FootprintHole &hole : footprintData.holes())
+        {
+            content += generateHole(hole, bboxX, bboxY);
+        }
+
+        // Generate circles (所有层，包括丝印层)
+        for (const FootprintCircle &circle : footprintData.circles())
+        {
+            content += generateCircle(circle, bboxX, bboxY);
+        }
+
+        // Generate arcs (所有层，包括丝印层)
+        for (const FootprintArc &arc : footprintData.arcs())
+        {
+            content += generateArc(arc, bboxX, bboxY);
+        }
+
+        // Generate texts
+        for (const FootprintText &text : footprintData.texts())
+        {
+            content += generateText(text, bboxX, bboxY);
+        }
+
+        // Generate solid regions (包括 courtyard 层)
+        bool hasCourtYard = false;
+        for (const FootprintSolidRegion &region : footprintData.solidRegions())
+        {
+            QString regionContent = generateSolidRegion(region, bboxX, bboxY);
+            content += regionContent;
+            if (region.layerId == 99)
+            {
+                hasCourtYard = true;
+            }
+        }
+
+        // 如果没有找到 courtyard，使用 BBox 自动生成
+        if (!hasCourtYard && footprintData.bbox().width > 0 && footprintData.bbox().height > 0)
+        {
+            content += generateCourtyardFromBBox(footprintData.bbox(), bboxX, bboxY);
+            qWarning() << "Warning: No courtyard found, generated from BBox";
+        }
+
+        // Generate 3D model references (both WRL and STEP)
+        if (!footprintData.model3D().name().isEmpty())
+        {
+            // Add WRL model
+            if (!model3DWrlPath.isEmpty())
+            {
+                content += generateModel3D(footprintData.model3D(), bboxX, bboxY, model3DWrlPath, footprintData.info().type);
+            }
+            // Add STEP model
+            if (!model3DStepPath.isEmpty())
+            {
+                content += generateModel3D(footprintData.model3D(), bboxX, bboxY, model3DStepPath, footprintData.info().type);
+            }
+        }
+
+        content += ")\n";
         return content;
     }
 

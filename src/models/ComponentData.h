@@ -9,70 +9,71 @@
 #include "FootprintData.h"
 #include "Model3DData.h"
 
-namespace EasyKiConverter {
-
-/**
- * @brief 元件数据类
- *
- * 包含元件的所有信息，包括符号、封装和 3D 模型
- */
-class ComponentData
+namespace EasyKiConverter
 {
-public:
-    ComponentData();
-    ~ComponentData() = default;
 
-    // Getter 和 Setter 方法
-    QString lcscId() const { return m_lcscId; }
-    void setLcscId(const QString &id) { m_lcscId = id; }
+    /**
+     * @brief 元件数据类
+     *
+     * 包含元件的所有信息，包括符号、封装和 3D 模型
+     */
+    class ComponentData
+    {
+    public:
+        ComponentData();
+        ~ComponentData() = default;
 
-    QString name() const { return m_name; }
-    void setName(const QString &name) { m_name = name; }
+        // Getter 和 Setter 方法
+        QString lcscId() const { return m_lcscId; }
+        void setLcscId(const QString &id) { m_lcscId = id; }
 
-    QString prefix() const { return m_prefix; }
-    void setPrefix(const QString &prefix) { m_prefix = prefix; }
+        QString name() const { return m_name; }
+        void setName(const QString &name) { m_name = name; }
 
-    QString package() const { return m_package; }
-    void setPackage(const QString &package) { m_package = package; }
+        QString prefix() const { return m_prefix; }
+        void setPrefix(const QString &prefix) { m_prefix = prefix; }
 
-    QString manufacturer() const { return m_manufacturer; }
-    void setManufacturer(const QString &manufacturer) { m_manufacturer = manufacturer; }
+        QString package() const { return m_package; }
+        void setPackage(const QString &package) { m_package = package; }
 
-    QString datasheet() const { return m_datasheet; }
-    void setDatasheet(const QString &datasheet) { m_datasheet = datasheet; }
+        QString manufacturer() const { return m_manufacturer; }
+        void setManufacturer(const QString &manufacturer) { m_manufacturer = manufacturer; }
 
-    QSharedPointer<SymbolData> symbolData() const { return m_symbolData; }
-    void setSymbolData(const QSharedPointer<SymbolData> &data) { m_symbolData = data; }
+        QString datasheet() const { return m_datasheet; }
+        void setDatasheet(const QString &datasheet) { m_datasheet = datasheet; }
 
-    QSharedPointer<FootprintData> footprintData() const { return m_footprintData; }
-    void setFootprintData(const QSharedPointer<FootprintData> &data) { m_footprintData = data; }
+        QSharedPointer<SymbolData> symbolData() const { return m_symbolData; }
+        void setSymbolData(const QSharedPointer<SymbolData> &data) { m_symbolData = data; }
 
-    QSharedPointer<Model3DData> model3DData() const { return m_model3DData; }
-    void setModel3DData(const QSharedPointer<Model3DData> &data) { m_model3DData = data; }
+        QSharedPointer<FootprintData> footprintData() const { return m_footprintData; }
+        void setFootprintData(const QSharedPointer<FootprintData> &data) { m_footprintData = data; }
 
-    // JSON 序列化
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject &json);
+        QSharedPointer<Model3DData> model3DData() const { return m_model3DData; }
+        void setModel3DData(const QSharedPointer<Model3DData> &data) { m_model3DData = data; }
 
-    // 数据验证
-    bool isValid() const;
-    QString validate() const;
+        // JSON 序列化
+        QJsonObject toJson() const;
+        bool fromJson(const QJsonObject &json);
 
-    // 清空数据
-    void clear();
+        // 数据验证
+        bool isValid() const;
+        QString validate() const;
 
-private:
-    QString m_lcscId;              // LCSC 元件编号
-    QString m_name;                // 元件名称
-    QString m_prefix;              // 元件前缀
-    QString m_package;             // 封装名称
-    QString m_manufacturer;        // 制造商
-    QString m_datasheet;           // 数据手册链接
+        // 清空数据
+        void clear();
 
-    QSharedPointer<SymbolData> m_symbolData;    // 符号数据
-    QSharedPointer<FootprintData> m_footprintData; // 封装数据
-    QSharedPointer<Model3DData> m_model3DData;   // 3D 模型数据
-};
+    private:
+        QString m_lcscId;       // LCSC 元件编号
+        QString m_name;         // 元件名称
+        QString m_prefix;       // 元件前缀
+        QString m_package;      // 封装名称
+        QString m_manufacturer; // 制造商
+        QString m_datasheet;    // 数据手册链接
+
+        QSharedPointer<SymbolData> m_symbolData;       // 符号数据
+        QSharedPointer<FootprintData> m_footprintData; // 封装数据
+        QSharedPointer<Model3DData> m_model3DData;     // 3D 模型数据
+    };
 
 } // namespace EasyKiConverter
 

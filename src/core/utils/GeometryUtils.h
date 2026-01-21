@@ -255,25 +255,25 @@ namespace EasyKiConverter
         static double pxToMmFloor(double px);
 
         /**
-             * @brief 检查字符串是否为纯 ASCII
-             *
-             * @param str 待检查的字符串
-             * @return bool 是否为纯 ASCII
-             */
-            static bool isASCII(const QString &str);
-        
-            /**
-             * @brief 计算两个向量之间的角度（弧度）
-             *
-             * @param x1 第一个向量的 X 分量
-             * @param y1 第一个向量的 Y 分量
-             * @param x2 第二个向量的 X 分量
-             * @param y2 第二个向量的 Y 分量
-             * @return double 角度（弧度）
-             */
-            static double getAngle(double x1, double y1, double x2, double y2);
-        };
-        
-        } // namespace EasyKiConverter
-        
-        #endif // GEOMETRYUTILS_H
+         * @brief 检查字符串是否为纯 ASCII
+         *
+         * @param str 待检查的字符串
+         * @return bool 是否为纯 ASCII
+         */
+        static bool isASCII(const QString &str);
+
+        /**
+         * @brief 计算两个向量之间的角度（弧度）
+         *
+         * @param x1 第一个向量的 X 分量
+         * @param y1 第一个向量的 Y 分量
+         * @param x2 第二个向量的 X 分量
+         * @param y2 第二个向量的 Y 分量
+         * @return double 角度（弧度）
+         */
+        static double getAngle(double x1, double y1, double x2, double y2);
+    };
+
+} // namespace EasyKiConverter
+
+#endif // GEOMETRYUTILS_H

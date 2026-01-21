@@ -276,7 +276,7 @@ namespace EasyKiConverter
             QString errorMessage;
         };
         QList<ExportData> m_exportDataList;
-        
+
         // 并行导出状态
         bool m_parallelExporting;
         int m_parallelCompletedCount;

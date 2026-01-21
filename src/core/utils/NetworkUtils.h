@@ -7,157 +7,158 @@
 #include <QJsonObject>
 #include <QTimer>
 
-namespace EasyKiConverter {
-
-/**
- * @brief 网络工具类
- *
- * 提供带重试机制的网络请求功能
- */
-class NetworkUtils : public QObject
+namespace EasyKiConverter
 {
-    Q_OBJECT
 
-public:
     /**
-     * @brief 构造函数
+     * @brief 网络工具类
      *
-     * @param parent 父对象
+     * 提供带重试机制的网络请求功能
      */
-    explicit NetworkUtils(QObject *parent = nullptr);
+    class NetworkUtils : public QObject
+    {
+        Q_OBJECT
 
-    /**
-     * @brief 析构函数
-     */
-    ~NetworkUtils() override;
+    public:
+        /**
+         * @brief 构造函数
+         *
+         * @param parent 父对象
+         */
+        explicit NetworkUtils(QObject *parent = nullptr);
 
-    /**
-     * @brief 发送 HTTP GET 请求
-     *
-     * @param url 请求 URL
-     * @param timeout 超时时间（秒），默认 30 秒
-     * @param maxRetries 最大重试次数，默认 3 次
-     */
-    void sendGetRequest(const QString &url, int timeout = 30, int maxRetries = 3);
+        /**
+         * @brief 析构函数
+         */
+        ~NetworkUtils() override;
 
-    /**
-     * @brief 取消当前请求
-     */
-    void cancelRequest();
+        /**
+         * @brief 发送 HTTP GET 请求
+         *
+         * @param url 请求 URL
+         * @param timeout 超时时间（秒），默认 30 秒
+         * @param maxRetries 最大重试次数，默认 3 次
+         */
+        void sendGetRequest(const QString &url, int timeout = 30, int maxRetries = 3);
 
-    /**
-     * @brief 设置请求头
-     *
-     * @param key 头字段名
-     * @param value 头字段值
-     */
-    void setHeader(const QString &key, const QString &value);
+        /**
+         * @brief 取消当前请求
+         */
+        void cancelRequest();
 
-    /**
-     * @brief 清除所有请求头
-     */
-    void clearHeaders();
+        /**
+         * @brief 设置请求头
+         *
+         * @param key 头字段名
+         * @param value 头字段值
+         */
+        void setHeader(const QString &key, const QString &value);
 
-    /**
-     * @brief 设置是否期望接收二进制数据
-     *
-     * @param expectBinaryData 是否期望接收二进制数据
-     */
-    void setExpectBinaryData(bool expectBinaryData);
+        /**
+         * @brief 清除所有请求头
+         */
+        void clearHeaders();
 
-signals:
-    /**
-     * @brief 请求成功信号
-     *
-     * @param data 响应数据（JSON 格式）
-     */
-    void requestSuccess(const QJsonObject &data);
+        /**
+         * @brief 设置是否期望接收二进制数据
+         *
+         * @param expectBinaryData 是否期望接收二进制数据
+         */
+        void setExpectBinaryData(bool expectBinaryData);
 
-    /**
-     * @brief 二进制数据获取成功信号
-     *
-     * @param binaryData 二进制数据
-     */
-    void binaryDataFetched(const QByteArray &binaryData);
+    signals:
+        /**
+         * @brief 请求成功信号
+         *
+         * @param data 响应数据（JSON 格式）
+         */
+        void requestSuccess(const QJsonObject &data);
 
-    /**
-     * @brief 请求失败信号
-     *
-     * @param errorMessage 错误消息
-     */
-    void requestError(const QString &errorMessage);
+        /**
+         * @brief 二进制数据获取成功信号
+         *
+         * @param binaryData 二进制数据
+         */
+        void binaryDataFetched(const QByteArray &binaryData);
 
-    /**
-     * @brief 请求进度信号
-     *
-     * @param bytesReceived 已接收字节数
-     * @param bytesTotal 总字节数
-     */
-    void requestProgress(qint64 bytesReceived, qint64 bytesTotal);
+        /**
+         * @brief 请求失败信号
+         *
+         * @param errorMessage 错误消息
+         */
+        void requestError(const QString &errorMessage);
 
-private slots:
-    /**
-     * @brief 处理网络响应
-     */
-    void handleResponse();
+        /**
+         * @brief 请求进度信号
+         *
+         * @param bytesReceived 已接收字节数
+         * @param bytesTotal 总字节数
+         */
+        void requestProgress(qint64 bytesReceived, qint64 bytesTotal);
 
-    /**
-     * @brief 处理网络错误
-     */
-    void handleError(QNetworkReply::NetworkError error);
+    private slots:
+        /**
+         * @brief 处理网络响应
+         */
+        void handleResponse();
 
-    /**
-     * @brief 处理请求超时
-     */
-    void handleTimeout();
+        /**
+         * @brief 处理网络错误
+         */
+        void handleError(QNetworkReply::NetworkError error);
 
-private:
-    /**
-     * @brief 执行请求
-     */
-    void executeRequest();
+        /**
+         * @brief 处理请求超时
+         */
+        void handleTimeout();
 
-    /**
-     * @brief 重试请求
-     */
-    void retryRequest();
+    private:
+        /**
+         * @brief 执行请求
+         */
+        void executeRequest();
 
-    /**
-     * @brief 检查是否需要重试
-     *
-     * @param statusCode HTTP 状态码
-     * @return bool 是否需要重试
-     */
-    bool shouldRetry(int statusCode);
+        /**
+         * @brief 重试请求
+         */
+        void retryRequest();
 
-    /**
-     * @brief 计算重试延迟时间
-     *
-     * @param retryCount 当前重试次数
-     * @return int 延迟时间（毫秒）
-     */
-    int calculateRetryDelay(int retryCount);
+        /**
+         * @brief 检查是否需要重试
+         *
+         * @param statusCode HTTP 状态码
+         * @return bool 是否需要重试
+         */
+        bool shouldRetry(int statusCode);
 
-    /**
-     * @brief 解压 gzip 数据
-     *
-     * @param compressedData 压缩的数据
-     * @return QByteArray 解压后的数据
-     */
-    QByteArray decompressGzip(const QByteArray &compressedData);
+        /**
+         * @brief 计算重试延迟时间
+         *
+         * @param retryCount 当前重试次数
+         * @return int 延迟时间（毫秒）
+         */
+        int calculateRetryDelay(int retryCount);
 
-private:
-    QNetworkAccessManager *m_networkManager;
-    QNetworkReply *m_currentReply;
-    QTimer *m_timeoutTimer;
-    QString m_url;
-    int m_timeout;
-    int m_maxRetries;
-    int m_retryCount;
-    QMap<QString, QString> m_headers;
-    bool m_isRequesting;
-    bool m_expectBinaryData;  // 是否期望接收二进制数据
-};
+        /**
+         * @brief 解压 gzip 数据
+         *
+         * @param compressedData 压缩的数据
+         * @return QByteArray 解压后的数据
+         */
+        QByteArray decompressGzip(const QByteArray &compressedData);
+
+    private:
+        QNetworkAccessManager *m_networkManager;
+        QNetworkReply *m_currentReply;
+        QTimer *m_timeoutTimer;
+        QString m_url;
+        int m_timeout;
+        int m_maxRetries;
+        int m_retryCount;
+        QMap<QString, QString> m_headers;
+        bool m_isRequesting;
+        bool m_expectBinaryData; // 是否期望接收二进制数据
+    };
 
 } // namespace EasyKiConverter
 
