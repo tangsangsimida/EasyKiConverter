@@ -74,8 +74,53 @@ For detailed build instructions, please refer to: [Build Guide](docs/developer/B
 ### Project Planning
 
 - [Changelog](CHANGELOG_en.md) - Version update records
+- [Performance Optimization Report](docs/PERFORMANCE_OPTIMIZATION_REPORT.md) - Detailed performance optimization report
 - [Roadmap](docs/project/ROADMAP_en.md) - Future development directions
 - [Architecture Decision Records](docs/project/adr/) - Technical decision records
+
+## Version History
+
+### v3.0.0 (2026-01-17) - Pipeline Architecture & Performance Optimization Version
+
+**Architecture Improvements**:
+- Implemented three-stage pipeline parallel architecture (Fetch-Process-Write)
+- ProcessWorker removed network requests, now pure CPU-intensive
+- Use QSharedPointer to avoid data copying
+- Dynamic queue size to prevent blocking
+- Parallel file writing to improve disk I/O efficiency
+
+**Performance Improvements**:
+- Total time reduced by 54% (240s → 110s for 100 components)
+- Throughput increased by 117% (0.42 → 0.91 components/sec)
+- Memory usage reduced by 50% (400MB → 200MB)
+- CPU utilization improved by 50% (60% → 90%)
+
+**Core Features**:
+- Complete symbol conversion, footprint generation, 3D model support
+- Batch processing functionality
+- Smart extraction and BOM import
+- Modern Qt Quick interface
+- Dark/light theme switching
+
+**Detailed Documentation**:
+- [Changelog](docs/developer/CHANGELOG_en.md#300---2026-01-17)
+- [Performance Optimization Report](docs/PERFORMANCE_OPTIMIZATION_REPORT.md)
+- [ADR-002](docs/project/adr/002-pipeline-parallelism-for-export_en.md)
+- [ADR-003](docs/project/adr/003-pipeline-performance-optimization.md)
+
+### v2.0.0 (2025-12-15)
+
+**New Features**:
+- Complete symbol conversion, footprint generation, 3D model support
+- Batch processing functionality
+- Smart extraction and BOM import
+- Three-stage pipeline parallel architecture
+- Modern Qt Quick interface
+- Dark/light theme switching
+
+**Detailed Documentation**:
+- [Changelog](docs/developer/CHANGELOG_en.md#300---2026-01-17)
+- [ADR-002](docs/project/adr/002-pipeline-parallelism-for-export_en.md)
 
 ## Contributing
 

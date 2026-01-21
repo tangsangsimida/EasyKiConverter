@@ -56,6 +56,9 @@ ADR 文件应使用以下命名格式：
 
 - [ADR 001: 选择 MVVM 架构](001-mvvm-architecture.md)
 - [ADR 001: Choose MVVM Architecture](001-mvvm-architecture_en.md) (English)
+- [ADR 002: 流水线并行架构](002-pipeline-parallelism-for-export.md)
+- [ADR 002: Pipeline Parallelism for Export](002-pipeline-parallelism-for-export_en.md) (English)
+- [ADR 003: 流水线性能优化](003-pipeline-performance-optimization.md)
 
 ## 参考资料
 

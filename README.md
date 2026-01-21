@@ -68,8 +68,50 @@ EasyKiConverter 提供符号、封装和 3D 模型的完整转换功能，具有
 ### 项目规划
 
 - [更新日志](docs/developer/CHANGELOG.md) - 版本更新记录
+- [性能优化报告](docs/PERFORMANCE_OPTIMIZATION_REPORT.md) - 性能优化详细报告
 - [项目路线图](docs/project/ROADMAP.md) - 未来发展方向
 - [架构决策记录](docs/project/adr/) - 技术决策记录
+
+## 版本历史
+
+### v3.0.0 (2026-01-17) - 流水线架构与性能优化版本
+
+**架构改进**：
+- 实现三阶段流水线并行架构（Fetch-Process-Write）
+- ProcessWorker 移除网络请求，现为纯 CPU 密集型
+- 使用 QSharedPointer 避免数据拷贝
+- 动态队列大小避免阻塞
+- 并行写入文件提升磁盘 I/O 效率
+
+**性能提升**：
+- 总耗时减少 54%（240秒 → 110秒，100个组件）
+- 吞吐量提升 117%（0.42 → 0.91 组件/秒）
+- 内存占用减少 50%（400MB → 200MB）
+- CPU 利用率提升 50%（60% → 90%）
+
+**核心功能**：
+- 完整的符号转换、封装生成、3D 模型支持
+- 批量处理功能
+- 智能提取和 BOM 导入
+- 现代化 Qt Quick 界面
+- 深色/浅色主题切换
+
+**详细文档**：
+- [更新日志](docs/developer/CHANGELOG.md#300---2026-01-17)
+- [性能优化报告](docs/PERFORMANCE_OPTIMIZATION_REPORT.md)
+- [ADR-002](docs/project/adr/002-pipeline-parallelism-for-export.md)
+- [ADR-003](docs/project/adr/003-pipeline-performance-optimization.md)
+- [更新日志](docs/developer/CHANGELOG.md#300---2026-01-17)
+- [ADR-002](docs/project/adr/002-pipeline-parallelism-for-export.md)
+
+**新增功能**：
+
+- 完整的符号转换、封装生成、3D 模型支持
+- 批量处理功能
+- 智能提取和 BOM 导入
+- 三阶段流水线并行架构
+- 现代化 Qt Quick 界面
+- 深色/浅色主题切换
 
 ## 贡献
 
