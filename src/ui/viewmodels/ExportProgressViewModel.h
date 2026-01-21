@@ -18,35 +18,35 @@ namespace EasyKiConverter
     class ExportProgressViewModel : public QObject
     {
         Q_OBJECT
-            Q_PROPERTY(int progress READ progress NOTIFY progressChanged)
-            Q_PROPERTY(QString status READ status NOTIFY statusChanged)
-            Q_PROPERTY(bool isExporting READ isExporting NOTIFY isExportingChanged)
-            Q_PROPERTY(int successCount READ successCount NOTIFY successCountChanged)
-            Q_PROPERTY(int failureCount READ failureCount NOTIFY failureCountChanged)
-            Q_PROPERTY(int fetchProgress READ fetchProgress NOTIFY fetchProgressChanged)
-            Q_PROPERTY(int processProgress READ processProgress NOTIFY processProgressChanged)
-            Q_PROPERTY(int writeProgress READ writeProgress NOTIFY writeProgressChanged)
-            Q_PROPERTY(QVariantList resultsList READ resultsList NOTIFY resultsListChanged)    public:
-        explicit ExportProgressViewModel(ExportService *exportService, ComponentService *componentService, QObject *parent = nullptr);
+        Q_PROPERTY(int progress READ progress NOTIFY progressChanged)
+        Q_PROPERTY(QString status READ status NOTIFY statusChanged)
+        Q_PROPERTY(bool isExporting READ isExporting NOTIFY isExportingChanged)
+        Q_PROPERTY(int successCount READ successCount NOTIFY successCountChanged)
+        Q_PROPERTY(int failureCount READ failureCount NOTIFY failureCountChanged)
+        Q_PROPERTY(int fetchProgress READ fetchProgress NOTIFY fetchProgressChanged)
+        Q_PROPERTY(int processProgress READ processProgress NOTIFY processProgressChanged)
+        Q_PROPERTY(int writeProgress READ writeProgress NOTIFY writeProgressChanged)
+    Q_PROPERTY(QVariantList resultsList READ resultsList NOTIFY resultsListChanged)
+    public : explicit ExportProgressViewModel(ExportService *exportService, ComponentService *componentService, QObject *parent = nullptr);
         ~ExportProgressViewModel() override;
 
         // Getter 方法
-    int progress() const { return m_progress; }
-    QString status() const { return m_status; }
-    bool isExporting() const { return m_isExporting; }
-    int successCount() const { return m_successCount; }
-    int failureCount() const { return m_failureCount; }
-    int fetchProgress() const { return m_fetchProgress; }
-    int processProgress() const { return m_processProgress; }
-    int writeProgress() const { return m_writeProgress; }
-    QVariantList resultsList() const { return m_resultsList; }
+        int progress() const { return m_progress; }
+        QString status() const { return m_status; }
+        bool isExporting() const { return m_isExporting; }
+        int successCount() const { return m_successCount; }
+        int failureCount() const { return m_failureCount; }
+        int fetchProgress() const { return m_fetchProgress; }
+        int processProgress() const { return m_processProgress; }
+        int writeProgress() const { return m_writeProgress; }
+        QVariantList resultsList() const { return m_resultsList; }
 
-    // Setter 方法
-    void setUsePipelineMode(bool usePipeline);
+        // Setter 方法
+        void setUsePipelineMode(bool usePipeline);
 
-public slots:
-    Q_INVOKABLE void startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles, bool updateMode, bool debugMode);
-    Q_INVOKABLE void cancelExport();
+    public slots:
+        Q_INVOKABLE void startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles, bool updateMode, bool debugMode);
+        Q_INVOKABLE void cancelExport();
 
     signals:
         void progressChanged();
@@ -68,6 +68,7 @@ public slots:
         void handleComponentDataFetched(const QString &componentId, const ComponentData &data);
         void handleAllComponentsDataCollected(const QList<ComponentData> &componentDataList);
         void handlePipelineProgressUpdated(const PipelineProgress &progress);
+
     private:
         ExportService *m_exportService;
         ComponentService *m_componentService;
@@ -84,7 +85,8 @@ public slots:
         int m_processProgress;
         int m_writeProgress;
         bool m_usePipelineMode;
-        QVariantList m_resultsList;    };
+        QVariantList m_resultsList;
+    };
 } // namespace EasyKiConverter
 
 #endif // EXPORTPROGRESSVIEWMODEL_H

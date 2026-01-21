@@ -92,7 +92,7 @@ namespace EasyKiConverter
         bool m_exportFootprint;
         bool m_exportModel3D;
         bool m_overwriteExistingFiles;
-        int m_exportMode;  // 0 = 追加模式, 1 = 更新模式
+        int m_exportMode; // 0 = 追加模式, 1 = 更新模式
         bool m_debugMode;
         bool m_isExporting;
         int m_progress;
