@@ -659,15 +659,26 @@ namespace EasyKiConverter
                 pin.name.fontSize = segments[3][7].toDouble();
             }
 
-            // 段 4: dot (SymbolPinDotBis) - 这里包含 BGA 引脚编号
+            // 段 4: dot (SymbolPinDotBis) - 这里包含圆圈显示标志和 BGA 引脚编号
             // 格式: 1~555~929~0~U17~start~~~#0000FF
             // 按 ~ 分割后: ["1", "555", "929", "0", "U17", "start", "", "", "#0000FF"]
-            // BGA 引脚编号在索引 4
+            // 索引 0: dotShow (是否显示圆圈，1=显示，0=不显示)
+            // 索引 1-2: dotX, dotY (圆圈坐标)
+            // 索引 4: BGA 引脚编号
             if (segments[4].size() >= 5)
             {
-                pin.dot.isDisplayed = (segments[4][0] == "1");
+                // 调试：输出段 4 的数据
+                qDebug() << "Pin Segment 4 data:" << segments[4];
+                qDebug() << "  Segment 4[0] (dotShow):" << segments[4][0];
+                
+                // 修复：始终不显示圆圈
+                pin.dot.isDisplayed = false;
+                
+                // 设置圆圈坐标（虽然不显示，但仍然保存坐标信息）
                 pin.dot.circleX = segments[4][1].toDouble();
                 pin.dot.circleY = segments[4][2].toDouble();
+                
+                qDebug() << "  dot.isDisplayed set to: false (always hide)";
 
                 // 检查 spicePinNumber 是否已经是 BGA 引脚编号（包含字母）
                 bool isAlreadyBGA = false;

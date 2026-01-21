@@ -744,6 +744,16 @@ namespace EasyKiConverter
         // 转换为毫米单位
         length = pxToMm(length);
 
+        // 调试：输出引脚信息
+        qDebug() << "Pin Debug - Name:" << pin.name.text << "Number:" << pin.settings.spicePinNumber;
+        qDebug() << "  Original posX:" << pin.settings.posX << "bbox.x:" << bbox.x;
+        qDebug() << "  Calculated x:" << x << "y:" << y;
+        qDebug() << "  Path:" << path << "Extracted length (px):" << length / 0.0254;
+        qDebug() << "  Length (mm):" << length << "Rotation:" << pin.settings.rotation;
+
+        // 确保引脚长度为正数（KiCad 引脚长度必须是正数）
+        length = std::abs(length);
+
         // 确保引脚长度不为 0
         if (length < 0.01)
         {
