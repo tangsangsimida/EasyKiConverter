@@ -1,157 +1,53 @@
 # EasyKiConverter
 
-[English](README_en.md) | 中文
+English | [中文](README.md)
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter_QT)![GitHub all releases](https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/total)![GitHub](https://img.shields.io/github/license/tangsangsimida/EasyKiConverter_QT)![GitHub stars](https://img.shields.io/github/stars/tangsangsimida/EasyKiConverter_QT)![GitHub forks](https://img.shields.io/github/forks/tangsangsimida/EasyKiConverter_QT)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter_QT)
+![GitHub downloads](https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/total)
+![License](https://img.shields.io/github/license/tangsangsimida/EasyKiConverter_QT)
+![Stars](https://img.shields.io/github/stars/tangsangsimida/EasyKiConverter_QT)
 
-A powerful C++ desktop application based on Qt 6 Quick and MVVM architecture for converting LCSC and EasyEDA components to KiCad format.
+**EasyKiConverter** is a modern C++ desktop tool based on Qt 6 and MVVM architecture, designed for electronics engineers to efficiently convert component data from LCSC and EasyEDA into KiCad libraries.
 
-## Interface Preview
+## ✨ Key Features
 
-![EasyKiConverter Interface](https://via.placeholder.com/800x500?text=EasyKiConverter+Interface+Preview)
+*   **Complete Conversion**: Full export support for Symbols (.kicad_sym), Footprints (.kicad_mod), and 3D Models (STEP/WRL).
+*   **Efficient Batch Processing**: Multi-threaded parallel conversion and BOM file import support to fully utilize multi-core performance.
+*   **Modern Experience**: Fluid UI based on Qt Quick with support for Dark/Light theme switching.
+*   **Smart Assistance**: Intelligent extraction of component numbers from the clipboard.
 
-> Add application screenshots or GIF animations to showcase core features and usage flow.
-
-## Introduction
-
-EasyKiConverter provides complete conversion of symbols, footprints, and 3D models with a modern user interface and efficient conversion performance.
-
-## Key Features
-
-- Symbol Conversion: Convert EasyEDA symbols to KiCad symbol libraries (.kicad_sym)
-- Footprint Generation: Create KiCad footprints from EasyEDA packages (.kicad_mod)
-- 3D Model Support: Automatically download and convert 3D models (supports WRL, STEP, and other formats)
-- Batch Processing: Support simultaneous conversion of multiple components
-- Modern Interface: Fluent user interface based on Qt 6 Quick
-- Dark Mode: Support dark/light theme switching
-- Parallel Conversion: Support multi-threaded parallel processing to fully utilize multi-core CPUs
-- Smart Extraction: Support intelligent extraction of component numbers from clipboard text
-- BOM Import: Support importing BOM files for batch component conversion
-
-For detailed features, please refer to: [Features Documentation](docs/user/FEATURES_en.md)
-
-## Quick Start
+## 🚀 Quick Start
 
 ### Installation
+Please visit the [Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) page to download the latest version for Windows, macOS, or Linux. simply extract and run.
 
-#### Windows
+### Build from Source
+If you are a developer or wish to compile it yourself, please refer to the [Build Guide](docs/developer/BUILD_en.md).
 
-1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases)
-2. Extract the downloaded archive
-3. Double-click `EasyKiConverter.exe` to run the application
+## 📚 Documentation
 
-#### macOS
+**User Guide**
+*   [Getting Started](docs/user/GETTING_STARTED_en.md) | [User Manual](docs/user/USER_GUIDE_en.md) | [FAQ](docs/user/FAQ_en.md)
+*   [Detailed Features](docs/user/FEATURES_en.md)
 
-1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases)
-2. Extract the downloaded archive
-3. Double-click `EasyKiConverter.app` to run the application
+**Developer Resources**
+*   [Contributing Guide](docs/developer/CONTRIBUTING_en.md) | [Architecture](docs/developer/ARCHITECTURE_en.md) | [Build Guide](docs/developer/BUILD_en.md)
+*   [Performance Report](docs/PERFORMANCE_OPTIMIZATION_REPORT_en.md) | [Roadmap](docs/project/ROADMAP_en.md)
 
-#### Linux
+## 📅 Latest Updates (v3.0.0)
 
-1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases)
-2. Extract the downloaded archive
-3. Run `./EasyKiConverter` to launch the application
+This update introduces a brand new **Three-Stage Pipeline Architecture**, significantly improving conversion efficiency:
+*   **Performance Leap**: Total time reduced by 54%, throughput increased by 117%.
+*   **Resource Optimization**: Memory usage reduced by 50%, with significantly improved CPU utilization.
+*   **Enhanced Features**: Complete 3D model support and batch processing capabilities.
 
-### Building from Source
+> View full changelog: [CHANGELOG.md](docs/developer/CHANGELOG_en.md)
 
-For detailed build instructions, please refer to: [Build Guide](docs/developer/BUILD_en.md)
+## 🤝 Contribution & Credits
 
-## Documentation
+This project references core algorithms from [easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py). Thanks to the original author for their contribution.
+Issues and Pull Requests are welcome! Please see the [Contributing Guide](docs/developer/CONTRIBUTING_en.md) for details.
 
-### For Users
+## 📄 License
 
-- [User Guide](docs/user/USER_GUIDE_en.md) - Detailed usage instructions
-- [Getting Started](docs/user/GETTING_STARTED_en.md) - Quick start guide
-- [FAQ](docs/user/FAQ_en.md) - Frequently asked questions
-- [Features](docs/user/FEATURES_en.md) - Detailed feature descriptions
-
-### For Developers
-
-- [Build Guide](docs/developer/BUILD_en.md) - Build from source
-- [Contributing Guide](docs/developer/CONTRIBUTING_en.md) - How to contribute code
-- [Architecture Documentation](docs/developer/ARCHITECTURE_en.md) - Project architecture design
-
-### Project Planning
-
-- [Changelog](CHANGELOG_en.md) - Version update records
-- [Performance Optimization Report](docs/PERFORMANCE_OPTIMIZATION_REPORT.md) - Detailed performance optimization report
-- [Roadmap](docs/project/ROADMAP_en.md) - Future development directions
-- [Architecture Decision Records](docs/project/adr/) - Technical decision records
-
-## Version History
-
-### v3.0.0 (2026-01-17) - Pipeline Architecture & Performance Optimization Version
-
-**Architecture Improvements**:
-- Implemented three-stage pipeline parallel architecture (Fetch-Process-Write)
-- ProcessWorker removed network requests, now pure CPU-intensive
-- Use QSharedPointer to avoid data copying
-- Dynamic queue size to prevent blocking
-- Parallel file writing to improve disk I/O efficiency
-
-**Performance Improvements**:
-- Total time reduced by 54% (240s → 110s for 100 components)
-- Throughput increased by 117% (0.42 → 0.91 components/sec)
-- Memory usage reduced by 50% (400MB → 200MB)
-- CPU utilization improved by 50% (60% → 90%)
-
-**Core Features**:
-- Complete symbol conversion, footprint generation, 3D model support
-- Batch processing functionality
-- Smart extraction and BOM import
-- Modern Qt Quick interface
-- Dark/light theme switching
-
-**Detailed Documentation**:
-- [Changelog](docs/developer/CHANGELOG_en.md#300---2026-01-17)
-- [Performance Optimization Report](docs/PERFORMANCE_OPTIMIZATION_REPORT.md)
-- [ADR-002](docs/project/adr/002-pipeline-parallelism-for-export_en.md)
-- [ADR-003](docs/project/adr/003-pipeline-performance-optimization.md)
-
-### v2.0.0 (2025-12-15)
-
-**New Features**:
-- Complete symbol conversion, footprint generation, 3D model support
-- Batch processing functionality
-- Smart extraction and BOM import
-- Three-stage pipeline parallel architecture
-- Modern Qt Quick interface
-- Dark/light theme switching
-
-**Detailed Documentation**:
-- [Changelog](docs/developer/CHANGELOG_en.md#300---2026-01-17)
-- [ADR-002](docs/project/adr/002-pipeline-parallelism-for-export_en.md)
-
-## Contributing
-
-Contributions are welcome! Please read the [Contributing Guide](docs/developer/CONTRIBUTING_en.md) to learn how to participate in project development.
-
-## License
-
-This project is licensed under GNU General Public License v3.0 (GPL-3.0).
-
-See [LICENSE](LICENSE) file for complete license terms.
-
-## Acknowledgments
-
-### Reference Project
-
-This project references the design and algorithms from [uPesy/easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py). Thank you to the original author for providing an excellent foundation framework and core conversion algorithms.
-
-Note: This project is an independent C++ implementation and does not contain Python code. The Python version is only referenced for design and algorithms.
-
-### Contributors
-
-Thank you to all developers who have contributed to the EasyKiConverter project!
-
-![Contributors](https://contrib.rocks/image?repo=tangsangsimida/EasyKiConverter_QT&max=100)
-
-View all contributors: [Contributors List](https://github.com/tangsangsimida/EasyKiConverter_QT/graphs/contributors)
-
-## Contact
-
-If you have any questions or suggestions, please contact the project maintainers through GitHub Issues.
-
-## Project Homepage
-
-[GitHub Repository](https://github.com/tangsangsimida/EasyKiConverter_QT)
+This project is licensed under the **GPL-3.0** License. See the [LICENSE](LICENSE) file for details.
