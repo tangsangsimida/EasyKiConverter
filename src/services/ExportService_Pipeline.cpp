@@ -52,6 +52,20 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList &c
         return;
     }
 
+    // 动态调整队列大小（任务数的 1/4，最小 100）
+    size_t queueSize = qMax(
+        static_cast<size_t>(100),  // 最小值
+        static_cast<size_t>(componentIds.size() / 4)  // 任务数的 1/4
+    );
+    
+    // 重新创建队列以应用新的队列大小
+    delete m_fetchProcessQueue;
+    delete m_processWriteQueue;
+    m_fetchProcessQueue = new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(queueSize);
+    m_processWriteQueue = new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(queueSize);
+    
+    qDebug() << "Dynamic queue size set to:" << queueSize << "(based on" << componentIds.size() << "tasks)";
+
     // 初始化流水线状态
     m_componentIds = componentIds;
     m_options = options;
@@ -230,7 +244,7 @@ void ExportServicePipeline::startProcessStage()
     for (int i = 0; i < m_processThreadPool->maxThreadCount(); i++) {
         QRunnable *task = QRunnable::create([this]() {
             while (true) {
-                ComponentExportStatus status;
+                QSharedPointer<ComponentExportStatus> status;
                 if (!m_fetchProcessQueue->pop(status, 1000)) {
                     // 超时，检查队列是否已关闭
                     if (m_fetchProcessQueue->isClosed()) {
@@ -263,7 +277,7 @@ void ExportServicePipeline::startWriteStage()
     for (int i = 0; i < m_writeThreadPool->maxThreadCount(); i++) {
         QRunnable *task = QRunnable::create([this]() {
             while (true) {
-                ComponentExportStatus status;
+                QSharedPointer<ComponentExportStatus> status;
                 if (!m_processWriteQueue->pop(status, 1000)) {
                     // 超时，检查队列是否已关闭
                     if (m_processWriteQueue->isClosed()) {

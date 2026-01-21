@@ -7,8 +7,30 @@
 #include <QDebug>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QThreadPool>
+#include <QMutex>
+#include <QWaitCondition>
 
 namespace EasyKiConverter {
+
+// 简单的写入任务类
+class WriteTask : public QRunnable
+{
+public:
+    WriteTask(std::function<bool()> writeFunc, bool *resultFlag)
+        : m_writeFunc(writeFunc), m_resultFlag(resultFlag)
+    {
+    }
+
+    void run() override
+    {
+        *m_resultFlag = m_writeFunc();
+    }
+
+private:
+    std::function<bool()> m_writeFunc;
+    bool *m_resultFlag;
+};
 
 WriteWorker::WriteWorker(
     QSharedPointer<ComponentExportStatus> status,
@@ -50,37 +72,64 @@ void WriteWorker::run()
         return;
     }
 
-    // 写入符号文件
+    // 并行写入文件（使用 QThreadPool）
+    QThreadPool threadPool;
+    threadPool.setMaxThreadCount(3);  // 符号、封装、3D模型最多3个任务
+
+    QList<bool*> results;
+
+    // 创建符号写入任务
+    bool symbolResult = false;
     if (m_exportSymbol && m_status->symbolData) {
-        if (!writeSymbolFile(*m_status)) {
-            m_status->writeSuccess = false;
-            m_status->writeMessage = "Failed to write symbol file";
-            m_status->addDebugLog("ERROR: Failed to write symbol file");
-            emit writeCompleted(m_status);
-            return;
-        }
+        WriteTask *symbolTask = new WriteTask([this]() {
+            return writeSymbolFile(*m_status);
+        }, &symbolResult);
+        symbolTask->setAutoDelete(true);
+        threadPool.start(symbolTask);
+        results.append(&symbolResult);
     }
 
-    // 写入封装文件
+    // 创建封装写入任务
+    bool footprintResult = false;
     if (m_exportFootprint && m_status->footprintData) {
-        if (!writeFootprintFile(*m_status)) {
-            m_status->writeSuccess = false;
-            m_status->writeMessage = "Failed to write footprint file";
-            m_status->addDebugLog("ERROR: Failed to write footprint file");
-            emit writeCompleted(m_status);
-            return;
+        WriteTask *footprintTask = new WriteTask([this]() {
+            return writeFootprintFile(*m_status);
+        }, &footprintResult);
+        footprintTask->setAutoDelete(true);
+        threadPool.start(footprintTask);
+        results.append(&footprintResult);
+    }
+
+    // 创建3D模型写入任务
+    bool model3DResult = false;
+    if (m_exportModel3D && m_status->model3DData && !m_status->model3DObjRaw.isEmpty()) {
+        WriteTask *model3DTask = new WriteTask([this]() {
+            return write3DModelFile(*m_status);
+        }, &model3DResult);
+        model3DTask->setAutoDelete(true);
+        threadPool.start(model3DTask);
+        results.append(&model3DResult);
+    }
+
+    // 等待所有任务完成
+    threadPool.waitForDone();
+
+    // 检查是否所有写入都成功
+    bool allSuccess = true;
+    for (bool *result : results) {
+        if (!*result) {
+            allSuccess = false;
+            break;
         }
     }
 
-    // 写入3D模型文件
-    if (m_exportModel3D && m_status->model3DData && !m_status->model3DObjRaw.isEmpty()) {
-        if (!write3DModelFile(*m_status)) {
-            m_status->writeSuccess = false;
-            m_status->writeMessage = "Failed to write 3D model file";
-            m_status->addDebugLog("ERROR: Failed to write 3D model file");
-            emit writeCompleted(m_status);
-            return;
-        }
+    // 检查是否所有写入都成功
+    if (!allSuccess) {
+        m_status->writeSuccess = false;
+        m_status->writeMessage = "Failed to write one or more files";
+        m_status->addDebugLog("ERROR: Failed to write one or more files");
+        emit writeCompleted(m_status);
+        return;
     }
 
     // 导出调试数据（如果启用）
