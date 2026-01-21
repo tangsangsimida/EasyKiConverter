@@ -113,6 +113,26 @@ void ComponentService::handleCadDataFetched(const QJsonObject &data)
         return;
     }
     
+    // 调试：打印resultData的结构
+    qDebug() << "=== CAD Data Structure ===";
+    qDebug() << "Top-level keys:" << resultData.keys();
+    if (resultData.contains("dataStr")) {
+        QJsonObject dataStr = resultData["dataStr"].toObject();
+        qDebug() << "dataStr keys:" << dataStr.keys();
+        if (dataStr.contains("shape")) {
+            QJsonArray shapes = dataStr["shape"].toArray();
+            qDebug() << "dataStr.shape size:" << shapes.size();
+            if (!shapes.isEmpty()) {
+                qDebug() << "First shape:" << shapes[0].toString().left(100);
+            }
+        } else {
+            qDebug() << "WARNING: dataStr does NOT contain 'shape' field!";
+        }
+    } else {
+        qDebug() << "WARNING: resultData does NOT contain 'dataStr' field!";
+    }
+    qDebug() << "===========================";
+    
     // 创建 ComponentData 对象
     ComponentData componentData;
     componentData.setLcscId(lcscId);

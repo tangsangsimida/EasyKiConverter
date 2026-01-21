@@ -68,6 +68,7 @@ set(SOURCES
     src/core/utils/GeometryUtils.cpp
     src/core/utils/NetworkUtils.cpp
     src/core/utils/LayerMapper.cpp
+    src/core/utils/SvgPathParser.cpp
     src/ui/utils/ConfigManager.cpp
     src/core/easyeda/EasyedaApi.cpp
     src/core/easyeda/EasyedaImporter.cpp
@@ -105,6 +106,7 @@ set(HEADERS
     src/core/utils/GeometryUtils.h
     src/core/utils/NetworkUtils.h
     src/core/utils/LayerMapper.h
+    src/core/utils/SvgPathParser.h
     src/utils/BoundedThreadSafeQueue.h
     src/ui/utils/ConfigManager.h
     src/core/easyeda/EasyedaApi.h

@@ -3,6 +3,7 @@
 #include <QTextStream>
 #include <QDebug>
 #include "src/core/utils/GeometryUtils.h"
+#include "src/core/utils/SvgPathParser.h"
 
 namespace EasyKiConverter
 {
@@ -306,8 +307,9 @@ namespace EasyKiConverter
         qDebug() << "BBox - x:" << m_currentBBox.x << "y:" << m_currentBBox.y;
 
         // 计算 y_high 和 y_low（使用引脚坐标，与 Python 版本保持一致）
-        double yHigh = 0.0;
-        double yLow = 0.0;
+        // 如果没有引脚，使用默认值以确保属性位置正确
+        double yHigh = 2.54;   // 默认值：100mil
+        double yLow = -2.54;   // 默认值：-100mil
         QList<SymbolPin> pins = symbolData.pins();
         if (!pins.isEmpty())
         {
@@ -319,6 +321,10 @@ namespace EasyKiConverter
                 yHigh = qMax(yHigh, pinY);
                 yLow = qMin(yLow, pinY);
             }
+        }
+        else
+        {
+            qDebug() << "No pins found, using default yHigh and yLow values";
         }
 
         qDebug() << "Final yHigh:" << yHigh << "yLow:" << yLow;
@@ -453,6 +459,11 @@ namespace EasyKiConverter
                 content += generatePath(path);
             }
             
+            // 生成文本元素
+            for (const SymbolText &text : symbolData.texts()) {
+                content += generateText(text);
+            }
+            
             // 生成引脚
                     for (const SymbolPin &pin : symbolData.pins()) {
                         content += generatePin(pin, symbolData.bbox());
@@ -500,6 +511,11 @@ namespace EasyKiConverter
             content += generatePath(path);
         }
 
+        // 生成文本元素
+        for (const SymbolText &text : symbolData.texts()) {
+            content += generateText(text);
+        }
+
         // 生成引脚
         for (const SymbolPin &pin : symbolData.pins()) {
             content += generatePin(pin, symbolData.bbox());
@@ -541,6 +557,11 @@ namespace EasyKiConverter
             content += generatePath(path);
         }
 
+        // 生成文本元素
+        for (const SymbolText &text : part.texts) {
+            content += generateText(text);
+        }
+
         // 生成引脚
         for (const SymbolPin &pin : part.pins) {
             content += generatePin(pin, symbolData.bbox());
@@ -559,100 +580,23 @@ namespace EasyKiConverter
         double x = pxToMm(pin.settings.posX - bbox.x);
         double y = -pxToMm(pin.settings.posY - bbox.y); // Y 轴翻转
 
-        // 改进引脚长度计算方法（参考 lckiconverter 的实现）
-        // 通过计算路径两点距离获取引脚长度，而非从字符串中提取
+        // 计算引脚长度（Python版本的做法：直接从路径字符串中提取'h'后面的数字）
         QString path = pin.pinPath.path;
         double length = 0;
 
-        // 解析路径字符串，提取点坐标
-        QStringList tokens = path.split(QRegularExpression("[\\s,]+"), Qt::SkipEmptyParts);
-        QList<QPointF> points;
-
-        // 简化的路径解析（支持 M、L、H、V 命令）
-        double currentX = 0.0;
-        double currentY = 0.0;
-
-        for (int i = 0; i < tokens.size(); ) {
-            QString token = tokens[i];
-
-            if (token == "M" || token == "m") {
-                if (i + 2 < tokens.size()) {
-                    double px = tokens[i + 1].toDouble();
-                    double py = tokens[i + 2].toDouble();
-                    if (token == "m") {
-                        px += currentX;
-                        py += currentY;
-                    }
-                    currentX = px;
-                    currentY = py;
-                    points.append(QPointF(px, py));
-                    i += 3;
-                } else {
-                    i++;
-                }
-            }
-            else if (token == "L" || token == "l") {
-                if (i + 2 < tokens.size()) {
-                    double px = tokens[i + 1].toDouble();
-                    double py = tokens[i + 2].toDouble();
-                    if (token == "l") {
-                        px += currentX;
-                        py += currentY;
-                    }
-                    currentX = px;
-                    currentY = py;
-                    points.append(QPointF(px, py));
-                    i += 3;
-                } else {
-                    i++;
-                }
-            }
-            else if (token == "H" || token == "h") {
-                if (i + 1 < tokens.size()) {
-                    double px = tokens[i + 1].toDouble();
-                    if (token == "h") {
-                        px += currentX;
-                    }
-                    currentX = px;
-                    points.append(QPointF(currentX, currentY));
-                    i += 2;
-                } else {
-                    i++;
-                }
-            }
-            else if (token == "V" || token == "v") {
-                if (i + 1 < tokens.size()) {
-                    double py = tokens[i + 1].toDouble();
-                    if (token == "v") {
-                        py += currentY;
-                    }
-                    currentY = py;
-                    points.append(QPointF(currentX, currentY));
-                    i += 2;
-                } else {
-                    i++;
-                }
-            }
-            else {
-                i++;
+        // 查找 'h' 命令并提取其后的数值作为引脚长度
+        int hIndex = path.indexOf('h');
+        if (hIndex >= 0) {
+            QString lengthStr = path.mid(hIndex + 1);
+            // 提取数值部分（可能包含其他命令）
+            QStringList parts = lengthStr.split(QRegularExpression("[^0-9.-]"), Qt::SkipEmptyParts);
+            if (!parts.isEmpty()) {
+                length = parts[0].toDouble();
             }
         }
 
-        // 计算引脚长度（第一点和最后一点的距离）
-        if (points.size() >= 2) {
-            double dx = points[0].x() - points[points.size() - 1].x();
-            double dy = points[0].y() - points[points.size() - 1].y();
-            length = std::sqrt(dx * dx + dy * dy);
-            length = pxToMm(length);
-        } else {
-            // 回退到字符串解析方法
-            int hIndex = path.indexOf('h');
-            if (hIndex >= 0) {
-                QString lengthStr = path.mid(hIndex + 1);
-                length = lengthStr.toDouble();
-                length = pxToMm(length);
-            }
-        }
+        // 转换为毫米单位
+        length = pxToMm(length);
 
         // 确保引脚长度不为 0
         if (length < 0.01) {
@@ -674,9 +618,11 @@ namespace EasyKiConverter
         }
         QString kicadPinStyle = pinStyleToKicad(pinStyle);
 
-        // 处理引脚名称和编号（去除空格）
-        QString pinName = pin.name.text.trimmed();
-        QString pinNumber = pin.settings.spicePinNumber.trimmed();
+        // 处理引脚名称和编号（完全移除空格，与Python版本一致）
+        QString pinName = pin.name.text;
+        pinName.replace(" ", "");
+        QString pinNumber = pin.settings.spicePinNumber;
+        pinNumber.replace(" ", "");
 
         // 如果引脚名称为空，使用引脚编号
         if (pinName.isEmpty()) {
@@ -787,12 +733,19 @@ namespace EasyKiConverter
             content += QString("      (mid %1 %2)\n").arg(midX, 0, 'f', 2).arg(midY, 0, 'f', 2);
             content += QString("      (end %1 %2)\n").arg(endX, 0, 'f', 2).arg(endY, 0, 'f', 2);
             content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
-            content += "      (fill (type none))\n";
+            
+            // 根据fillColor设置填充类型（与Python版本一致）
+            if (arc.fillColor) {
+                content += "      (fill (type background))\n";
+            } else {
+                content += "      (fill (type none))\n";
+            }
+            
             content += "    )\n";
         }
         else if (arc.path.size() == 2)
         {
-            // 只有两个点，计算中点
+            // 只有两个点，计算中点（参考lckiconverter的做法）
             const auto path = arc.path; // 避免临时对象detach
             QPointF startPoint = path.first();
             QPointF endPoint = path.last();
@@ -811,7 +764,14 @@ namespace EasyKiConverter
             content += QString("      (mid %1 %2)\n").arg(midX, 0, 'f', 2).arg(midY, 0, 'f', 2);
             content += QString("      (end %1 %2)\n").arg(endX, 0, 'f', 2).arg(endY, 0, 'f', 2);
             content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
-            content += "      (fill (type none))\n";
+            
+            // 根据fillColor设置填充类型
+            if (arc.fillColor) {
+                content += "      (fill (type background))\n";
+            } else {
+                content += "      (fill (type none))\n";
+            }
+            
             content += "    )\n";
         }
         else
@@ -1003,60 +963,25 @@ namespace EasyKiConverter
     {
         QString content;
 
-        // 解析 SVG 路径（支持 M、L、Z 命令，与 Python 版本一致）
-        QStringList rawPts = path.paths.split(" ");
-        // 过滤掉空字符串
-        rawPts.removeAll("");
+        // 使用SvgPathParser解析SVG路径（参考lckiconverter的实现）
+        QList<QPointF> points = SvgPathParser::parsePath(path.paths);
 
-        QList<double> xPoints;
-        QList<double> yPoints;
-
-        // 解析路径命令
-        for (int i = 0; i < rawPts.size(); ++i)
-        {
-            QString token = rawPts[i];
-
-            if (token == "M" || token == "L")
-            {
-                // MoveTo 或 LineTo 命令
-                if (i + 2 < rawPts.size())
-                {
-                    double x = pxToMm(rawPts[i + 1].toDouble() - m_currentBBox.x);
-                    double y = -pxToMm(rawPts[i + 2].toDouble() - m_currentBBox.y); // Y 轴翻转
-                    xPoints.append(x);
-                    yPoints.append(y);
-                    i += 2; // 跳过已处理的坐标
-                }
-            }
-            else if (token == "Z" || token == "z")
-            {
-                // ClosePath 命令：重复第一个点以闭合路径
-                if (!xPoints.isEmpty() && !yPoints.isEmpty())
-                {
-                    xPoints.append(xPoints.first());
-                    yPoints.append(yPoints.first());
-                }
-            }
-            else if (token == "C")
-            {
-                // Bezier 曲线（暂不支持，跳过）
-                // TODO: 添加 Bezier 曲线支持
-                i += 6; // 跳过 Bezier 控制点和终点
-            }
-        }
-
-        // 生成 polyline
-        if (!xPoints.isEmpty() && !yPoints.isEmpty())
+        // 生成polyline
+        if (!points.isEmpty())
         {
             content += "    (polyline\n";
             content += "      (pts";
 
             QString lastPoint;
-            for (int i = 0; i < qMin(xPoints.size(), yPoints.size()); ++i)
+            for (const QPointF &pt : points)
             {
+                // 转换为相对于边界框的坐标，并转换为毫米
+                double x = pxToMm(pt.x() - m_currentBBox.x);
+                double y = -pxToMm(pt.y() - m_currentBBox.y); // Y 轴翻转
+
                 QString point = QString(" (xy %1 %2)")
-                                    .arg(xPoints[i], 0, 'f', 2)
-                                    .arg(yPoints[i], 0, 'f', 2);
+                                    .arg(x, 0, 'f', 2)
+                                    .arg(y, 0, 'f', 2);
 
                 // 避免重复点
                 if (point != lastPoint)
@@ -1092,6 +1017,62 @@ namespace EasyKiConverter
 
         return content;
     }
+
+    QString ExporterSymbol::generateText(const SymbolText &text) const
+    {
+        QString content;
+
+        // V6 使用毫米单位
+        double x = pxToMm(text.posX - m_currentBBox.x);
+        double y = -pxToMm(text.posY - m_currentBBox.y); // Y 轴翻转
+
+        // 计算字体大小（从pt转换为mm）
+        double fontSize = text.textSize * 0.352778; // 1pt = 0.352778mm
+
+        // 处理粗体和斜体
+        QString fontStyle = "";
+        if (text.bold) {
+            fontStyle += "bold ";
+        }
+        if (text.italic == "1" || text.italic == "Italic" || text.italic == "italic") {
+            fontStyle += "italic ";
+        }
+        if (fontStyle.isEmpty()) {
+            fontStyle = "normal";
+        } else {
+            fontStyle = fontStyle.trimmed();
+        }
+
+        // 处理旋转角度（lckiconverter的做法）
+        double rotation = text.rotation;
+        if (rotation != 0) {
+            rotation = 360 - rotation;
+        }
+
+        // 处理可见性
+        QString hide = text.visible ? "" : "hide";
+
+        // 转义文本内容（移除空格，与Python版本一致）
+        QString textContent = text.text;
+        textContent.replace(" ", "");
+        if (textContent.isEmpty()) {
+            textContent = "~";
+        }
+
+        // 生成文本元素
+        content += "    (text\n";
+        content += QString("      \"%1\"\n").arg(textContent);
+        content += QString("      (at %1 %2 %3)\n").arg(x, 0, 'f', 2).arg(y, 0, 'f', 2).arg(rotation, 0, 'f', 0);
+        content += QString("      (effects (font (size %1 %2) (thickness 0.1) %3) %4)\n")
+                      .arg(fontSize, 0, 'f', 2)
+                      .arg(fontSize, 0, 'f', 2)
+                      .arg(fontStyle)
+                      .arg(hide);
+        content += "    )\n";
+
+        return content;
+    }
+
     double ExporterSymbol::pxToMil(double px) const
     {
         return 10.0 * px;

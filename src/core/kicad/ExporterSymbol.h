@@ -136,6 +136,14 @@ private:
     QString generatePath(const SymbolPath &path) const;
 
     /**
+     * @brief 生成 KiCad 文本
+     *
+     * @param text 文本数据
+     * @return QString 文本文本
+     */
+    QString generateText(const SymbolText &text) const;
+
+    /**
      * @brief 生成 KiCad 子符号（用于多部分符号）
      *
      * @param symbolData 符号数据

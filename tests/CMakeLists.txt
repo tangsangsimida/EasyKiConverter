@@ -13,8 +13,7 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Test Network)
 
 # 设置包含路径
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/../src)
+include_directories(${CMAKE_SOURCE_DIR}/..)
 
 # 定义一个宏，让源文件使用正确的包含路径
 add_definitions(-DTESTING_MODE)

@@ -110,11 +110,47 @@ bool ProcessWorker::parseCadData(ComponentExportStatus &status)
         obj = rootObj;
     }
 
+    // 调试：打印obj的结构
+    status.addDebugLog("=== ProcessWorker CAD Data Structure ===");
+    status.addDebugLog(QString("Top-level keys: %1").arg(obj.keys().join(", ")));
+    if (obj.contains("dataStr")) {
+        QJsonObject dataStr = obj["dataStr"].toObject();
+        status.addDebugLog(QString("dataStr keys: %1").arg(dataStr.keys().join(", ")));
+        if (dataStr.contains("shape")) {
+            QJsonArray shapes = dataStr["shape"].toArray();
+            status.addDebugLog(QString("dataStr.shape size: %1").arg(shapes.size()));
+            if (!shapes.isEmpty()) {
+                status.addDebugLog(QString("First shape: %1").arg(shapes[0].toString().left(100)));
+            }
+        } else {
+            status.addDebugLog("WARNING: dataStr does NOT contain 'shape' field!");
+        }
+    } else {
+        status.addDebugLog("WARNING: obj does NOT contain 'dataStr' field!");
+    }
+    status.addDebugLog("==========================================");
+
     // 使用EasyedaImporter导入符号和封装数据
     EasyedaImporter importer;
 
     // 导入符号数据
     status.symbolData = importer.importSymbolData(obj);
+
+    // 调试：打印符号数据的统计信息
+    if (status.symbolData) {
+        status.addDebugLog(QString("Symbol data imported successfully"));
+        status.addDebugLog(QString("  - Pins: %1").arg(status.symbolData->pins().size()));
+        status.addDebugLog(QString("  - Rectangles: %1").arg(status.symbolData->rectangles().size()));
+        status.addDebugLog(QString("  - Circles: %1").arg(status.symbolData->circles().size()));
+        status.addDebugLog(QString("  - Arcs: %1").arg(status.symbolData->arcs().size()));
+        status.addDebugLog(QString("  - Polylines: %1").arg(status.symbolData->polylines().size()));
+        status.addDebugLog(QString("  - Polygons: %1").arg(status.symbolData->polygons().size()));
+        status.addDebugLog(QString("  - Paths: %1").arg(status.symbolData->paths().size()));
+        status.addDebugLog(QString("  - Ellipses: %1").arg(status.symbolData->ellipses().size()));
+        status.addDebugLog(QString("  - Texts: %1").arg(status.symbolData->texts().size()));
+    } else {
+        status.addDebugLog("WARNING: Symbol data is null after import!");
+    }
 
     // 导入封装数据
     status.footprintData = importer.importFootprintData(obj);

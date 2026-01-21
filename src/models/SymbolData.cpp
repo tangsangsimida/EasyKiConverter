@@ -518,6 +518,51 @@ bool SymbolPath::fromJson(const QJsonObject &json)
     return true;
 }
 
+// ==================== SymbolText ====================
+
+QJsonObject SymbolText::toJson() const
+{
+    QJsonObject json;
+    json["mark"] = mark;
+    json["pos_x"] = posX;
+    json["pos_y"] = posY;
+    json["rotation"] = rotation;
+    json["color"] = color;
+    json["font"] = font;
+    json["text_size"] = textSize;
+    json["bold"] = bold;
+    json["italic"] = italic;
+    json["baseline"] = baseline;
+    json["type"] = type;
+    json["text"] = text;
+    json["visible"] = visible;
+    json["anchor"] = anchor;
+    json["id"] = id;
+    json["is_locked"] = isLocked;
+    return json;
+}
+
+bool SymbolText::fromJson(const QJsonObject &json)
+{
+    mark = json["mark"].toString();
+    posX = json["pos_x"].toDouble(0.0);
+    posY = json["pos_y"].toDouble(0.0);
+    rotation = json["rotation"].toInt(0);
+    color = json["color"].toString();
+    font = json["font"].toString();
+    textSize = json["text_size"].toDouble(10.0);
+    bold = json["bold"].toBool(false);
+    italic = json["italic"].toString();
+    baseline = json["baseline"].toString();
+    type = json["type"].toString();
+    text = json["text"].toString();
+    visible = json["visible"].toBool(true);
+    anchor = json["anchor"].toString();
+    id = json["id"].toString();
+    isLocked = json["is_locked"].toBool(false);
+    return true;
+}
+
 // ==================== SymbolData ====================
 
 SymbolData::SymbolData()
@@ -577,6 +622,12 @@ QJsonObject SymbolData::toJson() const
         pathsArray.append(path.toJson());
     }
     json["paths"] = pathsArray;
+
+    QJsonArray textsArray;
+    for (const SymbolText &text : m_texts) {
+        textsArray.append(text.toJson());
+    }
+    json["texts"] = textsArray;
 
     // 添加多部分符号的部分
     QJsonArray partsArray;
@@ -718,6 +769,20 @@ bool SymbolData::fromJson(const QJsonObject &json)
         }
     }
 
+    // 读取文本
+    if (json.contains("texts") && json["texts"].isArray()) {
+        QJsonArray textsArray = json["texts"].toArray();
+        m_texts.clear();
+        for (const QJsonValue &value : textsArray) {
+            if (value.isObject()) {
+                SymbolText text;
+                if (text.fromJson(value.toObject())) {
+                    m_texts.append(text);
+                }
+            }
+        }
+    }
+
     // 读取多部分符号的部分
     if (json.contains("parts") && json["parts"].isArray()) {
         QJsonArray partsArray = json["parts"].toArray();
@@ -780,6 +845,7 @@ void SymbolData::clear()
     m_polylines.clear();
     m_polygons.clear();
     m_paths.clear();
+    m_texts.clear();
     m_parts.clear();
 }
 
@@ -837,6 +903,12 @@ QJsonObject SymbolPart::toJson() const
         pathsArray.append(path.toJson());
     }
     json["paths"] = pathsArray;
+
+    QJsonArray textsArray;
+    for (const SymbolText &text : texts) {
+        textsArray.append(text.toJson());
+    }
+    json["texts"] = textsArray;
 
     return json;
 }
@@ -929,6 +1001,17 @@ bool SymbolPart::fromJson(const QJsonObject &json)
             SymbolPath path;
             if (path.fromJson(value.toObject())) {
                 paths.append(path);
+            }
+        }
+    }
+
+    if (json.contains("texts")) {
+        QJsonArray textsArray = json["texts"].toArray();
+        texts.clear();
+        for (const QJsonValue &value : textsArray) {
+            SymbolText text;
+            if (text.fromJson(value.toObject())) {
+                texts.append(text);
             }
         }
     }

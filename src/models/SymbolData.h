@@ -327,6 +327,31 @@ struct SymbolPath {
     bool fromJson(const QJsonObject &json);
 };
 
+/**
+ * @brief 文本
+ */
+struct SymbolText {
+    QString mark;
+    double posX;
+    double posY;
+    double rotation;
+    QString color;
+    QString font;
+    double textSize;
+    bool bold;
+    QString italic;
+    QString baseline;
+    QString type;
+    QString text;
+    bool visible;
+    QString anchor;
+    QString id;
+    bool isLocked;
+
+    QJsonObject toJson() const;
+    bool fromJson(const QJsonObject &json);
+};
+
 // ==================== 符号部分 ====================
 
 /**
@@ -342,6 +367,7 @@ struct SymbolPart {
     QList<SymbolPolyline> polylines;
     QList<SymbolPolygon> polygons;
     QList<SymbolPath> paths;
+    QList<SymbolText> texts;
 
     QJsonObject toJson() const;
     bool fromJson(const QJsonObject &json);
@@ -400,6 +426,10 @@ public:
     void setPaths(const QList<SymbolPath> &paths) { m_paths = paths; }
     void addPath(const SymbolPath &path) { m_paths.append(path); }
 
+    QList<SymbolText> texts() const { return m_texts; }
+    void setTexts(const QList<SymbolText> &texts) { m_texts = texts; }
+    void addText(const SymbolText &text) { m_texts.append(text); }
+
     // 多部分符号接口
     QList<SymbolPart> parts() const { return m_parts; }
     void setParts(const QList<SymbolPart> &parts) { m_parts = parts; }
@@ -428,6 +458,7 @@ private:
     QList<SymbolPolyline> m_polylines;
     QList<SymbolPolygon> m_polygons;
     QList<SymbolPath> m_paths;
+    QList<SymbolText> m_texts;
     QList<SymbolPart> m_parts;  // 多部分符号的部分列表
 };
 

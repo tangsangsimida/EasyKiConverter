@@ -112,6 +112,14 @@ public:
     SymbolPath importPathData(const QString &pathData);
 
     /**
+     * @brief 导入文本数据
+     *
+     * @param textData 文本数据字符串
+     * @return SymbolText 文本数据
+     */
+    SymbolText importTextData(const QString &textData);
+
+    /**
      * @brief 导入焊盘数据
      *
      * @param padData 焊盘数据字符串
