@@ -247,22 +247,89 @@ namespace EasyKiConverter
         // 生成所有符号（包括未覆盖的现有符号和新导出的符号）
         int index = 0;
         
-        // 先导出未覆盖的现有符号
-        for (const QString &symbolName : existingSymbols.keys())
+        // 收集要被覆盖的符号名称
+        QSet<QString> overwrittenSymbolNames;
+        for (const SymbolData &symbol : symbolsToExport)
         {
-            bool isOverwritten = false;
-            for (const SymbolData &symbol : symbolsToExport)
+            overwrittenSymbolNames.insert(symbol.info().name);
+        }
+        
+        // 收集要被删除的子符号名称（属于被覆盖的父符号的子符号）
+        QSet<QString> subSymbolsToDelete;
+        for (const QString &subSymbolName : subSymbolNames)
+        {
+            // 检查子符号是否属于被覆盖的父符号
+            for (const QString &parentSymbolName : overwrittenSymbolNames)
             {
-                if (symbol.info().name == symbolName)
+                if (subSymbolName.startsWith(parentSymbolName + "_"))
                 {
-                    isOverwritten = true;
+                    subSymbolsToDelete.insert(subSymbolName);
+                    qDebug() << "Marking sub-symbol for deletion:" << subSymbolName << "(parent:" << parentSymbolName << ")";
                     break;
                 }
             }
+        }
         
+        // 先导出未覆盖的现有符号（需要过滤掉被覆盖的子符号）
+        for (const QString &symbolName : existingSymbols.keys())
+        {
+            bool isOverwritten = overwrittenSymbolNames.contains(symbolName);
+            
             if (!isOverwritten)
             {
-                out << existingSymbols[symbolName];
+                // 导出未覆盖的符号，但需要过滤掉子符号
+                QString symbolContent = existingSymbols[symbolName];
+                QStringList lines = symbolContent.split('\n');
+                QString filteredContent;
+                bool skipNextSymbol = false;
+                int braceCount = 0;
+                
+                for (const QString &line : lines)
+                {
+                    QString trimmedLine = line.trimmed();
+                    
+                    // 检查是否是子符号定义的开始
+                    if (trimmedLine.startsWith("(symbol \""))
+                    {
+                        int nameStart = trimmedLine.indexOf("\"") + 1;
+                        int nameEnd = trimmedLine.indexOf("\"", nameStart);
+                        if (nameEnd > nameStart)
+                        {
+                            QString subSymbolName = trimmedLine.mid(nameStart, nameEnd - nameStart);
+                            if (subSymbolsToDelete.contains(subSymbolName))
+                            {
+                                skipNextSymbol = true;
+                                braceCount = 1;
+                                qDebug() << "Skipping deleted sub-symbol:" << subSymbolName;
+                                continue;
+                            }
+                        }
+                    }
+                    
+                    if (skipNextSymbol)
+                    {
+                        // 计算括号数量
+                        for (int j = 0; j < line.length(); ++j)
+                        {
+                            if (line[j] == '(')
+                                braceCount++;
+                            else if (line[j] == ')')
+                            {
+                                braceCount--;
+                                if (braceCount == 0)
+                                {
+                                    skipNextSymbol = false;
+                                    break;
+                                }
+                            }
+                        }
+                        continue;
+                    }
+                    
+                    filteredContent += line + "\n";
+                }
+                
+                out << filteredContent;
                 qDebug() << "Keeping existing symbol:" << symbolName;
             }
         }
