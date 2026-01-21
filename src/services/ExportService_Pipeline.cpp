@@ -397,11 +397,18 @@ namespace EasyKiConverter
 
         // 导出合并后的符号库
         QString libraryPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, m_options.libName);
+        
+        // 正确设置 appendMode 和 updateMode
+        // appendMode: true = 追加模式（跳过已存在的符号）
+        // updateMode: true = 更新模式（覆盖已存在的符号）
         bool appendMode = !m_options.overwriteExistingFiles;
+        bool updateMode = m_options.updateMode;
+
+        qDebug() << "Merge settings - Append mode:" << appendMode << "Update mode:" << updateMode;
 
         // 使用ExporterSymbol直接导出
         ExporterSymbol exporter;
-        bool success = exporter.exportSymbolLibrary(m_symbols, m_options.libName, libraryPath, appendMode);
+        bool success = exporter.exportSymbolLibrary(m_symbols, m_options.libName, libraryPath, appendMode, updateMode);
 
         if (success)
         {

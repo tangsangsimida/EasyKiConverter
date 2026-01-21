@@ -255,27 +255,72 @@ namespace EasyKiConverter
         }
 
         // 收集要被删除的子符号名称（属于被覆盖的父符号的子符号）
+        // 改进的逻辑：准确识别分体式符号的子符号
         QSet<QString> subSymbolsToDelete;
+        
+        // 首先分析现有符号，确定哪些是分体式符号（有多个子符号）
+        QMap<QString, QStringList> parentToSubSymbols; // 父符号名 -> 子符号列表
         for (const QString &subSymbolName : subSymbolNames)
         {
-            // 检查子符号是否属于被覆盖的父符号
-            for (const QString &parentSymbolName : overwrittenSymbolNames)
+            // 从子符号名称中提取父符号名
+            // 子符号格式：{parentName}_{unitNumber}_1
+            int lastUnderscore = subSymbolName.lastIndexOf('_');
+            if (lastUnderscore > 0)
             {
-                if (subSymbolName.startsWith(parentSymbolName + "_"))
+                int secondLastUnderscore = subSymbolName.lastIndexOf('_', lastUnderscore - 1);
+                if (secondLastUnderscore > 0)
                 {
-                    subSymbolsToDelete.insert(subSymbolName);
-                    qDebug() << "Marking sub-symbol for deletion:" << subSymbolName << "(parent:" << parentSymbolName << ")";
-                    break;
+                    QString parentName = subSymbolName.left(secondLastUnderscore);
+                    parentToSubSymbols[parentName].append(subSymbolName);
                 }
             }
         }
 
-        // 先导出未覆盖的现有符号（需要过滤掉被覆盖的子符号）
+        // 对于每个被覆盖的父符号，收集其所有子符号
+        for (const QString &parentSymbolName : overwrittenSymbolNames)
+        {
+            if (parentToSubSymbols.contains(parentSymbolName))
+            {
+                // 这是一个分体式符号，删除所有子符号
+                for (const QString &subSymbolName : parentToSubSymbols[parentSymbolName])
+                {
+                    subSymbolsToDelete.insert(subSymbolName);
+                    qDebug() << "Marking sub-symbol for deletion (multipart):" << subSymbolName << "(parent:" << parentSymbolName << ")";
+                }
+            }
+            else
+            {
+                // 这是一个单体符号，查找其子符号（格式：{parentName}_0_1）
+                QString expectedSubSymbolName = parentSymbolName + "_0_1";
+                if (subSymbolNames.contains(expectedSubSymbolName))
+                {
+                    subSymbolsToDelete.insert(expectedSubSymbolName);
+                    qDebug() << "Marking sub-symbol for deletion (single part):" << expectedSubSymbolName << "(parent:" << parentSymbolName << ")";
+                }
+            }
+        }
+
+        // 先导出未覆盖的现有符号（需要过滤掉被覆盖的子符号和以被覆盖符号名开头的顶层符号）
         for (const QString &symbolName : existingSymbols.keys())
         {
             bool isOverwritten = overwrittenSymbolNames.contains(symbolName);
-
+            
+            // 检查是否是以被覆盖符号名开头的顶层符号（可能是之前错误导出的子符号）
+            bool isOrphanedSubSymbol = false;
             if (!isOverwritten)
+            {
+                for (const QString &parentSymbolName : overwrittenSymbolNames)
+                {
+                    if (symbolName.startsWith(parentSymbolName + "_"))
+                    {
+                        isOrphanedSubSymbol = true;
+                        qDebug() << "Skipping orphaned sub-symbol (top-level):" << symbolName << "(parent:" << parentSymbolName << ")";
+                        break;
+                    }
+                }
+            }
+
+            if (!isOverwritten && !isOrphanedSubSymbol)
             {
                 // 导出未覆盖的符号，但需要过滤掉子符号
                 QString symbolContent = existingSymbols[symbolName];
