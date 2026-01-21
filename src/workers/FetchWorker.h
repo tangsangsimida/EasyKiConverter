@@ -44,9 +44,9 @@ public:
 signals:
     /**
      * @brief 抓取完成信号
-     * @param status 导出状态
+     * @param status 导出状态（使用 QSharedPointer 避免拷贝）
      */
-    void fetchCompleted(const ComponentExportStatus &status);
+    void fetchCompleted(QSharedPointer<ComponentExportStatus> status);
 
 private:
     /**
@@ -63,6 +63,20 @@ private:
      * @return QByteArray 解压后的数据
      */
     QByteArray decompressGzip(const QByteArray &compressedData);
+
+    /**
+     * @brief 解压ZIP数据
+     * @param zipData ZIP数据
+     * @return QByteArray 解压后的数据
+     */
+    QByteArray decompressZip(const QByteArray &zipData);
+
+    /**
+     * @brief 下载3D模型数据
+     * @param status 导出状态
+     * @return bool 是否成功
+     */
+    bool fetch3DModelData(ComponentExportStatus &status);
 
 private:
     QString m_componentId;

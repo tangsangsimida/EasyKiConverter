@@ -11,7 +11,7 @@
 namespace EasyKiConverter {
 
 WriteWorker::WriteWorker(
-    const ComponentExportStatus &status,
+    QSharedPointer<ComponentExportStatus> status,
     const QString &outputPath,
     const QString &libName,
     bool exportSymbol,
@@ -39,45 +39,45 @@ WriteWorker::~WriteWorker()
 
 void WriteWorker::run()
 {
-    m_status.addDebugLog(QString("WriteWorker started for component: %1").arg(m_status.componentId));
+    m_status->addDebugLog(QString("WriteWorker started for component: %1").arg(m_status->componentId));
 
     // 创建输出目录
     if (!createOutputDirectory(m_outputPath)) {
-        m_status.writeSuccess = false;
-        m_status.writeMessage = "Failed to create output directory";
-        m_status.addDebugLog("ERROR: Failed to create output directory");
+        m_status->writeSuccess = false;
+        m_status->writeMessage = "Failed to create output directory";
+        m_status->addDebugLog("ERROR: Failed to create output directory");
         emit writeCompleted(m_status);
         return;
     }
 
     // 写入符号文件
-    if (m_exportSymbol && m_status.symbolData) {
-        if (!writeSymbolFile(m_status)) {
-            m_status.writeSuccess = false;
-            m_status.writeMessage = "Failed to write symbol file";
-            m_status.addDebugLog("ERROR: Failed to write symbol file");
+    if (m_exportSymbol && m_status->symbolData) {
+        if (!writeSymbolFile(*m_status)) {
+            m_status->writeSuccess = false;
+            m_status->writeMessage = "Failed to write symbol file";
+            m_status->addDebugLog("ERROR: Failed to write symbol file");
             emit writeCompleted(m_status);
             return;
         }
     }
 
     // 写入封装文件
-    if (m_exportFootprint && m_status.footprintData) {
-        if (!writeFootprintFile(m_status)) {
-            m_status.writeSuccess = false;
-            m_status.writeMessage = "Failed to write footprint file";
-            m_status.addDebugLog("ERROR: Failed to write footprint file");
+    if (m_exportFootprint && m_status->footprintData) {
+        if (!writeFootprintFile(*m_status)) {
+            m_status->writeSuccess = false;
+            m_status->writeMessage = "Failed to write footprint file";
+            m_status->addDebugLog("ERROR: Failed to write footprint file");
             emit writeCompleted(m_status);
             return;
         }
     }
 
     // 写入3D模型文件
-    if (m_exportModel3D && m_status.model3DData && !m_status.model3DObjRaw.isEmpty()) {
-        if (!write3DModelFile(m_status)) {
-            m_status.writeSuccess = false;
-            m_status.writeMessage = "Failed to write 3D model file";
-            m_status.addDebugLog("ERROR: Failed to write 3D model file");
+    if (m_exportModel3D && m_status->model3DData && !m_status->model3DObjRaw.isEmpty()) {
+        if (!write3DModelFile(*m_status)) {
+            m_status->writeSuccess = false;
+            m_status->writeMessage = "Failed to write 3D model file";
+            m_status->addDebugLog("ERROR: Failed to write 3D model file");
             emit writeCompleted(m_status);
             return;
         }
@@ -85,12 +85,12 @@ void WriteWorker::run()
 
     // 导出调试数据（如果启用）
     if (m_debugMode) {
-        exportDebugData(m_status);
+        exportDebugData(*m_status);
     }
 
-    m_status.writeSuccess = true;
-    m_status.writeMessage = "Write completed successfully";
-    m_status.addDebugLog(QString("WriteWorker completed successfully for component: %1").arg(m_status.componentId));
+    m_status->writeSuccess = true;
+    m_status->writeMessage = "Write completed successfully";
+    m_status->addDebugLog(QString("WriteWorker completed successfully for component: %1").arg(m_status->componentId));
 
     emit writeCompleted(m_status);
 }

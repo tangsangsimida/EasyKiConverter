@@ -17,8 +17,8 @@ ExportServicePipeline::ExportServicePipeline(QObject *parent)
     , m_fetchThreadPool(new QThreadPool(this))
     , m_processThreadPool(new QThreadPool(this))
     , m_writeThreadPool(new QThreadPool(this))
-    , m_fetchProcessQueue(new BoundedThreadSafeQueue<ComponentExportStatus>(100))
-    , m_processWriteQueue(new BoundedThreadSafeQueue<ComponentExportStatus>(100))
+    , m_fetchProcessQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100))
+    , m_processWriteQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100))
     , m_networkAccessManager(new QNetworkAccessManager(this))
     , m_isPipelineRunning(false)
     , m_mutex(new QMutex())
@@ -93,25 +93,25 @@ PipelineProgress ExportServicePipeline::getPipelineProgress() const
     return m_pipelineProgress;
 }
 
-void ExportServicePipeline::handleFetchCompleted(const ComponentExportStatus &status)
+void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportStatus> status)
 {
     QMutexLocker locker(m_mutex);
 
-    qDebug() << "Fetch completed for component:" << status.componentId
-             << "Success:" << status.fetchSuccess;
+    qDebug() << "Fetch completed for component:" << status->componentId
+             << "Success:" << status->fetchSuccess;
 
     m_pipelineProgress.fetchCompleted++;
 
-    if (status.fetchSuccess) {
-        // 将数据放入处理队列
+    if (status->fetchSuccess) {
+        // 将数据放入处理队列（使用 QSharedPointer 避免拷贝）
         m_fetchProcessQueue->push(status);
         // 发送抓取完成信号
-        emit componentExported(status.componentId, true, "Fetch completed");
+        emit componentExported(status->componentId, true, "Fetch completed");
     } else {
         // 抓取失败，直接记录失败
         m_failureCount++;
-        qDebug() << "Fetch failed for component:" << status.componentId << "Error:" << status.fetchMessage;
-        emit componentExported(status.componentId, false, status.fetchMessage);
+        qDebug() << "Fetch failed for component:" << status->componentId << "Error:" << status->fetchMessage;
+        emit componentExported(status->componentId, false, status->fetchMessage);
     }
 
     emit pipelineProgressUpdated(m_pipelineProgress);
@@ -124,25 +124,25 @@ void ExportServicePipeline::handleFetchCompleted(const ComponentExportStatus &st
     checkPipelineCompletion();
 }
 
-void ExportServicePipeline::handleProcessCompleted(const ComponentExportStatus &status)
+void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExportStatus> status)
 {
     QMutexLocker locker(m_mutex);
 
-    qDebug() << "Process completed for component:" << status.componentId
-             << "Success:" << status.processSuccess;
+    qDebug() << "Process completed for component:" << status->componentId
+             << "Success:" << status->processSuccess;
 
     m_pipelineProgress.processCompleted++;
 
-    if (status.processSuccess) {
-        // 将数据放入写入队列
+    if (status->processSuccess) {
+        // 将数据放入写入队列（使用 QSharedPointer 避免拷贝）
         m_processWriteQueue->push(status);
         // 发送处理完成信号
-        emit componentExported(status.componentId, true, "Process completed");
+        emit componentExported(status->componentId, true, "Process completed");
     } else {
         // 处理失败，直接记录失败
         m_failureCount++;
-        qDebug() << "Process failed for component:" << status.componentId << "Error:" << status.processMessage;
-        emit componentExported(status.componentId, false, status.processMessage);
+        qDebug() << "Process failed for component:" << status->componentId << "Error:" << status->processMessage;
+        emit componentExported(status->componentId, false, status->processMessage);
     }
 
     emit pipelineProgressUpdated(m_pipelineProgress);
@@ -155,38 +155,38 @@ void ExportServicePipeline::handleProcessCompleted(const ComponentExportStatus &
     checkPipelineCompletion();
 }
 
-void ExportServicePipeline::handleWriteCompleted(const ComponentExportStatus &status)
+void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportStatus> status)
 {
     QMutexLocker locker(m_mutex);
 
-    qDebug() << "Write completed for component:" << status.componentId
-             << "Success:" << status.writeSuccess;
+    qDebug() << "Write completed for component:" << status->componentId
+             << "Success:" << status->writeSuccess;
 
     m_pipelineProgress.writeCompleted++;
 
-    if (status.writeSuccess) {
+    if (status->writeSuccess) {
         m_successCount++;
 
         // 如果导出了符号，将符号数据加入列表
-        if (m_options.exportSymbol && status.symbolData) {
-            m_symbols.append(*status.symbolData);
-            qDebug() << "Added symbol to merge list:" << status.symbolData->info().name;
+        if (m_options.exportSymbol && status->symbolData) {
+            m_symbols.append(*status->symbolData);
+            qDebug() << "Added symbol to merge list:" << status->symbolData->info().name;
         }
 
         // 如果导出了符号，将临时文件加入列表（用于清理）
-        if (m_options.exportSymbol && status.symbolData) {
-            QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, status.componentId);
+        if (m_options.exportSymbol && status->symbolData) {
+            QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, status->componentId);
             if (QFile::exists(tempFilePath)) {
                 m_tempSymbolFiles.append(tempFilePath);
             }
         }
         
         // 发送写入完成信号
-        emit componentExported(status.componentId, true, "Export completed successfully");
+        emit componentExported(status->componentId, true, "Export completed successfully");
     } else {
         m_failureCount++;
-        qDebug() << "Write failed for component:" << status.componentId << "Error:" << status.writeMessage;
-        emit componentExported(status.componentId, false, status.writeMessage);
+        qDebug() << "Write failed for component:" << status->componentId << "Error:" << status->writeMessage;
+        emit componentExported(status->componentId, false, status->writeMessage);
     }
 
     emit pipelineProgressUpdated(m_pipelineProgress);

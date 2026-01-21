@@ -79,21 +79,21 @@ signals:
 private slots:
     /**
      * @brief 处理抓取完成
-     * @param status 导出状态
+     * @param status 导出状态（使用 QSharedPointer 避免拷贝）
      */
-    void handleFetchCompleted(const ComponentExportStatus &status);
+    void handleFetchCompleted(QSharedPointer<ComponentExportStatus> status);
 
     /**
      * @brief 处理处理完成
-     * @param status 导出状态
+     * @param status 导出状态（使用 QSharedPointer 避免拷贝）
      */
-    void handleProcessCompleted(const ComponentExportStatus &status);
+    void handleProcessCompleted(QSharedPointer<ComponentExportStatus> status);
 
     /**
      * @brief 处理写入完成
-     * @param status 导出状态
+     * @param status 导出状态（使用 QSharedPointer 避免拷贝）
      */
-    void handleWriteCompleted(const ComponentExportStatus &status);
+    void handleWriteCompleted(QSharedPointer<ComponentExportStatus> status);
 
 private:
     /**
@@ -133,9 +133,9 @@ private:
     QThreadPool *m_processThreadPool;    // 处理线程池（CPU密集型，等于核心数）
     QThreadPool *m_writeThreadPool;      // 写入线程池（磁盘I/O密集型，8个线程）
 
-    // 线程安全队列
-    BoundedThreadSafeQueue<ComponentExportStatus> *m_fetchProcessQueue;  // 抓取->处理队列
-    BoundedThreadSafeQueue<ComponentExportStatus> *m_processWriteQueue;  // 处理->写入队列
+    // 线程安全队列（使用 QSharedPointer 避免数据拷贝）
+    BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>> *m_fetchProcessQueue;  // 抓取->处理队列
+    BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>> *m_processWriteQueue;  // 处理->写入队列
 
     // 网络访问管理器（共享）
     QNetworkAccessManager *m_networkAccessManager;

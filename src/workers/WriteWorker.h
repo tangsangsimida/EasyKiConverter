@@ -22,7 +22,7 @@ class WriteWorker : public QObject, public QRunnable
 public:
     /**
      * @brief 构造函数
-     * @param status 导出状态
+     * @param status 导出状态（使用 QSharedPointer 避免拷贝）
      * @param outputPath 输出路径
      * @param libName 库名称
      * @param exportSymbol 是否导出符号
@@ -32,7 +32,7 @@ public:
      * @param parent 父对象
      */
     explicit WriteWorker(
-        const ComponentExportStatus &status,
+        QSharedPointer<ComponentExportStatus> status,
         const QString &outputPath,
         const QString &libName,
         bool exportSymbol,
@@ -54,9 +54,9 @@ public:
 signals:
     /**
      * @brief 写入完成信号
-     * @param status 导出状态
+     * @param status 导出状态（使用 QSharedPointer 避免拷贝）
      */
-    void writeCompleted(const ComponentExportStatus &status);
+    void writeCompleted(QSharedPointer<ComponentExportStatus> status);
 
 private:
     /**
@@ -95,7 +95,7 @@ private:
     bool exportDebugData(ComponentExportStatus &status);
 
 private:
-    ComponentExportStatus m_status;
+    QSharedPointer<ComponentExportStatus> m_status;
     QString m_outputPath;
     QString m_libName;
     bool m_exportSymbol;
