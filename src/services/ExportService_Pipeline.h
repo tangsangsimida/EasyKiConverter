@@ -14,6 +14,16 @@ namespace EasyKiConverter
 {
 
     /**
+     * @brief 流水线阶段枚举
+     */
+    enum class PipelineStage
+    {
+        Fetch,    // 抓取阶段
+        Process,  // 处理阶段
+        Write     // 写入阶段
+    };
+
+    /**
      * @brief 流水线阶段进度
      */
     struct PipelineProgress

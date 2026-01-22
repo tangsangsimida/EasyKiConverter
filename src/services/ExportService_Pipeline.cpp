@@ -44,19 +44,17 @@ namespace EasyKiConverter
             return;
         }
 
-        // 动态调整队列大小（任务数的 1/4，最小 100）
-        size_t queueSize = qMax(
-            static_cast<size_t>(100),                    // 最小值
-            static_cast<size_t>(componentIds.size() / 4) // 任务数的 1/4
-        );
+        // 使用固定队列大小（64）以防止内存溢出
+        // 固定大小提供背压（Backpressure）机制，当下游处理不过来时阻塞上游
+        const size_t FIXED_QUEUE_SIZE = 64;
 
-        // 重新创建队列以应用新的队列大小
+        // 重新创建队列以应用固定的队列大小
         delete m_fetchProcessQueue;
         delete m_processWriteQueue;
-        m_fetchProcessQueue = new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(queueSize);
-        m_processWriteQueue = new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(queueSize);
+        m_fetchProcessQueue = new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(FIXED_QUEUE_SIZE);
+        m_processWriteQueue = new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(FIXED_QUEUE_SIZE);
 
-        qDebug() << "Dynamic queue size set to:" << queueSize << "(based on" << componentIds.size() << "tasks)";
+        qDebug() << "Fixed queue size set to:" << FIXED_QUEUE_SIZE << "(prevents memory overflow for" << componentIds.size() << "tasks)";
 
         // 初始化流水线状态
         m_componentIds = componentIds;
@@ -113,15 +111,15 @@ namespace EasyKiConverter
         {
             // 将数据放入处理队列（使用 QSharedPointer 避免拷贝）
             m_fetchProcessQueue->push(status);
-            // 发送抓取完成信号
-            emit componentExported(status->componentId, true, "Fetch completed");
+            // 发送抓取完成信号（包含阶段信息）
+            emit componentExported(status->componentId, true, "Fetch completed", static_cast<int>(PipelineStage::Fetch));
         }
         else
         {
             // 抓取失败，直接记录失败
             m_failureCount++;
             qDebug() << "Fetch failed for component:" << status->componentId << "Error:" << status->fetchMessage;
-            emit componentExported(status->componentId, false, status->fetchMessage);
+            emit componentExported(status->componentId, false, status->fetchMessage, static_cast<int>(PipelineStage::Fetch));
         }
 
         emit pipelineProgressUpdated(m_pipelineProgress);
@@ -147,15 +145,15 @@ namespace EasyKiConverter
         {
             // 将数据放入写入队列（使用 QSharedPointer 避免拷贝）
             m_processWriteQueue->push(status);
-            // 发送处理完成信号
-            emit componentExported(status->componentId, true, "Process completed");
+            // 发送处理完成信号（包含阶段信息）
+            emit componentExported(status->componentId, true, "Process completed", static_cast<int>(PipelineStage::Process));
         }
         else
         {
             // 处理失败，直接记录失败
             m_failureCount++;
             qDebug() << "Process failed for component:" << status->componentId << "Error:" << status->processMessage;
-            emit componentExported(status->componentId, false, status->processMessage);
+            emit componentExported(status->componentId, false, status->processMessage, static_cast<int>(PipelineStage::Process));
         }
 
         emit pipelineProgressUpdated(m_pipelineProgress);
@@ -198,14 +196,14 @@ namespace EasyKiConverter
                 }
             }
 
-            // 发送写入完成信号
-            emit componentExported(status->componentId, true, "Export completed successfully");
+            // 发送写入完成信号（包含阶段信息）
+            emit componentExported(status->componentId, true, "Export completed successfully", static_cast<int>(PipelineStage::Write));
         }
         else
         {
             m_failureCount++;
             qDebug() << "Write failed for component:" << status->componentId << "Error:" << status->writeMessage;
-            emit componentExported(status->componentId, false, status->writeMessage);
+            emit componentExported(status->componentId, false, status->writeMessage, static_cast<int>(PipelineStage::Write));
         }
 
         emit pipelineProgressUpdated(m_pipelineProgress);

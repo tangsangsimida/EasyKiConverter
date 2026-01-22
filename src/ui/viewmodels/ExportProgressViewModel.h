@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include <QString>
+#include <QVariantList>
+#include <QHash>
+#include <QTimer>
 #include "src/services/ExportService.h"
 #include "src/services/ComponentService.h"
 #include "src/services/ExportService_Pipeline.h"
@@ -26,8 +29,10 @@ namespace EasyKiConverter
         Q_PROPERTY(int fetchProgress READ fetchProgress NOTIFY fetchProgressChanged)
         Q_PROPERTY(int processProgress READ processProgress NOTIFY processProgressChanged)
         Q_PROPERTY(int writeProgress READ writeProgress NOTIFY writeProgressChanged)
-    Q_PROPERTY(QVariantList resultsList READ resultsList NOTIFY resultsListChanged)
-    public : explicit ExportProgressViewModel(ExportService *exportService, ComponentService *componentService, QObject *parent = nullptr);
+        Q_PROPERTY(QVariantList resultsList READ resultsList NOTIFY resultsListChanged)
+
+    public:
+        explicit ExportProgressViewModel(ExportService *exportService, ComponentService *componentService, QObject *parent = nullptr);
         ~ExportProgressViewModel() override;
 
         // Getter 方法
@@ -60,14 +65,33 @@ namespace EasyKiConverter
         void processProgressChanged();
         void writeProgressChanged();
         void resultsListChanged();
+
     private slots:
         void handleExportProgress(int current, int total);
         void handleExportCompleted(int totalCount, int successCount);
         void handleExportFailed(const QString &error);
-        void handleComponentExported(const QString &componentId, bool success, const QString &message);
+        void handleComponentExported(const QString &componentId, bool success, const QString &message, int stage = -1);
         void handleComponentDataFetched(const QString &componentId, const ComponentData &data);
         void handleAllComponentsDataCollected(const QList<ComponentData> &componentDataList);
         void handlePipelineProgressUpdated(const PipelineProgress &progress);
+
+        // 节流定时器槽函数
+        void flushPendingUpdates();
+
+    private:
+        /**
+         * @brief 根据阶段获取状态字符串
+         * @param stage 阶段（0=Fetch, 1=Process, 2=Write, -1=未知）
+         * @param success 是否成功
+         * @return 状态字符串
+         */
+        QString getStatusString(int stage, bool success) const;
+
+        /**
+         * @brief 预填充结果列表
+         * @param componentIds 元件ID列表
+         */
+        void prepopulateResultsList(const QStringList &componentIds);
 
     private:
         ExportService *m_exportService;
@@ -86,6 +110,13 @@ namespace EasyKiConverter
         int m_writeProgress;
         bool m_usePipelineMode;
         QVariantList m_resultsList;
+
+        // 性能优化：哈希表用于快速查找
+        QHash<QString, int> m_idToIndexMap;
+
+        // UI 节流：定时器和待更新列表
+        QTimer *m_throttleTimer;
+        bool m_pendingUpdate;
     };
 } // namespace EasyKiConverter
 

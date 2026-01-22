@@ -149,8 +149,9 @@ namespace EasyKiConverter
          * @param componentId 元件ID
          * @param success 是否成功
          * @param message 消息
+         * @param stage 阶段（可选，用于流水线模式：0=Fetch, 1=Process, 2=Write, -1=未知）
          */
-        void componentExported(const QString &componentId, bool success, const QString &message);
+        void componentExported(const QString &componentId, bool success, const QString &message, int stage = -1);
 
         /**
          * @brief 导出完成信号

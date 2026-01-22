@@ -6,8 +6,14 @@ namespace EasyKiConverter
 {
 
     ExportProgressViewModel::ExportProgressViewModel(ExportService *exportService, ComponentService *componentService, QObject *parent)
-        : QObject(parent), m_exportService(exportService), m_componentService(componentService), m_status("Ready"), m_progress(0), m_isExporting(false), m_successCount(0), m_failureCount(0), m_fetchedCount(0), m_fetchProgress(0), m_processProgress(0), m_writeProgress(0), m_usePipelineMode(false)
+        : QObject(parent), m_exportService(exportService), m_componentService(componentService), m_status("Ready"), m_progress(0), m_isExporting(false), m_successCount(0), m_failureCount(0), m_fetchedCount(0), m_fetchProgress(0), m_processProgress(0), m_writeProgress(0), m_usePipelineMode(false), m_pendingUpdate(false)
     {
+        // 初始化节流定时器（100ms）
+        m_throttleTimer = new QTimer(this);
+        m_throttleTimer->setInterval(100); // 100ms 节流间隔
+        m_throttleTimer->setSingleShot(true);
+        connect(m_throttleTimer, &QTimer::timeout, this, &ExportProgressViewModel::flushPendingUpdates);
+
         // 连接 ExportService 信号
         if (m_exportService)
         {
@@ -40,6 +46,10 @@ namespace EasyKiConverter
 
     ExportProgressViewModel::~ExportProgressViewModel()
     {
+        if (m_throttleTimer)
+        {
+            m_throttleTimer->stop();
+        }
     }
 
     void ExportProgressViewModel::startExport(const QStringList &componentIds, const QString &outputPath, const QString &libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool overwriteExistingFiles, bool updateMode, bool debugMode)
@@ -72,6 +82,13 @@ namespace EasyKiConverter
         m_collectedData.clear();
         m_status = "Starting export...";
 
+        // 清空结果列表和哈希表
+        m_resultsList.clear();
+        m_idToIndexMap.clear();
+
+        // 预填充结果列表（性能优化 + 用户体验优化）
+        prepopulateResultsList(componentIds);
+
         // 保存导出选项
         m_exportOptions.outputPath = outputPath;
         m_exportOptions.libName = libName;
@@ -85,6 +102,7 @@ namespace EasyKiConverter
         emit isExportingChanged();
         emit progressChanged();
         emit statusChanged();
+        emit resultsListChanged();
 
         // 如果使用流水线模式，直接调用流水线导出
         if (m_usePipelineMode && qobject_cast<ExportServicePipeline *>(m_exportService))
@@ -138,49 +156,107 @@ namespace EasyKiConverter
         }
     }
 
-    void ExportProgressViewModel::handleComponentExported(const QString &componentId, bool success, const QString &message)
+    QString ExportProgressViewModel::getStatusString(int stage, bool success) const
     {
-        qDebug() << "Component exported:" << componentId << "Success:" << success << "Message:" << message;
+        if (!success)
+        {
+            return "failed";
+        }
 
-        // 更新结果列表
+        // 根据阶段返回不同的状态字符串
+        switch (stage)
+        {
+        case 0: // Fetch
+            return "fetch_completed";
+        case 1: // Process
+            return "processing";
+        case 2: // Write
+            return "success"; // 只有写入阶段完成才算真正成功
+        default:
+            return "success";
+        }
+    }
+
+    void ExportProgressViewModel::handleComponentExported(const QString &componentId, bool success, const QString &message, int stage)
+    {
+        qDebug() << "Component exported:" << componentId << "Success:" << success << "Stage:" << stage << "Message:" << message;
+
+        // 使用哈希表快速查找（O(1) 复杂度）
+        int index = m_idToIndexMap.value(componentId, -1);
+
         QVariantMap result;
-        result["componentId"] = componentId;
-        result["status"] = success ? "success" : "failed";
-        result["message"] = message;
+        QString statusStr = getStatusString(stage, success);
 
-        // 查找并更新现有结果
-        bool found = false;
-        for (int i = 0; i < m_resultsList.size(); ++i)
+        if (index >= 0 && index < m_resultsList.size())
         {
-            QVariantMap existingResult = m_resultsList[i].toMap();
-            if (existingResult["componentId"].toString() == componentId)
-            {
-                m_resultsList[i] = result;
-                found = true;
-                break;
-            }
-        }
-
-        // 如果没找到，添加新结果
-        if (!found)
-        {
-            m_resultsList.append(result);
-        }
-
-        emit resultsListChanged();
-
-        if (success)
-        {
-            m_successCount++;
-            emit successCountChanged();
+            // 更新现有结果
+            result = m_resultsList[index].toMap();
+            result["status"] = statusStr;
+            result["message"] = message;
+            m_resultsList[index] = result;
         }
         else
+        {
+            // 如果没找到（不应该发生，因为已经预填充），添加新结果
+            qWarning() << "Component not found in pre-populated list:" << componentId;
+            result["componentId"] = componentId;
+            result["status"] = statusStr;
+            result["message"] = message;
+            m_resultsList.append(result);
+            m_idToIndexMap[componentId] = m_resultsList.size() - 1;
+        }
+
+        // 使用节流机制更新 UI（避免频繁刷新）
+        if (!m_pendingUpdate)
+        {
+            m_pendingUpdate = true;
+            m_throttleTimer->start();
+        }
+
+        // 更新统计（不依赖节流）
+        if (!success && statusStr == "failed")
         {
             m_failureCount++;
             emit failureCountChanged();
         }
+        else if (success && stage == 2) // 只有写入阶段完成才算成功
+        {
+            m_successCount++;
+            emit successCountChanged();
+        }
 
         emit componentExported(componentId, success, message);
+    }
+
+    void ExportProgressViewModel::flushPendingUpdates()
+    {
+        if (m_pendingUpdate)
+        {
+            m_pendingUpdate = false;
+            emit resultsListChanged();
+            qDebug() << "Flushed" << m_resultsList.size() << "results to UI";
+        }
+    }
+
+    void ExportProgressViewModel::prepopulateResultsList(const QStringList &componentIds)
+    {
+        qDebug() << "Pre-populating results list with" << componentIds.size() << "components";
+
+        m_resultsList.clear();
+        m_idToIndexMap.clear();
+
+        for (int i = 0; i < componentIds.size(); ++i)
+        {
+            QVariantMap result;
+            result["componentId"] = componentIds[i];
+            result["status"] = "pending"; // 初始状态：等待中
+            result["message"] = "Waiting to start...";
+
+            m_resultsList.append(result);
+            m_idToIndexMap[componentIds[i]] = i;
+        }
+
+        qDebug() << "Pre-populated" << m_resultsList.size() << "results with hash map";
     }
 
     void ExportProgressViewModel::handleComponentDataFetched(const QString &componentId, const ComponentData &data)
@@ -210,6 +286,13 @@ namespace EasyKiConverter
     {
         qDebug() << "Export completed:" << successCount << "/" << totalCount << "success";
 
+        // 确保所有待处理的更新都已刷新
+        if (m_pendingUpdate)
+        {
+            m_throttleTimer->stop();
+            flushPendingUpdates();
+        }
+
         m_isExporting = false;
         m_status = "Export completed";
         emit isExportingChanged();
@@ -220,6 +303,13 @@ namespace EasyKiConverter
     void ExportProgressViewModel::handleExportFailed(const QString &error)
     {
         qWarning() << "Export failed:" << error;
+
+        // 确保所有待处理的更新都已刷新
+        if (m_pendingUpdate)
+        {
+            m_throttleTimer->stop();
+            flushPendingUpdates();
+        }
 
         m_status = "Export failed: " + error;
         emit statusChanged();
