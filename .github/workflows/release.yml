@@ -28,12 +28,7 @@ jobs:
           target: 'desktop'
           arch: 'win64_mingw'
           cache: true
-
-      - name: Install MinGW toolchain
-        shell: pwsh
-        run: |
-          # 使用 aqt 安装 MinGW 工具链
-          python -m aqt install-qt windows desktop 6.10.1 win64_mingw --outputdir $env:Qt6_DIR\.. --archives gcc
+          # install-qt-action 会自动安装对应的 MinGW 工具链
 
       - name: Verify Qt and MinGW setup
         shell: pwsh
@@ -44,10 +39,26 @@ jobs:
           Write-Host "=== Qt Bin Directory ==="
           Get-ChildItem "$env:Qt6_DIR\bin" | Select-Object -First 10 Name
           Write-Host ""
-          Write-Host "=== Qt Tools Directory ==="
-          Get-ChildItem "$env:Qt6_DIR\..\Tools\mingw*\bin" -ErrorAction SilentlyContinue | Select-Object -First 10 Name
+          Write-Host "=== Looking for MinGW ==="
+          # install-qt-action 可能将 MinGW 安装在不同位置
+          $possiblePaths = @(
+            "$env:Qt6_DIR\..\Tools",
+            "$env:Qt6_DIR\..\..\Tools",
+            "$env:Qt6_DIR\Tools"
+          )
+          
+          foreach ($path in $possiblePaths) {
+            if (Test-Path $path) {
+              Write-Host "Found path: $path"
+              $mingwDirs = Get-ChildItem $path -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "mingw*" }
+              if ($mingwDirs) {
+                Write-Host "MinGW directories found:"
+                $mingwDirs | ForEach-Object { Write-Host "  - $($_.Name)" }
+              }
+            }
+          }
           Write-Host ""
-          Write-Host "=== PATH ==="
+          Write-Host "=== PATH (Qt and MinGW) ==="
           $env:PATH -split ';' | Select-String -Pattern 'Qt|mingw'
 
       - name: Configure CMake
@@ -55,7 +66,31 @@ jobs:
         run: |
           cd $env:GITHUB_WORKSPACE
           # 查找 MinGW 编译器的实际路径
-          $mingwPath = Get-ChildItem "$env:Qt6_DIR\..\Tools\mingw*" -Directory | Select-Object -First 1
+          # install-qt-action 可能将 MinGW 安装在不同位置
+          $possiblePaths = @(
+            "$env:Qt6_DIR\..\Tools",
+            "$env:Qt6_DIR\..\..\Tools",
+            "$env:Qt6_DIR\Tools"
+          )
+          
+          $mingwPath = $null
+          foreach ($path in $possiblePaths) {
+            if (Test-Path $path) {
+              $mingwDir = Get-ChildItem $path -Directory -ErrorAction SilentlyContinue | 
+                Where-Object { $_.Name -like "mingw*" } | 
+                Select-Object -First 1
+              if ($mingwDir) {
+                $mingwPath = $mingwDir.FullName
+                break
+              }
+            }
+          }
+          
+          if (-not $mingwPath) {
+            Write-Error "No MinGW directory found. Tried: $($possiblePaths -join ', ')"
+            exit 1
+          }
+          
           $gccPath = "$mingwPath\bin\gcc.exe"
           $gxxPath = "$mingwPath\bin\g++.exe"
           
@@ -87,8 +122,26 @@ jobs:
         shell: pwsh
         run: |
           cd $env:GITHUB_WORKSPACE
-          # 查找 MinGW 路径
-          $mingwPath = Get-ChildItem "$env:Qt6_DIR\..\Tools\mingw*" -Directory | Select-Object -First 1
+          # 查找 MinGW 路径（与 Configure 步骤相同）
+          $possiblePaths = @(
+            "$env:Qt6_DIR\..\Tools",
+            "$env:Qt6_DIR\..\..\Tools",
+            "$env:Qt6_DIR\Tools"
+          )
+          
+          $mingwPath = $null
+          foreach ($path in $possiblePaths) {
+            if (Test-Path $path) {
+              $mingwDir = Get-ChildItem $path -Directory -ErrorAction SilentlyContinue | 
+                Where-Object { $_.Name -like "mingw*" } | 
+                Select-Object -First 1
+              if ($mingwDir) {
+                $mingwPath = $mingwDir.FullName
+                break
+              }
+            }
+          }
+          
           $env:PATH = "$mingwPath\bin;$env:PATH"
           mingw32-make -C build -j
 
