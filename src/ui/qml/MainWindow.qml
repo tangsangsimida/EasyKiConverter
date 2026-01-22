@@ -476,16 +476,16 @@ Item {
             Card {
                 Layout.fillWidth: true
                 title: "导出选项"
-                GridLayout {
+                RowLayout {
                     width: parent.width
-                    columns: 4
-                    columnSpacing: 20
-                    rowSpacing: 12
+                    spacing: 20
                     // 符号库选项
                     ColumnLayout {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 100
                         spacing: 8
                         CheckBox {
+                            Layout.fillWidth: true
                             id: symbolCheckbox
                             text: "符号库"
                             checked: exportSettingsController.exportSymbol
@@ -503,8 +503,10 @@ Item {
                     // 封装库选项
                     ColumnLayout {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 100
                         spacing: 8
                         CheckBox {
+                            Layout.fillWidth: true
                             id: footprintCheckbox
                             text: "封装库"
                             checked: exportSettingsController.exportFootprint
@@ -522,8 +524,10 @@ Item {
                     // 3D模型选项
                     ColumnLayout {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 100
                         spacing: 8
                         CheckBox {
+                            Layout.fillWidth: true
                             id: model3dCheckbox
                             text: "3D模型"
                             checked: exportSettingsController.exportModel3D
@@ -541,11 +545,13 @@ Item {
                     // 调试模式选项
                     ColumnLayout {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 100
                         spacing: 8
                         CheckBox {
+                            Layout.fillWidth: true
                             id: debugModeCheckbox
-                            text: "调试模式 (导出debug文件夹)"
-                            checked: exportSettingsController.debugMode
+                            text: "调试模式"
+                            checked: false
                             onCheckedChanged: exportSettingsController.setDebugMode(checked)
                             font.pixelSize: 16
                             contentItem: Text {
@@ -556,26 +562,22 @@ Item {
                                 leftPadding: parent.indicator.width + parent.spacing
                             }
                         }
-                        Text {
-                            text: "启用后将在输出目录创建debug文件夹，包含API原始数据和解析后的调试信息"
-                            font.pixelSize: 12
-                            color: AppStyle.colors.textSecondary
-                            Layout.fillWidth: true
-                            wrapMode: Text.Wrap
-                        }
                     }
                     // 导出模式选项
                     ColumnLayout {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 100
                         spacing: 8
                         Text {
+                            Layout.fillWidth: true
                             text: "导出模式"
                             font.pixelSize: 14
                             font.bold: true
                             color: AppStyle.colors.textPrimary
-                            horizontalAlignment: Text.AlignHCenter
+                            horizontalAlignment: Text.AlignLeft
                         }
                         ColumnLayout {
+                            Layout.fillWidth: true
                             spacing: 6
                             // 追加模式
                             RowLayout {
