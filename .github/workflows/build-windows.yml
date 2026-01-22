@@ -28,7 +28,7 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_mingw'
-          modules: 'qtnetwork qtdeclarative qtquickcontrols2 qtconcurrent'
+          modules: 'qtquickcontrols'
           cache: true
 
       - name: Configure CMake
