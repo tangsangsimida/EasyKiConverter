@@ -30,6 +30,9 @@ namespace EasyKiConverter
         Q_PROPERTY(int processProgress READ processProgress NOTIFY processProgressChanged)
         Q_PROPERTY(int writeProgress READ writeProgress NOTIFY writeProgressChanged)
         Q_PROPERTY(QVariantList resultsList READ resultsList NOTIFY resultsListChanged)
+        Q_PROPERTY(bool hasStatistics READ hasStatistics NOTIFY statisticsChanged)
+        Q_PROPERTY(QString statisticsReportPath READ statisticsReportPath NOTIFY statisticsChanged)
+        Q_PROPERTY(QString statisticsSummary READ statisticsSummary NOTIFY statisticsChanged)
 
     public:
         explicit ExportProgressViewModel(ExportService *exportService, ComponentService *componentService, QObject *parent = nullptr);
@@ -45,6 +48,9 @@ namespace EasyKiConverter
         int processProgress() const { return m_processProgress; }
         int writeProgress() const { return m_writeProgress; }
         QVariantList resultsList() const { return m_resultsList; }
+        bool hasStatistics() const { return m_hasStatistics; }
+        QString statisticsReportPath() const { return m_statisticsReportPath; }
+        QString statisticsSummary() const { return m_statisticsSummary; }
 
         // Setter 方法
         void setUsePipelineMode(bool usePipeline);
@@ -65,6 +71,7 @@ namespace EasyKiConverter
         void processProgressChanged();
         void writeProgressChanged();
         void resultsListChanged();
+        void statisticsChanged();
 
     private slots:
         void handleExportProgress(int current, int total);
@@ -74,6 +81,7 @@ namespace EasyKiConverter
         void handleComponentDataFetched(const QString &componentId, const ComponentData &data);
         void handleAllComponentsDataCollected(const QList<ComponentData> &componentDataList);
         void handlePipelineProgressUpdated(const PipelineProgress &progress);
+        void handleStatisticsReportGenerated(const QString &reportPath, const ExportStatistics &statistics);
 
         // 节流定时器槽函数
         void flushPendingUpdates();
@@ -117,6 +125,12 @@ namespace EasyKiConverter
         // UI 节流：定时器和待更新列表
         QTimer *m_throttleTimer;
         bool m_pendingUpdate;
+        
+        // 统计相关
+        bool m_hasStatistics;
+        QString m_statisticsReportPath;
+        QString m_statisticsSummary;
+        ExportStatistics m_statistics;
     };
 } // namespace EasyKiConverter
 

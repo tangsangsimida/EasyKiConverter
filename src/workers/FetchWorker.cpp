@@ -31,6 +31,10 @@ namespace EasyKiConverter
 
     void FetchWorker::run()
     {
+        // 启动计时器
+        QElapsedTimer fetchTimer;
+        fetchTimer.start();
+
         // 在工作线程中创建自己的 QNetworkAccessManager
         m_ownNetworkManager = new QNetworkAccessManager();
         m_ownNetworkManager->moveToThread(QThread::currentThread());
@@ -126,18 +130,21 @@ namespace EasyKiConverter
             m_ownNetworkManager = nullptr;
         }
 
+        // 记录抓取耗时
+        status->fetchDurationMs = fetchTimer.elapsed();
+
         // 设置状态
         if (hasError)
         {
             status->fetchSuccess = false;
             status->fetchMessage = errorMessage;
-            status->addDebugLog(QString("FetchWorker failed for component: %1, Error: %2").arg(m_componentId).arg(errorMessage));
+            status->addDebugLog(QString("FetchWorker failed for component: %1, Error: %2, Duration: %3ms").arg(m_componentId).arg(errorMessage).arg(status->fetchDurationMs));
         }
         else
         {
             status->fetchSuccess = true;
             status->fetchMessage = "Fetch completed successfully";
-            status->addDebugLog(QString("FetchWorker completed successfully for component: %1").arg(m_componentId));
+            status->addDebugLog(QString("FetchWorker completed successfully for component: %1, Duration: %2ms").arg(m_componentId).arg(status->fetchDurationMs));
         }
 
         emit fetchCompleted(status);

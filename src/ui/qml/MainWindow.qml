@@ -1480,20 +1480,24 @@ Item {
                             }
                         }
 
-                        // 结果列表
-                        ListView {
+                        // 结果列表（使用 GridView 实现两列显示）
+                        GridView {
                             id: resultsList
                             Layout.fillWidth: true
                             Layout.minimumHeight: 200
-                            Layout.preferredHeight: Math.min(resultsList.contentHeight + 20, 400)
+                            Layout.preferredHeight: Math.min(resultsList.contentHeight + 20, 500)
                             Layout.topMargin: AppStyle.spacing.md
                             clip: true
-                            spacing: AppStyle.spacing.md
+                            cellWidth: (width - AppStyle.spacing.md) / 2
+                            cellHeight: 80
+                            flow: GridView.FlowLeftToRight
+                            layoutDirection: Qt.LeftToRight
 
                             model: exportProgressController.resultsList
 
                             delegate: ResultListItem {
-                                width: resultsList.width
+                                width: resultsList.cellWidth - AppStyle.spacing.md
+                                anchors.horizontalCenter: parent ? undefined : undefined
                                 componentId: modelData.componentId || ""
                                 status: modelData.status || "pending"
                                 message: modelData.message || ""
@@ -1501,6 +1505,35 @@ Item {
 
                             ScrollBar.vertical: ScrollBar {
                                 policy: ScrollBar.AsNeeded
+                            }
+
+                            // 添加列表项进入动画
+                            add: Transition {
+                                NumberAnimation {
+                                    property: "opacity"
+                                    from: 0
+                                    to: 1
+                                    duration: AppStyle.durations.normal
+                                    easing.type: AppStyle.easings.easeOut
+                                }
+                                NumberAnimation {
+                                    property: "scale"
+                                    from: 0.8
+                                    to: 1
+                                    duration: AppStyle.durations.normal
+                                    easing.type: AppStyle.easings.easeOut
+                                }
+                            }
+
+                            // 列表项移除动画
+                            remove: Transition {
+                                NumberAnimation {
+                                    property: "opacity"
+                                    from: 1
+                                    to: 0
+                                    duration: AppStyle.durations.normal
+                                    easing.type: AppStyle.easings.easeOut
+                                }
                             }
                         }
                     }

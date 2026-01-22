@@ -52,14 +52,19 @@ namespace EasyKiConverter
 
     void WriteWorker::run()
     {
+        // 启动计时器
+        QElapsedTimer writeTimer;
+        writeTimer.start();
+
         m_status->addDebugLog(QString("WriteWorker started for component: %1").arg(m_status->componentId));
 
         // 创建输出目录
         if (!createOutputDirectory(m_outputPath))
         {
+            m_status->writeDurationMs = writeTimer.elapsed();
             m_status->writeSuccess = false;
             m_status->writeMessage = "Failed to create output directory";
-            m_status->addDebugLog("ERROR: Failed to create output directory");
+            m_status->addDebugLog(QString("ERROR: Failed to create output directory, Duration: %1ms").arg(m_status->writeDurationMs));
             emit writeCompleted(m_status);
             return;
         }
@@ -120,9 +125,10 @@ namespace EasyKiConverter
         // 检查是否所有写入都成功
         if (!allSuccess)
         {
+            m_status->writeDurationMs = writeTimer.elapsed();
             m_status->writeSuccess = false;
             m_status->writeMessage = "Failed to write one or more files";
-            m_status->addDebugLog("ERROR: Failed to write one or more files");
+            m_status->addDebugLog(QString("ERROR: Failed to write one or more files, Duration: %1ms").arg(m_status->writeDurationMs));
             emit writeCompleted(m_status);
             return;
         }
@@ -133,9 +139,10 @@ namespace EasyKiConverter
             exportDebugData(*m_status);
         }
 
+        m_status->writeDurationMs = writeTimer.elapsed();
         m_status->writeSuccess = true;
         m_status->writeMessage = "Write completed successfully";
-        m_status->addDebugLog(QString("WriteWorker completed successfully for component: %1").arg(m_status->componentId));
+        m_status->addDebugLog(QString("WriteWorker completed successfully for component: %1, Duration: %2ms").arg(m_status->componentId).arg(m_status->writeDurationMs));
 
         emit writeCompleted(m_status);
     }

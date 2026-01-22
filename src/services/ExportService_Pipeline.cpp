@@ -7,14 +7,17 @@
 #include <QTextStream>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QTimer>
+#include <QDateTime>
 #include <QDebug>
+#include <algorithm>
 
 namespace EasyKiConverter
 {
 
     ExportServicePipeline::ExportServicePipeline(QObject *parent)
-        : ExportService(parent), m_fetchThreadPool(new QThreadPool(this)), m_processThreadPool(new QThreadPool(this)), m_writeThreadPool(new QThreadPool(this)), m_fetchProcessQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100)), m_processWriteQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100)), m_networkAccessManager(new QNetworkAccessManager(this)), m_isPipelineRunning(false), m_mutex(new QMutex()), m_successCount(0), m_failureCount(0)
+        : ExportService(parent), m_fetchThreadPool(new QThreadPool(this)), m_processThreadPool(new QThreadPool(this)), m_writeThreadPool(new QThreadPool(this)), m_fetchProcessQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100)), m_processWriteQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100)), m_networkAccessManager(new QNetworkAccessManager(this)), m_isPipelineRunning(false), m_mutex(new QMutex()), m_successCount(0), m_failureCount(0), m_exportStartTimeMs(0)
     {
         // 配置线程池
         m_fetchThreadPool->setMaxThreadCount(32);                            // I/O密集型，32个线程
@@ -67,7 +70,9 @@ namespace EasyKiConverter
         m_failureCount = 0;
         m_tempSymbolFiles.clear();
         m_symbols.clear();
+        m_completedStatuses.clear();
         m_isPipelineRunning = true;
+        m_exportStartTimeMs = QDateTime::currentMSecsSinceEpoch();
 
         // 创建输出目录
         QDir dir;
@@ -107,6 +112,9 @@ namespace EasyKiConverter
 
         m_pipelineProgress.fetchCompleted++;
 
+        // 保存状态到列表（用于生成统计报告）
+        m_completedStatuses.append(status);
+
         if (status->fetchSuccess)
         {
             // 将数据放入处理队列（使用 QSharedPointer 避免拷贝）
@@ -140,6 +148,9 @@ namespace EasyKiConverter
                  << "Success:" << status->processSuccess;
 
         m_pipelineProgress.processCompleted++;
+
+        // 更新状态（不重复添加，因为已经在 Fetch 阶段添加了）
+        // ProcessWorker 会修改同一个 status 对象
 
         if (status->processSuccess)
         {
@@ -343,6 +354,17 @@ namespace EasyKiConverter
             mergeSymbolLibrary();
         }
 
+        // 生成统计报告
+        ExportStatistics statistics = generateStatistics();
+        QString reportPath = QString("%1/export_report_%2.json")
+                                 .arg(m_options.outputPath)
+                                 .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
+        saveStatisticsReport(statistics, reportPath);
+        qDebug() << "Statistics report generated:" << reportPath;
+
+        // 发送统计报告生成信号
+        emit statisticsReportGenerated(reportPath, statistics);
+
         // 清理临时文件
         for (const QString &tempFile : m_tempSymbolFiles)
         {
@@ -350,6 +372,9 @@ namespace EasyKiConverter
         }
         m_tempSymbolFiles.clear();
         m_symbols.clear();
+
+        // 清理状态列表
+        m_completedStatuses.clear();
 
         // 发送完成信号
         emit exportCompleted(m_pipelineProgress.totalTasks, m_successCount);
@@ -418,6 +443,149 @@ namespace EasyKiConverter
         }
 
         return success;
+    }
+
+    ExportStatistics ExportServicePipeline::generateStatistics()
+    {
+        ExportStatistics statistics;
+
+        statistics.total = m_pipelineProgress.totalTasks;
+        statistics.success = m_successCount;
+        statistics.failed = m_failureCount;
+        statistics.totalDurationMs = QDateTime::currentMSecsSinceEpoch() - m_exportStartTimeMs;
+
+        qint64 totalFetchTime = 0;
+        qint64 totalProcessTime = 0;
+        qint64 totalWriteTime = 0;
+
+        // 遍历所有完成的状态，收集详细统计
+        for (const QSharedPointer<ComponentExportStatus> &status : m_completedStatuses)
+        {
+            // 收集失败原因和阶段
+            if (!status->isCompleteSuccess())
+            {
+                QString failedStage = status->getFailedStage();
+                QString failureReason = status->getFailureReason();
+
+                statistics.stageFailures[failedStage]++;
+                statistics.failureReasons[failureReason]++;
+            }
+
+            // 收集时间统计
+            totalFetchTime += status->fetchDurationMs;
+            totalProcessTime += status->processDurationMs;
+            totalWriteTime += status->writeDurationMs;
+
+            // 收集最慢的组件
+            qint64 totalDuration = status->getTotalDurationMs();
+            statistics.slowestComponents.append(qMakePair(status->componentId, totalDuration));
+        }
+
+        // 计算平均时间
+        if (statistics.total > 0)
+        {
+            statistics.avgFetchTimeMs = totalFetchTime / statistics.total;
+            statistics.avgProcessTimeMs = totalProcessTime / statistics.total;
+            statistics.avgWriteTimeMs = totalWriteTime / statistics.total;
+        }
+
+        // 排序最慢的组件（取前10个）
+        std::sort(statistics.slowestComponents.begin(), statistics.slowestComponents.end(),
+                  [](const QPair<QString, qint64> &a, const QPair<QString, qint64> &b)
+                  {
+                      return a.second > b.second;
+                  });
+
+        if (statistics.slowestComponents.size() > 10)
+        {
+            statistics.slowestComponents = statistics.slowestComponents.mid(0, 10);
+        }
+
+        return statistics;
+    }
+
+    bool ExportServicePipeline::saveStatisticsReport(const ExportStatistics &statistics, const QString &reportPath)
+    {
+        QJsonObject reportObj;
+
+        // 概览信息
+        QJsonObject overviewObj;
+        overviewObj["total"] = statistics.total;
+        overviewObj["success"] = statistics.success;
+        overviewObj["failed"] = statistics.failed;
+        overviewObj["successRate"] = QString::number(statistics.getSuccessRate(), 'f', 2) + "%";
+        overviewObj["totalDurationMs"] = statistics.totalDurationMs;
+        overviewObj["totalDurationSeconds"] = QString::number(statistics.totalDurationMs / 1000.0, 'f', 2);
+        reportObj["overview"] = overviewObj;
+
+        // 时间统计
+        QJsonObject timingObj;
+        timingObj["avgFetchTimeMs"] = statistics.avgFetchTimeMs;
+        timingObj["avgProcessTimeMs"] = statistics.avgProcessTimeMs;
+        timingObj["avgWriteTimeMs"] = statistics.avgWriteTimeMs;
+        timingObj["slowestStage"] = statistics.getSlowestStage();
+        reportObj["timing"] = timingObj;
+
+        // 失败统计
+        QJsonObject failuresObj;
+        QJsonObject stageFailuresObj;
+        for (auto it = statistics.stageFailures.constBegin(); it != statistics.stageFailures.constEnd(); ++it)
+        {
+            stageFailuresObj[it.key()] = it.value();
+        }
+        failuresObj["stageFailures"] = stageFailuresObj;
+
+        QJsonObject failureReasonsObj;
+        for (auto it = statistics.failureReasons.constBegin(); it != statistics.failureReasons.constEnd(); ++it)
+        {
+            failureReasonsObj[it.key()] = it.value();
+        }
+        failuresObj["failureReasons"] = failureReasonsObj;
+        reportObj["failures"] = failuresObj;
+
+        // 最慢的组件
+        QJsonArray slowestArray;
+        for (const auto &item : statistics.slowestComponents)
+        {
+            QJsonObject componentObj;
+            componentObj["componentId"] = item.first;
+            componentObj["durationMs"] = item.second;
+            componentObj["durationSeconds"] = QString::number(item.second / 1000.0, 'f', 2);
+            slowestArray.append(componentObj);
+        }
+        reportObj["slowestComponents"] = slowestArray;
+
+        // 导出选项
+        QJsonObject optionsObj;
+        optionsObj["outputPath"] = m_options.outputPath;
+        optionsObj["libName"] = m_options.libName;
+        optionsObj["exportSymbol"] = m_options.exportSymbol;
+        optionsObj["exportFootprint"] = m_options.exportFootprint;
+        optionsObj["exportModel3D"] = m_options.exportModel3D;
+        optionsObj["overwriteExistingFiles"] = m_options.overwriteExistingFiles;
+        optionsObj["updateMode"] = m_options.updateMode;
+        optionsObj["debugMode"] = m_options.debugMode;
+        reportObj["exportOptions"] = optionsObj;
+
+        // 时间戳
+        reportObj["timestamp"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        reportObj["exportStartTime"] = QDateTime::fromMSecsSinceEpoch(m_exportStartTimeMs).toString(Qt::ISODate);
+        reportObj["exportEndTime"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+
+        // 保存到文件
+        QJsonDocument doc(reportObj);
+        QFile file(reportPath);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            qWarning() << "Failed to open report file for writing:" << reportPath;
+            return false;
+        }
+
+        file.write(doc.toJson(QJsonDocument::Indented));
+        file.close();
+
+        qDebug() << "Statistics report saved to:" << reportPath;
+        return true;
     }
 
 } // namespace EasyKiConverter

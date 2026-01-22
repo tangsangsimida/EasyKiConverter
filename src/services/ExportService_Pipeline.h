@@ -86,6 +86,13 @@ namespace EasyKiConverter
          */
         void pipelineProgressUpdated(const PipelineProgress &progress);
 
+        /**
+         * @brief 统计报告生成信号
+         * @param reportPath 报告文件路径
+         * @param statistics 统计数据
+         */
+        void statisticsReportGenerated(const QString &reportPath, const ExportStatistics &statistics);
+
     private slots:
         /**
          * @brief 处理抓取完成
@@ -168,6 +175,26 @@ namespace EasyKiConverter
         // 结果统计
         int m_successCount;
         int m_failureCount;
+
+        // 完整的状态列表（用于生成统计报告）
+        QVector<QSharedPointer<ComponentExportStatus>> m_completedStatuses;
+
+        // 导出开始时间（用于计算总耗时）
+        qint64 m_exportStartTimeMs;
+
+        /**
+         * @brief 生成统计报告
+         * @return ExportStatistics 统计数据
+         */
+        ExportStatistics generateStatistics();
+
+        /**
+         * @brief 保存统计报告到文件
+         * @param statistics 统计数据
+         * @param reportPath 报告文件路径
+         * @return bool 是否成功
+         */
+        bool saveStatisticsReport(const ExportStatistics &statistics, const QString &reportPath);
     };
 
 } // namespace EasyKiConverter

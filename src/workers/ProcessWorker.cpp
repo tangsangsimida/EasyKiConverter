@@ -20,6 +20,10 @@ namespace EasyKiConverter
 
     void ProcessWorker::run()
     {
+        // 启动计时器
+        QElapsedTimer processTimer;
+        processTimer.start();
+
         m_status->addDebugLog(QString("ProcessWorker started for component: %1").arg(m_status->componentId));
 
         // 创建导入器
@@ -28,9 +32,10 @@ namespace EasyKiConverter
         // 解析组件信息
         if (!parseComponentInfo(*m_status))
         {
+            m_status->processDurationMs = processTimer.elapsed();
             m_status->processSuccess = false;
             m_status->processMessage = "Failed to parse component info";
-            m_status->addDebugLog("ERROR: Failed to parse component info");
+            m_status->addDebugLog(QString("ERROR: Failed to parse component info, Duration: %1ms").arg(m_status->processDurationMs));
             emit processCompleted(m_status);
             return;
         }
@@ -38,9 +43,10 @@ namespace EasyKiConverter
         // 解析CAD数据
         if (!parseCadData(*m_status))
         {
+            m_status->processDurationMs = processTimer.elapsed();
             m_status->processSuccess = false;
             m_status->processMessage = "Failed to parse CAD data";
-            m_status->addDebugLog("ERROR: Failed to parse CAD data");
+            m_status->addDebugLog(QString("ERROR: Failed to parse CAD data, Duration: %1ms").arg(m_status->processDurationMs));
             emit processCompleted(m_status);
             return;
         }
@@ -56,9 +62,10 @@ namespace EasyKiConverter
             }
         }
 
+        m_status->processDurationMs = processTimer.elapsed();
         m_status->processSuccess = true;
         m_status->processMessage = "Process completed successfully";
-        m_status->addDebugLog(QString("ProcessWorker completed successfully for component: %1").arg(m_status->componentId));
+        m_status->addDebugLog(QString("ProcessWorker completed successfully for component: %1, Duration: %2ms").arg(m_status->componentId).arg(m_status->processDurationMs));
 
         emit processCompleted(m_status);
     }

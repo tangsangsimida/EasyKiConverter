@@ -27,6 +27,8 @@ namespace EasyKiConverter
             {
                 connect(pipelineService, &ExportServicePipeline::pipelineProgressUpdated,
                         this, &ExportProgressViewModel::handlePipelineProgressUpdated);
+                connect(pipelineService, &ExportServicePipeline::statisticsReportGenerated,
+                        this, &ExportProgressViewModel::handleStatisticsReportGenerated);
                 m_usePipelineMode = true;
             }
         }
@@ -351,6 +353,25 @@ namespace EasyKiConverter
             emit progressChanged();
             qDebug() << "Overall progress changed to:" << m_progress;
         }
+    }
+
+    void ExportProgressViewModel::handleStatisticsReportGenerated(const QString &reportPath, const ExportStatistics &statistics)
+    {
+        qDebug() << "Statistics report generated:" << reportPath;
+        qDebug() << "Statistics summary:" << statistics.getSummary();
+
+        // 保存统计数据
+        m_hasStatistics = true;
+        m_statisticsReportPath = reportPath;
+        m_statistics = statistics;
+
+        // 生成统计摘要
+        m_statisticsSummary = statistics.getSummary();
+
+        // 发送信号通知 UI
+        emit statisticsChanged();
+
+        qDebug() << "Statistics updated in ViewModel";
     }
 
 } // namespace EasyKiConverter
