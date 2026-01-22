@@ -13,8 +13,7 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Test Network)
 
 # 设置包含路径
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/../src)
+include_directories(${CMAKE_SOURCE_DIR}/..)
 
 # 定义一个宏，让源文件使用正确的包含路径
 add_definitions(-DTESTING_MODE)
@@ -56,6 +55,30 @@ target_sources(test_export_service PRIVATE
 )
 
 target_link_libraries(test_export_service Qt6::Core Qt6::Test)
+
+# ========== ExportServicePipeline 测试 ==========
+add_executable(test_export_service_pipeline test_export_service_pipeline.cpp)
+
+# 添加源文件
+target_sources(test_export_service_pipeline PRIVATE
+    ${CMAKE_SOURCE_DIR}/../src/services/ExportService.cpp
+    ${CMAKE_SOURCE_DIR}/../src/services/ExportService_Pipeline.cpp
+    ${CMAKE_SOURCE_DIR}/../src/services/ComponentExportTask.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/ExporterSymbol.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/ExporterFootprint.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/Exporter3DModel.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/ComponentData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/SymbolData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/FootprintData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/Model3DData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/GeometryUtils.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/LayerMapper.cpp
+    ${CMAKE_SOURCE_DIR}/../src/workers/FetchWorker.cpp
+    ${CMAKE_SOURCE_DIR}/../src/workers/ProcessWorker.cpp
+    ${CMAKE_SOURCE_DIR}/../src/workers/WriteWorker.cpp
+)
+
+target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network)
 
 # ========== ConfigService 测试 ==========
 add_executable(test_config_service test_config_service.cpp)
@@ -142,3 +165,33 @@ target_sources(test_performance PRIVATE
 )
 
 target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network)
+
+# ========== 流水线性能基准测试 ==========
+add_executable(test_pipeline_baseline test_pipeline_baseline.cpp)
+
+# 添加源文件
+target_sources(test_pipeline_baseline PRIVATE
+    ${CMAKE_SOURCE_DIR}/../src/services/ComponentService.cpp
+    ${CMAKE_SOURCE_DIR}/../src/services/ExportService.cpp
+    ${CMAKE_SOURCE_DIR}/../src/services/ExportService_Pipeline.cpp
+    ${CMAKE_SOURCE_DIR}/../src/services/ConfigService.cpp
+    ${CMAKE_SOURCE_DIR}/../src/services/ComponentExportTask.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/ComponentData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/SymbolData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/FootprintData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/models/Model3DData.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/easyeda/EasyedaApi.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/easyeda/EasyedaImporter.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/ExporterSymbol.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/ExporterFootprint.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/Exporter3DModel.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/GeometryUtils.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/LayerMapper.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/NetworkUtils.cpp
+    ${CMAKE_SOURCE_DIR}/../src/workers/FetchWorker.cpp
+    ${CMAKE_SOURCE_DIR}/../src/workers/ProcessWorker.cpp
+    ${CMAKE_SOURCE_DIR}/../src/workers/WriteWorker.cpp
+    ${CMAKE_SOURCE_DIR}/../src/utils/BoundedThreadSafeQueue.h
+)
+
+target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network)

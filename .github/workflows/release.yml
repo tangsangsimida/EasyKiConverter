@@ -1,0 +1,92 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*' # 当推送到 v1.0.0 这样的 tag 时触发
+  workflow_dispatch: # 允许在 Actions 页面手动触发
+
+permissions:
+  contents: write # 允许发布 Release
+
+jobs:
+  build-and-package:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows
+            cpack_generator: "NSIS;ZIP"
+            artifact_pattern: "EasyKiConverter-*-win64.exe"
+            
+          - os: ubuntu-20.04 # 使用较旧版本以获得更好的 glibc 兼容性
+            name: Linux
+            cpack_generator: "DEB;TGZ"
+            artifact_pattern: "EasyKiConverter-*-Linux.*"
+            
+          - os: macos-latest
+            name: macOS
+            cpack_generator: "DragNDrop"
+            artifact_pattern: "EasyKiConverter-*-Darwin.dmg"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.8.0'
+          modules: 'qtnetwork qtdeclarative'
+          cache: true
+          
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev ninja-build build-essential
+          
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake -B build -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            
+      - name: Build
+        shell: bash
+        run: cmake --build build --config Release --parallel
+
+      - name: Package (CPack)
+        shell: bash
+        working-directory: build
+        run: |
+          # 显式指定生成器，覆盖 CMakeLists 中的默认行为（如果有冲突）
+          cpack -C Release -G "${{ matrix.cpack_generator }}" -V
+
+      - name: Upload Artifacts (Build Storage)
+        uses: actions/upload-artifact@v4
+        with:
+          name: EasyKiConverter-${{ matrix.name }}
+          path: build/_CPack_Packages/*/* # 抓取所有生成的包
+          if-no-files-found: warn
+
+      - name: Prepare Release Files
+        # 将生成的文件移动到一个干净的目录，方便上传 release
+        shell: bash
+        run: |
+          mkdir release_assets
+          # 查找构建目录下的特定后缀文件并移动
+          find build -maxdepth 1 -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.deb" -o -name "*.tar.gz" -o -name "*.zip" \) -exec cp {} release_assets/ \;
+          ls -R release_assets
+
+      - name: Upload Release Assets
+        if: startsWith(github.ref, 'refs/tags/') # 只有打 tag 时才上传到 Release 页面
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release_assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

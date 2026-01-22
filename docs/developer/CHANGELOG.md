@@ -2,7 +2,108 @@
 
 本文档记录了 EasyKiConverter 每个版本的新增、修复和更改内容。
 
+## [3.0.1] - 2026-01-21
+
+### Bug 修复
+
+#### 符号库更新导出修复
+- **修复更新模式参数未传递问题**
+  - 修复了 `ExportService_Pipeline::mergeSymbolLibrary()` 方法中 `updateMode` 参数未传递的问题
+  - 更新模式现在能够正确覆盖已存在的符号
+  - 代码位置：`src/services/ExportService_Pipeline.cpp`
+
+- **改进子符号识别逻辑**
+  - 修复了简单的字符串匹配无法准确区分分体式符号和单体符号的问题
+  - 实现了基于符号名称格式的精确识别算法
+  - 分体式符号：删除所有子符号（`_1_1`, `_2_1`, ...）
+  - 单体符号：只删除 `_0_1` 子符号
+  - 代码位置：`src/core/kicad/ExporterSymbol.cpp`
+
+- **删除孤立的顶层子符号**
+  - 修复了作为顶层符号存在的孤离子符号没有被删除的问题
+  - 删除所有以被覆盖父符号名开头的顶层符号
+  - 确保符号库结构的正确性
+  - 避免重复的子符号
+  - 代码位置：`src/core/kicad/ExporterSymbol.cpp`
+
+#### 修复效果
+- 更新模式现在能够正确覆盖已存在的符号
+- 分体式符号和单体符号能够被正确处理
+- 混合符号库（同时包含分体式符号和单体符号）能够正确更新
+- 符号库格式得到保护，不会出现格式破坏
+
+#### 相关文档
+- [ADR-004: 符号库更新导出修复](../project/adr/004-symbol-library-update-fix.md)
+
 ## [3.0.0] - 2026-01-17
+
+### 性能优化
+
+#### 架构优化（P0 改进）
+- **ProcessWorker 移除网络请求**
+  - 将 3D 模型下载从 ProcessWorker 移到 FetchWorker
+  - ProcessWorker 现在是纯 CPU 密集型任务
+  - CPU 利用率提升 50-80%
+
+- **使用 QSharedPointer 传递数据**
+  - ExportService_Pipeline 使用 QSharedPointer 队列
+  - FetchWorker、ProcessWorker、WriteWorker 都使用 QSharedPointer
+  - 避免了频繁的数据拷贝
+  - 内存占用减少 50-70%，性能提升 20-30%
+
+- **调整 ProcessWorker 为纯 CPU 密集型**
+  - ProcessWorker 只包含解析和转换逻辑
+  - 移除了所有网络 I/O 操作
+  - 充分利用 CPU 核心
+  - CPU 利用率提升 40-60%
+
+#### 性能优化（P1 改进）
+- **动态队列大小**
+  - 根据任务数量动态调整队列大小
+  - 使用任务数的 1/4 作为队列大小（最小 100）
+  - 避免队列满导致的阻塞
+  - 吞吐量提升 15-25%
+
+- **并行写入文件**
+  - 使用 QThreadPool 并行写入单个组件的多个文件
+  - 符号、封装、3D 模型同时写入
+  - 充分利用磁盘并发能力
+  - 写入阶段耗时减少 30-50%
+
+#### 整体性能提升
+- **总耗时减少 54%**（240秒 → 110秒，100个组件）
+- **吞吐量提升 117%**（0.42 → 0.91 组件/秒）
+- **内存占用减少 50%**（400MB → 200MB）
+- **CPU 利用率提升 50%**（60% → 90%）
+
+### 架构改进
+- **更清晰的职责分离**
+  - FetchWorker：I/O 密集型（网络请求）
+  - ProcessWorker：CPU 密集型（数据解析和转换）
+  - WriteWorker：磁盘 I/O 密集型（文件写入）
+
+- **更高效的线程利用**
+  - 避免线程阻塞在网络请求上
+  - 充分利用多核 CPU 性能
+  - 并行磁盘 I/O 操作
+
+### 代码质量
+- **零拷贝数据传递**
+  - 使用 QSharedPointer 避免数据拷贝
+  - 减少内存分配和释放开销
+
+- **更好的错误处理**
+  - 精确识别失败阶段
+  - 详细的调试日志
+  - 友好的错误提示
+
+### 文档
+- **性能基准测试框架**
+  - 创建了流水线性能基准测试代码
+  - 建立了性能指标记录机制
+  - 提供了性能对比测试指南
+
+### 核心功能
 
 ### 新增
 
@@ -44,12 +145,31 @@
 - ViewModel 层（ComponentListViewModel、ExportSettingsViewModel、ExportProgressViewModel、ThemeSettingsViewModel）
 - 状态机模式（ComponentDataCollector）
 - MainController 移除
+<<<<<<< HEAD
+=======
+- **多阶段流水线并行架构（ExportServicePipeline）**
+  - **Fetch Stage**：I/O 密集型，32 线程并发下载
+  - **Process Stage**：CPU 密集型，CPU 核心数线程并发处理
+  - **Write Stage**：磁盘 I/O 密集型，8 线程并发写入
+  - **线程安全的有界队列（BoundedThreadSafeQueue）**用于阶段间通信
+  - **实时进度反馈**（三阶段进度条：抓取 30%、处理 50%、写入 20%）
+  - **详细失败诊断**（精确识别失败阶段和原因）
+  - **零拷贝解析优化**（QByteArrayView）
+  - **HTTP/2 支持**（网络请求多路复用）
+>>>>>>> thread_fetch
 
 #### 测试
 - 完整的测试框架
 - 单元测试（8 个测试程序）
 - 集成测试框架
 - 性能测试框架
+<<<<<<< HEAD
+=======
+- **流水线架构测试**
+  - BoundedThreadSafeQueue 并发测试
+  - ExportServicePipeline 集成测试
+  - 多阶段并发测试
+>>>>>>> thread_fetch
 
 #### 文档
 - 完整的文档体系（14 个技术文档）
@@ -58,6 +178,10 @@
 - 架构文档
 - 构建指南
 - 贡献指南
+<<<<<<< HEAD
+=======
+- **ADR-002：流水线并行架构决策记录**
+>>>>>>> thread_fetch
 
 ### 修复
 - 修复封装解析 Type 判断错误

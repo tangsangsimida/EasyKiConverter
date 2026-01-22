@@ -191,6 +191,19 @@ namespace EasyKiConverter
         emit configChanged();
     }
 
+    bool ConfigService::getDebugMode() const
+    {
+        QMutexLocker locker(&m_configMutex);
+        return m_config["debugMode"].toBool(false);
+    }
+
+    void ConfigService::setDebugMode(bool enabled)
+    {
+        QMutexLocker locker(&m_configMutex);
+        m_config["debugMode"] = enabled;
+        emit configChanged();
+    }
+
     void ConfigService::initializeDefaultConfig()
     {
         m_config["outputPath"] = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
@@ -200,6 +213,7 @@ namespace EasyKiConverter
         m_config["exportModel3D"] = true;
         m_config["overwriteExistingFiles"] = false;
         m_config["darkMode"] = false;
+        m_config["debugMode"] = false;
     }
 
     QString ConfigService::getDefaultConfigPath() const

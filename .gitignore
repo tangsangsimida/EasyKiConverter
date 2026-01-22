@@ -83,7 +83,7 @@ CMakeLists.txt.user*
 
 
 
-
+test_date
 EasyKiConverter_QT
 easyeda_convertlib.kicad_sym
 demo.kicad_sym
@@ -96,6 +96,8 @@ SOT-23-3P_L2.9-W1.3-H1.0-LS2.4-P0.95.wrl
 temp_project
 tests/build
 IFLOW.md
-test_date
-AGENTS.md
 demo
+C414042_data.json
+pin_segment5_analysis.txt
+AGENTS.md
+GEMINI.md

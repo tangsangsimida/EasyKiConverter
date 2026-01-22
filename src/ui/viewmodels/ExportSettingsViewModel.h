@@ -22,6 +22,8 @@ namespace EasyKiConverter
         Q_PROPERTY(bool exportFootprint READ exportFootprint WRITE setExportFootprint NOTIFY exportFootprintChanged)
         Q_PROPERTY(bool exportModel3D READ exportModel3D WRITE setExportModel3D NOTIFY exportModel3DChanged)
         Q_PROPERTY(bool overwriteExistingFiles READ overwriteExistingFiles WRITE setOverwriteExistingFiles NOTIFY overwriteExistingFilesChanged)
+        Q_PROPERTY(int exportMode READ exportMode WRITE setExportMode NOTIFY exportModeChanged)
+        Q_PROPERTY(bool debugMode READ debugMode WRITE setDebugMode NOTIFY debugModeChanged)
 
     public:
         explicit ExportSettingsViewModel(QObject *parent = nullptr);
@@ -34,6 +36,8 @@ namespace EasyKiConverter
         bool exportFootprint() const { return m_exportFootprint; }
         bool exportModel3D() const { return m_exportModel3D; }
         bool overwriteExistingFiles() const { return m_overwriteExistingFiles; }
+        int exportMode() const { return m_exportMode; }
+        bool debugMode() const { return m_debugMode; }
         bool isExporting() const { return m_isExporting; }
         int progress() const { return m_progress; }
         QString status() const { return m_status; }
@@ -45,6 +49,8 @@ namespace EasyKiConverter
         Q_INVOKABLE void setExportFootprint(bool enabled);
         Q_INVOKABLE void setExportModel3D(bool enabled);
         Q_INVOKABLE void setOverwriteExistingFiles(bool enabled);
+        Q_INVOKABLE void setExportMode(int mode);
+        Q_INVOKABLE void setDebugMode(bool enabled);
 
     public slots:
         Q_INVOKABLE void saveConfig();
@@ -59,6 +65,8 @@ namespace EasyKiConverter
         void exportFootprintChanged();
         void exportModel3DChanged();
         void overwriteExistingFilesChanged();
+        void exportModeChanged();
+        void debugModeChanged();
         void isExportingChanged();
         void progressChanged();
         void statusChanged();
@@ -84,6 +92,8 @@ namespace EasyKiConverter
         bool m_exportFootprint;
         bool m_exportModel3D;
         bool m_overwriteExistingFiles;
+        int m_exportMode; // 0 = 追加模式, 1 = 更新模式
+        bool m_debugMode;
         bool m_isExporting;
         int m_progress;
         QString m_status;

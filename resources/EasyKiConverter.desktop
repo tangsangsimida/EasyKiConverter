@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=EasyKiConverter
+Comment=Electronic component converter for KiCad
+Comment[zh_CN]=电子元器件转换工具 - 将嘉立创EDA元器件转换为KiCad格式
+Exec=EasyKiConverter
+Icon=app_icon
+Terminal=false
+Categories=Electronics;Development;Engineering;
+Keywords=KiCad;EasyEDA;LCSC;Electronics;PCB;
+StartupNotify=true
