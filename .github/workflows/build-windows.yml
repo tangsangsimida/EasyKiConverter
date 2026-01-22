@@ -30,24 +30,37 @@ jobs:
           arch: 'win64_mingw'
           cache: true
 
+      - name: Install MinGW toolchain
+        shell: pwsh
+        run: |
+          # 使用 aqt 安装 MinGW 工具链
+          python -m aqt install-qt windows desktop 6.10.1 win64_mingw --outputdir $env:Qt6_DIR\.. --archives gcc
+
       - name: Configure CMake
         shell: pwsh
         run: |
           cd $env:GITHUB_WORKSPACE
+          # 查找 MinGW 编译器的实际路径
+          $mingwPath = Get-ChildItem "$env:Qt6_DIR\..\Tools\mingw*" -Directory | Select-Object -First 1
+          $gccPath = "$mingwPath\bin\gcc.exe"
+          $gxxPath = "$mingwPath\bin\g++.exe"
+          
           cmake -B build -G "MinGW Makefiles" `
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=ON `
-            -DCMAKE_C_COMPILER="$env:Qt6_DIR\..\Tools\mingw*\bin\gcc.exe" `
-            -DCMAKE_CXX_COMPILER="$env:Qt6_DIR\..\Tools\mingw*\bin\g++.exe"
+            -DCMAKE_C_COMPILER="$gccPath" `
+            -DCMAKE_CXX_COMPILER="$gxxPath" `
+            -DCMAKE_MAKE_PROGRAM="$mingwPath\bin\mingw32-make.exe"
 
       - name: Build
         shell: pwsh
         run: |
           cd $env:GITHUB_WORKSPACE
-          # 使用 Qt 自带的 mingw32-make
-          $env:PATH = "$env:Qt6_DIR\..\Tools\mingw*\bin;$env:PATH"
-          mingw32-make -C build -j$(nproc)
+          # 查找 MinGW 路径
+          $mingwPath = Get-ChildItem "$env:Qt6_DIR\..\Tools\mingw*" -Directory | Select-Object -First 1
+          $env:PATH = "$mingwPath\bin;$env:PATH"
+          mingw32-make -C build -j
 
       - name: Run tests (if available)
         if: matrix.build_type == 'Release'
