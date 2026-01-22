@@ -25,9 +25,11 @@ namespace EasyKiConverter
         bool exportFootprint;
         bool exportModel3D;
         bool overwriteExistingFiles;
+        bool updateMode; // 更新模式：替换相同符号，保留不同符号
+        bool debugMode;  // 调试模式：导出调试数据到 debug 文件夹
 
         ExportOptions()
-            : exportSymbol(true), exportFootprint(true), exportModel3D(true), overwriteExistingFiles(false)
+            : exportSymbol(true), exportFootprint(true), exportModel3D(true), overwriteExistingFiles(false), updateMode(false), debugMode(false)
         {
         }
     };
@@ -147,8 +149,9 @@ namespace EasyKiConverter
          * @param componentId 元件ID
          * @param success 是否成功
          * @param message 消息
+         * @param stage 阶段（可选，用于流水线模式：0=Fetch, 1=Process, 2=Write, -1=未知）
          */
-        void componentExported(const QString &componentId, bool success, const QString &message);
+        void componentExported(const QString &componentId, bool success, const QString &message, int stage = -1);
 
         /**
          * @brief 导出完成信号
@@ -274,7 +277,7 @@ namespace EasyKiConverter
             QString errorMessage;
         };
         QList<ExportData> m_exportDataList;
-        
+
         // 并行导出状态
         bool m_parallelExporting;
         int m_parallelCompletedCount;

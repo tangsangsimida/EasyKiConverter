@@ -34,13 +34,25 @@ namespace EasyKiConverter
         ~ExporterFootprint() override;
 
         /**
-         * @brief 导出封装为 KiCad 格式
+         * @brief 导出封装为 KiCad 格式（单个3D模型）
          *
          * @param footprintData 封装数据
          * @param filePath 输出文件路径
+         * @param model3DPath 3D模型路径
          * @return bool 是否成功
          */
         bool exportFootprint(const FootprintData &footprintData, const QString &filePath, const QString &model3DPath = QString());
+
+        /**
+         * @brief 导出封装为 KiCad 格式（两个3D模型）
+         *
+         * @param footprintData 封装数据
+         * @param filePath 输出文件路径
+         * @param model3DWrlPath WRL模型路径
+         * @param model3DStepPath STEP模型路径
+         * @return bool 是否成功
+         */
+        bool exportFootprint(const FootprintData &footprintData, const QString &filePath, const QString &model3DWrlPath, const QString &model3DStepPath);
 
         /**
          * @brief 导出多个封装为 KiCad 封装库
@@ -65,9 +77,20 @@ namespace EasyKiConverter
          * @brief 生成 KiCad 封装内容
          *
          * @param footprintData 封装数据
+         * @param model3DPath 3D模型路径
          * @return QString 封装内容
          */
         QString generateFootprintContent(const FootprintData &footprintData, const QString &model3DPath = QString()) const;
+
+        /**
+         * @brief 生成 KiCad 封装内容（两个3D模型）
+         *
+         * @param footprintData 封装数据
+         * @param model3DWrlPath WRL模型路径
+         * @param model3DStepPath STEP模型路径
+         * @return QString 封装内容
+         */
+        QString generateFootprintContent(const FootprintData &footprintData, const QString &model3DWrlPath, const QString &model3DStepPath) const;
 
         /**
          * @brief 生成 KiCad 焊盘

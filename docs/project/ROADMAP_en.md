@@ -10,6 +10,51 @@ This document shows the future direction of the project and the main features pl
 
 ## Version Planning
 
+### v3.0.0 - Core Feature Completion (Current Version)
+
+**Goal**: Complete core features and improve user experience
+
+**Core Architecture**:
+- [x] Multi-stage pipeline parallelism implementation
+- [x] Thread-safe bounded queues
+- [x] Real-time progress feedback
+
+**Export Functionality Enhancements**:
+- [ ] Quick access to export destination folder after completion
+- [ ] Network request retry mechanism
+- [ ] 3D model path export options (relative/absolute)
+  - [ ] Relative path: Use KiCad project path + 3D model path
+  - [ ] Absolute path: Use export path + 3D model path
+- [ ] Export progress bar design
+- [ ] Export statistics design
+- [ ] Export preview functionality (footprint, symbol, 3D model, manual PDF)
+
+**Export Options Optimization**:
+- [x] Overwrite and append export options
+- [x] Export mode UI design optimization (clearer mode selection)
+- [ ] Library description export option (KiCad library description parameter)
+- [ ] Footprint attribute enhancements (description, dual 3D model addresses, etc.)
+
+**Data Parsing Improvements**:
+- [~] Footprint symbol parser and exporter refinement
+  - [x] Footprint symbol line width parsing
+  - [ ] Other attribute parsing optimizations
+- [ ] BOM table parsing functionality testing
+- [ ] Special component export issue fixes (e.g., C7420375 position offset)
+
+**User Interface Improvements**:
+- [ ] Component list search functionality
+- [ ] Multi-language support (automatic based on system language)
+- [ ] UI performance optimization and response speed improvements
+
+**Development Tools and Processes**:
+- [x] GitHub workflow configuration
+  - [x] Automated code legal security review
+  - [ ] Automated testing
+  - [ ] Automated compilation and packaging
+  - [ ] Automated version release
+- [x] Contribution guidelines and project documentation improvements
+
 ### v3.1.0 - Performance Optimization and Stability Improvements (Planned)
 
 **Goal**: Optimize performance, improve stability, complete test coverage
@@ -25,88 +70,6 @@ This document shows the future direction of the project and the main features pl
 
 **Expected Release**: Q2 2026
 
-### v3.2.0 - New Features and User Experience Improvements (Planned)
-
-**Goal**: Add new features, improve user experience
-
-**Main Features**:
-- [ ] Advanced search functionality
-- [ ] Component library management
-- [ ] Custom template support
-- [ ] Batch export optimization
-- [ ] Export preview functionality
-- [ ] Undo/redo functionality
-- [ ] Custom keyboard shortcuts
-- [ ] Extended theme support
-
-**Expected Release**: Q3 2026
-
-### v4.0.0 - Plugin System and Cloud Sync (Planned)
-
-**Goal**: Implement plugin system, add cloud sync functionality
-
-**Main Features**:
-- [ ] Plugin system architecture
-- [ ] Plugin API documentation
-- [ ] Official plugin examples
-- [ ] Cloud sync support
-- [ ] User account system
-- [ ] Online component library
-- [ ] Collaboration features
-- [ ] Version control integration
-
-**Expected Release**: Q4 2026
-
-### v4.1.0 - Mobile Version and Cross-platform Support (Planned)
-
-**Goal**: Release mobile version, improve cross-platform support
-
-**Main Features**:
-- [ ] iOS version
-- [ ] Android version
-- [ ] Cross-platform data sync
-- [ ] Mobile-optimized interface
-- [ ] Offline mode
-- [ ] Touch gesture support
-
-**Expected Release**: Q2 2027
-
-### v5.0.0 - Enterprise Edition and Professional Features (Planned)
-
-**Goal**: Release enterprise edition, add professional features
-
-**Main Features**:
-- [ ] Enterprise edition licensing
-- [ ] Advanced batch processing
-- [ ] API interface
-- [ ] Command-line tools
-- [ ] CI/CD integration
-- [ ] Enterprise-level support
-- [ ] Customization services
-- [ ] SLA guarantees
-
-**Expected Release**: Q4 2027
-
-## Long-term Planning
-
-### 2027-2028
-
-- [ ] AI-assisted conversion
-- [ ] Automated testing
-- [ ] Performance monitoring
-- [ ] User behavior analytics
-- [ ] Community features
-- [ ] Educational resources
-- [ ] Certification system
-
-### 2029 and Beyond
-
-- [ ] Ecosystem expansion
-- [ ] Third-party integrations
-- [ ] Internationalization support
-- [ ] Accessibility features
-- [ ] Sustainable development
-
 ## Feature Priorities
 
 ### High Priority
@@ -120,18 +83,18 @@ This document shows the future direction of the project and the main features pl
 ### Medium Priority
 
 1. New features addition
-2. Plugin system
-3. Cloud sync
-4. Advanced search
-5. Component library management
+2. Advanced search
+3. Component library management
+4. Export preview functionality
+5. Multi-language support
 
 ### Low Priority
 
-1. Mobile version
-2. Enterprise edition
-3. AI features
-4. Community features
-5. Internationalization
+1. Plugin system
+2. Cloud sync
+3. Mobile version
+4. Enterprise edition
+5. AI features
 
 ## Technical Debt
 
@@ -156,126 +119,6 @@ This document shows the future direction of the project and the main features pl
    - [ ] Startup speed optimization
    - [ ] Memory usage optimization
    - [ ] Network request optimization
-
-## Dependency Updates
-
-### Qt Framework
-
-- [ ] Upgrade to Qt 6.12+
-- [ ] Evaluate Qt 7.0 migration
-- [ ] Integrate new Qt features
-
-### Third-party Libraries
-
-- [ ] Update zlib version
-- [ ] Evaluate new network libraries
-- [ ] Evaluate new compression libraries
-
-## Community Planning
-
-### Contributor Growth
-
-- [ ] Improve contributor guidelines
-- [ ] Beginner-friendly processes
-- [ ] Contributor incentive program
-- [ ] Community event organization
-
-### User Feedback
-
-- [ ] User surveys
-- [ ] Feedback collection mechanisms
-- [ ] Feature request management
-- [ ] User satisfaction surveys
-
-### Educational Resources
-
-- [ ] Video tutorials
-- [ ] Blog posts
-- [ ] Case studies
-- [ ] Best practice guides
-
-## Release Plan
-
-### Release Cycle
-
-- **Major versions**: 1-2 times per year
-- **Minor versions**: Once per quarter
-- **Patch versions**: On-demand
-
-### Release Process
-
-1. Feature freeze
-2. Testing phase
-3. Release candidate
-4. Official release
-5. Post-release support
-
-### Version Naming
-
-Follow semantic versioning: MAJOR.MINOR.PATCH
-
-- MAJOR: Incompatible API changes
-- MINOR: New features (backwards compatible)
-- PATCH: Bug fixes (backwards compatible)
-
-## Risks and Challenges
-
-### Technical Risks
-
-1. **Qt Version Upgrade**
-   - Risk: Compatibility issues
-   - Mitigation: Thorough testing, gradual upgrade
-
-2. **Performance Optimization**
-   - Risk: Insignificant optimization results
-   - Mitigation: Benchmark testing, continuous monitoring
-
-3. **Plugin System**
-   - Risk: Poor API design
-   - Mitigation: Thorough design, community feedback
-
-### Resource Risks
-
-1. **Development Resources**
-   - Risk: Insufficient resources
-   - Mitigation: Community contributions, priority management
-
-2. **Maintenance Costs**
-   - Risk: Increased maintenance costs
-   - Mitigation: Automation tools, documentation improvement
-
-### Market Risks
-
-1. **Competition**
-   - Risk: Competitors emerge
-   - Mitigation: Continuous innovation, community building
-
-2. **Changing User Needs**
-   - Risk: Rapidly changing needs
-   - Mitigation: Flexible architecture, rapid response
-
-## Success Metrics
-
-### Technical Metrics
-
-- Code coverage > 80%
-- Average response time < 2s
-- Memory usage < 500MB
-- Crash rate < 0.1%
-
-### User Metrics
-
-- Monthly active user growth
-- User satisfaction > 4.5/5
-- Feature usage rate
-- User retention rate
-
-### Community Metrics
-
-- Number of contributors
-- Issue response time
-- Pull Request merge rate
-- Community activity level
 
 ## How to Participate
 
