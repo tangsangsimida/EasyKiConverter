@@ -505,7 +505,7 @@ namespace EasyKiConverter
                     }
                 }
 
-                polygonStr = QString("\n    (primitives\n      (gr_poly\n        (pts %1)\n        (width 0.1)\n        (fill none)\n      )\n    )\n  ").arg(path);
+                polygonStr = QString("\n    (primitives\n      (gr_poly\n        (pts %1)\n        (width 0.1)\n        (fill yes)\n      )\n    )\n  ").arg(path);
             }
         }
         else
