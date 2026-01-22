@@ -13,8 +13,9 @@ This guide is primarily based on the [Qt Coding Style](https://wiki.qt.io/Qt_Cod
 
 ### 1.2. File Names
 
-*   C++ source and header files should use snake_case, e.g., `export_service_pipeline.cpp` and `export_service_pipeline.h`.
+*   C++ source and header files should use PascalCase, e.g., `ExportServicePipeline.cpp` and `ExportServicePipeline.h`.
 *   QML files should use PascalCase, e.g., `MainWindow.qml`.
+*   Test files usually use snake_case, e.g., `test_component_service.cpp`.
 
 ### 1.3. Classes, Structs, and Namespaces
 
@@ -54,29 +55,33 @@ This guide is primarily based on the [Qt Coding Style](https://wiki.qt.io/Qt_Cod
 
 ### 2.2. Braces `{}`
 
-*   **Functions, Classes, Namespaces, Enums**: The opening brace `{` goes on a **new line**.
+*   **All Blocks (Functions, Classes, Namespaces, Control Statements)**: The opening brace `{` goes on a **new line** (Allman style).
     ```cpp
     class MyClass
     {
     public:
         void myFunction()
         {
-            // ...
+            if (condition)
+            {
+                // ...
+            }
+            else
+            {
+                // ...
+            }
         }
     };
     ```
-*   **Control Statements (if, for, while, switch)**: The opening brace `{` goes at the **end of the current line**.
-    ```cpp
-    if (condition) {
-        // ...
-    } else {
-        // ...
-    }
-    ```
+*   **Exceptions**:
+    *   Extremely simple inline functions can stay on the same line.
+    *   Braces for QML elements usually stay on the same line.
+    *   Braces for Lambda expressions can stay on the same line.
 *   **Single-Line Statements**: Braces are mandatory even if the body of a control statement is a single line.
     ```cpp
     // Correct
-    if (condition) {
+    if (condition)
+    {
         return;
     }
 

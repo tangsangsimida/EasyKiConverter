@@ -13,8 +13,9 @@
 
 ### 1.2. 文件名
 
-*   C++ 源文件和头文件使用下划线命名法（snake_case），例如 `export_service_pipeline.cpp` 和 `export_service_pipeline.h`。
+*   C++ 源文件和头文件使用大驼峰命名法（PascalCase），例如 `ExportServicePipeline.cpp` 和 `ExportServicePipeline.h`。
 *   QML 文件使用大驼峰命名法（PascalCase），例如 `MainWindow.qml`。
+*   测试文件通常使用下划线命名法（snake_case），例如 `test_component_service.cpp`。
 
 ### 1.3. 类、结构体和命名空间
 
@@ -54,29 +55,33 @@
 
 ### 2.2. 大括号 `{}`
 
-*   **函数、类、命名空间、枚举**: 左大括号 `{` **另起一行**。
+*   **所有块 (函数、类、命名空间、控制语句)**: 左大括号 `{` **另起一行**（Allman 风格）。
     ```cpp
     class MyClass
     {
     public:
         void myFunction()
         {
-            // ...
+            if (condition)
+            {
+                // ...
+            }
+            else
+            {
+                // ...
+            }
         }
     };
     ```
-*   **控制语句 (if, for, while, switch)**: 左大括号 `{` **在当前行的末尾**。
-    ```cpp
-    if (condition) {
-        // ...
-    } else {
-        // ...
-    }
-    ```
+*   **例外**:
+    *   极其简单的内联函数可以在同一行。
+    *   QML 元素的大括号通常保持在同一行。
+    *   Lambda 表达式的大括号可以保持在同一行。
 *   **单行语句**: 即使控制语句体只有一行，也必须使用大括号。
     ```cpp
     // 正确
-    if (condition) {
+    if (condition)
+    {
         return;
     }
 
