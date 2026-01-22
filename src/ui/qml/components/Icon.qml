@@ -1,15 +1,11 @@
 import QtQuick
-
 Item {
     id: root
-
     property string iconName: ""
     property int size: 24
     property color iconColor: "#000000"
-
     width: size
     height: size
-
     // 尝试加载图标
     Image {
         id: iconImage
@@ -20,14 +16,12 @@ Item {
         smooth: true
         antialiasing: true
         visible: status === Image.Ready
-
         onStatusChanged: {
             if (status === Image.Error) {
                 console.warn("Icon not found:", iconName)
             }
         }
     }
-
     // 占位符（当图标不存在时显示）
     Text {
         anchors.centerIn: parent
@@ -37,7 +31,6 @@ Item {
         visible: !iconImage.visible
         font.bold: true
     }
-
     function getIconSymbol(name) {
         switch(name) {
             case "play": return "▶"

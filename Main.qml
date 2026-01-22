@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-
 ApplicationWindow {
     id: appWindow
     width: 1200
@@ -11,7 +10,6 @@ ApplicationWindow {
     minimumHeight: 800
     visible: true
     title: "EasyKiConverter - 元器件转换工具"
-
     // 加载主窗口内容
     Loader {
         anchors.fill: parent
