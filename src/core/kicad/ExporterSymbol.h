@@ -151,9 +151,11 @@ namespace EasyKiConverter
          * @param part 部分数据
          * @param symbolName 符号名称
          * @param libName 库名称
+         * @param centerX 符号中心X坐标
+         * @param centerY 符号中心Y坐标
          * @return QString 子符号文本
          */
-        QString generateSubSymbol(const SymbolData &symbolData, const SymbolPart &part, const QString &symbolName, const QString &libName) const;
+        QString generateSubSymbol(const SymbolData &symbolData, const SymbolPart &part, const QString &symbolName, const QString &libName, double centerX, double centerY) const;
 
         /**
          * @brief 生成 KiCad 子符号（用于单部分符号）
@@ -161,9 +163,11 @@ namespace EasyKiConverter
          * @param symbolData 符号数据
          * @param symbolName 符号名称
          * @param libName 库名称
+         * @param centerX 符号中心X坐标
+         * @param centerY 符号中心Y坐标
          * @return QString 子符号文本
          */
-        QString generateSubSymbol(const SymbolData &symbolData, const QString &symbolName, const QString &libName) const;
+        QString generateSubSymbol(const SymbolData &symbolData, const QString &symbolName, const QString &libName, double centerX, double centerY) const;
 
         /**
          * @brief 将像素转换为 mil

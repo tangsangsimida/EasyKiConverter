@@ -257,7 +257,7 @@ namespace EasyKiConverter
         // 收集要被删除的子符号名称（属于被覆盖的父符号的子符号）
         // 改进的逻辑：准确识别分体式符号的子符号
         QSet<QString> subSymbolsToDelete;
-        
+
         // 首先分析现有符号，确定哪些是分体式符号（有多个子符号）
         QMap<QString, QStringList> parentToSubSymbols; // 父符号名 -> 子符号列表
         for (const QString &subSymbolName : subSymbolNames)
@@ -304,7 +304,7 @@ namespace EasyKiConverter
         for (const QString &symbolName : existingSymbols.keys())
         {
             bool isOverwritten = overwrittenSymbolNames.contains(symbolName);
-            
+
             // 检查是否是以被覆盖符号名开头的顶层符号（可能是之前错误导出的子符号）
             bool isOrphanedSubSymbol = false;
             if (!isOverwritten)
@@ -415,9 +415,17 @@ namespace EasyKiConverter
         content += "    (on_board yes)\n";
 
         // 设置当前边界框，用于图形元素的相对坐标计算
-        m_currentBBox = symbolData.bbox();
-        qDebug() << "BBox - x:" << m_currentBBox.x << "y:" << m_currentBBox.y;
-
+        SymbolBBox originalBBox = symbolData.bbox();
+        m_currentBBox = originalBBox;
+        qDebug() << "BBox - x:" << m_currentBBox.x << "y:" << m_currentBBox.y << "width:" << m_currentBBox.width << "height:" << m_currentBBox.height;
+        // 计算符号中心点（用于将符号居中显示）
+        double centerX = m_currentBBox.x + m_currentBBox.width / 2.0;
+        double centerY = m_currentBBox.y + m_currentBBox.height / 2.0;
+        qDebug() << "Symbol center - centerX:" << centerX << "centerY:" << centerY;
+        // 修改边界框，使其指向中心点，这样所有图形元素都会相对于中心点定位
+        m_currentBBox.x = centerX;
+        m_currentBBox.y = centerY;
+        qDebug() << "Adjusted BBox for centering - x:" << m_currentBBox.x << "y:" << m_currentBBox.y;
         // 计算 y_high 和 y_low（使用引脚坐标，与 Python 版本保持一致）
         // 如果没有引脚，使用默认值以确保属性位置正确
         double yHigh = 2.54; // 默认值：100mil
@@ -428,7 +436,7 @@ namespace EasyKiConverter
             qDebug() << "Pin coordinates calculation:";
             for (const SymbolPin &pin : pins)
             {
-                double pinY = -pxToMm(pin.settings.posY - m_currentBBox.y);
+                double pinY = -pxToMm(pin.settings.posY - centerY);
                 qDebug() << "  Pin" << pin.settings.spicePinNumber << "- raw Y:" << pin.settings.posY << "converted Y:" << pinY;
                 yHigh = qMax(yHigh, pinY);
                 yLow = qMin(yLow, pinY);
@@ -438,7 +446,6 @@ namespace EasyKiConverter
         {
             qDebug() << "No pins found, using default yHigh and yLow values";
         }
-
         qDebug() << "Final yHigh:" << yHigh << "yLow:" << yLow;
 
         // 生成属性
@@ -544,7 +551,7 @@ namespace EasyKiConverter
             for (const SymbolPart &part : symbolData.parts())
             {
                 qDebug() << "Generating sub-symbol" << part.unitNumber << "with" << part.pins.size() << "pins";
-                content += generateSubSymbol(symbolData, part, cleanSymbolName, libName);
+                content += generateSubSymbol(symbolData, part, cleanSymbolName, libName, centerX, centerY);
             }
         }
         else
@@ -591,7 +598,7 @@ namespace EasyKiConverter
             // 生成引脚
             for (const SymbolPin &pin : symbolData.pins())
             {
-                content += generatePin(pin, symbolData.bbox());
+                content += generatePin(pin, m_currentBBox);
             }
         }
 
@@ -607,13 +614,11 @@ namespace EasyKiConverter
         return content;
     }
 
-    QString ExporterSymbol::generateSubSymbol(const SymbolData &symbolData, const QString &symbolName, const QString &libName) const
+    QString ExporterSymbol::generateSubSymbol(const SymbolData &symbolData, const QString &symbolName, const QString &libName, double centerX, double centerY) const
     {
         QString content;
-
         // 单部分符号：使用 _0_1 作为子符号名称
         content += QString("    (symbol \"%1_0_1\"\n").arg(symbolName);
-
         // 生成图形元素（直接生成，不添加任何属性）
         for (const SymbolRectangle &rect : symbolData.rectangles())
         {
@@ -643,25 +648,26 @@ namespace EasyKiConverter
         {
             content += generatePath(path);
         }
-
         // 生成文本元素
         for (const SymbolText &text : symbolData.texts())
         {
             content += generateText(text);
         }
-
-        // 生成引脚
+        // 生成引脚（使用中心点计算坐标，让引脚也跟着图形一起移动）
+        SymbolBBox centeredBBox;
+        centeredBBox.x = centerX;
+        centeredBBox.y = centerY;
+        centeredBBox.width = symbolData.bbox().width;
+        centeredBBox.height = symbolData.bbox().height;
         for (const SymbolPin &pin : symbolData.pins())
         {
-            content += generatePin(pin, symbolData.bbox());
+            content += generatePin(pin, centeredBBox);
         }
-
         content += "    )\n"; // 结束子符号
-
         return content;
     }
 
-    QString ExporterSymbol::generateSubSymbol(const SymbolData &symbolData, const SymbolPart &part, const QString &symbolName, const QString &libName) const
+    QString ExporterSymbol::generateSubSymbol(const SymbolData &symbolData, const SymbolPart &part, const QString &symbolName, const QString &libName, double centerX, double centerY) const
     {
         QString content;
 
@@ -708,7 +714,13 @@ namespace EasyKiConverter
         // 生成引脚
         for (const SymbolPin &pin : part.pins)
         {
-            content += generatePin(pin, symbolData.bbox());
+            // 使用中心点创建临时边界框，让引脚也跟着图形一起移动
+            SymbolBBox centeredBBox;
+            centeredBBox.x = centerX;
+            centeredBBox.y = centerY;
+            centeredBBox.width = symbolData.bbox().width;
+            centeredBBox.height = symbolData.bbox().height;
+            content += generatePin(pin, centeredBBox);
         }
 
         content += "    )\n"; // 结束子符号
@@ -720,7 +732,7 @@ namespace EasyKiConverter
     {
         QString content;
 
-        // 使用边界框偏移量计算相对坐标（Python 版本的做法）
+        // 使用边界框偏移量计算相对坐标
         double x = pxToMm(pin.settings.posX - bbox.x);
         double y = -pxToMm(pin.settings.posY - bbox.y); // Y 轴翻转
 
@@ -780,7 +792,7 @@ namespace EasyKiConverter
         }
         QString kicadPinStyle = pinStyleToKicad(pinStyle);
 
-        // 处理引脚名称和编号（完全移除空格，与Python版本一致）
+        // 处理引脚名称和编号
         QString pinName = pin.name.text;
         pinName.replace(" ", "");
         QString pinNumber = pin.settings.spicePinNumber;
@@ -913,7 +925,7 @@ namespace EasyKiConverter
         }
         else if (arc.path.size() == 2)
         {
-            // 只有两个点，计算中点（参考lckiconverter的做法）
+            // 只有两个点，计算中点
             const auto path = arc.path; // 避免临时对象detach
             QPointF startPoint = path.first();
             QPointF endPoint = path.last();
@@ -1056,7 +1068,7 @@ namespace EasyKiConverter
             }
             content += ")\n";
             content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
-            // 根据 fillColor 属性设置填充类型（与 Python 版本一致）
+            // 根据 fillColor 属性设置填充类型
             if (polygon.fillColor)
             {
                 content += "      (fill (type background))\n";
@@ -1109,14 +1121,14 @@ namespace EasyKiConverter
                     }
                 }
             }
-            // 只有当 fillColor 为 true 时才重复第一个点（与 Python 版本一致）
+            // 只有当 fillColor 为 true 时才重复第一个点
             if (polyline.fillColor && !firstPoint.isEmpty() && firstPoint != lastPoint)
             {
                 content += firstPoint;
             }
             content += ")\n";
             content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
-            // 填充类型由 fillColor 决定（与 Python 版本一致）
+            // 填充类型由 fillColor 决定
             if (polyline.fillColor)
             {
                 content += "      (fill (type background))\n";
@@ -1134,7 +1146,7 @@ namespace EasyKiConverter
     {
         QString content;
 
-        // 使用SvgPathParser解析SVG路径（参考lckiconverter的实现）
+        // 使用SvgPathParser解析SVG路径
         QList<QPointF> points = SvgPathParser::parsePath(path.paths);
 
         // 生成polyline
@@ -1219,7 +1231,7 @@ namespace EasyKiConverter
             fontStyle = fontStyle.trimmed();
         }
 
-        // 处理旋转角度（lckiconverter的做法）
+        // 处理旋转角度
         double rotation = text.rotation;
         if (rotation != 0)
         {
@@ -1229,7 +1241,7 @@ namespace EasyKiConverter
         // 处理可见性
         QString hide = text.visible ? "" : "hide";
 
-        // 转义文本内容（移除空格，与Python版本一致）
+        // 转义文本内容
         QString textContent = text.text;
         textContent.replace(" ", "");
         if (textContent.isEmpty())
