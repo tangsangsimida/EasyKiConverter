@@ -1,0 +1,70 @@
+name: Build Windows (CI)
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Windows (${{ matrix.build_type }})
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.10.1'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_mingw'
+          modules: 'qtnetwork qtdeclarative qtquickcontrols2 qtconcurrent'
+          cache: true
+
+      - name: Configure CMake
+        shell: pwsh
+        run: |
+          cd $env:GITHUB_WORKSPACE
+          cmake -B build -G "MinGW Makefiles" `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=ON `
+            -DCMAKE_C_COMPILER="$env:Qt6_DIR\..\Tools\mingw*\bin\gcc.exe" `
+            -DCMAKE_CXX_COMPILER="$env:Qt6_DIR\..\Tools\mingw*\bin\g++.exe"
+
+      - name: Build
+        shell: pwsh
+        run: |
+          cd $env:GITHUB_WORKSPACE
+          # 使用 Qt 自带的 mingw32-make
+          $env:PATH = "$env:Qt6_DIR\..\Tools\mingw*\bin;$env:PATH"
+          mingw32-make -C build -j$(nproc)
+
+      - name: Run tests (if available)
+        if: matrix.build_type == 'Release'
+        shell: pwsh
+        run: |
+          cd $env:GITHUB_WORKSPACE\tests
+          if (Test-Path "build\test_component_service.exe") {
+            Write-Host "Running tests..."
+            .\build\test_component_service.exe
+          } else {
+            Write-Host "No tests found, skipping..."
+          }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: EasyKiConverter-Windows-${{ matrix.build_type }}
+          path: build/bin/
+          if-no-files-found: warn
