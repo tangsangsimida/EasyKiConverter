@@ -27,7 +27,6 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_mingw'
-          modules: 'qtquickcontrols'
           cache: true
 
       - name: Verify Qt and MinGW setup
