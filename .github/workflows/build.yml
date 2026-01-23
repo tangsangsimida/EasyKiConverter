@@ -123,16 +123,15 @@ jobs:
 
       - name: 'Setup MinGW'
         if: matrix.platform == 'mingw_64'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          install: |
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-make
-            mingw-w64-x86_64-pkg-config
-            mingw-w64-x86_64-zlib
-          update: true
+        shell: pwsh
+        run: |
+          # 使用系统自带的 MinGW（GCC 14.2.0），跳过 MSYS2 安装
+          # 系统自带的 MinGW 版本稳定且与 CMake 兼容
+          Write-Host "Using system MinGW (GCC 14.2.0)"
+          gcc --version | Select-Object -First 1
+          g++ --version | Select-Object -First 1
+          cmake --version | Select-Object -First 1
+          make --version | Select-Object -First 1
 
       - name: 'Setup vcpkg'
         if: matrix.platform == 'msvc2019_64'
@@ -173,43 +172,28 @@ jobs:
           gcc --version | Select-Object -First 2
           g++ --version | Select-Object -First 2
 
-          # 查找 MSYS2 的实际安装路径
-          Write-Host "=== Searching for MSYS2 MinGW ==="
+          # 查找 MinGW 工具链
+          Write-Host "=== Searching for MinGW ==="
           
-          # 检查常见的 MSYS2 安装路径（优先使用我们安装的）
-          $mingwPaths = @(
-            "$env:RUNNER_TEMP/msys64/mingw64/bin",      # msys2/setup-msys2@v2 安装的位置
-            "$env:GITHUB_WORKSPACE/msys64/mingw64/bin",
-            "C:/msys64/mingw64/bin",
-            "C:/tools/msys64/mingw64/bin",
-            "C:/Program Files/msys64/mingw64/bin",
-            "C:/hostedtoolcache/windows/msys64/mingw64/bin"
-          )
-
-          Write-Host "Searching in the following paths:"
-          foreach ($path in $mingwPaths) {
-            $exists = Test-Path "$path/gcc.exe"
-            Write-Host "  - ${path} (${exists})"
-          }
-
-          $mingwPath = $null
-          foreach ($path in $mingwPaths) {
-            if (Test-Path "$path/gcc.exe") {
-              $mingwPath = $path
-              Write-Host "Found MinGW at: ${mingwPath}"
-              break
-            }
-          }
-
-          if (-not $mingwPath) {
-            Write-Error "Cannot find MinGW installation"
+          # 直接使用系统自带的 MinGW（C:\mingw64\bin）
+          $mingwPath = "C:/mingw64/bin"
+          
+          if (-not (Test-Path "${mingwPath}/gcc.exe")) {
+            Write-Error "System MinGW not found at: ${mingwPath}"
             exit 1
           }
-
-          # 验证编译器是否存在
+          
+          Write-Host "Using system MinGW at: ${mingwPath}"
+          
+          # 验证编译器版本
           $gccPath = "${mingwPath}/gcc.exe"
           $gppPath = "${mingwPath}/g++.exe"
           
+          $gccVersion = & "$gccPath" --version
+          Write-Host "GCC version:"
+          Write-Host ($gccVersion | Select-Object -First 2)
+          
+          # 验证编译器是否存在
           if (-not (Test-Path $gccPath)) {
             Write-Error "GCC not found at: ${gccPath}"
             exit 1
@@ -218,36 +202,6 @@ jobs:
           if (-not (Test-Path $gppPath)) {
             Write-Error "G++ not found at: ${gppPath}"
             exit 1
-          }
-
-          # 验证编译器版本
-          $gccVersion = & "$gccPath" --version
-          Write-Host "GCC version:"
-          Write-Host ($gccVersion | Select-Object -First 2)
-          
-          # 检查 GCC 版本，如果太新（15.x），使用系统自带的 MinGW
-          $gccVersionLine = $gccVersion | Select-Object -First 1
-          if ($gccVersionLine -match "gcc\.exe\s+\(.*\)\s+(\d+)\.(\d+)\.(\d+)") {
-            $major = [int]$matches[1]
-            $minor = [int]$matches[2]
-            Write-Host "GCC major version: ${major}, minor: ${minor}"
-            
-            if ($major -gt 14) {
-              Write-Host "GCC version ${major}.${minor} is too new, may have compatibility issues"
-              Write-Host "Falling back to system MinGW"
-              
-              # 使用系统自带的 MinGW（C:\mingw64\bin）
-              $systemMingwPath = "C:/mingw64/bin"
-              if (Test-Path "${systemMingwPath}/gcc.exe") {
-                $mingwPath = $systemMingwPath
-                Write-Host "Using system MinGW at: ${mingwPath}"
-                $gccPath = "${mingwPath}/gcc.exe"
-                $gppPath = "${mingwPath}/g++.exe"
-                $gccVersion = & "$gccPath" --version
-                Write-Host "System GCC version:"
-                Write-Host ($gccVersion | Select-Object -First 2)
-              }
-            }
           }
 
           # 确保使用找到的 MinGW
