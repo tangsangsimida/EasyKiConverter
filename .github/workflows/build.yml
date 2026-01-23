@@ -194,7 +194,11 @@ jobs:
       - name: 'Test'
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR"
+          if ("${{ matrix.platform }}" -eq "msvc2019_64") {
+            cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          } else {
+            cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR"
+          }
           cmake --build build
           ctest --output-on-failure --test-dir build --output-junit test-results.xml
 
