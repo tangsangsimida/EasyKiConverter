@@ -76,7 +76,7 @@ qt_add_executable(appEasyKiconverter_Cpp_Version
 
 # === MinGW 专用修复：必须在 target_link_libraries 之前设置 ===
 if(MINGW)
-    # 禁用 Qt EntryPoint（提示性质）
+    # 禁用 Qt EntryPoint
     set_property(TARGET appEasyKiconverter_Cpp_Version
         PROPERTY QT_NO_ENTRYPOINT TRUE
     )
@@ -132,7 +132,7 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         src/ui/qml/styles/qmldir
 )
 
-# === 彻底移除 Qt6::EntryPoint（处理所有可能的注入方式）===
+# === 移除 Qt6::EntryPoint ===
 if(MINGW)
     # 1. 尝试从 LINK_LIBRARIES 移除
     get_target_property(LINK_LIBS appEasyKiconverter_Cpp_Version LINK_LIBRARIES)
@@ -141,7 +141,7 @@ if(MINGW)
         set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES LINK_LIBRARIES "${LINK_LIBS}")
     endif()
 
-    # 2. 【关键】从 INTERFACE_LINK_LIBRARIES 移除（qt_add_qml_module 可能在这里加）
+    # 2. 从 INTERFACE_LINK_LIBRARIES 移除
     get_target_property(INTERFACE_LIBS appEasyKiconverter_Cpp_Version INTERFACE_LINK_LIBRARIES)
     if(INTERFACE_LIBS)
         list(REMOVE_ITEM INTERFACE_LIBS "Qt6::EntryPoint")
