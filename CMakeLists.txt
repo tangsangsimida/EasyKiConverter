@@ -86,18 +86,30 @@ target_include_directories(appEasyKiconverter_Cpp_Version
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# 链接主源码库
-target_link_libraries(appEasyKiconverter_Cpp_Version
-    PRIVATE
-        EasyKiConverterLib
-        Qt6::Quick
-        Qt6::Network
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Widgets
-        Qt6::QuickControls2
-        ${ZLIB_LIBRARY}
-)
+# 链接 zlib 库
+if(ZLIB_FOUND)
+    target_link_libraries(appEasyKiconverter_Cpp_Version
+        PRIVATE
+            EasyKiConverterLib
+            Qt6::Quick
+            Qt6::Network
+            Qt6::Core
+            Qt6::Gui
+            Qt6::Widgets
+            Qt6::QuickControls2
+            ZLIB::ZLIB)
+else()
+    target_link_libraries(appEasyKiconverter_Cpp_Version
+        PRIVATE
+            EasyKiConverterLib
+            Qt6::Quick
+            Qt6::Network
+            Qt6::Core
+            Qt6::Gui
+            Qt6::Widgets
+            Qt6::QuickControls2
+            z)
+endif()
 
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
