@@ -1,1 +1,57 @@
-{"version": 3, "configurePresets": [{"name": "mingw-debug", "displayName": "MinGW Debug", "description": "MinGW build using MinGW Makefiles generator", "generator": "MinGW Makefiles", "binaryDir": "${sourceDir}/build/Desktop_Qt_6_10_1_MinGW_64_bit-Debug", "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "CMAKE_CXX_STANDARD": "17", "CMAKE_PREFIX_PATH": "C:/software/QT/6.10.1/mingw_64", "QT_HOST_PATH": "C:/software/QT/6.10.1/mingw_64", "CMAKE_C_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/gcc.exe", "CMAKE_CXX_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/g++.exe", "CMAKE_MAKE_PROGRAM": "C:/software/QT/Tools/mingw1310_64/bin/mingw32-make.exe", "CMAKE_TOOLCHAIN_FILE": "", "VCPKG_ROOT": ""}, "environment": {"VCPKG_ROOT": ""}}, {"name": "mingw-release", "displayName": "MinGW Release", "description": "MinGW release build using MinGW Makefiles generator", "generator": "MinGW Makefiles", "binaryDir": "${sourceDir}/build/Desktop_Qt_6_10_1_MinGW_64_bit-Release", "cacheVariables": {"CMAKE_BUILD_TYPE": "Release", "CMAKE_CXX_STANDARD": "17", "CMAKE_PREFIX_PATH": "C:/software/QT/6.10.1/mingw_64", "QT_HOST_PATH": "C:/software/QT/6.10.1/mingw_64", "CMAKE_C_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/gcc.exe", "CMAKE_CXX_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/g++.exe", "CMAKE_MAKE_PROGRAM": "C:/software/QT/Tools/mingw1310_64/bin/mingw32-make.exe", "CMAKE_TOOLCHAIN_FILE": "", "VCPKG_ROOT": ""}, "environment": {"VCPKG_ROOT": ""}}], "buildPresets": [{"name": "mingw-debug", "configurePreset": "mingw-debug"}, {"name": "mingw-release", "configurePreset": "mingw-release"}]}
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "mingw-debug",
+            "displayName": "MinGW Debug",
+            "description": "MinGW build using MinGW Makefiles generator",
+            "generator": "MinGW Makefiles",
+            "binaryDir": "${sourceDir}/build/Desktop_Qt_6_10_1_MinGW_64_bit-Debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_CXX_STANDARD": "17",
+                "CMAKE_PREFIX_PATH": "C:/software/QT/6.10.1/mingw_64",
+                "QT_HOST_PATH": "C:/software/QT/6.10.1/mingw_64",
+                "CMAKE_C_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/g++.exe",
+                "CMAKE_MAKE_PROGRAM": "C:/software/QT/Tools/mingw1310_64/bin/mingw32-make.exe",
+                "CMAKE_TOOLCHAIN_FILE": "",
+                "VCPKG_ROOT": ""
+            },
+            "environment": {
+                "VCPKG_ROOT": ""
+            }
+        },
+        {
+            "name": "mingw-release",
+            "displayName": "MinGW Release",
+            "description": "MinGW release build using MinGW Makefiles generator",
+            "generator": "MinGW Makefiles",
+            "binaryDir": "${sourceDir}/build/Desktop_Qt_6_10_1_MinGW_64_bit-Release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_CXX_STANDARD": "17",
+                "CMAKE_PREFIX_PATH": "C:/software/QT/6.10.1/mingw_64",
+                "QT_HOST_PATH": "C:/software/QT/6.10.1/mingw_64",
+                "CMAKE_C_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/g++.exe",
+                "CMAKE_MAKE_PROGRAM": "C:/software/QT/Tools/mingw1310_64/bin/mingw32-make.exe",
+                "CMAKE_TOOLCHAIN_FILE": "",
+                "VCPKG_ROOT": ""
+            },
+            "environment": {
+                "VCPKG_ROOT": ""
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "mingw-debug",
+            "configurePreset": "mingw-debug"
+        },
+        {
+            "name": "mingw-release",
+            "configurePreset": "mingw-release"
+        }
+    ]
+}
