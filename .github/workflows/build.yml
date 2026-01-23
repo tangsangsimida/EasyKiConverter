@@ -2,13 +2,13 @@
 
 on:
   push:
-    branches: [ 'master', 'main', 'develop' ]
+    branches: [ 'master', 'main', 'ci_test' ]
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
       - 'docs/**'
   pull_request:
-    branches: [ 'master', 'main', 'develop' ]
+    branches: [ 'master', 'main', 'ci_test' ]
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
@@ -44,41 +44,8 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: 'Install Dependencies'
-        run: |
-          sudo apt-get -y -qq update
-          sudo apt-get -y --no-install-recommends install \
-            cmake \
-            ccache \
-            build-essential \
-            libgl1-mesa-dev \
-            libxcb-xinerama0 \
-            libxcb-cursor0 \
-            libxkbcommon-x11-0 \
-            libxcb-icccm4 \
-            libxcb-image0 \
-            libxcb-shape0 \
-            libxcb-render-util0 \
-            libxcb-xfixes0 \
-            libxcb-xkbcommon1 \
-            libxcb-keysyms1 \
-            libxcb-randr0 \
-            libxcb-render0 \
-            libxcb-shm0 \
-            libxcb-util1 \
-            libxcb-xinerama0 \
-            libxcb-xfixes0 \
-            libwayland-dev \
-            libegl1-mesa-dev \
-            libgles2-mesa-dev \
-            libfontconfig1-dev \
-            libfreetype6-dev \
-            libharfbuzz-dev \
-            libdbus-1-dev \
-            libglib2.0-0
-
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env
+        uses: ./.github/actions/setup-env@v1
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
@@ -162,7 +129,7 @@ jobs:
           version: 13.2.0
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env
+        uses: ./.github/actions/setup-env@v1
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
@@ -197,11 +164,11 @@ jobs:
           cmake --build build --config $env:BUILD_TYPE --parallel
 
       - name: 'Test'
-          run: |
-            cd tests
-            cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
-            cmake --build build
-            ctest --output-on-failure --test-dir build --output-junit test-results.xml
+        run: |
+          cd tests
+          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR"
+          cmake --build build
+          ctest --output-on-failure --test-dir build --output-junit test-results.xml
 
       - name: 'Publish Test Report'
         if: always()
@@ -233,7 +200,7 @@ jobs:
           ref: ${{ github.sha }}
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env
+        uses: ./.github/actions/setup-env@v1
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
