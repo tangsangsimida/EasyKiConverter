@@ -175,13 +175,29 @@ jobs:
 
           # 查找 MSYS2 的实际安装路径（排除系统自带的 MinGW）
           # MSYS2 setup action 会将 MSYS2 安装到特定位置
+          Write-Host "=== Searching for MSYS2 Installation ==="
+          
+          # 首先检查环境变量
+          $msys2Path = $env:MSYS2_PATH
+          if ($msys2Path) {
+            Write-Host "MSYS2_PATH environment variable: $msys2Path"
+          }
+
+          # 检查常见的 MSYS2 安装路径
           $mingwPaths = @(
             "C:/msys64/mingw64/bin",
             "C:/tools/msys64/mingw64/bin",
             "C:/Program Files/msys64/mingw64/bin",
             "$env:GITHUB_WORKSPACE/msys64/mingw64/bin",
-            "$env:RUNNER_TEMP/msys64/mingw64/bin"
+            "$env:RUNNER_TEMP/msys64/mingw64/bin",
+            "C:/hostedtoolcache/windows/msys64/mingw64/bin"
           )
+
+          Write-Host "Searching in the following paths:"
+          foreach ($path in $mingwPaths) {
+            $exists = Test-Path "$path/gcc.exe"
+            Write-Host "  - $path ($exists)"
+          }
 
           $mingwPath = $null
           foreach ($path in $mingwPaths) {
@@ -189,6 +205,10 @@ jobs:
               # 检查是否是 MSYS2 的 MinGW（通过检查 msys-2.0.dll 的存在）
               $hasMsysDll = Test-Path "$path/../msys-2.0.dll"
               $hasMsysDll2 = Test-Path "$path/../../msys-2.0.dll"
+              Write-Host "Checking $path:"
+              Write-Host "  msys-2.0.dll (parent): $hasMsysDll"
+              Write-Host "  msys-2.0.dll (grandparent): $hasMsysDll2"
+              
               if ($hasMsysDll -or $hasMsysDll2) {
                 $mingwPath = $path
                 Write-Host "Found MSYS2 MinGW at: $mingwPath"
@@ -203,6 +223,8 @@ jobs:
             foreach ($path in $mingwPaths) {
               Write-Host "  - $path"
             }
+            Write-Host "Current PATH:"
+            Write-Host $env:Path -split ';'
             exit 1
           }
 
