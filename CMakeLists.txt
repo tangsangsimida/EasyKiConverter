@@ -131,22 +131,9 @@ if(ZLIB_USE_QT)
 endif()
 
 # 创建可执行文件（包含 main.cpp）
-# 为 MinGW 设置全局链接标志，确保使用 GUI 子系统
-if(MINGW)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows" CACHE STRING "" FORCE)
-endif()
-
 qt_add_executable(appEasyKiconverter_Cpp_Version WIN32
     main.cpp
 )
-
-# 为 MinGW 添加 GUI 子系统链接选项
-if(MINGW)
-    set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
-        WIN32_EXECUTABLE TRUE
-    )
-    target_link_options(appEasyKiconverter_Cpp_Version PRIVATE -mwindows)
-endif()
 
 # 添加 src 目录到 include 路径
 target_include_directories(appEasyKiconverter_Cpp_Version
