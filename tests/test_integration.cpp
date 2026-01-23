@@ -59,7 +59,7 @@ void TestIntegration::init() {
     QVERIFY(m_tempDir->isValid());
 
     // 初始化服务
-    m_configService = new ConfigService(this);
+    m_configService = ConfigService::instance();
     m_componentService = new ComponentService(this);
     m_exportService = new ExportService(this);
 
@@ -78,7 +78,6 @@ void TestIntegration::init() {
 void TestIntegration::cleanup() {
     delete m_componentService;
     delete m_exportService;
-    delete m_configService;
     delete m_tempDir;
 }
 
@@ -147,7 +146,7 @@ void TestIntegration::testExportServiceIntegration() {
     QVERIFY(spyError.isValid());
 
     // 测试导出选项
-    ExportService::ExportOptions options;
+    ExportOptions options;
     options.outputPath = m_configService->getOutputPath();
     options.libName = m_configService->getLibName();
     options.exportSymbol = m_configService->getExportSymbol();

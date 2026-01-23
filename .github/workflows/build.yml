@@ -132,7 +132,6 @@ jobs:
         if: matrix.platform == 'msvc2019_64'
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgGitCommitId: 'f8a7a7e8d1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1'
           vcpkgJsonGlob: 'vcpkg.json'
 
       - name: 'Setup Build Environment'

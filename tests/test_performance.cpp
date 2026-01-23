@@ -74,7 +74,7 @@ void TestPerformance::init() {
     m_tempDir = new QTemporaryDir();
     QVERIFY(m_tempDir->isValid());
 
-    m_configService = new ConfigService(this);
+    m_configService = ConfigService::instance();
     m_componentService = new ComponentService(this);
     m_exportService = new ExportService(this);
 
@@ -86,7 +86,6 @@ void TestPerformance::init() {
 void TestPerformance::cleanup() {
     delete m_componentService;
     delete m_exportService;
-    delete m_configService;
     delete m_tempDir;
 }
 
@@ -124,7 +123,7 @@ void TestPerformance::testExportServicePerformance() {
 
     // 测试导出选项创建时间
     timer.start();
-    ExportService::ExportOptions options;
+    ExportOptions options;
     options.outputPath = m_configService->getOutputPath();
     options.libName = m_configService->getLibName();
     options.exportSymbol = true;
@@ -229,9 +228,9 @@ void TestPerformance::testBatchProcessing() {
     // 测试批量导出选项创建
     timer.start();
 
-    QList<ExportService::ExportOptions> optionsList;
+    QList<ExportOptions> optionsList;
     for (int i = 0; i < 5; i++) {
-        ExportService::ExportOptions options;
+        ExportOptions options;
         options.outputPath = m_tempDir->path();
         options.libName = QString("Library%1").arg(i);
         options.exportSymbol = true;

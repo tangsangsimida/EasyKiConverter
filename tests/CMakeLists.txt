@@ -203,6 +203,7 @@ target_sources(test_integration PRIVATE
     ${CMAKE_SOURCE_DIR}/../src/core/utils/NetworkUtils.cpp
     ${CMAKE_SOURCE_DIR}/../src/core/utils/GeometryUtils.cpp
     ${CMAKE_SOURCE_DIR}/../src/core/utils/LayerMapper.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/SvgPathParser.cpp
 )
 
 target_include_directories(test_integration PRIVATE ${CMAKE_SOURCE_DIR}/../src)
@@ -232,7 +233,13 @@ target_sources(test_performance PRIVATE
     ${CMAKE_SOURCE_DIR}/../src/models/Model3DData.cpp
     ${CMAKE_SOURCE_DIR}/../src/core/easyeda/EasyedaApi.cpp
     ${CMAKE_SOURCE_DIR}/../src/core/easyeda/EasyedaImporter.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/ExporterSymbol.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/ExporterFootprint.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/kicad/Exporter3DModel.cpp
     ${CMAKE_SOURCE_DIR}/../src/core/utils/NetworkUtils.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/GeometryUtils.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/LayerMapper.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/SvgPathParser.cpp
 )
 
 target_include_directories(test_performance PRIVATE ${CMAKE_SOURCE_DIR}/../src)
@@ -270,6 +277,7 @@ target_sources(test_pipeline_baseline PRIVATE
     ${CMAKE_SOURCE_DIR}/../src/core/utils/GeometryUtils.cpp
     ${CMAKE_SOURCE_DIR}/../src/core/utils/LayerMapper.cpp
     ${CMAKE_SOURCE_DIR}/../src/core/utils/NetworkUtils.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/SvgPathParser.cpp
     ${CMAKE_SOURCE_DIR}/../src/workers/FetchWorker.cpp
     ${CMAKE_SOURCE_DIR}/../src/workers/ProcessWorker.cpp
     ${CMAKE_SOURCE_DIR}/../src/workers/WriteWorker.cpp
