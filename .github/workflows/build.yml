@@ -123,15 +123,19 @@ jobs:
 
       - name: 'Setup MinGW'
         if: matrix.platform == 'mingw_64'
-        shell: pwsh
-        run: |
-          # 使用系统自带的 MinGW（GCC 14.2.0），跳过 MSYS2 安装
-          # 系统自带的 MinGW 版本稳定且与 CMake 兼容
-          Write-Host "Using system MinGW (GCC 14.2.0)"
-          gcc --version | Select-Object -First 1
-          g++ --version | Select-Object -First 1
-          cmake --version | Select-Object -First 1
-          make --version | Select-Object -First 1
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          # 使用 release: false 来锁定包版本
+          release: false
+          install: |
+            mingw-w64-x86_64-gcc=13.1.0-1
+            mingw-w64-x86_64-gcc-libs=13.1.0-1
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-zlib
+          update: true
 
       - name: 'Setup vcpkg'
         if: matrix.platform == 'msvc2019_64'
@@ -172,18 +176,18 @@ jobs:
           gcc --version | Select-Object -First 2
           g++ --version | Select-Object -First 2
 
-          # 查找 MinGW 工具链
-          Write-Host "=== Searching for MinGW ==="
+          # 查找 MSYS2 MinGW 工具链
+          Write-Host "=== Searching for MSYS2 MinGW ==="
           
-          # 直接使用系统自带的 MinGW（C:\mingw64\bin）
-          $mingwPath = "C:/mingw64/bin"
+          # MSYS2 安装在 RUNNER_TEMP
+          $mingwPath = "$env:RUNNER_TEMP/msys64/mingw64/bin"
           
           if (-not (Test-Path "${mingwPath}/gcc.exe")) {
-            Write-Error "System MinGW not found at: ${mingwPath}"
+            Write-Error "MSYS2 MinGW not found at: ${mingwPath}"
             exit 1
           }
           
-          Write-Host "Using system MinGW at: ${mingwPath}"
+          Write-Host "Using MSYS2 MinGW at: ${mingwPath}"
           
           # 验证编译器版本
           $gccPath = "${mingwPath}/gcc.exe"
@@ -192,6 +196,11 @@ jobs:
           $gccVersion = & "$gccPath" --version
           Write-Host "GCC version:"
           Write-Host ($gccVersion | Select-Object -First 2)
+          
+          # 验证是否是 GCC 13.1.0
+          if ($gccVersion -notmatch "13\.1\.0") {
+            Write-Warning "GCC version is not 13.1.0, but we will continue anyway"
+          }
           
           # 验证编译器是否存在
           if (-not (Test-Path $gccPath)) {
