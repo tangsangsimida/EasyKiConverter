@@ -1,0 +1,110 @@
+﻿name: Performance Testing
+
+on:
+  push:
+    branches: [ 'master', 'main' ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
+  pull_request:
+    branches: [ 'master', 'main' ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
+  workflow_dispatch:
+
+env:
+  QT_VERSION: '6.10.1'
+  CMAKE_VERSION: '3.16'
+
+jobs:
+  performance-benchmark:
+    name: 'Performance Benchmark'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Source code'
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+
+      - name: 'Checkout Source code'
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: 'Checkout Source code'
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: 'Setup Build Environment'
+        uses: ./.github/actions/setup-env@v1
+        with:
+          cmake-version: ${{ env.CMAKE_VERSION }}
+          qt-version: ${{ env.QT_VERSION }}
+          qt-host: 'linux'
+          qt-target: 'desktop'
+          enable-ccache: 'true'
+          enable-sccache: 'false'
+
+      - name: 'Configure and Build'
+        run: |
+          cmake -B build \
+            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+          cmake --build build --config Release --parallel
+
+      - name: 'Run performance tests'
+        run: |
+          cd tests
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake --build build
+
+          if [ -f "./build/test_performance" ]; then
+            ./build/test_performance 2>&1 | tee performance.log
+          else
+            echo "Performance test executable not found"
+          fi
+
+      - name: 'Upload benchmark results'
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: |
+            tests/performance.log
+            tests/build/test_performance.log
+          overwrite: true
+
+      - name: 'Comment PR with performance results'
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let commentBody = '## Performance Test Results\n\n';
+
+            try {
+              const logPath = 'tests/performance.log';
+              if (fs.existsSync(logPath)) {
+                const logContent = fs.readFileSync(logPath, 'utf8');
+                commentBody += '```\n' + logContent + '\n```\n';
+              } else {
+                commentBody += 'No performance log found.\n';
+              }
+            } catch (error) {
+              commentBody += 'Error reading performance log: ' + error.message + '\n';
+            }
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });

@@ -1,4 +1,4 @@
-# Features
+﻿# Features
 
 This document provides a detailed description of the features available in EasyKiConverter.
 

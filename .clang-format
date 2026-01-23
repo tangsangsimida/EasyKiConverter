@@ -1,0 +1,68 @@
+---
+BasedOnStyle: Google
+Language: Cpp
+Standard: c++17
+
+# 缩进
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 120
+
+# 大括号风格（K&R 风格）
+BreakBeforeBraces: Attach
+
+# 指针对齐
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+# 命名空间缩进
+NamespaceIndentation: None
+
+# 访问修饰符缩进
+AccessModifierOffset: -4
+
+# 函数参数换行
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackArguments: false
+BinPackParameters: false
+
+# 函数声明换行
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# 排序包含
+SortIncludes: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^<Qt.*>'
+    Priority:        1
+  - Regex:           '^<[A-Z]'
+    Priority:        2
+  - Regex:           '^".*'
+    Priority:        3
+
+# 空行
+MaxEmptyLinesToKeep: 2
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# 对齐
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignOperands: true
+AlignTrailingComments: true
+
+# 注释处理（保持中文注释原样）
+ReflowComments: false
+Cpp11BracedListStyle: true
+
+# 其他
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpacesInAngles: false
+SpaceAfterCStyleCast: false
+SpaceBeforeParens: ControlStatements
+SpaceBeforeAssignmentOperators: true
+SpaceInEmptyParentheses: false

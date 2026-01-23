@@ -1,0 +1,100 @@
+name: 'Setup Build Environment'
+description: 'Setup CMake, Qt, and build cache for EasyKiConverter project'
+
+inputs:
+  cmake-version:
+    description: 'CMake version to install'
+    required: false
+    default: '3.16'
+  qt-version:
+    description: 'Qt version to install'
+    required: false
+    default: '6.10.1'
+  qt-host:
+    description: 'Qt host platform'
+    required: false
+    default: 'linux'
+  qt-target:
+    description: 'Qt target platform'
+    required: false
+    default: 'desktop'
+  qt-arch:
+    description: 'Qt architecture'
+    required: false
+    default: ''
+  qt-modules:
+    description: 'Qt modules to install'
+    required: false
+    default: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
+  enable-ccache:
+    description: 'Enable CCache (Linux/macOS)'
+    required: false
+    default: 'true'
+  enable-sccache:
+    description: 'Enable sccache (Windows)'
+    required: false
+    default: 'true'
+  install-linux-deps:
+    description: 'Install Linux system dependencies'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Install Linux Dependencies'
+      if: inputs.install-linux-deps == 'true' && runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get -y -qq update
+        sudo apt-get -y --no-install-recommends install \
+          cmake \
+          build-essential \
+          libgl1-mesa-dev \
+          libxcb-xinerama0 \
+          libxcb-cursor0 \
+          libxkbcommon-x11-0 \
+          libxcb-icccm4 \
+          libxcb-image0 \
+          libxcb-shape0 \
+          libxcb-render-util0 \
+          libxcb-xfixes0 \
+          libxcb-xkbcommon1 \
+          libxcb-keysyms1 \
+          libxcb-randr0 \
+          libxcb-render0 \
+          libxcb-shm0 \
+          libxcb-util1 \
+          libwayland-dev \
+          libegl1-mesa-dev \
+          libgles2-mesa-dev \
+          libfontconfig1-dev \
+          libfreetype6-dev \
+          libharfbuzz-dev \
+          libdbus-1-dev \
+          libglib2.0-0
+
+    - name: 'Setup CMake'
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: ${{ inputs.cmake-version }}
+
+    - name: 'Install Qt'
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ inputs.qt-version }}
+        host: ${{ inputs.qt-host }}
+        target: ${{ inputs.qt-target }}
+        arch: ${{ inputs.qt-arch }}
+        modules: ${{ inputs.qt-modules }}
+        cache: true
+
+    - name: 'Setup CCache'
+      if: inputs.enable-ccache == 'true' && (runner.os == 'Linux' || runner.os == 'macOS')
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
+
+    - name: 'Setup sccache'
+      if: inputs.enable-sccache == 'true' && runner.os == 'Windows'
+      uses: mozilla-actions/sccache-action@v0.0.5

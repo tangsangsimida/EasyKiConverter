@@ -1,4 +1,4 @@
-# EasyKiConverter 编码规范
+﻿# EasyKiConverter 编码规范
 
 本文档旨在为 EasyKiConverter 项目的开发者提供一套统一的编码规范和最佳实践，以确保代码的一致性、可读性和可维护性。
 

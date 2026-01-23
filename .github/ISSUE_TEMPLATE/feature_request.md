@@ -1,4 +1,4 @@
----
+﻿---
 name: 功能建议
 about: 为这个项目提出一个想法
 title: '[FEATURE] '

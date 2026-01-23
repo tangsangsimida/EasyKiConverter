@@ -1,4 +1,4 @@
-# Performance Optimization Report
+﻿# Performance Optimization Report
 
 ## Overview
 

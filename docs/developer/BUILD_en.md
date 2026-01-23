@@ -1,4 +1,4 @@
-# Build Guide
+﻿# Build Guide
 
 This document provides detailed instructions for building the EasyKiConverter project locally.
 
