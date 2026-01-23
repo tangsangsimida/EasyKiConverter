@@ -19,7 +19,8 @@ jobs:
         with:
           fail-on-severity: moderate
           allow-licenses: |
-            GPL-3.0
+            GPL-3.0-only
+            GPL-3.0-or-later
             MIT
             BSD-2-Clause
             BSD-3-Clause
