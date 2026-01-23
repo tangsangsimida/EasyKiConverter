@@ -30,119 +30,21 @@ jobs:
           cache: true
           # install-qt-action 会自动安装对应的 MinGW 工具链
 
-      - name: Verify Qt and MinGW setup
-        shell: pwsh
-        run: |
-          Write-Host "=== Qt Directory ==="
-          Write-Host $env:Qt6_DIR
-          Write-Host ""
-          Write-Host "=== Qt Bin Directory ==="
-          Get-ChildItem "$env:Qt6_DIR\bin" | Select-Object -First 10 Name
-          Write-Host ""
-          Write-Host "=== Looking for MinGW ==="
-          # install-qt-action 可能将 MinGW 安装在不同位置
-          $possiblePaths = @(
-            "$env:Qt6_DIR\..\Tools",
-            "$env:Qt6_DIR\..\..\Tools",
-            "$env:Qt6_DIR\Tools"
-          )
-          
-          foreach ($path in $possiblePaths) {
-            if (Test-Path $path) {
-              Write-Host "Found path: $path"
-              $mingwDirs = Get-ChildItem $path -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "mingw*" }
-              if ($mingwDirs) {
-                Write-Host "MinGW directories found:"
-                $mingwDirs | ForEach-Object { Write-Host "  - $($_.Name)" }
-              }
-            }
-          }
-          Write-Host ""
-          Write-Host "=== PATH (Qt and MinGW) ==="
-          $env:PATH -split ';' | Select-String -Pattern 'Qt|mingw'
-
       - name: Configure CMake
         shell: pwsh
         run: |
           cd $env:GITHUB_WORKSPACE
-          # 查找 MinGW 编译器的实际路径
-          # install-qt-action 可能将 MinGW 安装在不同位置
-          $possiblePaths = @(
-            "$env:Qt6_DIR\..\Tools",
-            "$env:Qt6_DIR\..\..\Tools",
-            "$env:Qt6_DIR\Tools"
-          )
-          
-          $mingwPath = $null
-          foreach ($path in $possiblePaths) {
-            if (Test-Path $path) {
-              $mingwDir = Get-ChildItem $path -Directory -ErrorAction SilentlyContinue | 
-                Where-Object { $_.Name -like "mingw*" } | 
-                Select-Object -First 1
-              if ($mingwDir) {
-                $mingwPath = $mingwDir.FullName
-                break
-              }
-            }
-          }
-          
-          if (-not $mingwPath) {
-            Write-Error "No MinGW directory found. Tried: $($possiblePaths -join ', ')"
-            exit 1
-          }
-          
-          $gccPath = "$mingwPath\bin\gcc.exe"
-          $gxxPath = "$mingwPath\bin\g++.exe"
-          
-          Write-Host "=== MinGW Path ==="
-          Write-Host $mingwPath
-          Write-Host ""
-          Write-Host "=== GCC Path ==="
-          Write-Host $gccPath
-          Write-Host ""
-          Write-Host "=== G++ Path ==="
-          Write-Host $gxxPath
-          Write-Host ""
-          
-          # 验证编译器存在
-          if (-not (Test-Path $gccPath)) {
-            Write-Error "GCC not found at $gccPath"
-            exit 1
-          }
-          
+          # 使用 install-qt-action 提供的 MinGW 环境
           cmake -B build -G "MinGW Makefiles" `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
-            -DCMAKE_C_COMPILER="$gccPath" `
-            -DCMAKE_CXX_COMPILER="$gxxPath" `
-            -DCMAKE_MAKE_PROGRAM="$mingwPath\bin\mingw32-make.exe"
+            -DBUILD_TESTS=OFF
 
       - name: Build
         shell: pwsh
         run: |
           cd $env:GITHUB_WORKSPACE
-          # 查找 MinGW 路径（与 Configure 步骤相同）
-          $possiblePaths = @(
-            "$env:Qt6_DIR\..\Tools",
-            "$env:Qt6_DIR\..\..\Tools",
-            "$env:Qt6_DIR\Tools"
-          )
-          
-          $mingwPath = $null
-          foreach ($path in $possiblePaths) {
-            if (Test-Path $path) {
-              $mingwDir = Get-ChildItem $path -Directory -ErrorAction SilentlyContinue | 
-                Where-Object { $_.Name -like "mingw*" } | 
-                Select-Object -First 1
-              if ($mingwDir) {
-                $mingwPath = $mingwDir.FullName
-                break
-              }
-            }
-          }
-          
-          $env:PATH = "$mingwPath\bin;$env:PATH"
           mingw32-make -C build -j
 
       - name: Package with CPack
@@ -174,7 +76,7 @@ jobs:
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             build/*.exe

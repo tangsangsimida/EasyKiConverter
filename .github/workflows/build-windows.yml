@@ -29,40 +29,36 @@ jobs:
           target: 'desktop'
           arch: 'win64_mingw'
           cache: true
-          # 使用 runner 预装的 MinGW
+          # install-qt-action 会自动安装对应的 MinGW 工具链
 
       - name: Configure CMake
         shell: pwsh
         run: |
           cd $env:GITHUB_WORKSPACE
-          # 使用 GitHub Runner 预装的 MinGW (C:\mingw64)
-          # 这样可以避免 MinGW 路径查找问题
+          # 使用 install-qt-action 提供的 MinGW 环境
+          # install-qt-action 会自动设置 Qt6_DIR 环境变量
           cmake -B build -G "MinGW Makefiles" `
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=ON `
-            -DCMAKE_C_COMPILER="C:/mingw64/bin/gcc.exe" `
-            -DCMAKE_CXX_COMPILER="C:/mingw64/bin/g++.exe" `
-            -DCMAKE_MAKE_PROGRAM="C:/mingw64/bin/mingw32-make.exe"
+            -DBUILD_TESTS=ON
 
       - name: Build
         shell: pwsh
         run: |
           cd $env:GITHUB_WORKSPACE
-          # 将 MinGW 添加到 PATH
-          $env:PATH = "C:\mingw64\bin;$env:PATH"
           mingw32-make -C build -j
 
       - name: Run tests (if available)
         if: matrix.build_type == 'Release'
         shell: pwsh
         run: |
-          cd $env:GITHUB_WORKSPACE\tests
-          if (Test-Path "build\test_component_service.exe") {
-            Write-Host "Running tests..."
-            .\build\test_component_service.exe
+          cd $env:GITHUB_WORKSPACE\build
+          if (Test-Path "CTestTestfile.cmake") {
+            Write-Host "Running all tests with CTest..."
+            ctest --output-on-failure --verbose
           } else {
-            Write-Host "No tests found, skipping..."
+            Write-Host "No CTest configuration found, skipping tests..."
           }
 
       - name: Upload artifacts

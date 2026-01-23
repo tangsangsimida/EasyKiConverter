@@ -298,6 +298,17 @@ message(STATUS "Qt version: ${Qt6_VERSION}")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ==============================================================================
+# Tests (可选)
+# ==============================================================================
+option(BUILD_TESTS "Build tests" ON)
+
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+    message(STATUS "Tests enabled")
+endif()
+
+# ==============================================================================
 # CPack Configuration (Packaging)
 # ==============================================================================
 

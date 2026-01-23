@@ -195,3 +195,18 @@ target_sources(test_pipeline_baseline PRIVATE
 )
 
 target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network)
+
+# ========== 启用 CTest 测试框架 ==========
+enable_testing()
+
+# 注册所有测试到 CTest
+add_test(NAME ComponentService COMMAND test_component_service)
+add_test(NAME ExportService COMMAND test_export_service)
+add_test(NAME ExportServicePipeline COMMAND test_export_service_pipeline)
+add_test(NAME ConfigService COMMAND test_config_service)
+add_test(NAME ComponentDataCollector COMMAND test_component_data_collector)
+add_test(NAME UUIDExtraction COMMAND test_uuid_extraction)
+add_test(NAME LayerMapping COMMAND test_layer_mapping)
+add_test(NAME Integration COMMAND test_integration)
+add_test(NAME Performance COMMAND test_performance)
+add_test(NAME PipelineBaseline COMMAND test_pipeline_baseline)
