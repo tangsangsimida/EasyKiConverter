@@ -54,8 +54,11 @@ AlignConsecutiveDeclarations: false
 AlignOperands: true
 AlignTrailingComments: true
 
+# 注释处理（保持中文注释原样）
+ReflowComments: false
+Cpp11BracedListStyle: true
+
 # 其他
-ReflowComments: true
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 SpacesInAngles: false
