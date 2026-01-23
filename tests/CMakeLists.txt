@@ -101,6 +101,9 @@ target_sources(test_export_service_pipeline PRIVATE
     ${CMAKE_SOURCE_DIR}/../src/models/Model3DData.cpp
     ${CMAKE_SOURCE_DIR}/../src/core/utils/GeometryUtils.cpp
     ${CMAKE_SOURCE_DIR}/../src/core/utils/LayerMapper.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/NetworkUtils.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/utils/SvgPathParser.cpp
+    ${CMAKE_SOURCE_DIR}/../src/core/easyeda/EasyedaImporter.cpp
     ${CMAKE_SOURCE_DIR}/../src/workers/FetchWorker.cpp
     ${CMAKE_SOURCE_DIR}/../src/workers/ProcessWorker.cpp
     ${CMAKE_SOURCE_DIR}/../src/workers/WriteWorker.cpp
