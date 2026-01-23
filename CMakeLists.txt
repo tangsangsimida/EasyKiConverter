@@ -164,7 +164,13 @@ if(ZLIB_FOUND)
     endif()
 endif()
 
-# 对于 MinGW，不需要额外链接库（现代 MinGW 已自动处理）
+# 对于 MinGW，查找并链接 libssp（如果存在）
+if(MINGW)
+    find_library(SSP_LIB ssp)
+    if(SSP_LIB)
+        target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE ${SSP_LIB})
+    endif()
+endif()
 
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
