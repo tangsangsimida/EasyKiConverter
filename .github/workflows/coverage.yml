@@ -46,7 +46,7 @@ jobs:
           sudo apt-get -y --no-install-recommends install lcov
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
