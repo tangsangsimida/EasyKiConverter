@@ -96,15 +96,10 @@ void TestComponentDataCollector::testSignals() {
     QSignalSpy spyStateChanged(m_collector, &ComponentDataCollector::stateChanged);
     QSignalSpy spyDataCollected(m_collector, &ComponentDataCollector::dataCollected);
     QSignalSpy spyErrorOccurred(m_collector, &ComponentDataCollector::errorOccurred);
-    QSignalSpy spyDataCollected(m_collector, &ComponentDataCollector::dataCollected);
-    QSignalSpy spyError(m_collector, &ComponentDataCollector::errorOccurred);
 
-    QVERIFY(spyStarted.isValid());
-    QVERIFY(spyCompleted.isValid());
-    QVERIFY(spyFailed.isValid());
     QVERIFY(spyStateChanged.isValid());
     QVERIFY(spyDataCollected.isValid());
-    QVERIFY(spyError.isValid());
+    QVERIFY(spyErrorOccurred.isValid());
 
     qDebug() << "✓ 所有信号定义正确";
 }
