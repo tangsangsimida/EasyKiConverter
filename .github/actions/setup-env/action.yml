@@ -25,7 +25,7 @@ inputs:
   qt-modules:
     description: 'Qt modules to install'
     required: false
-    default: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
+    default: 'qtbase qtdeclarative qtquickcontrols2 qtnetworkauth'
   enable-ccache:
     description: 'Enable CCache (Linux/macOS)'
     required: false
@@ -59,7 +59,6 @@ runs:
           libxcb-shape0 \
           libxcb-render-util0 \
           libxcb-xfixes0 \
-          libxcb-xkbcommon1 \
           libxcb-keysyms1 \
           libxcb-randr0 \
           libxcb-render0 \
