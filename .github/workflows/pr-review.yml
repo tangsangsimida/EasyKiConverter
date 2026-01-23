@@ -167,7 +167,33 @@ jobs:
           echo "PR Number: ${{ steps.get_pr.outputs.pr_number || steps.get_pr_comment.outputs.pr_number }}"
           echo "Author Association: ${{ github.event.pull_request.author_association }}"
           echo "Repository Private: ${{ github.event.repository.private }}"
+          echo "PR Data: ${{ steps.get_pr.outputs.pr_data || steps.get_pr_comment.outputs.pr_data }}"
+          echo "Changed Files: ${{ steps.get_pr.outputs.changed_files || steps.get_pr_comment.outputs.changed_files }}"
+          echo "Additional Instructions: ${{ steps.get_pr.outputs.additional_instructions || steps.get_pr_comment.outputs.additional_instructions }}"
           echo "========================"
+
+      - name: 'Validate environment variables'
+        run: |-
+          PR_NUMBER="${{ steps.get_pr.outputs.pr_number || steps.get_pr_comment.outputs.pr_number }}"
+          PR_DATA="${{ steps.get_pr.outputs.pr_data || steps.get_pr_comment.outputs.pr_data }}"
+          CHANGED_FILES="${{ steps.get_pr.outputs.changed_files || steps.get_pr_comment.outputs.changed_files }}"
+          
+          if [[ -z "$PR_NUMBER" ]]; then
+            echo "ERROR: PR_NUMBER is not set!"
+            exit 1
+          fi
+          
+          if [[ -z "$PR_DATA" ]]; then
+            echo "ERROR: PR_DATA is not set!"
+            exit 1
+          fi
+          
+          if [[ -z "$CHANGED_FILES" ]]; then
+            echo "ERROR: CHANGED_FILES is not set!"
+            exit 1
+          fi
+          
+          echo "✅ All required environment variables are set"
 
       - name: 'PR Review'
         uses: iflow-ai/iflow-cli-action@v2.0.0
@@ -195,7 +221,7 @@ jobs:
                     "command": "npx",
                     "args": [
                       "-y",
-                      "@modelcontextprotocol/server-github"
+                      "@modelcontextprotocol/server-github@2025.4.8"
                     ],
                     "includeTools": [
                       "create_pending_pull_request_review",
@@ -215,8 +241,8 @@ jobs:
             You are an expert code reviewer. You have access to tools to gather
             PR information and perform the review on GitHub. Use the available tools to
             gather information; do not ask for information to be provided.
-
-            ## CRITICAL REQUIREMENTS
+          
+                      ## CRITICAL REQUIREMENTS
             1. You MUST use the GitHub MCP tools to submit your review comments.
             2. DO NOT just output text as your response - this will NOT be seen on GitHub.
             3. You MUST call these tools in order:
@@ -236,7 +262,6 @@ jobs:
                - Example format:
                  ```
                  🟢 This is an English comment describing the issue.
-
                  🟢 这是描述该问题的中文评论。
                  ```
                - This applies to ALL comments, including inline comments and the summary comment.
@@ -263,6 +288,19 @@ jobs:
                specific areas or focus points in your review. Common instruction
                examples: "focus on security", "check performance", "review error
                handling", "check for breaking changes"
+
+            ### Step 2: Debug Environment Variables
+            BEFORE starting your review, run these commands to verify you have the required data:
+            ```
+            echo "=== Environment Variables ==="
+            echo "REPOSITORY: $REPOSITORY"
+            echo "PR_NUMBER: $PR_NUMBER"
+            echo "PR_DATA: $PR_DATA"
+            echo "CHANGED_FILES: $CHANGED_FILES"
+            echo "ADDITIONAL_INSTRUCTIONS: $ADDITIONAL_INSTRUCTIONS"
+            echo "============================"
+            ```
+            If any of these variables are empty or not set, report this as an error immediately!
 
             ## Guideline
             ### Core Guideline(Always applicable)
