@@ -4,12 +4,12 @@
 
 #include <QSignalSpy>
 
-#include "src/models/ComponentExportStatus.h"
-#include "src/services/ExportService_Pipeline.h"
-#include "src/utils/BoundedThreadSafeQueue.h"
-#include "src/workers/FetchWorker.h"
-#include "src/workers/ProcessWorker.h"
-#include "src/workers/WriteWorker.h"
+#include "models/ComponentExportStatus.h"
+#include "services/ExportService_Pipeline.h"
+#include "utils/BoundedThreadSafeQueue.h"
+#include "workers/FetchWorker.h"
+#include "workers/ProcessWorker.h"
+#include "workers/WriteWorker.h"
 
 using namespace EasyKiConverter;
 

@@ -37,14 +37,21 @@ if(ZLIB_FOUND)
                 PATHS
                     "${CMAKE_PREFIX_PATH}/include"
                     "${CMAKE_PREFIX_PATH}/include/QtCore"
+                    "${CMAKE_PREFIX_PATH}/include/QtCore5Compat"
                     "${CMAKE_PREFIX_PATH}/../Tools/mingw*/include"
-                NO_DEFAULT_PATH
+                    "${CMAKE_PREFIX_PATH}/../Tools/Qt*/include"
             )
             if(ZLIB_INCLUDE_DIR)
                 message(STATUS "EasyKiConverterUtils: Found zlib.h at: ${ZLIB_INCLUDE_DIR}")
                 target_include_directories(EasyKiConverterUtils PRIVATE ${ZLIB_INCLUDE_DIR})
             else()
                 message(WARNING "EasyKiConverterUtils: Could not find zlib.h in Qt installation")
+                # 尝试使用 Qt6::Core 的 include 目录
+                get_target_property(QT_CORE_INCLUDES Qt6::Core INTERFACE_INCLUDE_DIRECTORIES)
+                if(QT_CORE_INCLUDES)
+                    message(STATUS "EasyKiConverterUtils: Using Qt6::Core include directories: ${QT_CORE_INCLUDES}")
+                    target_include_directories(EasyKiConverterUtils PRIVATE ${QT_CORE_INCLUDES})
+                endif()
             endif()
         endif()
     else()
