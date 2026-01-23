@@ -220,7 +220,7 @@ jobs:
 
           # 验证这是 MSYS2 的 MinGW（检查版本信息）
           $gccVersion = & "$gccPath" --version
-          Write-Host "GCC version at $mingwPath:"
+          Write-Host "GCC version at ${mingwPath}:"
           Write-Host ($gccVersion | Select-Object -First 2)
 
           # 确保使用 MSYS2 的 MinGW，而不是系统自带的旧版本
