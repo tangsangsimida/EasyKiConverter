@@ -40,7 +40,7 @@ namespace EasyKiConverter
         json["rotation"] = m_rotation.toJson();
         json["raw_obj"] = m_rawObj;
 
-        // STEP 数据�?Base64 编码存储
+        // STEP 数据�?Base64 编码存储
         if (!m_step.isEmpty())
         {
             json["step"] = QString::fromLatin1(m_step.toBase64());
@@ -74,7 +74,7 @@ namespace EasyKiConverter
 
         m_rawObj = json["raw_obj"].toString();
 
-        // 解析 Base64 编码�?STEP 数据
+        // 解析 Base64 编码�?STEP 数据
         if (json.contains("step") && json["step"].isString())
         {
             QString stepBase64 = json["step"].toString();
@@ -86,7 +86,7 @@ namespace EasyKiConverter
 
     bool Model3DData::isValid() const
     {
-        // 至少要有名称�?UUID
+        // 至少要有名称�?UUID
         if (m_name.isEmpty() && m_uuid.isEmpty())
         {
             return false;
