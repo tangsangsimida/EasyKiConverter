@@ -159,7 +159,7 @@ jobs:
           qt-version: ${{ env.QT_VERSION }}
           qt-host: 'windows'
           qt-target: 'desktop'
-          qt-arch: 'win64_msvc2019_64'
+          qt-arch: 'win64_msvc2022_64'
           enable-ccache: 'false'
           enable-sccache: 'true'
 
