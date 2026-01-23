@@ -205,13 +205,13 @@ jobs:
               # 检查是否是 MSYS2 的 MinGW（通过检查 msys-2.0.dll 的存在）
               $hasMsysDll = Test-Path "$path/../msys-2.0.dll"
               $hasMsysDll2 = Test-Path "$path/../../msys-2.0.dll"
-              Write-Host "Checking $path:"
-              Write-Host "  msys-2.0.dll (parent): $hasMsysDll"
-              Write-Host "  msys-2.0.dll (grandparent): $hasMsysDll2"
+              Write-Host "Checking path: ${path}"
+              Write-Host "  msys-2.0.dll (parent): ${hasMsysDll}"
+              Write-Host "  msys-2.0.dll (grandparent): ${hasMsysDll2}"
               
               if ($hasMsysDll -or $hasMsysDll2) {
                 $mingwPath = $path
-                Write-Host "Found MSYS2 MinGW at: $mingwPath"
+                Write-Host "Found MSYS2 MinGW at: ${mingwPath}"
                 break
               }
             }
