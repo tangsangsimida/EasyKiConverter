@@ -187,7 +187,9 @@ jobs:
           foreach ($path in $mingwPaths) {
             if (Test-Path "$path/gcc.exe") {
               # 检查是否是 MSYS2 的 MinGW（通过检查 msys-2.0.dll 的存在）
-              if (Test-Path "$path/../msys-2.0.dll" -or Test-Path "$path/../../msys-2.0.dll") {
+              $hasMsysDll = Test-Path "$path/../msys-2.0.dll"
+              $hasMsysDll2 = Test-Path "$path/../../msys-2.0.dll"
+              if ($hasMsysDll -or $hasMsysDll2) {
                 $mingwPath = $path
                 Write-Host "Found MSYS2 MinGW at: $mingwPath"
                 break
