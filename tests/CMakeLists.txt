@@ -53,10 +53,8 @@ target_sources(test_component_service PRIVATE
 # 添加包含目录
 target_include_directories(test_component_service PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
-target_include_directories(test_component_service PRIVATE ${CMAKE_SOURCE_DIR}/../src)
-
-# 链接 zlib
-target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network)
+# 链接库（统一使用 PRIVATE 关键字风格）
+target_link_libraries(test_component_service PRIVATE Qt6::Core Qt6::Test Qt6::Network)
 if(ZLIB_FOUND)
     target_link_libraries(test_component_service PRIVATE ZLIB::ZLIB)
 else()
@@ -88,8 +86,8 @@ target_sources(test_export_service PRIVATE
 
 target_include_directories(test_export_service PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
-# 链接 Qt Network 和 zlib
-target_link_libraries(test_export_service Qt6::Core Qt6::Test Qt6::Network)
+# 链接 Qt Network 和 zlib（统一使用 PRIVATE 关键字风格）
+target_link_libraries(test_export_service PRIVATE Qt6::Core Qt6::Test Qt6::Network)
 if(ZLIB_FOUND)
     if(ZLIB_USE_QT)
         target_link_libraries(test_export_service PRIVATE z)
@@ -178,7 +176,8 @@ target_sources(test_component_data_collector PRIVATE
 
 target_include_directories(test_component_data_collector PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
-target_link_libraries(test_component_data_collector Qt6::Core Qt6::Test Qt6::Network)
+# 链接库（统一使用 PRIVATE 关键字风格）
+target_link_libraries(test_component_data_collector PRIVATE Qt6::Core Qt6::Test Qt6::Network)
 # 链接 zlib（NetworkUtils 需要）
 if(ZLIB_FOUND)
     if(ZLIB_USE_QT)
