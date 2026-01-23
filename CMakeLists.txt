@@ -7,8 +7,14 @@
 # 会导致 "Unable to find a valid Visual Studio instance" 错误
 if(MINGW)
     message(STATUS "MinGW environment detected. Disabling vcpkg toolchain.")
-    # 清除 vcpkg toolchain 文件
+    # 强制清除 vcpkg toolchain 文件（包括环境变量和缓存）
+    unset(CMAKE_TOOLCHAIN_FILE CACHE)
+    unset(CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_TOOLCHAIN_FILE "" CACHE FILEPATH "Toolchain file" FORCE)
+    # 清除 VCPKG_ROOT 环境变量
+    unset(ENV{VCPKG_ROOT})
+    unset(VCPKG_ROOT CACHE)
+    message(STATUS "CMAKE_TOOLCHAIN_FILE cleared: ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
 project(EasyKiconverter_Cpp_Version VERSION 0.1 LANGUAGES CXX)
