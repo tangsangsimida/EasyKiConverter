@@ -1,4 +1,4 @@
-# ADR-003: Pipeline Performance Optimization
+﻿# ADR-003: Pipeline Performance Optimization
 
 ## Status
 Accepted

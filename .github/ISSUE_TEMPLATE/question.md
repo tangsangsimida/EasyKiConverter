@@ -1,4 +1,4 @@
----
+﻿---
 name: 问题咨询
 about: 提问关于项目使用的问题
 title: '[QUESTION] '

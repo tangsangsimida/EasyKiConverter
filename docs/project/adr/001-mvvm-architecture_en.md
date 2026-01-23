@@ -1,4 +1,4 @@
-# ADR 001: Choose MVVM Architecture
+﻿# ADR 001: Choose MVVM Architecture
 
 ## Status
 

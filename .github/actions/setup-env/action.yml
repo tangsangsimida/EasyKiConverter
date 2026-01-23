@@ -1,0 +1,64 @@
+﻿name: 'Setup Build Environment'
+description: 'Setup CMake, Qt, and build cache for EasyKiConverter project'
+
+inputs:
+  cmake-version:
+    description: 'CMake version to install'
+    required: false
+    default: '3.16'
+  qt-version:
+    description: 'Qt version to install'
+    required: false
+    default: '6.10.1'
+  qt-host:
+    description: 'Qt host platform'
+    required: false
+    default: 'linux'
+  qt-target:
+    description: 'Qt target platform'
+    required: false
+    default: 'desktop'
+  qt-arch:
+    description: 'Qt architecture'
+    required: false
+    default: ''
+  qt-modules:
+    description: 'Qt modules to install'
+    required: false
+    default: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
+  enable-ccache:
+    description: 'Enable CCache (Linux/macOS)'
+    required: false
+    default: 'true'
+  enable-sccache:
+    description: 'Enable sccache (Windows)'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Setup CMake'
+      uses: jwlawson/actions-setup-cmake@v2.2
+      with:
+        cmake-version: ${{ inputs.cmake-version }}
+
+    - name: 'Install Qt'
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ inputs.qt-version }}
+        host: ${{ inputs.qt-host }}
+        target: ${{ inputs.qt-target }}
+        arch: ${{ inputs.qt-arch }}
+        modules: ${{ inputs.qt-modules }}
+        cache: true
+
+    - name: 'Setup CCache'
+      if: inputs.enable-ccache == 'true' && (runner.os == 'Linux' || runner.os == 'macOS')
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ${{ runner.os }}-build
+
+    - name: 'Setup sccache'
+      if: inputs.enable-sccache == 'true' && runner.os == 'Windows'
+      uses: mozilla-actions/sccache-action@v0.0.5

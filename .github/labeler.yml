@@ -1,4 +1,4 @@
-# GitHub Actions Labeler 配置文件
+﻿# GitHub Actions Labeler 配置文件
 # 根据修改的文件路径自动为 Pull Request 分配标签
 
 # 文档相关

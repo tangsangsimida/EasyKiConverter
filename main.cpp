@@ -1,21 +1,21 @@
+﻿#include <QDebug>
+#include <QFile>
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQmlEngine>
-#include <QIcon>
-#include <QFile>
-#include <QDebug>
 #include <QQuickStyle>
 #include <QUrl>
-#include "src/ui/viewmodels/ComponentListViewModel.h"
-#include "src/ui/viewmodels/ExportSettingsViewModel.h"
-#include "src/ui/viewmodels/ExportProgressViewModel.h"
-#include "src/ui/viewmodels/ThemeSettingsViewModel.h"
+
 #include "src/services/ConfigService.h"
 #include "src/services/ExportService_Pipeline.h"
+#include "src/ui/viewmodels/ComponentListViewModel.h"
+#include "src/ui/viewmodels/ExportProgressViewModel.h"
+#include "src/ui/viewmodels/ExportSettingsViewModel.h"
+#include "src/ui/viewmodels/ThemeSettingsViewModel.h"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
 
     // 设置应用程序信息
@@ -28,13 +28,9 @@ int main(int argc, char *argv[])
     QQuickStyle::setStyle("Basic");
 
     // 尝试设置应用程序图标
-    QStringList iconPaths = {
-        ":/resources/app_icon.png",
-        "resources/app_icon.png",
-        "../resources/app_icon.png"
-    };
+    QStringList iconPaths = {":/resources/app_icon.png", "resources/app_icon.png", "../resources/app_icon.png"};
 
-    for (const QString &iconPath : iconPaths) {
+    for (const QString& iconPath : iconPaths) {
         if (QFile::exists(iconPath)) {
             app.setWindowIcon(QIcon(iconPath));
             qDebug() << "Application icon set:" << iconPath;
@@ -46,22 +42,27 @@ int main(int argc, char *argv[])
     EasyKiConverter::ConfigService::instance()->loadConfig();
 
     // 创建 Service 实例（使用流水线架构）
-    EasyKiConverter::ComponentService *componentService = new EasyKiConverter::ComponentService(&app);
-    EasyKiConverter::ExportServicePipeline *exportService = new EasyKiConverter::ExportServicePipeline(&app);
+    EasyKiConverter::ComponentService* componentService = new EasyKiConverter::ComponentService(&app);
+    EasyKiConverter::ExportServicePipeline* exportService = new EasyKiConverter::ExportServicePipeline(&app);
 
     // 创建 ViewModel 实例
-    EasyKiConverter::ComponentListViewModel *componentListViewModel = new EasyKiConverter::ComponentListViewModel(componentService, &app);
-    EasyKiConverter::ExportSettingsViewModel *exportSettingsViewModel = new EasyKiConverter::ExportSettingsViewModel(&app);
-    EasyKiConverter::ExportProgressViewModel *exportProgressViewModel = new EasyKiConverter::ExportProgressViewModel(exportService, componentService, &app);
-    EasyKiConverter::ThemeSettingsViewModel *themeSettingsViewModel = new EasyKiConverter::ThemeSettingsViewModel(&app);
+    EasyKiConverter::ComponentListViewModel* componentListViewModel =
+        new EasyKiConverter::ComponentListViewModel(componentService, &app);
+    EasyKiConverter::ExportSettingsViewModel* exportSettingsViewModel =
+        new EasyKiConverter::ExportSettingsViewModel(&app);
+    EasyKiConverter::ExportProgressViewModel* exportProgressViewModel =
+        new EasyKiConverter::ExportProgressViewModel(exportService, componentService, &app);
+    EasyKiConverter::ThemeSettingsViewModel* themeSettingsViewModel = new EasyKiConverter::ThemeSettingsViewModel(&app);
 
     // 创建 QML 引擎
     QQmlApplicationEngine engine;
 
     // 注册 AppStyle 单例类型
     qmlRegisterSingletonType(QUrl("qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/styles/AppStyle.qml"),
-                          "EasyKiconverter_Cpp_Version.src.ui.qml.styles",
-                          1, 0, "AppStyle");
+                             "EasyKiconverter_Cpp_Version.src.ui.qml.styles",
+                             1,
+                             0,
+                             "AppStyle");
 
     // 将 ViewModel 注册到 QML 上下文
     engine.rootContext()->setContextProperty("componentListViewModel", componentListViewModel);

@@ -1,69 +1,68 @@
-#ifndef COMPONENTEXPORTTASK_H
+﻿#ifndef COMPONENTEXPORTTASK_H
 #define COMPONENTEXPORTTASK_H
 
 #include <QObject>
 #include <QRunnable>
-#include "src/models/ComponentData.h"
-#include "ExportService.h"
 
-namespace EasyKiConverter
-{
+#include "ExportService.h"
+#include "models/ComponentData.h"
+
+namespace EasyKiConverter {
+
+/**
+ * @brief 元件导出任务�?
+ *
+ * 用于�?QThreadPool 中并行执行元件导出任�?
+ */
+class ComponentExportTask : public QObject, public QRunnable {
+    Q_OBJECT
+
+public:
+    /**
+     * @brief 构造函�?
+     *
+     * @param componentData 元件数据
+     * @param options 导出选项
+     * @param symbolExporter 符号导出�?
+     * @param footprintExporter 封装导出�?
+     * @param modelExporter 3D模型导出�?
+     * @param parent 父对�?
+     */
+    explicit ComponentExportTask(const ComponentData& componentData,
+                                 const ExportOptions& options,
+                                 class ExporterSymbol* symbolExporter,
+                                 class ExporterFootprint* footprintExporter,
+                                 class Exporter3DModel* modelExporter,
+                                 QObject* parent = nullptr);
 
     /**
-     * @brief 元件导出任务类
-     *
-     * 用于在 QThreadPool 中并行执行元件导出任务
+     * @brief 析构函数
      */
-    class ComponentExportTask : public QObject, public QRunnable
-    {
-        Q_OBJECT
+    ~ComponentExportTask() override;
 
-    public:
-        /**
-         * @brief 构造函数
-         *
-         * @param componentData 元件数据
-         * @param options 导出选项
-         * @param symbolExporter 符号导出器
-         * @param footprintExporter 封装导出器
-         * @param modelExporter 3D模型导出器
-         * @param parent 父对象
-         */
-        explicit ComponentExportTask(const ComponentData &componentData,
-                                     const ExportOptions &options,
-                                     class ExporterSymbol *symbolExporter,
-                                     class ExporterFootprint *footprintExporter,
-                                     class Exporter3DModel *modelExporter,
-                                     QObject *parent = nullptr);
+    /**
+     * @brief 执行导出任务
+     */
+    void run() override;
 
-        /**
-         * @brief 析构函数
-         */
-        ~ComponentExportTask() override;
+signals:
+    /**
+     * @brief 导出完成信号
+     *
+     * @param componentId 元件ID
+     * @param success 是否成功
+     * @param message 消息
+     */
+    void exportFinished(const QString& componentId, bool success, const QString& message);
 
-        /**
-         * @brief 执行导出任务
-         */
-        void run() override;
+private:
+    ComponentData m_componentData;
+    ExportOptions m_options;
+    class ExporterSymbol* m_symbolExporter;
+    class ExporterFootprint* m_footprintExporter;
+    class Exporter3DModel* m_modelExporter;
+};
 
-    signals:
-        /**
-         * @brief 导出完成信号
-         *
-         * @param componentId 元件ID
-         * @param success 是否成功
-         * @param message 消息
-         */
-        void exportFinished(const QString &componentId, bool success, const QString &message);
+}  // namespace EasyKiConverter
 
-    private:
-        ComponentData m_componentData;
-        ExportOptions m_options;
-        class ExporterSymbol *m_symbolExporter;
-        class ExporterFootprint *m_footprintExporter;
-        class Exporter3DModel *m_modelExporter;
-    };
-
-} // namespace EasyKiConverter
-
-#endif // COMPONENTEXPORTTASK_H
+#endif  // COMPONENTEXPORTTASK_H

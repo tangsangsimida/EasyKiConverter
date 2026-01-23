@@ -1,4 +1,4 @@
-# EasyKiConverter Coding Style
+﻿# EasyKiConverter Coding Style
 
 This document provides a unified set of coding standards and best practices for developers of the EasyKiConverter project, aiming to ensure code consistency, readability, and maintainability.
 

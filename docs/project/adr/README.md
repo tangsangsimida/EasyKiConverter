@@ -1,4 +1,4 @@
-# 架构决策记录 (Architecture Decision Records)
+﻿# 架构决策记录 (Architecture Decision Records)
 
 本目录包含 EasyKiConverter 项目的架构决策记录（ADR）。
 

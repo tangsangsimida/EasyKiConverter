@@ -1,4 +1,4 @@
-name: Build
+﻿name: Build
 
 on:
   push:
@@ -49,6 +49,7 @@ jobs:
           sudo apt-get -y -qq update
           sudo apt-get -y --no-install-recommends install \
             cmake \
+            ccache \
             build-essential \
             libgl1-mesa-dev \
             libxcb-xinerama0 \
@@ -76,25 +77,23 @@ jobs:
             libdbus-1-dev \
             libglib2.0-0
 
-      - name: 'Setup CMake'
-        uses: jwlawson/actions-setup-cmake@v2.2
+      - name: 'Setup Build Environment'
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
+          qt-version: ${{ env.QT_VERSION }}
+          qt-host: 'linux'
+          qt-target: 'desktop'
+          enable-ccache: 'true'
+          enable-sccache: 'false'
 
-      - name: 'Install Qt'
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: 'linux'
-          target: 'desktop'
-          modules: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
-          cache: true
-
-      - name: 'Configure CMake'
+      - name: 'Configure CMake with CCache'
         run: |
           cmake -B build \
             -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
 
       - name: 'Build'
@@ -106,9 +105,16 @@ jobs:
           cd tests
           cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
           cmake --build build
-          ./build/test_component_service
-          ./build/test_export_service
-          ./build/test_config_service
+          ctest --output-on-failure --test-dir build --output-junit test-results.xml
+
+      - name: 'Publish Test Report'
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: tests/build/test-results.xml
+          check_name: Test Report (Linux - ${{ matrix.os }})
+          detailed_summary: true
+          include_passed: true
 
   windows-build:
     name: 'Build Windows'
@@ -155,35 +161,35 @@ jobs:
           platform: x64
           version: 13.2.0
 
-      - name: 'Setup CMake'
-        uses: jwlawson/actions-setup-cmake@v2.2
+      - name: 'Setup Build Environment'
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
+          qt-version: ${{ env.QT_VERSION }}
+          qt-host: 'windows'
+          qt-target: 'desktop'
+          qt-arch: 'win64_mingw'
+          enable-ccache: 'false'
+          enable-sccache: 'true'
 
-      - name: 'Install Qt'
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: 'windows'
-          target: 'desktop'
-          arch: 'win64_mingw'
-          modules: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
-          cache: true
-
-      - name: 'Configure CMake (MinGW)'
+      - name: 'Configure CMake (MinGW) with sccache'
         if: matrix.platform == 'mingw_64'
         run: |
           cmake -B build -G "MinGW Makefiles" `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
 
-      - name: 'Configure CMake (MSVC)'
+      - name: 'Configure CMake (MSVC) with sccache'
         if: matrix.platform == 'msvc2019_64'
         run: |
           cmake -B build -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
 
       - name: 'Build'
@@ -191,11 +197,20 @@ jobs:
           cmake --build build --config $env:BUILD_TYPE --parallel
 
       - name: 'Test'
-        run: |
-          cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR"
-          cmake --build build
-          ./build/test_component_service.exe
+          run: |
+            cd tests
+            cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+            cmake --build build
+            ctest --output-on-failure --test-dir build --output-junit test-results.xml
+
+      - name: 'Publish Test Report'
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: tests/build/test-results.xml
+          check_name: Test Report (Windows - ${{ matrix.name }})
+          detailed_summary: true
+          include_passed: true
 
   macos-build:
     name: 'Build macOS'
@@ -217,25 +232,23 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: 'Setup CMake'
-        uses: jwlawson/actions-setup-cmake@v2.2
+      - name: 'Setup Build Environment'
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
+          qt-version: ${{ env.QT_VERSION }}
+          qt-host: 'mac'
+          qt-target: 'desktop'
+          enable-ccache: 'true'
+          enable-sccache: 'false'
 
-      - name: 'Install Qt'
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: 'mac'
-          target: 'desktop'
-          modules: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
-          cache: true
-
-      - name: 'Configure CMake'
+      - name: 'Configure CMake with CCache'
         run: |
           cmake -B build \
             -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
 
       - name: 'Build'
@@ -247,4 +260,13 @@ jobs:
           cd tests
           cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
           cmake --build build
-          ./build/test_component_service
+          ctest --output-on-failure --test-dir build --output-junit test-results.xml
+
+      - name: 'Publish Test Report'
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: tests/build/test-results.xml
+          check_name: Test Report (macOS)
+          detailed_summary: true
+          include_passed: true
