@@ -1,0 +1,65 @@
+name: Building(CMake)
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-windows:
+    name: Windows MinGW ${{ matrix.build_type }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+        qt_ver: ['6.10.1']
+
+    steps:
+      - name: Checkout Source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: ${{ matrix.qt_ver }}
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_mingw'
+          cache: true
+          cache-key-prefix: install-qt-action-${{ matrix.qt_ver }}
+
+      - name: Configure CMake
+        shell: pwsh
+        run: |
+          cmake -B build -G "MinGW Makefiles" `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=ON `
+            -DBUILD_TESTS=ON
+
+      - name: Build
+        shell: pwsh
+        run: |
+          cmake --build build --config ${{ matrix.build_type }} -j
+
+      - name: Test
+        shell: pwsh
+        working-directory: build
+        run: |
+          ctest -C ${{ matrix.build_type }} --output-on-failure --verbose

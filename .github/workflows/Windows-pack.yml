@@ -1,0 +1,129 @@
+name: Packaging(Windows)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  PRODUCT: EasyKiConverter
+
+jobs:
+  windows-pack:
+    name: Windows MinGW ${{ matrix.type }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        qt_ver: ['6.10.1']
+        type: [installer, portable] # 对应 NSIS (installer) 和 ZIP (portable)
+
+    steps:
+      - name: Checkout Source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set env & Print version
+        shell: bash
+        run: |
+          # 尝试获取最近的 tag
+          last_committed_tag=$(git tag -l --sort=-v:refname | head -1)
+          
+          # 如果没有 tag，使用默认值
+          if [ -z "$last_committed_tag" ]; then
+            last_committed_tag="v0.0.0"
+          fi
+          
+          git_revno=$(git rev-list --count HEAD)
+          git_hash=$(git rev-parse --short HEAD)
+          ver_info="${last_committed_tag}+git${git_revno}.${git_hash}"
+          
+          echo "======= VERSION INFO ========"
+          echo "Tag: ${last_committed_tag}"
+          echo "Full: ${ver_info}"
+          echo "============================"
+          
+          # 从 CMakeLists.txt 读取版本号 (假设格式 project(... VERSION X.Y.Z ...))
+          # 这里简单处理，直接使用 tag 版本（去掉 v 前缀）
+          VERSION=${last_committed_tag#v}
+          
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "VER_INFO=${ver_info}" >> $GITHUB_ENV
+          echo "GIT_HASH=${git_hash}" >> $GITHUB_ENV
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: ${{ matrix.qt_ver }}
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_mingw'
+          cache: true
+          cache-key-prefix: install-qt-action-${{ matrix.qt_ver }}
+
+      - name: Configure CMake
+        shell: pwsh
+        run: |
+          # 针对 Portable 版本，不生成 Uninstall 相关信息（可选优化）
+          # 但主要区别在于 CPack 的生成器
+          cmake -B build -G "MinGW Makefiles" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
+            -DBUILD_TESTS=OFF
+
+      - name: Build
+        shell: pwsh
+        run: |
+          cmake --build build --config Release -j
+
+      - name: Package (CPack)
+        shell: pwsh
+        working-directory: build
+        run: |
+          if ("${{ matrix.type }}" -eq "installer") {
+            cpack -G NSIS -V
+          } elseif ("${{ matrix.type }}" -eq "portable") {
+            cpack -G ZIP -V
+          }
+
+      - name: Prepare Artifacts & Checksum
+        shell: bash
+        working-directory: build
+        run: |
+          mkdir -p artifacts
+          
+          if [ "${{ matrix.type }}" == "installer" ]; then
+            mv *.exe artifacts/
+          else
+            mv *.zip artifacts/
+          fi
+          
+          cd artifacts
+          # 生成 SHA256 校验和
+          for file in *; do
+            sha256sum "$file" > "$file.sha256sum"
+          done
+          
+          ls -R
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PRODUCT }}-Windows-${{ matrix.type }}
+          path: build/artifacts/*
+          if-no-files-found: error
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/artifacts/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
