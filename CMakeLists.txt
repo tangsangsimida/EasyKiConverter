@@ -166,7 +166,7 @@ endif()
 
 # 对于 MinGW，添加 libssp 库（Stack Smashing Protection）
 if(MINGW)
-    target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE ssp)
+    target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE ssp gcc_s gcc seh)
 endif()
 
 # 添加 QML 模块

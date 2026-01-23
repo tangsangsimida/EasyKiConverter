@@ -6,7 +6,15 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QNetworkRequest>
-#include <zlib.h>
+
+// 尝试包含 zlib.h，根据平台使用不同的包含路径
+#if defined(_MSC_VER)
+    // MSVC: 尝试从 Qt 的 include 目录中查找
+    #include <QtCore/zlib.h>
+#else
+    // 其他平台直接包含
+    #include <zlib.h>
+#endif
 
 namespace EasyKiConverter {
 
