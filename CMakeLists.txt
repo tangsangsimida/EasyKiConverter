@@ -1,5 +1,16 @@
 ﻿cmake_minimum_required(VERSION 3.16)
 
+# ──────────────────────────────────────────────
+# MinGW 环境特殊处理
+# ──────────────────────────────────────────────
+# MinGW 环境下禁用 vcpkg toolchain，因为 vcpkg 默认使用 x64-windows triplet（需要 MSVC）
+# 会导致 "Unable to find a valid Visual Studio instance" 错误
+if(MINGW)
+    message(STATUS "MinGW environment detected. Disabling vcpkg toolchain.")
+    # 清除 vcpkg toolchain 文件
+    set(CMAKE_TOOLCHAIN_FILE "" CACHE FILEPATH "Toolchain file" FORCE)
+endif()
+
 project(EasyKiconverter_Cpp_Version VERSION 0.1 LANGUAGES CXX)
 
 # 设置 C++ 标准
@@ -46,8 +57,17 @@ find_package(Qt6 REQUIRED COMPONENTS Quick Network Core Gui Widgets QuickControl
 
 # 查找 zlib 库（NetworkUtils.cpp 使用 zlib API）
 # MSVC: 通过 vcpkg 安装 zlib
-# MinGW: 通过 MSYS2 安装 mingw-w64-x86_64-zlib
+# MinGW: 通过 MSYS2 安装 mingw-w64-x86_64-zlib 或 Strawberry Perl
 # Linux/macOS: 系统自带 zlib
+if(MINGW)
+    # MinGW 环境下，添加常见的 zlib 安装路径
+    # Strawberry Perl (GitHub Actions runner 自带)
+    list(APPEND CMAKE_PREFIX_PATH "C:/Strawberry/c")
+    # MSYS2
+    list(APPEND CMAKE_PREFIX_PATH "C:/msys64/mingw64")
+    # Qt 自带的 zlib
+    list(APPEND CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
+endif()
 find_package(ZLIB REQUIRED)
 
 message(STATUS "ZLIB_FOUND: ${ZLIB_FOUND}")
