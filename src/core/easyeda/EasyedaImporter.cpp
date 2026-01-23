@@ -3,7 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStringList>
-#include <qDebug>
+#include <QDebug>
 
 namespace EasyKiConverter {
 

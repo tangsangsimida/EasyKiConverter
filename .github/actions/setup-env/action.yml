@@ -78,6 +78,12 @@ runs:
       with:
         cmake-version: ${{ inputs.cmake-version }}
 
+    - name: 'Setup Python for macOS Qt installation'
+      if: runner.os == 'macOS'
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
     - name: 'Install Qt'
       uses: jurplel/install-qt-action@v4
       with:
