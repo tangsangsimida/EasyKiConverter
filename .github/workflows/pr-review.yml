@@ -171,6 +171,7 @@ jobs:
           echo "Changed Files: ${{ steps.get_pr.outputs.changed_files || steps.get_pr_comment.outputs.changed_files }}"
           echo "Additional Instructions: ${{ steps.get_pr.outputs.additional_instructions || steps.get_pr_comment.outputs.additional_instructions }}"
           echo "========================"
+        shell: bash
 
       - name: 'Validate environment variables'
         run: |-
@@ -194,6 +195,7 @@ jobs:
           fi
           
           echo "✅ All required environment variables are set"
+        shell: bash
 
       - name: 'PR Review'
         uses: iflow-ai/iflow-cli-action@v2.0.0
