@@ -123,34 +123,18 @@ jobs:
 
       - name: 'Setup MinGW'
         if: matrix.platform == 'mingw_64'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          install: |
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-gcc-libs
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-make
-            mingw-w64-x86_64-pkg-config
-            mingw-w64-x86_64-zlib
-          update: true
-
-      - name: 'Downgrade GCC to 13.1.0'
-        if: matrix.platform == 'mingw_64'
         shell: pwsh
         run: |
-          # 检查当前 GCC 版本
-          Write-Host "Current GCC version:"
+          # 使用系统自带的 MinGW-Builds GCC（GitHub Actions runner 自带）
+          Write-Host "=== Using system MinGW-Builds GCC ==="
+          Write-Host "GCC version:"
           gcc --version | Select-Object -First 1
-          
-          # 降级 GCC 到 13.1.0
-          Write-Host "Downgrading GCC to 13.1.0..."
-          $env:MSYSTEM = "MINGW64"
-          C:\msys64\usr\bin\bash.exe -lc "pacman --noconfirm -S mingw-w64-x86_64-gcc-libs mingw-w64-x86_64-gcc"
-          
-          # 验证 GCC 版本
-          Write-Host "GCC version after downgrade:"
-          gcc --version | Select-Object -First 1
+          Write-Host "G++ version:"
+          g++ --version | Select-Object -First 1
+          Write-Host "Make version:"
+          make --version | Select-Object -First 1
+          Write-Host "CMake version:"
+          cmake --version | Select-Object -First 1
 
       - name: 'Setup vcpkg'
         if: matrix.platform == 'msvc2019_64'
@@ -191,18 +175,18 @@ jobs:
           gcc --version | Select-Object -First 2
           g++ --version | Select-Object -First 2
 
-          # 查找 MSYS2 MinGW 工具链
-          Write-Host "=== Searching for MSYS2 MinGW ==="
+          # 查找系统自带的 MinGW-Builds 工具链
+          Write-Host "=== Searching for MinGW-Builds ==="
           
-          # MSYS2 安装在 RUNNER_TEMP
-          $mingwPath = "$env:RUNNER_TEMP/msys64/mingw64/bin"
+          # 使用系统自带的 MinGW-Builds（GitHub Actions runner 自带）
+          $mingwPath = "C:/mingw64/bin"
           
           if (-not (Test-Path "${mingwPath}/gcc.exe")) {
-            Write-Error "MSYS2 MinGW not found at: ${mingwPath}"
+            Write-Error "MinGW-Builds not found at: ${mingwPath}"
             exit 1
           }
           
-          Write-Host "Using MSYS2 MinGW at: ${mingwPath}"
+          Write-Host "Using MinGW-Builds at: ${mingwPath}"
           
           # 验证编译器版本
           $gccPath = "${mingwPath}/gcc.exe"
@@ -211,11 +195,6 @@ jobs:
           $gccVersion = & "$gccPath" --version
           Write-Host "GCC version:"
           Write-Host ($gccVersion | Select-Object -First 2)
-          
-          # 验证是否是 GCC 13.1.0
-          if ($gccVersion -notmatch "13\.1\.0") {
-            Write-Warning "GCC version is not 13.1.0, but we will continue anyway"
-          }
           
           # 验证编译器是否存在
           if (-not (Test-Path $gccPath)) {
@@ -270,9 +249,9 @@ jobs:
         shell: pwsh
         run: |
           # 验证使用的 GCC 版本
-          Write-Host "=== Verifying GCC version before build ==="
-          gcc --version | Select-Object -First 1
-          g++ --version | Select-Object -First 1
+          Write-Host "=== Verifying MinGW-Builds GCC version before build ==="
+          gcc --version | Select-Object -First 2
+          g++ --version | Select-Object -First 2
           
           # 构建项目
           cmake --build build --config $env:BUILD_TYPE --parallel 16
