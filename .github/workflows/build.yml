@@ -168,24 +168,41 @@ jobs:
         if: matrix.platform == 'mingw_64'
         shell: pwsh
         run: |
-          # 显式指定 MinGW 链接器，避免使用 MSVC 的 link.exe
-          $env:CMAKE_LINKER = "ld"
-          $env:CMAKE_AR = "ar"
-          $env:CMAKE_RANLIB = "ranlib"
-          $env:CMAKE_STRIP = "strip"
+          # 验证 MinGW GCC 版本
+          Write-Host "=== MinGW GCC Version Check ==="
+          gcc --version | Select-Object -First 2
+          g++ --version | Select-Object -First 2
 
-          # 确保 MinGW 工具链在 PATH 中优先
-          $env:Path = "C:\msys64\mingw64\bin;" + $env:Path
+          # 显式指定 MinGW 工具链路径
+          $mingwPath = "C:\msys64\mingw64\bin"
+
+          # 确保使用我们安装的 MinGW 13.1.0，而不是系统自带的旧版本
+          $env:Path = "$mingwPath;" + $env:Path
+
+          # 显式指定编译器和链接器
+          $env:CMAKE_C_COMPILER = "$mingwPath\gcc.exe"
+          $env:CMAKE_CXX_COMPILER = "$mingwPath\g++.exe"
+          $env:CMAKE_LINKER = "$mingwPath\ld.exe"
+          $env:CMAKE_AR = "$mingwPath\ar.exe"
+          $env:CMAKE_RANLIB = "$mingwPath\ranlib.exe"
+          $env:CMAKE_STRIP = "$mingwPath\strip.exe"
+
+          Write-Host "=== Using MinGW Toolchain from: $mingwPath ==="
+          Write-Host "C Compiler: $env:CMAKE_C_COMPILER"
+          Write-Host "CXX Compiler: $env:CMAKE_CXX_COMPILER"
+          Write-Host "Linker: $env:CMAKE_LINKER"
 
           cmake -B build -G "MinGW Makefiles" `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_C_COMPILER="$env:CMAKE_C_COMPILER" `
+            -DCMAKE_CXX_COMPILER="$env:CMAKE_CXX_COMPILER" `
+            -DCMAKE_LINKER="$env:CMAKE_LINKER" `
+            -DCMAKE_AR="$env:CMAKE_AR" `
+            -DCMAKE_RANLIB="$env:CMAKE_RANLIB" `
+            -DCMAKE_STRIP="$env:CMAKE_STRIP" `
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
-            -DCMAKE_LINKER="ld" `
-            -DCMAKE_AR="ar" `
-            -DCMAKE_RANLIB="ranlib" `
-            -DCMAKE_STRIP="strip" `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
 
       - name: 'Configure CMake (MSVC) with sccache and vcpkg'
