@@ -1,7 +1,7 @@
 ﻿#include <QCoreApplication>
 #include <QDebug>
 
-#include "src/core/utils/LayerMapper.h"
+#include "core/utils/LayerMapper.h"
 
 using namespace EasyKiConverter;
 

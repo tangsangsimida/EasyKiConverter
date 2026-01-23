@@ -132,7 +132,7 @@ jobs:
         if: matrix.platform == 'msvc2019_64'
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgGitCommitId: '7d9a5c5d0a1a0e1b0c1d0e1f0g1h0i0j0k0l0m0n0o0p0q0r0s0t0u0v0w0x0y0z'
+          vcpkgGitCommitId: 'f8a7a7e8d1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1'
           vcpkgJsonGlob: 'vcpkg.json'
 
       - name: 'Setup Build Environment'
@@ -171,7 +171,7 @@ jobs:
 
       - name: 'Build'
         run: |
-          cmake --build build --config $env:BUILD_TYPE --parallel $(nproc 2>/dev/null || echo 4)
+          cmake --build build --config $env:BUILD_TYPE --parallel
 
       - name: 'Test'
         run: |
