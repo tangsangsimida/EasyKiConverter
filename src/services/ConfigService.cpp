@@ -1,232 +1,202 @@
 ﻿#include "ConfigService.h"
+
+#include <QDebug>
+#include <QDir>
 #include <QFile>
 #include <QJsonDocument>
 #include <QStandardPaths>
-#include <QDir>
-#include <QDebug>
 
-namespace EasyKiConverter
-{
+namespace EasyKiConverter {
 
-    // 静态成员初始化
-    ConfigService *ConfigService::s_instance = nullptr;
-    QMutex ConfigService::s_mutex;
+// 静态成员初始化
+ConfigService* ConfigService::s_instance = nullptr;
+QMutex ConfigService::s_mutex;
 
-    ConfigService::ConfigService(QObject *parent)
-        : QObject(parent)
-    {
-        // 初始化默认配�?
-        initializeDefaultConfig();
+ConfigService::ConfigService(QObject* parent) : QObject(parent) {
+    // 初始化默认配�?
+    initializeDefaultConfig();
+}
+
+ConfigService::~ConfigService() {
+    // 自动保存配置
+    saveConfig();
+}
+
+ConfigService* ConfigService::instance() {
+    QMutexLocker locker(&s_mutex);
+
+    if (!s_instance) {
+        s_instance = new ConfigService();
     }
 
-    ConfigService::~ConfigService()
-    {
-        // 自动保存配置
-        saveConfig();
+    return s_instance;
+}
+
+bool ConfigService::loadConfig(const QString& path) {
+    QString configPath = path.isEmpty() ? getDefaultConfigPath() : path;
+
+    QFile file(configPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "Failed to open config file:" << configPath;
+        return false;
     }
 
-    ConfigService *ConfigService::instance()
-    {
-        QMutexLocker locker(&s_mutex);
+    QByteArray fileData = file.readAll();
+    file.close();
 
-        if (!s_instance)
-        {
-            s_instance = new ConfigService();
-        }
+    QJsonParseError parseError;
+    QJsonDocument doc = QJsonDocument::fromJson(fileData, &parseError);
 
-        return s_instance;
+    if (parseError.error != QJsonParseError::NoError) {
+        qWarning() << "Failed to parse config file:" << parseError.errorString();
+        return false;
     }
 
-    bool ConfigService::loadConfig(const QString &path)
-    {
-        QString configPath = path.isEmpty() ? getDefaultConfigPath() : path;
+    QMutexLocker locker(&m_configMutex);
+    m_config = doc.object();
+    m_configPath = configPath;
 
-        QFile file(configPath);
-        if (!file.open(QIODevice::ReadOnly))
-        {
-            qWarning() << "Failed to open config file:" << configPath;
-            return false;
-        }
+    qDebug() << "Config loaded from:" << configPath;
+    emit configChanged();
 
-        QByteArray fileData = file.readAll();
-        file.close();
+    return true;
+}
 
-        QJsonParseError parseError;
-        QJsonDocument doc = QJsonDocument::fromJson(fileData, &parseError);
+bool ConfigService::saveConfig(const QString& path) {
+    QString configPath = path.isEmpty() ? (m_configPath.isEmpty() ? getDefaultConfigPath() : m_configPath) : path;
 
-        if (parseError.error != QJsonParseError::NoError)
-        {
-            qWarning() << "Failed to parse config file:" << parseError.errorString();
-            return false;
-        }
+    QMutexLocker locker(&m_configMutex);
 
-        QMutexLocker locker(&m_configMutex);
-        m_config = doc.object();
-        m_configPath = configPath;
+    QJsonDocument doc(m_config);
 
-        qDebug() << "Config loaded from:" << configPath;
-        emit configChanged();
-
-        return true;
+    QFile file(configPath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        qWarning() << "Failed to open config file for writing:" << configPath;
+        return false;
     }
 
-    bool ConfigService::saveConfig(const QString &path)
-    {
-        QString configPath = path.isEmpty() ? (m_configPath.isEmpty() ? getDefaultConfigPath() : m_configPath) : path;
+    file.write(doc.toJson());
+    file.close();
 
-        QMutexLocker locker(&m_configMutex);
+    qDebug() << "Config saved to:" << configPath;
+    return true;
+}
 
-        QJsonDocument doc(m_config);
+void ConfigService::resetToDefaults() {
+    QMutexLocker locker(&m_configMutex);
+    initializeDefaultConfig();
+    emit configChanged();
+    qDebug() << "Config reset to defaults";
+}
 
-        QFile file(configPath);
-        if (!file.open(QIODevice::WriteOnly))
-        {
-            qWarning() << "Failed to open config file for writing:" << configPath;
-            return false;
-        }
+QString ConfigService::getOutputPath() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["outputPath"].toString(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
+}
 
-        file.write(doc.toJson());
-        file.close();
+void ConfigService::setOutputPath(const QString& path) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["outputPath"] = path;
+    emit configChanged();
+}
 
-        qDebug() << "Config saved to:" << configPath;
-        return true;
+QString ConfigService::getLibName() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["libName"].toString("easyeda_convertlib");
+}
+
+void ConfigService::setLibName(const QString& name) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["libName"] = name;
+    emit configChanged();
+}
+
+bool ConfigService::getExportSymbol() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["exportSymbol"].toBool(true);
+}
+
+void ConfigService::setExportSymbol(bool enabled) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["exportSymbol"] = enabled;
+    emit configChanged();
+}
+
+bool ConfigService::getExportFootprint() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["exportFootprint"].toBool(true);
+}
+
+void ConfigService::setExportFootprint(bool enabled) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["exportFootprint"] = enabled;
+    emit configChanged();
+}
+
+bool ConfigService::getExportModel3D() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["exportModel3D"].toBool(true);
+}
+
+void ConfigService::setExportModel3D(bool enabled) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["exportModel3D"] = enabled;
+    emit configChanged();
+}
+
+bool ConfigService::getOverwriteExistingFiles() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["overwriteExistingFiles"].toBool(false);
+}
+
+void ConfigService::setOverwriteExistingFiles(bool enabled) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["overwriteExistingFiles"] = enabled;
+    emit configChanged();
+}
+
+bool ConfigService::getDarkMode() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["darkMode"].toBool(false);
+}
+
+void ConfigService::setDarkMode(bool enabled) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["darkMode"] = enabled;
+    emit configChanged();
+}
+
+bool ConfigService::getDebugMode() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["debugMode"].toBool(false);
+}
+
+void ConfigService::setDebugMode(bool enabled) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["debugMode"] = enabled;
+    emit configChanged();
+}
+
+void ConfigService::initializeDefaultConfig() {
+    m_config["outputPath"] = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+    m_config["libName"] = "easyeda_convertlib";
+    m_config["exportSymbol"] = true;
+    m_config["exportFootprint"] = true;
+    m_config["exportModel3D"] = true;
+    m_config["overwriteExistingFiles"] = false;
+    m_config["darkMode"] = false;
+    m_config["debugMode"] = false;
+}
+
+QString ConfigService::getDefaultConfigPath() const {
+    QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    QDir dir(configDir);
+
+    if (!dir.exists()) {
+        dir.mkpath(".");
     }
 
-    void ConfigService::resetToDefaults()
-    {
-        QMutexLocker locker(&m_configMutex);
-        initializeDefaultConfig();
-        emit configChanged();
-        qDebug() << "Config reset to defaults";
-    }
+    return configDir + "/config.json";
+}
 
-    QString ConfigService::getOutputPath() const
-    {
-        QMutexLocker locker(&m_configMutex);
-        return m_config["outputPath"].toString(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
-    }
-
-    void ConfigService::setOutputPath(const QString &path)
-    {
-        QMutexLocker locker(&m_configMutex);
-        m_config["outputPath"] = path;
-        emit configChanged();
-    }
-
-    QString ConfigService::getLibName() const
-    {
-        QMutexLocker locker(&m_configMutex);
-        return m_config["libName"].toString("easyeda_convertlib");
-    }
-
-    void ConfigService::setLibName(const QString &name)
-    {
-        QMutexLocker locker(&m_configMutex);
-        m_config["libName"] = name;
-        emit configChanged();
-    }
-
-    bool ConfigService::getExportSymbol() const
-    {
-        QMutexLocker locker(&m_configMutex);
-        return m_config["exportSymbol"].toBool(true);
-    }
-
-    void ConfigService::setExportSymbol(bool enabled)
-    {
-        QMutexLocker locker(&m_configMutex);
-        m_config["exportSymbol"] = enabled;
-        emit configChanged();
-    }
-
-    bool ConfigService::getExportFootprint() const
-    {
-        QMutexLocker locker(&m_configMutex);
-        return m_config["exportFootprint"].toBool(true);
-    }
-
-    void ConfigService::setExportFootprint(bool enabled)
-    {
-        QMutexLocker locker(&m_configMutex);
-        m_config["exportFootprint"] = enabled;
-        emit configChanged();
-    }
-
-    bool ConfigService::getExportModel3D() const
-    {
-        QMutexLocker locker(&m_configMutex);
-        return m_config["exportModel3D"].toBool(true);
-    }
-
-    void ConfigService::setExportModel3D(bool enabled)
-    {
-        QMutexLocker locker(&m_configMutex);
-        m_config["exportModel3D"] = enabled;
-        emit configChanged();
-    }
-
-    bool ConfigService::getOverwriteExistingFiles() const
-    {
-        QMutexLocker locker(&m_configMutex);
-        return m_config["overwriteExistingFiles"].toBool(false);
-    }
-
-    void ConfigService::setOverwriteExistingFiles(bool enabled)
-    {
-        QMutexLocker locker(&m_configMutex);
-        m_config["overwriteExistingFiles"] = enabled;
-        emit configChanged();
-    }
-
-    bool ConfigService::getDarkMode() const
-    {
-        QMutexLocker locker(&m_configMutex);
-        return m_config["darkMode"].toBool(false);
-    }
-
-    void ConfigService::setDarkMode(bool enabled)
-    {
-        QMutexLocker locker(&m_configMutex);
-        m_config["darkMode"] = enabled;
-        emit configChanged();
-    }
-
-    bool ConfigService::getDebugMode() const
-    {
-        QMutexLocker locker(&m_configMutex);
-        return m_config["debugMode"].toBool(false);
-    }
-
-    void ConfigService::setDebugMode(bool enabled)
-    {
-        QMutexLocker locker(&m_configMutex);
-        m_config["debugMode"] = enabled;
-        emit configChanged();
-    }
-
-    void ConfigService::initializeDefaultConfig()
-    {
-        m_config["outputPath"] = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
-        m_config["libName"] = "easyeda_convertlib";
-        m_config["exportSymbol"] = true;
-        m_config["exportFootprint"] = true;
-        m_config["exportModel3D"] = true;
-        m_config["overwriteExistingFiles"] = false;
-        m_config["darkMode"] = false;
-        m_config["debugMode"] = false;
-    }
-
-    QString ConfigService::getDefaultConfigPath() const
-    {
-        QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-        QDir dir(configDir);
-
-        if (!dir.exists())
-        {
-            dir.mkpath(".");
-        }
-
-        return configDir + "/config.json";
-    }
-
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter

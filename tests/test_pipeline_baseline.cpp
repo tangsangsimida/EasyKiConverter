@@ -1,12 +1,14 @@
-﻿#include <QtTest/QtTest>
-#include <QElapsedTimer>
-#include <QTemporaryDir>
-#include <QFile>
+﻿#include <QTemporaryDir>
 #include <QTextStream>
+#include <QtTest/QtTest>
+
 #include <QDateTime>
+#include <QElapsedTimer>
+#include <QFile>
 #include <QProcess>
-#include "services/ExportService_Pipeline.h"
+
 #include "services/ConfigService.h"
+#include "services/ExportService_Pipeline.h"
 
 using namespace EasyKiConverter;
 
@@ -21,8 +23,7 @@ using namespace EasyKiConverter;
  * 5. 内存使用
  * 6. CPU 利用率
  */
-class TestPipelineBaseline : public QObject
-{
+class TestPipelineBaseline : public QObject {
     Q_OBJECT
 
 private slots:
@@ -40,9 +41,9 @@ private slots:
     void testWriteStagePerformance();
 
 private:
-    ExportServicePipeline *m_pipeline;
-    ConfigService *m_configService;
-    QTemporaryDir *m_tempDir;
+    ExportServicePipeline* m_pipeline;
+    ConfigService* m_configService;
+    QTemporaryDir* m_tempDir;
     QString m_baselineFile;
 
     // 性能指标结构
@@ -74,15 +75,14 @@ private:
 
     // 辅助方法
     void runPipelineTest(int componentCount);
-    void saveBaseline(const QString &testName, const PipelineMetrics &metrics);
-    PipelineMetrics loadBaseline(const QString &testName);
-    void compareWithBaseline(const QString &testName, const PipelineMetrics &current);
-    void printMetrics(const QString &testName, const PipelineMetrics &metrics);
+    void saveBaseline(const QString& testName, const PipelineMetrics& metrics);
+    PipelineMetrics loadBaseline(const QString& testName);
+    void compareWithBaseline(const QString& testName, const PipelineMetrics& current);
+    void printMetrics(const QString& testName, const PipelineMetrics& metrics);
     qint64 getMemoryUsage();
 };
 
-void TestPipelineBaseline::initTestCase()
-{
+void TestPipelineBaseline::initTestCase() {
     qDebug() << "\n========================================";
     qDebug() << "  流水线架构性能基准测试开始";
     qDebug() << "  测试日期:" << QDateTime::currentDateTime().toString();
@@ -100,14 +100,13 @@ void TestPipelineBaseline::initTestCase()
     m_pipeline = new ExportServicePipeline(this);
 
     // 连接进度信号
-    connect(m_pipeline, &ExportServicePipeline::pipelineProgressUpdated,
-            this, [](const PipelineProgress &progress) {
-                qDebug() << QString("进度: Fetch=%1%, Process=%2%, Write=%3%, Overall=%4%")
-                            .arg(progress.fetchProgress())
-                            .arg(progress.processProgress())
-                            .arg(progress.writeProgress())
-                            .arg(progress.overallProgress());
-            });
+    connect(m_pipeline, &ExportServicePipeline::pipelineProgressUpdated, this, [](const PipelineProgress& progress) {
+        qDebug() << QString("进度: Fetch=%1%, Process=%2%, Write=%3%, Overall=%4%")
+                        .arg(progress.fetchProgress())
+                        .arg(progress.processProgress())
+                        .arg(progress.writeProgress())
+                        .arg(progress.overallProgress());
+    });
 
     // 创建基准文件路径
     m_baselineFile = m_tempDir->path() + "/baseline.json";
@@ -116,8 +115,7 @@ void TestPipelineBaseline::initTestCase()
     qDebug() << "输出路径:" << m_configService->getOutputPath();
 }
 
-void TestPipelineBaseline::cleanupTestCase()
-{
+void TestPipelineBaseline::cleanupTestCase() {
     qDebug() << "\n========================================";
     qDebug() << "  流水线架构性能基准测试结束";
     qDebug() << "========================================\n";
@@ -126,31 +124,25 @@ void TestPipelineBaseline::cleanupTestCase()
     delete m_tempDir;
 }
 
-void TestPipelineBaseline::testPipeline_10_Components()
-{
+void TestPipelineBaseline::testPipeline_10_Components() {
     qDebug() << "\n--- 测试 1: 流水线处理 10 个组件 ---";
     runPipelineTest(10);
 
     // 验证性能基准
-    QVERIFY2(m_currentMetrics.totalTime < 30000,
-             "10个组件应该在30秒内完成");
-    QVERIFY2(m_currentMetrics.throughput > 0.3,
-             "吞吐量应该大于0.3组件/秒");
+    QVERIFY2(m_currentMetrics.totalTime < 30000, "10个组件应该在30秒内完成");
+    QVERIFY2(m_currentMetrics.throughput > 0.3, "吞吐量应该大于0.3组件/秒");
 
     printMetrics("10个组件", m_currentMetrics);
     saveBaseline("testPipeline_10_Components", m_currentMetrics);
 }
 
-void TestPipelineBaseline::testPipeline_50_Components()
-{
+void TestPipelineBaseline::testPipeline_50_Components() {
     qDebug() << "\n--- 测试 2: 流水线处理 50 个组件 ---";
     runPipelineTest(50);
 
     // 验证性能基准
-    QVERIFY2(m_currentMetrics.totalTime < 120000,
-             "50个组件应该在120秒内完成");
-    QVERIFY2(m_currentMetrics.throughput > 0.4,
-             "吞吐量应该大于0.4组件/秒");
+    QVERIFY2(m_currentMetrics.totalTime < 120000, "50个组件应该在120秒内完成");
+    QVERIFY2(m_currentMetrics.throughput > 0.4, "吞吐量应该大于0.4组件/秒");
 
     printMetrics("50个组件", m_currentMetrics);
     saveBaseline("testPipeline_50_Components", m_currentMetrics);
@@ -162,16 +154,13 @@ void TestPipelineBaseline::testPipeline_50_Components()
     }
 }
 
-void TestPipelineBaseline::testPipeline_100_Components()
-{
+void TestPipelineBaseline::testPipeline_100_Components() {
     qDebug() << "\n--- 测试 3: 流水线处理 100 个组件 ---";
     runPipelineTest(100);
 
     // 验证性能基准
-    QVERIFY2(m_currentMetrics.totalTime < 240000,
-             "100个组件应该在240秒内完成");
-    QVERIFY2(m_currentMetrics.throughput > 0.4,
-             "吞吐量应该大于0.4组件/秒");
+    QVERIFY2(m_currentMetrics.totalTime < 240000, "100个组件应该在240秒内完成");
+    QVERIFY2(m_currentMetrics.throughput > 0.4, "吞吐量应该大于0.4组件/秒");
 
     printMetrics("100个组件", m_currentMetrics);
     saveBaseline("testPipeline_100_Components", m_currentMetrics);
@@ -183,8 +172,7 @@ void TestPipelineBaseline::testPipeline_100_Components()
     }
 }
 
-void TestPipelineBaseline::testFetchStagePerformance()
-{
+void TestPipelineBaseline::testFetchStagePerformance() {
     qDebug() << "\n--- 测试 4: Fetch 阶段性能 ---";
 
     QElapsedTimer timer;
@@ -227,8 +215,7 @@ void TestPipelineBaseline::testFetchStagePerformance()
     QVERIFY2((endMemory - startMemory) < 50000, "内存增长应该小于50MB");
 }
 
-void TestPipelineBaseline::testProcessStagePerformance()
-{
+void TestPipelineBaseline::testProcessStagePerformance() {
     qDebug() << "\n--- 测试 5: Process 阶段性能 ---";
 
     // 注意：这个测试需要预先获取的数据
@@ -238,8 +225,7 @@ void TestPipelineBaseline::testProcessStagePerformance()
     qDebug() << "此测试将在集成测试中完成";
 }
 
-void TestPipelineBaseline::testWriteStagePerformance()
-{
+void TestPipelineBaseline::testWriteStagePerformance() {
     qDebug() << "\n--- 测试 6: Write 阶段性能 ---";
 
     QElapsedTimer timer;
@@ -281,8 +267,7 @@ void TestPipelineBaseline::testWriteStagePerformance()
     QVERIFY2(writeTime < 30000, "Write阶段应该在30秒内完成");
 }
 
-void TestPipelineBaseline::runPipelineTest(int componentCount)
-{
+void TestPipelineBaseline::runPipelineTest(int componentCount) {
     qDebug() << "开始测试" << componentCount << "个组件的流水线处理";
 
     QStringList componentIds;
@@ -339,8 +324,7 @@ void TestPipelineBaseline::runPipelineTest(int componentCount)
     qDebug() << "内存使用:" << m_currentMetrics.memoryUsageKB << "KB";
 }
 
-void TestPipelineBaseline::saveBaseline(const QString &testName, const PipelineMetrics &metrics)
-{
+void TestPipelineBaseline::saveBaseline(const QString& testName, const PipelineMetrics& metrics) {
     QFile file(m_baselineFile);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Append)) {
         qWarning() << "无法打开基准文件:" << m_baselineFile;
@@ -362,8 +346,7 @@ void TestPipelineBaseline::saveBaseline(const QString &testName, const PipelineM
     qDebug() << "基准数据已保存到:" << m_baselineFile;
 }
 
-TestPipelineBaseline::PipelineMetrics TestPipelineBaseline::loadBaseline(const QString &testName)
-{
+TestPipelineBaseline::PipelineMetrics TestPipelineBaseline::loadBaseline(const QString& testName) {
     PipelineMetrics metrics;
     metrics.totalTime = 0;  // 表示未找到
 
@@ -413,8 +396,7 @@ TestPipelineBaseline::PipelineMetrics TestPipelineBaseline::loadBaseline(const Q
     return metrics;
 }
 
-void TestPipelineBaseline::compareWithBaseline(const QString &testName, const PipelineMetrics &current)
-{
+void TestPipelineBaseline::compareWithBaseline(const QString& testName, const PipelineMetrics& current) {
     // 这里简化处理，实际应该从文件中加载基准
     qDebug() << "\n--- 性能对比 ---";
     qDebug() << "测试:" << testName;
@@ -424,8 +406,7 @@ void TestPipelineBaseline::compareWithBaseline(const QString &testName, const Pi
     qDebug() << "当前 CPU 利用率:" << current.cpuUtilization << "%";
 }
 
-void TestPipelineBaseline::printMetrics(const QString &testName, const PipelineMetrics &metrics)
-{
+void TestPipelineBaseline::printMetrics(const QString& testName, const PipelineMetrics& metrics) {
     qDebug() << "\n========== 性能指标 ==========";
     qDebug() << "测试:" << testName;
     qDebug() << "----------------------------";
@@ -447,17 +428,17 @@ void TestPipelineBaseline::printMetrics(const QString &testName, const PipelineM
     qDebug() << "==============================";
 }
 
-qint64 TestPipelineBaseline::getMemoryUsage()
-{
+qint64 TestPipelineBaseline::getMemoryUsage() {
     // Windows 平台内存使用估算
     // 注意：这是一个简化的实现
     // 实际应该使用 GetProcessMemoryInfo API
 
 #ifdef Q_OS_WIN
     QProcess process;
-    process.start("wmic", QStringList() << "process" << "where"
-                    << QString("ProcessId=%1").arg(QCoreApplication::applicationPid())
-                    << "get" << "WorkingSetSize");
+    process.start("wmic",
+                  QStringList() << "process" << "where"
+                                << QString("ProcessId=%1").arg(QCoreApplication::applicationPid()) << "get"
+                                << "WorkingSetSize");
     process.waitForFinished();
     QString output = process.readAllStandardOutput();
 
