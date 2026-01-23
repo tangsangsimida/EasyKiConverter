@@ -285,5 +285,5 @@ target_link_libraries(test_pipeline_baseline PRIVATE Qt6::Core Qt6::Test Qt6::Ne
 
 # 注册测试
 add_test(NAME test_pipeline_baseline COMMAND test_pipeline_baseline)
-# 设置 CTest 超时时间为 300 秒（流水线基准测试需要较长时间）
-set_property(TEST test_pipeline_baseline PROPERTY TIMEOUT 300)
+# 设置 CTest 超时时间为 60 秒（流水线基准测试使用虚拟 ID）
+set_property(TEST test_pipeline_baseline PROPERTY TIMEOUT 60)
