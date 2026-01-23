@@ -75,7 +75,7 @@ qt_add_executable(appEasyKiconverter_Cpp_Version
 )
 
 # ──────────────────────────────────────────────
-# MinGW 专用修复（顺序很重要）
+# MinGW 专用修复
 # ──────────────────────────────────────────────
 if(MINGW)
     # 1. 告诉 Qt 不要注入 EntryPoint（最关键）
