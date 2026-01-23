@@ -90,9 +90,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: 'Windows MinGW'
-            platform: 'mingw_64'
-            generator: 'MinGW Makefiles'
           - name: 'Windows MSVC'
             platform: 'msvc2019_64'
             generator: 'Visual Studio 17 2022'
@@ -115,47 +112,17 @@ jobs:
           ref: ${{ github.sha }}
 
       - name: 'Setup MSVC'
-        if: matrix.platform == 'msvc2019_64'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.arch }}
           toolset: '14.2'
 
-      - name: 'Setup MinGW'
-        if: matrix.platform == 'mingw_64'
-        shell: pwsh
-        run: |
-          # 使用系统自带的 MinGW-Builds GCC（GitHub Actions runner 自带）
-          Write-Host "=== Using system MinGW-Builds GCC ==="
-          Write-Host "GCC version:"
-          gcc --version | Select-Object -First 1
-          Write-Host "G++ version:"
-          g++ --version | Select-Object -First 1
-          Write-Host "Make version:"
-          make --version | Select-Object -First 1
-          Write-Host "CMake version:"
-          cmake --version | Select-Object -First 1
-
       - name: 'Setup vcpkg'
-        if: matrix.platform == 'msvc2019_64'
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: 'vcpkg.json'
 
-      - name: 'Setup Build Environment (MinGW)'
-        if: matrix.platform == 'mingw_64'
-        uses: ./.github/actions/setup-env
-        with:
-          cmake-version: ${{ env.CMAKE_VERSION }}
-          qt-version: ${{ env.QT_VERSION }}
-          qt-host: 'windows'
-          qt-target: 'desktop'
-          qt-arch: 'win64_mingw'
-          enable-ccache: 'false'
-          enable-sccache: 'true'
-
       - name: 'Setup Build Environment (MSVC)'
-        if: matrix.platform == 'msvc2019_64'
         uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
@@ -166,75 +133,7 @@ jobs:
           enable-ccache: 'false'
           enable-sccache: 'true'
 
-      - name: 'Configure CMake (MinGW) with sccache'
-        if: matrix.platform == 'mingw_64'
-        shell: pwsh
-        run: |
-          # 验证 MinGW GCC 版本
-          Write-Host "=== MinGW GCC Version Check ==="
-          gcc --version | Select-Object -First 2
-          g++ --version | Select-Object -First 2
-
-          # 查找系统自带的 MinGW-Builds 工具链
-          Write-Host "=== Searching for MinGW-Builds ==="
-          
-          # 使用系统自带的 MinGW-Builds（GitHub Actions runner 自带）
-          $mingwPath = "C:/mingw64/bin"
-          
-          if (-not (Test-Path "${mingwPath}/gcc.exe")) {
-            Write-Error "MinGW-Builds not found at: ${mingwPath}"
-            exit 1
-          }
-          
-          Write-Host "Using MinGW-Builds at: ${mingwPath}"
-          
-          # 验证编译器版本
-          $gccPath = "${mingwPath}/gcc.exe"
-          $gppPath = "${mingwPath}/g++.exe"
-          
-          $gccVersion = & "$gccPath" --version
-          Write-Host "GCC version:"
-          Write-Host ($gccVersion | Select-Object -First 2)
-          
-          # 验证编译器是否存在
-          if (-not (Test-Path $gccPath)) {
-            Write-Error "GCC not found at: ${gccPath}"
-            exit 1
-          }
-          
-          if (-not (Test-Path $gppPath)) {
-            Write-Error "G++ not found at: ${gppPath}"
-            exit 1
-          }
-
-          # 确保使用找到的 MinGW
-          $env:Path = "${mingwPath};" + $env:Path
-
-          # 使用环境变量设置编译器
-          $env:CC = "gcc"
-          $env:CXX = "g++"
-          $env:LD = "ld"
-          $env:AR = "ar"
-          $env:RANLIB = "ranlib"
-          $env:STRIP = "strip"
-
-          Write-Host "=== Using MinGW Toolchain from: ${mingwPath} ==="
-          Write-Host "CC: ${env:CC}"
-          Write-Host "CXX: ${env:CXX}"
-          Write-Host "LD: ${env:LD}"
-
-          # 清理之前的 CMake 缓存
-          Remove-Item -Path build -Recurse -Force -ErrorAction SilentlyContinue
-
-          cmake -B build -G "MinGW Makefiles" `
-            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
-            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
-            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
-
       - name: 'Configure CMake (MSVC) with sccache and vcpkg'
-        if: matrix.platform == 'msvc2019_64'
         run: |
           cmake -B build -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
@@ -245,19 +144,6 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: 'Build'
-        if: matrix.platform == 'mingw_64'
-        shell: pwsh
-        run: |
-          # 验证使用的 GCC 版本
-          Write-Host "=== Verifying MinGW-Builds GCC version before build ==="
-          gcc --version | Select-Object -First 2
-          g++ --version | Select-Object -First 2
-          
-          # 构建项目
-          cmake --build build --config $env:BUILD_TYPE --parallel 16
-
-      - name: 'Build'
-        if: matrix.platform == 'msvc2019_64'
         run: |
           cmake --build build --config $env:BUILD_TYPE --parallel 16
 
@@ -265,11 +151,7 @@ jobs:
         shell: pwsh
         run: |
           cd tests
-          if ("${{ matrix.platform }}" -eq "msvc2019_64") {
-            cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          } else {
-            cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR"
-          }
+          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
           cmake --build build
           ctest --output-on-failure --test-dir build --output-junit test-results.xml
 
