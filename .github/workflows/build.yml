@@ -123,10 +123,15 @@ jobs:
 
       - name: 'Setup MinGW'
         if: matrix.platform == 'mingw_64'
-        uses: egor-tensin/setup-mingw@v2
+        uses: msys2/setup-msys2@v2
         with:
-          platform: x64
-          version: 13.1.0
+          msystem: MINGW64
+          install: |
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-pkg-config
+          update: true
 
       - name: 'Setup vcpkg'
         if: matrix.platform == 'msvc2019_64'
