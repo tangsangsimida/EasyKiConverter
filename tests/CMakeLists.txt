@@ -39,7 +39,12 @@ target_include_directories(test_component_service PRIVATE ${CMAKE_SOURCE_DIR}/..
 
 target_include_directories(test_component_service PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
-target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network)
+# 链接 zlib
+if(ZLIB_FOUND)
+    target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+else()
+    target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network z)
+endif()
 
 # ========== ExportService 测试 ==========
 add_executable(test_export_service test_export_service.cpp)
@@ -87,7 +92,12 @@ target_sources(test_export_service_pipeline PRIVATE
 
 target_include_directories(test_export_service_pipeline PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
-target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network)
+# 链接 zlib
+if(ZLIB_FOUND)
+    target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+else()
+    target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network z)
+endif()
 
 # ========== ConfigService 测试 ==========
 add_executable(test_config_service test_config_service.cpp)
@@ -164,7 +174,12 @@ target_sources(test_integration PRIVATE
 
 target_include_directories(test_integration PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
-target_link_libraries(test_integration Qt6::Core Qt6::Test Qt6::Network)
+# 链接 zlib
+if(ZLIB_FOUND)
+    target_link_libraries(test_integration Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+else()
+    target_link_libraries(test_integration Qt6::Core Qt6::Test Qt6::Network z)
+endif()
 
 # ========== 性能测试 ==========
 add_executable(test_performance test_performance.cpp)
@@ -185,7 +200,12 @@ target_sources(test_performance PRIVATE
 
 target_include_directories(test_performance PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
-target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network)
+# 链接 zlib
+if(ZLIB_FOUND)
+    target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+else()
+    target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network z)
+endif()
 
 # ========== 流水线性能基准测试 ==========
 add_executable(test_pipeline_baseline test_pipeline_baseline.cpp)
@@ -217,4 +237,9 @@ target_sources(test_pipeline_baseline PRIVATE
 
 target_include_directories(test_pipeline_baseline PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
-target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network)
+# 链接 zlib
+if(ZLIB_FOUND)
+    target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+else()
+    target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network z)
+endif()
