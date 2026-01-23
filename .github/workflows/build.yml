@@ -173,8 +173,34 @@ jobs:
           gcc --version | Select-Object -First 2
           g++ --version | Select-Object -First 2
 
-          # 显式指定 MinGW 工具链路径（使用正斜杠避免 PowerShell 转义问题）
-          $mingwPath = "C:/msys64/mingw64/bin"
+          # 查找 MSYS2 的实际安装路径
+          $mingwPaths = @(
+            "C:/msys64/mingw64/bin",
+            "C:/tools/msys64/mingw64/bin",
+            "C:/Program Files/msys64/mingw64/bin",
+            "$env:GITHUB_WORKSPACE/msys64/mingw64/bin"
+          )
+
+          $mingwPath = $null
+          foreach ($path in $mingwPaths) {
+            if (Test-Path "$path/gcc.exe") {
+              $mingwPath = $path
+              Write-Host "Found MinGW at: $mingwPath"
+              break
+            }
+          }
+
+          if (-not $mingwPath) {
+            # 如果找不到，尝试直接使用环境变量中的 gcc
+            $gccLocation = Get-Command gcc -ErrorAction SilentlyContinue
+            if ($gccLocation) {
+              $mingwPath = Split-Path -Parent $gccLocation.Source
+              Write-Host "Using MinGW from PATH: $mingwPath"
+            } else {
+              Write-Error "Cannot find MinGW installation"
+              exit 1
+            }
+          }
 
           # 验证编译器是否存在
           $gccPath = "$mingwPath/gcc.exe"
@@ -190,7 +216,7 @@ jobs:
             exit 1
           }
 
-          # 确保使用我们安装的 MinGW 13.1.0，而不是系统自带的旧版本
+          # 确保使用我们安装的 MinGW，而不是系统自带的旧版本
           $env:Path = "$mingwPath;" + $env:Path
 
           # 使用环境变量设置编译器（CMake 会自动从环境变量读取）
