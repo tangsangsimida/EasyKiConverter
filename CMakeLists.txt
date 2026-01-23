@@ -103,16 +103,6 @@ target_link_libraries(appEasyKiconverter_Cpp_Version
         ZLIB::ZLIB
 )
 
-# === 再次确保移除 EntryPoint（双重保险）===
-if(MINGW)
-    get_target_property(LINK_LIBS appEasyKiconverter_Cpp_Version LINK_LIBRARIES)
-    if(LINK_LIBS)
-        list(REMOVE_ITEM LINK_LIBS "Qt6::EntryPoint")
-        set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES LINK_LIBRARIES "${LINK_LIBS}")
-        message(STATUS "MinGW: Successfully removed Qt6::EntryPoint to avoid __imp___argc error")
-    endif()
-endif()
-
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
     URI EasyKiconverter_Cpp_Version
@@ -141,6 +131,16 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/imgs/background.jpg
         src/ui/qml/styles/qmldir
 )
+
+# === 再次确保移除 EntryPoint（双重保险）===
+if(MINGW)
+    get_target_property(LINK_LIBS appEasyKiconverter_Cpp_Version LINK_LIBRARIES)
+    if(LINK_LIBS)
+        list(REMOVE_ITEM LINK_LIBS "Qt6::EntryPoint")
+        set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES LINK_LIBRARIES "${LINK_LIBS}")
+        message(STATUS "MinGW: Successfully removed Qt6::EntryPoint to avoid __imp___argc error")
+    endif()
+endif()
 
 # 设置目标属性
 set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
