@@ -203,13 +203,13 @@ jobs:
           foreach ($path in $mingwPaths) {
             if (Test-Path "$path/gcc.exe") {
               # 检查是否是 MSYS2 的 MinGW（通过检查 msys-2.0.dll 的存在）
-              $hasMsysDll = Test-Path "$path/../msys-2.0.dll"
-              $hasMsysDll2 = Test-Path "$path/../../msys-2.0.dll"
+              # MSYS2 的 msys-2.0.dll 通常在 msys64/usr/bin/ 目录下
+              $msysUsrBin = "$path/../../usr/bin/msys-2.0.dll"
+              $hasMsysDll = Test-Path $msysUsrBin
               Write-Host "Checking path: ${path}"
-              Write-Host "  msys-2.0.dll (parent): ${hasMsysDll}"
-              Write-Host "  msys-2.0.dll (grandparent): ${hasMsysDll2}"
+              Write-Host "  msys-2.0.dll at ${msysUsrBin}: ${hasMsysDll}"
               
-              if ($hasMsysDll -or $hasMsysDll2) {
+              if ($hasMsysDll) {
                 $mingwPath = $path
                 Write-Host "Found MSYS2 MinGW at: ${mingwPath}"
                 break
