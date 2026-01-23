@@ -21,18 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup MinGW-w64 Compiler
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-make
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-ninja
-
-      - name: Install Qt
+      - name: Install Qt with MinGW
         uses: jurplel/install-qt-action@v3
         with:
           version: '6.10.1'
@@ -40,10 +29,15 @@ jobs:
           target: 'desktop'
           arch: 'win64_mingw'
           cache: true
+          # install-qt-action 会自动安装对应的 MinGW 工具链 (GCC 13.2)
+          # Qt 6.10.1 是用 GCC 13.2 编译的，必须使用相同版本的编译器
 
-      - name: Verify compiler
+      - name: Verify compiler and Qt
         shell: pwsh
         run: |
+          Write-Host "=== Qt Directory ==="
+          Write-Host $env:Qt6_DIR
+          Write-Host ""
           Write-Host "=== GCC Version ==="
           gcc --version
           Write-Host ""
@@ -53,8 +47,9 @@ jobs:
           Write-Host "=== Make Version ==="
           mingw32-make --version
           Write-Host ""
-          Write-Host "=== Qt Directory ==="
-          Write-Host $env:Qt6_DIR
+          Write-Host "=== Check MinGW Path ==="
+          $gccPath = Get-Command gcc | Select-Object -ExpandProperty Source
+          Write-Host "GCC location: $gccPath"
 
       - name: Test minimal compile
         shell: pwsh
@@ -74,7 +69,8 @@ jobs:
         shell: pwsh
         run: |
           cd $env:GITHUB_WORKSPACE
-          # 使用 MSYS2 安装的 MinGW-w64 和 install-qt-action 安装的 Qt
+          # 使用 install-qt-action 提供的 MinGW (GCC 13.2) 和 Qt
+          # Qt 6.10.1 是用 GCC 13.2 编译的，必须使用相同版本
           cmake -B build -G "MinGW Makefiles" `
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
