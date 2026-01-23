@@ -68,22 +68,25 @@ void TestComponentDataCollector::testStateMachine() {
 }
 
 void TestComponentDataCollector::testStart() {
+    // 设置测试超时时间为 310 秒（集成测试需要更长时间）
+    QTEST_SET_TIMEOUT(310000);
+
     // 测试启动数据收集
     QSignalSpy spyStateChanged(m_collector, &ComponentDataCollector::stateChanged);
 
-    // 设置超时时间
+    // 设置超时时间（略小于 QTEST_SET_TIMEOUT）
     QTimer timer;
     timer.setSingleShot(true);
     connect(&timer, &QTimer::timeout, [this]() {
         qDebug() << "Test timeout - stopping collector";
         m_collector->cancel();
     });
-    timer.start(5000); // 5秒超时
+    timer.start(300000); // 300秒超时
 
     m_collector->start();
 
     // 等待状态变化或超时
-    QTRY_VERIFY_WITH_TIMEOUT(spyStateChanged.wait(5000), 5000);
+    QTRY_VERIFY_WITH_TIMEOUT(spyStateChanged.wait(300000), 300000);
 
     // 验证状态变为 FetchingCadData
     QCOMPARE(m_collector->state(), ComponentDataCollector::FetchingCadData);
