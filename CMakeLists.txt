@@ -74,18 +74,43 @@ qt_add_executable(appEasyKiconverter_Cpp_Version
     main.cpp
 )
 
-# === MinGW 专用修复：必须在 target_link_libraries 之前设置 ===
+# ──────────────────────────────────────────────
+# MinGW 专用修复（顺序很重要）
+# ──────────────────────────────────────────────
 if(MINGW)
-    # 方案1：显式禁用 EntryPoint（使用 ON 而不是 TRUE）
+    # 1. 告诉 Qt 不要注入 EntryPoint（最关键）
     set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
         QT_NO_ENTRYPOINT            ON
+    )
+
+    # 2. 明确指定为 Windows GUI 子系统（无控制台）
+    set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
         WIN32_EXECUTABLE            TRUE
     )
 
-    # 方案2：链接时强制排除 libQt6EntryPoint.a
+    # 3. 链接选项：排除 EntryPoint + 保证 mingw32 在合适的位置
     target_link_options(appEasyKiconverter_Cpp_Version PRIVATE
         "-mwindows"
-        "-Wl,--exclude-libs,libQt6EntryPoint.a"
+        # 尝试排除 EntryPoint（部分 binutils 有效）
+        "-Wl,--exclude-libs=libQt6EntryPoint.a"
+        # 更强的排除方式（推荐加这一行）
+        "-Wl,--allow-multiple-definition"
+    )
+
+    # 4. 很多时候需要显式把 mingw32 放到链接列表前面（提供 WinMainCRTStartup 等）
+    target_link_libraries(appEasyKiconverter_Cpp_Version
+        PRIVATE
+            # 故意放在最前面
+            mingw32
+
+            EasyKiConverterLib
+            Qt6::Quick
+            Qt6::Network
+            Qt6::Core
+            Qt6::Gui
+            Qt6::Widgets
+            Qt6::QuickControls2
+            ZLIB::ZLIB
     )
 endif()
 
@@ -95,18 +120,20 @@ target_include_directories(appEasyKiconverter_Cpp_Version
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# 链接库
-target_link_libraries(appEasyKiconverter_Cpp_Version
-    PRIVATE
-        EasyKiConverterLib
-        Qt6::Quick
-        Qt6::Network
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Widgets
-        Qt6::QuickControls2
-        ZLIB::ZLIB
-)
+# 链接库（非 MinGW 平台）
+if(NOT MINGW)
+    target_link_libraries(appEasyKiconverter_Cpp_Version
+        PRIVATE
+            EasyKiConverterLib
+            Qt6::Quick
+            Qt6::Network
+            Qt6::Core
+            Qt6::Gui
+            Qt6::Widgets
+            Qt6::QuickControls2
+            ZLIB::ZLIB
+    )
+endif()
 
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
@@ -138,13 +165,22 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
 )
 
 # 设置目标属性
-set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
-    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-    MACOSX_BUNDLE TRUE
-    WIN32_EXECUTABLE TRUE
-    OUTPUT_NAME "EasyKiConverter"
-)
+if(MSVC)
+    set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
+        MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+        MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+        MACOSX_BUNDLE TRUE
+        WIN32_EXECUTABLE TRUE
+        OUTPUT_NAME "EasyKiConverter"
+    )
+else()
+    set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
+        MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+        MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+        MACOSX_BUNDLE TRUE
+        OUTPUT_NAME "EasyKiConverter"
+    )
+endif()
 
 # 安装规则
 include(GNUInstallDirs)
