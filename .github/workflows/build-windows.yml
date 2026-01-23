@@ -31,6 +31,26 @@ jobs:
           cache: true
           # install-qt-action 会自动安装对应的 MinGW 工具链
 
+      - name: Clean environment variables
+        shell: pwsh
+        run: |
+          # 清理可能干扰的环境变量
+          # 移除系统自带的 GCC/MinGW 路径，确保使用 Qt 的 MinGW
+          $env:PATH = ($env:PATH -split ';' | Where-Object { 
+            $_ -notmatch 'mingw' -and 
+            $_ -notmatch 'gcc' -and 
+            $_ -notmatch 'C:\\Program Files\\Git\\usr\\bin'
+          }) -join ';'
+          
+          # 确保 Qt 的 MinGW 在 PATH 最前面
+          $env:PATH = "$env:Qt6_DIR\bin;$env:Qt6_DIR\..\Tools\mingw*\bin;$env:PATH"
+          
+          Write-Host "=== Cleaned PATH ==="
+          Write-Host $env:PATH
+          Write-Host ""
+          Write-Host "=== Qt Directory ==="
+          Write-Host $env:Qt6_DIR
+
       - name: Configure CMake
         shell: pwsh
         run: |
