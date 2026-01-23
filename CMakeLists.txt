@@ -132,14 +132,26 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         src/ui/qml/styles/qmldir
 )
 
-# === 再次确保移除 EntryPoint（双重保险）===
+# === 彻底移除 Qt6::EntryPoint（处理所有可能的注入方式）===
 if(MINGW)
+    # 1. 尝试从 LINK_LIBRARIES 移除
     get_target_property(LINK_LIBS appEasyKiconverter_Cpp_Version LINK_LIBRARIES)
     if(LINK_LIBS)
         list(REMOVE_ITEM LINK_LIBS "Qt6::EntryPoint")
         set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES LINK_LIBRARIES "${LINK_LIBS}")
-        message(STATUS "MinGW: Successfully removed Qt6::EntryPoint to avoid __imp___argc error")
     endif()
+
+    # 2. 【关键】从 INTERFACE_LINK_LIBRARIES 移除（qt_add_qml_module 可能在这里加）
+    get_target_property(INTERFACE_LIBS appEasyKiconverter_Cpp_Version INTERFACE_LINK_LIBRARIES)
+    if(INTERFACE_LIBS)
+        list(REMOVE_ITEM INTERFACE_LIBS "Qt6::EntryPoint")
+        set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES INTERFACE_LINK_LIBRARIES "${INTERFACE_LIBS}")
+    endif()
+
+    # 3. 确保不自动链接 EntryPoint
+    set_property(TARGET appEasyKiconverter_Cpp_Version PROPERTY AUTOMOC_SKIP Qt6::EntryPoint)
+
+    message(STATUS "MinGW: Removed Qt6::EntryPoint from both LINK_LIBRARIES and INTERFACE_LINK_LIBRARIES")
 endif()
 
 # 设置目标属性
