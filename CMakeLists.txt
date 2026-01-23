@@ -76,12 +76,17 @@ qt_add_executable(appEasyKiconverter_Cpp_Version
 
 # === MinGW 专用修复：必须在 target_link_libraries 之前设置 ===
 if(MINGW)
-    # 禁用 Qt EntryPoint
-    set_property(TARGET appEasyKiconverter_Cpp_Version
-        PROPERTY QT_NO_ENTRYPOINT TRUE
+    # 方案1：显式禁用 EntryPoint（使用 ON 而不是 TRUE）
+    set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
+        QT_NO_ENTRYPOINT            ON
+        WIN32_EXECUTABLE            TRUE
     )
-    # 强制使用 Windows GUI 子系统（无控制台）
-    target_link_options(appEasyKiconverter_Cpp_Version PRIVATE "-mwindows")
+
+    # 方案2：链接时强制排除 libQt6EntryPoint.a
+    target_link_options(appEasyKiconverter_Cpp_Version PRIVATE
+        "-mwindows"
+        "-Wl,--exclude-libs,libQt6EntryPoint.a"
+    )
 endif()
 
 # 添加 src 目录到 include 路径
@@ -131,28 +136,6 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/imgs/background.jpg
         src/ui/qml/styles/qmldir
 )
-
-# === 移除 Qt6::EntryPoint ===
-if(MINGW)
-    # 1. 尝试从 LINK_LIBRARIES 移除
-    get_target_property(LINK_LIBS appEasyKiconverter_Cpp_Version LINK_LIBRARIES)
-    if(LINK_LIBS)
-        list(REMOVE_ITEM LINK_LIBS "Qt6::EntryPoint")
-        set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES LINK_LIBRARIES "${LINK_LIBS}")
-    endif()
-
-    # 2. 从 INTERFACE_LINK_LIBRARIES 移除
-    get_target_property(INTERFACE_LIBS appEasyKiconverter_Cpp_Version INTERFACE_LINK_LIBRARIES)
-    if(INTERFACE_LIBS)
-        list(REMOVE_ITEM INTERFACE_LIBS "Qt6::EntryPoint")
-        set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES INTERFACE_LINK_LIBRARIES "${INTERFACE_LIBS}")
-    endif()
-
-    # 3. 确保不自动链接 EntryPoint
-    set_property(TARGET appEasyKiconverter_Cpp_Version PROPERTY AUTOMOC_SKIP Qt6::EntryPoint)
-
-    message(STATUS "MinGW: Removed Qt6::EntryPoint from both LINK_LIBRARIES and INTERFACE_LINK_LIBRARIES")
-endif()
 
 # 设置目标属性
 set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
