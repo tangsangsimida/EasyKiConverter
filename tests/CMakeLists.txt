@@ -1,6 +1,9 @@
 ﻿cmake_minimum_required(VERSION 3.16)
 project(tests)
 
+# 启用测试
+enable_testing()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -50,6 +53,9 @@ else()
     target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network z)
 endif()
 
+# 注册测试
+add_test(NAME test_component_service COMMAND test_component_service)
+
 # ========== ExportService 测试 ==========
 add_executable(test_export_service test_export_service.cpp)
 
@@ -83,6 +89,9 @@ if(ZLIB_FOUND)
 else()
     target_link_libraries(test_export_service z)
 endif()
+
+# 注册测试
+add_test(NAME test_export_service COMMAND test_export_service)
 
 # ========== ExportServicePipeline 测试 ==========
 add_executable(test_export_service_pipeline test_export_service_pipeline.cpp)
@@ -122,6 +131,9 @@ else()
     target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network z)
 endif()
 
+# 注册测试
+add_test(NAME test_export_service_pipeline COMMAND test_export_service_pipeline)
+
 # ========== ConfigService 测试 ==========
 add_executable(test_config_service test_config_service.cpp)
 
@@ -133,6 +145,9 @@ target_sources(test_config_service PRIVATE
 target_include_directories(test_config_service PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 target_link_libraries(test_config_service Qt6::Core Qt6::Test)
+
+# 注册测试
+add_test(NAME test_config_service COMMAND test_config_service)
 
 # ========== ComponentDataCollector 测试 ==========
 add_executable(test_component_data_collector test_component_data_collector.cpp)
@@ -163,11 +178,17 @@ else()
     target_link_libraries(test_component_data_collector z)
 endif()
 
+# 注册测试
+add_test(NAME test_component_data_collector COMMAND test_component_data_collector)
+
 # ========== UUID 提取测试 ==========
 add_executable(test_uuid_extraction test_uuid_extraction.cpp)
 target_include_directories(test_uuid_extraction PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 target_link_libraries(test_uuid_extraction Qt6::Core)
+
+# 注册测试
+add_test(NAME test_uuid_extraction COMMAND test_uuid_extraction)
 
 # ========== 图层映射测试 ==========
 add_executable(test_layer_mapping test_layer_mapping.cpp)
@@ -180,6 +201,9 @@ target_sources(test_layer_mapping PRIVATE
 target_include_directories(test_layer_mapping PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 target_link_libraries(test_layer_mapping Qt6::Core)
+
+# 注册测试
+add_test(NAME test_layer_mapping COMMAND test_layer_mapping)
 
 # ========== 集成测试 ==========
 add_executable(test_integration test_integration.cpp)
@@ -219,6 +243,9 @@ else()
     target_link_libraries(test_integration Qt6::Core Qt6::Test Qt6::Network z)
 endif()
 
+# 注册测试
+add_test(NAME test_integration COMMAND test_integration)
+
 # ========== 性能测试 ==========
 add_executable(test_performance test_performance.cpp)
 
@@ -254,6 +281,9 @@ if(ZLIB_FOUND)
 else()
     target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network z)
 endif()
+
+# 注册测试
+add_test(NAME test_performance COMMAND test_performance)
 
 # ========== 流水线性能基准测试 ==========
 add_executable(test_pipeline_baseline test_pipeline_baseline.cpp)
@@ -296,3 +326,6 @@ if(ZLIB_FOUND)
 else()
     target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network z)
 endif()
+
+# 注册测试
+add_test(NAME test_pipeline_baseline COMMAND test_pipeline_baseline)
