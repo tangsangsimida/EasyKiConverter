@@ -1,4 +1,4 @@
-﻿name: 'Setup Build Environment'
+name: 'Setup Build Environment'
 description: 'Setup CMake, Qt, and build cache for EasyKiConverter project'
 
 inputs:
@@ -34,12 +34,48 @@ inputs:
     description: 'Enable sccache (Windows)'
     required: false
     default: 'true'
+  install-linux-deps:
+    description: 'Install Linux system dependencies'
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
   steps:
+    - name: 'Install Linux Dependencies'
+      if: inputs.install-linux-deps == 'true' && runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get -y -qq update
+        sudo apt-get -y --no-install-recommends install \
+          cmake \
+          build-essential \
+          libgl1-mesa-dev \
+          libxcb-xinerama0 \
+          libxcb-cursor0 \
+          libxkbcommon-x11-0 \
+          libxcb-icccm4 \
+          libxcb-image0 \
+          libxcb-shape0 \
+          libxcb-render-util0 \
+          libxcb-xfixes0 \
+          libxcb-xkbcommon1 \
+          libxcb-keysyms1 \
+          libxcb-randr0 \
+          libxcb-render0 \
+          libxcb-shm0 \
+          libxcb-util1 \
+          libwayland-dev \
+          libegl1-mesa-dev \
+          libgles2-mesa-dev \
+          libfontconfig1-dev \
+          libfreetype6-dev \
+          libharfbuzz-dev \
+          libdbus-1-dev \
+          libglib2.0-0
+
     - name: 'Setup CMake'
-      uses: jwlawson/actions-setup-cmake@v2.2
+      uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: ${{ inputs.cmake-version }}
 
@@ -57,7 +93,7 @@ runs:
       if: inputs.enable-ccache == 'true' && (runner.os == 'Linux' || runner.os == 'macOS')
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: ${{ runner.os }}-build
+        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
 
     - name: 'Setup sccache'
       if: inputs.enable-sccache == 'true' && runner.os == 'Windows'

@@ -21,6 +21,7 @@ env:
   PRODUCT: EasyKiConverter
   RELEASE: 1
   QT_VERSION: '6.10.1'
+  CMAKE_VERSION: '3.16'
 
 jobs:
   appimage-pack:
@@ -66,38 +67,25 @@ jobs:
           echo "VER_INFO=${ver_info}" >> $GITHUB_ENV
           echo "GIT_HASH=${git_hash}" >> $GITHUB_ENV
 
-      - name: 'Install Dependencies'
+      - name: 'Install AppImage Dependencies'
         run: |
           sudo apt-get -y -qq update
           sudo apt-get -y --no-install-recommends install \
             fuse \
-            cmake \
-            build-essential \
-            qt6-base-dev \
-            qt6-tools-dev \
-            qt6-tools-dev-tools \
-            libqt6svg6-dev \
-            qt6-l10n-tools \
-            qt6-wayland \
-            libgl-dev \
             appstream \
             hicolor-icon-theme \
             openssl \
             ca-certificates
 
-      - name: 'Setup CMake'
-        uses: jwlawson/actions-setup-cmake@v2
+      - name: 'Setup Build Environment'
+        uses: ./.github/actions/setup-env@v1
         with:
-          cmake-version: '3.16'
-
-      - name: 'Install Qt'
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: 'linux'
-          target: 'desktop'
-          modules: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
-          cache: true
+          cmake-version: ${{ env.CMAKE_VERSION }}
+          qt-version: ${{ env.QT_VERSION }}
+          qt-host: 'linux'
+          qt-target: 'desktop'
+          enable-ccache: 'true'
+          enable-sccache: 'false'
 
       - name: 'Download linuxdeploy'
         run: |
@@ -121,6 +109,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
             -DCMAKE_INSTALL_PREFIX=/usr \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
           cmake --build build --config RelWithDebInfo --parallel
           cmake --install build --prefix ${APPIMAGE_DST_PATH}/usr
@@ -193,38 +183,15 @@ jobs:
           echo "VER_INFO=${ver_info}" >> $GITHUB_ENV
           echo "GIT_HASH=${git_hash}" >> $GITHUB_ENV
 
-      - name: 'Install Dependencies'
-        run: |
-          apt-get -y -qq update
-          apt-get -y --no-install-recommends install \
-            cmake \
-            build-essential \
-            libgl1-mesa-dev \
-            libxcb-xinerama0 \
-            libxcb-cursor0 \
-            libxkbcommon-x11-0 \
-            libxcb-icccm4 \
-            libxcb-image0 \
-            libxcb-shape0 \
-            libxcb-render-util0 \
-            libxcb-xfixes0 \
-            libwayland-dev \
-            libegl1-mesa-dev \
-            libgles2-mesa-dev
-
-      - name: 'Setup CMake'
-        uses: jwlawson/actions-setup-cmake@v2
+      - name: 'Setup Build Environment'
+        uses: ./.github/actions/setup-env@v1
         with:
-          cmake-version: '3.16'
-
-      - name: 'Install Qt'
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: 'linux'
-          target: 'desktop'
-          modules: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
-          cache: true
+          cmake-version: ${{ env.CMAKE_VERSION }}
+          qt-version: ${{ env.QT_VERSION }}
+          qt-host: 'linux'
+          qt-target: 'desktop'
+          enable-ccache: 'true'
+          enable-sccache: 'false'
 
       - name: 'Build application'
         run: |
@@ -233,6 +200,8 @@ jobs:
           cmake -B build \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
           cmake --build build --config RelWithDebInfo --parallel
 

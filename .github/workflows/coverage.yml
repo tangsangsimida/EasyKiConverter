@@ -40,37 +40,20 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: 'Install Dependencies'
+      - name: 'Install lcov'
         run: |
           sudo apt-get -y -qq update
-          sudo apt-get -y --no-install-recommends install \
-            cmake \
-            build-essential \
-            lcov \
-            libgl1-mesa-dev \
-            libxcb-xinerama0 \
-            libxcb-cursor0 \
-            libxkbcommon-x11-0 \
-            libxcb-icccm4 \
-            libxcb-image0 \
-            libxcb-shape0 \
-            libxcb-render-util0 \
-            libxcb-xfixes0 \
-            libwayland-dev \
-            libegl1-mesa-dev \
-            libgles2-mesa-dev
+          sudo apt-get -y --no-install-recommends install lcov
 
-      - name: 'Setup CMake'
-        uses: jwlawson/actions-setup-cmake@v2
-
-      - name: 'Install Qt'
-        uses: jurplel/install-qt-action@v4
+      - name: 'Setup Build Environment'
+        uses: ./.github/actions/setup-env@v1
         with:
-          version: ${{ env.QT_VERSION }}
-          host: 'linux'
-          target: 'desktop'
-          modules: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
-          cache: true
+          cmake-version: ${{ env.CMAKE_VERSION }}
+          qt-version: ${{ env.QT_VERSION }}
+          qt-host: 'linux'
+          qt-target: 'desktop'
+          enable-ccache: 'true'
+          enable-sccache: 'false'
 
       - name: 'Configure main project with coverage'
         run: |
