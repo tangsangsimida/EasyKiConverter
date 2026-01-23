@@ -162,11 +162,6 @@ if(ZLIB_FOUND)
     endif()
 endif()
 
-# 对于 MinGW，强制链接 libssp 库（Stack Smashing Protection）
-if(MINGW)
-    target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE ssp)
-endif()
-
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
     URI EasyKiconverter_Cpp_Version
