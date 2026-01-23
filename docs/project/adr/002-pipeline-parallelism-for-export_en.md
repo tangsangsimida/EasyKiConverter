@@ -1,4 +1,4 @@
-# ADR-002: Adopt Multi-Stage Pipeline Parallelism Architecture for Export Functionality
+﻿# ADR-002: Adopt Multi-Stage Pipeline Parallelism Architecture for Export Functionality
 
 ## Status
 

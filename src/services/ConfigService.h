@@ -1,4 +1,4 @@
-#ifndef CONFIGSERVICE_H
+﻿#ifndef CONFIGSERVICE_H
 #define CONFIGSERVICE_H
 
 #include <QObject>

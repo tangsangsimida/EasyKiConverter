@@ -1,4 +1,4 @@
-#ifndef COMPONENTEXPORTTASK_H
+﻿#ifndef COMPONENTEXPORTTASK_H
 #define COMPONENTEXPORTTASK_H
 
 #include <QObject>

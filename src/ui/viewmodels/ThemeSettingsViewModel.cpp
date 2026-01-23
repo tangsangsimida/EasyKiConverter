@@ -1,4 +1,4 @@
-#include "ThemeSettingsViewModel.h"
+﻿#include "ThemeSettingsViewModel.h"
 #include <QDebug>
 
 namespace EasyKiConverter

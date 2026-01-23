@@ -1,4 +1,4 @@
-#include <QtTest/QtTest>
+﻿#include <QtTest/QtTest>
 #include <QSignalSpy>
 #include "services/ComponentDataCollector.h"
 #include "core/easyeda/EasyedaApi.h"

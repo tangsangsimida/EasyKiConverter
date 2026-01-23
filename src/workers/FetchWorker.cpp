@@ -1,4 +1,4 @@
-#include "FetchWorker.h"
+﻿#include "FetchWorker.h"
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QEventLoop>
@@ -31,11 +31,11 @@ namespace EasyKiConverter
 
     void FetchWorker::run()
     {
-        // 启动计时�?
+        // 启动计时�?
         QElapsedTimer fetchTimer;
         fetchTimer.start();
 
-        // 在工作线程中创建自己�?QNetworkAccessManager
+        // 在工作线程中创建自己�?QNetworkAccessManager
         m_ownNetworkManager = new QNetworkAccessManager();
         m_ownNetworkManager->moveToThread(QThread::currentThread());
 
@@ -46,11 +46,11 @@ namespace EasyKiConverter
 
         status->addDebugLog(QString("FetchWorker started for component: %1").arg(m_componentId));
 
-        // 使用同步方式获取数据（避免QEventLoop死锁�?
+        // 使用同步方式获取数据（避免QEventLoop死锁�?
         bool hasError = false;
         QString errorMessage;
 
-        // 1. 获取组件信息（包含CAD数据�?
+        // 1. 获取组件信息（包含CAD数据�?
         QString componentInfoUrl = QString("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(m_componentId);
         status->addDebugLog(QString("Fetching component info from: %1").arg(componentInfoUrl));
 
@@ -70,12 +70,12 @@ namespace EasyKiConverter
             status->cadJsonRaw = componentInfoData;   // cad JSON 原始数据
             status->addDebugLog(QString("Component info (including CAD) fetched for: %1, Size: %2 bytes").arg(m_componentId).arg(componentInfoData.size()));
 
-            // 2. 如果需�?D模型，解析CAD数据获取UUID并下�?D模型
+            // 2. 如果需�?D模型，解析CAD数据获取UUID并下�?D模型
             if (m_need3DModel && !hasError)
             {
                 status->addDebugLog("Parsing CAD data to extract 3D model UUID...");
 
-                // 快速解析CAD数据以获�?D模型UUID
+                // 快速解析CAD数据以获�?D模型UUID
                 QJsonParseError parseError;
                 QJsonDocument doc = QJsonDocument::fromJson(componentInfoData, &parseError);
 
@@ -84,7 +84,7 @@ namespace EasyKiConverter
                     QJsonObject rootObj = doc.object();
                     QJsonObject obj;
 
-                    // API 返回的数据在 result 字段�?
+                    // API 返回的数据在 result 字段�?
                     if (rootObj.contains("result") && rootObj["result"].isObject())
                     {
                         obj = rootObj["result"].toObject();
@@ -110,7 +110,7 @@ namespace EasyKiConverter
                                 if (!fetch3DModelData(*status))
                                 {
                                     status->addDebugLog(QString("WARNING: Failed to fetch 3D model data for: %1").arg(m_componentId));
-                                    // 3D模型下载失败不影响整体流�?
+                                    // 3D模型下载失败不影响整体流�?
                                 }
                             }
                         }
@@ -123,7 +123,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 清理网络管理�?
+        // 清理网络管理�?
         if (m_ownNetworkManager)
         {
             m_ownNetworkManager->deleteLater();
@@ -133,7 +133,7 @@ namespace EasyKiConverter
         // 记录抓取耗时
         status->fetchDurationMs = fetchTimer.elapsed();
 
-        // 设置状�?
+        // 设置状�?
         if (hasError)
         {
             status->fetchSuccess = false;
@@ -205,7 +205,7 @@ namespace EasyKiConverter
         z_stream stream;
         memset(&stream, 0, sizeof(stream));
 
-        // 初始�?zlib
+        // 初始�?zlib
         if (inflateInit2(&stream, 15 + 16) != Z_OK)
         {
             qWarning() << "Failed to initialize zlib";
@@ -261,7 +261,7 @@ namespace EasyKiConverter
 
         while (pos < zipData.size() - 30)
         {
-            // 查找本地文件头签�?(0x04034b50)
+            // 查找本地文件头签�?(0x04034b50)
             if (zipData[pos] != 0x50 || zipData[pos + 1] != 0x03 ||
                 zipData[pos + 2] != 0x04 || zipData[pos + 3] != 0x4b)
             {
@@ -269,13 +269,13 @@ namespace EasyKiConverter
                 continue;
             }
 
-            // 读取本地文件�?
+            // 读取本地文件�?
             // 跳过版本、标志、压缩方法等字段
             // 读取压缩后的大小 (offset 18)
             std::uint16_t compressedSize = ((std::uint8_t)zipData[pos + 18] | ((std::uint8_t)zipData[pos + 19] << 8));
             // 读取未压缩的大小 (offset 22)
             std::uint16_t uncompressedSize = ((std::uint8_t)zipData[pos + 22] | ((std::uint8_t)zipData[pos + 23] << 8));
-            // 读取文件名长�?(offset 26)
+            // 读取文件名长�?(offset 26)
             std::uint16_t fileNameLen = ((std::uint8_t)zipData[pos + 26] | ((std::uint8_t)zipData[pos + 27] << 8));
             // 读取额外字段长度 (offset 28)
             std::uint16_t extraFieldLen = ((std::uint8_t)zipData[pos + 28] | ((std::uint8_t)zipData[pos + 29] << 8));
@@ -283,7 +283,7 @@ namespace EasyKiConverter
             // 跳过文件名和额外字段
             int dataStart = pos + 30 + fileNameLen + extraFieldLen;
 
-            // 检查压缩方�?(offset 8)
+            // 检查压缩方�?(offset 8)
             std::uint16_t compressionMethod = ((std::uint8_t)zipData[pos + 8] | ((std::uint8_t)zipData[pos + 9] << 8));
 
             if (compressionMethod == 8)
@@ -294,7 +294,7 @@ namespace EasyKiConverter
                 result.append(decompressedData);
             }
             else if (compressionMethod == 0)
-            { // 不压�?
+            { // 不压�?
                 QByteArray uncompressedData = zipData.mid(dataStart, uncompressedSize);
                 result.append(uncompressedData);
             }
@@ -303,7 +303,7 @@ namespace EasyKiConverter
                 qWarning() << "Unsupported ZIP compression method:" << compressionMethod;
             }
 
-            // 移动到下一个文�?
+            // 移动到下一个文�?
             pos = dataStart + compressedSize;
         }
 
@@ -312,7 +312,7 @@ namespace EasyKiConverter
 
     bool FetchWorker::fetch3DModelData(ComponentExportStatus &status)
     {
-        // 从CAD数据中提�?D模型UUID
+        // 从CAD数据中提�?D模型UUID
         QString uuid;
 
         QJsonParseError parseError;
@@ -358,10 +358,10 @@ namespace EasyKiConverter
 
         status.addDebugLog(QString("Fetching 3D model for UUID: %1").arg(uuid));
 
-        // 下载OBJ格式�?D模型
+        // 下载OBJ格式�?D模型
         QString objUrl = QString("https://modules.easyeda.com/3dmodel/%1").arg(uuid);
         status.addDebugLog(QString("Downloading 3D model from: %1").arg(objUrl));
-        QByteArray objData = httpGet(objUrl, 60000); // 60秒超�?
+        QByteArray objData = httpGet(objUrl, 60000); // 60秒超�?
 
         if (objData.isEmpty())
         {
@@ -397,10 +397,10 @@ namespace EasyKiConverter
         status.model3DObjRaw = actualObjData;
         status.addDebugLog(QString("3D model (OBJ) data fetched successfully for: %1").arg(status.componentId));
 
-        // 下载STEP格式�?D模型
+        // 下载STEP格式�?D模型
         QString stepUrl = QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(uuid);
         status.addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));
-        QByteArray stepData = httpGet(stepUrl, 60000); // 60秒超�?
+        QByteArray stepData = httpGet(stepUrl, 60000); // 60秒超�?
 
         if (!stepData.isEmpty() && stepData.size() > 100)
         { // STEP文件通常大于100字节

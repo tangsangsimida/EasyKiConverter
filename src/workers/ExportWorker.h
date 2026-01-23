@@ -1,4 +1,4 @@
-#ifndef EXPORTWORKER_H
+﻿#ifndef EXPORTWORKER_H
 #define EXPORTWORKER_H
 
 #include <QObject>
@@ -23,16 +23,16 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 构造函�?
+         * @brief 构造函�?
          * @param componentData 元件数据
          * @param symbolData 符号数据
          * @param footprintData 封装数据
          * @param outputPath 输出路径
-         * @param libName 库名�?
+         * @param libName 库名�?
          * @param exportSymbol 是否导出符号
          * @param exportFootprint 是否导出封装
          * @param exportModel3D 是否导出3D模型
-         * @param parent 父对�?
+         * @param parent 父对�?
          */
         explicit ExportWorker(
             const QString &componentId,
@@ -67,19 +67,19 @@ namespace EasyKiConverter
         /**
          * @brief 导出进度信号
          * @param componentId 元件ID
-         * @param progress 进度�?-100�?
+         * @param progress 进度�?-100�?
          */
         void exportProgress(const QString &componentId, int progress);
 
     private:
         /**
-         * @brief 导出符号�?
+         * @brief 导出符号�?
          * @return bool 是否成功
          */
         bool exportSymbolLibrary();
 
         /**
-         * @brief 导出封装�?
+         * @brief 导出封装�?
          * @param model3DPath 3D模型路径
          * @return bool 是否成功
          */

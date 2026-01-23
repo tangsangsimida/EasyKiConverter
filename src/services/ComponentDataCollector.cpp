@@ -1,4 +1,4 @@
-#include "ComponentDataCollector.h"
+﻿#include "ComponentDataCollector.h"
 #include <QDebug>
 #include "core/easyeda/EasyedaApi.h"
 #include "core/easyeda/EasyedaImporter.h"

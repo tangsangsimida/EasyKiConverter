@@ -1,4 +1,4 @@
-#include "ConfigService.h"
+﻿#include "ConfigService.h"
 #include <QFile>
 #include <QJsonDocument>
 #include <QStandardPaths>

@@ -1,4 +1,4 @@
-#ifndef MODEL3DDATA_H
+﻿#ifndef MODEL3DDATA_H
 #define MODEL3DDATA_H
 
 #include <QString>

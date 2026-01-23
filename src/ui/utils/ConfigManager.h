@@ -1,4 +1,4 @@
-#ifndef CONFIGMANAGER_H
+﻿#ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
 
 #include <QObject>
@@ -10,9 +10,9 @@ namespace EasyKiConverter
 {
 
     /**
-     * @brief 配置管理�?
+     * @brief 配置管理�?
      *
-     * 管理应用程序的配置信息，包括导出路径、库名称、导出选项�?
+     * 管理应用程序的配置信息，包括导出路径、库名称、导出选项�?
      */
     class ConfigManager : public QObject
     {
@@ -20,9 +20,9 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 构造函�?
+         * @brief 构造函�?
          *
-         * @param parent 父对�?
+         * @param parent 父对�?
          */
         explicit ConfigManager(QObject *parent = nullptr);
 
@@ -74,16 +74,16 @@ namespace EasyKiConverter
         void setExportPath(const QString &path);
 
         /**
-         * @brief 获取库名�?
+         * @brief 获取库名�?
          *
-         * @return QString 库名�?
+         * @return QString 库名�?
          */
         QString getLibName() const;
 
         /**
-         * @brief 设置库名�?
+         * @brief 设置库名�?
          *
-         * @param name 库名�?
+         * @param name 库名�?
          */
         void setLibName(const QString &name);
 
@@ -102,19 +102,19 @@ namespace EasyKiConverter
         void setExportOptions(const QJsonObject &options);
 
         /**
-         * @brief 重置配置为默认�?
+         * @brief 重置配置为默认�?
          */
         void resetToDefaults();
 
     signals:
         /**
-         * @brief 配置已更改信�?
+         * @brief 配置已更改信�?
          */
         void configChanged();
 
     private:
         /**
-         * @brief 初始化默认配�?
+         * @brief 初始化默认配�?
          */
         void initDefaults();
 

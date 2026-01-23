@@ -1,4 +1,4 @@
-#ifndef NETWORKUTILS_H
+﻿#ifndef NETWORKUTILS_H
 #define NETWORKUTILS_H
 
 #include <QObject>
@@ -11,7 +11,7 @@ namespace EasyKiConverter
 {
 
     /**
-     * @brief 网络工具�?
+     * @brief 网络工具�?
      *
      * 提供带重试机制的网络请求功能
      */
@@ -21,9 +21,9 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 构造函�?
+         * @brief 构造函�?
          *
-         * @param parent 父对�?
+         * @param parent 父对�?
          */
         explicit NetworkUtils(QObject *parent = nullptr);
 
@@ -33,11 +33,11 @@ namespace EasyKiConverter
         ~NetworkUtils() override;
 
         /**
-         * @brief 发�?HTTP GET 请求
+         * @brief 发�?HTTP GET 请求
          *
          * @param url 请求 URL
-         * @param timeout 超时时间（秒），默认 30 �?
-         * @param maxRetries 最大重试次数，默认 3 �?
+         * @param timeout 超时时间（秒），默认 30 �?
+         * @param maxRetries 最大重试次数，默认 3 �?
          */
         void sendGetRequest(const QString &url, int timeout = 30, int maxRetries = 3);
 
@@ -47,10 +47,10 @@ namespace EasyKiConverter
         void cancelRequest();
 
         /**
-         * @brief 设置请求�?
+         * @brief 设置请求�?
          *
          * @param key 头字段名
-         * @param value 头字段�?
+         * @param value 头字段�?
          */
         void setHeader(const QString &key, const QString &value);
 
@@ -60,9 +60,9 @@ namespace EasyKiConverter
         void clearHeaders();
 
         /**
-         * @brief 设置是否期望接收二进制数�?
+         * @brief 设置是否期望接收二进制数�?
          *
-         * @param expectBinaryData 是否期望接收二进制数�?
+         * @param expectBinaryData 是否期望接收二进制数�?
          */
         void setExpectBinaryData(bool expectBinaryData);
 
@@ -70,14 +70,14 @@ namespace EasyKiConverter
         /**
          * @brief 请求成功信号
          *
-         * @param data 响应数据（JSON 格式�?
+         * @param data 响应数据（JSON 格式�?
          */
         void requestSuccess(const QJsonObject &data);
 
         /**
-         * @brief 二进制数据获取成功信�?
+         * @brief 二进制数据获取成功信�?
          *
-         * @param binaryData 二进制数�?
+         * @param binaryData 二进制数�?
          */
         void binaryDataFetched(const QByteArray &binaryData);
 
@@ -124,10 +124,10 @@ namespace EasyKiConverter
         void retryRequest();
 
         /**
-         * @brief 检查是否需要重�?
+         * @brief 检查是否需要重�?
          *
          * @param statusCode HTTP 状态码
-         * @return bool 是否需要重�?
+         * @return bool 是否需要重�?
          */
         bool shouldRetry(int statusCode);
 
@@ -142,7 +142,7 @@ namespace EasyKiConverter
         /**
          * @brief 解压 gzip 数据
          *
-         * @param compressedData 压缩的数�?
+         * @param compressedData 压缩的数�?
          * @return QByteArray 解压后的数据
          */
         QByteArray decompressGzip(const QByteArray &compressedData);
@@ -157,7 +157,7 @@ namespace EasyKiConverter
         int m_retryCount;
         QMap<QString, QString> m_headers;
         bool m_isRequesting;
-        bool m_expectBinaryData; // 是否期望接收二进制数�?
+        bool m_expectBinaryData; // 是否期望接收二进制数�?
     };
 
 } // namespace EasyKiConverter

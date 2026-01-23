@@ -1,4 +1,4 @@
-#include "ComponentService.h"
+﻿#include "ComponentService.h"
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>

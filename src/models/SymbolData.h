@@ -1,4 +1,4 @@
-#ifndef SYMBOLDATA_H
+﻿#ifndef SYMBOLDATA_H
 #define SYMBOLDATA_H
 
 #include <QString>

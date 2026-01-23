@@ -1,4 +1,4 @@
-#ifndef FETCHWORKER_H
+﻿#ifndef FETCHWORKER_H
 #define FETCHWORKER_H
 
 #include <QObject>
@@ -20,11 +20,11 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 构造函�?
+         * @brief 构造函�?
          * @param componentId 元件ID
          * @param networkAccessManager 共享的网络访问管理器
-         * @param need3DModel 是否需�?D模型
-         * @param parent 父对�?
+         * @param need3DModel 是否需�?D模型
+         * @param parent 父对�?
          */
         explicit FetchWorker(
             const QString &componentId,
@@ -45,7 +45,7 @@ namespace EasyKiConverter
     signals:
         /**
          * @brief 抓取完成信号
-         * @param status 导出状态（使用 QSharedPointer 避免拷贝�?
+         * @param status 导出状态（使用 QSharedPointer 避免拷贝�?
          */
         void fetchCompleted(QSharedPointer<ComponentExportStatus> status);
 
@@ -60,7 +60,7 @@ namespace EasyKiConverter
 
         /**
          * @brief 解压gzip数据
-         * @param compressedData 压缩的数�?
+         * @param compressedData 压缩的数�?
          * @return QByteArray 解压后的数据
          */
         QByteArray decompressGzip(const QByteArray &compressedData);
@@ -74,7 +74,7 @@ namespace EasyKiConverter
 
         /**
          * @brief 下载3D模型数据
-         * @param status 导出状�?
+         * @param status 导出状�?
          * @return bool 是否成功
          */
         bool fetch3DModelData(ComponentExportStatus &status);

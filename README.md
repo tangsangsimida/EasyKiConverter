@@ -1,4 +1,4 @@
-# EasyKiConverter
+﻿# EasyKiConverter
 
 [English](README_en.md) | 中文
 

@@ -1,4 +1,4 @@
-import QtQuick
+﻿import QtQuick
 import QtQuick.Controls
 import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 Button {

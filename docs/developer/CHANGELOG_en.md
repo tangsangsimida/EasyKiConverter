@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 This document records the additions, fixes, and changes in each version of EasyKiConverter.
 

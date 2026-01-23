@@ -1,4 +1,4 @@
-# ViewModels 模块
+﻿# ViewModels 模块
 
 add_library(EasyKiConverterViewModels STATIC
     ComponentListViewModel.cpp

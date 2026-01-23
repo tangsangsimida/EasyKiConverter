@@ -1,4 +1,4 @@
-#include "SvgPathParser.h"
+﻿#include "SvgPathParser.h"
 #include <QRegularExpression>
 #include <QDebug>
 #include <cmath>
@@ -32,7 +32,7 @@ namespace EasyKiConverter
 
             QChar command = cmd[0].toUpper();
 
-            // 处理M/m（MoveTo）命�?
+            // 处理M/m（MoveTo）命�?
             if (command == 'M')
             {
                 bool relative = (cmd[0] == 'm');
@@ -55,7 +55,7 @@ namespace EasyKiConverter
                     points.append(pt);
                 }
             }
-            // 处理L/l（LineTo）命�?
+            // 处理L/l（LineTo）命�?
             else if (command == 'L')
             {
                 bool relative = (cmd[0] == 'l');
@@ -78,7 +78,7 @@ namespace EasyKiConverter
                     points.append(pt);
                 }
             }
-            // 处理H/h（Horizontal LineTo）命�?
+            // 处理H/h（Horizontal LineTo）命�?
             else if (command == 'H')
             {
                 bool relative = (cmd[0] == 'h');
@@ -102,7 +102,7 @@ namespace EasyKiConverter
                     points.append(QPointF(currentX, currentY));
                 }
             }
-            // 处理V/v（Vertical LineTo）命�?
+            // 处理V/v（Vertical LineTo）命�?
             else if (command == 'V')
             {
                 bool relative = (cmd[0] == 'v');
@@ -126,7 +126,7 @@ namespace EasyKiConverter
                     points.append(QPointF(currentX, currentY));
                 }
             }
-            // 处理A/a（Arc）命�?
+            // 处理A/a（Arc）命�?
             else if (command == 'A')
             {
                 bool relative = (cmd[0] == 'a');
@@ -178,13 +178,13 @@ namespace EasyKiConverter
                                                     largeArcFlag != 0, sweepFlag != 0, endPoint);
                 points.append(arcPoints);
             }
-            // 处理C/c（Bezier Curve）命�?
+            // 处理C/c（Bezier Curve）命�?
             else if (command == 'C')
             {
                 qWarning() << "Bezier curve not fully supported, skipping";
-                i += 7; // 跳过6个控制点参数 + 1个终点参�?
+                i += 7; // 跳过6个控制点参数 + 1个终点参�?
             }
-            // 处理Z/z（ClosePath）命�?
+            // 处理Z/z（ClosePath）命�?
             else if (command == 'Z')
             {
                 if (!points.isEmpty())
@@ -206,7 +206,7 @@ namespace EasyKiConverter
 
     QStringList SvgPathParser::splitPath(const QString &path)
     {
-        // 将命令字母前后添加空格，然后按空格分�?
+        // 将命令字母前后添加空格，然后按空格分�?
         QString processed = path;
         processed.replace(QRegularExpression("([a-zA-Z])"), " \\1 ");
         QStringList tokens = processed.split(QRegularExpression("[\\s,]+"), Qt::SkipEmptyParts);
@@ -233,7 +233,7 @@ namespace EasyKiConverter
     {
         QList<QPointF> points;
 
-        // 如果半径�?，直接返回起点和终点
+        // 如果半径�?，直接返回起点和终点
         if (rx <= 0 || ry <= 0)
         {
             points.append(startPoint);
@@ -248,7 +248,7 @@ namespace EasyKiConverter
         double dx = (startPoint.x() - endPoint.x()) / 2.0;
         double dy = (startPoint.y() - endPoint.y()) / 2.0;
 
-        // 旋转坐标�?
+        // 旋转坐标�?
         double x1 = cos(phi) * dx + sin(phi) * dy;
         double y1 = -sin(phi) * dx + cos(phi) * dy;
 
@@ -273,11 +273,11 @@ namespace EasyKiConverter
         double cx = cos(phi) * cx1 - sin(phi) * cy1 + (startPoint.x() + endPoint.x()) / 2.0;
         double cy = sin(phi) * cx1 + cos(phi) * cy1 + (startPoint.y() + endPoint.y()) / 2.0;
 
-        // 计算起始角度和角度增�?
+        // 计算起始角度和角度增�?
         double startAngle = getAngle(1.0, 0.0, (x1 - cx1) / rx, (y1 - cy1) / ry);
         double deltaAngle = getAngle((x1 - cx1) / rx, (y1 - cy1) / ry, (-x1 - cx1) / rx, (-y1 - cy1) / ry);
 
-        // 规范化角�?
+        // 规范化角�?
         while (startAngle < 0)
             startAngle += 2 * PI;
         while (startAngle >= 2 * PI)
@@ -299,7 +299,7 @@ namespace EasyKiConverter
         double startAngleDeg = startAngle * 180.0 / PI;
         double deltaAngleDeg = deltaAngle * 180.0 / PI;
 
-        // 计算圆弧上的�?
+        // 计算圆弧上的�?
         points = calcArcPoints(cx, cy, rx, ry, startAngleDeg, deltaAngleDeg, xRotation);
 
         return points;
@@ -309,7 +309,7 @@ namespace EasyKiConverter
                                                 double startAngle, double deltaAngle, double xRotation)
     {
         QList<QPointF> points;
-        const int splitCount = 32; // 分割�?2�?
+        const int splitCount = 32; // 分割�?2�?
         double step = deltaAngle / splitCount;
 
         double phi = xRotation * PI / 180.0;
@@ -331,7 +331,7 @@ namespace EasyKiConverter
 
     double SvgPathParser::getAngle(double x1, double y1, double x2, double y2)
     {
-        // 计算向量点积和叉�?
+        // 计算向量点积和叉�?
         double dot = x1 * x2 + y1 * y2;
         double cross = x1 * y2 - y1 * x2;
 

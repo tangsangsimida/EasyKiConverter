@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+﻿cmake_minimum_required(VERSION 3.16)
 
 project(EasyKiconverter_Cpp_Version VERSION 0.1 LANGUAGES CXX)
 

@@ -1,4 +1,4 @@
-#include "NetworkUtils.h"
+﻿#include "NetworkUtils.h"
 #include <QNetworkRequest>
 #include <QJsonDocument>
 #include <QJsonParseError>
@@ -13,13 +13,13 @@ namespace EasyKiConverter
     NetworkUtils::NetworkUtils(QObject *parent)
         : QObject(parent), m_networkManager(new QNetworkAccessManager(this)), m_currentReply(nullptr), m_timeoutTimer(new QTimer(this)), m_timeout(30), m_maxRetries(3), m_retryCount(0), m_isRequesting(false), m_expectBinaryData(false)
     {
-        // 设置默认请求�?
+        // 设置默认请求�?
         m_headers["Accept-Encoding"] = "gzip, deflate";
         m_headers["Accept"] = "application/json, text/javascript, */*; q=0.01";
         m_headers["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8";
         m_headers["User-Agent"] = "EasyKiConverter/1.0.0";
 
-        // 连接超时定时�?
+        // 连接超时定时�?
         connect(m_timeoutTimer, &QTimer::timeout, this, &NetworkUtils::handleTimeout);
     }
 
@@ -34,7 +34,7 @@ namespace EasyKiConverter
 
         if (m_isRequesting)
         {
-            // 检查状态是否不一致：m_isRequesting �?true，但没有活跃的请�?
+            // 检查状态是否不一致：m_isRequesting �?true，但没有活跃的请�?
             if (!m_currentReply && !m_timeoutTimer->isActive())
             {
                 qWarning() << "Inconsistent state detected: m_isRequesting is true but no active request. Resetting state.";
@@ -94,13 +94,13 @@ namespace EasyKiConverter
         // 创建网络请求
         QNetworkRequest request{QUrl(m_url)};
 
-        // 设置请求�?
+        // 设置请求�?
         for (auto it = m_headers.constBegin(); it != m_headers.constEnd(); ++it)
         {
             request.setRawHeader(it.key().toUtf8(), it.value().toUtf8());
         }
 
-        // 发�?GET 请求
+        // 发�?GET 请求
         m_currentReply = m_networkManager->get(request);
 
         // 连接信号
@@ -108,7 +108,7 @@ namespace EasyKiConverter
         connect(m_currentReply, &QNetworkReply::errorOccurred, this, &NetworkUtils::handleError);
         connect(m_currentReply, &QNetworkReply::downloadProgress, this, &NetworkUtils::requestProgress);
 
-        // 启动超时定时�?
+        // 启动超时定时�?
         m_timeoutTimer->start(m_timeout * 1000);
 
         qDebug() << "Sending GET request to:" << m_url << "(Retry:" << m_retryCount << "/" << m_maxRetries << ")";
@@ -116,7 +116,7 @@ namespace EasyKiConverter
 
     void NetworkUtils::handleResponse()
     {
-        // 停止超时定时�?
+        // 停止超时定时�?
         m_timeoutTimer->stop();
 
         if (!m_currentReply)
@@ -125,11 +125,11 @@ namespace EasyKiConverter
             return;
         }
 
-        // 检�?HTTP 状态码
+        // 检�?HTTP 状态码
         int statusCode = m_currentReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         qDebug() << "HTTP Status Code:" << statusCode;
 
-        // 检查是否需要重�?
+        // 检查是否需要重�?
         if (shouldRetry(statusCode) && m_retryCount < m_maxRetries)
         {
             retryRequest();
@@ -143,7 +143,7 @@ namespace EasyKiConverter
         m_currentReply->deleteLater();
         m_currentReply = nullptr;
 
-        // 检�?HTTP 状态码
+        // 检�?HTTP 状态码
         if (statusCode != 200)
         {
             QString errorMsg = QString("HTTP request failed with status code: %1").arg(statusCode);
@@ -153,10 +153,10 @@ namespace EasyKiConverter
             return;
         }
 
-        // 期望接收二进制数据，检查是否是 gzip 压缩的数据并解压�?
+        // 期望接收二进制数据，检查是否是 gzip 压缩的数据并解压�?
         if (m_expectBinaryData)
         {
-            // 检查是否是 gzip 压缩的数�?
+            // 检查是否是 gzip 压缩的数�?
             if (responseData.size() >= 2 &&
                 static_cast<unsigned char>(responseData[0]) == 0x1F &&
                 static_cast<unsigned char>(responseData[1]) == 0x8B)
@@ -174,7 +174,7 @@ namespace EasyKiConverter
             return;
         }
 
-        // 检查是否是 gzip 压缩的数�?
+        // 检查是否是 gzip 压缩的数�?
         if (responseData.size() >= 2 &&
             static_cast<unsigned char>(responseData[0]) == 0x1F &&
             static_cast<unsigned char>(responseData[1]) == 0x8B)
@@ -183,7 +183,7 @@ namespace EasyKiConverter
             responseData = decompressGzip(responseData);
         }
 
-        // 输出响应数据的前 1000 个字符用于调�?
+        // 输出响应数据的前 1000 个字符用于调�?
         qDebug() << "Response data (first 1000 chars):" << responseData.left(1000);
 
         // 解析 JSON 响应
@@ -210,7 +210,7 @@ namespace EasyKiConverter
 
         QJsonObject jsonObject = jsonDoc.object();
 
-        // 检查响应是否为�?
+        // 检查响应是否为�?
         if (jsonObject.isEmpty())
         {
             QString errorMsg = "JSON response is empty";
@@ -220,7 +220,7 @@ namespace EasyKiConverter
             return;
         }
 
-        // 检查响应是否包含错误信�?
+        // 检查响应是否包含错误信�?
         if (jsonObject.contains("success") && jsonObject["success"].toBool() == false)
         {
             QString errorMsg = QString("API returned error: %1").arg(QJsonDocument(jsonObject).toJson(QJsonDocument::Compact));
@@ -230,7 +230,7 @@ namespace EasyKiConverter
             return;
         }
 
-        // 发送成功信�?
+        // 发送成功信�?
         qDebug() << "handleResponse - Setting m_isRequesting to false before emitting requestSuccess, m_isRequesting:" << m_isRequesting;
         m_isRequesting = false;
         emit requestSuccess(jsonObject);
@@ -241,7 +241,7 @@ namespace EasyKiConverter
     {
         Q_UNUSED(error)
 
-        // 停止超时定时�?
+        // 停止超时定时�?
         m_timeoutTimer->stop();
 
         if (!m_currentReply)
@@ -257,22 +257,22 @@ namespace EasyKiConverter
         m_currentReply->deleteLater();
         m_currentReply = nullptr;
 
-        // 如果�?操作被取�?错误（由abort()触发），说明超时已经处理了，不需要重�?
+        // 如果�?操作被取�?错误（由abort()触发），说明超时已经处理了，不需要重�?
         if (error == QNetworkReply::OperationCanceledError)
         {
-            // 超时已经由handleTimeout处理，这里不需要重�?
+            // 超时已经由handleTimeout处理，这里不需要重�?
             qWarning() << "Request was cancelled, timeout handler will handle retry";
             return;
         }
 
-        // 检查是否需要重�?
+        // 检查是否需要重�?
         if (m_retryCount < m_maxRetries)
         {
             retryRequest();
             return;
         }
 
-        // 发送失败信�?
+        // 发送失败信�?
         emit requestError(errorMsg);
         m_isRequesting = false;
     }
@@ -289,10 +289,10 @@ namespace EasyKiConverter
             m_currentReply = nullptr;
         }
 
-        // 检查是否需要重�?
+        // 检查是否需要重�?
         if (m_retryCount < m_maxRetries)
         {
-            // 保持 m_isRequesting �?true，因为重试仍在进行中
+            // 保持 m_isRequesting �?true，因为重试仍在进行中
             retryRequest();
             return;
         }
@@ -310,7 +310,7 @@ namespace EasyKiConverter
         int delay = calculateRetryDelay(m_retryCount);
         qDebug() << "Retrying request in" << delay << "ms (Retry:" << m_retryCount << "/" << m_maxRetries << ")";
 
-        // 延迟后重�?
+        // 延迟后重�?
         QTimer::singleShot(delay, this, &NetworkUtils::executeRequest);
     }
 
@@ -329,7 +329,7 @@ namespace EasyKiConverter
     int NetworkUtils::calculateRetryDelay(int retryCount)
     {
         // 指数退避算法：delay = base_delay * (2 ^ (retry_count - 1))
-        // 基础延迟�?1 �?
+        // 基础延迟�?1 �?
         return 1000 * static_cast<int>(std::pow(2, retryCount - 1));
     }
 
@@ -342,7 +342,7 @@ namespace EasyKiConverter
             return compressedData;
         }
 
-        // 检�?gzip 魔数数字 (0x1F, 0x8B)
+        // 检�?gzip 魔数数字 (0x1F, 0x8B)
         if (static_cast<unsigned char>(compressedData[0]) != 0x1F ||
             static_cast<unsigned char>(compressedData[1]) != 0x8B)
         {
@@ -354,7 +354,7 @@ namespace EasyKiConverter
         z_stream stream;
         memset(&stream, 0, sizeof(stream));
 
-        // 初始�?zlib
+        // 初始�?zlib
         if (inflateInit2(&stream, 15 + 16) != Z_OK)
         { // 15 + 16 启用 gzip 解码
             qWarning() << "Failed to initialize zlib for gzip decompression";

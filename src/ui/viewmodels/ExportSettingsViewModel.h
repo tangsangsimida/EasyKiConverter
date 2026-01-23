@@ -1,4 +1,4 @@
-#ifndef EXPORTSETTINGSVIEWMODEL_H
+﻿#ifndef EXPORTSETTINGSVIEWMODEL_H
 #define EXPORTSETTINGSVIEWMODEL_H
 
 #include <QObject>
@@ -9,9 +9,9 @@ namespace EasyKiConverter
 {
 
     /**
-     * @brief 导出设置视图模型�?
+     * @brief 导出设置视图模型�?
      *
-     * 负责管理导出设置相关�?UI 状态和操作
+     * 负责管理导出设置相关�?UI 状态和操作
      */
     class ExportSettingsViewModel : public QObject
     {
@@ -42,7 +42,7 @@ namespace EasyKiConverter
         int progress() const { return m_progress; }
         QString status() const { return m_status; }
 
-        // Setter 方法（标记为 Q_INVOKABLE 以便�?QML 中调用）
+        // Setter 方法（标记为 Q_INVOKABLE 以便�?QML 中调用）
         Q_INVOKABLE void setOutputPath(const QString &path);
         Q_INVOKABLE void setLibName(const QString &name);
         Q_INVOKABLE void setExportSymbol(bool enabled);

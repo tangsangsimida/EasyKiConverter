@@ -1,4 +1,4 @@
-# Contributing Guide
+﻿# Contributing Guide
 
 Thank you for your interest in contributing to EasyKiConverter! This document provides guidelines for contributing to the project.
 

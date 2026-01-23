@@ -1,4 +1,4 @@
-#ifndef EASYEDAAPI_H
+﻿#ifndef EASYEDAAPI_H
 #define EASYEDAAPI_H
 
 #include <QObject>
@@ -12,7 +12,7 @@ namespace EasyKiConverter
     /**
      * @brief EasyEDA API 客户端类
      *
-     * 用于�?EasyEDA 服务器通信，获取组件数�?
+     * 用于�?EasyEDA 服务器通信，获取组件数�?
      */
     class EasyedaApi : public QObject
     {
@@ -20,9 +20,9 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 构造函�?
+         * @brief 构造函�?
          *
-         * @param parent 父对�?
+         * @param parent 父对�?
          */
         explicit EasyedaApi(QObject *parent = nullptr);
 
@@ -34,28 +34,28 @@ namespace EasyKiConverter
         /**
          * @brief 获取组件信息
          *
-         * @param lcscId LCSC 组件 ID（应�?'C' 开头）
+         * @param lcscId LCSC 组件 ID（应�?'C' 开头）
          */
         void fetchComponentInfo(const QString &lcscId);
 
         /**
-         * @brief 获取组件�?CAD 数据
+         * @brief 获取组件�?CAD 数据
          *
          * @param lcscId LCSC 组件 ID
          */
         void fetchCadData(const QString &lcscId);
 
         /**
-         * @brief 获取 3D 模型数据（OBJ 格式�?
+         * @brief 获取 3D 模型数据（OBJ 格式�?
          *
-         * @param uuid 3D 模型�?UUID
+         * @param uuid 3D 模型�?UUID
          */
         void fetch3DModelObj(const QString &uuid);
 
         /**
-         * @brief 获取 3D 模型数据（STEP 格式�?
+         * @brief 获取 3D 模型数据（STEP 格式�?
          *
-         * @param uuid 3D 模型�?UUID
+         * @param uuid 3D 模型�?UUID
          */
         void fetch3DModelStep(const QString &uuid);
 
@@ -82,7 +82,7 @@ namespace EasyKiConverter
         /**
          * @brief 3D 模型数据获取成功信号
          *
-         * @param uuid 3D 模型�?UUID
+         * @param uuid 3D 模型�?UUID
          * @param data 3D 模型数据
          */
         void model3DFetched(const QString &uuid, const QByteArray &data);
@@ -126,7 +126,7 @@ namespace EasyKiConverter
         void handleRequestError(NetworkUtils *networkUtils, const QString &lcscId, const QString &error);
 
         /**
-         * @brief 处理二进制数据（支持并行请求�?
+         * @brief 处理二进制数据（支持并行请求�?
          */
         void handleBinaryDataFetched(NetworkUtils *networkUtils, const QString &lcscId, const QByteArray &data);
 
@@ -147,7 +147,7 @@ namespace EasyKiConverter
         void handleRequestSuccess(const QJsonObject &data);
 
         /**
-         * @brief 重置请求状�?
+         * @brief 重置请求状�?
          */
         void resetRequestState();
 
@@ -160,17 +160,17 @@ namespace EasyKiConverter
         QString buildComponentApiUrl(const QString &lcscId) const;
 
         /**
-         * @brief 构建 3D 模型 URL（OBJ 格式�?
+         * @brief 构建 3D 模型 URL（OBJ 格式�?
          *
-         * @param uuid 3D 模型�?UUID
+         * @param uuid 3D 模型�?UUID
          * @return QString 3D 模型 URL
          */
         QString build3DModelObjUrl(const QString &uuid) const;
 
         /**
-         * @brief 构建 3D 模型 URL（STEP 格式�?
+         * @brief 构建 3D 模型 URL（STEP 格式�?
          *
-         * @param uuid 3D 模型�?UUID
+         * @param uuid 3D 模型�?UUID
          * @return QString 3D 模型 URL
          */
         QString build3DModelStepUrl(const QString &uuid) const;

@@ -1,4 +1,4 @@
-#ifndef PROCESSWORKER_H
+﻿#ifndef PROCESSWORKER_H
 #define PROCESSWORKER_H
 
 #include <QObject>
@@ -20,9 +20,9 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 构造函�?
-         * @param status 导出状态（使用 QSharedPointer 避免拷贝�?
-         * @param parent 父对�?
+         * @brief 构造函�?
+         * @param status 导出状态（使用 QSharedPointer 避免拷贝�?
+         * @param parent 父对�?
          */
         explicit ProcessWorker(QSharedPointer<ComponentExportStatus> status, QObject *parent = nullptr);
 
@@ -39,28 +39,28 @@ namespace EasyKiConverter
     signals:
         /**
          * @brief 处理完成信号
-         * @param status 导出状态（使用 QSharedPointer 避免拷贝�?
+         * @param status 导出状态（使用 QSharedPointer 避免拷贝�?
          */
         void processCompleted(QSharedPointer<ComponentExportStatus> status);
 
     private:
         /**
          * @brief 解析组件信息
-         * @param status 导出状�?
+         * @param status 导出状�?
          * @return bool 是否成功
          */
         bool parseComponentInfo(ComponentExportStatus &status);
 
         /**
          * @brief 解析CAD数据
-         * @param status 导出状�?
+         * @param status 导出状�?
          * @return bool 是否成功
          */
         bool parseCadData(ComponentExportStatus &status);
 
         /**
          * @brief 解析3D模型数据
-         * @param status 导出状�?
+         * @param status 导出状�?
          * @return bool 是否成功
          */
         bool parse3DModelData(ComponentExportStatus &status);

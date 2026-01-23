@@ -1,4 +1,4 @@
-#include "ExportWorker.h"
+﻿#include "ExportWorker.h"
 #include "core/kicad/ExporterSymbol.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/Exporter3DModel.h"
@@ -21,7 +21,7 @@ namespace EasyKiConverter
         QObject *parent)
         : QObject(parent), QRunnable(), m_componentId(componentId), m_symbolData(symbolData), m_footprintData(footprintData), m_outputPath(outputPath), m_libName(libName), m_exportSymbol(exportSymbol), m_exportFootprint(exportFootprint), m_exportModel3D(exportModel3D)
     {
-        setAutoDelete(true); // 任务完成后自动删�?
+        setAutoDelete(true); // 任务完成后自动删�?
     }
 
     ExportWorker::~ExportWorker()
@@ -66,7 +66,7 @@ namespace EasyKiConverter
             {
                 Model3DData model3D = m_footprintData->model3D();
 
-                // 清理模型名称，移除文件系统不支持的字�?
+                // 清理模型名称，移除文件系统不支持的字�?
                 QString sanitizedName = model3D.name();
                 sanitizedName.replace(QRegularExpression("[<>:\"/\\\\|?*]"), "_");
 
@@ -232,7 +232,7 @@ namespace EasyKiConverter
         {
             QDir outputDir(m_outputPath);
 
-            // 创建主输出目�?
+            // 创建主输出目�?
             if (!outputDir.exists())
             {
                 if (!outputDir.mkpath("."))
@@ -242,7 +242,7 @@ namespace EasyKiConverter
                 }
             }
 
-            // 创建符号库目�?
+            // 创建符号库目�?
             if (m_exportSymbol)
             {
                 QString symbolDir = outputDir.filePath(m_libName);
@@ -257,7 +257,7 @@ namespace EasyKiConverter
                 }
             }
 
-            // 创建封装库目�?
+            // 创建封装库目�?
             if (m_exportFootprint)
             {
                 QString footprintDir = outputDir.filePath(QString("%1.pretty").arg(m_libName));

@@ -1,4 +1,4 @@
-#include "SymbolData.h"
+﻿#include "SymbolData.h"
 #include <QDebug>
 
 namespace EasyKiConverter

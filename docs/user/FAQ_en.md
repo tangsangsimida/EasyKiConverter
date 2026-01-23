@@ -1,4 +1,4 @@
-# Frequently Asked Questions
+﻿# Frequently Asked Questions
 
 This document collects the most frequently asked questions and their solutions.
 

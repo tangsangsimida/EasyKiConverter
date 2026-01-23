@@ -1,4 +1,4 @@
-# Core 模块
+﻿# Core 模块
 
 add_subdirectory(easyeda)
 add_subdirectory(kicad)

@@ -1,4 +1,4 @@
-#ifndef EXPORTSERVICE_PIPELINE_H
+﻿#ifndef EXPORTSERVICE_PIPELINE_H
 #define EXPORTSERVICE_PIPELINE_H
 
 #include "ExportService.h"

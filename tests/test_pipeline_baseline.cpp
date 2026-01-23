@@ -1,4 +1,4 @@
-#include <QtTest/QtTest>
+﻿#include <QtTest/QtTest>
 #include <QElapsedTimer>
 #include <QTemporaryDir>
 #include <QFile>

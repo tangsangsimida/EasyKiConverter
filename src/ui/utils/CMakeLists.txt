@@ -1,4 +1,4 @@
-# UI Utils 模块
+﻿# UI Utils 模块
 
 add_library(EasyKiConverterUIUtils STATIC
     ConfigManager.cpp

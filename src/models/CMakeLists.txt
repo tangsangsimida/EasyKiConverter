@@ -1,4 +1,4 @@
-# Models 模块
+﻿# Models 模块
 
 add_library(EasyKiConverterModels STATIC
     ComponentData.cpp

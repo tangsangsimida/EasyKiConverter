@@ -1,4 +1,4 @@
-# Project Architecture
+﻿# Project Architecture
 
 This document provides a detailed description of the EasyKiConverter project architecture design.
 

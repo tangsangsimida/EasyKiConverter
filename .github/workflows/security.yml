@@ -1,4 +1,4 @@
-name: Security
+﻿name: Security
 
 on:
   schedule:

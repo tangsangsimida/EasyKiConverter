@@ -1,4 +1,4 @@
-#ifndef EXPORTSERVICE_H
+﻿#ifndef EXPORTSERVICE_H
 #define EXPORTSERVICE_H
 
 #include <QObject>

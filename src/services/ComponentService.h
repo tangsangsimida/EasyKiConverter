@@ -1,4 +1,4 @@
-#ifndef COMPONENTSERVICE_H
+﻿#ifndef COMPONENTSERVICE_H
 #define COMPONENTSERVICE_H
 
 #include <QObject>

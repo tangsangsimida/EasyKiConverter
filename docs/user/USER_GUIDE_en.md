@@ -1,4 +1,4 @@
-# User Guide
+﻿# User Guide
 
 This manual provides detailed instructions for using all features of EasyKiConverter.
 

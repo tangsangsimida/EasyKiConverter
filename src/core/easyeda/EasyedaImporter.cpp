@@ -1,4 +1,4 @@
-#include "EasyedaImporter.h"
+﻿#include "EasyedaImporter.h"
 #include <qDebug>
 #include <QStringList>
 #include <QJsonDocument>
@@ -21,7 +21,7 @@ namespace EasyKiConverter
 
         auto symbolData = QSharedPointer<SymbolData>::create();
 
-        // 导入顶层字段（result 对象的根字段�?
+        // 导入顶层字段（result 对象的根字段�?
 
         SymbolInfo info;
         info.uuid = cadData["uuid"].toString();
@@ -47,7 +47,7 @@ namespace EasyKiConverter
             {
                 QJsonObject head = dataStr["head"].toObject();
 
-                // 编辑器信�?
+                // 编辑器信�?
                 info.editorVersion = head["editorVersion"].toString();
 
                 // 项目信息
@@ -76,7 +76,7 @@ namespace EasyKiConverter
                 }
             }
 
-            // �?lcsc 字段获取数据手册 URL
+            // �?lcsc 字段获取数据手册 URL
             if (cadData.contains("lcsc"))
             {
                 QJsonObject lcsc = cadData["lcsc"].toObject();
@@ -86,14 +86,14 @@ namespace EasyKiConverter
 
         symbolData->setInfo(info);
 
-        // 导入边界�?
+        // 导入边界�?
         if (cadData.contains("dataStr"))
         {
             QJsonObject dataStr = cadData["dataStr"].toObject();
             SymbolBBox symbolBbox;
             if (dataStr.contains("BBox"))
             {
-                // �?dataStr.BBox 中读取边界框数据
+                // �?dataStr.BBox 中读取边界框数据
                 QJsonObject bbox = dataStr["BBox"].toObject();
                 symbolBbox.x = bbox["x"].toDouble();
                 symbolBbox.y = bbox["y"].toDouble();
@@ -104,7 +104,7 @@ namespace EasyKiConverter
             }
             else if (dataStr.contains("head"))
             {
-                // 如果没有 BBox，使�?head.x �?head.y 作为中心点，width �?height 设为 0
+                // 如果没有 BBox，使�?head.x �?head.y 作为中心点，width �?height 设为 0
                 QJsonObject head = dataStr["head"].toObject();
                 symbolBbox.x = head["x"].toDouble();
                 symbolBbox.y = head["y"].toDouble();
@@ -115,7 +115,7 @@ namespace EasyKiConverter
             symbolData->setBbox(symbolBbox);
         }
 
-        // 导入几何数据（引脚、矩形、圆、圆弧、多边形、路径、文本等�?
+        // 导入几何数据（引脚、矩形、圆、圆弧、多边形、路径、文本等�?
         qDebug() << "=== EasyedaImporter::importSymbolData - Starting geometry data import ===";
         if (cadData.contains("dataStr"))
         {
@@ -140,7 +140,7 @@ namespace EasyKiConverter
                 {
                     qDebug() << "Found" << subparts.size() << "subparts in symbol";
 
-                    // 导入每个子部�?
+                    // 导入每个子部�?
                     for (int i = 0; i < subparts.size(); ++i)
                     {
                         QJsonObject subpart = subparts[i].toObject();
@@ -181,7 +181,7 @@ namespace EasyKiConverter
                                     }
                                     else if (designator == "C")
                                     {
-                                        // 导入�?
+                                        // 导入�?
                                         SymbolCircle circle = importCircleData(shapeString);
                                         part.circles.append(circle);
                                     }
@@ -193,13 +193,13 @@ namespace EasyKiConverter
                                     }
                                     else if (designator == "PL")
                                     {
-                                        // 导入多段�?
+                                        // 导入多段�?
                                         SymbolPolyline polyline = importPolylineData(shapeString);
                                         part.polylines.append(polyline);
                                     }
                                     else if (designator == "PG")
                                     {
-                                        // 导入多边�?
+                                        // 导入多边�?
                                         SymbolPolygon polygon = importPolygonData(shapeString);
                                         part.polygons.append(polygon);
                                     }
@@ -224,13 +224,13 @@ namespace EasyKiConverter
                                 }
                             }
 
-                            // 添加部分到符号数�?
+                            // 添加部分到符号数�?
                             symbolData->addPart(part);
                             qDebug() << "Imported subpart" << i << "with" << part.pins.size() << "pins," << part.rectangles.size() << "rectangles";
                         }
                     }
 
-                    // 如果 subparts 不为空，则跳过单部分符号的处�?
+                    // 如果 subparts 不为空，则跳过单部分符号的处�?
                     if (!subparts.isEmpty())
                     {
                         qDebug() << "Multi-part symbol processed, skipping single-part symbol processing";
@@ -280,7 +280,7 @@ namespace EasyKiConverter
                     }
                     else if (designator == "C")
                     {
-                        // 导入�?
+                        // 导入�?
                         SymbolCircle circle = importCircleData(shapeString);
                         symbolData->addCircle(circle);
                         qDebug() << "  -> Added circle";
@@ -294,14 +294,14 @@ namespace EasyKiConverter
                     }
                     else if (designator == "PL")
                     {
-                        // 导入多段�?
+                        // 导入多段�?
                         SymbolPolyline polyline = importPolylineData(shapeString);
                         symbolData->addPolyline(polyline);
                         qDebug() << "  -> Added polyline";
                     }
                     else if (designator == "PG")
                     {
-                        // 导入多边�?
+                        // 导入多边�?
                         SymbolPolygon polygon = importPolygonData(shapeString);
                         symbolData->addPolygon(polygon);
                         qDebug() << "  -> Added polygon";
@@ -369,12 +369,12 @@ namespace EasyKiConverter
             {
                 QJsonObject dataStr = packageDetail["dataStr"].toObject();
 
-                // �?dataStr.head 中获取封装信�?
+                // �?dataStr.head 中获取封装信�?
                 if (dataStr.contains("head"))
                 {
                     QJsonObject head = dataStr["head"].toObject();
 
-                    // 编辑器信�?
+                    // 编辑器信�?
                     info.editorVersion = head["editorVersion"].toString();
 
                     // 项目信息
@@ -389,7 +389,7 @@ namespace EasyKiConverter
                         QJsonObject c_para = head["c_para"].toObject();
                         info.name = c_para["package"].toString();
 
-                        // 判断是否�?SMD
+                        // 判断是否�?SMD
                         bool isSmd = cadData.contains("SMT") && cadData["SMT"].toBool();
                         info.type = isSmd ? "smd" : "tht";
 
@@ -411,7 +411,7 @@ namespace EasyKiConverter
                         info.canvas = dataStr["canvas"].toString();
                     }
 
-                    // 保存层定�?
+                    // 保存层定�?
                     if (dataStr.contains("layers"))
                     {
                         QJsonArray layersArray = dataStr["layers"].toArray();
@@ -423,7 +423,7 @@ namespace EasyKiConverter
                         info.layers = layers.join("\n");
                     }
 
-                    // 保存对象可见�?
+                    // 保存对象可见�?
                     if (dataStr.contains("objects"))
                     {
                         QJsonArray objectsArray = dataStr["objects"].toArray();
@@ -451,7 +451,7 @@ namespace EasyKiConverter
                     }
                     else
                     {
-                        // 如果没有 BBox，使�?head.x �?head.y 作为中心�?
+                        // 如果没有 BBox，使�?head.x �?head.y 作为中心�?
                         footprintBbox.x = head["x"].toDouble();
                         footprintBbox.y = head["y"].toDouble();
                         footprintBbox.width = 0;
@@ -492,14 +492,14 @@ namespace EasyKiConverter
                         }
                         else if (designator == "HOLE")
                         {
-                            // 导入�?
+                            // 导入�?
                             FootprintHole hole = importHoleData(shapeString);
                             footprintData->addHole(hole);
                             // qDebug() << "Imported hole";
                         }
                         else if (designator == "CIRCLE")
                         {
-                            // 导入�?
+                            // 导入�?
                             FootprintCircle circle = importFootprintCircleData(shapeString);
                             footprintData->addCircle(circle);
                             // qDebug() << "Imported circle";
@@ -541,7 +541,7 @@ namespace EasyKiConverter
                         }
                         else if (designator == "PATH" || designator == "PT")
                         {
-                            // 导入路径（可能是丝印�?
+                            // 导入路径（可能是丝印�?
                             FootprintTrack track = importTrackData(shapeString); // 复用 track 格式
                             footprintData->addTrack(track);
                             // qDebug() << "Imported path (layer" << track.layerId << ")";
@@ -554,14 +554,14 @@ namespace EasyKiConverter
                         }
                         else if (designator == "SOLIDREGION")
                         {
-                            // 导入实体填充区域（禁止布线区�?
+                            // 导入实体填充区域（禁止布线区�?
                             FootprintSolidRegion solidRegion = importSolidRegionData(shapeString);
                             footprintData->addSolidRegion(solidRegion);
                             // qDebug() << "Imported solid region";
                         }
                     }
 
-                    // 导入层定�?
+                    // 导入层定�?
                     if (dataStr.contains("layers"))
                     {
                         QJsonArray layers = dataStr["layers"].toArray();
@@ -573,7 +573,7 @@ namespace EasyKiConverter
                         }
                     }
 
-                    // 导入对象可见性配�?
+                    // 导入对象可见性配�?
                     if (dataStr.contains("objects"))
                     {
                         QJsonArray objects = dataStr["objects"].toArray();
@@ -585,7 +585,7 @@ namespace EasyKiConverter
                         }
                     }
 
-                    // 修正类型判断：检查焊盘是否有�?
+                    // 修正类型判断：检查焊盘是否有�?
                     bool hasHole = false;
                     for (const FootprintPad &pad : footprintData->pads())
                     {
@@ -616,14 +616,14 @@ namespace EasyKiConverter
 
         if (segments.size() >= 7)
         {
-            // �?0: 引脚设置（跳过第一个元�?"P"�?
+            // �?0: 引脚设置（跳过第一个元�?"P"�?
             QStringList settings = segments[0];
             if (settings.size() >= 8)
-            { // 需要至�?个元素（包括"P"�?
+            { // 需要至�?个元素（包括"P"�?
                 pin.settings.isDisplayed = (settings[1] == "show");
                 pin.settings.type = static_cast<PinType>(settings[2].toInt());
-                // 注意：settings[3] �?spicePinNumber（如 6, 17, H10），这只是引脚的顺序索引
-                // 真正�?BGA 引脚编号�?Segment 5 的索�?4 中（�?U6, U17, U16�?
+                // 注意：settings[3] �?spicePinNumber（如 6, 17, H10），这只是引脚的顺序索引
+                // 真正�?BGA 引脚编号�?Segment 5 的索�?4 中（�?U6, U17, U16�?
                 pin.settings.spicePinNumber = settings[3];
                 pin.settings.posX = settings[4].toDouble();
                 pin.settings.posY = settings[5].toDouble();
@@ -632,21 +632,21 @@ namespace EasyKiConverter
                 pin.settings.isLocked = (settings.size() > 8 ? stringToBool(settings[8]) : false);
             }
 
-            // �?1: pinDot
+            // �?1: pinDot
             if (segments[1].size() >= 2)
             {
                 pin.pinDot.dotX = segments[1][0].toDouble();
                 pin.pinDot.dotY = segments[1][1].toDouble();
             }
 
-            // �?2: pinPath
+            // �?2: pinPath
             if (segments[2].size() >= 2)
             {
                 pin.pinPath.path = segments[2][0];
                 pin.pinPath.color = segments[2][1];
             }
 
-            // �?3: name
+            // �?3: name
             if (segments[3].size() >= 8)
             {
                 pin.name.isDisplayed = (segments[3][0] == "show");
@@ -659,28 +659,28 @@ namespace EasyKiConverter
                 pin.name.fontSize = segments[3][7].toDouble();
             }
 
-            // �?4: dot (SymbolPinDotBis) - 这里包含圆圈显示标志�?BGA 引脚编号
+            // �?4: dot (SymbolPinDotBis) - 这里包含圆圈显示标志�?BGA 引脚编号
             // 格式: 1~555~929~0~U17~start~~~#0000FF
-            // �?~ 分割�? ["1", "555", "929", "0", "U17", "start", "", "", "#0000FF"]
-            // 索引 0: dotShow (是否显示圆圈�?=显示�?=不显�?
+            // �?~ 分割�? ["1", "555", "929", "0", "U17", "start", "", "", "#0000FF"]
+            // 索引 0: dotShow (是否显示圆圈�?=显示�?=不显�?
             // 索引 1-2: dotX, dotY (圆圈坐标)
             // 索引 4: BGA 引脚编号
             if (segments[4].size() >= 5)
             {
-                // 调试：输出段 4 的数�?
+                // 调试：输出段 4 的数�?
                 qDebug() << "Pin Segment 4 data:" << segments[4];
                 qDebug() << "  Segment 4[0] (dotShow):" << segments[4][0];
                 
                 // 修复：始终不显示圆圈
                 pin.dot.isDisplayed = false;
                 
-                // 设置圆圈坐标（虽然不显示，但仍然保存坐标信息�?
+                // 设置圆圈坐标（虽然不显示，但仍然保存坐标信息�?
                 pin.dot.circleX = segments[4][1].toDouble();
                 pin.dot.circleY = segments[4][2].toDouble();
                 
                 qDebug() << "  dot.isDisplayed set to: false (always hide)";
 
-                // 检�?spicePinNumber 是否已经�?BGA 引脚编号（包含字母）
+                // 检�?spicePinNumber 是否已经�?BGA 引脚编号（包含字母）
                 bool isAlreadyBGA = false;
                 for (QChar c : pin.settings.spicePinNumber)
                 {
@@ -691,10 +691,10 @@ namespace EasyKiConverter
                     }
                 }
 
-                // 如果 spicePinNumber 只是纯数字，尝试�?Segment 4 提取 BGA 引脚编号
+                // 如果 spicePinNumber 只是纯数字，尝试�?Segment 4 提取 BGA 引脚编号
                 if (!isAlreadyBGA)
                 {
-                    // 提取 BGA 引脚编号（在�?4 的索�?4 中，�?"U6", "U17", "U16"�?
+                    // 提取 BGA 引脚编号（在�?4 的索�?4 中，�?"U6", "U17", "U16"�?
                     QString bgaPinNumber = segments[4][4];
                     // 使用 BGA 引脚编号替换 spicePinNumber
                     if (!bgaPinNumber.isEmpty())
@@ -705,9 +705,9 @@ namespace EasyKiConverter
                 }
             }
 
-            // �?5: 跳过（不使用�?
+            // �?5: 跳过（不使用�?
 
-            // �?6: clock
+            // �?6: clock
             if (segments[6].size() >= 2)
             {
                 pin.clock.isDisplayed = (segments[6][0] == "show");
@@ -728,7 +728,7 @@ namespace EasyKiConverter
         // qDebug() << "Fields count:" << fields.size();
         // qDebug() << "Fields:" << fields;
 
-        // 跳过第一个字段（类型标识 'R'），从索�?1 开始读�?
+        // 跳过第一个字段（类型标识 'R'），从索�?1 开始读�?
         if (fields.size() >= 13)
         {
             rectangle.posX = fields[1].toDouble();
@@ -779,7 +779,7 @@ namespace EasyKiConverter
 
         if (fields.size() >= 8)
         {
-            // 路径数据需要特殊处�?
+            // 路径数据需要特殊处�?
             // arc.path = fields[0].split(",");
             arc.helperDots = fields[1];
             arc.strokeColor = fields[2];
@@ -798,7 +798,7 @@ namespace EasyKiConverter
         SymbolEllipse ellipse;
         QStringList fields = parseDataString(ellipseData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         if (fields.size() >= 10)
         {
             ellipse.centerX = fields[1].toDouble();
@@ -821,7 +821,7 @@ namespace EasyKiConverter
         SymbolPolyline polyline;
         QStringList fields = parseDataString(polylineData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         if (fields.size() >= 8)
         {
             polyline.points = fields[1];
@@ -846,7 +846,7 @@ namespace EasyKiConverter
         SymbolPolygon polygon;
         QStringList fields = parseDataString(polygonData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         if (fields.size() >= 8)
         {
             polygon.points = fields[1];
@@ -871,7 +871,7 @@ namespace EasyKiConverter
         SymbolPath path;
         QStringList fields = parseDataString(pathData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         if (fields.size() >= 8)
         {
             path.paths = fields[1];
@@ -891,7 +891,7 @@ namespace EasyKiConverter
         SymbolText text;
         QStringList fields = parseDataString(textData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         // EasyEDA文本元素格式参考lckiconverter实现
         // ["TEXT", id, x, y, rotate, text, styleName, mayLocked]
         if (fields.size() >= 15)
@@ -922,7 +922,7 @@ namespace EasyKiConverter
         FootprintPad pad;
         QStringList fields = parseDataString(padData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         if (fields.size() >= 17)
         {
             pad.shape = fields[1];
@@ -951,7 +951,7 @@ namespace EasyKiConverter
         FootprintTrack track;
         QStringList fields = parseDataString(trackData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         if (fields.size() >= 6)
         {
             track.strokeWidth = fields[1].toDouble();
@@ -970,7 +970,7 @@ namespace EasyKiConverter
         FootprintHole hole;
         QStringList fields = parseDataString(holeData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         if (fields.size() >= 5)
         {
             hole.centerX = fields[1].toDouble();
@@ -988,7 +988,7 @@ namespace EasyKiConverter
         FootprintCircle circle;
         QStringList fields = parseDataString(circleData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         if (fields.size() >= 7)
         {
             circle.cx = fields[1].toDouble();
@@ -1008,7 +1008,7 @@ namespace EasyKiConverter
         FootprintRectangle rectangle;
         QStringList fields = parseDataString(rectangleData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         // 格式: RECT~x~y~width~height~layerId~id~strokeWidth~isLocked~fillColor~strokeStyle~...
         if (fields.size() >= 8)
         {
@@ -1016,9 +1016,9 @@ namespace EasyKiConverter
             rectangle.y = fields[2].toDouble();
             rectangle.width = fields[3].toDouble();
             rectangle.height = fields[4].toDouble();
-            rectangle.layerId = fields[5].toInt(); // layerId 在第 6 个字�?
+            rectangle.layerId = fields[5].toInt(); // layerId 在第 6 个字�?
             rectangle.id = fields[6];
-            rectangle.strokeWidth = fields[7].toDouble(); // strokeWidth 在第 8 个字�?
+            rectangle.strokeWidth = fields[7].toDouble(); // strokeWidth 在第 8 个字�?
             rectangle.isLocked = fields.size() > 8 ? stringToBool(fields[8]) : false;
         }
 
@@ -1030,7 +1030,7 @@ namespace EasyKiConverter
         FootprintArc arc;
         QStringList fields = parseDataString(arcData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         if (fields.size() >= 7)
         {
             arc.strokeWidth = fields[1].toDouble();
@@ -1050,7 +1050,7 @@ namespace EasyKiConverter
         FootprintText text;
         QStringList fields = parseDataString(textData);
 
-        // 跳过第一个字段（设计器），从第二个字段开始解�?
+        // 跳过第一个字段（设计器），从第二个字段开始解�?
         if (fields.size() >= 14)
         {
             text.type = fields[1];
@@ -1074,7 +1074,7 @@ namespace EasyKiConverter
 
     QStringList EasyedaImporter::parseDataString(const QString &data) const
     {
-        // 使用 Qt::KeepEmptyParts 保留空字段，这样可以正确处理连续�?~~
+        // 使用 Qt::KeepEmptyParts 保留空字段，这样可以正确处理连续�?~~
         return data.split("~", Qt::KeepEmptyParts);
     }
 
@@ -1083,14 +1083,14 @@ namespace EasyKiConverter
         QList<QStringList> result;
 
         // 只分割顶层的 "^^"，保留嵌套的 "^^"
-        // 策略：遇�?^^ 时分割，^^ 标志着新段落的开�?
+        // 策略：遇�?^^ 时分割，^^ 标志着新段落的开�?
         QStringList segments;
         int start = 0;
         int pos = 0;
 
         while (pos < pinData.length())
         {
-            // 检查是否遇�?^^
+            // 检查是否遇�?^^
             if (pinData[pos] == '^' && pos + 1 < pinData.length() && pinData[pos + 1] == '^')
             {
                 segments.append(pinData.mid(start, pos - start));
@@ -1108,7 +1108,7 @@ namespace EasyKiConverter
             segments.append(pinData.mid(start));
         }
 
-        // 对每个段�?~ 分割
+        // 对每个段�?~ 分割
         for (const QString &segment : segments)
         {
             QStringList subSegments = segment.split("~", Qt::KeepEmptyParts);
@@ -1128,12 +1128,12 @@ namespace EasyKiConverter
         if (fields.size() >= 6)
         {
             region.layerId = fields[1].toInt();
-            region.path = fields[3]; // 路径数据（如 "M x y L x y Z"�?
+            region.path = fields[3]; // 路径数据（如 "M x y L x y Z"�?
             region.fillStyle = fields[4];
             region.id = fields[5];
             region.isLocked = fields.size() > 7 ? stringToBool(fields[7]) : false;
 
-            // 判断是否为禁止布线区（通常�?ComponentShapeLayer，ID=99�?
+            // 判断是否为禁止布线区（通常�?ComponentShapeLayer，ID=99�?
             region.isKeepOut = (region.layerId == 99);
 
             // qDebug() << "Imported solid region - Layer:" << region.layerId
@@ -1169,11 +1169,11 @@ namespace EasyKiConverter
 
         QJsonObject attrs = root["attrs"].toObject();
 
-        // 检查是否为外形轮廓（c_etype == "outline3D"�?
+        // 检查是否为外形轮廓（c_etype == "outline3D"�?
         if (attrs.contains("c_etype") && attrs["c_etype"].toString() == "outline3D")
         {
-            // 这是外形轮廓，但同时也包�?3D 模型�?UUID
-            // 先提�?3D 模型�?UUID（从 SVGNODE attrs.uuid�?
+            // 这是外形轮廓，但同时也包�?3D 模型�?UUID
+            // 先提�?3D 模型�?UUID（从 SVGNODE attrs.uuid�?
             Model3DData model3D;
             if (attrs.contains("uuid"))
             {
@@ -1221,14 +1221,14 @@ namespace EasyKiConverter
             outline.strokeWidth = attrs.contains("c_width") ? attrs["c_width"].toString().toDouble() : 0.0;
             outline.isLocked = false;
 
-            // 获取�?ID
+            // 获取�?ID
             if (attrs.contains("layerid"))
             {
                 outline.layerId = attrs["layerid"].toString().toInt();
             }
             else
             {
-                outline.layerId = 19; // 默认�?3DModel �?
+                outline.layerId = 19; // 默认�?3DModel �?
             }
 
             // 解析 SVG 路径
@@ -1244,7 +1244,7 @@ namespace EasyKiConverter
                         if (childAttrs.contains("points"))
                         {
                             outline.path = childAttrs["points"].toString();
-                            break; // 只取第一个路�?
+                            break; // 只取第一个路�?
                         }
                     }
                 }
@@ -1256,7 +1256,7 @@ namespace EasyKiConverter
         }
         else
         {
-            // 这是 3D 模型（非 outline3D 类型�?
+            // 这是 3D 模型（非 outline3D 类型�?
             Model3DData model3D;
             model3D.setName(attrs.contains("title") ? attrs["title"].toString() : "");
             model3D.setUuid(attrs.contains("uuid") ? attrs["uuid"].toString() : "");
@@ -1315,7 +1315,7 @@ namespace EasyKiConverter
             layer.isVisible = (fields[3] == "true");
             layer.isUsedForManufacturing = (fields[4] == "true");
 
-            // 解析扩展值（如阻焊层扩展�?
+            // 解析扩展值（如阻焊层扩展�?
             if (fields.size() >= 7)
             {
                 layer.expansion = fields[6].toDouble();
@@ -1352,7 +1352,7 @@ namespace EasyKiConverter
 
     bool EasyedaImporter::stringToBool(const QString &str) const
     {
-        // 空值�?、false、none、transparent 视为 false
+        // 空值�?、false、none、transparent 视为 false
         if (str.isEmpty() || str == "0" || str.toLower() == "false" ||
             str.toLower() == "none" || str.toLower() == "transparent")
         {

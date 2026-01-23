@@ -1,4 +1,4 @@
-#include "Model3DData.h"
+﻿#include "Model3DData.h"
 #include <QDebug>
 
 namespace EasyKiConverter

@@ -1,4 +1,4 @@
-#include "ProcessWorker.h"
+﻿#include "ProcessWorker.h"
 #include "core/easyeda/EasyedaImporter.h"
 #include "core/easyeda/EasyedaApi.h"
 #include "core/utils/NetworkUtils.h"
@@ -20,13 +20,13 @@ namespace EasyKiConverter
 
     void ProcessWorker::run()
     {
-        // 启动计时�?
+        // 启动计时�?
         QElapsedTimer processTimer;
         processTimer.start();
 
         m_status->addDebugLog(QString("ProcessWorker started for component: %1").arg(m_status->componentId));
 
-        // 创建导入�?
+        // 创建导入�?
         EasyedaImporter importer;
 
         // 解析组件信息
@@ -51,14 +51,14 @@ namespace EasyKiConverter
             return;
         }
 
-        // 解析3D模型数据（如果已下载�?
+        // 解析3D模型数据（如果已下载�?
         if (m_status->need3DModel && !m_status->model3DObjRaw.isEmpty())
         {
             m_status->addDebugLog("Parsing 3D model data (already fetched by FetchWorker)");
             if (!parse3DModelData(*m_status))
             {
                 m_status->addDebugLog(QString("WARNING: Failed to parse 3D model data for: %1").arg(m_status->componentId));
-                // 3D模型解析失败不影响整体流�?
+                // 3D模型解析失败不影响整体流�?
             }
         }
 
@@ -116,7 +116,7 @@ namespace EasyKiConverter
 
         QJsonObject rootObj = doc.object();
 
-        // API 返回的数据在 result 字段中，需要提取出�?
+        // API 返回的数据在 result 字段中，需要提取出�?
         QJsonObject obj;
         if (rootObj.contains("result") && rootObj["result"].isObject())
         {
@@ -129,7 +129,7 @@ namespace EasyKiConverter
             obj = rootObj;
         }
 
-        // 调试：打印obj的结�?
+        // 调试：打印obj的结�?
         status.addDebugLog("=== ProcessWorker CAD Data Structure ===");
         status.addDebugLog(QString("Top-level keys: %1").arg(obj.keys().join(", ")));
         if (obj.contains("dataStr"))
@@ -156,7 +156,7 @@ namespace EasyKiConverter
         }
         status.addDebugLog("==========================================");
 
-        // 使用EasyedaImporter导入符号和封装数�?
+        // 使用EasyedaImporter导入符号和封装数�?
         EasyedaImporter importer;
 
         // 导入符号数据
@@ -198,7 +198,7 @@ namespace EasyKiConverter
         status.model3DData = QSharedPointer<Model3DData>::create();
         status.model3DData->setRawObj(QString::fromUtf8(status.model3DObjRaw));
 
-        // �?footprintData �?model3D 中获�?UUID
+        // �?footprintData �?model3D 中获�?UUID
         if (status.footprintData && !status.footprintData->model3D().uuid().isEmpty())
         {
             status.model3DData->setUuid(status.footprintData->model3D().uuid());

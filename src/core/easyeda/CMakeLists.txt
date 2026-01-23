@@ -1,4 +1,4 @@
-# EasyEDA 模块
+﻿# EasyEDA 模块
 
 add_library(EasyKiConverterEasyeda STATIC
     EasyedaApi.cpp

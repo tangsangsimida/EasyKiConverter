@@ -1,4 +1,4 @@
-#include "FootprintData.h"
+﻿#include "FootprintData.h"
 #include <QDebug>
 
 namespace EasyKiConverter
@@ -20,7 +20,7 @@ namespace EasyKiConverter
         json["writable"] = writable;
         json["update_time"] = updateTime;
 
-        // 编辑器信�?
+        // 编辑器信�?
         json["editor_version"] = editorVersion;
 
         // 项目信息
@@ -38,10 +38,10 @@ namespace EasyKiConverter
         // 画布信息
         json["canvas"] = canvas;
 
-        // 层定�?
+        // 层定�?
         json["layers"] = layers;
 
-        // 对象可见�?
+        // 对象可见�?
         json["objects"] = objects;
 
         return json;
@@ -60,7 +60,7 @@ namespace EasyKiConverter
         writable = json["writable"].toBool(false);
         updateTime = json["update_time"].toVariant().toLongLong();
 
-        // 编辑器信�?
+        // 编辑器信�?
         editorVersion = json["editor_version"].toString();
 
         // 项目信息
@@ -78,10 +78,10 @@ namespace EasyKiConverter
         // 画布信息
         canvas = json["canvas"].toString();
 
-        // 层定�?
+        // 层定�?
         layers = json["layers"].toString();
 
-        // 对象可见�?
+        // 对象可见�?
         objects = json["objects"].toString();
 
         return true;
@@ -430,7 +430,7 @@ namespace EasyKiConverter
         // 基本信息
         json["info"] = m_info.toJson();
 
-        // 边界�?
+        // 边界�?
         json["bbox"] = m_bbox.toJson();
 
         // 焊盘
@@ -449,7 +449,7 @@ namespace EasyKiConverter
         }
         json["tracks"] = tracksArray;
 
-        // �?
+        // �?
         QJsonArray holesArray;
         for (const FootprintHole &hole : m_holes)
         {
@@ -457,7 +457,7 @@ namespace EasyKiConverter
         }
         json["holes"] = holesArray;
 
-        // �?
+        // �?
         QJsonArray circlesArray;
         for (const FootprintCircle &circle : m_circles)
         {
@@ -505,7 +505,7 @@ namespace EasyKiConverter
         }
         json["outlines"] = outlinesArray;
 
-        // 层定�?
+        // 层定�?
         QJsonArray layersArray;
         for (const LayerDefinition &layer : m_layers)
         {
@@ -513,7 +513,7 @@ namespace EasyKiConverter
         }
         json["layers"] = layersArray;
 
-        // 对象可见�?
+        // 对象可见�?
         QJsonArray objectVisibilitiesArray;
         for (const ObjectVisibility &visibility : m_objectVisibilities)
         {
@@ -536,7 +536,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 读取边界�?
+        // 读取边界�?
         if (json.contains("bbox") && json["bbox"].isObject())
         {
             if (!m_bbox.fromJson(json["bbox"].toObject()))
@@ -582,7 +582,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 读取�?
+        // 读取�?
         if (json.contains("holes") && json["holes"].isArray())
         {
             QJsonArray holesArray = json["holes"].toArray();
@@ -600,7 +600,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 读取�?
+        // 读取�?
         if (json.contains("circles") && json["circles"].isArray())
         {
             QJsonArray circlesArray = json["circles"].toArray();
@@ -708,7 +708,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 读取层定�?
+        // 读取层定�?
         if (json.contains("layers") && json["layers"].isArray())
         {
             QJsonArray layersArray = json["layers"].toArray();
@@ -726,7 +726,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 读取对象可见�?
+        // 读取对象可见�?
         if (json.contains("object_visibilities") && json["object_visibilities"].isArray())
         {
             QJsonArray objectVisibilitiesArray = json["object_visibilities"].toArray();
@@ -749,13 +749,13 @@ namespace EasyKiConverter
 
     bool FootprintData::isValid() const
     {
-        // 检查基本信�?
+        // 检查基本信�?
         if (m_info.name.isEmpty())
         {
             return false;
         }
 
-        // 至少要有一个焊�?
+        // 至少要有一个焊�?
         if (m_pads.isEmpty())
         {
             return false;
@@ -776,7 +776,7 @@ namespace EasyKiConverter
             return "Footprint must have at least one pad";
         }
 
-        // 检查焊�?
+        // 检查焊�?
         for (int i = 0; i < m_pads.size(); ++i)
         {
             const FootprintPad &pad = m_pads[i];

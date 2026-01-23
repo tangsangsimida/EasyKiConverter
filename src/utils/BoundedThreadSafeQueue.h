@@ -1,4 +1,4 @@
-#ifndef BOUNDEDTHREADSAFEQUEUE_H
+﻿#ifndef BOUNDEDTHREADSAFEQUEUE_H
 #define BOUNDEDTHREADSAFEQUEUE_H
 
 #include <QQueue>
@@ -12,14 +12,14 @@ namespace EasyKiConverter
     /**
      * @brief 有界线程安全队列
      *
-     * 支持阻塞和非阻塞操作，用于连接流水线的各个阶�?
+     * 支持阻塞和非阻塞操作，用于连接流水线的各个阶�?
      */
     template <typename T>
     class BoundedThreadSafeQueue
     {
     public:
         /**
-         * @brief 构造函�?
+         * @brief 构造函�?
          * @param maxSize 最大容量（0表示无限制）
          */
         explicit BoundedThreadSafeQueue(size_t maxSize = 0)
@@ -38,7 +38,7 @@ namespace EasyKiConverter
         /**
          * @brief 非阻塞push
          * @param item 要添加的元素
-         * @return bool 是否成功（队列已满或已关闭返回false�?
+         * @return bool 是否成功（队列已满或已关闭返回false�?
          */
         bool tryPush(const T &item)
         {
@@ -62,8 +62,8 @@ namespace EasyKiConverter
         /**
          * @brief 阻塞push
          * @param item 要添加的元素
-         * @param timeoutMs 超时时间（毫秒，0表示无限等待�?
-         * @return bool 是否成功（超时或已关闭返回false�?
+         * @param timeoutMs 超时时间（毫秒，0表示无限等待�?
+         * @return bool 是否成功（超时或已关闭返回false�?
          */
         bool push(const T &item, int timeoutMs = 0)
         {
@@ -90,7 +90,7 @@ namespace EasyKiConverter
         /**
          * @brief 非阻塞tryPop
          * @param item 输出参数，存储取出的元素
-         * @return bool 是否成功（队列为空或已关闭返回false�?
+         * @return bool 是否成功（队列为空或已关闭返回false�?
          */
         bool tryPop(T &item)
         {
@@ -114,8 +114,8 @@ namespace EasyKiConverter
         /**
          * @brief 阻塞pop
          * @param item 输出参数，存储取出的元素
-         * @param timeoutMs 超时时间（毫秒，0表示无限等待�?
-         * @return bool 是否成功（超时或已关闭且队列为空返回false�?
+         * @param timeoutMs 超时时间（毫秒，0表示无限等待�?
+         * @return bool 是否成功（超时或已关闭且队列为空返回false�?
          */
         bool pop(T &item, int timeoutMs = 0)
         {
@@ -153,7 +153,7 @@ namespace EasyKiConverter
         }
 
         /**
-         * @brief 是否已关�?
+         * @brief 是否已关�?
          * @return bool
          */
         bool isClosed() const

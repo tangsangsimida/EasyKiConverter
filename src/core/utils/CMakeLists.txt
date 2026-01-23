@@ -1,4 +1,4 @@
-# Utils 模块
+﻿# Utils 模块
 
 add_library(EasyKiConverterUtils STATIC
     GeometryUtils.cpp

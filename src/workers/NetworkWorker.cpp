@@ -1,4 +1,4 @@
-#include "NetworkWorker.h"
+﻿#include "NetworkWorker.h"
 #include "core/easyeda/EasyedaApi.h"
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -19,7 +19,7 @@ namespace EasyKiConverter
         QObject *parent)
         : QObject(parent), QRunnable(), m_componentId(componentId), m_taskType(taskType), m_uuid(uuid)
     {
-        setAutoDelete(true); // 任务完成后自动删�?
+        setAutoDelete(true); // 任务完成后自动删�?
     }
 
     NetworkWorker::~NetworkWorker()
@@ -58,7 +58,7 @@ namespace EasyKiConverter
             if (!success)
             {
                 qWarning() << "Network request failed for:" << m_componentId;
-                // 错误信号已经在各个fetch方法中发�?
+                // 错误信号已经在各个fetch方法中发�?
             }
         }
         catch (const std::exception &e)
@@ -77,7 +77,7 @@ namespace EasyKiConverter
     {
         try
         {
-            // 创建网络访问管理�?
+            // 创建网络访问管理�?
             QNetworkAccessManager manager;
             QEventLoop loop;
 
@@ -87,7 +87,7 @@ namespace EasyKiConverter
             request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
             request.setRawHeader("Accept", "application/json");
 
-            // 发送请�?
+            // 发送请�?
             QNetworkReply *reply = manager.get(request);
 
             // 连接信号
@@ -103,7 +103,7 @@ namespace EasyKiConverter
             // 等待响应
             loop.exec();
 
-            // 检查错�?
+            // 检查错�?
             if (reply->error() != QNetworkReply::NoError)
             {
                 QString errorMessage = QString("Network error: %1").arg(reply->errorString());
@@ -127,7 +127,7 @@ namespace EasyKiConverter
                 return false;
             }
 
-            // 发送成功信�?
+            // 发送成功信�?
             QJsonObject data = doc.object();
             emit componentInfoFetched(m_componentId, data);
 
@@ -152,7 +152,7 @@ namespace EasyKiConverter
     {
         try
         {
-            // 创建网络访问管理�?
+            // 创建网络访问管理�?
             QNetworkAccessManager manager;
             QEventLoop loop;
 
@@ -162,7 +162,7 @@ namespace EasyKiConverter
             request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
             request.setRawHeader("Accept", "application/json");
 
-            // 发送请�?
+            // 发送请�?
             QNetworkReply *reply = manager.get(request);
 
             // 连接信号
@@ -178,7 +178,7 @@ namespace EasyKiConverter
             // 等待响应
             loop.exec();
 
-            // 检查错�?
+            // 检查错�?
             if (reply->error() != QNetworkReply::NoError)
             {
                 QString errorMessage = QString("Network error: %1").arg(reply->errorString());
@@ -212,7 +212,7 @@ namespace EasyKiConverter
                 return false;
             }
 
-            // 发送成功信�?
+            // 发送成功信�?
             QJsonObject data = doc.object();
             emit cadDataFetched(m_componentId, data);
 
@@ -237,7 +237,7 @@ namespace EasyKiConverter
     {
         try
         {
-            // 创建网络访问管理�?
+            // 创建网络访问管理�?
             QNetworkAccessManager manager;
             QEventLoop loop;
 
@@ -247,7 +247,7 @@ namespace EasyKiConverter
             request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
             request.setRawHeader("Accept", "application/octet-stream");
 
-            // 发送请�?
+            // 发送请�?
             QNetworkReply *reply = manager.get(request);
 
             // 连接信号
@@ -263,7 +263,7 @@ namespace EasyKiConverter
             // 等待响应
             loop.exec();
 
-            // 检查错�?
+            // 检查错�?
             if (reply->error() != QNetworkReply::NoError)
             {
                 QString errorMessage = QString("Network error: %1").arg(reply->errorString());
@@ -277,7 +277,7 @@ namespace EasyKiConverter
             QByteArray responseData = reply->readAll();
             reply->deleteLater();
 
-            // 发送成功信�?
+            // 发送成功信�?
             emit model3DFetched(m_componentId, m_uuid, responseData);
 
             qDebug() << "3D model OBJ data fetched successfully for:" << m_componentId;
@@ -301,7 +301,7 @@ namespace EasyKiConverter
     {
         try
         {
-            // 创建网络访问管理�?
+            // 创建网络访问管理�?
             QNetworkAccessManager manager;
             QEventLoop loop;
 
@@ -311,7 +311,7 @@ namespace EasyKiConverter
             request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
             request.setRawHeader("Accept", "application/octet-stream");
 
-            // 发送请�?
+            // 发送请�?
             QNetworkReply *reply = manager.get(request);
 
             // 连接信号
@@ -327,7 +327,7 @@ namespace EasyKiConverter
             // 等待响应
             loop.exec();
 
-            // 检查错�?
+            // 检查错�?
             if (reply->error() != QNetworkReply::NoError)
             {
                 QString errorMessage = QString("Network error: %1").arg(reply->errorString());
@@ -341,7 +341,7 @@ namespace EasyKiConverter
             QByteArray responseData = reply->readAll();
             reply->deleteLater();
 
-            // 发送成功信�?
+            // 发送成功信�?
             emit model3DFetched(m_componentId, m_uuid, responseData);
 
             qDebug() << "3D model MTL data fetched successfully for:" << m_componentId;
@@ -368,17 +368,17 @@ namespace EasyKiConverter
             return QByteArray();
         }
 
-        // 检查是否为gzip数据（gzip魔术数字�?x1f 0x8b�?
+        // 检查是否为gzip数据（gzip魔术数字�?x1f 0x8b�?
         if (compressedData.size() < 2 ||
             (static_cast<unsigned char>(compressedData[0]) != 0x1f ||
              static_cast<unsigned char>(compressedData[1]) != 0x8b))
         {
-            // 不是gzip数据，直接返�?
+            // 不是gzip数据，直接返�?
             qDebug() << "Data is not gzip compressed, returning as-is";
             return compressedData;
         }
 
-        // 初始化zlib解压�?
+        // 初始化zlib解压�?
         z_stream stream;
         stream.zalloc = Z_NULL;
         stream.zfree = Z_NULL;
@@ -398,7 +398,7 @@ namespace EasyKiConverter
         stream.avail_in = compressedData.size();
         stream.next_in = const_cast<Bytef *>(reinterpret_cast<const Bytef *>(compressedData.constData()));
 
-        // 准备输出缓冲�?
+        // 准备输出缓冲�?
         QByteArray decompressedData;
         const int chunkSize = 8192;
         char buffer[chunkSize];

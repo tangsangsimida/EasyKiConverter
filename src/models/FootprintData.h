@@ -1,4 +1,4 @@
-#ifndef FOOTPRINTDATA_H
+﻿#ifndef FOOTPRINTDATA_H
 #define FOOTPRINTDATA_H
 
 #include <QString>
@@ -26,7 +26,7 @@ namespace EasyKiConverter
         bool writable;
         qint64 updateTime;
 
-        // 编辑器信�?
+        // 编辑器信�?
         QString editorVersion;
 
         // 项目信息
@@ -44,17 +44,17 @@ namespace EasyKiConverter
         // 画布信息
         QString canvas;
 
-        // 层定�?
+        // 层定�?
         QString layers;
 
-        // 对象可见�?
+        // 对象可见�?
         QString objects;
 
         QJsonObject toJson() const;
         bool fromJson(const QJsonObject &json);
     };
 
-    // ==================== 边界�?====================
+    // ==================== 边界�?====================
 
     struct FootprintBBox
     {
@@ -107,7 +107,7 @@ namespace EasyKiConverter
         bool fromJson(const QJsonObject &json);
     };
 
-    // ==================== �?====================
+    // ==================== �?====================
 
     struct FootprintHole
     {
@@ -121,7 +121,7 @@ namespace EasyKiConverter
         bool fromJson(const QJsonObject &json);
     };
 
-    // ==================== �?====================
+    // ==================== �?====================
 
     struct FootprintCircle
     {
@@ -199,8 +199,8 @@ namespace EasyKiConverter
      */
     struct FootprintSolidRegion
     {
-        QString path;      // 路径数据（如 "M x y L x y Z"�?
-        int layerId;       // 所属层（通常�?ComponentShapeLayer，ID=99�?
+        QString path;      // 路径数据（如 "M x y L x y Z"�?
+        int layerId;       // 所属层（通常�?ComponentShapeLayer，ID=99�?
         QString fillStyle; // 填充样式（solid, none等）
         QString id;        // 唯一标识
         bool isKeepOut;    // 是否为禁止布线区
@@ -216,8 +216,8 @@ namespace EasyKiConverter
      */
     struct FootprintOutline
     {
-        QString path;       // SVG 路径或多边形点序�?
-        int layerId;        // 所属层（通常�?TopSilkLayer �?3DModel 层）
+        QString path;       // SVG 路径或多边形点序�?
+        int layerId;        // 所属层（通常�?TopSilkLayer �?3DModel 层）
         double strokeWidth; // 线宽
         QString id;         // 唯一标识
         bool isLocked;      // 是否锁定
@@ -226,26 +226,26 @@ namespace EasyKiConverter
         bool fromJson(const QJsonObject &json);
     };
 
-    // ==================== 层定�?====================
+    // ==================== 层定�?====================
     /**
-     * @brief PCB 层定义信�?
+     * @brief PCB 层定义信�?
      */
     struct LayerDefinition
     {
-        int layerId;                 // �?ID
-        QString name;                // 层名�?
-        QString color;               // 层颜色（#RRGGBB�?
+        int layerId;                 // �?ID
+        QString name;                // 层名�?
+        QString color;               // 层颜色（#RRGGBB�?
         bool isVisible;              // 是否可见
-        bool isUsedForManufacturing; // 是否用于制�?
-        double expansion;            // 扩展值（如阻焊层扩展�?
+        bool isUsedForManufacturing; // 是否用于制�?
+        double expansion;            // 扩展值（如阻焊层扩展�?
 
         QJsonObject toJson() const;
         bool fromJson(const QJsonObject &json);
     };
 
-    // ==================== 对象可见性配�?====================
+    // ==================== 对象可见性配�?====================
     /**
-     * @brief 对象类型可见性配�?
+     * @brief 对象类型可见性配�?
      */
     struct ObjectVisibility
     {
@@ -265,7 +265,7 @@ namespace EasyKiConverter
         FootprintData();
         ~FootprintData() = default;
 
-        // Getter �?Setter 方法
+        // Getter �?Setter 方法
         FootprintInfo info() const { return m_info; }
         void setInfo(const FootprintInfo &info) { m_info = info; }
 
@@ -319,7 +319,7 @@ namespace EasyKiConverter
         Model3DData model3D() const { return m_model3D; }
         void setModel3D(const Model3DData &model3D) { m_model3D = model3D; }
 
-        // JSON 序列�?
+        // JSON 序列�?
         QJsonObject toJson() const;
         bool fromJson(const QJsonObject &json);
 

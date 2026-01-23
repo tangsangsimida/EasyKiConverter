@@ -1,4 +1,4 @@
-# KiCad 模块
+﻿# KiCad 模块
 
 add_library(EasyKiConverterKicad STATIC
     ExporterSymbol.cpp

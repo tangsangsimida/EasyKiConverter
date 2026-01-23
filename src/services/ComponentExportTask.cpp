@@ -1,4 +1,4 @@
-#include "ComponentExportTask.h"
+﻿#include "ComponentExportTask.h"
 #include "core/kicad/ExporterSymbol.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/Exporter3DModel.h"

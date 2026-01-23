@@ -1,4 +1,4 @@
-#ifndef COMPONENTDATA_H
+﻿#ifndef COMPONENTDATA_H
 #define COMPONENTDATA_H
 
 #include <QString>
@@ -13,7 +13,7 @@ namespace EasyKiConverter
 {
 
     /**
-     * @brief 元件数据�?
+     * @brief 元件数据�?
      *
      * 包含元件的所有信息，包括符号、封装和 3D 模型
      */
@@ -23,7 +23,7 @@ namespace EasyKiConverter
         ComponentData();
         ~ComponentData() = default;
 
-        // Getter �?Setter 方法
+        // Getter �?Setter 方法
         QString lcscId() const { return m_lcscId; }
         void setLcscId(const QString &id) { m_lcscId = id; }
 
@@ -51,7 +51,7 @@ namespace EasyKiConverter
         QSharedPointer<Model3DData> model3DData() const { return m_model3DData; }
         void setModel3DData(const QSharedPointer<Model3DData> &data) { m_model3DData = data; }
 
-        // JSON 序列�?
+        // JSON 序列�?
         QJsonObject toJson() const;
         bool fromJson(const QJsonObject &json);
 

@@ -1,4 +1,4 @@
-#include "GeometryUtils.h"
+﻿#include "GeometryUtils.h"
 #include <cmath>
 #include <limits>
 #include <QDebug>
@@ -26,7 +26,7 @@ namespace EasyKiConverter
     {
         double arcDistance = distance(startX, startY, endX, endY);
 
-        // 检查距离是否有�?
+        // 检查距离是否有�?
         if (arcDistance < std::numeric_limits<double>::epsilon())
         {
             qWarning() << "Arc distance is too small, cannot calculate center";
@@ -41,7 +41,7 @@ namespace EasyKiConverter
 
         double hSquared = radius * radius - (arcDistance * arcDistance) / 4.0;
 
-        // 检�?h² 是否为负数（半径太小�?
+        // 检�?h² 是否为负数（半径太小�?
         if (hSquared < 0)
         {
             qWarning() << "Radius is too small for the given arc distance";
@@ -63,7 +63,7 @@ namespace EasyKiConverter
         double dx = endX - centerX;
         double angle = std::acos(dx / radius);
 
-        // 根据大圆弧标志调整角�?
+        // 根据大圆弧标志调整角�?
         if (flagLargeArc)
         {
             angle = 2.0 * M_PI - angle;
@@ -84,7 +84,7 @@ namespace EasyKiConverter
 
     double GeometryUtils::convertToMm(double dim)
     {
-        // 检查输入是否有�?
+        // 检查输入是否有�?
         if (std::isnan(dim))
         {
             qWarning() << "convertToMm: Input is NaN, returning 0.0";
@@ -101,7 +101,7 @@ namespace EasyKiConverter
         double result = dim * 10.0 * 0.0254;
 
         // 检查结果是否合理（大多数元器件尺寸不会超过1米）
-        constexpr double MAX_REASONABLE_SIZE = 1000.0; // 1�?= 1000mm
+        constexpr double MAX_REASONABLE_SIZE = 1000.0; // 1�?= 1000mm
         if (std::abs(result) > MAX_REASONABLE_SIZE)
         {
             qWarning() << QString("convertToMm: Converted value (%1mm) exceeds reasonable range, "
@@ -132,7 +132,7 @@ namespace EasyKiConverter
 
     double GeometryUtils::normalizeAngle(double angle)
     {
-        // 将角度规范化�?[0, 2π) 范围
+        // 将角度规范化�?[0, 2π) 范围
         while (angle < 0.0)
         {
             angle += 2.0 * M_PI;
@@ -249,7 +249,7 @@ namespace EasyKiConverter
     }
 
     // ============================================================================
-    // SVG 弧计算相关函�?
+    // SVG 弧计算相关函�?
     // ============================================================================
 
     GeometryUtils::SvgArcResult GeometryUtils::solveSvgArc(const QString &param)
@@ -296,7 +296,7 @@ namespace EasyKiConverter
         res.endPt.y = y2;
         res.xRotate = phiAngle;
 
-        // 如果半径�?，退化为直线
+        // 如果半径�?，退化为直线
         if (rx == 0 || ry == 0)
         {
             res.cx = (x1 + x2) / 2.0;
@@ -305,7 +305,7 @@ namespace EasyKiConverter
             return res;
         }
 
-        // 转换旋转角度为弧�?
+        // 转换旋转角度为弧�?
         double phi = degreesToRadians(phiAngle);
         double cos_phi = std::cos(phi);
         double sin_phi = std::sin(phi);
@@ -318,7 +318,7 @@ namespace EasyKiConverter
         double x1_ = cos_phi * dx + sin_phi * dy;
         double y1_ = -sin_phi * dx + cos_phi * dy;
 
-        // 确保半径足够�?
+        // 确保半径足够�?
         double rx_sq = rx * rx;
         double ry_sq = ry * ry;
         double x1_sq = x1_ * x1_;
@@ -342,11 +342,11 @@ namespace EasyKiConverter
         double cx_ = sign * temp * rx * y1_ / ry;
         double cy_ = -sign * temp * ry * x1_ / rx;
 
-        // 变换回旋转的坐标�?
+        // 变换回旋转的坐标�?
         res.cx = cos_phi * cx_ - sin_phi * cy_ + (x1 + x2) / 2.0;
         res.cy = sin_phi * cx_ + cos_phi * cy_ + (y1 + y2) / 2.0;
 
-        // 计算起始角度和角度增�?
+        // 计算起始角度和角度增�?
         double angle1 = getAngle(1.0, 0.0, (x1_ - cx_) / rx, (y1_ - cy_) / ry);
         double angle2 = getAngle((x1_ - cx_) / rx, (y1_ - cy_) / ry,
                                  (-x1_ - cx_) / rx, (-y1_ - cy_) / ry);
@@ -354,7 +354,7 @@ namespace EasyKiConverter
         res.startAngle = radiansToDegrees(angle1);
         res.deltaAngle = radiansToDegrees(angle2);
 
-        // 规范化起始角�?
+        // 规范化起始角�?
         while (res.startAngle < 0)
             res.startAngle += 360.0;
         while (res.startAngle >= 360.0)
@@ -388,7 +388,7 @@ namespace EasyKiConverter
             return 0.0;
 
         double ratio = dot / (mag1 * mag2);
-        ratio = std::clamp(ratio, -1.0, 1.0); // 防止数值误�?
+        ratio = std::clamp(ratio, -1.0, 1.0); // 防止数值误�?
 
         return factor * std::acos(ratio);
     }
@@ -417,7 +417,7 @@ namespace EasyKiConverter
     {
         QList<SvgPoint> res;
 
-        const int splitCount = 32; // �?lckiconverter 保持一�?
+        const int splitCount = 32; // �?lckiconverter 保持一�?
         double step = 360.0 / splitCount;
 
         double startAngle = arc.startAngle;
@@ -456,7 +456,7 @@ namespace EasyKiConverter
     {
         QList<SvgPoint> res;
 
-        // 简化的 SVG 路径解析�?
+        // 简化的 SVG 路径解析�?
         QStringList tokens;
         QString currentToken;
 
@@ -600,7 +600,7 @@ namespace EasyKiConverter
                     y += currentY;
                 }
 
-                // 构�?SVG 弧参�?
+                // 构�?SVG 弧参�?
                 QString arcParam = QString("M %1 %2 A %3 %4 %5 %6 %7 %8 %9")
                                        .arg(currentX)
                                        .arg(currentY)
@@ -624,7 +624,7 @@ namespace EasyKiConverter
             }
             else if (token == "C" || token == "c")
             {
-                // 贝塞尔曲�?- 转换为多段线
+                // 贝塞尔曲�?- 转换为多段线
                 if (i + 7 >= tokens.size())
                     break;
 
@@ -701,7 +701,7 @@ namespace EasyKiConverter
             }
             else
             {
-                // 未知命令，跳�?
+                // 未知命令，跳�?
                 i += 1;
             }
         }
@@ -718,7 +718,7 @@ namespace EasyKiConverter
     {
         QList<SvgPoint> res;
 
-        // 三次贝塞尔曲线公�?
+        // 三次贝塞尔曲线公�?
         // B(t) = (1-t)^3 * P0 + 3*(1-t)^2*t * P1 + 3*(1-t)*t^2 * P2 + t^3 * P3
 
         for (int i = 0; i <= segments; ++i)
@@ -741,10 +741,10 @@ namespace EasyKiConverter
 
     double GeometryUtils::pxToMmFloor(double px)
     {
-        // 使用 floor 而非 round，与 lckiconverter 保持一�?
+        // 使用 floor 而非 round，与 lckiconverter 保持一�?
         // 1 unit = 10 mil = 0.254 mm
         double mm = px * 0.254;
-        return std::floor(mm * 100.0) / 100.0; // 保留2位小�?
+        return std::floor(mm * 100.0) / 100.0; // 保留2位小�?
     }
 
     bool GeometryUtils::isASCII(const QString &str)

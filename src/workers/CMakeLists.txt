@@ -1,4 +1,4 @@
-# Workers 模块
+﻿# Workers 模块
 
 add_library(EasyKiConverterWorkers STATIC
     ExportWorker.cpp
