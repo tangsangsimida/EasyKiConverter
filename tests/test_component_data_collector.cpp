@@ -41,7 +41,7 @@ void TestComponentDataCollector::cleanupTestCase() {
 void TestComponentDataCollector::init() {
     m_api = new EasyedaApi(this);
     m_importer = new EasyedaImporter(this);
-    m_collector = new ComponentDataCollector("C12345", m_api, m_importer, this);
+    m_collector = new ComponentDataCollector("C12345", this);
 }
 
 void TestComponentDataCollector::cleanup() {
@@ -69,7 +69,6 @@ void TestComponentDataCollector::testStateMachine() {
 
 void TestComponentDataCollector::testStart() {
     // 测试启动数据收集
-    QSignalSpy spyStarted(m_collector, &ComponentDataCollector::started);
     QSignalSpy spyStateChanged(m_collector, &ComponentDataCollector::stateChanged);
 
     m_collector->start();
@@ -94,10 +93,9 @@ void TestComponentDataCollector::testCancel() {
 
 void TestComponentDataCollector::testSignals() {
     // 测试所有信号
-    QSignalSpy spyStarted(m_collector, &ComponentDataCollector::started);
-    QSignalSpy spyCompleted(m_collector, &ComponentDataCollector::completed);
-    QSignalSpy spyFailed(m_collector, &ComponentDataCollector::failed);
     QSignalSpy spyStateChanged(m_collector, &ComponentDataCollector::stateChanged);
+    QSignalSpy spyDataCollected(m_collector, &ComponentDataCollector::dataCollected);
+    QSignalSpy spyErrorOccurred(m_collector, &ComponentDataCollector::errorOccurred);
     QSignalSpy spyDataCollected(m_collector, &ComponentDataCollector::dataCollected);
     QSignalSpy spyError(m_collector, &ComponentDataCollector::errorOccurred);
 
