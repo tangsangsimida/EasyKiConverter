@@ -138,8 +138,8 @@ void TestPipelineBaseline::testPipeline_10_Components() {
     qDebug() << "\n--- 测试 1: 流水线处理 10 个组件 ---";
     runPipelineTest(10);
 
-    // 验证性能基准（使用真实 ID，网络请求会成功）
-    QVERIFY2(m_currentMetrics.totalTime < 300000, "10个组件应该在5分钟内完成");
+    // 验证性能基准（使用真实 ID，流水线模式下20秒不到就能导出）
+    QVERIFY2(m_currentMetrics.totalTime < 35000, "10个组件应该在35秒内完成");
     qDebug() << "✓ 10个组件流水线测试完成";
 
     printMetrics("10个组件", m_currentMetrics);
@@ -150,8 +150,8 @@ void TestPipelineBaseline::testPipeline_50_Components() {
     qDebug() << "\n--- 测试 2: 流水线处理 50 个组件 ---";
     runPipelineTest(50);
 
-    // 验证性能基准（使用真实 ID，网络请求会成功）
-    QVERIFY2(m_currentMetrics.totalTime < 600000, "50个组件应该在10分钟内完成");
+    // 验证性能基准（使用真实 ID，流水线模式下20秒不到就能导出）
+    QVERIFY2(m_currentMetrics.totalTime < 35000, "50个组件应该在35秒内完成");
     qDebug() << "✓ 50个组件流水线测试完成";
 
     printMetrics("50个组件", m_currentMetrics);
@@ -168,8 +168,8 @@ void TestPipelineBaseline::testPipeline_100_Components() {
     qDebug() << "\n--- 测试 3: 流水线处理 100 个组件 ---";
     runPipelineTest(100);
 
-    // 验证性能基准（使用真实 ID，网络请求会成功）
-    QVERIFY2(m_currentMetrics.totalTime < 1200000, "100个组件应该在20分钟内完成");
+    // 验证性能基准（使用真实 ID，流水线模式下20秒不到就能导出）
+    QVERIFY2(m_currentMetrics.totalTime < 35000, "100个组件应该在35秒内完成");
     qDebug() << "✓ 100个组件流水线测试完成";
 
     printMetrics("100个组件", m_currentMetrics);
@@ -306,9 +306,9 @@ void TestPipelineBaseline::runPipelineTest(int componentCount) {
 
     m_pipeline->executeExportPipelineWithStages(componentIds, options);
 
-    // 等待完成（增加超时时间到5分钟，因为使用真实元器件编号）
+    // 等待完成（30秒超时，流水线模式下20秒不到就能导出）
     QEventLoop loop;
-    QTimer::singleShot(300000, &loop, &QEventLoop::quit);  // 5分钟超时
+    QTimer::singleShot(30000, &loop, &QEventLoop::quit);  // 30秒超时
     loop.exec();
 
     qint64 totalTime = totalTimer.elapsed();

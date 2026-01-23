@@ -343,5 +343,5 @@ endif()
 
 # 注册测试
 add_test(NAME test_pipeline_baseline COMMAND test_pipeline_baseline)
-# 设置 CTest 超时时间为 1200 秒（20分钟，流水线基准测试使用真实 ID）
-set_property(TEST test_pipeline_baseline PROPERTY TIMEOUT 1200)
+# 设置 CTest 超时时间为 60 秒（流水线模式下20秒不到就能导出）
+set_property(TEST test_pipeline_baseline PROPERTY TIMEOUT 60)
