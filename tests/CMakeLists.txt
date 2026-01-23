@@ -15,18 +15,8 @@ set(CMAKE_AUTOUIC ON)
 # 查找 Qt6
 find_package(Qt6 REQUIRED COMPONENTS Core Test Network)
 
-# 查找 zlib
-find_package(ZLIB QUIET)
-
-# 如果找不到标准的 zlib，使用 Qt 的 zlib 库
-if(NOT ZLIB_FOUND)
-    message(STATUS "Using Qt's zlib library for tests")
-    set(ZLIB_FOUND TRUE)
-    set(ZLIB_LIBRARY z)
-    set(ZLIB_USE_QT TRUE)
-else()
-    set(ZLIB_USE_QT FALSE)
-endif()
+# 查找 zlib（NetworkUtils.cpp 使用 zlib API）
+find_package(ZLIB REQUIRED)
 
 # 设置包含路径
 include_directories(${CMAKE_SOURCE_DIR}/../src)
@@ -87,16 +77,7 @@ target_sources(test_export_service PRIVATE
 target_include_directories(test_export_service PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 # 链接 Qt Network 和 zlib（统一使用 PRIVATE 关键字风格）
-target_link_libraries(test_export_service PRIVATE Qt6::Core Qt6::Test Qt6::Network)
-if(ZLIB_FOUND)
-    if(ZLIB_USE_QT)
-        target_link_libraries(test_export_service PRIVATE z)
-    else()
-        target_link_libraries(test_export_service PRIVATE ZLIB::ZLIB)
-    endif()
-else()
-    target_link_libraries(test_export_service PRIVATE z)
-endif()
+target_link_libraries(test_export_service PRIVATE Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
 
 # 注册测试
 add_test(NAME test_export_service COMMAND test_export_service)
@@ -129,15 +110,7 @@ target_sources(test_export_service_pipeline PRIVATE
 target_include_directories(test_export_service_pipeline PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 # 链接 zlib
-if(ZLIB_FOUND)
-    if(ZLIB_USE_QT)
-        target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network z)
-    else()
-        target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
-    endif()
-else()
-    target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network z)
-endif()
+target_link_libraries(test_export_service_pipeline PRIVATE Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
 
 # 注册测试
 add_test(NAME test_export_service_pipeline COMMAND test_export_service_pipeline)
@@ -177,17 +150,7 @@ target_sources(test_component_data_collector PRIVATE
 target_include_directories(test_component_data_collector PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 # 链接库（统一使用 PRIVATE 关键字风格）
-target_link_libraries(test_component_data_collector PRIVATE Qt6::Core Qt6::Test Qt6::Network)
-# 链接 zlib（NetworkUtils 需要）
-if(ZLIB_FOUND)
-    if(ZLIB_USE_QT)
-        target_link_libraries(test_component_data_collector PRIVATE z)
-    else()
-        target_link_libraries(test_component_data_collector PRIVATE ZLIB::ZLIB)
-    endif()
-else()
-    target_link_libraries(test_component_data_collector PRIVATE z)
-endif()
+target_link_libraries(test_component_data_collector PRIVATE Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
 
 # 注册测试
 add_test(NAME test_component_data_collector COMMAND test_component_data_collector)
@@ -246,15 +209,7 @@ target_sources(test_integration PRIVATE
 target_include_directories(test_integration PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 # 链接 zlib
-if(ZLIB_FOUND)
-    if(ZLIB_USE_QT)
-        target_link_libraries(test_integration Qt6::Core Qt6::Test Qt6::Network z)
-    else()
-        target_link_libraries(test_integration Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
-    endif()
-else()
-    target_link_libraries(test_integration Qt6::Core Qt6::Test Qt6::Network z)
-endif()
+target_link_libraries(test_integration PRIVATE Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
 
 # 注册测试
 add_test(NAME test_integration COMMAND test_integration)
@@ -287,15 +242,7 @@ target_sources(test_performance PRIVATE
 target_include_directories(test_performance PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 # 链接 zlib
-if(ZLIB_FOUND)
-    if(ZLIB_USE_QT)
-        target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network z)
-    else()
-        target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
-    endif()
-else()
-    target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network z)
-endif()
+target_link_libraries(test_performance PRIVATE Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
 
 # 注册测试
 add_test(NAME test_performance COMMAND test_performance)
@@ -334,15 +281,7 @@ target_sources(test_pipeline_baseline PRIVATE
 target_include_directories(test_pipeline_baseline PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 # 链接 zlib
-if(ZLIB_FOUND)
-    if(ZLIB_USE_QT)
-        target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network z)
-    else()
-        target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
-    endif()
-else()
-    target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network z)
-endif()
+target_link_libraries(test_pipeline_baseline PRIVATE Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
 
 # 注册测试
 add_test(NAME test_pipeline_baseline COMMAND test_pipeline_baseline)
