@@ -176,31 +176,42 @@ jobs:
           # 显式指定 MinGW 工具链路径（使用正斜杠避免 PowerShell 转义问题）
           $mingwPath = "C:/msys64/mingw64/bin"
 
+          # 验证编译器是否存在
+          $gccPath = "$mingwPath/gcc.exe"
+          $gppPath = "$mingwPath/g++.exe"
+          
+          if (-not (Test-Path $gccPath)) {
+            Write-Error "GCC not found at: $gccPath"
+            exit 1
+          }
+          
+          if (-not (Test-Path $gppPath)) {
+            Write-Error "G++ not found at: $gppPath"
+            exit 1
+          }
+
           # 确保使用我们安装的 MinGW 13.1.0，而不是系统自带的旧版本
           $env:Path = "$mingwPath;" + $env:Path
 
-          # 显式指定编译器和链接器（使用正斜杠）
-          $env:CMAKE_C_COMPILER = "$mingwPath/gcc.exe"
-          $env:CMAKE_CXX_COMPILER = "$mingwPath/g++.exe"
-          $env:CMAKE_LINKER = "$mingwPath/ld.exe"
-          $env:CMAKE_AR = "$mingwPath/ar.exe"
-          $env:CMAKE_RANLIB = "$mingwPath/ranlib.exe"
-          $env:CMAKE_STRIP = "$mingwPath/strip.exe"
+          # 使用环境变量设置编译器（CMake 会自动从环境变量读取）
+          $env:CC = "gcc"
+          $env:CXX = "g++"
+          $env:LD = "ld"
+          $env:AR = "ar"
+          $env:RANLIB = "ranlib"
+          $env:STRIP = "strip"
 
           Write-Host "=== Using MinGW Toolchain from: $mingwPath ==="
-          Write-Host "C Compiler: $env:CMAKE_C_COMPILER"
-          Write-Host "CXX Compiler: $env:CMAKE_CXX_COMPILER"
-          Write-Host "Linker: $env:CMAKE_LINKER"
+          Write-Host "CC: $env:CC"
+          Write-Host "CXX: $env:CXX"
+          Write-Host "LD: $env:LD"
+
+          # 清理之前的 CMake 缓存
+          Remove-Item -Path build -Recurse -Force -ErrorAction SilentlyContinue
 
           cmake -B build -G "MinGW Makefiles" `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
-            -DCMAKE_C_COMPILER="$env:CMAKE_C_COMPILER" `
-            -DCMAKE_CXX_COMPILER="$env:CMAKE_CXX_COMPILER" `
-            -DCMAKE_LINKER="$env:CMAKE_LINKER" `
-            -DCMAKE_AR="$env:CMAKE_AR" `
-            -DCMAKE_RANLIB="$env:CMAKE_RANLIB" `
-            -DCMAKE_STRIP="$env:CMAKE_STRIP" `
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
