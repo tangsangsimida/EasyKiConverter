@@ -491,7 +491,7 @@ void TestExportServicePipeline::testExportServicePipeline_SignalConnections() {
     // 执行空流水线以触发信号
     QStringList componentIds;
 
-    ExportService::ExportOptions options;
+    ExportOptions options;
     options.outputPath = m_tempDir->path();
     options.libName = "TestLibrary";
     options.exportSymbol = true;
@@ -517,7 +517,7 @@ void TestExportServicePipeline::testExportServicePipeline_Cleanup() {
     // 执行空流水线
     QStringList componentIds;
 
-    ExportService::ExportOptions options;
+    ExportOptions options;
     options.outputPath = m_tempDir->path();
     options.libName = "TestLibrary";
     options.exportSymbol = true;
@@ -551,7 +551,7 @@ void TestExportServicePipeline::testIntegration_SingleComponent() {
     QStringList componentIds;
     componentIds << "C12345";
 
-    ExportService::ExportOptions options;
+    ExportOptions options;
     options.outputPath = m_tempDir->path();
     options.libName = "TestLibrary";
     options.exportSymbol = true;
@@ -590,7 +590,7 @@ void TestExportServicePipeline::testIntegration_MultipleComponents() {
     QStringList componentIds;
     componentIds << "C12345" << "C67890" << "C13579";
 
-    ExportService::ExportOptions options;
+    ExportOptions options;
     options.outputPath = m_tempDir->path();
     options.libName = "TestLibrary";
     options.exportSymbol = true;
@@ -628,7 +628,7 @@ void TestExportServicePipeline::testIntegration_ErrorHandling() {
     QStringList componentIds;
     componentIds << "INVALID_ID";  // 无效的元件ID
 
-    ExportService::ExportOptions options;
+    ExportOptions options;
     options.outputPath = m_tempDir->path();
     options.libName = "TestLibrary";
     options.exportSymbol = true;
