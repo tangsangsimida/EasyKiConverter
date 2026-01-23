@@ -1,4 +1,4 @@
-﻿#include <QTemporaryDir>
+#include <QTemporaryDir>
 #include <QThread>
 #include <QtTest/QtTest>
 
@@ -306,8 +306,9 @@ void TestExportServicePipeline::testFetchWorker_SignalEmission() {
     QCOMPARE(spy.count(), 1);
 
     QList<QVariant> arguments = spy.takeFirst();
-    ComponentExportStatus status = arguments.at(0).value<ComponentExportStatus>();
-    QCOMPARE(status.componentId, QString("C12345"));
+    QSharedPointer<ComponentExportStatus> status = arguments.at(0).value<QSharedPointer<ComponentExportStatus>>();
+    QVERIFY(status != nullptr);
+    QCOMPARE(status->componentId, QString("C12345"));
 
     delete worker;
     delete networkManager;
@@ -352,8 +353,9 @@ void TestExportServicePipeline::testProcessWorker_SignalEmission() {
     QCOMPARE(spy.count(), 1);
 
     QList<QVariant> arguments = spy.takeFirst();
-    ComponentExportStatus resultStatus = arguments.at(0).value<ComponentExportStatus>();
-    QCOMPARE(resultStatus.componentId, QString("C12345"));
+    QSharedPointer<ComponentExportStatus> resultStatus = arguments.at(0).value<QSharedPointer<ComponentExportStatus>>();
+    QVERIFY(resultStatus != nullptr);
+    QCOMPARE(resultStatus->componentId, QString("C12345"));
 
     delete worker;
 
@@ -396,8 +398,9 @@ void TestExportServicePipeline::testWriteWorker_SignalEmission() {
     QCOMPARE(spy.count(), 1);
 
     QList<QVariant> arguments = spy.takeFirst();
-    ComponentExportStatus resultStatus = arguments.at(0).value<ComponentExportStatus>();
-    QCOMPARE(resultStatus.componentId, QString("C12345"));
+    QSharedPointer<ComponentExportStatus> resultStatus = arguments.at(0).value<QSharedPointer<ComponentExportStatus>>();
+    QVERIFY(resultStatus != nullptr);
+    QCOMPARE(resultStatus->componentId, QString("C12345"));
 
     delete worker;
 
@@ -505,7 +508,7 @@ void TestExportServicePipeline::testExportServicePipeline_SignalConnections() {
     QVERIFY(completedSpy.wait(5000));
 
     // 验证信号被发射
-    QVERIFY(progressSpy.count() >= 0);  // 可能有进度更新
+    // 空任务可能不发送进度更新，只发送完成信号，所以 progressSpy.count() >= 0 是合理的
     QCOMPARE(completedSpy.count(), 1);
 
     qDebug() << "✓ ExportServicePipeline 信号连接测试通过";
