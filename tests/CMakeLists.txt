@@ -133,8 +133,8 @@ endif()
 
 # 注册测试
 add_test(NAME test_export_service_pipeline COMMAND test_export_service_pipeline)
-# 设置 CTest 超时时间为 600 秒（流水线测试需要较长时间）
-set_property(TEST test_export_service_pipeline PROPERTY TIMEOUT 600)
+# 设置 CTest 超时时间为 120 秒（流水线测试需要较长时间）
+set_property(TEST test_export_service_pipeline PROPERTY TIMEOUT 120)
 
 # ========== ConfigService 测试 ==========
 add_executable(test_config_service test_config_service.cpp)
@@ -182,8 +182,8 @@ endif()
 
 # 注册测试
 add_test(NAME test_component_data_collector COMMAND test_component_data_collector)
-# 设置 CTest 超时时间为 320 秒（集成测试需要更长时间）
-set_property(TEST test_component_data_collector PROPERTY TIMEOUT 320)
+# 设置 CTest 超时时间为 60 秒（集成测试需要较长时间）
+set_property(TEST test_component_data_collector PROPERTY TIMEOUT 60)
 
 # ========== UUID 提取测试 ==========
 add_executable(test_uuid_extraction test_uuid_extraction.cpp)
@@ -249,8 +249,8 @@ endif()
 
 # 注册测试
 add_test(NAME test_integration COMMAND test_integration)
-# 设置 CTest 超时时间为 600 秒（集成测试需要较长时间）
-set_property(TEST test_integration PROPERTY TIMEOUT 600)
+# 设置 CTest 超时时间为 120 秒（集成测试需要较长时间）
+set_property(TEST test_integration PROPERTY TIMEOUT 120)
 
 # ========== 性能测试 ==========
 add_executable(test_performance test_performance.cpp)
@@ -290,8 +290,8 @@ endif()
 
 # 注册测试
 add_test(NAME test_performance COMMAND test_performance)
-# 设置 CTest 超时时间为 600 秒（性能测试需要较长时间）
-set_property(TEST test_performance PROPERTY TIMEOUT 600)
+# 设置 CTest 超时时间为 180 秒（性能测试需要较长时间）
+set_property(TEST test_performance PROPERTY TIMEOUT 180)
 
 # ========== 流水线性能基准测试 ==========
 add_executable(test_pipeline_baseline test_pipeline_baseline.cpp)
@@ -337,5 +337,5 @@ endif()
 
 # 注册测试
 add_test(NAME test_pipeline_baseline COMMAND test_pipeline_baseline)
-# 设置 CTest 超时时间为 960 秒（流水线基准测试需要较长时间）
-set_property(TEST test_pipeline_baseline PROPERTY TIMEOUT 960)
+# 设置 CTest 超时时间为 300 秒（流水线基准测试需要较长时间）
+set_property(TEST test_pipeline_baseline PROPERTY TIMEOUT 300)
