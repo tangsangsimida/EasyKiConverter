@@ -137,7 +137,13 @@ qt_add_executable(appEasyKiconverter_Cpp_Version WIN32
 
 # 为 MinGW 添加 GUI 子系统链接选项
 if(MINGW)
+    set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
+        WIN32_EXECUTABLE TRUE
+    )
+    # 使用 target_link_options 添加 -mwindows
     target_link_options(appEasyKiconverter_Cpp_Version PRIVATE -mwindows)
+    # 同时设置全局链接标志
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
 endif()
 
 # 添加 src 目录到 include 路径
