@@ -61,9 +61,7 @@ jobs:
             libgles2-mesa-dev
 
       - name: 'Setup CMake'
-        uses: jwlawson/actions-setup-cmake@v2.2
-        with:
-          cmake-version: ${{ env.CMAKE_VERSION }}
+        uses: jwlawson/actions-setup-cmake@v2
 
       - name: 'Install Qt'
         uses: jurplel/install-qt-action@v4
@@ -74,7 +72,7 @@ jobs:
           modules: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
           cache: true
 
-      - name: 'Configure with coverage'
+      - name: 'Configure main project with coverage'
         run: |
           cmake -B build \
             -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
@@ -82,22 +80,33 @@ jobs:
             -DCMAKE_CXX_FLAGS="--coverage" \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
 
-      - name: 'Build with coverage'
+      - name: 'Build main project with coverage'
         run: |
           cmake --build build --config Debug --parallel
 
-      - name: 'Run tests with coverage'
+      - name: 'Configure tests with coverage'
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
-          cmake --build build
-          ./build/test_component_service
-          ./build/test_export_service
-          ./build/test_config_service
-          ./build/test_export_service_pipeline
-          ./build/test_component_data_collector
-          ./build/test_layer_mapping
-          ./build/test_uuid_extraction
+          cmake -B build \
+            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="--coverage"
+
+      - name: 'Build tests with coverage'
+        run: |
+          cd tests
+          cmake --build build --config Debug
+
+      - name: 'Run tests with coverage'
+        run: |
+          cd tests/build
+          ./test_component_service
+          ./test_export_service
+          ./test_config_service
+          ./test_export_service_pipeline
+          ./test_component_data_collector
+          ./test_layer_mapping
+          ./test_uuid_extraction
 
       - name: 'Generate coverage report'
         run: |
@@ -113,17 +122,6 @@ jobs:
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
-
-      - name: 'Add coverage comment to PR'
-        if: github.event_name == 'pull_request'
-        uses: py-cov-action/python-coverage-comment-action@v3
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMUM_GREEN: 80
-          MINIMUM_ORANGE: 70
-          MINIMUM_RED: 60
-          MINIMUM_COVERAGE: 60
-        continue-on-error: true
 
       - name: 'Upload coverage artifact'
         uses: actions/upload-artifact@v4
