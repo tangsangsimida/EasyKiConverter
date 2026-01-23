@@ -1,12 +1,19 @@
 # This workflow will triage pull requests and apply a label based on the
 # paths that are modified in the pull request.
 #
-# To use this workflow, you will need to set up a .github/labeler.yml
-# file with configuration.  For more information, see:
-# https://github.com/actions/labeler
+# 配置文件: .github/labeler.yml
+# 文档: https://github.com/actions/labeler
+#
+# 安全性说明:
+# - 使用 pull_request 事件而非 pull_request_target，以减少安全风险
+# - 仅在 PR 打开、同步或重新打开时触发
+# - Fork 的 PR 不会触发此工作流（需要仓库维护者手动添加标签）
 
 name: Labeler
-on: [pull_request_target]
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   label:
@@ -20,3 +27,4 @@ jobs:
     - uses: actions/labeler@v4
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        sync-labels: true

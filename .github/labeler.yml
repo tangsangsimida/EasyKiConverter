@@ -1,0 +1,50 @@
+# GitHub Actions Labeler 配置文件
+# 根据修改的文件路径自动为 Pull Request 分配标签
+
+# 文档相关
+docs:
+  - docs/**/*
+  - README*.md
+  - CHANGELOG*.md
+  - LICENSE
+  - AGENTS.md
+  - GEMINI.md
+
+# 核心转换引擎
+core:
+  - src/core/**/*
+
+# 数据模型
+models:
+  - src/models/**/*
+
+# 服务层
+services:
+  - src/services/**/*
+
+# UI 层
+ui:
+  - src/ui/**/*
+
+# 工作线程
+workers:
+  - src/workers/**/*
+
+# 工具类
+utils:
+  - src/utils/**/*
+
+# 测试
+tests:
+  - tests/**/*
+
+# CI/CD
+ci:
+  - .github/**/*
+  - CMakeLists.txt
+  - .gitignore
+
+# 资源文件
+resources:
+  - resources/**/*
+
