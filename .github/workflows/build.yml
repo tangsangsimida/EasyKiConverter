@@ -166,14 +166,26 @@ jobs:
 
       - name: 'Configure CMake (MinGW) with sccache'
         if: matrix.platform == 'mingw_64'
-        shell: bash
+        shell: pwsh
         run: |
-          export CMAKE_SH="CMAKE_SH-NOTFOUND"
-          cmake -B build -G "MinGW Makefiles" \
-            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
-            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+          # 显式指定 MinGW 链接器，避免使用 MSVC 的 link.exe
+          $env:CMAKE_LINKER = "ld"
+          $env:CMAKE_AR = "ar"
+          $env:CMAKE_RANLIB = "ranlib"
+          $env:CMAKE_STRIP = "strip"
+
+          # 确保 MinGW 工具链在 PATH 中优先
+          $env:Path = "C:\msys64\mingw64\bin;" + $env:Path
+
+          cmake -B build -G "MinGW Makefiles" `
+            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_LINKER="ld" `
+            -DCMAKE_AR="ar" `
+            -DCMAKE_RANLIB="ranlib" `
+            -DCMAKE_STRIP="strip" `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
 
       - name: 'Configure CMake (MSVC) with sccache and vcpkg'
