@@ -1,0 +1,250 @@
+name: Build
+
+on:
+  push:
+    branches: [ 'master', 'main', 'develop' ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
+  pull_request:
+    branches: [ 'master', 'main', 'develop' ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: RelWithDebInfo
+  QT_VERSION: '6.10.1'
+  CMAKE_VERSION: '3.16'
+
+jobs:
+  linux-build:
+    name: 'Build Linux'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-20.04]
+    steps:
+      - name: 'Checkout Source code'
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+
+      - name: 'Checkout Source code'
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: 'Checkout Source code'
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: 'Install Dependencies'
+        run: |
+          sudo apt-get -y -qq update
+          sudo apt-get -y --no-install-recommends install \
+            cmake \
+            build-essential \
+            libgl1-mesa-dev \
+            libxcb-xinerama0 \
+            libxcb-cursor0 \
+            libxkbcommon-x11-0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-shape0 \
+            libxcb-render-util0 \
+            libxcb-xfixes0 \
+            libxcb-xkbcommon1 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render0 \
+            libxcb-shm0 \
+            libxcb-util1 \
+            libxcb-xinerama0 \
+            libxcb-xfixes0 \
+            libwayland-dev \
+            libegl1-mesa-dev \
+            libgles2-mesa-dev \
+            libfontconfig1-dev \
+            libfreetype6-dev \
+            libharfbuzz-dev \
+            libdbus-1-dev \
+            libglib2.0-0
+
+      - name: 'Setup CMake'
+        uses: jwlawson/actions-setup-cmake@v2.2
+        with:
+          cmake-version: ${{ env.CMAKE_VERSION }}
+
+      - name: 'Install Qt'
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: 'linux'
+          target: 'desktop'
+          modules: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
+          cache: true
+
+      - name: 'Configure CMake'
+        run: |
+          cmake -B build \
+            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+
+      - name: 'Build'
+        run: |
+          cmake --build build --config $BUILD_TYPE --parallel
+
+      - name: 'Test'
+        run: |
+          cd tests
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake --build build
+          ./build/test_component_service
+          ./build/test_export_service
+          ./build/test_config_service
+
+  windows-build:
+    name: 'Build Windows'
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 'Windows MinGW'
+            platform: 'mingw_64'
+            generator: 'MinGW Makefiles'
+          - name: 'Windows MSVC'
+            platform: 'msvc2019_64'
+            generator: 'Visual Studio 17 2022'
+            arch: 'x64'
+    steps:
+      - name: 'Checkout Source code'
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+
+      - name: 'Checkout Source code'
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: 'Checkout Source code'
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: 'Setup MSVC'
+        if: matrix.platform == 'msvc2019_64'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+          toolset: '14.2'
+
+      - name: 'Setup MinGW'
+        if: matrix.platform == 'mingw_64'
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: x64
+          version: 13.2.0
+
+      - name: 'Setup CMake'
+        uses: jwlawson/actions-setup-cmake@v2.2
+        with:
+          cmake-version: ${{ env.CMAKE_VERSION }}
+
+      - name: 'Install Qt'
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_mingw'
+          modules: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
+          cache: true
+
+      - name: 'Configure CMake (MinGW)'
+        if: matrix.platform == 'mingw_64'
+        run: |
+          cmake -B build -G "MinGW Makefiles" `
+            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+
+      - name: 'Configure CMake (MSVC)'
+        if: matrix.platform == 'msvc2019_64'
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+
+      - name: 'Build'
+        run: |
+          cmake --build build --config $env:BUILD_TYPE --parallel
+
+      - name: 'Test'
+        run: |
+          cd tests
+          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR"
+          cmake --build build
+          ./build/test_component_service.exe
+
+  macos-build:
+    name: 'Build macOS'
+    runs-on: macos-latest
+    steps:
+      - name: 'Checkout Source code'
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+
+      - name: 'Checkout Source code'
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: 'Checkout Source code'
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: 'Setup CMake'
+        uses: jwlawson/actions-setup-cmake@v2.2
+        with:
+          cmake-version: ${{ env.CMAKE_VERSION }}
+
+      - name: 'Install Qt'
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: 'mac'
+          target: 'desktop'
+          modules: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
+          cache: true
+
+      - name: 'Configure CMake'
+        run: |
+          cmake -B build \
+            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+
+      - name: 'Build'
+        run: |
+          cmake --build build --config $BUILD_TYPE --parallel
+
+      - name: 'Test'
+        run: |
+          cd tests
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake --build build
+          ./build/test_component_service

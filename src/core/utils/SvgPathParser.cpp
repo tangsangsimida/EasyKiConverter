@@ -181,7 +181,6 @@ namespace EasyKiConverter
             // 处理C/c（Bezier Curve）命令
             else if (command == 'C')
             {
-                bool relative = (cmd[0] == 'c');
                 qWarning() << "Bezier curve not fully supported, skipping";
                 i += 7; // 跳过6个控制点参数 + 1个终点参数
             }

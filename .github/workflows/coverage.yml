@@ -1,0 +1,135 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [ 'master', 'main' ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
+  pull_request:
+    branches: [ 'master', 'main' ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
+  workflow_dispatch:
+
+env:
+  QT_VERSION: '6.10.1'
+  CMAKE_VERSION: '3.16'
+
+jobs:
+  code-coverage:
+    name: 'Code Coverage'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Source code'
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+
+      - name: 'Checkout Source code'
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: 'Checkout Source code'
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: 'Install Dependencies'
+        run: |
+          sudo apt-get -y -qq update
+          sudo apt-get -y --no-install-recommends install \
+            cmake \
+            build-essential \
+            lcov \
+            libgl1-mesa-dev \
+            libxcb-xinerama0 \
+            libxcb-cursor0 \
+            libxkbcommon-x11-0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-shape0 \
+            libxcb-render-util0 \
+            libxcb-xfixes0 \
+            libwayland-dev \
+            libegl1-mesa-dev \
+            libgles2-mesa-dev
+
+      - name: 'Setup CMake'
+        uses: jwlawson/actions-setup-cmake@v2.2
+        with:
+          cmake-version: ${{ env.CMAKE_VERSION }}
+
+      - name: 'Install Qt'
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: 'linux'
+          target: 'desktop'
+          modules: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
+          cache: true
+
+      - name: 'Configure with coverage'
+        run: |
+          cmake -B build \
+            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="--coverage" \
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+
+      - name: 'Build with coverage'
+        run: |
+          cmake --build build --config Debug --parallel
+
+      - name: 'Run tests with coverage'
+        run: |
+          cd tests
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake --build build
+          ./build/test_component_service
+          ./build/test_export_service
+          ./build/test_config_service
+          ./build/test_export_service_pipeline
+          ./build/test_component_data_collector
+          ./build/test_layer_mapping
+          ./build/test_uuid_extraction
+
+      - name: 'Generate coverage report'
+        run: |
+          lcov --capture --directory build --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info
+          lcov --remove coverage.info 'tests/*' --output-file coverage.info
+          lcov --list coverage.info --output-file coverage.txt
+
+      - name: 'Upload coverage to Codecov'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: 'Add coverage comment to PR'
+        if: github.event_name == 'pull_request'
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MINIMUM_GREEN: 80
+          MINIMUM_ORANGE: 70
+          MINIMUM_RED: 60
+          MINIMUM_COVERAGE: 60
+        continue-on-error: true
+
+      - name: 'Upload coverage artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.info
+            coverage.txt
+          overwrite: true
