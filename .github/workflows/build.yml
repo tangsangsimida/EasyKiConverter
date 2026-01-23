@@ -1,194 +1,249 @@
-name : Build
+name: Build
 
-           on : push : branches : [ 'master', 'main', 'ci_test' ] paths -
-                                  ignore : -'README.md' -
-                                           'LICENSE' -
-                                           'docs/**' pull_request : branches : [ 'master', 'main', 'ci_test' ] paths -
-                                                                               ignore : -'README.md' -
-                                                                                        'LICENSE' -
-                                                                                        'docs/**' workflow_dispatch :
+on:
+  push:
+    branches: ['master', 'main', 'ci_test']
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
+  pull_request:
+    branches: ['master', 'main', 'ci_test']
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
+  workflow_dispatch:
 
-    env : BUILD_TYPE : RelWithDebInfo QT_VERSION : '6.10.1' CMAKE_VERSION : '3.22'
+env:
+  BUILD_TYPE: RelWithDebInfo
+  QT_VERSION: '6.10.1'
+  CMAKE_VERSION: '3.22'
 
-                                                                            jobs : linux -
-                                                                                   build : name : 'Build Linux' runs -
-                                                                                                  on : ubuntu -
-                                                                                                       latest strategy
-    : matrix : os : [ ubuntu - 22.04, ubuntu - 20.04 ] steps : -name : 'Checkout Source code' if : github.event_name ==
-    'push' uses : actions / checkout @v4
+jobs:
+  linux-build:
+    name: 'Build Linux'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-20.04]
+    steps:
+      - name: 'Checkout Source code'
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
 
-        - name : 'Checkout Source code' if : github.event_name ==
-    'pull_request' uses : actions / checkout @v4 with : ref : ${{github.event.pull_request.head.sha}}
+      - name: 'Checkout Source code'
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
-        - name : 'Checkout Source code' if : github.event_name ==
-    'workflow_dispatch' uses : actions / checkout @v4 with : ref : ${{github.sha}}
+      - name: 'Checkout Source code'
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
 
-        - name : 'Setup Build Environment' uses :./.github / actions / setup - env with : cmake - version : $ {
-    {
-        env.CMAKE_VERSION
-    }
-}
-qt - version : $ {
-    {
-        env.QT_VERSION
-    }
-}
-qt - host : 'linux' qt - target : 'desktop' enable - ccache : 'true' enable - sccache : 'false'
+      - name: 'Setup Build Environment'
+        uses: ./.github/actions/setup-env
+        with:
+          cmake-version: ${{ env.CMAKE_VERSION }}
+          qt-version: ${{ env.QT_VERSION }}
+          qt-host: 'linux'
+          qt-target: 'desktop'
+          enable-ccache: 'true'
+          enable-sccache: 'false'
 
-                                                                                        -
-                                                                                        name
-    : 'Configure CMake with CCache' run : |
-                                          cmake - B build - DCMAKE_PREFIX_PATH =
-    "$Qt6_DIR" - DCMAKE_BUILD_TYPE =
-        $BUILD_TYPE - DCMAKE_C_COMPILER_LAUNCHER =
-            ccache - DCMAKE_CXX_COMPILER_LAUNCHER =
-                ccache - DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT =
-                    OFF
+      - name: 'Configure CMake with CCache'
+        run: |
+          cmake -B build \
+            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
 
-                        - name : 'Build' run : |
-                                               cmake-- build build-- config $BUILD_TYPE-- parallel
+      - name: 'Build'
+        run: |
+          cmake --build build --config $BUILD_TYPE --parallel
 
-                                                   - name : 'Test' run : |
-                                                                         cd tests cmake - B build - DCMAKE_PREFIX_PATH =
-                        "$Qt6_DIR" cmake-- build build ctest-- output - on - failure-- test - dir build-- output -
-                            junit test - results.xml
+      - name: 'Test'
+        run: |
+          cd tests
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake --build build
+          ctest --output-on-failure --test-dir build --output-junit test-results.xml
 
-                            - name : 'Publish Test Report' if : always() uses : mikepenz / action - junit -
-                            report @v4 with : report_paths : tests / build / test -
-                            results.xml check_name : Test Report(Linux - ${{matrix.os}}) detailed_summary
-    : true include_passed : true
+      - name: 'Publish Test Report'
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: tests/build/test-results.xml
+          check_name: Test Report (Linux - ${{ matrix.os }})
+          detailed_summary: true
+          include_passed: true
 
-                            windows -
-                            build : name : 'Build Windows' runs - on : windows - 2022 strategy : fail -
-                                                                                                 fast : false matrix
-    : include : -name : 'Windows MinGW' platform : 'mingw_64' generator : 'MinGW Makefiles' -
-                                                                          name : 'Windows MSVC' platform
-    : 'msvc2019_64' generator : 'Visual Studio 17 2022' arch : 'x64' steps : -name : 'Checkout Source code' if
-    : github.event_name ==
-                        'push' uses : actions / checkout @v4
+  windows-build:
+    name: 'Build Windows'
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 'Windows MinGW'
+            platform: 'mingw_64'
+            generator: 'MinGW Makefiles'
+          - name: 'Windows MSVC'
+            platform: 'msvc2019_64'
+            generator: 'Visual Studio 17 2022'
+            arch: 'x64'
+    steps:
+      - name: 'Checkout Source code'
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
 
-                            - name : 'Checkout Source code' if : github.event_name ==
-                        'pull_request' uses : actions / checkout @v4 with : ref
-    : ${{github.event.pull_request.head.sha}}
+      - name: 'Checkout Source code'
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
-                            - name : 'Checkout Source code' if : github.event_name ==
-                        'workflow_dispatch' uses : actions / checkout @v4 with : ref : ${{github.sha}}
+      - name: 'Checkout Source code'
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
 
-                            - name : 'Setup MSVC' if : matrix.platform ==
-                        'msvc2019_64' uses : ilammy / msvc - dev - cmd @v1 with : arch : $ {
-    {
-        matrix.arch
-    }
-}
-toolset : '14.2'
+      - name: 'Setup MSVC'
+        if: matrix.platform == 'msvc2019_64'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+          toolset: '14.2'
 
-          -
-          name : 'Setup MinGW' if : matrix.platform ==
-    'mingw_64' uses : egor - tensin / setup - mingw @v2 with : platform : x64 version : 12.2.0
+      - name: 'Setup MinGW'
+        if: matrix.platform == 'mingw_64'
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: x64
+          version: 12.2.0
 
-                                                                          -
-                                                                          name : 'Setup vcpkg' if : matrix.platform ==
-    'msvc2019_64' uses : lukka / run -
-        vcpkg @v11 with : vcpkgGitCommitId
-    : '7d9a5c5d0a1a0e1b0c1d0e1f0g1h0i0j0k0l0m0n0o0p0q0r0s0t0u0v0w0x0y0z' vcpkgJsonGlob : 'vcpkg.json'
+      - name: 'Setup vcpkg'
+        if: matrix.platform == 'msvc2019_64'
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '7d9a5c5d0a1a0e1b0c1d0e1f0g1h0i0j0k0l0m0n0o0p0q0r0s0t0u0v0w0x0y0z'
+          vcpkgJsonGlob: 'vcpkg.json'
 
-                                                                                         -
-                                                                                         name
-    : 'Setup Build Environment' uses :./.github / actions / setup - env with : cmake -
-                                                                               version : $ {
-    {
-        env.CMAKE_VERSION
-    }
-}
-qt - version : $ {
-    {
-        env.QT_VERSION
-    }
-}
-qt - host : 'windows' qt - target : 'desktop' qt - arch : 'win64_mingw' enable - ccache : 'false' enable -
-                                                                                          sccache
-    : 'true'
+      - name: 'Setup Build Environment'
+        uses: ./.github/actions/setup-env
+        with:
+          cmake-version: ${{ env.CMAKE_VERSION }}
+          qt-version: ${{ env.QT_VERSION }}
+          qt-host: 'windows'
+          qt-target: 'desktop'
+          qt-arch: 'win64_mingw'
+          enable-ccache: 'false'
+          enable-sccache: 'true'
 
-      -
-      name : 'Configure CMake (MinGW) with sccache' if : matrix.platform ==
-        'mingw_64' shell : bash run : |
-                                      export CMAKE_SH =
-    "CMAKE_SH-NOTFOUND" cmake - B build - G "MinGW Makefiles" - DCMAKE_PREFIX_PATH =
-        "$Qt6_DIR" - DCMAKE_BUILD_TYPE = $BUILD_TYPE - DCMAKE_C_COMPILER_LAUNCHER =
-                                             sccache - DCMAKE_CXX_COMPILER_LAUNCHER =
-                                                 sccache - DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT = OFF
+      - name: 'Configure CMake (MinGW) with sccache'
+        if: matrix.platform == 'mingw_64'
+        shell: bash
+        run: |
+          export CMAKE_SH="CMAKE_SH-NOTFOUND"
+          cmake -B build -G "MinGW Makefiles" \
+            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
 
-                                                                                                           - name
-    : 'Configure CMake (MSVC) with sccache and vcpkg' if : matrix.platform == 'msvc2019_64' run
-    : |
-      cmake - B build - G "Visual Studio 17 2022" - A x64 ` -
-          DCMAKE_PREFIX_PATH = "$env:Qt6_DIR" ` - DCMAKE_BUILD_TYPE =
-                                   $env : BUILD_TYPE ` - DCMAKE_C_COMPILER_LAUNCHER =
-                                       sccache ` - DCMAKE_CXX_COMPILER_LAUNCHER =
-                                           sccache ` - DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT =
-                                               OFF ` - DCMAKE_TOOLCHAIN_FILE =
-                                                   "$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+      - name: 'Configure CMake (MSVC) with sccache and vcpkg'
+        if: matrix.platform == 'msvc2019_64'
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 
-                                                       - name : 'Build' run
-    : |
-      cmake-- build build-- config $env : BUILD_TYPE-- parallel $(nproc 2 > / dev / null || echo 4)
+      - name: 'Build'
+        run: |
+          cmake --build build --config $env:BUILD_TYPE --parallel $(nproc 2>/dev/null || echo 4)
 
-                                          -
-                                          name : 'Test' run
-    : |
-      cd tests cmake - B build -
-          DCMAKE_PREFIX_PATH = "$env:Qt6_DIR" cmake-- build build ctest-- output - on - failure-- test -
-                                   dir build-- output - junit test - results.xml
+      - name: 'Test'
+        run: |
+          cd tests
+          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR"
+          cmake --build build
+          ctest --output-on-failure --test-dir build --output-junit test-results.xml
 
-                                   - name : 'Publish Test Report' if : always() uses : mikepenz / action - junit -
-                                   report @v4 with : report_paths : tests / build / test -
-                                   results.xml check_name : Test Report(Windows - ${{matrix.name}}) detailed_summary
-    : true include_passed : true
+      - name: 'Publish Test Report'
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: tests/build/test-results.xml
+          check_name: Test Report (Windows - ${{ matrix.name }})
+          detailed_summary: true
+          include_passed: true
 
-                            macos - build : name : 'Build macOS' runs -
-                                                   on
-    : macos -
-      latest steps : -name : 'Checkout Source code' if : github.event_name ==
-                               'push' uses : actions / checkout @v4
+  macos-build:
+    name: 'Build macOS'
+    runs-on: macos-latest
+    steps:
+      - name: 'Checkout Source code'
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
 
-                                   - name : 'Checkout Source code' if : github.event_name ==
-                               'pull_request' uses : actions / checkout
-                                                     @v4 with : ref : ${{github.event.pull_request.head.sha}}
+      - name: 'Checkout Source code'
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
-                                   - name : 'Checkout Source code' if : github.event_name ==
-                               'workflow_dispatch' uses : actions / checkout @v4 with : ref : ${{github.sha}}
+      - name: 'Checkout Source code'
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
 
-                                   - name : 'Setup Build Environment' uses :./.github / actions / setup -
-                                   env with : cmake - version : $ {
-    {
-        env.CMAKE_VERSION
-    }
-}
-qt - version : $ {
-    {
-        env.QT_VERSION
-    }
-}
-qt - host : 'mac' qt - target : 'desktop' enable - ccache : 'true' enable - sccache : 'false'
+      - name: 'Setup Build Environment'
+        uses: ./.github/actions/setup-env
+        with:
+          cmake-version: ${{ env.CMAKE_VERSION }}
+          qt-version: ${{ env.QT_VERSION }}
+          qt-host: 'mac'
+          qt-target: 'desktop'
+          enable-ccache: 'true'
+          enable-sccache: 'false'
 
-                                                                                      -
-                                                                                      name
-    : 'Configure CMake with CCache' run : |
-                                          cmake - B build - DCMAKE_PREFIX_PATH =
-    "$Qt6_DIR" - DCMAKE_BUILD_TYPE =
-        $BUILD_TYPE - DCMAKE_C_COMPILER_LAUNCHER =
-            ccache - DCMAKE_CXX_COMPILER_LAUNCHER =
-                ccache - DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT =
-                    OFF
+      - name: 'Configure CMake with CCache'
+        run: |
+          cmake -B build \
+            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
 
-                        - name : 'Build' run : |
-                                               cmake-- build build-- config $BUILD_TYPE-- parallel
+      - name: 'Build'
+        run: |
+          cmake --build build --config $BUILD_TYPE --parallel
 
-                                                   - name : 'Test' run : |
-                                                                         cd tests cmake - B build - DCMAKE_PREFIX_PATH =
-                        "$Qt6_DIR" cmake-- build build ctest-- output - on - failure-- test - dir build-- output -
-                        junit test - results.xml
+      - name: 'Test'
+        run: |
+          cd tests
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake --build build
+          ctest --output-on-failure --test-dir build --output-junit test-results.xml
 
-                        - name : 'Publish Test Report' if : always() uses : mikepenz / action - junit -
-                        report @v4 with : report_paths : tests / build / test -
-                        results.xml check_name : Test Report(macOS) detailed_summary : true include_passed : true
+      - name: 'Publish Test Report'
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: tests/build/test-results.xml
+          check_name: Test Report (macOS)
+          detailed_summary: true
+          include_passed: true
