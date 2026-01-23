@@ -320,8 +320,8 @@ void TestExportServicePipeline::testFetchWorker_SignalEmission() {
 void TestExportServicePipeline::testProcessWorker_Creation() {
     qDebug() << "测试：ProcessWorker 创建";
 
-    ComponentExportStatus status;
-    status.componentId = "C12345";
+    QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
+    status->componentId = "C12345";
 
     ProcessWorker* worker = new ProcessWorker(status, this);
 
@@ -335,11 +335,11 @@ void TestExportServicePipeline::testProcessWorker_Creation() {
 void TestExportServicePipeline::testProcessWorker_SignalEmission() {
     qDebug() << "测试：ProcessWorker 信号发射";
 
-    ComponentExportStatus status;
-    status.componentId = "C12345";
-    status.fetchSuccess = true;
-    status.componentInfoRaw = "{}";
-    status.cadDataRaw = "{}";
+    QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
+    status->componentId = "C12345";
+    status->fetchSuccess = true;
+    status->componentInfoRaw = "{}";
+    status->cadDataRaw = "{}";
 
     ProcessWorker* worker = new ProcessWorker(status, this);
 
@@ -365,8 +365,8 @@ void TestExportServicePipeline::testProcessWorker_SignalEmission() {
 void TestExportServicePipeline::testWriteWorker_Creation() {
     qDebug() << "测试：WriteWorker 创建";
 
-    ComponentExportStatus status;
-    status.componentId = "C12345";
+    QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
+    status->componentId = "C12345";
 
     WriteWorker* worker = new WriteWorker(status, m_tempDir->path(), "TestLibrary", false, false, false, this);
 
@@ -380,10 +380,10 @@ void TestExportServicePipeline::testWriteWorker_Creation() {
 void TestExportServicePipeline::testWriteWorker_SignalEmission() {
     qDebug() << "测试：WriteWorker 信号发射";
 
-    ComponentExportStatus status;
-    status.componentId = "C12345";
-    status.processSuccess = true;
-    status.symbolData = QSharedPointer<SymbolData>::create();
+    QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
+    status->componentId = "C12345";
+    status->processSuccess = true;
+    status->symbolData = QSharedPointer<SymbolData>::create();
 
     WriteWorker* worker = new WriteWorker(status, m_tempDir->path(), "TestLibrary", true, false, false, this);
 
@@ -453,7 +453,7 @@ void TestExportServicePipeline::testExportServicePipeline_ExecuteEmptyPipeline()
 
     QStringList componentIds;  // 空列表
 
-    ExportService::ExportOptions options;
+    ExportOptions options;
     options.outputPath = m_tempDir->path();
     options.libName = "TestLibrary";
     options.exportSymbol = true;
