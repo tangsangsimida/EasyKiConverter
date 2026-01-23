@@ -546,6 +546,9 @@ void TestExportServicePipeline::testExportServicePipeline_Cleanup() {
 // ==================== 集成测试 ====================
 
 void TestExportServicePipeline::testIntegration_SingleComponent() {
+    // 设置测试超时时间为 60 秒
+    QTEST_SET_TIMEOUT(60000);
+
     qDebug() << "测试：集成 - 单个元件";
 
     QStringList componentIds;
@@ -585,6 +588,9 @@ void TestExportServicePipeline::testIntegration_SingleComponent() {
 }
 
 void TestExportServicePipeline::testIntegration_MultipleComponents() {
+    // 设置测试超时时间为 120 秒
+    QTEST_SET_TIMEOUT(120000);
+
     qDebug() << "测试：集成 - 多个元件";
 
     QStringList componentIds;

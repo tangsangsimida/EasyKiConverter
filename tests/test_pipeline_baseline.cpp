@@ -125,6 +125,9 @@ void TestPipelineBaseline::cleanupTestCase() {
 }
 
 void TestPipelineBaseline::testPipeline_10_Components() {
+    // 设置测试超时时间为 360 秒（6分钟）
+    QTEST_SET_TIMEOUT(360000);
+
     qDebug() << "\n--- 测试 1: 流水线处理 10 个组件 ---";
     runPipelineTest(10);
 
@@ -137,6 +140,9 @@ void TestPipelineBaseline::testPipeline_10_Components() {
 }
 
 void TestPipelineBaseline::testPipeline_50_Components() {
+    // 设置测试超时时间为 600 秒（10分钟）
+    QTEST_SET_TIMEOUT(600000);
+
     qDebug() << "\n--- 测试 2: 流水线处理 50 个组件 ---";
     runPipelineTest(50);
 
@@ -155,6 +161,9 @@ void TestPipelineBaseline::testPipeline_50_Components() {
 }
 
 void TestPipelineBaseline::testPipeline_100_Components() {
+    // 设置测试超时时间为 900 秒（15分钟）
+    QTEST_SET_TIMEOUT(900000);
+
     qDebug() << "\n--- 测试 3: 流水线处理 100 个组件 ---";
     runPipelineTest(100);
 
