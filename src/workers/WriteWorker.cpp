@@ -1,7 +1,7 @@
 #include "WriteWorker.h"
-#include "src/core/kicad/ExporterSymbol.h"
-#include "src/core/kicad/ExporterFootprint.h"
-#include "src/core/kicad/Exporter3DModel.h"
+#include "core/kicad/ExporterSymbol.h"
+#include "core/kicad/ExporterFootprint.h"
+#include "core/kicad/Exporter3DModel.h"
 #include <QDir>
 #include <QFile>
 #include <QDebug>
@@ -14,7 +14,7 @@
 namespace EasyKiConverter
 {
 
-    // 简单的写入任务类
+    // 简单的写入任务�?
     class WriteTask : public QRunnable
     {
     public:
@@ -52,7 +52,7 @@ namespace EasyKiConverter
 
     void WriteWorker::run()
     {
-        // 启动计时器
+        // 启动计时�?
         QElapsedTimer writeTimer;
         writeTimer.start();
 
@@ -69,9 +69,9 @@ namespace EasyKiConverter
             return;
         }
 
-        // 并行写入文件（使用 QThreadPool）
+        // 并行写入文件（使�?QThreadPool�?
         QThreadPool threadPool;
-        threadPool.setMaxThreadCount(3); // 符号、封装、3D模型最多3个任务
+        threadPool.setMaxThreadCount(3); // 符号、封装�?D模型最�?个任�?
 
         QList<bool *> results;
 
@@ -108,7 +108,7 @@ namespace EasyKiConverter
             results.append(&model3DResult);
         }
 
-        // 等待所有任务完成
+        // 等待所有任务完�?
         threadPool.waitForDone();
 
         // 检查是否所有写入都成功
@@ -174,7 +174,7 @@ namespace EasyKiConverter
             return true;
         }
 
-        // 创建封装库目录
+        // 创建封装库目�?
         QString footprintLibPath = QString("%1/%2.pretty").arg(m_outputPath, m_libName);
         if (!createOutputDirectory(footprintLibPath))
         {
@@ -245,7 +245,7 @@ namespace EasyKiConverter
             return false;
         }
 
-        // 使用封装名称作为文件名
+        // 使用封装名称作为文件�?
         QString footprintName = status.footprintData ? status.footprintData->info().name : status.componentId;
 
         // 写入WRL文件
@@ -259,7 +259,7 @@ namespace EasyKiConverter
             status.addDebugLog(QString("3D model WRL file written: %1").arg(wrlFilePath));
         }
 
-        // 写入STEP文件（如果有）
+        // 写入STEP文件（如果有�?
         if (!status.model3DStepRaw.isEmpty())
         {
             QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
@@ -303,7 +303,7 @@ namespace EasyKiConverter
             return false;
         }
 
-        // 创建元件专属的 debug 子目录
+        // 创建元件专属�?debug 子目�?
         QString componentDebugDir = QString("%1/%2").arg(debugDirPath, status.componentId);
         if (!createOutputDirectory(componentDebugDir))
         {
@@ -313,7 +313,7 @@ namespace EasyKiConverter
 
         status.addDebugLog(QString("Exporting debug data to: %1").arg(componentDebugDir));
 
-        // 1. 导出 API 原始数据（JSON 格式）
+        // 1. 导出 API 原始数据（JSON 格式�?
         if (!status.cinfoJsonRaw.isEmpty())
         {
             QString cinfoFilePath = QString("%1/cinfo_raw.json").arg(componentDebugDir);
@@ -375,7 +375,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 3. 导出解析后的数据（JSON 格式）
+        // 3. 导出解析后的数据（JSON 格式�?
         QJsonObject debugInfo;
         debugInfo["componentId"] = status.componentId;
         debugInfo["fetchSuccess"] = status.fetchSuccess;
@@ -409,7 +409,7 @@ namespace EasyKiConverter
             symbolInfo["pathCount"] = status.symbolData->paths().size();
             symbolInfo["ellipseCount"] = status.symbolData->ellipses().size();
 
-            // 边界框
+            // 边界�?
             QJsonObject bbox;
             bbox["x"] = status.symbolData->bbox().x;
             bbox["y"] = status.symbolData->bbox().y;
@@ -433,7 +433,7 @@ namespace EasyKiConverter
             }
             symbolInfo["rectangles"] = rectanglesArray;
 
-            // 导出圆数据
+            // 导出圆数�?
             QJsonArray circlesArray;
             for (const SymbolCircle &circle : status.symbolData->circles())
             {
@@ -449,7 +449,7 @@ namespace EasyKiConverter
             }
             symbolInfo["arcs"] = arcsArray;
 
-            // 导出多段线数据
+            // 导出多段线数�?
             QJsonArray polylinesArray;
             for (const SymbolPolyline &polyline : status.symbolData->polylines())
             {
@@ -457,7 +457,7 @@ namespace EasyKiConverter
             }
             symbolInfo["polylines"] = polylinesArray;
 
-            // 导出多边形数据
+            // 导出多边形数�?
             QJsonArray polygonsArray;
             for (const SymbolPolygon &polygon : status.symbolData->polygons())
             {
@@ -498,7 +498,7 @@ namespace EasyKiConverter
             footprintInfo["solidRegionCount"] = status.footprintData->solidRegions().size();
             footprintInfo["outlineCount"] = status.footprintData->outlines().size();
 
-            // 边界框
+            // 边界�?
             QJsonObject bbox;
             bbox["x"] = status.footprintData->bbox().x;
             bbox["y"] = status.footprintData->bbox().y;
@@ -522,7 +522,7 @@ namespace EasyKiConverter
             }
             footprintInfo["tracks"] = tracksArray;
 
-            // 导出孔数据
+            // 导出孔数�?
             QJsonArray holesArray;
             for (const FootprintHole &hole : status.footprintData->holes())
             {
@@ -530,7 +530,7 @@ namespace EasyKiConverter
             }
             footprintInfo["holes"] = holesArray;
 
-            // 导出圆数据
+            // 导出圆数�?
             QJsonArray circlesArray;
             for (const FootprintCircle &circle : status.footprintData->circles())
             {

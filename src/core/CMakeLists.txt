@@ -11,9 +11,11 @@ target_link_libraries(EasyKiConverterCore
         EasyKiConverterEasyeda
         EasyKiConverterKicad
         EasyKiConverterUtils
+        EasyKiConverterModels
 )
 
 target_include_directories(EasyKiConverterCore
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../..
 )

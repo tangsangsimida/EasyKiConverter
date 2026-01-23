@@ -5,7 +5,7 @@ namespace EasyKiConverter
 {
 
     ExportSettingsViewModel::ExportSettingsViewModel(QObject *parent)
-        : QObject(parent), m_configService(ConfigService::instance()), m_outputPath(""), m_libName("MyLibrary"), m_exportSymbol(true), m_exportFootprint(true), m_exportModel3D(true), m_overwriteExistingFiles(false), m_exportMode(0) // 默认为追加模式
+        : QObject(parent), m_configService(ConfigService::instance()), m_outputPath(""), m_libName("MyLibrary"), m_exportSymbol(true), m_exportFootprint(true), m_exportModel3D(true), m_overwriteExistingFiles(false), m_exportMode(0) // 默认为追加模�?
           ,
           m_debugMode(false)
     {
@@ -79,8 +79,8 @@ namespace EasyKiConverter
             qDebug() << "Export mode changed to:" << mode << "(0=append, 1=update)";
 
             // 同步更新 overwriteExistingFiles
-            // 0 = 追加模式（保留已存在的元器件，跳过重复的）-> overwriteExistingFiles = false
-            // 1 = 更新模式（替换相同的元器件，保留不同的元器件，添加新的元器件）-> overwriteExistingFiles = false
+            // 0 = 追加模式（保留已存在的元器件，跳过重复的�?> overwriteExistingFiles = false
+            // 1 = 更新模式（替换相同的元器件，保留不同的元器件，添加新的元器件�?> overwriteExistingFiles = false
             // 注意：更新模式不删除整个文件，而是智能合并
             bool newOverwrite = false; // 两种模式都不删除整个文件
             if (m_overwriteExistingFiles != newOverwrite)
@@ -114,8 +114,8 @@ namespace EasyKiConverter
             return;
         }
 
-        // TODO: 需要添加 ExportService 的支持
-        // 目前先设置为导出状态
+        // TODO: 需要添�?ExportService 的支�?
+        // 目前先设置为导出状�?
         setIsExporting(true);
         setStatus("Export started");
         setProgress(0);
@@ -125,7 +125,7 @@ namespace EasyKiConverter
     {
         qDebug() << "Canceling export";
 
-        // TODO: 需要添加 ExportService 的支持
+        // TODO: 需要添�?ExportService 的支�?
         setIsExporting(false);
         setStatus("Export cancelled");
     }
@@ -144,7 +144,7 @@ namespace EasyKiConverter
     {
         Q_UNUSED(message);
         qDebug() << "Component exported:" << componentId << "Success:" << success;
-        // TODO: 需要添加信号声明
+        // TODO: 需要添加信号声�?
     }
     void ExportSettingsViewModel::handleExportCompleted(bool success)
     {
@@ -192,7 +192,7 @@ namespace EasyKiConverter
 
     void ExportSettingsViewModel::loadFromConfig()
     {
-        // 从配置服务加载设置
+        // 从配置服务加载设�?
         m_outputPath = m_configService->getOutputPath();
         m_libName = m_configService->getLibName();
         m_exportSymbol = m_configService->getExportSymbol();
@@ -205,7 +205,7 @@ namespace EasyKiConverter
     }
     void ExportSettingsViewModel::saveConfig()
     {
-        // 保存配置到配置服务
+        // 保存配置到配置服�?
         m_configService->setOutputPath(m_outputPath);
         m_configService->setLibName(m_libName);
         m_configService->setExportSymbol(m_exportSymbol);
@@ -219,14 +219,14 @@ namespace EasyKiConverter
     }
     void ExportSettingsViewModel::resetConfig()
     {
-        // 重置为默认值
+        // 重置为默认�?
         m_outputPath = "";
         m_libName = "MyLibrary";
         m_exportSymbol = true;
         m_exportFootprint = true;
         m_exportModel3D = true;
         m_overwriteExistingFiles = false;
-        m_exportMode = 0; // 重置为追加模式
+        m_exportMode = 0; // 重置为追加模�?
         m_debugMode = false;
 
         emit outputPathChanged();

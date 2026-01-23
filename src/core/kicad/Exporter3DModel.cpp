@@ -4,7 +4,7 @@
 #include <QJsonArray>
 #include <QDebug>
 #include <QFileInfo>
-#include "src/core/utils/NetworkUtils.h"
+#include "core/utils/NetworkUtils.h"
 
 namespace EasyKiConverter
 {
@@ -95,7 +95,7 @@ namespace EasyKiConverter
         // qDebug() << "WRL content preview (last 500 chars):" << content.right(500);
 
         out << content;
-        file.flush(); // 确保数据被写入
+        file.flush(); // 确保数据被写�?
         file.close();
 
         // qDebug() << "3D model exported to:" << savePath;
@@ -116,7 +116,7 @@ namespace EasyKiConverter
             return false;
         }
 
-        // 直接写入 STEP 二进制数据
+        // 直接写入 STEP 二进制数�?
         file.write(modelData.step());
         file.close();
 
@@ -126,20 +126,20 @@ namespace EasyKiConverter
 
     void Exporter3DModel::convertToKiCadCoordinates(Model3DData &modelData)
     {
-        // EasyEDA 使用右手坐标系，KiCad 使用左手坐标系
-        // 需要进行坐标转换
+        // EasyEDA 使用右手坐标系，KiCad 使用左手坐标�?
+        // 需要进行坐标转�?
 
         // 获取当前的平移和旋转
         Model3DBase translation = modelData.translation();
         Model3DBase rotation = modelData.rotation();
 
-        // 旋转 X 轴 180 度
+        // 旋转 X �?180 �?
         rotation.x += 180.0;
 
-        // Y 轴翻转
+        // Y 轴翻�?
         rotation.y = -rotation.y;
 
-        // Z 轴翻转
+        // Z 轴翻�?
         rotation.z = -rotation.z;
 
         // 更新模型数据
@@ -187,7 +187,7 @@ namespace EasyKiConverter
                 //          << "points:" << shapePoints.size()
                 //          << "coordIndex:" << coordIndex.size();
 
-                // 关键步骤：在倒数第二个位置插入最后一个点的副本（与 Python 版本保持一致）
+                // 关键步骤：在倒数第二个位置插入最后一个点的副本（�?Python 版本保持一致）
                 if (shapePoints.size() > 0)
                 {
                     shapePoints.insert(shapePoints.size() - 1, shapePoints.last());
@@ -226,7 +226,7 @@ namespace EasyKiConverter
                 // 添加顶点数据
                 for (const QJsonValue &pointValue : shapePoints)
                 {
-                    // pointValue 现在是字符串格式，直接输出
+                    // pointValue 现在是字符串格式，直接输�?
                     content += "        " + pointValue.toString() + ",\n";
                 }
 
@@ -234,10 +234,10 @@ namespace EasyKiConverter
                 content += "    }\n";
                 content += "    coordIndex [\n";
 
-                // 添加面索引数据
+                // 添加面索引数�?
                 for (const QJsonValue &indexValue : coordIndex)
                 {
-                    // indexValue 是一个 QJsonArray，包含面索引
+                    // indexValue 是一�?QJsonArray，包含面索引
                     QJsonArray faceIndices = indexValue.toArray();
                     QString indexStr;
                     for (const QJsonValue &idx : faceIndices)
@@ -256,7 +256,7 @@ namespace EasyKiConverter
         {
             // qDebug() << "No shapes found, using simple Transform mode";
             // 如果没有形状数据，使用简单的 Transform 包装
-            // 获取平移和旋转
+            // 获取平移和旋�?
             Model3DBase translation = modelData.translation();
             Model3DBase rotation = modelData.rotation();
 
@@ -304,7 +304,7 @@ namespace EasyKiConverter
             content += "        }\n";
             content += "        coordIndex [\n";
 
-            // 添加面索引数据
+            // 添加面索引数�?
             for (const QJsonValue &faceValue : faces)
             {
                 QJsonArray face = faceValue.toArray();
@@ -370,7 +370,7 @@ namespace EasyKiConverter
 
             if (parts[0] == "newmtl")
             {
-                // 保存上一个材质
+                // 保存上一个材�?
                 if (!currentMaterialId.isEmpty() && !currentMaterial.isEmpty())
                 {
                     materials[currentMaterialId] = currentMaterial;
@@ -427,7 +427,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 保存最后一个材质
+        // 保存最后一个材�?
         if (!currentMaterialId.isEmpty() && !currentMaterial.isEmpty())
         {
             materials[currentMaterialId] = currentMaterial;
@@ -435,8 +435,8 @@ namespace EasyKiConverter
 
         // qDebug() << "Found" << materials.size() << "materials";
 
-        // 第二遍：提取顶点数据（存储为字符串，用于 WRL 输出）
-        QStringList vertexStrings; // 存储顶点坐标字符串
+        // 第二遍：提取顶点数据（存储为字符串，用于 WRL 输出�?
+        QStringList vertexStrings; // 存储顶点坐标字符�?
         for (const QString &line : lines)
         {
             QString trimmedLine = line.trimmed();
@@ -453,17 +453,17 @@ namespace EasyKiConverter
 
             if (parts[0] == 'v')
             {
-                // 顶点数据，转换为毫米（除以 2.54）
+                // 顶点数据，转换为毫米（除�?2.54�?
                 if (parts.size() >= 4)
                 {
                     double x = parts[1].toDouble() / 2.54;
                     double y = parts[2].toDouble() / 2.54;
                     double z = parts[3].toDouble() / 2.54;
-                    // 保留 4 位小数，与 Python 版本保持一致
+                    // 保留 4 位小数，�?Python 版本保持一�?
                     QString vertexStr = QString("%1 %2 %3").arg(x, 0, 'f', 4).arg(y, 0, 'f', 4).arg(z, 0, 'f', 4);
                     vertexStrings.append(vertexStr);
 
-                    // 同时保存为 JSON 数组，用于后续处理
+                    // 同时保存�?JSON 数组，用于后续处�?
                     QJsonArray vertex;
                     vertex.append(x);
                     vertex.append(y);
@@ -475,11 +475,11 @@ namespace EasyKiConverter
 
         // qDebug() << "Found" << vertices.size() << "vertices";
 
-        // 第三遍：按材质分割形状并提取面数据
+        // 第三遍：按材质分割形状并提取面数�?
         QString currentShapeMaterial = "default";
-        QStringList currentShapePoints; // 使用字符串列表
+        QStringList currentShapePoints; // 使用字符串列�?
         QJsonArray currentShapeCoordIndex;
-        QMap<int, int> vertexIndexMap; // 映射原始顶点索引到形状中的索引
+        QMap<int, int> vertexIndexMap; // 映射原始顶点索引到形状中的索�?
         int shapeVertexCounter = 0;
 
         for (const QString &line : lines)
@@ -498,7 +498,7 @@ namespace EasyKiConverter
 
             if (parts[0] == "usemtl")
             {
-                // 保存上一个形状
+                // 保存上一个形�?
                 if (!currentShapePoints.isEmpty())
                 {
                     QJsonObject shape;
@@ -516,12 +516,12 @@ namespace EasyKiConverter
             }
             else if (parts[0] == 'f')
             {
-                // 面数据
+                // 面数�?
                 QJsonArray faceIndices;
                 for (int i = 1; i < parts.size(); ++i)
                 {
                     QString vertexIndexStr = parts[i].split('/')[0];
-                    int vertexIndex = vertexIndexStr.toInt() - 1; // OBJ 索引从 1 开始
+                    int vertexIndex = vertexIndexStr.toInt() - 1; // OBJ 索引�?1 开�?
 
                     if (!vertexIndexMap.contains(vertexIndex))
                     {
@@ -549,7 +549,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 保存最后一个形状
+        // 保存最后一个形�?
         if (!currentShapePoints.isEmpty())
         {
             QJsonObject shape;

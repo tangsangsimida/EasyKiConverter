@@ -22,4 +22,6 @@ target_link_libraries(EasyKiConverterWorkers
         EasyKiConverterModels
         EasyKiConverterServices
         EasyKiConverterEasyeda
+        EasyKiConverterKicad
+        EasyKiConverterUtils
 )

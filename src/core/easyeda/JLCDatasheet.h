@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QFile>
-#include "src/core/utils/NetworkUtils.h"
+#include "core/utils/NetworkUtils.h"
 
 namespace EasyKiConverter
 {
@@ -12,7 +12,7 @@ namespace EasyKiConverter
     /**
      * @brief JLC 数据手册下载器类
      *
-     * 用于下载 JLC/LCSC 元件的数据手册
+     * 用于下载 JLC/LCSC 元件的数据手�?
      */
     class JLCDatasheet : public QObject
     {
@@ -20,9 +20,9 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 构造函数
+         * @brief 构造函�?
          *
-         * @param parent 父对象
+         * @param parent 父对�?
          */
         explicit JLCDatasheet(QObject *parent = nullptr);
 
@@ -48,7 +48,7 @@ namespace EasyKiConverter
         /**
          * @brief 下载成功信号
          *
-         * @param filePath 保存的文件路径
+         * @param filePath 保存的文件路�?
          */
         void downloadSuccess(const QString &filePath);
 
@@ -62,7 +62,7 @@ namespace EasyKiConverter
         /**
          * @brief 下载进度信号
          *
-         * @param bytesReceived 已接收的字节数
+         * @param bytesReceived 已接收的字节�?
          * @param bytesTotal 总字节数
          */
         void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);

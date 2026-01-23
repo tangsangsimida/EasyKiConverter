@@ -3,16 +3,16 @@
 
 #include <QObject>
 #include <QStringList>
-#include "src/services/ComponentService.h"
+#include "services/ComponentService.h"
 
 namespace EasyKiConverter
 {
 
     /**
-     * @brief 元件列表视图模型类
+     * @brief 元件列表视图模型�?
      *
-     * 负责管理元件列表相关的 UI 状态和操作
-     * 连接 QML 界面和 ComponentService
+     * 负责管理元件列表相关�?UI 状态和操作
+     * 连接 QML 界面�?ComponentService
      */
     class ComponentListViewModel : public QObject
     {
@@ -24,10 +24,10 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 构造函数
+         * @brief 构造函�?
          *
          * @param service 元件服务
-         * @param parent 父对象
+         * @param parent 父对�?
          */
         explicit ComponentListViewModel(ComponentService *service, QObject *parent = nullptr);
 
@@ -44,7 +44,7 @@ namespace EasyKiConverter
 
     public slots:
         /**
-         * @brief 添加元件到列表
+         * @brief 添加元件到列�?
          *
          * @param componentId 元件ID
          */
@@ -63,7 +63,7 @@ namespace EasyKiConverter
         Q_INVOKABLE void clearComponentList();
 
         /**
-         * @brief 从剪贴板粘贴元器件编号
+         * @brief 从剪贴板粘贴元器件编�?
          */
         Q_INVOKABLE void pasteFromClipboard();
 
@@ -177,7 +177,7 @@ namespace EasyKiConverter
          * @brief 从文本中提取元件编号
          *
          * @param text 文本内容
-         * @return QStringList 提取的元件编号列表
+         * @return QStringList 提取的元件编号列�?
          */
         QStringList extractComponentIdFromText(const QString &text) const;
 

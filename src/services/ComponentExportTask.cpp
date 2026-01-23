@@ -1,7 +1,7 @@
 #include "ComponentExportTask.h"
-#include "src/core/kicad/ExporterSymbol.h"
-#include "src/core/kicad/ExporterFootprint.h"
-#include "src/core/kicad/Exporter3DModel.h"
+#include "core/kicad/ExporterSymbol.h"
+#include "core/kicad/ExporterFootprint.h"
+#include "core/kicad/Exporter3DModel.h"
 #include <QDebug>
 #include <QFile>
 #include <QDir>
@@ -62,18 +62,18 @@ namespace EasyKiConverter
                 }
             }
 
-            // 导出3D模型（需要在导出封装之前完成）
+            // 导出3D模型（需要在导出封装之前完成�?
             QString model3DPath;
             if (m_options.exportModel3D && m_componentData.model3DData() && !m_componentData.model3DData()->uuid().isEmpty())
             {
-                // 使用封装名称作为文件名
+                // 使用封装名称作为文件�?
                 QString footprintName = m_componentData.footprintData() ? m_componentData.footprintData()->info().name : m_componentData.model3DData()->name();
                 if (footprintName.isEmpty())
                 {
                     footprintName = m_componentData.model3DData()->uuid();
                 }
 
-                // 创建 3D 模型目录（添加库名称前缀）
+                // 创建 3D 模型目录（添加库名称前缀�?
                 QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_options.outputPath, m_options.libName);
                 if (!dir.exists(modelsDirPath))
                 {

@@ -1,7 +1,7 @@
 #include "ExportService_Pipeline.h"
-#include "src/workers/FetchWorker.h"
-#include "src/workers/ProcessWorker.h"
-#include "src/workers/WriteWorker.h"
+#include "workers/FetchWorker.h"
+#include "workers/ProcessWorker.h"
+#include "workers/WriteWorker.h"
 #include <QFile>
 #include <QDir>
 #include <QTextStream>
@@ -19,10 +19,10 @@ namespace EasyKiConverter
     ExportServicePipeline::ExportServicePipeline(QObject *parent)
         : ExportService(parent), m_fetchThreadPool(new QThreadPool(this)), m_processThreadPool(new QThreadPool(this)), m_writeThreadPool(new QThreadPool(this)), m_fetchProcessQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100)), m_processWriteQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100)), m_networkAccessManager(new QNetworkAccessManager(this)), m_isPipelineRunning(false), m_mutex(new QMutex()), m_successCount(0), m_failureCount(0), m_exportStartTimeMs(0)
     {
-        // 配置线程池
-        m_fetchThreadPool->setMaxThreadCount(32);                            // I/O密集型，32个线程
-        m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount()); // CPU密集型，等于核心数
-        m_writeThreadPool->setMaxThreadCount(8);                             // 磁盘I/O密集型，8个线程
+        // 配置线程�?
+        m_fetchThreadPool->setMaxThreadCount(32);                            // I/O密集型，32个线�?
+        m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount()); // CPU密集型，等于核心�?
+        m_writeThreadPool->setMaxThreadCount(8);                             // 磁盘I/O密集型，8个线�?
 
         qDebug() << "ExportServicePipeline initialized with thread pools:"
                  << "Fetch:" << m_fetchThreadPool->maxThreadCount()
@@ -47,8 +47,8 @@ namespace EasyKiConverter
             return;
         }
 
-        // 使用固定队列大小（64）以防止内存溢出
-        // 固定大小提供背压（Backpressure）机制，当下游处理不过来时阻塞上游
+        // 使用固定队列大小�?4）以防止内存溢出
+        // 固定大小提供背压（Backpressure）机制，当下游处理不过来时阻塞上�?
         const size_t FIXED_QUEUE_SIZE = 64;
 
         // 重新创建队列以应用固定的队列大小
@@ -59,7 +59,7 @@ namespace EasyKiConverter
 
         qDebug() << "Fixed queue size set to:" << FIXED_QUEUE_SIZE << "(prevents memory overflow for" << componentIds.size() << "tasks)";
 
-        // 初始化流水线状态
+        // 初始化流水线状�?
         m_componentIds = componentIds;
         m_options = options;
         m_pipelineProgress.totalTasks = componentIds.size();
@@ -84,13 +84,13 @@ namespace EasyKiConverter
         // 释放互斥锁以允许其他线程工作
         locker.unlock();
 
-        // 发出开始导出信号
+        // 发出开始导出信�?
         emit exportProgress(0, m_pipelineProgress.totalTasks);
 
         // 启动抓取阶段
         startFetchStage();
 
-        // 启动处理和写入阶段
+        // 启动处理和写入阶�?
         startProcessStage();
         startWriteStage();
 
@@ -117,14 +117,14 @@ namespace EasyKiConverter
 
         if (status->fetchSuccess)
         {
-            // 将数据放入处理队列（使用 QSharedPointer 避免拷贝）
+            // 将数据放入处理队列（使用 QSharedPointer 避免拷贝�?
             m_fetchProcessQueue->push(status);
-            // 发送抓取完成信号（包含阶段信息）
+            // 发送抓取完成信号（包含阶段信息�?
             emit componentExported(status->componentId, true, "Fetch completed", static_cast<int>(PipelineStage::Fetch));
         }
         else
         {
-            // 抓取失败，直接记录失败
+            // 抓取失败，直接记录失�?
             m_failureCount++;
             qDebug() << "Fetch failed for component:" << status->componentId << "Error:" << status->fetchMessage;
             emit componentExported(status->componentId, false, status->fetchMessage, static_cast<int>(PipelineStage::Fetch));
@@ -136,7 +136,7 @@ namespace EasyKiConverter
                  << "Process:" << m_pipelineProgress.processCompleted << "/" << m_pipelineProgress.totalTasks
                  << "Write:" << m_pipelineProgress.writeCompleted << "/" << m_pipelineProgress.totalTasks;
 
-        // 检查是否完成
+        // 检查是否完�?
         checkPipelineCompletion();
     }
 
@@ -149,19 +149,19 @@ namespace EasyKiConverter
 
         m_pipelineProgress.processCompleted++;
 
-        // 更新状态（不重复添加，因为已经在 Fetch 阶段添加了）
-        // ProcessWorker 会修改同一个 status 对象
+        // 更新状态（不重复添加，因为已经�?Fetch 阶段添加了）
+        // ProcessWorker 会修改同一�?status 对象
 
         if (status->processSuccess)
         {
-            // 将数据放入写入队列（使用 QSharedPointer 避免拷贝）
+            // 将数据放入写入队列（使用 QSharedPointer 避免拷贝�?
             m_processWriteQueue->push(status);
-            // 发送处理完成信号（包含阶段信息）
+            // 发送处理完成信号（包含阶段信息�?
             emit componentExported(status->componentId, true, "Process completed", static_cast<int>(PipelineStage::Process));
         }
         else
         {
-            // 处理失败，直接记录失败
+            // 处理失败，直接记录失�?
             m_failureCount++;
             qDebug() << "Process failed for component:" << status->componentId << "Error:" << status->processMessage;
             emit componentExported(status->componentId, false, status->processMessage, static_cast<int>(PipelineStage::Process));
@@ -173,7 +173,7 @@ namespace EasyKiConverter
                  << "Process:" << m_pipelineProgress.processCompleted << "/" << m_pipelineProgress.totalTasks
                  << "Write:" << m_pipelineProgress.writeCompleted << "/" << m_pipelineProgress.totalTasks;
 
-        // 检查是否完成
+        // 检查是否完�?
         checkPipelineCompletion();
     }
 
@@ -190,14 +190,14 @@ namespace EasyKiConverter
         {
             m_successCount++;
 
-            // 如果导出了符号，将符号数据加入列表
+            // 如果导出了符号，将符号数据加入列�?
             if (m_options.exportSymbol && status->symbolData)
             {
                 m_symbols.append(*status->symbolData);
                 qDebug() << "Added symbol to merge list:" << status->symbolData->info().name;
             }
 
-            // 如果导出了符号，将临时文件加入列表（用于清理）
+            // 如果导出了符号，将临时文件加入列表（用于清理�?
             if (m_options.exportSymbol && status->symbolData)
             {
                 QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, status->componentId);
@@ -207,7 +207,7 @@ namespace EasyKiConverter
                 }
             }
 
-            // 发送写入完成信号（包含阶段信息）
+            // 发送写入完成信号（包含阶段信息�?
             emit componentExported(status->componentId, true, "Export completed successfully", static_cast<int>(PipelineStage::Write));
         }
         else
@@ -223,7 +223,7 @@ namespace EasyKiConverter
                  << "Process:" << m_pipelineProgress.processCompleted << "/" << m_pipelineProgress.totalTasks
                  << "Write:" << m_pipelineProgress.writeCompleted << "/" << m_pipelineProgress.totalTasks;
 
-        // 检查是否完成
+        // 检查是否完�?
         checkPipelineCompletion();
     }
 
@@ -237,7 +237,7 @@ namespace EasyKiConverter
                 componentId,
                 m_networkAccessManager,
                 m_options.exportModel3D,
-                nullptr); // 不设置parent，避免线程问题
+                nullptr); // 不设置parent，避免线程问�?
 
             connect(worker, &FetchWorker::fetchCompleted,
                     this, &ExportServicePipeline::handleFetchCompleted,
@@ -255,7 +255,7 @@ namespace EasyKiConverter
     {
         qDebug() << "Starting process stage";
 
-        // 创建持续运行的处理工作线程
+        // 创建持续运行的处理工作线�?
         for (int i = 0; i < m_processThreadPool->maxThreadCount(); i++)
         {
             QRunnable *task = QRunnable::create([this]()
@@ -289,7 +289,7 @@ namespace EasyKiConverter
     {
         qDebug() << "Starting write stage";
 
-        // 创建持续运行的写入工作线程
+        // 创建持续运行的写入工作线�?
         for (int i = 0; i < m_writeThreadPool->maxThreadCount(); i++)
         {
             QRunnable *task = QRunnable::create([this]()
@@ -345,10 +345,10 @@ namespace EasyKiConverter
             return; // 还在写入
         }
 
-        // 所有阶段都完成了
+        // 所有阶段都完成�?
         qDebug() << "Pipeline completed. Success:" << m_successCount << "Failed:" << m_failureCount;
 
-        // 合并符号库
+        // 合并符号�?
         if (m_options.exportSymbol && !m_symbols.isEmpty())
         {
             mergeSymbolLibrary();
@@ -362,7 +362,7 @@ namespace EasyKiConverter
         saveStatisticsReport(statistics, reportPath);
         qDebug() << "Statistics report generated:" << reportPath;
 
-        // 发送统计报告生成信号
+        // 发送统计报告生成信�?
         emit statisticsReportGenerated(reportPath, statistics);
 
         // 清理临时文件
@@ -373,10 +373,10 @@ namespace EasyKiConverter
         m_tempSymbolFiles.clear();
         m_symbols.clear();
 
-        // 清理状态列表
+        // 清理状态列�?
         m_completedStatuses.clear();
 
-        // 发送完成信号
+        // 发送完成信�?
         emit exportCompleted(m_pipelineProgress.totalTasks, m_successCount);
 
         // 清理流水线（使用QTimer::singleShot延迟执行，避免在信号处理中清理）
@@ -399,7 +399,7 @@ namespace EasyKiConverter
         m_fetchProcessQueue->close();
         m_processWriteQueue->close();
 
-        // 等待线程池完成
+        // 等待线程池完�?
         m_fetchThreadPool->waitForDone();
         m_processThreadPool->waitForDone();
         m_writeThreadPool->waitForDone();
@@ -418,10 +418,10 @@ namespace EasyKiConverter
             return true;
         }
 
-        // 导出合并后的符号库
+        // 导出合并后的符号�?
         QString libraryPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, m_options.libName);
         
-        // 正确设置 appendMode 和 updateMode
+        // 正确设置 appendMode �?updateMode
         // appendMode: true = 追加模式（跳过已存在的符号）
         // updateMode: true = 更新模式（覆盖已存在的符号）
         bool appendMode = !m_options.overwriteExistingFiles;
@@ -461,7 +461,7 @@ namespace EasyKiConverter
         // 遍历所有完成的状态，收集详细统计
         for (const QSharedPointer<ComponentExportStatus> &status : m_completedStatuses)
         {
-            // 收集失败原因和阶段
+            // 收集失败原因和阶�?
             if (!status->isCompleteSuccess())
             {
                 QString failedStage = status->getFailedStage();
@@ -489,7 +489,7 @@ namespace EasyKiConverter
             statistics.avgWriteTimeMs = totalWriteTime / statistics.total;
         }
 
-        // 排序最慢的组件（取前10个）
+        // 排序最慢的组件（取�?0个）
         std::sort(statistics.slowestComponents.begin(), statistics.slowestComponents.end(),
                   [](const QPair<QString, qint64> &a, const QPair<QString, qint64> &b)
                   {
@@ -567,12 +567,12 @@ namespace EasyKiConverter
         optionsObj["debugMode"] = m_options.debugMode;
         reportObj["exportOptions"] = optionsObj;
 
-        // 时间戳
+        // 时间�?
         reportObj["timestamp"] = QDateTime::currentDateTime().toString(Qt::ISODate);
         reportObj["exportStartTime"] = QDateTime::fromMSecsSinceEpoch(m_exportStartTimeMs).toString(Qt::ISODate);
         reportObj["exportEndTime"] = QDateTime::currentDateTime().toString(Qt::ISODate);
 
-        // 保存到文件
+        // 保存到文�?
         QJsonDocument doc(reportObj);
         QFile file(reportPath);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text))

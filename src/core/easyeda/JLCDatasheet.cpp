@@ -42,7 +42,7 @@ namespace EasyKiConverter
 
         qDebug() << "Downloading datasheet from:" << datasheetUrl;
 
-        // 发送 GET 请求
+        // 发�?GET 请求
         m_networkUtils->sendGetRequest(datasheetUrl, 60, 3);
     }
 
@@ -58,8 +58,8 @@ namespace EasyKiConverter
         m_isDownloading = false;
 
         // 注意：数据手册下载通常返回二进制数据，不是 JSON
-        // 这里需要使用 QNetworkReply 直接访问二进制数据
-        // 暂时先发送成功信号
+        // 这里需要使�?QNetworkReply 直接访问二进制数�?
+        // 暂时先发送成功信�?
         qDebug() << "Datasheet download completed";
 
         emit downloadSuccess(m_savePath);

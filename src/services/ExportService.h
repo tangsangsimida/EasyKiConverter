@@ -6,10 +6,10 @@
 #include <QStringList>
 #include <QThreadPool>
 #include <QMutex>
-#include "src/models/ComponentData.h"
-#include "src/models/SymbolData.h"
-#include "src/models/FootprintData.h"
-#include "src/models/Model3DData.h"
+#include "models/ComponentData.h"
+#include "models/SymbolData.h"
+#include "models/FootprintData.h"
+#include "models/Model3DData.h"
 
 namespace EasyKiConverter
 {
@@ -26,7 +26,7 @@ namespace EasyKiConverter
         bool exportModel3D;
         bool overwriteExistingFiles;
         bool updateMode; // 更新模式：替换相同符号，保留不同符号
-        bool debugMode;  // 调试模式：导出调试数据到 debug 文件夹
+        bool debugMode;  // 调试模式：导出调试数据到 debug 文件�?
 
         ExportOptions()
             : exportSymbol(true), exportFootprint(true), exportModel3D(true), overwriteExistingFiles(false), updateMode(false), debugMode(false)
@@ -35,10 +35,10 @@ namespace EasyKiConverter
     };
 
     /**
-     * @brief 导出服务类
+     * @brief 导出服务�?
      *
-     * 负责处理导出相关的业务逻辑，异步处理
-     * 不依赖任何 UI 组件
+     * 负责处理导出相关的业务逻辑，异步处�?
+     * 不依赖任�?UI 组件
      */
     class ExportService : public QObject
     {
@@ -46,9 +46,9 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 构造函数
+         * @brief 构造函�?
          *
-         * @param parent 父对象
+         * @param parent 父对�?
          */
         explicit ExportService(QObject *parent = nullptr);
 
@@ -149,7 +149,7 @@ namespace EasyKiConverter
          * @param componentId 元件ID
          * @param success 是否成功
          * @param message 消息
-         * @param stage 阶段（可选，用于流水线模式：0=Fetch, 1=Process, 2=Write, -1=未知）
+         * @param stage 阶段（可选，用于流水线模式：0=Fetch, 1=Process, 2=Write, -1=未知�?
          */
         void componentExported(const QString &componentId, bool success, const QString &message, int stage = -1);
 
@@ -157,7 +157,7 @@ namespace EasyKiConverter
          * @brief 导出完成信号
          *
          * @param totalCount 总数
-         * @param successCount 成功数
+         * @param successCount 成功�?
          */
         void exportCompleted(int totalCount, int successCount);
 
@@ -189,20 +189,20 @@ namespace EasyKiConverter
 
     private:
         /**
-         * @brief 导出符号库
+         * @brief 导出符号�?
          *
          * @param symbols 符号列表
-         * @param libName 库名称
+         * @param libName 库名�?
          * @param filePath 输出文件路径
          * @return bool 是否成功
          */
         bool exportSymbolLibrary(const QList<SymbolData> &symbols, const QString &libName, const QString &filePath);
 
         /**
-         * @brief 导出封装库
+         * @brief 导出封装�?
          *
          * @param footprints 封装列表
-         * @param libName 库名称
+         * @param libName 库名�?
          * @param filePath 输出文件路径
          * @return bool 是否成功
          */
@@ -226,7 +226,7 @@ namespace EasyKiConverter
         void updateProgress(int current, int total);
 
         /**
-         * @brief 检查文件是否存在
+         * @brief 检查文件是否存�?
          *
          * @param filePath 文件路径
          * @return bool 是否存在
@@ -242,21 +242,21 @@ namespace EasyKiConverter
         bool createOutputDirectory(const QString &path) const;
 
         /**
-         * @brief 处理下一个导出任务
+         * @brief 处理下一个导出任�?
          */
         void processNextExport();
 
     private:
-        // 导出器
+        // 导出�?
         class ExporterSymbol *m_symbolExporter;
         class ExporterFootprint *m_footprintExporter;
         class Exporter3DModel *m_modelExporter;
 
-        // 线程池和互斥锁
+        // 线程池和互斥�?
         QThreadPool *m_threadPool;
         QMutex *m_mutex;
 
-        // 导出状态
+        // 导出状�?
         bool m_isExporting;
         ExportOptions m_options;
 
@@ -266,7 +266,7 @@ namespace EasyKiConverter
         int m_successCount;
         int m_failureCount;
 
-        // 收集的数据
+        // 收集的数�?
         struct ExportData
         {
             QString componentId;
@@ -278,7 +278,7 @@ namespace EasyKiConverter
         };
         QList<ExportData> m_exportDataList;
 
-        // 并行导出状态
+        // 并行导出状�?
         bool m_parallelExporting;
         int m_parallelCompletedCount;
         int m_parallelTotalCount;

@@ -45,7 +45,7 @@ namespace EasyKiConverter
                 return;
             }
 
-            // 添加提取的元件编号
+            // 添加提取的元件编�?
             for (const QString &id : extractedIds)
             {
                 if (!componentExists(id))
@@ -184,7 +184,7 @@ namespace EasyKiConverter
 
     bool ComponentListViewModel::validateComponentId(const QString &componentId) const
     {
-        // LCSC 元件ID格式：以 'C' 开头，后面跟数字
+        // LCSC 元件ID格式：以 'C' 开头，后面跟数�?
         QRegularExpression re("^C\\d+$");
         return re.match(componentId).hasMatch();
     }
@@ -193,7 +193,7 @@ namespace EasyKiConverter
     {
         QStringList extractedIds;
 
-        // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟数字
+        // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟数�?
         QRegularExpression re("C\\d+");
         QRegularExpressionMatchIterator it = re.globalMatch(text);
 
@@ -218,25 +218,25 @@ namespace EasyKiConverter
     void ComponentListViewModel::handleComponentInfoReady(const QString &componentId, const ComponentData &data)
     {
         qDebug() << "Component info ready for:" << componentId;
-        // 可以在这里更新 UI 显示
+        // 可以在这里更�?UI 显示
     }
 
     void ComponentListViewModel::handleCadDataReady(const QString &componentId, const ComponentData &data)
     {
         qDebug() << "CAD data ready for:" << componentId;
-        // 可以在这里更新 UI 显示
+        // 可以在这里更�?UI 显示
     }
 
     void ComponentListViewModel::handleModel3DReady(const QString &uuid, const QString &filePath)
     {
         qDebug() << "3D model ready for UUID:" << uuid << "at:" << filePath;
-        // 可以在这里更新 UI 显示
+        // 可以在这里更�?UI 显示
     }
 
     void ComponentListViewModel::handleFetchError(const QString &componentId, const QString &error)
     {
         qWarning() << "Fetch error for:" << componentId << "-" << error;
-        // 可以在这里更新 UI 显示
+        // 可以在这里更�?UI 显示
     }
 
 } // namespace EasyKiConverter

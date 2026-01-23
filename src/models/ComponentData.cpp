@@ -118,7 +118,7 @@ namespace EasyKiConverter
             return false;
         }
 
-        // 至少要有符号或封装数据
+        // 至少要有符号或封装数�?
         if (!m_symbolData && !m_footprintData)
         {
             return false;

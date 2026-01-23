@@ -31,7 +31,7 @@ namespace EasyKiConverter
         Model3DData();
         ~Model3DData() = default;
 
-        // Getter 和 Setter 方法
+        // Getter �?Setter 方法
         QString name() const { return m_name; }
         void setName(const QString &name) { m_name = name; }
 
@@ -50,7 +50,7 @@ namespace EasyKiConverter
         QByteArray step() const { return m_step; }
         void setStep(const QByteArray &step) { m_step = step; }
 
-        // JSON 序列化
+        // JSON 序列�?
         QJsonObject toJson() const;
         bool fromJson(const QJsonObject &json);
 

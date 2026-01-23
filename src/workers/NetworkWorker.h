@@ -31,11 +31,11 @@ namespace EasyKiConverter
         };
 
         /**
-         * @brief 构造函数
+         * @brief 构造函�?
          * @param componentId 元件ID
          * @param taskType 任务类型
-         * @param uuid UUID（用于3D模型下载）
-         * @param parent 父对象
+         * @param uuid UUID（用�?D模型下载�?
+         * @param parent 父对�?
          */
         explicit NetworkWorker(
             const QString &componentId,
@@ -86,7 +86,7 @@ namespace EasyKiConverter
         /**
          * @brief 请求进度信号
          * @param componentId 元件ID
-         * @param progress 进度（0-100）
+         * @param progress 进度�?-100�?
          */
         void requestProgress(const QString &componentId, int progress);
 
@@ -117,7 +117,7 @@ namespace EasyKiConverter
 
         /**
          * @brief 解压gzip数据
-         * @param compressedData 压缩的数据
+         * @param compressedData 压缩的数�?
          * @return QByteArray 解压后的数据
          */
         QByteArray decompressGzip(const QByteArray &compressedData);

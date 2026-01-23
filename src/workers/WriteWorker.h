@@ -3,10 +3,10 @@
 
 #include <QObject>
 #include <QRunnable>
-#include "src/models/ComponentExportStatus.h"
-#include "src/core/kicad/ExporterSymbol.h"
-#include "src/core/kicad/ExporterFootprint.h"
-#include "src/core/kicad/Exporter3DModel.h"
+#include "models/ComponentExportStatus.h"
+#include "core/kicad/ExporterSymbol.h"
+#include "core/kicad/ExporterFootprint.h"
+#include "core/kicad/Exporter3DModel.h"
 
 namespace EasyKiConverter
 {
@@ -22,15 +22,15 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 构造函数
-         * @param status 导出状态（使用 QSharedPointer 避免拷贝）
+         * @brief 构造函�?
+         * @param status 导出状态（使用 QSharedPointer 避免拷贝�?
          * @param outputPath 输出路径
-         * @param libName 库名称
+         * @param libName 库名�?
          * @param exportSymbol 是否导出符号
          * @param exportFootprint 是否导出封装
          * @param exportModel3D 是否导出3D模型
          * @param debugMode 是否启用调试模式
-         * @param parent 父对象
+         * @param parent 父对�?
          */
         explicit WriteWorker(
             QSharedPointer<ComponentExportStatus> status,
@@ -55,28 +55,28 @@ namespace EasyKiConverter
     signals:
         /**
          * @brief 写入完成信号
-         * @param status 导出状态（使用 QSharedPointer 避免拷贝）
+         * @param status 导出状态（使用 QSharedPointer 避免拷贝�?
          */
         void writeCompleted(QSharedPointer<ComponentExportStatus> status);
 
     private:
         /**
          * @brief 写入符号文件
-         * @param status 导出状态
+         * @param status 导出状�?
          * @return bool 是否成功
          */
         bool writeSymbolFile(ComponentExportStatus &status);
 
         /**
          * @brief 写入封装文件
-         * @param status 导出状态
+         * @param status 导出状�?
          * @return bool 是否成功
          */
         bool writeFootprintFile(ComponentExportStatus &status);
 
         /**
          * @brief 写入3D模型文件
-         * @param status 导出状态
+         * @param status 导出状�?
          * @return bool 是否成功
          */
         bool write3DModelFile(ComponentExportStatus &status);
@@ -90,7 +90,7 @@ namespace EasyKiConverter
 
         /**
          * @brief 导出调试数据
-         * @param status 导出状态
+         * @param status 导出状�?
          * @return bool 是否成功
          */
         bool exportDebugData(ComponentExportStatus &status);

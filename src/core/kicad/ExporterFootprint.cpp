@@ -4,7 +4,7 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QDir>
-#include "src/core/utils/GeometryUtils.h"
+#include "core/utils/GeometryUtils.h"
 
 namespace EasyKiConverter
 {
@@ -71,7 +71,7 @@ namespace EasyKiConverter
         qDebug() << "Output path:" << filePath;
         qDebug() << "Footprint count:" << footprints.count();
 
-        // filePath 应该是指向 .pretty 文件夹的路径
+        // filePath 应该是指�?.pretty 文件夹的路径
         QDir libDir(filePath);
 
         // 如果文件夹不存在，创建它
@@ -90,7 +90,7 @@ namespace EasyKiConverter
         QStringList existingFiles = libDir.entryList(QStringList("*.kicad_mod"), QDir::Files);
         for (const QString &fileName : existingFiles)
         {
-            // 从文件名中提取封装名称（去掉 .kicad_mod 后缀）
+            // 从文件名中提取封装名称（去掉 .kicad_mod 后缀�?
             QString footprintName = fileName;
             footprintName.remove(".kicad_mod");
             existingFootprintNames.insert(footprintName);
@@ -174,7 +174,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 设置正确的属性
+        // 设置正确的属�?
         // KiCad只允许以下属性值：through_hole、smd、virtual、board_only、exclude_from_pos_files、exclude_from_bom、allow_solder_mask_bridges
         if (isThroughHole)
         {
@@ -185,10 +185,10 @@ namespace EasyKiConverter
             content += "  (attr smd)\n";
         }
 
-        // KiCad的attr属性只允许特定的值，不能随意添加自定义类型
+        // KiCad的attr属性只允许特定的值，不能随意添加自定义类�?
         // 如果需要额外的属性，必须使用KiCad支持的属性名
         // 目前我们忽略EasyEDA的自定义类型，只使用through_hole或smd
-        // 如果将来需要支持其他属性（如virtual、board_only等），需要根据实际需求添加
+        // 如果将来需要支持其他属性（如virtual、board_only等），需要根据实际需求添�?
 
         // Calculate Y positions for reference and value text
         double yLow = 0;
@@ -225,7 +225,7 @@ namespace EasyKiConverter
         content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
         content += "  )\n";
 
-        // 生成所有图形元素（tracks + rectangles）
+        // 生成所有图形元素（tracks + rectangles�?
         for (const FootprintTrack &track : footprintData.tracks())
         {
             content += generateTrack(track, bboxX, bboxY);
@@ -265,7 +265,7 @@ namespace EasyKiConverter
             content += generateText(text, bboxX, bboxY);
         }
 
-        // Generate solid regions (包括 courtyard 层)
+        // Generate solid regions (包括 courtyard �?
         bool hasCourtYard = false;
         for (const FootprintSolidRegion &region : footprintData.solidRegions())
         {
@@ -277,7 +277,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 如果没有找到 courtyard，使用 BBox 自动生成
+        // 如果没有找到 courtyard，使�?BBox 自动生成
         if (!hasCourtYard && footprintData.bbox().width > 0 && footprintData.bbox().height > 0)
         {
             content += generateCourtyardFromBBox(footprintData.bbox(), bboxX, bboxY);
@@ -314,7 +314,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 设置正确的属性
+        // 设置正确的属�?
         if (isThroughHole)
         {
             content += "\t(attr through_hole)\n";
@@ -359,7 +359,7 @@ namespace EasyKiConverter
         content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
         content += "\t)\n";
 
-        // 生成所有图形元素（tracks + rectangles）
+        // 生成所有图形元素（tracks + rectangles�?
         for (const FootprintTrack &track : footprintData.tracks())
         {
             content += generateTrack(track, bboxX, bboxY);
@@ -399,7 +399,7 @@ namespace EasyKiConverter
             content += generateText(text, bboxX, bboxY);
         }
 
-        // Generate solid regions (包括 courtyard 层)
+        // Generate solid regions (包括 courtyard �?
         bool hasCourtYard = false;
         for (const FootprintSolidRegion &region : footprintData.solidRegions())
         {
@@ -411,7 +411,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 如果没有找到 courtyard，使用 BBox 自动生成
+        // 如果没有找到 courtyard，使�?BBox 自动生成
         if (!hasCourtYard && footprintData.bbox().width > 0 && footprintData.bbox().height > 0)
         {
             content += generateCourtyardFromBBox(footprintData.bbox(), bboxX, bboxY);
@@ -511,7 +511,7 @@ namespace EasyKiConverter
         else
         {
             // 直接使用原始shape，不进行智能判断
-            // 这样可以避免矩形焊盘被错误地判断为圆形
+            // 这样可以避免矩形焊盘被错误地判断为圆�?
             width = qMax(width, 0.01);
             height = qMax(height, 0.01);
         }
@@ -543,12 +543,12 @@ namespace EasyKiConverter
             // 根据焊盘尺寸判断椭圆钻孔方向
             if (qAbs(maxDistance - pos0) < qAbs(maxDistance - pos90))
             {
-                // 椭圆长轴在 Y 方向
+                // 椭圆长轴�?Y 方向
                 drillStr = QString(" (drill oval %1 %2)").arg(holeRadius * 2, 0, 'f', 2).arg(holeLengthMm, 0, 'f', 2);
             }
             else
             {
-                // 椭圆长轴在 X 方向
+                // 椭圆长轴�?X 方向
                 drillStr = QString(" (drill oval %1 %2)").arg(holeLengthMm, 0, 'f', 2).arg(holeRadius * 2, 0, 'f', 2);
             }
         }
@@ -556,7 +556,7 @@ namespace EasyKiConverter
         {
             // 圆形钻孔
             double drillDiameter = holeRadius * 2;
-            // 限制为2位小数，避免精度冗余（如 2.30002）
+            // 限制�?位小数，避免精度冗余（如 2.30002�?
             drillStr = QString(" (drill %1)").arg(drillDiameter, 0, 'f', 2);
         }
 
@@ -647,7 +647,7 @@ namespace EasyKiConverter
         QString layer = layerIdToKicad(rectangle.layerId);
         double strokeWidth = pxToMmRounded(rectangle.strokeWidth);
 
-        // 生成完整的矩形外框（4条线）
+        // 生成完整的矩形外框（4条线�?
         // 上边
         content += QString("  (fp_line (start %1 %2) (end %3 %2) (layer %4) (width %5))\n")
                        .arg(x, 0, 'f', 2)
@@ -684,21 +684,21 @@ namespace EasyKiConverter
     {
         QString content;
 
-        // 使用完整的 SVG 弧解析算法
-        // 构造 SVG 弧参数字符串
+        // 使用完整�?SVG 弧解析算�?
+        // 构�?SVG 弧参数字符串
         QString arcParam = "M " + arc.path; // 添加 "M" 前缀
 
-        // 解析 SVG 弧
+        // 解析 SVG �?
         GeometryUtils::SvgArcResult svgArc = GeometryUtils::solveSvgArc(arcParam);
 
         // 转换坐标为相对于边界框的坐标
         double cx = pxToMmRounded(svgArc.cx - bboxX);
-        double cy = -pxToMmRounded(svgArc.cy - bboxY); // Y 轴翻转
+        double cy = -pxToMmRounded(svgArc.cy - bboxY); // Y 轴翻�?
 
-        // 处理大圆弧（>180° 拆分为多个小圆弧）
+        // 处理大圆弧（>180° 拆分为多个小圆弧�?
         if (svgArc.rx == svgArc.ry && svgArc.rx > 0)
         {
-            // 拆分大圆弧
+            // 拆分大圆�?
             double startAngle = svgArc.startAngle;
             double deltaAngle = svgArc.deltaAngle;
             double step = 180.0;
@@ -740,7 +740,7 @@ namespace EasyKiConverter
         }
         else
         {
-            // 椭圆弧：转换为路径
+            // 椭圆弧：转换为路�?
             QList<GeometryUtils::SvgPoint> points = GeometryUtils::arcToPath(svgArc, false);
 
             for (int i = 1; i < points.size(); ++i)
@@ -779,7 +779,7 @@ namespace EasyKiConverter
 
         // Check if text should be hidden
         QString displayStr = text.isDisplayed ? "" : " hide";
-        // 检查是否为非 ASCII 文本
+        // 检查是否为�?ASCII 文本
         bool isNonASCII = false;
         for (int i = 0; i < text.text.length(); ++i)
         {
@@ -791,15 +791,15 @@ namespace EasyKiConverter
         }
         if (isNonASCII && !text.textPath.isEmpty())
         {
-            // 非 ASCII 文本转换为多边形
+            // �?ASCII 文本转换为多边形
             qWarning() << "Warning: Converting non-ASCII text to polygon:" << text.text;
-            // 解析路径字符串（格式如 "M x y L x y ... M x y L x y ..."）
+            // 解析路径字符串（格式�?"M x y L x y ... M x y L x y ..."�?
             QStringList paths = text.textPath.split("M", Qt::SkipEmptyParts);
             for (const QString &pathStr : paths)
             {
                 if (pathStr.trimmed().isEmpty())
                     continue;
-                // 解析点数据
+                // 解析点数�?
                 QStringList tokens = pathStr.split(QRegularExpression("[\\s,]+"), Qt::SkipEmptyParts);
                 QList<QPointF> points;
                 for (int i = 0; i + 1 < tokens.size(); i += 2)
@@ -811,7 +811,7 @@ namespace EasyKiConverter
                     double relY = pxToMmRounded(py - bboxY);
                     points.append(QPointF(relX, relY));
                 }
-                // 生成多段线
+                // 生成多段�?
                 if (points.size() >= 2)
                 {
                     for (int i = 1; i < points.size(); ++i)
@@ -864,7 +864,7 @@ namespace EasyKiConverter
         // Use the provided 3D model path if available, otherwise use the model name
         QString finalPath = model3DPath.isEmpty() ? model3D.name() : model3DPath;
 
-        // 修复 Z 轴处理：SMD 器件 Z 轴取反，THT 器件 Z 轴设为 0
+        // 修复 Z 轴处理：SMD 器件 Z 轴取反，THT 器件 Z 轴设�?0
         double z = pxToMmRounded(model3D.translation().z);
         if (fpType == "smd")
         {
@@ -875,7 +875,7 @@ namespace EasyKiConverter
             z = 0.0;
         }
 
-        // 修复旋转处理：使用 (360 - rotation) % 360 公式
+        // 修复旋转处理：使�?(360 - rotation) % 360 公式
         double rotX = (360.0 - model3D.rotation().x);
         while (rotX >= 360.0)
             rotX -= 360.0;
@@ -886,7 +886,7 @@ namespace EasyKiConverter
         while (rotZ >= 360.0)
             rotZ -= 360.0;
 
-        // 提取模型名称（去掉扩展名）
+        // 提取模型名称（去掉扩展名�?
         QString modelName = finalPath;
         if (modelName.endsWith(".wrl"))
         {
@@ -897,8 +897,8 @@ namespace EasyKiConverter
             modelName = modelName.left(modelName.length() - 5);
         }
 
-        // 同时导出 STEP 和 WRL 模型
-        // 注意：如果 STEP 数据为空或无效，EasyEDA API 可能返回空数据
+        // 同时导出 STEP �?WRL 模型
+        // 注意：如�?STEP 数据为空或无效，EasyEDA API 可能返回空数�?
         QString wrlPath = modelName + ".wrl";
         content += QString("  (model \"%1\"\n").arg(wrlPath);
         content += QString("    (offset (xyz %1 %2 %3))\n")
@@ -913,7 +913,7 @@ namespace EasyKiConverter
         content += "  )\n";
 
         // STEP 模型（优先，但需要检查数据是否有效）
-        // 如果 model3D 有 step 数据且数据不为空，则导出 STEP 模型
+        // 如果 model3D �?step 数据且数据不为空，则导出 STEP 模型
         if (!model3D.step().isEmpty() && model3D.step().size() > 100)
         {
             QString stepPath = modelName + ".step";
@@ -950,17 +950,17 @@ namespace EasyKiConverter
     {
         QString content;
 
-        // 判断是否为 courtyard 层（层 ID 99）
+        // 判断是否�?courtyard 层（�?ID 99�?
         bool isCourtYard = (region.layerId == 99);
         QString layer;
 
         if (isCourtYard)
         {
-            layer = "F.CrtYd"; // Courtyard 层
+            layer = "F.CrtYd"; // Courtyard �?
         }
         else if (region.layerId == 100)
         {
-            layer = "F.Fab"; // 引脚形状层
+            layer = "F.Fab"; // 引脚形状�?
         }
         else if (region.layerId == 101)
         {
@@ -971,7 +971,7 @@ namespace EasyKiConverter
             layer = layerIdToKicad(region.layerId);
         }
 
-        // 解析 SVG 路径（格式如 "M x y L x y Z"）
+        // 解析 SVG 路径（格式如 "M x y L x y Z"�?
         QStringList tokens = region.path.split(QRegularExpression("[\\s,]+"), Qt::SkipEmptyParts);
         QList<QPointF> points;
 
@@ -1020,12 +1020,12 @@ namespace EasyKiConverter
             }
             else
             {
-                // 坐标值
+                // 坐标�?
                 i++;
             }
         }
 
-        // 生成多边形或多段线
+        // 生成多边形或多段�?
         if (points.size() >= 2)
         {
             if (isCourtYard || region.isKeepOut)
@@ -1068,13 +1068,13 @@ namespace EasyKiConverter
     {
         QString content;
 
-        // 从 BBox 生成矩形 courtyard
+        // �?BBox 生成矩形 courtyard
         double x1 = pxToMmRounded(bbox.x - bboxX);
         double y1 = pxToMmRounded(bbox.y - bboxY);
         double x2 = pxToMmRounded(bbox.x + bbox.width - bboxX);
         double y2 = pxToMmRounded(bbox.y + bbox.height - bboxY);
 
-        // 生成四条边
+        // 生成四条�?
         content += QString("  (fp_line (start %1 %2) (end %3 %2) (layer F.CrtYd) (width 0.05))\n")
                        .arg(x1, 0, 'f', 2)
                        .arg(y1, 0, 'f', 2)
@@ -1146,21 +1146,21 @@ namespace EasyKiConverter
     QString ExporterFootprint::padLayersToKicad(int layerId) const
     {
         // 焊盘层映射规则：
-        // 1. SMD 焊盘（顶层/底层）需要包含 Paste 层（用于钢网印刷）
+        // 1. SMD 焊盘（顶�?底层）需要包�?Paste 层（用于钢网印刷�?
         // 2. 通孔焊盘（多层）不应包含 Paste 层（通孔元件不需要钢网）
-        // 3. 丝印层、装配层等不需要 Paste
+        // 3. 丝印层、装配层等不需�?Paste
         //
         // case '1':return ["F.Cu", "F.Paste", "F.Mask"];  // 顶层SMD
         // case '2':return ["B.Cu", "B.Paste", "B.Mask"];  // 底层SMD
-        // case '12':return ["*.Cu", "*.Mask"];            // 通孔焊盘（不包含Paste）
+        // case '12':return ["*.Cu", "*.Mask"];            // 通孔焊盘（不包含Paste�?
 
         switch (layerId)
         {
         case 1:
-            // 顶层SMD焊盘：需要Paste层用于钢网印刷
+            // 顶层SMD焊盘：需要Paste层用于钢网印�?
             return "F.Cu F.Paste F.Mask";
         case 2:
-            // 底层SMD焊盘：需要Paste层用于钢网印刷
+            // 底层SMD焊盘：需要Paste层用于钢网印�?
             return "B.Cu B.Paste B.Mask";
         case 3:
             // 顶层丝印：不需要Paste
@@ -1169,7 +1169,7 @@ namespace EasyKiConverter
             // 底层丝印：不需要Paste
             return "B.SilkS";
         case 11:
-            // 通孔焊盘（多层）：不应包含Paste层
+            // 通孔焊盘（多层）：不应包含Paste�?
             // 通孔元件不需要钢网印刷，避免锡膏进入孔内
             return "*.Cu *.Mask";
         case 13:
@@ -1182,7 +1182,7 @@ namespace EasyKiConverter
             // 文档层：不需要Paste
             return "Dwgs.User";
         default:
-            // 默认使用通孔焊盘配置（不包含Paste）
+            // 默认使用通孔焊盘配置（不包含Paste�?
             qWarning() << "Unknown pad layer ID:" << layerId << ", using default thru-hole configuration";
             return "*.Cu *.Mask";
         }
@@ -1211,11 +1211,11 @@ namespace EasyKiConverter
         case 9:
             return "F.Cu"; // Top Layer (alternative)
         case 10:
-            return "Edge.Cuts"; // Board Outline (板框层)
+            return "Edge.Cuts"; // Board Outline (板框�?
         case 11:
-            return "Edge.Cuts"; // Board Outline (板框层)
+            return "Edge.Cuts"; // Board Outline (板框�?
         case 12:
-            return "Dwgs.User"; // Document (文档层)
+            return "Dwgs.User"; // Document (文档�?
         case 13:
             return "F.Fab"; // Top Fabrication
         case 14:
@@ -1229,7 +1229,7 @@ namespace EasyKiConverter
         case 22:
             return "Eco2.User"; // Eco2
         case 100:
-            return "F.Fab"; // Lead Shape Layer (引脚形状层) - 同时也会生成 F.SilkS 版本
+            return "F.Fab"; // Lead Shape Layer (引脚形状�? - 同时也会生成 F.SilkS 版本
         case 101:
             return "F.SilkS"; // Component Polarity Layer (极性标记层)
         default:

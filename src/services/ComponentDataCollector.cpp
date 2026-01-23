@@ -1,7 +1,7 @@
 #include "ComponentDataCollector.h"
 #include <QDebug>
-#include "src/core/easyeda/EasyedaApi.h"
-#include "src/core/easyeda/EasyedaImporter.h"
+#include "core/easyeda/EasyedaApi.h"
+#include "core/easyeda/EasyedaImporter.h"
 
 namespace EasyKiConverter
 {
@@ -29,7 +29,7 @@ namespace EasyKiConverter
         m_isCancelled = false;
         setState(FetchingCadData);
 
-        // 直接获取 CAD 数据（包含符号和封装信息）
+        // 直接获取 CAD 数据（包含符号和封装信息�?
         m_api->fetchCadData(m_componentId);
     }
 
@@ -66,7 +66,7 @@ namespace EasyKiConverter
             return;
         }
 
-        // 检查响应结构
+        // 检查响应结�?
         QJsonObject resultData;
         if (data.contains("result"))
         {
@@ -127,10 +127,10 @@ namespace EasyKiConverter
             qWarning() << "Failed to import footprint data";
         }
 
-        // 检查是否需要获取 3D 模型
+        // 检查是否需要获�?3D 模型
         if (m_export3DModel && footprintData && footprintData->model3D().uuid().isEmpty())
         {
-            // 从 CAD 数据中提取 3D 模型 UUID
+            // �?CAD 数据中提�?3D 模型 UUID
             if (resultData.contains("head"))
             {
                 QJsonObject head = resultData["head"].toObject();
@@ -141,12 +141,12 @@ namespace EasyKiConverter
                     {
                         qDebug() << "Fetching 3D model with UUID:" << uuid;
 
-                        // 更新 Model3DData 的 UUID
+                        // 更新 Model3DData �?UUID
                         QSharedPointer<Model3DData> model3DData(new Model3DData());
                         model3DData->setUuid(uuid);
                         m_componentData.setModel3DData(model3DData);
 
-                        // 进入获取 OBJ 数据状态
+                        // 进入获取 OBJ 数据状�?
                         setState(FetchingObjData);
                         m_api->fetch3DModelObj(uuid);
                         return;
@@ -155,7 +155,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 不需要 3D 模型或没有找到 UUID，直接完成
+        // 不需�?3D 模型或没有找�?UUID，直接完�?
         complete();
     }
 
@@ -169,7 +169,7 @@ namespace EasyKiConverter
             return;
         }
 
-        // 根据当前状态决定如何处理
+        // 根据当前状态决定如何处�?
         if (m_state == FetchingObjData)
         {
             // 保存 OBJ 数据
@@ -179,7 +179,7 @@ namespace EasyKiConverter
                 qDebug() << "OBJ data saved for:" << uuid;
             }
 
-            // 检查是否需要获取 STEP 数据
+            // 检查是否需要获�?STEP 数据
             if (m_export3DModel)
             {
                 setState(FetchingStepData);

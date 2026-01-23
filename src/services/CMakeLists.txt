@@ -20,7 +20,11 @@ target_link_libraries(EasyKiConverterServices
         Qt6::Core
         Qt6::Network
         Qt6::Concurrent
+        Qt6::Quick
         EasyKiConverterModels
         EasyKiConverterCore
         EasyKiConverterEasyeda
+        EasyKiConverterKicad
+        EasyKiConverterUtils
+        EasyKiConverterWorkers
 )

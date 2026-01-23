@@ -1,5 +1,5 @@
 #include "ExportProgressViewModel.h"
-#include "src/services/ExportService_Pipeline.h"
+#include "services/ExportService_Pipeline.h"
 #include <QDebug>
 
 namespace EasyKiConverter
@@ -8,7 +8,7 @@ namespace EasyKiConverter
     ExportProgressViewModel::ExportProgressViewModel(ExportService *exportService, ComponentService *componentService, QObject *parent)
         : QObject(parent), m_exportService(exportService), m_componentService(componentService), m_status("Ready"), m_progress(0), m_isExporting(false), m_successCount(0), m_failureCount(0), m_fetchedCount(0), m_fetchProgress(0), m_processProgress(0), m_writeProgress(0), m_usePipelineMode(false), m_pendingUpdate(false)
     {
-        // 初始化节流定时器（100ms）
+        // 初始化节流定时器�?00ms�?
         m_throttleTimer = new QTimer(this);
         m_throttleTimer->setInterval(100); // 100ms 节流间隔
         m_throttleTimer->setSingleShot(true);
@@ -88,7 +88,7 @@ namespace EasyKiConverter
         m_resultsList.clear();
         m_idToIndexMap.clear();
 
-        // 预填充结果列表（性能优化 + 用户体验优化）
+        // 预填充结果列表（性能优化 + 用户体验优化�?
         prepopulateResultsList(componentIds);
 
         // 保存导出选项
@@ -106,7 +106,7 @@ namespace EasyKiConverter
         emit statusChanged();
         emit resultsListChanged();
 
-        // 如果使用流水线模式，直接调用流水线导出
+        // 如果使用流水线模式，直接调用流水线导�?
         if (m_usePipelineMode && qobject_cast<ExportServicePipeline *>(m_exportService))
         {
             m_status = "Running pipeline export...";
@@ -117,11 +117,11 @@ namespace EasyKiConverter
             return;
         }
 
-        // 否则使用原有的并行数据收集模式
+        // 否则使用原有的并行数据收集模�?
         m_status = "Fetching component data in parallel...";
         emit statusChanged();
 
-        // 设置组件服务的输出路径
+        // 设置组件服务的输出路�?
         m_componentService->setOutputPath(outputPath);
 
         // 并行收集数据
@@ -215,7 +215,7 @@ namespace EasyKiConverter
             m_throttleTimer->start();
         }
 
-        // 更新统计（不依赖节流）
+        // 更新统计（不依赖节流�?
         if (!success && statusStr == "failed")
         {
             m_failureCount++;
@@ -251,7 +251,7 @@ namespace EasyKiConverter
         {
             QVariantMap result;
             result["componentId"] = componentIds[i];
-            result["status"] = "pending"; // 初始状态：等待中
+            result["status"] = "pending"; // 初始状态：等待�?
             result["message"] = "Waiting to start...";
 
             m_resultsList.append(result);
@@ -268,8 +268,8 @@ namespace EasyKiConverter
                  << "Footprint:" << (data.footprintData() && !data.footprintData()->info().name.isEmpty())
                  << "3D Model:" << (data.model3DData() && !data.model3DData()->uuid().isEmpty());
 
-        // 这个方法现在不应该被调用，因为我们使用并行数据收集
-        // 如果被调用，说明有错误
+        // 这个方法现在不应该被调用，因为我们使用并行数据收�?
+        // 如果被调用，说明有错�?
         qWarning() << "handleComponentDataFetched called in parallel mode, this should not happen";
     }
 
@@ -288,7 +288,7 @@ namespace EasyKiConverter
     {
         qDebug() << "Export completed:" << successCount << "/" << totalCount << "success";
 
-        // 确保所有待处理的更新都已刷新
+        // 确保所有待处理的更新都已刷�?
         if (m_pendingUpdate)
         {
             m_throttleTimer->stop();
@@ -306,7 +306,7 @@ namespace EasyKiConverter
     {
         qWarning() << "Export failed:" << error;
 
-        // 确保所有待处理的更新都已刷新
+        // 确保所有待处理的更新都已刷�?
         if (m_pendingUpdate)
         {
             m_throttleTimer->stop();
@@ -345,7 +345,7 @@ namespace EasyKiConverter
             qDebug() << "Write progress changed to:" << m_writeProgress;
         }
 
-        // 更新总进度
+        // 更新总进�?
         int newProgress = progress.overallProgress();
         if (m_progress != newProgress)
         {

@@ -6,17 +6,17 @@
 #include <QVariantList>
 #include <QHash>
 #include <QTimer>
-#include "src/services/ExportService.h"
-#include "src/services/ComponentService.h"
-#include "src/services/ExportService_Pipeline.h"
+#include "services/ExportService.h"
+#include "services/ComponentService.h"
+#include "services/ExportService_Pipeline.h"
 
 namespace EasyKiConverter
 {
 
     /**
-     * @brief 导出进度视图模型类
+     * @brief 导出进度视图模型�?
      *
-     * 负责管理导出进度和结果相关的 UI 状态
+     * 负责管理导出进度和结果相关的 UI 状�?
      */
     class ExportProgressViewModel : public QObject
     {
@@ -89,14 +89,14 @@ namespace EasyKiConverter
     private:
         /**
          * @brief 根据阶段获取状态字符串
-         * @param stage 阶段（0=Fetch, 1=Process, 2=Write, -1=未知）
+         * @param stage 阶段�?=Fetch, 1=Process, 2=Write, -1=未知�?
          * @param success 是否成功
          * @return 状态字符串
          */
         QString getStatusString(int stage, bool success) const;
 
         /**
-         * @brief 预填充结果列表
+         * @brief 预填充结果列�?
          * @param componentIds 元件ID列表
          */
         void prepopulateResultsList(const QStringList &componentIds);
@@ -119,7 +119,7 @@ namespace EasyKiConverter
         bool m_usePipelineMode;
         QVariantList m_resultsList;
 
-        // 性能优化：哈希表用于快速查找
+        // 性能优化：哈希表用于快速查�?
         QHash<QString, int> m_idToIndexMap;
 
         // UI 节流：定时器和待更新列表

@@ -13,9 +13,9 @@ namespace EasyKiConverter
     EasyedaApi::EasyedaApi(QObject *parent)
         : QObject(parent), m_networkUtils(new NetworkUtils(this)), m_isFetching(false), m_requestType(RequestType::None)
     {
-        // 注意：不再连接默认的 m_networkUtils 信号，因为并行请求会创建独立的 NetworkUtils 实例
+        // 注意：不再连接默认的 m_networkUtils 信号，因为并行请求会创建独立�?NetworkUtils 实例
 
-        // 设置请求头
+        // 设置请求�?
         m_networkUtils->setHeader("Accept-Encoding", "gzip, deflate");
         m_networkUtils->setHeader("Accept", "application/json, text/javascript, */*; q=0.01");
         m_networkUtils->setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
@@ -64,7 +64,7 @@ namespace EasyKiConverter
             return;
         }
 
-        // 为每个请求创建独立的 NetworkUtils 实例以支持并行请求
+        // 为每个请求创建独立的 NetworkUtils 实例以支持并行请�?
         NetworkUtils *networkUtils = new NetworkUtils(this);
         connect(networkUtils, &NetworkUtils::requestSuccess, this, [this, networkUtils, lcscId](const QJsonObject &data)
                 { handleRequestSuccess(networkUtils, lcscId, data); });
@@ -73,7 +73,7 @@ namespace EasyKiConverter
         connect(networkUtils, &NetworkUtils::binaryDataFetched, this, [this, networkUtils, lcscId](const QByteArray &data)
                 { handleBinaryDataFetched(networkUtils, lcscId, data); });
 
-        // 设置请求头
+        // 设置请求�?
         networkUtils->setHeader("Accept-Encoding", "gzip, deflate");
         networkUtils->setHeader("Accept", "application/json, text/javascript, */*; q=0.01");
         networkUtils->setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
@@ -98,20 +98,20 @@ namespace EasyKiConverter
             return;
         }
 
-        // 为每个请求创建独立的 NetworkUtils 实例以支持并行请求
+        // 为每个请求创建独立的 NetworkUtils 实例以支持并行请�?
         NetworkUtils *networkUtils = new NetworkUtils(this);
         connect(networkUtils, &NetworkUtils::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray &data)
                 { handleBinaryDataFetched(networkUtils, uuid, data); });
         connect(networkUtils, &NetworkUtils::requestError, this, [this, networkUtils, uuid](const QString &error)
                 { handleRequestError(networkUtils, uuid, error); });
 
-        // 设置请求头
+        // 设置请求�?
         networkUtils->setHeader("Accept-Encoding", "gzip, deflate");
         networkUtils->setHeader("Accept", "application/octet-stream, */*");
         networkUtils->setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
         networkUtils->setHeader("User-Agent", "EasyKiConverter/1.0.0");
 
-        // 设置期望接收二进制数据
+        // 设置期望接收二进制数�?
         networkUtils->setExpectBinaryData(true);
 
         QString apiUrl = build3DModelObjUrl(uuid);
@@ -130,20 +130,20 @@ namespace EasyKiConverter
             return;
         }
 
-        // 为每个请求创建独立的 NetworkUtils 实例以支持并行请求
+        // 为每个请求创建独立的 NetworkUtils 实例以支持并行请�?
         NetworkUtils *networkUtils = new NetworkUtils(this);
         connect(networkUtils, &NetworkUtils::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray &data)
                 { handleBinaryDataFetched(networkUtils, uuid, data); });
         connect(networkUtils, &NetworkUtils::requestError, this, [this, networkUtils, uuid](const QString &error)
                 { handleRequestError(networkUtils, uuid, error); });
 
-        // 设置请求头
+        // 设置请求�?
         networkUtils->setHeader("Accept-Encoding", "gzip, deflate");
         networkUtils->setHeader("Accept", "application/octet-stream, */*");
         networkUtils->setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
         networkUtils->setHeader("User-Agent", "EasyKiConverter/1.0.0");
 
-        // 设置期望接收二进制数据
+        // 设置期望接收二进制数�?
         networkUtils->setExpectBinaryData(true);
 
         QString apiUrl = build3DModelStepUrl(uuid);
@@ -154,7 +154,7 @@ namespace EasyKiConverter
 
     void EasyedaApi::handleRequestSuccess(const QJsonObject &data)
     {
-        // 根据请求类型调用相应的处理函数
+        // 根据请求类型调用相应的处理函�?
         switch (m_requestType)
         {
         case RequestType::ComponentInfo:
@@ -172,7 +172,7 @@ namespace EasyKiConverter
 
     void EasyedaApi::handleRequestSuccess(NetworkUtils *networkUtils, const QString &lcscId, const QJsonObject &data)
     {
-        // 保存当前处理的 LCSC ID
+        // 保存当前处理�?LCSC ID
         QString savedLcscId = m_currentLcscId;
         m_currentLcscId = lcscId;
 
@@ -218,7 +218,7 @@ namespace EasyKiConverter
             return;
         }
 
-        // 检查响应是否包含错误
+        // 检查响应是否包含错�?
         if (data.contains("success") && data["success"].toBool() == false)
         {
             QString errorMsg = QString("API returned error for LCSC ID: %1").arg(m_currentLcscId);
@@ -227,7 +227,7 @@ namespace EasyKiConverter
             return;
         }
 
-        // 发送成功信号
+        // 发送成功信�?
         emit componentInfoFetched(data);
     }
 
@@ -243,7 +243,7 @@ namespace EasyKiConverter
             return;
         }
 
-        // 检查是否包含 result 键
+        // 检查是否包�?result �?
         if (!data.contains("result"))
         {
             QString errorMsg = QString("Response missing 'result' key for LCSC ID: %1").arg(m_currentLcscId);
@@ -254,10 +254,10 @@ namespace EasyKiConverter
 
         QJsonObject result = data["result"].toObject();
 
-        // 添加 LCSC ID 到 result 对象中
+        // 添加 LCSC ID �?result 对象�?
         result["lcscId"] = m_currentLcscId;
 
-        // 发送成功信号
+        // 发送成功信�?
         emit cadDataFetched(result);
     }
 
@@ -265,8 +265,8 @@ namespace EasyKiConverter
     {
         m_isFetching = false;
 
-        // 注意：3D 模型数据可能是二进制数据，这里需要特殊处理
-        // 检查是否有二进制数据
+        // 注意�?D 模型数据可能是二进制数据，这里需要特殊处�?
+        // 检查是否有二进制数�?
         if (data.contains("binaryData"))
         {
             QByteArray binaryData = QByteArray::fromBase64(data["binaryData"].toString().toUtf8());

@@ -2,15 +2,15 @@
 #define THEMESETTINGSVIEWMODEL_H
 
 #include <QObject>
-#include "src/services/ConfigService.h"
+#include "services/ConfigService.h"
 
 namespace EasyKiConverter
 {
 
     /**
-     * @brief 主题设置视图模型类
+     * @brief 主题设置视图模型�?
      *
-     * 负责管理主题设置相关的 UI 状态
+     * 负责管理主题设置相关�?UI 状�?
      */
     class ThemeSettingsViewModel : public QObject
     {
@@ -24,7 +24,7 @@ namespace EasyKiConverter
         // Getter 方法
         bool isDarkMode() const { return m_isDarkMode; }
 
-        // Setter 方法（标记为 Q_INVOKABLE 以便在 QML 中调用）
+        // Setter 方法（标记为 Q_INVOKABLE 以便�?QML 中调用）
         Q_INVOKABLE void setDarkMode(bool darkMode);
 
     signals:

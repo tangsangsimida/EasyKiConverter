@@ -3,10 +3,10 @@
 
 #include <QObject>
 #include <QString>
-#include "src/models/ComponentData.h"
-#include "src/models/SymbolData.h"
-#include "src/models/FootprintData.h"
-#include "src/models/Model3DData.h"
+#include "models/ComponentData.h"
+#include "models/SymbolData.h"
+#include "models/FootprintData.h"
+#include "models/Model3DData.h"
 
 namespace EasyKiConverter
 {
@@ -23,11 +23,11 @@ namespace EasyKiConverter
 
     public:
         /**
-         * @brief 收集状态枚举
+         * @brief 收集状态枚�?
          */
         enum State
         {
-            Idle,                  // 空闲状态
+            Idle,                  // 空闲状�?
             FetchingComponentInfo, // 正在获取组件信息
             FetchingCadData,       // 正在获取CAD数据
             FetchingObjData,       // 正在获取OBJ数据
@@ -38,10 +38,10 @@ namespace EasyKiConverter
         Q_ENUM(State)
 
         /**
-         * @brief 构造函数
+         * @brief 构造函�?
          *
          * @param componentId 元件ID
-         * @param parent 父对象
+         * @param parent 父对�?
          */
         explicit ComponentDataCollector(const QString &componentId, QObject *parent = nullptr);
 
@@ -51,7 +51,7 @@ namespace EasyKiConverter
         ~ComponentDataCollector() override;
 
         /**
-         * @brief 开始数据收集
+         * @brief 开始数据收�?
          */
         void start();
 
@@ -61,9 +61,9 @@ namespace EasyKiConverter
         void cancel();
 
         /**
-         * @brief 获取当前状态
+         * @brief 获取当前状�?
          *
-         * @return State 当前状态
+         * @return State 当前状�?
          */
         State state() const { return m_state; }
 
@@ -89,7 +89,7 @@ namespace EasyKiConverter
         QString errorMessage() const { return m_errorMessage; }
 
         /**
-         * @brief 设置是否需要导出3D模型
+         * @brief 设置是否需要导�?D模型
          *
          * @param export3D 是否导出3D模型
          */
@@ -97,9 +97,9 @@ namespace EasyKiConverter
 
     signals:
         /**
-         * @brief 状态改变信号
+         * @brief 状态改变信�?
          *
-         * @param state 新状态
+         * @param state 新状�?
          */
         void stateChanged(State state);
 
@@ -151,9 +151,9 @@ namespace EasyKiConverter
 
     private:
         /**
-         * @brief 设置状态
+         * @brief 设置状�?
          *
-         * @param state 新状态
+         * @param state 新状�?
          */
         void setState(State state);
 

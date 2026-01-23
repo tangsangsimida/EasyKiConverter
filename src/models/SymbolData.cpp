@@ -224,11 +224,11 @@ namespace EasyKiConverter
         json["verify"] = verify;
         json["smt"] = smt;
 
-        // 时间戳
+        // 时间�?
         json["update_time"] = updateTime;
         json["updated_at"] = updatedAt;
 
-        // 编辑器信息
+        // 编辑器信�?
         json["editor_version"] = editorVersion;
 
         // 项目信息
@@ -272,11 +272,11 @@ namespace EasyKiConverter
         verify = json["verify"].toBool(false);
         smt = json["smt"].toBool(false);
 
-        // 时间戳
+        // 时间�?
         updateTime = json["update_time"].toVariant().toLongLong();
         updatedAt = json["updated_at"].toString();
 
-        // 编辑器信息
+        // 编辑器信�?
         editorVersion = json["editor_version"].toString();
 
         // 项目信息
@@ -671,7 +671,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 读取边界框
+        // 读取边界�?
         if (json.contains("bbox") && json["bbox"].isObject())
         {
             if (!m_bbox.fromJson(json["bbox"].toObject()))
@@ -717,7 +717,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 读取圆
+        // 读取�?
         if (json.contains("circles") && json["circles"].isArray())
         {
             QJsonArray circlesArray = json["circles"].toArray();
@@ -771,7 +771,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 读取多段线
+        // 读取多段�?
         if (json.contains("polylines") && json["polylines"].isArray())
         {
             QJsonArray polylinesArray = json["polylines"].toArray();
@@ -789,7 +789,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 读取多边形
+        // 读取多边�?
         if (json.contains("polygons") && json["polygons"].isArray())
         {
             QJsonArray polygonsArray = json["polygons"].toArray();
@@ -866,7 +866,7 @@ namespace EasyKiConverter
 
     bool SymbolData::isValid() const
     {
-        // 检查基本字段
+        // 检查基本字�?
         if (m_bbox.x == 0.0 && m_bbox.y == 0.0)
         {
             return false;
@@ -883,7 +883,7 @@ namespace EasyKiConverter
             return "Symbol name is empty";
         }
 
-        // 验证边界框
+        // 验证边界�?
         if (m_bbox.x == 0.0 && m_bbox.y == 0.0)
         {
             return "Symbol bbox is empty";

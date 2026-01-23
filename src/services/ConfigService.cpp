@@ -15,7 +15,7 @@ namespace EasyKiConverter
     ConfigService::ConfigService(QObject *parent)
         : QObject(parent)
     {
-        // 初始化默认配置
+        // 初始化默认配�?
         initializeDefaultConfig();
     }
 

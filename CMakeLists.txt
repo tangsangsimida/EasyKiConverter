@@ -71,8 +71,16 @@ set(QML_FILES
 # 添加源码模块
 add_subdirectory(src)
 
-# 创建可执行文件
-qt_add_executable(appEasyKiconverter_Cpp_Version)
+# 创建可执行文件（包含 main.cpp）
+qt_add_executable(appEasyKiconverter_Cpp_Version
+    main.cpp
+)
+
+# 添加 src 目录到 include 路径
+target_include_directories(appEasyKiconverter_Cpp_Version
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
 
 # 链接主源码库
 target_link_libraries(appEasyKiconverter_Cpp_Version

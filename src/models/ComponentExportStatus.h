@@ -4,18 +4,18 @@
 #include <QString>
 #include <QSharedPointer>
 #include <QElapsedTimer>
-#include "src/models/ComponentData.h"
-#include "src/models/SymbolData.h"
-#include "src/models/FootprintData.h"
-#include "src/models/Model3DData.h"
+#include "models/ComponentData.h"
+#include "models/SymbolData.h"
+#include "models/FootprintData.h"
+#include "models/Model3DData.h"
 
 namespace EasyKiConverter
 {
 
     /**
-     * @brief 元件导出状态
+     * @brief 元件导出状�?
      *
-     * 跟踪元件在流水线各阶段的状态
+     * 跟踪元件在流水线各阶段的状�?
      */
     struct ComponentExportStatus
     {
@@ -36,29 +36,29 @@ namespace EasyKiConverter
         QSharedPointer<FootprintData> footprintData;
         QSharedPointer<Model3DData> model3DData;
 
-        // 抓取阶段状态
+        // 抓取阶段状�?
         bool fetchSuccess = false;
         QString fetchMessage;
         qint64 fetchDurationMs = 0; // 抓取耗时（毫秒）
 
-        // 处理阶段状态
+        // 处理阶段状�?
         bool processSuccess = false;
         QString processMessage;
         qint64 processDurationMs = 0; // 处理耗时（毫秒）
 
-        // 写入阶段状态
+        // 写入阶段状�?
         bool writeSuccess = false;
         QString writeMessage;
         qint64 writeDurationMs = 0; // 写入耗时（毫秒）
 
-        // 调试日志（仅在调试模式下使用）
+        // 调试日志（仅在调试模式下使用�?
         QStringList debugLog;
 
-        // 是否需要导出3D模型
+        // 是否需要导�?D模型
         bool need3DModel = false;
 
         /**
-         * @brief 检查是否完全成功
+         * @brief 检查是否完全成�?
          * @return bool
          */
         bool isCompleteSuccess() const
@@ -121,8 +121,8 @@ namespace EasyKiConverter
     struct ExportStatistics
     {
         int total = 0;           // 总数
-        int success = 0;         // 成功数
-        int failed = 0;          // 失败数
+        int success = 0;         // 成功�?
+        int failed = 0;          // 失败�?
 
         // 细分错误统计
         QMap<QString, int> failureReasons; // 例如: {"Network Error": 5, "Parse Error": 2}
@@ -134,12 +134,12 @@ namespace EasyKiConverter
         qint64 avgProcessTimeMs = 0;    // 平均处理时间
         qint64 avgWriteTimeMs = 0;      // 平均写入时间
 
-        // 最慢的组件（用于性能分析）
+        // 最慢的组件（用于性能分析�?
         QList<QPair<QString, qint64>> slowestComponents; // <componentId, durationMs>
 
         /**
-         * @brief 计算成功率
-         * @return double 成功率（0-100）
+         * @brief 计算成功�?
+         * @return double 成功率（0-100�?
          */
         double getSuccessRate() const
         {
@@ -147,8 +147,8 @@ namespace EasyKiConverter
         }
 
         /**
-         * @brief 获取最慢阶段
-         * @return QString 最慢阶段名称
+         * @brief 获取最慢阶�?
+         * @return QString 最慢阶段名�?
          */
         QString getSlowestStage() const
         {

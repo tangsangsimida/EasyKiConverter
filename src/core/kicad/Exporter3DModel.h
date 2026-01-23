@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QByteArray>
-#include "src/models/Model3DData.h"
+#include "models/Model3DData.h"
 
 // 前向声明
 namespace EasyKiConverter
@@ -36,9 +36,9 @@ namespace EasyKiConverter
         Q_ENUM(ModelFormat)
 
         /**
-         * @brief 构造函数
+         * @brief 构造函�?
          *
-         * @param parent 父对象
+         * @param parent 父对�?
          */
         explicit Exporter3DModel(QObject *parent = nullptr);
 
@@ -48,7 +48,7 @@ namespace EasyKiConverter
         ~Exporter3DModel() override;
 
         /**
-         * @brief 下载 3D 模型（OBJ 格式）
+         * @brief 下载 3D 模型（OBJ 格式�?
          *
          * @param uuid 模型 UUID
          * @param savePath 保存路径
@@ -56,7 +56,7 @@ namespace EasyKiConverter
         void downloadObjModel(const QString &uuid, const QString &savePath);
 
         /**
-         * @brief 下载 3D 模型（STEP 格式）
+         * @brief 下载 3D 模型（STEP 格式�?
          *
          * @param uuid 模型 UUID
          * @param savePath 保存路径
@@ -64,7 +64,7 @@ namespace EasyKiConverter
         void downloadStepModel(const QString &uuid, const QString &savePath);
 
         /**
-         * @brief 导出模型为 KiCad WRL 格式
+         * @brief 导出模型�?KiCad WRL 格式
          *
          * @param modelData 模型数据
          * @param savePath 保存路径
@@ -73,7 +73,7 @@ namespace EasyKiConverter
         bool exportToWrl(const Model3DData &modelData, const QString &savePath);
 
         /**
-         * @brief 导出模型为 STEP 格式
+         * @brief 导出模型�?STEP 格式
          *
          * @param modelData 模型数据
          * @param savePath 保存路径
@@ -82,7 +82,7 @@ namespace EasyKiConverter
         bool exportToStep(const Model3DData &modelData, const QString &savePath);
 
         /**
-         * @brief 将 3D 模型转换为 KiCad 坐标系
+         * @brief �?3D 模型转换�?KiCad 坐标�?
          *
          * @param modelData 模型数据
          */
@@ -97,7 +97,7 @@ namespace EasyKiConverter
         /**
          * @brief 下载成功信号
          *
-         * @param filePath 保存的文件路径
+         * @param filePath 保存的文件路�?
          */
         void downloadSuccess(const QString &filePath);
 
@@ -111,7 +111,7 @@ namespace EasyKiConverter
         /**
          * @brief 下载进度信号
          *
-         * @param bytesReceived 已接收的字节数
+         * @param bytesReceived 已接收的字节�?
          * @param bytesTotal 总字节数
          */
         void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
