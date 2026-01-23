@@ -21,6 +21,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup MinGW-w64 Compiler
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
@@ -29,34 +40,41 @@ jobs:
           target: 'desktop'
           arch: 'win64_mingw'
           cache: true
-          # install-qt-action 会自动安装对应的 MinGW 工具链
 
-      - name: Clean environment variables
+      - name: Verify compiler
         shell: pwsh
         run: |
-          # 清理可能干扰的环境变量
-          # 移除系统自带的 GCC/MinGW 路径，确保使用 Qt 的 MinGW
-          $env:PATH = ($env:PATH -split ';' | Where-Object { 
-            $_ -notmatch 'mingw' -and 
-            $_ -notmatch 'gcc' -and 
-            $_ -notmatch 'C:\\Program Files\\Git\\usr\\bin'
-          }) -join ';'
-          
-          # 确保 Qt 的 MinGW 在 PATH 最前面
-          $env:PATH = "$env:Qt6_DIR\bin;$env:Qt6_DIR\..\Tools\mingw*\bin;$env:PATH"
-          
-          Write-Host "=== Cleaned PATH ==="
-          Write-Host $env:PATH
+          Write-Host "=== GCC Version ==="
+          gcc --version
+          Write-Host ""
+          Write-Host "=== G++ Version ==="
+          g++ --version
+          Write-Host ""
+          Write-Host "=== Make Version ==="
+          mingw32-make --version
           Write-Host ""
           Write-Host "=== Qt Directory ==="
           Write-Host $env:Qt6_DIR
+
+      - name: Test minimal compile
+        shell: pwsh
+        run: |
+          cd $env:GITHUB_WORKSPACE
+          echo 'int main() { return 0; }' > test.cpp
+          g++ test.cpp -o test.exe
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "✓ Compiler test passed"
+            Remove-Item test.cpp, test.exe
+          } else {
+            Write-Error "✗ Compiler test failed"
+            exit 1
+          }
 
       - name: Configure CMake
         shell: pwsh
         run: |
           cd $env:GITHUB_WORKSPACE
-          # 使用 install-qt-action 提供的 MinGW 环境
-          # install-qt-action 会自动设置 Qt6_DIR 环境变量
+          # 使用 MSYS2 安装的 MinGW-w64 和 install-qt-action 安装的 Qt
           cmake -B build -G "MinGW Makefiles" `
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
