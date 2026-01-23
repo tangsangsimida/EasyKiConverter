@@ -1,12 +1,1 @@
-{
-    "name": "easykiconverter",
-    "version-string": "3.0.1",
-    "description": "EasyKiConverter - LCSC and EasyEDA component to KiCad library converter",
-    "dependencies": [
-        {
-            "name": "zlib",
-            "platform": "windows"
-        }
-    ],
-    "builtin-baseline": "544a4c5c297e60e4ac4a5a1810df66748d908869"
-}
+{"name": "easykiconverter", "version-string": "3.0.1", "description": "EasyKiConverter - LCSC and EasyEDA component to KiCad library converter", "dependencies": [{"name": "zlib", "platform": "windows"}], "builtin-baseline": "544a4c5c297e60e4ac4a5a1810df66748d908869"}

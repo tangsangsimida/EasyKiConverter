@@ -16,7 +16,13 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Test Network)
 
 # 查找 zlib（NetworkUtils.cpp 使用 zlib API）
-find_package(ZLIB REQUIRED)
+find_package(ZLIB QUIET)
+
+# 输出 zlib 查找结果（用于调试）
+message(STATUS "ZLIB_FOUND: ${ZLIB_FOUND}")
+message(STATUS "ZLIB_INCLUDE_DIRS: ${ZLIB_INCLUDE_DIRS}")
+message(STATUS "ZLIB_LIBRARIES: ${ZLIB_LIBRARIES}")
+message(STATUS "ZLIB_VERSION: ${ZLIB_VERSION}")
 
 # 设置包含路径
 include_directories(${CMAKE_SOURCE_DIR}/../src)

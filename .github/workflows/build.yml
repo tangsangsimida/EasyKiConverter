@@ -192,6 +192,7 @@ jobs:
           cmake --build build --config $env:BUILD_TYPE --parallel 16
 
       - name: 'Test'
+        shell: pwsh
         run: |
           cd tests
           if ("${{ matrix.platform }}" -eq "msvc2019_64") {
