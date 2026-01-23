@@ -131,6 +131,7 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-make
             mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-libssp
           update: true
 
       - name: 'Setup vcpkg'
@@ -139,7 +140,20 @@ jobs:
         with:
           vcpkgJsonGlob: 'vcpkg.json'
 
-      - name: 'Setup Build Environment'
+      - name: 'Setup Build Environment (MinGW)'
+        if: matrix.platform == 'mingw_64'
+        uses: ./.github/actions/setup-env
+        with:
+          cmake-version: ${{ env.CMAKE_VERSION }}
+          qt-version: ${{ env.QT_VERSION }}
+          qt-host: 'windows'
+          qt-target: 'desktop'
+          qt-arch: 'win64_mingw'
+          enable-ccache: 'false'
+          enable-sccache: 'true'
+
+      - name: 'Setup Build Environment (MSVC)'
+        if: matrix.platform == 'msvc2019_64'
         uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}

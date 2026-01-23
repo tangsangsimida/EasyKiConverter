@@ -106,8 +106,6 @@ if(ZLIB_USE_QT)
                 "${CMAKE_PREFIX_PATH}/include"
                 "${CMAKE_PREFIX_PATH}/include/QtCore"
                 "${CMAKE_PREFIX_PATH}/include/QtCore5Compat"
-                "${CMAKE_PREFIX_PATH}/../Tools/mingw*/include"
-                "${CMAKE_PREFIX_PATH}/../Tools/Qt*/include"
         )
         if(ZLIB_INCLUDE_DIR)
             message(STATUS "Found zlib.h at: ${ZLIB_INCLUDE_DIR}")
