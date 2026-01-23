@@ -173,19 +173,19 @@ jobs:
           gcc --version | Select-Object -First 2
           g++ --version | Select-Object -First 2
 
-          # 显式指定 MinGW 工具链路径
-          $mingwPath = "C:\msys64\mingw64\bin"
+          # 显式指定 MinGW 工具链路径（使用正斜杠避免 PowerShell 转义问题）
+          $mingwPath = "C:/msys64/mingw64/bin"
 
           # 确保使用我们安装的 MinGW 13.1.0，而不是系统自带的旧版本
           $env:Path = "$mingwPath;" + $env:Path
 
-          # 显式指定编译器和链接器
-          $env:CMAKE_C_COMPILER = "$mingwPath\gcc.exe"
-          $env:CMAKE_CXX_COMPILER = "$mingwPath\g++.exe"
-          $env:CMAKE_LINKER = "$mingwPath\ld.exe"
-          $env:CMAKE_AR = "$mingwPath\ar.exe"
-          $env:CMAKE_RANLIB = "$mingwPath\ranlib.exe"
-          $env:CMAKE_STRIP = "$mingwPath\strip.exe"
+          # 显式指定编译器和链接器（使用正斜杠）
+          $env:CMAKE_C_COMPILER = "$mingwPath/gcc.exe"
+          $env:CMAKE_CXX_COMPILER = "$mingwPath/g++.exe"
+          $env:CMAKE_LINKER = "$mingwPath/ld.exe"
+          $env:CMAKE_AR = "$mingwPath/ar.exe"
+          $env:CMAKE_RANLIB = "$mingwPath/ranlib.exe"
+          $env:CMAKE_STRIP = "$mingwPath/strip.exe"
 
           Write-Host "=== Using MinGW Toolchain from: $mingwPath ==="
           Write-Host "C Compiler: $env:CMAKE_C_COMPILER"
