@@ -244,17 +244,16 @@ jobs:
             PR information and perform the review on GitHub. You MUST ACTUALLY EXECUTE COMMANDS and CALL TOOLS - do not just output text about what you would do.
 
             ## CRITICAL REQUIREMENTS
-            1. You MUST use the GitHub MCP tools to submit your review comments.
+            1. You MUST use GitHub CLI (gh) commands to submit your review comments.
             2. DO NOT just output text as your response - this will NOT be seen on GitHub.
-            3. You MUST call these tools in order:
-               - First: mcp__github__create_pending_pull_request_review
-               - Then: mcp__github__add_comment_to_pending_review (for each comment)
-               - Finally: mcp__github__submit_pending_pull_request_review
-            4. If the MCP tools fail, report the error clearly.
+            3. You MUST execute these commands in order:
+               - First: Create a pending review using gh pr review
+               - Then: Add review comments using gh pr review edit
+               - Finally: Submit the review
+            4. If the commands fail, report the error clearly.
             5. **Bilingual Output**: ALL comments MUST be in BOTH English and Chinese (中文).
                - Every comment must have an English version followed by a Chinese translation.
                - This includes inline comments, general comments, and the summary comment.
-
             ## Requirements
             1. All feedback must be left on GitHub.
             2. Any output that is not left in GitHub will not be seen.
@@ -456,85 +455,47 @@ jobs:
             The get the files changed in this pull request, run:
             "$(gh pr diff "${PR_NUMBER}" --patch)" to get the list of changed files PATCH
 
-            ## Review
+            ## Review Process
 
-            Once you have the information and are ready to leave a review on GitHub, post the review to GitHub using the GitHub MCP tool by:
-            1. Creating a pending review: Use the mcp__github__create_pending_pull_request_review to create a Pending Pull Request Review.
+            Once you have the information, ACTUALLY EXECUTE these GitHub CLI commands:
 
-            2. Adding review comments:
-                2.1 Use the mcp__github__add_comment_to_pending_review to add comments to the Pending Pull Request Review. Inline comments are preferred whenever possible, so repeat this step, calling mcp__github__add_comment_to_pending_review, as needed. All comments about specific lines of code should use inline comments. It is preferred to use code suggestions when possible, which include a code block that is labeled "suggestion", which contains what the new code should be. All comments should also have a severity. The syntax is:
-                  Normal Comment Syntax:
-                  <COMMENT>
-                  {{SEVERITY}} {{COMMENT_TEXT}}
-                  </COMMENT>
+            1. Create a pending review:
+               ```
+               gh pr review "${PR_NUMBER}" --body "PR review in progress..." --pending
+               ```
 
-                  Inline Comment Syntax: (Preferred):
-                  <COMMENT>
-                  {{SEVERITY}} {{COMMENT_TEXT}}
-                  ```suggestion
-                  {{CODE_SUGGESTION}}
-                  ```
-                  </COMMENT>
+            2. For each comment, add it to the review:
+               ```
+               gh pr review edit "${PR_NUMBER}" --body "Your review comment here"
+               ```
+               Or use inline comments:
+               ```
+               gh pr review edit "${PR_NUMBER}" --comment-file /tmp/comment.json
+               ```
+               Where comment.json contains:
+               ```json
+               {
+                 "body": "🟢 Your English comment\n🟢 Your Chinese translation",
+                 "path": "path/to/file",
+                 "line": 123
+               }
+               ```
 
-                  Prepend a severity emoji to each comment:
-                  - 🟢 for low severity
-                  - 🟡 for medium severity
-                  - 🟠 for high severity
-                  - 🔴 for critical severity
-                  - 🔵 if severity is unclear
-
-                  Including all of this, an example inline comment would be:
-                  <COMMENT>
-                  🟢 Use camelCase for function names
-                  函数名使用 camelCase 命名
-                  ```suggestion
-                  myFooBarFunction
-                  ```
-                  </COMMENT>
-
-                  A critical severity example would be:
-                  <COMMENT>
-                  🔴 Remove storage key from GitHub
-                  从 GitHub 中移除存储密钥
-                  ```suggestion
-                  ```
-
-            3. Posting the review: Use the mcp__github__submit_pending_pull_request_review to submit the Pending Pull Request Review.
-
-              3.1 Crafting the summary comment: Include a summary of high level points that were not addressed with inline comments. Be concise. Do not repeat details mentioned inline.
-
-                Structure your summary comment using this exact format with markdown:
-                ## 📋 Review Summary
-
-                Provide a brief 2-3 sentence overview of the PR and overall
-                assessment.
-
-                ## 📋 审查总结
-
-                提供 2-3 句话的 PR 概述和整体评估（中文）。
-
-                ## 🔍 General Feedback
-                - List general observations about code quality
-                - Mention overall patterns or architectural decisions
-                - Highlight positive aspects of the implementation
-                - Note any recurring themes across files
-
-                ## 🔍 一般反馈
-                - 列出代码质量的一般观察
-                - 提及整体模式或架构决策
-                - 突出实现的积极方面
-                - 注意跨文件的重复主题
+            3. Submit the review with a bilingual summary:
+               ```
+               gh pr review "${PR_NUMBER}" --body "## 📋 Review Summary\n\nYour summary\n\n## 📋 审查总结\n\n您的总结" --comment
+               ```
 
             ## Final Instructions
 
-            Remember, you are running in a VM and no one reviewing your output. Your review must be posted to GitHub using the MCP tools to create a pending review, add comments to the pending review, and submit the pending review.
+            Remember, you are running in a VM and no one reviewing your output. Your review must be posted to GitHub using GitHub CLI commands. ACTUALLY EXECUTE THE COMMANDS - do not just output text!
 
             ## IMPORTANT: Error Handling
 
             If you encounter any issues:
-            1. First, try to call the MCP tools again
-            2. If MCP tools are not available or fail, report the error with these details:
-               - Which tool failed
+            1. First, try to run the gh commands again
+            2. If gh commands fail, report the error with these details:
+               - Which command failed
                - The error message received
                - What you were trying to do
             3. Print your diagnostic information to help debug the issue
@@ -542,9 +503,9 @@ jobs:
             ## Verification Steps
 
             Before finishing, verify:
-            1. You have called `mcp__github__create_pending_pull_request_review` successfully
-            2. You have added all comments using `mcp__github__add_comment_to_pending_review`
-            3. You have called `mcp__github__submit_pending_pull_request_review` to submit the review
+            1. You have ACTUALLY EXECUTED gh pr review commands
+            2. You have added all review comments using gh commands
+            3. You have submitted the review using gh pr review
             4. All comments are in BOTH English and Chinese
             5. All comments have severity indicators (🟢🟡🟠🔴)
 
@@ -576,7 +537,19 @@ jobs:
             - **PR Number**: #${prNumber}
             - **Review Type**: Automated Code Review / 自动化代码审查
             - **Reviewer**: iFlow CLI AI Assistant
+
+            ## 🔍 Next Steps / 下一步
+
+            1. Review the inline comments in the "Files changed" tab
+            2. Address the issues marked with 🔴 (critical) and 🟠 (high) severity
+            3. Consider the suggestions marked with 🟡 (medium) and 🟢 (low) severity
+
             ---
+
+            *This review was generated by [iFlow CLI](https://github.com/iflow-ai/iflow-cli) using AI-powered code analysis.*
+            *本审查由 [iFlow CLI](https://github.com/iflow-ai/iflow-cli) 使用 AI 驱动的代码分析生成。*
+            `;
+
             await github.rest.issues.createComment({
               owner: owner,
               repo: repoName,
