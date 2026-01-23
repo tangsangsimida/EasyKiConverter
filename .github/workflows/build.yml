@@ -173,84 +173,62 @@ jobs:
           gcc --version | Select-Object -First 2
           g++ --version | Select-Object -First 2
 
-          # 查找 MSYS2 的实际安装路径（排除系统自带的 MinGW）
-          # MSYS2 setup action 会将 MSYS2 安装到特定位置
-          Write-Host "=== Searching for MSYS2 Installation ==="
+          # 查找 MSYS2 的实际安装路径
+          Write-Host "=== Searching for MSYS2 MinGW ==="
           
-          # 首先检查环境变量
-          $msys2Path = $env:MSYS2_PATH
-          if ($msys2Path) {
-            Write-Host "MSYS2_PATH environment variable: $msys2Path"
-          }
-
-          # 检查常见的 MSYS2 安装路径
+          # 检查常见的 MSYS2 安装路径（优先使用我们安装的）
           $mingwPaths = @(
+            "$env:RUNNER_TEMP/msys64/mingw64/bin",      # msys2/setup-msys2@v2 安装的位置
+            "$env:GITHUB_WORKSPACE/msys64/mingw64/bin",
             "C:/msys64/mingw64/bin",
             "C:/tools/msys64/mingw64/bin",
             "C:/Program Files/msys64/mingw64/bin",
-            "$env:GITHUB_WORKSPACE/msys64/mingw64/bin",
-            "$env:RUNNER_TEMP/msys64/mingw64/bin",
             "C:/hostedtoolcache/windows/msys64/mingw64/bin"
           )
 
           Write-Host "Searching in the following paths:"
           foreach ($path in $mingwPaths) {
             $exists = Test-Path "$path/gcc.exe"
-            Write-Host "  - $path ($exists)"
+            Write-Host "  - ${path} (${exists})"
           }
 
           $mingwPath = $null
           foreach ($path in $mingwPaths) {
             if (Test-Path "$path/gcc.exe") {
-              # 检查是否是 MSYS2 的 MinGW（通过检查 msys-2.0.dll 的存在）
-              # MSYS2 的 msys-2.0.dll 通常在 msys64/usr/bin/ 目录下
-              $msysUsrBin = "$path/../../usr/bin/msys-2.0.dll"
-              $hasMsysDll = Test-Path $msysUsrBin
-              Write-Host "Checking path: ${path}"
-              Write-Host "  msys-2.0.dll at ${msysUsrBin}: ${hasMsysDll}"
-              
-              if ($hasMsysDll) {
-                $mingwPath = $path
-                Write-Host "Found MSYS2 MinGW at: ${mingwPath}"
-                break
-              }
+              $mingwPath = $path
+              Write-Host "Found MinGW at: ${mingwPath}"
+              break
             }
           }
 
           if (-not $mingwPath) {
-            Write-Error "Cannot find MSYS2 MinGW installation"
-            Write-Host "Searched paths:"
-            foreach ($path in $mingwPaths) {
-              Write-Host "  - $path"
-            }
-            Write-Host "Current PATH:"
-            Write-Host $env:Path -split ';'
+            Write-Error "Cannot find MinGW installation"
             exit 1
           }
 
           # 验证编译器是否存在
-          $gccPath = "$mingwPath/gcc.exe"
-          $gppPath = "$mingwPath/g++.exe"
+          $gccPath = "${mingwPath}/gcc.exe"
+          $gppPath = "${mingwPath}/g++.exe"
           
           if (-not (Test-Path $gccPath)) {
-            Write-Error "GCC not found at: $gccPath"
+            Write-Error "GCC not found at: ${gccPath}"
             exit 1
           }
           
           if (-not (Test-Path $gppPath)) {
-            Write-Error "G++ not found at: $gppPath"
+            Write-Error "G++ not found at: ${gppPath}"
             exit 1
           }
 
-          # 验证这是 MSYS2 的 MinGW（检查版本信息）
+          # 验证编译器版本
           $gccVersion = & "$gccPath" --version
-          Write-Host "GCC version at ${mingwPath}:"
+          Write-Host "GCC version:"
           Write-Host ($gccVersion | Select-Object -First 2)
 
-          # 确保使用 MSYS2 的 MinGW，而不是系统自带的旧版本
-          $env:Path = "$mingwPath;" + $env:Path
+          # 确保使用找到的 MinGW
+          $env:Path = "${mingwPath};" + $env:Path
 
-          # 使用环境变量设置编译器（CMake 会自动从环境变量读取）
+          # 使用环境变量设置编译器
           $env:CC = "gcc"
           $env:CXX = "g++"
           $env:LD = "ld"
@@ -258,10 +236,10 @@ jobs:
           $env:RANLIB = "ranlib"
           $env:STRIP = "strip"
 
-          Write-Host "=== Using MSYS2 MinGW Toolchain from: $mingwPath ==="
-          Write-Host "CC: $env:CC"
-          Write-Host "CXX: $env:CXX"
-          Write-Host "LD: $env:LD"
+          Write-Host "=== Using MinGW Toolchain from: ${mingwPath} ==="
+          Write-Host "CC: ${env:CC}"
+          Write-Host "CXX: ${env:CXX}"
+          Write-Host "LD: ${env:LD}"
 
           # 清理之前的 CMake 缓存
           Remove-Item -Path build -Recurse -Force -ErrorAction SilentlyContinue
