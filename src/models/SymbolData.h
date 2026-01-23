@@ -70,11 +70,11 @@ namespace EasyKiConverter
         bool verify;
         bool smt;
 
-        // 时间�?
+        // 时间�?
         qint64 updateTime;
         QString updatedAt;
 
-        // 编辑器信�?
+        // 编辑器信�?
         QString editorVersion;
 
         // 项目信息
@@ -95,10 +95,10 @@ namespace EasyKiConverter
         bool fromJson(const QJsonObject &json);
     };
 
-    // ==================== 边界�?====================
+    // ==================== 边界�?====================
 
     /**
-     * @brief 边界�?
+     * @brief 边界�?
      */
     struct SymbolBBox
     {
@@ -132,7 +132,7 @@ namespace EasyKiConverter
     };
 
     /**
-     * @brief 引脚�?
+     * @brief 引脚�?
      */
     struct SymbolPinDot
     {
@@ -174,7 +174,7 @@ namespace EasyKiConverter
     };
 
     /**
-     * @brief 引脚圆点（第二个�?
+     * @brief 引脚圆点（第二个�?
      */
     struct SymbolPinDotBis
     {
@@ -239,7 +239,7 @@ namespace EasyKiConverter
     };
 
     /**
-     * @brief �?
+     * @brief �?
      */
     struct SymbolCircle
     {
@@ -296,7 +296,7 @@ namespace EasyKiConverter
     };
 
     /**
-     * @brief 多段�?
+     * @brief 多段�?
      */
     struct SymbolPolyline
     {
@@ -313,7 +313,7 @@ namespace EasyKiConverter
     };
 
     /**
-     * @brief 多边�?
+     * @brief 多边�?
      */
     struct SymbolPolygon
     {
@@ -375,7 +375,7 @@ namespace EasyKiConverter
     // ==================== 符号部分 ====================
 
     /**
-     * @brief 符号部分（用于多部分符号�?
+     * @brief 符号部分（用于多部分符号�?
      */
     struct SymbolPart
     {
@@ -397,9 +397,9 @@ namespace EasyKiConverter
     // ==================== 符号数据 ====================
 
     /**
-     * @brief 符号数据�?
+     * @brief 符号数据�?
      *
-     * 包含符号的所有信息，包括引脚和各种图形元�?
+     * 包含符号的所有信息，包括引脚和各种图形元�?
      */
     class SymbolData
     {
@@ -407,7 +407,7 @@ namespace EasyKiConverter
         SymbolData();
         ~SymbolData() = default;
 
-        // Getter �?Setter 方法
+        // Getter �?Setter 方法
         SymbolInfo info() const { return m_info; }
         void setInfo(const SymbolInfo &info) { m_info = info; }
 
@@ -451,13 +451,13 @@ namespace EasyKiConverter
         void setTexts(const QList<SymbolText> &texts) { m_texts = texts; }
         void addText(const SymbolText &text) { m_texts.append(text); }
 
-        // 多部分符号接�?
+        // 多部分符号接�?
         QList<SymbolPart> parts() const { return m_parts; }
         void setParts(const QList<SymbolPart> &parts) { m_parts = parts; }
         void addPart(const SymbolPart &part) { m_parts.append(part); }
         bool isMultiPart() const { return m_parts.size() > 1; }
 
-        // JSON 序列�?
+        // JSON 序列�?
         QJsonObject toJson() const;
         bool fromJson(const QJsonObject &json);
 

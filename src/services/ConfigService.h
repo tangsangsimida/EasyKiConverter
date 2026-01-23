@@ -10,10 +10,10 @@ namespace EasyKiConverter
 {
 
     /**
-     * @brief 配置服务�?
+     * @brief 配置服务�?
      *
-     * 负责配置管理，使用单例模式�?
-     * 不依赖任�?UI 组件
+     * 负责配置管理，使用单例模式�?
+     * 不依赖任�?UI 组件
      */
     class ConfigService : public QObject
     {
@@ -44,7 +44,7 @@ namespace EasyKiConverter
         bool saveConfig(const QString &path = QString());
 
         /**
-         * @brief 重置为默认配�?
+         * @brief 重置为默认配�?
          */
         void resetToDefaults();
 
@@ -65,16 +65,16 @@ namespace EasyKiConverter
         void setOutputPath(const QString &path);
 
         /**
-         * @brief 获取库名�?
+         * @brief 获取库名�?
          *
-         * @return QString 库名�?
+         * @return QString 库名�?
          */
         QString getLibName() const;
 
         /**
-         * @brief 设置库名�?
+         * @brief 设置库名�?
          *
-         * @param name 库名�?
+         * @param name 库名�?
          */
         void setLibName(const QString &name);
 
@@ -121,14 +121,14 @@ namespace EasyKiConverter
         void setExportModel3D(bool enabled);
 
         /**
-         * @brief 是否覆盖已存在文�?
+         * @brief 是否覆盖已存在文�?
          *
          * @return bool 是否覆盖
          */
         bool getOverwriteExistingFiles() const;
 
         /**
-         * @brief 设置是否覆盖已存在文�?
+         * @brief 设置是否覆盖已存在文�?
          *
          * @param enabled 是否启用
          */
@@ -170,9 +170,9 @@ namespace EasyKiConverter
 
     private:
         /**
-         * @brief 构造函�?
+         * @brief 构造函�?
          *
-         * @param parent 父对�?
+         * @param parent 父对�?
          */
         ConfigService(QObject *parent = nullptr);
 
@@ -182,7 +182,7 @@ namespace EasyKiConverter
         ~ConfigService() override;
 
         /**
-         * @brief 初始化默认配�?
+         * @brief 初始化默认配�?
          */
         void initializeDefaultConfig();
 

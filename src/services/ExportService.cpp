@@ -58,7 +58,7 @@ namespace EasyKiConverter
             return false;
         }
 
-        // 使用 Exporter3DModel 导出�?WRL 格式
+        // 使用 Exporter3DModel 导出�?WRL 格式
         return m_modelExporter->exportToWrl(model, filePath);
     }
 
@@ -81,12 +81,12 @@ namespace EasyKiConverter
         m_successCount = 0;
         m_failureCount = 0;
 
-        // 清空之前的数�?
+        // 清空之前的数�?
         m_exportDataList.clear();
 
         locker.unlock();
 
-        // 为每个元件创建导出任�?
+        // 为每个元件创建导出任�?
         for (const QString &componentId : componentIds)
         {
             ExportData exportData;
@@ -95,7 +95,7 @@ namespace EasyKiConverter
             m_exportDataList.append(exportData);
         }
 
-        // 开始处理第一个元�?
+        // 开始处理第一个元�?
         processNextExport();
     }
 
@@ -118,7 +118,7 @@ namespace EasyKiConverter
         m_successCount = 0;
         m_failureCount = 0;
 
-        // 清空之前的数�?
+        // 清空之前的数�?
         m_exportDataList.clear();
 
         // 收集所有符号和封装数据
@@ -128,7 +128,7 @@ namespace EasyKiConverter
 
         locker.unlock();
 
-        // 为每个元件收集数�?
+        // 为每个元件收集数�?
         for (const ComponentData &componentData : componentDataList)
         {
             ExportData exportData;
@@ -173,19 +173,19 @@ namespace EasyKiConverter
             return;
         }
 
-        // 导出符号�?
+        // 导出符号�?
         if (m_options.exportSymbol && !allSymbols.isEmpty())
         {
             QString symbolLibPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, m_options.libName);
             if (exportSymbolLibrary(allSymbols, m_options.libName, symbolLibPath))
             {
                 qDebug() << "Symbol library exported successfully:" << symbolLibPath;
-                // 在追加模式下，如果所有符号都已存在，exportSymbolLibrary 会返�?true
-                // 但实际上没有导出任何新符号，这种情况下我们认为这些符号已经存�?
+                // 在追加模式下，如果所有符号都已存在，exportSymbolLibrary 会返�?true
+                // 但实际上没有导出任何新符号，这种情况下我们认为这些符号已经存�?
                 // 不应该计入成功或失败计数
-                // 只有在实际导出新符号或覆盖现有符号时才增加计�?
-                // 由于我们无法从返回值判断是否实际导出了新符�?
-                // 这里简单处理：如果文件存在，认为所有符号都已成功导出（包括之前已存在的�?
+                // 只有在实际导出新符号或覆盖现有符号时才增加计�?
+                // 由于我们无法从返回值判断是否实际导出了新符�?
+                // 这里简单处理：如果文件存在，认为所有符号都已成功导出（包括之前已存在的�?
                 m_successCount += allSymbols.size();
             }
             else
@@ -199,7 +199,7 @@ namespace EasyKiConverter
         QString modelsDirPath = QString("%1/3dmodels").arg(m_options.outputPath);
         if (m_options.exportModel3D && !allModels.isEmpty())
         {
-            // 创建 3D 模型目录（添加库名称前缀�?
+            // 创建 3D 模型目录（添加库名称前缀�?
             QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_options.outputPath, m_options.libName);
             if (!createOutputDirectory(modelsDirPath))
             {
@@ -207,12 +207,12 @@ namespace EasyKiConverter
             }
             else
             {
-                // 为每�?3D 模型设置文件名（使用封装名称�?
+                // 为每�?3D 模型设置文件名（使用封装名称�?
                 QMap<QString, QString> modelPathMap; // UUID -> 文件路径映射
 
                 for (auto &model : allModels)
                 {
-                    // 查找对应的封装名�?
+                    // 查找对应的封装名�?
                     QString footprintName;
                     for (const auto &exportData : m_exportDataList)
                     {
@@ -223,7 +223,7 @@ namespace EasyKiConverter
                         }
                     }
 
-                    // 使用封装名称作为文件�?
+                    // 使用封装名称作为文件�?
                     QString modelName = footprintName.isEmpty() ? model.uuid() : footprintName;
                     QString wrlPath = QString("%1/%2.wrl").arg(modelsDirPath, modelName);
                     QString stepPath = QString("%1/%2.step").arg(modelsDirPath, modelName);
@@ -268,7 +268,7 @@ namespace EasyKiConverter
                         }
                     }
 
-                    // 保存模型路径映射（使用相对路径，相对于封装库目录�?
+                    // 保存模型路径映射（使用相对路径，相对于封装库目录�?
                     QString relativePath = QString("${KIPRJMOD}/%1.3dmodels/%2").arg(m_options.libName, modelName);
                     modelPathMap[model.uuid()] = relativePath;
                 }
@@ -286,7 +286,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 创建封装库目�?
+        // 创建封装库目�?
         QString footprintDirPath = QString("%1/%2.pretty").arg(m_options.outputPath, m_options.libName);
         if (m_options.exportFootprint && !allFootprints.isEmpty())
         {
@@ -300,14 +300,14 @@ namespace EasyKiConverter
             }
         }
 
-        // 更新进度和统�?
+        // 更新进度和统�?
         m_successCount = m_totalProgress - m_failureCount;
         m_currentProgress = m_totalProgress;
 
-        // 发送导出完成信�?
+        // 发送导出完成信�?
         emit exportProgress(m_currentProgress, m_totalProgress);
 
-        // 为每个元件发送导出成功信�?
+        // 为每个元件发送导出成功信�?
         for (const ExportData &exportData : m_exportDataList)
         {
             emit componentExported(exportData.componentId, true, "Export successful");
@@ -370,7 +370,7 @@ namespace EasyKiConverter
         emit exportProgress(m_currentProgress, m_totalProgress);
         emit componentExported(componentId, success, message);
 
-        // 处理下一个元�?
+        // 处理下一个元�?
         processNextExport();
     }
 
@@ -386,13 +386,13 @@ namespace EasyKiConverter
         {
             if (m_options.overwriteExistingFiles)
             {
-                // 覆盖模式：删除现有文�?
+                // 覆盖模式：删除现有文�?
                 qDebug() << "Overwriting existing symbol library:" << filePath;
                 QFile::remove(filePath);
             }
             else
             {
-                // 追加模式或更新模式：追加/更新新符号到现有�?
+                // 追加模式或更新模式：追加/更新新符号到现有�?
                 qDebug() << "Appending/Updating to existing symbol library:" << filePath;
                 appendMode = true;
             }
@@ -469,7 +469,7 @@ namespace EasyKiConverter
             return;
         }
 
-        // 检查是否所有元件都已处�?
+        // 检查是否所有元件都已处�?
         if (m_currentProgress >= m_totalProgress)
         {
             m_isExporting = false;
@@ -480,7 +480,7 @@ namespace EasyKiConverter
             return;
         }
 
-        // 获取下一个待处理的元�?
+        // 获取下一个待处理的元�?
         int index = m_currentProgress;
         if (index >= m_exportDataList.size())
         {
@@ -576,7 +576,7 @@ namespace EasyKiConverter
 
         locker.unlock();
 
-        // 发送导出开始信�?
+        // 发送导出开始信�?
         // emit exportStarted(m_totalProgress); // 暂时注释掉，因为没有这个信号
 
         // 创建输出目录
@@ -610,19 +610,19 @@ namespace EasyKiConverter
             }
         }
 
-        // 导出符号�?
+        // 导出符号�?
         if (m_options.exportSymbol && !allSymbols.isEmpty())
         {
             QString symbolLibPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, m_options.libName);
             if (exportSymbolLibrary(allSymbols, m_options.libName, symbolLibPath))
             {
                 qDebug() << "Symbol library exported successfully:" << symbolLibPath;
-                // 在追加模式下，如果所有符号都已存在，exportSymbolLibrary 会返�?true
-                // 但实际上没有导出任何新符号，这种情况下我们认为这些符号已经存�?
+                // 在追加模式下，如果所有符号都已存在，exportSymbolLibrary 会返�?true
+                // 但实际上没有导出任何新符号，这种情况下我们认为这些符号已经存�?
                 // 不应该计入成功或失败计数
-                // 只有在实际导出新符号或覆盖现有符号时才增加计�?
-                // 由于我们无法从返回值判断是否实际导出了新符�?
-                // 这里简单处理：如果文件存在，认为所有符号都已成功导出（包括之前已存在的�?
+                // 只有在实际导出新符号或覆盖现有符号时才增加计�?
+                // 由于我们无法从返回值判断是否实际导出了新符�?
+                // 这里简单处理：如果文件存在，认为所有符号都已成功导出（包括之前已存在的�?
                 m_successCount += allSymbols.size();
             }
             else
@@ -643,12 +643,12 @@ namespace EasyKiConverter
             }
             else
             {
-                // 为每�?3D 模型设置文件名（使用封装名称�?
+                // 为每�?3D 模型设置文件名（使用封装名称�?
                 QMap<QString, QString> modelPathMap; // UUID -> 文件路径映射
 
                 for (auto &model : allModels)
                 {
-                    // 查找对应的封装名�?
+                    // 查找对应的封装名�?
                     QString footprintName;
                     for (const auto &componentData : componentDataList)
                     {
@@ -660,7 +660,7 @@ namespace EasyKiConverter
                         }
                     }
 
-                    // 使用封装名称作为文件�?
+                    // 使用封装名称作为文件�?
                     QString modelName = footprintName.isEmpty() ? model.uuid() : footprintName;
                     QString wrlPath = QString("%1/%2.wrl").arg(modelsDirPath, modelName);
                     QString stepPath = QString("%1/%2.step").arg(modelsDirPath, modelName);
@@ -705,7 +705,7 @@ namespace EasyKiConverter
                         }
                     }
 
-                    // 保存模型路径映射（使用相对路径，相对于封装库目录�?
+                    // 保存模型路径映射（使用相对路径，相对于封装库目录�?
                     QString relativePath = QString("${KIPRJMOD}/%1.3dmodels/%2").arg(m_options.libName, modelName);
                     modelPathMap[model.uuid()] = relativePath;
                 }
@@ -732,7 +732,7 @@ namespace EasyKiConverter
             }
         }
 
-        // 创建封装库目�?
+        // 创建封装库目�?
         QString footprintDirPath = QString("%1/%2.pretty").arg(m_options.outputPath, m_options.libName);
         if (m_options.exportFootprint && !allFootprints.isEmpty())
         {
@@ -747,10 +747,10 @@ namespace EasyKiConverter
             }
         }
 
-        // 更新进度和统�?
+        // 更新进度和统�?
         m_currentProgress = m_totalProgress;
 
-        // 发送导出完成信�?
+        // 发送导出完成信�?
         m_isExporting = false;
         m_parallelExporting = false;
         emit exportProgress(m_currentProgress, m_totalProgress);
@@ -773,7 +773,7 @@ namespace EasyKiConverter
             m_failureCount++;
         }
 
-        // 更新状�?
+        // 更新状�?
         m_parallelExportStatus[componentId] = false;
         m_parallelCompletedCount++;
 
@@ -784,7 +784,7 @@ namespace EasyKiConverter
         emit exportProgress(m_currentProgress, m_totalProgress);
         emit componentExported(componentId, success, message);
 
-        // 检查是否所有任务都已完�?
+        // 检查是否所有任务都已完�?
         if (m_parallelCompletedCount >= m_parallelTotalCount)
         {
             qDebug() << "All parallel export tasks completed:" << m_successCount << "success," << m_failureCount << "failed";
