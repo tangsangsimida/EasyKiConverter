@@ -29,74 +29,28 @@ jobs:
           target: 'desktop'
           arch: 'win64_mingw'
           cache: true
-          # install-qt-action 会自动安装对应的 MinGW 工具链
+          # 使用 runner 预装的 MinGW
 
       - name: Configure CMake
         shell: pwsh
         run: |
           cd $env:GITHUB_WORKSPACE
-          # 查找 MinGW 编译器的实际路径
-          # install-qt-action 可能将 MinGW 安装在不同位置
-          $possiblePaths = @(
-            "$env:Qt6_DIR\..\Tools",
-            "$env:Qt6_DIR\..\..\Tools",
-            "$env:Qt6_DIR\Tools"
-          )
-          
-          $mingwPath = $null
-          foreach ($path in $possiblePaths) {
-            if (Test-Path $path) {
-              $mingwDir = Get-ChildItem $path -Directory -ErrorAction SilentlyContinue | 
-                Where-Object { $_.Name -like "mingw*" } | 
-                Select-Object -First 1
-              if ($mingwDir) {
-                $mingwPath = $mingwDir.FullName
-                break
-              }
-            }
-          }
-          
-          if (-not $mingwPath) {
-            Write-Error "No MinGW directory found. Tried: $($possiblePaths -join ', ')"
-            exit 1
-          }
-          
-          $gccPath = "$mingwPath\bin\gcc.exe"
-          $gxxPath = "$mingwPath\bin\g++.exe"
-          
+          # 使用 GitHub Runner 预装的 MinGW (C:\mingw64)
+          # 这样可以避免 MinGW 路径查找问题
           cmake -B build -G "MinGW Makefiles" `
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=ON `
-            -DCMAKE_C_COMPILER="$gccPath" `
-            -DCMAKE_CXX_COMPILER="$gxxPath" `
-            -DCMAKE_MAKE_PROGRAM="$mingwPath\bin\mingw32-make.exe"
+            -DCMAKE_C_COMPILER="C:/mingw64/bin/gcc.exe" `
+            -DCMAKE_CXX_COMPILER="C:/mingw64/bin/g++.exe" `
+            -DCMAKE_MAKE_PROGRAM="C:/mingw64/bin/mingw32-make.exe"
 
       - name: Build
         shell: pwsh
         run: |
           cd $env:GITHUB_WORKSPACE
-          # 查找 MinGW 路径（与 Configure 步骤相同）
-          $possiblePaths = @(
-            "$env:Qt6_DIR\..\Tools",
-            "$env:Qt6_DIR\..\..\Tools",
-            "$env:Qt6_DIR\Tools"
-          )
-          
-          $mingwPath = $null
-          foreach ($path in $possiblePaths) {
-            if (Test-Path $path) {
-              $mingwDir = Get-ChildItem $path -Directory -ErrorAction SilentlyContinue | 
-                Where-Object { $_.Name -like "mingw*" } | 
-                Select-Object -First 1
-              if ($mingwDir) {
-                $mingwPath = $mingwDir.FullName
-                break
-              }
-            }
-          }
-          
-          $env:PATH = "$mingwPath\bin;$env:PATH"
+          # 将 MinGW 添加到 PATH
+          $env:PATH = "C:\mingw64\bin;$env:PATH"
           mingw32-make -C build -j
 
       - name: Run tests (if available)
