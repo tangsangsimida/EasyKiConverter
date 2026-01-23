@@ -58,83 +58,6 @@ message(STATUS "ZLIB_LIBRARY: ${ZLIB_LIBRARY}")
 
 qt_standard_project_setup(REQUIRES 6.8)
 
-# 源文件列表
-set(SOURCES
-    main.cpp
-    src/models/ComponentData.cpp
-    src/models/SymbolData.cpp
-    src/models/FootprintData.cpp
-    src/models/Model3DData.cpp
-    src/core/utils/GeometryUtils.cpp
-    src/core/utils/NetworkUtils.cpp
-    src/core/utils/LayerMapper.cpp
-    src/core/utils/SvgPathParser.cpp
-    src/ui/utils/ConfigManager.cpp
-    src/core/easyeda/EasyedaApi.cpp
-    src/core/easyeda/EasyedaImporter.cpp
-    src/core/easyeda/JLCDatasheet.cpp
-    src/core/kicad/ExporterSymbol.cpp
-    src/core/kicad/ExporterFootprint.cpp
-    src/core/kicad/Exporter3DModel.cpp
-    src/workers/ExportWorker.cpp
-    src/workers/NetworkWorker.cpp
-    # 流水线架构 Workers
-    src/workers/FetchWorker.cpp
-    src/workers/ProcessWorker.cpp
-    src/workers/WriteWorker.cpp
-    # Service 层
-    src/services/ComponentService.cpp
-    src/services/ExportService.cpp
-    src/services/ExportService_Pipeline.cpp
-    src/services/ConfigService.cpp
-    src/services/ComponentDataCollector.cpp
-    src/services/ComponentExportTask.cpp
-    # ViewModel 层
-    src/ui/viewmodels/ComponentListViewModel.cpp
-    src/ui/viewmodels/ExportSettingsViewModel.cpp
-    src/ui/viewmodels/ExportProgressViewModel.cpp
-    src/ui/viewmodels/ThemeSettingsViewModel.cpp
-)
-
-# 头文件列表
-set(HEADERS
-    src/models/ComponentData.h
-    src/models/SymbolData.h
-    src/models/FootprintData.h
-    src/models/Model3DData.h
-    src/models/ComponentExportStatus.h
-    src/core/utils/GeometryUtils.h
-    src/core/utils/NetworkUtils.h
-    src/core/utils/LayerMapper.h
-    src/core/utils/SvgPathParser.h
-    src/utils/BoundedThreadSafeQueue.h
-    src/ui/utils/ConfigManager.h
-    src/core/easyeda/EasyedaApi.h
-    src/core/easyeda/EasyedaImporter.h
-    src/core/easyeda/JLCDatasheet.h
-    src/core/kicad/ExporterSymbol.h
-    src/core/kicad/ExporterFootprint.h
-    src/core/kicad/Exporter3DModel.h
-    src/workers/ExportWorker.h
-    src/workers/NetworkWorker.h
-    # 流水线架构 Workers
-    src/workers/FetchWorker.h
-    src/workers/ProcessWorker.h
-    src/workers/WriteWorker.h
-    # Service 层
-    src/services/ComponentService.h
-    src/services/ExportService.h
-    src/services/ExportService_Pipeline.h
-    src/services/ConfigService.h
-    src/services/ComponentDataCollector.h
-    src/services/ComponentExportTask.h
-    # ViewModel 层
-    src/ui/viewmodels/ComponentListViewModel.h
-    src/ui/viewmodels/ExportSettingsViewModel.h
-    src/ui/viewmodels/ExportProgressViewModel.h
-    src/ui/viewmodels/ThemeSettingsViewModel.h
-)
-
 # QML 文件列表
 set(QML_FILES
     Main.qml
@@ -145,19 +68,24 @@ set(QML_FILES
     src/ui/qml/styles/AppStyle.qml
 )
 
-# 创建可执行文件
-qt_add_executable(appEasyKiconverter_Cpp_Version
-    ${SOURCES}
-    ${HEADERS}
-)
+# 添加源码模块
+add_subdirectory(src)
 
-# 添加编译定义
-if(ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT)
-    message(STATUS "Symbol and footprint debug export is ENABLED")
-    target_compile_definitions(appEasyKiconverter_Cpp_Version PRIVATE ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT)
-else()
-    message(STATUS "Symbol and footprint debug export is DISABLED")
-endif()
+# 创建可执行文件
+qt_add_executable(appEasyKiconverter_Cpp_Version)
+
+# 链接主源码库
+target_link_libraries(appEasyKiconverter_Cpp_Version
+    PRIVATE
+        EasyKiConverterLib
+        Qt6::Quick
+        Qt6::Network
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
+        Qt6::QuickControls2
+        ${ZLIB_LIBRARY}
+)
 
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
@@ -196,35 +124,6 @@ set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
     WIN32_EXECUTABLE TRUE
     OUTPUT_NAME "EasyKiConverter"
 )
-
-# 链接 Qt 库
-target_link_libraries(appEasyKiconverter_Cpp_Version
-    PRIVATE
-        Qt6::Quick
-        Qt6::Network
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Widgets
-        Qt6::QuickControls2
-        ${ZLIB_LIBRARY}
-)
-
-# 包含目录
-target_include_directories(appEasyKiconverter_Cpp_Version
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/core
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/models
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/ui
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/workers
-)
-
-# 编译选项
-if(MSVC)
-    target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE /W4)
-else()
-    target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE -Wall -Wextra -Wpedantic)
-endif()
 
 # 安装规则
 include(GNUInstallDirs)
