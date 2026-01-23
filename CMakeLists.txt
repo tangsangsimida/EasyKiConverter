@@ -78,31 +78,20 @@ qt_add_executable(appEasyKiconverter_Cpp_Version
 # MinGW 专用修复
 # ──────────────────────────────────────────────
 if(MINGW)
-    # 1. 告诉 Qt 不要注入 EntryPoint（最关键）
     set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
         QT_NO_ENTRYPOINT            ON
     )
-
-    # 2. 明确指定为 Windows GUI 子系统（无控制台）
     set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
         WIN32_EXECUTABLE            TRUE
     )
-
-    # 3. 链接选项：排除 EntryPoint + 保证 mingw32 在合适的位置
     target_link_options(appEasyKiconverter_Cpp_Version PRIVATE
         "-mwindows"
-        # 尝试排除 EntryPoint（部分 binutils 有效）
         "-Wl,--exclude-libs=libQt6EntryPoint.a"
-        # 更强的排除方式（推荐加这一行）
         "-Wl,--allow-multiple-definition"
     )
-
-    # 4. 很多时候需要显式把 mingw32 放到链接列表前面（提供 WinMainCRTStartup 等）
     target_link_libraries(appEasyKiconverter_Cpp_Version
         PRIVATE
-            # 故意放在最前面
             mingw32
-
             EasyKiConverterLib
             Qt6::Quick
             Qt6::Network
