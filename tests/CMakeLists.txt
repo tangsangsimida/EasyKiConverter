@@ -15,6 +15,19 @@ set(CMAKE_AUTOUIC ON)
 # 查找 Qt6
 find_package(Qt6 REQUIRED COMPONENTS Core Test Network)
 
+# 查找 zlib
+find_package(ZLIB QUIET)
+
+# 如果找不到标准的 zlib，使用 Qt 的 zlib 库
+if(NOT ZLIB_FOUND)
+    message(STATUS "Using Qt's zlib library for tests")
+    set(ZLIB_FOUND TRUE)
+    set(ZLIB_LIBRARY z)
+    set(ZLIB_USE_QT TRUE)
+else()
+    set(ZLIB_USE_QT FALSE)
+endif()
+
 # 设置包含路径
 include_directories(${CMAKE_SOURCE_DIR}/../src)
 
@@ -43,14 +56,11 @@ target_include_directories(test_component_service PRIVATE ${CMAKE_SOURCE_DIR}/..
 target_include_directories(test_component_service PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 # 链接 zlib
+target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network)
 if(ZLIB_FOUND)
-    if(ZLIB_USE_QT)
-        target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network z)
-    else()
-        target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
-    endif()
+    target_link_libraries(test_component_service PRIVATE ZLIB::ZLIB)
 else()
-    target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network z)
+    target_link_libraries(test_component_service PRIVATE z)
 endif()
 
 # 注册测试
@@ -82,12 +92,12 @@ target_include_directories(test_export_service PRIVATE ${CMAKE_SOURCE_DIR}/../sr
 target_link_libraries(test_export_service Qt6::Core Qt6::Test Qt6::Network)
 if(ZLIB_FOUND)
     if(ZLIB_USE_QT)
-        target_link_libraries(test_export_service z)
+        target_link_libraries(test_export_service PRIVATE z)
     else()
-        target_link_libraries(test_export_service ZLIB::ZLIB)
+        target_link_libraries(test_export_service PRIVATE ZLIB::ZLIB)
     endif()
 else()
-    target_link_libraries(test_export_service z)
+    target_link_libraries(test_export_service PRIVATE z)
 endif()
 
 # 注册测试
@@ -172,12 +182,12 @@ target_link_libraries(test_component_data_collector Qt6::Core Qt6::Test Qt6::Net
 # 链接 zlib（NetworkUtils 需要）
 if(ZLIB_FOUND)
     if(ZLIB_USE_QT)
-        target_link_libraries(test_component_data_collector z)
+        target_link_libraries(test_component_data_collector PRIVATE z)
     else()
-        target_link_libraries(test_component_data_collector ZLIB::ZLIB)
+        target_link_libraries(test_component_data_collector PRIVATE ZLIB::ZLIB)
     endif()
 else()
-    target_link_libraries(test_component_data_collector z)
+    target_link_libraries(test_component_data_collector PRIVATE z)
 endif()
 
 # 注册测试
