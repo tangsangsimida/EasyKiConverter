@@ -103,6 +103,18 @@ target_link_libraries(appEasyKiconverter_Cpp_Version
         ZLIB::ZLIB
 )
 
+# 强制移除 Qt6::EntryPoint（MinGW 专用，解决 Qt 6.10 MinGW bug）
+if(MINGW)
+    # 获取当前链接库列表
+    get_target_property(LINK_LIBS appEasyKiconverter_Cpp_Version LINK_LIBRARIES)
+    if(LINK_LIBS)
+        # 过滤掉 Qt6::EntryPoint
+        list(REMOVE_ITEM LINK_LIBS "Qt6::EntryPoint")
+        set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES LINK_LIBRARIES "${LINK_LIBS}")
+        message(STATUS "MinGW: Removed Qt6::EntryPoint from link libraries to fix __imp___argc error")
+    endif()
+endif()
+
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
     URI EasyKiconverter_Cpp_Version
