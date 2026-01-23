@@ -182,16 +182,17 @@ jobs:
                 "searchApiKey": "${{ secrets.IFLOW_API_KEY }}",
                 "mcpServers": {
                   "github": {
-                  "command": "github-mcp-server",
-                  "args": [
-                    "stdio"
-                  ],
-                  "includeTools": [
-                    "create_pending_pull_request_review",
-                    "add_comment_to_pending_review",
-                    "submit_pending_pull_request_review",
-                    "list_pull_requests"
-                  ],
+                    "command": "npx",
+                    "args": [
+                      "-y",
+                      "@modelcontextprotocol/server-github"
+                    ],
+                    "includeTools": [
+                      "create_pending_pull_request_review",
+                      "add_comment_to_pending_review",
+                      "submit_pending_pull_request_review",
+                      "list_pull_requests"
+                    ],
                     "env": {
                       "GITHUB_PERSONAL_ACCESS_TOKEN": "${{ secrets.GITHUB_TOKEN }}"
                     }
@@ -205,9 +206,30 @@ jobs:
             PR information and perform the review on GitHub. Use the available tools to
             gather information; do not ask for information to be provided.
 
+            ## CRITICAL REQUIREMENTS
+            1. You MUST use the GitHub MCP tools to submit your review comments.
+            2. DO NOT just output text as your response - this will NOT be seen on GitHub.
+            3. You MUST call these tools in order:
+               - First: mcp__github__create_pending_pull_request_review
+               - Then: mcp__github__add_comment_to_pending_review (for each comment)
+               - Finally: mcp__github__submit_pending_pull_request_review
+            4. If the MCP tools fail, report the error clearly.
+            5. **Bilingual Output**: ALL comments MUST be in BOTH English and Chinese (中文).
+               - Every comment must have an English version followed by a Chinese translation.
+               - This includes inline comments, general comments, and the summary comment.
+
             ## Requirements
             1. All feedback must be left on GitHub.
             2. Any output that is not left in GitHub will not be seen.
+            3. **Bilingual Comments**: ALL review comments MUST be provided in BOTH English and Chinese (中文).
+               - Format: First provide the English comment, followed by the Chinese translation.
+               - Example format:
+                 ```
+                 🟢 This is an English comment describing the issue.
+                 
+                 🟢 这是描述该问题的中文评论。
+                 ```
+               - This applies to ALL comments, including inline comments and the summary comment.
 
             ## Steps
 
@@ -410,6 +432,7 @@ jobs:
                   Including all of this, an example inline comment would be:
                   <COMMENT>
                   🟢 Use camelCase for function names
+                  函数名使用 camelCase 命名
                   ```suggestion
                   myFooBarFunction
                   ```
@@ -418,6 +441,7 @@ jobs:
                   A critical severity example would be:
                   <COMMENT>
                   🔴 Remove storage key from GitHub
+                  从 GitHub 中移除存储密钥
                   ```suggestion
                   ```
 
@@ -431,11 +455,21 @@ jobs:
                 Provide a brief 2-3 sentence overview of the PR and overall
                 assessment.
 
+                ## 📋 审查总结
+
+                提供 2-3 句话的 PR 概述和整体评估（中文）。
+
                 ## 🔍 General Feedback
                 - List general observations about code quality
                 - Mention overall patterns or architectural decisions
                 - Highlight positive aspects of the implementation
                 - Note any recurring themes across files
+
+                ## 🔍 一般反馈
+                - 列出代码质量的一般观察
+                - 提及整体模式或架构决策
+                - 突出实现的积极方面
+                - 注意跨文件的重复主题
 
             ## Final Instructions
 
@@ -443,15 +477,15 @@ jobs:
 
 
       - name: 'Post PR review failure comment'
-        if: |-
-          ${{ failure() && steps.iflow_cli_pr_review.outcome == 'failure' }}
-        uses: 'actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea'
-        with:
-          github-token: '${{ secrets.GITHUB_TOKEN }}'
-          script: |-
-            github.rest.issues.createComment({
-              owner: '${{ github.repository }}'.split('/')[0],
-              repo: '${{ github.repository }}'.split('/')[1],
-              issue_number: '${{ steps.get_pr.outputs.pr_number || steps.get_pr_comment.outputs.pr_number }}',
-              body: 'There is a problem with the PR review. Please check the [action logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.'
-            })
+              if: |-
+                ${{ failure() && steps.iflow_cli_pr_review.outcome == 'failure' }}
+              uses: 'actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea'
+              with:
+                github-token: '${{ secrets.GITHUB_TOKEN }}'
+                script: |-
+                  github.rest.issues.createComment({
+                    owner: '${{ github.repository }}'.split('/')[0],
+                    repo: '${{ github.repository }}'.split('/')[1],
+                    issue_number: '${{ steps.get_pr.outputs.pr_number || steps.get_pr_comment.outputs.pr_number }}',
+                    body: '## ❌ PR Review Failed\n\nThere is a problem with the PR review automation.\n\n### Possible Causes:\n1. **MCP Server Connection Failed**: The GitHub MCP server may not be accessible\n2. **AI Model Issue**: The AI model may have failed to call the required MCP tools\n3. **Permission Issue**: The GitHub token may not have sufficient permissions\n4. **Network Issue**: Connection to iFlow API or GitHub API may have failed\n\n### Next Steps:\n1. Check the [action logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed error messages\n2. Verify that `IFLOW_API_KEY` secret is properly configured\n3. Ensure the GitHub token has `pull-requests: write` permission\n4. Try running the workflow manually with `workflow_dispatch` to test\n\n### Debug Information:\n- **PR Number**: ${{ steps.get_pr.outputs.pr_number || steps.get_pr_comment.outputs.pr_number }}\n- **Event Name**: ${{ github.event_name }}\n- **Run ID**: ${{ github.run_id }}'
+                  })
