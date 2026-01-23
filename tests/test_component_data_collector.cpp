@@ -71,12 +71,27 @@ void TestComponentDataCollector::testStart() {
     // 测试启动数据收集
     QSignalSpy spyStateChanged(m_collector, &ComponentDataCollector::stateChanged);
 
+    // 设置超时时间
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, [this]() {
+        qDebug() << "Test timeout - stopping collector";
+        m_collector->cancel();
+    });
+    timer.start(5000); // 5秒超时
+
     m_collector->start();
+
+    // 等待状态变化或超时
+    QTRY_VERIFY_WITH_TIMEOUT(spyStateChanged.wait(5000), 5000);
 
     // 验证状态变为 FetchingCadData
     QCOMPARE(m_collector->state(), ComponentDataCollector::FetchingCadData);
 
     qDebug() << "✓ start() 方法工作正常，状态转换正确";
+
+    // 取消请求以避免异步回调导致段错误
+    m_collector->cancel();
 }
 
 void TestComponentDataCollector::testCancel() {

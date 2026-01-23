@@ -123,7 +123,7 @@ if(ZLIB_USE_QT)
 endif()
 
 # 创建可执行文件（包含 main.cpp）
-qt_add_executable(appEasyKiconverter_Cpp_Version
+qt_add_executable(appEasyKiconverter_Cpp_version WIN32
     main.cpp
 )
 
