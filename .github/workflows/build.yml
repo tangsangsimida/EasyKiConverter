@@ -126,16 +126,31 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          # 使用 release: false 来锁定包版本
-          release: false
           install: |
-            mingw-w64-x86_64-gcc=13.1.0-1
-            mingw-w64-x86_64-gcc-libs=13.1.0-1
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-gcc-libs
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-make
             mingw-w64-x86_64-pkg-config
             mingw-w64-x86_64-zlib
           update: true
+
+      - name: 'Downgrade GCC to 13.1.0'
+        if: matrix.platform == 'mingw_64'
+        shell: pwsh
+        run: |
+          # 检查当前 GCC 版本
+          Write-Host "Current GCC version:"
+          gcc --version | Select-Object -First 1
+          
+          # 降级 GCC 到 13.1.0
+          Write-Host "Downgrading GCC to 13.1.0..."
+          $env:MSYSTEM = "MINGW64"
+          C:\msys64\usr\bin\bash.exe -lc "pacman --noconfirm -S mingw-w64-x86_64-gcc-libs mingw-w64-x86_64-gcc"
+          
+          # 验证 GCC 版本
+          Write-Host "GCC version after downgrade:"
+          gcc --version | Select-Object -First 1
 
       - name: 'Setup vcpkg'
         if: matrix.platform == 'msvc2019_64'
