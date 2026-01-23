@@ -10,7 +10,7 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_CXX_STANDARD": "17",
-                "CMAKE_PREFIX_PATH": "C:/software/QT/6.10.1/mingw_64",
+                "CMAKE_PREFIX_PATH": "C:/software/QT/6.10.1/mingw_64;C:/software/vcpkg/installed/x64-mingw-dynamic",
                 "QT_HOST_PATH": "C:/software/QT/6.10.1/mingw_64",
                 "CMAKE_C_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/gcc.exe",
                 "CMAKE_CXX_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/g++.exe",
@@ -31,7 +31,7 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_CXX_STANDARD": "17",
-                "CMAKE_PREFIX_PATH": "C:/software/QT/6.10.1/mingw_64",
+                "CMAKE_PREFIX_PATH": "C:/software/QT/6.10.1/mingw_64;C:/software/vcpkg/installed/x64-mingw-dynamic",
                 "QT_HOST_PATH": "C:/software/QT/6.10.1/mingw_64",
                 "CMAKE_C_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/gcc.exe",
                 "CMAKE_CXX_COMPILER": "C:/software/QT/Tools/mingw1310_64/bin/g++.exe",
