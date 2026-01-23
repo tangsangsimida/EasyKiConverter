@@ -70,7 +70,17 @@ target_sources(test_export_service PRIVATE
 
 target_include_directories(test_export_service PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
-target_link_libraries(test_export_service Qt6::Core Qt6::Test)
+# 链接 Qt Network 和 zlib
+target_link_libraries(test_export_service Qt6::Core Qt6::Test Qt6::Network)
+if(ZLIB_FOUND)
+    if(ZLIB_USE_QT)
+        target_link_libraries(test_export_service z)
+    else()
+        target_link_libraries(test_export_service ZLIB::ZLIB)
+    endif()
+else()
+    target_link_libraries(test_export_service z)
+endif()
 
 # ========== ExportServicePipeline 测试 ==========
 add_executable(test_export_service_pipeline test_export_service_pipeline.cpp)
@@ -137,6 +147,16 @@ target_sources(test_component_data_collector PRIVATE
 target_include_directories(test_component_data_collector PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 target_link_libraries(test_component_data_collector Qt6::Core Qt6::Test Qt6::Network)
+# 链接 zlib（NetworkUtils 需要）
+if(ZLIB_FOUND)
+    if(ZLIB_USE_QT)
+        target_link_libraries(test_component_data_collector z)
+    else()
+        target_link_libraries(test_component_data_collector ZLIB::ZLIB)
+    endif()
+else()
+    target_link_libraries(test_component_data_collector z)
+endif()
 
 # ========== UUID 提取测试 ==========
 add_executable(test_uuid_extraction test_uuid_extraction.cpp)
