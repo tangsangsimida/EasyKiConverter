@@ -23,7 +23,7 @@ on:
 
 concurrency:
   group: '${{ github.workflow }}-${{ github.head_ref || github.ref }}'
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 defaults:
   run:
@@ -159,6 +159,16 @@ jobs:
             echo "EOF"
           } >> "${GITHUB_OUTPUT}"
 
+      - name: 'Debug: Print environment variables'
+        run: |-
+          echo "=== Debug Information ==="
+          echo "Event Name: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "PR Number: ${{ steps.get_pr.outputs.pr_number || steps.get_pr_comment.outputs.pr_number }}"
+          echo "Author Association: ${{ github.event.pull_request.author_association }}"
+          echo "Repository Private: ${{ github.event.repository.private }}"
+          echo "========================"
+
       - name: 'PR Review'
         uses: iflow-ai/iflow-cli-action@v2.0.0
         id: 'iflow_cli_pr_review'
@@ -234,6 +244,11 @@ jobs:
             ## Steps
 
             Start by running these commands to gather the required data:
+
+            ### Step 0: Verify MCP Tools Availability
+            First, check if the GitHub MCP tools are available by trying to list available tools. If the MCP tools are not available, report this error immediately.
+
+            ### Step 1: Gather PR Information
             1. Run: echo "${REPOSITORY}" to get the github repository in <OWNER>/<REPO> format
             2. Run: echo "${PR_DATA}" to get PR details (JSON format)
             3. Run: echo "${CHANGED_FILES}" to get the list of changed files
@@ -474,6 +489,25 @@ jobs:
             ## Final Instructions
 
             Remember, you are running in a VM and no one reviewing your output. Your review must be posted to GitHub using the MCP tools to create a pending review, add comments to the pending review, and submit the pending review.
+
+            ## IMPORTANT: Error Handling
+
+            If you encounter any issues:
+            1. First, try to call the MCP tools again
+            2. If MCP tools are not available or fail, report the error with these details:
+               - Which tool failed
+               - The error message received
+               - What you were trying to do
+            3. Print your diagnostic information to help debug the issue
+
+            ## Verification Steps
+
+            Before finishing, verify:
+            1. You have called `mcp__github__create_pending_pull_request_review` successfully
+            2. You have added all comments using `mcp__github__add_comment_to_pending_review`
+            3. You have called `mcp__github__submit_pending_pull_request_review` to submit the review
+            4. All comments are in BOTH English and Chinese
+            5. All comments have severity indicators (🟢🟡🟠🔴)
 
 
       - name: 'Post PR review failure comment'
