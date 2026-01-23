@@ -127,6 +127,11 @@ qt_add_executable(appEasyKiconverter_Cpp_Version WIN32
     main.cpp
 )
 
+# 为 MinGW 添加 GUI 子系统链接选项
+if(MINGW)
+    target_link_options(appEasyKiconverter_Cpp_Version PRIVATE -mwindows)
+endif()
+
 # 添加 src 目录到 include 路径
 target_include_directories(appEasyKiconverter_Cpp_Version
     PRIVATE
