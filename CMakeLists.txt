@@ -55,10 +55,22 @@ if(NOT ZLIB_FOUND)
     set(ZLIB_FOUND TRUE)
     set(ZLIB_INCLUDE_DIR "")
     set(ZLIB_LIBRARY z)
+    set(ZLIB_LIBRARIES z)
+    set(ZLIB_USE_QT TRUE)
+else()
+    set(ZLIB_USE_QT FALSE)
 endif()
 
 message(STATUS "ZLIB_FOUND: ${ZLIB_FOUND}")
 message(STATUS "ZLIB_LIBRARY: ${ZLIB_LIBRARY}")
+message(STATUS "ZLIB_USE_QT: ${ZLIB_USE_QT}")
+
+# 为 Qt zlib 添加头文件路径
+if(ZLIB_USE_QT)
+    # Qt 的 zlib 头文件通常在 Qt 安装目录的 include 目录中
+    # 我们需要在编译时添加这些路径
+    message(STATUS "Qt zlib will be linked via Qt6::Core")
+endif()
 
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -75,6 +87,15 @@ set(QML_FILES
 # 添加源码模块
 add_subdirectory(src)
 
+# 为 Qt zlib 添加头文件路径（用于 MinGW 环境）
+if(ZLIB_USE_QT)
+    # Qt 的 zlib 头文件在 Qt 安装目录中
+    # 添加到全局包含路径
+    include_directories(${CMAKE_PREFIX_PATH}/include)
+    include_directories(${CMAKE_PREFIX_PATH}/include/QtCore)
+    include_directories(${CMAKE_PREFIX_PATH}/include/QtCore5Compat)
+endif()
+
 # 创建可执行文件（包含 main.cpp）
 qt_add_executable(appEasyKiconverter_Cpp_Version
     main.cpp
@@ -88,27 +109,31 @@ target_include_directories(appEasyKiconverter_Cpp_Version
 
 # 链接 zlib 库
 if(ZLIB_FOUND)
-    target_link_libraries(appEasyKiconverter_Cpp_Version
-        PRIVATE
-            EasyKiConverterLib
-            Qt6::Quick
-            Qt6::Network
-            Qt6::Core
-            Qt6::Gui
-            Qt6::Widgets
-            Qt6::QuickControls2
-            ZLIB::ZLIB)
-else()
-    target_link_libraries(appEasyKiconverter_Cpp_Version
-        PRIVATE
-            EasyKiConverterLib
-            Qt6::Quick
-            Qt6::Network
-            Qt6::Core
-            Qt6::Gui
-            Qt6::Widgets
-            Qt6::QuickControls2
-            z)
+    if(ZLIB_USE_QT)
+        # 使用 Qt 的 zlib 库
+        target_link_libraries(appEasyKiconverter_Cpp_Version
+            PRIVATE
+                EasyKiConverterLib
+                Qt6::Quick
+                Qt6::Network
+                Qt6::Core
+                Qt6::Gui
+                Qt6::Widgets
+                Qt6::QuickControls2
+                z)
+    else()
+        # 使用标准的 zlib 库
+        target_link_libraries(appEasyKiconverter_Cpp_Version
+            PRIVATE
+                EasyKiConverterLib
+                Qt6::Quick
+                Qt6::Network
+                Qt6::Core
+                Qt6::Gui
+                Qt6::Widgets
+                Qt6::QuickControls2
+                ZLIB::ZLIB)
+    endif()
 endif()
 
 # 添加 QML 模块

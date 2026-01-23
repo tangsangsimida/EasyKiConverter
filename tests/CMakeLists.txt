@@ -41,7 +41,11 @@ target_include_directories(test_component_service PRIVATE ${CMAKE_SOURCE_DIR}/..
 
 # 链接 zlib
 if(ZLIB_FOUND)
-    target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+    if(ZLIB_USE_QT)
+        target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network z)
+    else()
+        target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+    endif()
 else()
     target_link_libraries(test_component_service Qt6::Core Qt6::Test Qt6::Network z)
 endif()
@@ -94,7 +98,11 @@ target_include_directories(test_export_service_pipeline PRIVATE ${CMAKE_SOURCE_D
 
 # 链接 zlib
 if(ZLIB_FOUND)
-    target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+    if(ZLIB_USE_QT)
+        target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network z)
+    else()
+        target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+    endif()
 else()
     target_link_libraries(test_export_service_pipeline Qt6::Core Qt6::Test Qt6::Network z)
 endif()
@@ -176,7 +184,11 @@ target_include_directories(test_integration PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 # 链接 zlib
 if(ZLIB_FOUND)
-    target_link_libraries(test_integration Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+    if(ZLIB_USE_QT)
+        target_link_libraries(test_integration Qt6::Core Qt6::Test Qt6::Network z)
+    else()
+        target_link_libraries(test_integration Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+    endif()
 else()
     target_link_libraries(test_integration Qt6::Core Qt6::Test Qt6::Network z)
 endif()
@@ -202,7 +214,11 @@ target_include_directories(test_performance PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
 # 链接 zlib
 if(ZLIB_FOUND)
-    target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+    if(ZLIB_USE_QT)
+        target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network z)
+    else()
+        target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+    endif()
 else()
     target_link_libraries(test_performance Qt6::Core Qt6::Test Qt6::Network z)
 endif()
@@ -239,7 +255,11 @@ target_include_directories(test_pipeline_baseline PRIVATE ${CMAKE_SOURCE_DIR}/..
 
 # 链接 zlib
 if(ZLIB_FOUND)
-    target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+    if(ZLIB_USE_QT)
+        target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network z)
+    else()
+        target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network ZLIB::ZLIB)
+    endif()
 else()
     target_link_libraries(test_pipeline_baseline Qt6::Core Qt6::Test Qt6::Network z)
 endif()
