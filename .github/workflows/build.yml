@@ -128,12 +128,6 @@ jobs:
           platform: x64
           version: 12.2.0
 
-      - name: 'Install MinGW dependencies'
-        if: matrix.platform == 'mingw_64'
-        shell: bash
-        run: |
-          pacman -S --noconfirm mingw-w64-x86_64-zlib
-
       - name: 'Setup Build Environment'
         uses: ./.github/actions/setup-env
         with:
