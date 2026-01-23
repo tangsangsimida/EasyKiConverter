@@ -18,7 +18,7 @@ on:
 env:
   BUILD_TYPE: RelWithDebInfo
   QT_VERSION: '6.10.1'
-  CMAKE_VERSION: '3.16'
+  CMAKE_VERSION: '3.22'
 
 jobs:
   linux-build:
@@ -141,12 +141,14 @@ jobs:
 
       - name: 'Configure CMake (MinGW) with sccache'
         if: matrix.platform == 'mingw_64'
+        shell: bash
         run: |
-          cmake -B build -G "MinGW Makefiles" `
-            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
-            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
-            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
+          export CMAKE_SH="CMAKE_SH-NOTFOUND"
+          cmake -B build -G "MinGW Makefiles" \
+            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
 
       - name: 'Configure CMake (MSVC) with sccache'

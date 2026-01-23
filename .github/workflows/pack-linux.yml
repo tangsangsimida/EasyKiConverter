@@ -21,7 +21,7 @@ env:
   PRODUCT: EasyKiConverter
   RELEASE: 1
   QT_VERSION: '6.10.1'
-  CMAKE_VERSION: '3.16'
+  CMAKE_VERSION: '3.22'
 
 jobs:
   appimage-pack:
