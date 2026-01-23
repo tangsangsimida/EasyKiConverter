@@ -46,6 +46,16 @@ private:
     QTemporaryDir* m_tempDir;
     QString m_baselineFile;
 
+    // 辅助方法
+    QStringList getRealComponentIds() const {
+        return QStringList{
+            "C8734", "C52717", "C8323", "C28730", "C35556",
+            "C724040", "C432211", "C14877", "C12345", "C2040",
+            "C915663", "C33993", "C2858491", "C19156", "C80713",
+            "C13622", "C60420", "C507118", "C3018718", "C414042"
+        };
+    }
+
     // 性能指标结构
     struct PipelineMetrics {
         // 整体指标
@@ -128,9 +138,9 @@ void TestPipelineBaseline::testPipeline_10_Components() {
     qDebug() << "\n--- 测试 1: 流水线处理 10 个组件 ---";
     runPipelineTest(10);
 
-    // 验证性能基准（使用虚拟 ID，网络请求会失败，所以只测试流水线框架）
-    QVERIFY2(m_currentMetrics.totalTime < 35000, "10个组件应该在35秒内完成（包括超时）");
-    qDebug() << "✓ 流水线框架测试完成（注意：使用虚拟 ID，网络请求会失败）";
+    // 验证性能基准（使用真实 ID，网络请求会成功）
+    QVERIFY2(m_currentMetrics.totalTime < 300000, "10个组件应该在5分钟内完成");
+    qDebug() << "✓ 10个组件流水线测试完成";
 
     printMetrics("10个组件", m_currentMetrics);
     saveBaseline("testPipeline_10_Components", m_currentMetrics);
@@ -140,9 +150,9 @@ void TestPipelineBaseline::testPipeline_50_Components() {
     qDebug() << "\n--- 测试 2: 流水线处理 50 个组件 ---";
     runPipelineTest(50);
 
-    // 验证性能基准（使用虚拟 ID，网络请求会失败，所以只测试流水线框架）
-    QVERIFY2(m_currentMetrics.totalTime < 35000, "50个组件应该在35秒内完成（包括超时）");
-    qDebug() << "✓ 流水线框架测试完成（注意：使用虚拟 ID，网络请求会失败）";
+    // 验证性能基准（使用真实 ID，网络请求会成功）
+    QVERIFY2(m_currentMetrics.totalTime < 600000, "50个组件应该在10分钟内完成");
+    qDebug() << "✓ 50个组件流水线测试完成";
 
     printMetrics("50个组件", m_currentMetrics);
     saveBaseline("testPipeline_50_Components", m_currentMetrics);
@@ -158,9 +168,9 @@ void TestPipelineBaseline::testPipeline_100_Components() {
     qDebug() << "\n--- 测试 3: 流水线处理 100 个组件 ---";
     runPipelineTest(100);
 
-    // 验证性能基准（使用虚拟 ID，网络请求会失败，所以只测试流水线框架）
-    QVERIFY2(m_currentMetrics.totalTime < 35000, "100个组件应该在35秒内完成（包括超时）");
-    qDebug() << "✓ 流水线框架测试完成（注意：使用虚拟 ID，网络请求会失败）";
+    // 验证性能基准（使用真实 ID，网络请求会成功）
+    QVERIFY2(m_currentMetrics.totalTime < 1200000, "100个组件应该在20分钟内完成");
+    qDebug() << "✓ 100个组件流水线测试完成";
 
     printMetrics("100个组件", m_currentMetrics);
     saveBaseline("testPipeline_100_Components", m_currentMetrics);
@@ -179,8 +189,9 @@ void TestPipelineBaseline::testFetchStagePerformance() {
     QStringList componentIds;
 
     // 使用真实的 LCSC 元件 ID
+    QStringList realIds = getRealComponentIds();
     for (int i = 0; i < 10; i++) {
-        componentIds << QString("C%1").arg(1000 + i);
+        componentIds << realIds[i % realIds.size()];
     }
 
     // 记录开始内存
@@ -231,9 +242,10 @@ void TestPipelineBaseline::testWriteStagePerformance() {
     QElapsedTimer timer;
     QStringList componentIds;
 
-    // 使用模拟数据测试写入性能
+    // 使用真实的元器件编号测试写入性能
+    QStringList realIds = getRealComponentIds();
     for (int i = 0; i < 50; i++) {
-        componentIds << QString("C%1").arg(2000 + i);
+        componentIds << realIds[i % realIds.size()];
     }
 
     // 记录开始内存
@@ -270,9 +282,12 @@ void TestPipelineBaseline::testWriteStagePerformance() {
 void TestPipelineBaseline::runPipelineTest(int componentCount) {
     qDebug() << "开始测试" << componentCount << "个组件的流水线处理";
 
+    QStringList realIds = getRealComponentIds();
     QStringList componentIds;
+
+    // 使用真实的元器件编号
     for (int i = 0; i < componentCount; i++) {
-        componentIds << QString("C%1").arg(1000 + i);
+        componentIds << realIds[i % realIds.size()];
     }
 
     // 记录开始内存
@@ -291,9 +306,9 @@ void TestPipelineBaseline::runPipelineTest(int componentCount) {
 
     m_pipeline->executeExportPipelineWithStages(componentIds, options);
 
-    // 等待完成（减少超时时间以快速失败）
+    // 等待完成（增加超时时间到5分钟，因为使用真实元器件编号）
     QEventLoop loop;
-    QTimer::singleShot(30000, &loop, &QEventLoop::quit);  // 30秒超时
+    QTimer::singleShot(300000, &loop, &QEventLoop::quit);  // 5分钟超时
     loop.exec();
 
     qint64 totalTime = totalTimer.elapsed();

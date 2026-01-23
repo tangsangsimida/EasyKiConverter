@@ -41,7 +41,7 @@ void TestComponentDataCollector::cleanupTestCase() {
 void TestComponentDataCollector::init() {
     m_api = new EasyedaApi(this);
     m_importer = new EasyedaImporter(this);
-    m_collector = new ComponentDataCollector("C12345", this);
+    m_collector = new ComponentDataCollector("C8734", this);
 }
 
 void TestComponentDataCollector::cleanup() {
@@ -52,7 +52,7 @@ void TestComponentDataCollector::cleanup() {
 
 void TestComponentDataCollector::testCreation() {
     QVERIFY(m_collector != nullptr);
-    QCOMPARE(m_collector->componentId(), QString("C12345"));
+    QCOMPARE(m_collector->componentId(), QString("C8734"));
     QCOMPARE(m_collector->state(), ComponentDataCollector::Idle);
     qDebug() << "✓ ComponentDataCollector 创建成功，初始状态正确";
 }
