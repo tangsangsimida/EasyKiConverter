@@ -69,18 +69,18 @@ set(QML_FILES
 # 添加源码模块
 add_subdirectory(src)
 
-# 创建可执行文件（包含 main.cpp）
-qt_add_executable(appEasyKiconverter_Cpp_Version WIN32
+# 创建可执行文件（包含 main.cpp）—— 注意：不再使用 WIN32
+qt_add_executable(appEasyKiconverter_Cpp_Version
     main.cpp
 )
 
-# MinGW 修复：确保是 GUI 应用
+# === MinGW 专用修复：必须在 target_link_libraries 之前设置 ===
 if(MINGW)
-    # 禁用 Qt EntryPoint（避免链接控制台入口）
+    # 禁用 Qt EntryPoint（提示性质）
     set_property(TARGET appEasyKiconverter_Cpp_Version
         PROPERTY QT_NO_ENTRYPOINT TRUE
     )
-    # 强制使用 Windows GUI 子系统
+    # 强制使用 Windows GUI 子系统（无控制台）
     target_link_options(appEasyKiconverter_Cpp_Version PRIVATE "-mwindows")
 endif()
 
@@ -103,15 +103,13 @@ target_link_libraries(appEasyKiconverter_Cpp_Version
         ZLIB::ZLIB
 )
 
-# 强制移除 Qt6::EntryPoint（MinGW 专用，解决 Qt 6.10 MinGW bug）
+# === 再次确保移除 EntryPoint（双重保险）===
 if(MINGW)
-    # 获取当前链接库列表
     get_target_property(LINK_LIBS appEasyKiconverter_Cpp_Version LINK_LIBRARIES)
     if(LINK_LIBS)
-        # 过滤掉 Qt6::EntryPoint
         list(REMOVE_ITEM LINK_LIBS "Qt6::EntryPoint")
         set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES LINK_LIBRARIES "${LINK_LIBS}")
-        message(STATUS "MinGW: Removed Qt6::EntryPoint from link libraries to fix __imp___argc error")
+        message(STATUS "MinGW: Successfully removed Qt6::EntryPoint to avoid __imp___argc error")
     endif()
 endif()
 
