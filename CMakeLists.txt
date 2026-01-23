@@ -87,13 +87,34 @@ set(QML_FILES
 # 添加源码模块
 add_subdirectory(src)
 
-# 为 Qt zlib 添加头文件路径（用于 MinGW 环境）
+# 为 Qt zlib 添加头文件路径（用于 MinGW 和 MSVC 环境）
 if(ZLIB_USE_QT)
     # Qt 的 zlib 头文件在 Qt 安装目录中
-    # 添加到全局包含路径
+    # 添加到全局包含路径（适用于 MinGW 和 MSVC）
     include_directories(${CMAKE_PREFIX_PATH}/include)
     include_directories(${CMAKE_PREFIX_PATH}/include/QtCore)
-    include_directories(${CMAKE_PREFIX_PATH}/include/QtCore5Compat)
+
+    # 对于 MSVC，需要显式添加 zlib.h 的路径
+    if(MSVC)
+        # MSVC 下 Qt 的 zlib.h 可能在这些位置
+        list(APPEND CMAKE_INCLUDE_PATH "${CMAKE_PREFIX_PATH}/include")
+        list(APPEND CMAKE_INCLUDE_PATH "${CMAKE_PREFIX_PATH}/include/QtCore")
+        # 强制查找 zlib.h
+        find_path(ZLIB_INCLUDE_DIR
+            NAMES zlib.h
+            PATHS
+                "${CMAKE_PREFIX_PATH}/include"
+                "${CMAKE_PREFIX_PATH}/include/QtCore"
+                "${CMAKE_PREFIX_PATH}/../Tools/mingw*/include"
+            NO_DEFAULT_PATH
+        )
+        if(ZLIB_INCLUDE_DIR)
+            message(STATUS "Found zlib.h at: ${ZLIB_INCLUDE_DIR}")
+            include_directories(${ZLIB_INCLUDE_DIR})
+        else()
+            message(WARNING "Could not find zlib.h in Qt installation")
+        endif()
+    endif()
 endif()
 
 # 创建可执行文件（包含 main.cpp）
@@ -134,6 +155,11 @@ if(ZLIB_FOUND)
                 Qt6::QuickControls2
                 ZLIB::ZLIB)
     endif()
+endif()
+
+# 对于 MinGW，添加 libssp 库（Stack Smashing Protection）
+if(MINGW)
+    target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE ssp)
 endif()
 
 # 添加 QML 模块
