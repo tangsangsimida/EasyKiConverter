@@ -183,17 +183,17 @@ jobs:
             echo "ERROR: PR_NUMBER is not set!"
             exit 1
           fi
-          
+
           if [[ -z "$PR_DATA" ]]; then
             echo "ERROR: PR_DATA is not set!"
             exit 1
           fi
-          
+
           if [[ -z "$CHANGED_FILES" ]]; then
             echo "ERROR: CHANGED_FILES is not set!"
             exit 1
           fi
-          
+
           echo "✅ All required environment variables are set"
         shell: bash
 
@@ -241,10 +241,9 @@ jobs:
             ## Role
 
             You are an expert code reviewer. You have access to tools to gather
-            PR information and perform the review on GitHub. Use the available tools to
-            gather information; do not ask for information to be provided.
-          
-                      ## CRITICAL REQUIREMENTS
+            PR information and perform the review on GitHub. You MUST ACTUALLY EXECUTE COMMANDS and CALL TOOLS - do not just output text about what you would do.
+
+            ## CRITICAL REQUIREMENTS
             1. You MUST use the GitHub MCP tools to submit your review comments.
             2. DO NOT just output text as your response - this will NOT be seen on GitHub.
             3. You MUST call these tools in order:
@@ -549,6 +548,41 @@ jobs:
             4. All comments are in BOTH English and Chinese
             5. All comments have severity indicators (🟢🟡🟠🔴)
 
+      - name: 'Post PR Review Summary'
+        if: ${{ success() && steps.iflow_cli_pr_review.outcome == 'success' }}
+        uses: 'actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea'
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          script: |-
+            const prNumber = '${{ steps.get_pr.outputs.pr_number || steps.get_pr_comment.outputs.pr_number }}';
+            const repo = '${{ github.repository }}';
+            const [owner, repoName] = repo.split('/');
+
+            const commentBody = `## 📊 PR Review Summary / PR 审查总结
+
+            ### English / 英文
+
+            ✅ Automated code review has been completed for this pull request.
+
+            ### 中文
+
+            ✅ 此拉取请求的自动化代码审查已完成。
+
+            ---
+
+            ## 📋 Review Details / 审查详情
+
+            - **Repository**: ${repo}
+            - **PR Number**: #${prNumber}
+            - **Review Type**: Automated Code Review / 自动化代码审查
+            - **Reviewer**: iFlow CLI AI Assistant
+            ---
+            await github.rest.issues.createComment({
+              owner: owner,
+              repo: repoName,
+              issue_number: parseInt(prNumber),
+              body: commentBody
+            });
 
       - name: 'Post PR review failure comment'
         if: |-
