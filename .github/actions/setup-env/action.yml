@@ -85,8 +85,8 @@ runs:
         host: ${{ inputs.qt-host }}
         target: ${{ inputs.qt-target }}
         arch: ${{ inputs.qt-arch }}
-        modules: ${{ inputs.qt-modules }}
         cache: true
+        setup-python: false
 
     - name: 'Setup CCache'
       if: inputs.enable-ccache == 'true' && (runner.os == 'Linux' || runner.os == 'macOS')
