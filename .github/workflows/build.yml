@@ -126,7 +126,7 @@ jobs:
         uses: egor-tensin/setup-mingw@v2
         with:
           platform: x64
-          version: 12.2.0
+          version: 13.1.0
 
       - name: 'Setup vcpkg'
         if: matrix.platform == 'msvc2019_64'
