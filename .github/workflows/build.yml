@@ -224,6 +224,31 @@ jobs:
           $gccVersion = & "$gccPath" --version
           Write-Host "GCC version:"
           Write-Host ($gccVersion | Select-Object -First 2)
+          
+          # 检查 GCC 版本，如果太新（15.x），使用系统自带的 MinGW
+          $gccVersionLine = $gccVersion | Select-Object -First 1
+          if ($gccVersionLine -match "gcc\.exe\s+\(.*\)\s+(\d+)\.(\d+)\.(\d+)") {
+            $major = [int]$matches[1]
+            $minor = [int]$matches[2]
+            Write-Host "GCC major version: ${major}, minor: ${minor}"
+            
+            if ($major -gt 14) {
+              Write-Host "GCC version ${major}.${minor} is too new, may have compatibility issues"
+              Write-Host "Falling back to system MinGW"
+              
+              # 使用系统自带的 MinGW（C:\mingw64\bin）
+              $systemMingwPath = "C:/mingw64/bin"
+              if (Test-Path "${systemMingwPath}/gcc.exe") {
+                $mingwPath = $systemMingwPath
+                Write-Host "Using system MinGW at: ${mingwPath}"
+                $gccPath = "${mingwPath}/gcc.exe"
+                $gppPath = "${mingwPath}/g++.exe"
+                $gccVersion = & "$gccPath" --version
+                Write-Host "System GCC version:"
+                Write-Host ($gccVersion | Select-Object -First 2)
+              }
+            }
+          }
 
           # 确保使用找到的 MinGW
           $env:Path = "${mingwPath};" + $env:Path
