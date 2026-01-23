@@ -251,6 +251,19 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: 'Build'
+        if: matrix.platform == 'mingw_64'
+        shell: pwsh
+        run: |
+          # 验证使用的 GCC 版本
+          Write-Host "=== Verifying GCC version before build ==="
+          gcc --version | Select-Object -First 1
+          g++ --version | Select-Object -First 1
+          
+          # 构建项目
+          cmake --build build --config $env:BUILD_TYPE --parallel 16
+
+      - name: 'Build'
+        if: matrix.platform == 'msvc2019_64'
         run: |
           cmake --build build --config $env:BUILD_TYPE --parallel 16
 
