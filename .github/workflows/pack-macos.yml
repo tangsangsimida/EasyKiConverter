@@ -107,7 +107,7 @@ jobs:
           mkdir -p ${APP_NAME}.app/Contents/MacOS
           mkdir -p ${APP_NAME}.app/Contents/Resources
           cp -r ${DIR_BUILD}/bin/* ${APP_NAME}.app/Contents/MacOS/
-          cp -r ${DIR_BUILD}/lib/* ${APP_NAME}.app/Contents/MacOS/ 2>$null || echo "No lib directory"
+          cp -r ${DIR_BUILD}/lib/* ${APP_NAME}.app/Contents/MacOS/ 2>/dev/null || echo "No lib directory"
 
           if [ -f "resources/icons/app_icon.icns" ]; then
             cp resources/icons/app_icon.icns ${APP_NAME}.app/Contents/Resources/AppIcon.icns
@@ -141,7 +141,7 @@ jobs:
           EOF
 
           # 使用 macdeployqt 部署 Qt 运行时库和插件
-          macdeployqt ${APP_NAME}.app -appstore
+          macdeployqt ${APP_NAME}.app
 
       - name: 'Create DMG'
         run: |

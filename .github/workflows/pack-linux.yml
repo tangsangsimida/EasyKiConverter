@@ -133,7 +133,6 @@ jobs:
           
           echo "Found QMAKE at: $QMAKE_PATH"
           export QMAKE="$QMAKE_PATH"
-          export QML_SOURCES_PATHS="$Qt6_DIR/qml"
           
           # Create .desktop file
           cat > ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop <<EOF
