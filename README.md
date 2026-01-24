@@ -2,6 +2,12 @@
 
 [English](README_en.md) | 中文
 
+[![Build Status](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Build/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/build.yml)
+[![Code Coverage](https://codecov.io/gh/tangsangsimida/EasyKiConverter_QT/branch/main/graph/badge.svg)](https://codecov.io/gh/tangsangsimida/EasyKiConverter_QT)
+[![Security Scan](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Security/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/security.yml)
+[![Performance](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Performance%20Testing/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/performance.yml)
+[![Code Format](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Code%20Format%20Check/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/clang-format.yml)
+
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter_QT)
 ![GitHub downloads](https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/total)
 ![License](https://img.shields.io/github/license/tangsangsimida/EasyKiConverter_QT)
