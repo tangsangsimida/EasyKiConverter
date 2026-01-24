@@ -39,17 +39,9 @@ jobs:
         type: [portable, installer]
     steps:
       - name: 'Checkout Source code'
-        if: github.event_name == 'push'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: 'Checkout Source code'
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.sha }}
 
       - name: 'Fix Python path'
         shell: pwsh
@@ -88,10 +80,6 @@ jobs:
         with:
           arch: ${{ matrix.config.arch }}
           toolset: '14.2'
-
-      - name: 'Create vcpkg.json'
-        run: |
-          echo '{"name":"easykiconverter","version-string":"3.0.2","description":"EasyKiConverter - LCSC and EasyEDA component to KiCad library converter","dependencies":[{"name":"zlib","platform":"windows"}],"builtin-baseline":"544a4c5c297e60e4ac4a5a1810df66748d908869"}' > vcpkg.json
 
       - name: 'Setup vcpkg'
         uses: lukka/run-vcpkg@v11
