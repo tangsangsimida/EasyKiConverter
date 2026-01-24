@@ -32,8 +32,8 @@ jobs:
               generator: 'Visual Studio 17 2022',
               gen_arch: '-A x64',
               vcpkg_triplet: 'x64-windows',
-              qt_arch: 'win64_msvc2019_64',
-              qt_arch_install: 'msvc2019_64',
+              qt_arch: 'win64_msvc2022_64',
+              qt_arch_install: 'msvc2022_64',
               pak_arch: 'win64'
             }
         type: [portable, installer]

@@ -253,6 +253,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.config.os }}.tar.gz
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.config.os }}.tar.gz.sha256sum
+            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz
+            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz.sha256sum
           generate_release_notes: true
