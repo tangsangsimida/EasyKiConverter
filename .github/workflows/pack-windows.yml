@@ -150,10 +150,14 @@ jobs:
 
       - name: 'SHA256Sum of Windows portable'
         if: matrix.type == 'portable'
-        shell: bash
+        shell: pwsh
         run: |
-          cd "$GITHUB_WORKSPACE/build/Package/portable" || { >&2 echo "Cannot cd to '$GITHUB_WORKSPACE/build/Package/portable/'!"; exit 11 ; }
-          sha256sum ${PRODUCT}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip | tee ${PRODUCT}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip.sha256sum
+          $fileName = "${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-${{ matrix.config.pak_arch }}.zip"
+          $filePath = "$env:GITHUB_WORKSPACE\build\Package\portable\$fileName"
+          $hash = Get-FileHash -Path $filePath -Algorithm SHA256
+          $hashString = $hash.Hash.ToLower() + " *" + $fileName
+          $hashString | Out-File -FilePath "$filePath.sha256sum" -Encoding ascii
+          Write-Host "Generated SHA256: $hashString"
 
       - name: 'Artifact Upload (portable)'
         if: matrix.type == 'portable'

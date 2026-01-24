@@ -121,9 +121,12 @@ jobs:
           cmake --install build --prefix ${APPIMAGE_DST_PATH}/usr
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
 
-          export QMAKE=${Qt6_DIR}/bin/qmake
-          export QML_SOURCES_PATHS=${Qt6_DIR}/qml
-          ${LINUXDEPLOY_BIN} --appdir ${APPIMAGE_DST_PATH} --plugin qt --output appimage
+          # Explicitly export QMAKE for linuxdeploy plugin
+          export QMAKE="$Qt6_DIR/bin/qmake"
+          echo "Using QMAKE at: $QMAKE"
+          
+          # Run linuxdeploy
+          QMAKE="$Qt6_DIR/bin/qmake" ${LINUXDEPLOY_BIN} --appdir ${APPIMAGE_DST_PATH} --plugin qt --output appimage
 
           mv $GITHUB_WORKSPACE/EasyKiConverter-${VERSION}-x86_64.AppImage \
              $GITHUB_WORKSPACE/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}.x86_64.AppImage
