@@ -21,13 +21,13 @@ env:
 jobs:
   appimage-pack:
     name: 'Build AppImage on ${{ matrix.config.name }}'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         config:
           - {
-              name: 'Ubuntu 20.04',
+              name: 'Ubuntu 22.04',
               os: 'ubuntu',
               symbol: 'focal',
               arch: 'amd64'
@@ -146,22 +146,22 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}.x86_64.AppImage
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}.x86_64.AppImage.sha256sum
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.x86_64.AppImage
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.x86_64.AppImage.sha256sum
           generate_release_notes: true
           draft: true
           prerelease: false
 
   tarball-pack:
     name: 'Build tarball on ${{ matrix.config.name }}'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         config:
           - {
-              name: 'Ubuntu 20.04',
-              os: 'ubuntu-20.04'
+              name: 'Ubuntu 22.04',
+              os: 'ubuntu-22.04'
             }
     container:
       image: ${{ matrix.config.os }}
@@ -253,6 +253,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz.sha256sum
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz.sha256sum
           generate_release_notes: true

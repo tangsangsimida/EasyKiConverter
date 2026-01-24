@@ -101,10 +101,10 @@ jobs:
           enable-sccache: 'true'
 
       - name: 'Configure'
-        working-directory: build
         shell: pwsh
         run: |
-          cmake .. -G "${{ matrix.config.generator }}" ${{matrix.config.gen_arch}} `
+          if (Test-Path build) { Remove-Item -Recurse -Force build }
+          cmake -B build -G "${{ matrix.config.generator }}" ${{matrix.config.gen_arch}} `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
@@ -113,10 +113,9 @@ jobs:
             -DVERSION_FROM_CI=${{ env.VERSION }}
 
       - name: 'Compile'
-        working-directory: build
         shell: pwsh
         run: |
-          cmake --build . --config Release --parallel
+          cmake --build build --config Release --parallel
 
       - name: 'Create portable package'
         if: matrix.type == 'portable'

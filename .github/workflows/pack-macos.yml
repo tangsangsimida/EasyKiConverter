@@ -157,8 +157,8 @@ jobs:
         with:
           name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-macos-${{ matrix.dist.arch }}
           path: |
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
           overwrite: true
 
       - name: 'Upload Release Asset'
@@ -166,6 +166,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
           generate_release_notes: true
