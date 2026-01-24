@@ -26,6 +26,14 @@ using namespace EasyKiConverter;
 class TestPipelineBaseline : public QObject {
     Q_OBJECT
 
+public:
+    TestPipelineBaseline()
+        : m_pipeline(nullptr)
+        , m_configService(nullptr)
+        , m_tempDir(nullptr)
+    {
+    }
+
 private slots:
     void initTestCase();
     void cleanupTestCase();
@@ -135,8 +143,18 @@ void TestPipelineBaseline::cleanupTestCase() {
     qDebug() << "  流水线架构性能基准测试结束";
     qDebug() << "========================================\n";
 
-    delete m_pipeline;
-    delete m_tempDir;
+    // 安全删除成员变量（防止 initTestCase 被跳过时的段错误）
+    if (m_pipeline) {
+        delete m_pipeline;
+        m_pipeline = nullptr;
+    }
+
+    if (m_tempDir) {
+        delete m_tempDir;
+        m_tempDir = nullptr;
+    }
+
+    // 注意：ConfigService 是单例，不需要删除
 }
 
 void TestPipelineBaseline::testPipeline_10_Components() {
