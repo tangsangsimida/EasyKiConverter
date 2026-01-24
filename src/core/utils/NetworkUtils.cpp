@@ -6,6 +6,8 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QNetworkRequest>
+
+// 包含 zlib.h（所有平台统一使用）
 #include <zlib.h>
 
 namespace EasyKiConverter {

@@ -196,13 +196,25 @@ cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64" -DENAB
 
 **Windows (MSVC)**
 
+MSVC 编译器会自动使用 /MP 选项进行多线程编译，无需额外参数。
+
+**Windows (MinGW)**
+
 ```bash
-cmake --build . --config Debug -- /MP
+# 使用 16 个并行任务编译
+cmake --build . --config Debug -- -j 16
+
+# 或使用系统最大核心数
+cmake --build . --config Debug -- -j
 ```
 
 **Linux/macOS**
 
 ```bash
+# 使用 16 个并行任务编译
+cmake --build . --config Debug -- -j 16
+
+# 或使用系统最大核心数
 cmake --build . --config Debug -- -j$(nproc)
 ```
 

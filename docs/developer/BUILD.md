@@ -289,15 +289,32 @@ cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64" -DENAB
 
 **Windows (MSVC)**
 
+MSVC 编译器会自动使用 /MP 选项进行多线程编译，无需额外参数。
+
+**Windows (MinGW)**
+
 ```bash
-cmake --build . --config Debug -- /MP
+# 使用 16 个并行任务编译
+cmake --build . --config Debug -- -j 16
+
+# 或使用系统最大核心数
+cmake --build . --config Debug -- -j
 ```
 
 **Linux/macOS**
 
 ```bash
+# 使用 16 个并行任务编译
+cmake --build . --config Debug -- -j 16
+
+# 或使用系统最大核心数
 cmake --build . --config Debug -- -j$(nproc)
 ```
+
+**注意：**
+- 并行编译可以显著加快编译速度，特别是在多核 CPU 上
+- 建议根据 CPU 核心数调整并行任务数（通常设置为 CPU 核心数的 1-2 倍）
+- 如果遇到内存不足问题，可以减少并行任务数
 
 ### 指定构建类型
 
@@ -475,12 +492,24 @@ sudo cmake --install . --prefix /usr/local
 
 ### Windows
 
+**生成便携版 (Portable Zip):**
 使用 windeployqt 工具打包依赖项：
 
 ```bash
-cd build/bin
-windeployqt EasyKiConverter.exe
+cd build/bin/Release
+windeployqt --release --no-translations EasyKiConverter.exe
+# 然后压缩该目录
 ```
+
+**生成安装包 (Installer .exe):**
+需要安装 [Inno Setup 6](https://jrsoftware.org/isinfo.php)。
+
+1. 确保已运行 `windeployqt` 填充了依赖。
+2. 将 `build/bin/Release` 内容复制到临时目录 `build/Staging`。
+3. 运行编译器：
+   ```bash
+   iscc "/DMyAppVersion=3.0.0" "/DSourceDir=path\to\staging" "resources\windows_setup.iss"
+   ```
 
 ### macOS
 
@@ -556,3 +585,16 @@ gdb ./EasyKiConverter
 - [CMake 官网](https://cmake.org/)
 - [MinGW-w64](https://www.mingw-w64.org/)
 - [项目主页](https://github.com/tangsangsimida/EasyKiConverter_QT)
+
+## CI/CD 架构
+
+本项目使用 GitHub Actions 实现全自动化 CI/CD。
+
+*   **依赖管理**: 使用 `vcpkg.json` (Manifest Mode) 统一管理 CI 环境依赖。
+*   **本地 Actions**:
+    *   `setup-env`: 统一配置 CMake, Qt, ccache/sccache。
+    *   `get-version`: 统一从 Git Tag 提取版本号。
+*   **缓存策略**: 启用了 Qt 安装缓存、vcpkg 二进制缓存以及 CMake 编译器缓存 (ccache/sccache)。
+*   **安全性**: 所有工作流均配置了最小权限和并发控制。
+
+详细依赖关系请参考 `.github/workflows/WORKFLOW_DEPENDENCIES.md`。

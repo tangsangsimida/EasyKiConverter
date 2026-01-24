@@ -1,4 +1,4 @@
-﻿#include "ExportService_Pipeline.h"
+#include "ExportService_Pipeline.h"
 
 #include <QTextStream>
 #include <QTimer>
@@ -31,10 +31,10 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
       m_successCount(0),
       m_failureCount(0),
       m_exportStartTimeMs(0) {
-    // 配置线程�?
-    m_fetchThreadPool->setMaxThreadCount(32);                             // I/O密集型，32个线�?
-    m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());  // CPU密集型，等于核心�?
-    m_writeThreadPool->setMaxThreadCount(8);                              // 磁盘I/O密集型，8个线�?
+    // 配置线程?
+    m_fetchThreadPool->setMaxThreadCount(32);                             // I/O密集型，32个线?
+    m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());  // CPU密集型，等于核心?
+    m_writeThreadPool->setMaxThreadCount(8);                              // 磁盘I/O密集型，8个线?
 
     qDebug() << "ExportServicePipeline initialized with thread pools:"
              << "Fetch:" << m_fetchThreadPool->maxThreadCount() << "Process:" << m_processThreadPool->maxThreadCount()
@@ -56,8 +56,17 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& c
         return;
     }
 
-    // 使用固定队列大小�?4）以防止内存溢出
-    // 固定大小提供背压（Backpressure）机制，当下游处理不过来时阻塞上�?
+    // 检查空列表，避免死锁
+    if (componentIds.isEmpty()) {
+        qDebug() << "Component list is empty, nothing to do.";
+        // 发送完成信号（0总数，0成功）
+        emit exportProgress(0, 0);
+        emit exportCompleted(0, 0);
+        return;
+    }
+
+    // 使用固定队列大小?4）以防止内存溢出
+    // 固定大小提供背压（Backpressure）机制，当下游处理不过来时阻塞上?
     const size_t FIXED_QUEUE_SIZE = 64;
 
     // 重新创建队列以应用固定的队列大小
@@ -69,7 +78,7 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& c
     qDebug() << "Fixed queue size set to:" << FIXED_QUEUE_SIZE << "(prevents memory overflow for" << componentIds.size()
              << "tasks)";
 
-    // 初始化流水线状�?
+    // 初始化流水线状?
     m_componentIds = componentIds;
     m_options = options;
     m_pipelineProgress.totalTasks = componentIds.size();
@@ -93,13 +102,13 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& c
     // 释放互斥锁以允许其他线程工作
     locker.unlock();
 
-    // 发出开始导出信�?
+    // 发出开始导出信?
     emit exportProgress(0, m_pipelineProgress.totalTasks);
 
     // 启动抓取阶段
     startFetchStage();
 
-    // 启动处理和写入阶�?
+    // 启动处理和写入阶?
     startProcessStage();
     startWriteStage();
 
@@ -122,12 +131,12 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
     m_completedStatuses.append(status);
 
     if (status->fetchSuccess) {
-        // 将数据放入处理队列（使用 QSharedPointer 避免拷贝�?
+        // 将数据放入处理队列（使用 QSharedPointer 避免拷贝?
         m_fetchProcessQueue->push(status);
-        // 发送抓取完成信号（包含阶段信息�?
+        // 发送抓取完成信号（包含阶段信息?
         emit componentExported(status->componentId, true, "Fetch completed", static_cast<int>(PipelineStage::Fetch));
     } else {
-        // 抓取失败，直接记录失�?
+        // 抓取失败，直接记录失?
         m_failureCount++;
         qDebug() << "Fetch failed for component:" << status->componentId << "Error:" << status->fetchMessage;
         emit componentExported(
@@ -141,7 +150,7 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
              << m_pipelineProgress.totalTasks << "Write:" << m_pipelineProgress.writeCompleted << "/"
              << m_pipelineProgress.totalTasks;
 
-    // 检查是否完�?
+    // 检查是否完?
     checkPipelineCompletion();
 }
 
@@ -152,17 +161,17 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
 
     m_pipelineProgress.processCompleted++;
 
-    // 更新状态（不重复添加，因为已经�?Fetch 阶段添加了）
-    // ProcessWorker 会修改同一�?status 对象
+    // 更新状态（不重复添加，因为已经?Fetch 阶段添加了）
+    // ProcessWorker 会修改同一?status 对象
 
     if (status->processSuccess) {
-        // 将数据放入写入队列（使用 QSharedPointer 避免拷贝�?
+        // 将数据放入写入队列（使用 QSharedPointer 避免拷贝?
         m_processWriteQueue->push(status);
-        // 发送处理完成信号（包含阶段信息�?
+        // 发送处理完成信号（包含阶段信息?
         emit componentExported(
             status->componentId, true, "Process completed", static_cast<int>(PipelineStage::Process));
     } else {
-        // 处理失败，直接记录失�?
+        // 处理失败，直接记录失?
         m_failureCount++;
         qDebug() << "Process failed for component:" << status->componentId << "Error:" << status->processMessage;
         emit componentExported(
@@ -176,7 +185,7 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
              << m_pipelineProgress.totalTasks << "Write:" << m_pipelineProgress.writeCompleted << "/"
              << m_pipelineProgress.totalTasks;
 
-    // 检查是否完�?
+    // 检查是否完?
     checkPipelineCompletion();
 }
 
@@ -190,13 +199,13 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
     if (status->writeSuccess) {
         m_successCount++;
 
-        // 如果导出了符号，将符号数据加入列�?
+        // 如果导出了符号，将符号数据加入列?
         if (m_options.exportSymbol && status->symbolData) {
             m_symbols.append(*status->symbolData);
             qDebug() << "Added symbol to merge list:" << status->symbolData->info().name;
         }
 
-        // 如果导出了符号，将临时文件加入列表（用于清理�?
+        // 如果导出了符号，将临时文件加入列表（用于清理?
         if (m_options.exportSymbol && status->symbolData) {
             QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, status->componentId);
             if (QFile::exists(tempFilePath)) {
@@ -204,7 +213,7 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
             }
         }
 
-        // 发送写入完成信号（包含阶段信息�?
+        // 发送写入完成信号（包含阶段信息?
         emit componentExported(
             status->componentId, true, "Export completed successfully", static_cast<int>(PipelineStage::Write));
     } else {
@@ -221,7 +230,7 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
              << m_pipelineProgress.totalTasks << "Write:" << m_pipelineProgress.writeCompleted << "/"
              << m_pipelineProgress.totalTasks;
 
-    // 检查是否完�?
+    // 检查是否完?
     checkPipelineCompletion();
 }
 
@@ -232,7 +241,7 @@ void ExportServicePipeline::startFetchStage() {
         FetchWorker* worker = new FetchWorker(componentId,
                                               m_networkAccessManager,
                                               m_options.exportModel3D,
-                                              nullptr);  // 不设置parent，避免线程问�?
+                                              nullptr);  // 不设置parent，避免线程问?
 
         connect(worker,
                 &FetchWorker::fetchCompleted,
@@ -253,7 +262,7 @@ void ExportServicePipeline::startFetchStage() {
 void ExportServicePipeline::startProcessStage() {
     qDebug() << "Starting process stage";
 
-    // 创建持续运行的处理工作线�?
+    // 创建持续运行的处理工作线?
     for (int i = 0; i < m_processThreadPool->maxThreadCount(); i++) {
         QRunnable* task = QRunnable::create([this]() {
             while (true) {
@@ -285,7 +294,7 @@ void ExportServicePipeline::startProcessStage() {
 void ExportServicePipeline::startWriteStage() {
     qDebug() << "Starting write stage";
 
-    // 创建持续运行的写入工作线�?
+    // 创建持续运行的写入工作线?
     for (int i = 0; i < m_writeThreadPool->maxThreadCount(); i++) {
         QRunnable* task = QRunnable::create([this]() {
             while (true) {
@@ -335,10 +344,10 @@ void ExportServicePipeline::checkPipelineCompletion() {
         return;  // 还在写入
     }
 
-    // 所有阶段都完成�?
+    // 所有阶段都完成?
     qDebug() << "Pipeline completed. Success:" << m_successCount << "Failed:" << m_failureCount;
 
-    // 合并符号�?
+    // 合并符号?
     if (m_options.exportSymbol && !m_symbols.isEmpty()) {
         mergeSymbolLibrary();
     }
@@ -351,7 +360,7 @@ void ExportServicePipeline::checkPipelineCompletion() {
     saveStatisticsReport(statistics, reportPath);
     qDebug() << "Statistics report generated:" << reportPath;
 
-    // 发送统计报告生成信�?
+    // 发送统计报告生成信?
     emit statisticsReportGenerated(reportPath, statistics);
 
     // 清理临时文件
@@ -361,10 +370,10 @@ void ExportServicePipeline::checkPipelineCompletion() {
     m_tempSymbolFiles.clear();
     m_symbols.clear();
 
-    // 清理状态列�?
+    // 清理状态列?
     m_completedStatuses.clear();
 
-    // 发送完成信�?
+    // 发送完成信?
     emit exportCompleted(m_pipelineProgress.totalTasks, m_successCount);
 
     // 清理流水线（使用QTimer::singleShot延迟执行，避免在信号处理中清理）
@@ -384,7 +393,7 @@ void ExportServicePipeline::cleanupPipeline() {
     m_fetchProcessQueue->close();
     m_processWriteQueue->close();
 
-    // 等待线程池完�?
+    // 等待线程池完?
     m_fetchThreadPool->waitForDone();
     m_processThreadPool->waitForDone();
     m_writeThreadPool->waitForDone();
@@ -401,10 +410,10 @@ bool ExportServicePipeline::mergeSymbolLibrary() {
         return true;
     }
 
-    // 导出合并后的符号�?
+    // 导出合并后的符号?
     QString libraryPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, m_options.libName);
 
-    // 正确设置 appendMode �?updateMode
+    // 正确设置 appendMode ?updateMode
     // appendMode: true = 追加模式（跳过已存在的符号）
     // updateMode: true = 更新模式（覆盖已存在的符号）
     bool appendMode = !m_options.overwriteExistingFiles;
@@ -439,7 +448,7 @@ ExportStatistics ExportServicePipeline::generateStatistics() {
 
     // 遍历所有完成的状态，收集详细统计
     for (const QSharedPointer<ComponentExportStatus>& status : m_completedStatuses) {
-        // 收集失败原因和阶�?
+        // 收集失败原因和阶?
         if (!status->isCompleteSuccess()) {
             QString failedStage = status->getFailedStage();
             QString failureReason = status->getFailureReason();
@@ -465,7 +474,7 @@ ExportStatistics ExportServicePipeline::generateStatistics() {
         statistics.avgWriteTimeMs = totalWriteTime / statistics.total;
     }
 
-    // 排序最慢的组件（取�?0个）
+    // 排序最慢的组件（取?0个）
     std::sort(statistics.slowestComponents.begin(),
               statistics.slowestComponents.end(),
               [](const QPair<QString, qint64>& a, const QPair<QString, qint64>& b) { return a.second > b.second; });
@@ -536,12 +545,12 @@ bool ExportServicePipeline::saveStatisticsReport(const ExportStatistics& statist
     optionsObj["debugMode"] = m_options.debugMode;
     reportObj["exportOptions"] = optionsObj;
 
-    // 时间�?
+    // 时间?
     reportObj["timestamp"] = QDateTime::currentDateTime().toString(Qt::ISODate);
     reportObj["exportStartTime"] = QDateTime::fromMSecsSinceEpoch(m_exportStartTimeMs).toString(Qt::ISODate);
     reportObj["exportEndTime"] = QDateTime::currentDateTime().toString(Qt::ISODate);
 
-    // 保存到文�?
+    // 保存到文?
     QJsonDocument doc(reportObj);
     QFile file(reportPath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {

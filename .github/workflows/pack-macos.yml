@@ -1,14 +1,9 @@
-﻿name: Packaging(MacOS)
+name: Packaging(MacOS)
 
 on:
   push:
-    branches: [ 'master', 'main' ]
     tags:
       - 'v*'
-    paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
-      - 'docs/**'
   workflow_dispatch:
     inputs:
       create_release:
@@ -17,13 +12,20 @@ on:
         type: boolean
         default: false
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
 env:
   PRODUCT: EasyKiConverter
   QT_VERSION: '6.10.1'
-  CMAKE_VERSION: '3.16'
+  CMAKE_VERSION: '3.22'
 
 jobs:
-  dmg-pack:
+  pack:
     name: 'Build DMG on ${{ matrix.dist.os }} ${{ matrix.dist.arch }}'
     runs-on: ${{ matrix.dist.os }}
     strategy:
@@ -35,7 +37,7 @@ jobs:
               arch: arm64
             }
           - {
-              os: macos-13,
+              os: macos-15,
               arch: intel
             }
     env:
@@ -43,35 +45,23 @@ jobs:
       DIR_BUILD: build
     steps:
       - name: 'Checkout Source code'
-        if: github.event_name == 'push'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 'Checkout Source code'
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.sha }}
+      - name: 'Get Version Info'
+        id: version
+        uses: ./.github/actions/get-version
 
-      - name: 'Set env & Print version'
+      - name: 'Export Version to Env'
         shell: bash
         run: |
-          last_committed_tag=$(git tag -l --sort=-v:refname | head -1)
-          git_revno=$(git rev-list $(git describe --tags --abbrev=0)..HEAD --count)
-          git_hash=$(git rev-parse --short HEAD)
-          ver_info=${last_committed_tag}+git${git_revno}.${git_hash}
-          echo "=======EASYKICONVERTER VERSION========"
-          echo ${last_committed_tag:1}
-          echo "Details: ${ver_info}"
-          echo "======================================"
-          echo "VERSION=3.0.1" >> $GITHUB_ENV
-          echo "VER_INFO=${ver_info}" >> $GITHUB_ENV
-          echo "GIT_HASH=${git_hash}" >> $GITHUB_ENV
+          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
+          echo "VER_INFO=${{ steps.version.outputs.VER_INFO }}" >> $GITHUB_ENV
+          echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}" >> $GITHUB_ENV
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
@@ -88,7 +78,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DVERSION_FROM_CI=${{ env.VERSION }}
 
       - name: 'Compile'
         run: |
@@ -99,7 +90,7 @@ jobs:
           mkdir -p ${APP_NAME}.app/Contents/MacOS
           mkdir -p ${APP_NAME}.app/Contents/Resources
           cp -r ${DIR_BUILD}/bin/* ${APP_NAME}.app/Contents/MacOS/
-          cp -r ${DIR_BUILD}/lib/* ${APP_NAME}.app/Contents/MacOS/ 2>$null || echo "No lib directory"
+          cp -r ${DIR_BUILD}/lib/* ${APP_NAME}.app/Contents/MacOS/ 2>/dev/null || echo "No lib directory"
 
           if [ -f "resources/icons/app_icon.icns" ]; then
             cp resources/icons/app_icon.icns ${APP_NAME}.app/Contents/Resources/AppIcon.icns
@@ -119,9 +110,9 @@ jobs:
               <key>CFBundleDisplayName</key>
               <string>EasyKiConverter</string>
               <key>CFBundleVersion</key>
-              <string>3.0.1</string>
+              <string>${VERSION}</string>
               <key>CFBundleShortVersionString</key>
-              <string>3.0.1</string>
+              <string>${VERSION}</string>
               <key>CFBundleInfoDictionaryVersion</key>
               <string>6.0</string>
               <key>NSHighResolutionCapable</key>
@@ -132,25 +123,28 @@ jobs:
           </plist>
           EOF
 
+          # 使用 macdeployqt 部署 Qt 运行时库和插件
+          macdeployqt ${APP_NAME}.app -qmldir=src -verbose=1
+
       - name: 'Create DMG'
         run: |
           hdiutil create -volname EasyKiConverter \
             -srcfolder ${APP_NAME}.app \
             -ov -format UDZO \
-            ${PRODUCT}-${VERSION}-${{ matrix.dist.arch }}.dmg
+            ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
 
       - name: 'SHA256Sum of DMG'
         run: |
           cd "$GITHUB_WORKSPACE/" || { >&2 echo "Cannot cd to '$GITHUB_WORKSPACE/'!"; exit 11 ; }
-          sha256sum ${PRODUCT}-${VERSION}-${{ matrix.dist.arch }}.dmg | tee ${PRODUCT}-${VERSION}-${{ matrix.dist.arch }}.dmg.sha256sum
+          shasum ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg | tee ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
 
       - name: 'Artifact Upload'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-macos-${{ matrix.dist.arch }}
           path: |
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.dist.arch }}.dmg
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.dist.arch }}.dmg.sha256sum
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
           overwrite: true
 
       - name: 'Upload Release Asset'
@@ -158,6 +152,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.dist.arch }}.dmg
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.dist.arch }}.dmg.sha256sum
-          generate_release_notes: true
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
+          generate_release_notes: false
+          fail_on_unmatched_files: false

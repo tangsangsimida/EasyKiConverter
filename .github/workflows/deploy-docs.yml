@@ -2,65 +2,35 @@
 
 on:
   push:
-    branches: [ 'master', 'main', 'docs' ]
+    branches: [ 'master', 'dev', 'test', 'feature/**', 'feat/**']
     paths:
-      - 'src/**'
       - 'docs/**'
+      - 'mkdocs.yml'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: 'Install dependencies'
-        run: |
-          sudo apt-get --yes --quiet update
-          sudo apt-get --yes --no-install-recommends install \
-            doxygen \
-            graphviz
-
-      - name: 'Install Python packages'
-        run: |
-          pip install \
-              mkdocs \
-              mkdocs-material \
-              mkdocs-material-extensions \
-              mkdocs-redirects \
-              pymdown-extensions \
-              mkdocstrings[python]
-
-      - name: 'Checkout EasyKiConverter source'
+      - name: Checkout Source
         uses: actions/checkout@v4
-        with:
-          path: 'EasyKiConverter'
 
-      - name: 'Build documentation'
-        working-directory: ${{github.workspace}}/EasyKiConverter
+      - name: Configure Git Credentials
         run: |
-          # Build API documentation with Doxygen
-          if [ -f "Doxyfile" ]; then
-            doxygen Doxyfile || echo "Doxygen failed, continuing with mkdocs only"
-          fi
-          
-          # Build user and developer documentation with mkdocs
-          if [ -d "docs/user" ]; then
-            cd docs/user
-            mkdocs build --site-dir ../../site/user || echo "User docs build failed"
-          fi
-          
-          if [ -d "docs/developer" ]; then
-            cd docs/developer
-            mkdocs build --site-dir ../../site/developer || echo "Developer docs build failed"
-          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
 
-      - name: 'Deploy to GitHub Pages'
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{ github.workspace }}/EasyKiConverter/site
-          publish_branch: gh-pages
-          force_orphan: true
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
-          commit_message: 'Deploy documentation from ${{ github.sha }}'
+          python-version: 3.x
+
+      - name: Install MkDocs Material
+        run: pip install mkdocs-material
+
+      - name: Build and Deploy
+        run: mkdocs gh-deploy --force

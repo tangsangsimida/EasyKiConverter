@@ -1,7 +1,7 @@
 ﻿#include "EasyedaApi.h"
 
+#include <QDebug>
 #include <QJsonDocument>
-#include <qDebug>
 
 namespace EasyKiConverter {
 

@@ -2,50 +2,49 @@
 
 on:
   push:
-    branches: [ 'master', 'main', 'ci_test' ]
+    branches: ['master', 'main', 'ci_test']
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
       - 'docs/**'
   pull_request:
-    branches: [ 'master', 'main', 'ci_test' ]
+    branches: ['master', 'main', 'ci_test']
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
       - 'docs/**'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+
 env:
   BUILD_TYPE: RelWithDebInfo
   QT_VERSION: '6.10.1'
-  CMAKE_VERSION: '3.16'
+  CMAKE_VERSION: '3.22'
+  TEST_TIMEOUT: 300
 
 jobs:
   linux-build:
     name: 'Build Linux'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04]
+        os: [ubuntu-22.04, ubuntu-24.04]
     steps:
       - name: 'Checkout Source code'
-        if: github.event_name == 'push'
-        uses: actions/checkout@v4
-
-      - name: 'Checkout Source code'
-        if: github.event_name == 'pull_request'
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: 'Checkout Source code'
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
+          fetch-depth: 0
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
@@ -61,18 +60,19 @@ jobs:
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DCI=ON
 
       - name: 'Build'
         run: |
-          cmake --build build --config $BUILD_TYPE --parallel
+          cmake --build build --config $BUILD_TYPE --parallel 16
 
       - name: 'Test'
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR" -DCI=ON
           cmake --build build
-          ctest --output-on-failure --test-dir build --output-junit test-results.xml
+          ctest --output-on-failure --timeout ${{ env.TEST_TIMEOUT }} --test-dir build --output-junit test-results.xml
 
       - name: 'Publish Test Report'
         if: always()
@@ -86,89 +86,66 @@ jobs:
   windows-build:
     name: 'Build Windows'
     runs-on: windows-2022
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: 'Windows MinGW'
-            platform: 'mingw_64'
-            generator: 'MinGW Makefiles'
           - name: 'Windows MSVC'
             platform: 'msvc2019_64'
             generator: 'Visual Studio 17 2022'
             arch: 'x64'
     steps:
       - name: 'Checkout Source code'
-        if: github.event_name == 'push'
-        uses: actions/checkout@v4
-
-      - name: 'Checkout Source code'
-        if: github.event_name == 'pull_request'
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: 'Checkout Source code'
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
+          fetch-depth: 0
 
       - name: 'Setup MSVC'
-        if: matrix.platform == 'msvc2019_64'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.arch }}
           toolset: '14.2'
 
-      - name: 'Setup MinGW'
-        if: matrix.platform == 'mingw_64'
-        uses: egor-tensin/setup-mingw@v2
+      - name: 'Setup vcpkg'
+        uses: lukka/run-vcpkg@v11
         with:
-          platform: x64
-          version: 13.2.0
+          vcpkgJsonGlob: 'vcpkg.json'
+          runVcpkgInstall: true
 
-      - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+      - name: 'Setup Build Environment (MSVC)'
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
           qt-host: 'windows'
           qt-target: 'desktop'
-          qt-arch: 'win64_mingw'
+          qt-arch: 'win64_msvc2022_64'
           enable-ccache: 'false'
           enable-sccache: 'true'
 
-      - name: 'Configure CMake (MinGW) with sccache'
-        if: matrix.platform == 'mingw_64'
-        run: |
-          cmake -B build -G "MinGW Makefiles" `
-            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
-            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
-            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
-
-      - name: 'Configure CMake (MSVC) with sccache'
-        if: matrix.platform == 'msvc2019_64'
+      - name: 'Configure CMake (MSVC) with sccache and vcpkg'
         run: |
           cmake -B build -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DCI=ON
 
       - name: 'Build'
         run: |
-          cmake --build build --config $env:BUILD_TYPE --parallel
+          cmake --build build --config $env:BUILD_TYPE --parallel 16
 
       - name: 'Test'
+        shell: pwsh
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR"
+          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR=".." -DCI=ON
           cmake --build build
-          ctest --output-on-failure --test-dir build --output-junit test-results.xml
+          ctest --output-on-failure -C Debug --timeout 300 --test-dir build --output-junit test-results.xml
 
       - name: 'Publish Test Report'
         if: always()
@@ -181,26 +158,23 @@ jobs:
 
   macos-build:
     name: 'Build macOS'
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 'macOS ARM64'
+            os: macos-14
+          - name: 'macOS Intel'
+            os: macos-15
     steps:
       - name: 'Checkout Source code'
-        if: github.event_name == 'push'
-        uses: actions/checkout@v4
-
-      - name: 'Checkout Source code'
-        if: github.event_name == 'pull_request'
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: 'Checkout Source code'
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
+          fetch-depth: 0
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
@@ -216,18 +190,19 @@ jobs:
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DCI=ON
 
       - name: 'Build'
         run: |
-          cmake --build build --config $BUILD_TYPE --parallel
+          cmake --build build --config $BUILD_TYPE --parallel 4
 
       - name: 'Test'
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR" -DCI=ON
           cmake --build build
-          ctest --output-on-failure --test-dir build --output-junit test-results.xml
+          ctest --output-on-failure --timeout 300 --test-dir build --output-junit test-results.xml
 
       - name: 'Publish Test Report'
         if: always()

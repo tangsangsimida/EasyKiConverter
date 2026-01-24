@@ -1,9 +1,9 @@
 ﻿#include "EasyedaImporter.h"
 
+#include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStringList>
-#include <qDebug>
 
 namespace EasyKiConverter {
 

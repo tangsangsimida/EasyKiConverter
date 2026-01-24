@@ -1,14 +1,9 @@
-﻿name: Packaging(Windows)
+name: Packaging(Windows)
 
 on:
   push:
-    branches: [ 'master', 'main' ]
     tags:
       - 'v*'
-    paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
-      - 'docs/**'
   workflow_dispatch:
     inputs:
       create_release:
@@ -17,10 +12,17 @@ on:
         type: boolean
         default: false
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
 env:
   PRODUCT: EasyKiConverter
   QT_VERSION: '6.10.1'
-  CMAKE_VERSION: '3.16'
+  CMAKE_VERSION: '3.22'
 
 jobs:
   windows-pack:
@@ -37,44 +39,32 @@ jobs:
               generator: 'Visual Studio 17 2022',
               gen_arch: '-A x64',
               vcpkg_triplet: 'x64-windows',
-              qt_arch: 'win64_msvc2019_64',
-              qt_arch_install: 'msvc2019_64',
+              qt_arch: 'win64_msvc2022_64',
+              qt_arch_install: 'msvc2022_64',
               pak_arch: 'win64'
             }
         type: [portable, installer]
     steps:
       - name: 'Checkout Source code'
-        if: github.event_name == 'push'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: 'Checkout Source code'
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.sha }}
 
       - name: 'Fix Python path'
         shell: pwsh
         run: |
           Remove-Item "$env:LOCALAPPDATA\Microsoft\WindowsApps\python*.exe" -Force -ErrorAction SilentlyContinue
 
-      - name: 'Set env & Print version'
+      - name: 'Get Version Info'
+        id: version
+        uses: ./.github/actions/get-version
+
+      - name: 'Export Version to Env'
         shell: bash
         run: |
-          last_committed_tag=$(git tag -l --sort=-v:refname | head -1)
-          git_revno=$(git rev-list $(git describe --tags --abbrev=0)..HEAD --count)
-          git_hash=$(git rev-parse --short HEAD)
-          ver_info=${last_committed_tag}+git${git_revno}.${git_hash}
-          echo "=======EASYKICONVERTER VERSION========"
-          echo ${last_committed_tag:1}
-          echo "Details: ${ver_info}"
-          echo "======================================"
-          echo "VERSION=3.0.1" >> $GITHUB_ENV
-          echo "VER_INFO=${ver_info}" >> $GITHUB_ENV
-          echo "GIT_HASH=${git_hash}" >> $GITHUB_ENV
+          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
+          echo "VER_INFO=${{ steps.version.outputs.VER_INFO }}" >> $GITHUB_ENV
+          echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}" >> $GITHUB_ENV
 
       - name: 'Setup MSVC'
         uses: ilammy/msvc-dev-cmd@v1
@@ -82,8 +72,14 @@ jobs:
           arch: ${{ matrix.config.arch }}
           toolset: '14.2'
 
+      - name: 'Setup vcpkg'
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: 'vcpkg.json'
+          runVcpkgInstall: true
+
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ matrix.qt_ver }}
@@ -93,50 +89,101 @@ jobs:
           enable-ccache: 'false'
           enable-sccache: 'true'
 
-      - name: 'Configure'
-        working-directory: build
+      - name: 'Setup Inno Setup'
+        if: matrix.type == 'installer'
         shell: pwsh
         run: |
-          cmake .. -G "${{ matrix.config.generator }}" ${{matrix.config.gen_arch}} `
+          choco install innosetup --no-progress
+
+      - name: 'Configure'
+        shell: pwsh
+        run: |
+          if (Test-Path build) { Remove-Item -Recurse -Force build }
+          cmake -B build -G "${{ matrix.config.generator }}" ${{matrix.config.gen_arch}} `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DVERSION_FROM_CI="${{ env.VERSION }}"
 
       - name: 'Compile'
-        working-directory: build
         shell: pwsh
         run: |
-          cmake --build . --config Release --parallel
+          cmake --build build --config Release --parallel
+
+      - name: 'Deploy Qt dependencies'
+        shell: pwsh
+        run: |
+          $exePath = "$env:GITHUB_WORKSPACE\build\bin\Release\EasyKiConverter.exe"
+          Write-Host "Running windeployqt on $exePath"
+          # Rely on PATH to find windeployqt
+          windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw --qmldir "$env:GITHUB_WORKSPACE\src" $exePath
 
       - name: 'Create portable package'
         if: matrix.type == 'portable'
         shell: pwsh
         run: |
           mkdir -p $env:GITHUB_WORKSPACE\build\Package\portable
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse -ErrorAction SilentlyContinue
+          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\Release\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse
+          Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\Release\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\README*.md -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\LICENSE -Destination $env:GITHUB_WORKSPACE\build\Package\portable\
-          Compress-Archive -Path $env:GITHUB_WORKSPACE\build\Package\portable\* -DestinationPath $env:GITHUB_WORKSPACE\build\Package\portable\${PRODUCT}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip
+          Compress-Archive -Path $env:GITHUB_WORKSPACE\build\Package\portable\* -DestinationPath $env:GITHUB_WORKSPACE\build\Package\portable\${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-${{ matrix.config.pak_arch }}.zip
 
       - name: 'Create installer package'
         if: matrix.type == 'installer'
         shell: pwsh
         run: |
-          mkdir -p $env:GITHUB_WORKSPACE\build\Package\installer
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\* -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -Recurse
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\* -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -Recurse -ErrorAction SilentlyContinue
-          Copy-Item -Path $env:GITHUB_WORKSPACE\README*.md -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -ErrorAction SilentlyContinue
-          Copy-Item -Path $env:GITHUB_WORKSPACE\LICENSE -Destination $env:GITHUB_WORKSPACE\build\Package\installer\
+          # 1. Prepare Staging Directory
+          $stagingDir = "$env:GITHUB_WORKSPACE\build\Staging"
+          mkdir -p $stagingDir
+          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\Release\* -Destination $stagingDir -Recurse
+          # Copy dependencies (if any separate lib dir exists, though windeployqt usually puts them in bin)
+          if (Test-Path "$env:GITHUB_WORKSPACE\build\lib\Release") {
+            Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\Release\* -Destination $stagingDir -Recurse -ErrorAction SilentlyContinue
+          }
+          
+          # 2. Run Inno Setup Compiler
+          # We pass variables: MyAppVersion, SourceDir, OutputDir
+          $outputDir = "$env:GITHUB_WORKSPACE\build\Package\installer"
+          mkdir -p $outputDir
+          
+          $issFile = "$env:GITHUB_WORKSPACE\resources\windows_setup.iss"
+          
+          # ISCC command
+          # Note: SourceDir must be absolute
+          iscc "/DMyAppVersion=${{ env.VERSION }}" "/DSourceDir=$stagingDir" "/O$outputDir" "$issFile"
+          
+          # Rename output to standard format
+          $setupExe = Get-ChildItem -Path $outputDir -Filter "EasyKiConverter_*_Setup.exe" | Select-Object -First 1
+          $newContentName = "${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-setup.exe"
+          Rename-Item -Path $setupExe.FullName -NewName $newContentName
+          
+          Write-Host "Installer created at: $outputDir\$newContentName"
 
       - name: 'SHA256Sum of Windows portable'
         if: matrix.type == 'portable'
-        shell: bash
+        shell: pwsh
         run: |
-          cd "$GITHUB_WORKSPACE/build/Package/portable" || { >&2 echo "Cannot cd to '$GITHUB_WORKSPACE/build/Package/portable/'!"; exit 11 ; }
-          sha256sum ${PRODUCT}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip | tee ${PRODUCT}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip.sha256sum
+          $fileName = "${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-${{ matrix.config.pak_arch }}.zip"
+          $filePath = "$env:GITHUB_WORKSPACE\build\Package\portable\$fileName"
+          $hash = Get-FileHash -Path $filePath -Algorithm SHA256
+          $hashString = $hash.Hash.ToLower() + " *" + $fileName
+          $hashString | Out-File -FilePath "$filePath.sha256sum" -Encoding ascii
+          Write-Host "Generated SHA256: $hashString"
+
+      - name: 'SHA256Sum of Windows installer'
+        if: matrix.type == 'installer'
+        shell: pwsh
+        run: |
+          $fileName = "${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-setup.exe"
+          $filePath = "$env:GITHUB_WORKSPACE\build\Package\installer\$fileName"
+          $hash = Get-FileHash -Path $filePath -Algorithm SHA256
+          $hashString = $hash.Hash.ToLower() + " *" + $fileName
+          $hashString | Out-File -FilePath "$filePath.sha256sum" -Encoding ascii
+          Write-Host "Generated SHA256: $hashString"
 
       - name: 'Artifact Upload (portable)'
         if: matrix.type == 'portable'
@@ -144,8 +191,8 @@ jobs:
         with:
           name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-win-${{ matrix.config.arch }}-${{ matrix.type }}
           path: |
-            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip
-            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip.sha256sum
+            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip
+            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip.sha256sum
           overwrite: true
 
       - name: 'Artifact Upload (installer)'
@@ -154,7 +201,8 @@ jobs:
         with:
           name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-win-${{ matrix.config.arch }}-${{ matrix.type }}
           path: |
-            ${{ github.workspace }}/build/Package/installer/*
+            ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe
+            ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe.sha256sum
           overwrite: true
 
       - name: 'Upload Release Asset (portable)'
@@ -162,14 +210,21 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip
-            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip.sha256sum
-          generate_release_notes: true
+            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip
+            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip.sha256sum
+          generate_release_notes: false
+          draft: true
+          prerelease: false
+          fail_on_unmatched_files: false
 
       - name: 'Upload Release Asset (installer)'
         if: startsWith(github.ref, 'refs/tags/') && matrix.type == 'installer'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/build/Package/installer/*
-          generate_release_notes: true
+            ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe
+            ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe.sha256sum
+          generate_release_notes: false
+          draft: true
+          prerelease: false
+          fail_on_unmatched_files: false

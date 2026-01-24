@@ -49,7 +49,7 @@ void TestExportService::testCreation() {
 }
 
 void TestExportService::testExportOptions() {
-    ExportService::ExportOptions options;
+    EasyKiConverter::ExportOptions options;
 
     options.outputPath = "C:/test/output";
     options.libName = "TestLibrary";
@@ -73,7 +73,7 @@ void TestExportService::testExecuteExportPipeline() {
     QStringList componentIds;
     componentIds << "C12345" << "C67890";
 
-    ExportService::ExportOptions options;
+    EasyKiConverter::ExportOptions options;
     options.outputPath = "C:/test/output";
     options.libName = "TestLibrary";
     options.exportSymbol = true;

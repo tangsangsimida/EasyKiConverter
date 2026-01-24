@@ -1,6 +1,30 @@
-﻿cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.16)
 
-project(EasyKiconverter_Cpp_Version VERSION 0.1 LANGUAGES CXX)
+# 从 CI 环境动态获取版本号，如果没有定义则使用默认版本
+if(NOT DEFINED VERSION_FROM_CI)
+    set(VERSION_FROM_CI "0.1")
+    message(STATUS "VERSION_FROM_CI not defined, using default: ${VERSION_FROM_CI}")
+else()
+    message(STATUS "VERSION_FROM_CI defined: ${VERSION_FROM_CI}")
+endif()
+
+project(EasyKiconverter_Cpp_Version VERSION ${VERSION_FROM_CI} LANGUAGES CXX)
+
+# 显式设置版本号变量，确保 configure_file 能正确替换
+# 如果补丁号未定义或为空，默认设置为 0
+if(NOT DEFINED PROJECT_VERSION_PATCH OR "${PROJECT_VERSION_PATCH}" STREQUAL "")
+    set(PROJECT_VERSION_PATCH 0)
+    message(STATUS "PROJECT_VERSION_PATCH not defined or empty, setting to 0")
+endif()
+
+set(PROJECT_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(PROJECT_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(PROJECT_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(PROJECT_VERSION ${PROJECT_VERSION})
+
+# 调试信息：打印版本号
+message(STATUS "Project version: ${PROJECT_VERSION}")
+message(STATUS "Major: ${PROJECT_VERSION_MAJOR}, Minor: ${PROJECT_VERSION_MINOR}, Patch: ${PROJECT_VERSION_PATCH}")
 
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 17)
@@ -27,6 +51,15 @@ else()
     message(STATUS "Symbol and footprint debug export is DISABLED")
 endif()
 
+# CI 环境检测
+if(DEFINED ENV{CI})
+    message(STATUS "Running in CI environment")
+    add_compile_definitions(CI_ENVIRONMENT=1)
+else()
+    message(STATUS "Running in local environment")
+    add_compile_definitions(CI_ENVIRONMENT=0)
+endif()
+
 # 设置构建类型
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
@@ -42,6 +75,7 @@ find_package(Qt6 REQUIRED COMPONENTS Quick Network Core Gui Widgets QuickControl
 
 # 尝试查找 zlib 库
 # 在 Windows + MinGW 环境下，Qt 的 zlib 库通常在 Qt 安装目录中
+# 在 CI 环境中，vcpkg 会提供 zlib
 find_package(ZLIB QUIET)
 
 # 如果找不到标准的 zlib，使用 Qt 的 zlib 库
@@ -51,12 +85,22 @@ if(NOT ZLIB_FOUND)
     set(ZLIB_FOUND TRUE)
     set(ZLIB_INCLUDE_DIR "")
     set(ZLIB_LIBRARY z)
+    set(ZLIB_USE_QT TRUE)
+else()
+    # 找到了 zlib（可能是 vcpkg 提供的）
+    message(STATUS "Found zlib: ${ZLIB_INCLUDE_DIRS}")
+    message(STATUS "ZLIB libraries: ${ZLIB_LIBRARIES}")
+    set(ZLIB_USE_QT FALSE)
 endif()
 
 message(STATUS "ZLIB_FOUND: ${ZLIB_FOUND}")
 message(STATUS "ZLIB_LIBRARY: ${ZLIB_LIBRARY}")
+message(STATUS "ZLIB_USE_QT: ${ZLIB_USE_QT}")
 
 qt_standard_project_setup(REQUIRES 6.8)
+
+# 添加源码模块（包含所有子模块的 CMakeLists.txt）
+add_subdirectory(src)
 
 # QML 文件列表
 set(QML_FILES
@@ -65,35 +109,34 @@ set(QML_FILES
     src/ui/qml/components/Card.qml
     src/ui/qml/components/ComponentListItem.qml
     src/ui/qml/components/ResultListItem.qml
+    src/ui/qml/components/Icon.qml
+    src/ui/qml/components/ModernButton.qml
     src/ui/qml/styles/AppStyle.qml
 )
 
-# 添加源码模块
-add_subdirectory(src)
+# Windows 资源文件配置
+if(WIN32)
+    # 生成 Windows 资源文件
+    configure_file(resources/windows_meta.rc.in ${CMAKE_BINARY_DIR}/windows_meta.rc)
+endif()
 
-# 创建可执行文件（包含 main.cpp）
+# 创建可执行文件
 qt_add_executable(appEasyKiconverter_Cpp_Version
     main.cpp
 )
 
-# 添加 src 目录到 include 路径
-target_include_directories(appEasyKiconverter_Cpp_Version
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
+# 添加 Windows 资源文件
+if(WIN32)
+    target_sources(appEasyKiconverter_Cpp_Version PRIVATE ${CMAKE_BINARY_DIR}/windows_meta.rc)
+endif()
 
-# 链接主源码库
-target_link_libraries(appEasyKiconverter_Cpp_Version
-    PRIVATE
-        EasyKiConverterLib
-        Qt6::Quick
-        Qt6::Network
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Widgets
-        Qt6::QuickControls2
-        ${ZLIB_LIBRARY}
-)
+# 添加编译定义
+if(ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT)
+    message(STATUS "Symbol and footprint debug export is ENABLED")
+    target_compile_definitions(appEasyKiconverter_Cpp_Version PRIVATE ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT)
+else()
+    message(STATUS "Symbol and footprint debug export is DISABLED")
+endif()
 
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
@@ -101,14 +144,13 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
     VERSION 1.0
     QML_FILES
         ${QML_FILES}
-        src/ui/qml/components/Icon.qml
-        src/ui/qml/components/ModernButton.qml
     RESOURCES
         resources/icons/app_icon.icns
         resources/icons/app_icon.ico
         resources/icons/app_icon.png
         resources/icons/app_icon.svg
         resources/icons/play.svg
+        resources/icons/play_black.svg
         resources/icons/folder.svg
         resources/icons/trash.svg
         resources/icons/upload.svg
@@ -132,6 +174,29 @@ set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
     WIN32_EXECUTABLE TRUE
     OUTPUT_NAME "EasyKiConverter"
 )
+
+# 链接源码库和 Qt 库
+target_link_libraries(appEasyKiconverter_Cpp_Version
+    PRIVATE
+        EasyKiConverterLib
+        Qt6::Quick
+        Qt6::QuickControls2
+        Qt6::Gui
+        Qt6::Widgets
+)
+
+# 包含目录（用于 main.cpp）
+target_include_directories(appEasyKiconverter_Cpp_Version
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# 编译选项
+if(MSVC)
+    target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE /W4)
+else()
+    target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE -Wall -Wextra -Wpedantic)
+endif()
 
 # 安装规则
 include(GNUInstallDirs)

@@ -17,7 +17,7 @@ on:
 
 env:
   QT_VERSION: '6.10.1'
-  CMAKE_VERSION: '3.16'
+  CMAKE_VERSION: '3.22'
 
 jobs:
   code-coverage:
@@ -25,20 +25,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Source code'
-        if: github.event_name == 'push'
-        uses: actions/checkout@v4
-
-      - name: 'Checkout Source code'
-        if: github.event_name == 'pull_request'
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: 'Checkout Source code'
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
+          fetch-depth: 0
 
       - name: 'Install lcov'
         run: |
@@ -46,7 +35,7 @@ jobs:
           sudo apt-get -y --no-install-recommends install lcov
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
@@ -54,18 +43,6 @@ jobs:
           qt-target: 'desktop'
           enable-ccache: 'true'
           enable-sccache: 'false'
-
-      - name: 'Configure main project with coverage'
-        run: |
-          cmake -B build \
-            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_CXX_FLAGS="--coverage" \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
-
-      - name: 'Build main project with coverage'
-        run: |
-          cmake --build build --config Debug --parallel
 
       - name: 'Configure tests with coverage'
         run: |
@@ -83,17 +60,11 @@ jobs:
       - name: 'Run tests with coverage'
         run: |
           cd tests/build
-          ./test_component_service
-          ./test_export_service
-          ./test_config_service
-          ./test_export_service_pipeline
-          ./test_component_data_collector
-          ./test_layer_mapping
-          ./test_uuid_extraction
+          ctest --output-on-failure --output-junit test-results.xml
 
       - name: 'Generate coverage report'
         run: |
-          lcov --capture --directory build --output-file coverage.info
+          lcov --capture --directory tests/build --output-file coverage.info
           lcov --remove coverage.info '/usr/*' --output-file coverage.info
           lcov --remove coverage.info 'tests/*' --output-file coverage.info
           lcov --list coverage.info --output-file coverage.txt

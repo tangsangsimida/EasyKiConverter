@@ -1,14 +1,9 @@
-﻿name: Packaging(Linux)
+name: Packaging(Linux)
 
 on:
   push:
-    branches: [ 'master', 'main' ]
     tags:
       - 'v*'
-    paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
-      - 'docs/**'
   workflow_dispatch:
     inputs:
       create_release:
@@ -17,55 +12,49 @@ on:
         type: boolean
         default: false
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
 env:
   PRODUCT: EasyKiConverter
   RELEASE: 1
   QT_VERSION: '6.10.1'
-  CMAKE_VERSION: '3.16'
+  CMAKE_VERSION: '3.22'
 
 jobs:
   appimage-pack:
     name: 'Build AppImage on ${{ matrix.config.name }}'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
         config:
           - {
-              name: 'Ubuntu 24.04',
+              name: 'Ubuntu 20.04',
               os: 'ubuntu',
-              symbol: 'noble',
+              symbol: 'focal',
               arch: 'amd64'
             }
     steps:
       - name: 'Checkout Source code'
-        if: github.event_name == 'push'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 'Checkout Source code'
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.sha }}
+      - name: 'Get Version Info'
+        id: version
+        uses: ./.github/actions/get-version
 
-      - name: 'Set env & Print version'
+      - name: 'Export Version to Env'
         shell: bash
         run: |
-          last_committed_tag=$(git tag -l --sort=-v:refname | head -1)
-          git_revno=$(git rev-list $(git describe --tags --abbrev=0)..HEAD --count)
-          git_hash=$(git rev-parse --short HEAD)
-          ver_info=${last_committed_tag}+git${git_revno}.${git_hash}
-          echo "=======EASYKICONVERTER VERSION========"
-          echo ${last_committed_tag:1}
-          echo "Details: ${ver_info}"
-          echo "======================================"
-          # Extract version from CMakeLists.txt
-          echo "VERSION=3.0.1" >> $GITHUB_ENV
-          echo "VER_INFO=${ver_info}" >> $GITHUB_ENV
-          echo "GIT_HASH=${git_hash}" >> $GITHUB_ENV
+          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
+          echo "VER_INFO=${{ steps.version.outputs.VER_INFO }}" >> $GITHUB_ENV
+          echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}" >> $GITHUB_ENV
 
       - name: 'Install AppImage Dependencies'
         run: |
@@ -78,7 +67,7 @@ jobs:
             ca-certificates
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
@@ -89,13 +78,13 @@ jobs:
 
       - name: 'Download linuxdeploy'
         run: |
-          wget -c -nv "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
+          curl -L -o linuxdeploy-x86_64.AppImage "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
           chmod a+x linuxdeploy-x86_64.AppImage
-          LINUXDEPLOY_BIN=${PWD}/linuxdeploy-x86_64.AppImage
+          echo "LINUXDEPLOY_BIN=${PWD}/linuxdeploy-x86_64.AppImage" >> $GITHUB_ENV
 
       - name: 'Download linuxdeployqt-plugin-qt'
         run: |
-          wget -c -nv "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
+          curl -L -o linuxdeploy-plugin-qt-x86_64.AppImage "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
           chmod a+x linuxdeploy-plugin-qt-x86_64.AppImage
 
       - name: 'Build application'
@@ -106,34 +95,63 @@ jobs:
 
           cd $GITHUB_WORKSPACE
           cmake -B build \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_INSTALL_PREFIX=/usr \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DVERSION_FROM_CI=${{ env.VERSION }}
           cmake --build build --config RelWithDebInfo --parallel
           cmake --install build --prefix ${APPIMAGE_DST_PATH}/usr
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
 
-          export QMAKE=${Qt6_DIR}/bin/qmake
+          # Debug: Find where qmake really is
+          echo "Qt6_DIR is: $Qt6_DIR"
+          QMAKE_PATH="$Qt6_DIR/bin/qmake"
+          
+          if [ ! -f "$QMAKE_PATH" ]; then
+            echo "Error: qmake not found at $QMAKE_PATH"
+            # Fallback to checking PATH
+            QMAKE_PATH=$(which qmake)
+          fi
+          
+          echo "Found QMAKE at: $QMAKE_PATH"
+          export QMAKE="$QMAKE_PATH"
+          
+          # Create .desktop file
+          cat > ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop <<EOF
+          [Desktop Entry]
+          Type=Application
+          Name=EasyKiConverter
+          Comment=Convert LCSC and EasyEDA components to KiCad libraries
+          Exec=EasyKiConverter
+          Icon=app_icon
+          Categories=Development;Electronics;
+          Terminal=false
+          EOF
+
+          # Copy icon
+          cp resources/icons/app_icon.png ${APPIMAGE_DST_PATH}/app_icon.png
+
+          # Run linuxdeploy
           ${LINUXDEPLOY_BIN} --appdir ${APPIMAGE_DST_PATH} --plugin qt --output appimage
 
           mv $GITHUB_WORKSPACE/EasyKiConverter-${VERSION}-x86_64.AppImage \
-             $GITHUB_WORKSPACE/${PRODUCT}-${VERSION}.x86_64.AppImage
+             $GITHUB_WORKSPACE/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}.x86_64.AppImage
 
       - name: 'SHA256Sum of appimage'
         run: |
           cd "$GITHUB_WORKSPACE/" || { >&2 echo "Cannot cd to '$GITHUB_WORKSPACE/'!"; exit 11 ; }
-          sha256sum ${PRODUCT}-${VERSION}.x86_64.AppImage | tee ${PRODUCT}-${VERSION}.x86_64.AppImage.sha256sum
+          sha256sum ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}.x86_64.AppImage | tee ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}.x86_64.AppImage.sha256sum
 
       - name: 'Artifact Upload'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-appimage-x86_64
           path: |
-            ${{ github.workspace }}/${PRODUCT}-*.x86_64.AppImage
-            ${{ github.workspace }}/${PRODUCT}-*.x86_64.AppImage.sha256sum
+            ${{ github.workspace }}/${{ env.PRODUCT }}-*.x86_64.AppImage
+            ${{ github.workspace }}/${{ env.PRODUCT }}-*.x86_64.AppImage.sha256sum
           overwrite: true
 
       - name: 'Upload Release Asset'
@@ -141,13 +159,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}.x86_64.AppImage
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}.x86_64.AppImage.sha256sum
-          generate_release_notes: true
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.x86_64.AppImage
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.x86_64.AppImage.sha256sum
+          generate_release_notes: false
+          draft: true
+          prerelease: false
+          fail_on_unmatched_files: false
 
   tarball-pack:
     name: 'Build tarball on ${{ matrix.config.name }}'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -156,35 +177,25 @@ jobs:
               name: 'Ubuntu 22.04',
               os: 'ubuntu-22.04'
             }
-    container:
-      image: ${{ matrix.config.os }}
     steps:
       - name: 'Checkout Source code'
-        if: github.event_name == 'push'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 'Checkout Source code'
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.sha }}
+      - name: 'Get Version Info'
+        id: version
+        uses: ./.github/actions/get-version
 
-      - name: 'Set env & Print version'
+      - name: 'Export Version to Env'
         shell: bash
         run: |
-          last_committed_tag=$(git tag -l --sort=-v:refname | head -1)
-          git_revno=$(git rev-list $(git describe --tags --abbrev=0)..HEAD --count)
-          git_hash=$(git rev-parse --short HEAD)
-          ver_info=${last_committed_tag}+git${git_revno}.${git_hash}
-          echo "VERSION=3.0.1" >> $GITHUB_ENV
-          echo "VER_INFO=${ver_info}" >> $GITHUB_ENV
-          echo "GIT_HASH=${git_hash}" >> $GITHUB_ENV
+          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
+          echo "VER_INFO=${{ steps.version.outputs.VER_INFO }}" >> $GITHUB_ENV
+          echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}" >> $GITHUB_ENV
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
@@ -198,34 +209,35 @@ jobs:
           set -x
           cd $GITHUB_WORKSPACE
           cmake -B build \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DVERSION_FROM_CI=${{ env.VERSION }}
           cmake --build build --config RelWithDebInfo --parallel
 
       - name: 'Create tarball'
         run: |
-          mkdir -p ${PRODUCT}-${VERSION}-${{ matrix.config.os }}
-          cp -r build/bin/* ${PRODUCT}-${VERSION}-${{ matrix.config.os }}/
-          cp -r build/lib/* ${PRODUCT}-${VERSION}-${{ matrix.config.os }}/ 2>$null || echo "No lib directory"
-          cp README*.md ${PRODUCT}-${VERSION}-${{ matrix.config.os }}/ 2>$null || echo "No README files"
-          cp LICENSE ${PRODUCT}-${VERSION}-${{ matrix.config.os }}/
-          tar czf ${PRODUCT}-${VERSION}-${{ matrix.config.os }}.tar.gz ${PRODUCT}-${VERSION}-${{ matrix.config.os }}/
+          mkdir -p ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}
+          cp -r build/bin/* ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/
+          cp -r build/lib/* ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/ 2>/dev/null || echo "No lib directory"
+          cp README*.md ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/ 2>/dev/null || echo "No README files"
+          cp LICENSE ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/
+          tar czf ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/
 
       - name: 'SHA256Sum of tarball'
         run: |
           cd "$GITHUB_WORKSPACE/" || { >&2 echo "Cannot cd to '$GITHUB_WORKSPACE/'!"; exit 11 ; }
-          sha256sum ${PRODUCT}-${VERSION}-${{ matrix.config.os }}.tar.gz | tee ${PRODUCT}-${VERSION}-${{ matrix.config.os }}.tar.gz.sha256sum
+          sha256sum ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz | tee ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz.sha256sum
 
       - name: 'Artifact Upload'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-tarball-${{ matrix.config.os }}
           path: |
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.config.os }}.tar.gz
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.config.os }}.tar.gz.sha256sum
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz.sha256sum
           overwrite: true
 
       - name: 'Upload Release Asset'
@@ -233,6 +245,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.config.os }}.tar.gz
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.config.os }}.tar.gz.sha256sum
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz
+            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz.sha256sum
           generate_release_notes: true
+          fail_on_unmatched_files: false

@@ -2,6 +2,12 @@
 
 [English](README_en.md) | 中文
 
+[![Build Status](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Build/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/build.yml)
+[![Code Coverage](https://codecov.io/gh/tangsangsimida/EasyKiConverter_QT/branch/main/graph/badge.svg)](https://codecov.io/gh/tangsangsimida/EasyKiConverter_QT)
+[![Security Scan](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Security/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/security.yml)
+[![Performance](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Performance%20Testing/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/performance.yml)
+[![Code Format](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Code%20Format%20Check/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/clang-format.yml)
+
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter_QT)
 ![GitHub downloads](https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/total)
 ![License](https://img.shields.io/github/license/tangsangsimida/EasyKiConverter_QT)
@@ -19,10 +25,14 @@
 ## 🚀 快速开始
 
 ### 安装
-请前往 [Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 页面下载适用于 Windows、macOS 或 Linux 的最新版本，解压后直接运行即可。
+请前往 [Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 页面下载适用于您平台的版本：
+
+*   **Windows**: 推荐下载 `.exe` 安装程序（包含完整运行时），或下载 `.zip` 便携版。
+*   **Linux**: 推荐下载 `.AppImage`（无需安装，赋予执行权限即可运行），或 `.tar.gz` 归档。
+*   **macOS**: 下载 `.dmg` 镜像文件。
 
 ### 从源码构建
-如果您是开发者或希望自行编译，请参考 [构建指南](docs/developer/BUILD.md)。
+本项目已实现全平台 CI/CD 自动化构建。如果您是开发者或希望自行编译，请参考 [构建指南](docs/developer/BUILD.md)。
 
 ## 📚 文档中心
 

@@ -1,10 +1,10 @@
 ﻿# EasyKiConverter 源码模块
 
-# 添加子模块
+# 添加子模块（注意顺序：Workers 需要在 Services 之前添加，因为 Services 依赖 Workers）
 add_subdirectory(models)
 add_subdirectory(core)
-add_subdirectory(services)
 add_subdirectory(workers)
+add_subdirectory(services)
 add_subdirectory(ui)
 
 # 创建主源码库（不包含 main.cpp，main.cpp 在根目录）
@@ -15,8 +15,8 @@ target_link_libraries(EasyKiConverterLib
     PRIVATE
         EasyKiConverterModels
         EasyKiConverterCore
-        EasyKiConverterServices
         EasyKiConverterWorkers
+        EasyKiConverterServices
         EasyKiConverterUI
 )
 
@@ -37,3 +37,9 @@ if(MSVC)
 else()
     target_compile_options(EasyKiConverterLib PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+# 确保 Services 模块可以访问 Workers 的头文件
+target_include_directories(EasyKiConverterServices
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/workers
+)

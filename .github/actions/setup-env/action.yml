@@ -5,7 +5,7 @@ inputs:
   cmake-version:
     description: 'CMake version to install'
     required: false
-    default: '3.16'
+    default: '3.22'
   qt-version:
     description: 'Qt version to install'
     required: false
@@ -25,7 +25,7 @@ inputs:
   qt-modules:
     description: 'Qt modules to install'
     required: false
-    default: 'qtbase qtquick qtdeclarative qtquickcontrols2 qtnetworkauth'
+    default: 'qtbase qtdeclarative qtquickcontrols2 qtnetworkauth'
   enable-ccache:
     description: 'Enable CCache (Linux/macOS)'
     required: false
@@ -59,7 +59,6 @@ runs:
           libxcb-shape0 \
           libxcb-render-util0 \
           libxcb-xfixes0 \
-          libxcb-xkbcommon1 \
           libxcb-keysyms1 \
           libxcb-randr0 \
           libxcb-render0 \
@@ -79,6 +78,12 @@ runs:
       with:
         cmake-version: ${{ inputs.cmake-version }}
 
+    - name: 'Setup Python for macOS Qt installation'
+      if: runner.os == 'macOS'
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
     - name: 'Install Qt'
       uses: jurplel/install-qt-action@v4
       with:
@@ -86,8 +91,10 @@ runs:
         host: ${{ inputs.qt-host }}
         target: ${{ inputs.qt-target }}
         arch: ${{ inputs.qt-arch }}
-        modules: ${{ inputs.qt-modules }}
         cache: true
+        setup-python: false
+        add-tools-to-path: true
+        set-env: true
 
     - name: 'Setup CCache'
       if: inputs.enable-ccache == 'true' && (runner.os == 'Linux' || runner.os == 'macOS')
