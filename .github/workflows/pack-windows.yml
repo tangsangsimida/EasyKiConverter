@@ -130,7 +130,7 @@ jobs:
       - name: 'Deploy Qt dependencies'
         shell: pwsh
         run: |
-          $exePath = "$env:GITHUB_WORKSPACE\build\bin\EasyKiConverter.exe"
+          $exePath = "$env:GITHUB_WORKSPACE\build\bin\Release\EasyKiConverter.exe"
           Write-Host "Running windeployqt on $exePath"
           # Rely on PATH to find windeployqt
           windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw --qmldir "$env:GITHUB_WORKSPACE\src" $exePath
@@ -140,27 +140,21 @@ jobs:
         shell: pwsh
         run: |
           mkdir -p $env:GITHUB_WORKSPACE\build\Package\portable
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse -ErrorAction SilentlyContinue
+          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\Release\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse
+          Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\Release\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\README*.md -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\LICENSE -Destination $env:GITHUB_WORKSPACE\build\Package\portable\
-          # 使用 windeployqt 部署 Qt 运行时库和插件
-          $windeployqt = Join-Path $env:Qt6_DIR "bin\windeployqt.exe"
-          & $windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw $env:GITHUB_WORKSPACE\build\Package\portable\EasyKiconverter_Cpp_Version.exe
-          Compress-Archive -Path $env:GITHUB_WORKSPACE\build\Package\portable\* -DestinationPath $env:GITHUB_WORKSPACE\build\Package\portable\$env:PRODUCT-${env:VERSION}-g$env:GIT_HASH-${{ matrix.config.pak_arch }}.zip
+          Compress-Archive -Path $env:GITHUB_WORKSPACE\build\Package\portable\* -DestinationPath $env:GITHUB_WORKSPACE\build\Package\portable\${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-${{ matrix.config.pak_arch }}.zip
 
       - name: 'Create installer package'
         if: matrix.type == 'installer'
         shell: pwsh
         run: |
           mkdir -p $env:GITHUB_WORKSPACE\build\Package\installer
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\* -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -Recurse
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\* -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -Recurse -ErrorAction SilentlyContinue
+          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\Release\* -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -Recurse
+          Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\Release\* -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -Recurse -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\README*.md -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\LICENSE -Destination $env:GITHUB_WORKSPACE\build\Package\installer\
-          # 使用 windeployqt 部署 Qt 运行时库和插件
-          $windeployqt = Join-Path $env:Qt6_DIR "bin\windeployqt.exe"
-          & $windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw $env:GITHUB_WORKSPACE\build\Package\installer\EasyKiconverter_Cpp_Version.exe
 
       - name: 'SHA256Sum of Windows portable'
         if: matrix.type == 'portable'
