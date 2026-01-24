@@ -136,7 +136,7 @@ jobs:
           Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\README*.md -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\LICENSE -Destination $env:GITHUB_WORKSPACE\build\Package\portable\
-          Compress-Archive -Path $env:GITHUB_WORKSPACE\build\Package\portable\* -DestinationPath $env:GITHUB_WORKSPACE\build\Package\portable\${PRODUCT}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip
+          Compress-Archive -Path $env:GITHUB_WORKSPACE\build\Package\portable\* -DestinationPath $env:GITHUB_WORKSPACE\build\Package\portable\$env:PRODUCT-${env:VERSION}-g$env:GIT_HASH-${{ matrix.config.pak_arch }}.zip
 
       - name: 'Create installer package'
         if: matrix.type == 'installer'

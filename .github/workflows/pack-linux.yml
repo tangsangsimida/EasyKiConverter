@@ -121,12 +121,21 @@ jobs:
           cmake --install build --prefix ${APPIMAGE_DST_PATH}/usr
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
 
-          # Explicitly export QMAKE for linuxdeploy plugin
-          export QMAKE="$Qt6_DIR/bin/qmake"
-          echo "Using QMAKE at: $QMAKE"
+          # Debug: Find where qmake really is
+          echo "Qt6_DIR is: $Qt6_DIR"
+          QMAKE_PATH=$(find $GITHUB_WORKSPACE/Qt -name qmake -type f | head -n 1)
+          
+          if [ -z "$QMAKE_PATH" ]; then
+            echo "Error: qmake not found in $GITHUB_WORKSPACE/Qt"
+            # Fallback to checking PATH
+            QMAKE_PATH=$(which qmake)
+          fi
+          
+          echo "Found QMAKE at: $QMAKE_PATH"
+          export QMAKE="$QMAKE_PATH"
           
           # Run linuxdeploy
-          QMAKE="$Qt6_DIR/bin/qmake" ${LINUXDEPLOY_BIN} --appdir ${APPIMAGE_DST_PATH} --plugin qt --output appimage
+          ${LINUXDEPLOY_BIN} --appdir ${APPIMAGE_DST_PATH} --plugin qt --output appimage
 
           mv $GITHUB_WORKSPACE/EasyKiConverter-${VERSION}-x86_64.AppImage \
              $GITHUB_WORKSPACE/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}.x86_64.AppImage
