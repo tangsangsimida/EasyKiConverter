@@ -140,6 +140,9 @@ jobs:
           </plist>
           EOF
 
+          # 使用 macdeployqt 部署 Qt 运行时库和插件
+          macdeployqt ${APP_NAME}.app -appstore
+
       - name: 'Create DMG'
         run: |
           hdiutil create -volname EasyKiConverter \

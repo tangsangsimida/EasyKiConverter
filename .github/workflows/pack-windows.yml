@@ -136,6 +136,8 @@ jobs:
           Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\README*.md -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\LICENSE -Destination $env:GITHUB_WORKSPACE\build\Package\portable\
+          # 使用 windeployqt 部署 Qt 运行时库和插件
+          $env:Qt6_DIR\bin\windeployqt.exe --release --no-translations --no-system-d3d-compiler --no-opengl-sw $env:GITHUB_WORKSPACE\build\Package\portable\EasyKiconverter_Cpp_Version.exe
           Compress-Archive -Path $env:GITHUB_WORKSPACE\build\Package\portable\* -DestinationPath $env:GITHUB_WORKSPACE\build\Package\portable\$env:PRODUCT-${env:VERSION}-g$env:GIT_HASH-${{ matrix.config.pak_arch }}.zip
 
       - name: 'Create installer package'
@@ -147,6 +149,8 @@ jobs:
           Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\* -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -Recurse -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\README*.md -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\LICENSE -Destination $env:GITHUB_WORKSPACE\build\Package\installer\
+          # 使用 windeployqt 部署 Qt 运行时库和插件
+          $env:Qt6_DIR\bin\windeployqt.exe --release --no-translations --no-system-d3d-compiler --no-opengl-sw $env:GITHUB_WORKSPACE\build\Package\installer\EasyKiconverter_Cpp_Version.exe
 
       - name: 'SHA256Sum of Windows portable'
         if: matrix.type == 'portable'

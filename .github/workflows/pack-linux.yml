@@ -123,16 +123,17 @@ jobs:
 
           # Debug: Find where qmake really is
           echo "Qt6_DIR is: $Qt6_DIR"
-          QMAKE_PATH=$(find $GITHUB_WORKSPACE/Qt -name qmake -type f | head -n 1)
+          QMAKE_PATH="$Qt6_DIR/bin/qmake"
           
-          if [ -z "$QMAKE_PATH" ]; then
-            echo "Error: qmake not found in $GITHUB_WORKSPACE/Qt"
+          if [ ! -f "$QMAKE_PATH" ]; then
+            echo "Error: qmake not found at $QMAKE_PATH"
             # Fallback to checking PATH
             QMAKE_PATH=$(which qmake)
           fi
           
           echo "Found QMAKE at: $QMAKE_PATH"
           export QMAKE="$QMAKE_PATH"
+          export QML_SOURCES_PATHS="$Qt6_DIR/qml"
           
           # Create .desktop file
           cat > ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop <<EOF
@@ -165,8 +166,8 @@ jobs:
         with:
           name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-appimage-x86_64
           path: |
-            ${{ github.workspace }}/${PRODUCT}-*.x86_64.AppImage
-            ${{ github.workspace }}/${PRODUCT}-*.x86_64.AppImage.sha256sum
+            ${{ github.workspace }}/${{ env.PRODUCT }}-*.x86_64.AppImage
+            ${{ github.workspace }}/${{ env.PRODUCT }}-*.x86_64.AppImage.sha256sum
           overwrite: true
 
       - name: 'Upload Release Asset'
