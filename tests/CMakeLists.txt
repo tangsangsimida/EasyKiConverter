@@ -207,8 +207,8 @@ link_zlib(test_export_service_pipeline)
 
 # 注册测试
 add_test(NAME test_export_service_pipeline COMMAND test_export_service_pipeline)
-# 设置 CTest 超时时间为 120 秒（流水线测试需要较长时间）
-set_property(TEST test_export_service_pipeline PROPERTY TIMEOUT 120)
+# 设置 CTest 超时时间为 300 秒（流水线测试需要较长时间，特别是涉及网络请求）
+set_property(TEST test_export_service_pipeline PROPERTY TIMEOUT 300)
 
 # ========== ConfigService 测试 ==========
 add_executable(test_config_service test_config_service.cpp)
@@ -248,8 +248,8 @@ link_zlib(test_component_data_collector)
 
 # 注册测试
 add_test(NAME test_component_data_collector COMMAND test_component_data_collector)
-# 设置 CTest 超时时间为 60 秒（集成测试需要较长时间）
-set_property(TEST test_component_data_collector PROPERTY TIMEOUT 60)
+# 设置 CTest 超时时间为 120 秒（状态机测试涉及网络请求，需要较长时间）
+set_property(TEST test_component_data_collector PROPERTY TIMEOUT 120)
 
 # ========== UUID 提取测试 ==========
 add_executable(test_uuid_extraction test_uuid_extraction.cpp)
@@ -383,5 +383,5 @@ link_zlib(test_pipeline_baseline)
 
 # 注册测试
 add_test(NAME test_pipeline_baseline COMMAND test_pipeline_baseline)
-# 设置 CTest 超时时间为 60 秒（流水线模式下20秒不到就能导出）
-set_property(TEST test_pipeline_baseline PROPERTY TIMEOUT 60)
+# 设置 CTest 超时时间为 120 秒（性能基准测试涉及网络请求）
+set_property(TEST test_pipeline_baseline PROPERTY TIMEOUT 120)

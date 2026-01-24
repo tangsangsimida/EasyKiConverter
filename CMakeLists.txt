@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(EasyKiconverter_Cpp_Version VERSION 0.1 LANGUAGES CXX)
+# 从 CI 环境动态获取版本号，如果没有定义则使用默认版本
+if(NOT DEFINED VERSION_FROM_CI)
+    set(VERSION_FROM_CI "0.1")
+    message(STATUS "VERSION_FROM_CI not defined, using default: ${VERSION_FROM_CI}")
+else()
+    message(STATUS "VERSION_FROM_CI defined: ${VERSION_FROM_CI}")
+endif()
+
+project(EasyKiconverter_Cpp_Version VERSION ${VERSION_FROM_CI} LANGUAGES CXX)
 
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 17)
@@ -90,10 +98,21 @@ set(QML_FILES
     src/ui/qml/styles/AppStyle.qml
 )
 
+# Windows 资源文件配置
+if(WIN32)
+    # 生成 Windows 资源文件
+    configure_file(resources/windows_meta.rc.in ${CMAKE_BINARY_DIR}/windows_meta.rc @ONLY)
+endif()
+
 # 创建可执行文件
 qt_add_executable(appEasyKiconverter_Cpp_Version
     main.cpp
 )
+
+# 添加 Windows 资源文件
+if(WIN32)
+    target_sources(appEasyKiconverter_Cpp_Version PRIVATE ${CMAKE_BINARY_DIR}/windows_meta.rc)
+endif()
 
 # 添加编译定义
 if(ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT)

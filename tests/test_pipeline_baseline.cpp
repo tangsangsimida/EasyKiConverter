@@ -93,6 +93,11 @@ private:
 };
 
 void TestPipelineBaseline::initTestCase() {
+    // 在 CI 环境中跳过此测试，避免网络请求导致的超时和失败
+    if (qEnvironmentVariableIsSet("CI")) {
+        QSKIP("Skipping Pipeline Baseline tests in CI environment to avoid network request timeouts");
+    }
+
     qDebug() << "\n========================================";
     qDebug() << "  流水线架构性能基准测试开始";
     qDebug() << "  测试日期:" << QDateTime::currentDateTime().toString();

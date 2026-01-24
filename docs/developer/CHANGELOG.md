@@ -2,6 +2,34 @@
 
 本文档记录了 EasyKiConverter 每个版本的新增、修复和更改内容。
 
+## [3.0.2] - 2026-01-24
+
+### Bug 修复
+
+#### macOS CI 测试超时修复
+- **增加测试超时时间**
+  - test_export_service_pipeline: 120s → 300s
+  - test_component_data_collector: 60s → 120s
+  - test_pipeline_baseline: 60s → 120s
+  - 代码位置：`tests/CMakeLists.txt`
+
+- **添加 CI 环境检测**
+  - test_component_data_collector：在 CI 环境中跳过网络请求
+  - test_pipeline_baseline：在 CI 环境中跳过网络请求
+  - test_export_service_pipeline：在 CI 环境中跳过网络请求
+  - 使用 `qEnvironmentVariableIsSet("CI")` 检测 CI 环境
+  - 代码位置：`tests/test_component_data_collector.cpp`, `tests/test_pipeline_baseline.cpp`, `tests/test_export_service_pipeline.cpp`
+
+- **更新 AGENTS.md 文档**
+  - 添加 CI 环境检测说明
+  - 添加测试超时配置说明
+  - 更新测试覆盖范围描述
+
+#### 修复效果
+- macOS CI 构建不再因测试超时而失败
+- 涉及网络请求的测试在 CI 环境中自动跳过
+- 测试超时时间更加合理，避免误判
+
 ## [3.0.1] - 2026-01-21
 
 ### Bug 修复

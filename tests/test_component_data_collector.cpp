@@ -32,6 +32,10 @@ private:
 
 void TestComponentDataCollector::initTestCase() {
     qDebug() << "========== TestComponentDataCollector 开始 ==========";
+    // 在 CI 环境中跳过此测试，避免网络请求导致的超时和失败
+    if (qEnvironmentVariableIsSet("CI")) {
+        QSKIP("Skipping ComponentDataCollector tests in CI environment to avoid network request timeouts");
+    }
 }
 
 void TestComponentDataCollector::cleanupTestCase() {
