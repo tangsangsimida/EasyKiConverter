@@ -111,7 +111,9 @@ jobs:
 
       - name: 'Setup Inno Setup'
         if: matrix.type == 'installer'
-        uses: dsafa/action-inno-setup@v1
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress
 
       - name: 'Configure'
         shell: pwsh
