@@ -170,4 +170,3 @@ jobs:
             ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
           generate_release_notes: true
           fail_on_unmatched_files: false
-          update_existing: true

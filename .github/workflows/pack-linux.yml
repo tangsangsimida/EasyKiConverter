@@ -91,6 +91,17 @@ jobs:
           enable-ccache: 'true'
           enable-sccache: 'false'
 
+      - name: 'Set Qt Environment Variables'
+        run: |
+          echo "Qt6_DIR=$Qt6_DIR" >> $GITHUB_ENV
+          echo "Qt6_ROOT_DIR=$Qt6_DIR" >> $GITHUB_ENV
+          echo "Qt6_PLUGIN_PATH=$Qt6_DIR/plugins" >> $GITHUB_ENV
+          echo "QML2_IMPORT_PATH=$Qt6_DIR/qml" >> $GITHUB_ENV
+          echo "Qt6_DIR=$Qt6_DIR"
+          echo "Qt6_ROOT_DIR=$Qt6_DIR"
+          echo "Qt6_PLUGIN_PATH=$Qt6_DIR/plugins"
+          echo "QML2_IMPORT_PATH=$Qt6_DIR/qml"
+
       - name: 'Download linuxdeploy'
         run: |
           curl -L -o linuxdeploy-x86_64.AppImage "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
@@ -153,7 +164,6 @@ jobs:
           draft: true
           prerelease: false
           fail_on_unmatched_files: false
-          update_existing: true
 
   tarball-pack:
     name: 'Build tarball on ${{ matrix.config.name }}'
@@ -213,13 +223,24 @@ jobs:
           enable-ccache: 'true'
           enable-sccache: 'false'
 
+      - name: 'Set Qt Environment Variables'
+        run: |
+          echo "Qt6_DIR=$Qt6_DIR" >> $GITHUB_ENV
+          echo "Qt6_ROOT_DIR=$Qt6_DIR" >> $GITHUB_ENV
+          echo "Qt6_PLUGIN_PATH=$Qt6_DIR/plugins" >> $GITHUB_ENV
+          echo "QML2_IMPORT_PATH=$Qt6_DIR/qml" >> $GITHUB_ENV
+          echo "Qt6_DIR=$Qt6_DIR"
+          echo "Qt6_ROOT_DIR=$Qt6_DIR"
+          echo "Qt6_PLUGIN_PATH=$Qt6_DIR/plugins"
+          echo "QML2_IMPORT_PATH=$Qt6_DIR/qml"
+
       - name: 'Build application'
         run: |
           set -x
           cd $GITHUB_WORKSPACE
           cmake -B build \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_PREFIX_PATH=${Qt6_DIR} \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
@@ -258,4 +279,3 @@ jobs:
             ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz.sha256sum
           generate_release_notes: true
           fail_on_unmatched_files: false
-          update_existing: true
