@@ -2,7 +2,7 @@
 
 on:
   push:
-    branches: [ 'master', 'main', 'docs' ]
+    branches: [ 'master', 'dev', 'test', 'feature/**', 'feat/**']
     paths:
       - 'docs/**'
       - 'mkdocs.yml'

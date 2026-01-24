@@ -12,6 +12,13 @@ on:
         type: boolean
         default: false
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
 env:
   PRODUCT: EasyKiConverter
   QT_VERSION: '6.10.1'
@@ -48,32 +55,16 @@ jobs:
         run: |
           Remove-Item "$env:LOCALAPPDATA\Microsoft\WindowsApps\python*.exe" -Force -ErrorAction SilentlyContinue
 
-      - name: 'Get Version from Git Tag'
-        shell: bash
-        run: |
-          #如果是 Tag 触发，使用 Tag 名(去掉 v 前缀)
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-          else
-            # 如果不是 Tag，使用默认开发版本
-            VERSION="dev"
-          fi
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
-          echo "Extracted version: ${VERSION}"
+      - name: 'Get Version Info'
+        id: version
+        uses: ./.github/actions/get-version
 
-      - name: 'Set env & Print version'
+      - name: 'Export Version to Env'
         shell: bash
         run: |
-          last_committed_tag=$(git tag -l --sort=-v:refname | head -1)
-          git_revno=$(git rev-list $(git describe --tags --abbrev=0)..HEAD --count)
-          git_hash=$(git rev-parse --short HEAD)
-          ver_info=${last_committed_tag}+git${git_revno}.${git_hash}
-          echo "=======EASYKICONVERTER VERSION========"
-          echo ${last_committed_tag:1}
-          echo "Details: ${ver_info}"
-          echo "======================================"
-          echo "VER_INFO=${ver_info}" >> $GITHUB_ENV
-          echo "GIT_HASH=${git_hash}" >> $GITHUB_ENV
+          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
+          echo "VER_INFO=${{ steps.version.outputs.VER_INFO }}" >> $GITHUB_ENV
+          echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}" >> $GITHUB_ENV
 
       - name: 'Setup MSVC'
         uses: ilammy/msvc-dev-cmd@v1

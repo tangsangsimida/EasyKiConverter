@@ -1,0 +1,49 @@
+name: 'Get Version'
+description: 'Extract version info from git ref and commit hash'
+outputs:
+  VERSION:
+    description: 'Version string (e.g. 3.0.2 or dev)'
+    value: ${{ steps.get_version.outputs.VERSION }}
+  VER_INFO:
+    description: 'Full version info string (e.g. v3.0.2+git5.1234567)'
+    value: ${{ steps.get_version.outputs.VER_INFO }}
+  GIT_HASH:
+    description: 'Short git hash'
+    value: ${{ steps.get_version.outputs.GIT_HASH }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Extract Version'
+      id: get_version
+      shell: bash
+      run: |
+        # 1. VERSION (from Tag or default)
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          VERSION="dev"
+        fi
+        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+        echo "Extracted version: ${VERSION}"
+
+        # 2. GIT INFO (Hash & Rev)
+        last_committed_tag=$(git tag -l --sort=-v:refname | head -1)
+        if [ -z "$last_committed_tag" ]; then
+           last_committed_tag="v0.0.0"
+        fi
+        
+        # Safe handling for shallow clones or no tags
+        git_revno=$(git rev-list ${last_committed_tag}..HEAD --count 2>/dev/null || echo "0")
+        git_hash=$(git rev-parse --short HEAD)
+        
+        ver_info="${last_committed_tag}+git${git_revno}.${git_hash}"
+        
+        echo "VER_INFO=${ver_info}" >> $GITHUB_OUTPUT
+        echo "GIT_HASH=${git_hash}" >> $GITHUB_OUTPUT
+        
+        echo "======= VERSION INFO ========"
+        echo "Version:  ${VERSION}"
+        echo "Info:     ${ver_info}"
+        echo "Hash:     ${git_hash}"
+        echo "============================="
