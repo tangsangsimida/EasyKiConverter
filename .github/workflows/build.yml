@@ -61,7 +61,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DCI=ON
 
       - name: 'Build'
         run: |
@@ -70,7 +71,7 @@ jobs:
       - name: 'Test'
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR" -DCI=ON
           cmake --build build
           ctest --output-on-failure --test-dir build --output-junit test-results.xml
 
@@ -145,7 +146,8 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DCI=ON
 
       - name: 'Build'
         run: |
@@ -155,7 +157,7 @@ jobs:
         shell: pwsh
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DCI=ON
           cmake --build build
           ctest --output-on-failure --test-dir build --output-junit test-results.xml
 
@@ -205,7 +207,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DCI=ON
 
       - name: 'Build'
         run: |
@@ -214,7 +217,7 @@ jobs:
       - name: 'Test'
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR" -DCI=ON
           cmake --build build
           ctest --output-on-failure --test-dir build --output-junit test-results.xml
 

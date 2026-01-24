@@ -27,6 +27,15 @@ else()
     message(STATUS "Symbol and footprint debug export is DISABLED")
 endif()
 
+# CI 环境检测
+if(DEFINED ENV{CI})
+    message(STATUS "Running in CI environment")
+    add_compile_definitions(CI_ENVIRONMENT=1)
+else()
+    message(STATUS "Running in local environment")
+    add_compile_definitions(CI_ENVIRONMENT=0)
+endif()
+
 # 设置构建类型
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)

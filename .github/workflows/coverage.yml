@@ -83,13 +83,7 @@ jobs:
       - name: 'Run tests with coverage'
         run: |
           cd tests/build
-          ./test_component_service
-          ./test_export_service
-          ./test_config_service
-          ./test_export_service_pipeline
-          ./test_component_data_collector
-          ./test_layer_mapping
-          ./test_uuid_extraction
+          ctest --output-on-failure --output-junit test-results.xml
 
       - name: 'Generate coverage report'
         run: |
