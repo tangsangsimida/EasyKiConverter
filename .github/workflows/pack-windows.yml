@@ -85,6 +85,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: 'vcpkg.json'
+          runVcpkgInstall: true
 
       - name: 'Setup Build Environment'
         uses: ./.github/actions/setup-env

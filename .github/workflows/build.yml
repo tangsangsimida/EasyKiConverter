@@ -62,7 +62,7 @@ jobs:
           cd tests
           cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR" -DCI=ON
           cmake --build build
-          ctest --output-on-failure --test-dir build --output-junit test-results.xml
+          ctest --output-on-failure --timeout 300 --test-dir build --output-junit test-results.xml
 
       - name: 'Publish Test Report'
         if: always()
@@ -100,6 +100,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: 'vcpkg.json'
+          runVcpkgInstall: true
 
       - name: 'Setup Build Environment (MSVC)'
         uses: ./.github/actions/setup-env
@@ -131,9 +132,9 @@ jobs:
         shell: pwsh
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DCI=ON
+          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR=".." -DCI=ON
           cmake --build build
-          ctest --output-on-failure --test-dir build --output-junit test-results.xml
+          ctest --output-on-failure --timeout 300 --test-dir build --output-junit test-results.xml
 
       - name: 'Publish Test Report'
         if: always()
@@ -190,7 +191,7 @@ jobs:
           cd tests
           cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR" -DCI=ON
           cmake --build build
-          ctest --output-on-failure --test-dir build --output-junit test-results.xml
+          ctest --output-on-failure --timeout 300 --test-dir build --output-junit test-results.xml
 
       - name: 'Publish Test Report'
         if: always()

@@ -1,0 +1,59 @@
+site_name: EasyKiConverter Documentation
+site_description: Documentation for EasyKiConverter - LCSC and EasyEDA component to KiCad library converter
+site_author: tangsangsimida
+repo_url: https://github.com/tangsangsimida/EasyKiConverter_QT
+edit_uri: edit/master/docs/
+
+theme:
+  name: material
+  language: zh
+  palette:
+    - scheme: default
+      primary: teal
+      accent: deep purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: deep purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+
+nav:
+  - 首页: index.md
+  - 用户指南:
+    - 快速入门: user/GETTING_STARTED.md
+    - 用户手册: user/USER_GUIDE.md
+    - 功能特性: user/FEATURES.md
+    - 常见问题: user/FAQ.md
+  - 开发者指南:
+    - 贡献指南: developer/CONTRIBUTING.md
+    - 架构设计: developer/ARCHITECTURE.md
+    - 构建指南: developer/BUILD.md
+    - 代码风格: developer/CODING_STYLE.md
+    - 测试指南: ../tests/TESTING_GUIDE.md
+    - 变更日志: developer/CHANGELOG.md
+  - 项目信息:
+    - 路线图: project/ROADMAP.md
+    - 性能报告: PERFORMANCE_OPTIMIZATION_REPORT.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
