@@ -176,7 +176,7 @@ jobs:
           files: |
             ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.x86_64.AppImage
             ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.x86_64.AppImage.sha256sum
-          generate_release_notes: true
+          generate_release_notes: false
           draft: true
           prerelease: false
           fail_on_unmatched_files: false
