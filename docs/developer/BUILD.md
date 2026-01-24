@@ -289,15 +289,32 @@ cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64" -DENAB
 
 **Windows (MSVC)**
 
+MSVC 编译器会自动使用 /MP 选项进行多线程编译，无需额外参数。
+
+**Windows (MinGW)**
+
 ```bash
-cmake --build . --config Debug -- /MP
+# 使用 16 个并行任务编译
+cmake --build . --config Debug -- -j 16
+
+# 或使用系统最大核心数
+cmake --build . --config Debug -- -j
 ```
 
 **Linux/macOS**
 
 ```bash
+# 使用 16 个并行任务编译
+cmake --build . --config Debug -- -j 16
+
+# 或使用系统最大核心数
 cmake --build . --config Debug -- -j$(nproc)
 ```
+
+**注意：**
+- 并行编译可以显著加快编译速度，特别是在多核 CPU 上
+- 建议根据 CPU 核心数调整并行任务数（通常设置为 CPU 核心数的 1-2 倍）
+- 如果遇到内存不足问题，可以减少并行任务数
 
 ### 指定构建类型
 
