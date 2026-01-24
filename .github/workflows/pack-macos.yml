@@ -1,4 +1,4 @@
-name: Packaging(MacOS)
+﻿name: Packaging(MacOS)
 
 on:
   push:
@@ -166,8 +166,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
-            ${{ github.workspace }}/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
+            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.dist.arch }}.dmg
+            ${{ github.workspace }}/${PRODUCT}-${VERSION}-${{ matrix.dist.arch }}.dmg.sha256sum
           generate_release_notes: true
-          draft: true
-          prerelease: false

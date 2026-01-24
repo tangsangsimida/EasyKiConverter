@@ -1,4 +1,4 @@
-name: Performance Testing
+﻿name: Performance Testing
 
 on:
   push:
@@ -90,7 +90,7 @@ jobs:
           script: |
             const fs = require('fs');
             let commentBody = '## Performance Test Results\n\n';
-            
+
             try {
               const logPath = 'tests/performance.log';
               if (fs.existsSync(logPath)) {
@@ -102,7 +102,7 @@ jobs:
             } catch (error) {
               commentBody += 'Error reading performance log: ' + error.message + '\n';
             }
-            
+
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
