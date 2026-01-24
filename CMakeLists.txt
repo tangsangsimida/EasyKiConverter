@@ -51,6 +51,7 @@ find_package(Qt6 REQUIRED COMPONENTS Quick Network Core Gui Widgets QuickControl
 
 # 尝试查找 zlib 库
 # 在 Windows + MinGW 环境下，Qt 的 zlib 库通常在 Qt 安装目录中
+# 在 CI 环境中，vcpkg 会提供 zlib
 find_package(ZLIB QUIET)
 
 # 如果找不到标准的 zlib，使用 Qt 的 zlib 库
@@ -60,10 +61,17 @@ if(NOT ZLIB_FOUND)
     set(ZLIB_FOUND TRUE)
     set(ZLIB_INCLUDE_DIR "")
     set(ZLIB_LIBRARY z)
+    set(ZLIB_USE_QT TRUE)
+else()
+    # 找到了 zlib（可能是 vcpkg 提供的）
+    message(STATUS "Found zlib: ${ZLIB_INCLUDE_DIRS}")
+    message(STATUS "ZLIB libraries: ${ZLIB_LIBRARIES}")
+    set(ZLIB_USE_QT FALSE)
 endif()
 
 message(STATUS "ZLIB_FOUND: ${ZLIB_FOUND}")
 message(STATUS "ZLIB_LIBRARY: ${ZLIB_LIBRARY}")
+message(STATUS "ZLIB_USE_QT: ${ZLIB_USE_QT}")
 
 qt_standard_project_setup(REQUIRES 6.8)
 
