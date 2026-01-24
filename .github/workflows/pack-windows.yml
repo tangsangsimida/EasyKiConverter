@@ -109,6 +109,10 @@ jobs:
           enable-ccache: 'false'
           enable-sccache: 'true'
 
+      - name: 'Setup Inno Setup'
+        if: matrix.type == 'installer'
+        uses: dsafa/action-inno-setup@v1
+
       - name: 'Configure'
         shell: pwsh
         run: |
@@ -150,11 +154,32 @@ jobs:
         if: matrix.type == 'installer'
         shell: pwsh
         run: |
-          mkdir -p $env:GITHUB_WORKSPACE\build\Package\installer
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\Release\* -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -Recurse
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\Release\* -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -Recurse -ErrorAction SilentlyContinue
-          Copy-Item -Path $env:GITHUB_WORKSPACE\README*.md -Destination $env:GITHUB_WORKSPACE\build\Package\installer\ -ErrorAction SilentlyContinue
-          Copy-Item -Path $env:GITHUB_WORKSPACE\LICENSE -Destination $env:GITHUB_WORKSPACE\build\Package\installer\
+          # 1. Prepare Staging Directory
+          $stagingDir = "$env:GITHUB_WORKSPACE\build\Staging"
+          mkdir -p $stagingDir
+          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\Release\* -Destination $stagingDir -Recurse
+          # Copy dependencies (if any separate lib dir exists, though windeployqt usually puts them in bin)
+          if (Test-Path "$env:GITHUB_WORKSPACE\build\lib\Release") {
+            Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\Release\* -Destination $stagingDir -Recurse -ErrorAction SilentlyContinue
+          }
+          
+          # 2. Run Inno Setup Compiler
+          # We pass variables: MyAppVersion, SourceDir, OutputDir
+          $outputDir = "$env:GITHUB_WORKSPACE\build\Package\installer"
+          mkdir -p $outputDir
+          
+          $issFile = "$env:GITHUB_WORKSPACE\resources\windows_setup.iss"
+          
+          # ISCC command
+          # Note: SourceDir must be absolute
+          iscc "/DMyAppVersion=${{ env.VERSION }}" "/DSourceDir=$stagingDir" "/O$outputDir" "$issFile"
+          
+          # Rename output to standard format
+          $setupExe = Get-ChildItem -Path $outputDir -Filter "EasyKiConverter_*_Setup.exe" | Select-Object -First 1
+          $newContentName = "${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-setup.exe"
+          Rename-Item -Path $setupExe.FullName -NewName $newContentName
+          
+          Write-Host "Installer created at: $outputDir\$newContentName"
 
       - name: 'SHA256Sum of Windows portable'
         if: matrix.type == 'portable'
@@ -162,6 +187,17 @@ jobs:
         run: |
           $fileName = "${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-${{ matrix.config.pak_arch }}.zip"
           $filePath = "$env:GITHUB_WORKSPACE\build\Package\portable\$fileName"
+          $hash = Get-FileHash -Path $filePath -Algorithm SHA256
+          $hashString = $hash.Hash.ToLower() + " *" + $fileName
+          $hashString | Out-File -FilePath "$filePath.sha256sum" -Encoding ascii
+          Write-Host "Generated SHA256: $hashString"
+
+      - name: 'SHA256Sum of Windows installer'
+        if: matrix.type == 'installer'
+        shell: pwsh
+        run: |
+          $fileName = "${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-setup.exe"
+          $filePath = "$env:GITHUB_WORKSPACE\build\Package\installer\$fileName"
           $hash = Get-FileHash -Path $filePath -Algorithm SHA256
           $hashString = $hash.Hash.ToLower() + " *" + $fileName
           $hashString | Out-File -FilePath "$filePath.sha256sum" -Encoding ascii
@@ -183,7 +219,8 @@ jobs:
         with:
           name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-win-${{ matrix.config.arch }}-${{ matrix.type }}
           path: |
-            ${{ github.workspace }}/build/Package/installer/*
+            ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe
+            ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe.sha256sum
           overwrite: true
 
       - name: 'Upload Release Asset (portable)'
@@ -203,7 +240,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/build/Package/installer/*
+            ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe
+            ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe.sha256sum
           generate_release_notes: false
           draft: true
           prerelease: false
