@@ -131,10 +131,9 @@ jobs:
         shell: pwsh
         run: |
           $exePath = "$env:GITHUB_WORKSPACE\build\bin\EasyKiConverter.exe"
-          $windeployqt = Join-Path $env:Qt6_DIR "bin\windeployqt.exe"
           Write-Host "Running windeployqt on $exePath"
-          # --qmldir is crucial for QML applications to find QML dependencies
-          & $windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw --qmldir "$env:GITHUB_WORKSPACE\src" $exePath
+          # Rely on PATH to find windeployqt
+          windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw --qmldir "$env:GITHUB_WORKSPACE\src" $exePath
 
       - name: 'Create portable package'
         if: matrix.type == 'portable'
