@@ -15,7 +15,9 @@ target_include_directories(EasyKiConverterEasyeda
 target_link_libraries(EasyKiConverterEasyeda
     PUBLIC
         Qt6::Network
-        ${ZLIB_LIBRARY}
         EasyKiConverterModels
         EasyKiConverterUtils
 )
+
+# 链接 zlib（通过 EasyKiConverterUtils 已经链接了，这里不需要重复链接）
+# EasyKiConverterUtils 已经正确处理了 Qt zlib 和 vcpkg zlib 的情况

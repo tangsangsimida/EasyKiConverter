@@ -36,11 +36,12 @@ void TestConfigService::cleanupTestCase() {
 }
 
 void TestConfigService::init() {
-    m_service = new ConfigService(this);
+    m_service = ConfigService::instance();
 }
 
 void TestConfigService::cleanup() {
-    delete m_service;
+    // ConfigService 是单例，不需要手动删除
+    m_service = nullptr;
 }
 
 void TestConfigService::testCreation() {

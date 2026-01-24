@@ -68,6 +68,9 @@ CMakeLists.txt.user*
 # Python byte code
 *.pyc
 
+# vcpkg
+vcpkg.json.bak
+
 # Binaries
 # --------
 *.dll

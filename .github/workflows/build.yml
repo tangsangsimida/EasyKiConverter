@@ -2,13 +2,13 @@
 
 on:
   push:
-    branches: [ 'master', 'main', 'ci_test' ]
+    branches: ['master', 'main', 'ci_test']
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
       - 'docs/**'
   pull_request:
-    branches: [ 'master', 'main', 'ci_test' ]
+    branches: ['master', 'main', 'ci_test']
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
@@ -18,7 +18,7 @@ on:
 env:
   BUILD_TYPE: RelWithDebInfo
   QT_VERSION: '6.10.1'
-  CMAKE_VERSION: '3.16'
+  CMAKE_VERSION: '3.22'
 
 jobs:
   linux-build:
@@ -45,7 +45,7 @@ jobs:
           ref: ${{ github.sha }}
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
@@ -61,16 +61,17 @@ jobs:
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DCI=ON
 
       - name: 'Build'
         run: |
-          cmake --build build --config $BUILD_TYPE --parallel
+          cmake --build build --config $BUILD_TYPE --parallel 16
 
       - name: 'Test'
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR" -DCI=ON
           cmake --build build
           ctest --output-on-failure --test-dir build --output-junit test-results.xml
 
@@ -90,9 +91,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: 'Windows MinGW'
-            platform: 'mingw_64'
-            generator: 'MinGW Makefiles'
           - name: 'Windows MSVC'
             platform: 'msvc2019_64'
             generator: 'Visual Studio 17 2022'
@@ -115,58 +113,51 @@ jobs:
           ref: ${{ github.sha }}
 
       - name: 'Setup MSVC'
-        if: matrix.platform == 'msvc2019_64'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.arch }}
           toolset: '14.2'
 
-      - name: 'Setup MinGW'
-        if: matrix.platform == 'mingw_64'
-        uses: egor-tensin/setup-mingw@v2
-        with:
-          platform: x64
-          version: 13.2.0
+      - name: 'Create vcpkg.json'
+        run: |
+          echo '{"name":"easykiconverter","version-string":"3.0.1","description":"EasyKiConverter - LCSC and EasyEDA component to KiCad library converter","dependencies":[{"name":"zlib","platform":"windows"}],"builtin-baseline":"544a4c5c297e60e4ac4a5a1810df66748d908869"}' > vcpkg.json
 
-      - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+      - name: 'Setup vcpkg'
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: 'vcpkg.json'
+
+      - name: 'Setup Build Environment (MSVC)'
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
           qt-host: 'windows'
           qt-target: 'desktop'
-          qt-arch: 'win64_mingw'
+          qt-arch: 'win64_msvc2022_64'
           enable-ccache: 'false'
           enable-sccache: 'true'
 
-      - name: 'Configure CMake (MinGW) with sccache'
-        if: matrix.platform == 'mingw_64'
-        run: |
-          cmake -B build -G "MinGW Makefiles" `
-            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
-            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
-            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
-
-      - name: 'Configure CMake (MSVC) with sccache'
-        if: matrix.platform == 'msvc2019_64'
+      - name: 'Configure CMake (MSVC) with sccache and vcpkg'
         run: |
           cmake -B build -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DCI=ON
 
       - name: 'Build'
         run: |
-          cmake --build build --config $env:BUILD_TYPE --parallel
+          cmake --build build --config $env:BUILD_TYPE --parallel 16
 
       - name: 'Test'
+        shell: pwsh
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR"
+          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DCI=ON
           cmake --build build
           ctest --output-on-failure --test-dir build --output-junit test-results.xml
 
@@ -200,7 +191,7 @@ jobs:
           ref: ${{ github.sha }}
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
@@ -216,16 +207,17 @@ jobs:
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DCI=ON
 
       - name: 'Build'
         run: |
-          cmake --build build --config $BUILD_TYPE --parallel
+          cmake --build build --config $BUILD_TYPE --parallel 4
 
       - name: 'Test'
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR" -DCI=ON
           cmake --build build
           ctest --output-on-failure --test-dir build --output-junit test-results.xml
 

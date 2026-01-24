@@ -2,13 +2,8 @@
 
 on:
   push:
-    branches: [ 'master', 'main' ]
     tags:
       - 'v*'
-    paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
-      - 'docs/**'
   workflow_dispatch:
     inputs:
       create_release:
@@ -20,7 +15,7 @@ on:
 env:
   PRODUCT: EasyKiConverter
   QT_VERSION: '6.10.1'
-  CMAKE_VERSION: '3.16'
+  CMAKE_VERSION: '3.22'
 
 jobs:
   windows-pack:
@@ -61,6 +56,19 @@ jobs:
         run: |
           Remove-Item "$env:LOCALAPPDATA\Microsoft\WindowsApps\python*.exe" -Force -ErrorAction SilentlyContinue
 
+      - name: 'Get Version from Git Tag'
+        shell: bash
+        run: |
+          #如果是 Tag 触发，使用 Tag 名(去掉 v 前缀)
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            # 如果不是 Tag，使用默认开发版本
+            VERSION="dev"
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "Extracted version: ${VERSION}"
+
       - name: 'Set env & Print version'
         shell: bash
         run: |
@@ -72,7 +80,6 @@ jobs:
           echo ${last_committed_tag:1}
           echo "Details: ${ver_info}"
           echo "======================================"
-          echo "VERSION=3.0.1" >> $GITHUB_ENV
           echo "VER_INFO=${ver_info}" >> $GITHUB_ENV
           echo "GIT_HASH=${git_hash}" >> $GITHUB_ENV
 
@@ -83,7 +90,7 @@ jobs:
           toolset: '14.2'
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ matrix.qt_ver }}
@@ -102,7 +109,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
+            -DVERSION_FROM_CI=${{ env.VERSION }}
 
       - name: 'Compile'
         working-directory: build
@@ -119,7 +127,7 @@ jobs:
           Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\README*.md -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\LICENSE -Destination $env:GITHUB_WORKSPACE\build\Package\portable\
-          Compress-Archive -Path $env:GITHUB_WORKSPACE\build\Package\portable\* -DestinationPath $env:GITHUB_WORKSPACE\build\Package\portable\${PRODUCT}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip
+          Compress-Archive -Path $env:GITHUB_WORKSPACE\build\Package\portable\* -DestinationPath $env:GITHUB_WORKSPACE\build\Package\portable\${PRODUCT}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip
 
       - name: 'Create installer package'
         if: matrix.type == 'installer'
@@ -136,7 +144,7 @@ jobs:
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE/build/Package/portable" || { >&2 echo "Cannot cd to '$GITHUB_WORKSPACE/build/Package/portable/'!"; exit 11 ; }
-          sha256sum ${PRODUCT}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip | tee ${PRODUCT}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip.sha256sum
+          sha256sum ${PRODUCT}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip | tee ${PRODUCT}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip.sha256sum
 
       - name: 'Artifact Upload (portable)'
         if: matrix.type == 'portable'
@@ -144,8 +152,8 @@ jobs:
         with:
           name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-win-${{ matrix.config.arch }}-${{ matrix.type }}
           path: |
-            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip
-            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip.sha256sum
+            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip
+            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip.sha256sum
           overwrite: true
 
       - name: 'Artifact Upload (installer)'
@@ -162,9 +170,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip
-            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip.sha256sum
+            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip
+            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip.sha256sum
           generate_release_notes: true
+          draft: true
+          prerelease: false
 
       - name: 'Upload Release Asset (installer)'
         if: startsWith(github.ref, 'refs/tags/') && matrix.type == 'installer'
@@ -173,3 +183,5 @@ jobs:
           files: |
             ${{ github.workspace }}/build/Package/installer/*
           generate_release_notes: true
+          draft: true
+          prerelease: false

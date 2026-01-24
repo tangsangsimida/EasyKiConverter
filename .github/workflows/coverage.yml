@@ -17,7 +17,7 @@ on:
 
 env:
   QT_VERSION: '6.10.1'
-  CMAKE_VERSION: '3.16'
+  CMAKE_VERSION: '3.22'
 
 jobs:
   code-coverage:
@@ -46,7 +46,7 @@ jobs:
           sudo apt-get -y --no-install-recommends install lcov
 
       - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env@v1
+        uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
           qt-version: ${{ env.QT_VERSION }}
@@ -83,13 +83,7 @@ jobs:
       - name: 'Run tests with coverage'
         run: |
           cd tests/build
-          ./test_component_service
-          ./test_export_service
-          ./test_config_service
-          ./test_export_service_pipeline
-          ./test_component_data_collector
-          ./test_layer_mapping
-          ./test_uuid_extraction
+          ctest --output-on-failure --output-junit test-results.xml
 
       - name: 'Generate coverage report'
         run: |
