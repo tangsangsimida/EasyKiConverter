@@ -219,7 +219,8 @@ target_sources(test_layer_mapping PRIVATE
 
 target_include_directories(test_layer_mapping PRIVATE ${CMAKE_SOURCE_DIR}/../src)
 
-target_link_libraries(test_layer_mapping Qt6::Core)
+# 链接 Qt6::Test（重写后使用 QtTest 框架）
+target_link_libraries(test_layer_mapping Qt6::Core Qt6::Test)
 
 # 注册测试
 add_test(NAME test_layer_mapping COMMAND test_layer_mapping)

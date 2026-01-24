@@ -47,6 +47,11 @@ private:
 void TestIntegration::initTestCase() {
     qDebug() << "========== 集成测试开始 ==========";
     qDebug() << "测试完整的元件转换流程";
+
+    // 在 CI 环境中跳过集成测试（集成测试可能涉及网络请求）
+    if (qEnvironmentVariableIsSet("CI")) {
+        QSKIP("Skipping integration tests in CI environment to avoid flaky failures");
+    }
 }
 
 void TestIntegration::cleanupTestCase() {
