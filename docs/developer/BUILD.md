@@ -492,12 +492,24 @@ sudo cmake --install . --prefix /usr/local
 
 ### Windows
 
+**生成便携版 (Portable Zip):**
 使用 windeployqt 工具打包依赖项：
 
 ```bash
-cd build/bin
-windeployqt EasyKiConverter.exe
+cd build/bin/Release
+windeployqt --release --no-translations EasyKiConverter.exe
+# 然后压缩该目录
 ```
+
+**生成安装包 (Installer .exe):**
+需要安装 [Inno Setup 6](https://jrsoftware.org/isinfo.php)。
+
+1. 确保已运行 `windeployqt` 填充了依赖。
+2. 将 `build/bin/Release` 内容复制到临时目录 `build/Staging`。
+3. 运行编译器：
+   ```bash
+   iscc "/DMyAppVersion=3.0.0" "/DSourceDir=path\to\staging" "resources\windows_setup.iss"
+   ```
 
 ### macOS
 

@@ -19,10 +19,14 @@
 ## 🚀 快速开始
 
 ### 安装
-请前往 [Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 页面下载适用于 Windows、macOS 或 Linux 的最新版本，解压后直接运行即可。
+请前往 [Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 页面下载适用于您平台的版本：
+
+*   **Windows**: 推荐下载 `.exe` 安装程序（包含完整运行时），或下载 `.zip` 便携版。
+*   **Linux**: 推荐下载 `.AppImage`（无需安装，赋予执行权限即可运行），或 `.tar.gz` 归档。
+*   **macOS**: 下载 `.dmg` 镜像文件。
 
 ### 从源码构建
-如果您是开发者或希望自行编译，请参考 [构建指南](docs/developer/BUILD.md)。
+本项目已实现全平台 CI/CD 自动化构建。如果您是开发者或希望自行编译，请参考 [构建指南](docs/developer/BUILD.md)。
 
 ## 📚 文档中心
 
