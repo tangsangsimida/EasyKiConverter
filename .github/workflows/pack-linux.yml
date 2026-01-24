@@ -93,13 +93,13 @@ jobs:
 
       - name: 'Download linuxdeploy'
         run: |
-          wget -c -nv "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
+          curl -L -o linuxdeploy-x86_64.AppImage "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
           chmod a+x linuxdeploy-x86_64.AppImage
-          LINUXDEPLOY_BIN=${PWD}/linuxdeploy-x86_64.AppImage
+          echo "LINUXDEPLOY_BIN=${PWD}/linuxdeploy-x86_64.AppImage" >> $GITHUB_ENV
 
       - name: 'Download linuxdeployqt-plugin-qt'
         run: |
-          wget -c -nv "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
+          curl -L -o linuxdeploy-plugin-qt-x86_64.AppImage "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
           chmod a+x linuxdeploy-plugin-qt-x86_64.AppImage
 
       - name: 'Build application'
@@ -111,7 +111,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           cmake -B build \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_PREFIX_PATH=${Qt6_DIR} \
             -DCMAKE_INSTALL_PREFIX=/usr \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -122,6 +122,7 @@ jobs:
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
 
           export QMAKE=${Qt6_DIR}/bin/qmake
+          export QML_SOURCES_PATHS=${Qt6_DIR}/qml
           ${LINUXDEPLOY_BIN} --appdir ${APPIMAGE_DST_PATH} --plugin qt --output appimage
 
           mv $GITHUB_WORKSPACE/EasyKiConverter-${VERSION}-x86_64.AppImage \
@@ -151,6 +152,8 @@ jobs:
           generate_release_notes: true
           draft: true
           prerelease: false
+          fail_on_unmatched_files: false
+          update_existing: true
 
   tarball-pack:
     name: 'Build tarball on ${{ matrix.config.name }}'
@@ -163,8 +166,6 @@ jobs:
               name: 'Ubuntu 22.04',
               os: 'ubuntu-22.04'
             }
-    container:
-      image: ${{ matrix.config.os }}
     steps:
       - name: 'Checkout Source code'
         if: github.event_name == 'push'
@@ -229,8 +230,8 @@ jobs:
         run: |
           mkdir -p ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}
           cp -r build/bin/* ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/
-          cp -r build/lib/* ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/ 2>$null || echo "No lib directory"
-          cp README*.md ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/ 2>$null || echo "No README files"
+          cp -r build/lib/* ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/ 2>/dev/null || echo "No lib directory"
+          cp README*.md ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/ 2>/dev/null || echo "No README files"
           cp LICENSE ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/
           tar czf ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/
 
@@ -256,3 +257,5 @@ jobs:
             ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz
             ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz.sha256sum
           generate_release_notes: true
+          fail_on_unmatched_files: false
+          update_existing: true

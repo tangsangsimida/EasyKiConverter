@@ -93,6 +93,8 @@ runs:
         arch: ${{ inputs.qt-arch }}
         cache: true
         setup-python: false
+        add-tools-to-path: true
+        set-env: true
 
     - name: 'Setup CCache'
       if: inputs.enable-ccache == 'true' && (runner.os == 'Linux' || runner.os == 'macOS')
