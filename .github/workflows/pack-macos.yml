@@ -30,7 +30,7 @@ jobs:
               arch: arm64
             }
           - {
-              os: macos-latest,
+              os: macos-15,
               arch: intel
             }
     env:
