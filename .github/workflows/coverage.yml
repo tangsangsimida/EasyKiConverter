@@ -55,18 +55,6 @@ jobs:
           enable-ccache: 'true'
           enable-sccache: 'false'
 
-      - name: 'Configure main project with coverage'
-        run: |
-          cmake -B build \
-            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_CXX_FLAGS="--coverage" \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
-
-      - name: 'Build main project with coverage'
-        run: |
-          cmake --build build --config Debug --parallel
-
       - name: 'Configure tests with coverage'
         run: |
           cd tests
@@ -87,7 +75,7 @@ jobs:
 
       - name: 'Generate coverage report'
         run: |
-          lcov --capture --directory build --output-file coverage.info
+          lcov --capture --directory tests/build --output-file coverage.info
           lcov --remove coverage.info '/usr/*' --output-file coverage.info
           lcov --remove coverage.info 'tests/*' --output-file coverage.info
           lcov --list coverage.info --output-file coverage.txt

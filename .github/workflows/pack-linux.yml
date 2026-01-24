@@ -21,13 +21,13 @@ env:
 jobs:
   appimage-pack:
     name: 'Build AppImage on ${{ matrix.config.name }}'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
         config:
           - {
-              name: 'Ubuntu 22.04',
+              name: 'Ubuntu 20.04',
               os: 'ubuntu',
               symbol: 'focal',
               arch: 'amd64'

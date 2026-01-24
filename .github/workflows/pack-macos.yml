@@ -141,7 +141,7 @@ jobs:
           EOF
 
           # 使用 macdeployqt 部署 Qt 运行时库和插件
-          macdeployqt ${APP_NAME}.app
+          macdeployqt ${APP_NAME}.app -qmldir=src -verbose=1
 
       - name: 'Create DMG'
         run: |
