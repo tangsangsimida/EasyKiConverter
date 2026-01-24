@@ -585,3 +585,16 @@ gdb ./EasyKiConverter
 - [CMake 官网](https://cmake.org/)
 - [MinGW-w64](https://www.mingw-w64.org/)
 - [项目主页](https://github.com/tangsangsimida/EasyKiConverter_QT)
+
+## CI/CD 架构
+
+本项目使用 GitHub Actions 实现全自动化 CI/CD。
+
+*   **依赖管理**: 使用 `vcpkg.json` (Manifest Mode) 统一管理 CI 环境依赖。
+*   **本地 Actions**:
+    *   `setup-env`: 统一配置 CMake, Qt, ccache/sccache。
+    *   `get-version`: 统一从 Git Tag 提取版本号。
+*   **缓存策略**: 启用了 Qt 安装缓存、vcpkg 二进制缓存以及 CMake 编译器缓存 (ccache/sccache)。
+*   **安全性**: 所有工作流均配置了最小权限和并发控制。
+
+详细依赖关系请参考 `.github/workflows/WORKFLOW_DEPENDENCIES.md`。

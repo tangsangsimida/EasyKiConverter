@@ -15,10 +15,20 @@
 - `pack-windows.yml` - Windows 打包
 - `deploy-docs.yml` - 文档部署
 
-### 自动化
+### 自动化与辅助
 - `issue-triage.yaml` - Issue 自动分类
 - `label.yml` - PR 自动标签
 - `pr-review.yml` - PR 自动审查
+- `.github/actions/setup-env` - 环境配置 Composite Action
+- `.github/actions/get-version` - 版本号提取 Composite Action (新增)
+
+## 全局策略
+
+### 并发控制 (Concurrency)
+所有 CI/CD 工作流均配置了并发控制组 (`group: ${{ github.workflow }}-${{ github.ref }}`)。当同一分支有新的 Push 时，旧的运行中的构建会自动取消，以节省资源。
+
+### 权限控制 (Permissions)
+遵循最小权限原则，每个工作流显式声明所需的 `GITHUB_TOKEN` 权限（例如 `contents: read` 或 `contents: write`）。
 
 ## 触发条件
 

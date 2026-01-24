@@ -147,6 +147,15 @@ jobs:
           cmake --build build
           ctest --output-on-failure -C Debug --timeout 300 --test-dir build --output-junit test-results.xml
 
+      - name: 'Publish Test Report'
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: tests/build/test-results.xml
+          check_name: Test Report (Windows - ${{ matrix.name }})
+          detailed_summary: true
+          include_passed: true
+
   macos-build:
     name: 'Build macOS'
     runs-on: ${{ matrix.os }}
