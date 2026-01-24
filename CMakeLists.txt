@@ -10,6 +10,16 @@ endif()
 
 project(EasyKiconverter_Cpp_Version VERSION ${VERSION_FROM_CI} LANGUAGES CXX)
 
+# 显式设置版本号变量，确保 configure_file 能正确替换
+set(PROJECT_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(PROJECT_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(PROJECT_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(PROJECT_VERSION ${PROJECT_VERSION})
+
+# 调试信息：打印版本号
+message(STATUS "Project version: ${PROJECT_VERSION}")
+message(STATUS "Major: ${PROJECT_VERSION_MAJOR}, Minor: ${PROJECT_VERSION_MINOR}, Patch: ${PROJECT_VERSION_PATCH}")
+
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -101,7 +111,7 @@ set(QML_FILES
 # Windows 资源文件配置
 if(WIN32)
     # 生成 Windows 资源文件
-    configure_file(resources/windows_meta.rc.in ${CMAKE_BINARY_DIR}/windows_meta.rc @ONLY)
+    configure_file(resources/windows_meta.rc.in ${CMAKE_BINARY_DIR}/windows_meta.rc)
 endif()
 
 # 创建可执行文件
