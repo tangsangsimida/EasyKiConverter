@@ -11,6 +11,12 @@ endif()
 project(EasyKiconverter_Cpp_Version VERSION ${VERSION_FROM_CI} LANGUAGES CXX)
 
 # 显式设置版本号变量，确保 configure_file 能正确替换
+# 如果补丁号未定义或为空，默认设置为 0
+if(NOT DEFINED PROJECT_VERSION_PATCH OR "${PROJECT_VERSION_PATCH}" STREQUAL "")
+    set(PROJECT_VERSION_PATCH 0)
+    message(STATUS "PROJECT_VERSION_PATCH not defined or empty, setting to 0")
+endif()
+
 set(PROJECT_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(PROJECT_VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set(PROJECT_VERSION_PATCH ${PROJECT_VERSION_PATCH})
