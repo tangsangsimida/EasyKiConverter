@@ -37,28 +37,56 @@ set(CMAKE_AUTOUIC ON)
 # 查找 Qt6
 find_package(Qt6 REQUIRED COMPONENTS Core Test Network)
 
-# 查找 zlib（NetworkUtils.cpp 使用 zlib API）
-find_package(ZLIB QUIET)
-
-# 如果找不到标准的 zlib，使用 Qt 的 zlib 库
-if(NOT ZLIB_FOUND)
-    message(STATUS "Using Qt's zlib library for tests")
-    set(ZLIB_FOUND TRUE)
-    set(ZLIB_LIBRARY z)
-    set(ZLIB_USE_QT TRUE)
+# CI 环境检测
+if(DEFINED ENV{CI})
+    message(STATUS "Tests: Running in CI environment")
+    set(TESTS_CI_ENV TRUE)
 else()
+    message(STATUS "Tests: Running in local environment")
+    set(TESTS_CI_ENV FALSE)
+endif()
+
+# 查找 zlib（NetworkUtils.cpp 使用 zlib API）
+# 在 CI 环境中，使用 vcpkg 提供的 zlib
+# 在本地环境中，使用 Qt 自带的 zlib
+if(TESTS_CI_ENV)
+    # CI 环境：使用 vcpkg 提供的 zlib
+    find_package(ZLIB REQUIRED)
     set(ZLIB_USE_QT FALSE)
+    message(STATUS "Tests: Using vcpkg zlib (CI environment)")
+    message(STATUS "Tests: ZLIB_INCLUDE_DIRS = ${ZLIB_INCLUDE_DIRS}")
+    message(STATUS "Tests: ZLIB_LIBRARIES = ${ZLIB_LIBRARIES}")
+else()
+    # 本地环境：使用 Qt 自带的 zlib
+    find_package(ZLIB QUIET)
+    if(NOT ZLIB_FOUND)
+        message(STATUS "Tests: Using Qt's zlib library (local environment)")
+        set(ZLIB_FOUND TRUE)
+        set(ZLIB_LIBRARY z)
+        set(ZLIB_INCLUDE_DIR "")
+        set(ZLIB_USE_QT TRUE)
+    else()
+        set(ZLIB_USE_QT FALSE)
+        message(STATUS "Tests: Found system zlib (local environment)")
+    endif()
 endif()
 
 # 输出 zlib 查找结果（用于调试）
-message(STATUS "ZLIB_FOUND: ${ZLIB_FOUND}")
-message(STATUS "ZLIB_INCLUDE_DIRS: ${ZLIB_INCLUDE_DIRS}")
-message(STATUS "ZLIB_LIBRARIES: ${ZLIB_LIBRARIES}")
-message(STATUS "ZLIB_VERSION: ${ZLIB_VERSION}")
-message(STATUS "ZLIB_USE_QT: ${ZLIB_USE_QT}")
+message(STATUS "Tests: ZLIB_FOUND = ${ZLIB_FOUND}")
+message(STATUS "Tests: ZLIB_LIBRARY = ${ZLIB_LIBRARY}")
+message(STATUS "Tests: ZLIB_USE_QT = ${ZLIB_USE_QT}")
 
 # 设置包含路径
 include_directories(${CMAKE_SOURCE_DIR}/../src)
+
+# 在 CI 环境中，确保 vcpkg 的 include 路径被正确传递
+if(TESTS_CI_ENV AND ZLIB_FOUND AND NOT ZLIB_USE_QT)
+    message(STATUS "Tests: Adding vcpkg include directories")
+    if(DEFINED ZLIB_INCLUDE_DIRS AND NOT "${ZLIB_INCLUDE_DIRS}" STREQUAL "")
+        include_directories(${ZLIB_INCLUDE_DIRS})
+        message(STATUS "Tests: Added include directories: ${ZLIB_INCLUDE_DIRS}")
+    endif()
+endif()
 
 # 定义一个宏，让源文件使用正确的包含路径
 add_definitions(-DTESTING_MODE)
@@ -67,17 +95,27 @@ add_definitions(-DTESTING_MODE)
 function(link_zlib TARGET)
     if(ZLIB_FOUND)
         if(ZLIB_USE_QT)
-            # 使用 Qt 的 zlib 库
+            # 使用 Qt 的 zlib 库（本地 MinGW 环境）
+            message(STATUS "Tests: Linking Qt zlib to ${TARGET}")
             target_link_libraries(${TARGET} PRIVATE ${ZLIB_LIBRARY})
         else()
-            # 使用 vcpkg 或系统提供的 zlib
+            # 使用 vcpkg 或系统提供的 zlib（CI MSVC 环境）
+            message(STATUS "Tests: Linking vcpkg zlib to ${TARGET}")
             if(TARGET ZLIB::ZLIB)
+                # 使用 ZLIB::ZLIB target 会自动包含正确的 include 路径
                 target_link_libraries(${TARGET} PRIVATE ZLIB::ZLIB)
+                # 调试输出：检查 include 路径
+                get_target_property(ZLIB_INCLUDES ZLIB::ZLIB INTERFACE_INCLUDE_DIRECTORIES)
+                message(STATUS "Tests: ZLIB::ZLIB include directories = ${ZLIB_INCLUDES}")
             else()
+                # 如果 ZLIB::ZLIB target 不存在，回退到使用 ZLIB_LIBRARIES
+                message(STATUS "Tests: Using ZLIB_LIBRARIES directly")
                 target_link_libraries(${TARGET} PRIVATE ${ZLIB_LIBRARIES})
                 target_include_directories(${TARGET} PRIVATE ${ZLIB_INCLUDE_DIRS})
             endif()
         endif()
+    else()
+        message(WARNING "Tests: ZLIB not found, ${TARGET} may fail to compile")
     endif()
 endfunction()
 
