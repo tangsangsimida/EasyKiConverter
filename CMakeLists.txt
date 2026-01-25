@@ -107,7 +107,7 @@ message(STATUS "ZLIB_FOUND: ${ZLIB_FOUND}")
 message(STATUS "ZLIB_LIBRARY: ${ZLIB_LIBRARY}")
 message(STATUS "ZLIB_USE_QT: ${ZLIB_USE_QT}")
 
-qt_standard_project_setup(REQUIRES 6.8)
+qt_standard_project_setup(REQUIRES 6.6)
 
 # 添加源码模块（包含所有子模块的 CMakeLists.txt）
 add_subdirectory(src)
