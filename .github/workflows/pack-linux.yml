@@ -221,9 +221,10 @@ jobs:
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
           
-          # 准备脚本
+          # 准备脚本（创建所有必需的脚本文件）
           mkdir -p scripts
           echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
+          echo -e "#!/bin/sh\n# Pre-remove script (empty)" > scripts/preremove.sh
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
@@ -317,7 +318,11 @@ jobs:
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
           
-          mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
+          # 准备脚本（创建所有必需的脚本文件）
+          mkdir -p scripts
+          echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
+          echo -e "#!/bin/sh\n# Pre-remove script (empty)" > scripts/preremove.sh
+          chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
           sed "s|\${APP_DIR}|$APP_DIR|g" nfpm.yaml > nfpm_temp.yaml
@@ -406,7 +411,11 @@ jobs:
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
           
-          mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
+          # 准备脚本（创建所有必需的脚本文件）
+          mkdir -p scripts
+          echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
+          echo -e "#!/bin/sh\n# Pre-remove script (empty)" > scripts/preremove.sh
+          chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
           sed "s|\${APP_DIR}|$APP_DIR|g" nfpm.yaml > nfpm_temp.yaml
