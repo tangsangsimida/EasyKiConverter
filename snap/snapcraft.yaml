@@ -25,11 +25,13 @@ package-repositories:
 parts:
   easykiconverter:
     plugin: cmake
-    source: ..
+    source: .
     # 配置 CMake 参数
     cmake-parameters:
       - -DCMAKE_BUILD_TYPE=Release
       - -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+      - -DCMAKE_INSTALL_PREFIX=/usr
+      - -DKDE_INSTALL_USE_QT_SYS_PATHS=ON
     
     # 构建依赖
     build-packages:
@@ -55,12 +57,32 @@ parts:
       - qml6-module-qtquick-layouts
       - qml6-module-qtquick-templates
       - qml6-module-qtqml-workerscript
+    
+    # 构建后步骤：创建 desktop 文件和图标
+    override-build: |
+      craftctl default
+      # 创建 desktop 文件
+      mkdir -p $CRAFT_PART_INSTALL/usr/share/applications
+      cat > $CRAFT_PART_INSTALL/usr/share/applications/easykiconverter.desktop <<EOF
+      [Desktop Entry]
+      Type=Application
+      Name=EasyKiConverter
+      Comment=Convert LCSC and EasyEDA components to KiCad libraries
+      Exec=EasyKiConverter
+      Icon=easykiconverter
+      Categories=Development;Electronics;
+      Terminal=false
+      EOF
+      # 复制图标
+      mkdir -p $CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps
+      cp resources/icons/app_icon.png $CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/easykiconverter.png
 
 apps:
   easykiconverter:
     command: bin/EasyKiConverter
     extensions: [kde-neon]
     common-id: com.tangsangsimida.easykiconverter
+    desktop: usr/share/applications/easykiconverter.desktop
     plugs:
       - network
       - network-bind
