@@ -22,7 +22,7 @@ permissions:
 
 env:
   PRODUCT: EasyKiConverter
-  DOCKER_IMAGE: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+  DOCKER_IMAGE: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
 
 jobs:
   # ===========================================================================
@@ -33,7 +33,7 @@ jobs:
     name: 'Build Core (Compile & Prepare)'
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
       options: --user root
     steps:
       - name: Checkout
@@ -106,7 +106,7 @@ jobs:
     needs: build-core
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
       options: --user root
     steps:
       - uses: actions/checkout@v4 # 需要 checkout 以便 linuxdeploy 某些插件工作正常
@@ -148,7 +148,7 @@ jobs:
     needs: build-core
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -193,7 +193,7 @@ jobs:
     needs: build-core
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -230,7 +230,7 @@ jobs:
     needs: build-core
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
       options: --user root
     steps:
       - uses: actions/checkout@v4

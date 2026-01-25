@@ -37,7 +37,7 @@ jobs:
     timeout-minutes: 60
     # 使用统一构建环境
     container:
-      image: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
       options: --user root
 
     steps:
