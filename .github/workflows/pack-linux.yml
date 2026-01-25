@@ -166,12 +166,35 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: built-appdir
-          path: ${{ env.PRODUCT }}.AppDir
+          path: .
+
+      - name: Debug - List AppDir
+        run: |
+          echo "=== Listing current directory ==="
+          ls -la
+          echo "=== Checking for AppDir ==="
+          if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
+            echo "Found AppDir directory"
+            ls -R ${{ env.PRODUCT }}.AppDir | head -50
+          else
+            echo "AppDir directory not found, checking for nested directories..."
+            find . -maxdepth 2 -type d -name "AppDir" -o -name "usr" 2>/dev/null || true
+          fi
 
       - name: Generate DEB
         run: |
           export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
           export VERSION="${{ steps.version.outputs.VERSION }}"
+          
+          echo "=== APP_DIR = $APP_DIR ==="
+          echo "=== Checking APP_DIR ==="
+          if [ -d "$APP_DIR" ]; then
+            echo "APP_DIR exists"
+            ls -la "$APP_DIR"
+          else
+            echo "APP_DIR does not exist, looking for alternatives..."
+            find . -maxdepth 2 -type d -name "AppDir" 2>/dev/null
+          fi
           
           # 准备脚本
           mkdir -p scripts
@@ -211,12 +234,36 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: built-appdir
-          path: ${{ env.PRODUCT }}.AppDir
+          path: .
+
+      - name: Debug - List AppDir
+        run: |
+          echo "=== Listing current directory ==="
+          ls -la
+          echo "=== Checking for AppDir ==="
+          if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
+            echo "Found AppDir directory"
+            ls -R ${{ env.PRODUCT }}.AppDir | head -50
+          else
+            echo "AppDir directory not found, checking for nested directories..."
+            find . -maxdepth 2 -type d -name "AppDir" -o -name "usr" 2>/dev/null || true
+          fi
 
       - name: Generate RPM
         run: |
           export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
           export VERSION="${{ steps.version.outputs.VERSION }}"
+          
+          echo "=== APP_DIR = $APP_DIR ==="
+          echo "=== Checking APP_DIR ==="
+          if [ -d "$APP_DIR" ]; then
+            echo "APP_DIR exists"
+            ls -la "$APP_DIR"
+          else
+            echo "APP_DIR does not exist, looking for alternatives..."
+            find . -maxdepth 2 -type d -name "AppDir" 2>/dev/null
+          fi
+          
           mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
 
           nfpm pkg --packager rpm --target .
@@ -248,12 +295,36 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: built-appdir
-          path: ${{ env.PRODUCT }}.AppDir
+          path: .
+
+      - name: Debug - List AppDir
+        run: |
+          echo "=== Listing current directory ==="
+          ls -la
+          echo "=== Checking for AppDir ==="
+          if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
+            echo "Found AppDir directory"
+            ls -R ${{ env.PRODUCT }}.AppDir | head -50
+          else
+            echo "AppDir directory not found, checking for nested directories..."
+            find . -maxdepth 2 -type d -name "AppDir" -o -name "usr" 2>/dev/null || true
+          fi
 
       - name: Generate Arch Package
         run: |
           export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
           export VERSION="${{ steps.version.outputs.VERSION }}"
+          
+          echo "=== APP_DIR = $APP_DIR ==="
+          echo "=== Checking APP_DIR ==="
+          if [ -d "$APP_DIR" ]; then
+            echo "APP_DIR exists"
+            ls -la "$APP_DIR"
+          else
+            echo "APP_DIR does not exist, looking for alternatives..."
+            find . -maxdepth 2 -type d -name "AppDir" 2>/dev/null
+          fi
+          
           mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
 
           nfpm pkg --packager archlinux --target .
