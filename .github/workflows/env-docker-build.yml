@@ -2,7 +2,7 @@ name: Build Docker Environment
 
 on:
   push:
-    branches: ['master', 'main']
+    branches: ['master', 'dev', 'feat/**', 'feat*']
     paths:
       - 'docker/**'
       - '.github/workflows/env-docker-build.yml'
