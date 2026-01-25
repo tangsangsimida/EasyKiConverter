@@ -2,13 +2,13 @@
 
 on:
   push:
-    branches: ['master', 'main', 'ci_test']
+    branches: ['master', 'ci_test']
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
       - 'docs/**'
   pull_request:
-    branches: ['master', 'main', 'ci_test']
+    branches: ['master', 'dev', 'ci_test']
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
@@ -22,6 +22,7 @@ concurrency:
 permissions:
   contents: read
   checks: write
+  packages: read
 
 env:
   BUILD_TYPE: RelWithDebInfo
@@ -31,32 +32,27 @@ env:
 
 jobs:
   linux-build:
-    name: 'Build Linux'
+    name: 'Build Linux (Docker)'
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    strategy:
-      matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
+    # 使用统一构建环境
+    container:
+      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
+      options: --user root
+
     steps:
       - name: 'Checkout Source code'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env
-        with:
-          cmake-version: ${{ env.CMAKE_VERSION }}
-          qt-version: ${{ env.QT_VERSION }}
-          qt-host: 'linux'
-          qt-target: 'desktop'
-          enable-ccache: 'true'
-          enable-sccache: 'false'
+      - name: 'Fix Git Safe Directory'
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
       - name: 'Configure CMake with CCache'
         run: |
           cmake -B build \
-            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -G "Ninja" \
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -70,7 +66,7 @@ jobs:
       - name: 'Test'
         run: |
           cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR" -DCI=ON
+          cmake -B build -G "Ninja" -DCI=ON
           cmake --build build
           ctest --output-on-failure --timeout ${{ env.TEST_TIMEOUT }} --test-dir build --output-junit test-results.xml
 
@@ -79,7 +75,7 @@ jobs:
         uses: mikepenz/action-junit-report@v4
         with:
           report_paths: tests/build/test-results.xml
-          check_name: Test Report (Linux - ${{ matrix.os }})
+          check_name: Test Report (Linux)
           detailed_summary: true
           include_passed: true
 

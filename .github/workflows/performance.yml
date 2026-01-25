@@ -8,7 +8,7 @@ on:
       - 'LICENSE'
       - 'docs/**'
   pull_request:
-    branches: [ 'master', 'main' ]
+    branches: [ 'master', 'main', 'dev' ]
     paths-ignore:
       - 'README.md'
       - 'LICENSE'

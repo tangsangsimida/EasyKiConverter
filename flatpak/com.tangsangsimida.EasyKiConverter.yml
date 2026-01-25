@@ -1,0 +1,66 @@
+app-id: com.tangsangsimida.EasyKiConverter
+runtime: org.kde.Platform
+runtime-version: '6.6'
+sdk: org.kde.Sdk
+command: EasyKiConverter
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --share=network
+  - --filesystem=home
+
+modules:
+  - name: easykiconverter
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+      - -DCMAKE_INSTALL_PREFIX=/app
+    build-options:
+      cflags: -O2 -g
+      cxxflags: -O2 -g
+    build-commands:
+      - cmake --build . --parallel
+      - cmake --install .
+      - |
+        # 验证可执行文件是否被安装
+        if [ ! -f /app/bin/EasyKiConverter ]; then
+          echo "ERROR: EasyKiConverter executable was not installed!"
+          ls -la /app/bin/
+          exit 1
+        fi
+        echo "EasyKiConverter executable installed successfully"
+        ls -lh /app/bin/EasyKiConverter
+    post-install:
+      - |
+        # 创建 desktop 文件
+        mkdir -p /app/share/applications
+        cat > /app/share/applications/com.tangsangsimida.EasyKiConverter.desktop <<EOF
+        [Desktop Entry]
+        Type=Application
+        Name=EasyKiConverter
+        Comment=Convert LCSC and EasyEDA components to KiCad libraries
+        Exec=EasyKiConverter
+        Icon=com.tangsangsimida.EasyKiConverter
+        Categories=Development;Electronics;
+        Terminal=false
+        EOF
+        
+        # 复制图标（使用绝对路径）
+        mkdir -p /app/share/icons/hicolor/256x256/apps
+        if [ -f "/run/build/easykiconverter/resources/icons/app_icon.png" ]; then
+          cp /run/build/easykiconverter/resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/com.tangsangsimida.EasyKiConverter.png
+        elif [ -f "resources/icons/app_icon.png" ]; then
+          cp resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/com.tangsangsimida.EasyKiConverter.png
+        else
+          echo "Warning: Icon file not found, skipping icon installation"
+        fi
+        
+        # 更新桌面数据库
+        update-desktop-database /app/share/applications || true
+    sources:
+      - type: dir
+        path: .

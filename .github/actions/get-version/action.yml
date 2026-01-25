@@ -18,6 +18,9 @@ runs:
       id: get_version
       shell: bash
       run: |
+        # Fix for "detected dubious ownership" in Docker containers
+        git config --global --add safe.directory $GITHUB_WORKSPACE
+
         # 1. VERSION (from Tag or default)
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           VERSION=${GITHUB_REF#refs/tags/v}

@@ -189,7 +189,7 @@ jobs:
         if: matrix.type == 'portable'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-win-${{ matrix.config.arch }}-${{ matrix.type }}
+          name: EasyKiConverter-${{ env.VERSION }}-g${{ env.GIT_HASH }}-x64-portable
           path: |
             ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip
             ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip.sha256sum
@@ -199,7 +199,7 @@ jobs:
         if: matrix.type == 'installer'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-win-${{ matrix.config.arch }}-${{ matrix.type }}
+          name: EasyKiConverter-${{ env.VERSION }}-g${{ env.GIT_HASH }}-x64-setup
           path: |
             ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe
             ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe.sha256sum

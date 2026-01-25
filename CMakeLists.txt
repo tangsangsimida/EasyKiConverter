@@ -8,7 +8,24 @@ else()
     message(STATUS "VERSION_FROM_CI defined: ${VERSION_FROM_CI}")
 endif()
 
-project(EasyKiconverter_Cpp_Version VERSION ${VERSION_FROM_CI} LANGUAGES CXX)
+# 检查版本号格式 (X.Y.Z) 并提取有效的语义化版本号
+# 匹配格式：数字.数字.数字（可能包含后缀，如 3.0.1_test_release）
+if(VERSION_FROM_CI MATCHES "^([0-9]+\\.[0-9]+\\.[0-9]+)")
+    # 提取纯数字版本号（去掉后缀）
+    set(PROJECT_VERSION_SANITIZED ${CMAKE_MATCH_0})
+    message(STATUS "Extracted semantic version: ${PROJECT_VERSION_SANITIZED}")
+elseif(VERSION_FROM_CI MATCHES "^([0-9]+\\.[0-9]+)")
+    # 如果只有 X.Y 格式，添加 .0 补全
+    set(PROJECT_VERSION_SANITIZED "${CMAKE_MATCH_0}.0")
+    message(STATUS "Extracted semantic version (with .0): ${PROJECT_VERSION_SANITIZED}")
+else()
+    # 如果版本号不是数字格式 (例如 "dev")，使用安全的默认值
+    set(PROJECT_VERSION_SANITIZED "0.0.0")
+    message(STATUS "Version '${VERSION_FROM_CI}' is not semantic, defaulting project version to ${PROJECT_VERSION_SANITIZED}")
+endif()
+
+project(EasyKiconverter_Cpp_Version VERSION ${PROJECT_VERSION_SANITIZED} LANGUAGES CXX)
+
 
 # 显式设置版本号变量，确保 configure_file 能正确替换
 # 如果补丁号未定义或为空，默认设置为 0
@@ -97,7 +114,7 @@ message(STATUS "ZLIB_FOUND: ${ZLIB_FOUND}")
 message(STATUS "ZLIB_LIBRARY: ${ZLIB_LIBRARY}")
 message(STATUS "ZLIB_USE_QT: ${ZLIB_USE_QT}")
 
-qt_standard_project_setup(REQUIRES 6.8)
+qt_standard_project_setup(REQUIRES 6.6)
 
 # 添加源码模块（包含所有子模块的 CMakeLists.txt）
 add_subdirectory(src)
