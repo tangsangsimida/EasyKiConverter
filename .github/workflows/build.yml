@@ -2,13 +2,13 @@
 
 on:
   push:
-    branches: ['master', 'main', 'ci_test']
+    branches: ['master', 'dev', 'ci_test']
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
       - 'docs/**'
   pull_request:
-    branches: ['master', 'main', 'ci_test']
+    branches: ['master', 'dev', 'ci_test']
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
