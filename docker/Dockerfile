@@ -35,6 +35,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxkbcommon-x11-0 \
     libvulkan1 \
     libwayland-cursor0 \
+    libglib2.0-0 \
+    libsm6 \
+    libice6 \
+    libxext6 \
+    libxrender1 \
     libssl-dev \
     file \
     fuse \
