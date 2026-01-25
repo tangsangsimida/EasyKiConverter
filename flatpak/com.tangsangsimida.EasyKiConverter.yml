@@ -18,9 +18,21 @@ modules:
       - -DCMAKE_BUILD_TYPE=Release
       - -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
       - -DCMAKE_INSTALL_PREFIX=/app
+    build-options:
+      cflags: -O2 -g
+      cxxflags: -O2 -g
     build-commands:
       - cmake --build . --parallel
       - cmake --install .
+      - |
+        # 验证可执行文件是否被安装
+        if [ ! -f /app/bin/EasyKiConverter ]; then
+          echo "ERROR: EasyKiConverter executable was not installed!"
+          ls -la /app/bin/
+          exit 1
+        fi
+        echo "EasyKiConverter executable installed successfully"
+        ls -lh /app/bin/EasyKiConverter
     post-install:
       - |
         # 创建 desktop 文件

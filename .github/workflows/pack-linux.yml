@@ -460,12 +460,60 @@ jobs:
             fi
           done
 
+      - name: Debug Flatpak Source
+        run: |
+          echo "=== Listing flatpak directory ==="
+          ls -la flatpak/
+          echo "=== Checking for CMakeLists.txt ==="
+          if [ -f "flatpak/CMakeLists.txt" ]; then
+            echo "CMakeLists.txt found"
+            echo "=== First 30 lines of CMakeLists.txt ==="
+            head -30 flatpak/CMakeLists.txt
+          else
+            echo "ERROR: CMakeLists.txt not found!"
+            echo "=== All files in flatpak ==="
+            find flatpak -maxdepth 2 -type f
+          fi
+          echo "=== Checking for src directory ==="
+          if [ -d "flatpak/src" ]; then
+            echo "src directory found"
+            echo "=== Files in src ==="
+            ls -la flatpak/src/
+          else
+            echo "ERROR: src directory not found!"
+          fi
+
       - name: Build Flatpak
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: EasyKiConverter.flatpak
           manifest-path: flatpak/com.tangsangsimida.EasyKiConverter.yml
           cache-key: flatpak-builder-${{ github.sha }}
+          upload-artifact: false
+          verbose: true
+
+      - name: Check Flatpak Bundle Size
+        run: |
+          if [ -f "EasyKiConverter.flatpak" ]; then
+            SIZE=$(du -h EasyKiConverter.flatpak | cut -f1)
+            echo "Flatpak bundle size: $SIZE"
+            if [ "$SIZE" = "2.0M" ] || [ "$SIZE" = "2.1M" ]; then
+              echo "WARNING: Flatpak bundle is suspiciously small!"
+              echo "Listing contents of flatpak directory:"
+              find flatpak -type f -name "*.cpp" -o -name "*.h" | head -20
+              echo "Checking if CMakeLists.txt exists:"
+              if [ -f "flatpak/CMakeLists.txt" ]; then
+                echo "CMakeLists.txt found in flatpak directory"
+                head -20 flatpak/CMakeLists.txt
+              else
+                echo "ERROR: CMakeLists.txt not found in flatpak directory!"
+                ls -la flatpak/
+              fi
+            fi
+          else
+            echo "ERROR: EasyKiConverter.flatpak was not created!"
+            exit 1
+          fi
 
       - name: Rename & Checksum
         run: |
