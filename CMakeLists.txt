@@ -8,7 +8,17 @@ else()
     message(STATUS "VERSION_FROM_CI defined: ${VERSION_FROM_CI}")
 endif()
 
-project(EasyKiconverter_Cpp_Version VERSION ${VERSION_FROM_CI} LANGUAGES CXX)
+# 检查版本号格式 (X.Y.Z)
+if(VERSION_FROM_CI MATCHES "^[0-9]+\\.[0-9]+")
+    set(PROJECT_VERSION_SANITIZED ${VERSION_FROM_CI})
+else()
+    # 如果版本号不是数字格式 (例如 "dev")，使用安全的默认值
+    set(PROJECT_VERSION_SANITIZED "0.0.0")
+    message(STATUS "Version '${VERSION_FROM_CI}' is not semantic, defaulting project version to ${PROJECT_VERSION_SANITIZED}")
+endif()
+
+project(EasyKiconverter_Cpp_Version VERSION ${PROJECT_VERSION_SANITIZED} LANGUAGES CXX)
+
 
 # 显式设置版本号变量，确保 configure_file 能正确替换
 # 如果补丁号未定义或为空，默认设置为 0
