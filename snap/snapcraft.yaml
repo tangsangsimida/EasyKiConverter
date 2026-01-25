@@ -73,9 +73,15 @@ parts:
       Categories=Development;Electronics;
       Terminal=false
       EOF
-      # 复制图标
+      # 复制图标（从源代码目录）
       mkdir -p $CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps
-      cp resources/icons/app_icon.png $CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/easykiconverter.png
+      if [ -f "$CRAFT_PART_SRC/resources/icons/app_icon.png" ]; then
+        cp "$CRAFT_PART_SRC/resources/icons/app_icon.png" $CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/easykiconverter.png
+      elif [ -f "resources/icons/app_icon.png" ]; then
+        cp resources/icons/app_icon.png $CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/easykiconverter.png
+      else
+        echo "Warning: Icon file not found, skipping icon installation"
+      fi
 
 apps:
   easykiconverter:

@@ -44,4 +44,4 @@ modules:
         update-desktop-database /app/share/applications || true
     sources:
       - type: dir
-        path: ..
+        path: .
