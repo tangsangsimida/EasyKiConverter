@@ -194,13 +194,15 @@ jobs:
             export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
             echo "Found AppDir at: $APP_DIR"
           else
-            # 查找包含 usr/bin 的目录
-            FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -exec dirname {} \; 2>/dev/null | head -1)
-            if [ -n "$FOUND_DIR" ]; then
+            # 查找包含 usr/bin 的目录（排除当前目录）
+            FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -not -path '.' -exec dirname {} \; 2>/dev/null | head -1)
+            if [ -n "$FOUND_DIR" ] && [ "$FOUND_DIR" != "." ]; then
               export APP_DIR="${GITHUB_WORKSPACE}/${FOUND_DIR}"
               echo "Found AppDir-like structure at: $APP_DIR"
             else
               echo "ERROR: Could not find AppDir!"
+              echo "Available directories:"
+              find . -maxdepth 2 -type d
               exit 1
             fi
           fi
@@ -275,13 +277,15 @@ jobs:
             export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
             echo "Found AppDir at: $APP_DIR"
           else
-            # 查找包含 usr/bin 的目录
-            FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -exec dirname {} \; 2>/dev/null | head -1)
-            if [ -n "$FOUND_DIR" ]; then
+            # 查找包含 usr/bin 的目录（排除当前目录）
+            FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -not -path '.' -exec dirname {} \; 2>/dev/null | head -1)
+            if [ -n "$FOUND_DIR" ] && [ "$FOUND_DIR" != "." ]; then
               export APP_DIR="${GITHUB_WORKSPACE}/${FOUND_DIR}"
               echo "Found AppDir-like structure at: $APP_DIR"
             else
               echo "ERROR: Could not find AppDir!"
+              echo "Available directories:"
+              find . -maxdepth 2 -type d
               exit 1
             fi
           fi
@@ -349,13 +353,15 @@ jobs:
             export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
             echo "Found AppDir at: $APP_DIR"
           else
-            # 查找包含 usr/bin 的目录
-            FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -exec dirname {} \; 2>/dev/null | head -1)
-            if [ -n "$FOUND_DIR" ]; then
+            # 查找包含 usr/bin 的目录（排除当前目录）
+            FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -not -path '.' -exec dirname {} \; 2>/dev/null | head -1)
+            if [ -n "$FOUND_DIR" ] && [ "$FOUND_DIR" != "." ]; then
               export APP_DIR="${GITHUB_WORKSPACE}/${FOUND_DIR}"
               echo "Found AppDir-like structure at: $APP_DIR"
             else
               echo "ERROR: Could not find AppDir!"
+              echo "Available directories:"
+              find . -maxdepth 2 -type d
               exit 1
             fi
           fi
