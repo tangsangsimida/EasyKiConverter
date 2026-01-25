@@ -25,7 +25,7 @@ package-repositories:
 parts:
   easykiconverter:
     plugin: cmake
-    source: .
+    source: ..
     # 配置 CMake 参数
     cmake-parameters:
       - -DCMAKE_BUILD_TYPE=Release
