@@ -196,8 +196,12 @@ jobs:
           else
             # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/EasyKiConverter）
             if [ -f "usr/bin/EasyKiConverter" ] && [ -f "AppRun" ]; then
-              export APP_DIR="${GITHUB_WORKSPACE}/."
-              echo "Found AppDir structure in current directory"
+              # nfpm 不支持使用根目录，需要创建一个子目录
+              echo "Found AppDir structure in current directory, creating subdirectory for nfpm"
+              mkdir -p AppDir_temp
+              mv usr lib AppRun *.desktop app_icon.png AppDir_temp/ 2>/dev/null || true
+              export APP_DIR="${GITHUB_WORKSPACE}/AppDir_temp"
+              echo "Using AppDir at: $APP_DIR"
             else
               # 查找包含 usr/bin 的子目录
               FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -not -path '.' -exec dirname {} \; 2>/dev/null | head -1)
@@ -285,8 +289,12 @@ jobs:
           else
             # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/EasyKiConverter）
             if [ -f "usr/bin/EasyKiConverter" ] && [ -f "AppRun" ]; then
-              export APP_DIR="${GITHUB_WORKSPACE}/."
-              echo "Found AppDir structure in current directory"
+              # nfpm 不支持使用根目录，需要创建一个子目录
+              echo "Found AppDir structure in current directory, creating subdirectory for nfpm"
+              mkdir -p AppDir_temp
+              mv usr lib AppRun *.desktop app_icon.png AppDir_temp/ 2>/dev/null || true
+              export APP_DIR="${GITHUB_WORKSPACE}/AppDir_temp"
+              echo "Using AppDir at: $APP_DIR"
             else
               # 查找包含 usr/bin 的子目录
               FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -not -path '.' -exec dirname {} \; 2>/dev/null | head -1)
@@ -367,8 +375,12 @@ jobs:
           else
             # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/EasyKiConverter）
             if [ -f "usr/bin/EasyKiConverter" ] && [ -f "AppRun" ]; then
-              export APP_DIR="${GITHUB_WORKSPACE}/."
-              echo "Found AppDir structure in current directory"
+              # nfpm 不支持使用根目录，需要创建一个子目录
+              echo "Found AppDir structure in current directory, creating subdirectory for nfpm"
+              mkdir -p AppDir_temp
+              mv usr lib AppRun *.desktop app_icon.png AppDir_temp/ 2>/dev/null || true
+              export APP_DIR="${GITHUB_WORKSPACE}/AppDir_temp"
+              echo "Using AppDir at: $APP_DIR"
             else
               # 查找包含 usr/bin 的子目录
               FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -not -path '.' -exec dirname {} \; 2>/dev/null | head -1)
