@@ -61,7 +61,7 @@ jobs:
 
       - name: 'Build'
         run: |
-          cmake --build build --config $BUILD_TYPE --parallel
+          cmake --build build --config $BUILD_TYPE --parallel 16
 
       - name: 'Test'
         run: |

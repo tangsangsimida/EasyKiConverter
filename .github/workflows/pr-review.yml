@@ -1,4 +1,4 @@
-﻿name: 'Pull Request Review'
+name: 'Pull Request Review'
 
 on:
   pull_request:
@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   review-pr:
-    if: |- 
+    if: |-
       github.event_name == 'workflow_dispatch' ||
       (
         github.event_name == 'pull_request' &&
@@ -48,13 +48,13 @@ jobs:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |-
           set -euo pipefail
-          
+
           if [[ "${{ github.event_name }}" = "workflow_dispatch" ]]; then
             PR_NUMBER="${{ github.event.inputs.pr_number }}"
           else
             PR_NUMBER="${{ github.event.pull_request.number }}"
           fi
-          
+
           echo "pr_number=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
           PR_DATA="$(gh pr view "${PR_NUMBER}" --json title,body,additions,deletions,changedFiles,baseRefName,headRefName)"
           echo "pr_data=${PR_DATA}" >> "${GITHUB_OUTPUT}"
@@ -123,7 +123,7 @@ jobs:
             - 保持报告简洁明了
 
       - name: 'Post PR review failure comment'
-        if: |- 
+        if: |-
           ${{ failure() && steps.iflow_cli_pr_review.outcome == 'failure' }}
         uses: 'actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea'
         with:
