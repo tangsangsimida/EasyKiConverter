@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     python3 \
     python3-pip \
+    python3-dev \
     libgl1-mesa-dev \
     libxkbcommon-x11-0 \
     libvulkan1 \
