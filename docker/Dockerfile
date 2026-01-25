@@ -9,8 +9,8 @@ LABEL description="Build environment for EasyKiConverter with Qt 6 and LinuxDepl
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 构建参数
-ARG QT_VERSION=6.10.1
-ARG QT_MODULES="qt5compat qtimageformats qtmultimedia qtnetworkauth qtshadertools qtsvg qtwebsockets"
+ARG QT_VERSION=6.8.0
+ARG QT_MODULES="qtimageformats qtshadertools qtsvg"
 ARG QT_HOST=linux
 ARG QT_TARGET=desktop
 ARG QT_ARCH=linux_gcc_64
