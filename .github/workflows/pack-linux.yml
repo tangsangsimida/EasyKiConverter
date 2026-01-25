@@ -183,7 +183,7 @@ jobs:
 
       - name: Generate DEB
         run: |
-          export VERSION="${{ steps.version.outputs.VERSION }}"
+          export VERSION="${{ steps.version.outputs.VERSION}}"
           
           # 自动检测 AppDir 位置
           echo "=== Searching for AppDir ==="
@@ -226,8 +226,8 @@ jobs:
           echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
           chmod +x scripts/*.sh
 
-          # 打包
-          nfpm pkg --packager deb --target .
+          # 打包（直接使用 APP_DIR 的绝对值，不依赖环境变量替换）
+          nfpm pkg --packager deb --target . --config nfpm.yaml --env "APP_DIR=$APP_DIR"
 
           # 重命名
           find . -name "*.deb" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_amd64.deb \;
@@ -276,7 +276,7 @@ jobs:
 
       - name: Generate RPM
         run: |
-          export VERSION="${{ steps.version.outputs.VERSION }}"
+          export VERSION="${{ steps.version.outputs.VERSION}}"
           
           # 自动检测 AppDir 位置
           echo "=== Searching for AppDir ==="
@@ -316,7 +316,7 @@ jobs:
           
           mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
 
-          nfpm pkg --packager rpm --target .
+          nfpm pkg --packager rpm --target . --config nfpm.yaml --env "APP_DIR=$APP_DIR"
 
           find . -name "*.rpm" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.rpm \;
           sha256sum *.rpm | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.rpm.sha256sum
@@ -362,7 +362,7 @@ jobs:
 
       - name: Generate Arch Package
         run: |
-          export VERSION="${{ steps.version.outputs.VERSION }}"
+          export VERSION="${{ steps.version.outputs.VERSION}}"
           
           # 自动检测 AppDir 位置
           echo "=== Searching for AppDir ==="
@@ -402,7 +402,7 @@ jobs:
           
           mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
 
-          nfpm pkg --packager archlinux --target .
+          nfpm pkg --packager archlinux --target . --config nfpm.yaml --env "APP_DIR=$APP_DIR"
 
           find . -name "*.pkg.tar.zst" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.pkg.tar.zst \;
           sha256sum *.pkg.tar.zst | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.pkg.tar.zst.sha256sum
