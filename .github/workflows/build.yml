@@ -2,7 +2,7 @@
 
 on:
   push:
-    branches: ['master', 'dev', 'ci_test']
+    branches: ['master', 'ci_test']
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
