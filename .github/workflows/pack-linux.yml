@@ -434,7 +434,7 @@ jobs:
             *.sha256sum
 
   # ===========================================================================
-  # 阶段 3: 独立构建系统任务 (Flatpak & Snap)
+  # 阶段 3: 独立构建系统任务 (Flatpak)
   # 它们有自己的构建流程，无法复用 build-core 的 AppDir
   # ===========================================================================
 
@@ -547,62 +547,6 @@ jobs:
             *.flatpak
             *.sha256sum
 
-  pack-snap:
-    name: 'Package: Snap'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/get-version
-        id: version
-      
-      - name: Prepare Snap Source
-        run: |
-          # 将源代码复制到 snap 目录中，以便 snapcraft 能找到 CMakeLists.txt
-          # 使用 cp 命令代替 rsync
-          mkdir -p snap
-          
-          # 复制所有文件和目录（排除不需要的）
-          for item in *; do
-            case "$item" in
-              .git|build|temp_project|test_date|demo|.github|flatpak|snap|nfpm.yaml|mkdocs.yml|AGENTS.md|GEMINI.md|*.md)
-                # 跳过这些文件/目录
-                ;;
-              *)
-                # 复制其他文件/目录
-                cp -r "$item" snap/
-                ;;
-            esac
-          done
-          
-          # 复制隐藏文件（如 .clang-format, .gitignore）
-          for hidden in .clang-format .gitignore; do
-            if [ -f "$hidden" ]; then
-              cp "$hidden" snap/
-            fi
-          done
-      
-      - name: Build Snap
-        uses: snapcore/action-build@v1
-        id: snapbuild
-        with:
-          path: snap
-
-      - name: Rename & Checksum
-        run: |
-          FILENAME=${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_amd64.snap
-          find . -name "*.snap" -exec mv {} $FILENAME \;
-          sha256sum $FILENAME | tee $FILENAME.sha256sum
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pkg-snap
-          path: |
-            *.snap
-            *.sha256sum
-
   # ===========================================================================
   # 阶段 4: 发布
   # 汇总所有工件并发布
@@ -610,7 +554,7 @@ jobs:
   release:
     name: 'Publish Release'
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [pack-appimage, pack-deb, pack-rpm, pack-arch, pack-flatpak, pack-snap]
+    needs: [pack-appimage, pack-deb, pack-rpm, pack-arch, pack-flatpak]
     runs-on: ubuntu-latest
     permissions:
       contents: write
