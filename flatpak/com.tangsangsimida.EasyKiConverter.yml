@@ -49,9 +49,15 @@ modules:
         Terminal=false
         EOF
         
-        # 复制图标
+        # 复制图标（使用绝对路径）
         mkdir -p /app/share/icons/hicolor/256x256/apps
-        cp resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/com.tangsangsimida.EasyKiConverter.png
+        if [ -f "/run/build/easykiconverter/resources/icons/app_icon.png" ]; then
+          cp /run/build/easykiconverter/resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/com.tangsangsimida.EasyKiConverter.png
+        elif [ -f "resources/icons/app_icon.png" ]; then
+          cp resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/com.tangsangsimida.EasyKiConverter.png
+        else
+          echo "Warning: Icon file not found, skipping icon installation"
+        fi
         
         # 更新桌面数据库
         update-desktop-database /app/share/applications || true

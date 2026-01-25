@@ -226,8 +226,11 @@ jobs:
           echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
           chmod +x scripts/*.sh
 
-          # 打包（nfpm 会自动读取环境变量）
-          nfpm pkg --packager deb --target . --config nfpm.yaml
+          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
+          sed "s|\${APP_DIR}|$APP_DIR|g" nfpm.yaml > nfpm_temp.yaml
+
+          # 打包
+          nfpm pkg --packager deb --target . --config nfpm_temp.yaml
 
           # 重命名
           find . -name "*.deb" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_amd64.deb \;
@@ -316,7 +319,10 @@ jobs:
           
           mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
 
-          nfpm pkg --packager rpm --target . --config nfpm.yaml
+          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
+          sed "s|\${APP_DIR}|$APP_DIR|g" nfpm.yaml > nfpm_temp.yaml
+
+          nfpm pkg --packager rpm --target . --config nfpm_temp.yaml
 
           find . -name "*.rpm" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.rpm \;
           sha256sum *.rpm | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.rpm.sha256sum
@@ -402,7 +408,10 @@ jobs:
           
           mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
 
-          nfpm pkg --packager archlinux --target . --config nfpm.yaml
+          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
+          sed "s|\${APP_DIR}|$APP_DIR|g" nfpm.yaml > nfpm_temp.yaml
+
+          nfpm pkg --packager archlinux --target . --config nfpm_temp.yaml
 
           find . -name "*.pkg.tar.zst" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.pkg.tar.zst \;
           sha256sum *.pkg.tar.zst | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.pkg.tar.zst.sha256sum
