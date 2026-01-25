@@ -8,9 +8,16 @@ else()
     message(STATUS "VERSION_FROM_CI defined: ${VERSION_FROM_CI}")
 endif()
 
-# 检查版本号格式 (X.Y.Z)
-if(VERSION_FROM_CI MATCHES "^[0-9]+\\.[0-9]+")
-    set(PROJECT_VERSION_SANITIZED ${VERSION_FROM_CI})
+# 检查版本号格式 (X.Y.Z) 并提取有效的语义化版本号
+# 匹配格式：数字.数字.数字（可能包含后缀，如 3.0.1_test_release）
+if(VERSION_FROM_CI MATCHES "^([0-9]+\\.[0-9]+\\.[0-9]+)")
+    # 提取纯数字版本号（去掉后缀）
+    set(PROJECT_VERSION_SANITIZED ${CMAKE_MATCH_0})
+    message(STATUS "Extracted semantic version: ${PROJECT_VERSION_SANITIZED}")
+elseif(VERSION_FROM_CI MATCHES "^([0-9]+\\.[0-9]+)")
+    # 如果只有 X.Y 格式，添加 .0 补全
+    set(PROJECT_VERSION_SANITIZED "${CMAKE_MATCH_0}.0")
+    message(STATUS "Extracted semantic version (with .0): ${PROJECT_VERSION_SANITIZED}")
 else()
     # 如果版本号不是数字格式 (例如 "dev")，使用安全的默认值
     set(PROJECT_VERSION_SANITIZED "0.0.0")
