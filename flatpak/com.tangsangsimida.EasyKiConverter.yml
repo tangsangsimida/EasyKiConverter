@@ -18,26 +18,13 @@ modules:
       - -DCMAKE_BUILD_TYPE=Release
       - -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
       - -DCMAKE_INSTALL_PREFIX=/app
-      - -DCMAKE_INSTALL_LIBDIR=/app/lib
-      - -DCMAKE_INSTALL_BINDIR=/app/bin
-      - -DCMAKE_INSTALL_DATADIR=/app/share
-      - -DQT6_INSTALL_PREFIX=/app
-      - -DQT6_INSTALL_LIBS=/app/lib
-      - -DQT6_INSTALL_QML=/app/lib/qt6/qml
-      - -DQT6_INSTALL_PLUGINS=/app/lib/qt6/plugins
-      - -DQT6_INSTALL_TRANSLATIONS=/app/share/translations
     build-commands:
       - cmake --build . --parallel
       - cmake --install .
     post-install:
       - |
-        # 确保所有必要的目录存在
-        mkdir -p /app/lib/qt6/qml
-        mkdir -p /app/lib/qt6/plugins
-        mkdir -p /app/share/applications
-        mkdir -p /app/share/icons/hicolor/256x256/apps
-        
         # 创建 desktop 文件
+        mkdir -p /app/share/applications
         cat > /app/share/applications/com.tangsangsimida.EasyKiConverter.desktop <<EOF
         [Desktop Entry]
         Type=Application
@@ -50,7 +37,8 @@ modules:
         EOF
         
         # 复制图标
-        cp /app/share/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/com.tangsangsimida.EasyKiConverter.png
+        mkdir -p /app/share/icons/hicolor/256x256/apps
+        cp resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/com.tangsangsimida.EasyKiConverter.png
         
         # 更新桌面数据库
         update-desktop-database /app/share/applications || true
