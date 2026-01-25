@@ -141,7 +141,7 @@ jobs:
       - name: 'Artifact Upload'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-macos-${{ matrix.dist.arch }}
+          name: EasyKiConverter-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
           path: |
             ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
             ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum

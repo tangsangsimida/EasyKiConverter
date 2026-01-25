@@ -145,7 +145,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pkg-appimage
+          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-x86_64.AppImage
           path: |
             *.AppImage
             *.sha256sum
@@ -242,7 +242,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pkg-deb
+          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-amd64.deb
           path: |
             *.deb
             *.sha256sum
@@ -335,7 +335,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pkg-rpm
+          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-x86_64.rpm
           path: |
             *.rpm
             *.sha256sum
@@ -428,7 +428,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pkg-arch
+          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-x86_64.pkg.tar.zst
           path: |
             *.pkg.tar.zst
             *.sha256sum
@@ -542,7 +542,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pkg-flatpak
+          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-x86_64.flatpak
           path: |
             *.flatpak
             *.sha256sum
