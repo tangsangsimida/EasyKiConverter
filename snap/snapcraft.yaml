@@ -1,0 +1,72 @@
+name: easykiconverter
+base: core24
+version: 'git'
+summary: Convert LCSC and EasyEDA components to KiCad libraries
+description: |
+  EasyKiConverter is a powerful tool designed to convert electronic component 
+  data from LCSC and EasyEDA formats into KiCad libraries seamlessly.
+
+grade: stable
+confinement: strict
+
+# 定义架构
+platforms:
+  amd64:
+
+# 使用 KDE Neon 扩展以获得 Qt 6 支持
+# 注意：Snapcraft 的 KDE 扩展通常能很好地处理 Qt 依赖
+package-repositories:
+  - type: apt
+    components: [main]
+    suites: [noble]
+    key-id: 444DABCF3667D0283F894EDDE6D4736255751E5D
+    url: http://archive.neon.kde.org/user
+
+parts:
+  easykiconverter:
+    plugin: cmake
+    source: .
+    # 配置 CMake 参数
+    cmake-parameters:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+    
+    # 构建依赖
+    build-packages:
+      - build-essential
+      - cmake
+      - ninja-build
+      - qt6-base-dev
+      - qt6-declarative-dev
+      - qt6-tools-dev
+      - qt6-svg-dev
+      - libgl1-mesa-dev
+    
+    # 运行时库
+    stage-packages:
+      - libqt6gui6
+      - libqt6widgets6
+      - libqt6qml6
+      - libqt6quick6
+      - libqt6quickcontrols2-6
+      - libqt6svg6
+      - libqt6network6
+      - qml6-module-qtquick-controls
+      - qml6-module-qtquick-layouts
+      - qml6-module-qtquick-templates
+      - qml6-module-qtqml-workerscript
+
+apps:
+  easykiconverter:
+    command: bin/EasyKiConverter
+    extensions: [kde-neon]
+    common-id: com.tangsangsimida.easykiconverter
+    plugs:
+      - network
+      - network-bind
+      - home
+      - desktop
+      - desktop-legacy
+      - opengl
+      - wayland
+      - x11

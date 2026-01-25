@@ -1,4 +1,4 @@
-name: Packaging(Linux)
+name: Packaging (Linux)
 
 on:
   push:
@@ -18,108 +18,61 @@ concurrency:
 
 permissions:
   contents: write
+  packages: read
 
 env:
   PRODUCT: EasyKiConverter
-  RELEASE: 1
-  QT_VERSION: '6.10.1'
-  CMAKE_VERSION: '3.22'
+  DOCKER_IMAGE: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
 
 jobs:
-  appimage-pack:
-    name: 'Build AppImage on ${{ matrix.config.name }}'
-    runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - {
-              name: 'Ubuntu 20.04',
-              os: 'ubuntu',
-              symbol: 'focal',
-              arch: 'amd64'
-            }
+  # ===========================================================================
+  # 阶段 1: 核心构建 (Build Once)
+  # 编译代码，处理依赖，生成 AppDir 目录结构，供后续打包任务使用
+  # ===========================================================================
+  build-core:
+    name: 'Build Core (Compile & Prepare)'
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+      options: --user root
     steps:
-      - name: 'Checkout Source code'
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 'Get Version Info'
+      - name: Get Version
         id: version
         uses: ./.github/actions/get-version
 
-      - name: 'Export Version to Env'
-        shell: bash
+      - name: Export Version
         run: |
           echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
-          echo "VER_INFO=${{ steps.version.outputs.VER_INFO }}" >> $GITHUB_ENV
           echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}" >> $GITHUB_ENV
 
-      - name: 'Install AppImage Dependencies'
-        run: |
-          sudo apt-get -y -qq update
-          sudo apt-get -y --no-install-recommends install \
-            fuse \
-            appstream \
-            hicolor-icon-theme \
-            openssl \
-            ca-certificates
+      - name: Fix Git Safe Directory
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
-      - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env
-        with:
-          cmake-version: ${{ env.CMAKE_VERSION }}
-          qt-version: ${{ env.QT_VERSION }}
-          qt-host: 'linux'
-          qt-target: 'desktop'
-          enable-ccache: 'true'
-          enable-sccache: 'false'
-
-      - name: 'Download linuxdeploy'
-        run: |
-          curl -L -o linuxdeploy-x86_64.AppImage "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
-          chmod a+x linuxdeploy-x86_64.AppImage
-          echo "LINUXDEPLOY_BIN=${PWD}/linuxdeploy-x86_64.AppImage" >> $GITHUB_ENV
-
-      - name: 'Download linuxdeployqt-plugin-qt'
-        run: |
-          curl -L -o linuxdeploy-plugin-qt-x86_64.AppImage "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
-          chmod a+x linuxdeploy-plugin-qt-x86_64.AppImage
-
-      - name: 'Build application'
+      - name: Compile & Install
         run: |
           set -x
           APPIMAGE_DST_PATH=$GITHUB_WORKSPACE/${PRODUCT}.AppDir
           mkdir -p ${APPIMAGE_DST_PATH}
 
-          cd $GITHUB_WORKSPACE
-          cmake -B build \
-            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+          # 编译
+          cmake -B build -G "Ninja" \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_INSTALL_PREFIX=/usr \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
             -DVERSION_FROM_CI=${{ env.VERSION }}
+          
           cmake --build build --config RelWithDebInfo --parallel
           cmake --install build --prefix ${APPIMAGE_DST_PATH}/usr
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
-
-          # Debug: Find where qmake really is
-          echo "Qt6_DIR is: $Qt6_DIR"
-          QMAKE_PATH="$Qt6_DIR/bin/qmake"
           
-          if [ ! -f "$QMAKE_PATH" ]; then
-            echo "Error: qmake not found at $QMAKE_PATH"
-            # Fallback to checking PATH
-            QMAKE_PATH=$(which qmake)
-          fi
-          
-          echo "Found QMAKE at: $QMAKE_PATH"
-          export QMAKE="$QMAKE_PATH"
-          
-          # Create .desktop file
+          # 配置元数据
           cat > ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop <<EOF
           [Desktop Entry]
           Type=Application
@@ -130,122 +83,280 @@ jobs:
           Categories=Development;Electronics;
           Terminal=false
           EOF
-
-          # Copy icon
           cp resources/icons/app_icon.png ${APPIMAGE_DST_PATH}/app_icon.png
 
-          # Run linuxdeploy
-          ${LINUXDEPLOY_BIN} --appdir ${APPIMAGE_DST_PATH} --plugin qt --output appimage
+          # 关键步骤：运行 linuxdeploy 填充依赖库 (Qt libs 等) 到 AppDir
+          # 注意：这里不生成 AppImage 文件，只处理目录内容
+          linuxdeploy --appdir ${APPIMAGE_DST_PATH} --plugin qt
 
-          mv $GITHUB_WORKSPACE/EasyKiConverter-${VERSION}-x86_64.AppImage \
-             $GITHUB_WORKSPACE/${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}.x86_64.AppImage
-
-      - name: 'SHA256Sum of appimage'
-        run: |
-          cd "$GITHUB_WORKSPACE/" || { >&2 echo "Cannot cd to '$GITHUB_WORKSPACE/'!"; exit 11 ; }
-          sha256sum ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}.x86_64.AppImage | tee ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}.x86_64.AppImage.sha256sum
-
-      - name: 'Artifact Upload'
+      - name: Upload AppDir Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-appimage-x86_64
-          path: |
-            ${{ github.workspace }}/${{ env.PRODUCT }}-*.x86_64.AppImage
-            ${{ github.workspace }}/${{ env.PRODUCT }}-*.x86_64.AppImage.sha256sum
-          overwrite: true
+          name: built-appdir
+          path: ${{ github.workspace }}/${{ env.PRODUCT }}.AppDir
+          retention-days: 1
 
-      - name: 'Upload Release Asset'
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.x86_64.AppImage
-            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.x86_64.AppImage.sha256sum
-          generate_release_notes: false
-          draft: true
-          prerelease: false
-          fail_on_unmatched_files: false
+  # ===========================================================================
+  # 阶段 2: 独立打包任务 (Package Anywhere)
+  # 并行执行，互不干扰
+  # ===========================================================================
 
-  tarball-pack:
-    name: 'Build tarball on ${{ matrix.config.name }}'
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - {
-              name: 'Ubuntu 22.04',
-              os: 'ubuntu-22.04'
-            }
+  pack-appimage:
+    name: 'Package: AppImage'
+    needs: build-core
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+      options: --user root
     steps:
-      - name: 'Checkout Source code'
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4 # 需要 checkout 以便 linuxdeploy 某些插件工作正常
+      - uses: ./.github/actions/get-version
+        id: version
+      
+      - name: Download AppDir
+        uses: actions/download-artifact@v4
+        with:
+          name: built-appdir
+          path: ${{ env.PRODUCT }}.AppDir
+
+      - name: Generate AppImage
+        run: |
+          # 设置权限 (artifact 下载后可能丢失执行权限)
+          chmod -R +x ${{ env.PRODUCT }}.AppDir/AppRun
+          chmod -R +x ${{ env.PRODUCT }}.AppDir/usr/bin
+          
+          # 生成 AppImage
+          linuxdeploy --appdir ${{ env.PRODUCT }}.AppDir --output appimage
+          
+          # 重命名
+          mv EasyKiConverter-*.AppImage \
+             ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}.x86_64.AppImage
+          
+          # Checksum
+          sha256sum *.AppImage | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}.x86_64.AppImage.sha256sum
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg-appimage
+          path: |
+            *.AppImage
+            *.sha256sum
+
+  pack-deb:
+    name: 'Package: DEB (Debian/Ubuntu)'
+    needs: build-core
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/get-version
+        id: version
+
+      - name: Download AppDir
+        uses: actions/download-artifact@v4
+        with:
+          name: built-appdir
+          path: ${{ env.PRODUCT }}.AppDir
+
+      - name: Generate DEB
+        run: |
+          export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
+          export VERSION="${{ steps.version.outputs.VERSION }}"
+          
+          # 准备脚本
+          mkdir -p scripts
+          echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
+          chmod +x scripts/*.sh
+
+          # 打包
+          nfpm pkg --packager deb --target .
+
+          # 重命名
+          find . -name "*.deb" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_amd64.deb \;
+          
+          # Checksum
+          sha256sum *.deb | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_amd64.deb.sha256sum
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg-deb
+          path: |
+            *.deb
+            *.sha256sum
+
+  pack-rpm:
+    name: 'Package: RPM (RedHat/Fedora)'
+    needs: build-core
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/get-version
+        id: version
+
+      - name: Download AppDir
+        uses: actions/download-artifact@v4
+        with:
+          name: built-appdir
+          path: ${{ env.PRODUCT }}.AppDir
+
+      - name: Generate RPM
+        run: |
+          export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
+          export VERSION="${{ steps.version.outputs.VERSION }}"
+          mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
+
+          nfpm pkg --packager rpm --target .
+
+          find . -name "*.rpm" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.rpm \;
+          sha256sum *.rpm | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.rpm.sha256sum
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg-rpm
+          path: |
+            *.rpm
+            *.sha256sum
+
+  pack-arch:
+    name: 'Package: Arch Linux'
+    needs: build-core
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/tangsangsimida/easykiconverter_qt/build-env:latest
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/get-version
+        id: version
+
+      - name: Download AppDir
+        uses: actions/download-artifact@v4
+        with:
+          name: built-appdir
+          path: ${{ env.PRODUCT }}.AppDir
+
+      - name: Generate Arch Package
+        run: |
+          export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
+          export VERSION="${{ steps.version.outputs.VERSION }}"
+          mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
+
+          nfpm pkg --packager archlinux --target .
+
+          find . -name "*.pkg.tar.zst" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.pkg.tar.zst \;
+          sha256sum *.pkg.tar.zst | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.pkg.tar.zst.sha256sum
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg-arch
+          path: |
+            *.pkg.tar.zst
+            *.sha256sum
+
+  # ===========================================================================
+  # 阶段 3: 独立构建系统任务 (Flatpak & Snap)
+  # 它们有自己的构建流程，无法复用 build-core 的 AppDir
+  # ===========================================================================
+
+  pack-flatpak:
+    name: 'Package: Flatpak'
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:kde-6.6
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: 'Get Version Info'
+      - uses: ./.github/actions/get-version
         id: version
-        uses: ./.github/actions/get-version
+      - run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
-      - name: 'Export Version to Env'
-        shell: bash
-        run: |
-          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
-          echo "VER_INFO=${{ steps.version.outputs.VER_INFO }}" >> $GITHUB_ENV
-          echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}" >> $GITHUB_ENV
-
-      - name: 'Setup Build Environment'
-        uses: ./.github/actions/setup-env
+      - name: Build Flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
-          cmake-version: ${{ env.CMAKE_VERSION }}
-          qt-version: ${{ env.QT_VERSION }}
-          qt-host: 'linux'
-          qt-target: 'desktop'
-          enable-ccache: 'true'
-          enable-sccache: 'false'
+          bundle: EasyKiConverter.flatpak
+          manifest-path: flatpak/com.tangsangsimida.EasyKiConverter.yml
+          cache-key: flatpak-builder-${{ github.sha }}
 
-      - name: 'Build application'
+      - name: Rename & Checksum
         run: |
-          set -x
-          cd $GITHUB_WORKSPACE
-          cmake -B build \
-            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
-            -DVERSION_FROM_CI=${{ env.VERSION }}
-          cmake --build build --config RelWithDebInfo --parallel
+          FILENAME=${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}.flatpak
+          mv EasyKiConverter.flatpak $FILENAME
+          sha256sum $FILENAME | tee $FILENAME.sha256sum
 
-      - name: 'Create tarball'
-        run: |
-          mkdir -p ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}
-          cp -r build/bin/* ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/
-          cp -r build/lib/* ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/ 2>/dev/null || echo "No lib directory"
-          cp README*.md ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/ 2>/dev/null || echo "No README files"
-          cp LICENSE ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/
-          tar czf ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}/
-
-      - name: 'SHA256Sum of tarball'
-        run: |
-          cd "$GITHUB_WORKSPACE/" || { >&2 echo "Cannot cd to '$GITHUB_WORKSPACE/'!"; exit 11 ; }
-          sha256sum ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz | tee ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz.sha256sum
-
-      - name: 'Artifact Upload'
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PRODUCT }}-${{ env.VER_INFO }}-artifact-tarball-${{ matrix.config.os }}
+          name: pkg-flatpak
           path: |
-            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz
-            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz.sha256sum
-          overwrite: true
+            *.flatpak
+            *.sha256sum
 
-      - name: 'Upload Release Asset'
-        if: startsWith(github.ref, 'refs/tags/')
+  pack-snap:
+    name: 'Package: Snap'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/get-version
+        id: version
+      
+      - name: Build Snap
+        uses: snapcore/action-build@v1
+        id: snapbuild
+        with:
+          path: snap
+
+      - name: Rename & Checksum
+        run: |
+          FILENAME=${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_amd64.snap
+          find . -name "*.snap" -exec mv {} $FILENAME \;
+          sha256sum $FILENAME | tee $FILENAME.sha256sum
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg-snap
+          path: |
+            *.snap
+            *.sha256sum
+
+  # ===========================================================================
+  # 阶段 4: 发布
+  # 汇总所有工件并发布
+  # ===========================================================================
+  release:
+    name: 'Publish Release'
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [pack-appimage, pack-deb, pack-rpm, pack-arch, pack-flatpak, pack-snap]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pkg-*
+          merge-multiple: true
+          path: release_assets
+
+      - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz
-            ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.os }}.tar.gz.sha256sum
+          files: release_assets/*
           generate_release_notes: true
+          draft: true
+          prerelease: false
           fail_on_unmatched_files: false

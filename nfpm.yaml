@@ -1,0 +1,47 @@
+name: "easykiconverter"
+arch: "amd64"
+platform: "linux"
+version: "${VERSION}"
+release: "1"
+section: "devel"
+priority: "optional"
+maintainer: "EasyKiConverter Team"
+description: |
+  Convert LCSC and EasyEDA components to KiCad libraries.
+  This package is self-contained and includes all necessary Qt libraries.
+homepage: "https://github.com/tangsangsimida/EasyKiConverter_QT"
+license: "MIT"
+
+contents:
+  # 将 AppDir 的内容安装到 /opt/easykiconverter
+  - src: "${APP_DIR}/"
+    dst: "/opt/easykiconverter/"
+    type: tree
+
+  # 创建符号链接 /usr/bin/easykiconverter -> /opt/easykiconverter/AppRun
+  - src: "/opt/easykiconverter/AppRun"
+    dst: "/usr/bin/easykiconverter"
+    type: symlink
+
+  # 安装 desktop 文件
+  - src: "${APP_DIR}/EasyKiConverter.desktop"
+    dst: "/usr/share/applications/easykiconverter.desktop"
+    
+  # 安装图标
+  - src: "${APP_DIR}/app_icon.png"
+    dst: "/usr/share/icons/hicolor/256x256/apps/easykiconverter.png"
+
+overrides:
+  deb:
+    scripts:
+      postinstall: scripts/postinstall.sh
+      preremove: scripts/preremove.sh
+  rpm:
+    scripts:
+      postinstall: scripts/postinstall.sh
+      preremove: scripts/preremove.sh
+  archlinux:
+    pkgbase: easykiconverter-bin
+    packager: EasyKiConverter Team
+    # Arch Linux 包通常不使用 postinstall 脚本来更新 desktop 数据库，而是依赖 pacman hooks
+    # 但我们可以保留基本的 scripts 如果需要

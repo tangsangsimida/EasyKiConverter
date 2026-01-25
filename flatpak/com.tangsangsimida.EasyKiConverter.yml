@@ -1,0 +1,22 @@
+app-id: com.tangsangsimida.EasyKiConverter
+runtime: org.kde.Platform
+runtime-version: '6.6'
+sdk: org.kde.Sdk
+command: EasyKiConverter
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --share=network
+  - --filesystem=home
+
+modules:
+  - name: easykiconverter
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
+    sources:
+      - type: dir
+        path: ..
