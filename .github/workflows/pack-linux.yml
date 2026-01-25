@@ -183,18 +183,31 @@ jobs:
 
       - name: Generate DEB
         run: |
-          export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
           export VERSION="${{ steps.version.outputs.VERSION }}"
           
-          echo "=== APP_DIR = $APP_DIR ==="
-          echo "=== Checking APP_DIR ==="
-          if [ -d "$APP_DIR" ]; then
-            echo "APP_DIR exists"
-            ls -la "$APP_DIR"
+          # 自动检测 AppDir 位置
+          echo "=== Searching for AppDir ==="
+          if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
+            export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
+            echo "Found AppDir at: $APP_DIR"
+          elif [ -d "AppDir" ]; then
+            export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
+            echo "Found AppDir at: $APP_DIR"
           else
-            echo "APP_DIR does not exist, looking for alternatives..."
-            find . -maxdepth 2 -type d -name "AppDir" 2>/dev/null
+            # 查找包含 usr/bin 的目录
+            FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -exec dirname {} \; 2>/dev/null | head -1)
+            if [ -n "$FOUND_DIR" ]; then
+              export APP_DIR="${GITHUB_WORKSPACE}/${FOUND_DIR}"
+              echo "Found AppDir-like structure at: $APP_DIR"
+            else
+              echo "ERROR: Could not find AppDir!"
+              exit 1
+            fi
           fi
+          
+          echo "=== APP_DIR = $APP_DIR ==="
+          echo "=== Verifying APP_DIR ==="
+          ls -la "$APP_DIR" | head -20
           
           # 准备脚本
           mkdir -p scripts
@@ -251,18 +264,31 @@ jobs:
 
       - name: Generate RPM
         run: |
-          export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
           export VERSION="${{ steps.version.outputs.VERSION }}"
           
-          echo "=== APP_DIR = $APP_DIR ==="
-          echo "=== Checking APP_DIR ==="
-          if [ -d "$APP_DIR" ]; then
-            echo "APP_DIR exists"
-            ls -la "$APP_DIR"
+          # 自动检测 AppDir 位置
+          echo "=== Searching for AppDir ==="
+          if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
+            export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
+            echo "Found AppDir at: $APP_DIR"
+          elif [ -d "AppDir" ]; then
+            export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
+            echo "Found AppDir at: $APP_DIR"
           else
-            echo "APP_DIR does not exist, looking for alternatives..."
-            find . -maxdepth 2 -type d -name "AppDir" 2>/dev/null
+            # 查找包含 usr/bin 的目录
+            FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -exec dirname {} \; 2>/dev/null | head -1)
+            if [ -n "$FOUND_DIR" ]; then
+              export APP_DIR="${GITHUB_WORKSPACE}/${FOUND_DIR}"
+              echo "Found AppDir-like structure at: $APP_DIR"
+            else
+              echo "ERROR: Could not find AppDir!"
+              exit 1
+            fi
           fi
+          
+          echo "=== APP_DIR = $APP_DIR ==="
+          echo "=== Verifying APP_DIR ==="
+          ls -la "$APP_DIR" | head -20
           
           mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
 
@@ -312,18 +338,31 @@ jobs:
 
       - name: Generate Arch Package
         run: |
-          export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
           export VERSION="${{ steps.version.outputs.VERSION }}"
           
-          echo "=== APP_DIR = $APP_DIR ==="
-          echo "=== Checking APP_DIR ==="
-          if [ -d "$APP_DIR" ]; then
-            echo "APP_DIR exists"
-            ls -la "$APP_DIR"
+          # 自动检测 AppDir 位置
+          echo "=== Searching for AppDir ==="
+          if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
+            export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
+            echo "Found AppDir at: $APP_DIR"
+          elif [ -d "AppDir" ]; then
+            export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
+            echo "Found AppDir at: $APP_DIR"
           else
-            echo "APP_DIR does not exist, looking for alternatives..."
-            find . -maxdepth 2 -type d -name "AppDir" 2>/dev/null
+            # 查找包含 usr/bin 的目录
+            FOUND_DIR=$(find . -maxdepth 2 -type d -name "usr" -exec dirname {} \; 2>/dev/null | head -1)
+            if [ -n "$FOUND_DIR" ]; then
+              export APP_DIR="${GITHUB_WORKSPACE}/${FOUND_DIR}"
+              echo "Found AppDir-like structure at: $APP_DIR"
+            else
+              echo "ERROR: Could not find AppDir!"
+              exit 1
+            fi
           fi
+          
+          echo "=== APP_DIR = $APP_DIR ==="
+          echo "=== Verifying APP_DIR ==="
+          ls -la "$APP_DIR" | head -20
           
           mkdir -p scripts && echo "#!/bin/sh" > scripts/postinstall.sh && chmod +x scripts/*.sh
 
