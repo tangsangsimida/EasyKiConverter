@@ -87,9 +87,11 @@ jobs:
 
           # 关键步骤：运行 linuxdeploy 填充依赖库 (Qt libs 等) 到 AppDir
           # 注意：这里不生成 AppImage 文件，只处理目录内容
+          # --icon-file 参数必须指向 AppDir 中的图标文件，而不是源路径
           linuxdeploy --appdir ${APPIMAGE_DST_PATH} --plugin qt \
             --executable ${APPIMAGE_DST_PATH}/usr/bin/EasyKiConverter \
-            --desktop-file ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop
+            --desktop-file ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop \
+            --icon-file ${APPIMAGE_DST_PATH}/app_icon.png
 
       - name: Upload AppDir Artifact
         uses: actions/upload-artifact@v4
