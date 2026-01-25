@@ -429,6 +429,23 @@ jobs:
       - uses: ./.github/actions/get-version
         id: version
       
+      - name: Prepare Snap Source
+        run: |
+          # 将源代码复制到 snap 目录中，以便 snapcraft 能找到 CMakeLists.txt
+          # 排除不需要的目录
+          rsync -av --exclude='.git' \
+                    --exclude='build' \
+                    --exclude='temp_project' \
+                    --exclude='test_date' \
+                    --exclude='demo' \
+                    --exclude='.github' \
+                    --exclude='flatpak' \
+                    --exclude='snap' \
+                    --exclude='nfpm.yaml' \
+                    --exclude='mkdocs.yml' \
+                    --exclude='*.md' \
+                    . snap/
+      
       - name: Build Snap
         uses: snapcore/action-build@v1
         id: snapbuild
