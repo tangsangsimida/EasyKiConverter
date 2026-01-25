@@ -407,21 +407,28 @@ jobs:
       - name: Prepare Flatpak Source
         run: |
           # 将源代码复制到 flatpak 目录中，以便 flatpak-builder 能找到
-          # 排除不需要的目录和文件
-          rsync -av --exclude='.git' \
-                    --exclude='build' \
-                    --exclude='temp_project' \
-                    --exclude='test_date' \
-                    --exclude='demo' \
-                    --exclude='.github' \
-                    --exclude='snap' \
-                    --exclude='flatpak' \
-                    --exclude='nfpm.yaml' \
-                    --exclude='mkdocs.yml' \
-                    --exclude='AGENTS.md' \
-                    --exclude='GEMINI.md' \
-                    --exclude='*.md' \
-                    . flatpak/
+          # 使用 cp 命令代替 rsync（容器中可能没有 rsync）
+          mkdir -p flatpak
+          
+          # 复制所有文件和目录（排除不需要的）
+          for item in *; do
+            case "$item" in
+              .git|build|temp_project|test_date|demo|.github|snap|flatpak|nfpm.yaml|mkdocs.yml|AGENTS.md|GEMINI.md|*.md)
+                # 跳过这些文件/目录
+                ;;
+              *)
+                # 复制其他文件/目录
+                cp -r "$item" flatpak/
+                ;;
+            esac
+          done
+          
+          # 复制隐藏文件（如 .clang-format, .gitignore）
+          for hidden in .clang-format .gitignore; do
+            if [ -f "$hidden" ]; then
+              cp "$hidden" flatpak/
+            fi
+          done
 
       - name: Build Flatpak
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
@@ -457,19 +464,28 @@ jobs:
       - name: Prepare Snap Source
         run: |
           # 将源代码复制到 snap 目录中，以便 snapcraft 能找到 CMakeLists.txt
-          # 排除不需要的目录
-          rsync -av --exclude='.git' \
-                    --exclude='build' \
-                    --exclude='temp_project' \
-                    --exclude='test_date' \
-                    --exclude='demo' \
-                    --exclude='.github' \
-                    --exclude='flatpak' \
-                    --exclude='snap' \
-                    --exclude='nfpm.yaml' \
-                    --exclude='mkdocs.yml' \
-                    --exclude='*.md' \
-                    . snap/
+          # 使用 cp 命令代替 rsync
+          mkdir -p snap
+          
+          # 复制所有文件和目录（排除不需要的）
+          for item in *; do
+            case "$item" in
+              .git|build|temp_project|test_date|demo|.github|flatpak|snap|nfpm.yaml|mkdocs.yml|AGENTS.md|GEMINI.md|*.md)
+                # 跳过这些文件/目录
+                ;;
+              *)
+                # 复制其他文件/目录
+                cp -r "$item" snap/
+                ;;
+            esac
+          done
+          
+          # 复制隐藏文件（如 .clang-format, .gitignore）
+          for hidden in .clang-format .gitignore; do
+            if [ -f "$hidden" ]; then
+              cp "$hidden" snap/
+            fi
+          done
       
       - name: Build Snap
         uses: snapcore/action-build@v1
