@@ -40,6 +40,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libice6 \
     libxext6 \
     libxrender1 \
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    libx11-dev \
+    libx11-xcb-dev \
     libssl-dev \
     file \
     fuse \
