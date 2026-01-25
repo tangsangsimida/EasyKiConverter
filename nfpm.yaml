@@ -26,7 +26,7 @@ contents:
   # 安装 desktop 文件
   - src: "${APP_DIR}/EasyKiConverter.desktop"
     dst: "/usr/share/applications/easykiconverter.desktop"
-    
+
   # 安装图标
   - src: "${APP_DIR}/app_icon.png"
     dst: "/usr/share/icons/hicolor/256x256/apps/easykiconverter.png"
@@ -40,8 +40,4 @@ overrides:
     scripts:
       postinstall: scripts/postinstall.sh
       preremove: scripts/preremove.sh
-  archlinux:
-    pkgbase: easykiconverter-bin
-    packager: EasyKiConverter Team
-    # Arch Linux 包通常不使用 postinstall 脚本来更新 desktop 数据库，而是依赖 pacman hooks
-    # 但我们可以保留基本的 scripts 如果需要
+

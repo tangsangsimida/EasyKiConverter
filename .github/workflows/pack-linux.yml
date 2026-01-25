@@ -87,7 +87,9 @@ jobs:
 
           # 关键步骤：运行 linuxdeploy 填充依赖库 (Qt libs 等) 到 AppDir
           # 注意：这里不生成 AppImage 文件，只处理目录内容
-          linuxdeploy --appdir ${APPIMAGE_DST_PATH} --plugin qt
+          linuxdeploy --appdir ${APPIMAGE_DST_PATH} --plugin qt \
+            --executable ${APPIMAGE_DST_PATH}/usr/bin/EasyKiConverter \
+            --desktop-file ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop
 
       - name: Upload AppDir Artifact
         uses: actions/upload-artifact@v4
@@ -119,14 +121,17 @@ jobs:
           name: built-appdir
           path: ${{ env.PRODUCT }}.AppDir
 
+      - name: Debug - List AppDir
+        run: ls -R ${{ env.PRODUCT }}.AppDir
+
       - name: Generate AppImage
         run: |
-          # 设置权限 (artifact 下载后可能丢失执行权限)
-          chmod -R +x ${{ env.PRODUCT }}.AppDir/AppRun
-          chmod -R +x ${{ env.PRODUCT }}.AppDir/usr/bin
-          
-          # 生成 AppImage
-          linuxdeploy --appdir ${{ env.PRODUCT }}.AppDir --output appimage
+          # 重新运行 linuxdeploy 以生成 AppImage
+          # 必须再次指定 executable 和 desktop-file 否则 AppRun 可能不会正确链接
+          linuxdeploy --appdir ${{ env.PRODUCT }}.AppDir --plugin qt \
+            --executable ${{ env.PRODUCT }}.AppDir/usr/bin/EasyKiConverter \
+            --desktop-file ${{ env.PRODUCT }}.AppDir/EasyKiConverter.desktop \
+            --output appimage
           
           # 重命名
           mv EasyKiConverter-*.AppImage \
