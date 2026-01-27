@@ -1,4 +1,4 @@
-﻿#include "EasyedaImporter.h"
+#include "EasyedaImporter.h"
 
 #include <QDebug>
 #include <QJsonDocument>
@@ -13,8 +13,6 @@ EasyedaImporter::~EasyedaImporter() {}
 
 QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject& cadData) {
     auto symbolData = QSharedPointer<SymbolData>::create();
-
-    // 导入顶层字段（result 对象的根字段�?
 
     SymbolInfo info;
     info.uuid = cadData["uuid"].toString();
@@ -38,7 +36,6 @@ QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject& 
         if (dataStr.contains("head")) {
             QJsonObject head = dataStr["head"].toObject();
 
-            // 编辑器信�?
             info.editorVersion = head["editorVersion"].toString();
 
             // 项目信息
@@ -66,7 +63,6 @@ QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject& 
             }
         }
 
-        // �?lcsc 字段获取数据手册 URL
         if (cadData.contains("lcsc")) {
             QJsonObject lcsc = cadData["lcsc"].toObject();
             info.datasheet = lcsc["url"].toString();
@@ -75,21 +71,16 @@ QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject& 
 
     symbolData->setInfo(info);
 
-    // 导入边界�?
     if (cadData.contains("dataStr")) {
         QJsonObject dataStr = cadData["dataStr"].toObject();
         SymbolBBox symbolBbox;
         if (dataStr.contains("BBox")) {
-            // �?dataStr.BBox 中读取边界框数据
             QJsonObject bbox = dataStr["BBox"].toObject();
             symbolBbox.x = bbox["x"].toDouble();
             symbolBbox.y = bbox["y"].toDouble();
             symbolBbox.width = bbox["width"].toDouble();
             symbolBbox.height = bbox["height"].toDouble();
-            // qDebug() << "Symbol BBox from dataStr.BBox - x:" << symbolBbox.x << "y:" << symbolBbox.y
-            // << "width:" << symbolBbox.width << "height:" << symbolBbox.height;
         } else if (dataStr.contains("head")) {
-            // 如果没有 BBox，使�?head.x �?head.y 作为中心点，width �?height 设为 0
             QJsonObject head = dataStr["head"].toObject();
             symbolBbox.x = head["x"].toDouble();
             symbolBbox.y = head["y"].toDouble();
@@ -100,7 +91,6 @@ QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject& 
         symbolData->setBbox(symbolBbox);
     }
 
-    // 导入几何数据（引脚、矩形、圆、圆弧、多边形、路径、文本等�?
     qDebug() << "=== EasyedaImporter::importSymbolData - Starting geometry data import ===";
     if (cadData.contains("dataStr")) {
         QJsonObject dataStr = cadData["dataStr"].toObject();
@@ -120,7 +110,6 @@ QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject& 
             } else {
                 qDebug() << "Found" << subparts.size() << "subparts in symbol";
 
-                // 导入每个子部�?
                 for (int i = 0; i < subparts.size(); ++i) {
                     QJsonObject subpart = subparts[i].toObject();
                     if (subpart.contains("dataStr")) {
@@ -161,45 +150,36 @@ QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject& 
                                     SymbolRectangle rectangle = importRectangleData(shapeString);
                                     part.rectangles.append(rectangle);
                                 } else if (designator == "C") {
-                                    // 导入�?
                                     SymbolCircle circle = importCircleData(shapeString);
                                     part.circles.append(circle);
                                 } else if (designator == "A") {
-                                    // 导入圆弧
                                     SymbolArc arc = importArcData(shapeString);
                                     part.arcs.append(arc);
                                 } else if (designator == "PL") {
-                                    // 导入多段�?
                                     SymbolPolyline polyline = importPolylineData(shapeString);
                                     part.polylines.append(polyline);
                                 } else if (designator == "PG") {
-                                    // 导入多边�?
                                     SymbolPolygon polygon = importPolygonData(shapeString);
                                     part.polygons.append(polygon);
                                 } else if (designator == "PT") {
-                                    // 导入路径
                                     SymbolPath path = importPathData(shapeString);
                                     part.paths.append(path);
                                 } else if (designator == "T") {
-                                    // 导入文本元素
                                     SymbolText text = importTextData(shapeString);
                                     part.texts.append(text);
                                 } else if (designator == "E") {
-                                    // 导入椭圆
                                     SymbolEllipse ellipse = importEllipseData(shapeString);
                                     part.ellipses.append(ellipse);
                                 }
                             }
                         }
 
-                        // 添加部分到符号数�?
                         symbolData->addPart(part);
                         qDebug() << "Imported subpart" << i << "with" << part.pins.size() << "pins,"
                                  << part.rectangles.size() << "rectangles";
                     }
                 }
 
-                // 如果 subparts 不为空，则跳过单部分符号的处�?
                 if (!subparts.isEmpty()) {
                     qDebug() << "Multi-part symbol processed, skipping single-part symbol processing";
                     return symbolData;
@@ -239,37 +219,30 @@ QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject& 
                     symbolData->addRectangle(rectangle);
                     qDebug() << "  -> Added rectangle";
                 } else if (designator == "C") {
-                    // 导入�?
                     SymbolCircle circle = importCircleData(shapeString);
                     symbolData->addCircle(circle);
                     qDebug() << "  -> Added circle";
                 } else if (designator == "A") {
-                    // 导入圆弧
                     SymbolArc arc = importArcData(shapeString);
                     symbolData->addArc(arc);
                     qDebug() << "  -> Added arc";
                 } else if (designator == "PL") {
-                    // 导入多段�?
                     SymbolPolyline polyline = importPolylineData(shapeString);
                     symbolData->addPolyline(polyline);
                     qDebug() << "  -> Added polyline";
                 } else if (designator == "PG") {
-                    // 导入多边�?
                     SymbolPolygon polygon = importPolygonData(shapeString);
                     symbolData->addPolygon(polygon);
                     qDebug() << "  -> Added polygon";
                 } else if (designator == "PT") {
-                    // 导入路径
                     SymbolPath path = importPathData(shapeString);
                     symbolData->addPath(path);
                     qDebug() << "  -> Added path";
                 } else if (designator == "T") {
-                    // 导入文本元素
                     SymbolText text = importTextData(shapeString);
                     symbolData->addText(text);
                     qDebug() << "  -> Added text:" << text.text;
                 } else if (designator == "E") {
-                    // 导入椭圆
                     SymbolEllipse ellipse = importEllipseData(shapeString);
                     symbolData->addEllipse(ellipse);
                     qDebug() << "  -> Added ellipse";
@@ -308,14 +281,11 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
         if (packageDetail.contains("dataStr")) {
             QJsonObject dataStr = packageDetail["dataStr"].toObject();
 
-            // �?dataStr.head 中获取封装信�?
             if (dataStr.contains("head")) {
                 QJsonObject head = dataStr["head"].toObject();
 
-                // 编辑器信�?
                 info.editorVersion = head["editorVersion"].toString();
 
-                // 项目信息
                 info.puuid = head["puuid"].toString();
                 info.utime = head["utime"].toVariant().toLongLong();
                 info.importFlag = head["importFlag"].toBool(false);
@@ -326,11 +296,9 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
                     QJsonObject c_para = head["c_para"].toObject();
                     info.name = c_para["package"].toString();
 
-                    // 判断是否�?SMD
                     bool isSmd = cadData.contains("SMT") && cadData["SMT"].toBool();
                     info.type = isSmd ? "smd" : "tht";
 
-                    // 获取 3D 模型名称
                     if (c_para.contains("3DModel")) {
                         info.model3DName = c_para["3DModel"].toString();
                     }
@@ -346,7 +314,6 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
                     info.canvas = dataStr["canvas"].toString();
                 }
 
-                // 保存层定�?
                 if (dataStr.contains("layers")) {
                     QJsonArray layersArray = dataStr["layers"].toArray();
                     QStringList layers;
@@ -356,7 +323,6 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
                     info.layers = layers.join("\n");
                 }
 
-                // 保存对象可见�?
                 if (dataStr.contains("objects")) {
                     QJsonArray objectsArray = dataStr["objects"].toArray();
                     QStringList objects;
@@ -378,7 +344,6 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
                     footprintBbox.width = bbox["width"].toDouble();
                     footprintBbox.height = bbox["height"].toDouble();
                 } else {
-                    // 如果没有 BBox，使�?head.x �?head.y 作为中心�?
                     footprintBbox.x = head["x"].toDouble();
                     footprintBbox.y = head["y"].toDouble();
                     footprintBbox.width = 0;
@@ -390,7 +355,6 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
             // 导入几何数据（焊盘、走线、孔等）
             if (dataStr.contains("shape")) {
                 QJsonArray shapes = dataStr["shape"].toArray();
-                // qDebug() << "Found" << shapes.size() << "shapes in footprint";
 
                 for (const QJsonValue& shapeValue : shapes) {
                     QString shapeString = shapeValue.toString();
@@ -402,88 +366,59 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
                     QString designator = parts[0];
 
                     if (designator == "PAD") {
-                        // 导入焊盘
                         FootprintPad pad = importPadData(shapeString);
                         footprintData->addPad(pad);
-                        // qDebug() << "Imported pad:" << pad.number;
                     } else if (designator == "TRACK") {
-                        // 导入走线
                         FootprintTrack track = importTrackData(shapeString);
                         footprintData->addTrack(track);
-                        // qDebug() << "Imported track";
                     } else if (designator == "HOLE") {
-                        // 导入�?
                         FootprintHole hole = importHoleData(shapeString);
                         footprintData->addHole(hole);
-                        // qDebug() << "Imported hole";
                     } else if (designator == "CIRCLE") {
-                        // 导入�?
                         FootprintCircle circle = importFootprintCircleData(shapeString);
                         footprintData->addCircle(circle);
-                        // qDebug() << "Imported circle";
                     } else if (designator == "ARC") {
-                        // 导入圆弧
                         FootprintArc arc = importFootprintArcData(shapeString);
                         footprintData->addArc(arc);
-                        // qDebug() << "Imported arc";
                     } else if (designator == "RECT") {
-                        // 导入矩形
                         FootprintRectangle rectangle = importFootprintRectangleData(shapeString);
                         footprintData->addRectangle(rectangle);
-                        // qDebug() << "Imported rectangle";
                     } else if (designator == "TEXT") {
-                        // 导入文本
                         FootprintText text = importFootprintTextData(shapeString);
                         footprintData->addText(text);
-                        // qDebug() << "Imported text:" << text.text;
                     } else if (designator == "POLYLINE" || designator == "PL") {
-                        // 导入多段线（可能是丝印）
-                        FootprintTrack track = importTrackData(shapeString);  // 复用 track 格式
+                        FootprintTrack track = importTrackData(shapeString);
                         footprintData->addTrack(track);
-                        // qDebug() << "Imported polyline (layer" << track.layerId << ")";
                     } else if (designator == "POLYGON" || designator == "PG") {
-                        // 导入多边形（可能是丝印）
-                        FootprintTrack track = importTrackData(shapeString);  // 复用 track 格式
+                        FootprintTrack track = importTrackData(shapeString);
                         footprintData->addTrack(track);
-                        // qDebug() << "Imported polygon (layer" << track.layerId << ")";
                     } else if (designator == "PATH" || designator == "PT") {
-                        // 导入路径（可能是丝印�?
-                        FootprintTrack track = importTrackData(shapeString);  // 复用 track 格式
+                        FootprintTrack track = importTrackData(shapeString);
                         footprintData->addTrack(track);
-                        // qDebug() << "Imported path (layer" << track.layerId << ")";
                     } else if (designator == "SVGNODE") {
-                        // 导入 SVGNODE（可能是 3D 模型或外形轮廓）
-                        // qDebug() << "Found SVGNODE, parsing...";
                         importSvgNodeData(shapeString, footprintData);
                     } else if (designator == "SOLIDREGION") {
-                        // 导入实体填充区域（禁止布线区�?
                         FootprintSolidRegion solidRegion = importSolidRegionData(shapeString);
                         footprintData->addSolidRegion(solidRegion);
-                        // qDebug() << "Imported solid region";
                     }
                 }
 
-                // 导入层定�?
                 if (dataStr.contains("layers")) {
                     QJsonArray layers = dataStr["layers"].toArray();
-                    // qDebug() << "Found" << layers.size() << "layers";
                     for (const QJsonValue& layerValue : layers) {
                         LayerDefinition layer = parseLayerDefinition(layerValue.toString());
                         footprintData->addLayer(layer);
                     }
                 }
 
-                // 导入对象可见性配�?
                 if (dataStr.contains("objects")) {
                     QJsonArray objects = dataStr["objects"].toArray();
-                    // qDebug() << "Found" << objects.size() << "object visibility settings";
                     for (const QJsonValue& objectValue : objects) {
                         ObjectVisibility visibility = parseObjectVisibility(objectValue.toString());
                         footprintData->addObjectVisibility(visibility);
                     }
                 }
 
-                // 修正类型判断：检查焊盘是否有�?
                 bool hasHole = false;
                 for (const FootprintPad& pad : footprintData->pads()) {
                     if (pad.holeRadius > 0 || pad.holeLength > 0) {
@@ -493,7 +428,6 @@ QSharedPointer<FootprintData> EasyedaImporter::importFootprintData(const QJsonOb
                 }
                 if (hasHole) {
                     info.type = "tht";
-                    // qDebug() << "Corrected type to THT (through-hole) because pads have holes";
                 }
             }
 
@@ -509,13 +443,10 @@ SymbolPin EasyedaImporter::importPinData(const QString& pinData) {
     QList<QStringList> segments = parsePinDataString(pinData);
 
     if (segments.size() >= 7) {
-        // �?0: 引脚设置（跳过第一个元�?"P"�?
         QStringList settings = segments[0];
-        if (settings.size() >= 8) {  // 需要至�?个元素（包括"P"�?
+        if (settings.size() >= 8) {
             pin.settings.isDisplayed = (settings[1] == "show");
             pin.settings.type = static_cast<PinType>(settings[2].toInt());
-            // 注意：settings[3] �?spicePinNumber（如 6, 17, H10），这只是引脚的顺序索引
-            // 真正�?BGA 引脚编号�?Segment 5 的索�?4 中（�?U6, U17, U16�?
             pin.settings.spicePinNumber = settings[3];
             pin.settings.posX = settings[4].toDouble();
             pin.settings.posY = settings[5].toDouble();
@@ -524,19 +455,16 @@ SymbolPin EasyedaImporter::importPinData(const QString& pinData) {
             pin.settings.isLocked = (settings.size() > 8 ? stringToBool(settings[8]) : false);
         }
 
-        // �?1: pinDot
         if (segments[1].size() >= 2) {
             pin.pinDot.dotX = segments[1][0].toDouble();
             pin.pinDot.dotY = segments[1][1].toDouble();
         }
 
-        // �?2: pinPath
         if (segments[2].size() >= 2) {
             pin.pinPath.path = segments[2][0];
             pin.pinPath.color = segments[2][1];
         }
 
-        // �?3: name
         if (segments[3].size() >= 8) {
             pin.name.isDisplayed = (segments[3][0] == "show");
             pin.name.posX = segments[3][1].toDouble();
@@ -548,51 +476,25 @@ SymbolPin EasyedaImporter::importPinData(const QString& pinData) {
             pin.name.fontSize = segments[3][7].toDouble();
         }
 
-        // �?4: dot (SymbolPinDotBis) - 这里包含圆圈显示标志�?BGA 引脚编号
-        // 格式: 1~555~929~0~U17~start~~~#0000FF
-        // �?~ 分割�? ["1", "555", "929", "0", "U17", "start", "", "", "#0000FF"]
-        // 索引 0: dotShow (是否显示圆圈�?=显示�?=不显�?
-        // 索引 1-2: dotX, dotY (圆圈坐标)
-        // 索引 4: BGA 引脚编号
         if (segments[4].size() >= 5) {
-            // 调试：输出段 4 的数�?
             qDebug() << "Pin Segment 4 data:" << segments[4];
             qDebug() << "  Segment 4[0] (dotShow):" << segments[4][0];
 
-            // 修复：始终不显示圆圈
             pin.dot.isDisplayed = false;
 
-            // 设置圆圈坐标（虽然不显示，但仍然保存坐标信息�?
             pin.dot.circleX = segments[4][1].toDouble();
             pin.dot.circleY = segments[4][2].toDouble();
 
             qDebug() << "  dot.isDisplayed set to: false (always hide)";
 
-            // 检�?spicePinNumber 是否已经�?BGA 引脚编号（包含字母）
-            bool isAlreadyBGA = false;
-            for (QChar c : pin.settings.spicePinNumber) {
-                if (c.isLetter()) {
-                    isAlreadyBGA = true;
-                    break;
-                }
-            }
-
-            // 如果 spicePinNumber 只是纯数字，尝试�?Segment 4 提取 BGA 引脚编号
-            if (!isAlreadyBGA) {
-                // 提取 BGA 引脚编号（在�?4 的索�?4 中，�?"U6", "U17", "U16"�?
-                QString bgaPinNumber = segments[4][4];
-                // 使用 BGA 引脚编号替换 spicePinNumber
-                if (!bgaPinNumber.isEmpty()) {
-                    pin.settings.spicePinNumber = bgaPinNumber;
-                    qDebug() << "BGA Pin Number extracted from Segment 4:" << bgaPinNumber << "for pin" << pin.name.text
-                             << "(replaced spicePinNumber)";
-                }
+            QString pinNumberDisplayText = segments[4][4];
+            if (!pinNumberDisplayText.isEmpty()) {
+                pin.settings.spicePinNumber = pinNumberDisplayText;
+                qDebug() << "Pin Number Display Text extracted from Segment 4:" << pinNumberDisplayText << "for pin" << pin.name.text
+                         << "(replaced spicePinNumber)";
             }
         }
 
-        // �?5: 跳过（不使用�?
-
-        // �?6: clock
         if (segments[6].size() >= 2) {
             pin.clock.isDisplayed = (segments[6][0] == "show");
             pin.clock.path = segments[6][1];
@@ -606,12 +508,6 @@ SymbolRectangle EasyedaImporter::importRectangleData(const QString& rectangleDat
     SymbolRectangle rectangle;
     QStringList fields = parseDataString(rectangleData);
 
-    // qDebug() << "=== Rectangle Parsing Debug ===";
-    // qDebug() << "Raw data:" << rectangleData;
-    // qDebug() << "Fields count:" << fields.size();
-    // qDebug() << "Fields:" << fields;
-
-    // 跳过第一个字段（类型标识 'R'），从索�?1 开始读�?
     if (fields.size() >= 13) {
         rectangle.posX = fields[1].toDouble();
         rectangle.posY = fields[2].toDouble();
@@ -626,8 +522,6 @@ SymbolRectangle EasyedaImporter::importRectangleData(const QString& rectangleDat
         rectangle.id = fields[11];
         rectangle.isLocked = stringToBool(fields[12]);
 
-        // qDebug() << "Parsed - posX:" << rectangle.posX << "posY:" << rectangle.posY
-        // << "width:" << rectangle.width << "height:" << rectangle.height;
     }
 
     return rectangle;
@@ -657,8 +551,6 @@ SymbolArc EasyedaImporter::importArcData(const QString& arcData) {
     QStringList fields = parseDataString(arcData);
 
     if (fields.size() >= 8) {
-        // 路径数据需要特殊处�?
-        // arc.path = fields[0].split(",");
         arc.helperDots = fields[1];
         arc.strokeColor = fields[2];
         arc.strokeWidth = fields[3].toDouble();
@@ -675,7 +567,6 @@ SymbolEllipse EasyedaImporter::importEllipseData(const QString& ellipseData) {
     SymbolEllipse ellipse;
     QStringList fields = parseDataString(ellipseData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
     if (fields.size() >= 10) {
         ellipse.centerX = fields[1].toDouble();
         ellipse.centerY = fields[2].toDouble();
@@ -696,7 +587,6 @@ SymbolPolyline EasyedaImporter::importPolylineData(const QString& polylineData) 
     SymbolPolyline polyline;
     QStringList fields = parseDataString(polylineData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
     if (fields.size() >= 8) {
         polyline.points = fields[1];
         polyline.strokeColor = fields[2];
@@ -706,10 +596,6 @@ SymbolPolyline EasyedaImporter::importPolylineData(const QString& polylineData) 
         polyline.id = fields[6];
         polyline.isLocked = fields.size() > 7 ? stringToBool(fields[7]) : false;
 
-        // qDebug() << "=== Polyline Debug ===";
-        // qDebug() << "Raw fillColor field:" << fields[5];
-        // qDebug() << "Parsed fillColor:" << polyline.fillColor;
-        // qDebug() << "Points:" << polyline.points;
     }
 
     return polyline;
@@ -719,7 +605,6 @@ SymbolPolygon EasyedaImporter::importPolygonData(const QString& polygonData) {
     SymbolPolygon polygon;
     QStringList fields = parseDataString(polygonData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
     if (fields.size() >= 8) {
         polygon.points = fields[1];
         polygon.strokeColor = fields[2];
@@ -728,11 +613,6 @@ SymbolPolygon EasyedaImporter::importPolygonData(const QString& polygonData) {
         polygon.fillColor = stringToBool(fields[5]);
         polygon.id = fields[6];
         polygon.isLocked = fields.size() > 7 ? stringToBool(fields[7]) : false;
-
-        // qDebug() << "=== Polygon Debug ===";
-        // qDebug() << "Raw fillColor field:" << fields[5];
-        // qDebug() << "Parsed fillColor:" << polygon.fillColor;
-        // qDebug() << "Points:" << polygon.points;
     }
 
     return polygon;
@@ -742,7 +622,6 @@ SymbolPath EasyedaImporter::importPathData(const QString& pathData) {
     SymbolPath path;
     QStringList fields = parseDataString(pathData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
     if (fields.size() >= 8) {
         path.paths = fields[1];
         path.strokeColor = fields[2];
@@ -760,9 +639,6 @@ SymbolText EasyedaImporter::importTextData(const QString& textData) {
     SymbolText text;
     QStringList fields = parseDataString(textData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
-    // EasyEDA文本元素格式参考lckiconverter实现
-    // ["TEXT", id, x, y, rotate, text, styleName, mayLocked]
     if (fields.size() >= 15) {
         text.mark = fields[0];
         text.posX = fields[1].toDouble();
@@ -789,7 +665,6 @@ FootprintPad EasyedaImporter::importPadData(const QString& padData) {
     FootprintPad pad;
     QStringList fields = parseDataString(padData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
     if (fields.size() >= 17) {
         pad.shape = fields[1];
         pad.centerX = fields[2].toDouble();
@@ -816,7 +691,6 @@ FootprintTrack EasyedaImporter::importTrackData(const QString& trackData) {
     FootprintTrack track;
     QStringList fields = parseDataString(trackData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
     if (fields.size() >= 6) {
         track.strokeWidth = fields[1].toDouble();
         track.layerId = fields[2].toInt();
@@ -833,7 +707,6 @@ FootprintHole EasyedaImporter::importHoleData(const QString& holeData) {
     FootprintHole hole;
     QStringList fields = parseDataString(holeData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
     if (fields.size() >= 5) {
         hole.centerX = fields[1].toDouble();
         hole.centerY = fields[2].toDouble();
@@ -849,7 +722,6 @@ FootprintCircle EasyedaImporter::importFootprintCircleData(const QString& circle
     FootprintCircle circle;
     QStringList fields = parseDataString(circleData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
     if (fields.size() >= 7) {
         circle.cx = fields[1].toDouble();
         circle.cy = fields[2].toDouble();
@@ -867,16 +739,14 @@ FootprintRectangle EasyedaImporter::importFootprintRectangleData(const QString& 
     FootprintRectangle rectangle;
     QStringList fields = parseDataString(rectangleData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
-    // 格式: RECT~x~y~width~height~layerId~id~strokeWidth~isLocked~fillColor~strokeStyle~...
     if (fields.size() >= 8) {
         rectangle.x = fields[1].toDouble();
         rectangle.y = fields[2].toDouble();
         rectangle.width = fields[3].toDouble();
         rectangle.height = fields[4].toDouble();
-        rectangle.layerId = fields[5].toInt();  // layerId 在第 6 个字�?
+        rectangle.layerId = fields[5].toInt();
         rectangle.id = fields[6];
-        rectangle.strokeWidth = fields[7].toDouble();  // strokeWidth 在第 8 个字�?
+        rectangle.strokeWidth = fields[7].toDouble();
         rectangle.isLocked = fields.size() > 8 ? stringToBool(fields[8]) : false;
     }
 
@@ -887,7 +757,6 @@ FootprintArc EasyedaImporter::importFootprintArcData(const QString& arcData) {
     FootprintArc arc;
     QStringList fields = parseDataString(arcData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
     if (fields.size() >= 7) {
         arc.strokeWidth = fields[1].toDouble();
         arc.layerId = fields[2].toInt();
@@ -905,7 +774,6 @@ FootprintText EasyedaImporter::importFootprintTextData(const QString& textData) 
     FootprintText text;
     QStringList fields = parseDataString(textData);
 
-    // 跳过第一个字段（设计器），从第二个字段开始解�?
     if (fields.size() >= 14) {
         text.type = fields[1];
         text.centerX = fields[2].toDouble();
@@ -927,24 +795,20 @@ FootprintText EasyedaImporter::importFootprintTextData(const QString& textData) 
 }
 
 QStringList EasyedaImporter::parseDataString(const QString& data) const {
-    // 使用 Qt::KeepEmptyParts 保留空字段，这样可以正确处理连续�?~~
     return data.split("~", Qt::KeepEmptyParts);
 }
 
 QList<QStringList> EasyedaImporter::parsePinDataString(const QString& pinData) const {
     QList<QStringList> result;
 
-    // 只分割顶层的 "^^"，保留嵌套的 "^^"
-    // 策略：遇�?^^ 时分割，^^ 标志着新段落的开�?
     QStringList segments;
     int start = 0;
     int pos = 0;
 
     while (pos < pinData.length()) {
-        // 检查是否遇�?^^
         if (pinData[pos] == '^' && pos + 1 < pinData.length() && pinData[pos + 1] == '^') {
             segments.append(pinData.mid(start, pos - start));
-            pos += 2;  // 跳过 ^^
+            pos += 2;
             start = pos;
             continue;
         }
@@ -952,12 +816,10 @@ QList<QStringList> EasyedaImporter::parsePinDataString(const QString& pinData) c
         pos++;
     }
 
-    // 添加最后一个段
     if (start < pinData.length()) {
         segments.append(pinData.mid(start));
     }
 
-    // 对每个段�?~ 分割
     for (const QString& segment : segments) {
         QStringList subSegments = segment.split("~", Qt::KeepEmptyParts);
         result.append(subSegments);
@@ -970,22 +832,13 @@ FootprintSolidRegion EasyedaImporter::importSolidRegionData(const QString& solid
     FootprintSolidRegion region;
     QStringList fields = parseDataString(solidRegionData);
 
-    // SOLIDREGION~layerId~~path~fillStyle~id~~~~isLocked
-    // 示例: SOLIDREGION~99~~M 3984.1457 2975.3938 L 4046.5657 2975.3938 L 4046.5657 3024.6063 L 3984.1457 3024.6063
-    // Z~solid~gge55~~~~0
     if (fields.size() >= 6) {
         region.layerId = fields[1].toInt();
-        region.path = fields[3];  // 路径数据（如 "M x y L x y Z"�?
+        region.path = fields[3];
         region.fillStyle = fields[4];
         region.id = fields[5];
         region.isLocked = fields.size() > 7 ? stringToBool(fields[7]) : false;
-
-        // 判断是否为禁止布线区（通常�?ComponentShapeLayer，ID=99�?
         region.isKeepOut = (region.layerId == 99);
-
-        // qDebug() << "Imported solid region - Layer:" << region.layerId
-        // << "IsKeepOut:" << region.isKeepOut
-        // << "Path length:" << region.path.length();
     }
 
     return region;
@@ -1012,17 +865,13 @@ void EasyedaImporter::importSvgNodeData(const QString& svgNodeData, QSharedPoint
 
     QJsonObject attrs = root["attrs"].toObject();
 
-    // 检查是否为外形轮廓（c_etype == "outline3D"�?
     if (attrs.contains("c_etype") && attrs["c_etype"].toString() == "outline3D") {
-        // 这是外形轮廓，但同时也包�?3D 模型�?UUID
-        // 先提�?3D 模型�?UUID（从 SVGNODE attrs.uuid�?
         Model3DData model3D;
         if (attrs.contains("uuid")) {
             QString modelUuid = attrs["uuid"].toString();
             model3D.setUuid(modelUuid);
             model3D.setName(attrs.contains("title") ? attrs["title"].toString() : "");
 
-            // 解析平移
             if (attrs.contains("c_origin")) {
                 QString c_origin = attrs["c_origin"].toString();
                 QStringList originParts = c_origin.split(",");
@@ -1031,31 +880,23 @@ void EasyedaImporter::importSvgNodeData(const QString& svgNodeData, QSharedPoint
                     double originX = originParts[0].toDouble();
                     double originY = originParts[1].toDouble();
 
-                    // 检测 c_origin 是否为异常的小值（单位不一致）
-                    // 正常的 c_origin 应该在 1000-10000 像素范围内
-                    // 如果远小于这个范围，说明使用了相对坐标模式
                     if (qAbs(originX) < 1000 && qAbs(originY) < 1000) {
-                        // 相对模式：将 3D 模型偏移置零，直接定位到封装中心
-                        // c_origin 应该设为 (0, 0)，3D 模型就在封装中心
-                        
+
                         double bboxCenterX = footprintData->bbox().x + footprintData->bbox().width / 2.0;
                         double bboxCenterY = footprintData->bbox().y + footprintData->bbox().height / 2.0;
-                        
-                        // 3D 模型直接在封装中心
+
                         translation.x = bboxCenterX;
                         translation.y = bboxCenterY;
                     } else {
-                        // 绝对模式：c_origin 直接就是封装中心（绝对坐标）
                         translation.x = originX;
                         translation.y = originY;
                     }
-                    
+
                     translation.z = attrs.contains("z") ? attrs["z"].toDouble() : 0.0;
                     model3D.setTranslation(translation);
                 }
             }
 
-            // 解析旋转
             if (attrs.contains("c_rotation")) {
                 QString c_rotation = attrs["c_rotation"].toString();
                 QStringList rotationParts = c_rotation.split(",");
@@ -1069,23 +910,19 @@ void EasyedaImporter::importSvgNodeData(const QString& svgNodeData, QSharedPoint
             }
 
             footprintData->setModel3D(model3D);
-            // qDebug() << "3D model info (from SVGNODE) - Name:" << model3D.name() << "UUID:" << model3D.uuid();
         }
 
-        // 然后解析外形轮廓
         FootprintOutline outline;
         outline.id = attrs["id"].toString();
         outline.strokeWidth = attrs.contains("c_width") ? attrs["c_width"].toString().toDouble() : 0.0;
         outline.isLocked = false;
 
-        // 获取�?ID
         if (attrs.contains("layerid")) {
             outline.layerId = attrs["layerid"].toString().toInt();
         } else {
             outline.layerId = 19;  // 默认�?3DModel �?
         }
 
-        // 解析 SVG 路径
         if (root.contains("childNodes")) {
             QJsonArray childNodes = root["childNodes"].toArray();
             for (const QJsonValue& child : childNodes) {
@@ -1094,24 +931,18 @@ void EasyedaImporter::importSvgNodeData(const QString& svgNodeData, QSharedPoint
                     QJsonObject childAttrs = childObj["attrs"].toObject();
                     if (childAttrs.contains("points")) {
                         outline.path = childAttrs["points"].toString();
-                        break;  // 只取第一个路�?
+                        break;
                     }
                 }
             }
         }
 
         footprintData->addOutline(outline);
-        // qDebug() << "Imported outline - Layer:" << outline.layerId
-        // << "Path length:" << outline.path.length();
     } else {
-        // 这是 3D 模型（非 outline3D 类型�?
         Model3DData model3D;
         model3D.setName(attrs.contains("title") ? attrs["title"].toString() : "");
         model3D.setUuid(attrs.contains("uuid") ? attrs["uuid"].toString() : "");
 
-        // qDebug() << "3D model info - Name:" << model3D.name() << "UUID:" << model3D.uuid();
-
-        // 解析平移
         if (attrs.contains("c_origin")) {
             QString c_origin = attrs["c_origin"].toString();
             QStringList originParts = c_origin.split(",");
@@ -1121,11 +952,9 @@ void EasyedaImporter::importSvgNodeData(const QString& svgNodeData, QSharedPoint
                 translation.y = originParts[1].toDouble();
                 translation.z = attrs.contains("z") ? attrs["z"].toDouble() : 0.0;
                 model3D.setTranslation(translation);
-                // qDebug() << "3D model translation:" << translation.x << translation.y << translation.z;
             }
         }
 
-        // 解析旋转
         if (attrs.contains("c_rotation")) {
             QString c_rotation = attrs["c_rotation"].toString();
             QStringList rotationParts = c_rotation.split(",");
@@ -1135,19 +964,15 @@ void EasyedaImporter::importSvgNodeData(const QString& svgNodeData, QSharedPoint
                 rotation.y = rotationParts[1].toDouble();
                 rotation.z = rotationParts[2].toDouble();
                 model3D.setRotation(rotation);
-                // qDebug() << "3D model rotation:" << rotation.x << rotation.y << rotation.z;
             }
         }
 
         footprintData->setModel3D(model3D);
-        // qDebug() << "Imported 3D model - Name:" << model3D.name() << "UUID:" << model3D.uuid();
     }
 }
 
 LayerDefinition EasyedaImporter::parseLayerDefinition(const QString& layerString) {
     LayerDefinition layer;
-    // 格式: layerId~name~color~isVisible~isUsedForManufacturing~~expansion
-    // 示例: 1~TopLayer~#FF0000~true~true~~
     QStringList fields = layerString.split("~");
 
     if (fields.size() >= 5) {
@@ -1157,14 +982,9 @@ LayerDefinition EasyedaImporter::parseLayerDefinition(const QString& layerString
         layer.isVisible = (fields[3] == "true");
         layer.isUsedForManufacturing = (fields[4] == "true");
 
-        // 解析扩展值（如阻焊层扩展�?
         if (fields.size() >= 7) {
             layer.expansion = fields[6].toDouble();
         }
-
-        // qDebug() << "Parsed layer - ID:" << layer.layerId
-        // << "Name:" << layer.name
-        // << "Color:" << layer.color;
     }
 
     return layer;
@@ -1172,30 +992,22 @@ LayerDefinition EasyedaImporter::parseLayerDefinition(const QString& layerString
 
 ObjectVisibility EasyedaImporter::parseObjectVisibility(const QString& objectString) {
     ObjectVisibility visibility;
-    // 格式: objectType~isEnabled~isVisible
-    // 示例: Text~true~false
     QStringList fields = objectString.split("~");
 
     if (fields.size() >= 3) {
         visibility.objectType = fields[0];
         visibility.isEnabled = (fields[1] == "true");
         visibility.isVisible = (fields[2] == "true");
-
-        // qDebug() << "Parsed object visibility - Type:" << visibility.objectType
-        // << "Enabled:" << visibility.isEnabled
-        // << "Visible:" << visibility.isVisible;
     }
 
     return visibility;
 }
 
 bool EasyedaImporter::stringToBool(const QString& str) const {
-    // 空值�?、false、none、transparent 视为 false
     if (str.isEmpty() || str == "0" || str.toLower() == "false" || str.toLower() == "none" ||
         str.toLower() == "transparent") {
         return false;
     }
-    // 1、true、show 或任何其他值（包括颜色值）视为 true
     return true;
 }
 }  // namespace EasyKiConverter
