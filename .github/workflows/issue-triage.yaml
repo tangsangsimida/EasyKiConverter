@@ -70,7 +70,7 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         with:
           api_key: ${{ secrets.IFLOW_API_KEY }}
-          model: glm-4.7
+          model: iFlow-ROME-30BA3B
           timeout: "3600"
           debug: "true"
           prompt: |
