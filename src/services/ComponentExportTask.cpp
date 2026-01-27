@@ -36,7 +36,6 @@ void ComponentExportTask::run() {
     QString message;
 
     try {
-        // 创建输出目录
         QDir dir;
         if (!dir.exists(m_options.outputPath)) {
             if (!dir.mkpath(m_options.outputPath)) {
@@ -44,7 +43,7 @@ void ComponentExportTask::run() {
             }
         }
 
-        // 导出符号
+
         if (m_options.exportSymbol && m_componentData.symbolData() &&
             !m_componentData.symbolData()->info().name.isEmpty()) {
             QString symbolPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, componentId);
@@ -58,18 +57,17 @@ void ComponentExportTask::run() {
             }
         }
 
-        // 导出3D模型（需要在导出封装之前完成�?
+
         QString model3DPath;
         if (m_options.exportModel3D && m_componentData.model3DData() &&
             !m_componentData.model3DData()->uuid().isEmpty()) {
-            // 使用封装名称作为文件�?
             QString footprintName = m_componentData.footprintData() ? m_componentData.footprintData()->info().name
                                                                     : m_componentData.model3DData()->name();
             if (footprintName.isEmpty()) {
                 footprintName = m_componentData.model3DData()->uuid();
             }
 
-            // 创建 3D 模型目录（添加库名称前缀�?
+
             QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_options.outputPath, m_options.libName);
             if (!dir.exists(modelsDirPath)) {
                 if (!dir.mkpath(modelsDirPath)) {
@@ -86,12 +84,10 @@ void ComponentExportTask::run() {
                 }
                 qDebug() << "3D model exported successfully:" << modelPath;
             }
-
-            // 设置相对路径用于封装
-            model3DPath = QString("${KIPRJMOD}/%1.3dmodels/%2").arg(m_options.libName, footprintName);
+            model3DPath = QString("../%1.3dmodels/%2.wrl").arg(m_options.libName, footprintName);
         }
 
-        // 导出封装
+
         if (m_options.exportFootprint && m_componentData.footprintData() &&
             !m_componentData.footprintData()->info().name.isEmpty()) {
             QString footprintPath = QString("%1/%2.kicad_mod").arg(m_options.outputPath, componentId);

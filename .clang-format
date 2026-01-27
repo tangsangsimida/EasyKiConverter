@@ -32,16 +32,16 @@ AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 
-# 排序包含
+# 排序包含（从具体到一般：本地头文件 -> Qt/第三方库 -> 标准库）
 SortIncludes: true
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '^<Qt.*>'
-    Priority:        1
-  - Regex:           '^<[A-Z]'
-    Priority:        2
-  - Regex:           '^".*'
-    Priority:        3
+  - Regex: '^".*'
+    Priority: 1
+  - Regex: '^<Q.*'
+    Priority: 2
+  - Regex: '^<.*'
+    Priority: 3
 
 # 空行
 MaxEmptyLinesToKeep: 2
@@ -57,6 +57,15 @@ AlignTrailingComments: true
 # 注释处理（保持中文注释原样）
 ReflowComments: false
 Cpp11BracedListStyle: true
+
+# Lambda 表达式格式化（C++17/Qt 6）
+LambdaBodyIndentation: Signature
+
+# 构造函数初始化列表格式化
+BreakConstructorInitializers: BeforeComma
+
+# 预处理指令缩进（跨平台代码）
+IndentPPDirectives: AfterHash
 
 # 其他
 SpacesInParentheses: false
