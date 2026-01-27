@@ -1,16 +1,15 @@
 ﻿#ifndef EXPORTPROGRESSVIEWMODEL_H
 #define EXPORTPROGRESSVIEWMODEL_H
 
-#include <QTimer>
+#include "services/ComponentService.h"
+#include "services/ExportService.h"
+#include "services/ExportService_Pipeline.h"
 
 #include <QHash>
 #include <QObject>
 #include <QString>
+#include <QTimer>
 #include <QVariantList>
-
-#include "services/ComponentService.h"
-#include "services/ExportService.h"
-#include "services/ExportService_Pipeline.h"
 
 namespace EasyKiConverter {
 

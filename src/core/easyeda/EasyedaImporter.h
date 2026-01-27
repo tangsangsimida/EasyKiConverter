@@ -1,12 +1,12 @@
 ﻿#ifndef EASYEDAIMPORTER_H
 #define EASYEDAIMPORTER_H
 
+#include "models/FootprintData.h"
+#include "models/SymbolData.h"
+
 #include <QJsonObject>
 #include <QObject>
 #include <QString>
-
-#include "models/FootprintData.h"
-#include "models/SymbolData.h"
 
 namespace EasyKiConverter {
 

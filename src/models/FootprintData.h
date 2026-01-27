@@ -1,13 +1,13 @@
 ﻿#ifndef FOOTPRINTDATA_H
 #define FOOTPRINTDATA_H
 
+#include "Model3DData.h"
+
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QList>
 #include <QPointF>
 #include <QString>
-
-#include "Model3DData.h"
 
 namespace EasyKiConverter {
 

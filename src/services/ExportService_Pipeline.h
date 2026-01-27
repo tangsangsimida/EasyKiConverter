@@ -1,16 +1,15 @@
 ﻿#ifndef EXPORTSERVICE_PIPELINE_H
 #define EXPORTSERVICE_PIPELINE_H
 
-#include <QThreadPool>
-
-#include <QMap>
-#include <QMutex>
-#include <QNetworkAccessManager>
-
 #include "ExportService.h"
 #include "models/ComponentExportStatus.h"
 #include "models/SymbolData.h"
 #include "utils/BoundedThreadSafeQueue.h"
+
+#include <QMap>
+#include <QMutex>
+#include <QNetworkAccessManager>
+#include <QThreadPool>
 
 namespace EasyKiConverter {
 

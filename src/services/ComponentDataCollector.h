@@ -1,13 +1,13 @@
 ﻿#ifndef COMPONENTDATACOLLECTOR_H
 #define COMPONENTDATACOLLECTOR_H
 
-#include <QObject>
-#include <QString>
-
 #include "models/ComponentData.h"
 #include "models/FootprintData.h"
 #include "models/Model3DData.h"
 #include "models/SymbolData.h"
+
+#include <QObject>
+#include <QString>
 
 namespace EasyKiConverter {
 

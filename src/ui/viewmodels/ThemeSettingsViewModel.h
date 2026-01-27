@@ -1,9 +1,9 @@
 ﻿#ifndef THEMESETTINGSVIEWMODEL_H
 #define THEMESETTINGSVIEWMODEL_H
 
-#include <QObject>
-
 #include "services/ConfigService.h"
+
+#include <QObject>
 
 namespace EasyKiConverter {
 

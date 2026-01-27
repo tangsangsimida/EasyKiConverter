@@ -1,16 +1,16 @@
 ﻿#ifndef COMPONENTSERVICE_H
 #define COMPONENTSERVICE_H
 
+#include "models/ComponentData.h"
+#include "models/FootprintData.h"
+#include "models/Model3DData.h"
+#include "models/SymbolData.h"
+
 #include <QJsonObject>
 #include <QMap>
 #include <QObject>
 #include <QString>
 #include <QStringList>
-
-#include "models/ComponentData.h"
-#include "models/FootprintData.h"
-#include "models/Model3DData.h"
-#include "models/SymbolData.h"
 
 namespace EasyKiConverter {
 

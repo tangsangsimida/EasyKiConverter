@@ -2,6 +2,7 @@
 #define GEOMETRYUTILS_H
 
 #include <QPointF>
+
 #include <cmath>
 
 namespace EasyKiConverter {

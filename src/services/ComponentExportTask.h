@@ -1,11 +1,11 @@
 ﻿#ifndef COMPONENTEXPORTTASK_H
 #define COMPONENTEXPORTTASK_H
 
-#include <QObject>
-#include <QRunnable>
-
 #include "ExportService.h"
 #include "models/ComponentData.h"
+
+#include <QObject>
+#include <QRunnable>
 
 namespace EasyKiConverter {
 

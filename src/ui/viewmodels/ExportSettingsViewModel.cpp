@@ -5,17 +5,16 @@
 namespace EasyKiConverter {
 
 ExportSettingsViewModel::ExportSettingsViewModel(QObject* parent)
-    : QObject(parent),
-      m_configService(ConfigService::instance()),
-      m_outputPath(""),
-      m_libName("MyLibrary"),
-      m_exportSymbol(true),
-      m_exportFootprint(true),
-      m_exportModel3D(true),
-      m_overwriteExistingFiles(false),
-      m_exportMode(0)  // 默认为追加模�?
-      ,
-      m_debugMode(false) {
+    : QObject(parent)
+    , m_configService(ConfigService::instance())
+    , m_outputPath("")
+    , m_libName("MyLibrary")
+    , m_exportSymbol(true)
+    , m_exportFootprint(true)
+    , m_exportModel3D(true)
+    , m_overwriteExistingFiles(false)
+    , m_exportMode(0)  // 默认为追加模�?
+    , m_debugMode(false) {
     loadFromConfig();
 }
 

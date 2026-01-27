@@ -1,13 +1,12 @@
 ﻿#ifndef EXPORTERSYMBOL_H
 #define EXPORTERSYMBOL_H
 
-#include <QTextStream>
+#include "models/SymbolData.h"
 
 #include <QJsonObject>
 #include <QObject>
 #include <QString>
-
-#include "models/SymbolData.h"
+#include <QTextStream>
 
 namespace EasyKiConverter {
 
@@ -222,6 +221,14 @@ private:
      * @return QString KiCad 引脚方向
      */
     QString rotationToKicadOrientation(int rotation) const;
+
+    /**
+     * @brief 计算子部分的边界框
+     *
+     * @param part 子部分数据
+     * @return SymbolBBox 子部分的边界框
+     */
+    SymbolBBox calculatePartBBox(const SymbolPart& part) const;
 
 private:
     mutable SymbolBBox m_currentBBox;  // 当前处理的边界框

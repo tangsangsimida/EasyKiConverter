@@ -1,10 +1,10 @@
 ﻿#ifndef EXPORTSETTINGSVIEWMODEL_H
 #define EXPORTSETTINGSVIEWMODEL_H
 
+#include "services/ConfigService.h"
+
 #include <QObject>
 #include <QString>
-
-#include "services/ConfigService.h"
 
 namespace EasyKiConverter {
 

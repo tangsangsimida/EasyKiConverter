@@ -1,7 +1,8 @@
 #include "ExportService_Pipeline.h"
 
-#include <QTextStream>
-#include <QTimer>
+#include "workers/FetchWorker.h"
+#include "workers/ProcessWorker.h"
+#include "workers/WriteWorker.h"
 
 #include <QDateTime>
 #include <QDebug>
@@ -10,27 +11,26 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <algorithm>
+#include <QTextStream>
+#include <QTimer>
 
-#include "workers/FetchWorker.h"
-#include "workers/ProcessWorker.h"
-#include "workers/WriteWorker.h"
+#include <algorithm>
 
 namespace EasyKiConverter {
 
 ExportServicePipeline::ExportServicePipeline(QObject* parent)
-    : ExportService(parent),
-      m_fetchThreadPool(new QThreadPool(this)),
-      m_processThreadPool(new QThreadPool(this)),
-      m_writeThreadPool(new QThreadPool(this)),
-      m_fetchProcessQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100)),
-      m_processWriteQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100)),
-      m_networkAccessManager(new QNetworkAccessManager(this)),
-      m_isPipelineRunning(false),
-      m_mutex(new QMutex()),
-      m_successCount(0),
-      m_failureCount(0),
-      m_exportStartTimeMs(0) {
+    : ExportService(parent)
+    , m_fetchThreadPool(new QThreadPool(this))
+    , m_processThreadPool(new QThreadPool(this))
+    , m_writeThreadPool(new QThreadPool(this))
+    , m_fetchProcessQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100))
+    , m_processWriteQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100))
+    , m_networkAccessManager(new QNetworkAccessManager(this))
+    , m_isPipelineRunning(false)
+    , m_mutex(new QMutex())
+    , m_successCount(0)
+    , m_failureCount(0)
+    , m_exportStartTimeMs(0) {
     // 配置线程?
     m_fetchThreadPool->setMaxThreadCount(32);                             // I/O密集型，32个线?
     m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());  // CPU密集型，等于核心?

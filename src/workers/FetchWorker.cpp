@@ -1,14 +1,14 @@
 ﻿#include "FetchWorker.h"
 
-#include <QThread>
-#include <QTimer>
-
 #include <QDebug>
 #include <QEventLoop>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QThread>
+#include <QTimer>
+
 #include <zlib.h>
 
 namespace EasyKiConverter {
@@ -17,11 +17,11 @@ FetchWorker::FetchWorker(const QString& componentId,
                          QNetworkAccessManager* networkAccessManager,
                          bool need3DModel,
                          QObject* parent)
-    : QObject(parent),
-      m_componentId(componentId),
-      m_networkAccessManager(networkAccessManager),
-      m_ownNetworkManager(nullptr),
-      m_need3DModel(need3DModel) {}
+    : QObject(parent)
+    , m_componentId(componentId)
+    , m_networkAccessManager(networkAccessManager)
+    , m_ownNetworkManager(nullptr)
+    , m_need3DModel(need3DModel) {}
 
 FetchWorker::~FetchWorker() {
     if (m_ownNetworkManager) {

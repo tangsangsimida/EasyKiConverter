@@ -1,12 +1,12 @@
 ﻿#include "ComponentExportTask.h"
 
-#include <QDebug>
-#include <QDir>
-#include <QFile>
-
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
+
+#include <QDebug>
+#include <QDir>
+#include <QFile>
 
 namespace EasyKiConverter {
 
@@ -16,13 +16,13 @@ ComponentExportTask::ComponentExportTask(const ComponentData& componentData,
                                          ExporterFootprint* footprintExporter,
                                          Exporter3DModel* modelExporter,
                                          QObject* parent)
-    : QObject(parent),
-      QRunnable(),
-      m_componentData(componentData),
-      m_options(options),
-      m_symbolExporter(symbolExporter),
-      m_footprintExporter(footprintExporter),
-      m_modelExporter(modelExporter) {
+    : QObject(parent)
+    , QRunnable()
+    , m_componentData(componentData)
+    , m_options(options)
+    , m_symbolExporter(symbolExporter)
+    , m_footprintExporter(footprintExporter)
+    , m_modelExporter(modelExporter) {
     setAutoDelete(true);
 }
 

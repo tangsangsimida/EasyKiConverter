@@ -1,14 +1,14 @@
 ﻿#ifndef EXPORTWORKER_H
 #define EXPORTWORKER_H
 
-#include <QObject>
-#include <QRunnable>
-#include <QSharedPointer>
-
 #include "models/ComponentData.h"
 #include "models/FootprintData.h"
 #include "models/Model3DData.h"
 #include "models/SymbolData.h"
+
+#include <QObject>
+#include <QRunnable>
+#include <QSharedPointer>
 
 namespace EasyKiConverter {
 

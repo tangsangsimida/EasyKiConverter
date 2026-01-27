@@ -1,12 +1,12 @@
 ﻿#include "ProcessWorker.h"
 
-#include <QDebug>
-#include <QJsonDocument>
-#include <QJsonObject>
-
 #include "core/easyeda/EasyedaApi.h"
 #include "core/easyeda/EasyedaImporter.h"
 #include "core/utils/NetworkUtils.h"
+
+#include <QDebug>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 namespace EasyKiConverter {
 

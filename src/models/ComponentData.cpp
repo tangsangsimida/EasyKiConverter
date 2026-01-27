@@ -6,15 +6,15 @@
 namespace EasyKiConverter {
 
 ComponentData::ComponentData()
-    : m_lcscId(),
-      m_name(),
-      m_prefix(),
-      m_package(),
-      m_manufacturer(),
-      m_datasheet(),
-      m_symbolData(nullptr),
-      m_footprintData(nullptr),
-      m_model3DData(nullptr) {}
+    : m_lcscId()
+    , m_name()
+    , m_prefix()
+    , m_package()
+    , m_manufacturer()
+    , m_datasheet()
+    , m_symbolData(nullptr)
+    , m_footprintData(nullptr)
+    , m_model3DData(nullptr) {}
 
 QJsonObject ComponentData::toJson() const {
     QJsonObject json;

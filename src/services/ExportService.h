@@ -1,17 +1,16 @@
 ﻿#ifndef EXPORTSERVICE_H
 #define EXPORTSERVICE_H
 
-#include <QThreadPool>
+#include "models/ComponentData.h"
+#include "models/FootprintData.h"
+#include "models/Model3DData.h"
+#include "models/SymbolData.h"
 
 #include <QMutex>
 #include <QObject>
 #include <QString>
 #include <QStringList>
-
-#include "models/ComponentData.h"
-#include "models/FootprintData.h"
-#include "models/Model3DData.h"
-#include "models/SymbolData.h"
+#include <QThreadPool>
 
 namespace EasyKiConverter {
 
@@ -29,12 +28,12 @@ struct ExportOptions {
     bool debugMode;   // 调试模式：导出调试数据到 debug 文件�?
 
     ExportOptions()
-        : exportSymbol(true),
-          exportFootprint(true),
-          exportModel3D(true),
-          overwriteExistingFiles(false),
-          updateMode(false),
-          debugMode(false) {}
+        : exportSymbol(true)
+        , exportFootprint(true)
+        , exportModel3D(true)
+        , overwriteExistingFiles(false)
+        , updateMode(false)
+        , debugMode(false) {}
 };
 
 /**

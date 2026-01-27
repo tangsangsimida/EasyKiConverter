@@ -1,10 +1,10 @@
 ﻿#ifndef COMPONENTLISTVIEWMODEL_H
 #define COMPONENTLISTVIEWMODEL_H
 
+#include "services/ComponentService.h"
+
 #include <QObject>
 #include <QStringList>
-
-#include "services/ComponentService.h"
 
 namespace EasyKiConverter {
 
