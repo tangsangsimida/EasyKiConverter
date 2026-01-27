@@ -16,7 +16,7 @@ on:
         type: number
 
 concurrency:
-  group: ' $ {{ github.workflow }}- $ {{ github.event.issue.number || inputs.issue_number }}'
+  group: '${{ github.workflow }}-${{ github.event.issue.number || inputs.issue_number }}'
   cancel-in-progress: true
 
 defaults:
@@ -43,35 +43,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 动态设置 Issue 编号（兼容自动触发和手动触发）
       - name: Set issue context
         id: issue_context
         run: |
-          if [ " $ {{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "number= $ {{ inputs.issue_number }}" >> " $ GITHUB_OUTPUT"
-            # 尝试获取 Issue 标题和内容（需调用 GitHub API）
-            ISSUE_DATA= $ (gh api repos/ $ {{ github.repository }}/issues/ $ {{ inputs.issue_number }} --jq '{title: .title, body: .body}')
-            echo "title= $ (echo " $ ISSUE_DATA" | jq -r '.title // ""')" >> " $ GITHUB_OUTPUT"
-            echo "body= $ (echo " $ ISSUE_DATA" | jq -r '.body // ""')" >> " $ GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "number=${{ inputs.issue_number }}" >> "$GITHUB_OUTPUT"
+            ISSUE_DATA=$(gh api repos/${{ github.repository }}/issues/${{ inputs.issue_number }} --jq '{title: .title, body: .body}')
+            echo "title=$(echo "$ISSUE_DATA" | jq -r '.title // ""')" >> "$GITHUB_OUTPUT"
+            echo "body=$(echo "$ISSUE_DATA" | jq -r '.body // ""')" >> "$GITHUB_OUTPUT"
           else
-            echo "number= $ {{ github.event.issue.number }}" >> " $ GITHUB_OUTPUT"
-            echo "title= $ {{ github.event.issue.title }}" >> " $ GITHUB_OUTPUT"
-            echo "body= $ {{ github.event.issue.body }}" >> " $ GITHUB_OUTPUT"
+            echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+            echo "title=${{ github.event.issue.title }}" >> "$GITHUB_OUTPUT"
+            echo "body=${{ github.event.issue.body }}" >> "$GITHUB_OUTPUT"
           fi
         env:
-          GITHUB_TOKEN:  $ {{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run iFlow CLI Issue Triage (Chinese Mode)
         uses: iflow-ai/iflow-cli-action@v2.0.0
         id: iflow_cli_issue_triage
         env:
-          GITHUB_TOKEN:  $ {{ secrets.GITHUB_TOKEN }}
-          ISSUE_TITLE:  $ {{ steps.issue_context.outputs.title }}
-          ISSUE_BODY:  $ {{ steps.issue_context.outputs.body }}
-          ISSUE_NUMBER:  $ {{ steps.issue_context.outputs.number }}
-          REPOSITORY:  $ {{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: ${{ steps.issue_context.outputs.title }}
+          ISSUE_BODY: ${{ steps.issue_context.outputs.body }}
+          ISSUE_NUMBER: ${{ steps.issue_context.outputs.number }}
+          REPOSITORY: ${{ github.repository }}
         with:
-          api_key:  $ {{ secrets.IFLOW_API_KEY }}
+          api_key: ${{ secrets.IFLOW_API_KEY }}
           model: glm-4.7
           timeout: "3600"
           debug: "true"
@@ -106,9 +104,9 @@ jobs:
         if: success() && (github.event_name != 'issues')
         uses: actions/github-script@v7
         with:
-          github-token:  $ {{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issueNumber =  $ {{ steps.issue_context.outputs.number }};
+            const issueNumber = ${{ steps.issue_context.outputs.number }};
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -120,12 +118,12 @@ jobs:
         if: failure() && steps.iflow_cli_issue_triage.outcome == 'failure'
         uses: actions/github-script@v7
         with:
-          github-token:  $ {{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issueNumber =  $ {{ steps.issue_context.outputs.number }};
+            const issueNumber = ${{ steps.issue_context.outputs.number }};
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issueNumber,
-              body: `❌ 自动分类失败。\n\n请查看 [Action 运行日志]( $ {{ github.server_url }}/ $ {{ github.repository }}/actions/runs/ $ {{ github.run_id }}) 以排查问题。\n\n常见原因：\n- 仓库中缺少必要的标签（如 kind/bug）\n- IFLOW_API_KEY 无效或配额不足\n- 模型临时不可用`
+              body: `❌ 自动分类失败。\n\n请查看 [Action 运行日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) 以排查问题。\n\n常见原因：\n- 仓库中缺少必要的标签（如 kind/bug）\n- IFLOW_API_KEY 无效或配额不足\n- 模型临时不可用`
             });
