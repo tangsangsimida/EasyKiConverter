@@ -490,8 +490,8 @@ SymbolPin EasyedaImporter::importPinData(const QString& pinData) {
             QString pinNumberDisplayText = segments[4][4];
             if (!pinNumberDisplayText.isEmpty()) {
                 pin.settings.spicePinNumber = pinNumberDisplayText;
-                qDebug() << "Pin Number Display Text extracted from Segment 4:" << pinNumberDisplayText << "for pin" << pin.name.text
-                         << "(replaced spicePinNumber)";
+                qDebug() << "Pin Number Display Text extracted from Segment 4:" << pinNumberDisplayText << "for pin"
+                         << pin.name.text << "(replaced spicePinNumber)";
             }
         }
 
@@ -521,7 +521,6 @@ SymbolRectangle EasyedaImporter::importRectangleData(const QString& rectangleDat
         rectangle.fillColor = fields[10];
         rectangle.id = fields[11];
         rectangle.isLocked = stringToBool(fields[12]);
-
     }
 
     return rectangle;
@@ -595,7 +594,6 @@ SymbolPolyline EasyedaImporter::importPolylineData(const QString& polylineData) 
         polyline.fillColor = stringToBool(fields[5]);
         polyline.id = fields[6];
         polyline.isLocked = fields.size() > 7 ? stringToBool(fields[7]) : false;
-
     }
 
     return polyline;
@@ -881,7 +879,6 @@ void EasyedaImporter::importSvgNodeData(const QString& svgNodeData, QSharedPoint
                     double originY = originParts[1].toDouble();
 
                     if (qAbs(originX) < 1000 && qAbs(originY) < 1000) {
-
                         double bboxCenterX = footprintData->bbox().x + footprintData->bbox().width / 2.0;
                         double bboxCenterY = footprintData->bbox().y + footprintData->bbox().height / 2.0;
 

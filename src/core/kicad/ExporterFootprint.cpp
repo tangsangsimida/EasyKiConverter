@@ -755,33 +755,20 @@ QString ExporterFootprint::generateModel3D(const Model3DData& model3D,
                                            const QString& model3DPath,
 
                                            const QString& fpType) const {
-
     QString content;
-
-
-
 
 
     QString finalPath = model3DPath.isEmpty() ? model3D.name() : model3DPath;
 
 
-
-
-
     double z = pxToMmRounded(model3D.translation().z);
 
     if (fpType == "smd") {
-
         z = -z;
 
     } else {
-
         z = 0.0;
-
     }
-
-
-
 
 
     double rotX = (360.0 - model3D.rotation().x);
@@ -803,9 +790,6 @@ QString ExporterFootprint::generateModel3D(const Model3DData& model3D,
         rotZ -= 360.0;
 
 
-
-
-
     // 计算 3D 模型的 offset
 
     // 检测是否为异常的小值（来自特殊单位的 c_origin）
@@ -815,7 +799,6 @@ QString ExporterFootprint::generateModel3D(const Model3DData& model3D,
     double finalOffsetX, finalOffsetY;
 
     if (qAbs(model3D.translation().x) < 100 && qAbs(model3D.translation().y) < 100) {
-
         // 异常值：translation 已经是毫米单位
 
         // 对于异常封装，translation 可能是相对于焊盘中心的偏移，而不是相对于 bbox 的
@@ -826,7 +809,6 @@ QString ExporterFootprint::generateModel3D(const Model3DData& model3D,
 
         double padsCenterY = bboxY + 2999.5;
 
-        
 
         // 将焊盘中心转换为毫米单位
 
@@ -834,7 +816,6 @@ QString ExporterFootprint::generateModel3D(const Model3DData& model3D,
 
         double padsCenterY_mm = pxToMmRounded(padsCenterY - bboxY);
 
-        
 
         // 最终偏移 = translation - 焊盘中心偏移
 
@@ -843,7 +824,6 @@ QString ExporterFootprint::generateModel3D(const Model3DData& model3D,
         finalOffsetY = -(model3D.translation().y - padsCenterY_mm);  // Y 轴取反
 
     } else {
-
         // 正常值：translation 和 bbox 都是像素单位，使用标准的 pxToMm 转换逻辑
 
         double offsetX = model3D.translation().x - bboxX;
@@ -853,35 +833,27 @@ QString ExporterFootprint::generateModel3D(const Model3DData& model3D,
         finalOffsetX = pxToMmRounded(offsetX);
 
         finalOffsetY = -pxToMmRounded(offsetY);  // Y 轴取反（正常情况）
-
     }
 
 
+    content += QString("  (model \"%1\"\n").arg(finalPath);
 
-content += QString("  (model \"%1\"\n").arg(finalPath);
+    content += QString("    (offset (xyz %1 %2 %3))\n")
 
-content += QString("    (offset (xyz %1 %2 %3))\n")
+                   .arg(finalOffsetX, 0, 'f', 3)
 
-               .arg(finalOffsetX, 0, 'f', 3)
+                   .arg(finalOffsetY, 0, 'f', 3)
 
-               .arg(finalOffsetY, 0, 'f', 3)
+                   .arg(z, 0, 'f', 3);
 
-               .arg(z, 0, 'f', 3);
+    content += "    (scale (xyz 1 1 1))\n";
 
-content += "    (scale (xyz 1 1 1))\n";
+    content += QString("    (rotate (xyz %1 %2 %3))\n").arg(rotX, 0, 'f', 0).arg(rotY, 0, 'f', 0).arg(rotZ, 0, 'f', 0);
 
-content += QString("    (rotate (xyz %1 %2 %3))\n").arg(rotX, 0, 'f', 0).arg(rotY, 0, 'f', 0).arg(rotZ, 0, 'f', 0);
-
-content += "  )\n";
-
-
-
-
-
+    content += "  )\n";
 
 
     return content;
-
 }
 double ExporterFootprint::pxToMm(double px) const {
     return GeometryUtils::convertToMm(px);
