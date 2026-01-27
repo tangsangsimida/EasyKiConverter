@@ -609,9 +609,36 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
                                           double centerY) const {
     QString content;
 
-    // 多部分符号：使用 _{unitNumber}_1 作为子符号名�?
-    // 注意：Unit 编号必须�?1 开始，而不是从 0 开�?
+    // 多部分符号：使用 _{unitNumber}_1 作为子符号名?
+    // 注意：Unit 编号必须?1 开始，而不是从 0 开?
     content += QString("    (symbol \"%1_%2_1\"\n").arg(symbolName).arg(part.unitNumber + 1);
+
+    // 计算子部分的边界框和中心点
+    SymbolBBox partBBox = calculatePartBBox(part);
+    double partCenterX = partBBox.x + partBBox.width / 2.0;
+    double partCenterY = partBBox.y + partBBox.height / 2.0;
+
+    qDebug() << "Sub-symbol" << part.unitNumber << "- partCenterX:" << partCenterX
+             << "partCenterY:" << partCenterY;
+
+    // 临时保存当前的边界框
+    SymbolBBox originalBBox = m_currentBBox;
+
+    // 设置 m_currentBBox 为子部分的中心点，以便图形元素使用正确的偏移
+    m_currentBBox.x = partCenterX;
+    m_currentBBox.y = partCenterY;
+    m_currentBBox.width = partBBox.width;
+    m_currentBBox.height = partBBox.height;
+
+    qDebug() << "Setting m_currentBBox for sub-symbol - x:" << m_currentBBox.x
+             << "y:" << m_currentBBox.y;
+
+    // 创建以子部分中心为基准的边界框（用于引脚）
+    SymbolBBox centeredPartBBox;
+    centeredPartBBox.x = partCenterX;
+    centeredPartBBox.y = partCenterY;
+    centeredPartBBox.width = partBBox.width;
+    centeredPartBBox.height = partBBox.height;
 
     // 生成图形元素（直接生成，不添加任何属性）
     for (const SymbolRectangle& rect : part.rectangles) {
@@ -641,18 +668,15 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
         content += generateText(text);
     }
 
-    // 生成引脚
+    // 生成引脚（使用子部分的中心点进行偏移）
     for (const SymbolPin& pin : part.pins) {
-        // 使用中心点创建临时边界框，让引脚也跟着图形一起移�?
-        SymbolBBox centeredBBox;
-        centeredBBox.x = centerX;
-        centeredBBox.y = centerY;
-        centeredBBox.width = symbolData.bbox().width;
-        centeredBBox.height = symbolData.bbox().height;
-        content += generatePin(pin, centeredBBox);
+        content += generatePin(pin, centeredPartBBox);
     }
 
-    content += "    )\n";  // 结束子符�?
+    // 恢复原始边界框
+    m_currentBBox = originalBBox;
+
+    content += "    )\n";  // 结束子符?
 
     return content;
 }
@@ -1182,6 +1206,88 @@ QString ExporterSymbol::rotationToKicadOrientation(int rotation) const {
         default:
             return "right";
     }
+}
+
+SymbolBBox ExporterSymbol::calculatePartBBox(const SymbolPart& part) const {
+    SymbolBBox bbox;
+    bbox.x = 0.0;
+    bbox.y = 0.0;
+    bbox.width = 0.0;
+    bbox.height = 0.0;
+
+    // 如果子部分有坐标原点，使用它作为基准
+    if (part.originX != 0.0 || part.originY != 0.0) {
+        bbox.x = part.originX;
+        bbox.y = part.originY;
+    }
+
+    // 计算图形元素的边界
+    double minX = bbox.x;
+    double minY = bbox.y;
+    double maxX = bbox.x;
+    double maxY = bbox.y;
+
+    // 遍历所有图形元素，计算边界
+    auto updateBounds = [&](double x, double y, double w, double h) {
+        minX = qMin(minX, x);
+        minY = qMin(minY, y);
+        maxX = qMax(maxX, x + w);
+        maxY = qMax(maxY, y + h);
+    };
+
+    // 处理矩形
+    for (const auto& rect : part.rectangles) {
+        updateBounds(rect.posX, rect.posY, rect.width, rect.height);
+    }
+
+    // 处理圆
+    for (const auto& circle : part.circles) {
+        double radius = circle.radius;
+        updateBounds(circle.centerX - radius, circle.centerY - radius, radius * 2, radius * 2);
+    }
+
+    // 处理椭圆
+    for (const auto& ellipse : part.ellipses) {
+        updateBounds(ellipse.centerX - ellipse.radiusX, ellipse.centerY - ellipse.radiusY,
+                    ellipse.radiusX * 2, ellipse.radiusY * 2);
+    }
+
+    // 处理圆弧（使用路径点）
+    for (const auto& arc : part.arcs) {
+        for (const auto& point : arc.path) {
+            minX = qMin(minX, point.x());
+            minY = qMin(minY, point.y());
+            maxX = qMax(maxX, point.x());
+            maxY = qMax(maxY, point.y());
+        }
+    }
+
+    // 处理引脚
+    for (const auto& pin : part.pins) {
+        minX = qMin(minX, pin.settings.posX);
+        minY = qMin(minY, pin.settings.posY);
+        maxX = qMax(maxX, pin.settings.posX);
+        maxY = qMax(maxY, pin.settings.posY);
+    }
+
+    // 处理文本
+    for (const auto& text : part.texts) {
+        minX = qMin(minX, text.posX);
+        minY = qMin(minY, text.posY);
+        maxX = qMax(maxX, text.posX);
+        maxY = qMax(maxY, text.posY);
+    }
+
+    // 更新边界框
+    bbox.x = minX;
+    bbox.y = minY;
+    bbox.width = maxX - minX;
+    bbox.height = maxY - minY;
+
+    qDebug() << "Part BBox - x:" << bbox.x << "y:" << bbox.y
+             << "width:" << bbox.width << "height:" << bbox.height;
+
+    return bbox;
 }
 
 }  // namespace EasyKiConverter

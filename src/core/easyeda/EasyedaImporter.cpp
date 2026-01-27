@@ -128,6 +128,15 @@ QSharedPointer<SymbolData> EasyedaImporter::importSymbolData(const QJsonObject& 
 
                         SymbolPart part;
                         part.unitNumber = i;
+
+                        // 设置子部分的坐标原点（从 EasyEDA head 字段）
+                        if (subpartDataStr.contains("head")) {
+                            QJsonObject head = subpartDataStr["head"].toObject();
+                            part.originX = head["x"].toDouble(0.0);
+                            part.originY = head["y"].toDouble(0.0);
+                            qDebug() << "Subpart" << i << "origin: (" << part.originX << "," << part.originY << ")";
+                        }
+
                         qDebug() << "Importing subpart" << i << "from" << subpart["title"].toString();
 
                         // 导入子部分的图形元素

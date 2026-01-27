@@ -223,6 +223,14 @@ private:
      */
     QString rotationToKicadOrientation(int rotation) const;
 
+    /**
+     * @brief 计算子部分的边界框
+     *
+     * @param part 子部分数据
+     * @return SymbolBBox 子部分的边界框
+     */
+    SymbolBBox calculatePartBBox(const SymbolPart& part) const;
+
 private:
     mutable SymbolBBox m_currentBBox;  // 当前处理的边界框
 };

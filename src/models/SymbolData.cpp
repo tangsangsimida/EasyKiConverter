@@ -814,6 +814,8 @@ void SymbolData::clear() {
 QJsonObject SymbolPart::toJson() const {
     QJsonObject json;
     json["unit_number"] = unitNumber;
+    json["origin_x"] = originX;
+    json["origin_y"] = originY;
 
     QJsonArray pinsArray;
     for (const SymbolPin& pin : pins) {
@@ -874,6 +876,8 @@ QJsonObject SymbolPart::toJson() const {
 
 bool SymbolPart::fromJson(const QJsonObject& json) {
     unitNumber = json["unit_number"].toInt(0);
+    originX = json["origin_x"].toDouble(0.0);
+    originY = json["origin_y"].toDouble(0.0);
 
     if (json.contains("pins")) {
         QJsonArray pinsArray = json["pins"].toArray();
