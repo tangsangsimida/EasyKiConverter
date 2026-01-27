@@ -1028,8 +1028,28 @@ void EasyedaImporter::importSvgNodeData(const QString& svgNodeData, QSharedPoint
                 QStringList originParts = c_origin.split(",");
                 if (originParts.size() >= 2) {
                     Model3DBase translation;
-                    translation.x = originParts[0].toDouble();
-                    translation.y = originParts[1].toDouble();
+                    double originX = originParts[0].toDouble();
+                    double originY = originParts[1].toDouble();
+
+                    // 检测 c_origin 是否为异常的小值（单位不一致）
+                    // 正常的 c_origin 应该在 1000-10000 像素范围内
+                    // 如果远小于这个范围，说明使用了相对坐标模式
+                    if (qAbs(originX) < 1000 && qAbs(originY) < 1000) {
+                        // 相对模式：将 3D 模型偏移置零，直接定位到封装中心
+                        // c_origin 应该设为 (0, 0)，3D 模型就在封装中心
+                        
+                        double bboxCenterX = footprintData->bbox().x + footprintData->bbox().width / 2.0;
+                        double bboxCenterY = footprintData->bbox().y + footprintData->bbox().height / 2.0;
+                        
+                        // 3D 模型直接在封装中心
+                        translation.x = bboxCenterX;
+                        translation.y = bboxCenterY;
+                    } else {
+                        // 绝对模式：c_origin 直接就是封装中心（绝对坐标）
+                        translation.x = originX;
+                        translation.y = originY;
+                    }
+                    
                     translation.z = attrs.contains("z") ? attrs["z"].toDouble() : 0.0;
                     model3D.setTranslation(translation);
                 }
