@@ -1,12 +1,11 @@
 ﻿#include "ExporterSymbol.h"
 
-#include <QTextStream>
+#include "core/utils/GeometryUtils.h"
+#include "core/utils/SvgPathParser.h"
 
 #include <QDebug>
 #include <QFile>
-
-#include "core/utils/GeometryUtils.h"
-#include "core/utils/SvgPathParser.h"
+#include <QTextStream>
 
 namespace EasyKiConverter {
 
@@ -618,8 +617,7 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
     double partCenterX = partBBox.x + partBBox.width / 2.0;
     double partCenterY = partBBox.y + partBBox.height / 2.0;
 
-    qDebug() << "Sub-symbol" << part.unitNumber << "- partCenterX:" << partCenterX
-             << "partCenterY:" << partCenterY;
+    qDebug() << "Sub-symbol" << part.unitNumber << "- partCenterX:" << partCenterX << "partCenterY:" << partCenterY;
 
     // 临时保存当前的边界框
     SymbolBBox originalBBox = m_currentBBox;
@@ -630,8 +628,7 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
     m_currentBBox.width = partBBox.width;
     m_currentBBox.height = partBBox.height;
 
-    qDebug() << "Setting m_currentBBox for sub-symbol - x:" << m_currentBBox.x
-             << "y:" << m_currentBBox.y;
+    qDebug() << "Setting m_currentBBox for sub-symbol - x:" << m_currentBBox.x << "y:" << m_currentBBox.y;
 
     // 创建以子部分中心为基准的边界框（用于引脚）
     SymbolBBox centeredPartBBox;
@@ -1248,8 +1245,10 @@ SymbolBBox ExporterSymbol::calculatePartBBox(const SymbolPart& part) const {
 
     // 处理椭圆
     for (const auto& ellipse : part.ellipses) {
-        updateBounds(ellipse.centerX - ellipse.radiusX, ellipse.centerY - ellipse.radiusY,
-                    ellipse.radiusX * 2, ellipse.radiusY * 2);
+        updateBounds(ellipse.centerX - ellipse.radiusX,
+                     ellipse.centerY - ellipse.radiusY,
+                     ellipse.radiusX * 2,
+                     ellipse.radiusY * 2);
     }
 
     // 处理圆弧（使用路径点）
@@ -1284,8 +1283,7 @@ SymbolBBox ExporterSymbol::calculatePartBBox(const SymbolPart& part) const {
     bbox.width = maxX - minX;
     bbox.height = maxY - minY;
 
-    qDebug() << "Part BBox - x:" << bbox.x << "y:" << bbox.y
-             << "width:" << bbox.width << "height:" << bbox.height;
+    qDebug() << "Part BBox - x:" << bbox.x << "y:" << bbox.y << "width:" << bbox.width << "height:" << bbox.height;
 
     return bbox;
 }

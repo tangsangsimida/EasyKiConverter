@@ -1,10 +1,10 @@
 ﻿#ifndef PROCESSWORKER_H
 #define PROCESSWORKER_H
 
+#include "models/ComponentExportStatus.h"
+
 #include <QObject>
 #include <QRunnable>
-
-#include "models/ComponentExportStatus.h"
 
 namespace EasyKiConverter {
 

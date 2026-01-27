@@ -1,12 +1,12 @@
 ﻿#include "ExportWorker.h"
 
-#include <QDebug>
-#include <QDir>
-#include <QFile>
-
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
+
+#include <QDebug>
+#include <QDir>
+#include <QFile>
 
 namespace EasyKiConverter {
 
@@ -19,16 +19,16 @@ ExportWorker::ExportWorker(const QString& componentId,
                            bool exportFootprint,
                            bool exportModel3D,
                            QObject* parent)
-    : QObject(parent),
-      QRunnable(),
-      m_componentId(componentId),
-      m_symbolData(symbolData),
-      m_footprintData(footprintData),
-      m_outputPath(outputPath),
-      m_libName(libName),
-      m_exportSymbol(exportSymbol),
-      m_exportFootprint(exportFootprint),
-      m_exportModel3D(exportModel3D) {
+    : QObject(parent)
+    , QRunnable()
+    , m_componentId(componentId)
+    , m_symbolData(symbolData)
+    , m_footprintData(footprintData)
+    , m_outputPath(outputPath)
+    , m_libName(libName)
+    , m_exportSymbol(exportSymbol)
+    , m_exportFootprint(exportFootprint)
+    , m_exportModel3D(exportModel3D) {
     setAutoDelete(true);  // 任务完成后自动删�?
 }
 

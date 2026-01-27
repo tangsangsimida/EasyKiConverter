@@ -1,13 +1,12 @@
 ﻿#include "ExporterFootprint.h"
 
-#include <QTextStream>
+#include "core/utils/GeometryUtils.h"
 
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-
-#include "core/utils/GeometryUtils.h"
+#include <QTextStream>
 
 namespace EasyKiConverter {
 

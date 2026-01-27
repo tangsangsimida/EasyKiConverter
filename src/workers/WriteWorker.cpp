@@ -1,6 +1,8 @@
 ﻿#include "WriteWorker.h"
 
-#include <QThreadPool>
+#include "core/kicad/Exporter3DModel.h"
+#include "core/kicad/ExporterFootprint.h"
+#include "core/kicad/ExporterSymbol.h"
 
 #include <QDebug>
 #include <QDir>
@@ -8,11 +10,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMutex>
+#include <QThreadPool>
 #include <QWaitCondition>
-
-#include "core/kicad/Exporter3DModel.h"
-#include "core/kicad/ExporterFootprint.h"
-#include "core/kicad/ExporterSymbol.h"
 
 namespace EasyKiConverter {
 
@@ -38,17 +37,17 @@ WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
                          bool exportModel3D,
                          bool debugMode,
                          QObject* parent)
-    : QObject(parent),
-      m_status(status),
-      m_outputPath(outputPath),
-      m_libName(libName),
-      m_exportSymbol(exportSymbol),
-      m_exportFootprint(exportFootprint),
-      m_exportModel3D(exportModel3D),
-      m_debugMode(debugMode),
-      m_symbolExporter(),
-      m_footprintExporter(),
-      m_model3DExporter() {}
+    : QObject(parent)
+    , m_status(status)
+    , m_outputPath(outputPath)
+    , m_libName(libName)
+    , m_exportSymbol(exportSymbol)
+    , m_exportFootprint(exportFootprint)
+    , m_exportModel3D(exportModel3D)
+    , m_debugMode(debugMode)
+    , m_symbolExporter()
+    , m_footprintExporter()
+    , m_model3DExporter() {}
 
 WriteWorker::~WriteWorker() {}
 

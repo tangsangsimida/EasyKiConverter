@@ -1,11 +1,11 @@
 ﻿#ifndef EXPORTER3DMODEL_H
 #define EXPORTER3DMODEL_H
 
+#include "models/Model3DData.h"
+
 #include <QByteArray>
 #include <QObject>
 #include <QString>
-
-#include "models/Model3DData.h"
 
 // 前向声明
 namespace EasyKiConverter {

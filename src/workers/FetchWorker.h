@@ -1,11 +1,11 @@
 ﻿#ifndef FETCHWORKER_H
 #define FETCHWORKER_H
 
+#include "models/ComponentExportStatus.h"
+
 #include <QNetworkAccessManager>
 #include <QObject>
 #include <QRunnable>
-
-#include "models/ComponentExportStatus.h"
 
 namespace EasyKiConverter {
 

@@ -1,20 +1,20 @@
 ﻿#include "ComponentDataCollector.h"
 
-#include <QDebug>
-
 #include "core/easyeda/EasyedaApi.h"
 #include "core/easyeda/EasyedaImporter.h"
+
+#include <QDebug>
 
 namespace EasyKiConverter {
 
 ComponentDataCollector::ComponentDataCollector(const QString& componentId, QObject* parent)
-    : QObject(parent),
-      m_componentId(componentId),
-      m_state(Idle),
-      m_export3DModel(true),
-      m_isCancelled(false),
-      m_api(new EasyedaApi(this)),
-      m_importer(new EasyedaImporter(this)) {
+    : QObject(parent)
+    , m_componentId(componentId)
+    , m_state(Idle)
+    , m_export3DModel(true)
+    , m_isCancelled(false)
+    , m_api(new EasyedaApi(this))
+    , m_importer(new EasyedaImporter(this)) {
     initializeApiConnections();
 }
 

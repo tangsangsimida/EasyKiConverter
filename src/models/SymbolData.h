@@ -342,9 +342,9 @@ struct SymbolText {
  * @brief 符号部分（用于多部分符号）
  */
 struct SymbolPart {
-    int unitNumber;       // 部分编号（从 0 开始）
-    double originX;       // 子部分的坐标原点 X（从 EasyEDA head.x）
-    double originY;       // 子部分的坐标原点 Y（从 EasyEDA head.y）
+    int unitNumber;  // 部分编号（从 0 开始）
+    double originX;  // 子部分的坐标原点 X（从 EasyEDA head.x）
+    double originY;  // 子部分的坐标原点 Y（从 EasyEDA head.y）
     QList<SymbolPin> pins;
     QList<SymbolRectangle> rectangles;
     QList<SymbolCircle> circles;

@@ -1,14 +1,14 @@
 ﻿#ifndef COMPONENTDATA_H
 #define COMPONENTDATA_H
 
+#include "FootprintData.h"
+#include "Model3DData.h"
+#include "SymbolData.h"
+
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QSharedPointer>
 #include <QString>
-
-#include "FootprintData.h"
-#include "Model3DData.h"
-#include "SymbolData.h"
 
 namespace EasyKiConverter {
 

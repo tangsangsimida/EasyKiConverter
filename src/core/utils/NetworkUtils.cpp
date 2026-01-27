@@ -13,15 +13,15 @@
 namespace EasyKiConverter {
 
 NetworkUtils::NetworkUtils(QObject* parent)
-    : QObject(parent),
-      m_networkManager(new QNetworkAccessManager(this)),
-      m_currentReply(nullptr),
-      m_timeoutTimer(new QTimer(this)),
-      m_timeout(30),
-      m_maxRetries(3),
-      m_retryCount(0),
-      m_isRequesting(false),
-      m_expectBinaryData(false) {
+    : QObject(parent)
+    , m_networkManager(new QNetworkAccessManager(this))
+    , m_currentReply(nullptr)
+    , m_timeoutTimer(new QTimer(this))
+    , m_timeout(30)
+    , m_maxRetries(3)
+    , m_retryCount(0)
+    , m_isRequesting(false)
+    , m_expectBinaryData(false) {
     // 设置默认请求�?
     m_headers["Accept-Encoding"] = "gzip, deflate";
     m_headers["Accept"] = "application/json, text/javascript, */*; q=0.01";

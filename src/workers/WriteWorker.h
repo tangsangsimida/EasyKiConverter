@@ -1,13 +1,13 @@
 ﻿#ifndef WRITEWORKER_H
 #define WRITEWORKER_H
 
-#include <QObject>
-#include <QRunnable>
-
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
 #include "models/ComponentExportStatus.h"
+
+#include <QObject>
+#include <QRunnable>
 
 namespace EasyKiConverter {
 

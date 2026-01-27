@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QRegularExpression>
+
 #include <cmath>
 
 namespace EasyKiConverter {

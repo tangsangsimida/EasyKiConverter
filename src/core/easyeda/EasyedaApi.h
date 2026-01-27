@@ -1,11 +1,11 @@
 ﻿#ifndef EASYEDAAPI_H
 #define EASYEDAAPI_H
 
+#include "core/utils/NetworkUtils.h"
+
 #include <QJsonObject>
 #include <QObject>
 #include <QString>
-
-#include "core/utils/NetworkUtils.h"
 
 namespace EasyKiConverter {
 

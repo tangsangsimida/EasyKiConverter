@@ -1,28 +1,28 @@
 ﻿#include "ExportProgressViewModel.h"
 
-#include <QDebug>
-
 #include "services/ExportService_Pipeline.h"
+
+#include <QDebug>
 
 namespace EasyKiConverter {
 
 ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
                                                  ComponentService* componentService,
                                                  QObject* parent)
-    : QObject(parent),
-      m_exportService(exportService),
-      m_componentService(componentService),
-      m_status("Ready"),
-      m_progress(0),
-      m_isExporting(false),
-      m_successCount(0),
-      m_failureCount(0),
-      m_fetchedCount(0),
-      m_fetchProgress(0),
-      m_processProgress(0),
-      m_writeProgress(0),
-      m_usePipelineMode(false),
-      m_pendingUpdate(false) {
+    : QObject(parent)
+    , m_exportService(exportService)
+    , m_componentService(componentService)
+    , m_status("Ready")
+    , m_progress(0)
+    , m_isExporting(false)
+    , m_successCount(0)
+    , m_failureCount(0)
+    , m_fetchedCount(0)
+    , m_fetchProgress(0)
+    , m_processProgress(0)
+    , m_writeProgress(0)
+    , m_usePipelineMode(false)
+    , m_pendingUpdate(false) {
     // 初始化节流定时器�?00ms�?
     m_throttleTimer = new QTimer(this);
     m_throttleTimer->setInterval(100);  // 100ms 节流间隔

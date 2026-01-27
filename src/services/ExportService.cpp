@@ -1,31 +1,31 @@
 ﻿#include "ExportService.h"
 
-#include <QDebug>
-#include <QDir>
-#include <QFile>
-
 #include "ComponentExportTask.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
 
+#include <QDebug>
+#include <QDir>
+#include <QFile>
+
 namespace EasyKiConverter {
 
 ExportService::ExportService(QObject* parent)
-    : QObject(parent),
-      m_symbolExporter(new ExporterSymbol(this)),
-      m_footprintExporter(new ExporterFootprint(this)),
-      m_modelExporter(new Exporter3DModel(this)),
-      m_threadPool(new QThreadPool(this)),
-      m_mutex(new QMutex()),
-      m_isExporting(false),
-      m_currentProgress(0),
-      m_totalProgress(0),
-      m_successCount(0),
-      m_failureCount(0),
-      m_parallelExporting(false),
-      m_parallelCompletedCount(0),
-      m_parallelTotalCount(0) {}
+    : QObject(parent)
+    , m_symbolExporter(new ExporterSymbol(this))
+    , m_footprintExporter(new ExporterFootprint(this))
+    , m_modelExporter(new Exporter3DModel(this))
+    , m_threadPool(new QThreadPool(this))
+    , m_mutex(new QMutex())
+    , m_isExporting(false)
+    , m_currentProgress(0)
+    , m_totalProgress(0)
+    , m_successCount(0)
+    , m_failureCount(0)
+    , m_parallelExporting(false)
+    , m_parallelCompletedCount(0)
+    , m_parallelTotalCount(0) {}
 
 ExportService::~ExportService() {}
 

@@ -1,11 +1,11 @@
 ﻿#ifndef JLCDATASHEET_H
 #define JLCDATASHEET_H
 
+#include "core/utils/NetworkUtils.h"
+
 #include <QFile>
 #include <QObject>
 #include <QString>
-
-#include "core/utils/NetworkUtils.h"
 
 namespace EasyKiConverter {
 

@@ -1,13 +1,12 @@
 ﻿#ifndef EXPORTERSYMBOL_H
 #define EXPORTERSYMBOL_H
 
-#include <QTextStream>
+#include "models/SymbolData.h"
 
 #include <QJsonObject>
 #include <QObject>
 #include <QString>
-
-#include "models/SymbolData.h"
+#include <QTextStream>
 
 namespace EasyKiConverter {
 

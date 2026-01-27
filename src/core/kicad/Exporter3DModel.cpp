@@ -1,13 +1,12 @@
 ﻿#include "Exporter3DModel.h"
 
-#include <QTextStream>
+#include "core/utils/NetworkUtils.h"
 
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
-
-#include "core/utils/NetworkUtils.h"
+#include <QTextStream>
 
 namespace EasyKiConverter {
 

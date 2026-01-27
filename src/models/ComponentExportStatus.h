@@ -1,14 +1,14 @@
 ﻿#ifndef COMPONENTEXPORTSTATUS_H
 #define COMPONENTEXPORTSTATUS_H
 
-#include <QElapsedTimer>
-#include <QSharedPointer>
-#include <QString>
-
 #include "models/ComponentData.h"
 #include "models/FootprintData.h"
 #include "models/Model3DData.h"
 #include "models/SymbolData.h"
+
+#include <QElapsedTimer>
+#include <QSharedPointer>
+#include <QString>
 
 namespace EasyKiConverter {
 

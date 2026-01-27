@@ -1,12 +1,11 @@
 ﻿#ifndef NETWORKUTILS_H
 #define NETWORKUTILS_H
 
-#include <QTimer>
-
 #include <QJsonObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QObject>
+#include <QTimer>
 
 namespace EasyKiConverter {
 

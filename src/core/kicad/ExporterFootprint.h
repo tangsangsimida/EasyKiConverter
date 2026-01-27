@@ -1,14 +1,13 @@
 ﻿#ifndef EXPORTERFOOTPRINT_H
 #define EXPORTERFOOTPRINT_H
 
-#include <QTextStream>
+#include "models/FootprintData.h"
+#include "models/Model3DData.h"
 
 #include <QJsonObject>
 #include <QObject>
 #include <QString>
-
-#include "models/FootprintData.h"
-#include "models/Model3DData.h"
+#include <QTextStream>
 
 namespace EasyKiConverter {
 

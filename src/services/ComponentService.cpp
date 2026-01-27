@@ -1,24 +1,24 @@
 #include "ComponentService.h"
 
+#include "core/easyeda/EasyedaApi.h"
+#include "core/easyeda/EasyedaImporter.h"
+
 #include <QDebug>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "core/easyeda/EasyedaApi.h"
-#include "core/easyeda/EasyedaImporter.h"
-
 namespace EasyKiConverter {
 
 ComponentService::ComponentService(QObject* parent)
-    : QObject(parent),
-      m_api(new EasyedaApi(this)),
-      m_importer(new EasyedaImporter(this)),
-      m_currentComponentId(),
-      m_hasDownloadedWrl(false),
-      m_parallelTotalCount(0),
-      m_parallelCompletedCount(0),
-      m_parallelFetching(false) {
+    : QObject(parent)
+    , m_api(new EasyedaApi(this))
+    , m_importer(new EasyedaImporter(this))
+    , m_currentComponentId()
+    , m_hasDownloadedWrl(false)
+    , m_parallelTotalCount(0)
+    , m_parallelCompletedCount(0)
+    , m_parallelFetching(false) {
     // 连接 API 信号
     connect(m_api, &EasyedaApi::componentInfoFetched, this, &ComponentService::handleComponentInfoFetched);
     connect(m_api, &EasyedaApi::cadDataFetched, this, &ComponentService::handleCadDataFetched);

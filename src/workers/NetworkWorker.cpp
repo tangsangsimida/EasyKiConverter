@@ -1,5 +1,7 @@
 ﻿#include "NetworkWorker.h"
 
+#include "core/easyeda/EasyedaApi.h"
+
 #include <QDebug>
 #include <QEventLoop>
 #include <QJsonDocument>
@@ -7,9 +9,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <zlib.h>
 
-#include "core/easyeda/EasyedaApi.h"
+#include <zlib.h>
 
 namespace EasyKiConverter {
 
