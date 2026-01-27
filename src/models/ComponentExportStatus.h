@@ -56,6 +56,17 @@ struct ComponentExportStatus {
     // 是否需要导�?D模型
     bool need3DModel = false;
 
+    // 网络诊断信息（v3.0.3 新增）
+    struct NetworkDiagnostics {
+        QString url;          // 请求 URL
+        int statusCode = 0;   // HTTP 状态码
+        QString errorString;  // 错误信息
+        int retryCount = 0;   // 重试次数
+        qint64 latencyMs = 0; // 请求延迟（毫秒）
+        bool wasRateLimited = false; // 是否触发速率限制
+    };
+    QList<NetworkDiagnostics> networkDiagnostics;  // 所有网络请求的诊断信息
+
     /**
      * @brief 检查是否完全成�?
          * @return bool
@@ -129,6 +140,13 @@ struct ExportStatistics {
 
     // 最慢的组件（用于性能分析�?
     QList<QPair<QString, qint64>> slowestComponents;  // <componentId, durationMs>
+
+    // 网络诊断统计（v3.0.3 新增）
+    int totalNetworkRequests = 0;        // 总网络请求数
+    int totalRetries = 0;                // 总重试次数
+    qint64 avgNetworkLatencyMs = 0;     // 平均网络延迟
+    int rateLimitHitCount = 0;           // 触发速率限制次数
+    QMap<int, int> statusCodeDistribution;  // 状态码分布
 
     /**
      * @brief 计算成功�?

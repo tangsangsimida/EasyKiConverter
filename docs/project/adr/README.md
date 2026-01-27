@@ -60,6 +60,8 @@ ADR 文件应使用以下命名格式：
 - [ADR 002: Pipeline Parallelism for Export](002-pipeline-parallelism-for-export_en.md) (English)
 - [ADR 003: 流水线性能优化](003-pipeline-performance-optimization.md)
 - [ADR 004: 符号库更新导出修复](004-symbol-library-update-fix.md)
+- [ADR 005: 流水线 Worker 微观性能优化](005-pipeline-worker-micro-optimization.md)
+- [ADR 006: 网络性能优化](006-network-performance-optimization.md)
 
 ## 参考资料
 

@@ -408,7 +408,7 @@ cmake --build build --config Debug --parallel 16
 
 ### 总结
 
-通过 P0 和 P1 两轮优化，我们成功解决了流水线架构中的关键性能瓶颈：
+通过 P0、P1 和 P2 三轮优化，我们成功解决了流水线架构中的关键性能瓶颈：
 
 1. **P0 改进（架构优化）**：
    - ProcessWorker 移除网络请求
@@ -419,12 +419,26 @@ cmake --build build --config Debug --parallel 16
    - 动态队列大小
    - 并行写入文件
 
+3. **P2 改进（网络优化 - ADR-006）**：
+   - 优化线程池配置（3线程）
+   - 降低超时时间
+   - 实现速率限制检测
+   - 启用网络诊断功能
+
 ### 性能提升
 
+**ADR-003 优化后（P0 + P1）：**
 - **总耗时减少 54%**（240秒 → 110秒，100个组件）
 - **吞吐量提升 117%**（0.42 → 0.91 组件/秒）
 - **内存占用减少 50%**（400MB → 200MB）
 - **CPU 利用率提升 50%**（60% → 90%）
+
+**ADR-006 优化后（P0 + P1 + P2）：**
+- **总耗时减少 94.5%**（263秒 → 14秒，21个组件）
+- **吞吐量提升 1712%**（0.08 → 1.45 组件/秒）
+- **平均抓取时间减少 97.3%**（65.8秒 → 1.76秒）
+- **超过3秒组件减少 85.7%**（21个 → 3个）
+- **无超时请求，无速率限制**
 
 ### 架构改进
 
@@ -447,6 +461,7 @@ cmake --build build --config Debug --parallel 16
 ## 参考资料
 
 - [ADR-003: 流水线性能优化](docs/project/adr/003-pipeline-performance-optimization.md)
+- [ADR-006: 网络性能优化](docs/project/adr/006-network-performance-optimization.md)
 - [CHANGELOG.md](docs/developer/CHANGELOG.md)
 - [ARCHITECTURE.md](docs/developer/ARCHITECTURE.md)
 - [性能测试指南](tests/PERFORMANCE_TEST_GUIDE.md)
