@@ -31,5 +31,5 @@ jobs:
         with:
           source: './src'
           extensions: 'h,cpp'
-          clangFormatVersion: 11
+          clangFormatVersion: 13
           style: file
