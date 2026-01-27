@@ -3,8 +3,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Window
-import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
-import EasyKiconverter_Cpp_Version.src.ui.qml.components
+import "styles"
+import "components"
 Item {
     id: window
     // 连接到 ViewModel
