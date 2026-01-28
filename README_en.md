@@ -34,18 +34,16 @@ If you are a developer or wish to compile it yourself, please refer to the [Buil
 *   [Contributing Guide](docs/developer/CONTRIBUTING_en.md) | [Architecture](docs/developer/ARCHITECTURE_en.md) | [Build Guide](docs/developer/BUILD_en.md)
 *   [Performance Report](docs/PERFORMANCE_OPTIMIZATION_REPORT_en.md) | [Roadmap](docs/project/ROADMAP_en.md)
 
-## 📅 Latest Updates (v3.0.0)
-
-This update introduces a brand new **Three-Stage Pipeline Architecture**, significantly improving conversion efficiency:
-*   **Performance Leap**: Total time reduced by 54%, throughput increased by 117%.
-*   **Resource Optimization**: Memory usage reduced by 50%, with significantly improved CPU utilization.
-*   **Enhanced Features**: Complete 3D model support and batch processing capabilities.
-
-> View full changelog: [CHANGELOG.md](docs/developer/CHANGELOG_en.md)
-
 ## 🤝 Contribution & Credits
 
-This project references core algorithms from [easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py). Thanks to the original author for their contribution.
+### Contributors
+
+We would like to thank the following contributors to EasyKiConverter:
+
+<a href="https://github.com/tangsangsimida/EasyKiConverter_QT/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=tangsangsimida/EasyKiConverter_QT" alt="Contributors" />
+</a>
+
 Issues and Pull Requests are welcome! Please see the [Contributing Guide](docs/developer/CONTRIBUTING_en.md) for details.
 
 ## 📄 License
