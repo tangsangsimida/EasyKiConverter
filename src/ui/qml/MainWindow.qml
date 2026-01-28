@@ -593,6 +593,29 @@ Item {
                             checked: exportSettingsController.exportSymbol
                             onCheckedChanged: exportSettingsController.setExportSymbol(checked)
                             font.pixelSize: 16
+                            
+                            indicator: Rectangle {
+                                implicitWidth: 22
+                                implicitHeight: 22
+                                x: symbolCheckbox.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: 4
+                                color: symbolCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                                border.color: symbolCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                border.width: 1.5
+                                
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on border.color { ColorAnimation { duration: 150 } }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "✓"
+                                    font.pixelSize: 14
+                                    color: "#ffffff"
+                                    visible: symbolCheckbox.checked
+                                }
+                            }
+
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
@@ -614,6 +637,29 @@ Item {
                             checked: exportSettingsController.exportFootprint
                             onCheckedChanged: exportSettingsController.setExportFootprint(checked)
                             font.pixelSize: 16
+                            
+                            indicator: Rectangle {
+                                implicitWidth: 22
+                                implicitHeight: 22
+                                x: footprintCheckbox.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: 4
+                                color: footprintCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                                border.color: footprintCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                border.width: 1.5
+                                
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on border.color { ColorAnimation { duration: 150 } }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "✓"
+                                    font.pixelSize: 14
+                                    color: "#ffffff"
+                                    visible: footprintCheckbox.checked
+                                }
+                            }
+
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
@@ -635,6 +681,29 @@ Item {
                             checked: exportSettingsController.exportModel3D
                             onCheckedChanged: exportSettingsController.setExportModel3D(checked)
                             font.pixelSize: 16
+                            
+                            indicator: Rectangle {
+                                implicitWidth: 22
+                                implicitHeight: 22
+                                x: model3dCheckbox.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: 4
+                                color: model3dCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                                border.color: model3dCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                border.width: 1.5
+                                
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on border.color { ColorAnimation { duration: 150 } }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "✓"
+                                    font.pixelSize: 14
+                                    color: "#ffffff"
+                                    visible: model3dCheckbox.checked
+                                }
+                            }
+
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
@@ -656,6 +725,29 @@ Item {
                             checked: false
                             onCheckedChanged: exportSettingsController.setDebugMode(checked)
                             font.pixelSize: 16
+                            
+                            indicator: Rectangle {
+                                implicitWidth: 22
+                                implicitHeight: 22
+                                x: debugModeCheckbox.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: 4
+                                color: debugModeCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                                border.color: debugModeCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                border.width: 1.5
+                                
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on border.color { ColorAnimation { duration: 150 } }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "✓"
+                                    font.pixelSize: 14
+                                    color: "#ffffff"
+                                    visible: debugModeCheckbox.checked
+                                }
+                            }
+
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
@@ -694,6 +786,27 @@ Item {
                                         }
                                     }
                                     font.pixelSize: 14
+                                    
+                                    indicator: Rectangle {
+                                        implicitWidth: 20
+                                        implicitHeight: 20
+                                        x: appendModeRadio.leftPadding
+                                        y: parent.height / 2 - height / 2
+                                        radius: 10
+                                        color: "transparent"
+                                        border.color: appendModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                        border.width: 1.5
+                                        
+                                        Rectangle {
+                                            anchors.centerIn: parent
+                                            width: 10
+                                            height: 10
+                                            radius: 5
+                                            color: AppStyle.colors.primary
+                                            visible: appendModeRadio.checked
+                                        }
+                                    }
+
                                     contentItem: Text {
                                         text: parent.text
                                         font: parent.font
@@ -705,7 +818,7 @@ Item {
                                 Text {
                                     text: "保留已存在的元器件"
                                     font.pixelSize: 11
-                                    color: "#94a3b8"
+                                    color: AppStyle.colors.textSecondary
                                 }
                             }
                             // 更新模式
@@ -721,6 +834,27 @@ Item {
                                         }
                                     }
                                     font.pixelSize: 14
+                                    
+                                    indicator: Rectangle {
+                                        implicitWidth: 20
+                                        implicitHeight: 20
+                                        x: updateModeRadio.leftPadding
+                                        y: parent.height / 2 - height / 2
+                                        radius: 10
+                                        color: "transparent"
+                                        border.color: updateModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                        border.width: 1.5
+                                        
+                                        Rectangle {
+                                            anchors.centerIn: parent
+                                            width: 10
+                                            height: 10
+                                            radius: 5
+                                            color: AppStyle.colors.primary
+                                            visible: updateModeRadio.checked
+                                        }
+                                    }
+
                                     contentItem: Text {
                                         text: parent.text
                                         font: parent.font
@@ -732,7 +866,7 @@ Item {
                                 Text {
                                     text: "覆盖已存在的元器件"
                                     font.pixelSize: 11
-                                    color: "#94a3b8"
+                                    color: AppStyle.colors.textSecondary
                                 }
                             }
                         }
@@ -859,7 +993,8 @@ Item {
 
                         // 步骤 1: 抓取
                         StepItem {
-                            Layout.fillWidth: true
+                            // 移除 Layout.fillWidth，让它保持最小宽度
+                            Layout.preferredWidth: implicitWidth
                             label: "数据抓取"
                             index: 1
                             progress: exportProgressController.fetchProgress
@@ -868,10 +1003,10 @@ Item {
 
                         // 连接线 1-2
                         Rectangle {
-                            Layout.fillWidth: true
+                            Layout.fillWidth: true // 让线条占据所有剩余空间
                             Layout.preferredHeight: 2
                             Layout.alignment: Qt.AlignVCenter
-                            Layout.bottomMargin: 14 // 调整垂直位置以对齐圆圈中心(圆圈高32/2=16 + spacing)
+                            Layout.bottomMargin: 14 
                             color: exportProgressController.fetchProgress >= 100 ? AppStyle.colors.success : AppStyle.colors.border
                             
                             Behavior on color { ColorAnimation { duration: 300 } }
@@ -879,7 +1014,7 @@ Item {
 
                         // 步骤 2: 处理
                         StepItem {
-                            Layout.fillWidth: true
+                            Layout.preferredWidth: implicitWidth
                             label: "数据处理"
                             index: 2
                             progress: exportProgressController.processProgress
@@ -888,7 +1023,7 @@ Item {
 
                         // 连接线 2-3
                         Rectangle {
-                            Layout.fillWidth: true
+                            Layout.fillWidth: true // 让线条占据所有剩余空间
                             Layout.preferredHeight: 2
                             Layout.alignment: Qt.AlignVCenter
                             Layout.bottomMargin: 14
@@ -899,7 +1034,7 @@ Item {
 
                         // 步骤 3: 写入
                         StepItem {
-                            Layout.fillWidth: true
+                            Layout.preferredWidth: implicitWidth
                             label: "文件写入"
                             index: 3
                             progress: exportProgressController.writeProgress
@@ -907,27 +1042,20 @@ Item {
                         }
                     }
 
-                    // 2. 总进度 (多色拼接)
-                    ColumnLayout {
+                    // 2. 总进度 (多色拼接) - 改为水平布局
+                    RowLayout {
                         Layout.fillWidth: true
-                        spacing: 6
-                        
-                        Text {
-                            text: "总进度: " + Math.round(exportProgressController.progress) + "%"
-                            font.pixelSize: 14
-                            font.bold: true
-                            color: AppStyle.colors.textPrimary
-                        }
+                        spacing: 12
                         
                         // 自定义多色进度条容器
                         Rectangle {
                             id: progressBar
                             Layout.fillWidth: true
-                            height: 12 // 稍微加粗一点
+                            height: 12
                             color: AppStyle.colors.border
                             radius: AppStyle.radius.md
                             clip: true
-                            visible: exportProgressController.isExporting
+                            // 移除 visible 限制，使其在完成后依然可见
                             
                             Row {
                                 anchors.fill: parent
@@ -960,6 +1088,15 @@ Item {
                                     Behavior on width { NumberAnimation { duration: 100 } }
                                 }
                             }
+                        }
+
+                        // 总进度文字 (放在右侧)
+                        Text {
+                            text: Math.round(exportProgressController.progress) + "%"
+                            font.pixelSize: 14
+                            font.bold: true
+                            color: AppStyle.colors.textPrimary
+                            Layout.alignment: Qt.AlignVCenter
                         }
                     }
 
