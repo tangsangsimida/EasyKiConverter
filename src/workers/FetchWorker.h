@@ -56,7 +56,9 @@ private:
      * @param status 导出状态对象（用于记录网络诊断）
      * @return QByteArray 响应数据
      */
-    QByteArray httpGet(const QString& url, int timeoutMs = 30000, QSharedPointer<ComponentExportStatus> status = nullptr);
+    QByteArray httpGet(const QString& url,
+                       int timeoutMs = 30000,
+                       QSharedPointer<ComponentExportStatus> status = nullptr);
 
     /**
      * @brief 解压gzip数据

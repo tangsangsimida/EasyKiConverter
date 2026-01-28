@@ -32,7 +32,7 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     , m_failureCount(0)
     , m_exportStartTimeMs(0) {
     // 配置线程池
-    m_fetchThreadPool->setMaxThreadCount(5);                               // I/O密集型，降低并发数至3以避免超时和降低网络延迟
+    m_fetchThreadPool->setMaxThreadCount(5);  // I/O密集型，降低并发数至3以避免超时和降低网络延迟
     m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());  // CPU密集型，等于核心数
     m_writeThreadPool->setMaxThreadCount(3);                              // 磁盘I/O密集型，8个线程
 
@@ -557,7 +557,8 @@ bool ExportServicePipeline::saveStatisticsReport(const ExportStatistics& statist
     networkObj["rateLimitHitCount"] = statistics.rateLimitHitCount;
 
     QJsonObject statusCodeDistObj;
-    for (auto it = statistics.statusCodeDistribution.constBegin(); it != statistics.statusCodeDistribution.constEnd(); ++it) {
+    for (auto it = statistics.statusCodeDistribution.constBegin(); it != statistics.statusCodeDistribution.constEnd();
+         ++it) {
         statusCodeDistObj[QString::number(it.key())] = it.value();
     }
     networkObj["statusCodeDistribution"] = statusCodeDistObj;

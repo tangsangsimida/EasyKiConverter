@@ -1,15 +1,15 @@
 #include "FetchWorker.h"
 
+#include <QDateTime>
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMutex>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QThread>
 #include <QTimer>
-#include <QMutex>
-#include <QDateTime>
 
 #include <zlib.h>
 
@@ -127,7 +127,7 @@ void FetchWorker::run() {
     }
 
     // 不要删除或清空 m_ownNetworkManager
-    m_ownNetworkManager = nullptr; // 解除引用，防止析构函数误删（虽然析构函数已修改，但为了安全）
+    m_ownNetworkManager = nullptr;  // 解除引用，防止析构函数误删（虽然析构函数已修改，但为了安全）
 
     // 减少活跃请求计数
     s_activeRequests.fetchAndSubRelaxed(1);
@@ -162,11 +162,14 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
         requestTimer.restart();
 
         if (retryCount > 0) {
-            int delayMs = 10000; // Default for 3rd+ retry
-            if (retryCount == 1) delayMs = 3000;
-            else if (retryCount == 2) delayMs = 5000;
+            int delayMs = 10000;  // Default for 3rd+ retry
+            if (retryCount == 1)
+                delayMs = 3000;
+            else if (retryCount == 2)
+                delayMs = 5000;
 
-            qDebug() << "Retrying request to" << url << "in" << delayMs << "ms (Retry" << retryCount << "/" << maxRetries << ")";
+            qDebug() << "Retrying request to" << url << "in" << delayMs << "ms (Retry" << retryCount << "/"
+                     << maxRetries << ")";
             QThread::msleep(delayMs);
         }
 
@@ -215,7 +218,8 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 QMutexLocker locker(&s_rateLimitMutex);
                 s_lastRateLimitTime = QDateTime::currentDateTime();
                 s_backoffMs = qMin(s_backoffMs + 1000, 5000);  // 指数退避，最大5秒
-                qWarning() << "Rate limit backoff increased to" << s_backoffMs << "ms, active requests:" << s_activeRequests.loadRelaxed();
+                qWarning() << "Rate limit backoff increased to" << s_backoffMs
+                           << "ms, active requests:" << s_activeRequests.loadRelaxed();
 
                 // 记录网络诊断信息
                 if (status) {
@@ -234,7 +238,7 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 // Will retry
             } else {
                 qWarning() << "HTTP error" << statusCode << "for URL:" << url << "(No retry for this code)";
-                retryCount = maxRetries + 1; // Don't retry for other 4xx errors
+                retryCount = maxRetries + 1;  // Don't retry for other 4xx errors
             }
         } else if (reply->error() == QNetworkReply::OperationCanceledError) {
             // 请求被取消（超时），不再重试
@@ -252,7 +256,7 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 status->networkDiagnostics.append(diag);
             }
 
-            retryCount = maxRetries + 1; // Skip retries
+            retryCount = maxRetries + 1;  // Skip retries
         } else {
             qWarning() << "Network error:" << reply->errorString() << "URL:" << url;
 
@@ -464,77 +468,50 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
     QByteArray actualObjData = objData;
 
 
-        if (objData.size() >= 2 && objData[0] == 0x50 && objData[1] == 0x4B) {
+    if (objData.size() >= 2 && objData[0] == 0x50 && objData[1] == 0x4B) {
+        status->addDebugLog("3D model data is ZIP compressed, decompressing...");
 
 
-            status->addDebugLog("3D model data is ZIP compressed, decompressing...");
+        actualObjData = decompressZip(objData);
 
 
-            actualObjData = decompressZip(objData);
+        status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
+    }
 
 
-            status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
+    if (actualObjData.size() >= 2 && (unsigned char)actualObjData[0] == 0x1f &&
 
 
-        }
+        (unsigned char)actualObjData[1] == 0x8b) {
+        status->addDebugLog("3D model data is gzip compressed, decompressing...");
 
 
+        actualObjData = decompressGzip(actualObjData);
 
 
+        status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
+    }
 
 
+    if (actualObjData.isEmpty()) {
+        QString msg = "ERROR: Failed to decompress 3D model data";
 
 
-        if (actualObjData.size() >= 2 && (unsigned char)actualObjData[0] == 0x1f &&
+        status->addDebugLog(msg);
 
 
-            (unsigned char)actualObjData[1] == 0x8b) {
+        qWarning() << msg;
 
 
-            status->addDebugLog("3D model data is gzip compressed, decompressing...");
+        return false;
+    }
 
 
-            actualObjData = decompressGzip(actualObjData);
+    status->model3DObjRaw = actualObjData;
 
 
-            status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
-
-
-        }
-
-
-
-
-
-        if (actualObjData.isEmpty()) {
-
-
-            QString msg = "ERROR: Failed to decompress 3D model data";
-
-
-            status->addDebugLog(msg);
-
-
-            qWarning() << msg;
-
-
-            return false;
-
-
-        }
-
-
-
-
-
-        status->model3DObjRaw = actualObjData;
-
-
-
-
-
-        QString successMsg = QString("3D model (OBJ) data fetched successfully for: %1").arg(status->componentId);
-        status->addDebugLog(successMsg);
+    QString successMsg = QString("3D model (OBJ) data fetched successfully for: %1").arg(status->componentId);
+    status->addDebugLog(successMsg);
     qDebug() << successMsg;
 
 
