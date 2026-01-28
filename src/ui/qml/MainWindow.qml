@@ -387,7 +387,6 @@ Item {
             // 元件列表卡片
             Card {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 300
                 title: "元器件列表"
                 RowLayout {
                     width: parent.width
@@ -417,7 +416,7 @@ Item {
                 GridView {
                     id: componentList
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.preferredHeight: 300
                     Layout.topMargin: AppStyle.spacing.md
                     clip: true
                     cellWidth: (width - AppStyle.spacing.md) / 5
