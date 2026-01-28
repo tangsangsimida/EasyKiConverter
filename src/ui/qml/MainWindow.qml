@@ -1,8 +1,9 @@
-﻿import QtQuick
+import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Window
+import QtQml.Models
 import "styles"
 import "components"
 Item {
@@ -388,6 +389,84 @@ Item {
             Card {
                 Layout.fillWidth: true
                 title: "元器件列表"
+
+                // 搜索过滤模型 (作为资源定义，不参与布局)
+                resources: [
+                    DelegateModel {
+                        id: visualModel
+                        model: componentListController.componentList
+
+                        groups: [
+                            DelegateModelGroup {
+                                id: displayGroup
+                                includeByDefault: true
+                                name: "display"
+                            },
+                            DelegateModelGroup {
+                                id: filterGroup
+                                name: "filter"
+                            }
+                        ]
+
+                        filterOnGroup: "display"
+
+                        delegate: ComponentListItem {
+                            width: componentList.cellWidth - AppStyle.spacing.md
+                            anchors.horizontalCenter: parent ? undefined : undefined
+                            componentId: modelData
+                            onDeleteClicked: {
+                                var sourceIndex = -1;
+                                var currentId = modelData;
+                                var list = componentListController.componentList;
+                                for(var i = 0; i < list.length; i++) {
+                                    if(list[i] === currentId) {
+                                        sourceIndex = i;
+                                        break;
+                                    }
+                                }
+                                if(sourceIndex !== -1) {
+                                    componentListController.removeComponent(sourceIndex);
+                                }
+                            }
+                        }
+
+                        // 过滤函数
+                        function updateFilter() {
+                            var searchTerm = searchInput.text.toLowerCase().trim()
+
+                            if (searchTerm === "") {
+                                // 显示所有
+                                items.setGroups(0, items.count, ["display"])
+                            } else {
+                                // 遍历所有项进行过滤
+                                for (var i = 0; i < items.count; i++) {
+                                    var item = items.get(i)
+                                    // 获取内容
+                                    var content = item.model
+
+                                    // 如果是对象，尝试获取 modelData
+                                    if (typeof content === 'object' && content !== null) {
+                                        if (content.modelData !== undefined) {
+                                            content = content.modelData
+                                        } else if (content.display !== undefined) {
+                                            content = content.display
+                                        }
+                                    }
+
+                                    // 强制转换为字符串并处理
+                                    var idStr = String(content)
+
+                                    if (idStr.toLowerCase().indexOf(searchTerm) !== -1) {
+                                        item.inDisplay = true
+                                    } else {
+                                        item.inDisplay = false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+
                 RowLayout {
                     width: parent.width
                     spacing: 12
@@ -397,9 +476,56 @@ Item {
                         font.pixelSize: 14
                         color: AppStyle.colors.textSecondary
                     }
+
                     Item {
                         Layout.fillWidth: true
                     }
+
+                    // 搜索框
+                    TextField {
+                        id: searchInput
+                        Layout.preferredWidth: 200
+                        placeholderText: "搜索元器件..."
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        color: AppStyle.colors.textPrimary
+                        placeholderTextColor: AppStyle.colors.textSecondary
+                        leftPadding: 32 // 为图标留出空间
+
+                        background: Rectangle {
+                            color: AppStyle.colors.surface
+                            border.color: searchInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                            border.width: searchInput.focus ? 2 : 1
+                            radius: AppStyle.radius.md
+                        }
+
+                        // 搜索图标
+                        Image {
+                            anchors.left: parent.left
+                            anchors.leftMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 16
+                            height: 16
+                            source: AppStyle.isDarkMode ?
+                                    "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark-white.svg" : // 暂时用现有图标替代，或者用文字
+                                    "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark.svg"
+                            // 注意：实际上应该用一个 'search' 图标，这里暂时复用或忽略，
+                            // 为了美观，用 Text 替代
+                            visible: false
+                        }
+                        Text {
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "🔍"
+                            font.pixelSize: 12
+                            color: AppStyle.colors.textSecondary
+                        }
+
+                        onTextChanged: {
+                            visualModel.updateFilter()
+                        }
+                    }
+
                     ModernButton {
                         text: "清空列表"
                         iconName: "trash"
@@ -408,6 +534,7 @@ Item {
                         hoverColor: AppStyle.colors.dangerDark
                         pressedColor: AppStyle.colors.dangerDark
                         onClicked: {
+                            searchInput.text = "" // 清空搜索
                             componentListController.clearComponentList()
                         }
                     }
@@ -423,52 +550,20 @@ Item {
                     cellHeight: 56
                     flow: GridView.FlowLeftToRight
                     layoutDirection: Qt.LeftToRight
-                    model: componentListController.componentList
-                    delegate: ComponentListItem {
-                        width: componentList.cellWidth - AppStyle.spacing.md
-                        anchors.horizontalCenter: parent ? undefined : undefined
-                        componentId: modelData
-                        onDeleteClicked: {
-                            componentListController.removeComponent(index)
-                        }
-                    }
+
+                    // 使用 DelegateModel
+                    model: visualModel
+
+                    // delegate 已经在 DelegateModel 中定义了，这里不需要再定义，
+                    // 但是 GridView 需要直接使用 visualModel 作为 model。
+                    // 注意：当 model 是 DelegateModel 时，不需要指定 delegate 属性，
+                    // 因为 DelegateModel 已经包含了 delegate。
+
                     ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded
                     }
-                    // 添加列表项进入动画
-                    add: Transition {
-                        NumberAnimation {
-                            property: "opacity"
-                            from: 0
-                            to: 1
-                            duration: AppStyle.durations.normal
-                            easing.type: AppStyle.easings.easeOut
-                        }
-                        NumberAnimation {
-                            property: "scale"
-                            from: 0.8
-                            to: 1
-                            duration: AppStyle.durations.normal
-                            easing.type: AppStyle.easings.easeOut
-                        }
-                    }
-                    // 列表项移除动画
-                    remove: Transition {
-                        NumberAnimation {
-                            property: "opacity"
-                            from: 1
-                            to: 0
-                            duration: AppStyle.durations.normal
-                            easing.type: AppStyle.easings.easeIn
-                        }
-                        NumberAnimation {
-                            property: "scale"
-                            from: 1
-                            to: 0.8
-                            duration: AppStyle.durations.normal
-                            easing.type: AppStyle.easings.easeIn
-                        }
-                    }
+                    // 添加列表项进入动画 (DelegateModel 管理时可能需要调整)
+                    // 简单的 add/remove 动画在使用 DelegateModel 时可能不生效或表现不同
                 }
             }
             // 导出选项卡片
