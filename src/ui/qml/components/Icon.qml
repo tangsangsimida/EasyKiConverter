@@ -11,13 +11,13 @@ Item {
         id: iconImage
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
-        source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/" + iconName + ".svg"
+        source: iconName.length > 0 ? "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/" + iconName + ".svg" : ""
         cache: true
         smooth: true
         antialiasing: true
-        visible: status === Image.Ready
+        visible: status === Image.Ready && iconName.length > 0
         onStatusChanged: {
-            if (status === Image.Error) {
+            if (status === Image.Error && iconName.length > 0) {
                 console.warn("Icon not found:", iconName)
             }
         }
