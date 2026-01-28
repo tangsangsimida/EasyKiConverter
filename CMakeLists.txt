@@ -129,6 +129,7 @@ set(QML_FILES
     src/ui/qml/components/Icon.qml
     src/ui/qml/components/ModernButton.qml
     src/ui/qml/components/StatItem.qml
+    src/ui/qml/components/StepItem.qml
     src/ui/qml/styles/AppStyle.qml
 )
 
