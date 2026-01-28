@@ -32,6 +32,18 @@ class ExportProgressViewModel : public QObject {
     Q_PROPERTY(bool hasStatistics READ hasStatistics NOTIFY statisticsChanged)
     Q_PROPERTY(QString statisticsReportPath READ statisticsReportPath NOTIFY statisticsChanged)
     Q_PROPERTY(QString statisticsSummary READ statisticsSummary NOTIFY statisticsChanged)
+    Q_PROPERTY(int statisticsTotal READ statisticsTotal NOTIFY statisticsChanged)
+    Q_PROPERTY(int statisticsSuccess READ statisticsSuccess NOTIFY statisticsChanged)
+    Q_PROPERTY(int statisticsFailed READ statisticsFailed NOTIFY statisticsChanged)
+    Q_PROPERTY(double statisticsSuccessRate READ statisticsSuccessRate NOTIFY statisticsChanged)
+    Q_PROPERTY(qint64 statisticsTotalDuration READ statisticsTotalDuration NOTIFY statisticsChanged)
+    Q_PROPERTY(qint64 statisticsAvgFetchTime READ statisticsAvgFetchTime NOTIFY statisticsChanged)
+    Q_PROPERTY(qint64 statisticsAvgProcessTime READ statisticsAvgProcessTime NOTIFY statisticsChanged)
+    Q_PROPERTY(qint64 statisticsAvgWriteTime READ statisticsAvgWriteTime NOTIFY statisticsChanged)
+    Q_PROPERTY(int statisticsTotalNetworkRequests READ statisticsTotalNetworkRequests NOTIFY statisticsChanged)
+    Q_PROPERTY(int statisticsTotalRetries READ statisticsTotalRetries NOTIFY statisticsChanged)
+    Q_PROPERTY(qint64 statisticsAvgNetworkLatency READ statisticsAvgNetworkLatency NOTIFY statisticsChanged)
+    Q_PROPERTY(int statisticsRateLimitHitCount READ statisticsRateLimitHitCount NOTIFY statisticsChanged)
 
 public:
     explicit ExportProgressViewModel(ExportService* exportService,
@@ -75,6 +87,42 @@ public:
     }
     QString statisticsSummary() const {
         return m_statisticsSummary;
+    }
+    int statisticsTotal() const {
+        return m_statistics.total;
+    }
+    int statisticsSuccess() const {
+        return m_statistics.success;
+    }
+    int statisticsFailed() const {
+        return m_statistics.failed;
+    }
+    double statisticsSuccessRate() const {
+        return m_statistics.getSuccessRate();
+    }
+    qint64 statisticsTotalDuration() const {
+        return m_statistics.totalDurationMs;
+    }
+    qint64 statisticsAvgFetchTime() const {
+        return m_statistics.avgFetchTimeMs;
+    }
+    qint64 statisticsAvgProcessTime() const {
+        return m_statistics.avgProcessTimeMs;
+    }
+    qint64 statisticsAvgWriteTime() const {
+        return m_statistics.avgWriteTimeMs;
+    }
+    int statisticsTotalNetworkRequests() const {
+        return m_statistics.totalNetworkRequests;
+    }
+    int statisticsTotalRetries() const {
+        return m_statistics.totalRetries;
+    }
+    qint64 statisticsAvgNetworkLatency() const {
+        return m_statistics.avgNetworkLatencyMs;
+    }
+    int statisticsRateLimitHitCount() const {
+        return m_statistics.rateLimitHitCount;
     }
 
     // Setter 方法

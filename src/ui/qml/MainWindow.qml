@@ -935,83 +935,6 @@ Item {
                         width: parent.width
                         spacing: AppStyle.spacing.md
                         visible: true
-                        // 统计信息
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: AppStyle.spacing.xl
-                            Rectangle {
-                                Layout.preferredWidth: 120
-                                Layout.preferredHeight: 80
-                                color: AppStyle.colors.successLight
-                                radius: AppStyle.radius.md
-                                ColumnLayout {
-                                    anchors.centerIn: parent
-                                    spacing: AppStyle.spacing.xs
-                                    Text {
-                                        text: "成功"
-                                        font.pixelSize: AppStyle.fontSizes.xs
-                                        color: AppStyle.colors.successDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                    Text {
-                                        id: successCountLabel
-                                        text: "0"
-                                        font.pixelSize: AppStyle.fontSizes.xxl
-                                        font.bold: true
-                                        color: AppStyle.colors.successDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                }
-                            }
-                            Rectangle {
-                                Layout.preferredWidth: 120
-                                Layout.preferredHeight: 80
-                                color: AppStyle.colors.dangerLight
-                                radius: AppStyle.radius.md
-                                ColumnLayout {
-                                    anchors.centerIn: parent
-                                    spacing: AppStyle.spacing.xs
-                                    Text {
-                                        text: "失败"
-                                        font.pixelSize: AppStyle.fontSizes.xs
-                                        color: AppStyle.colors.dangerDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                    Text {
-                                        id: failedCountLabel
-                                        text: "0"
-                                        font.pixelSize: AppStyle.fontSizes.xxl
-                                        font.bold: true
-                                        color: AppStyle.colors.dangerDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                }
-                            }
-                            Rectangle {
-                                Layout.preferredWidth: 120
-                                Layout.preferredHeight: 80
-                                color: AppStyle.colors.warningLight
-                                radius: AppStyle.radius.md
-                                ColumnLayout {
-                                    anchors.centerIn: parent
-                                    spacing: AppStyle.spacing.xs
-                                    Text {
-                                        text: "部分成功"
-                                        font.pixelSize: AppStyle.fontSizes.xs
-                                        color: AppStyle.colors.warningDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                    Text {
-                                        id: partialCountLabel
-                                        text: "0"
-                                        font.pixelSize: AppStyle.fontSizes.xxl
-                                        font.bold: true
-                                        color: AppStyle.colors.warningDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                }
-                            }
-                        }
                         // 结果列表（使用 GridView 实现五列显示）
                         GridView {
                             id: resultsList
@@ -1062,6 +985,122 @@ Item {
                                     easing.type: AppStyle.easings.easeOut
                                 }
                             }
+                        }
+                    }
+                }
+            }
+            // 导出统计卡片（仅在导出完成后显示）
+            Card {
+                Layout.fillWidth: true
+                title: "导出统计"
+                visible: exportProgressController.hasStatistics
+                ColumnLayout {
+                    width: parent.width
+                    spacing: AppStyle.spacing.md
+                    // 基本统计信息
+                    Text {
+                        text: "基本统计"
+                        font.pixelSize: AppStyle.fontSizes.md
+                        font.bold: true
+                        color: AppStyle.colors.textPrimary
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: AppStyle.spacing.lg
+                        StatItem {
+                            label: "总数"
+                            value: exportProgressController.statisticsTotal
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "成功"
+                            value: exportProgressController.statisticsSuccess
+                            valueColor: AppStyle.colors.success
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "失败"
+                            value: exportProgressController.statisticsFailed
+                            valueColor: AppStyle.colors.danger
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "成功率"
+                            value: exportProgressController.statisticsSuccessRate.toFixed(2) + "%"
+                            Layout.fillWidth: true
+                        }
+                    }
+                    // 时间统计信息
+                    Text {
+                        text: "时间统计"
+                        font.pixelSize: AppStyle.fontSizes.md
+                        font.bold: true
+                        color: AppStyle.colors.textPrimary
+                        Layout.topMargin: AppStyle.spacing.sm
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: AppStyle.spacing.lg
+                        StatItem {
+                            label: "总耗时"
+                            value: (exportProgressController.statisticsTotalDuration / 1000).toFixed(2) + "s"
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "平均抓取"
+                            value: exportProgressController.statisticsAvgFetchTime + "ms"
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "平均处理"
+                            value: exportProgressController.statisticsAvgProcessTime + "ms"
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "平均写入"
+                            value: exportProgressController.statisticsAvgWriteTime + "ms"
+                            Layout.fillWidth: true
+                        }
+                    }
+                    // 网络统计信息
+                    Text {
+                        text: "网络统计"
+                        font.pixelSize: AppStyle.fontSizes.md
+                        font.bold: true
+                        color: AppStyle.colors.textPrimary
+                        Layout.topMargin: AppStyle.spacing.sm
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: AppStyle.spacing.lg
+                        StatItem {
+                            label: "总请求数"
+                            value: exportProgressController.statisticsTotalNetworkRequests
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "重试次数"
+                            value: exportProgressController.statisticsTotalRetries
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "平均延迟"
+                            value: exportProgressController.statisticsAvgNetworkLatency + "ms"
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "速率限制"
+                            value: exportProgressController.statisticsRateLimitHitCount
+                            Layout.fillWidth: true
+                        }
+                    }
+                    // 打开详细报告按钮
+                    ModernButton {
+                        text: "打开详细统计报告"
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: AppStyle.spacing.sm
+                        onClicked: {
+                            Qt.openUrlExternally("file:///" + exportProgressController.statisticsReportPath)
                         }
                     }
                 }
