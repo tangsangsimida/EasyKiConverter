@@ -1282,13 +1282,39 @@ Item {
                             Layout.fillWidth: true
                         }
                     }
-                    // 打开详细报告按钮
-                    ModernButton {
-                        text: "打开详细统计报告"
+                    // 底部按钮组（居中排列）
+                    RowLayout {
                         Layout.alignment: Qt.AlignHCenter
                         Layout.topMargin: AppStyle.spacing.sm
-                        onClicked: {
-                            Qt.openUrlExternally("file:///" + exportProgressController.statisticsReportPath)
+                        spacing: AppStyle.spacing.lg
+
+                        // 打开详细报告按钮
+                        ModernButton {
+                            text: "打开详细统计报告"
+                            iconName: "folder" // 或者其他合适的图标
+                            backgroundColor: AppStyle.colors.surface
+                            textColor: AppStyle.colors.textPrimary
+                            hoverColor: AppStyle.colors.border
+                            pressedColor: AppStyle.colors.borderFocus
+                            // 稍微加个边框让它看起来像二级按钮
+                            
+                            onClicked: {
+                                Qt.openUrlExternally("file:///" + exportProgressController.statisticsReportPath)
+                            }
+                        }
+
+                        // 打开导出目录按钮
+                        ModernButton {
+                            text: "打开导出目录"
+                            iconName: "folder"
+                            backgroundColor: AppStyle.colors.primary
+                            hoverColor: AppStyle.colors.primaryHover
+                            pressedColor: AppStyle.colors.primaryPressed
+                            
+                            onClicked: {
+                                // 打开输出路径
+                                Qt.openUrlExternally("file:///" + exportSettingsController.outputPath)
+                            }
                         }
                     }
                 }

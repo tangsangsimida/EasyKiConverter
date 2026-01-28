@@ -4,8 +4,12 @@ Item {
     property string iconName: ""
     property int size: 24
     property color iconColor: "#000000"
+    
     width: size
     height: size
+    implicitWidth: size
+    implicitHeight: size
+    
     // 尝试加载图标
     Image {
         id: iconImage
