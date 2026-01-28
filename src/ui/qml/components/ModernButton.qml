@@ -1,5 +1,6 @@
 ﻿import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 Button {
     id: root
@@ -32,25 +33,38 @@ Button {
             }
         }
     }
-    contentItem: Row {
-        spacing: AppStyle.spacing.sm
-        anchors.centerIn: parent
-        Icon {
-            id: iconItem
-            iconName: root.iconName
-            size: 28
-            iconColor: root.textColor
-            visible: root.iconName.length > 0
-        }
-        Text {
-            text: root.text
-            font: root.font
-            color: root.textColor
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            Behavior on color {
-                ColorAnimation {
-                    duration: AppStyle.durations.fast
+    contentItem: Item {
+        // 关键：透传隐式尺寸，确保 Button 能正确计算大小，防止界面凌乱
+        implicitWidth: contentRow.implicitWidth
+        implicitHeight: contentRow.implicitHeight
+        
+        Row {
+            id: contentRow
+            anchors.centerIn: parent
+            spacing: AppStyle.spacing.sm
+            
+            // 只有当图标存在时才显示并占用空间
+            Icon {
+                id: iconItem
+                anchors.verticalCenter: parent.verticalCenter
+                iconName: root.iconName
+                size: 28
+                iconColor: root.textColor
+                visible: root.iconName.length > 0
+            }
+            
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.text
+                font: root.font
+                color: root.textColor
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+                
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppStyle.durations.fast
+                    }
                 }
             }
         }

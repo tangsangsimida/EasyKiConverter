@@ -1,4 +1,4 @@
-﻿#include "NetworkUtils.h"
+#include "NetworkUtils.h"
 
 #include <QBuffer>
 #include <QByteArray>
@@ -22,13 +22,13 @@ NetworkUtils::NetworkUtils(QObject* parent)
     , m_retryCount(0)
     , m_isRequesting(false)
     , m_expectBinaryData(false) {
-    // 设置默认请求�?
+    // 设置默认请求头
     m_headers["Accept-Encoding"] = "gzip, deflate";
     m_headers["Accept"] = "application/json, text/javascript, */*; q=0.01";
     m_headers["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8";
     m_headers["User-Agent"] = "EasyKiConverter/1.0.0";
 
-    // 连接超时定时�?
+    // 连接超时定时器
     connect(m_timeoutTimer, &QTimer::timeout, this, &NetworkUtils::handleTimeout);
 }
 
@@ -41,7 +41,7 @@ void NetworkUtils::sendGetRequest(const QString& url, int timeout, int maxRetrie
              << "m_currentReply:" << (m_currentReply != nullptr);
 
     if (m_isRequesting) {
-        // 检查状态是否不一致：m_isRequesting �?true，但没有活跃的请�?
+        // 检查状态是否不一致：m_isRequesting 为 true，但没有活跃的请求
         if (!m_currentReply && !m_timeoutTimer->isActive()) {
             qWarning() << "Inconsistent state detected: m_isRequesting is true but no active request. Resetting state.";
             m_isRequesting = false;
@@ -92,12 +92,12 @@ void NetworkUtils::executeRequest() {
     // 创建网络请求
     QNetworkRequest request{QUrl(m_url)};
 
-    // 设置请求�?
+    // 设置请求头
     for (auto it = m_headers.constBegin(); it != m_headers.constEnd(); ++it) {
         request.setRawHeader(it.key().toUtf8(), it.value().toUtf8());
     }
 
-    // 发�?GET 请求
+    // 发送 GET 请求
     m_currentReply = m_networkManager->get(request);
 
     // 连接信号
@@ -105,14 +105,14 @@ void NetworkUtils::executeRequest() {
     connect(m_currentReply, &QNetworkReply::errorOccurred, this, &NetworkUtils::handleError);
     connect(m_currentReply, &QNetworkReply::downloadProgress, this, &NetworkUtils::requestProgress);
 
-    // 启动超时定时�?
+    // 启动超时定时器
     m_timeoutTimer->start(m_timeout * 1000);
 
     qDebug() << "Sending GET request to:" << m_url << "(Retry:" << m_retryCount << "/" << m_maxRetries << ")";
 }
 
 void NetworkUtils::handleResponse() {
-    // 停止超时定时�?
+    // 停止超时定时器
     m_timeoutTimer->stop();
 
     if (!m_currentReply) {
@@ -120,11 +120,11 @@ void NetworkUtils::handleResponse() {
         return;
     }
 
-    // 检�?HTTP 状态码
+    // 获取 HTTP 状态码
     int statusCode = m_currentReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     qDebug() << "HTTP Status Code:" << statusCode;
 
-    // 检查是否需要重�?
+    // 检查是否需要重试
     if (shouldRetry(statusCode) && m_retryCount < m_maxRetries) {
         retryRequest();
         return;
@@ -137,7 +137,7 @@ void NetworkUtils::handleResponse() {
     m_currentReply->deleteLater();
     m_currentReply = nullptr;
 
-    // 检�?HTTP 状态码
+    // 检查 HTTP 状态码
     if (statusCode != 200) {
         QString errorMsg = QString("HTTP request failed with status code: %1").arg(statusCode);
         qWarning() << errorMsg;
@@ -146,9 +146,9 @@ void NetworkUtils::handleResponse() {
         return;
     }
 
-    // 期望接收二进制数据，检查是否是 gzip 压缩的数据并解压�?
+    // 期望接收二进制数据，检查是否是 gzip 压缩的数据并解压缩
     if (m_expectBinaryData) {
-        // 检查是否是 gzip 压缩的数�?
+        // 检查是否是 gzip 压缩的数据
         if (responseData.size() >= 2 && static_cast<unsigned char>(responseData[0]) == 0x1F &&
             static_cast<unsigned char>(responseData[1]) == 0x8B) {
             qDebug() << "Binary data is gzip compressed, decompressing...";
@@ -164,14 +164,14 @@ void NetworkUtils::handleResponse() {
         return;
     }
 
-    // 检查是否是 gzip 压缩的数�?
+    // 检查是否是 gzip 压缩的数据
     if (responseData.size() >= 2 && static_cast<unsigned char>(responseData[0]) == 0x1F &&
         static_cast<unsigned char>(responseData[1]) == 0x8B) {
         qDebug() << "Response is gzip compressed, decompressing...";
         responseData = decompressGzip(responseData);
     }
 
-    // 输出响应数据的前 1000 个字符用于调�?
+    // 输出响应数据的前 1000 个字符用于调试
     qDebug() << "Response data (first 1000 chars):" << responseData.left(1000);
 
     // 解析 JSON 响应
@@ -196,7 +196,7 @@ void NetworkUtils::handleResponse() {
 
     QJsonObject jsonObject = jsonDoc.object();
 
-    // 检查响应是否为�?
+    // 检查响应是否为空
     if (jsonObject.isEmpty()) {
         QString errorMsg = "JSON response is empty";
         qWarning() << errorMsg;
@@ -205,7 +205,7 @@ void NetworkUtils::handleResponse() {
         return;
     }
 
-    // 检查响应是否包含错误信�?
+    // 检查响应是否包含错误信息
     if (jsonObject.contains("success") && jsonObject["success"].toBool() == false) {
         QString errorMsg =
             QString("API returned error: %1").arg(QJsonDocument(jsonObject).toJson(QJsonDocument::Compact));
@@ -215,7 +215,7 @@ void NetworkUtils::handleResponse() {
         return;
     }
 
-    // 发送成功信�?
+    // 发送成功信号
     qDebug() << "handleResponse - Setting m_isRequesting to false before emitting requestSuccess, m_isRequesting:"
              << m_isRequesting;
     m_isRequesting = false;
@@ -226,7 +226,7 @@ void NetworkUtils::handleResponse() {
 void NetworkUtils::handleError(QNetworkReply::NetworkError error) {
     Q_UNUSED(error)
 
-    // 停止超时定时�?
+    // 停止超时定时器
     m_timeoutTimer->stop();
 
     if (!m_currentReply) {
@@ -241,20 +241,20 @@ void NetworkUtils::handleError(QNetworkReply::NetworkError error) {
     m_currentReply->deleteLater();
     m_currentReply = nullptr;
 
-    // 如果�?操作被取�?错误（由abort()触发），说明超时已经处理了，不需要重�?
+    // 如果是操作被取消错误（由abort()触发），说明超时已经处理了，不需要重试
     if (error == QNetworkReply::OperationCanceledError) {
-        // 超时已经由handleTimeout处理，这里不需要重�?
+        // 超时已经由handleTimeout处理，这里不需要重试
         qWarning() << "Request was cancelled, timeout handler will handle retry";
         return;
     }
 
-    // 检查是否需要重�?
+    // 检查是否需要重试
     if (m_retryCount < m_maxRetries) {
         retryRequest();
         return;
     }
 
-    // 发送失败信�?
+    // 发送失败信号
     emit requestError(errorMsg);
     m_isRequesting = false;
 }
@@ -269,9 +269,9 @@ void NetworkUtils::handleTimeout() {
         m_currentReply = nullptr;
     }
 
-    // 检查是否需要重�?
+    // 检查是否需要重试
     if (m_retryCount < m_maxRetries) {
-        // 保持 m_isRequesting �?true，因为重试仍在进行中
+        // 保持 m_isRequesting 为 true，因为重试仍在进行中
         retryRequest();
         return;
     }
@@ -288,7 +288,7 @@ void NetworkUtils::retryRequest() {
     int delay = calculateRetryDelay(m_retryCount);
     qDebug() << "Retrying request in" << delay << "ms (Retry:" << m_retryCount << "/" << m_maxRetries << ")";
 
-    // 延迟后重�?
+    // 延迟后重试
     QTimer::singleShot(delay, this, &NetworkUtils::executeRequest);
 }
 
@@ -303,9 +303,17 @@ bool NetworkUtils::shouldRetry(int statusCode) {
 }
 
 int NetworkUtils::calculateRetryDelay(int retryCount) {
-    // 指数退避算法：delay = base_delay * (2 ^ (retry_count - 1))
-    // 基础延迟�?1 �?
-    return 1000 * static_cast<int>(std::pow(2, retryCount - 1));
+    // 自定义重试延迟策略：
+    // 第1次重试：3秒
+    // 第2次重试：5秒
+    // 第3次及以后重试：10秒
+    if (retryCount == 1) {
+        return 3000;
+    } else if (retryCount == 2) {
+        return 5000;
+    } else {
+        return 10000;
+    }
 }
 
 QByteArray NetworkUtils::decompressGzip(const QByteArray& compressedData) {
@@ -315,7 +323,7 @@ QByteArray NetworkUtils::decompressGzip(const QByteArray& compressedData) {
         return compressedData;
     }
 
-    // 检�?gzip 魔数数字 (0x1F, 0x8B)
+    // 检查 gzip 魔数数字 (0x1F, 0x8B)
     if (static_cast<unsigned char>(compressedData[0]) != 0x1F ||
         static_cast<unsigned char>(compressedData[1]) != 0x8B) {
         qWarning() << "Data is not gzip compressed";
@@ -326,7 +334,7 @@ QByteArray NetworkUtils::decompressGzip(const QByteArray& compressedData) {
     z_stream stream;
     memset(&stream, 0, sizeof(stream));
 
-    // 初始�?zlib
+    // 初始化 zlib
     if (inflateInit2(&stream, 15 + 16) != Z_OK) {  // 15 + 16 启用 gzip 解码
         qWarning() << "Failed to initialize zlib for gzip decompression";
         return compressedData;

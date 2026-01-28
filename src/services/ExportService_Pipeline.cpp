@@ -31,10 +31,10 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     , m_successCount(0)
     , m_failureCount(0)
     , m_exportStartTimeMs(0) {
-    // 配置线程?
-    m_fetchThreadPool->setMaxThreadCount(32);                             // I/O密集型，32个线?
-    m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());  // CPU密集型，等于核心?
-    m_writeThreadPool->setMaxThreadCount(8);                              // 磁盘I/O密集型，8个线?
+    // 配置线程池
+    m_fetchThreadPool->setMaxThreadCount(5);  // I/O密集型，降低并发数至3以避免超时和降低网络延迟
+    m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());  // CPU密集型，等于核心数
+    m_writeThreadPool->setMaxThreadCount(3);                              // 磁盘I/O密集型，8个线程
 
     qDebug() << "ExportServicePipeline initialized with thread pools:"
              << "Fetch:" << m_fetchThreadPool->maxThreadCount() << "Process:" << m_processThreadPool->maxThreadCount()
@@ -465,6 +465,22 @@ ExportStatistics ExportServicePipeline::generateStatistics() {
         // 收集最慢的组件
         qint64 totalDuration = status->getTotalDurationMs();
         statistics.slowestComponents.append(qMakePair(status->componentId, totalDuration));
+
+        // 收集网络诊断信息（v3.0.3 新增）
+        for (const auto& diag : status->networkDiagnostics) {
+            statistics.totalNetworkRequests++;
+            statistics.totalRetries += diag.retryCount;
+            statistics.avgNetworkLatencyMs += diag.latencyMs;
+            if (diag.wasRateLimited) {
+                statistics.rateLimitHitCount++;
+            }
+            statistics.statusCodeDistribution[diag.statusCode]++;
+        }
+    }
+
+    // 计算平均网络延迟
+    if (statistics.totalNetworkRequests > 0) {
+        statistics.avgNetworkLatencyMs /= statistics.totalNetworkRequests;
     }
 
     // 计算平均时间
@@ -532,6 +548,21 @@ bool ExportServicePipeline::saveStatisticsReport(const ExportStatistics& statist
         slowestArray.append(componentObj);
     }
     reportObj["slowestComponents"] = slowestArray;
+
+    // 网络诊断统计（v3.0.3 新增）
+    QJsonObject networkObj;
+    networkObj["totalRequests"] = statistics.totalNetworkRequests;
+    networkObj["totalRetries"] = statistics.totalRetries;
+    networkObj["avgLatencyMs"] = statistics.avgNetworkLatencyMs;
+    networkObj["rateLimitHitCount"] = statistics.rateLimitHitCount;
+
+    QJsonObject statusCodeDistObj;
+    for (auto it = statistics.statusCodeDistribution.constBegin(); it != statistics.statusCodeDistribution.constEnd();
+         ++it) {
+        statusCodeDistObj[QString::number(it.key())] = it.value();
+    }
+    networkObj["statusCodeDistribution"] = statusCodeDistObj;
+    reportObj["networkDiagnostics"] = networkObj;
 
     // 导出选项
     QJsonObject optionsObj;

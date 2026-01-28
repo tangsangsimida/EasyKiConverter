@@ -1,9 +1,11 @@
-﻿#include "FetchWorker.h"
+#include "FetchWorker.h"
 
-#include <QDebug>
+#include <QDateTime>
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMutex>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QThread>
@@ -12,6 +14,12 @@
 #include <zlib.h>
 
 namespace EasyKiConverter {
+
+// 速率限制检测静态变量初始化
+QAtomicInt FetchWorker::s_activeRequests = 0;
+QMutex FetchWorker::s_rateLimitMutex;
+QDateTime FetchWorker::s_lastRateLimitTime;
+int FetchWorker::s_backoffMs = 0;
 
 FetchWorker::FetchWorker(const QString& componentId,
                          QNetworkAccessManager* networkAccessManager,
@@ -24,23 +32,51 @@ FetchWorker::FetchWorker(const QString& componentId,
     , m_need3DModel(need3DModel) {}
 
 FetchWorker::~FetchWorker() {
-    if (m_ownNetworkManager) {
-        m_ownNetworkManager->deleteLater();
-    }
+    // 不要删除 m_ownNetworkManager，因为它现在是线程局部存储的共享实例
+    // if (m_ownNetworkManager) {
+    //     m_ownNetworkManager->deleteLater();
+    // }
 }
 
 void FetchWorker::run() {
     QElapsedTimer fetchTimer;
     fetchTimer.start();
 
-    m_ownNetworkManager = new QNetworkAccessManager();
-    m_ownNetworkManager->moveToThread(QThread::currentThread());
-
+    // 创建状态对象
     QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
     status->componentId = m_componentId;
     status->need3DModel = m_need3DModel;
 
     status->addDebugLog(QString("FetchWorker started for component: %1").arg(m_componentId));
+
+    // 速率限制：如果最近被限流，延迟启动
+    if (s_backoffMs > 0) {
+        QMutexLocker locker(&s_rateLimitMutex);
+        QDateTime now = QDateTime::currentDateTime();
+        qint64 elapsedSinceLimit = s_lastRateLimitTime.msecsTo(now);
+        if (elapsedSinceLimit < s_backoffMs * 2) {
+            // 如果距离上次限流时间较短，应用退避延迟
+            int delay = qMin(s_backoffMs, 5000);
+            status->addDebugLog(QString("Rate limit backoff: delaying %1ms").arg(delay));
+            QThread::msleep(delay);
+        } else {
+            // 超过限流冷却时间，重置退避延迟
+            s_backoffMs = 0;
+        }
+    }
+
+    // 增加活跃请求计数
+    s_activeRequests.fetchAndAddRelaxed(1);
+
+    // 使用线程局部存储缓存 QNetworkAccessManager
+    // 避免为每个任务重复创建和销毁 QNAM（这是非常昂贵的操作）
+    static thread_local QNetworkAccessManager* threadQNAM = nullptr;
+    if (!threadQNAM) {
+        threadQNAM = new QNetworkAccessManager();
+        // QNAM 创建于当前线程，自动归属于当前线程
+        qDebug() << "Created thread-local QNetworkAccessManager for thread:" << QThread::currentThreadId();
+    }
+    m_ownNetworkManager = threadQNAM;
 
     bool hasError = false;
     QString errorMessage;
@@ -49,7 +85,7 @@ void FetchWorker::run() {
         QString("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(m_componentId);
     status->addDebugLog(QString("Fetching component info from: %1").arg(componentInfoUrl));
 
-    QByteArray componentInfoData = httpGet(componentInfoUrl, 30000);
+    QByteArray componentInfoData = httpGet(componentInfoUrl, 15000, status);
 
     if (componentInfoData.isEmpty()) {
         hasError = true;
@@ -81,7 +117,7 @@ void FetchWorker::run() {
                 }
 
 
-                if (!fetch3DModelData(*status)) {
+                if (!fetch3DModelData(status)) {
                 }
             } else {
                 status->addDebugLog(
@@ -90,10 +126,11 @@ void FetchWorker::run() {
         }
     }
 
-    if (m_ownNetworkManager) {
-        m_ownNetworkManager->deleteLater();
-        m_ownNetworkManager = nullptr;
-    }
+    // 不要删除或清空 m_ownNetworkManager
+    m_ownNetworkManager = nullptr;  // 解除引用，防止析构函数误删（虽然析构函数已修改，但为了安全）
+
+    // 减少活跃请求计数
+    s_activeRequests.fetchAndSubRelaxed(1);
 
     status->fetchDurationMs = fetchTimer.elapsed();
 
@@ -115,41 +152,143 @@ void FetchWorker::run() {
     emit fetchCompleted(status);
 }
 
-QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs) {
+QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointer<ComponentExportStatus> status) {
     QByteArray result;
+    int retryCount = 0;
+    const int maxRetries = 3;
+    QElapsedTimer requestTimer;
 
-    QNetworkRequest request{QUrl(url)};
-    request.setRawHeader("User-Agent", "EasyKiConverter/1.0");
-    request.setRawHeader("Accept", "application/json, text/javascript, */*; q=0.01");
+    while (retryCount <= maxRetries) {
+        requestTimer.restart();
 
-    QNetworkReply* reply = m_ownNetworkManager->get(request);
+        if (retryCount > 0) {
+            int delayMs = 10000;  // Default for 3rd+ retry
+            if (retryCount == 1)
+                delayMs = 3000;
+            else if (retryCount == 2)
+                delayMs = 5000;
 
-    QEventLoop loop;
-    QTimer timeoutTimer;
-    timeoutTimer.setSingleShot(true);
-
-    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    connect(&timeoutTimer, &QTimer::timeout, [&]() {
-        reply->abort();
-        loop.quit();
-    });
-
-    timeoutTimer.start(timeoutMs);
-    loop.exec();
-
-    if (reply->error() == QNetworkReply::NoError) {
-        result = reply->readAll();
-
-        if (!result.isEmpty() && result.size() >= 2 && (unsigned char)result[0] == 0x1f &&
-            (unsigned char)result[1] == 0x8b) {
-            result = decompressGzip(result);
+            qDebug() << "Retrying request to" << url << "in" << delayMs << "ms (Retry" << retryCount << "/"
+                     << maxRetries << ")";
+            QThread::msleep(delayMs);
         }
-    } else {
-        qWarning() << "HTTP error:" << reply->errorString() << "URL:" << url;
+
+        QNetworkRequest request{QUrl(url)};
+        request.setRawHeader("User-Agent", "EasyKiConverter/1.0");
+        request.setRawHeader("Accept", "application/json, text/javascript, */*; q=0.01");
+
+        QNetworkReply* reply = m_ownNetworkManager->get(request);
+
+        QEventLoop loop;
+        QTimer timeoutTimer;
+        timeoutTimer.setSingleShot(true);
+
+        connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        connect(&timeoutTimer, &QTimer::timeout, [&]() {
+            if (reply->isRunning()) {
+                reply->abort();
+            }
+            loop.quit();
+        });
+
+        timeoutTimer.start(timeoutMs);
+        loop.exec();
+
+        bool success = false;
+        if (reply->error() == QNetworkReply::NoError) {
+            int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            if (statusCode == 200) {
+                result = reply->readAll();
+                success = true;
+
+                // 记录网络诊断信息
+                if (status) {
+                    ComponentExportStatus::NetworkDiagnostics diag;
+                    diag.url = url;
+                    diag.statusCode = statusCode;
+                    diag.errorString = "";
+                    diag.retryCount = retryCount;
+                    diag.latencyMs = requestTimer.elapsed();
+                    diag.wasRateLimited = false;
+                    status->networkDiagnostics.append(diag);
+                }
+            } else if (statusCode == 429) {
+                qWarning() << "Rate limit detected (HTTP 429) for URL:" << url;
+                // 触发速率限制退避
+                QMutexLocker locker(&s_rateLimitMutex);
+                s_lastRateLimitTime = QDateTime::currentDateTime();
+                s_backoffMs = qMin(s_backoffMs + 1000, 5000);  // 指数退避，最大5秒
+                qWarning() << "Rate limit backoff increased to" << s_backoffMs
+                           << "ms, active requests:" << s_activeRequests.loadRelaxed();
+
+                // 记录网络诊断信息
+                if (status) {
+                    ComponentExportStatus::NetworkDiagnostics diag;
+                    diag.url = url;
+                    diag.statusCode = statusCode;
+                    diag.errorString = "Rate Limited";
+                    diag.retryCount = retryCount;
+                    diag.latencyMs = requestTimer.elapsed();
+                    diag.wasRateLimited = true;
+                    status->networkDiagnostics.append(diag);
+                }
+                // Will retry
+            } else if (statusCode >= 500) {
+                qWarning() << "HTTP error" << statusCode << "for URL:" << url;
+                // Will retry
+            } else {
+                qWarning() << "HTTP error" << statusCode << "for URL:" << url << "(No retry for this code)";
+                retryCount = maxRetries + 1;  // Don't retry for other 4xx errors
+            }
+        } else if (reply->error() == QNetworkReply::OperationCanceledError) {
+            // 请求被取消（超时），不再重试
+            qWarning() << "Request timeout (cancelled) for URL:" << url << "after" << timeoutMs << "ms";
+
+            // 记录网络诊断信息
+            if (status) {
+                ComponentExportStatus::NetworkDiagnostics diag;
+                diag.url = url;
+                diag.statusCode = 0;
+                diag.errorString = "Timeout";
+                diag.retryCount = retryCount;
+                diag.latencyMs = requestTimer.elapsed();
+                diag.wasRateLimited = false;
+                status->networkDiagnostics.append(diag);
+            }
+
+            retryCount = maxRetries + 1;  // Skip retries
+        } else {
+            qWarning() << "Network error:" << reply->errorString() << "URL:" << url;
+
+            // 记录网络诊断信息
+            if (status) {
+                ComponentExportStatus::NetworkDiagnostics diag;
+                diag.url = url;
+                diag.statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                diag.errorString = reply->errorString();
+                diag.retryCount = retryCount;
+                diag.latencyMs = requestTimer.elapsed();
+                diag.wasRateLimited = false;
+                status->networkDiagnostics.append(diag);
+            }
+
+            // Will retry for other network errors (except timeout/cancelled)
+        }
+
+        reply->deleteLater();
+
+        if (success) {
+            if (!result.isEmpty() && result.size() >= 2 && (unsigned char)result[0] == 0x1f &&
+                (unsigned char)result[1] == 0x8b) {
+                result = decompressGzip(result);
+            }
+            return result;
+        }
+
+        retryCount++;
     }
 
-    reply->deleteLater();
-    return result;
+    return QByteArray();
 }
 
 QByteArray FetchWorker::decompressGzip(const QByteArray& compressedData) {
@@ -236,15 +375,15 @@ QByteArray FetchWorker::decompressZip(const QByteArray& zipData) {
     return result;
 }
 
-bool FetchWorker::fetch3DModelData(ComponentExportStatus& status) {
+bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status) {
     QString uuid;
 
     QJsonParseError parseError;
-    QJsonDocument doc = QJsonDocument::fromJson(status.cadDataRaw, &parseError);
+    QJsonDocument doc = QJsonDocument::fromJson(status->cadDataRaw, &parseError);
 
     if (parseError.error != QJsonParseError::NoError) {
         QString msg = "Failed to parse CAD data for 3D model UUID";
-        status.addDebugLog(msg);
+        status->addDebugLog(msg);
         qWarning() << msg;
         return false;
     }
@@ -302,72 +441,94 @@ bool FetchWorker::fetch3DModelData(ComponentExportStatus& status) {
 
     if (uuid.isEmpty()) {
         QString msg = "No 3D model UUID found in CAD data";
-        status.addDebugLog(msg);
+        status->addDebugLog(msg);
         qDebug() << msg;
         return false;
     }
 
-    status.addDebugLog(QString("Fetching 3D model for UUID: %1").arg(uuid));
+    status->addDebugLog(QString("Fetching 3D model for UUID: %1").arg(uuid));
     qDebug() << "Fetching 3D model for UUID:" << uuid;
 
 
     QString objUrl = QString("https://modules.easyeda.com/3dmodel/%1").arg(uuid);
-    status.addDebugLog(QString("Downloading 3D model from: %1").arg(objUrl));
+    status->addDebugLog(QString("Downloading 3D model from: %1").arg(objUrl));
     qDebug() << "Downloading 3D model from:" << objUrl;
-    QByteArray objData = httpGet(objUrl, 60000);
+    QByteArray objData = httpGet(objUrl, 30000, status);
 
     if (objData.isEmpty()) {
         QString msg = QString("ERROR: Failed to download 3D model from: %1").arg(objUrl);
-        status.addDebugLog(msg);
+        status->addDebugLog(msg);
         qWarning() << msg;
         return false;
     }
 
-    status.addDebugLog(QString("Downloaded 3D model data size: %1 bytes").arg(objData.size()));
+    status->addDebugLog(QString("Downloaded 3D model data size: %1 bytes").arg(objData.size()));
 
 
     QByteArray actualObjData = objData;
+
+
     if (objData.size() >= 2 && objData[0] == 0x50 && objData[1] == 0x4B) {
-        status.addDebugLog("3D model data is ZIP compressed, decompressing...");
+        status->addDebugLog("3D model data is ZIP compressed, decompressing...");
+
+
         actualObjData = decompressZip(objData);
-        status.addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
+
+
+        status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
     }
 
 
     if (actualObjData.size() >= 2 && (unsigned char)actualObjData[0] == 0x1f &&
+
+
         (unsigned char)actualObjData[1] == 0x8b) {
-        status.addDebugLog("3D model data is gzip compressed, decompressing...");
+        status->addDebugLog("3D model data is gzip compressed, decompressing...");
+
+
         actualObjData = decompressGzip(actualObjData);
-        status.addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
+
+
+        status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
     }
+
 
     if (actualObjData.isEmpty()) {
         QString msg = "ERROR: Failed to decompress 3D model data";
-        status.addDebugLog(msg);
+
+
+        status->addDebugLog(msg);
+
+
         qWarning() << msg;
+
+
         return false;
     }
 
-    status.model3DObjRaw = actualObjData;
-    QString successMsg = QString("3D model (OBJ) data fetched successfully for: %1").arg(status.componentId);
-    status.addDebugLog(successMsg);
+
+    status->model3DObjRaw = actualObjData;
+
+
+    QString successMsg = QString("3D model (OBJ) data fetched successfully for: %1").arg(status->componentId);
+    status->addDebugLog(successMsg);
     qDebug() << successMsg;
 
 
     QString stepUrl = QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(uuid);
-    status.addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));
-    QByteArray stepData = httpGet(stepUrl, 60000);
+    status->addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));
+    QByteArray stepData = httpGet(stepUrl, 30000, status);
 
     if (!stepData.isEmpty() && stepData.size() > 100) {
-        status.model3DStepRaw = stepData;
+        status->model3DStepRaw = stepData;
         QString stepMsg = QString("3D model (STEP) data fetched successfully for: %1, Size: %2 bytes")
-                              .arg(status.componentId)
+                              .arg(status->componentId)
                               .arg(stepData.size());
-        status.addDebugLog(stepMsg);
+        status->addDebugLog(stepMsg);
         qDebug() << stepMsg;
     } else {
-        status.addDebugLog(
-            QString("WARNING: Failed to download STEP model or STEP data too small for: %1").arg(status.componentId));
+        status->addDebugLog(
+            QString("WARNING: Failed to download STEP model or STEP data too small for: %1").arg(status->componentId));
     }
 
     return true;
