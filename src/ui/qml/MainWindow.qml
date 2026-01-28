@@ -413,7 +413,11 @@ Item {
                         delegate: ComponentListItem {
                             width: componentList.cellWidth - AppStyle.spacing.md
                             anchors.horizontalCenter: parent ? undefined : undefined
+
+                            // 绑定数据和搜索词
                             componentId: modelData
+                            searchText: searchInput.text // 传递搜索词用于高亮
+
                             onDeleteClicked: {
                                 var sourceIndex = -1;
                                 var currentId = modelData;
@@ -432,35 +436,39 @@ Item {
 
                         // 过滤函数
                         function updateFilter() {
-                            var searchTerm = searchInput.text.toLowerCase().trim()
+                            // 移除所有空格，实现更宽容的搜索 (例如 "C 2040" -> "c2040")
+                            var searchTerm = searchInput.text.toLowerCase().replace(/\s+/g, '')
 
-                            if (searchTerm === "") {
-                                // 显示所有
-                                items.setGroups(0, items.count, ["display"])
-                            } else {
-                                // 遍历所有项进行过滤
-                                for (var i = 0; i < items.count; i++) {
-                                    var item = items.get(i)
-                                    // 获取内容
-                                    var content = item.model
+                            // 遍历所有项进行处理
+                            for (var i = 0; i < items.count; i++) {
+                                var item = items.get(i)
 
-                                    // 如果是对象，尝试获取 modelData
-                                    if (typeof content === 'object' && content !== null) {
-                                        if (content.modelData !== undefined) {
-                                            content = content.modelData
-                                        } else if (content.display !== undefined) {
-                                            content = content.display
-                                        }
+                                // 如果搜索词为空，显示所有项
+                                if (searchTerm === "") {
+                                    item.inDisplay = true
+                                    continue
+                                }
+
+                                // 获取内容
+                                var content = item.model
+
+                                // 如果是对象（通常是包装过的），尝试获取 modelData
+                                if (typeof content === 'object' && content !== null) {
+                                    if (content.modelData !== undefined) {
+                                        content = content.modelData
+                                    } else if (content.display !== undefined) {
+                                        content = content.display
                                     }
+                                }
 
-                                    // 强制转换为字符串并处理
-                                    var idStr = String(content)
+                                // 强制转换为字符串并处理
+                                var idStr = String(content)
 
-                                    if (idStr.toLowerCase().indexOf(searchTerm) !== -1) {
-                                        item.inDisplay = true
-                                    } else {
-                                        item.inDisplay = false
-                                    }
+                                // 判断是否匹配
+                                if (idStr.toLowerCase().indexOf(searchTerm) !== -1) {
+                                    item.inDisplay = true
+                                } else {
+                                    item.inDisplay = false
                                 }
                             }
                         }
