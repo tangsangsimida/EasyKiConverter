@@ -1,4 +1,4 @@
-﻿#include "ConfigService.h"
+#include "ConfigService.h"
 
 #include <QDebug>
 #include <QDir>
@@ -86,6 +86,11 @@ void ConfigService::resetToDefaults() {
     QMutexLocker locker(&m_configMutex);
     initializeDefaultConfig();
     emit configChanged();
+    
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
+
     qDebug() << "Config reset to defaults";
 }
 
@@ -98,6 +103,10 @@ void ConfigService::setOutputPath(const QString& path) {
     QMutexLocker locker(&m_configMutex);
     m_config["outputPath"] = path;
     emit configChanged();
+
+    // 释放锁后保存（因为 saveConfig 内部也会加锁，避免死锁）
+    locker.unlock();
+    saveConfig();
 }
 
 QString ConfigService::getLibName() const {
@@ -109,6 +118,10 @@ void ConfigService::setLibName(const QString& name) {
     QMutexLocker locker(&m_configMutex);
     m_config["libName"] = name;
     emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
 }
 
 bool ConfigService::getExportSymbol() const {
@@ -120,6 +133,10 @@ void ConfigService::setExportSymbol(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportSymbol"] = enabled;
     emit configChanged();
+    
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
 }
 
 bool ConfigService::getExportFootprint() const {
@@ -131,6 +148,10 @@ void ConfigService::setExportFootprint(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportFootprint"] = enabled;
     emit configChanged();
+    
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
 }
 
 bool ConfigService::getExportModel3D() const {
@@ -142,6 +163,10 @@ void ConfigService::setExportModel3D(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportModel3D"] = enabled;
     emit configChanged();
+    
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
 }
 
 bool ConfigService::getOverwriteExistingFiles() const {
@@ -153,6 +178,10 @@ void ConfigService::setOverwriteExistingFiles(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["overwriteExistingFiles"] = enabled;
     emit configChanged();
+    
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
 }
 
 bool ConfigService::getDarkMode() const {
@@ -175,6 +204,10 @@ void ConfigService::setDebugMode(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["debugMode"] = enabled;
     emit configChanged();
+    
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
 }
 
 void ConfigService::initializeDefaultConfig() {
