@@ -13,8 +13,9 @@ English | [中文](README.md)
 
 *   **Complete Conversion**: Full export support for Symbols (.kicad_sym), Footprints (.kicad_mod), and 3D Models (STEP/WRL).
 *   **Efficient Batch Processing**: Multi-threaded parallel conversion and BOM file import support to fully utilize multi-core performance.
-*   **Modern Experience**: Fluid UI based on Qt Quick with support for Dark/Light theme switching.
-*   **Smart Assistance**: Intelligent extraction of component numbers from the clipboard.
+*   **Modern Experience**: Fluid UI based on Qt Quick, supporting dark/light theme switching.
+*   **Smart Configuration**: Real-time auto-saving of settings, with memory for last-used state and debug mode restoration.
+*   **Smart Assistance**: Intelligent extraction of component IDs from the clipboard.
 
 ## 🚀 Quick Start
 

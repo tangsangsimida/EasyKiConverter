@@ -2,7 +2,22 @@
 
 This document records the additions, fixes, and changes in each version of EasyKiConverter.
 
-## [3.0.0] - 2026-01-17
+## [3.0.1] - 2026-01-29
+
+### Added
+- **Auto-Save Configuration**: Implemented real-time auto-saving for all configuration settings. Changes to output path, library name, or export options are now immediately persisted to the config file.
+- **Config Auto-Completion**: Introduced a configuration merge and auto-completion mechanism to automatically fix missing fields in config files (improving compatibility when upgrading from older versions).
+- **UX Improvement**: Added smart state checking for the "Start Conversion" button. It is now enabled only when at least one export target (Symbol/Footprint/3D Model) is selected and there are components to process, preventing accidental misoperation.
+
+### Improved
+- **Window Adaptation**: Adjusted default window size to 80% of the available screen area and optimized the minimum window size to 800x600, ensuring perfect compatibility with smaller screens like 1366x768.
+- **Debug Mode**: Refined the logic for remembering Debug Mode state. The application now correctly restores the Debug Mode setting from the last session upon startup.
+
+### Fixed
+- Fixed an issue where the UI did not refresh immediately after resetting the configuration.
+- Fixed a bug where the Debug Mode checkbox state was out of sync with the backend configuration.
+
+## [3.0.0] - 2026-01-18
 
 ### Added
 
