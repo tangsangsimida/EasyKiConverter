@@ -100,8 +100,18 @@ Item {
         MouseArea {
             anchors.fill: parent
             property point clickPos: "0,0"
-            onPressed: {
+            onPressed: (mouse) => {
                 clickPos = Qt.point(mouse.x,mouse.y)
+                if (Window.window.visibility === Window.Maximized) {
+                    var ratio = mouse.x / width
+                    Window.window.showNormal()
+                    // Re-center window horizontally relative to mouse
+                    // We need to estimate where the mouse is globally or relative to the restored window
+                    // Since startSystemMove grabs it, we just need to set 'x' roughly correct.
+                    // A simple approximation is to center it or keep the ratio.
+                    Window.window.x = mouse.screenX - (Window.window.width * ratio)
+                    Window.window.y = mouse.screenY - (mouse.y)
+                }
                 Window.window.startSystemMove()
             }
             onDoubleClicked: {
@@ -143,76 +153,66 @@ Item {
                 Layout.alignment: Qt.AlignRight
                 
                 // 最小化
-                Rectangle {
+                Button {
                     width: 46
-                    height: 38 // Match titleBar height
-                    color: minBtnArea.containsMouse ? (AppStyle.isDarkMode ? "#1affffff" : "#1a000000") : "transparent"
+                    height: 38
+                    flat: true
                     
-                    // Animation
-                    Behavior on color { ColorAnimation { duration: 150 } }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "—"
-                        color: AppStyle.colors.textPrimary
-                        font.pixelSize: 10
+                    icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/minimize.svg"
+                    icon.color: AppStyle.colors.textPrimary
+                    icon.width: 10
+                    icon.height: 10
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? (AppStyle.isDarkMode ? "#1affffff" : "#1a000000") : "transparent"
+                        Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    MouseArea {
-                        id: minBtnArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: Window.window.showMinimized()
-                    }
+                    
+                    onClicked: Window.window.showMinimized()
                 }
 
                 // 最大化/还原
-                Rectangle {
+                Button {
                     width: 46
-                    height: 38 // Match titleBar height
-                    color: maxBtnArea.containsMouse ? (AppStyle.isDarkMode ? "#1affffff" : "#1a000000") : "transparent"
+                    height: 38
+                    flat: true
                     
-                    Behavior on color { ColorAnimation { duration: 150 } }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: Window.window.visibility === Window.Maximized ? "❐" : "□"
-                        color: AppStyle.colors.textPrimary
-                        font.pixelSize: 10
+                    icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/maximize.svg"
+                    icon.color: AppStyle.colors.textPrimary
+                    icon.width: 10
+                    icon.height: 10
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? (AppStyle.isDarkMode ? "#1affffff" : "#1a000000") : "transparent"
+                        Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    MouseArea {
-                        id: maxBtnArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: {
-                            if (Window.window.visibility === Window.Maximized) {
-                                Window.window.showNormal()
-                            } else {
-                                Window.window.showMaximized()
-                            }
+                    
+                    onClicked: {
+                        if (Window.window.visibility === Window.Maximized) {
+                            Window.window.showNormal()
+                        } else {
+                            Window.window.showMaximized()
                         }
                     }
                 }
 
                 // 关闭
-                Rectangle {
+                Button {
                     width: 46
-                    height: 38 // Match titleBar height
-                    color: closeBtnArea.containsMouse ? "#c42b1c" : "transparent" // Windows 11 style red
+                    height: 38
+                    flat: true
                     
-                    Behavior on color { ColorAnimation { duration: 150 } }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "✕"
-                        color: closeBtnArea.containsMouse ? "white" : AppStyle.colors.textPrimary
-                        font.pixelSize: 10
+                    icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/close.svg"
+                    icon.color: hovered ? "white" : AppStyle.colors.textPrimary
+                    icon.width: 10
+                    icon.height: 10
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? "#c42b1c" : "transparent"
+                        Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    MouseArea {
-                        id: closeBtnArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: Window.window.close()
-                    }
+                    
+                    onClicked: Window.window.close()
                 }
             }
         }

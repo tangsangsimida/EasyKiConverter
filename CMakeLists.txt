@@ -174,6 +174,9 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/icons/trash.svg
         resources/icons/upload.svg
         resources/icons/add.svg
+        resources/icons/minimize.svg
+        resources/icons/maximize.svg
+        resources/icons/close.svg
         resources/icons/loading.svg
         resources/icons/github-mark.svg
         resources/icons/github-mark-white.svg
