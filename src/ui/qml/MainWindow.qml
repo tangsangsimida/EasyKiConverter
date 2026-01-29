@@ -722,7 +722,7 @@ Item {
                             Layout.fillWidth: true
                             id: debugModeCheckbox
                             text: "调试模式"
-                            checked: false
+                            checked: exportSettingsController.debugMode
                             onCheckedChanged: exportSettingsController.setDebugMode(checked)
                             font.pixelSize: 16
                             
