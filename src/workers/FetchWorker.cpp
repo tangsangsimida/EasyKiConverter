@@ -85,7 +85,7 @@ void FetchWorker::run() {
         QString("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(m_componentId);
     status->addDebugLog(QString("Fetching component info from: %1").arg(componentInfoUrl));
 
-    QByteArray componentInfoData = httpGet(componentInfoUrl, 15000, status);
+    QByteArray componentInfoData = httpGet(componentInfoUrl, 8000, status);
 
     if (componentInfoData.isEmpty()) {
         hasError = true;
@@ -185,11 +185,7 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
         requestTimer.restart();
 
         if (retryCount > 0) {
-            int delayMs = 10000;  // Default for 3rd+ retry
-            if (retryCount == 1)
-                delayMs = 3000;
-            else if (retryCount == 2)
-                delayMs = 5000;
+            int delayMs = 500;  // Fixed 500ms delay as requested
 
             qDebug() << "Retrying request to" << url << "in" << delayMs << "ms (Retry" << retryCount << "/"
                      << maxRetries << ")";
@@ -476,7 +472,7 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
     QString objUrl = QString("https://modules.easyeda.com/3dmodel/%1").arg(uuid);
     status->addDebugLog(QString("Downloading 3D model from: %1").arg(objUrl));
     qDebug() << "Downloading 3D model from:" << objUrl;
-    QByteArray objData = httpGet(objUrl, 30000, status);
+    QByteArray objData = httpGet(objUrl, 10000, status);
 
     if (objData.isEmpty()) {
         QString msg = QString("ERROR: Failed to download 3D model from: %1").arg(objUrl);
@@ -540,7 +536,7 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
 
     QString stepUrl = QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(uuid);
     status->addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));
-    QByteArray stepData = httpGet(stepUrl, 30000, status);
+    QByteArray stepData = httpGet(stepUrl, 10000, status);
 
     if (!stepData.isEmpty() && stepData.size() > 100) {
         status->model3DStepRaw = stepData;
