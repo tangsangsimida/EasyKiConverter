@@ -204,7 +204,7 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
     m_pipelineProgress.writeCompleted++;
 
     // CRITICAL FIX: Only count as success if ALL stages succeeded.
-    // If Write "succeeded" (meaning it finished without crashing) but was skipped due to 
+    // If Write "succeeded" (meaning it finished without crashing) but was skipped due to
     // fetch/process failure, it is NOT a success for the user.
     if (status->writeSuccess && status->fetchSuccess && status->processSuccess) {
         m_successCount++;

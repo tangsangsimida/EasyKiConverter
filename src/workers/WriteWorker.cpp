@@ -50,7 +50,7 @@ void WriteWorker::run() {
     // Since this is the Write stage, if previous stages failed, there is nothing to write.
     if (!m_status->fetchSuccess || !m_status->processSuccess) {
         m_status->writeDurationMs = 0;
-        m_status->writeSuccess = false; // It failed to write because there was nothing to write
+        m_status->writeSuccess = false;  // It failed to write because there was nothing to write
         m_status->writeMessage = "Skipped writing due to previous stage failure";
         m_status->addDebugLog("Skipping write stage because fetch or process failed.");
         emit writeCompleted(m_status);
@@ -59,9 +59,8 @@ void WriteWorker::run() {
 
     // SANITY CHECK: Ensure we actually have valid data to write
     // This prevents creating empty files if ProcessWorker somehow passed empty data
-    if ((m_exportSymbol && (!m_status->symbolData || m_status->symbolData->info().name.isEmpty())) && 
+    if ((m_exportSymbol && (!m_status->symbolData || m_status->symbolData->info().name.isEmpty())) &&
         (m_exportFootprint && (!m_status->footprintData || m_status->footprintData->info().name.isEmpty()))) {
-        
         m_status->writeDurationMs = writeTimer.elapsed();
         m_status->writeSuccess = false;
         m_status->writeMessage = "No valid symbol or footprint data to write";

@@ -95,20 +95,21 @@ void FetchWorker::run() {
         // Validate JSON content
         QJsonParseError parseError;
         QJsonDocument doc = QJsonDocument::fromJson(componentInfoData, &parseError);
-        
+
         if (parseError.error != QJsonParseError::NoError) {
             hasError = true;
             errorMessage = "Invalid JSON response: " + parseError.errorString();
             status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
         } else {
             QJsonObject rootObj = doc.object();
-            
+
             // Check for API specific error fields
             if (rootObj.contains("success") && !rootObj["success"].toBool()) {
                 hasError = true;
-                errorMessage = "API returned error: " + (rootObj.contains("message") ? rootObj["message"].toString() : "Unknown error");
+                errorMessage = "API returned error: " +
+                               (rootObj.contains("message") ? rootObj["message"].toString() : "Unknown error");
                 status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
-            } 
+            }
             // Check if result exists and is valid
             else if (!rootObj.contains("result") || rootObj["result"].isNull()) {
                 hasError = true;
@@ -120,8 +121,7 @@ void FetchWorker::run() {
                 hasError = true;
                 errorMessage = "Component data is empty";
                 status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
-            }
-            else {
+            } else {
                 // Data seems valid
                 status->componentInfoRaw = componentInfoData;
                 status->cinfoJsonRaw = componentInfoData;
