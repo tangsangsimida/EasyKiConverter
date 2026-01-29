@@ -2,12 +2,12 @@
 import QtQuick.Controls
 ApplicationWindow {
     id: appWindow
-    width: 1200
-    height: 800
+    width: Screen.desktopAvailableWidth * 0.8
+    height: Screen.desktopAvailableHeight * 0.8
     x: (Screen.width - width) / 2
     y: (Screen.height - height) / 2
-    minimumWidth: 1200
-    minimumHeight: 800
+    minimumWidth: 800
+    minimumHeight: 600
     visible: true
     title: "EasyKiConverter - 元器件转换工具"
     // 加载主窗口内容

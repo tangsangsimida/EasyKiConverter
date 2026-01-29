@@ -1,4 +1,4 @@
-﻿#include "ExportSettingsViewModel.h"
+#include "ExportSettingsViewModel.h"
 
 #include <QDebug>
 
@@ -13,7 +13,7 @@ ExportSettingsViewModel::ExportSettingsViewModel(QObject* parent)
     , m_exportFootprint(true)
     , m_exportModel3D(true)
     , m_overwriteExistingFiles(false)
-    , m_exportMode(0)  // 默认为追加模�?
+    , m_exportMode(0)  // 默认为追加模式
     , m_debugMode(false) {
     loadFromConfig();
 }
@@ -23,6 +23,7 @@ ExportSettingsViewModel::~ExportSettingsViewModel() {}
 void ExportSettingsViewModel::setOutputPath(const QString& path) {
     if (m_outputPath != path) {
         m_outputPath = path;
+        m_configService->setOutputPath(path);
         emit outputPathChanged();
     }
 }
@@ -30,6 +31,7 @@ void ExportSettingsViewModel::setOutputPath(const QString& path) {
 void ExportSettingsViewModel::setLibName(const QString& name) {
     if (m_libName != name) {
         m_libName = name;
+        m_configService->setLibName(name);
         emit libNameChanged();
     }
 }
@@ -37,6 +39,7 @@ void ExportSettingsViewModel::setLibName(const QString& name) {
 void ExportSettingsViewModel::setExportSymbol(bool enabled) {
     if (m_exportSymbol != enabled) {
         m_exportSymbol = enabled;
+        m_configService->setExportSymbol(enabled);
         emit exportSymbolChanged();
     }
 }
@@ -44,6 +47,7 @@ void ExportSettingsViewModel::setExportSymbol(bool enabled) {
 void ExportSettingsViewModel::setExportFootprint(bool enabled) {
     if (m_exportFootprint != enabled) {
         m_exportFootprint = enabled;
+        m_configService->setExportFootprint(enabled);
         emit exportFootprintChanged();
     }
 }
@@ -51,6 +55,7 @@ void ExportSettingsViewModel::setExportFootprint(bool enabled) {
 void ExportSettingsViewModel::setExportModel3D(bool enabled) {
     if (m_exportModel3D != enabled) {
         m_exportModel3D = enabled;
+        m_configService->setExportModel3D(enabled);
         emit exportModel3DChanged();
     }
 }
@@ -58,6 +63,7 @@ void ExportSettingsViewModel::setExportModel3D(bool enabled) {
 void ExportSettingsViewModel::setOverwriteExistingFiles(bool enabled) {
     if (m_overwriteExistingFiles != enabled) {
         m_overwriteExistingFiles = enabled;
+        m_configService->setOverwriteExistingFiles(enabled);
         emit overwriteExistingFilesChanged();
     }
 }
@@ -69,12 +75,13 @@ void ExportSettingsViewModel::setExportMode(int mode) {
         qDebug() << "Export mode changed to:" << mode << "(0=append, 1=update)";
 
         // 同步更新 overwriteExistingFiles
-        // 0 = 追加模式（保留已存在的元器件，跳过重复的�?> overwriteExistingFiles = false
-        // 1 = 更新模式（替换相同的元器件，保留不同的元器件，添加新的元器件�?> overwriteExistingFiles = false
+        // 0 = 追加模式（保留已存在的元器件，跳过重复的）-> overwriteExistingFiles = false
+        // 1 = 更新模式（替换相同的元器件，保留不同的元器件，添加新的元器件）-> overwriteExistingFiles = false
         // 注意：更新模式不删除整个文件，而是智能合并
         bool newOverwrite = false;  // 两种模式都不删除整个文件
         if (m_overwriteExistingFiles != newOverwrite) {
             m_overwriteExistingFiles = newOverwrite;
+            m_configService->setOverwriteExistingFiles(newOverwrite);
             emit overwriteExistingFilesChanged();
             qDebug() << "overwriteExistingFiles changed to:" << newOverwrite;
         }
@@ -99,8 +106,8 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
         return;
     }
 
-    // TODO: 需要添�?ExportService 的支�?
-    // 目前先设置为导出状�?
+    // TODO: 需要添加 ExportService 的支持
+    // 目前先设置为导出状态
     setIsExporting(true);
     setStatus("Export started");
     setProgress(0);
@@ -109,7 +116,7 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
 void ExportSettingsViewModel::cancelExport() {
     qDebug() << "Canceling export";
 
-    // TODO: 需要添�?ExportService 的支�?
+    // TODO: 需要添加 ExportService 的支持
     setIsExporting(false);
     setStatus("Export cancelled");
 }
@@ -127,7 +134,7 @@ void ExportSettingsViewModel::handleComponentExported(const QString& componentId
                                                       const QString& message) {
     Q_UNUSED(message);
     qDebug() << "Component exported:" << componentId << "Success:" << success;
-    // TODO: 需要添加信号声�?
+    // TODO: 需要添加信号声明
 }
 void ExportSettingsViewModel::handleExportCompleted(bool success) {
     qDebug() << "Export completed:" << success;
@@ -166,7 +173,7 @@ void ExportSettingsViewModel::handleExportFailed(const QString& error) {
 }
 
 void ExportSettingsViewModel::loadFromConfig() {
-    // 从配置服务加载设�?
+    // 从配置服务加载设置
     m_outputPath = m_configService->getOutputPath();
     m_libName = m_configService->getLibName();
     m_exportSymbol = m_configService->getExportSymbol();
@@ -175,10 +182,36 @@ void ExportSettingsViewModel::loadFromConfig() {
     m_overwriteExistingFiles = m_configService->getOverwriteExistingFiles();
     m_debugMode = m_configService->getDebugMode();
 
+    // 发送变更信号以更新 UI
+    emit outputPathChanged();
+    emit libNameChanged();
+    emit exportSymbolChanged();
+    emit exportFootprintChanged();
+    emit exportModel3DChanged();
+    emit overwriteExistingFilesChanged();
+    emit debugModeChanged();
+
     qDebug() << "Loading configuration from ConfigService";
 }
+
 void ExportSettingsViewModel::saveConfig() {
-    // 保存配置到配置服�?
+    // 保存配置到配置服务
+    m_configService->saveConfig();
+    qDebug() << "Saving configuration to ConfigService";
+}
+
+void ExportSettingsViewModel::resetConfig() {
+    // 重置为默认值
+    m_outputPath = "";
+    m_libName = "MyLibrary";
+    m_exportSymbol = true;
+    m_exportFootprint = true;
+    m_exportModel3D = true;
+    m_overwriteExistingFiles = false;
+    m_exportMode = 0;  // 重置为追加模式
+    m_debugMode = false;
+
+    // 同步到 ConfigService
     m_configService->setOutputPath(m_outputPath);
     m_configService->setLibName(m_libName);
     m_configService->setExportSymbol(m_exportSymbol);
@@ -186,20 +219,6 @@ void ExportSettingsViewModel::saveConfig() {
     m_configService->setExportModel3D(m_exportModel3D);
     m_configService->setOverwriteExistingFiles(m_overwriteExistingFiles);
     m_configService->setDebugMode(m_debugMode);
-
-    m_configService->saveConfig();
-    qDebug() << "Saving configuration to ConfigService";
-}
-void ExportSettingsViewModel::resetConfig() {
-    // 重置为默认�?
-    m_outputPath = "";
-    m_libName = "MyLibrary";
-    m_exportSymbol = true;
-    m_exportFootprint = true;
-    m_exportModel3D = true;
-    m_overwriteExistingFiles = false;
-    m_exportMode = 0;  // 重置为追加模�?
-    m_debugMode = false;
 
     emit outputPathChanged();
     emit libNameChanged();
@@ -212,4 +231,5 @@ void ExportSettingsViewModel::resetConfig() {
 
     qDebug() << "Configuration reset to defaults";
 }
+
 }  // namespace EasyKiConverter

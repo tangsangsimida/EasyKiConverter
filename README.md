@@ -44,18 +44,16 @@
 *   [贡献指南](docs/developer/CONTRIBUTING.md) | [架构设计](docs/developer/ARCHITECTURE.md) | [构建说明](docs/developer/BUILD.md)
 *   [性能优化报告](docs/PERFORMANCE_OPTIMIZATION_REPORT.md) | [项目路线图](docs/project/ROADMAP.md)
 
-## 📅 最新更新 (v3.0.0)
-
-本次更新引入了全新的**三阶段流水线架构**，显著提升了转换效率：
-*   **性能飞跃**：总耗时减少 54%，吞吐量提升 117%。
-*   **资源优化**：内存占用降低 50%，CPU 利用率大幅提升。
-*   **功能增强**：完整的 3D 模型支持与批量处理能力。
-
-> 查看完整变更记录：[CHANGELOG.md](docs/developer/CHANGELOG.md)
 
 ## 🤝 贡献与致谢
 
-本项目参考了 [easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py) 的核心算法，感谢原作者的贡献。
+### 贡献者
+
+感谢以下开发者对 EasyKiConverter 的贡献：
+
+<a href="https://github.com/tangsangsimida/EasyKiConverter_QT/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=tangsangsimida/EasyKiConverter_QT" />
+
 欢迎提交 Issue 或 Pull Request 参与改进！详细请阅 [贡献指南](docs/developer/CONTRIBUTING.md)。
 
 ## 📄 许可证

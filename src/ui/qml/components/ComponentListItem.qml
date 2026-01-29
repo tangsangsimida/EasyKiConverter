@@ -5,6 +5,7 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 Rectangle {
     id: item
     property string componentId
+    property string searchText: "" // 新增：搜索关键词
     signal deleteClicked()
     height: 48
     // 悬停效果
@@ -28,7 +29,20 @@ Rectangle {
         Text {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            text: componentId
+            
+            // 使用富文本以支持高亮
+            textFormat: Text.RichText
+            text: {
+                if (!searchText || searchText.trim() === "") return componentId
+                
+                // 转义特殊字符防止正则错误或HTML注入
+                var escapedSearch = searchText.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                var regex = new RegExp("(" + escapedSearch + ")", "gi") // 全局 + 忽略大小写
+                
+                // 高亮颜色使用 Primary 颜色 (#3b82f6)
+                return componentId.replace(regex, "<font color='#3b82f6'><b>$1</b></font>")
+            }
+            
             font.pixelSize: AppStyle.fontSizes.sm
             font.family: "Courier New"
             color: AppStyle.colors.textPrimary

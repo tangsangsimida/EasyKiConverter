@@ -1,8 +1,9 @@
-﻿import QtQuick
+import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Window
+import QtQml.Models
 import "styles"
 import "components"
 Item {
@@ -387,8 +388,93 @@ Item {
             // 元件列表卡片
             Card {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 300
                 title: "元器件列表"
+
+                // 搜索过滤模型 (作为资源定义，不参与布局)
+                resources: [
+                    DelegateModel {
+                        id: visualModel
+                        model: componentListController.componentList
+
+                        groups: [
+                            DelegateModelGroup {
+                                id: displayGroup
+                                includeByDefault: true
+                                name: "display"
+                            },
+                            DelegateModelGroup {
+                                id: filterGroup
+                                name: "filter"
+                            }
+                        ]
+
+                        filterOnGroup: "display"
+
+                        delegate: ComponentListItem {
+                            width: componentList.cellWidth - AppStyle.spacing.md
+                            anchors.horizontalCenter: parent ? undefined : undefined
+
+                            // 绑定数据和搜索词
+                            componentId: modelData
+                            searchText: searchInput.text // 传递搜索词用于高亮
+
+                            onDeleteClicked: {
+                                var sourceIndex = -1;
+                                var currentId = modelData;
+                                var list = componentListController.componentList;
+                                for(var i = 0; i < list.length; i++) {
+                                    if(list[i] === currentId) {
+                                        sourceIndex = i;
+                                        break;
+                                    }
+                                }
+                                if(sourceIndex !== -1) {
+                                    componentListController.removeComponent(sourceIndex);
+                                }
+                            }
+                        }
+
+                        // 过滤函数
+                        function updateFilter() {
+                            // 移除所有空格，实现更宽容的搜索 (例如 "C 2040" -> "c2040")
+                            var searchTerm = searchInput.text.toLowerCase().replace(/\s+/g, '')
+
+                            // 遍历所有项进行处理
+                            for (var i = 0; i < items.count; i++) {
+                                var item = items.get(i)
+
+                                // 如果搜索词为空，显示所有项
+                                if (searchTerm === "") {
+                                    item.inDisplay = true
+                                    continue
+                                }
+
+                                // 获取内容
+                                var content = item.model
+
+                                // 如果是对象（通常是包装过的），尝试获取 modelData
+                                if (typeof content === 'object' && content !== null) {
+                                    if (content.modelData !== undefined) {
+                                        content = content.modelData
+                                    } else if (content.display !== undefined) {
+                                        content = content.display
+                                    }
+                                }
+
+                                // 强制转换为字符串并处理
+                                var idStr = String(content)
+
+                                // 判断是否匹配
+                                if (idStr.toLowerCase().indexOf(searchTerm) !== -1) {
+                                    item.inDisplay = true
+                                } else {
+                                    item.inDisplay = false
+                                }
+                            }
+                        }
+                    }
+                ]
+
                 RowLayout {
                     width: parent.width
                     spacing: 12
@@ -398,9 +484,56 @@ Item {
                         font.pixelSize: 14
                         color: AppStyle.colors.textSecondary
                     }
+
                     Item {
                         Layout.fillWidth: true
                     }
+
+                    // 搜索框
+                    TextField {
+                        id: searchInput
+                        Layout.preferredWidth: 200
+                        placeholderText: "搜索元器件..."
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        color: AppStyle.colors.textPrimary
+                        placeholderTextColor: AppStyle.colors.textSecondary
+                        leftPadding: 32 // 为图标留出空间
+
+                        background: Rectangle {
+                            color: AppStyle.colors.surface
+                            border.color: searchInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                            border.width: searchInput.focus ? 2 : 1
+                            radius: AppStyle.radius.md
+                        }
+
+                        // 搜索图标
+                        Image {
+                            anchors.left: parent.left
+                            anchors.leftMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 16
+                            height: 16
+                            source: AppStyle.isDarkMode ?
+                                    "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark-white.svg" : // 暂时用现有图标替代，或者用文字
+                                    "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark.svg"
+                            // 注意：实际上应该用一个 'search' 图标，这里暂时复用或忽略，
+                            // 为了美观，用 Text 替代
+                            visible: false
+                        }
+                        Text {
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "🔍"
+                            font.pixelSize: 12
+                            color: AppStyle.colors.textSecondary
+                        }
+
+                        onTextChanged: {
+                            visualModel.updateFilter()
+                        }
+                    }
+
                     ModernButton {
                         text: "清空列表"
                         iconName: "trash"
@@ -409,6 +542,7 @@ Item {
                         hoverColor: AppStyle.colors.dangerDark
                         pressedColor: AppStyle.colors.dangerDark
                         onClicked: {
+                            searchInput.text = "" // 清空搜索
                             componentListController.clearComponentList()
                         }
                     }
@@ -417,59 +551,27 @@ Item {
                 GridView {
                     id: componentList
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.preferredHeight: 300
                     Layout.topMargin: AppStyle.spacing.md
                     clip: true
                     cellWidth: (width - AppStyle.spacing.md) / 5
                     cellHeight: 56
                     flow: GridView.FlowLeftToRight
                     layoutDirection: Qt.LeftToRight
-                    model: componentListController.componentList
-                    delegate: ComponentListItem {
-                        width: componentList.cellWidth - AppStyle.spacing.md
-                        anchors.horizontalCenter: parent ? undefined : undefined
-                        componentId: modelData
-                        onDeleteClicked: {
-                            componentListController.removeComponent(index)
-                        }
-                    }
+
+                    // 使用 DelegateModel
+                    model: visualModel
+
+                    // delegate 已经在 DelegateModel 中定义了，这里不需要再定义，
+                    // 但是 GridView 需要直接使用 visualModel 作为 model。
+                    // 注意：当 model 是 DelegateModel 时，不需要指定 delegate 属性，
+                    // 因为 DelegateModel 已经包含了 delegate。
+
                     ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded
                     }
-                    // 添加列表项进入动画
-                    add: Transition {
-                        NumberAnimation {
-                            property: "opacity"
-                            from: 0
-                            to: 1
-                            duration: AppStyle.durations.normal
-                            easing.type: AppStyle.easings.easeOut
-                        }
-                        NumberAnimation {
-                            property: "scale"
-                            from: 0.8
-                            to: 1
-                            duration: AppStyle.durations.normal
-                            easing.type: AppStyle.easings.easeOut
-                        }
-                    }
-                    // 列表项移除动画
-                    remove: Transition {
-                        NumberAnimation {
-                            property: "opacity"
-                            from: 1
-                            to: 0
-                            duration: AppStyle.durations.normal
-                            easing.type: AppStyle.easings.easeIn
-                        }
-                        NumberAnimation {
-                            property: "scale"
-                            from: 1
-                            to: 0.8
-                            duration: AppStyle.durations.normal
-                            easing.type: AppStyle.easings.easeIn
-                        }
-                    }
+                    // 添加列表项进入动画 (DelegateModel 管理时可能需要调整)
+                    // 简单的 add/remove 动画在使用 DelegateModel 时可能不生效或表现不同
                 }
             }
             // 导出选项卡片
@@ -491,6 +593,29 @@ Item {
                             checked: exportSettingsController.exportSymbol
                             onCheckedChanged: exportSettingsController.setExportSymbol(checked)
                             font.pixelSize: 16
+                            
+                            indicator: Rectangle {
+                                implicitWidth: 22
+                                implicitHeight: 22
+                                x: symbolCheckbox.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: 4
+                                color: symbolCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                                border.color: symbolCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                border.width: 1.5
+                                
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on border.color { ColorAnimation { duration: 150 } }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "✓"
+                                    font.pixelSize: 14
+                                    color: "#ffffff"
+                                    visible: symbolCheckbox.checked
+                                }
+                            }
+
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
@@ -512,6 +637,29 @@ Item {
                             checked: exportSettingsController.exportFootprint
                             onCheckedChanged: exportSettingsController.setExportFootprint(checked)
                             font.pixelSize: 16
+                            
+                            indicator: Rectangle {
+                                implicitWidth: 22
+                                implicitHeight: 22
+                                x: footprintCheckbox.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: 4
+                                color: footprintCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                                border.color: footprintCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                border.width: 1.5
+                                
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on border.color { ColorAnimation { duration: 150 } }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "✓"
+                                    font.pixelSize: 14
+                                    color: "#ffffff"
+                                    visible: footprintCheckbox.checked
+                                }
+                            }
+
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
@@ -533,6 +681,29 @@ Item {
                             checked: exportSettingsController.exportModel3D
                             onCheckedChanged: exportSettingsController.setExportModel3D(checked)
                             font.pixelSize: 16
+                            
+                            indicator: Rectangle {
+                                implicitWidth: 22
+                                implicitHeight: 22
+                                x: model3dCheckbox.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: 4
+                                color: model3dCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                                border.color: model3dCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                border.width: 1.5
+                                
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on border.color { ColorAnimation { duration: 150 } }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "✓"
+                                    font.pixelSize: 14
+                                    color: "#ffffff"
+                                    visible: model3dCheckbox.checked
+                                }
+                            }
+
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
@@ -551,9 +722,32 @@ Item {
                             Layout.fillWidth: true
                             id: debugModeCheckbox
                             text: "调试模式"
-                            checked: false
+                            checked: exportSettingsController.debugMode
                             onCheckedChanged: exportSettingsController.setDebugMode(checked)
                             font.pixelSize: 16
+                            
+                            indicator: Rectangle {
+                                implicitWidth: 22
+                                implicitHeight: 22
+                                x: debugModeCheckbox.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: 4
+                                color: debugModeCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                                border.color: debugModeCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                border.width: 1.5
+                                
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on border.color { ColorAnimation { duration: 150 } }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "✓"
+                                    font.pixelSize: 14
+                                    color: "#ffffff"
+                                    visible: debugModeCheckbox.checked
+                                }
+                            }
+
                             contentItem: Text {
                                 text: parent.text
                                 font: parent.font
@@ -592,6 +786,27 @@ Item {
                                         }
                                     }
                                     font.pixelSize: 14
+                                    
+                                    indicator: Rectangle {
+                                        implicitWidth: 20
+                                        implicitHeight: 20
+                                        x: appendModeRadio.leftPadding
+                                        y: parent.height / 2 - height / 2
+                                        radius: 10
+                                        color: "transparent"
+                                        border.color: appendModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                        border.width: 1.5
+                                        
+                                        Rectangle {
+                                            anchors.centerIn: parent
+                                            width: 10
+                                            height: 10
+                                            radius: 5
+                                            color: AppStyle.colors.primary
+                                            visible: appendModeRadio.checked
+                                        }
+                                    }
+
                                     contentItem: Text {
                                         text: parent.text
                                         font: parent.font
@@ -603,7 +818,7 @@ Item {
                                 Text {
                                     text: "保留已存在的元器件"
                                     font.pixelSize: 11
-                                    color: "#94a3b8"
+                                    color: AppStyle.colors.textSecondary
                                 }
                             }
                             // 更新模式
@@ -619,6 +834,27 @@ Item {
                                         }
                                     }
                                     font.pixelSize: 14
+                                    
+                                    indicator: Rectangle {
+                                        implicitWidth: 20
+                                        implicitHeight: 20
+                                        x: updateModeRadio.leftPadding
+                                        y: parent.height / 2 - height / 2
+                                        radius: 10
+                                        color: "transparent"
+                                        border.color: updateModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                        border.width: 1.5
+                                        
+                                        Rectangle {
+                                            anchors.centerIn: parent
+                                            width: 10
+                                            height: 10
+                                            radius: 5
+                                            color: AppStyle.colors.primary
+                                            visible: updateModeRadio.checked
+                                        }
+                                    }
+
                                     contentItem: Text {
                                         text: parent.text
                                         font: parent.font
@@ -630,7 +866,7 @@ Item {
                                 Text {
                                     text: "覆盖已存在的元器件"
                                     font.pixelSize: 11
-                                    color: "#94a3b8"
+                                    color: AppStyle.colors.textSecondary
                                 }
                             }
                         }
@@ -740,187 +976,139 @@ Item {
                 }
             }
             // 进度显示卡片
-                        Card {
+            Card {
+                Layout.fillWidth: true
+                title: "转换进度"
+                visible: exportProgressController.isExporting || exportProgressController.progress > 0
+                ColumnLayout {
+                    width: parent.width
+                    spacing: 12
+                    
+                    // 1. 流程指示器 (Step Indicators)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 8
+                        Layout.bottomMargin: 8
+                        spacing: 0
+
+                        // 步骤 1: 抓取
+                        StepItem {
+                            // 移除 Layout.fillWidth，让它保持最小宽度
+                            Layout.preferredWidth: implicitWidth
+                            label: "数据抓取"
+                            index: 1
+                            progress: exportProgressController.fetchProgress
+                            activeColor: "#22c55e" // 绿色
+                        }
+
+                        // 连接线 1-2
+                        Rectangle {
+                            Layout.fillWidth: true // 让线条占据所有剩余空间
+                            Layout.preferredHeight: 2
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.bottomMargin: 14 
+                            color: exportProgressController.fetchProgress >= 100 ? AppStyle.colors.success : AppStyle.colors.border
+                            
+                            Behavior on color { ColorAnimation { duration: 300 } }
+                        }
+
+                        // 步骤 2: 处理
+                        StepItem {
+                            Layout.preferredWidth: implicitWidth
+                            label: "数据处理"
+                            index: 2
+                            progress: exportProgressController.processProgress
+                            activeColor: "#3b82f6" // 蓝色
+                        }
+
+                        // 连接线 2-3
+                        Rectangle {
+                            Layout.fillWidth: true // 让线条占据所有剩余空间
+                            Layout.preferredHeight: 2
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.bottomMargin: 14
+                            color: exportProgressController.processProgress >= 100 ? AppStyle.colors.success : AppStyle.colors.border
+                            
+                            Behavior on color { ColorAnimation { duration: 300 } }
+                        }
+
+                        // 步骤 3: 写入
+                        StepItem {
+                            Layout.preferredWidth: implicitWidth
+                            label: "文件写入"
+                            index: 3
+                            progress: exportProgressController.writeProgress
+                            activeColor: "#f59e0b" // 橙色
+                        }
+                    }
+
+                    // 2. 总进度 (多色拼接) - 改为水平布局
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        
+                        // 自定义多色进度条容器
+                        Rectangle {
+                            id: progressBar
                             Layout.fillWidth: true
-                            title: "转换进度"
-                            visible: progressBar.visible
-                            ColumnLayout {
-                                width: parent.width
-                                spacing: 12
-                                // 总进度条
-                                Text {
-                                    text: "总进度: " + Math.round(exportProgressController.progress) + "%"
-                                    font.pixelSize: 14
-                                    font.bold: true
-                                    color: AppStyle.colors.textPrimary
+                            height: 12
+                            color: AppStyle.colors.border
+                            radius: AppStyle.radius.md
+                            clip: true
+                            // 移除 visible 限制，使其在完成后依然可见
+                            
+                            Row {
+                                anchors.fill: parent
+                                spacing: 0
+                                
+                                // 抓取部分 (Green, 占比 1/3)
+                                Rectangle {
+                                    height: parent.height
+                                    width: (parent.width / 3) * (exportProgressController.fetchProgress / 100)
+                                    color: "#22c55e"
+                                    visible: width > 0
+                                    Behavior on width { NumberAnimation { duration: 100 } }
                                 }
-                                ProgressBar {
-                                    id: progressBar
-                                    Layout.fillWidth: true
-                                    from: 0
-                                    to: 100
-                                    value: exportProgressController.progress
-                                    visible: exportProgressController.isExporting
-                                    background: Rectangle {
-                                        color: AppStyle.colors.border
-                                        radius: AppStyle.radius.md
-                                    }
-                                    contentItem: Item {
-                                        Rectangle {
-                                            width: progressBar.visualPosition * parent.width
-                                            height: parent.height
-                                            radius: AppStyle.radius.md
-                                            color: AppStyle.colors.primary
-                                            Behavior on width {
-                                                NumberAnimation {
-                                                    duration: AppStyle.durations.normal
-                                                    easing.type: AppStyle.easings.easeOut
-                                                }
-                                            }
-                                        }
-                                    }
+                                
+                                // 处理部分 (Blue, 占比 1/3)
+                                Rectangle {
+                                    height: parent.height
+                                    width: (parent.width / 3) * (exportProgressController.processProgress / 100)
+                                    color: "#3b82f6"
+                                    visible: width > 0
+                                    Behavior on width { NumberAnimation { duration: 100 } }
                                 }
-                                // 分段进度条
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 8
-                                    visible: exportProgressController.isExporting
-                                    // 抓取阶段进度
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 8
-                                        Text {
-                                            text: "抓取"
-                                            font.pixelSize: 12
-                                            color: AppStyle.colors.textSecondary
-                                            Layout.preferredWidth: 40
-                                        }
-                                        ProgressBar {
-                                            Layout.fillWidth: true
-                                            from: 0
-                                            to: 100
-                                            value: exportProgressController.fetchProgress
-                                            background: Rectangle {
-                                                color: AppStyle.colors.border
-                                                radius: AppStyle.radius.sm
-                                            }
-                                            contentItem: Item {
-                                                Rectangle {
-                                                    width: parent.visualPosition * parent.width
-                                                    height: parent.height
-                                                    radius: AppStyle.radius.sm
-                                                    color: "#22c55e"  // 绿色
-                                                    Behavior on width {
-                                                        NumberAnimation {
-                                                            duration: AppStyle.durations.normal
-                                                            easing.type: AppStyle.easings.easeOut
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        Text {
-                                            text: Math.round(exportProgressController.fetchProgress) + "%"
-                                            font.pixelSize: 12
-                                            color: AppStyle.colors.textSecondary
-                                            Layout.preferredWidth: 35
-                                            horizontalAlignment: Text.AlignRight
-                                        }
-                                    }
-                                    // 处理阶段进度
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 8
-                                        Text {
-                                            text: "处理"
-                                            font.pixelSize: 12
-                                            color: AppStyle.colors.textSecondary
-                                            Layout.preferredWidth: 40
-                                        }
-                                        ProgressBar {
-                                            Layout.fillWidth: true
-                                            from: 0
-                                            to: 100
-                                            value: exportProgressController.processProgress
-                                            background: Rectangle {
-                                                color: AppStyle.colors.border
-                                                radius: AppStyle.radius.sm
-                                            }
-                                            contentItem: Item {
-                                                Rectangle {
-                                                    width: parent.visualPosition * parent.width
-                                                    height: parent.height
-                                                    radius: AppStyle.radius.sm
-                                                    color: "#3b82f6"  // 蓝色
-                                                    Behavior on width {
-                                                        NumberAnimation {
-                                                            duration: AppStyle.durations.normal
-                                                            easing.type: AppStyle.easings.easeOut
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        Text {
-                                            text: Math.round(exportProgressController.processProgress) + "%"
-                                            font.pixelSize: 12
-                                            color: AppStyle.colors.textSecondary
-                                            Layout.preferredWidth: 35
-                                            horizontalAlignment: Text.AlignRight
-                                        }
-                                    }
-                                    // 写入阶段进度
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 8
-                                        Text {
-                                            text: "写入"
-                                            font.pixelSize: 12
-                                            color: AppStyle.colors.textSecondary
-                                            Layout.preferredWidth: 40
-                                        }
-                                        ProgressBar {
-                                            Layout.fillWidth: true
-                                            from: 0
-                                            to: 100
-                                            value: exportProgressController.writeProgress
-                                            background: Rectangle {
-                                                color: AppStyle.colors.border
-                                                radius: AppStyle.radius.sm
-                                            }
-                                            contentItem: Item {
-                                                Rectangle {
-                                                    width: parent.visualPosition * parent.width
-                                                    height: parent.height
-                                                    radius: AppStyle.radius.sm
-                                                    color: "#f59e0b"  // 橙色
-                                                    Behavior on width {
-                                                        NumberAnimation {
-                                                            duration: AppStyle.durations.normal
-                                                            easing.type: AppStyle.easings.easeOut
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        Text {
-                                            text: Math.round(exportProgressController.writeProgress) + "%"
-                                            font.pixelSize: 12
-                                            color: AppStyle.colors.textSecondary
-                                            Layout.preferredWidth: 35
-                                            horizontalAlignment: Text.AlignRight
-                                        }
-                                    }
+                                
+                                // 写入部分 (Orange, 占比 1/3)
+                                Rectangle {
+                                    height: parent.height
+                                    width: (parent.width / 3) * (exportProgressController.writeProgress / 100)
+                                    color: "#f59e0b"
+                                    visible: width > 0
+                                    Behavior on width { NumberAnimation { duration: 100 } }
                                 }
-                                                    Text {
-                                                        id: statusLabel
-                                                        Layout.fillWidth: true
-                                                        text: exportProgressController.status
-                                                        font.pixelSize: 14
-                                                        color: AppStyle.colors.textSecondary
-                                                        horizontalAlignment: Text.AlignHCenter
-                                                        visible: exportProgressController.status.length > 0
-                                                    }
+                            }
+                        }
+
+                        // 总进度文字 (放在右侧)
+                        Text {
+                            text: Math.round(exportProgressController.progress) + "%"
+                            font.pixelSize: 14
+                            font.bold: true
+                            color: AppStyle.colors.textPrimary
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                    }
+
+                    Text {
+                        id: statusLabel
+                        Layout.fillWidth: true
+                        text: exportProgressController.status
+                        font.pixelSize: 14
+                        color: AppStyle.colors.textSecondary
+                        horizontalAlignment: Text.AlignHCenter
+                        visible: exportProgressController.status.length > 0
+                    }
                 }
             }
             // 转换结果卡片（延迟加载）
@@ -935,83 +1123,6 @@ Item {
                         width: parent.width
                         spacing: AppStyle.spacing.md
                         visible: true
-                        // 统计信息
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: AppStyle.spacing.xl
-                            Rectangle {
-                                Layout.preferredWidth: 120
-                                Layout.preferredHeight: 80
-                                color: AppStyle.colors.successLight
-                                radius: AppStyle.radius.md
-                                ColumnLayout {
-                                    anchors.centerIn: parent
-                                    spacing: AppStyle.spacing.xs
-                                    Text {
-                                        text: "成功"
-                                        font.pixelSize: AppStyle.fontSizes.xs
-                                        color: AppStyle.colors.successDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                    Text {
-                                        id: successCountLabel
-                                        text: "0"
-                                        font.pixelSize: AppStyle.fontSizes.xxl
-                                        font.bold: true
-                                        color: AppStyle.colors.successDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                }
-                            }
-                            Rectangle {
-                                Layout.preferredWidth: 120
-                                Layout.preferredHeight: 80
-                                color: AppStyle.colors.dangerLight
-                                radius: AppStyle.radius.md
-                                ColumnLayout {
-                                    anchors.centerIn: parent
-                                    spacing: AppStyle.spacing.xs
-                                    Text {
-                                        text: "失败"
-                                        font.pixelSize: AppStyle.fontSizes.xs
-                                        color: AppStyle.colors.dangerDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                    Text {
-                                        id: failedCountLabel
-                                        text: "0"
-                                        font.pixelSize: AppStyle.fontSizes.xxl
-                                        font.bold: true
-                                        color: AppStyle.colors.dangerDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                }
-                            }
-                            Rectangle {
-                                Layout.preferredWidth: 120
-                                Layout.preferredHeight: 80
-                                color: AppStyle.colors.warningLight
-                                radius: AppStyle.radius.md
-                                ColumnLayout {
-                                    anchors.centerIn: parent
-                                    spacing: AppStyle.spacing.xs
-                                    Text {
-                                        text: "部分成功"
-                                        font.pixelSize: AppStyle.fontSizes.xs
-                                        color: AppStyle.colors.warningDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                    Text {
-                                        id: partialCountLabel
-                                        text: "0"
-                                        font.pixelSize: AppStyle.fontSizes.xxl
-                                        font.bold: true
-                                        color: AppStyle.colors.warningDark
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                }
-                            }
-                        }
                         // 结果列表（使用 GridView 实现五列显示）
                         GridView {
                             id: resultsList
@@ -1066,6 +1177,148 @@ Item {
                     }
                 }
             }
+            // 导出统计卡片（仅在导出完成后显示）
+            Card {
+                Layout.fillWidth: true
+                title: "导出统计"
+                visible: exportProgressController.hasStatistics
+                ColumnLayout {
+                    width: parent.width
+                    spacing: AppStyle.spacing.md
+                    // 基本统计信息
+                    Text {
+                        text: "基本统计"
+                        font.pixelSize: AppStyle.fontSizes.md
+                        font.bold: true
+                        color: AppStyle.colors.textPrimary
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: AppStyle.spacing.lg
+                        StatItem {
+                            label: "总数"
+                            value: exportProgressController.statisticsTotal
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "成功"
+                            value: exportProgressController.statisticsSuccess
+                            valueColor: AppStyle.colors.success
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "失败"
+                            value: exportProgressController.statisticsFailed
+                            valueColor: AppStyle.colors.danger
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "成功率"
+                            value: exportProgressController.statisticsSuccessRate.toFixed(2) + "%"
+                            Layout.fillWidth: true
+                        }
+                    }
+                    // 时间统计信息
+                    Text {
+                        text: "时间统计"
+                        font.pixelSize: AppStyle.fontSizes.md
+                        font.bold: true
+                        color: AppStyle.colors.textPrimary
+                        Layout.topMargin: AppStyle.spacing.sm
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: AppStyle.spacing.lg
+                        StatItem {
+                            label: "总耗时"
+                            value: (exportProgressController.statisticsTotalDuration / 1000).toFixed(2) + "s"
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "平均抓取"
+                            value: exportProgressController.statisticsAvgFetchTime + "ms"
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "平均处理"
+                            value: exportProgressController.statisticsAvgProcessTime + "ms"
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "平均写入"
+                            value: exportProgressController.statisticsAvgWriteTime + "ms"
+                            Layout.fillWidth: true
+                        }
+                    }
+                    // 网络统计信息
+                    Text {
+                        text: "网络统计"
+                        font.pixelSize: AppStyle.fontSizes.md
+                        font.bold: true
+                        color: AppStyle.colors.textPrimary
+                        Layout.topMargin: AppStyle.spacing.sm
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: AppStyle.spacing.lg
+                        StatItem {
+                            label: "总请求数"
+                            value: exportProgressController.statisticsTotalNetworkRequests
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "重试次数"
+                            value: exportProgressController.statisticsTotalRetries
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "平均延迟"
+                            value: exportProgressController.statisticsAvgNetworkLatency + "ms"
+                            Layout.fillWidth: true
+                        }
+                        StatItem {
+                            label: "速率限制"
+                            value: exportProgressController.statisticsRateLimitHitCount
+                            Layout.fillWidth: true
+                        }
+                    }
+                    // 底部按钮组（居中排列）
+                    RowLayout {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: AppStyle.spacing.sm
+                        spacing: AppStyle.spacing.lg
+
+                        // 打开详细报告按钮
+                        ModernButton {
+                            text: "打开详细统计报告"
+                            iconName: "folder" // 或者其他合适的图标
+                            backgroundColor: AppStyle.colors.surface
+                            textColor: AppStyle.colors.textPrimary
+                            hoverColor: AppStyle.colors.border
+                            pressedColor: AppStyle.colors.borderFocus
+                            // 稍微加个边框让它看起来像二级按钮
+                            
+                            onClicked: {
+                                Qt.openUrlExternally("file:///" + exportProgressController.statisticsReportPath)
+                            }
+                        }
+
+                        // 打开导出目录按钮
+                        ModernButton {
+                            text: "打开导出目录"
+                            iconName: "folder"
+                            backgroundColor: AppStyle.colors.primary
+                            hoverColor: AppStyle.colors.primaryHover
+                            pressedColor: AppStyle.colors.primaryPressed
+                            
+                            onClicked: {
+                                // 打开输出路径
+                                Qt.openUrlExternally("file:///" + exportSettingsController.outputPath)
+                            }
+                        }
+                    }
+                }
+            }
             // 导出按钮
             ModernButton {
                 id: exportButton
@@ -1074,7 +1327,9 @@ Item {
                 text: exportProgressController.isExporting ? "转换中..." : "开始转换"
                 iconName: exportProgressController.isExporting ? "loading" : "play"
                 font.pixelSize: AppStyle.fontSizes.xxl
-                enabled: componentListController.componentCount > 0 && !exportProgressController.isExporting
+                enabled: componentListController.componentCount > 0 && 
+                         !exportProgressController.isExporting && 
+                         (exportSettingsController.exportSymbol || exportSettingsController.exportFootprint || exportSettingsController.exportModel3D)
                 onClicked: {
                     exportProgressController.startExport(
                         componentListController.componentList,

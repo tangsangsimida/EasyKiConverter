@@ -16,19 +16,6 @@
 namespace EasyKiConverter {
 
 
-class WriteTask : public QRunnable {
-public:
-    WriteTask(std::function<bool()> writeFunc, bool* resultFlag) : m_writeFunc(writeFunc), m_resultFlag(resultFlag) {}
-
-    void run() override {
-        *m_resultFlag = m_writeFunc();
-    }
-
-private:
-    std::function<bool()> m_writeFunc;
-    bool* m_resultFlag;
-};
-
 WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
                          const QString& outputPath,
                          const QString& libName,
@@ -68,51 +55,26 @@ void WriteWorker::run() {
         return;
     }
 
-
-    QThreadPool threadPool;
-    threadPool.setMaxThreadCount(3);
-
-    QList<bool*> results;
-
-
-    bool symbolResult = false;
-    if (m_exportSymbol && m_status->symbolData) {
-        WriteTask* symbolTask = new WriteTask([this]() { return writeSymbolFile(*m_status); }, &symbolResult);
-        symbolTask->setAutoDelete(true);
-        threadPool.start(symbolTask);
-        results.append(&symbolResult);
-    }
-
-
-    bool footprintResult = false;
-    if (m_exportFootprint && m_status->footprintData) {
-        WriteTask* footprintTask = new WriteTask([this]() { return writeFootprintFile(*m_status); }, &footprintResult);
-        footprintTask->setAutoDelete(true);
-        threadPool.start(footprintTask);
-        results.append(&footprintResult);
-    }
-
-
-    bool model3DResult = false;
-    if (m_exportModel3D && m_status->model3DData && !m_status->model3DObjRaw.isEmpty()) {
-        WriteTask* model3DTask = new WriteTask([this]() { return write3DModelFile(*m_status); }, &model3DResult);
-        model3DTask->setAutoDelete(true);
-        threadPool.start(model3DTask);
-        results.append(&model3DResult);
-    }
-
-
-    threadPool.waitForDone();
-
-
     bool allSuccess = true;
-    for (bool* result : results) {
-        if (!*result) {
+
+    // 串行写入文件，避免创建线程池的高开销
+    if (m_exportSymbol && m_status->symbolData) {
+        if (!writeSymbolFile(*m_status)) {
             allSuccess = false;
-            break;
         }
     }
 
+    if (m_exportFootprint && m_status->footprintData) {
+        if (!writeFootprintFile(*m_status)) {
+            allSuccess = false;
+        }
+    }
+
+    if (m_exportModel3D && m_status->model3DData && !m_status->model3DObjRaw.isEmpty()) {
+        if (!write3DModelFile(*m_status)) {
+            allSuccess = false;
+        }
+    }
 
     if (!allSuccess) {
         m_status->writeDurationMs = writeTimer.elapsed();

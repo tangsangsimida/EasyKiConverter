@@ -3,6 +3,7 @@
 
 #include "models/ComponentExportStatus.h"
 
+#include <QMutex>
 #include <QNetworkAccessManager>
 #include <QObject>
 #include <QRunnable>
@@ -52,9 +53,12 @@ private:
      * @brief 执行HTTP GET请求
      * @param url URL
      * @param timeoutMs 超时时间（毫秒）
+     * @param status 导出状态对象（用于记录网络诊断）
      * @return QByteArray 响应数据
      */
-    QByteArray httpGet(const QString& url, int timeoutMs = 30000);
+    QByteArray httpGet(const QString& url,
+                       int timeoutMs = 30000,
+                       QSharedPointer<ComponentExportStatus> status = nullptr);
 
     /**
      * @brief 解压gzip数据
@@ -75,13 +79,19 @@ private:
      * @param status 导出状�?
          * @return bool 是否成功
      */
-    bool fetch3DModelData(ComponentExportStatus& status);
+    bool fetch3DModelData(QSharedPointer<ComponentExportStatus> status);
 
 private:
     QString m_componentId;
     QNetworkAccessManager* m_networkAccessManager;
     QNetworkAccessManager* m_ownNetworkManager;
     bool m_need3DModel;
+
+    // 速率限制检测（静态成员，所有 FetchWorker 共享）
+    static QAtomicInt s_activeRequests;    // 活跃请求计数
+    static QMutex s_rateLimitMutex;        // 速率限制互斥锁
+    static QDateTime s_lastRateLimitTime;  // 上次触发速率限制的时间
+    static int s_backoffMs;                // 退避延迟（毫秒）
 };
 
 }  // namespace EasyKiConverter
