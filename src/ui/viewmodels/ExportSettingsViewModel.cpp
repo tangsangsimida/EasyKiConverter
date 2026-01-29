@@ -180,10 +180,7 @@ void ExportSettingsViewModel::loadFromConfig() {
     m_exportFootprint = m_configService->getExportFootprint();
     m_exportModel3D = m_configService->getExportModel3D();
     m_overwriteExistingFiles = m_configService->getOverwriteExistingFiles();
-
-    // 强制调试模式默认为关闭，不从配置文件加载，避免意外开启
-    m_debugMode = false;
-    m_configService->setDebugMode(false);
+    m_debugMode = m_configService->getDebugMode();
 
     // 发送变更信号以更新 UI
     emit outputPathChanged();

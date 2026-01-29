@@ -53,11 +53,21 @@ bool ConfigService::loadConfig(const QString& path) {
     }
 
     QMutexLocker locker(&m_configMutex);
-    m_config = doc.object();
+    
+    // 合并配置：只更新文件中存在的字段，保留文件中缺失字段的默认值
+    QJsonObject loadedConfig = doc.object();
+    for (auto it = loadedConfig.begin(); it != loadedConfig.end(); ++it) {
+        m_config[it.key()] = it.value();
+    }
+    
     m_configPath = configPath;
 
     qDebug() << "Config loaded from:" << configPath;
     emit configChanged();
+    
+    // 释放锁后保存，确保补全缺失的字段（如 debugMode）到文件中
+    locker.unlock();
+    saveConfig();
 
     return true;
 }
