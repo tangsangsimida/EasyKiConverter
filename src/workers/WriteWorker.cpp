@@ -44,6 +44,31 @@ void WriteWorker::run() {
 
     m_status->addDebugLog(QString("WriteWorker started for component: %1").arg(m_status->componentId));
 
+    // CRITICAL FIX: If fetch or process failed, DO NOT CREATE ANY FILES.
+    // Just report write success (as "finished") but with a note, or keep it failed.
+    // The user wants "export failure" status but "progress complete".
+    // Since this is the Write stage, if previous stages failed, there is nothing to write.
+    if (!m_status->fetchSuccess || !m_status->processSuccess) {
+        m_status->writeDurationMs = 0;
+        m_status->writeSuccess = false; // It failed to write because there was nothing to write
+        m_status->writeMessage = "Skipped writing due to previous stage failure";
+        m_status->addDebugLog("Skipping write stage because fetch or process failed.");
+        emit writeCompleted(m_status);
+        return;
+    }
+
+    // SANITY CHECK: Ensure we actually have valid data to write
+    // This prevents creating empty files if ProcessWorker somehow passed empty data
+    if ((m_exportSymbol && (!m_status->symbolData || m_status->symbolData->info().name.isEmpty())) && 
+        (m_exportFootprint && (!m_status->footprintData || m_status->footprintData->info().name.isEmpty()))) {
+        
+        m_status->writeDurationMs = writeTimer.elapsed();
+        m_status->writeSuccess = false;
+        m_status->writeMessage = "No valid symbol or footprint data to write";
+        m_status->addDebugLog("ERROR: Symbol and Footprint data are empty or invalid.");
+        emit writeCompleted(m_status);
+        return;
+    }
 
     if (!createOutputDirectory(m_outputPath)) {
         m_status->writeDurationMs = writeTimer.elapsed();

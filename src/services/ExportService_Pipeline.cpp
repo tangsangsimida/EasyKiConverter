@@ -138,6 +138,10 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
     } else {
         // 抓取失败，直接记录失?
         m_failureCount++;
+        // 同时也增加后续阶段的进度，确保流水线能够完成
+        m_pipelineProgress.processCompleted++;
+        m_pipelineProgress.writeCompleted++;
+
         qDebug() << "Fetch failed for component:" << status->componentId << "Error:" << status->fetchMessage;
         emit componentExported(
             status->componentId, false, status->fetchMessage, static_cast<int>(PipelineStage::Fetch));
@@ -165,14 +169,17 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
     // ProcessWorker 会修改同一?status 对象
 
     if (status->processSuccess) {
-        // 将数据放入写入队列（使用 QSharedPointer 避免拷贝?
+        // 将数据放入写入队列（使用 QSharedPointer 避免拷贝）
         m_processWriteQueue->push(status);
-        // 发送处理完成信号（包含阶段信息?
+        // 发送处理完成信号（包含阶段信息）
         emit componentExported(
             status->componentId, true, "Process completed", static_cast<int>(PipelineStage::Process));
     } else {
-        // 处理失败，直接记录失?
+        // 处理失败，直接记录失败
         m_failureCount++;
+        // 同时也增加后续阶段的进度，确保流水线能够完成
+        m_pipelineProgress.writeCompleted++;
+
         qDebug() << "Process failed for component:" << status->componentId << "Error:" << status->processMessage;
         emit componentExported(
             status->componentId, false, status->processMessage, static_cast<int>(PipelineStage::Process));
@@ -196,17 +203,20 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
 
     m_pipelineProgress.writeCompleted++;
 
-    if (status->writeSuccess) {
+    // CRITICAL FIX: Only count as success if ALL stages succeeded.
+    // If Write "succeeded" (meaning it finished without crashing) but was skipped due to 
+    // fetch/process failure, it is NOT a success for the user.
+    if (status->writeSuccess && status->fetchSuccess && status->processSuccess) {
         m_successCount++;
 
-        // 如果导出了符号，将符号数据加入列?
-        if (m_options.exportSymbol && status->symbolData) {
+        // 如果导出了符号，将符号数据加入列表
+        if (m_options.exportSymbol && status->symbolData && !status->symbolData->info().name.isEmpty()) {
             m_symbols.append(*status->symbolData);
             qDebug() << "Added symbol to merge list:" << status->symbolData->info().name;
         }
 
-        // 如果导出了符号，将临时文件加入列表（用于清理?
-        if (m_options.exportSymbol && status->symbolData) {
+        // 如果导出了符号，将临时文件加入列表（用于清理）
+        if (m_options.exportSymbol && status->symbolData && !status->symbolData->info().name.isEmpty()) {
             QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, status->componentId);
             if (QFile::exists(tempFilePath)) {
                 m_tempSymbolFiles.append(tempFilePath);

@@ -40,6 +40,8 @@ Rectangle {
                 if (status === "write_completed") return "✅"
                 if (status === "success") return "🌟"
                 if (status === "failed") return "❌"
+                // Add explicit check for fetch/process failures if the status string is different
+                if (status.indexOf("fail") !== -1) return "❌" 
                 return "⏳"
             }
             Behavior on text {

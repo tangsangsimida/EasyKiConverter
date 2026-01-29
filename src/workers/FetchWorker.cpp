@@ -89,39 +89,62 @@ void FetchWorker::run() {
 
     if (componentInfoData.isEmpty()) {
         hasError = true;
-        errorMessage = "Failed to fetch component info";
+        errorMessage = "Failed to fetch component info (empty response)";
         status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
     } else {
-        status->componentInfoRaw = componentInfoData;
-        status->cinfoJsonRaw = componentInfoData;
-        status->cadDataRaw = componentInfoData;
-        status->cadJsonRaw = componentInfoData;
-        status->addDebugLog(QString("Component info (including CAD) fetched for: %1, Size: %2 bytes")
-                                .arg(m_componentId)
-                                .arg(componentInfoData.size()));
+        // Validate JSON content
+        QJsonParseError parseError;
+        QJsonDocument doc = QJsonDocument::fromJson(componentInfoData, &parseError);
+        
+        if (parseError.error != QJsonParseError::NoError) {
+            hasError = true;
+            errorMessage = "Invalid JSON response: " + parseError.errorString();
+            status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+        } else {
+            QJsonObject rootObj = doc.object();
+            
+            // Check for API specific error fields
+            if (rootObj.contains("success") && !rootObj["success"].toBool()) {
+                hasError = true;
+                errorMessage = "API returned error: " + (rootObj.contains("message") ? rootObj["message"].toString() : "Unknown error");
+                status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+            } 
+            // Check if result exists and is valid
+            else if (!rootObj.contains("result") || rootObj["result"].isNull()) {
+                hasError = true;
+                errorMessage = "Component not found (null result)";
+                status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+            }
+            // Check if result is empty object (sometimes happens for invalid IDs)
+            else if (rootObj["result"].isObject() && rootObj["result"].toObject().isEmpty()) {
+                hasError = true;
+                errorMessage = "Component data is empty";
+                status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+            }
+            else {
+                // Data seems valid
+                status->componentInfoRaw = componentInfoData;
+                status->cinfoJsonRaw = componentInfoData;
+                status->cadDataRaw = componentInfoData;
+                status->cadJsonRaw = componentInfoData;
+                status->addDebugLog(QString("Component info (including CAD) fetched for: %1, Size: %2 bytes")
+                                        .arg(m_componentId)
+                                        .arg(componentInfoData.size()));
 
-        if (m_need3DModel && !hasError) {
-            status->addDebugLog("Parsing CAD data to extract 3D model UUID...");
+                if (m_need3DModel && !hasError) {
+                    status->addDebugLog("Parsing CAD data to extract 3D model UUID...");
+                    // Re-use doc/rootObj since we already parsed it
+                    QJsonObject obj;
+                    if (rootObj.contains("result") && rootObj["result"].isObject()) {
+                        obj = rootObj["result"].toObject();
+                    } else {
+                        obj = rootObj;
+                    }
 
-            QJsonParseError parseError;
-            QJsonDocument doc = QJsonDocument::fromJson(componentInfoData, &parseError);
-
-            if (parseError.error == QJsonParseError::NoError) {
-                QJsonObject rootObj = doc.object();
-                QJsonObject obj;
-
-                if (rootObj.contains("result") && rootObj["result"].isObject()) {
-                    obj = rootObj["result"].toObject();
-                } else {
-                    obj = rootObj;
+                    if (!fetch3DModelData(status)) {
+                        // 3D model fetch failure is not fatal for the whole component
+                    }
                 }
-
-
-                if (!fetch3DModelData(status)) {
-                }
-            } else {
-                status->addDebugLog(
-                    QString("WARNING: Failed to parse CAD data for 3D model UUID: %1").arg(parseError.errorString()));
             }
         }
     }
