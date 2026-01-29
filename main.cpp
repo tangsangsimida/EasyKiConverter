@@ -1,4 +1,11 @@
-﻿#include <QDebug>
+﻿#include "src/services/ConfigService.h"
+#include "src/services/ExportService_Pipeline.h"
+#include "src/ui/viewmodels/ComponentListViewModel.h"
+#include "src/ui/viewmodels/ExportProgressViewModel.h"
+#include "src/ui/viewmodels/ExportSettingsViewModel.h"
+#include "src/ui/viewmodels/ThemeSettingsViewModel.h"
+
+#include <QDebug>
 #include <QFile>
 #include <QGuiApplication>
 #include <QIcon>
@@ -7,13 +14,6 @@
 #include <QQmlEngine>
 #include <QQuickStyle>
 #include <QUrl>
-
-#include "src/services/ConfigService.h"
-#include "src/services/ExportService_Pipeline.h"
-#include "src/ui/viewmodels/ComponentListViewModel.h"
-#include "src/ui/viewmodels/ExportProgressViewModel.h"
-#include "src/ui/viewmodels/ExportSettingsViewModel.h"
-#include "src/ui/viewmodels/ThemeSettingsViewModel.h"
 
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);

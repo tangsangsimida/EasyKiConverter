@@ -53,18 +53,18 @@ bool ConfigService::loadConfig(const QString& path) {
     }
 
     QMutexLocker locker(&m_configMutex);
-    
+
     // 合并配置：只更新文件中存在的字段，保留文件中缺失字段的默认值
     QJsonObject loadedConfig = doc.object();
     for (auto it = loadedConfig.begin(); it != loadedConfig.end(); ++it) {
         m_config[it.key()] = it.value();
     }
-    
+
     m_configPath = configPath;
 
     qDebug() << "Config loaded from:" << configPath;
     emit configChanged();
-    
+
     // 释放锁后保存，确保补全缺失的字段（如 debugMode）到文件中
     locker.unlock();
     saveConfig();
@@ -96,7 +96,7 @@ void ConfigService::resetToDefaults() {
     QMutexLocker locker(&m_configMutex);
     initializeDefaultConfig();
     emit configChanged();
-    
+
     // 释放锁后保存
     locker.unlock();
     saveConfig();
@@ -143,7 +143,7 @@ void ConfigService::setExportSymbol(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportSymbol"] = enabled;
     emit configChanged();
-    
+
     // 释放锁后保存
     locker.unlock();
     saveConfig();
@@ -158,7 +158,7 @@ void ConfigService::setExportFootprint(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportFootprint"] = enabled;
     emit configChanged();
-    
+
     // 释放锁后保存
     locker.unlock();
     saveConfig();
@@ -173,7 +173,7 @@ void ConfigService::setExportModel3D(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportModel3D"] = enabled;
     emit configChanged();
-    
+
     // 释放锁后保存
     locker.unlock();
     saveConfig();
@@ -188,7 +188,7 @@ void ConfigService::setOverwriteExistingFiles(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["overwriteExistingFiles"] = enabled;
     emit configChanged();
-    
+
     // 释放锁后保存
     locker.unlock();
     saveConfig();
@@ -214,7 +214,7 @@ void ConfigService::setDebugMode(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["debugMode"] = enabled;
     emit configChanged();
-    
+
     // 释放锁后保存
     locker.unlock();
     saveConfig();
