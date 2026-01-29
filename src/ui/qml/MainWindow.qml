@@ -159,7 +159,7 @@ Item {
                     flat: true
                     
                     icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/minimize.svg"
-                    icon.color: AppStyle.colors.textPrimary
+                    icon.color: "transparent" // Use original SVG colors
                     icon.width: 10
                     icon.height: 10
                     
@@ -178,7 +178,7 @@ Item {
                     flat: true
                     
                     icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/maximize.svg"
-                    icon.color: AppStyle.colors.textPrimary
+                    icon.color: "transparent" // Use original SVG colors
                     icon.width: 10
                     icon.height: 10
                     
@@ -203,7 +203,7 @@ Item {
                     flat: true
                     
                     icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/close.svg"
-                    icon.color: hovered ? "white" : AppStyle.colors.textPrimary
+                    icon.color: hovered ? "white" : "transparent" // White on hover, otherwise original color
                     icon.width: 10
                     icon.height: 10
                     
