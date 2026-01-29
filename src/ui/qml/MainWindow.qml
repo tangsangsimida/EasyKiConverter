@@ -1327,7 +1327,9 @@ Item {
                 text: exportProgressController.isExporting ? "转换中..." : "开始转换"
                 iconName: exportProgressController.isExporting ? "loading" : "play"
                 font.pixelSize: AppStyle.fontSizes.xxl
-                enabled: componentListController.componentCount > 0 && !exportProgressController.isExporting
+                enabled: componentListController.componentCount > 0 && 
+                         !exportProgressController.isExporting && 
+                         (exportSettingsController.exportSymbol || exportSettingsController.exportFootprint || exportSettingsController.exportModel3D)
                 onClicked: {
                     exportProgressController.startExport(
                         componentListController.componentList,
