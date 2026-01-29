@@ -459,12 +459,12 @@ Item {
                                     }
                                 }
                             }
-                            onAccepted: {
-                                if (componentInput.text.length > 0) {
-                                    componentListController.addComponent(componentInput.text)
-                                }
-                            }
-                        }
+                                                    onAccepted: {
+                                                        if (componentInput.text.length > 0) {
+                                                            componentListController.addComponent(componentInput.text)
+                                                            componentInput.text = "" // Clear input after adding
+                                                        }
+                                                    }                        }
                         ModernButton {
                             text: "添加"
                             iconName: "add"

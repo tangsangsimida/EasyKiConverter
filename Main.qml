@@ -10,7 +10,7 @@ ApplicationWindow {
     minimumHeight: 600
     visible: true
     title: "EasyKiConverter - 元器件转换工具"
-    flags: Qt.Window | Qt.FramelessWindowHint
+    flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint
     // 加载主窗口内容
     Loader {
         anchors.fill: parent
