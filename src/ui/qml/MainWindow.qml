@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Window
+import QtQuick.Effects
 import QtQml.Models
 import "styles"
 import "components"
@@ -14,6 +15,11 @@ Item {
     property var exportSettingsController: exportSettingsViewModel
     property var exportProgressController: exportProgressViewModel
     property var themeController: themeSettingsViewModel
+    
+    // 窗口状态属性
+    readonly property bool isMaximized: Window.window ? (Window.window.visibility === Window.Maximized || Window.window.visibility === Window.FullScreen) : false
+    readonly property int windowRadius: isMaximized ? 0 : AppStyle.radius.lg
+
     // 绑定 AppStyle.isDarkMode 到 themeSettingsViewModel.isDarkMode
     Binding {
         target: AppStyle
@@ -42,29 +48,77 @@ Item {
             exportSettingsController.setOutputPath(path)
         }
     }
-    // 背景图片
-    Image {
-        id: backgroundImage
+
+    // 主容器
+    Rectangle {
+        id: mainContainer
         anchors.fill: parent
+        color: "transparent"
+        radius: AppStyle.radius.lg
+
+
+    // 源图片（用于 Canvas 绘制）
+    Image {
+        id: bgSource
+        visible: false
         source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/imgs/background.jpg"
-        fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: true
-        enabled: false  // 不拦截鼠标事件
-        // 添加加载状态检查
-        onStatusChanged: {
-            if (status === Image.Error) {
-                console.log("Failed to load background image:", source)
-            } else if (status === Image.Ready) {
-                console.log("Background image loaded successfully")
+        onStatusChanged: if (status === Image.Ready) backgroundCanvas.requestPaint()
+    }
+
+    // 画布背景（实现圆角裁切）
+    Canvas {
+        id: backgroundCanvas
+        anchors.fill: parent
+        
+        onPaint: {
+            var ctx = getContext("2d");
+            ctx.reset();
+            
+            // 绘制圆角路径
+            var r = windowRadius;
+            ctx.beginPath();
+            ctx.roundedRect(0, 0, width, height, r, r);
+            ctx.closePath();
+            
+            // 裁切
+            ctx.clip();
+            
+            // 绘制背景色（作为底色）
+            ctx.fillStyle = AppStyle.colors.background;
+            ctx.fill();
+
+            // 绘制图片
+            if (bgSource.status === Image.Ready) {
+                // 模拟 PreserveAspectCrop
+                var sw = bgSource.sourceSize.width;
+                var sh = bgSource.sourceSize.height;
+                if (sw > 0 && sh > 0) {
+                    var scale = Math.max(width / sw, height / sh);
+                    var dw = sw * scale;
+                    var dh = sh * scale;
+                    var dx = (width - dw) / 2;
+                    var dy = (height - dh) / 2;
+                    ctx.drawImage(bgSource, dx, dy, dw, dh);
+                }
             }
         }
+        
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
+        onVisibleChanged: requestPaint()
+        
+        // 监听圆角变化
+        property int radiusTrigger: windowRadius
+        onRadiusTriggerChanged: requestPaint()
     }
     // 半透明遮罩层（确保内容可读性）
     Rectangle {
         anchors.fill: parent
         color: AppStyle.isDarkMode ? "#000000" : "#ffffff"
         opacity: AppStyle.isDarkMode ? 0.3 : 0.5
+        radius: windowRadius
         enabled: false  // 不拦截鼠标事件
         Behavior on color {
             ColorAnimation {
@@ -86,6 +140,8 @@ Item {
         width: parent.width
         height: 38 // Slightly taller for better touch/click targets
         color: AppStyle.colors.surface
+        topLeftRadius: windowRadius
+        topRightRadius: windowRadius
         z: 1000 // 确保在最顶层
 
         // Bottom separator line
@@ -1494,5 +1550,6 @@ Item {
                 }
             }
         }
+    }
     }
 }
