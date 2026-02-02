@@ -255,7 +255,7 @@ Item {
                     Layout.fillWidth: true
                     text: "将嘉立创EDA元器件转换为KiCad格式"
                     font.pixelSize: 18
-                    color: AppStyle.colors.textSecondary
+                    color: AppStyle.isDarkMode ? AppStyle.colors.textPrimary : AppStyle.colors.textSecondary
                     horizontalAlignment: Text.AlignHCenter
                 }
                 // 深色模式切换按钮和 GitHub 图标
