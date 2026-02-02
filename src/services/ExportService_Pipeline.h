@@ -5,10 +5,13 @@
 #include "models/ComponentExportStatus.h"
 #include "models/SymbolData.h"
 #include "utils/BoundedThreadSafeQueue.h"
+#include "workers/FetchWorker.h"
 
+#include <QAtomicInt>
 #include <QMap>
 #include <QMutex>
 #include <QNetworkAccessManager>
+#include <QSet>
 #include <QThreadPool>
 
 namespace EasyKiConverter {
@@ -74,12 +77,18 @@ public:
      * @param options 导出选项
      */
     void executeExportPipelineWithStages(const QStringList& componentIds, const ExportOptions& options);
+    void retryExport(const QStringList& componentIds, const ExportOptions& options) override;
 
     /**
      * @brief 获取流水线进�?
      * @return PipelineProgress 流水线进�?
      */
     PipelineProgress getPipelineProgress() const;
+
+    /**
+     * @brief 取消导出
+     */
+    void cancelExport() override;
 
 signals:
     /**
@@ -164,9 +173,14 @@ private:
     QStringList m_componentIds;
     ExportOptions m_options;
     bool m_isPipelineRunning;
+    QAtomicInt m_isCancelled;
 
     // 互斥�?
     QMutex* m_mutex;
+    QMutex m_workerMutex;  // 保护活跃工作线程列表
+
+    // 活跃的抓取工作线程列表（用于中断）
+    QSet<FetchWorker*> m_activeFetchWorkers;
 
     // 临时文件列表（用于合并符号库�?
     QStringList m_tempSymbolFiles;

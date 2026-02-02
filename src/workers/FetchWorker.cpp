@@ -29,7 +29,9 @@ FetchWorker::FetchWorker(const QString& componentId,
     , m_componentId(componentId)
     , m_networkAccessManager(networkAccessManager)
     , m_ownNetworkManager(nullptr)
-    , m_need3DModel(need3DModel) {}
+    , m_need3DModel(need3DModel)
+    , m_currentReply(nullptr)
+    , m_isAborted(0) {}
 
 FetchWorker::~FetchWorker() {
     // 不要删除 m_ownNetworkManager，因为它现在是线程局部存储的共享实例
@@ -182,6 +184,11 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
     QElapsedTimer requestTimer;
 
     while (retryCount <= maxRetries) {
+        // 检查是否已被中断 (原子检查，不加锁)
+        if (m_isAborted.loadRelaxed()) {
+            return QByteArray();
+        }
+
         requestTimer.restart();
 
         if (retryCount > 0) {
@@ -191,12 +198,22 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                      << maxRetries << ")";
             QThread::msleep(delayMs);
         }
-
         QNetworkRequest request{QUrl(url)};
         request.setRawHeader("User-Agent", "EasyKiConverter/1.0");
         request.setRawHeader("Accept", "application/json, text/javascript, */*; q=0.01");
 
         QNetworkReply* reply = m_ownNetworkManager->get(request);
+
+        // 跟踪当前 reply 以便中断
+        {
+            QMutexLocker locker(&m_replyMutex);
+            if (m_isAborted.loadRelaxed()) {
+                reply->abort();
+                reply->deleteLater();
+                return QByteArray();
+            }
+            m_currentReply = reply;
+        }
 
         QEventLoop loop;
         QTimer timeoutTimer;
@@ -212,6 +229,12 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
 
         timeoutTimer.start(timeoutMs);
         loop.exec();
+
+        // 清除 reply 跟踪
+        {
+            QMutexLocker locker(&m_replyMutex);
+            m_currentReply = nullptr;
+        }
 
         bool success = false;
         if (reply->error() == QNetworkReply::NoError) {
@@ -551,6 +574,15 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
     }
 
     return true;
+}
+
+void FetchWorker::abort() {
+    m_isAborted.storeRelaxed(1);
+    QMutexLocker locker(&m_replyMutex);
+    if (m_currentReply) {
+        qDebug() << "Aborting network request for component:" << m_componentId;
+        m_currentReply->abort();
+    }
 }
 
 }  // namespace EasyKiConverter

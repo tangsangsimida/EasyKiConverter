@@ -13,21 +13,31 @@ namespace EasyKiConverter {
 
 ExportService::ExportService(QObject* parent)
     : QObject(parent)
-    , m_symbolExporter(new ExporterSymbol(this))
-    , m_footprintExporter(new ExporterFootprint(this))
-    , m_modelExporter(new Exporter3DModel(this))
+    , m_symbolExporter(new ExporterSymbol())
+    , m_footprintExporter(new ExporterFootprint())
+    , m_modelExporter(new Exporter3DModel())
     , m_threadPool(new QThreadPool(this))
     , m_mutex(new QMutex())
-    , m_isExporting(false)
+    , m_isExporting(0)
+    , m_isStopping(0)
     , m_currentProgress(0)
     , m_totalProgress(0)
     , m_successCount(0)
     , m_failureCount(0)
     , m_parallelExporting(false)
     , m_parallelCompletedCount(0)
-    , m_parallelTotalCount(0) {}
+    , m_parallelTotalCount(0) {
+    m_threadPool->setMaxThreadCount(QThread::idealThreadCount());
+}
 
-ExportService::~ExportService() {}
+ExportService::~ExportService() {
+    cancelExport();
+    m_threadPool->waitForDone();
+    delete m_symbolExporter;
+    delete m_footprintExporter;
+    delete m_modelExporter;
+    delete m_mutex;
+}
 
 bool ExportService::exportSymbol(const SymbolData& symbol, const QString& filePath) {
     qDebug() << "Exporting symbol to:" << filePath;
@@ -284,12 +294,17 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData>& co
 }
 
 void ExportService::cancelExport() {
-    QMutexLocker locker(m_mutex);
-    if (m_isExporting) {
-        qDebug() << "Canceling export";
-        m_isExporting = false;
-        emit exportFailed("Export cancelled");
+    // 无锁设置停止标志，确保 UI 线程不被阻塞
+    if (m_isExporting.loadAcquire()) {
+        m_isStopping.storeRelease(1);
     }
+}
+
+void ExportService::retryExport(const QStringList& componentIds, const ExportOptions& options) {
+    ExportOptions retryOptions = options;
+    retryOptions.overwriteExistingFiles = false;
+    retryOptions.updateMode = true;
+    executeExportPipeline(componentIds, retryOptions);
 }
 
 void ExportService::setExportOptions(const ExportOptions& options) {
@@ -303,7 +318,7 @@ ExportOptions ExportService::getExportOptions() const {
 }
 
 bool ExportService::isExporting() const {
-    return m_isExporting;
+    return m_isExporting.loadAcquire();
 }
 
 void ExportService::handleExportTaskFinished(const QString& componentId, bool success, const QString& message) {

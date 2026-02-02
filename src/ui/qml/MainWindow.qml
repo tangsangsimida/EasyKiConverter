@@ -1323,6 +1323,25 @@ Item {
                             width: parent.width
                             spacing: AppStyle.spacing.md
                             visible: true
+
+                            // 工具栏（显示重试按钮）
+                            RowLayout {
+                                Layout.fillWidth: true
+                                visible: exportProgressController.failureCount > 0 && !exportProgressController.isExporting
+                                
+                                Item { Layout.fillWidth: true } // Spacer
+                                
+                                ModernButton {
+                                    text: "重试失败项"
+                                    iconName: "play" 
+                                    backgroundColor: AppStyle.colors.warning
+                                    hoverColor: AppStyle.colors.warningDark
+                                    pressedColor: AppStyle.colors.warning
+                                    font.pixelSize: 14
+                                    
+                                    onClicked: exportProgressController.retryFailedComponents()
+                                }
+                            }
                             // 结果列表（使用 GridView 实现五列显示）
                             GridView {
                                 id: resultsList
@@ -1342,6 +1361,7 @@ Item {
                                     componentId: modelData.componentId || ""
                                     status: modelData.status || "pending"
                                     message: modelData.message || ""
+                                    onRetryClicked: exportProgressController.retryComponent(componentId)
                                 }
                                 ScrollBar.vertical: ScrollBar {
                                     policy: ScrollBar.AsNeeded
@@ -1450,6 +1470,26 @@ Item {
                                 Layout.fillWidth: true
                             }
                         }
+                        // 导出成果统计
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: AppStyle.spacing.lg
+                            StatItem {
+                                label: "符号"
+                                value: exportProgressController.successSymbolCount
+                                Layout.fillWidth: true
+                            }
+                            StatItem {
+                                label: "封装"
+                                value: exportProgressController.successFootprintCount
+                                Layout.fillWidth: true
+                            }
+                            StatItem {
+                                label: "3D模型"
+                                value: exportProgressController.successModel3DCount
+                                Layout.fillWidth: true
+                            }
+                        }
                         // 网络统计信息
                         Text {
                             text: "网络统计"
@@ -1524,24 +1564,36 @@ Item {
                     id: exportButton
                     Layout.preferredHeight: 56
                     Layout.fillWidth: true
-                    text: exportProgressController.isExporting ? "转换中..." : "开始转换"
-                    iconName: exportProgressController.isExporting ? "loading" : "play"
+                    text: exportProgressController.isStopping ? "正在停止..." : (exportProgressController.isExporting ? "结束转换" : "开始转换")
+                    iconName: exportProgressController.isExporting ? "close" : "play"
                     font.pixelSize: AppStyle.fontSizes.xxl
-                    enabled: componentListController.componentCount > 0 && 
-                             !exportProgressController.isExporting && 
-                             (exportSettingsController.exportSymbol || exportSettingsController.exportFootprint || exportSettingsController.exportModel3D)
+                    
+                    backgroundColor: exportProgressController.isStopping ? AppStyle.colors.textDisabled : (exportProgressController.isExporting ? AppStyle.colors.danger : AppStyle.colors.primary)
+                    hoverColor: exportProgressController.isExporting ? AppStyle.colors.dangerDark : AppStyle.colors.primaryHover
+                    pressedColor: exportProgressController.isExporting ? AppStyle.colors.dangerDark : AppStyle.colors.primaryPressed
+
+                    // 防止重复点击：当正在停止时禁用按钮
+                    enabled: !exportProgressController.isStopping &&
+                             ((componentListController.componentCount > 0 &&
+                             (exportSettingsController.exportSymbol || exportSettingsController.exportFootprint || exportSettingsController.exportModel3D)) ||
+                             exportProgressController.isExporting)
+
                     onClicked: {
-                        exportProgressController.startExport(
-                            componentListController.componentList,
-                            exportSettingsController.outputPath,
-                            exportSettingsController.libName,
-                            exportSettingsController.exportSymbol,
-                            exportSettingsController.exportFootprint,
-                            exportSettingsController.exportModel3D,
-                            exportSettingsController.overwriteExistingFiles,
-                            exportSettingsController.exportMode === 1,  // exportMode === 1 表示更新模式
-                            exportSettingsController.debugMode  // 调试模式
-                        )
+                        if (exportProgressController.isExporting) {
+                            exportProgressController.cancelExport()
+                        } else {
+                            exportProgressController.startExport(
+                                componentListController.componentList,
+                                exportSettingsController.outputPath,
+                                exportSettingsController.libName,
+                                exportSettingsController.exportSymbol,
+                                exportSettingsController.exportFootprint,
+                                exportSettingsController.exportModel3D,
+                                exportSettingsController.overwriteExistingFiles,
+                                exportSettingsController.exportMode === 1,  // exportMode === 1 表示更新模式
+                                exportSettingsController.debugMode  // 调试模式
+                            )
+                        }
                     }
                 }
                 // 底部边距

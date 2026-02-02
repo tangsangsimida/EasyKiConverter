@@ -51,11 +51,16 @@ public:
      */
     void run() override;
 
+    /**
+     * @brief 取消写入任务 (v3.0.5+)
+     */
+    void abort();
+
 signals:
     /**
      * @brief 写入完成信号
-     * @param status 导出状态（使用 QSharedPointer 避免拷贝�?
-         */
+     * @param status 导出状态（使用 QSharedPointer 避免拷贝）
+     */
     void writeCompleted(QSharedPointer<ComponentExportStatus> status);
 
 private:
@@ -106,6 +111,7 @@ private:
     ExporterSymbol m_symbolExporter;
     ExporterFootprint m_footprintExporter;
     Exporter3DModel m_model3DExporter;
+    QAtomicInt m_isAborted;  // 取消标志 (v3.0.5+)
 };
 
 }  // namespace EasyKiConverter

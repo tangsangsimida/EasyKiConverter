@@ -1,10 +1,12 @@
-﻿#ifndef FETCHWORKER_H
+#ifndef FETCHWORKER_H
 #define FETCHWORKER_H
 
 #include "models/ComponentExportStatus.h"
 
+#include <QAtomicInt>
 #include <QMutex>
 #include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QObject>
 #include <QRunnable>
 
@@ -40,6 +42,11 @@ public:
      * @brief 执行抓取任务
      */
     void run() override;
+
+    /**
+     * @brief 中断当前正在执行的网络请求
+     */
+    void abort();
 
 signals:
     /**
@@ -86,6 +93,10 @@ private:
     QNetworkAccessManager* m_networkAccessManager;
     QNetworkAccessManager* m_ownNetworkManager;
     bool m_need3DModel;
+
+    QNetworkReply* m_currentReply;
+    QMutex m_replyMutex;
+    QAtomicInt m_isAborted;
 
     // 速率限制检测（静态成员，所有 FetchWorker 共享）
     static QAtomicInt s_activeRequests;    // 活跃请求计数

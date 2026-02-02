@@ -34,11 +34,22 @@ WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
     , m_debugMode(debugMode)
     , m_symbolExporter()
     , m_footprintExporter()
-    , m_model3DExporter() {}
+    , m_model3DExporter()
+    , m_isAborted(0) {}
 
 WriteWorker::~WriteWorker() {}
 
 void WriteWorker::run() {
+    // 检查是否已被取消 (v3.0.5+)
+    if (m_isAborted.loadRelaxed()) {
+        m_status->writeSuccess = false;
+        m_status->writeMessage = "Export cancelled";
+        m_status->isCancelled = true;
+        m_status->addDebugLog(QString("WriteWorker cancelled for component: %1").arg(m_status->componentId));
+        emit writeCompleted(m_status);
+        return;
+    }
+
     QElapsedTimer writeTimer;
     writeTimer.start();
 
@@ -86,11 +97,17 @@ void WriteWorker::run() {
         if (!writeSymbolFile(*m_status)) {
             allSuccess = false;
         }
+        if (m_isAborted.loadRelaxed()) {
+            goto cleanup;
+        }
     }
 
     if (m_exportFootprint && m_status->footprintData) {
         if (!writeFootprintFile(*m_status)) {
             allSuccess = false;
+        }
+        if (m_isAborted.loadRelaxed()) {
+            goto cleanup;
         }
     }
 
@@ -100,16 +117,32 @@ void WriteWorker::run() {
         }
     }
 
+cleanup:
+    if (m_isAborted.loadRelaxed()) {
+        m_status->writeDurationMs = writeTimer.elapsed();
+        m_status->writeSuccess = false;
+        m_status->writeMessage = "Export cancelled";
+        m_status->isCancelled = true;
+        m_status->symbolWritten = false;
+        m_status->footprintWritten = false;
+        m_status->model3DWritten = false;
+        m_status->addDebugLog(QString("WriteWorker cancelled for component: %1").arg(m_status->componentId));
+        emit writeCompleted(m_status);
+        return;
+    }
+
     if (!allSuccess) {
         m_status->writeDurationMs = writeTimer.elapsed();
         m_status->writeSuccess = false;
         m_status->writeMessage = "Failed to write one or more files";
+        m_status->symbolWritten = false;
+        m_status->footprintWritten = false;
+        m_status->model3DWritten = false;
         m_status->addDebugLog(
             QString("ERROR: Failed to write one or more files, Duration: %1ms").arg(m_status->writeDurationMs));
         emit writeCompleted(m_status);
         return;
     }
-
 
     if (m_debugMode) {
         exportDebugData(*m_status);
@@ -139,6 +172,7 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
     }
 
     status.addDebugLog(QString("Symbol file written: %1").arg(tempFilePath));
+    status.symbolWritten = true;
     return true;
 }
 
@@ -170,20 +204,28 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
         }
     }
 
-
+    bool exportSuccess = false;
     if (!model3DStepPath.isEmpty()) {
-        if (!m_footprintExporter.exportFootprint(*status.footprintData, filePath, model3DWrlPath, model3DStepPath)) {
-            status.addDebugLog(QString("ERROR: Failed to write footprint file: %1").arg(filePath));
-            return false;
-        }
+        exportSuccess =
+            m_footprintExporter.exportFootprint(*status.footprintData, filePath, model3DWrlPath, model3DStepPath);
     } else {
-        if (!m_footprintExporter.exportFootprint(*status.footprintData, filePath, model3DWrlPath)) {
-            status.addDebugLog(QString("ERROR: Failed to write footprint file: %1").arg(filePath));
-            return false;
-        }
+        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, filePath, model3DWrlPath);
     }
 
+    if (!exportSuccess) {
+        status.addDebugLog(QString("ERROR: Failed to write footprint file: %1").arg(filePath));
+        return false;
+    }
+
+    // 验证文件是否真的被写入 (v3.0.5+)
+    if (!QFile::exists(filePath)) {
+        status.addDebugLog(QString("ERROR: Footprint file not found after export: %1").arg(filePath));
+        return false;
+    }
+
+    // 只有在成功导出且文件存在时才设置标志
     status.addDebugLog(QString("Footprint file written: %1").arg(filePath));
+    status.footprintWritten = true;
     return true;
 }
 
@@ -194,8 +236,10 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
 
 
     QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_outputPath, m_libName);
+
     if (!createOutputDirectory(modelsDirPath)) {
         status.addDebugLog(QString("ERROR: Failed to create 3D models directory: %1").arg(modelsDirPath));
+
         return false;
     }
 
@@ -203,27 +247,97 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     QString footprintName = status.footprintData ? status.footprintData->info().name : status.componentId;
 
 
+    bool wrlSuccess = false;
+
+    bool stepSuccess = false;
+
+
+    // 导出 WRL 文件
+
+
     QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
-    if (!m_model3DExporter.exportToWrl(*status.model3DData, wrlFilePath)) {
-        status.addDebugLog(QString("ERROR: Failed to write WRL file: %1").arg(wrlFilePath));
+
+
+    wrlSuccess = m_model3DExporter.exportToWrl(*status.model3DData, wrlFilePath);
+
+
+    if (wrlSuccess) {
+        // 验证 WRL 文件是否真的被写入 (v3.0.5+)
+
+
+        if (QFile::exists(wrlFilePath)) {
+            status.addDebugLog(QString("3D model WRL file written: %1").arg(wrlFilePath));
+
+
+        } else {
+            status.addDebugLog(QString("ERROR: WRL file not found after export: %1").arg(wrlFilePath));
+
+
+            return false;
+        }
+
+
     } else {
-        status.addDebugLog(QString("3D model WRL file written: %1").arg(wrlFilePath));
+        status.addDebugLog(QString("ERROR: Failed to write WRL file: %1").arg(wrlFilePath));
+
+
+        return false;
     }
+
+
+    // 导出 STEP 文件（如果有）
 
 
     if (!status.model3DStepRaw.isEmpty()) {
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
+
+
         QFile stepFile(stepFilePath);
+
+
         if (stepFile.open(QIODevice::WriteOnly)) {
             stepFile.write(status.model3DStepRaw);
+
+
             stepFile.close();
-            status.addDebugLog(QString("3D model STEP file written: %1").arg(stepFilePath));
+
+
+            // 验证 STEP 文件是否真的被写入 (v3.0.5+)
+
+
+            if (QFile::exists(stepFilePath)) {
+                status.addDebugLog(QString("3D model STEP file written: %1").arg(stepFilePath));
+
+
+                stepSuccess = true;
+
+
+            } else {
+                status.addDebugLog(QString("WARNING: STEP file not found after write: %1").arg(stepFilePath));
+
+
+                // STEP 文件失败不影响整体成功，只要有 WRL 就算成功
+            }
+
+
         } else {
             status.addDebugLog(QString("ERROR: Failed to write STEP file: %1").arg(stepFilePath));
+
+
+            // STEP 文件失败不影响整体成功，只要有 WRL 就算成功
         }
     }
 
-    return true;
+
+    // 只有在至少 WRL 文件成功导出且存在时才设置标志
+
+
+    if (wrlSuccess) {
+        status.model3DWritten = true;
+    }
+
+
+    return wrlSuccess;
 }
 
 bool WriteWorker::createOutputDirectory(const QString& path) {
@@ -511,6 +625,11 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
     status.addDebugLog(QString("Debug data export completed for component: %1").arg(status.componentId));
     return true;
+}
+
+void WriteWorker::abort() {
+    m_isAborted.storeRelaxed(1);
+    m_status->addDebugLog(QString("WriteWorker abort requested for component: %1").arg(m_status->componentId));
 }
 
 }  // namespace EasyKiConverter
