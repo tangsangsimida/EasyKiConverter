@@ -1,4 +1,4 @@
-﻿#include "ExportProgressViewModel.h"
+#include "ExportProgressViewModel.h"
 
 #include "services/ExportService_Pipeline.h"
 
@@ -15,17 +15,22 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
     , m_status("Ready")
     , m_progress(0)
     , m_isExporting(false)
+    , m_isStopping(false)
     , m_successCount(0)
+    , m_successSymbolCount(0)
+    , m_successFootprintCount(0)
+    , m_successModel3DCount(0)
     , m_failureCount(0)
     , m_fetchedCount(0)
     , m_fetchProgress(0)
     , m_processProgress(0)
     , m_writeProgress(0)
     , m_usePipelineMode(false)
-    , m_pendingUpdate(false) {
-    // 初始化节流定时器�?00ms�?
+    , m_pendingUpdate(false)
+    , m_hasStatistics(false) {
+    // 初始化节流定时器
     m_throttleTimer = new QTimer(this);
-    m_throttleTimer->setInterval(100);  // 100ms 节流间隔
+    m_throttleTimer->setInterval(100);
     m_throttleTimer->setSingleShot(true);
     connect(m_throttleTimer, &QTimer::timeout, this, &ExportProgressViewModel::flushPendingUpdates);
 
@@ -40,7 +45,6 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
             m_exportService, &ExportService::exportCompleted, this, &ExportProgressViewModel::handleExportCompleted);
         connect(m_exportService, &ExportService::exportFailed, this, &ExportProgressViewModel::handleExportFailed);
 
-        // 连接流水线信号（如果使用流水线模式）
         if (auto* pipelineService = qobject_cast<ExportServicePipeline*>(m_exportService)) {
             connect(pipelineService,
                     &ExportServicePipeline::pipelineProgressUpdated,
@@ -54,7 +58,6 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
         }
     }
 
-    // 连接 ComponentService 信号
     if (m_componentService) {
         connect(m_componentService,
                 &ComponentService::cadDataReady,
@@ -86,40 +89,10 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
                                           bool overwriteExistingFiles,
                                           bool updateMode,
                                           bool debugMode) {
-    qDebug() << "Starting export for" << componentIds.size() << "components";
-    qDebug() << "Options - Path:" << outputPath << "Lib:" << libName << "Symbol:" << exportSymbol
-             << "Footprint:" << exportFootprint << "3D:" << exportModel3D << "Overwrite:" << overwriteExistingFiles
-             << "Update:" << updateMode << "Debug:" << debugMode;
-    qDebug() << "Using pipeline mode:" << m_usePipelineMode;
-
     if (m_isExporting) {
         qWarning() << "Export already in progress";
         return;
     }
-
-    if (!m_exportService || !m_componentService) {
-        qWarning() << "Services not initialized";
-        return;
-    }
-
-    m_isExporting = true;
-    m_progress = 0;
-    m_successCount = 0;
-    m_failureCount = 0;
-    m_fetchedCount = 0;
-    m_fetchProgress = 0;
-    m_processProgress = 0;
-    m_writeProgress = 0;
-    m_componentIds = componentIds;
-    m_collectedData.clear();
-    m_status = "Starting export...";
-
-    // 清空结果列表和哈希表
-    m_resultsList.clear();
-    m_idToIndexMap.clear();
-
-    // 预填充结果列表（性能优化 + 用户体验优化�?
-    prepopulateResultsList(componentIds);
 
     // 保存导出选项
     m_exportOptions.outputPath = outputPath;
@@ -131,48 +104,52 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     m_exportOptions.updateMode = updateMode;
     m_exportOptions.debugMode = debugMode;
 
-    emit isExportingChanged();
-    emit progressChanged();
-    emit statusChanged();
-    emit resultsListChanged();
-
-    // 如果使用流水线模式，直接调用流水线导�?
-    if (m_usePipelineMode && qobject_cast<ExportServicePipeline*>(m_exportService)) {
-        m_status = "Running pipeline export...";
-        emit statusChanged();
-
-        auto* pipelineService = qobject_cast<ExportServicePipeline*>(m_exportService);
-        pipelineService->executeExportPipelineWithStages(componentIds, m_exportOptions);
-        return;
-    }
-
-    // 否则使用原有的并行数据收集模�?
-    m_status = "Fetching component data in parallel...";
-    emit statusChanged();
-
-    // 设置组件服务的输出路�?
-    m_componentService->setOutputPath(outputPath);
-
-    // 并行收集数据
-    m_componentService->fetchMultipleComponentsData(componentIds, exportModel3D);
+    startExportInternal(componentIds, false);
 }
 
 void ExportProgressViewModel::cancelExport() {
-    qDebug() << "Canceling export";
-
-    if (!m_exportService) {
-        qWarning() << "Export service not initialized";
+    if (!m_exportService)
         return;
-    }
 
-    m_isExporting = false;
-    m_status = "Export cancelled";
+    qDebug() << "ExportProgressViewModel::cancelExport() called";
 
-    emit isExportingChanged();
+    // 1. 瞬时响应：立即通知后端中断（原子操作，<1ms）
+    m_exportService->cancelExport();
+
+    // 2. 立即更新按钮状态（同步执行，<1ms）
+    m_isStopping = true;
+    emit isStoppingChanged();
+    m_status = "Stopping export...";
     emit statusChanged();
 
-    // TODO: 调用 ExportService 取消导出
-    // m_exportService->cancelExport();
+    qDebug() << "Cancel operation initiated in <1ms";
+
+    // 3. 异步处理 UI 列表更新（不阻塞取消操作）
+    QTimer::singleShot(0, this, [this]() {
+        bool updated = false;
+        for (int i = 0; i < m_resultsList.size(); ++i) {
+            QVariantMap item = m_resultsList[i].toMap();
+            QString status = item["status"].toString();
+
+            // 更新所有未完成的状态 (v3.0.5+ 改进)
+            if (status == "pending" || status == "fetching" || status == "processing" || status == "writing") {
+                item["status"] = "failed";
+                item["message"] = "Export cancelled";
+                // CRITICAL FIX: 在取消时，将所有分项成功标志也重置为 false
+                item["symbolSuccess"] = false;
+                item["footprintSuccess"] = false;
+                item["model3DSuccess"] = false;
+                m_resultsList[i] = item;
+                updated = true;
+            }
+        }
+
+        if (updated) {
+            emit resultsListChanged();
+            updateStatistics();
+        }
+        qDebug() << "UI update completed after cancellation";
+    });
 }
 
 void ExportProgressViewModel::handleExportProgress(int current, int total) {
@@ -183,19 +160,32 @@ void ExportProgressViewModel::handleExportProgress(int current, int total) {
     }
 }
 
-QString ExportProgressViewModel::getStatusString(int stage, bool success) const {
+QString ExportProgressViewModel::getStatusString(int stage,
+                                                 bool success,
+                                                 bool symbolSuccess,
+                                                 bool footprintSuccess,
+                                                 bool model3DSuccess) const {
     if (!success) {
         return "failed";
     }
 
-    // 根据阶段返回不同的状态字符串
     switch (stage) {
-        case 0:  // Fetch
+        case 0:
             return "fetch_completed";
-        case 1:  // Process
+        case 1:
             return "processing";
-        case 2:                // Write
-            return "success";  // 只有写入阶段完成才算真正成功
+        case 2: {
+            // 严格成功判定：检查用户请求的所有项是否都已成功写入
+            bool allRequestedItemsDone = true;
+            if (m_exportOptions.exportSymbol && !symbolSuccess)
+                allRequestedItemsDone = false;
+            if (m_exportOptions.exportFootprint && !footprintSuccess)
+                allRequestedItemsDone = false;
+            if (m_exportOptions.exportModel3D && !model3DSuccess)
+                allRequestedItemsDone = false;
+
+            return allRequestedItemsDone ? "success" : "failed";
+        }
         default:
             return "success";
     }
@@ -204,177 +194,269 @@ QString ExportProgressViewModel::getStatusString(int stage, bool success) const 
 void ExportProgressViewModel::handleComponentExported(const QString& componentId,
                                                       bool success,
                                                       const QString& message,
-                                                      int stage) {
-    qDebug() << "Component exported:" << componentId << "Success:" << success << "Stage:" << stage
-             << "Message:" << message;
-
-    // 使用哈希表快速查找（O(1) 复杂度）
+                                                      int stage,
+                                                      bool symbolSuccess,
+                                                      bool footprintSuccess,
+                                                      bool model3DSuccess) {
     int index = m_idToIndexMap.value(componentId, -1);
-
-    QVariantMap result;
-    QString statusStr = getStatusString(stage, success);
+    // 使用增强后的判定逻辑
+    QString statusStr = getStatusString(stage, success, symbolSuccess, footprintSuccess, model3DSuccess);
 
     if (index >= 0 && index < m_resultsList.size()) {
-        // 更新现有结果
-        result = m_resultsList[index].toMap();
+        QVariantMap result = m_resultsList[index].toMap();
         result["status"] = statusStr;
-        result["message"] = message;
+        result["message"] = statusStr == "failed" && success ? "Partial export failed (missing parts)" : message;
+        // 保存分项状态
+        result["symbolSuccess"] = symbolSuccess;
+        result["footprintSuccess"] = footprintSuccess;
+        result["model3DSuccess"] = model3DSuccess;
         m_resultsList[index] = result;
     } else {
-        // 如果没找到（不应该发生，因为已经预填充），添加新结果
-        qWarning() << "Component not found in pre-populated list:" << componentId;
+        QVariantMap result;
         result["componentId"] = componentId;
         result["status"] = statusStr;
         result["message"] = message;
+        result["symbolSuccess"] = symbolSuccess;
+        result["footprintSuccess"] = footprintSuccess;
+        result["model3DSuccess"] = model3DSuccess;
         m_resultsList.append(result);
         m_idToIndexMap[componentId] = m_resultsList.size() - 1;
     }
 
-    // 使用节流机制更新 UI（避免频繁刷新）
     if (!m_pendingUpdate) {
         m_pendingUpdate = true;
         m_throttleTimer->start();
     }
 
-    // 更新统计（不依赖节流�?
-    if (!success && statusStr == "failed") {
-        m_failureCount++;
-        emit failureCountChanged();
-    } else if (success && stage == 2)  // 只有写入阶段完成才算成功
-    {
-        m_successCount++;
+    updateStatistics();
+    emit componentExported(componentId, success, message);
+}
+
+void ExportProgressViewModel::updateStatistics() {
+    int globalSuccess = 0;
+    int globalFailed = 0;
+    int globalSymbol = 0;
+    int globalFootprint = 0;
+    int globalModel3D = 0;
+
+    for (const auto& var : m_resultsList) {
+        QVariantMap item = var.toMap();
+        QString status = item["status"].toString();
+
+        if (status == "success") {
+            globalSuccess++;
+        } else if (status == "failed") {
+            globalFailed++;
+        }
+
+        // 累加分项成功数（只有当该类型被启用时才计数）
+        if (m_exportOptions.exportSymbol && item["symbolSuccess"].toBool())
+            globalSymbol++;
+        if (m_exportOptions.exportFootprint && item["footprintSuccess"].toBool())
+            globalFootprint++;
+        if (m_exportOptions.exportModel3D && item["model3DSuccess"].toBool())
+            globalModel3D++;
+    }
+
+    if (m_successCount != globalSuccess) {
+        m_successCount = globalSuccess;
         emit successCountChanged();
     }
 
-    emit componentExported(componentId, success, message);
+    if (m_failureCount != globalFailed) {
+        m_failureCount = globalFailed;
+        emit failureCountChanged();
+    }
+
+    // 更新分项计数
+    if (m_successSymbolCount != globalSymbol || m_successFootprintCount != globalFootprint ||
+        m_successModel3DCount != globalModel3D) {
+        m_successSymbolCount = globalSymbol;
+        m_successFootprintCount = globalFootprint;
+        m_successModel3DCount = globalModel3D;
+        emit successCountChanged();  // 触发 UI 刷新
+    }
 }
 
 void ExportProgressViewModel::flushPendingUpdates() {
     if (m_pendingUpdate) {
         m_pendingUpdate = false;
         emit resultsListChanged();
-        qDebug() << "Flushed" << m_resultsList.size() << "results to UI";
     }
 }
 
 void ExportProgressViewModel::prepopulateResultsList(const QStringList& componentIds) {
-    qDebug() << "Pre-populating results list with" << componentIds.size() << "components";
-
     m_resultsList.clear();
     m_idToIndexMap.clear();
 
     for (int i = 0; i < componentIds.size(); ++i) {
         QVariantMap result;
         result["componentId"] = componentIds[i];
-        result["status"] = "pending";  // 初始状态：等待�?
+        result["status"] = "pending";
         result["message"] = "Waiting to start...";
-
         m_resultsList.append(result);
         m_idToIndexMap[componentIds[i]] = i;
     }
-
-    qDebug() << "Pre-populated" << m_resultsList.size() << "results with hash map";
 }
 
 void ExportProgressViewModel::handleComponentDataFetched(const QString& componentId, const ComponentData& data) {
-    qDebug() << "Component data fetched for:" << componentId
-             << "Symbol:" << (data.symbolData() && !data.symbolData()->info().name.isEmpty())
-             << "Footprint:" << (data.footprintData() && !data.footprintData()->info().name.isEmpty())
-             << "3D Model:" << (data.model3DData() && !data.model3DData()->uuid().isEmpty());
-
-    // 这个方法现在不应该被调用，因为我们使用并行数据收�?
-    // 如果被调用，说明有错�?
-    qWarning() << "handleComponentDataFetched called in parallel mode, this should not happen";
+    Q_UNUSED(componentId);
+    Q_UNUSED(data);
 }
 
 void ExportProgressViewModel::handleAllComponentsDataCollected(const QList<ComponentData>& componentDataList) {
-    qDebug() << "All components data collected in parallel:" << componentDataList.size() << "components";
-
     m_status = "Exporting components in parallel...";
     emit statusChanged();
-
-    // 使用并行导出流程
     m_exportService->executeExportPipelineWithDataParallel(componentDataList, m_exportOptions);
 }
 
 void ExportProgressViewModel::handleExportCompleted(int totalCount, int successCount) {
-    qDebug() << "Export completed:" << successCount << "/" << totalCount << "success";
+    Q_UNUSED(totalCount);
+    Q_UNUSED(successCount);
 
-    // 确保所有待处理的更新都已刷�?
+    // 扫尾：确保 pending 项标记为取消
+    for (int i = 0; i < m_resultsList.size(); ++i) {
+        QVariantMap item = m_resultsList[i].toMap();
+        if (item["status"].toString() == "pending") {
+            item["status"] = "failed";
+            item["message"] = "Export cancelled";
+            m_resultsList[i] = item;
+        }
+    }
+
+    // 全量刷新统计
+    updateStatistics();
+
     if (m_pendingUpdate) {
         m_throttleTimer->stop();
         flushPendingUpdates();
     }
 
+    m_isStopping = false;
+    emit isStoppingChanged();
     m_isExporting = false;
-    m_status = "Export completed";
     emit isExportingChanged();
+    m_status = "Export completed";
     emit statusChanged();
-    emit exportCompleted(totalCount, successCount);
+    emit exportCompleted(m_successCount, m_failureCount);
 }
 
 void ExportProgressViewModel::handleExportFailed(const QString& error) {
-    qWarning() << "Export failed:" << error;
-
-    // 确保所有待处理的更新都已刷�?
     if (m_pendingUpdate) {
         m_throttleTimer->stop();
         flushPendingUpdates();
     }
 
+    m_isStopping = false;
+    m_isExporting = false;
+    emit isStoppingChanged();
+    emit isExportingChanged();
     m_status = "Export failed: " + error;
     emit statusChanged();
+    updateStatistics();
 }
 
 void ExportProgressViewModel::handlePipelineProgressUpdated(const PipelineProgress& progress) {
-    qDebug() << "Pipeline progress updated - Fetch:" << progress.fetchProgress()
-             << "Process:" << progress.processProgress() << "Write:" << progress.writeProgress()
-             << "Overall:" << progress.overallProgress();
-
     if (m_fetchProgress != progress.fetchProgress()) {
         m_fetchProgress = progress.fetchProgress();
         emit fetchProgressChanged();
-        qDebug() << "Fetch progress changed to:" << m_fetchProgress;
     }
-
     if (m_processProgress != progress.processProgress()) {
         m_processProgress = progress.processProgress();
         emit processProgressChanged();
-        qDebug() << "Process progress changed to:" << m_processProgress;
     }
-
     if (m_writeProgress != progress.writeProgress()) {
         m_writeProgress = progress.writeProgress();
         emit writeProgressChanged();
-        qDebug() << "Write progress changed to:" << m_writeProgress;
     }
 
-    // 更新总进�?
     int newProgress = progress.overallProgress();
     if (m_progress != newProgress) {
         m_progress = newProgress;
         emit progressChanged();
-        qDebug() << "Overall progress changed to:" << m_progress;
     }
 }
 
 void ExportProgressViewModel::handleStatisticsReportGenerated(const QString& reportPath,
                                                               const ExportStatistics& statistics) {
-    qDebug() << "Statistics report generated:" << reportPath;
-    qDebug() << "Statistics summary:" << statistics.getSummary();
-
-    // 保存统计数据
     m_hasStatistics = true;
     m_statisticsReportPath = reportPath;
     m_statistics = statistics;
-
-    // 生成统计摘要
     m_statisticsSummary = statistics.getSummary();
-
-    // 发送信号通知 UI
     emit statisticsChanged();
+}
 
-    qDebug() << "Statistics updated in ViewModel";
+void ExportProgressViewModel::retryFailedComponents() {
+    if (m_isExporting)
+        return;
+
+    QStringList failedIds;
+    for (int i = 0; i < m_resultsList.size(); ++i) {
+        if (m_resultsList[i].toMap()["status"].toString() != "success") {
+            failedIds << m_resultsList[i].toMap()["componentId"].toString();
+        }
+    }
+
+    if (!failedIds.isEmpty()) {
+        startExportInternal(failedIds, true);
+    }
+}
+
+void ExportProgressViewModel::retryComponent(const QString& componentId) {
+    if (m_isExporting)
+        return;
+    startExportInternal(QStringList() << componentId, true);
+}
+
+void ExportProgressViewModel::startExportInternal(const QStringList& componentIds, bool isRetry) {
+    if (!m_exportService || !m_componentService)
+        return;
+
+    m_isExporting = true;
+    m_progress = 0;
+    m_fetchedCount = 0;
+    m_fetchProgress = 0;
+    m_processProgress = 0;
+    m_writeProgress = 0;
+    m_componentIds = componentIds;
+    m_collectedData.clear();
+    m_status = isRetry ? "Retrying..." : "Starting export...";
+
+    if (!isRetry) {
+        m_successCount = 0;
+        m_failureCount = 0;
+        prepopulateResultsList(componentIds);
+    } else {
+        // 重试模式：仅更新被重试项的状态
+        for (const QString& id : componentIds) {
+            int index = m_idToIndexMap.value(id, -1);
+            if (index >= 0) {
+                QVariantMap item = m_resultsList[index].toMap();
+                item["status"] = "pending";
+                item["message"] = "Waiting to retry...";
+                m_resultsList[index] = item;
+            }
+        }
+    }
+
+    // 无论是新开始还是重试，都先执行一次全量统计同步
+    updateStatistics();
+    emit resultsListChanged();
+    emit isExportingChanged();
+    emit progressChanged();
+    emit statusChanged();
+
+    if (isRetry) {
+        m_exportService->retryExport(componentIds, m_exportOptions);
+    } else {
+        if (m_usePipelineMode && qobject_cast<ExportServicePipeline*>(m_exportService)) {
+            auto* pipelineService = qobject_cast<ExportServicePipeline*>(m_exportService);
+            pipelineService->executeExportPipelineWithStages(componentIds, m_exportOptions);
+        } else {
+            m_componentService->setOutputPath(m_exportOptions.outputPath);
+            m_componentService->fetchMultipleComponentsData(componentIds, m_exportOptions.exportModel3D);
+        }
+    }
 }
 
 }  // namespace EasyKiConverter

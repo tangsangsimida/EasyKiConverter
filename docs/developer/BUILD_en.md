@@ -351,20 +351,6 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
 ```
 
-## Testing
-
-After building, you can run the test programs:
-
-```bash
-cd tests
-cmake -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64"
-cmake --build build
-
-# Run tests
-./build/test_layer_mapping.exe
-./build/test_uuid_extraction.exe
-```
-
 ## Deployment
 
 ### Windows Deployment

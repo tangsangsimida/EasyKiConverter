@@ -540,7 +540,6 @@ EasyKiConverter_QT/
 │   │   ├── viewmodels/         # 视图模型
 │   │   └── utils/              # UI 工具
 │   └── workers/                # 工作线程
-├── tests/                      # 测试
 ├── docs/                       # 文档
 └── resources/                  # 资源文件
 ```
@@ -608,12 +607,6 @@ EasyKiConverter_QT/
 - 遵循 Qt 编码规范
 - 使用 Doxygen 注释
 - 代码审查
-
-### 测试覆盖
-
-- 单元测试
-- 集成测试
-- 性能测试
 
 ### 文档完整
 

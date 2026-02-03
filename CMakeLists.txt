@@ -174,6 +174,9 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/icons/trash.svg
         resources/icons/upload.svg
         resources/icons/add.svg
+        resources/icons/minimize.svg
+        resources/icons/maximize.svg
+        resources/icons/close.svg
         resources/icons/loading.svg
         resources/icons/github-mark.svg
         resources/icons/github-mark-white.svg
@@ -183,6 +186,8 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/icons/Grey_light_bulb.svg
         resources/imgs/background.jpg
         src/ui/qml/styles/qmldir
+        resources/translations/translations_easykiconverter_en.qm
+        resources/translations/translations_easykiconverter_zh_CN.qm
 )
 
 # 设置目标属性

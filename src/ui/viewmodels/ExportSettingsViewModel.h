@@ -1,4 +1,4 @@
-﻿#ifndef EXPORTSETTINGSVIEWMODEL_H
+#ifndef EXPORTSETTINGSVIEWMODEL_H
 #define EXPORTSETTINGSVIEWMODEL_H
 
 #include "services/ConfigService.h"
@@ -8,10 +8,13 @@
 
 namespace EasyKiConverter {
 
+// 前向声明
+class ExportService;
+
 /**
- * @brief 导出设置视图模型�?
-     *
- * 负责管理导出设置相关�?UI 状态和操作
+ * @brief 导出设置视图模型
+ *
+ * 负责管理导出设置相关的 UI 状态和操作
  */
 class ExportSettingsViewModel : public QObject {
     Q_OBJECT
@@ -26,7 +29,7 @@ class ExportSettingsViewModel : public QObject {
     Q_PROPERTY(bool debugMode READ debugMode WRITE setDebugMode NOTIFY debugModeChanged)
 
 public:
-    explicit ExportSettingsViewModel(QObject* parent = nullptr);
+    explicit ExportSettingsViewModel(ExportService* exportService, QObject* parent = nullptr);
     ~ExportSettingsViewModel() override;
 
     // Getter 方法
@@ -107,6 +110,7 @@ private:
     void setProgress(int progress);
     void setStatus(const QString& status);
 
+    ExportService* m_exportService;
     ConfigService* m_configService;
     QString m_outputPath;
     QString m_libName;

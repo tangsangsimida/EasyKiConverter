@@ -1,9 +1,10 @@
-﻿#include "ComponentListViewModel.h"
+#include "ComponentListViewModel.h"
 
 #include <QClipboard>
 #include <QDebug>
 #include <QGuiApplication>
 #include <QRegularExpression>
+#include <QUrl>
 
 namespace EasyKiConverter {
 
@@ -38,7 +39,7 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
             return;
         }
 
-        // 添加提取的元件编�?
+        // 添加提取的元件编号
         for (const QString& id : extractedIds) {
             if (!componentExists(id)) {
                 m_componentList.append(id);
@@ -125,19 +126,45 @@ void ComponentListViewModel::selectBomFile(const QString& filePath) {
         emit bomFilePathChanged();
     }
 
-    // TODO: 实现 BOM 文件解析逻辑
-    m_bomResult = "BOM file imported successfully";
+    // 将 URL 转换为本地文件路径
+    QString localPath = filePath;
+    if (filePath.startsWith("file:///")) {
+        localPath = QUrl(filePath).toLocalFile();
+        qDebug() << "Converted URL to local path:" << localPath;
+    }
+
+    // 使用 ComponentService 解析 BOM 文件
+    QStringList componentIds = m_service->parseBomFile(localPath);
+
+    if (componentIds.isEmpty()) {
+        m_bomResult = "No valid component IDs found in BOM file";
+        qWarning() << "No component IDs found in BOM file:" << localPath;
+        emit bomResultChanged();
+        return;
+    }
+
+    // 添加提取的元件编号到列表
+    int added = 0;
+    int skipped = 0;
+
+    for (const QString& id : componentIds) {
+        if (!componentExists(id)) {
+            m_componentList.append(id);
+            added++;
+        } else {
+            skipped++;
+        }
+    }
+
+    if (added > 0) {
+        emit componentListChanged();
+        emit componentCountChanged();
+    }
+
+    QString resultMsg = QString("BOM file imported: %1 components added, %2 skipped").arg(added).arg(skipped);
+    m_bomResult = resultMsg;
+    qDebug() << resultMsg;
     emit bomResultChanged();
-}
-
-void ComponentListViewModel::handleComponentDataFetched(const QString& componentId, const ComponentData& data) {
-    qDebug() << "Component data fetched for:" << componentId;
-    // TODO: 更新 UI 显示
-}
-
-void ComponentListViewModel::handleComponentDataFetchFailed(const QString& componentId, const QString& error) {
-    qWarning() << "Component data fetch failed for:" << componentId << "Error:" << error;
-    // TODO: 更新 UI 显示
 }
 
 void ComponentListViewModel::fetchComponentData(const QString& componentId, bool fetch3DModel) {
@@ -154,16 +181,16 @@ void ComponentListViewModel::setOutputPath(const QString& path) {
 }
 
 bool ComponentListViewModel::validateComponentId(const QString& componentId) const {
-    // LCSC 元件ID格式：以 'C' 开头，后面跟数�?
-    QRegularExpression re("^C\\d+$");
+    // LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
+    QRegularExpression re("^C\\d{4,}$");
     return re.match(componentId).hasMatch();
 }
 
 QStringList ComponentListViewModel::extractComponentIdFromText(const QString& text) const {
     QStringList extractedIds;
 
-    // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟数�?
-    QRegularExpression re("C\\d+");
+    // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
+    QRegularExpression re("C\\d{4,}");
     QRegularExpressionMatchIterator it = re.globalMatch(text);
 
     while (it.hasNext()) {
@@ -183,22 +210,22 @@ bool ComponentListViewModel::componentExists(const QString& componentId) const {
 
 void ComponentListViewModel::handleComponentInfoReady(const QString& componentId, const ComponentData& data) {
     qDebug() << "Component info ready for:" << componentId;
-    // 可以在这里更�?UI 显示
+    // 可以在这里更?UI 显示
 }
 
 void ComponentListViewModel::handleCadDataReady(const QString& componentId, const ComponentData& data) {
     qDebug() << "CAD data ready for:" << componentId;
-    // 可以在这里更�?UI 显示
+    // 可以在这里更?UI 显示
 }
 
 void ComponentListViewModel::handleModel3DReady(const QString& uuid, const QString& filePath) {
     qDebug() << "3D model ready for UUID:" << uuid << "at:" << filePath;
-    // 可以在这里更�?UI 显示
+    // 可以在这里更?UI 显示
 }
 
 void ComponentListViewModel::handleFetchError(const QString& componentId, const QString& error) {
     qWarning() << "Fetch error for:" << componentId << "-" << error;
-    // 可以在这里更�?UI 显示
+    // 可以在这里更?UI 显示
 }
 
 }  // namespace EasyKiConverter

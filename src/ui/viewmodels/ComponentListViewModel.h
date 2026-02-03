@@ -149,22 +149,6 @@ private slots:
      */
     void handleFetchError(const QString& componentId, const QString& error);
 
-    /**
-     * @brief 处理元件数据获取成功
-     *
-     * @param componentId 元件ID
-     * @param data 元件数据
-     */
-    void handleComponentDataFetched(const QString& componentId, const ComponentData& data);
-
-    /**
-     * @brief 处理元件数据获取失败
-     *
-     * @param componentId 元件ID
-     * @param error 错误信息
-     */
-    void handleComponentDataFetchFailed(const QString& componentId, const QString& error);
-
 private:
     /**
      * @brief 检查元件是否已存在

@@ -1,8 +1,19 @@
-﻿# 更新日志
+# 更新日志
 
 本文档记录了 EasyKiConverter 每个版本的新增、修复和更改内容。
 
-## [3.0.5] - 2026-01-27
+## [3.0.2] - 2026-01-27
+
+### 修复
+- **批量导出卡顿问题**
+  - **降低并发数**: 将 `FetchWorker` 线程池的最大线程数从 32 降低至 8。这有效防止了因并发连接数过多导致的服务器端限流或拒绝服务，解决了批量导出时个别组件下载"卡死"的问题。
+  - **增加重试机制**: 为 `FetchWorker` 的网络请求添加了自动重试逻辑。
+    - 策略：遇到网络错误或 HTTP 429/5xx 错误时自动重试。
+    - 延迟：第1次重试等待3秒，第2次等待5秒，第3次及以后等待10秒。
+    - 最大重试次数：3次。
+  - 代码位置：`src/services/ExportService_Pipeline.cpp`, `src/workers/FetchWorker.cpp`
+
+## [3.0.1] - 2026-01-27
 
 ### 性能优化
 
@@ -11,7 +22,7 @@
   - 将 `FetchWorker` 线程池从 8 线程优化至 3 线程。
   - 测试结果表明：3线程配置在"单个导出不超过3秒"的要求下表现最优。
   - 性能提升：
-    - 总耗时从 263.72秒（v3.0.3）降至 14.43秒（改进94.5%）
+    - 总耗时从 263.72秒（v3.0.0）降至 14.43秒（改进94.5%）
     - 吞吐量从 0.08组件/秒提升至 1.45组件/秒（改进1712%）
     - 平均抓取时间从 65.8秒降至 1.76秒（改进97.3%）
     - 超过3秒的组件从 21个降至 3个（改进85.7%）
@@ -35,6 +46,24 @@
   - 帮助快速定位性能瓶颈和网络问题
   - 代码位置：`src/models/ComponentExportStatus.h`, `src/workers/FetchWorker.cpp`, `src/services/ExportService_Pipeline.cpp`
 
+#### 导出流水线效率提升
+- **WriteWorker 优化 (磁盘 I/O)**
+  - 移除了 `WriteWorker` 内部的局部 `QThreadPool`。
+  - 改为串行写入符号、封装和 3D 模型文件。
+  - 消除了为每个组件创建和销毁线程池的高昂开销，避免了"过度并行"导致的性能下降。
+  - 代码位置：`src/workers/WriteWorker.cpp`
+
+- **FetchWorker 优化 (网络 I/O)**
+  - 实现了 `QNetworkAccessManager` 的 `thread_local` 缓存机制。
+  - 确保线程池中的每个线程只创建一个 `QNetworkAccessManager` 实例并复用它。
+  - 避免了为每个组件重复初始化网络栈的高昂成本（包括代理解析、DNS 缓存初始化等）。
+  - 代码位置：`src/workers/FetchWorker.cpp`
+
+#### 构建系统修复
+- **解决循环依赖**
+  - 修复了 `EasyKiConverterWorkers` 和 `EasyKiConverterServices` 之间的循环链接依赖。
+  - 移除了 `src/workers/CMakeLists.txt` 中不必要的 `EasyKiConverterServices` 链接。
+
 ### 新增
 - **网络诊断报告**
   - 导出统计报告新增 `networkDiagnostics` 字段
@@ -57,101 +86,7 @@
   | 超过3秒组件 | 21个 | 3个 | ⬇️ 85.7% |
   | 超时请求 | 未知 | 0个 | ✅ 完全消除 |
 
-## [3.0.4] - 2026-01-27
-
-### 修复
-- **批量导出卡顿问题**
-  - **降低并发数**: 将 `FetchWorker` 线程池的最大线程数从 32 降低至 8。这有效防止了因并发连接数过多导致的服务器端限流或拒绝服务，解决了批量导出时个别组件下载“卡死”的问题。
-  - **增加重试机制**: 为 `FetchWorker` 的网络请求添加了自动重试逻辑。
-    - 策略：遇到网络错误或 HTTP 429/5xx 错误时自动重试。
-    - 延迟：第1次重试等待3秒，第2次等待5秒，第3次及以后等待10秒。
-    - 最大重试次数：3次。
-  - 代码位置：`src/services/ExportService_Pipeline.cpp`, `src/workers/FetchWorker.cpp`
-
-## [3.0.3] - 2026-01-27
-
-### 性能优化
-
-#### 导出流水线效率提升
-- **WriteWorker 优化 (磁盘 I/O)**
-  - 移除了 `WriteWorker` 内部的局部 `QThreadPool`。
-  - 改为串行写入符号、封装和 3D 模型文件。
-  - 消除了为每个组件创建和销毁线程池的高昂开销，避免了“过度并行”导致的性能下降。
-  - 代码位置：`src/workers/WriteWorker.cpp`
-
-- **FetchWorker 优化 (网络 I/O)**
-  - 实现了 `QNetworkAccessManager` 的 `thread_local` 缓存机制。
-  - 确保线程池中的每个线程只创建一个 `QNetworkAccessManager` 实例并复用它。
-  - 避免了为每个组件重复初始化网络栈的高昂成本（包括代理解析、DNS 缓存初始化等）。
-  - 代码位置：`src/workers/FetchWorker.cpp`
-
-#### 构建系统修复
-- **解决循环依赖**
-  - 修复了 `EasyKiConverterWorkers` 和 `EasyKiConverterServices` 之间的循环链接依赖。
-  - 移除了 `src/workers/CMakeLists.txt` 中不必要的 `EasyKiConverterServices` 链接。
-
-## [3.0.2] - 2026-01-24
-
-### Bug 修复
-
-#### macOS CI 测试超时修复
-- **增加测试超时时间**
-  - test_export_service_pipeline: 120s → 300s
-  - test_component_data_collector: 60s → 120s
-  - test_pipeline_baseline: 60s → 120s
-  - 代码位置：`tests/CMakeLists.txt`
-
-- **添加 CI 环境检测**
-  - test_component_data_collector：在 CI 环境中跳过网络请求
-  - test_pipeline_baseline：在 CI 环境中跳过网络请求
-  - test_export_service_pipeline：在 CI 环境中跳过网络请求
-  - 使用 `qEnvironmentVariableIsSet("CI")` 检测 CI 环境
-  - 代码位置：`tests/test_component_data_collector.cpp`, `tests/test_pipeline_baseline.cpp`, `tests/test_export_service_pipeline.cpp`
-
-- **更新 AGENTS.md 文档**
-  - 添加 CI 环境检测说明
-  - 添加测试超时配置说明
-  - 更新测试覆盖范围描述
-
-#### 修复效果
-- macOS CI 构建不再因测试超时而失败
-- 涉及网络请求的测试在 CI 环境中自动跳过
-- 测试超时时间更加合理，避免误判
-
-## [3.0.1] - 2026-01-21
-
-### Bug 修复
-
-#### 符号库更新导出修复
-- **修复更新模式参数未传递问题**
-  - 修复了 `ExportService_Pipeline::mergeSymbolLibrary()` 方法中 `updateMode` 参数未传递的问题
-  - 更新模式现在能够正确覆盖已存在的符号
-  - 代码位置：`src/services/ExportService_Pipeline.cpp`
-
-- **改进子符号识别逻辑**
-  - 修复了简单的字符串匹配无法准确区分分体式符号和单体符号的问题
-  - 实现了基于符号名称格式的精确识别算法
-  - 分体式符号：删除所有子符号（`_1_1`, `_2_1`, ...）
-  - 单体符号：只删除 `_0_1` 子符号
-  - 代码位置：`src/core/kicad/ExporterSymbol.cpp`
-
-- **删除孤立的顶层子符号**
-  - 修复了作为顶层符号存在的孤离子符号没有被删除的问题
-  - 删除所有以被覆盖父符号名开头的顶层符号
-  - 确保符号库结构的正确性
-  - 避免重复的子符号
-  - 代码位置：`src/core/kicad/ExporterSymbol.cpp`
-
-#### 修复效果
-- 更新模式现在能够正确覆盖已存在的符号
-- 分体式符号和单体符号能够被正确处理
-- 混合符号库（同时包含分体式符号和单体符号）能够正确更新
-- 符号库格式得到保护，不会出现格式破坏
-
-#### 相关文档
-- [ADR-004: 符号库更新导出修复](../project/adr/004-symbol-library-update-fix.md)
-
-## [3.0.0] - 2026-01-17
+## [3.0.0] - 2026-01-18
 
 ### 性能优化
 
@@ -160,13 +95,13 @@
   - 将 3D 模型下载从 ProcessWorker 移到 FetchWorker
   - ProcessWorker 现在是纯 CPU 密集型任务
   - CPU 利用率提升 50-80%
-  
+
 - **使用 QSharedPointer 传递数据**
   - ExportService_Pipeline 使用 QSharedPointer 队列
   - FetchWorker、ProcessWorker、WriteWorker 都使用 QSharedPointer
   - 避免了频繁的数据拷贝
   - 内存占用减少 50-70%，性能提升 20-30%
-  
+
 - **调整 ProcessWorker 为纯 CPU 密集型**
   - ProcessWorker 只包含解析和转换逻辑
   - 移除了所有网络 I/O 操作
@@ -179,7 +114,7 @@
   - 使用任务数的 1/4 作为队列大小（最小 100）
   - 避免队列满导致的阻塞
   - 吞吐量提升 15-25%
-  
+
 - **并行写入文件**
   - 使用 QThreadPool 并行写入单个组件的多个文件
   - 符号、封装、3D 模型同时写入
@@ -197,7 +132,7 @@
   - FetchWorker：I/O 密集型（网络请求）
   - ProcessWorker：CPU 密集型（数据解析和转换）
   - WriteWorker：磁盘 I/O 密集型（文件写入）
-  
+
 - **更高效的线程利用**
   - 避免线程阻塞在网络请求上
   - 充分利用多核 CPU 性能
@@ -207,7 +142,7 @@
 - **零拷贝数据传递**
   - 使用 QSharedPointer 避免数据拷贝
   - 减少内存分配和释放开销
-  
+
 - **更好的错误处理**
   - 精确识别失败阶段
   - 详细的调试日志
@@ -221,9 +156,9 @@
 
 ### 核心功能
 
-### 新增
+#### 新增
 
-#### 核心功能
+**核心功能**
 - 完整的符号转换功能（EasyEDA 到 KiCad）
 - 完整的封装生成功能（EasyEDA 到 KiCad）
 - 完整的 3D 模型支持（WRL、STEP、OBJ 格式）
@@ -231,7 +166,7 @@
 - 智能提取功能（从剪贴板文本中提取元件编号）
 - BOM 导入功能（CSV、Excel 格式）
 
-#### 性能优化
+**性能优化**
 - 并行转换支持（多线程并行处理）
 - 两阶段导出策略（并行数据收集，串行数据导出）
 - 状态机模式（异步数据收集）
@@ -239,7 +174,7 @@
 - GZIP 解压缩支持
 - 内存优化（智能指针管理）
 
-#### 用户界面
+**用户界面**
 - 现代化 Qt Quick 界面
 - 深色/浅色主题切换
 - 卡片式布局系统
@@ -247,7 +182,7 @@
 - 实时进度显示
 - 响应式设计
 
-#### 高级功能
+**高级功能**
 - 完整的图层映射系统（50+ 图层）
 - 多边形焊盘支持
 - 椭圆弧计算（精确圆弧计算）
@@ -255,7 +190,7 @@
 - 覆盖文件功能
 - 调试模式支持
 
-#### 架构
+**架构**
 - MVVM 架构实现
 - Service 层（ComponentService、ExportService、ConfigService）
 - ViewModel 层（ComponentListViewModel、ExportSettingsViewModel、ExportProgressViewModel、ThemeSettingsViewModel）
@@ -271,7 +206,7 @@
   - **零拷贝解析优化**（QByteArrayView）
   - **HTTP/2 支持**（网络请求多路复用）
 
-#### 测试
+**测试**
 - 完整的测试框架
 - 单元测试（8 个测试程序）
 - 集成测试框架
@@ -281,7 +216,7 @@
   - ExportServicePipeline 集成测试
   - 多阶段并发测试
 
-#### 文档
+**文档**
 - 完整的文档体系（14 个技术文档）
 - 用户手册
 - 开发者文档
@@ -290,7 +225,7 @@
 - 贡献指南
 - **ADR-002：流水线并行架构决策记录**
 
-### 修复
+#### 修复
 - 修复封装解析 Type 判断错误
 - 修复 3D Model UUID 遗漏问题
 - 修复 Footprint BBox 不完整问题
@@ -305,7 +240,7 @@
 - 修复元件 ID 验证规则过于严格
 - 修复与 Python 版本 V6 一致性问题
 
-### 更改
+#### 更改
 - 从 MVC 架构重构为 MVVM 架构
 - 移除 MainController
 - 移除丝印层复制逻辑
@@ -314,7 +249,7 @@
 - 优化错误处理机制
 - 优化配置管理
 
-### 移除
+#### 移除
 - 移除 MainController
 - 移除丝印层复制逻辑
 - 移除特殊层圆形处理（层 100 和 101）

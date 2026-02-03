@@ -1,4 +1,4 @@
-﻿#ifndef EXPORTPROGRESSVIEWMODEL_H
+#ifndef EXPORTPROGRESSVIEWMODEL_H
 #define EXPORTPROGRESSVIEWMODEL_H
 
 #include "services/ComponentService.h"
@@ -13,17 +13,16 @@
 
 namespace EasyKiConverter {
 
-/**
- * @brief 导出进度视图模型�?
-     *
- * 负责管理导出进度和结果相关的 UI 状�?
-     */
 class ExportProgressViewModel : public QObject {
     Q_OBJECT
     Q_PROPERTY(int progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
     Q_PROPERTY(bool isExporting READ isExporting NOTIFY isExportingChanged)
+    Q_PROPERTY(bool isStopping READ isStopping NOTIFY isStoppingChanged)
     Q_PROPERTY(int successCount READ successCount NOTIFY successCountChanged)
+    Q_PROPERTY(int successSymbolCount READ successSymbolCount NOTIFY successCountChanged)
+    Q_PROPERTY(int successFootprintCount READ successFootprintCount NOTIFY successCountChanged)
+    Q_PROPERTY(int successModel3DCount READ successModel3DCount NOTIFY successCountChanged)
     Q_PROPERTY(int failureCount READ failureCount NOTIFY failureCountChanged)
     Q_PROPERTY(int fetchProgress READ fetchProgress NOTIFY fetchProgressChanged)
     Q_PROPERTY(int processProgress READ processProgress NOTIFY processProgressChanged)
@@ -51,7 +50,6 @@ public:
                                      QObject* parent = nullptr);
     ~ExportProgressViewModel() override;
 
-    // Getter 方法
     int progress() const {
         return m_progress;
     }
@@ -61,8 +59,20 @@ public:
     bool isExporting() const {
         return m_isExporting;
     }
+    bool isStopping() const {
+        return m_isStopping;
+    }
     int successCount() const {
         return m_successCount;
+    }
+    int successSymbolCount() const {
+        return m_successSymbolCount;
+    }
+    int successFootprintCount() const {
+        return m_successFootprintCount;
+    }
+    int successModel3DCount() const {
+        return m_successModel3DCount;
     }
     int failureCount() const {
         return m_failureCount;
@@ -88,18 +98,20 @@ public:
     QString statisticsSummary() const {
         return m_statisticsSummary;
     }
+
     int statisticsTotal() const {
-        return m_statistics.total;
+        return m_resultsList.size();
     }
     int statisticsSuccess() const {
-        return m_statistics.success;
+        return m_successCount;
     }
     int statisticsFailed() const {
-        return m_statistics.failed;
+        return m_failureCount;
     }
     double statisticsSuccessRate() const {
-        return m_statistics.getSuccessRate();
+        return m_resultsList.isEmpty() ? 0.0 : (m_successCount * 100.0 / m_resultsList.size());
     }
+
     qint64 statisticsTotalDuration() const {
         return m_statistics.totalDurationMs;
     }
@@ -125,7 +137,6 @@ public:
         return m_statistics.rateLimitHitCount;
     }
 
-    // Setter 方法
     void setUsePipelineMode(bool usePipeline);
 
 public slots:
@@ -138,12 +149,15 @@ public slots:
                                  bool overwriteExistingFiles,
                                  bool updateMode,
                                  bool debugMode);
+    Q_INVOKABLE void retryFailedComponents();
+    Q_INVOKABLE void retryComponent(const QString& componentId);
     Q_INVOKABLE void cancelExport();
 
 signals:
     void progressChanged();
     void statusChanged();
     void isExportingChanged();
+    void isStoppingChanged();
     void successCountChanged();
     void failureCountChanged();
     void exportCompleted(int totalCount, int successCount);
@@ -158,29 +172,28 @@ private slots:
     void handleExportProgress(int current, int total);
     void handleExportCompleted(int totalCount, int successCount);
     void handleExportFailed(const QString& error);
-    void handleComponentExported(const QString& componentId, bool success, const QString& message, int stage = -1);
+    void handleComponentExported(const QString& componentId,
+                                 bool success,
+                                 const QString& message,
+                                 int stage = -1,
+                                 bool symbolSuccess = false,
+                                 bool footprintSuccess = false,
+                                 bool model3DSuccess = false);
     void handleComponentDataFetched(const QString& componentId, const ComponentData& data);
     void handleAllComponentsDataCollected(const QList<ComponentData>& componentDataList);
     void handlePipelineProgressUpdated(const PipelineProgress& progress);
     void handleStatisticsReportGenerated(const QString& reportPath, const ExportStatistics& statistics);
-
-    // 节流定时器槽函数
     void flushPendingUpdates();
 
 private:
-    /**
-     * @brief 根据阶段获取状态字符串
-     * @param stage 阶段�?=Fetch, 1=Process, 2=Write, -1=未知�?
-         * @param success 是否成功
-     * @return 状态字符串
-     */
-    QString getStatusString(int stage, bool success) const;
-
-    /**
-     * @brief 预填充结果列�?
-         * @param componentIds 元件ID列表
-     */
+    QString getStatusString(int stage,
+                            bool success,
+                            bool symbolSuccess,
+                            bool footprintSuccess,
+                            bool model3DSuccess) const;
     void prepopulateResultsList(const QStringList& componentIds);
+    void startExportInternal(const QStringList& componentIds, bool isRetry);
+    void updateStatistics();
 
 private:
     ExportService* m_exportService;
@@ -188,8 +201,7 @@ private:
     QString m_status;
     int m_progress;
     bool m_isExporting;
-    int m_successCount;
-    int m_failureCount;
+    bool m_isStopping;
     QStringList m_componentIds;
     int m_fetchedCount;
     QList<ComponentData> m_collectedData;
@@ -199,19 +211,18 @@ private:
     int m_writeProgress;
     bool m_usePipelineMode;
     QVariantList m_resultsList;
-
-    // 性能优化：哈希表用于快速查�?
     QHash<QString, int> m_idToIndexMap;
-
-    // UI 节流：定时器和待更新列表
     QTimer* m_throttleTimer;
     bool m_pendingUpdate;
-
-    // 统计相关
     bool m_hasStatistics;
     QString m_statisticsReportPath;
     QString m_statisticsSummary;
     ExportStatistics m_statistics;
+    int m_successCount;
+    int m_successSymbolCount;
+    int m_successFootprintCount;
+    int m_successModel3DCount;
+    int m_failureCount;
 };
 }  // namespace EasyKiConverter
 

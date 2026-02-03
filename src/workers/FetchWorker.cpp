@@ -29,7 +29,9 @@ FetchWorker::FetchWorker(const QString& componentId,
     , m_componentId(componentId)
     , m_networkAccessManager(networkAccessManager)
     , m_ownNetworkManager(nullptr)
-    , m_need3DModel(need3DModel) {}
+    , m_need3DModel(need3DModel)
+    , m_currentReply(nullptr)
+    , m_isAborted(0) {}
 
 FetchWorker::~FetchWorker() {
     // 不要删除 m_ownNetworkManager，因为它现在是线程局部存储的共享实例
@@ -85,43 +87,66 @@ void FetchWorker::run() {
         QString("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(m_componentId);
     status->addDebugLog(QString("Fetching component info from: %1").arg(componentInfoUrl));
 
-    QByteArray componentInfoData = httpGet(componentInfoUrl, 15000, status);
+    QByteArray componentInfoData = httpGet(componentInfoUrl, COMPONENT_INFO_TIMEOUT_MS, status);
 
     if (componentInfoData.isEmpty()) {
         hasError = true;
-        errorMessage = "Failed to fetch component info";
+        errorMessage = "Failed to fetch component info (empty response)";
         status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
     } else {
-        status->componentInfoRaw = componentInfoData;
-        status->cinfoJsonRaw = componentInfoData;
-        status->cadDataRaw = componentInfoData;
-        status->cadJsonRaw = componentInfoData;
-        status->addDebugLog(QString("Component info (including CAD) fetched for: %1, Size: %2 bytes")
-                                .arg(m_componentId)
-                                .arg(componentInfoData.size()));
+        // Validate JSON content
+        QJsonParseError parseError;
+        QJsonDocument doc = QJsonDocument::fromJson(componentInfoData, &parseError);
 
-        if (m_need3DModel && !hasError) {
-            status->addDebugLog("Parsing CAD data to extract 3D model UUID...");
+        if (parseError.error != QJsonParseError::NoError) {
+            hasError = true;
+            errorMessage = "Invalid JSON response: " + parseError.errorString();
+            status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+        } else {
+            QJsonObject rootObj = doc.object();
 
-            QJsonParseError parseError;
-            QJsonDocument doc = QJsonDocument::fromJson(componentInfoData, &parseError);
-
-            if (parseError.error == QJsonParseError::NoError) {
-                QJsonObject rootObj = doc.object();
-                QJsonObject obj;
-
-                if (rootObj.contains("result") && rootObj["result"].isObject()) {
-                    obj = rootObj["result"].toObject();
-                } else {
-                    obj = rootObj;
-                }
-
-
-                if (!fetch3DModelData(status)) {
-                }
+            // Check for API specific error fields
+            if (rootObj.contains("success") && !rootObj["success"].toBool()) {
+                hasError = true;
+                errorMessage = "API returned error: " +
+                               (rootObj.contains("message") ? rootObj["message"].toString() : "Unknown error");
+                status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+            }
+            // Check if result exists and is valid
+            else if (!rootObj.contains("result") || rootObj["result"].isNull()) {
+                hasError = true;
+                errorMessage = "Component not found (null result)";
+                status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+            }
+            // Check if result is empty object (sometimes happens for invalid IDs)
+            else if (rootObj["result"].isObject() && rootObj["result"].toObject().isEmpty()) {
+                hasError = true;
+                errorMessage = "Component data is empty";
+                status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
             } else {
-                status->addDebugLog(
-                    QString("WARNING: Failed to parse CAD data for 3D model UUID: %1").arg(parseError.errorString()));
+                // Data seems valid
+                status->componentInfoRaw = componentInfoData;
+                status->cinfoJsonRaw = componentInfoData;
+                status->cadDataRaw = componentInfoData;
+                status->cadJsonRaw = componentInfoData;
+                status->addDebugLog(QString("Component info (including CAD) fetched for: %1, Size: %2 bytes")
+                                        .arg(m_componentId)
+                                        .arg(componentInfoData.size()));
+
+                if (m_need3DModel && !hasError) {
+                    status->addDebugLog("Parsing CAD data to extract 3D model UUID...");
+                    // Re-use doc/rootObj since we already parsed it
+                    QJsonObject obj;
+                    if (rootObj.contains("result") && rootObj["result"].isObject()) {
+                        obj = rootObj["result"].toObject();
+                    } else {
+                        obj = rootObj;
+                    }
+
+                    if (!fetch3DModelData(status)) {
+                        // 3D model fetch failure is not fatal for the whole component
+                    }
+                }
             }
         }
     }
@@ -155,29 +180,37 @@ void FetchWorker::run() {
 QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointer<ComponentExportStatus> status) {
     QByteArray result;
     int retryCount = 0;
-    const int maxRetries = 3;
     QElapsedTimer requestTimer;
 
-    while (retryCount <= maxRetries) {
+    while (retryCount <= MAX_HTTP_RETRIES) {
+        // 检查是否已被中断 (原子检查，不加锁)
+        if (m_isAborted.loadRelaxed()) {
+            return QByteArray();
+        }
+
         requestTimer.restart();
 
         if (retryCount > 0) {
-            int delayMs = 10000;  // Default for 3rd+ retry
-            if (retryCount == 1)
-                delayMs = 3000;
-            else if (retryCount == 2)
-                delayMs = 5000;
-
-            qDebug() << "Retrying request to" << url << "in" << delayMs << "ms (Retry" << retryCount << "/"
-                     << maxRetries << ")";
-            QThread::msleep(delayMs);
+            qDebug() << "Retrying request to" << url << "in" << HTTP_RETRY_DELAY_MS << "ms (Retry" << retryCount << "/"
+                     << MAX_HTTP_RETRIES << ")";
+            QThread::msleep(HTTP_RETRY_DELAY_MS);
         }
-
         QNetworkRequest request{QUrl(url)};
         request.setRawHeader("User-Agent", "EasyKiConverter/1.0");
         request.setRawHeader("Accept", "application/json, text/javascript, */*; q=0.01");
 
         QNetworkReply* reply = m_ownNetworkManager->get(request);
+
+        // 跟踪当前 reply 以便中断
+        {
+            QMutexLocker locker(&m_replyMutex);
+            if (m_isAborted.loadRelaxed()) {
+                reply->abort();
+                reply->deleteLater();
+                return QByteArray();
+            }
+            m_currentReply = reply;
+        }
 
         QEventLoop loop;
         QTimer timeoutTimer;
@@ -193,6 +226,12 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
 
         timeoutTimer.start(timeoutMs);
         loop.exec();
+
+        // 清除 reply 跟踪
+        {
+            QMutexLocker locker(&m_replyMutex);
+            m_currentReply = nullptr;
+        }
 
         bool success = false;
         if (reply->error() == QNetworkReply::NoError) {
@@ -238,7 +277,7 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 // Will retry
             } else {
                 qWarning() << "HTTP error" << statusCode << "for URL:" << url << "(No retry for this code)";
-                retryCount = maxRetries + 1;  // Don't retry for other 4xx errors
+                retryCount = MAX_HTTP_RETRIES + 1;  // Don't retry for other 4xx errors
             }
         } else if (reply->error() == QNetworkReply::OperationCanceledError) {
             // 请求被取消（超时），不再重试
@@ -256,7 +295,7 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 status->networkDiagnostics.append(diag);
             }
 
-            retryCount = maxRetries + 1;  // Skip retries
+            retryCount = MAX_HTTP_RETRIES + 1;  // Skip retries
         } else {
             qWarning() << "Network error:" << reply->errorString() << "URL:" << url;
 
@@ -453,7 +492,7 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
     QString objUrl = QString("https://modules.easyeda.com/3dmodel/%1").arg(uuid);
     status->addDebugLog(QString("Downloading 3D model from: %1").arg(objUrl));
     qDebug() << "Downloading 3D model from:" << objUrl;
-    QByteArray objData = httpGet(objUrl, 30000, status);
+    QByteArray objData = httpGet(objUrl, MODEL_3D_TIMEOUT_MS, status);
 
     if (objData.isEmpty()) {
         QString msg = QString("ERROR: Failed to download 3D model from: %1").arg(objUrl);
@@ -517,7 +556,7 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
 
     QString stepUrl = QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(uuid);
     status->addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));
-    QByteArray stepData = httpGet(stepUrl, 30000, status);
+    QByteArray stepData = httpGet(stepUrl, 10000, status);
 
     if (!stepData.isEmpty() && stepData.size() > 100) {
         status->model3DStepRaw = stepData;
@@ -532,6 +571,15 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
     }
 
     return true;
+}
+
+void FetchWorker::abort() {
+    m_isAborted.storeRelaxed(1);
+    QMutexLocker locker(&m_replyMutex);
+    if (m_currentReply) {
+        qDebug() << "Aborting network request for component:" << m_componentId;
+        m_currentReply->abort();
+    }
 }
 
 }  // namespace EasyKiConverter

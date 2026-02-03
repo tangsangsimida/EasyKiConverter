@@ -14,7 +14,9 @@
 *.so.*
 *_pch.h.cpp
 *_resource.rc
-*.qm
+# Qt Linguist
+# *.qm  # Uncomment to ignore .qm files, but we commit them for CI
+!resources/translations/*.qm  # Keep translation files in resources/translations
 .#*
 *.*#
 core
@@ -103,3 +105,4 @@ C414042_data.json
 pin_segment5_analysis.txt
 AGENTS.md
 gha-creds-*.json
+format_code.bat
