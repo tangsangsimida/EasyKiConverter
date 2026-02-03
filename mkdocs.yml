@@ -38,7 +38,6 @@ nav:
     - 架构设计: developer/ARCHITECTURE.md
     - 构建指南: developer/BUILD.md
     - 代码风格: developer/CODING_STYLE.md
-    - 测试指南: ../tests/TESTING_GUIDE.md
     - 变更日志: developer/CHANGELOG.md
   - 项目信息:
     - 路线图: project/ROADMAP.md

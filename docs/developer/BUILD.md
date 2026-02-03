@@ -329,37 +329,6 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
 ```
 
-## 运行测试
-
-### 构建测试程序
-
-```bash
-cd tests
-cmake -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64"
-cmake --build build
-```
-
-### 运行测试
-
-```bash
-# 运行图层映射测试
-./build/test_layer_mapping.exe
-
-# 运行 UUID 提取测试
-./build/test_uuid_extraction.exe
-
-# 运行 Service 层测试
-./build/test_component_service.exe
-./build/test_export_service.exe
-./build/test_config_service.exe
-
-# 运行集成测试
-./build/test_integration.exe
-
-# 运行性能测试
-./build/test_performance.exe
-```
-
 ## 常见问题
 
 ### 找不到 Qt

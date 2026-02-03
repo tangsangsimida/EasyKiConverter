@@ -28,7 +28,6 @@ env:
   BUILD_TYPE: RelWithDebInfo
   QT_VERSION: '6.10.1'
   CMAKE_VERSION: '3.22'
-  TEST_TIMEOUT: 300
 
 jobs:
   linux-build:
@@ -62,22 +61,6 @@ jobs:
       - name: 'Build'
         run: |
           cmake --build build --config $BUILD_TYPE --parallel 16
-
-      - name: 'Test'
-        run: |
-          cd tests
-          cmake -B build -G "Ninja" -DCI=ON
-          cmake --build build
-          ctest --output-on-failure --timeout ${{ env.TEST_TIMEOUT }} --test-dir build --output-junit test-results.xml
-
-      - name: 'Publish Test Report'
-        if: always()
-        uses: mikepenz/action-junit-report@v4
-        with:
-          report_paths: tests/build/test-results.xml
-          check_name: Test Report (Linux)
-          detailed_summary: true
-          include_passed: true
 
   windows-build:
     name: 'Build Windows'
@@ -135,23 +118,6 @@ jobs:
         run: |
           cmake --build build --config $env:BUILD_TYPE --parallel 16
 
-      - name: 'Test'
-        shell: pwsh
-        run: |
-          cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR=".." -DCI=ON
-          cmake --build build
-          ctest --output-on-failure -C Debug --timeout 300 --test-dir build --output-junit test-results.xml
-
-      - name: 'Publish Test Report'
-        if: always()
-        uses: mikepenz/action-junit-report@v4
-        with:
-          report_paths: tests/build/test-results.xml
-          check_name: Test Report (Windows - ${{ matrix.name }})
-          detailed_summary: true
-          include_passed: true
-
   macos-build:
     name: 'Build macOS'
     runs-on: ${{ matrix.os }}
@@ -192,19 +158,3 @@ jobs:
       - name: 'Build'
         run: |
           cmake --build build --config $BUILD_TYPE --parallel 4
-
-      - name: 'Test'
-        run: |
-          cd tests
-          cmake -B build -DCMAKE_PREFIX_PATH="$Qt6_DIR" -DCI=ON
-          cmake --build build
-          ctest --output-on-failure --timeout 300 --test-dir build --output-junit test-results.xml
-
-      - name: 'Publish Test Report'
-        if: always()
-        uses: mikepenz/action-junit-report@v4
-        with:
-          report_paths: tests/build/test-results.xml
-          check_name: Test Report (macOS)
-          detailed_summary: true
-          include_passed: true

@@ -161,10 +161,9 @@ cmake --build build
 
 ## 示例代码
 
-完整的示例代码可以参考 `tests/test_component_service.cpp` 和 `src/ui/viewmodels/ComponentListViewModel.cpp`。
+完整的示例代码可以参考 `src/ui/viewmodels/ComponentListViewModel.cpp`。
 
 ## 相关文档
 
 - [CHANGELOG.md](CHANGELOG.md) - 版本更新日志
-- [TESTING_GUIDE.md](../TESTING_GUIDE.md) - 测试指南
 - [AGENTS.md](../../AGENTS.md) - 开发者指南

@@ -219,18 +219,6 @@ C8734,Inductor,Filter
 - Components added: 3
 - Components skipped: 0
 
-## Testing
-
-A sample BOM file is provided for testing:
-- `tests/test_bom_sample.csv`
-
-Run the component service test to verify parsing functionality:
-```bash
-cd tests
-cmake --build build --target test_component_service
-./build/test_component_service.exe
-```
-
 ## Future Enhancements
 
 Potential improvements for BOM parsing:

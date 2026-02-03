@@ -297,7 +297,6 @@ EasyKiConverter_QT/
 │   │   ├── viewmodels/         # View models
 │   │   └── utils/              # UI utilities
 │   └── workers/                # Worker threads
-├── tests/                      # Tests
 ├── docs/                       # Documentation
 └── resources/                  # Resource files
 ```
@@ -365,12 +364,6 @@ EasyKiConverter_QT/
 - Follow Qt coding standards
 - Use Doxygen comments
 - Code review
-
-### Test Coverage
-
-- Unit tests
-- Integration tests
-- Performance tests
 
 ### Documentation Completeness
 

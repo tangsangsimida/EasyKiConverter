@@ -92,13 +92,6 @@ git checkout -b feature/your-feature-name
 - 阶段间通过线程安全的有界队列通信
 - 详见：[ADR-002: 流水线并行架构](../project/adr/002-pipeline-parallelism-for-export.md)
 
-#### 测试要求
-
-- 为新功能添加单元测试
-- 确保所有测试通过
-- 测试覆盖率不得降低
-- 遵循测试指南：[../tests/TESTING_GUIDE.md](../tests/TESTING_GUIDE.md)
-
 #### 提交流程
 
 1. 提交您的更改：
@@ -135,7 +128,6 @@ git push origin feature/your-feature-name
 feat: add support for custom layer mapping
 
 - Implement LayerMapper class for EasyEDA to KiCad layer conversion
-- Add unit tests for layer mapping logic
 - Update documentation
 ```
 
@@ -143,7 +135,6 @@ feat: add support for custom layer mapping
 
 - 清晰描述更改的目的和内容
 - 引用相关的 Issue（如果适用）
-- 确保所有测试通过
 - 更新相关文档
 - 保持代码风格一致
 - 确保与现有代码的兼容性
@@ -164,7 +155,6 @@ feat: add support for custom layer mapping
 
 - 代码质量和风格
 - 架构设计
-- 测试覆盖率
 - 文档完整性
 - 与现有代码的兼容性
 

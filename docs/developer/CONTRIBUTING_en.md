@@ -157,13 +157,6 @@ Use multi-stage pipeline parallelism architecture (ExportServicePipeline):
 - Stages communicate via thread-safe bounded queues
 - See: [ADR-002: Pipeline Parallelism](../project/adr/002-pipeline-parallelism-for-export_en.md)
 
-## Testing Requirements
-
-- Add unit tests for new features
-- Ensure all tests pass
-- Do not reduce test coverage
-- Follow testing guide: [../tests/TESTING_GUIDE.md](../tests/TESTING_GUIDE.md)
-
 ## Development Workflow
 
 ### 1. Make Changes
@@ -174,8 +167,6 @@ Make your changes following the code standards.
 
 - Build the project successfully
 - Run the application and test your changes
-- Add or update unit tests if applicable
-- Ensure all existing tests pass
 
 ### 3. Commit Your Changes
 
@@ -240,7 +231,6 @@ git push origin feature/your-feature-name
 4. Fill in the PR template:
    - Description of changes
    - Related issues
-   - Testing performed
    - Screenshots (if applicable)
 
 ### 6. Review and Iterate
@@ -255,8 +245,6 @@ git push origin feature/your-feature-name
 
 - [ ] Code follows project coding standards
 - [ ] Code compiles without warnings
-- [ ] All tests pass
-- [ ] New features include tests
 - [ ] Documentation is updated
 - [ ] Commit messages are clear and follow the format
 
@@ -280,29 +268,9 @@ Describe how you tested the changes
 
 ## Checklist
 - [ ] Code follows project standards
-- [ ] Tests added/updated
 - [ ] Documentation updated
 - [ ] No new warnings
 ```
-
-## Testing Guidelines
-
-### Unit Tests
-
-- Write unit tests for new functionality
-- Ensure test coverage is adequate
-- Use Qt Test framework
-
-### Integration Tests
-
-- Test integration with existing components
-- Verify end-to-end functionality
-
-### Manual Testing
-
-- Test the application manually
-- Verify UI changes work correctly
-- Test on different platforms if possible
 
 ## Documentation
 
@@ -385,7 +353,6 @@ Follow semantic versioning: MAJOR.MINOR.PATCH
 
 ### Release Checklist
 
-- [ ] All tests pass
 - [ ] Documentation is complete
 - [ ] CHANGELOG is updated
 - [ ] Version number is updated

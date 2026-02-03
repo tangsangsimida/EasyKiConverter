@@ -2,16 +2,17 @@
 
 [English](README_en.md) | 中文
 
+<p align="center">
 [![Build Status](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Build/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/build.yml)
-[![Code Coverage](https://codecov.io/gh/tangsangsimida/EasyKiConverter_QT/branch/main/graph/badge.svg)](https://codecov.io/gh/tangsangsimida/EasyKiConverter_QT)
 [![Security Scan](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Security/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/security.yml)
-[![Performance](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Performance%20Testing/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/performance.yml)
 [![Code Format](https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Code%20Format%20Check/badge.svg)](https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/clang-format.yml)
-
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter_QT)
-![GitHub downloads](https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/total)
+<br/>
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter_QT)](https://github.com/tangsangsimida/EasyKiConverter_QT/releases/latest)
+[![GitHub downloads (latest)](https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/latest/total)](https://github.com/tangsangsimida/EasyKiConverter_QT/releases/latest)
+[![GitHub downloads (total)](https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/total)](https://github.com/tangsangsimida/EasyKiConverter_QT/releases/latest)
 ![License](https://img.shields.io/github/license/tangsangsimida/EasyKiConverter_QT)
 ![Stars](https://img.shields.io/github/stars/tangsangsimida/EasyKiConverter_QT)
+</p>
 
 **EasyKiConverter** 是一个基于 Qt 6 和 MVVM 架构的现代化 C++ 桌面工具，专为电子工程师设计，旨在将嘉立创 (LCSC) 和 EasyEDA 的元件数据高效转换为 KiCad 库文件。
 
@@ -53,7 +54,8 @@
 感谢以下开发者对 EasyKiConverter 的贡献：
 
 <a href="https://github.com/tangsangsimida/EasyKiConverter_QT/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=tangsangsimida/EasyKiConverter_QT" />
+  <img src="https://contrib.rocks/image?repo=tangsangsimida/EasyKiConverter_QT&max=50" />
+</a>
 
 欢迎提交 Issue 或 Pull Request 参与改进！详细请阅 [贡献指南](docs/developer/CONTRIBUTING.md)。
 

@@ -264,38 +264,6 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad 符号库格式（.kicad
 
 ## 测试支持
 
-### 单元测试
-
-完整的单元测试框架。
-
-- 核心转换逻辑测试
-- Service 层测试
-- ViewModel 层测试
-- 工具类测试
-
-详细说明请参考：[../tests/TESTING_GUIDE.md](../tests/TESTING_GUIDE.md)
-
-### 集成测试
-
-完整转换流程的集成测试。
-
-- 端到端测试
-- 多元件批量转换测试
-- 错误恢复测试
-
-详细说明请参考：[../tests/INTEGRATION_TEST_GUIDE.md](../tests/INTEGRATION_TEST_GUIDE.md)
-
-### 性能测试
-
-性能测试和优化。
-
-- 转换速度测试
-- 内存使用测试
-- 并行性能测试
-- 与其他版本性能对比
-
-详细说明请参考：[../tests/PERFORMANCE_TEST_GUIDE.md](../tests/PERFORMANCE_TEST_GUIDE.md)
-
 ## 配置管理
 
 ### 配置持久化
