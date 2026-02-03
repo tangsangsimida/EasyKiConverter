@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QGuiApplication>
 #include <QRegularExpression>
+#include <QUrl>
 
 namespace EasyKiConverter {
 
@@ -125,8 +126,44 @@ void ComponentListViewModel::selectBomFile(const QString& filePath) {
         emit bomFilePathChanged();
     }
 
-    // TODO: 实现 BOM 文件解析逻辑
-    m_bomResult = "BOM file imported successfully";
+    // 将 URL 转换为本地文件路径
+    QString localPath = filePath;
+    if (filePath.startsWith("file:///")) {
+        localPath = QUrl(filePath).toLocalFile();
+        qDebug() << "Converted URL to local path:" << localPath;
+    }
+
+    // 使用 ComponentService 解析 BOM 文件
+    QStringList componentIds = m_service->parseBomFile(localPath);
+
+    if (componentIds.isEmpty()) {
+        m_bomResult = "No valid component IDs found in BOM file";
+        qWarning() << "No component IDs found in BOM file:" << localPath;
+        emit bomResultChanged();
+        return;
+    }
+
+    // 添加提取的元件编号到列表
+    int added = 0;
+    int skipped = 0;
+
+    for (const QString& id : componentIds) {
+        if (!componentExists(id)) {
+            m_componentList.append(id);
+            added++;
+        } else {
+            skipped++;
+        }
+    }
+
+    if (added > 0) {
+        emit componentListChanged();
+        emit componentCountChanged();
+    }
+
+    QString resultMsg = QString("BOM file imported: %1 components added, %2 skipped").arg(added).arg(skipped);
+    m_bomResult = resultMsg;
+    qDebug() << resultMsg;
     emit bomResultChanged();
 }
 

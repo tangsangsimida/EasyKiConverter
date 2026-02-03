@@ -226,6 +226,22 @@ private:
      */
     void handleParallelFetchError(const QString& componentId, const QString& error);
 
+    /**
+     * @brief 解析 CSV 格式的 BOM 文件
+     *
+     * @param filePath 文件路径
+     * @return QStringList 解析出的元件ID列表
+     */
+    QStringList parseCsvBomFile(const QString& filePath);
+
+    /**
+     * @brief 解析 Excel 格式的 BOM 文件
+     *
+     * @param filePath 文件路径
+     * @return QStringList 解析出的元件ID列表
+     */
+    QStringList parseExcelBomFile(const QString& filePath);
+
 private:
     // 核心API和导入器
     class EasyedaApi* m_api;

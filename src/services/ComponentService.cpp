@@ -4,9 +4,16 @@
 #include "core/easyeda/EasyedaImporter.h"
 
 #include <QDebug>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QProcess>
+#include <QRegularExpression>
+#include <QTextStream>
+#include <QUuid>
 
 namespace EasyKiConverter {
 
@@ -388,6 +395,221 @@ void ComponentService::handleParallelFetchError(const QString& componentId, cons
         m_parallelFetchingStatus.clear();
         m_parallelPendingComponents.clear();
     }
+}
+
+bool ComponentService::validateComponentId(const QString& componentId) const {
+    // LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
+    QRegularExpression re("^C\\d{4,}$");
+    return re.match(componentId).hasMatch();
+}
+
+QStringList ComponentService::extractComponentIdFromText(const QString& text) const {
+    QStringList extractedIds;
+
+    // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
+    QRegularExpression re("C\\d{4,}");
+    QRegularExpressionMatchIterator it = re.globalMatch(text);
+
+    while (it.hasNext()) {
+        QRegularExpressionMatch match = it.next();
+        QString id = match.captured();
+        if (!extractedIds.contains(id)) {
+            extractedIds.append(id);
+        }
+    }
+
+    return extractedIds;
+}
+
+QStringList ComponentService::parseBomFile(const QString& filePath) {
+    qDebug() << "Parsing BOM file:" << filePath;
+
+    QStringList componentIds;
+    QFileInfo fileInfo(filePath);
+
+    if (!fileInfo.exists()) {
+        qWarning() << "BOM file does not exist:" << filePath;
+        return componentIds;
+    }
+
+    QString suffix = fileInfo.suffix().toLower();
+
+    if (suffix == "csv" || suffix == "txt") {
+        componentIds = parseCsvBomFile(filePath);
+    } else if (suffix == "xlsx" || suffix == "xls") {
+        componentIds = parseExcelBomFile(filePath);
+    } else {
+        qWarning() << "Unsupported BOM file format:" << suffix;
+    }
+
+    qDebug() << "Extracted" << componentIds.size() << "component IDs from BOM file";
+    return componentIds;
+}
+
+QStringList ComponentService::parseCsvBomFile(const QString& filePath) {
+    qDebug() << "Parsing CSV BOM file:" << filePath;
+
+    QStringList componentIds;
+    QFile file(filePath);
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "Failed to open CSV file:" << filePath << file.errorString();
+        return componentIds;
+    }
+
+    QTextStream in(&file);
+    in.setEncoding(QStringConverter::Utf8);
+
+    // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
+    QRegularExpression re("C\\d{4,}");
+
+    while (!in.atEnd()) {
+        QString line = in.readLine();
+        if (line.isEmpty()) {
+            continue;
+        }
+
+        // 检索所有以 C 开头的单元格（按逗号分隔）
+        QStringList cells = line.split(',', Qt::SkipEmptyParts);
+
+        for (const QString& cell : cells) {
+            QString trimmedCell = cell.trimmed();
+
+            // 去除可能的引号
+            if (trimmedCell.startsWith('"') && trimmedCell.endsWith('"')) {
+                trimmedCell = trimmedCell.mid(1, trimmedCell.length() - 2);
+            }
+
+            // 检查是否匹配元件ID格式
+            QRegularExpressionMatch match = re.match(trimmedCell);
+            if (match.hasMatch()) {
+                QString componentId = match.captured();
+                if (!componentIds.contains(componentId)) {
+                    componentIds.append(componentId);
+                    qDebug() << "Found component ID:" << componentId;
+                }
+            }
+        }
+    }
+
+    file.close();
+    return componentIds;
+}
+
+QStringList ComponentService::parseExcelBomFile(const QString& filePath) {
+    qDebug() << "Parsing Excel BOM file:" << filePath;
+
+    QStringList componentIds;
+
+    // 尝试使用 QXlsx 库解析 Excel 文件
+    // 如果 QXlsx 不可用，则尝试使用其他方法
+    #ifdef QT_XLSX_LIB
+        QXlsx::Document xlsx(filePath);
+        if (!xlsx.load()) {
+            qWarning() << "Failed to load Excel file:" << filePath;
+            return componentIds;
+        }
+
+        // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
+        QRegularExpression re("C\\d{4,}");
+
+        // 遍历所有工作表
+        for (const QString& sheetName : xlsx.sheetNames()) {
+            xlsx.selectSheet(sheetName);
+
+            // 遍历所有单元格
+            QXlsx::CellRange range = xlsx.dimension();
+            for (int row = range.firstRow(); row <= range.lastRow(); ++row) {
+                for (int col = range.firstColumn(); col <= range.lastColumn(); ++col) {
+                    QXlsx::Cell* cell = xlsx.cellAt(row, col);
+                    if (!cell) {
+                        continue;
+                    }
+
+                    QVariant value = cell->readValue();
+                    if (value.isNull() || !value.isValid()) {
+                        continue;
+                    }
+
+                    QString cellText = value.toString().trimmed();
+
+                    // 检查是否匹配元件ID格式
+                    QRegularExpressionMatch match = re.match(cellText);
+                    if (match.hasMatch()) {
+                        QString componentId = match.captured();
+                        if (!componentIds.contains(componentId)) {
+                            componentIds.append(componentId);
+                            qDebug() << "Found component ID:" << componentId << "at" << sheetName << ":" << row << "," << col;
+                        }
+                    }
+                }
+            }
+        }
+    #else
+        // 如果没有 QXlsx 库，尝试使用 Python 脚本解析
+        qWarning() << "QXlsx library not available, trying alternative method";
+
+        // 尝试将 Excel 转换为 CSV 格式
+        QString pythonScript = QString(
+            "import pandas as pd\n"
+            "import sys\n"
+            "\n"
+            "try:\n"
+            "    # 读取 Excel 文件\n"
+            "    df = pd.read_excel(r'%1', sheet_name=None)\n"
+            "    \n"
+            "    # 合并所有工作表\n"
+            "    all_data = pd.concat(df.values(), ignore_index=True)\n"
+            "    \n"
+            "    # 保存为 CSV\n"
+            "    all_data.to_csv(r'%2', index=False, encoding='utf-8')\n"
+            "    print('SUCCESS')\n"
+            "except Exception as e:\n"
+            "    print('ERROR:', str(e), file=sys.stderr)\n"
+            "    sys.exit(1)\n"
+        ).arg(filePath, filePath + ".temp.csv");
+
+        // 创建临时 Python 脚本文件
+        QString tempScriptPath = QDir::tempPath() + "/excel_to_csv_" + QUuid::createUuid().toString(QUuid::WithoutBraces) + ".py";
+        QFile tempScript(tempScriptPath);
+
+        if (tempScript.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&tempScript);
+            out.setEncoding(QStringConverter::Utf8);
+            out << pythonScript;
+            tempScript.close();
+
+            // 执行 Python 脚本
+            QProcess process;
+            process.start("python", QStringList() << tempScriptPath);
+            process.waitForFinished(30000);  // 30秒超时
+
+            if (process.exitCode() == 0) {
+                QString tempCsvPath = filePath + ".temp.csv";
+                componentIds = parseCsvBomFile(tempCsvPath);
+
+                // 删除临时文件
+                QFile::remove(tempCsvPath);
+            } else {
+                qWarning() << "Failed to convert Excel to CSV:" << process.readAllStandardError();
+            }
+
+            QFile::remove(tempScriptPath);
+        } else {
+            qWarning() << "Failed to create temporary Python script";
+        }
+    #endif
+
+    return componentIds;
+}
+
+ComponentData ComponentService::getComponentData(const QString& componentId) const {
+    return m_componentCache.value(componentId, ComponentData());
+}
+
+void ComponentService::clearCache() {
+    m_componentCache.clear();
+    qDebug() << "Component cache cleared";
 }
 
 }  // namespace EasyKiConverter
