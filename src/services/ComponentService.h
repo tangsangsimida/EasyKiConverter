@@ -128,29 +128,7 @@ signals:
      */
     void model3DReady(const QString& uuid, const QString& filePath);
 
-    /**
-     * @brief 获取错误信号
-     *
-     * @param componentId 元件ID
-     * @param error 错误信息
-     */
-    void fetchError(const QString& componentId, const QString& error);
 
-    /**
-     * @brief 元件数据获取成功信号
-     *
-     * @param componentId 元件ID
-     * @param data 元件数据
-     */
-    void componentDataFetched(const QString& componentId, const ComponentData& data);
-
-    /**
-     * @brief 元件数据获取失败信号
-     *
-     * @param componentId 元件ID
-     * @param error 错误信息
-     */
-    void componentDataFetchFailed(const QString& componentId, const QString& error);
 
     /**
      * @brief 所有元件数据收集完成信�?
