@@ -15,7 +15,7 @@
 
 **EasyKiConverter** 是一个基于 Qt 6 和 MVVM 架构的现代化 C++ 桌面工具，专为电子工程师设计，旨在将嘉立创 (LCSC) 和 EasyEDA 的元件数据高效转换为 KiCad 库文件。
 
-## ✨ 主要特性
+## 主要特性
 
 *   **全流程转换**：支持符号 (.kicad_sym)、封装 (.kicad_mod) 及 3D 模型 (STEP/WRL) 的完整导出。
 *   **高效批量处理**：支持多线程并行转换与 BOM 文件导入，充分利用多核性能。
@@ -23,7 +23,7 @@
 *   **智能配置**：配置项实时自动保存，支持断点记忆与调试模式状态恢复。
 *   **智能辅助**：支持从剪贴板智能提取元件编号。
 
-## 🚀 快速开始
+## 快速开始
 
 ### 安装
 请前往 [Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 页面下载适用于您平台的版本：
@@ -35,7 +35,7 @@
 ### 从源码构建
 本项目已实现全平台 CI/CD 自动化构建。如果您是开发者或希望自行编译，请参考 [构建指南](docs/developer/BUILD.md)。
 
-## 📚 文档中心
+## 文档中心
 
 **用户指南**
 *   [快速入门](docs/user/GETTING_STARTED.md) | [用户手册](docs/user/USER_GUIDE.md) | [常见问题 (FAQ)](docs/user/FAQ.md)
@@ -46,7 +46,7 @@
 *   [性能优化报告](docs/PERFORMANCE_OPTIMIZATION_REPORT.md) | [项目路线图](docs/project/ROADMAP.md)
 
 
-## 🤝 贡献与致谢
+## 贡献与致谢
 
 ### 贡献者
 
@@ -57,6 +57,6 @@
 
 欢迎提交 Issue 或 Pull Request 参与改进！详细请阅 [贡献指南](docs/developer/CONTRIBUTING.md)。
 
-## 📄 许可证
+## 许可证
 
 本项目采用 **GPL-3.0** 许可证。详情请参阅 [LICENSE](LICENSE) 文件。
