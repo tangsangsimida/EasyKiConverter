@@ -6,6 +6,12 @@ add_subdirectory(utils)
 
 add_library(EasyKiConverterCore STATIC)
 
+target_sources(EasyKiConverterCore
+    PRIVATE
+        LanguageManager.cpp
+        LanguageManager.h
+)
+
 target_link_libraries(EasyKiConverterCore
     PUBLIC
         EasyKiConverterEasyeda

@@ -137,22 +137,6 @@ signals:
     void fetchError(const QString& componentId, const QString& error);
 
     /**
-     * @brief 元件数据获取成功信号
-     *
-     * @param componentId 元件ID
-     * @param data 元件数据
-     */
-    void componentDataFetched(const QString& componentId, const ComponentData& data);
-
-    /**
-     * @brief 元件数据获取失败信号
-     *
-     * @param componentId 元件ID
-     * @param error 错误信息
-     */
-    void componentDataFetchFailed(const QString& componentId, const QString& error);
-
-    /**
      * @brief 所有元件数据收集完成信�?
      *
      * @param componentDataList 元件数据列表
@@ -225,6 +209,22 @@ private:
      * @param error 错误信息
      */
     void handleParallelFetchError(const QString& componentId, const QString& error);
+
+    /**
+     * @brief 解析 CSV 格式的 BOM 文件
+     *
+     * @param filePath 文件路径
+     * @return QStringList 解析出的元件ID列表
+     */
+    QStringList parseCsvBomFile(const QString& filePath);
+
+    /**
+     * @brief 解析 Excel 格式的 BOM 文件
+     *
+     * @param filePath 文件路径
+     * @return QStringList 解析出的元件ID列表
+     */
+    QStringList parseExcelBomFile(const QString& filePath);
 
 private:
     // 核心API和导入器

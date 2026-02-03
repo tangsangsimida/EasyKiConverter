@@ -11,18 +11,28 @@
 namespace EasyKiConverter {
 
 ProcessWorker::ProcessWorker(QSharedPointer<ComponentExportStatus> status, QObject* parent)
-    : QObject(parent), m_status(status) {}
+    : QObject(parent), m_status(status), m_isAborted(0) {}
 
 ProcessWorker::~ProcessWorker() {}
 
 void ProcessWorker::run() {
-    // 启动计时�?
+    // 检查是否已被取消 (v3.0.5+)
+    if (m_isAborted.loadRelaxed()) {
+        m_status->processSuccess = false;
+        m_status->processMessage = "Export cancelled";
+        m_status->isCancelled = true;
+        m_status->addDebugLog(QString("ProcessWorker cancelled for component: %1").arg(m_status->componentId));
+        emit processCompleted(m_status);
+        return;
+    }
+
+    // 启动计时器
     QElapsedTimer processTimer;
     processTimer.start();
 
     m_status->addDebugLog(QString("ProcessWorker started for component: %1").arg(m_status->componentId));
 
-    // 创建导入�?
+    // 创建导入器
     EasyedaImporter importer;
 
     // 解析组件信息
@@ -32,6 +42,17 @@ void ProcessWorker::run() {
         m_status->processMessage = "Failed to parse component info";
         m_status->addDebugLog(
             QString("ERROR: Failed to parse component info, Duration: %1ms").arg(m_status->processDurationMs));
+        emit processCompleted(m_status);
+        return;
+    }
+
+    if (m_isAborted.loadRelaxed()) {
+        m_status->processDurationMs = processTimer.elapsed();
+        m_status->processSuccess = false;
+        m_status->processMessage = "Export cancelled";
+        m_status->isCancelled = true;
+        m_status->addDebugLog(
+            QString("ProcessWorker cancelled during processing for component: %1").arg(m_status->componentId));
         emit processCompleted(m_status);
         return;
     }
@@ -47,12 +68,23 @@ void ProcessWorker::run() {
         return;
     }
 
-    // 解析3D模型数据（如果已下载�?
+    if (m_isAborted.loadRelaxed()) {
+        m_status->processDurationMs = processTimer.elapsed();
+        m_status->processSuccess = false;
+        m_status->processMessage = "Export cancelled";
+        m_status->isCancelled = true;
+        m_status->addDebugLog(
+            QString("ProcessWorker cancelled during processing for component: %1").arg(m_status->componentId));
+        emit processCompleted(m_status);
+        return;
+    }
+
+    // 解析3D模型数据（如果已下载）
     if (m_status->need3DModel && !m_status->model3DObjRaw.isEmpty()) {
         m_status->addDebugLog("Parsing 3D model data (already fetched by FetchWorker)");
         if (!parse3DModelData(*m_status)) {
             m_status->addDebugLog(QString("WARNING: Failed to parse 3D model data for: %1").arg(m_status->componentId));
-            // 3D模型解析失败不影响整体流�?
+            // 3D模型解析失败不影响整体流程
         }
     }
 
@@ -179,6 +211,11 @@ bool ProcessWorker::parse3DModelData(ComponentExportStatus& status) {
     }
 
     return true;
+}
+
+void ProcessWorker::abort() {
+    m_isAborted.storeRelaxed(1);
+    m_status->addDebugLog(QString("ProcessWorker abort requested for component: %1").arg(m_status->componentId));
 }
 
 }  // namespace EasyKiConverter

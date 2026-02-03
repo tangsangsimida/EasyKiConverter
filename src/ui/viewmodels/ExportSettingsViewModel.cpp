@@ -1,11 +1,14 @@
 #include "ExportSettingsViewModel.h"
 
+#include "services/ExportService_Pipeline.h"
+
 #include <QDebug>
 
 namespace EasyKiConverter {
 
-ExportSettingsViewModel::ExportSettingsViewModel(QObject* parent)
+ExportSettingsViewModel::ExportSettingsViewModel(ExportService* exportService, QObject* parent)
     : QObject(parent)
+    , m_exportService(exportService)
     , m_configService(ConfigService::instance())
     , m_outputPath("")
     , m_libName("MyLibrary")
@@ -16,6 +19,19 @@ ExportSettingsViewModel::ExportSettingsViewModel(QObject* parent)
     , m_exportMode(0)  // 默认为追加模式
     , m_debugMode(false) {
     loadFromConfig();
+
+    // 连接 ExportService 信号
+    if (m_exportService) {
+        connect(m_exportService, &ExportService::exportProgress, this, &ExportSettingsViewModel::handleExportProgress);
+        connect(m_exportService,
+                &ExportService::componentExported,
+                this,
+                &ExportSettingsViewModel::handleComponentExported);
+        connect(
+            m_exportService, &ExportService::exportCompleted, this, &ExportSettingsViewModel::handleExportCompleted);
+        connect(m_exportService, &ExportService::exportFailed, this, &ExportSettingsViewModel::handleExportFailed);
+        qDebug() << "ExportSettingsViewModel: Connected to ExportService signals";
+    }
 }
 
 ExportSettingsViewModel::~ExportSettingsViewModel() {}
@@ -106,17 +122,54 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
         return;
     }
 
-    // TODO: 需要添加 ExportService 的支持
-    // 目前先设置为导出状态
+    if (!m_exportService) {
+        qWarning() << "ExportService is not available";
+        setStatus("Export service not available");
+        return;
+    }
+
+    if (componentIds.isEmpty()) {
+        qWarning() << "No components to export";
+        setStatus("No components to export");
+        return;
+    }
+
+    // 设置导出选项
+    ExportOptions options;
+    options.outputPath = m_outputPath;
+    options.libName = m_libName;
+    options.exportSymbol = m_exportSymbol;
+    options.exportFootprint = m_exportFootprint;
+    options.exportModel3D = m_exportModel3D;
+    options.updateMode = (m_exportMode == 1);  // 1 = 更新模式
+    options.debugMode = m_debugMode;
+
+    qDebug() << "Export options:"
+             << "OutputPath:" << options.outputPath << "LibName:" << options.libName
+             << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
+             << "3D Model:" << options.exportModel3D << "Update Mode:" << options.updateMode
+             << "Debug Mode:" << options.debugMode;
+
+    // 设置导出状态
     setIsExporting(true);
     setStatus("Export started");
     setProgress(0);
+
+    // 调用 ExportService 执行导出
+    m_exportService->executeExportPipeline(componentIds, options);
 }
 
 void ExportSettingsViewModel::cancelExport() {
     qDebug() << "Canceling export";
 
-    // TODO: 需要添加 ExportService 的支持
+    if (!m_exportService) {
+        qWarning() << "ExportService is not available";
+        return;
+    }
+
+    // 调用 ExportService 取消导出
+    m_exportService->cancelExport();
+
     setIsExporting(false);
     setStatus("Export cancelled");
 }
