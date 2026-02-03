@@ -87,7 +87,7 @@ void FetchWorker::run() {
         QString("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(m_componentId);
     status->addDebugLog(QString("Fetching component info from: %1").arg(componentInfoUrl));
 
-    QByteArray componentInfoData = httpGet(componentInfoUrl, 8000, status);
+    QByteArray componentInfoData = httpGet(componentInfoUrl, COMPONENT_INFO_TIMEOUT_MS, status);
 
     if (componentInfoData.isEmpty()) {
         hasError = true;
@@ -180,10 +180,9 @@ void FetchWorker::run() {
 QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointer<ComponentExportStatus> status) {
     QByteArray result;
     int retryCount = 0;
-    const int maxRetries = 3;
     QElapsedTimer requestTimer;
 
-    while (retryCount <= maxRetries) {
+    while (retryCount <= MAX_HTTP_RETRIES) {
         // 检查是否已被中断 (原子检查，不加锁)
         if (m_isAborted.loadRelaxed()) {
             return QByteArray();
@@ -192,11 +191,9 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
         requestTimer.restart();
 
         if (retryCount > 0) {
-            int delayMs = 500;  // Fixed 500ms delay as requested
-
-            qDebug() << "Retrying request to" << url << "in" << delayMs << "ms (Retry" << retryCount << "/"
-                     << maxRetries << ")";
-            QThread::msleep(delayMs);
+            qDebug() << "Retrying request to" << url << "in" << HTTP_RETRY_DELAY_MS << "ms (Retry" << retryCount << "/"
+                     << MAX_HTTP_RETRIES << ")";
+            QThread::msleep(HTTP_RETRY_DELAY_MS);
         }
         QNetworkRequest request{QUrl(url)};
         request.setRawHeader("User-Agent", "EasyKiConverter/1.0");
@@ -280,7 +277,7 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 // Will retry
             } else {
                 qWarning() << "HTTP error" << statusCode << "for URL:" << url << "(No retry for this code)";
-                retryCount = maxRetries + 1;  // Don't retry for other 4xx errors
+                retryCount = MAX_HTTP_RETRIES + 1;  // Don't retry for other 4xx errors
             }
         } else if (reply->error() == QNetworkReply::OperationCanceledError) {
             // 请求被取消（超时），不再重试
@@ -298,7 +295,7 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 status->networkDiagnostics.append(diag);
             }
 
-            retryCount = maxRetries + 1;  // Skip retries
+            retryCount = MAX_HTTP_RETRIES + 1;  // Skip retries
         } else {
             qWarning() << "Network error:" << reply->errorString() << "URL:" << url;
 
@@ -495,7 +492,7 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
     QString objUrl = QString("https://modules.easyeda.com/3dmodel/%1").arg(uuid);
     status->addDebugLog(QString("Downloading 3D model from: %1").arg(objUrl));
     qDebug() << "Downloading 3D model from:" << objUrl;
-    QByteArray objData = httpGet(objUrl, 10000, status);
+    QByteArray objData = httpGet(objUrl, MODEL_3D_TIMEOUT_MS, status);
 
     if (objData.isEmpty()) {
         QString msg = QString("ERROR: Failed to download 3D model from: %1").arg(objUrl);
