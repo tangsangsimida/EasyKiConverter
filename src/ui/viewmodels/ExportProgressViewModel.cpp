@@ -135,6 +135,10 @@ void ExportProgressViewModel::cancelExport() {
             if (status == "pending" || status == "fetching" || status == "processing" || status == "writing") {
                 item["status"] = "failed";
                 item["message"] = "Export cancelled";
+                // CRITICAL FIX: 在取消时，将所有分项成功标志也重置为 false
+                item["symbolSuccess"] = false;
+                item["footprintSuccess"] = false;
+                item["model3DSuccess"] = false;
                 m_resultsList[i] = item;
                 updated = true;
             }

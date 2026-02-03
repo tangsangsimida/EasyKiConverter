@@ -342,27 +342,48 @@ void ExportServicePipeline::checkPipelineCompletion() {
         return;
 
     qDebug() << "Pipeline completed. Success:" << m_successCount << "Failed:" << m_failureCount;
-    if (m_options.exportSymbol && !m_symbols.isEmpty())
-        mergeSymbolLibrary();
 
-    ExportStatistics statistics = generateStatistics();
-    QString reportPath = QString("%1/export_report_%2.json")
-                             .arg(m_options.outputPath)
-                             .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
-    saveStatisticsReport(statistics, reportPath);
-    emit statisticsReportGenerated(reportPath, statistics);
+    // 将合并符号库、生成统计报告和清理临时文件的耗时操作放到异步线程中执行
+    QThreadPool::globalInstance()->start(QRunnable::create([this]() {
+        qDebug() << "Starting asynchronous cleanup and statistics generation...";
+        bool mergeSuccess = true;
+        if (m_options.exportSymbol && !m_symbols.isEmpty()) {
+            mergeSuccess = mergeSymbolLibrary();
+            if (!mergeSuccess) {
+                qWarning() << "Failed to merge symbol library during cleanup.";
+            }
+        }
 
-    for (const QString& tempFile : m_tempSymbolFiles) {
-        if (QFile::exists(tempFile))
-            QFile::remove(tempFile);
-    }
-    m_tempSymbolFiles.clear();
+        // 临时文件清理
+        for (const QString& tempFile : m_tempSymbolFiles) {
+            if (QFile::exists(tempFile)) {
+                if (!QFile::remove(tempFile)) {
+                    qWarning() << "Failed to remove temporary symbol file:" << tempFile;
+                }
+            }
+        }
+        m_tempSymbolFiles.clear();
 
-    emit exportCompleted(m_pipelineProgress.totalTasks, m_successCount);
-    m_isExporting.storeRelease(0);
-    m_isStopping.storeRelease(0);
-    m_isCancelled.storeRelease(0);
-    QTimer::singleShot(0, this, [this]() { cleanupPipeline(); });
+        // 生成和保存统计报告
+        ExportStatistics statistics = generateStatistics();
+        QString reportPath = QString("%1/export_report_%2.json")
+                                 .arg(m_options.outputPath)
+                                 .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
+        if (saveStatisticsReport(statistics, reportPath)) {
+            emit statisticsReportGenerated(reportPath, statistics);
+        } else {
+            qWarning() << "Failed to save statistics report.";
+        }
+
+        // 所有清理和统计完成后，才真正标记导出完成
+        emit exportCompleted(m_pipelineProgress.totalTasks, m_successCount);
+        m_isExporting.storeRelease(0);
+        m_isStopping.storeRelease(0);
+        m_isCancelled.storeRelease(0);
+        
+        QTimer::singleShot(0, this, [this]() { cleanupPipeline(); });
+        qDebug() << "Asynchronous cleanup and statistics generation completed.";
+    }));
 }
 
 void ExportServicePipeline::cleanupPipeline() {
@@ -501,64 +522,42 @@ void ExportServicePipeline::cancelExport() {
 
     qDebug() << "Starting pipeline cancellation...";
 
-    // 立即中断活跃的 FetchWorker（避免网络请求继续）
-    {
-        QMutexLocker locker(&m_workerMutex);
-        QList<FetchWorker*> workers = m_activeFetchWorkers.values();
-        qDebug() << "Aborting" << workers.size() << "active FetchWorkers";
-        for (FetchWorker* worker : workers) {
-            worker->abort();
-        }
-    }
-
-    // 关键修复：异步执行清理操作，避免死锁
-    // ProcessWorker 和 WriteWorker 可能在 queue->pop() 中阻塞，同步 clear() 会导致死锁
+    // 异步执行清理操作，确保不阻塞 UI 线程
     QThreadPool::globalInstance()->start(QRunnable::create([this]() {
-        qDebug() << "Executing cancellation cleanup...";
+        qDebug() << "Executing cancellation cleanup (async)...";
 
-        // 清空线程池（让正在运行的任务自然完成，但不再接受新任务）
+        // 清空线程池队列中尚未开始的任务
         if (m_fetchThreadPool) {
             m_fetchThreadPool->clear();
-            qDebug() << "Cleared FetchWorker thread pool";
+            qDebug() << "Cleared FetchWorker thread pool queue.";
         }
         if (m_processThreadPool) {
             m_processThreadPool->clear();
-            qDebug() << "Cleared ProcessWorker thread pool";
+            qDebug() << "Cleared ProcessWorker thread pool queue.";
         }
         if (m_writeThreadPool) {
             m_writeThreadPool->clear();
-            qDebug() << "Cleared WriteWorker thread pool";
+            qDebug() << "Cleared WriteWorker thread pool queue.";
         }
 
         // 关闭队列（唤醒所有等待的线程，使它们退出循环）
         if (m_fetchProcessQueue) {
             m_fetchProcessQueue->close();
-            qDebug() << "Closed FetchProcessQueue";
+            qDebug() << "Closed FetchProcessQueue.";
         }
         if (m_processWriteQueue) {
             m_processWriteQueue->close();
-            qDebug() << "Closed ProcessWriteQueue";
+            qDebug() << "Closed ProcessWriteQueue.";
         }
 
-        qDebug() << "Cancellation cleanup completed";
+        qDebug() << "Cancellation cleanup completed.";
 
-        // 触发完成检查
+        // 触发完成检查，这将最终发出 exportCompleted 信号
         checkPipelineCompletion();
     }));
 
-    // 添加超时保护：10秒后强制清理
-    QTimer::singleShot(10000, this, [this]() {
-        if (m_isCancelled.loadAcquire()) {
-            qDebug() << "Force cleanup after timeout";
-            if (m_fetchThreadPool)
-                m_fetchThreadPool->clear();
-            if (m_processThreadPool)
-                m_processThreadPool->clear();
-            if (m_writeThreadPool)
-                m_writeThreadPool->clear();
-            cleanupPipeline();
-        }
-    });
+    // 移除 10 秒超时保护，因为异步清理应该足够快且 Worker 内部会响应取消
+    // QTimer::singleShot(10000, this, [this]() { ... });
 }
 
 }  // namespace EasyKiConverter
