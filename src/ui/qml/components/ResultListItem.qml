@@ -76,7 +76,7 @@ Rectangle {
                         color: modelData.symbolSuccess ? AppStyle.colors.success : AppStyle.colors.border
                         Text { anchors.centerIn: parent; text: "S"; font.pixelSize: 9; color: "white"; font.bold: true }
                         ToolTip.visible: symMa.containsMouse
-                        ToolTip.text: "符号: " + (modelData.symbolSuccess ? "已导出" : "未完成")
+                        ToolTip.text: qsTr("符号: %1").arg(modelData.symbolSuccess ? qsTr("已导出") : qsTr("未完成"))
                         MouseArea { id: symMa; anchors.fill: parent; hoverEnabled: true }
                     }
                     Rectangle {
@@ -84,7 +84,7 @@ Rectangle {
                         color: modelData.footprintSuccess ? AppStyle.colors.success : AppStyle.colors.border
                         Text { anchors.centerIn: parent; text: "F"; font.pixelSize: 9; color: "white"; font.bold: true }
                         ToolTip.visible: ftMa.containsMouse
-                        ToolTip.text: "封装: " + (modelData.footprintSuccess ? "已导出" : "未完成")
+                        ToolTip.text: qsTr("封装: %1").arg(modelData.footprintSuccess ? qsTr("已导出") : qsTr("未完成"))
                         MouseArea { id: ftMa; anchors.fill: parent; hoverEnabled: true }
                     }
                     Rectangle {
@@ -92,7 +92,7 @@ Rectangle {
                         color: modelData.model3DSuccess ? AppStyle.colors.success : AppStyle.colors.border
                         Text { anchors.centerIn: parent; text: "3"; font.pixelSize: 9; color: "white"; font.bold: true }
                         ToolTip.visible: m3Ma.containsMouse
-                        ToolTip.text: "3D模型: " + (modelData.model3DSuccess ? "已导出" : "未完成")
+                        ToolTip.text: qsTr("3D模型: %1").arg(modelData.model3DSuccess ? qsTr("已导出") : qsTr("未完成"))
                         MouseArea { id: m3Ma; anchors.fill: parent; hoverEnabled: true }
                     }
                 }
@@ -127,7 +127,7 @@ Rectangle {
             }
 
             ToolTip.visible: hovered
-            ToolTip.text: "重试"
+            ToolTip.text: qsTr("重试")
             ToolTip.delay: 500
             
             onClicked: item.retryClicked()

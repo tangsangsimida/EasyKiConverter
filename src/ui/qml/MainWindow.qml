@@ -7,6 +7,7 @@ import QtQuick.Effects
 import QtQml.Models
 import "styles"
 import "components"
+import EasyKiconverter_Cpp_Version 1.0
 
 Item {
     id: window
@@ -15,7 +16,7 @@ Item {
     property var exportSettingsController: exportSettingsViewModel
     property var exportProgressController: exportProgressViewModel
     property var themeController: themeSettingsViewModel
-    
+
     // 窗口状态属性
     readonly property bool isMaximized: Window.window ? (Window.window.visibility === Window.Maximized || Window.window.visibility === Window.FullScreen) : false
     readonly property int windowRadius: isMaximized ? 0 : AppStyle.radius.lg
@@ -29,7 +30,7 @@ Item {
     // BOM 文件选择对话框
     FileDialog {
         id: bomFileDialog
-        title: "选择 BOM 文件"
+        title: qsTr("选择 BOM 文件")
         nameFilters: ["Supported files (*.txt *.csv *.xlsx *.xls)", "Text files (*.txt)", "CSV files (*.csv)", "Excel files (*.xlsx *.xls)", "All files (*.*)"]
         onAccepted: {
             componentListController.selectBomFile(selectedFile)
@@ -38,7 +39,7 @@ Item {
     // 输出路径选择对话框
     FolderDialog {
         id: outputFolderDialog
-        title: "选择输出目录"
+        title: qsTr("选择输出目录")
         onAccepted: {
             // 从 URL 中提取本地路径
             var path = selectedFolder.toString()
@@ -309,7 +310,7 @@ Item {
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: "将嘉立创EDA元器件转换为KiCad格式"
+                    text: qsTr("将嘉立创EDA元器件转换为KiCad格式")
                     font.pixelSize: 18
                     color: AppStyle.isDarkMode ? AppStyle.colors.textPrimary : AppStyle.colors.textSecondary
                     horizontalAlignment: Text.AlignHCenter
@@ -319,6 +320,136 @@ Item {
                     Layout.alignment: Qt.AlignRight
                     spacing: AppStyle.spacing.sm
                     z: 10  // 确保在其他元素之上
+
+                    // 语言选择器
+                    ComboBox {
+                        id: languageComboBox
+                        Layout.preferredWidth: 120
+                        model: [
+                            { text: qsTr("跟随系统"), value: "auto" },
+                            { text: "简体中文", value: "zh_CN" },
+                            { text: "English", value: "en" }
+                        ]
+                        textRole: "text"
+                        valueRole: "value"
+
+                        property string savedLanguage: ""
+
+                        Component.onCompleted: {
+                            // 设置初始语言
+                            savedLanguage = LanguageManager.currentLanguage
+                            currentIndex = indexOfValue(LanguageManager.currentLanguage)
+                        }
+
+                        onActivated: function(index) {
+                            const langValue = currentValue
+                            savedLanguage = langValue
+                            LanguageManager.setLanguage(langValue)
+                        }
+
+                        background: Rectangle {
+                            color: AppStyle.colors.surface
+                            border.color: languageComboBox.hovered ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                            border.width: 1
+                            radius: AppStyle.radius.md
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
+                        }
+
+                        contentItem: Text {
+                            text: languageComboBox.displayText
+                            font.pixelSize: 12
+                            color: AppStyle.colors.textPrimary
+                            verticalAlignment: Text.AlignVCenter
+                            leftPadding: 8
+                            rightPadding: 8
+                        }
+
+                        indicator: Canvas {
+                            id: canvas
+                            x: languageComboBox.width - width - languageComboBox.rightPadding
+                            y: languageComboBox.topPadding + (languageComboBox.availableHeight - height) / 2
+                            width: 12
+                            height: 8
+                            contextType: "2d"
+
+                            Connections {
+                                target: languageComboBox
+                                function onPressedChanged() { canvas.requestPaint() }
+                            }
+
+                            onPaint: {
+                                context.reset();
+                                context.moveTo(0, 0);
+                                context.lineTo(width / 2, height);
+                                context.lineTo(width, 0);
+                                context.closePath();
+                                context.fillStyle = AppStyle.colors.textSecondary;
+                                context.fill();
+                            }
+                        }
+
+                        delegate: ItemDelegate {
+                            width: languageComboBox.width
+                            height: 36
+
+                            contentItem: Text {
+                                text: modelData.text
+                                font.pixelSize: 12
+                                color: AppStyle.colors.textPrimary
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: 8
+                            }
+
+                            background: Rectangle {
+                                color: parent.highlighted ? (AppStyle.isDarkMode ? "#334155" : "#e2e8f0") : "transparent"
+                            }
+                        }
+
+                        popup: Popup {
+                            y: languageComboBox.height - 1
+                            width: languageComboBox.width
+                            implicitHeight: listview.contentHeight
+                            padding: 0
+
+                            onClosed: {
+                                // 当关闭下拉框时，恢复到保存的语言
+                                languageComboBox.currentIndex = languageComboBox.indexOfValue(languageComboBox.savedLanguage)
+                            }
+
+                            contentItem: ListView {
+                                id: listview
+                                clip: true
+                                model: languageComboBox.popup.visible ? languageComboBox.delegateModel : null
+                                currentIndex: languageComboBox.highlightedIndex
+                                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+                                delegate: ItemDelegate {
+                                    width: languageComboBox.width
+                                    height: 36
+
+                                    contentItem: Text {
+                                        text: modelData.text
+                                        font.pixelSize: 12
+                                        color: AppStyle.colors.textPrimary
+                                        verticalAlignment: Text.AlignVCenter
+                                        leftPadding: 8
+                                    }
+
+                                    background: Rectangle {
+                                        color: parent.hovered ? (AppStyle.isDarkMode ? "#334155" : "#e2e8f0") : "transparent"
+                                    }
+                                }
+                            }
+
+                            background: Rectangle {
+                                color: AppStyle.colors.surface
+                                border.color: AppStyle.colors.border
+                                border.width: 1
+                                radius: AppStyle.radius.md
+                            }
+                        }
+                    }
+
                     // GitHub 图标按钮
                     MouseArea {
                         id: githubButton
@@ -488,14 +619,14 @@ Item {
                 // 元件输入卡片
                 Card {
                     Layout.fillWidth: true
-                    title: "添加元器件"
+                    title: qsTr("添加元器件")
                     RowLayout {
                         width: parent.width
                         spacing: 12
                         TextField {
                             id: componentInput
                             Layout.fillWidth: true
-                            placeholderText: "输入LCSC元件编号 (例如: C2040)"
+                            placeholderText: qsTr("输入LCSC元件编号 (例如: C2040)")
                             font.pixelSize: AppStyle.fontSizes.md
                             color: AppStyle.colors.textPrimary
                             placeholderTextColor: AppStyle.colors.textSecondary
@@ -522,7 +653,7 @@ Item {
                                                         }
                                                     }                        }
                         ModernButton {
-                            text: "添加"
+                            text: qsTr("添加")
                             iconName: "add"
                             enabled: componentInput.text.length > 0
                             onClicked: {
@@ -533,7 +664,7 @@ Item {
                             }
                         }
                         ModernButton {
-                            text: "粘贴"
+                            text: qsTr("粘贴")
                             iconName: "folder"
                             backgroundColor: AppStyle.colors.textSecondary
                             hoverColor: AppStyle.colors.textPrimary
@@ -547,12 +678,12 @@ Item {
                 // BOM导入卡片
                 Card {
                     Layout.fillWidth: true
-                    title: "导入BOM文件"
+                    title: qsTr("导入BOM文件")
                     RowLayout {
                         width: parent.width
                         spacing: 12
                         ModernButton {
-                            text: "选择BOM文件"
+                            text: qsTr("选择BOM文件")
                             iconName: "upload"
                             backgroundColor: AppStyle.colors.success
                             hoverColor: AppStyle.colors.successDark
@@ -564,7 +695,7 @@ Item {
                         Text {
                                                 id: bomFileLabel
                                                 Layout.fillWidth: true
-                                                text: componentListController.bomFilePath.length > 0 ? componentListController.bomFilePath.split("/").pop() : "未选择文件"
+                                                text: componentListController.bomFilePath.length > 0 ? componentListController.bomFilePath.split("/").pop() : qsTr("未选择文件")
                                                 font.pixelSize: AppStyle.fontSizes.sm
                                                 color: AppStyle.colors.textSecondary
                                                 horizontalAlignment: Text.AlignHCenter
@@ -585,7 +716,7 @@ Item {
                 // 元件列表卡片
                 Card {
                     Layout.fillWidth: true
-                    title: "元器件列表"
+                    title: qsTr("元器件列表")
 
                     // 搜索过滤模型 (作为资源定义，不参与布局)
                     resources: [
@@ -677,7 +808,7 @@ Item {
                         spacing: 12
                         Text {
                             id: componentCountLabel
-                            text: "共 " + componentListController.componentCount + " 个元器件"
+                            text: qsTr("共 %1 个元器件").arg(componentListController.componentCount)
                             font.pixelSize: 14
                             color: AppStyle.colors.textSecondary
                         }
@@ -690,7 +821,7 @@ Item {
                         TextField {
                             id: searchInput
                             Layout.preferredWidth: 200
-                            placeholderText: "搜索元器件..."
+                            placeholderText: qsTr("搜索元器件...")
                             font.pixelSize: AppStyle.fontSizes.sm
                             color: AppStyle.colors.textPrimary
                             placeholderTextColor: AppStyle.colors.textSecondary
@@ -732,7 +863,7 @@ Item {
                         }
 
                         ModernButton {
-                            text: "清空列表"
+                            text: qsTr("清空列表")
                             iconName: "trash"
                             font.pixelSize: AppStyle.fontSizes.sm
                             backgroundColor: AppStyle.colors.danger
@@ -775,7 +906,7 @@ Item {
                 // 导出设置卡片 (合并后的)
                 Card {
                     Layout.fillWidth: true
-                    title: "导出设置"
+                    title: qsTr("导出设置")
                     GridLayout {
                         width: parent.width
                         columns: 2
@@ -786,7 +917,7 @@ Item {
                             Layout.fillWidth: true
                             spacing: 8
                             Text {
-                                text: "输出路径"
+                                text: qsTr("输出路径")
                                 font.pixelSize: 14
                                 font.bold: true
                                 color: AppStyle.colors.textPrimary
@@ -800,7 +931,7 @@ Item {
                                     Layout.fillWidth: true
                                     text: exportSettingsController.outputPath
                                     onTextChanged: exportSettingsController.setOutputPath(text)
-                                    placeholderText: "选择输出目录"
+                                    placeholderText: qsTr("选择输出目录")
                                     font.pixelSize: 14
                                     color: AppStyle.colors.textPrimary
                                     placeholderTextColor: AppStyle.colors.textSecondary
@@ -822,7 +953,7 @@ Item {
                                     }
                                 }
                                 ModernButton {
-                                    text: "浏览"
+                                    text: qsTr("浏览")
                                     iconName: "folder"
                                     font.pixelSize: AppStyle.fontSizes.sm
                                     backgroundColor: AppStyle.colors.textSecondary
@@ -839,7 +970,7 @@ Item {
                             Layout.fillWidth: true
                             spacing: 8
                             Text {
-                                text: "库名称"
+                                text: qsTr("库名称")
                                 font.pixelSize: 14
                                 font.bold: true
                                 color: AppStyle.colors.textPrimary
@@ -850,7 +981,7 @@ Item {
                                 Layout.fillWidth: true
                                 text: exportSettingsController.libName
                                 onTextChanged: exportSettingsController.setLibName(text)
-                                placeholderText: "输入库名称 (例如: MyLibrary)"
+                                placeholderText: qsTr("输入库名称 (例如: MyLibrary)")
                                 font.pixelSize: 14
                                 color: AppStyle.colors.textPrimary
                                 placeholderTextColor: AppStyle.colors.textSecondary
@@ -890,7 +1021,7 @@ Item {
                             CheckBox {
                                 Layout.fillWidth: true
                                 id: symbolCheckbox
-                                text: "符号库"
+                                text: qsTr("符号库")
                                 checked: exportSettingsController.exportSymbol
                                 onCheckedChanged: exportSettingsController.setExportSymbol(checked)
                                 font.pixelSize: 16
@@ -934,7 +1065,7 @@ Item {
                             CheckBox {
                                 Layout.fillWidth: true
                                 id: footprintCheckbox
-                                text: "封装库"
+                                text: qsTr("封装库")
                                 checked: exportSettingsController.exportFootprint
                                 onCheckedChanged: exportSettingsController.setExportFootprint(checked)
                                 font.pixelSize: 16
@@ -978,7 +1109,7 @@ Item {
                             CheckBox {
                                 Layout.fillWidth: true
                                 id: model3dCheckbox
-                                text: "3D模型"
+                                text: qsTr("3D模型")
                                 checked: exportSettingsController.exportModel3D
                                 onCheckedChanged: exportSettingsController.setExportModel3D(checked)
                                 font.pixelSize: 16
@@ -1022,7 +1153,7 @@ Item {
                             CheckBox {
                                 Layout.fillWidth: true
                                 id: debugModeCheckbox
-                                text: "调试模式"
+                                text: qsTr("调试模式")
                                 checked: exportSettingsController.debugMode
                                 onCheckedChanged: exportSettingsController.setDebugMode(checked)
                                 font.pixelSize: 16
@@ -1065,7 +1196,7 @@ Item {
                             spacing: 8
                             Text {
                                 Layout.fillWidth: true
-                                text: "导出模式"
+                                text: qsTr("导出模式")
                                 font.pixelSize: 14
                                 font.bold: true
                                 color: AppStyle.colors.textPrimary
@@ -1079,7 +1210,7 @@ Item {
                                     spacing: 8
                                     RadioButton {
                                         id: appendModeRadio
-                                        text: "追加"
+                                        text: qsTr("追加")
                                         checked: exportSettingsController.exportMode === 0
                                         onCheckedChanged: {
                                             if (checked) {
@@ -1117,7 +1248,7 @@ Item {
                                         }
                                     }
                                     Text {
-                                        text: "保留已存在的元器件"
+                                        text: qsTr("保留已存在的元器件")
                                         font.pixelSize: 11
                                         color: AppStyle.colors.textSecondary
                                     }
@@ -1127,7 +1258,7 @@ Item {
                                     spacing: 8
                                     RadioButton {
                                         id: updateModeRadio
-                                        text: "更新"
+                                        text: qsTr("更新")
                                         checked: exportSettingsController.exportMode === 1
                                         onCheckedChanged: {
                                             if (checked) {
@@ -1165,7 +1296,7 @@ Item {
                                         }
                                     }
                                     Text {
-                                        text: "覆盖已存在的元器件"
+                                        text: qsTr("覆盖已存在的元器件")
                                         font.pixelSize: 11
                                         color: AppStyle.colors.textSecondary
                                     }
@@ -1178,7 +1309,7 @@ Item {
                 // 进度显示卡片
                 Card {
                     Layout.fillWidth: true
-                    title: "转换进度"
+                    title: qsTr("转换进度")
                     visible: exportProgressController.isExporting || exportProgressController.progress > 0
                     ColumnLayout {
                         width: parent.width
@@ -1195,7 +1326,7 @@ Item {
                             StepItem {
                                 // 移除 Layout.fillWidth，让它保持最小宽度
                                 Layout.preferredWidth: implicitWidth
-                                label: "数据抓取"
+                                label: qsTr("数据抓取")
                                 index: 1
                                 progress: exportProgressController.fetchProgress
                                 activeColor: "#22c55e" // 绿色
@@ -1215,7 +1346,7 @@ Item {
                             // 步骤 2: 处理
                             StepItem {
                                 Layout.preferredWidth: implicitWidth
-                                label: "数据处理"
+                                label: qsTr("数据处理")
                                 index: 2
                                 progress: exportProgressController.processProgress
                                 activeColor: "#3b82f6" // 蓝色
@@ -1235,7 +1366,7 @@ Item {
                             // 步骤 3: 写入
                             StepItem {
                                 Layout.preferredWidth: implicitWidth
-                                label: "文件写入"
+                                label: qsTr("文件写入")
                                 index: 3
                                 progress: exportProgressController.writeProgress
                                 activeColor: "#f59e0b" // 橙色
@@ -1317,7 +1448,7 @@ Item {
                     Layout.fillWidth: true
                     active: exportProgressController.isExporting || exportProgressController.resultsList.length > 0
                     sourceComponent: Card {
-                        title: "转换结果"
+                        title: qsTr("转换结果")
                         ColumnLayout {
                             id: resultsContent
                             width: parent.width
@@ -1332,7 +1463,7 @@ Item {
                                 Item { Layout.fillWidth: true } // Spacer
                                 
                                 ModernButton {
-                                    text: "重试失败项"
+                                    text: qsTr("重试失败项")
                                     iconName: "play" 
                                     backgroundColor: AppStyle.colors.warning
                                     hoverColor: AppStyle.colors.warningDark
@@ -1400,14 +1531,14 @@ Item {
                 // 导出统计卡片（仅在导出完成后显示）
                 Card {
                     Layout.fillWidth: true
-                    title: "导出统计"
+                    title: qsTr("导出统计")
                     visible: exportProgressController.hasStatistics
                     ColumnLayout {
                         width: parent.width
                         spacing: AppStyle.spacing.md
                         // 基本统计信息
                         Text {
-                            text: "基本统计"
+                            text: qsTr("基本统计")
                             font.pixelSize: AppStyle.fontSizes.md
                             font.bold: true
                             color: AppStyle.colors.textPrimary
@@ -1416,31 +1547,31 @@ Item {
                             Layout.fillWidth: true
                             spacing: AppStyle.spacing.lg
                             StatItem {
-                                label: "总数"
+                                label: qsTr("总数")
                                 value: exportProgressController.statisticsTotal
                                 Layout.fillWidth: true
                             }
                             StatItem {
-                                label: "成功"
+                                label: qsTr("成功")
                                 value: exportProgressController.statisticsSuccess
                                 valueColor: AppStyle.colors.success
                                 Layout.fillWidth: true
                             }
                             StatItem {
-                                label: "失败"
+                                label: qsTr("失败")
                                 value: exportProgressController.statisticsFailed
                                 valueColor: AppStyle.colors.danger
                                 Layout.fillWidth: true
                             }
                             StatItem {
-                                label: "成功率"
+                                label: qsTr("成功率")
                                 value: exportProgressController.statisticsSuccessRate.toFixed(2) + "%"
                                 Layout.fillWidth: true
                             }
                         }
                         // 时间统计信息
                         Text {
-                            text: "时间统计"
+                            text: qsTr("时间统计")
                             font.pixelSize: AppStyle.fontSizes.md
                             font.bold: true
                             color: AppStyle.colors.textPrimary
@@ -1450,22 +1581,22 @@ Item {
                             Layout.fillWidth: true
                             spacing: AppStyle.spacing.lg
                             StatItem {
-                                label: "总耗时"
+                                label: qsTr("总耗时")
                                 value: (exportProgressController.statisticsTotalDuration / 1000).toFixed(2) + "s"
                                 Layout.fillWidth: true
                             }
                             StatItem {
-                                label: "平均抓取"
+                                label: qsTr("平均抓取")
                                 value: exportProgressController.statisticsAvgFetchTime + "ms"
                                 Layout.fillWidth: true
                             }
                             StatItem {
-                                label: "平均处理"
+                                label: qsTr("平均处理")
                                 value: exportProgressController.statisticsAvgProcessTime + "ms"
                                 Layout.fillWidth: true
                             }
                             StatItem {
-                                label: "平均写入"
+                                label: qsTr("平均写入")
                                 value: exportProgressController.statisticsAvgWriteTime + "ms"
                                 Layout.fillWidth: true
                             }
@@ -1475,24 +1606,24 @@ Item {
                             Layout.fillWidth: true
                             spacing: AppStyle.spacing.lg
                             StatItem {
-                                label: "符号"
+                                label: qsTr("符号")
                                 value: exportProgressController.successSymbolCount
                                 Layout.fillWidth: true
                             }
                             StatItem {
-                                label: "封装"
+                                label: qsTr("封装")
                                 value: exportProgressController.successFootprintCount
                                 Layout.fillWidth: true
                             }
                             StatItem {
-                                label: "3D模型"
+                                label: qsTr("3D模型")
                                 value: exportProgressController.successModel3DCount
                                 Layout.fillWidth: true
                             }
                         }
                         // 网络统计信息
                         Text {
-                            text: "网络统计"
+                            text: qsTr("网络统计")
                             font.pixelSize: AppStyle.fontSizes.md
                             font.bold: true
                             color: AppStyle.colors.textPrimary
@@ -1502,22 +1633,22 @@ Item {
                             Layout.fillWidth: true
                             spacing: AppStyle.spacing.lg
                             StatItem {
-                                label: "总请求数"
+                                label: qsTr("总请求数")
                                 value: exportProgressController.statisticsTotalNetworkRequests
                                 Layout.fillWidth: true
                             }
                             StatItem {
-                                label: "重试次数"
+                                label: qsTr("重试次数")
                                 value: exportProgressController.statisticsTotalRetries
                                 Layout.fillWidth: true
                             }
                             StatItem {
-                                label: "平均延迟"
+                                label: qsTr("平均延迟")
                                 value: exportProgressController.statisticsAvgNetworkLatency + "ms"
                                 Layout.fillWidth: true
                             }
                             StatItem {
-                                label: "速率限制"
+                                label: qsTr("速率限制")
                                 value: exportProgressController.statisticsRateLimitHitCount
                                 Layout.fillWidth: true
                             }
@@ -1530,7 +1661,7 @@ Item {
 
                             // 打开详细报告按钮
                             ModernButton {
-                                text: "打开详细统计报告"
+                                text: qsTr("打开详细统计报告")
                                 iconName: "folder" // 或者其他合适的图标
                                 backgroundColor: AppStyle.colors.surface
                                 textColor: AppStyle.colors.textPrimary
@@ -1545,7 +1676,7 @@ Item {
 
                             // 打开导出目录按钮
                             ModernButton {
-                                text: "打开导出目录"
+                                text: qsTr("打开导出目录")
                                 iconName: "folder"
                                 backgroundColor: AppStyle.colors.primary
                                 hoverColor: AppStyle.colors.primaryHover
@@ -1572,9 +1703,9 @@ Item {
                         
                         // 根据是否有失败项来决定按钮文本
                         text: {
-                            if (exportProgressController.isExporting) return "正在转换...";
-                            if (exportProgressController.failureCount > 0) return "重试失败项";
-                            return "开始转换";
+                            if (exportProgressController.isExporting) return qsTr("正在转换...");
+                            if (exportProgressController.failureCount > 0) return qsTr("重试失败项");
+                            return qsTr("开始转换");
                         }
                         
                         iconName: exportProgressController.failureCount > 0 && !exportProgressController.isExporting ? "play" : "play"
@@ -1627,7 +1758,7 @@ Item {
                         // 仅在导出进行时可见
                         visible: exportProgressController.isExporting
                         
-                        text: exportProgressController.isStopping ? "正在停止..." : "停止转换"
+                        text: exportProgressController.isStopping ? qsTr("正在停止...") : qsTr("停止转换")
                         iconName: "close"
                         font.pixelSize: AppStyle.fontSizes.xl
                         

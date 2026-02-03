@@ -1,4 +1,5 @@
-﻿#include "src/services/ConfigService.h"
+﻿#include "src/core/LanguageManager.h"
+#include "src/services/ConfigService.h"
 #include "src/services/ExportService_Pipeline.h"
 #include "src/ui/viewmodels/ComponentListViewModel.h"
 #include "src/ui/viewmodels/ExportProgressViewModel.h"
@@ -41,6 +42,9 @@ int main(int argc, char* argv[]) {
     // 初始化配置服务
     EasyKiConverter::ConfigService::instance()->loadConfig();
 
+    // 初始化语言管理器
+    EasyKiConverter::LanguageManager::instance();
+
     // 创建 Service 实例（使用流水线架构）
     EasyKiConverter::ComponentService* componentService = new EasyKiConverter::ComponentService(&app);
     EasyKiConverter::ExportServicePipeline* exportService = new EasyKiConverter::ExportServicePipeline(&app);
@@ -63,6 +67,26 @@ int main(int argc, char* argv[]) {
                              1,
                              0,
                              "AppStyle");
+
+    // 注册 LanguageManager 到 QML
+    qmlRegisterSingletonType<QObject>(
+        "EasyKiconverter_Cpp_Version",
+        1,
+        0,
+        "LanguageManager",
+        [](QQmlEngine*, QJSEngine*) -> QObject* { return EasyKiConverter::LanguageManager::instance(); });
+
+    // 连接语言管理器的刷新信号到引擎的重新翻译
+    QObject::connect(
+        EasyKiConverter::LanguageManager::instance(),
+        &EasyKiConverter::LanguageManager::refreshRequired,
+        &engine,
+        [&engine]() {
+            // 重新翻译 QML 引擎
+            engine.retranslate();
+            qDebug() << "QML engine retranslated";
+        },
+        Qt::QueuedConnection);
 
     // 将 ViewModel 注册到 QML 上下文
     engine.rootContext()->setContextProperty("componentListViewModel", componentListViewModel);

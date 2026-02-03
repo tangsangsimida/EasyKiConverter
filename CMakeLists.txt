@@ -186,6 +186,8 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/icons/Grey_light_bulb.svg
         resources/imgs/background.jpg
         src/ui/qml/styles/qmldir
+        resources/translations/translations_easykiconverter_en.qm
+        resources/translations/translations_easykiconverter_zh_CN.qm
 )
 
 # 设置目标属性
