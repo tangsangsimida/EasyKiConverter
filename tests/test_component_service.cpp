@@ -1,13 +1,12 @@
-﻿#include <QtTest/QtTest>
+﻿#include "models/ComponentData.h"
+#include "services/ComponentService.h"
 
 #include <QDir>
 #include <QFile>
 #include <QJsonObject>
 #include <QSignalSpy>
 #include <QTextStream>
-
-#include "models/ComponentData.h"
-#include "services/ComponentService.h"
+#include <QtTest/QtTest>
 
 using namespace EasyKiConverter;
 
@@ -159,7 +158,7 @@ void TestComponentService::testParseBomFile() {
     out << "C1234,10,电阻\n";
     out << "C5678,5,电容\n";
     out << "C9012,20,电感\n";
-    out << "D1234,3,二极管\n";  // 无效的元件编号
+    out << "D1234,3,二极管\n";   // 无效的元件编号
     out << "C345,2,无效编号\n";  // 数字不足4位
     tempCsv.close();
 

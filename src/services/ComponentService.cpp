@@ -501,104 +501,106 @@ QStringList ComponentService::parseExcelBomFile(const QString& filePath) {
 
     QStringList componentIds;
 
-    // 尝试使用 QXlsx 库解析 Excel 文件
-    // 如果 QXlsx 不可用，则尝试使用其他方法
-    #ifdef QT_XLSX_LIB
-        QXlsx::Document xlsx(filePath);
-        if (!xlsx.load()) {
-            qWarning() << "Failed to load Excel file:" << filePath;
-            return componentIds;
-        }
+// 尝试使用 QXlsx 库解析 Excel 文件
+// 如果 QXlsx 不可用，则尝试使用其他方法
+#ifdef QT_XLSX_LIB
+    QXlsx::Document xlsx(filePath);
+    if (!xlsx.load()) {
+        qWarning() << "Failed to load Excel file:" << filePath;
+        return componentIds;
+    }
 
-        // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
-        QRegularExpression re("C\\d{4,}");
+    // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
+    QRegularExpression re("C\\d{4,}");
 
-        // 遍历所有工作表
-        for (const QString& sheetName : xlsx.sheetNames()) {
-            xlsx.selectSheet(sheetName);
+    // 遍历所有工作表
+    for (const QString& sheetName : xlsx.sheetNames()) {
+        xlsx.selectSheet(sheetName);
 
-            // 遍历所有单元格
-            QXlsx::CellRange range = xlsx.dimension();
-            for (int row = range.firstRow(); row <= range.lastRow(); ++row) {
-                for (int col = range.firstColumn(); col <= range.lastColumn(); ++col) {
-                    QXlsx::Cell* cell = xlsx.cellAt(row, col);
-                    if (!cell) {
-                        continue;
-                    }
+        // 遍历所有单元格
+        QXlsx::CellRange range = xlsx.dimension();
+        for (int row = range.firstRow(); row <= range.lastRow(); ++row) {
+            for (int col = range.firstColumn(); col <= range.lastColumn(); ++col) {
+                QXlsx::Cell* cell = xlsx.cellAt(row, col);
+                if (!cell) {
+                    continue;
+                }
 
-                    QVariant value = cell->readValue();
-                    if (value.isNull() || !value.isValid()) {
-                        continue;
-                    }
+                QVariant value = cell->readValue();
+                if (value.isNull() || !value.isValid()) {
+                    continue;
+                }
 
-                    QString cellText = value.toString().trimmed();
+                QString cellText = value.toString().trimmed();
 
-                    // 检查是否匹配元件ID格式
-                    QRegularExpressionMatch match = re.match(cellText);
-                    if (match.hasMatch()) {
-                        QString componentId = match.captured();
-                        if (!componentIds.contains(componentId)) {
-                            componentIds.append(componentId);
-                            qDebug() << "Found component ID:" << componentId << "at" << sheetName << ":" << row << "," << col;
-                        }
+                // 检查是否匹配元件ID格式
+                QRegularExpressionMatch match = re.match(cellText);
+                if (match.hasMatch()) {
+                    QString componentId = match.captured();
+                    if (!componentIds.contains(componentId)) {
+                        componentIds.append(componentId);
+                        qDebug() << "Found component ID:" << componentId << "at" << sheetName << ":" << row << ","
+                                 << col;
                     }
                 }
             }
         }
-    #else
-        // 如果没有 QXlsx 库，尝试使用 Python 脚本解析
-        qWarning() << "QXlsx library not available, trying alternative method";
+    }
+#else
+    // 如果没有 QXlsx 库，尝试使用 Python 脚本解析
+    qWarning() << "QXlsx library not available, trying alternative method";
 
-        // 尝试将 Excel 转换为 CSV 格式
-        QString pythonScript = QString(
-            "import pandas as pd\n"
-            "import sys\n"
-            "\n"
-            "try:\n"
-            "    # 读取 Excel 文件\n"
-            "    df = pd.read_excel(r'%1', sheet_name=None)\n"
-            "    \n"
-            "    # 合并所有工作表\n"
-            "    all_data = pd.concat(df.values(), ignore_index=True)\n"
-            "    \n"
-            "    # 保存为 CSV\n"
-            "    all_data.to_csv(r'%2', index=False, encoding='utf-8')\n"
-            "    print('SUCCESS')\n"
-            "except Exception as e:\n"
-            "    print('ERROR:', str(e), file=sys.stderr)\n"
-            "    sys.exit(1)\n"
-        ).arg(filePath, filePath + ".temp.csv");
+    // 尝试将 Excel 转换为 CSV 格式
+    QString pythonScript = QString(
+                               "import pandas as pd\n"
+                               "import sys\n"
+                               "\n"
+                               "try:\n"
+                               "    # 读取 Excel 文件\n"
+                               "    df = pd.read_excel(r'%1', sheet_name=None)\n"
+                               "    \n"
+                               "    # 合并所有工作表\n"
+                               "    all_data = pd.concat(df.values(), ignore_index=True)\n"
+                               "    \n"
+                               "    # 保存为 CSV\n"
+                               "    all_data.to_csv(r'%2', index=False, encoding='utf-8')\n"
+                               "    print('SUCCESS')\n"
+                               "except Exception as e:\n"
+                               "    print('ERROR:', str(e), file=sys.stderr)\n"
+                               "    sys.exit(1)\n")
+                               .arg(filePath, filePath + ".temp.csv");
 
-        // 创建临时 Python 脚本文件
-        QString tempScriptPath = QDir::tempPath() + "/excel_to_csv_" + QUuid::createUuid().toString(QUuid::WithoutBraces) + ".py";
-        QFile tempScript(tempScriptPath);
+    // 创建临时 Python 脚本文件
+    QString tempScriptPath =
+        QDir::tempPath() + "/excel_to_csv_" + QUuid::createUuid().toString(QUuid::WithoutBraces) + ".py";
+    QFile tempScript(tempScriptPath);
 
-        if (tempScript.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&tempScript);
-            out.setEncoding(QStringConverter::Utf8);
-            out << pythonScript;
-            tempScript.close();
+    if (tempScript.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&tempScript);
+        out.setEncoding(QStringConverter::Utf8);
+        out << pythonScript;
+        tempScript.close();
 
-            // 执行 Python 脚本
-            QProcess process;
-            process.start("python", QStringList() << tempScriptPath);
-            process.waitForFinished(30000);  // 30秒超时
+        // 执行 Python 脚本
+        QProcess process;
+        process.start("python", QStringList() << tempScriptPath);
+        process.waitForFinished(30000);  // 30秒超时
 
-            if (process.exitCode() == 0) {
-                QString tempCsvPath = filePath + ".temp.csv";
-                componentIds = parseCsvBomFile(tempCsvPath);
+        if (process.exitCode() == 0) {
+            QString tempCsvPath = filePath + ".temp.csv";
+            componentIds = parseCsvBomFile(tempCsvPath);
 
-                // 删除临时文件
-                QFile::remove(tempCsvPath);
-            } else {
-                qWarning() << "Failed to convert Excel to CSV:" << process.readAllStandardError();
-            }
-
-            QFile::remove(tempScriptPath);
+            // 删除临时文件
+            QFile::remove(tempCsvPath);
         } else {
-            qWarning() << "Failed to create temporary Python script";
+            qWarning() << "Failed to convert Excel to CSV:" << process.readAllStandardError();
         }
-    #endif
+
+        QFile::remove(tempScriptPath);
+    } else {
+        qWarning() << "Failed to create temporary Python script";
+    }
+#endif
 
     return componentIds;
 }

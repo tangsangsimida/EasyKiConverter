@@ -149,7 +149,7 @@ private slots:
      */
     void handleFetchError(const QString& componentId, const QString& error);
 
-    private:
+private:
     /**
      * @brief 检查元件是否已存在
      *

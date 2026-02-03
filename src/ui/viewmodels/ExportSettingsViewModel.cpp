@@ -23,8 +23,12 @@ ExportSettingsViewModel::ExportSettingsViewModel(ExportService* exportService, Q
     // 连接 ExportService 信号
     if (m_exportService) {
         connect(m_exportService, &ExportService::exportProgress, this, &ExportSettingsViewModel::handleExportProgress);
-        connect(m_exportService, &ExportService::componentExported, this, &ExportSettingsViewModel::handleComponentExported);
-        connect(m_exportService, &ExportService::exportCompleted, this, &ExportSettingsViewModel::handleExportCompleted);
+        connect(m_exportService,
+                &ExportService::componentExported,
+                this,
+                &ExportSettingsViewModel::handleComponentExported);
+        connect(
+            m_exportService, &ExportService::exportCompleted, this, &ExportSettingsViewModel::handleExportCompleted);
         connect(m_exportService, &ExportService::exportFailed, this, &ExportSettingsViewModel::handleExportFailed);
         qDebug() << "ExportSettingsViewModel: Connected to ExportService signals";
     }
@@ -141,12 +145,9 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
     options.debugMode = m_debugMode;
 
     qDebug() << "Export options:"
-             << "OutputPath:" << options.outputPath
-             << "LibName:" << options.libName
-             << "Symbol:" << options.exportSymbol
-             << "Footprint:" << options.exportFootprint
-             << "3D Model:" << options.exportModel3D
-             << "Update Mode:" << options.updateMode
+             << "OutputPath:" << options.outputPath << "LibName:" << options.libName
+             << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
+             << "3D Model:" << options.exportModel3D << "Update Mode:" << options.updateMode
              << "Debug Mode:" << options.debugMode;
 
     // 设置导出状态
