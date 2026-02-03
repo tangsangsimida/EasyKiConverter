@@ -167,16 +167,6 @@ void ComponentListViewModel::selectBomFile(const QString& filePath) {
     emit bomResultChanged();
 }
 
-void ComponentListViewModel::handleComponentDataFetched(const QString& componentId, const ComponentData& data) {
-    qDebug() << "Component data fetched for:" << componentId;
-    // TODO: 更新 UI 显示
-}
-
-void ComponentListViewModel::handleComponentDataFetchFailed(const QString& componentId, const QString& error) {
-    qWarning() << "Component data fetch failed for:" << componentId << "Error:" << error;
-    // TODO: 更新 UI 显示
-}
-
 void ComponentListViewModel::fetchComponentData(const QString& componentId, bool fetch3DModel) {
     qDebug() << "Fetching component data for:" << componentId;
     m_service->setOutputPath(m_outputPath);
