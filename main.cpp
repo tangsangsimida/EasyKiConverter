@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
     EasyKiConverter::ComponentListViewModel* componentListViewModel =
         new EasyKiConverter::ComponentListViewModel(componentService, &app);
     EasyKiConverter::ExportSettingsViewModel* exportSettingsViewModel =
-        new EasyKiConverter::ExportSettingsViewModel(&app);
+        new EasyKiConverter::ExportSettingsViewModel(exportService, &app);
     EasyKiConverter::ExportProgressViewModel* exportProgressViewModel =
         new EasyKiConverter::ExportProgressViewModel(exportService, componentService, &app);
     EasyKiConverter::ThemeSettingsViewModel* themeSettingsViewModel = new EasyKiConverter::ThemeSettingsViewModel(&app);
