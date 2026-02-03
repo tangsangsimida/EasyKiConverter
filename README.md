@@ -1,8 +1,10 @@
-﻿# EasyKiConverter
 
-[English](README_en.md) | 中文
-
+<h1 align="center">EasyKiConverter</h1>
 ---
+<p align="center">
+  <a href="README_en.md">English</a> | 中文
+</p>
+
 
 <p align="center">
   <a href="https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/build.yml">
@@ -32,8 +34,6 @@
   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PR Welcome" />
   <img src="https://img.shields.io/github/contributors/tangsangsimida/EasyKiConverter_QT" alt="Contributors" />
 </p>
-
-
 <p align="center">
   <img src="https://img.shields.io/github/created-at/tangsangsimida/EasyKiConverter_QT" alt="Created at" />
   <img src="https://img.shields.io/github/issues/tangsangsimida/EasyKiConverter_QT" alt="Issues" />
