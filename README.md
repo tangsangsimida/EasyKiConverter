@@ -1,6 +1,6 @@
 
 <h1 align="center">EasyKiConverter</h1>
----
+--- 
 <p align="center">
   <a href="README_en.md">English</a> | 中文
 </p>
@@ -42,7 +42,7 @@
   <img src="https://img.shields.io/badge/made%20with-C%2B%2B17-blue" alt="Made with C++17" />
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey" alt="Platform" />
 </p>
----
+--- 
 
 **EasyKiConverter** 是一个基于 Qt 6 和 MVVM 架构的现代化 C++ 桌面工具，专为电子工程师设计，旨在将嘉立创 (LCSC) 和 EasyEDA 的元件数据高效转换为 KiCad 库文件。
 
