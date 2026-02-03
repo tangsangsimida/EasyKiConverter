@@ -70,11 +70,9 @@ int main(int argc, char* argv[]) {
 
     // 注册 LanguageManager 到 QML
     qmlRegisterSingletonType<QObject>(
-        "EasyKiconverter_Cpp_Version",
-        1,
-        0,
-        "LanguageManager",
-        [](QQmlEngine*, QJSEngine*) -> QObject* { return EasyKiConverter::LanguageManager::instance(); });
+        "EasyKiconverter_Cpp_Version", 1, 0, "LanguageManager", [](QQmlEngine*, QJSEngine*) -> QObject* {
+            return EasyKiConverter::LanguageManager::instance();
+        });
 
     // 连接语言管理器的刷新信号到引擎的重新翻译
     QObject::connect(

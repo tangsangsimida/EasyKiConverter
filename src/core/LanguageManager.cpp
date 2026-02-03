@@ -4,7 +4,6 @@
 #include <QDebug>
 #include <QLocale>
 #include <QTranslator>
-#include <QCoreApplication>
 
 namespace EasyKiConverter {
 
@@ -101,7 +100,9 @@ void LanguageManager::installTranslator(const QString& languageCode) {
     }
 
     // Qt 6 qml_module 资源路径
-    QString qmPath = QString(":/qt/qml/EasyKiconverter_Cpp_Version/resources/translations/translations_easykiconverter_%1.qm").arg(languageCode);
+    QString qmPath =
+        QString(":/qt/qml/EasyKiconverter_Cpp_Version/resources/translations/translations_easykiconverter_%1.qm")
+            .arg(languageCode);
 
     QTranslator* translator = new QTranslator(this);
 
