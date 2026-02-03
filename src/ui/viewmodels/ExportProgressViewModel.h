@@ -98,42 +98,6 @@ public:
     QString statisticsSummary() const {
         return m_statisticsSummary;
     }
-    int statisticsTotal() const {
-        return m_statistics.total;
-    }
-    int statisticsSuccess() const {
-        return m_statistics.success;
-    }
-    int statisticsFailed() const {
-        return m_statistics.failed;
-    }
-    double statisticsSuccessRate() const {
-        return m_statistics.getSuccessRate();
-    }
-    qint64 statisticsTotalDuration() const {
-        return m_statistics.totalDurationMs;
-    }
-    qint64 statisticsAvgFetchTime() const {
-        return m_statistics.avgFetchTimeMs;
-    }
-    qint64 statisticsAvgProcessTime() const {
-        return m_statistics.avgProcessTimeMs;
-    }
-    qint64 statisticsAvgWriteTime() const {
-        return m_statistics.avgWriteTimeMs;
-    }
-    int statisticsTotalNetworkRequests() const {
-        return m_statistics.totalNetworkRequests;
-    }
-    int statisticsTotalRetries() const {
-        return m_statistics.totalRetries;
-    }
-    qint64 statisticsAvgNetworkLatency() const {
-        return m_statistics.avgNetworkLatencyMs;
-    }
-    int statisticsRateLimitHitCount() const {
-        return m_statistics.rateLimitHitCount;
-    }
 
     int statisticsTotal() const {
         return m_resultsList.size();
