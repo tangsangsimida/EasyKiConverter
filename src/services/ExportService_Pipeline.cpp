@@ -380,7 +380,7 @@ void ExportServicePipeline::checkPipelineCompletion() {
         m_isExporting.storeRelease(0);
         m_isStopping.storeRelease(0);
         m_isCancelled.storeRelease(0);
-        
+
         QTimer::singleShot(0, this, [this]() { cleanupPipeline(); });
         qDebug() << "Asynchronous cleanup and statistics generation completed.";
     }));

@@ -72,8 +72,13 @@ signals:
      * @param footprintSuccess 封装是否导出成功
      * @param model3DSuccess 3D模型是否导出成功
      */
-    void componentExported(const QString& componentId, bool success, const QString& message, int stage = -1,
-                           bool symbolSuccess = false, bool footprintSuccess = false, bool model3DSuccess = false);
+    void componentExported(const QString& componentId,
+                           bool success,
+                           const QString& message,
+                           int stage = -1,
+                           bool symbolSuccess = false,
+                           bool footprintSuccess = false,
+                           bool model3DSuccess = false);
     void exportCompleted(int totalCount, int successCount);
     void exportFailed(const QString& error);
 

@@ -54,7 +54,7 @@ void WriteWorker::run() {
     writeTimer.start();
 
     m_status->addDebugLog(QString("WriteWorker started for component: %1").arg(m_status->componentId));
-    
+
     // 初始化所有写入状态
     m_status->symbolWritten = false;
     m_status->footprintWritten = false;
@@ -92,12 +92,14 @@ void WriteWorker::run() {
     // 串行写入文件，每个函数独立更新自己的状态
     if (m_exportSymbol && m_status->symbolData) {
         writeSymbolFile(*m_status);
-        if (m_isAborted.loadRelaxed()) goto cleanup;
+        if (m_isAborted.loadRelaxed())
+            goto cleanup;
     }
 
     if (m_exportFootprint && m_status->footprintData) {
         writeFootprintFile(*m_status);
-        if (m_isAborted.loadRelaxed()) goto cleanup;
+        if (m_isAborted.loadRelaxed())
+            goto cleanup;
     }
 
     if (m_exportModel3D && m_status->model3DData && !m_status->model3DObjRaw.isEmpty()) {
@@ -127,7 +129,7 @@ cleanup:
     if (m_exportModel3D && !m_status->model3DWritten) {
         finalSuccess = false;
     }
-    
+
     m_status->writeSuccess = finalSuccess;
     m_status->writeMessage = finalSuccess ? "Write completed successfully" : "Failed to write one or more files";
 
@@ -146,14 +148,14 @@ cleanup:
 
 bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
     if (!status.symbolData) {
-        return true; // 没有数据可写，不应视为失败
+        return true;  // 没有数据可写，不应视为失败
     }
 
     QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_outputPath, status.componentId);
 
     if (!m_symbolExporter.exportSymbol(*status.symbolData, tempFilePath)) {
         status.addDebugLog(QString("ERROR: Failed to write symbol file: %1").arg(tempFilePath));
-        return false; // 导出器报告失败
+        return false;  // 导出器报告失败
     }
 
     // 验证文件是否真的被写入
@@ -163,13 +165,13 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
         return true;
     } else {
         status.addDebugLog(QString("ERROR: Symbol file not found after export: %1").arg(tempFilePath));
-        return false; // 文件未找到，视为失败
+        return false;  // 文件未找到，视为失败
     }
 }
 
 bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     if (!status.footprintData) {
-        return true; // 没有数据可写，不应视为失败
+        return true;  // 没有数据可写，不应视为失败
     }
 
     QString footprintLibPath = QString("%1/%2.pretty").arg(m_outputPath, m_libName);
@@ -208,7 +210,7 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
 
     if (!exportSuccess) {
         status.addDebugLog(QString("ERROR: Failed to write footprint file (exporter): %1").arg(filePath));
-        return false; // 导出器报告失败
+        return false;  // 导出器报告失败
     }
 
     // 验证文件是否真的被写入
@@ -218,13 +220,13 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
         return true;
     } else {
         status.addDebugLog(QString("ERROR: Footprint file not found after export: %1").arg(filePath));
-        return false; // 文件未找到，视为失败
+        return false;  // 文件未找到，视为失败
     }
 }
 
 bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     if (!status.model3DData || status.model3DObjRaw.isEmpty()) {
-        return true; // 没有 WRL 数据可写，不应视为失败 (如果只请求 STEP，则应在ProcessWorker中处理)
+        return true;  // 没有 WRL 数据可写，不应视为失败 (如果只请求 STEP，则应在ProcessWorker中处理)
     }
 
     QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_outputPath, m_libName);
@@ -247,7 +249,7 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
             status.addDebugLog(QString("3D model WRL file written: %1").arg(wrlFilePath));
         } else {
             status.addDebugLog(QString("ERROR: WRL file not found after export: %1").arg(wrlFilePath));
-            wrlSuccess = false; // 文件不存在，视为写入失败
+            wrlSuccess = false;  // 文件不存在，视为写入失败
         }
     } else {
         status.addDebugLog(QString("ERROR: Failed to write WRL file: %1").arg(wrlFilePath));
