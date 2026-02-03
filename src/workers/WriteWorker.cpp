@@ -54,22 +54,21 @@ void WriteWorker::run() {
     writeTimer.start();
 
     m_status->addDebugLog(QString("WriteWorker started for component: %1").arg(m_status->componentId));
+    
+    // 初始化所有写入状态
+    m_status->symbolWritten = false;
+    m_status->footprintWritten = false;
+    m_status->model3DWritten = false;
 
-    // CRITICAL FIX: If fetch or process failed, DO NOT CREATE ANY FILES.
-    // Just report write success (as "finished") but with a note, or keep it failed.
-    // The user wants "export failure" status but "progress complete".
-    // Since this is the Write stage, if previous stages failed, there is nothing to write.
     if (!m_status->fetchSuccess || !m_status->processSuccess) {
         m_status->writeDurationMs = 0;
-        m_status->writeSuccess = false;  // It failed to write because there was nothing to write
+        m_status->writeSuccess = false;
         m_status->writeMessage = "Skipped writing due to previous stage failure";
         m_status->addDebugLog("Skipping write stage because fetch or process failed.");
         emit writeCompleted(m_status);
         return;
     }
 
-    // SANITY CHECK: Ensure we actually have valid data to write
-    // This prevents creating empty files if ProcessWorker somehow passed empty data
     if ((m_exportSymbol && (!m_status->symbolData || m_status->symbolData->info().name.isEmpty())) &&
         (m_exportFootprint && (!m_status->footprintData || m_status->footprintData->info().name.isEmpty()))) {
         m_status->writeDurationMs = writeTimer.elapsed();
@@ -90,31 +89,19 @@ void WriteWorker::run() {
         return;
     }
 
-    bool allSuccess = true;
-
-    // 串行写入文件，避免创建线程池的高开销
+    // 串行写入文件，每个函数独立更新自己的状态
     if (m_exportSymbol && m_status->symbolData) {
-        if (!writeSymbolFile(*m_status)) {
-            allSuccess = false;
-        }
-        if (m_isAborted.loadRelaxed()) {
-            goto cleanup;
-        }
+        writeSymbolFile(*m_status);
+        if (m_isAborted.loadRelaxed()) goto cleanup;
     }
 
     if (m_exportFootprint && m_status->footprintData) {
-        if (!writeFootprintFile(*m_status)) {
-            allSuccess = false;
-        }
-        if (m_isAborted.loadRelaxed()) {
-            goto cleanup;
-        }
+        writeFootprintFile(*m_status);
+        if (m_isAborted.loadRelaxed()) goto cleanup;
     }
 
     if (m_exportModel3D && m_status->model3DData && !m_status->model3DObjRaw.isEmpty()) {
-        if (!write3DModelFile(*m_status)) {
-            allSuccess = false;
-        }
+        write3DModelFile(*m_status);
     }
 
 cleanup:
@@ -123,36 +110,35 @@ cleanup:
         m_status->writeSuccess = false;
         m_status->writeMessage = "Export cancelled";
         m_status->isCancelled = true;
-        m_status->symbolWritten = false;
-        m_status->footprintWritten = false;
-        m_status->model3DWritten = false;
+        // 状态已在开头初始化为 false，无需再次设置
         m_status->addDebugLog(QString("WriteWorker cancelled for component: %1").arg(m_status->componentId));
         emit writeCompleted(m_status);
         return;
     }
 
-    if (!allSuccess) {
-        m_status->writeDurationMs = writeTimer.elapsed();
-        m_status->writeSuccess = false;
-        m_status->writeMessage = "Failed to write one or more files";
-        m_status->symbolWritten = false;
-        m_status->footprintWritten = false;
-        m_status->model3DWritten = false;
-        m_status->addDebugLog(
-            QString("ERROR: Failed to write one or more files, Duration: %1ms").arg(m_status->writeDurationMs));
-        emit writeCompleted(m_status);
-        return;
+    // 根据用户请求的导出项和实际完成情况，决定最终的成功状态
+    bool finalSuccess = true;
+    if (m_exportSymbol && !m_status->symbolWritten) {
+        finalSuccess = false;
     }
+    if (m_exportFootprint && !m_status->footprintWritten) {
+        finalSuccess = false;
+    }
+    if (m_exportModel3D && !m_status->model3DWritten) {
+        finalSuccess = false;
+    }
+    
+    m_status->writeSuccess = finalSuccess;
+    m_status->writeMessage = finalSuccess ? "Write completed successfully" : "Failed to write one or more files";
 
     if (m_debugMode) {
         exportDebugData(*m_status);
     }
 
     m_status->writeDurationMs = writeTimer.elapsed();
-    m_status->writeSuccess = true;
-    m_status->writeMessage = "Write completed successfully";
-    m_status->addDebugLog(QString("WriteWorker completed successfully for component: %1, Duration: %2ms")
+    m_status->addDebugLog(QString("WriteWorker completed for component: %1, Success: %2, Duration: %3ms")
                               .arg(m_status->componentId)
+                              .arg(m_status->writeSuccess)
                               .arg(m_status->writeDurationMs));
 
     emit writeCompleted(m_status);
@@ -160,25 +146,30 @@ cleanup:
 
 bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
     if (!status.symbolData) {
-        return true;
+        return true; // 没有数据可写，不应视为失败
     }
-
 
     QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_outputPath, status.componentId);
 
     if (!m_symbolExporter.exportSymbol(*status.symbolData, tempFilePath)) {
         status.addDebugLog(QString("ERROR: Failed to write symbol file: %1").arg(tempFilePath));
-        return false;
+        return false; // 导出器报告失败
     }
 
-    status.addDebugLog(QString("Symbol file written: %1").arg(tempFilePath));
-    status.symbolWritten = true;
-    return true;
+    // 验证文件是否真的被写入
+    if (QFile::exists(tempFilePath)) {
+        status.addDebugLog(QString("Symbol file written: %1").arg(tempFilePath));
+        status.symbolWritten = true;
+        return true;
+    } else {
+        status.addDebugLog(QString("ERROR: Symbol file not found after export: %1").arg(tempFilePath));
+        return false; // 文件未找到，视为失败
+    }
 }
 
 bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     if (!status.footprintData) {
-        return true;
+        return true; // 没有数据可写，不应视为失败
     }
 
     QString footprintLibPath = QString("%1/%2.pretty").arg(m_outputPath, m_libName);
@@ -189,7 +180,10 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
 
     QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_outputPath, m_libName);
     if (m_exportModel3D) {
-        createOutputDirectory(modelsDirPath);
+        // 确保3D模型目录存在，但它的创建失败不直接导致封装写入失败
+        if (!createOutputDirectory(modelsDirPath)) {
+            status.addDebugLog(QString("WARNING: Failed to create 3D models directory: %1").arg(modelsDirPath));
+        }
     }
 
     QString footprintName = status.footprintData->info().name;
@@ -213,130 +207,77 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     }
 
     if (!exportSuccess) {
-        status.addDebugLog(QString("ERROR: Failed to write footprint file: %1").arg(filePath));
-        return false;
+        status.addDebugLog(QString("ERROR: Failed to write footprint file (exporter): %1").arg(filePath));
+        return false; // 导出器报告失败
     }
 
-    // 验证文件是否真的被写入 (v3.0.5+)
-    if (!QFile::exists(filePath)) {
+    // 验证文件是否真的被写入
+    if (QFile::exists(filePath)) {
+        status.addDebugLog(QString("Footprint file written: %1").arg(filePath));
+        status.footprintWritten = true;
+        return true;
+    } else {
         status.addDebugLog(QString("ERROR: Footprint file not found after export: %1").arg(filePath));
-        return false;
+        return false; // 文件未找到，视为失败
     }
-
-    // 只有在成功导出且文件存在时才设置标志
-    status.addDebugLog(QString("Footprint file written: %1").arg(filePath));
-    status.footprintWritten = true;
-    return true;
 }
 
 bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     if (!status.model3DData || status.model3DObjRaw.isEmpty()) {
-        return true;
+        return true; // 没有 WRL 数据可写，不应视为失败 (如果只请求 STEP，则应在ProcessWorker中处理)
     }
-
 
     QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_outputPath, m_libName);
-
     if (!createOutputDirectory(modelsDirPath)) {
         status.addDebugLog(QString("ERROR: Failed to create 3D models directory: %1").arg(modelsDirPath));
-
         return false;
     }
-
 
     QString footprintName = status.footprintData ? status.footprintData->info().name : status.componentId;
 
-
     bool wrlSuccess = false;
-
     bool stepSuccess = false;
 
-
     // 导出 WRL 文件
-
-
     QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
-
-
     wrlSuccess = m_model3DExporter.exportToWrl(*status.model3DData, wrlFilePath);
 
-
     if (wrlSuccess) {
-        // 验证 WRL 文件是否真的被写入 (v3.0.5+)
-
-
         if (QFile::exists(wrlFilePath)) {
             status.addDebugLog(QString("3D model WRL file written: %1").arg(wrlFilePath));
-
-
         } else {
             status.addDebugLog(QString("ERROR: WRL file not found after export: %1").arg(wrlFilePath));
-
-
-            return false;
+            wrlSuccess = false; // 文件不存在，视为写入失败
         }
-
-
     } else {
         status.addDebugLog(QString("ERROR: Failed to write WRL file: %1").arg(wrlFilePath));
-
-
-        return false;
     }
 
-
     // 导出 STEP 文件（如果有）
-
-
     if (!status.model3DStepRaw.isEmpty()) {
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
-
-
         QFile stepFile(stepFilePath);
-
-
         if (stepFile.open(QIODevice::WriteOnly)) {
             stepFile.write(status.model3DStepRaw);
-
-
             stepFile.close();
-
-
-            // 验证 STEP 文件是否真的被写入 (v3.0.5+)
-
 
             if (QFile::exists(stepFilePath)) {
                 status.addDebugLog(QString("3D model STEP file written: %1").arg(stepFilePath));
-
-
                 stepSuccess = true;
-
-
             } else {
                 status.addDebugLog(QString("WARNING: STEP file not found after write: %1").arg(stepFilePath));
-
-
-                // STEP 文件失败不影响整体成功，只要有 WRL 就算成功
+                // STEP 文件失败不影响整体 3D 模型成功，只要有 WRL 就算成功
             }
-
-
         } else {
             status.addDebugLog(QString("ERROR: Failed to write STEP file: %1").arg(stepFilePath));
-
-
-            // STEP 文件失败不影响整体成功，只要有 WRL 就算成功
+            // STEP 文件失败不影响整体 3D 模型成功
         }
     }
 
+    // 只有在 WRL 文件成功导出且存在时才设置 model3DWritten 标志
+    status.model3DWritten = wrlSuccess;
 
-    // 只有在至少 WRL 文件成功导出且存在时才设置标志
-
-
-    if (wrlSuccess) {
-        status.model3DWritten = true;
-    }
-
-
+    // 整个3D模型导出成功，取决于 WRL 是否成功。STEP 失败不影响此结果。
     return wrlSuccess;
 }
 

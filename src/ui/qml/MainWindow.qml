@@ -1559,40 +1559,86 @@ Item {
                         }
                     }
                 }
-                // 导出按钮
-                ModernButton {
-                    id: exportButton
-                    Layout.preferredHeight: 56
+                // 导出按钮组
+                RowLayout {
                     Layout.fillWidth: true
-                    text: exportProgressController.isStopping ? "正在停止..." : (exportProgressController.isExporting ? "结束转换" : "开始转换")
-                    iconName: exportProgressController.isExporting ? "close" : "play"
-                    font.pixelSize: AppStyle.fontSizes.xxl
-                    
-                    backgroundColor: exportProgressController.isStopping ? AppStyle.colors.textDisabled : (exportProgressController.isExporting ? AppStyle.colors.danger : AppStyle.colors.primary)
-                    hoverColor: exportProgressController.isExporting ? AppStyle.colors.dangerDark : AppStyle.colors.primaryHover
-                    pressedColor: exportProgressController.isExporting ? AppStyle.colors.dangerDark : AppStyle.colors.primaryPressed
+                    spacing: AppStyle.spacing.md
 
-                    // 防止重复点击：当正在停止时禁用按钮
-                    enabled: !exportProgressController.isStopping &&
-                             ((componentListController.componentCount > 0 &&
-                             (exportSettingsController.exportSymbol || exportSettingsController.exportFootprint || exportSettingsController.exportModel3D)) ||
-                             exportProgressController.isExporting)
+                    // “开始转换”或“重试”按钮
+                    ModernButton {
+                        id: exportButton
+                        Layout.preferredHeight: 56
+                        Layout.fillWidth: true
+                        
+                        // 根据是否有失败项来决定按钮文本
+                        text: {
+                            if (exportProgressController.isExporting) return "正在转换...";
+                            if (exportProgressController.failureCount > 0) return "重试失败项";
+                            return "开始转换";
+                        }
+                        
+                        iconName: exportProgressController.failureCount > 0 && !exportProgressController.isExporting ? "play" : "play"
+                        font.pixelSize: AppStyle.fontSizes.xxl
+                        
+                        backgroundColor: {
+                           if (exportProgressController.isExporting) return AppStyle.colors.textDisabled;
+                           if (exportProgressController.failureCount > 0) return AppStyle.colors.warning;
+                           return AppStyle.colors.primary;
+                        }
+                        hoverColor: {
+                           if (exportProgressController.failureCount > 0 && !exportProgressController.isExporting) return AppStyle.colors.warningDark;
+                           return AppStyle.colors.primaryHover;
+                        }
+                        pressedColor: {
+                           if (exportProgressController.failureCount > 0 && !exportProgressController.isExporting) return AppStyle.colors.warningDark;
+                           return AppStyle.colors.primaryPressed;
+                        }
 
-                    onClicked: {
-                        if (exportProgressController.isExporting) {
+                        // 导出进行中时禁用此按钮
+                        enabled: !exportProgressController.isExporting && 
+                                 (componentListController.componentCount > 0 &&
+                                 (exportSettingsController.exportSymbol || exportSettingsController.exportFootprint || exportSettingsController.exportModel3D))
+
+                        onClicked: {
+                            if (exportProgressController.failureCount > 0) {
+                                exportProgressController.retryFailedComponents();
+                            } else {
+                                exportProgressController.startExport(
+                                    componentListController.componentList,
+                                    exportSettingsController.outputPath,
+                                    exportSettingsController.libName,
+                                    exportSettingsController.exportSymbol,
+                                    exportSettingsController.exportFootprint,
+                                    exportSettingsController.exportModel3D,
+                                    exportSettingsController.overwriteExistingFiles,
+                                    exportSettingsController.exportMode === 1,
+                                    exportSettingsController.debugMode
+                                );
+                            }
+                        }
+                    }
+
+                    // “停止转换”按钮
+                    ModernButton {
+                        id: stopButton
+                        Layout.preferredHeight: 56
+                        Layout.preferredWidth: 180
+                        
+                        // 仅在导出进行时可见
+                        visible: exportProgressController.isExporting
+                        
+                        text: exportProgressController.isStopping ? "正在停止..." : "停止转换"
+                        iconName: "close"
+                        font.pixelSize: AppStyle.fontSizes.xl
+                        
+                        backgroundColor: AppStyle.colors.danger
+                        hoverColor: AppStyle.colors.dangerDark
+                        pressedColor: AppStyle.colors.dangerDark
+
+                        enabled: !exportProgressController.isStopping
+
+                        onClicked: {
                             exportProgressController.cancelExport()
-                        } else {
-                            exportProgressController.startExport(
-                                componentListController.componentList,
-                                exportSettingsController.outputPath,
-                                exportSettingsController.libName,
-                                exportSettingsController.exportSymbol,
-                                exportSettingsController.exportFootprint,
-                                exportSettingsController.exportModel3D,
-                                exportSettingsController.overwriteExistingFiles,
-                                exportSettingsController.exportMode === 1,  // exportMode === 1 表示更新模式
-                                exportSettingsController.debugMode  // 调试模式
-                            )
                         }
                     }
                 }
