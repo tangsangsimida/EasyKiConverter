@@ -100,29 +100,29 @@ void LanguageManager::installTranslator(const QString& languageCode) {
     }
 
     // Qt 6 qml_module 资源路径
-    QString qmPath =
-        QString(":/qt/qml/EasyKiconverter_Cpp_Version/resources/translations/translations_easykiconverter_%1.qm")
+    QString translationPath =
+        QString(":/qt/qml/EasyKiconverter_Cpp_Version/resources/translations/translations_easykiconverter_%1.ts")
             .arg(languageCode);
 
     QTranslator* translator = new QTranslator(this);
 
-    // 尝试加载 .qm 文件
-    if (translator->load(qmPath)) {
+    // 尝试加载翻译文件（.ts 格式）
+    if (translator->load(translationPath)) {
         app->installTranslator(translator);
-        qDebug() << "Installed translator:" << qmPath;
+        qDebug() << "Installed translator:" << translationPath;
         return;
     }
 
-    // 如果 .qm 文件不存在，尝试从文件系统加载
-    QString localQmPath = QString("resources/translations/translations_easykiconverter_%1.qm").arg(languageCode);
-    if (translator->load(localQmPath)) {
+    // 如果资源文件不存在，尝试从文件系统加载
+    QString localPath = QString("resources/translations/translations_easykiconverter_%1.ts").arg(languageCode);
+    if (translator->load(localPath)) {
         app->installTranslator(translator);
-        qDebug() << "Installed translator from file system:" << localQmPath;
+        qDebug() << "Installed translator from file system:" << localPath;
         return;
     }
 
     qWarning() << "Failed to load translation file for language:" << languageCode;
-    qWarning() << "Tried paths:" << qmPath << localQmPath;
+    qWarning() << "Tried paths:" << translationPath << localPath;
     qWarning() << "Note: .qm files must be generated using lrelease tool from .ts files";
 }
 
