@@ -15,6 +15,7 @@ Rectangle {
     radius: AppStyle.radius.md
     border.color: AppStyle.colors.border
     border.width: 1
+    clip: true
     Behavior on color {
         ColorAnimation {
             duration: AppStyle.durations.fast
@@ -61,6 +62,8 @@ Rectangle {
                 spacing: AppStyle.spacing.sm
                 Text {
                     text: componentId
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
                     font.pixelSize: AppStyle.fontSizes.sm
                     font.bold: true
                     font.family: "Courier New"

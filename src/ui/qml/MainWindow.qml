@@ -1481,7 +1481,11 @@ Item {
                                 Layout.preferredHeight: Math.min(resultsList.contentHeight + 20, 500)
                                 Layout.topMargin: AppStyle.spacing.md
                                 clip: true
-                                cellWidth: (width - AppStyle.spacing.md) / 5
+                                cellWidth: {
+                                    var w = width - AppStyle.spacing.md
+                                    var c = Math.max(1, Math.floor(w / 230))
+                                    return w / c
+                                }
                                 cellHeight: 80
                                 flow: GridView.FlowLeftToRight
                                 layoutDirection: Qt.LeftToRight
