@@ -326,7 +326,6 @@ Item {
                         id: languageComboBox
                         Layout.preferredWidth: 120
                         model: [
-                            { text: qsTr("跟随系统"), value: "auto" },
                             { text: "简体中文", value: "zh_CN" },
                             { text: "English", value: "en" }
                         ]
@@ -337,8 +336,15 @@ Item {
 
                         Component.onCompleted: {
                             // 设置初始语言
-                            savedLanguage = LanguageManager.currentLanguage
-                            currentIndex = indexOfValue(LanguageManager.currentLanguage)
+                            var currentLang = LanguageManager.currentLanguage
+                            if (currentLang === "auto") {
+                                // 如果是自动/跟随系统，解析出实际语言并选中
+                                var systemLang = LanguageManager.detectSystemLanguage()
+                                currentIndex = indexOfValue(systemLang)
+                            } else {
+                                currentIndex = indexOfValue(currentLang)
+                            }
+                            savedLanguage = currentValue
                         }
 
                         onActivated: function(index) {
@@ -1707,6 +1713,7 @@ Item {
                         
                         // 根据是否有失败项来决定按钮文本
                         text: {
+                            var lang = LanguageManager.currentLanguage // Force update on language change
                             if (exportProgressController.isExporting) return qsTr("正在转换...");
                             if (exportProgressController.failureCount > 0) return qsTr("重试失败项");
                             return qsTr("开始转换");

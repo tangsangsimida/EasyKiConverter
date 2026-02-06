@@ -12,7 +12,8 @@ LanguageManager* LanguageManager::s_instance = nullptr;
 LanguageManager::LanguageManager(QObject* parent)
     : QObject(parent)
     , m_currentLanguage("auto")
-    , m_settings(new QSettings("EasyKiConverter", "EasyKiConverter", this)) {
+    , m_settings(new QSettings("EasyKiConverter", "EasyKiConverter", this))
+    , m_translator(nullptr) {
     loadLanguageSettings();
 }
 
@@ -38,18 +39,7 @@ void LanguageManager::setLanguage(const QString& languageCode) {
         actualLanguage = detectSystemLanguage();
     }
 
-    // 移除旧的翻译器
-    QCoreApplication* app = QCoreApplication::instance();
-    if (app) {
-        // 移除所有翻译器
-        auto translators = app->findChildren<QTranslator*>();
-        for (QTranslator* trans : translators) {
-            app->removeTranslator(trans);
-            trans->deleteLater();
-        }
-    }
-
-    // 安装新的翻译器
+    // 安装新的翻译器 (installTranslator 会处理旧翻译器的移除)
     installTranslator(actualLanguage);
 
     emit languageChanged(languageCode);
@@ -63,11 +53,21 @@ QString LanguageManager::currentLanguage() const {
 
 QString LanguageManager::detectSystemLanguage() const {
     QLocale systemLocale = QLocale::system();
-    QString languageCode = systemLocale.name();
+    QStringList uiLanguages = systemLocale.uiLanguages();
+    
+    qDebug() << "System UI languages:" << uiLanguages;
+    qDebug() << "System locale name:" << systemLocale.name();
 
-    qDebug() << "System locale:" << languageCode;
-
-    if (languageCode.startsWith("zh")) {
+    // 优先检查 UI 语言列表
+    if (!uiLanguages.isEmpty()) {
+        QString firstLang = uiLanguages.first();
+        if (firstLang.startsWith("zh", Qt::CaseInsensitive)) {
+            return "zh_CN";
+        }
+    }
+    
+    // 回退到检查 locale 名称
+    if (systemLocale.name().startsWith("zh", Qt::CaseInsensitive)) {
         return "zh_CN";
     }
 
@@ -99,31 +99,41 @@ void LanguageManager::installTranslator(const QString& languageCode) {
         return;
     }
 
-    // Qt 6 qml_module 资源路径
+    // 如果已有翻译器，先移除并删除
+    if (m_translator) {
+        app->removeTranslator(m_translator);
+        m_translator->deleteLater();
+        m_translator = nullptr;
+    }
+
+    // Qt 6 qml_module 资源路径 - 使用 compiled .qm files
     QString translationPath =
-        QString(":/qt/qml/EasyKiconverter_Cpp_Version/resources/translations/translations_easykiconverter_%1.ts")
+        QString(":/qt/qml/EasyKiconverter_Cpp_Version/resources/translations/translations_easykiconverter_%1.qm")
             .arg(languageCode);
 
-    QTranslator* translator = new QTranslator(this);
+    m_translator = new QTranslator(this);
 
-    // 尝试加载翻译文件（.ts 格式）
-    if (translator->load(translationPath)) {
-        app->installTranslator(translator);
+    // 尝试加载翻译文件（.qm 格式）
+    if (m_translator->load(translationPath)) {
+        app->installTranslator(m_translator);
         qDebug() << "Installed translator:" << translationPath;
         return;
     }
 
     // 如果资源文件不存在，尝试从文件系统加载
-    QString localPath = QString("resources/translations/translations_easykiconverter_%1.ts").arg(languageCode);
-    if (translator->load(localPath)) {
-        app->installTranslator(translator);
+    QString localPath = QString("resources/translations/translations_easykiconverter_%1.qm").arg(languageCode);
+    if (m_translator->load(localPath)) {
+        app->installTranslator(m_translator);
         qDebug() << "Installed translator from file system:" << localPath;
         return;
     }
 
     qWarning() << "Failed to load translation file for language:" << languageCode;
     qWarning() << "Tried paths:" << translationPath << localPath;
-    qWarning() << "Note: .qm files must be generated using lrelease tool from .ts files";
+    
+    // 加载失败时，清理创建的翻译器对象
+    m_translator->deleteLater();
+    m_translator = nullptr;
 }
 
 }  // namespace EasyKiConverter
