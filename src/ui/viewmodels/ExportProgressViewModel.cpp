@@ -8,10 +8,12 @@ namespace EasyKiConverter {
 
 ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
                                                  ComponentService* componentService,
+                                                 ComponentListViewModel* componentListViewModel,
                                                  QObject* parent)
     : QObject(parent)
     , m_exportService(exportService)
     , m_componentService(componentService)
+    , m_componentListViewModel(componentListViewModel)
     , m_status("Ready")
     , m_progress(0)
     , m_isExporting(false)
@@ -451,6 +453,22 @@ void ExportProgressViewModel::startExportInternal(const QStringList& componentId
     } else {
         if (m_usePipelineMode && qobject_cast<ExportServicePipeline*>(m_exportService)) {
             auto* pipelineService = qobject_cast<ExportServicePipeline*>(m_exportService);
+
+            // Gather preloaded data
+            if (m_componentListViewModel) {
+                QMap<QString, QSharedPointer<ComponentData>> preloadedData;
+                for (const QString& id : componentIds) {
+                    auto data = m_componentListViewModel->getPreloadedData(id);
+                    if (data) {
+                        preloadedData.insert(id, data);
+                    }
+                }
+                if (!preloadedData.isEmpty()) {
+                    qDebug() << "Passing" << preloadedData.size() << "preloaded components to pipeline";
+                    pipelineService->setPreloadedData(preloadedData);
+                }
+            }
+
             pipelineService->executeExportPipelineWithStages(componentIds, m_exportOptions);
         } else {
             m_componentService->setOutputPath(m_exportOptions.outputPath);

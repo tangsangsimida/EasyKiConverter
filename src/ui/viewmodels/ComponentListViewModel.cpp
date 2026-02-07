@@ -1,23 +1,61 @@
 #include "ComponentListViewModel.h"
 
+#include "ui/utils/ThumbnailGenerator.h"
+
 #include <QClipboard>
 #include <QDebug>
 #include <QGuiApplication>
 #include <QRegularExpression>
+#include <QRunnable>
+#include <QThreadPool>
 #include <QUrl>
+#include <QtConcurrent>
 
 namespace EasyKiConverter {
 
 ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObject* parent)
-    : QObject(parent), m_service(service), m_componentList(), m_bomFilePath(), m_bomResult() {
+    : QAbstractListModel(parent), m_service(service), m_componentList(), m_bomFilePath(), m_bomResult() {
     // 连接 Service 信号
     connect(m_service, &ComponentService::componentInfoReady, this, &ComponentListViewModel::handleComponentInfoReady);
     connect(m_service, &ComponentService::cadDataReady, this, &ComponentListViewModel::handleCadDataReady);
     connect(m_service, &ComponentService::model3DReady, this, &ComponentListViewModel::handleModel3DReady);
+    connect(
+        m_service, &ComponentService::previewImageReady, this, [this](const QString& componentId, const QImage& image) {
+            auto item = findItemData(componentId);
+            if (item) {
+                item->setThumbnail(image);
+            }
+        });
     connect(m_service, &ComponentService::fetchError, this, &ComponentListViewModel::handleFetchError);
 }
 
-ComponentListViewModel::~ComponentListViewModel() {}
+ComponentListViewModel::~ComponentListViewModel() {
+    qDeleteAll(m_componentList);
+    m_componentList.clear();
+}
+
+int ComponentListViewModel::rowCount(const QModelIndex& parent) const {
+    if (parent.isValid())
+        return 0;
+    return m_componentList.count();
+}
+
+QVariant ComponentListViewModel::data(const QModelIndex& index, int role) const {
+    if (!index.isValid() || index.row() < 0 || index.row() >= m_componentList.count())
+        return QVariant();
+
+    if (role == ItemDataRole) {
+        return QVariant::fromValue(m_componentList.at(index.row()));
+    }
+
+    return QVariant();
+}
+
+QHash<int, QByteArray> ComponentListViewModel::roleNames() const {
+    QHash<int, QByteArray> roles;
+    roles[ItemDataRole] = "itemData";
+    return roles;
+}
 
 void ComponentListViewModel::addComponent(const QString& componentId) {
     QString trimmedId = componentId.trimmed();
@@ -42,8 +80,15 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
         // 添加提取的元件编号
         for (const QString& id : extractedIds) {
             if (!componentExists(id)) {
-                m_componentList.append(id);
-                emit componentListChanged();
+                beginInsertRows(QModelIndex(), m_componentList.count(), m_componentList.count());
+                auto item = new ComponentListItemData(id, this);
+                item->setFetching(true);  // 开始添加时标记为正在获取
+                m_componentList.append(item);
+                endInsertRows();
+
+                // 触发获取数据
+                m_service->fetchComponentData(id, false);  // 验证时不获取 3D 模型以加快速度
+
                 emit componentCountChanged();
                 emit componentAdded(id, true, "Component added");
             }
@@ -58,25 +103,48 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
         return;
     }
 
-    m_componentList.append(trimmedId);
-    emit componentListChanged();
+    beginInsertRows(QModelIndex(), m_componentList.count(), m_componentList.count());
+    auto item = new ComponentListItemData(trimmedId, this);
+    item->setFetching(true);
+    m_componentList.append(item);
+    endInsertRows();
+
+    // 触发获取数据
+    m_service->fetchComponentData(trimmedId, false);
+
     emit componentCountChanged();
     emit componentAdded(trimmedId, true, "Component added");
 }
 
 void ComponentListViewModel::removeComponent(int index) {
     if (index >= 0 && index < m_componentList.count()) {
-        QString removedId = m_componentList.takeAt(index);
-        emit componentListChanged();
+        beginRemoveRows(QModelIndex(), index, index);
+        auto item = m_componentList.takeAt(index);
+        QString removedId = item->componentId();
+        delete item;
+        endRemoveRows();
+
         emit componentCountChanged();
         emit componentRemoved(removedId);
     }
 }
 
+void ComponentListViewModel::removeComponentById(const QString& componentId) {
+    for (int i = 0; i < m_componentList.count(); ++i) {
+        if (m_componentList.at(i)->componentId() == componentId) {
+            removeComponent(i);
+            return;
+        }
+    }
+}
+
 void ComponentListViewModel::clearComponentList() {
     if (!m_componentList.isEmpty()) {
+        beginResetModel();
+        qDeleteAll(m_componentList);
         m_componentList.clear();
-        emit componentListChanged();
+        endResetModel();
+
         emit componentCountChanged();
         emit listCleared();
     }
@@ -103,18 +171,14 @@ void ComponentListViewModel::pasteFromClipboard() {
 
     for (const QString& id : extractedIds) {
         if (!componentExists(id)) {
-            m_componentList.append(id);
+            addComponent(id);  // 使用 addComponent 处理添加和验证逻辑
             added++;
         } else {
             skipped++;
         }
     }
 
-    if (added > 0) {
-        emit componentListChanged();
-        emit componentCountChanged();
-    }
-
+    // addComponent 已发出变更信号
     emit pasteCompleted(added, skipped);
 }
 
@@ -147,18 +211,14 @@ void ComponentListViewModel::selectBomFile(const QString& filePath) {
     int added = 0;
     int skipped = 0;
 
+    // 为了性能，这里可以考虑批量添加，但目前简单起见还是逐个添加
     for (const QString& id : componentIds) {
         if (!componentExists(id)) {
-            m_componentList.append(id);
+            addComponent(id);  // 使用 addComponent 触发验证
             added++;
         } else {
             skipped++;
         }
-    }
-
-    if (added > 0) {
-        emit componentListChanged();
-        emit componentCountChanged();
     }
 
     QString resultMsg = QString("BOM file imported: %1 components added, %2 skipped").arg(added).arg(skipped);
@@ -205,27 +265,101 @@ QStringList ComponentListViewModel::extractComponentIdFromText(const QString& te
 }
 
 bool ComponentListViewModel::componentExists(const QString& componentId) const {
-    return m_componentList.contains(componentId);
+    for (const auto& item : m_componentList) {
+        if (item->componentId() == componentId) {
+            return true;
+        }
+    }
+    return false;
+}
+
+ComponentListItemData* ComponentListViewModel::findItemData(const QString& componentId) const {
+    for (const auto& item : m_componentList) {
+        if (item->componentId() == componentId) {
+            return item;
+        }
+    }
+    return nullptr;
 }
 
 void ComponentListViewModel::handleComponentInfoReady(const QString& componentId, const ComponentData& data) {
-    qDebug() << "Component info ready for:" << componentId;
-    // 可以在这里更?UI 显示
+    auto item = findItemData(componentId);
+    if (item) {
+        item->setName(data.name());
+        item->setPackage(data.package());
+    }
 }
 
 void ComponentListViewModel::handleCadDataReady(const QString& componentId, const ComponentData& data) {
     qDebug() << "CAD data ready for:" << componentId;
-    // 可以在这里更?UI 显示
+    auto item = findItemData(componentId);
+    if (item) {
+        QSharedPointer<ComponentData> dataPtr = QSharedPointer<ComponentData>::create(data);
+        item->setComponentData(dataPtr);
+        item->setFetching(false);
+        item->setValid(true);
+        item->setErrorMessage("");
+
+        // 异步生成缩略图
+        QThreadPool::globalInstance()->start(QRunnable::create([item, dataPtr]() {
+            QImage thumbnail = ThumbnailGenerator::generateThumbnail(dataPtr);
+            QMetaObject::invokeMethod(item, [item, thumbnail]() { item->setThumbnail(thumbnail); });
+        }));
+
+        // 尝试获取 LCSC 预览图覆盖生成的缩略图
+        m_service->fetchLcscPreviewImage(componentId);
+    }
 }
 
 void ComponentListViewModel::handleModel3DReady(const QString& uuid, const QString& filePath) {
     qDebug() << "3D model ready for UUID:" << uuid << "at:" << filePath;
-    // 可以在这里更?UI 显示
+    // 3D 模型下载通常比较慢，验证阶段不强制要求显示，但如果来了也可以更新
 }
 
 void ComponentListViewModel::handleFetchError(const QString& componentId, const QString& error) {
     qWarning() << "Fetch error for:" << componentId << "-" << error;
-    // 可以在这里更?UI 显示
+    auto item = findItemData(componentId);
+    if (item) {
+        item->setFetching(false);
+        // 如果是严重错误（如404），标记为无效
+        if (error.contains("404") || error.contains("not found", Qt::CaseInsensitive)) {
+            item->setValid(false);
+            item->setErrorMessage("Not Found");
+        } else {
+            item->setErrorMessage(error);
+        }
+    }
+}
+
+void ComponentListViewModel::refreshComponentInfo(int index) {
+    if (index >= 0 && index < m_componentList.count()) {
+        auto item = m_componentList.at(index);
+        item->setFetching(true);
+        item->setErrorMessage("");
+        m_service->fetchComponentData(item->componentId(), false);
+    }
+}
+
+QStringList ComponentListViewModel::getAllComponentIds() const {
+    QStringList ids;
+    for (const auto& item : m_componentList) {
+        ids.append(item->componentId());
+    }
+    return ids;
+}
+
+QSharedPointer<ComponentData> ComponentListViewModel::getPreloadedData(const QString& componentId) const {
+    auto item = findItemData(componentId);
+    if (item && item->isValid() && item->componentData()) {
+        return item->componentData();
+    }
+    return nullptr;
+}
+
+void ComponentListViewModel::copyToClipboard(const QString& text) {
+    QClipboard* clipboard = QGuiApplication::clipboard();
+    clipboard->setText(text);
+    qDebug() << "Copied to clipboard:" << text;
 }
 
 }  // namespace EasyKiConverter

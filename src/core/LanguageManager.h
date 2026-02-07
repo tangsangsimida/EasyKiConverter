@@ -3,6 +3,7 @@
 
 #include <QSettings>
 #include <QString>
+#include <QTranslator>
 
 namespace EasyKiConverter {
 
@@ -69,6 +70,7 @@ private:
     static LanguageManager* s_instance;
     QString m_currentLanguage;
     QSettings* m_settings;
+    QTranslator* m_translator;
 };
 
 }  // namespace EasyKiConverter

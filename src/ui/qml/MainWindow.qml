@@ -72,20 +72,20 @@ Item {
     Canvas {
         id: backgroundCanvas
         anchors.fill: parent
-        
+
         onPaint: {
             var ctx = getContext("2d");
             ctx.reset();
-            
+
             // 绘制圆角路径
             var r = windowRadius;
             ctx.beginPath();
             ctx.roundedRect(0, 0, width, height, r, r);
             ctx.closePath();
-            
+
             // 裁切
             ctx.clip();
-            
+
             // 绘制背景色（作为底色）
             ctx.fillStyle = AppStyle.colors.background;
             ctx.fill();
@@ -105,11 +105,11 @@ Item {
                 }
             }
         }
-        
+
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
         onVisibleChanged: requestPaint()
-        
+
         // 监听圆角变化
         property int radiusTrigger: windowRadius
         onRadiusTriggerChanged: requestPaint()
@@ -183,7 +183,7 @@ Item {
         RowLayout {
             anchors.fill: parent
             spacing: 0
-            
+
             // 图标
             Image {
                 source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png"
@@ -208,23 +208,23 @@ Item {
             // 窗口控制按钮
             Row {
                 Layout.alignment: Qt.AlignRight
-                
+
                 // 最小化
                 Button {
                     width: 46
                     height: 38
                     flat: true
-                    
+
                     icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/minimize.svg"
                     icon.color: "transparent" // Use original SVG colors
                     icon.width: 10
                     icon.height: 10
-                    
+
                     background: Rectangle {
                         color: parent.hovered ? (AppStyle.isDarkMode ? "#1affffff" : "#1a000000") : "transparent"
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    
+
                     onClicked: Window.window.showMinimized()
                 }
 
@@ -233,17 +233,17 @@ Item {
                     width: 46
                     height: 38
                     flat: true
-                    
+
                     icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/maximize.svg"
                     icon.color: "transparent" // Use original SVG colors
                     icon.width: 10
                     icon.height: 10
-                    
+
                     background: Rectangle {
                         color: parent.hovered ? (AppStyle.isDarkMode ? "#1affffff" : "#1a000000") : "transparent"
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    
+
                     onClicked: {
                         if (Window.window.visibility === Window.Maximized) {
                             Window.window.showNormal()
@@ -258,17 +258,17 @@ Item {
                     width: 46
                     height: 38
                     flat: true
-                    
+
                     icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/close.svg"
                     icon.color: hovered ? "white" : "transparent" // White on hover, otherwise original color
                     icon.width: 10
                     icon.height: 10
-                    
+
                     background: Rectangle {
                         color: parent.hovered ? "#c42b1c" : "transparent"
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    
+
                     onClicked: Window.window.close()
                 }
             }
@@ -297,7 +297,7 @@ Item {
                 width: parent.width - AppStyle.spacing.huge * 2
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 30
-                
+
                 // 欢迎标题
                 Text {
                     Layout.fillWidth: true
@@ -326,7 +326,6 @@ Item {
                         id: languageComboBox
                         Layout.preferredWidth: 120
                         model: [
-                            { text: qsTr("跟随系统"), value: "auto" },
                             { text: "简体中文", value: "zh_CN" },
                             { text: "English", value: "en" }
                         ]
@@ -337,8 +336,15 @@ Item {
 
                         Component.onCompleted: {
                             // 设置初始语言
-                            savedLanguage = LanguageManager.currentLanguage
-                            currentIndex = indexOfValue(LanguageManager.currentLanguage)
+                            var currentLang = LanguageManager.currentLanguage
+                            if (currentLang === "auto") {
+                                // 如果是自动/跟随系统，解析出实际语言并选中
+                                var systemLang = LanguageManager.detectSystemLanguage()
+                                currentIndex = indexOfValue(systemLang)
+                            } else {
+                                currentIndex = indexOfValue(currentLang)
+                            }
+                            savedLanguage = currentValue
                         }
 
                         onActivated: function(index) {
@@ -722,7 +728,7 @@ Item {
                     resources: [
                         DelegateModel {
                             id: visualModel
-                            model: componentListController.componentList
+                            model: componentListController
 
                             groups: [
                                 DelegateModelGroup {
@@ -743,21 +749,13 @@ Item {
                                 anchors.horizontalCenter: parent ? undefined : undefined
 
                                 // 绑定数据和搜索词
-                                componentId: modelData
+                                // 注意：QAbstractListModel 暴露的角色名为 "itemData"
+                                itemData: model.itemData
                                 searchText: searchInput.text // 传递搜索词用于高亮
 
                                 onDeleteClicked: {
-                                    var sourceIndex = -1;
-                                    var currentId = modelData;
-                                    var list = componentListController.componentList;
-                                    for(var i = 0; i < list.length; i++) {
-                                        if(list[i] === currentId) {
-                                            sourceIndex = i;
-                                            break;
-                                        }
-                                    }
-                                    if(sourceIndex !== -1) {
-                                        componentListController.removeComponent(sourceIndex);
+                                    if (itemData) {
+                                        componentListController.removeComponentById(itemData.componentId);
                                     }
                                 }
                             }
@@ -778,19 +776,14 @@ Item {
                                     }
 
                                     // 获取内容
-                                    var content = item.model
+                                    // 对于 QAbstractListModel，item.model 包含角色属性
+                                    var dataObj = item.model.itemData
 
-                                    // 如果是对象（通常是包装过的），尝试获取 modelData
-                                    if (typeof content === 'object' && content !== null) {
-                                        if (content.modelData !== undefined) {
-                                            content = content.modelData
-                                        } else if (content.display !== undefined) {
-                                            content = content.display
-                                        }
+                                    // 获取 ID
+                                    var idStr = ""
+                                    if (dataObj && dataObj.componentId !== undefined) {
+                                        idStr = dataObj.componentId
                                     }
-
-                                    // 强制转换为字符串并处理
-                                    var idStr = String(content)
 
                                     // 判断是否匹配
                                     if (idStr.toLowerCase().indexOf(searchTerm) !== -1) {
@@ -852,7 +845,7 @@ Item {
                                 anchors.left: parent.left
                                 anchors.leftMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: "🔍"
+                                text: ""
                                 font.pixelSize: 12
                                 color: AppStyle.colors.textSecondary
                             }
@@ -875,15 +868,23 @@ Item {
                             }
                         }
                     }
-                    // 元件列表视图（5列网格）
+                    // 元件列表视图（自适应网格）
                     GridView {
                         id: componentList
                         Layout.fillWidth: true
                         Layout.preferredHeight: 300
                         Layout.topMargin: AppStyle.spacing.md
                         clip: true
-                        cellWidth: (width - AppStyle.spacing.md) / 5
-                        cellHeight: 56
+
+                        // 动态计算列宽，实现响应式布局
+                        property int minCellWidth: 230
+                        property int availableWidth: width - AppStyle.spacing.md // 减去右侧滚动条/边距空间
+                        property int columns: Math.max(1, Math.floor(availableWidth / minCellWidth))
+
+                        cellWidth: Math.floor(availableWidth / columns)
+                        // 卡片高度 64 + 垂直间距 12 = 76
+                        cellHeight: 76
+
                         flow: GridView.FlowLeftToRight
                         layoutDirection: Qt.LeftToRight
 
@@ -902,7 +903,7 @@ Item {
                         // 简单的 add/remove 动画在使用 DelegateModel 时可能不生效或表现不同
                     }
                 }
-                
+
                 // 导出设置卡片 (合并后的)
                 Card {
                     Layout.fillWidth: true
@@ -1004,10 +1005,10 @@ Item {
                             }
                         }
                     }
-                    
+
                     // 分隔
                     Item { Layout.preferredHeight: 10; Layout.fillWidth: true }
-                    
+
                     // 原导出选项内容
                     RowLayout {
                         Layout.fillWidth: true
@@ -1025,7 +1026,7 @@ Item {
                                 checked: exportSettingsController.exportSymbol
                                 onCheckedChanged: exportSettingsController.setExportSymbol(checked)
                                 font.pixelSize: 16
-                                
+
                                 indicator: Rectangle {
                                     implicitWidth: 22
                                     implicitHeight: 22
@@ -1035,10 +1036,10 @@ Item {
                                     color: symbolCheckbox.checked ? AppStyle.colors.primary : "transparent"
                                     border.color: symbolCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                                     border.width: 1.5
-                                    
+
                                     Behavior on color { ColorAnimation { duration: 150 } }
                                     Behavior on border.color { ColorAnimation { duration: 150 } }
-                                    
+
                                     Text {
                                         anchors.centerIn: parent
                                         text: "✓"
@@ -1069,7 +1070,7 @@ Item {
                                 checked: exportSettingsController.exportFootprint
                                 onCheckedChanged: exportSettingsController.setExportFootprint(checked)
                                 font.pixelSize: 16
-                                
+
                                 indicator: Rectangle {
                                     implicitWidth: 22
                                     implicitHeight: 22
@@ -1079,10 +1080,10 @@ Item {
                                     color: footprintCheckbox.checked ? AppStyle.colors.primary : "transparent"
                                     border.color: footprintCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                                     border.width: 1.5
-                                    
+
                                     Behavior on color { ColorAnimation { duration: 150 } }
                                     Behavior on border.color { ColorAnimation { duration: 150 } }
-                                    
+
                                     Text {
                                         anchors.centerIn: parent
                                         text: "✓"
@@ -1113,7 +1114,7 @@ Item {
                                 checked: exportSettingsController.exportModel3D
                                 onCheckedChanged: exportSettingsController.setExportModel3D(checked)
                                 font.pixelSize: 16
-                                
+
                                 indicator: Rectangle {
                                     implicitWidth: 22
                                     implicitHeight: 22
@@ -1123,10 +1124,10 @@ Item {
                                     color: model3dCheckbox.checked ? AppStyle.colors.primary : "transparent"
                                     border.color: model3dCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                                     border.width: 1.5
-                                    
+
                                     Behavior on color { ColorAnimation { duration: 150 } }
                                     Behavior on border.color { ColorAnimation { duration: 150 } }
-                                    
+
                                     Text {
                                         anchors.centerIn: parent
                                         text: "✓"
@@ -1157,7 +1158,7 @@ Item {
                                 checked: exportSettingsController.debugMode
                                 onCheckedChanged: exportSettingsController.setDebugMode(checked)
                                 font.pixelSize: 16
-                                
+
                                 indicator: Rectangle {
                                     implicitWidth: 22
                                     implicitHeight: 22
@@ -1167,10 +1168,10 @@ Item {
                                     color: debugModeCheckbox.checked ? AppStyle.colors.primary : "transparent"
                                     border.color: debugModeCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                                     border.width: 1.5
-                                    
+
                                     Behavior on color { ColorAnimation { duration: 150 } }
                                     Behavior on border.color { ColorAnimation { duration: 150 } }
-                                    
+
                                     Text {
                                         anchors.centerIn: parent
                                         text: "✓"
@@ -1218,7 +1219,7 @@ Item {
                                             }
                                         }
                                         font.pixelSize: 14
-                                        
+
                                         indicator: Rectangle {
                                             implicitWidth: 20
                                             implicitHeight: 20
@@ -1228,7 +1229,7 @@ Item {
                                             color: "transparent"
                                             border.color: appendModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                                             border.width: 1.5
-                                            
+
                                             Rectangle {
                                                 anchors.centerIn: parent
                                                 width: 10
@@ -1266,7 +1267,7 @@ Item {
                                             }
                                         }
                                         font.pixelSize: 14
-                                        
+
                                         indicator: Rectangle {
                                             implicitWidth: 20
                                             implicitHeight: 20
@@ -1276,7 +1277,7 @@ Item {
                                             color: "transparent"
                                             border.color: updateModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                                             border.width: 1.5
-                                            
+
                                             Rectangle {
                                                 anchors.centerIn: parent
                                                 width: 10
@@ -1305,7 +1306,7 @@ Item {
                         }
                     }
                 }
-                
+
                 // 进度显示卡片
                 Card {
                     Layout.fillWidth: true
@@ -1314,7 +1315,7 @@ Item {
                     ColumnLayout {
                         width: parent.width
                         spacing: 12
-                        
+
                         // 1. 流程指示器 (Step Indicators)
                         RowLayout {
                             Layout.fillWidth: true
@@ -1337,9 +1338,9 @@ Item {
                                 Layout.fillWidth: true // 让线条占据所有剩余空间
                                 Layout.preferredHeight: 2
                                 Layout.alignment: Qt.AlignVCenter
-                                Layout.bottomMargin: 14 
+                                Layout.bottomMargin: 14
                                 color: exportProgressController.fetchProgress >= 100 ? AppStyle.colors.success : AppStyle.colors.border
-                                
+
                                 Behavior on color { ColorAnimation { duration: 300 } }
                             }
 
@@ -1359,7 +1360,7 @@ Item {
                                 Layout.alignment: Qt.AlignVCenter
                                 Layout.bottomMargin: 14
                                 color: exportProgressController.processProgress >= 100 ? AppStyle.colors.success : AppStyle.colors.border
-                                
+
                                 Behavior on color { ColorAnimation { duration: 300 } }
                             }
 
@@ -1377,7 +1378,7 @@ Item {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 12
-                            
+
                             // 自定义多色进度条容器
                             Rectangle {
                                 id: progressBar
@@ -1387,11 +1388,11 @@ Item {
                                 radius: AppStyle.radius.md
                                 clip: true
                                 // 移除 visible 限制，使其在完成后依然可见
-                                
+
                                 Row {
                                     anchors.fill: parent
                                     spacing: 0
-                                    
+
                                     // 抓取部分 (Green, 占比 1/3)
                                     Rectangle {
                                         height: parent.height
@@ -1400,7 +1401,7 @@ Item {
                                         visible: width > 0
                                         Behavior on width { NumberAnimation { duration: 100 } }
                                     }
-                                    
+
                                     // 处理部分 (Blue, 占比 1/3)
                                     Rectangle {
                                         height: parent.height
@@ -1409,7 +1410,7 @@ Item {
                                         visible: width > 0
                                         Behavior on width { NumberAnimation { duration: 100 } }
                                     }
-                                    
+
                                     // 写入部分 (Orange, 占比 1/3)
                                     Rectangle {
                                         height: parent.height
@@ -1459,17 +1460,17 @@ Item {
                             RowLayout {
                                 Layout.fillWidth: true
                                 visible: exportProgressController.failureCount > 0 && !exportProgressController.isExporting
-                                
+
                                 Item { Layout.fillWidth: true } // Spacer
-                                
+
                                 ModernButton {
                                     text: qsTr("重试失败项")
-                                    iconName: "play" 
+                                    iconName: "play"
                                     backgroundColor: AppStyle.colors.warning
                                     hoverColor: AppStyle.colors.warningDark
                                     pressedColor: AppStyle.colors.warning
                                     font.pixelSize: 14
-                                    
+
                                     onClicked: exportProgressController.retryFailedComponents()
                                 }
                             }
@@ -1481,7 +1482,11 @@ Item {
                                 Layout.preferredHeight: Math.min(resultsList.contentHeight + 20, 500)
                                 Layout.topMargin: AppStyle.spacing.md
                                 clip: true
-                                cellWidth: (width - AppStyle.spacing.md) / 5
+                                cellWidth: {
+                                    var w = width - AppStyle.spacing.md
+                                    var c = Math.max(1, Math.floor(w / 230))
+                                    return w / c
+                                }
                                 cellHeight: 80
                                 flow: GridView.FlowLeftToRight
                                 layoutDirection: Qt.LeftToRight
@@ -1668,7 +1673,7 @@ Item {
                                 hoverColor: AppStyle.colors.border
                                 pressedColor: AppStyle.colors.borderFocus
                                 // 稍微加个边框让它看起来像二级按钮
-                                
+
                                 onClicked: {
                                     Qt.openUrlExternally("file:///" + exportProgressController.statisticsReportPath)
                                 }
@@ -1681,7 +1686,7 @@ Item {
                                 backgroundColor: AppStyle.colors.primary
                                 hoverColor: AppStyle.colors.primaryHover
                                 pressedColor: AppStyle.colors.primaryPressed
-                                
+
                                 onClicked: {
                                     // 打开输出路径
                                     Qt.openUrlExternally("file:///" + exportSettingsController.outputPath)
@@ -1700,17 +1705,18 @@ Item {
                         id: exportButton
                         Layout.preferredHeight: 56
                         Layout.fillWidth: true
-                        
+
                         // 根据是否有失败项来决定按钮文本
                         text: {
+                            var lang = LanguageManager.currentLanguage // Force update on language change
                             if (exportProgressController.isExporting) return qsTr("正在转换...");
                             if (exportProgressController.failureCount > 0) return qsTr("重试失败项");
                             return qsTr("开始转换");
                         }
-                        
+
                         iconName: exportProgressController.failureCount > 0 && !exportProgressController.isExporting ? "play" : "play"
                         font.pixelSize: AppStyle.fontSizes.xxl
-                        
+
                         backgroundColor: {
                            if (exportProgressController.isExporting) return AppStyle.colors.textDisabled;
                            if (exportProgressController.failureCount > 0) return AppStyle.colors.warning;
@@ -1726,7 +1732,7 @@ Item {
                         }
 
                         // 导出进行中时禁用此按钮
-                        enabled: !exportProgressController.isExporting && 
+                        enabled: !exportProgressController.isExporting &&
                                  (componentListController.componentCount > 0 &&
                                  (exportSettingsController.exportSymbol || exportSettingsController.exportFootprint || exportSettingsController.exportModel3D))
 
@@ -1734,8 +1740,11 @@ Item {
                             if (exportProgressController.failureCount > 0) {
                                 exportProgressController.retryFailedComponents();
                             } else {
+                                // 提取 Component ID 列表
+                                var idList = componentListController.getAllComponentIds();
+
                                 exportProgressController.startExport(
-                                    componentListController.componentList,
+                                    idList,
                                     exportSettingsController.outputPath,
                                     exportSettingsController.libName,
                                     exportSettingsController.exportSymbol,
@@ -1754,14 +1763,14 @@ Item {
                         id: stopButton
                         Layout.preferredHeight: 56
                         Layout.preferredWidth: 180
-                        
+
                         // 仅在导出进行时可见
                         visible: exportProgressController.isExporting
-                        
+
                         text: exportProgressController.isStopping ? qsTr("正在停止...") : qsTr("停止转换")
                         iconName: "close"
                         font.pixelSize: AppStyle.fontSizes.xl
-                        
+
                         backgroundColor: AppStyle.colors.danger
                         hoverColor: AppStyle.colors.dangerDark
                         pressedColor: AppStyle.colors.dangerDark
@@ -1780,5 +1789,89 @@ Item {
             }
         }
     }
+    }
+
+    // 窗口边缘调整大小手柄
+    // 仅在非最大化时启用
+    Item {
+        anchors.fill: parent
+        z: 9999 // 确保在最顶层
+        visible: !window.isMaximized
+
+        // 边框拖拽宽度
+        property int gripSize: 8
+
+        // 左
+        MouseArea {
+            width: parent.gripSize
+            height: parent.height - 2 * parent.gripSize
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            cursorShape: Qt.SizeHorCursor
+            onPressed: Window.window.startSystemResize(Qt.LeftEdge)
+        }
+        // 右
+        MouseArea {
+            width: parent.gripSize
+            height: parent.height - 2 * parent.gripSize
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            cursorShape: Qt.SizeHorCursor
+            onPressed: Window.window.startSystemResize(Qt.RightEdge)
+        }
+        // 上
+        MouseArea {
+            width: parent.width - 2 * parent.gripSize
+            height: parent.gripSize
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            cursorShape: Qt.SizeVerCursor
+            onPressed: Window.window.startSystemResize(Qt.TopEdge)
+        }
+        // 下
+        MouseArea {
+            width: parent.width - 2 * parent.gripSize
+            height: parent.gripSize
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            cursorShape: Qt.SizeVerCursor
+            onPressed: Window.window.startSystemResize(Qt.BottomEdge)
+        }
+        // 左上
+        MouseArea {
+            width: parent.gripSize * 2
+            height: parent.gripSize * 2
+            anchors.left: parent.left
+            anchors.top: parent.top
+            cursorShape: Qt.SizeFDiagCursor
+            onPressed: Window.window.startSystemResize(Qt.LeftEdge | Qt.TopEdge)
+        }
+        // 右上
+        MouseArea {
+            width: parent.gripSize * 2
+            height: parent.gripSize * 2
+            anchors.right: parent.right
+            anchors.top: parent.top
+            cursorShape: Qt.SizeBDiagCursor
+            onPressed: Window.window.startSystemResize(Qt.RightEdge | Qt.TopEdge)
+        }
+        // 左下
+        MouseArea {
+            width: parent.gripSize * 2
+            height: parent.gripSize * 2
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            cursorShape: Qt.SizeBDiagCursor
+            onPressed: Window.window.startSystemResize(Qt.LeftEdge | Qt.BottomEdge)
+        }
+        // 右下
+        MouseArea {
+            width: parent.gripSize * 2
+            height: parent.gripSize * 2
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            cursorShape: Qt.SizeFDiagCursor
+            onPressed: Window.window.startSystemResize(Qt.RightEdge | Qt.BottomEdge)
+        }
     }
 }

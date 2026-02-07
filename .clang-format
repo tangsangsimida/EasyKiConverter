@@ -38,7 +38,7 @@ IncludeBlocks: Regroup
 IncludeCategories:
   - Regex: '^".*'
     Priority: 1
-  - Regex: '^<Q.*'
+  - Regex: '^<Q[A-Z]'
     Priority: 2
   - Regex: '^<.*'
     Priority: 3

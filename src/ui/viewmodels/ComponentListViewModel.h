@@ -1,33 +1,37 @@
-﻿#ifndef COMPONENTLISTVIEWMODEL_H
+#ifndef COMPONENTLISTVIEWMODEL_H
 #define COMPONENTLISTVIEWMODEL_H
 
+#include "models/ComponentListItemData.h"
 #include "services/ComponentService.h"
 
-#include <QObject>
+#include <QAbstractListModel>
 #include <QStringList>
+#include <QVector>
 
 namespace EasyKiConverter {
 
 /**
- * @brief 元件列表视图模型�?
-     *
- * 负责管理元件列表相关�?UI 状态和操作
- * 连接 QML 界面�?ComponentService
+ * @brief 元件列表视图模型
+ *
+ * 负责管理元件列表相关的 UI 状态和操作
+ * 连接 QML 界面和 ComponentService
+ * 继承自 QAbstractListModel 以提供细粒度的 UI 更新和更高的性能
  */
-class ComponentListViewModel : public QObject {
+class ComponentListViewModel : public QAbstractListModel {
     Q_OBJECT
-    Q_PROPERTY(QStringList componentList READ componentList NOTIFY componentListChanged)
     Q_PROPERTY(int componentCount READ componentCount NOTIFY componentCountChanged)
     Q_PROPERTY(QString bomFilePath READ bomFilePath NOTIFY bomFilePathChanged)
     Q_PROPERTY(QString bomResult READ bomResult NOTIFY bomResultChanged)
 
 public:
+    enum ComponentRoles { ItemDataRole = Qt::UserRole + 1 };
+
     /**
-     * @brief 构造函�?
-         *
+     * @brief 构造函数
+     *
      * @param service 元件服务
-     * @param parent 父对�?
-         */
+     * @param parent 父对象
+     */
     explicit ComponentListViewModel(ComponentService* service, QObject* parent = nullptr);
 
     /**
@@ -35,10 +39,11 @@ public:
      */
     ~ComponentListViewModel() override;
 
-    // Getter 方法
-    QStringList componentList() const {
-        return m_componentList;
-    }
+    // QAbstractListModel 接口实现
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    QHash<int, QByteArray> roleNames() const override;
+
     int componentCount() const {
         return m_componentList.count();
     }
@@ -49,10 +54,13 @@ public:
         return m_bomResult;
     }
 
+    // 获取预加载的数据（用于导出流程）
+    QSharedPointer<ComponentData> getPreloadedData(const QString& componentId) const;
+
 public slots:
     /**
-     * @brief 添加元件到列�?
-         *
+     * @brief 添加元件到列表
+     *
      * @param componentId 元件ID
      */
     Q_INVOKABLE void addComponent(const QString& componentId);
@@ -65,13 +73,20 @@ public slots:
     Q_INVOKABLE void removeComponent(int index);
 
     /**
+     * @brief 根据ID移除元件
+     *
+     * @param componentId 元件ID
+     */
+    Q_INVOKABLE void removeComponentById(const QString& componentId);
+
+    /**
      * @brief 清空元件列表
      */
     Q_INVOKABLE void clearComponentList();
 
     /**
-     * @brief 从剪贴板粘贴元器件编�?
-         */
+     * @brief 从剪贴板粘贴元器件编号
+     */
     Q_INVOKABLE void pasteFromClipboard();
 
     /**
@@ -105,8 +120,24 @@ public slots:
         return m_outputPath;
     }
 
+    // 重新验证/获取信息
+    Q_INVOKABLE void refreshComponentInfo(int index);
+
+    /**
+     * @brief 获取所有元件ID列表
+     * @return QStringList 元件ID列表
+     */
+    Q_INVOKABLE QStringList getAllComponentIds() const;
+
+    /**
+     * @brief 复制文本到剪贴板
+     *
+     * @param text 要复制的文本
+     */
+    Q_INVOKABLE void copyToClipboard(const QString& text);
+
 signals:
-    void componentListChanged();
+    // componentListChanged 信号不再需要，因为 QAbstractListModel 有自己的信号机制
     void componentCountChanged();
     void bomFilePathChanged();
     void bomResultChanged();
@@ -170,13 +201,16 @@ private:
      * @brief 从文本中提取元件编号
      *
      * @param text 文本内容
-     * @return QStringList 提取的元件编号列�?
-         */
+     * @return QStringList 提取的元件编号列表
+     */
     QStringList extractComponentIdFromText(const QString& text) const;
+
+    // 查找列表项数据
+    ComponentListItemData* findItemData(const QString& componentId) const;
 
 private:
     ComponentService* m_service;
-    QStringList m_componentList;
+    QList<ComponentListItemData*> m_componentList;
     QString m_outputPath;
     QString m_bomFilePath;
     QString m_bomResult;

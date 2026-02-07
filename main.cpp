@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     EasyKiConverter::ExportSettingsViewModel* exportSettingsViewModel =
         new EasyKiConverter::ExportSettingsViewModel(exportService, &app);
     EasyKiConverter::ExportProgressViewModel* exportProgressViewModel =
-        new EasyKiConverter::ExportProgressViewModel(exportService, componentService, &app);
+        new EasyKiConverter::ExportProgressViewModel(exportService, componentService, componentListViewModel, &app);
     EasyKiConverter::ThemeSettingsViewModel* themeSettingsViewModel = new EasyKiConverter::ThemeSettingsViewModel(&app);
 
     // 创建 QML 引擎
