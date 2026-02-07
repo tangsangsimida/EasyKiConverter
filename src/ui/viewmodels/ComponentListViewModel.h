@@ -24,9 +24,7 @@ class ComponentListViewModel : public QAbstractListModel {
     Q_PROPERTY(QString bomResult READ bomResult NOTIFY bomResultChanged)
 
 public:
-    enum ComponentRoles {
-        ItemDataRole = Qt::UserRole + 1
-    };
+    enum ComponentRoles { ItemDataRole = Qt::UserRole + 1 };
 
     /**
      * @brief 构造函数

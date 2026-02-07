@@ -313,6 +313,12 @@ void ExportServicePipeline::startFetchStage() {
             status->processMessage = "Preloaded data used";
             status->processDurationMs = 0;
 
+            // 添加到完成状态列表以供统计 (Critical Fix)
+            {
+                QMutexLocker locker(m_mutex);
+                m_completedStatuses.append(status);
+            }
+
             // 直接推送到写入队列
             m_pipelineProgress.fetchCompleted++;
             m_pipelineProgress.processCompleted++;
