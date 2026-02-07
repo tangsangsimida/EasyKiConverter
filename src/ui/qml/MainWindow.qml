@@ -728,7 +728,7 @@ Item {
                     resources: [
                         DelegateModel {
                             id: visualModel
-                            model: componentListController.componentList
+                            model: componentListController
 
                             groups: [
                                 DelegateModelGroup {
@@ -749,12 +749,13 @@ Item {
                                 anchors.horizontalCenter: parent ? undefined : undefined
 
                                 // 绑定数据和搜索词
-                                itemData: modelData
+                                // 注意：QAbstractListModel 暴露的角色名为 "itemData"
+                                itemData: model.itemData 
                                 searchText: searchInput.text // 传递搜索词用于高亮
 
                                 onDeleteClicked: {
-                                    if (modelData) {
-                                        componentListController.removeComponentById(modelData.componentId);
+                                    if (itemData) {
+                                        componentListController.removeComponentById(itemData.componentId);
                                     }
                                 }
                             }
@@ -775,23 +776,13 @@ Item {
                                     }
 
                                     // 获取内容
-                                    var content = item.model
-
-                                    // 如果是对象（通常是包装过的），尝试获取 modelData
-                                    if (typeof content === 'object' && content !== null) {
-                                        if (content.modelData !== undefined) {
-                                            content = content.modelData
-                                        } else if (content.display !== undefined) {
-                                            content = content.display
-                                        }
-                                    }
+                                    // 对于 QAbstractListModel，item.model 包含角色属性
+                                    var dataObj = item.model.itemData
 
                                     // 获取 ID
                                     var idStr = ""
-                                    if (content && content.componentId !== undefined) {
-                                        idStr = content.componentId
-                                    } else {
-                                        idStr = String(content)
+                                    if (dataObj && dataObj.componentId !== undefined) {
+                                        idStr = dataObj.componentId
                                     }
 
                                     // 判断是否匹配
@@ -1750,11 +1741,7 @@ Item {
                                 exportProgressController.retryFailedComponents();
                             } else {
                                 // 提取 Component ID 列表
-                                var idList = [];
-                                var list = componentListController.componentList;
-                                for (var i = 0; i < list.length; i++) {
-                                    idList.push(list[i].componentId);
-                                }
+                                var idList = componentListController.getAllComponentIds();
 
                                 exportProgressController.startExport(
                                     idList,

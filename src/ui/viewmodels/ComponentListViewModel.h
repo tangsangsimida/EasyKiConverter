@@ -4,8 +4,7 @@
 #include "models/ComponentListItemData.h"
 #include "services/ComponentService.h"
 
-#include <QObject>
-#include <QQmlListProperty>
+#include <QAbstractListModel>
 #include <QStringList>
 #include <QVector>
 
@@ -16,16 +15,19 @@ namespace EasyKiConverter {
  *
  * 负责管理元件列表相关的 UI 状态和操作
  * 连接 QML 界面和 ComponentService
+ * 继承自 QAbstractListModel 以提供细粒度的 UI 更新和更高的性能
  */
-class ComponentListViewModel : public QObject {
+class ComponentListViewModel : public QAbstractListModel {
     Q_OBJECT
-    Q_PROPERTY(QQmlListProperty<EasyKiConverter::ComponentListItemData> componentList READ componentList NOTIFY
-                   componentListChanged)
     Q_PROPERTY(int componentCount READ componentCount NOTIFY componentCountChanged)
     Q_PROPERTY(QString bomFilePath READ bomFilePath NOTIFY bomFilePathChanged)
     Q_PROPERTY(QString bomResult READ bomResult NOTIFY bomResultChanged)
 
 public:
+    enum ComponentRoles {
+        ItemDataRole = Qt::UserRole + 1
+    };
+
     /**
      * @brief 构造函数
      *
@@ -39,8 +41,10 @@ public:
      */
     ~ComponentListViewModel() override;
 
-    // Getter 方法
-    QQmlListProperty<ComponentListItemData> componentList();
+    // QAbstractListModel 接口实现
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    QHash<int, QByteArray> roleNames() const override;
 
     int componentCount() const {
         return m_componentList.count();
@@ -122,6 +126,12 @@ public slots:
     Q_INVOKABLE void refreshComponentInfo(int index);
 
     /**
+     * @brief 获取所有元件ID列表
+     * @return QStringList 元件ID列表
+     */
+    Q_INVOKABLE QStringList getAllComponentIds() const;
+
+    /**
      * @brief 复制文本到剪贴板
      *
      * @param text 要复制的文本
@@ -129,7 +139,7 @@ public slots:
     Q_INVOKABLE void copyToClipboard(const QString& text);
 
 signals:
-    void componentListChanged();
+    // componentListChanged 信号不再需要，因为 QAbstractListModel 有自己的信号机制
     void componentCountChanged();
     void bomFilePathChanged();
     void bomResultChanged();
@@ -199,12 +209,6 @@ private:
 
     // 查找列表项数据
     ComponentListItemData* findItemData(const QString& componentId) const;
-
-    // QQmlListProperty 辅助函数
-    static void appendComponent(QQmlListProperty<ComponentListItemData>* list, ComponentListItemData* p);
-    static qsizetype componentCount(QQmlListProperty<ComponentListItemData>* list);
-    static ComponentListItemData* componentAt(QQmlListProperty<ComponentListItemData>* list, qsizetype i);
-    static void clearComponents(QQmlListProperty<ComponentListItemData>* list);
 
 private:
     ComponentService* m_service;
