@@ -54,7 +54,7 @@ QString LanguageManager::currentLanguage() const {
 QString LanguageManager::detectSystemLanguage() const {
     QLocale systemLocale = QLocale::system();
     QStringList uiLanguages = systemLocale.uiLanguages();
-    
+
     qDebug() << "System UI languages:" << uiLanguages;
     qDebug() << "System locale name:" << systemLocale.name();
 
@@ -65,7 +65,7 @@ QString LanguageManager::detectSystemLanguage() const {
             return "zh_CN";
         }
     }
-    
+
     // 回退到检查 locale 名称
     if (systemLocale.name().startsWith("zh", Qt::CaseInsensitive)) {
         return "zh_CN";
@@ -130,7 +130,7 @@ void LanguageManager::installTranslator(const QString& languageCode) {
 
     qWarning() << "Failed to load translation file for language:" << languageCode;
     qWarning() << "Tried paths:" << translationPath << localPath;
-    
+
     // 加载失败时，清理创建的翻译器对象
     m_translator->deleteLater();
     m_translator = nullptr;
