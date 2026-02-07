@@ -1874,4 +1874,5 @@ Item {
             onPressed: Window.window.startSystemResize(Qt.RightEdge | Qt.BottomEdge)
         }
     }
+    }
 }

@@ -123,7 +123,7 @@ void ComponentListViewModel::removeComponent(int index) {
         QString removedId = item->componentId();
         delete item;
         endRemoveRows();
-        
+
         emit componentCountChanged();
         emit componentRemoved(removedId);
     }
@@ -144,7 +144,7 @@ void ComponentListViewModel::clearComponentList() {
         qDeleteAll(m_componentList);
         m_componentList.clear();
         endResetModel();
-        
+
         emit componentCountChanged();
         emit listCleared();
     }
