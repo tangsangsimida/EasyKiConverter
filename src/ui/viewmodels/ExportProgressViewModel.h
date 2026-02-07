@@ -4,6 +4,7 @@
 #include "services/ComponentService.h"
 #include "services/ExportService.h"
 #include "services/ExportService_Pipeline.h"
+#include "ui/viewmodels/ComponentListViewModel.h"
 
 #include <QHash>
 #include <QObject>
@@ -47,6 +48,7 @@ class ExportProgressViewModel : public QObject {
 public:
     explicit ExportProgressViewModel(ExportService* exportService,
                                      ComponentService* componentService,
+                                     ComponentListViewModel* componentListViewModel,
                                      QObject* parent = nullptr);
     ~ExportProgressViewModel() override;
 
@@ -198,6 +200,7 @@ private:
 private:
     ExportService* m_exportService;
     ComponentService* m_componentService;
+    ComponentListViewModel* m_componentListViewModel;
     QString m_status;
     int m_progress;
     bool m_isExporting;

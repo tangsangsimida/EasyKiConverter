@@ -749,21 +749,12 @@ Item {
                                 anchors.horizontalCenter: parent ? undefined : undefined
 
                                 // 绑定数据和搜索词
-                                componentId: modelData
+                                itemData: modelData
                                 searchText: searchInput.text // 传递搜索词用于高亮
 
                                 onDeleteClicked: {
-                                    var sourceIndex = -1;
-                                    var currentId = modelData;
-                                    var list = componentListController.componentList;
-                                    for(var i = 0; i < list.length; i++) {
-                                        if(list[i] === currentId) {
-                                            sourceIndex = i;
-                                            break;
-                                        }
-                                    }
-                                    if(sourceIndex !== -1) {
-                                        componentListController.removeComponent(sourceIndex);
+                                    if (modelData) {
+                                        componentListController.removeComponentById(modelData.componentId);
                                     }
                                 }
                             }
@@ -795,8 +786,13 @@ Item {
                                         }
                                     }
 
-                                    // 强制转换为字符串并处理
-                                    var idStr = String(content)
+                                    // 获取 ID
+                                    var idStr = ""
+                                    if (content && content.componentId !== undefined) {
+                                        idStr = content.componentId
+                                    } else {
+                                        idStr = String(content)
+                                    }
 
                                     // 判断是否匹配
                                     if (idStr.toLowerCase().indexOf(searchTerm) !== -1) {
@@ -858,7 +854,7 @@ Item {
                                 anchors.left: parent.left
                                 anchors.leftMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: "🔍"
+                                text: ""
                                 font.pixelSize: 12
                                 color: AppStyle.colors.textSecondary
                             }
@@ -881,15 +877,23 @@ Item {
                             }
                         }
                     }
-                    // 元件列表视图（5列网格）
+                    // 元件列表视图（自适应网格）
                     GridView {
                         id: componentList
                         Layout.fillWidth: true
                         Layout.preferredHeight: 300
                         Layout.topMargin: AppStyle.spacing.md
                         clip: true
-                        cellWidth: (width - AppStyle.spacing.md) / 5
-                        cellHeight: 56
+                        
+                        // 动态计算列宽，实现响应式布局
+                        property int minCellWidth: 230
+                        property int availableWidth: width - AppStyle.spacing.md // 减去右侧滚动条/边距空间
+                        property int columns: Math.max(1, Math.floor(availableWidth / minCellWidth))
+                        
+                        cellWidth: Math.floor(availableWidth / columns)
+                        // 卡片高度 64 + 垂直间距 12 = 76
+                        cellHeight: 76
+                        
                         flow: GridView.FlowLeftToRight
                         layoutDirection: Qt.LeftToRight
 
@@ -1745,8 +1749,15 @@ Item {
                             if (exportProgressController.failureCount > 0) {
                                 exportProgressController.retryFailedComponents();
                             } else {
+                                // 提取 Component ID 列表
+                                var idList = [];
+                                var list = componentListController.componentList;
+                                for (var i = 0; i < list.length; i++) {
+                                    idList.push(list[i].componentId);
+                                }
+
                                 exportProgressController.startExport(
-                                    componentListController.componentList,
+                                    idList,
                                     exportSettingsController.outputPath,
                                     exportSettingsController.libName,
                                     exportSettingsController.exportSymbol,
@@ -1791,5 +1802,89 @@ Item {
             }
         }
     }
+    }
+    
+    // 窗口边缘调整大小手柄
+    // 仅在非最大化时启用
+    Item {
+        anchors.fill: parent
+        z: 9999 // 确保在最顶层
+        visible: !window.isMaximized
+
+        // 边框拖拽宽度
+        property int gripSize: 8
+
+        // 左
+        MouseArea {
+            width: parent.gripSize
+            height: parent.height - 2 * parent.gripSize
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            cursorShape: Qt.SizeHorCursor
+            onPressed: Window.window.startSystemResize(Qt.LeftEdge)
+        }
+        // 右
+        MouseArea {
+            width: parent.gripSize
+            height: parent.height - 2 * parent.gripSize
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            cursorShape: Qt.SizeHorCursor
+            onPressed: Window.window.startSystemResize(Qt.RightEdge)
+        }
+        // 上
+        MouseArea {
+            width: parent.width - 2 * parent.gripSize
+            height: parent.gripSize
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            cursorShape: Qt.SizeVerCursor
+            onPressed: Window.window.startSystemResize(Qt.TopEdge)
+        }
+        // 下
+        MouseArea {
+            width: parent.width - 2 * parent.gripSize
+            height: parent.gripSize
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            cursorShape: Qt.SizeVerCursor
+            onPressed: Window.window.startSystemResize(Qt.BottomEdge)
+        }
+        // 左上
+        MouseArea {
+            width: parent.gripSize * 2
+            height: parent.gripSize * 2
+            anchors.left: parent.left
+            anchors.top: parent.top
+            cursorShape: Qt.SizeFDiagCursor
+            onPressed: Window.window.startSystemResize(Qt.LeftEdge | Qt.TopEdge)
+        }
+        // 右上
+        MouseArea {
+            width: parent.gripSize * 2
+            height: parent.gripSize * 2
+            anchors.right: parent.right
+            anchors.top: parent.top
+            cursorShape: Qt.SizeBDiagCursor
+            onPressed: Window.window.startSystemResize(Qt.RightEdge | Qt.TopEdge)
+        }
+        // 左下
+        MouseArea {
+            width: parent.gripSize * 2
+            height: parent.gripSize * 2
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            cursorShape: Qt.SizeBDiagCursor
+            onPressed: Window.window.startSystemResize(Qt.LeftEdge | Qt.BottomEdge)
+        }
+        // 右下
+        MouseArea {
+            width: parent.gripSize * 2
+            height: parent.gripSize * 2
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            cursorShape: Qt.SizeFDiagCursor
+            onPressed: Window.window.startSystemResize(Qt.RightEdge | Qt.BottomEdge)
+        }
     }
 }
