@@ -10,9 +10,13 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QTextStream>
+#include <QTimer>
 #include <QUuid>
 
 namespace EasyKiConverter {
@@ -21,6 +25,7 @@ ComponentService::ComponentService(QObject* parent)
     : QObject(parent)
     , m_api(new EasyedaApi(this))
     , m_importer(new EasyedaImporter(this))
+    , m_networkManager(new QNetworkAccessManager(this))
     , m_currentComponentId()
     , m_hasDownloadedWrl(false)
     , m_parallelTotalCount(0)
@@ -44,6 +49,195 @@ void ComponentService::fetchComponentData(const QString& componentId, bool fetch
 
     // 首先获取 CAD 数据（包含符号和封装信息?
     m_api->fetchCadData(componentId);
+}
+
+void ComponentService::fetchLcscPreviewImage(const QString& componentId) {
+    fetchLcscPreviewImageWithRetry(componentId, 0);
+}
+
+void ComponentService::fetchLcscPreviewImageWithRetry(const QString& componentId, int retryCount) {
+    qDebug() << "Fetching LCSC preview image for:" << componentId << "Retry:" << retryCount;
+    QString url =
+        QString("https://overseas.szlcsc.com/overseas/global/search?keyword=%1&pageNumber=1&noShowSelf=false&from=%1")
+            .arg(componentId);
+    QNetworkRequest request{QUrl(url)};
+    request.setHeader(QNetworkRequest::UserAgentHeader,
+                      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/114.0.0.0 Safari/537.36");
+    request.setRawHeader("Accept", "application/json");
+
+    QNetworkReply* reply = m_networkManager->get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, retryCount]() {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError) {
+            qWarning() << "LCSC search request failed:" << reply->errorString() << "Retry:" << retryCount;
+            if (retryCount < 3) {
+                QTimer::singleShot(1000 * (retryCount + 1), this, [this, componentId, retryCount]() {
+                    fetchLcscPreviewImageWithRetry(componentId, retryCount + 1);
+                });
+            }
+            return;
+        }
+
+        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+        QJsonObject root = doc.object();
+
+        // Parse: result[2].products[0].selfBreviaryImageUrl
+        if (!root.contains("result")) {
+            qWarning() << "LCSC response missing 'result' field for:" << componentId << "- Switching to Fallback";
+            fetchLcscPreviewImageFallback(componentId);
+            return;
+        }
+        QJsonArray resultArray = root["result"].toArray();
+        if (resultArray.size() <= 2) {
+            qWarning() << "LCSC response 'result' array size too small:" << resultArray.size() << "for:" << componentId
+                       << "- Switching to Fallback";
+            fetchLcscPreviewImageFallback(componentId);
+            return;  // Need at least index 2
+        }
+
+        QJsonObject result2 = resultArray[2].toObject();
+        if (!result2.contains("products")) {
+            qWarning() << "LCSC response missing 'products' in result[2] for:" << componentId
+                       << "- Switching to Fallback";
+            fetchLcscPreviewImageFallback(componentId);
+            return;
+        }
+
+        QJsonArray products = result2["products"].toArray();
+        if (products.isEmpty()) {
+            qWarning() << "LCSC products array is empty for:" << componentId << "- Switching to Fallback";
+            fetchLcscPreviewImageFallback(componentId);
+            return;
+        }
+
+        QJsonObject product0 = products[0].toObject();
+        if (!product0.contains("selfBreviaryImageUrl")) {
+            qWarning() << "LCSC product missing 'selfBreviaryImageUrl' for:" << componentId
+                       << "- Switching to Fallback";
+            fetchLcscPreviewImageFallback(componentId);
+            return;
+        }
+
+        QString imageUrl = product0["selfBreviaryImageUrl"].toString();
+        if (imageUrl.isEmpty()) {
+            qWarning() << "LCSC image URL is empty for:" << componentId << "- Switching to Fallback";
+            fetchLcscPreviewImageFallback(componentId);
+            return;
+        }
+
+        qDebug() << "Found LCSC preview image URL:" << imageUrl << "for:" << componentId;
+        downloadLcscImage(componentId, imageUrl, 0);
+    });
+}
+
+void ComponentService::fetchLcscPreviewImageFallback(const QString& componentId) {
+    qDebug() << "Starting LCSC Fallback scraping for:" << componentId;
+    QString url =
+        QString(
+            "https://so.szlcsc.com/"
+            "global.html?k=%1&hot-key=KLM8G1GETF-B041&lcsc_vid="
+            "RQQKVgVeQFdeVwUFFgcLX1UAFVEMUV1TQVkKVgFST1QxVlNRR1VbXlBfQ1ddVjtW&spm=sc.gbn.hd.ss___sc.gbn.hd.ss")
+            .arg(componentId);
+
+    QNetworkRequest request{QUrl(url)};
+    request.setHeader(QNetworkRequest::UserAgentHeader,
+                      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/144.0.0.0 Safari/537.36");
+    request.setRawHeader("accept",
+                         "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/"
+                         "*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+    request.setRawHeader("accept-language", "zh-CN,zh;q=0.9,en;q=0.8");
+    request.setRawHeader("cache-control", "no-cache");
+    request.setRawHeader(
+        "cookie",
+        "lcb_cid_pro=7c5c2031b1f74f61b1a374c6c150866c1767537144388; _lcsc_fid=2ed1a87600acafe81fb0b69568d1e485; "
+        "lotteryKey=b6da0ab85f7f9d7d257c; noLoginCustomerFlag2=347162dfb4193385adc2; "
+        "PRO_NEW_SID=c309f8b3-416b-4bb6-a4e4-ec6e9abd1b65; customer_info=30-5-0-1; "
+        "currentCartVo={%22cartCode%22:%22%22%2C%22cartName%22:%22%E8%B4%AD%E7%89%A9%E8%BD%A6%EF%BC%88%E9%BB%98%E8%AE%"
+        "A4%EF%BC%89%22%2C%22productCount%22:30}; uvCookie=2ed1a87600acafe81fb0b69568d1e485_1770459162862_T5Qboa; "
+        "JSESSIONID=8287734B6C5B5FB19C8F3B642CDC9273; cookies_save_operation_code_mark=; isLoginCustomerFlag=6104950A; "
+        "noLoginCustomerFlag=42e8f7115e25f0fb574e; "
+        "acw_tc=76b20fb417704674515477679eb5b37ce59da5c291482c056a3064f85e4b21; "
+        "searchHistoryRecord=C3018718%EF%BC%9AC12345%EF%BC%9ASM712_C7420375%EF%BC%9AC8734%EF%BC%9AUFQFPN-48_L7.0-W7.0-"
+        "P0.50-BL-EP%EF%BC%9AC35556%EF%BC%9AC8323%EF%BC%9AC414042%EF%BC%9AC23345%EF%BC%9ASOT-23; soBuriedPointData=; "
+        "_lcsc_asid=19c3819a4e7e2509cd4c04e8ded46ad0c7d; _uetsid=86bad040040d11f18c3cd1c583eb7e2e; "
+        "_uetvid=dfdaa240e97911f0b6908526265f8f7c");
+    request.setRawHeader("pragma", "no-cache");
+    request.setRawHeader("priority", "u=0, i");
+    request.setRawHeader("referer", QString("https://so.szlcsc.com/global.html?k=%1").arg(componentId).toUtf8());
+    request.setRawHeader("sec-ch-ua", "\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144\"");
+    request.setRawHeader("sec-ch-ua-mobile", "?0");
+    request.setRawHeader("sec-ch-ua-platform", "\"Windows\"");
+    request.setRawHeader("sec-fetch-dest", "document");
+    request.setRawHeader("sec-fetch-mode", "navigate");
+    request.setRawHeader("sec-fetch-site", "same-origin");
+    request.setRawHeader("sec-fetch-user", "?1");
+    request.setRawHeader("upgrade-insecure-requests", "1");
+
+    QNetworkReply* reply = m_networkManager->get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, reply, componentId]() {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError) {
+            qWarning() << "LCSC Fallback scraping failed:" << reply->errorString();
+            return;
+        }
+
+        QString html = QString::fromUtf8(reply->readAll());
+
+        // Regex to find the image src.
+        // Targeting the structure: <img ... src=".../product/breviary/..." ...> inside the product list
+        // Since we know the image usually contains "breviary" or is a jpg/png link in the result list.
+        // The user's xpath points to the first result.
+        // Let's look for the first image URL that looks like a product image.
+
+        // Strategy: Look for the specific image class or structure if possible, but generic product image URL regex is safer.
+        // LCSC images often look like: https://alimg.szlcsc.com/upload/public/product/breviary/...
+
+        QRegularExpression re("src=\"(https?://[^\"]+/upload/public/product/breviary/[^\"]+)\"");
+        QRegularExpressionMatch match = re.match(html);
+
+        if (match.hasMatch()) {
+            QString imageUrl = match.captured(1);
+            qDebug() << "Fallback: Found image URL:" << imageUrl;
+            downloadLcscImage(componentId, imageUrl, 0);
+        } else {
+            qWarning() << "Fallback: Could not find image URL in HTML response for:" << componentId;
+            // Debug: Print a small part of HTML to see if we got the right page
+            // qDebug() << "HTML snippet:" << html.left(500);
+        }
+    });
+}
+
+void ComponentService::downloadLcscImage(const QString& componentId, const QString& imageUrl, int retryCount) {
+    qDebug() << "Downloading LCSC image from:" << imageUrl << "Retry:" << retryCount;
+    QNetworkRequest imgRequest{QUrl(imageUrl)};
+    imgRequest.setHeader(QNetworkRequest::UserAgentHeader,
+                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                         "Chrome/114.0.0.0 Safari/537.36");
+
+    QNetworkReply* imgReply = m_networkManager->get(imgRequest);
+    connect(imgReply, &QNetworkReply::finished, this, [this, imgReply, componentId, imageUrl, retryCount]() {
+        imgReply->deleteLater();
+        if (imgReply->error() != QNetworkReply::NoError) {
+            qWarning() << "LCSC image download failed:" << imgReply->errorString() << "Retry:" << retryCount;
+            if (retryCount < 3) {
+                QTimer::singleShot(1000 * (retryCount + 1), this, [this, componentId, imageUrl, retryCount]() {
+                    downloadLcscImage(componentId, imageUrl, retryCount + 1);
+                });
+            }
+            return;
+        }
+
+        QByteArray data = imgReply->readAll();
+        QImage image;
+        if (image.loadFromData(data)) {
+            qDebug() << "LCSC preview image downloaded successfully for:" << componentId << "Size:" << data.size();
+            emit previewImageReady(componentId, image);
+        } else {
+            qWarning() << "Failed to load LCSC image from data for:" << componentId << "Size:" << data.size();
+        }
+    });
 }
 
 void ComponentService::handleComponentInfoFetched(const QJsonObject& data) {

@@ -749,21 +749,12 @@ Item {
                                 anchors.horizontalCenter: parent ? undefined : undefined
 
                                 // 绑定数据和搜索词
-                                componentId: modelData
+                                itemData: modelData
                                 searchText: searchInput.text // 传递搜索词用于高亮
 
                                 onDeleteClicked: {
-                                    var sourceIndex = -1;
-                                    var currentId = modelData;
-                                    var list = componentListController.componentList;
-                                    for(var i = 0; i < list.length; i++) {
-                                        if(list[i] === currentId) {
-                                            sourceIndex = i;
-                                            break;
-                                        }
-                                    }
-                                    if(sourceIndex !== -1) {
-                                        componentListController.removeComponent(sourceIndex);
+                                    if (modelData) {
+                                        componentListController.removeComponentById(modelData.componentId);
                                     }
                                 }
                             }
@@ -795,8 +786,13 @@ Item {
                                         }
                                     }
 
-                                    // 强制转换为字符串并处理
-                                    var idStr = String(content)
+                                    // 获取 ID
+                                    var idStr = ""
+                                    if (content && content.componentId !== undefined) {
+                                        idStr = content.componentId
+                                    } else {
+                                        idStr = String(content)
+                                    }
 
                                     // 判断是否匹配
                                     if (idStr.toLowerCase().indexOf(searchTerm) !== -1) {
@@ -1745,8 +1741,15 @@ Item {
                             if (exportProgressController.failureCount > 0) {
                                 exportProgressController.retryFailedComponents();
                             } else {
+                                // 提取 Component ID 列表
+                                var idList = [];
+                                var list = componentListController.componentList;
+                                for (var i = 0; i < list.length; i++) {
+                                    idList.push(list[i].componentId);
+                                }
+
                                 exportProgressController.startExport(
-                                    componentListController.componentList,
+                                    idList,
                                     exportSettingsController.outputPath,
                                     exportSettingsController.libName,
                                     exportSettingsController.exportSymbol,

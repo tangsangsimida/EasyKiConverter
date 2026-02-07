@@ -119,6 +119,11 @@ PipelineProgress ExportServicePipeline::getPipelineProgress() const {
     return m_pipelineProgress;
 }
 
+void ExportServicePipeline::setPreloadedData(const QMap<QString, QSharedPointer<ComponentData>>& data) {
+    QMutexLocker locker(m_mutex);
+    m_preloadedData = data;
+}
+
 void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportStatus> status) {
     if (FetchWorker* worker = qobject_cast<FetchWorker*>(sender())) {
         QMutexLocker locker(&m_workerMutex);
@@ -216,13 +221,18 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
     qDebug() << "Write completed for component:" << status->componentId << "Success:" << status->writeSuccess;
     m_pipelineProgress.writeCompleted++;
 
+    // 无论整体是否成功，只要符号文件被写入了，就加入清理列表
+    if (m_options.exportSymbol && status->symbolWritten) {
+        QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, status->componentId);
+        if (QFile::exists(tempFilePath) && !m_tempSymbolFiles.contains(tempFilePath)) {
+            m_tempSymbolFiles.append(tempFilePath);
+        }
+    }
+
     if (status->writeSuccess && status->fetchSuccess && status->processSuccess) {
         m_successCount++;
         if (m_options.exportSymbol && status->symbolData && !status->symbolData->info().name.isEmpty()) {
             m_symbols.append(*status->symbolData);
-            QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, status->componentId);
-            if (QFile::exists(tempFilePath))
-                m_tempSymbolFiles.append(tempFilePath);
         }
         emit componentExported(status->componentId,
                                true,
@@ -248,6 +258,87 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
 
 void ExportServicePipeline::startFetchStage() {
     for (const QString& componentId : m_componentIds) {
+        // 检查是否有预加载数据
+        bool canUsePreloaded = false;
+        QSharedPointer<ComponentData> preloadedData;
+
+        if (m_preloadedData.contains(componentId)) {
+            preloadedData = m_preloadedData.value(componentId);
+            if (preloadedData && preloadedData->isValid()) {
+                // 如果需要导出3D模型，必须检查预加载数据中是否有有效的3D模型信息
+                // 如果预加载数据没有3D信息（例如列表验证时没有勾选获取3D），则不能使用预加载数据，必须重新获取
+                if (m_options.exportModel3D) {
+                    if (preloadedData->model3DData() && !preloadedData->model3DData()->uuid().isEmpty()) {
+                        canUsePreloaded = true;
+                    } else {
+                        qDebug() << "Preloaded data for" << componentId << "misses 3D model data, forcing fetch.";
+                        canUsePreloaded = false;
+                    }
+                } else {
+                    canUsePreloaded = true;
+                }
+            }
+        }
+
+        if (canUsePreloaded) {
+            qDebug() << "Using preloaded data for component:" << componentId;
+
+            QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
+            status->componentId = componentId;
+            status->need3DModel = m_options.exportModel3D;
+
+            // 填充数据
+            // 注意：这里我们需要把 ComponentData 转换回原始 JSON 或者直接填充 Status 对象
+            // ProcessWorker 主要是从 status->cadDataRaw 解析，或者我们可以修改 ProcessWorker 接受 ComponentData
+
+            // 现在的架构是 FetchWorker -> raw JSON -> ProcessWorker -> ComponentData -> WriteWorker
+            // 如果我们已经有 ComponentData，我们应该跳过 Fetch 和 Process 阶段吗？
+            // 或者我们可以把 ComponentData 序列化回 JSON (有点多余)，
+            // 或者修改 Status 对象以支持直接持有 ComponentData，并让 ProcessWorker 识别它。
+
+            // 既然 ComponentExportStatus 已经有 symbolData, footprintData 等成员，
+            // 我们可以直接填充这些，并标记 fetchSuccess 和 processSuccess 为 true。
+
+            status->fetchSuccess = true;
+            status->fetchMessage = "Used preloaded data";
+            status->fetchDurationMs = 0;
+
+            // 填充 CAD 数据
+            status->symbolData = preloadedData->symbolData();
+            status->footprintData = preloadedData->footprintData();
+            status->model3DData = preloadedData->model3DData();
+
+            // 标记处理成功 (因为数据已经是处理过的 ComponentData)
+            status->processSuccess = true;
+            status->processMessage = "Preloaded data used";
+            status->processDurationMs = 0;
+
+            // 直接推送到写入队列
+            m_pipelineProgress.fetchCompleted++;
+            m_pipelineProgress.processCompleted++;
+
+            // 发送信号更新 UI
+            emit componentExported(
+                componentId, true, "Used preloaded data", static_cast<int>(PipelineStage::Fetch), false, false, false);
+            emit componentExported(componentId,
+                                   true,
+                                   "Used preloaded data",
+                                   static_cast<int>(PipelineStage::Process),
+                                   false,
+                                   false,
+                                   false);
+            emit pipelineProgressUpdated(m_pipelineProgress);
+
+            if (m_processWriteQueue->push(status)) {
+                // 成功推送到写入队列
+            } else {
+                m_failureCount++;
+                // Handle failure
+            }
+
+            continue;
+        }
+
         FetchWorker* worker = new FetchWorker(componentId, m_networkAccessManager, m_options.exportModel3D, nullptr);
         {
             QMutexLocker locker(&m_workerMutex);
