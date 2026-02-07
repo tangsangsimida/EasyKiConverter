@@ -11,6 +11,7 @@ Rectangle {
     property string searchText: "" 
     
     signal deleteClicked()
+    signal copyClicked() // 新增复制信号
 
     height: 64 // 增加高度以容纳缩略图和更多信息
     
@@ -27,6 +28,24 @@ Rectangle {
         }
     }
 
+    // 复制辅助组件
+    TextEdit {
+        id: copyHelper
+        visible: false
+        text: ""
+    }
+
+    // 复制成功提示
+    ToolTip {
+        id: copyFeedback
+        parent: item
+        x: (parent.width - width) / 2
+        y: (parent.height - height) / 2
+        text: qsTr("已复制 ID")
+        delay: 0
+        timeout: 1500
+    }
+
     // 1. 将全局鼠标区域移到最底层（作为背景交互层）
     // 这样它就不会遮挡上层的缩略图交互
     MouseArea {
@@ -34,7 +53,20 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.ArrowCursor 
-        acceptedButtons: Qt.NoButton // 不拦截点击，只用于感知悬停颜色
+        acceptedButtons: Qt.RightButton // 只响应右键，左键穿透（如果有需要）或保留默认
+        
+        onClicked: (mouse) => {
+            if (mouse.button === Qt.RightButton) {
+                if (itemData && itemData.componentId) {
+                    copyHelper.text = itemData.componentId
+                    copyHelper.selectAll()
+                    copyHelper.copy()
+                    
+                    item.copyClicked()
+                    copyFeedback.visible = true
+                }
+            }
+        }
     }
 
     RowLayout {

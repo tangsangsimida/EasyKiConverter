@@ -353,4 +353,10 @@ QSharedPointer<ComponentData> ComponentListViewModel::getPreloadedData(const QSt
     return nullptr;
 }
 
+void ComponentListViewModel::copyToClipboard(const QString& text) {
+    QClipboard* clipboard = QGuiApplication::clipboard();
+    clipboard->setText(text);
+    qDebug() << "Copied to clipboard:" << text;
+}
+
 }  // namespace EasyKiConverter

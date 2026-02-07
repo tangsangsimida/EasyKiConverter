@@ -121,6 +121,13 @@ public slots:
     // 重新验证/获取信息
     Q_INVOKABLE void refreshComponentInfo(int index);
 
+    /**
+     * @brief 复制文本到剪贴板
+     *
+     * @param text 要复制的文本
+     */
+    Q_INVOKABLE void copyToClipboard(const QString& text);
+
 signals:
     void componentListChanged();
     void componentCountChanged();
