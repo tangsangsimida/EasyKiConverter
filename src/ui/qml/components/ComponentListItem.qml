@@ -1,6 +1,7 @@
-﻿import QtQuick
+import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Rectangle {
@@ -26,21 +27,32 @@ Rectangle {
         }
     }
 
+    // 1. 将全局鼠标区域移到最底层（作为背景交互层）
+    // 这样它就不会遮挡上层的缩略图交互
+    MouseArea {
+        id: itemMouseArea
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.ArrowCursor 
+        acceptedButtons: Qt.NoButton // 不拦截点击，只用于感知悬停颜色
+    }
+
     RowLayout {
         anchors.fill: parent
         anchors.margins: AppStyle.spacing.sm
         spacing: AppStyle.spacing.md
+        z: 10 // 确保内容在背景 MouseArea 之上
 
         // 缩略图区域
         Rectangle {
             Layout.preferredWidth: 48
             Layout.preferredHeight: 48
             Layout.alignment: Qt.AlignVCenter
-            color: "white" // 缩略图背景通常为白色
+            color: "white" 
             radius: AppStyle.radius.sm
             border.color: AppStyle.colors.border
             border.width: 1
-            clip: true
+            clip: true // 裁剪内部图片圆角
 
             Image {
                 id: thumbnail
@@ -58,8 +70,8 @@ Rectangle {
                 anchors.centerIn: parent
                 width: 24
                 height: 24
-                running: itemData ? itemData.isFetching : false
-                visible: itemData ? itemData.isFetching : false
+                running: (itemData && itemData.isFetching) ? true : false
+                visible: (itemData && itemData.isFetching) ? true : false
             }
 
             // 占位符/错误状态
@@ -68,7 +80,16 @@ Rectangle {
                 text: (itemData && !itemData.isValid) ? "✕" : (itemData && !itemData.isFetching && !itemData.hasThumbnail) ? "?" : ""
                 font.pixelSize: AppStyle.fontSizes.xxl
                 color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
-                visible: !thumbnail.visible && !itemData.isFetching
+                visible: !thumbnail.visible && !(itemData && itemData.isFetching)
+            }
+
+            // 2. 缩略图交互区域
+            MouseArea {
+                id: thumbMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: (itemData && itemData.hasThumbnail) ? Qt.PointingHandCursor : Qt.ArrowCursor
+                // 这里的 hover 事件现在可以正常触发了，因为 itemMouseArea 在底层
             }
         }
 
@@ -161,66 +182,66 @@ Rectangle {
         }
     }
 
-    MouseArea {
-        id: itemMouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        acceptedButtons: Qt.NoButton
-        
-        // 简单的放大预览逻辑
-        onContainsMouseChanged: {
-            if (containsMouse && itemData && itemData.hasThumbnail) {
-                // 显示放大预览
-                previewPopup.open()
-            } else {
-                previewPopup.close()
-            }
-        }
-    }
-    
-    // 放大预览弹窗
+    // 3. 悬浮预览层 (改回 Popup 以确保显示在最顶层且不被裁剪)
     Popup {
-        id: previewPopup
-        x: itemData && itemData.hasThumbnail ? 60 : 0 // 显示在右侧
-        y: -50
+        id: previewOverlay
+        // 绑定可见性：鼠标悬停 && 有数据 && 有缩略图
+        visible: thumbMouseArea.containsMouse && itemData && itemData.hasThumbnail
+        
+        // 相对坐标：显示在缩略图右侧
+        x: 65 
+        y: (parent.height - height) / 2
+        
         width: 200
         height: 200
         padding: 0
-        visible: false
-        closePolicy: Popup.NoAutoClose
         
+        // 关键配置：确保它是被动的，完全由 visible 控制
+        closePolicy: Popup.NoAutoClose
+        modal: false
+        focus: false
+        dim: false // 不变暗背景
+
         background: Rectangle {
             color: "white"
             border.color: AppStyle.colors.primary
             border.width: 2
             radius: AppStyle.radius.md
             
-            // 阴影效果需要 QtQuick.Effects 或自定义 Shader，这里简化
+            // 阴影效果
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowBlur: 1.0
+                shadowColor: "#33000000"
+                shadowVerticalOffset: 2
+                shadowHorizontalOffset: 2
+            }
         }
         
-        Image {
-            anchors.fill: parent
-            anchors.margins: 4
-            source: (itemData && itemData.thumbnailBase64) ? "data:image/png;base64," + itemData.thumbnailBase64 : ""
-            fillMode: Image.PreserveAspectFit
-        }
-        
-        // 元件名称覆盖
-        Rectangle {
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 30
-            color: "#CC000000" // 半透明黑
-            radius: AppStyle.radius.md
-            // 只设置下半部分的圆角有点麻烦，这里简化
+        contentItem: Item {
+            Image {
+                anchors.fill: parent
+                anchors.margins: 4
+                source: (itemData && itemData.thumbnailBase64) ? "data:image/png;base64," + itemData.thumbnailBase64 : ""
+                fillMode: Image.PreserveAspectFit
+            }
             
-            Text {
-                anchors.centerIn: parent
-                text: itemData ? itemData.componentId : ""
-                color: "white"
-                font.bold: true
+            // 底部文字遮罩
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width
+                height: 30
+                color: "#CC000000"
+                radius: AppStyle.radius.md
+                
+                Text {
+                    anchors.centerIn: parent
+                    text: itemData ? itemData.componentId : ""
+                    color: "white"
+                    font.bold: true
+                }
             }
         }
     }
