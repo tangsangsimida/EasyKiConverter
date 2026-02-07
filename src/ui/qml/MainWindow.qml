@@ -854,7 +854,7 @@ Item {
                                 anchors.left: parent.left
                                 anchors.leftMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: "🔍"
+                                text: ""
                                 font.pixelSize: 12
                                 color: AppStyle.colors.textSecondary
                             }
