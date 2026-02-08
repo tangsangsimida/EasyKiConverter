@@ -824,47 +824,163 @@ Item {
                         }
 
                         // 搜索框
-                        TextField {
-                            id: searchInput
-                            Layout.preferredWidth: 200
-                            placeholderText: qsTr("搜索元器件...")
-                            font.pixelSize: AppStyle.fontSizes.sm
-                            color: AppStyle.colors.textPrimary
-                            placeholderTextColor: AppStyle.colors.textSecondary
-                            leftPadding: 32 // 为图标留出空间
 
-                            background: Rectangle {
-                                color: AppStyle.colors.surface
-                                border.color: searchInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
-                                border.width: searchInput.focus ? 2 : 1
+                                                TextField {
+
+                                                    id: searchInput
+
+                                                    Layout.preferredWidth: 200
+
+                                                    Layout.preferredHeight: 44
+
+                                                    placeholderText: qsTr("搜索元器件...")
+
+                        
+
+                                                    font.pixelSize: AppStyle.fontSizes.sm
+
+                                                    color: AppStyle.colors.textPrimary
+
+                                                    placeholderTextColor: AppStyle.colors.textSecondary
+
+                                                    leftPadding: 32 // 为图标留出空间
+
+                        
+
+                                                    background: Rectangle {
+
+                                                        color: AppStyle.colors.surface
+
+                                                        border.color: searchInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+
+                                                        border.width: searchInput.focus ? 2 : 1
+
+                                                        radius: AppStyle.radius.md
+
+                                                    }
+
+                        
+
+                                                    // 搜索图标
+
+                                                    Image {
+
+                                                        anchors.left: parent.left
+
+                                                        anchors.leftMargin: 8
+
+                                                        anchors.verticalCenter: parent.verticalCenter
+
+                                                        width: 16
+
+                                                        height: 16
+
+                                                        source: AppStyle.isDarkMode ?
+
+                                                                "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark-white.svg" : // 暂时用现有图标替代，或者用文字
+
+                                                                "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark.svg"
+
+                                                        // 注意：实际上应该用一个 'search' 图标，这里暂时复用或忽略，
+
+                                                        // 为了美观，用 Text 替代
+
+                                                        visible: false
+
+                                                    }
+
+                                                    Text {
+
+                                                        anchors.left: parent.left
+
+                                                        anchors.leftMargin: 10
+
+                                                        anchors.verticalCenter: parent.verticalCenter
+
+                                                        text: ""
+
+                                                        font.pixelSize: 12
+
+                                                        color: AppStyle.colors.textSecondary
+
+                                                    }
+
+                        
+
+                                                    onTextChanged: {
+
+                                                        visualModel.updateFilter()
+
+                                                    }
+
+                                                }
+
+                        
+
+                                                // 复制所有编号按钮
+
+                                                Item {
+
+                                                    id: copyAllButton
+
+                                                    Layout.preferredWidth: copyAllButtonContent.width + AppStyle.spacing.xl * 2
+
+                                                    Layout.preferredHeight: 44
+
+                                                    Layout.alignment: Qt.AlignVCenter
+
+                            // 按钮背景
+                            Rectangle {
+                                anchors.fill: parent
+                                color: copyAllButtonMouseArea.pressed ? 
+                                       AppStyle.colors.textPrimary :
+                                       copyAllButtonMouseArea.containsMouse ? 
+                                       Qt.darker(AppStyle.colors.textSecondary, 1.2) : 
+                                       AppStyle.colors.textSecondary
                                 radius: AppStyle.radius.md
+                                enabled: componentListController.componentCount > 0
+                                opacity: componentListController.componentCount > 0 ? 1.0 : 0.4
+                                Behavior on color {
+                                    ColorAnimation { duration: AppStyle.durations.fast }
+                                }
+                                Behavior on opacity {
+                                    NumberAnimation { duration: AppStyle.durations.fast }
+                                }
                             }
 
-                            // 搜索图标
-                            Image {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 16
-                                height: 16
-                                source: AppStyle.isDarkMode ?
-                                        "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark-white.svg" : // 暂时用现有图标替代，或者用文字
-                                        "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark.svg"
-                                // 注意：实际上应该用一个 'search' 图标，这里暂时复用或忽略，
-                                // 为了美观，用 Text 替代
-                                visible: false
-                            }
+                            // 按钮文本
                             Text {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: ""
-                                font.pixelSize: 12
-                                color: AppStyle.colors.textSecondary
+                                id: copyAllButtonContent
+                                anchors.centerIn: parent
+                                text: qsTr("复制所有编号")
+                                font.pixelSize: AppStyle.fontSizes.sm
+                                color: "white"
                             }
 
-                            onTextChanged: {
-                                visualModel.updateFilter()
+                            // 鼠标区域
+                            MouseArea {
+                                id: copyAllButtonMouseArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: componentListController.componentCount > 0 ? 
+                                              Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: {
+                                    if (componentListController.componentCount > 0) {
+                                        componentListController.copyAllComponentIds()
+                                        copyAllFeedback.visible = true
+                                    }
+                                }
+                            }
+
+                            // 复制成功提示
+                            ToolTip {
+                                id: copyAllFeedback
+                                parent: copyAllButton
+                                x: (parent.width - width) / 2
+                                y: -35
+                                text: qsTr("已复制所有编号")
+                                delay: 0
+                                timeout: 1500
                             }
                         }
 

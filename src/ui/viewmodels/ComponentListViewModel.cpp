@@ -185,6 +185,30 @@ void ComponentListViewModel::pasteFromClipboard() {
     emit pasteCompleted(added, skipped);
 }
 
+void ComponentListViewModel::copyAllComponentIds() {
+    if (m_componentList.isEmpty()) {
+        qWarning() << "Component list is empty, nothing to copy";
+        return;
+    }
+
+    // 收集所有元器件编号
+    QStringList componentIds;
+    for (const auto* item : m_componentList) {
+        if (item) {
+            componentIds.append(item->componentId());
+        }
+    }
+
+    // 用换行符连接所有编号
+    QString textToCopy = componentIds.join("\n");
+
+    // 复制到剪贴板
+    QClipboard* clipboard = QGuiApplication::clipboard();
+    clipboard->setText(textToCopy);
+
+    qDebug() << "Copied" << componentIds.size() << "component IDs to clipboard";
+}
+
 void ComponentListViewModel::selectBomFile(const QString& filePath) {
     qDebug() << "BOM file selected:" << filePath;
 
