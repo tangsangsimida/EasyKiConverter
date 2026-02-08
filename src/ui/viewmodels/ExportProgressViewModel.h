@@ -11,6 +11,7 @@
 #include <QString>
 #include <QTimer>
 #include <QVariantList>
+#include <QSystemTrayIcon>
 
 namespace EasyKiConverter {
 
@@ -196,6 +197,8 @@ private:
     void prepopulateResultsList(const QStringList& componentIds);
     void startExportInternal(const QStringList& componentIds, bool isRetry);
     void updateStatistics();
+    void showExportCompleteNotification();
+    void initializeSystemTrayIcon();
 
 private:
     ExportService* m_exportService;
@@ -226,6 +229,7 @@ private:
     int m_successFootprintCount;
     int m_successModel3DCount;
     int m_failureCount;
+    QSystemTrayIcon* m_systemTrayIcon;
 };
 }  // namespace EasyKiConverter
 
