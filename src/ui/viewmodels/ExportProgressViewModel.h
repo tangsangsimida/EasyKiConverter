@@ -9,9 +9,9 @@
 #include <QHash>
 #include <QObject>
 #include <QString>
+#include <QSystemTrayIcon>
 #include <QTimer>
 #include <QVariantList>
-#include <QSystemTrayIcon>
 
 namespace EasyKiConverter {
 

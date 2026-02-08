@@ -107,13 +107,14 @@ void ExportSettingsViewModel::setExportMode(int mode) {
 void ExportSettingsViewModel::setDebugMode(bool enabled) {
     // 检查是否通过环境变量设置
     bool envDebugMode = qEnvironmentVariableIsSet("EASYKICONVERTER_DEBUG_MODE");
-    
+
     if (envDebugMode) {
         // 如果设置了环境变量，禁用手动设置
-        qDebug() << "Debug mode is controlled by environment variable EASYKICONVERTER_DEBUG_MODE, ignoring manual setting";
+        qDebug()
+            << "Debug mode is controlled by environment variable EASYKICONVERTER_DEBUG_MODE, ignoring manual setting";
         return;
     }
-    
+
     if (m_debugMode != enabled) {
         m_debugMode = enabled;
         emit debugModeChanged();
@@ -242,7 +243,7 @@ void ExportSettingsViewModel::loadFromConfig() {
     m_exportFootprint = m_configService->getExportFootprint();
     m_exportModel3D = m_configService->getExportModel3D();
     m_overwriteExistingFiles = m_configService->getOverwriteExistingFiles();
-    
+
     // 从环境变量读取调试模式（优先级高于配置文件）
     bool envDebugMode = qEnvironmentVariableIsSet("EASYKICONVERTER_DEBUG_MODE");
     if (envDebugMode) {

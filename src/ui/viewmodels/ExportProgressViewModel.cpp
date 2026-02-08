@@ -2,16 +2,16 @@
 
 #include "services/ExportService_Pipeline.h"
 
-#include <QDebug>
-#include <QSystemTrayIcon>
-#include <QGuiApplication>
+#include <QAction>
 #include <QApplication>
-#include <QTimer>
+#include <QDebug>
+#include <QGuiApplication>
 #include <QIcon>
 #include <QMenu>
-#include <QAction>
-#include <QWindow>
 #include <QStyle>
+#include <QSystemTrayIcon>
+#include <QTimer>
+#include <QWindow>
 
 namespace EasyKiConverter {
 
@@ -519,9 +519,7 @@ void ExportProgressViewModel::showExportCompleteNotification() {
         title = QObject::tr("导出完成");
 
         // 计算成功率
-        double successRate = m_resultsList.size() > 0
-            ? (m_successCount * 100.0 / m_resultsList.size())
-            : 0.0;
+        double successRate = m_resultsList.size() > 0 ? (m_successCount * 100.0 / m_resultsList.size()) : 0.0;
 
         if (m_successCount == 0) {
             // 全部失败
@@ -558,9 +556,9 @@ void ExportProgressViewModel::showExportCompleteNotification() {
         // 添加输出统计和耗时信息
         QStringList stats;
         stats << QObject::tr("输出：符号 %1 · 封装 %2 · 3D %3")
-                 .arg(m_successSymbolCount)
-                 .arg(m_successFootprintCount)
-                 .arg(m_successModel3DCount);
+                     .arg(m_successSymbolCount)
+                     .arg(m_successFootprintCount)
+                     .arg(m_successModel3DCount);
 
         // 添加耗时信息
         if (m_statistics.totalDurationMs > 0) {
@@ -601,17 +599,15 @@ void ExportProgressViewModel::initializeSystemTrayIcon() {
 
     // 设置图标 - 尝试多个路径
     QIcon appIcon;
-    
+
     // 尝试资源文件路径（使用 qt_add_qml_module 的路径格式）
-    QStringList iconPaths = {
-        ":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.ico",
-        ":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
-        ":/resources/icons/app_icon.ico",
-        ":/resources/icons/app_icon.png",
-        ":/icons/app_icon.ico",
-        ":/icons/app_icon.png"
-    };
-    
+    QStringList iconPaths = {":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.ico",
+                             ":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
+                             ":/resources/icons/app_icon.ico",
+                             ":/resources/icons/app_icon.png",
+                             ":/icons/app_icon.ico",
+                             ":/icons/app_icon.png"};
+
     for (const QString& path : iconPaths) {
         appIcon = QIcon(path);
         if (!appIcon.isNull()) {
@@ -621,7 +617,7 @@ void ExportProgressViewModel::initializeSystemTrayIcon() {
             qDebug() << "Failed to load icon from:" << path;
         }
     }
-    
+
     // 如果所有路径都失败，使用 Qt 内置图标
     if (appIcon.isNull()) {
         qWarning() << "Failed to load icon from all paths, using default icon";
@@ -632,7 +628,7 @@ void ExportProgressViewModel::initializeSystemTrayIcon() {
             return;
         }
     }
-    
+
     m_systemTrayIcon->setIcon(appIcon);
     qDebug() << "System tray icon set";
 
