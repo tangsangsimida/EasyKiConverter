@@ -414,14 +414,16 @@ void ExportServicePipeline::startWriteStage() {
 }
 
 void ExportServicePipeline::checkPipelineCompletion() {
+    // 抓取阶段完成检查
     bool fetchDone = m_pipelineProgress.fetchCompleted >= m_pipelineProgress.totalTasks;
-    if (m_isCancelled.loadAcquire() && m_fetchThreadPool->activeThreadCount() == 0)
+    if (m_isCancelled.loadAcquire() && m_fetchProcessQueue->isEmpty())
         fetchDone = true;
     if (fetchDone && !m_fetchProcessQueue->isClosed())
         m_fetchProcessQueue->close();
     if (!fetchDone)
         return;
 
+    // 处理阶段完成检查
     bool processDone = m_pipelineProgress.processCompleted >= m_pipelineProgress.totalTasks;
     if (m_isCancelled.loadAcquire() && m_fetchProcessQueue->isEmpty())
         processDone = true;
@@ -430,14 +432,14 @@ void ExportServicePipeline::checkPipelineCompletion() {
     if (!processDone)
         return;
 
+    // 写入阶段完成检查
     bool writeDone = m_pipelineProgress.writeCompleted >= m_pipelineProgress.totalTasks;
     if (m_isCancelled.loadAcquire() && m_processWriteQueue->isEmpty())
         writeDone = true;
     if (!writeDone)
         return;
-    if (m_writeThreadPool->activeThreadCount() > 0)
-        return;
 
+    // 所有阶段都完成，开始清理和统计
     qDebug() << "Pipeline completed. Success:" << m_successCount << "Failed:" << m_failureCount;
 
     // 将合并符号库、生成统计报告和清理临时文件的耗时操作放到异步线程中执行

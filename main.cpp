@@ -8,7 +8,7 @@
 
 #include <QDebug>
 #include <QFile>
-#include <QGuiApplication>
+#include <QApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -17,7 +17,7 @@
 #include <QUrl>
 
 int main(int argc, char* argv[]) {
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
 
     // 设置应用程序信息
     app.setApplicationName("EasyKiConverter");

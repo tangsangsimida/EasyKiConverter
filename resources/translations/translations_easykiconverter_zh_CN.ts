@@ -48,6 +48,14 @@
         <translation>搜索元器件...</translation>
     </message>
     <message>
+        <source>复制所有编号</source>
+        <translation>复制所有编号</translation>
+    </message>
+    <message>
+        <source>已复制所有编号</source>
+        <translation>已复制所有编号</translation>
+    </message>
+    <message>
         <source>清空列表</source>
         <translation>清空列表</translation>
     </message>

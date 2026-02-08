@@ -90,6 +90,11 @@ public slots:
     Q_INVOKABLE void pasteFromClipboard();
 
     /**
+     * @brief 复制所有元器件编号到剪贴板
+     */
+    Q_INVOKABLE void copyAllComponentIds();
+
+    /**
      * @brief 选择BOM文件
      *
      * @param filePath 文件路径
