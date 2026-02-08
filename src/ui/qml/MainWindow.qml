@@ -1305,58 +1305,6 @@ Item {
                                     }
                                 }
                             }
-                            // 调试模式选项
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                Layout.minimumWidth: 100
-                                spacing: 8
-                                CheckBox {
-                                    id: debugModeCheckbox
-                                    Layout.fillWidth: true
-                                    text: qsTr("调试模式")
-                                    checked: exportSettingsController.debugMode
-                                    onCheckedChanged: exportSettingsController.setDebugMode(checked)
-                                    font.pixelSize: 16
-
-                                    indicator: Rectangle {
-                                        implicitWidth: 22
-                                        implicitHeight: 22
-                                        x: debugModeCheckbox.leftPadding
-                                        y: parent.height / 2 - height / 2
-                                        radius: 4
-                                        color: debugModeCheckbox.checked ? AppStyle.colors.primary : "transparent"
-                                        border.color: debugModeCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                                        border.width: 1.5
-
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: 150
-                                            }
-                                        }
-                                        Behavior on border.color {
-                                            ColorAnimation {
-                                                duration: 150
-                                            }
-                                        }
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "✓"
-                                            font.pixelSize: 14
-                                            color: "#ffffff"
-                                            visible: debugModeCheckbox.checked
-                                        }
-                                    }
-
-                                    contentItem: Text {
-                                        text: parent.text
-                                        font: parent.font
-                                        color: AppStyle.colors.textPrimary
-                                        verticalAlignment: Text.AlignVCenter
-                                        leftPadding: parent.indicator.width + parent.spacing
-                                    }
-                                }
-                            }
                             // 导出模式选项
                             ColumnLayout {
                                 Layout.fillWidth: true
