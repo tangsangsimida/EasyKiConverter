@@ -592,21 +592,23 @@ void ComponentService::handleParallelFetchError(const QString& componentId, cons
 }
 
 bool ComponentService::validateComponentId(const QString& componentId) const {
-    // LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
-    QRegularExpression re("^C\\d{4,}$");
+    // LCSC 元件ID格式：以 'C' 或 'c' 开头，后面跟至少4位数字
+    QRegularExpression re("^[Cc]\\d{4,}$");
     return re.match(componentId).hasMatch();
 }
 
 QStringList ComponentService::extractComponentIdFromText(const QString& text) const {
     QStringList extractedIds;
 
-    // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
-    QRegularExpression re("C\\d{4,}");
+    // 匹配 LCSC 元件ID格式：以 'C' 或 'c' 开头，后面跟至少4位数字
+    QRegularExpression re("[Cc]\\d{4,}");
     QRegularExpressionMatchIterator it = re.globalMatch(text);
 
     while (it.hasNext()) {
         QRegularExpressionMatch match = it.next();
         QString id = match.captured();
+        // 统一转换为大写
+        id = id.toUpper();
         if (!extractedIds.contains(id)) {
             extractedIds.append(id);
         }
@@ -654,8 +656,8 @@ QStringList ComponentService::parseCsvBomFile(const QString& filePath) {
     QTextStream in(&file);
     in.setEncoding(QStringConverter::Utf8);
 
-    // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
-    QRegularExpression re("C\\d{4,}");
+    // 匹配 LCSC 元件ID格式：以 'C' 或 'c' 开头，后面跟至少4位数字
+    QRegularExpression re("[Cc]\\d{4,}");
 
     while (!in.atEnd()) {
         QString line = in.readLine();
@@ -663,7 +665,7 @@ QStringList ComponentService::parseCsvBomFile(const QString& filePath) {
             continue;
         }
 
-        // 检索所有以 C 开头的单元格（按逗号分隔）
+        // 检索所有以 C 或 c 开头的单元格（按逗号分隔）
         QStringList cells = line.split(',', Qt::SkipEmptyParts);
 
         for (const QString& cell : cells) {
@@ -678,6 +680,8 @@ QStringList ComponentService::parseCsvBomFile(const QString& filePath) {
             QRegularExpressionMatch match = re.match(trimmedCell);
             if (match.hasMatch()) {
                 QString componentId = match.captured();
+                // 统一转换为大写
+                componentId = componentId.toUpper();
                 if (!componentIds.contains(componentId)) {
                     componentIds.append(componentId);
                     qDebug() << "Found component ID:" << componentId;
@@ -704,8 +708,8 @@ QStringList ComponentService::parseExcelBomFile(const QString& filePath) {
         return componentIds;
     }
 
-    // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
-    QRegularExpression re("C\\d{4,}");
+    // 匹配 LCSC 元件ID格式：以 'C' 或 'c' 开头，后面跟至少4位数字
+    QRegularExpression re("[Cc]\\d{4,}");
 
     // 遍历所有工作表
     for (const QString& sheetName : xlsx.sheetNames()) {
@@ -731,6 +735,8 @@ QStringList ComponentService::parseExcelBomFile(const QString& filePath) {
                 QRegularExpressionMatch match = re.match(cellText);
                 if (match.hasMatch()) {
                     QString componentId = match.captured();
+                    // 统一转换为大写
+                    componentId = componentId.toUpper();
                     if (!componentIds.contains(componentId)) {
                         componentIds.append(componentId);
                         qDebug() << "Found component ID:" << componentId << "at" << sheetName << ":" << row << ","

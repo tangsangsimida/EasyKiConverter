@@ -65,6 +65,9 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
         return;
     }
 
+    // 统一转换为大写，支持用户输入小写 c
+    trimmedId = trimmedId.toUpper();
+
     // 验证元件ID格式
     if (!validateComponentId(trimmedId)) {
         qWarning() << "Invalid component ID format:" << trimmedId;
