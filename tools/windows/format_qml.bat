@@ -15,6 +15,9 @@ REM If qmlformat is in system PATH, use "qmlformat"
 REM Otherwise, specify the full path
 set QMLFORMAT=qmlformat
 
+REM Configuration file path (relative to this script)
+set CONFIG_FILE=..\..\.qmlformat.json
+
 REM ========================================
 REM Check if qmlformat is available
 REM ========================================
@@ -36,20 +39,24 @@ if %errorlevel% neq 0 (
 )
 
 echo INFO: Using qmlformat: %QMLFORMAT%
+echo INFO: Configuration file: %CONFIG_FILE%
 echo.
 
 REM ========================================
-REM Format QML files
+REM Format QML files with configuration
 REM ========================================
 
 set TOTAL_FILES=0
 set FORMATTED_FILES=0
 
 echo Starting formatting QML directory...
+echo Using configuration: .qmlformat.json
+echo.
+
 for /r "..\..\src\ui\qml" %%f in (*.qml) do (
     set /a TOTAL_FILES+=1
     echo Formatting: %%~nxf
-    "%QMLFORMAT%" -i "..\..\.qmlformat.ini" "%%f"
+    "%QMLFORMAT%" -i -s "%CONFIG_FILE%" "%%f"
     if !errorlevel! equ 0 (
         set /a FORMATTED_FILES+=1
     )
@@ -62,7 +69,7 @@ echo ========================================
 echo Total files: %TOTAL_FILES%
 echo Formatted successfully: %FORMATTED_FILES%
 echo.
-echo Configuration file: .qmlformat.ini
+echo Configuration file: .qmlformat.json
 echo NOTE: This tool only formats QML files.
 echo       Use format_code.bat for C++ files.
 echo.
