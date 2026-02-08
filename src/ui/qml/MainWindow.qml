@@ -721,8 +721,22 @@ Item {
                                         }            }
                 // 元件列表卡片
                 Card {
+                    id: componentListCard
                     Layout.fillWidth: true
                     title: qsTr("元器件列表")
+                    
+                    // 默认折叠，只有在有元器件时才展开
+                    isCollapsed: componentListController.componentCount === 0
+                    
+                    // 监听组件数量变化，自动展开
+                    Connections {
+                        target: componentListController
+                        function onComponentCountChanged() {
+                            if (componentListController.componentCount > 0) {
+                                componentListCard.isCollapsed = false
+                            }
+                        }
+                    }
 
                     // 搜索过滤模型 (作为资源定义，不参与布局)
                     resources: [
