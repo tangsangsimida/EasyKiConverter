@@ -10,6 +10,8 @@
 #include <QJsonObject>
 #include <QMap>
 #include <QObject>
+#include <QPair>
+#include <QQueue>
 #include <QString>
 #include <QStringList>
 
@@ -191,6 +193,14 @@ private slots:
      */
     void handleFetchError(const QString& errorMessage);
 
+    /**
+     * @brief 处理获取错误（带 ID?
+     *
+     * @param componentId 元件ID
+     * @param error 错误信息
+     */
+    void handleFetchErrorWithId(const QString& componentId, const QString& error);
+
 private:
     /**
      * @brief 初始化API连接
@@ -253,6 +263,14 @@ private:
     void fetchLcscPreviewImageWithRetry(const QString& componentId, int retryCount = 0);
 
     /**
+     * @brief 执行获取 LCSC 预览图请求
+     *
+     * @param componentId 元件ID
+     * @param retryCount 重试次数
+     */
+    void performFetchLcscPreviewImage(const QString& componentId, int retryCount);
+
+    /**
      * @brief 获取 LCSC 预览图（Fallback 爬虫模式）
      *
      * 当标准 API 无法获取图片 URL 时，尝试直接爬取搜索页面 HTML
@@ -286,6 +304,7 @@ private:
         bool hasCadData;
         bool hasObjData;
         bool hasStepData;
+        bool fetch3DModel;  // 是否需要获取 3D 模型
         QString errorMessage;
     };
     QMap<QString, FetchingComponent> m_fetchingComponents;
@@ -310,11 +329,46 @@ private:
     int m_parallelCompletedCount;                          // 已完成数
     bool m_parallelFetching;                               // 是否正在并行获取
 
+    // 请求队列控制
+    QQueue<QPair<QString, bool>> m_requestQueue;    // 请求队列 (ID, fetch3DModel)
+    int m_activeRequests;                           // 当前活动请求数
+    static const int MAX_CONCURRENT_REQUESTS = 20;  // 最大并发请求数
+
+    // 图片请求队列控制
+    QQueue<QString> m_imageRequestQueue;                  // 图片请求队列
+    int m_activeImageRequests;                            // 当前活动图片请求数
+    static const int MAX_CONCURRENT_IMAGE_REQUESTS = 10;  // 最大并发图片请求数
+
+    /**
+     * @brief 处理下一个请求
+     */
+    void processNextRequest();
+
+    /**
+     * @brief 处理下一个图片请求
+     */
+    void processNextImageRequest();
+
+    /**
+     * @brief 推进图片队列
+     */
+    void advanceImageQueue();
+
+    /**
+     * @brief 内部获取元件数据方法
+     *
+     * @param componentId 元件ID
+     * @param fetch3DModel 是否获取3D模型
+     */
+    void fetchComponentDataInternal(const QString& componentId, bool fetch3DModel);
+
+    /**
+     * @brief 推进队列处理（请求完成或失败时调用）
+     */
+    void advanceQueue();
+
     // 输出路径
     QString m_outputPath;
-
-    // 是否获取3D模型
-    bool m_fetch3DModel;
 };
 
 }  // namespace EasyKiConverter

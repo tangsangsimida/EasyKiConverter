@@ -30,33 +30,65 @@ ComponentService::ComponentService(QObject* parent)
     , m_hasDownloadedWrl(false)
     , m_parallelTotalCount(0)
     , m_parallelCompletedCount(0)
-    , m_parallelFetching(false) {
+    , m_parallelFetching(false)
+    , m_activeRequests(0)
+    , m_activeImageRequests(0) {
     // 连接 API 信号
     connect(m_api, &EasyedaApi::componentInfoFetched, this, &ComponentService::handleComponentInfoFetched);
     connect(m_api, &EasyedaApi::cadDataFetched, this, &ComponentService::handleCadDataFetched);
     connect(m_api, &EasyedaApi::model3DFetched, this, &ComponentService::handleModel3DFetched);
-    connect(m_api, &EasyedaApi::fetchError, this, &ComponentService::handleFetchError);
+    connect(m_api, qOverload<const QString&>(&EasyedaApi::fetchError), this, &ComponentService::handleFetchError);
+    connect(m_api,
+            qOverload<const QString&, const QString&>(&EasyedaApi::fetchError),
+            this,
+            &ComponentService::handleFetchErrorWithId);
 }
 
 ComponentService::~ComponentService() {}
 
 void ComponentService::fetchComponentData(const QString& componentId, bool fetch3DModel) {
-    qDebug() << "Fetching component data for:" << componentId << "Fetch 3D:" << fetch3DModel;
+    qDebug() << "Enqueuing request for:" << componentId << "Fetch 3D:" << fetch3DModel;
+    m_requestQueue.enqueue(qMakePair(componentId, fetch3DModel));
+    processNextRequest();
+}
+
+void ComponentService::fetchComponentDataInternal(const QString& componentId, bool fetch3DModel) {
+    qDebug() << "Fetching component data (internal) for:" << componentId << "Fetch 3D:" << fetch3DModel;
 
     // 暂时存储当前请求的元件ID?D模型标志
     m_currentComponentId = componentId;
-    m_fetch3DModel = fetch3DModel;
+
+    // 初始化或更新 m_fetchingComponents 中的条目，确保存储 fetch3DModel 配置
+    FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
+    fetchingComponent.componentId = componentId;
+    fetchingComponent.fetch3DModel = fetch3DModel;
+    // 重置其他标志，如果是新请求
+    if (!m_parallelFetching) {
+        // 非并行模式下也利用这个结构来存储配置，保持一致性
+        // 但注意并行模式下 m_fetchingComponents 用于追踪进度，非并行模式下可能只用于存储 fetch3DModel
+        // 为了安全起见，非并行模式下我们不重置 has... 标志，或者由调用者负责清理
+        // 简单起见，这里只更新 fetch3DModel
+    } else {
+        // 并行模式下，这些已经在 fetchMultipleComponentsData 中初始化了，但为了保险再次确认
+        fetchingComponent.hasComponentInfo = false;
+        fetchingComponent.hasCadData = false;
+        fetchingComponent.hasObjData = false;
+        fetchingComponent.hasStepData = false;
+    }
 
     // 首先获取 CAD 数据（包含符号和封装信息?
     m_api->fetchCadData(componentId);
 }
 
 void ComponentService::fetchLcscPreviewImage(const QString& componentId) {
-    fetchLcscPreviewImageWithRetry(componentId, 0);
+    qDebug() << "Enqueuing LCSC preview image request for:" << componentId;
+    m_imageRequestQueue.enqueue(componentId);
+    processNextImageRequest();
 }
 
-void ComponentService::fetchLcscPreviewImageWithRetry(const QString& componentId, int retryCount) {
-    qDebug() << "Fetching LCSC preview image for:" << componentId << "Retry:" << retryCount;
+void ComponentService::performFetchLcscPreviewImage(const QString& componentId, int retryCount) {
+    qDebug() << "Executing LCSC preview image request for:" << componentId << "Retry:" << retryCount;
+
     QString url =
         QString("https://overseas.szlcsc.com/overseas/global/search?keyword=%1&pageNumber=1&noShowSelf=false&from=%1")
             .arg(componentId);
@@ -65,6 +97,7 @@ void ComponentService::fetchLcscPreviewImageWithRetry(const QString& componentId
                       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/114.0.0.0 Safari/537.36");
     request.setRawHeader("Accept", "application/json");
+    request.setTransferTimeout(15000);
 
     QNetworkReply* reply = m_networkManager->get(request);
     connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, retryCount]() {
@@ -73,8 +106,11 @@ void ComponentService::fetchLcscPreviewImageWithRetry(const QString& componentId
             qWarning() << "LCSC search request failed:" << reply->errorString() << "Retry:" << retryCount;
             if (retryCount < 3) {
                 QTimer::singleShot(1000 * (retryCount + 1), this, [this, componentId, retryCount]() {
-                    fetchLcscPreviewImageWithRetry(componentId, retryCount + 1);
+                    performFetchLcscPreviewImage(componentId, retryCount + 1);
                 });
+            } else {
+                // 放弃重试，释放资源
+                advanceImageQueue();
             }
             return;
         }
@@ -83,45 +119,34 @@ void ComponentService::fetchLcscPreviewImageWithRetry(const QString& componentId
         QJsonObject root = doc.object();
 
         // Parse: result[2].products[0].selfBreviaryImageUrl
-        if (!root.contains("result")) {
-            qWarning() << "LCSC response missing 'result' field for:" << componentId << "- Switching to Fallback";
-            fetchLcscPreviewImageFallback(componentId);
-            return;
-        }
-        QJsonArray resultArray = root["result"].toArray();
-        if (resultArray.size() <= 2) {
-            qWarning() << "LCSC response 'result' array size too small:" << resultArray.size() << "for:" << componentId
-                       << "- Switching to Fallback";
-            fetchLcscPreviewImageFallback(componentId);
-            return;  // Need at least index 2
+        // 为了提高鲁棒性，放宽解析条件
+
+        QString imageUrl;
+        bool found = false;
+
+        if (root.contains("result")) {
+            QJsonArray resultArray = root["result"].toArray();
+            // 遍历 result 数组寻找包含 products 的对象
+            for (const auto& resVal : resultArray) {
+                QJsonObject resObj = resVal.toObject();
+                if (resObj.contains("products")) {
+                    QJsonArray products = resObj["products"].toArray();
+                    if (!products.isEmpty()) {
+                        QJsonObject product0 = products[0].toObject();
+                        if (product0.contains("selfBreviaryImageUrl")) {
+                            imageUrl = product0["selfBreviaryImageUrl"].toString();
+                            if (!imageUrl.isEmpty()) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        QJsonObject result2 = resultArray[2].toObject();
-        if (!result2.contains("products")) {
-            qWarning() << "LCSC response missing 'products' in result[2] for:" << componentId
-                       << "- Switching to Fallback";
-            fetchLcscPreviewImageFallback(componentId);
-            return;
-        }
-
-        QJsonArray products = result2["products"].toArray();
-        if (products.isEmpty()) {
-            qWarning() << "LCSC products array is empty for:" << componentId << "- Switching to Fallback";
-            fetchLcscPreviewImageFallback(componentId);
-            return;
-        }
-
-        QJsonObject product0 = products[0].toObject();
-        if (!product0.contains("selfBreviaryImageUrl")) {
-            qWarning() << "LCSC product missing 'selfBreviaryImageUrl' for:" << componentId
-                       << "- Switching to Fallback";
-            fetchLcscPreviewImageFallback(componentId);
-            return;
-        }
-
-        QString imageUrl = product0["selfBreviaryImageUrl"].toString();
-        if (imageUrl.isEmpty()) {
-            qWarning() << "LCSC image URL is empty for:" << componentId << "- Switching to Fallback";
+        if (!found) {
+            qWarning() << "LCSC response parsing failed for:" << componentId << "- Switching to Fallback";
             fetchLcscPreviewImageFallback(componentId);
             return;
         }
@@ -129,6 +154,36 @@ void ComponentService::fetchLcscPreviewImageWithRetry(const QString& componentId
         qDebug() << "Found LCSC preview image URL:" << imageUrl << "for:" << componentId;
         downloadLcscImage(componentId, imageUrl, 0);
     });
+}
+
+// 保持兼容性，如果有旧代码调用 fetchLcscPreviewImageWithRetry，将其转发到 performFetchLcscPreviewImage
+void ComponentService::fetchLcscPreviewImageWithRetry(const QString& componentId, int retryCount) {
+    if (retryCount == 0) {
+        fetchLcscPreviewImage(componentId);
+    } else {
+        performFetchLcscPreviewImage(componentId, retryCount);
+    }
+}
+
+void ComponentService::processNextImageRequest() {
+    qDebug() << "Processing next image request. Active:" << m_activeImageRequests
+             << "Queue size:" << m_imageRequestQueue.size();
+
+    while (m_activeImageRequests < MAX_CONCURRENT_IMAGE_REQUESTS && !m_imageRequestQueue.isEmpty()) {
+        QString componentId = m_imageRequestQueue.dequeue();
+        m_activeImageRequests++;
+
+        // 实际发起请求
+        performFetchLcscPreviewImage(componentId, 0);
+    }
+}
+
+void ComponentService::advanceImageQueue() {
+    if (m_activeImageRequests > 0) {
+        m_activeImageRequests--;
+    }
+    qDebug() << "Image queue advanced. Active:" << m_activeImageRequests << "Queue:" << m_imageRequestQueue.size();
+    processNextImageRequest();
 }
 
 void ComponentService::fetchLcscPreviewImageFallback(const QString& componentId) {
@@ -149,20 +204,21 @@ void ComponentService::fetchLcscPreviewImageFallback(const QString& componentId)
                          "*;q=0.8,application/signed-exchange;v=b3;q=0.7");
     request.setRawHeader("accept-language", "zh-CN,zh;q=0.9,en;q=0.8");
     request.setRawHeader("cache-control", "no-cache");
-    request.setRawHeader(
-        "cookie",
-        "lcb_cid_pro=7c5c2031b1f74f61b1a374c6c150866c1767537144388; _lcsc_fid=2ed1a87600acafe81fb0b69568d1e485; "
-        "lotteryKey=b6da0ab85f7f9d7d257c; noLoginCustomerFlag2=347162dfb4193385adc2; "
-        "PRO_NEW_SID=c309f8b3-416b-4bb6-a4e4-ec6e9abd1b65; customer_info=30-5-0-1; "
-        "currentCartVo={%22cartCode%22:%22%22%2C%22cartName%22:%22%E8%B4%AD%E7%89%A9%E8%BD%A6%EF%BC%88%E9%BB%98%E8%AE%"
-        "A4%EF%BC%89%22%2C%22productCount%22:30}; uvCookie=2ed1a87600acafe81fb0b69568d1e485_1770459162862_T5Qboa; "
-        "JSESSIONID=8287734B6C5B5FB19C8F3B642CDC9273; cookies_save_operation_code_mark=; isLoginCustomerFlag=6104950A; "
-        "noLoginCustomerFlag=42e8f7115e25f0fb574e; "
-        "acw_tc=76b20fb417704674515477679eb5b37ce59da5c291482c056a3064f85e4b21; "
-        "searchHistoryRecord=C3018718%EF%BC%9AC12345%EF%BC%9ASM712_C7420375%EF%BC%9AC8734%EF%BC%9AUFQFPN-48_L7.0-W7.0-"
-        "P0.50-BL-EP%EF%BC%9AC35556%EF%BC%9AC8323%EF%BC%9AC414042%EF%BC%9AC23345%EF%BC%9ASOT-23; soBuriedPointData=; "
-        "_lcsc_asid=19c3819a4e7e2509cd4c04e8ded46ad0c7d; _uetsid=86bad040040d11f18c3cd1c583eb7e2e; "
-        "_uetvid=dfdaa240e97911f0b6908526265f8f7c");
+    request.setTransferTimeout(15000);
+    // request.setRawHeader(
+    //     "cookie",
+    //     "lcb_cid_pro=7c5c2031b1f74f61b1a374c6c150866c1767537144388; _lcsc_fid=2ed1a87600acafe81fb0b69568d1e485; "
+    //     "lotteryKey=b6da0ab85f7f9d7d257c; noLoginCustomerFlag2=347162dfb4193385adc2; "
+    //     "PRO_NEW_SID=c309f8b3-416b-4bb6-a4e4-ec6e9abd1b65; customer_info=30-5-0-1; "
+    //     "currentCartVo={%22cartCode%22:%22%22%2C%22cartName%22:%22%E8%B4%AD%E7%89%A9%E8%BD%A6%EF%BC%88%E9%BB%98%E8%AE%"
+    //     "A4%EF%BC%89%22%2C%22productCount%22:30}; uvCookie=2ed1a87600acafe81fb0b69568d1e485_1770459162862_T5Qboa; "
+    //     "JSESSIONID=8287734B6C5B5FB19C8F3B642CDC9273; cookies_save_operation_code_mark=; isLoginCustomerFlag=6104950A; "
+    //     "noLoginCustomerFlag=42e8f7115e25f0fb574e; "
+    //     "acw_tc=76b20fb417704674515477679eb5b37ce59da5c291482c056a3064f85e4b21; "
+    //     "searchHistoryRecord=C3018718%EF%BC%9AC12345%EF%BC%9ASM712_C7420375%EF%BC%9AC8734%EF%BC%9AUFQFPN-48_L7.0-W7.0-"
+    //     "P0.50-BL-EP%EF%BC%9AC35556%EF%BC%9AC8323%EF%BC%9AC414042%EF%BC%9AC23345%EF%BC%9ASOT-23; soBuriedPointData=; "
+    //     "_lcsc_asid=19c3819a4e7e2509cd4c04e8ded46ad0c7d; _uetsid=86bad040040d11f18c3cd1c583eb7e2e; "
+    //     "_uetvid=dfdaa240e97911f0b6908526265f8f7c");
     request.setRawHeader("pragma", "no-cache");
     request.setRawHeader("priority", "u=0, i");
     request.setRawHeader("referer", QString("https://so.szlcsc.com/global.html?k=%1").arg(componentId).toUtf8());
@@ -180,31 +236,39 @@ void ComponentService::fetchLcscPreviewImageFallback(const QString& componentId)
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError) {
             qWarning() << "LCSC Fallback scraping failed:" << reply->errorString();
+            advanceImageQueue();  // 失败也要释放资源
             return;
         }
 
         QString html = QString::fromUtf8(reply->readAll());
 
-        // Regex to find the image src.
-        // Targeting the structure: <img ... src=".../product/breviary/..." ...> inside the product list
-        // Since we know the image usually contains "breviary" or is a jpg/png link in the result list.
-        // The user's xpath points to the first result.
-        // Let's look for the first image URL that looks like a product image.
+        // 放宽正则，匹配更多可能的图片 URL
+        // 原始: src="(https?://[^"]+/upload/public/product/breviary/[^"]+)"
+        // 新: src="(https?://[^"]+/upload/public/[^"]+\.(?:jpg|png|jpeg|webp))" 且包含 product
 
-        // Strategy: Look for the specific image class or structure if possible, but generic product image URL regex is safer.
-        // LCSC images often look like: https://alimg.szlcsc.com/upload/public/product/breviary/...
+        QRegularExpression re("src=\"(https?://[^\"]+/upload/public/[^\"]+)\"");
+        QRegularExpressionMatchIterator it = re.globalMatch(html);
 
-        QRegularExpression re("src=\"(https?://[^\"]+/upload/public/product/breviary/[^\"]+)\"");
-        QRegularExpressionMatch match = re.match(html);
+        QString imageUrl;
+        bool found = false;
 
-        if (match.hasMatch()) {
-            QString imageUrl = match.captured(1);
+        while (it.hasNext()) {
+            QRegularExpressionMatch match = it.next();
+            QString url = match.captured(1);
+            // 简单过滤，通常预览图包含 breviary 或 product
+            if (url.contains("product") && (url.endsWith(".jpg") || url.endsWith(".png") || url.endsWith(".jpeg"))) {
+                imageUrl = url;
+                found = true;
+                break;  // 取第一个匹配的
+            }
+        }
+
+        if (found) {
             qDebug() << "Fallback: Found image URL:" << imageUrl;
             downloadLcscImage(componentId, imageUrl, 0);
         } else {
             qWarning() << "Fallback: Could not find image URL in HTML response for:" << componentId;
-            // Debug: Print a small part of HTML to see if we got the right page
-            // qDebug() << "HTML snippet:" << html.left(500);
+            advanceImageQueue();  // 失败也要释放资源
         }
     });
 }
@@ -215,6 +279,7 @@ void ComponentService::downloadLcscImage(const QString& componentId, const QStri
     imgRequest.setHeader(QNetworkRequest::UserAgentHeader,
                          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                          "Chrome/114.0.0.0 Safari/537.36");
+    imgRequest.setTransferTimeout(15000);
 
     QNetworkReply* imgReply = m_networkManager->get(imgRequest);
     connect(imgReply, &QNetworkReply::finished, this, [this, imgReply, componentId, imageUrl, retryCount]() {
@@ -225,6 +290,8 @@ void ComponentService::downloadLcscImage(const QString& componentId, const QStri
                 QTimer::singleShot(1000 * (retryCount + 1), this, [this, componentId, imageUrl, retryCount]() {
                     downloadLcscImage(componentId, imageUrl, retryCount + 1);
                 });
+            } else {
+                advanceImageQueue();  // 放弃
             }
             return;
         }
@@ -237,6 +304,9 @@ void ComponentService::downloadLcscImage(const QString& componentId, const QStri
         } else {
             qWarning() << "Failed to load LCSC image from data for:" << componentId << "Size:" << data.size();
         }
+
+        // 成功完成
+        advanceImageQueue();
     });
 }
 
@@ -293,6 +363,17 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     // 临时保存当前的组?ID
     QString savedComponentId = m_currentComponentId;
     m_currentComponentId = lcscId;
+
+    // 获取 fetch3DModel 配置
+    bool need3DModel = true;  // 默认值
+    if (m_fetchingComponents.contains(lcscId)) {
+        need3DModel = m_fetchingComponents[lcscId].fetch3DModel;
+    } else {
+        // 如果找不到配置（可能是旧的串行逻辑遗留，或者 m_fetchingComponents 被清除），
+        // 尝试回退到 m_fetch3DModel，但这在并行下不可靠。
+        // 不过由于我们在 fetchComponentDataInternal 中强制设置了 map，这里应该能找到。
+        qWarning() << "Fetching component info not found in map for:" << lcscId << "Using default fetch3DModel=true";
+    }
 
     // 提取 result 数据
     QJsonObject resultData;
@@ -366,7 +447,8 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     }
 
     // 检查是否需要获?3D 模型
-    if (m_fetch3DModel && footprintData) {
+    // 使用本地变量 need3DModel 而不是成员变量 m_fetch3DModel
+    if (need3DModel && footprintData) {
         // 检查封装数据中是否包含 3D 模型 UUID
         QString modelUuid = footprintData->model3D().uuid();
 
@@ -396,14 +478,14 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
 
             // 在并行模式下，使?m_fetchingComponents 存储待处理的组件数据
             if (m_parallelFetching) {
-                FetchingComponent fetchingComponent;
-                fetchingComponent.componentId = m_currentComponentId;
+                // 更新已有的 entry
+                FetchingComponent& fetchingComponent = m_fetchingComponents[m_currentComponentId];
                 fetchingComponent.data = componentData;
                 fetchingComponent.hasComponentInfo = true;
                 fetchingComponent.hasCadData = true;
                 fetchingComponent.hasObjData = false;
                 fetchingComponent.hasStepData = false;
-                m_fetchingComponents[m_currentComponentId] = fetchingComponent;
+                // fetch3DModel 已经在 internal 调用时设置了
             } else {
                 // 串行模式下的处理
                 m_pendingComponentData = componentData;
@@ -426,6 +508,9 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     if (m_parallelFetching) {
         handleParallelDataCollected(m_currentComponentId, componentData);
     }
+
+    // 推进请求队?
+    advanceQueue();
 
     // 恢复组件 ID
     m_currentComponentId = savedComponentId;
@@ -465,6 +550,9 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
 
                     // 从待处理列表中移?
                     m_fetchingComponents.remove(componentId);
+
+                    // 推进请求队?
+                    advanceQueue();
                 }
                 return;
             }
@@ -496,6 +584,9 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
                 m_pendingComponentData = ComponentData();
                 m_pendingModelUuid.clear();
                 m_hasDownloadedWrl = false;
+
+                // 推进请求队?
+                advanceQueue();
             }
         } else {
             qWarning() << "Received 3D model data for unexpected UUID:" << uuid;
@@ -513,6 +604,33 @@ void ComponentService::handleFetchError(const QString& errorMessage) {
 
     // 最后发送信号，防止信号连接的槽函数删除了本对象导致后续访问成员变量崩溃
     emit fetchError(m_currentComponentId, errorMessage);
+}
+
+void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QString& error) {
+    QString componentId = idOrUuid;
+
+    // 如果在并行模式下，尝试解析 UUID 为组件 ID
+    if (m_parallelFetching && !m_parallelFetchingStatus.contains(idOrUuid)) {
+        for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
+            if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == idOrUuid) {
+                componentId = it.key();
+                qDebug() << "Resolved UUID" << idOrUuid << "to component ID" << componentId;
+                break;
+            }
+        }
+    }
+
+    qDebug() << "Fetch error for component:" << componentId << "Error:" << error;
+
+    // 如果在并行模式下，处理并行错误
+    if (m_parallelFetching) {
+        handleParallelFetchError(componentId, error);
+    }
+
+    emit fetchError(componentId, error);
+
+    // 推进请求队?
+    advanceQueue();
 }
 
 void ComponentService::setOutputPath(const QString& path) {
@@ -533,15 +651,40 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
     m_parallelTotalCount = componentIds.size();
     m_parallelCompletedCount = 0;
     m_parallelFetching = true;
-    m_fetch3DModel = fetch3DModel;
 
-    // 为每个元件启动数据收?
+    // 初始化请求队?
+    m_requestQueue.clear();
+    m_activeRequests = 0;
     for (const QString& componentId : componentIds) {
+        m_requestQueue.enqueue(qMakePair(componentId, fetch3DModel));
         m_parallelFetchingStatus[componentId] = true;
-        fetchComponentData(componentId, fetch3DModel);
+    }
+
+    // 开始处理请?
+    processNextRequest();
+}
+
+void ComponentService::processNextRequest() {
+    qDebug() << "Processing next request. Active:" << m_activeRequests << "Queue size:" << m_requestQueue.size();
+
+    while (m_activeRequests < MAX_CONCURRENT_REQUESTS && !m_requestQueue.isEmpty()) {
+        QPair<QString, bool> request = m_requestQueue.dequeue();
+        QString componentId = request.first;
+        bool fetch3DModel = request.second;
+
+        m_activeRequests++;
+
+        qDebug() << "Starting request for:" << componentId;
+        fetchComponentDataInternal(componentId, fetch3DModel);
     }
 }
 
+void ComponentService::advanceQueue() {
+    if (m_activeRequests > 0) {
+        m_activeRequests--;
+    }
+    processNextRequest();
+}
 void ComponentService::handleParallelDataCollected(const QString& componentId, const ComponentData& data) {
     qDebug() << "Parallel data collected for:" << componentId;
 
@@ -565,6 +708,8 @@ void ComponentService::handleParallelDataCollected(const QString& componentId, c
         m_parallelCollectedData.clear();
         m_parallelFetchingStatus.clear();
         m_parallelPendingComponents.clear();
+        m_requestQueue.clear();
+        m_activeRequests = 0;
     }
 }
 
@@ -588,6 +733,8 @@ void ComponentService::handleParallelFetchError(const QString& componentId, cons
         m_parallelCollectedData.clear();
         m_parallelFetchingStatus.clear();
         m_parallelPendingComponents.clear();
+        m_requestQueue.clear();
+        m_activeRequests = 0;
     }
 }
 

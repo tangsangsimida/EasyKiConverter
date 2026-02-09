@@ -53,7 +53,7 @@ void EasyedaApi::fetchCadData(const QString& lcscId) {
     if (!validateLcscId(lcscId)) {
         QString errorMsg = QString("Invalid LCSC ID format: %1").arg(lcscId);
         qWarning() << errorMsg;
-        emit fetchError(errorMsg);
+        emit fetchError(lcscId, errorMsg);
         return;
     }
 
@@ -181,7 +181,7 @@ void EasyedaApi::handleRequestSuccess(NetworkUtils* networkUtils, const QString&
 
 void EasyedaApi::handleRequestError(NetworkUtils* networkUtils, const QString& lcscId, const QString& error) {
     qWarning() << "Request error for" << lcscId << ":" << error;
-    emit fetchError(error);
+    emit fetchError(lcscId, error);
     networkUtils->deleteLater();
 }
 
@@ -224,7 +224,7 @@ void EasyedaApi::handleCadDataResponse(const QJsonObject& data) {
     if (data.isEmpty()) {
         QString errorMsg = QString("Empty response for LCSC ID: %1").arg(m_currentLcscId);
         qWarning() << errorMsg;
-        emit fetchError(errorMsg);
+        emit fetchError(m_currentLcscId, errorMsg);
         return;
     }
 
@@ -232,7 +232,7 @@ void EasyedaApi::handleCadDataResponse(const QJsonObject& data) {
     if (!data.contains("result")) {
         QString errorMsg = QString("Response missing 'result' key for LCSC ID: %1").arg(m_currentLcscId);
         qWarning() << errorMsg;
-        emit fetchError(errorMsg);
+        emit fetchError(m_currentLcscId, errorMsg);
         return;
     }
 
