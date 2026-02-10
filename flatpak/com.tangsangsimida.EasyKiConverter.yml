@@ -22,9 +22,6 @@ modules:
     build-options:
       cflags: -O2 -g
       cxxflags: -O2 -g
-      env:
-        CC: /usr/bin/ccache gcc
-        CXX: /usr/bin/ccache g++
       build-args:
         - --share=network
     build-commands:
