@@ -50,13 +50,20 @@ jobs:
 
       - name: 'Configure CMake with CCache'
         run: |
+          # 配置 Git 确保 FetchContent 能正常工作
+          git config --global http.sslVerify false
+          git config --global http.postBuffer 524288000
+
           cmake -B build \
             -G "Ninja" \
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
-            -DCI=ON
+            -DCI=ON \
+            -DFETCHCONTENT_FULLY_DISCONNECTED=OFF \
+            -DFETCHCONTENT_UPDATES_DISCONNECTED=OFF \
+            -DFETCHCONTENT_QUIET=OFF
 
       - name: 'Build'
         run: |
