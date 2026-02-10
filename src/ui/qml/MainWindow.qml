@@ -1593,26 +1593,6 @@ Item {
                                 spacing: AppStyle.spacing.md
                                 visible: true
 
-                                // 工具栏（显示重试按钮）
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    visible: exportProgressController.failureCount > 0 && !exportProgressController.isExporting
-
-                                    Item {
-                                        Layout.fillWidth: true
-                                    } // Spacer
-
-                                    ModernButton {
-                                        text: qsTr("重试失败项")
-                                        iconName: "play"
-                                        backgroundColor: AppStyle.colors.warning
-                                        hoverColor: AppStyle.colors.warningDark
-                                        pressedColor: AppStyle.colors.warning
-                                        font.pixelSize: 14
-
-                                        onClicked: exportProgressController.retryFailedComponents()
-                                    }
-                                }
                                 // 结果列表（使用 GridView 实现五列显示）
                                 GridView {
                                     id: resultsList
