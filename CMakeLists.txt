@@ -116,6 +116,33 @@ message(STATUS "ZLIB_USE_QT: ${ZLIB_USE_QT}")
 
 qt_standard_project_setup(REQUIRES 6.6)
 
+# 添加 QXlsx 库（用于 Excel 文件解析，必须依赖）
+include(FetchContent)
+
+# 配置 FetchContent 选项
+set(FETCHCONTENT_QUIET OFF CACHE BOOL "")
+set(FETCHCONTENT_UPDATES_DISCONNECTED OFF CACHE BOOL "")
+set(FETCHCONTENT_FULLY_DISCONNECTED OFF CACHE BOOL "")
+
+# 优先使用本地预下载的源码（CI 环境）
+if(DEFINED ENV{QXLSX_ROOT})
+    message(STATUS "Using local QXlsx source from: $ENV{QXLSX_ROOT}")
+    FetchContent_Declare(QXlsx SOURCE_DIR $ENV{QXLSX_ROOT})
+else()
+    # 从 GitHub 下载
+    message(STATUS "Downloading QXlsx from GitHub")
+    FetchContent_Declare(
+        QXlsx
+        GIT_REPOSITORY https://github.com/QtExcel/QXlsx.git
+        GIT_TAG        master
+        GIT_SHALLOW    TRUE
+        SOURCE_SUBDIR  QXlsx
+    )
+endif()
+
+# 使 QXlsx 可用
+FetchContent_MakeAvailable(QXlsx)
+
 # 添加源码模块（包含所有子模块的 CMakeLists.txt）
 add_subdirectory(src)
 
@@ -186,6 +213,7 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/icons/Grey_light_bulb.svg
         resources/imgs/background.jpg
         src/ui/qml/styles/qmldir
+        src/ui/qml/components/qmldir
         resources/translations/translations_easykiconverter_en.qm
         resources/translations/translations_easykiconverter_zh_CN.qm
 )

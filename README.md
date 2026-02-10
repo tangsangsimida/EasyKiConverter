@@ -47,10 +47,12 @@
 ## 主要特性
 
 *   **全流程转换**：支持符号 (.kicad_sym)、封装 (.kicad_mod) 及 3D 模型 (STEP/WRL) 的完整导出。
+*   **分体式符号**：支持分体式符号转换
 *   **高效批量处理**：支持多线程并行转换与 BOM 文件导入，充分利用多核性能。
 *   **现代化体验**：基于 Qt Quick 的流畅 UI，支持深色/浅色主题切换。
 *   **智能配置**：配置项实时自动保存，支持断点记忆与调试模式状态恢复。
 *   **智能辅助**：支持从剪贴板智能提取元件编号。
+*   **LCSC 预览图**：自动获取 LCSC 元件预览图，支持缩略图显示和悬停预览。
 
 ## 快速开始
 
@@ -71,8 +73,8 @@
 *   [详细功能特性](docs/user/FEATURES.md)
 
 **开发者资源**
+
 *   [贡献指南](docs/developer/CONTRIBUTING.md) | [架构设计](docs/developer/ARCHITECTURE.md) | [构建说明](docs/developer/BUILD.md)
-*   [性能优化报告](docs/PERFORMANCE_OPTIMIZATION_REPORT.md) | [项目路线图](docs/project/ROADMAP.md)
 
 
 ## 贡献与致谢

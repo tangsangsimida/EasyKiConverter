@@ -8,7 +8,7 @@
 
 #include <QDebug>
 #include <QFile>
-#include <QGuiApplication>
+#include <QApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -17,7 +17,7 @@
 #include <QUrl>
 
 int main(int argc, char* argv[]) {
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
 
     // 设置应用程序信息
     app.setApplicationName("EasyKiConverter");
@@ -29,12 +29,16 @@ int main(int argc, char* argv[]) {
     QQuickStyle::setStyle("Basic");
 
     // 尝试设置应用程序图标
-    QStringList iconPaths = {":/resources/app_icon.png", "resources/app_icon.png", "../resources/app_icon.png"};
+    QStringList iconPaths = {":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
+                             ":/resources/icons/app_icon.png",
+                             "resources/icons/app_icon.png",
+                             "../resources/icons/app_icon.png"};
 
     for (const QString& iconPath : iconPaths) {
-        if (QFile::exists(iconPath)) {
-            app.setWindowIcon(QIcon(iconPath));
-            qDebug() << "Application icon set:" << iconPath;
+        QIcon icon(iconPath);
+        if (!icon.isNull()) {
+            app.setWindowIcon(icon);
+            qDebug() << "Application icon set from:" << iconPath;
             break;
         }
     }
@@ -55,7 +59,7 @@ int main(int argc, char* argv[]) {
     EasyKiConverter::ExportSettingsViewModel* exportSettingsViewModel =
         new EasyKiConverter::ExportSettingsViewModel(exportService, &app);
     EasyKiConverter::ExportProgressViewModel* exportProgressViewModel =
-        new EasyKiConverter::ExportProgressViewModel(exportService, componentService, &app);
+        new EasyKiConverter::ExportProgressViewModel(exportService, componentService, componentListViewModel, &app);
     EasyKiConverter::ThemeSettingsViewModel* themeSettingsViewModel = new EasyKiConverter::ThemeSettingsViewModel(&app);
 
     // 创建 QML 引擎

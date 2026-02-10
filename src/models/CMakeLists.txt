@@ -5,6 +5,7 @@ add_library(EasyKiConverterModels STATIC
     SymbolData.cpp
     FootprintData.cpp
     Model3DData.cpp
+    ComponentListItemData.cpp
 )
 
 target_include_directories(EasyKiConverterModels
@@ -15,4 +16,5 @@ target_include_directories(EasyKiConverterModels
 target_link_libraries(EasyKiConverterModels
     PUBLIC
         Qt6::Core
+        Qt6::Gui
 )

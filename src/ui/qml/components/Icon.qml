@@ -1,15 +1,16 @@
-﻿import QtQuick
+import QtQuick
+
 Item {
     id: root
     property string iconName: ""
     property int size: 24
     property color iconColor: "#000000"
-    
+
     width: size
     height: size
     implicitWidth: size
     implicitHeight: size
-    
+
     // 尝试加载图标
     Image {
         id: iconImage
@@ -22,7 +23,7 @@ Item {
         visible: status === Image.Ready && iconName.length > 0
         onStatusChanged: {
             if (status === Image.Error && iconName.length > 0) {
-                console.warn("Icon not found:", iconName)
+                console.warn("Icon not found:", iconName);
             }
         }
     }
@@ -36,14 +37,21 @@ Item {
         font.bold: true
     }
     function getIconSymbol(name) {
-        switch(name) {
-            case "play": return "▶"
-            case "folder": return "📁"
-            case "trash": return "🗑"
-            case "upload": return "↑"
-            case "add": return "+"
-            case "loading": return "⟳"
-            default: return "?"
+        switch (name) {
+        case "play":
+            return "▶";
+        case "folder":
+            return "📁";
+        case "trash":
+            return "🗑";
+        case "upload":
+            return "↑";
+        case "add":
+            return "+";
+        case "loading":
+            return "⟳";
+        default:
+            return "?";
         }
     }
 }

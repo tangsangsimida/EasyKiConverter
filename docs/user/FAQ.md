@@ -171,7 +171,19 @@ EasyKiConverter 努力保持与 EasyEDA 的一致性，但可能存在细微差�
 
 ### 如何启用调试模式？
 
-在导出设置中启用"调试导出"选项。这将保存原始数据和导出数据用于调试。
+调试模式现在通过环境变量 `EASYKICONVERTER_DEBUG_MODE` 控制。请参考 [调试模式配置文档](DEBUG_MODE.md) 了解详细的配置方法。
+
+**快速启用（Windows PowerShell）：**
+```powershell
+$env:EASYKICONVERTER_DEBUG_MODE="true"
+.\build\bin\EasyKiConverter.exe
+```
+
+**快速启用（Linux/macOS）：**
+```bash
+export EASYKICONVERTER_DEBUG_MODE=true
+./build/bin/EasyKiConverter
+```
 
 ### 如何更改主题？
 

@@ -48,6 +48,14 @@
         <translation>Search Components...</translation>
     </message>
     <message>
+        <source>复制所有编号</source>
+        <translation>Copy All IDs</translation>
+    </message>
+    <message>
+        <source>已复制所有编号</source>
+        <translation>All IDs Copied</translation>
+    </message>
+    <message>
         <source>清空列表</source>
         <translation>Clear List</translation>
     </message>

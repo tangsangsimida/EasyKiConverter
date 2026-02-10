@@ -2,11 +2,77 @@
 
 This document records the additions, fixes, and changes in each version of EasyKiConverter.
 
+## [3.0.3] - 2026-02-08
+
+### Added
+- **LCSC Preview Image Feature**
+  - **Network Image Fetching**: Implemented `fetchLcscPreviewImage` method to fetch component preview images from LCSC website
+  - **Retry Mechanism**: Added network request retry mechanism to improve image fetch success rate
+  - **Fallback Crawler Mode**: Use crawler mode to fetch component preview images when API is unavailable
+  - **Thumbnail Generation**: Added `ThumbnailGenerator` utility class to automatically generate Base64 thumbnails
+  - **Data Model Extension**: Created `ComponentListItemData` class with UI-related information like thumbnails, validation status, etc.
+  - Code location: `src/services/ComponentService.cpp`, `src/models/ComponentListItemData.h/cpp`, `src/ui/utils/ThumbnailGenerator.h/cpp`
+
+- **Component List Feature Enhancements**
+  - **ID Copy Function**: Added right-click to copy component ID to clipboard in `ComponentListItem`
+  - **Copy Tooltip**: Display success tooltip when copy operation completes, improving user experience
+  - Code location: `src/ui/qml/components/ComponentListItem.qml`, `src/ui/viewmodels/ComponentListViewModel.cpp`
+
+- **Responsive Layout and Window Resizing**
+  - **Adaptive Grid Layout**: Changed component list from fixed 5-column grid to adaptive grid layout with dynamic column calculation
+  - **Window Edge Resizing**: Added drag-to-resize handles in 8 directions for window size adjustment
+  - **Mouse Interaction Optimization**: Optimized mouse interaction area hierarchy for component list items
+  - **Thumbnail Hover Preview**: Improved thumbnail hover preview display logic and visual effects
+  - Code location: `src/ui/qml/MainWindow.qml`, `src/ui/qml/components/ComponentListItem.qml`
+
+- **Preloaded Data Support**
+  - **Preloaded Data Feature**: Added `setPreloadedData` method in `ExportService_Pipeline`
+  - **Data Flow Optimization**: Improved progress tracking mechanism for more efficient data flow
+  - **Temporary File Management**: Optimized temporary file cleanup logic to ensure correct symbol file handling
+  - **Symbol Library Merge Fix**: Fixed temporary file management during symbol library merging
+  - Code location: `src/services/ExportService_Pipeline.cpp/h`
+
+### Breaking Changes
+- **Component List Model Refactoring**
+  - **Migration to QAbstractListModel**: Migrated `ComponentListViewModel` from `QQmlListProperty` to `QAbstractListModel`
+  - **Performance Improvement**: Provides more efficient UI update mechanism
+  - **API Change**: Component list access in QML changed from `componentList` property to direct `model` binding
+  - **New Method**: Added `getAllComponentIds` method to optimize export workflow
+  - Code location: `src/ui/viewmodels/ComponentListViewModel.cpp/h`, `src/ui/qml/MainWindow.qml`
+
+### Fixed
+- **Export Service Statistics Missing Issue**
+  - **Completion Status Statistics Fix**: Added status to completion status list for statistics in preloaded data usage scenarios
+  - **Critical Fix**: Resolved inaccurate statistics issue in preloaded data scenarios, ensuring all export statuses are properly counted
+  - Code location: `src/services/ExportService_Pipeline.cpp:316`
+
+- **MainWindow Code Structure Fix**
+  - **Component Removal Logic Optimization**: Changed component removal logic from index-based to ID-based lookup, simplifying removal process
+  - **Condition Check Fix**: Fixed condition check logic for empty data to avoid potential null pointer exceptions
+  - **Filter Logic Correction**: Corrected ID extraction logic for component list filtering
+  - Code location: `src/ui/qml/MainWindow.qml`
+
+- **ExportProgressViewModel Constructor Parameter Fix**
+  - **Dependency Injection**: Added `componentListViewModel` parameter to `ExportProgressViewModel` constructor
+  - **Correct Initialization**: Ensures view models are properly initialized with correct dependencies
+  - Code location: `main.cpp`, `src/ui/viewmodels/ExportProgressViewModel.cpp/h`
+
+### Refactor
+- **Component List View Model Simplification**
+  - **Enum Definition Optimization**: Simplified enum definition format in `ComponentListViewModel`
+  - **Code Cleanliness**: Removed unnecessary multi-line enum definition format, making code more compact and consistent
+  - Code location: `src/ui/viewmodels/ComponentListViewModel.h:27`
+
+- **Code Format Optimization**
+  - **Log Format Unification**: Unified debug log output format in `LanguageManager.cpp`
+  - **Readability Improvement**: Removed extra blank lines and standardized debug message log format
+  - Code location: `src/core/LanguageManager.cpp`
+
 ## [3.0.2] - 2026-01-27
 
 ### Fixed
 - **Batch Export Freezing Issue**
-  - **Reduced Concurrency**: Reduced the maximum thread count for `FetchWorker` thread pool from 32 to 8. This effectively prevents server-side rate limiting or service denial caused by excessive concurrent connections, solving the issue where individual component downloads would "freeze" during batch export.
+  - **Reduced Concurrency**: Reduced the maximum thread count for `FetchWorker` thread pool from 32 to 5. This effectively prevents server-side rate limiting or service denial caused by excessive concurrent connections, solving the issue where individual component downloads would "freeze" during batch export.
   - **Added Retry Mechanism**: Added automatic retry logic for `FetchWorker` network requests.
     - Strategy: Automatically retry on network errors or HTTP 429/5xx errors.
     - Delays: 3 seconds for 1st retry, 5 seconds for 2nd retry, 10 seconds for 3rd and subsequent retries.

@@ -1,5 +1,6 @@
-﻿pragma Singleton
+pragma Singleton
 import QtQuick
+
 QtObject {
     // 深色模式状态
     property bool isDarkMode: false

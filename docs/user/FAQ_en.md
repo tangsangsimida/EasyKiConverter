@@ -171,7 +171,19 @@ Custom layer mapping is not currently supported. Future versions may add this fe
 
 ### How do I enable debug mode?
 
-Enable the "Debug Export" option in export settings. This will save original and exported data for debugging.
+Debug mode is now controlled via the `EASYKICONVERTER_DEBUG_MODE` environment variable. Please refer to the [Debug Mode Configuration](DEBUG_MODE_en.md) documentation for detailed configuration instructions.
+
+**Quick Enable (Windows PowerShell):**
+```powershell
+$env:EASYKICONVERTER_DEBUG_MODE="true"
+.\build\bin\EasyKiConverter.exe
+```
+
+**Quick Enable (Linux/macOS):**
+```bash
+export EASYKICONVERTER_DEBUG_MODE=true
+./build/bin/EasyKiConverter
+```
 
 ### How do I change the theme?
 

@@ -9,7 +9,7 @@ Rectangle {
     // API
     property alias title: titleText.text
     default property alias content: contentLayout.children
-    
+
     // 新增：折叠功能属性
     property bool collapsible: true
     property bool isCollapsed: false
@@ -19,18 +19,18 @@ Rectangle {
     // 根据主题模式动态计算颜色
     color: {
         if (AppStyle.isDarkMode) {
-            return Qt.rgba(0, 0, 0, 0.5)
+            return Qt.rgba(0, 0, 0, 0.5);
         } else {
-            return Qt.rgba(255, 255, 255, 0.5)
+            return Qt.rgba(255, 255, 255, 0.5);
         }
     }
 
     radius: AppStyle.radius.lg
     border.color: {
         if (AppStyle.isDarkMode) {
-            return Qt.rgba(255, 255, 255, 0.15)
+            return Qt.rgba(255, 255, 255, 0.15);
         } else {
-            return Qt.rgba(0, 0, 0, 0.08)
+            return Qt.rgba(0, 0, 0, 0.08);
         }
     }
     border.width: 1
@@ -53,8 +53,8 @@ Rectangle {
     opacity: 0
     scale: 0.95
     Component.onCompleted: {
-        opacity = 1
-        card.state = "normal"
+        opacity = 1;
+        card.state = "normal";
     }
     Behavior on opacity {
         NumberAnimation {
@@ -67,17 +67,24 @@ Rectangle {
     states: [
         State {
             name: "normal"
-            PropertyChanges { target: card; scale: 1.0 }
+            PropertyChanges {
+                target: card
+                scale: 1.0
+            }
         },
         State {
             name: "hovered"
-            PropertyChanges { target: card; scale: 1.01 }
+            PropertyChanges {
+                target: card
+                scale: 1.01
+            }
         }
     ]
 
     transitions: [
         Transition {
-            from: "*"; to: "*"
+            from: "*"
+            to: "*"
             NumberAnimation {
                 property: "scale"
                 duration: AppStyle.durations.fast
@@ -92,7 +99,7 @@ Rectangle {
         hoverEnabled: true
         acceptedButtons: Qt.NoButton // 只处理 hover，不拦截点击
         onContainsMouseChanged: {
-            card.state = containsMouse ? "hovered" : "normal"
+            card.state = containsMouse ? "hovered" : "normal";
         }
     }
 
@@ -125,14 +132,14 @@ Rectangle {
                 // 折叠指示箭头 (仅在开启折叠且有标题时显示)
                 Text {
                     id: collapseIcon
-                    text: "▼" 
+                    text: "▼"
                     color: AppStyle.colors.textSecondary
                     font.pixelSize: AppStyle.fontSizes.md
                     visible: card.collapsible && titleText.text.length > 0
-                    
+
                     // 旋转状态
                     rotation: card.isCollapsed ? -90 : 0
-                    
+
                     Behavior on rotation {
                         NumberAnimation {
                             duration: AppStyle.durations.normal
@@ -148,7 +155,7 @@ Rectangle {
                 enabled: card.collapsible
                 cursorShape: card.collapsible ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: {
-                    card.isCollapsed = !card.isCollapsed
+                    card.isCollapsed = !card.isCollapsed;
                 }
             }
         }
@@ -160,9 +167,11 @@ Rectangle {
             color: AppStyle.colors.border
             visible: titleText.text.length > 0
             opacity: card.isCollapsed ? 0 : 1
-            
+
             Behavior on opacity {
-                NumberAnimation { duration: AppStyle.durations.fast }
+                NumberAnimation {
+                    duration: AppStyle.durations.fast
+                }
             }
         }
 
@@ -172,25 +181,25 @@ Rectangle {
             Layout.fillWidth: true
             // 如果折叠，高度为0；否则为内容高度
             Layout.preferredHeight: card.isCollapsed ? 0 : contentLayout.implicitHeight
-            
+
             clip: true // 裁剪溢出内容，确保折叠时内容不可见
-            
+
             Behavior on Layout.preferredHeight {
                 NumberAnimation {
                     duration: AppStyle.durations.normal
                     easing.type: AppStyle.easings.easeOut
                 }
             }
-            
+
             // 真正的内容布局
             ColumnLayout {
                 id: contentLayout
                 width: parent.width
                 // 不设置 anchors.fill，让它根据内容自动撑开高度
                 // 它的 implicitHeight 会被外部 Wrapper 读取
-                
+
                 spacing: AppStyle.spacing.md
-                
+
                 // 内容淡入淡出
                 opacity: card.isCollapsed ? 0 : 1
                 Behavior on opacity {
