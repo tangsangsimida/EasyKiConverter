@@ -10,7 +10,7 @@ add_subdirectory(ui)
 # 创建主源码库（不包含 main.cpp，main.cpp 在根目录）
 add_library(EasyKiConverterLib STATIC)
 
-# 链接所有子模块
+# 链接所有子模块（QXlsx 是必须的依赖）
 target_link_libraries(EasyKiConverterLib
     PRIVATE
         EasyKiConverterModels
