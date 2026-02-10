@@ -86,20 +86,11 @@ ENV Qt6_DIR=/opt/qt/${QT_VERSION}/gcc_64
 ENV PATH=$Qt6_DIR/bin:$PATH
 ENV LD_LIBRARY_PATH=$Qt6_DIR/lib:$LD_LIBRARY_PATH
 
-# 3. 预安装 QXlsx 库（用于 Excel BOM 解析）
-RUN git clone https://github.com/QtExcel/QXlsx.git /opt/QXlsx \
-    && mkdir -p /opt/QXlsx/build \
-    && cd /opt/QXlsx/build \
-    && cmake /opt/QXlsx/QXlsx \
-        -DCMAKE_PREFIX_PATH=$Qt6_DIR \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/opt/QXlsx/install \
-    && cmake --build . --parallel \
-    && cmake --install . \
-    && rm -rf /opt/QXlsx/build
+# 3. 预下载 QXlsx 源码（用于 Excel BOM 解析）
+RUN git clone https://github.com/QtExcel/QXlsx.git /opt/QXlsx
 
-# 设置 QXlsx 环境变量
-ENV QXLSX_ROOT=/opt/QXlsx/install
+# 设置 QXlsx 环境变量（指向源码目录）
+ENV QXLSX_ROOT=/opt/QXlsx/QXlsx
 
 # 4. 安装 LinuxDeploy & 插件
 # 直接下载并提取，减少临时文件

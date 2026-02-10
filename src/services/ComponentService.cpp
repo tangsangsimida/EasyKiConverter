@@ -19,9 +19,7 @@
 #include <QTimer>
 #include <QUuid>
 
-#ifdef QXLSX_AVAILABLE
 #include <xlsxdocument.h>
-#endif
 
 namespace EasyKiConverter {
 
@@ -860,7 +858,6 @@ QStringList ComponentService::parseExcelBomFile(const QString& filePath) {
 
     QStringList componentIds;
 
-#ifdef QXLSX_AVAILABLE
     // 使用 QXlsx 库解析 Excel 文件
     QXlsx::Document xlsx(filePath);
     if (!xlsx.load()) {
@@ -917,10 +914,6 @@ QStringList ComponentService::parseExcelBomFile(const QString& filePath) {
             }
         }
     }
-#else
-    qWarning() << "QXlsx library not available. Excel BOM parsing is disabled.";
-    qWarning() << "Please build with QXlsx support or use CSV format instead.";
-#endif
 
     return componentIds;
 }
