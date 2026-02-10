@@ -124,14 +124,13 @@ set(FETCHCONTENT_QUIET OFF CACHE BOOL "")
 set(FETCHCONTENT_UPDATES_DISCONNECTED OFF CACHE BOOL "")
 set(FETCHCONTENT_FULLY_DISCONNECTED OFF CACHE BOOL "")
 
-# 检查是否有预安装的 QXlsx（Docker 环境中）
-if(DEFINED ENV{QXLSX_ROOT} AND EXISTS "$ENV{QXLSX_ROOT}/lib/cmake/QXlsx/QXlsxConfig.cmake")
-    message(STATUS "Found pre-installed QXlsx at: $ENV{QXLSX_ROOT}")
-    set(QXLSX_USE_PREINSTALLED TRUE)
-    find_package(QXlsx REQUIRED PATHS $ENV{QXLSX_ROOT} NO_DEFAULT_PATH)
+# 检查是否有预安装的 QXlsx
+if(DEFINED ENV{QXLSX_ROOT})
+    message(STATUS "Using pre-installed QXlsx from: $ENV{QXLSX_ROOT}")
+    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};$ENV{QXLSX_ROOT}")
+    find_package(QXlsx REQUIRED)
 else()
     message(STATUS "Pre-installed QXlsx not found, using FetchContent")
-    set(QXLSX_USE_PREINSTALLED FALSE)
 
     FetchContent_Declare(
       QXlsx
@@ -144,15 +143,7 @@ else()
     # 显示下载信息
     message(STATUS "QXlsx will be downloaded from: https://github.com/QtExcel/QXlsx.git")
 
-    # 确保下载 QXlsx
-    FetchContent_Populate(QXlsx)
-
-    # 手动添加 QXlsx 子目录
-    if(EXISTS "${qxlsx_SOURCE_DIR}/QXlsx/CMakeLists.txt")
-        add_subdirectory(${qxlsx_SOURCE_DIR}/QXlsx ${qxlsx_BINARY_DIR})
-        message(STATUS "QXlsx source dir: ${qxlsx_SOURCE_DIR}/QXlsx")
-        message(STATUS "QXlsx binary dir: ${qxlsx_BINARY_DIR}")
-    endif()
+    FetchContent_MakeAvailable(QXlsx)
 endif()
 
 # 验证 QXlsx 是否正确配置
