@@ -33,6 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     libgl1-mesa-dev \
     libxkbcommon-x11-0 \
+    libxkbcommon-dev \
     libvulkan1 \
     libwayland-cursor0 \
     libglib2.0-0 \
