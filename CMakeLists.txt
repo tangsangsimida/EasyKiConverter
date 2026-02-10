@@ -118,13 +118,31 @@ qt_standard_project_setup(REQUIRES 6.6)
 
 # 添加 QXlsx 库（用于 Excel 文件解析）
 include(FetchContent)
+
+# 配置 FetchContent 选项
+set(FETCHCONTENT_QUIET OFF CACHE BOOL "")
+set(FETCHCONTENT_UPDATES_DISCONNECTED OFF CACHE BOOL "")
+set(FETCHCONTENT_FULLY_DISCONNECTED OFF CACHE BOOL "")
+
 FetchContent_Declare(
   QXlsx
   GIT_REPOSITORY https://github.com/QtExcel/QXlsx.git
   GIT_TAG        master
+  GIT_SHALLOW    TRUE
   SOURCE_SUBDIR  QXlsx
 )
+
+# 显示下载信息
+message(STATUS "QXlsx will be downloaded from: https://github.com/QtExcel/QXlsx.git")
+
 FetchContent_MakeAvailable(QXlsx)
+
+# 验证 QXlsx 是否正确配置
+if(TARGET QXlsx::QXlsx)
+    message(STATUS "QXlsx::QXlsx target found successfully")
+else()
+    message(FATAL_ERROR "QXlsx::QXlsx target not found! FetchContent may have failed.")
+endif()
 
 # 添加源码模块（包含所有子模块的 CMakeLists.txt）
 add_subdirectory(src)
