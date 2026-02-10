@@ -76,7 +76,9 @@ public:
      * @param componentIds 元件ID列表
      * @param options 导出选项
      */
-    void executeExportPipelineWithStages(const QStringList& componentIds, const ExportOptions& options);
+    void executeExportPipelineWithStages(const QStringList& componentIds,
+                                         const ExportOptions& options,
+                                         bool isRetry = false);
     void retryExport(const QStringList& componentIds, const ExportOptions& options) override;
 
     /**
@@ -219,8 +221,20 @@ private:
     // 完整的状态列表（用于生成统计报告?
     QVector<QSharedPointer<ComponentExportStatus>> m_completedStatuses;
 
-    // 导出开始时间（用于计算总耗时?
+    // 导出开始时间（用于计算总耗时）
     qint64 m_exportStartTimeMs;
+
+    // 原始导出开始时间（用于统计包括重试在内的总时间）
+    qint64 m_originalExportStartTimeMs;
+
+    // 原始导出总元器件数量（用于统计包括重试在内的总数）
+    int m_originalTotalTasks;
+
+    // 原始导出统计信息（用于在重试模式下保留时间数据）
+    ExportStatistics m_originalStatistics;
+
+    // 是否处于重试模式（用于区分新的导出流程和重试）
+    bool m_isRetryMode;
 };
 
 }  // namespace EasyKiConverter
