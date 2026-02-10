@@ -18,6 +18,7 @@ target_link_libraries(EasyKiConverterLib
         EasyKiConverterWorkers
         EasyKiConverterServices
         EasyKiConverterUI
+        QXlsx::QXlsx
 )
 
 # 包含目录

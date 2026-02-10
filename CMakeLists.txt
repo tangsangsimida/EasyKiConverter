@@ -116,6 +116,16 @@ message(STATUS "ZLIB_USE_QT: ${ZLIB_USE_QT}")
 
 qt_standard_project_setup(REQUIRES 6.6)
 
+# 添加 QXlsx 库（用于 Excel 文件解析）
+include(FetchContent)
+FetchContent_Declare(
+  QXlsx
+  GIT_REPOSITORY https://github.com/QtExcel/QXlsx.git
+  GIT_TAG        master
+  SOURCE_SUBDIR  QXlsx
+)
+FetchContent_MakeAvailable(QXlsx)
+
 # 添加源码模块（包含所有子模块的 CMakeLists.txt）
 add_subdirectory(src)
 

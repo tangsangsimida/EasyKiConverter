@@ -21,6 +21,7 @@ target_link_libraries(EasyKiConverterServices
         Qt6::Network
         Qt6::Concurrent
         Qt6::Quick
+        QXlsx::QXlsx
         EasyKiConverterModels
         EasyKiConverterCore
         EasyKiConverterEasyeda
