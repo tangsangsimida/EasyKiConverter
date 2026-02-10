@@ -50,8 +50,8 @@ jobs:
 
       - name: 'Configure CMake with CCache'
         run: |
-          # 设置 QXlsx 环境变量（Docker 镜像中预安装）
-          export QXLSX_ROOT=/opt/QXlsx/install
+          # 设置 QXlsx 环境变量（Docker 镜像中预下载的源码）
+          export QXLSX_ROOT=/opt/QXlsx/QXlsx
 
           cmake -B build \
             -G "Ninja" \
