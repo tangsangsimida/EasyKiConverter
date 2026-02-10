@@ -18,6 +18,7 @@
 #include <QTextStream>
 #include <QTimer>
 #include <QUuid>
+
 #include <xlsxdocument.h>
 
 namespace EasyKiConverter {
@@ -899,8 +900,8 @@ QStringList ComponentService::parseExcelBomFile(const QString& filePath) {
 
                     // 检查是否在排除列表中
                     if (excludedIds.contains(componentId)) {
-                        qDebug() << "Skipping excluded component ID:" << componentId << "at" << sheetName << ":"
-                                 << row << "," << col;
+                        qDebug() << "Skipping excluded component ID:" << componentId << "at" << sheetName << ":" << row
+                                 << "," << col;
                         continue;
                     }
 
