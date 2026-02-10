@@ -87,9 +87,9 @@ ENV LD_LIBRARY_PATH=$Qt6_DIR/lib:$LD_LIBRARY_PATH
 
 # 3. 预安装 QXlsx 库（用于 Excel BOM 解析）
 RUN git clone https://github.com/QtExcel/QXlsx.git /opt/QXlsx \
-    && cd /opt/QXlsx \
-    && mkdir -p build && cd build \
-    && cmake .. \
+    && mkdir -p /opt/QXlsx/build \
+    && cd /opt/QXlsx/build \
+    && cmake /opt/QXlsx/QXlsx \
         -DCMAKE_PREFIX_PATH=$Qt6_DIR \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/opt/QXlsx/install \
