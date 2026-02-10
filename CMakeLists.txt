@@ -116,7 +116,7 @@ message(STATUS "ZLIB_USE_QT: ${ZLIB_USE_QT}")
 
 qt_standard_project_setup(REQUIRES 6.6)
 
-# 添加 QXlsx 库（用于 Excel 文件解析）
+# 添加 QXlsx 库（用于 Excel 文件解析，必须依赖）
 include(FetchContent)
 
 # 配置 FetchContent 选项
@@ -124,58 +124,24 @@ set(FETCHCONTENT_QUIET OFF CACHE BOOL "")
 set(FETCHCONTENT_UPDATES_DISCONNECTED OFF CACHE BOOL "")
 set(FETCHCONTENT_FULLY_DISCONNECTED OFF CACHE BOOL "")
 
-# 检查是否有预安装或预下载的 QXlsx
+# 优先使用本地预下载的源码（CI 环境）
 if(DEFINED ENV{QXLSX_ROOT})
-    message(STATUS "Using QXlsx from: $ENV{QXLSX_ROOT}")
-
-    # 检查是否是已安装的版本（有配置文件）
-    if(EXISTS "$ENV{QXLSX_ROOT}/lib/cmake/QXlsx/QXlsxConfig.cmake")
-        message(STATUS "Using installed QXlsx")
-        set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};$ENV{QXLSX_ROOT}")
-        find_package(QXlsx REQUIRED)
-    else()
-        # 使用本地源码目录
-        message(STATUS "Using local QXlsx source directory")
-        include(FetchContent)
-
-        FetchContent_Declare(
-          QXlsx
-          SOURCE_DIR $ENV{QXLSX_ROOT}
-        )
-
-        FetchContent_MakeAvailable(QXlsx)
-    endif()
+    message(STATUS "Using local QXlsx source from: $ENV{QXLSX_ROOT}")
+    FetchContent_Declare(QXlsx SOURCE_DIR $ENV{QXLSX_ROOT})
 else()
-    message(STATUS "QXlsx not found, using FetchContent to download")
-
-    # 使用 FetchContent 下载 QXlsx
-    include(FetchContent)
-
-    # 配置 FetchContent 选项
-    set(FETCHCONTENT_QUIET OFF CACHE BOOL "")
-    set(FETCHCONTENT_UPDATES_DISCONNECTED OFF CACHE BOOL "")
-    set(FETCHCONTENT_FULLY_DISCONNECTED OFF CACHE BOOL "")
-
+    # 从 GitHub 下载
+    message(STATUS "Downloading QXlsx from GitHub")
     FetchContent_Declare(
-      QXlsx
-      GIT_REPOSITORY https://github.com/QtExcel/QXlsx.git
-      GIT_TAG        master
-      GIT_SHALLOW    TRUE
-      SOURCE_SUBDIR  QXlsx
+        QXlsx
+        GIT_REPOSITORY https://github.com/QtExcel/QXlsx.git
+        GIT_TAG        master
+        GIT_SHALLOW    TRUE
+        SOURCE_SUBDIR  QXlsx
     )
-
-    # 显示下载信息
-    message(STATUS "QXlsx will be downloaded from: https://github.com/QtExcel/QXlsx.git")
-
-    FetchContent_MakeAvailable(QXlsx)
 endif()
 
-# 验证 QXlsx 是否正确配置（QXlsx 是必须的依赖）
-if(TARGET QXlsx::QXlsx)
-    message(STATUS "QXlsx::QXlsx target found successfully")
-else()
-    message(FATAL_ERROR "QXlsx::QXlsx target not found! QXlsx is a required dependency.")
-endif()
+# 使 QXlsx 可用
+FetchContent_MakeAvailable(QXlsx)
 
 # 添加源码模块（包含所有子模块的 CMakeLists.txt）
 add_subdirectory(src)
