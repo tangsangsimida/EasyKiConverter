@@ -50,9 +50,8 @@ jobs:
 
       - name: 'Configure CMake with CCache'
         run: |
-          # 配置 Git 确保 FetchContent 能正常工作
-          git config --global http.sslVerify false
-          git config --global http.postBuffer 524288000
+          # 设置 QXlsx 环境变量（Docker 镜像中预安装）
+          export QXLSX_ROOT=/opt/QXlsx/install
 
           cmake -B build \
             -G "Ninja" \
@@ -60,10 +59,7 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
-            -DCI=ON \
-            -DFETCHCONTENT_FULLY_DISCONNECTED=OFF \
-            -DFETCHCONTENT_UPDATES_DISCONNECTED=OFF \
-            -DFETCHCONTENT_QUIET=OFF
+            -DCI=ON
 
       - name: 'Build'
         run: |
