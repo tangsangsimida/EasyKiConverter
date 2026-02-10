@@ -155,6 +155,7 @@ public slots:
     Q_INVOKABLE void retryFailedComponents();
     Q_INVOKABLE void retryComponent(const QString& componentId);
     Q_INVOKABLE void cancelExport();
+    Q_INVOKABLE void resetExport();
 
 signals:
     void progressChanged();

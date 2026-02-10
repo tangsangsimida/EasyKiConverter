@@ -997,6 +997,7 @@ Item {
                                 onClicked: {
                                     searchInput.text = ""; // 清空搜索
                                     componentListController.clearComponentList();
+                                    exportProgressController.resetExport(); // 重置导出状态
                                 }
                             }
                         }
@@ -1583,6 +1584,7 @@ Item {
                         id: resultsLoader
                         Layout.fillWidth: true
                         active: exportProgressController.isExporting || exportProgressController.resultsList.length > 0
+                        visible: active  // ✅ 确保 Loader 在没有结果时不占用空间
                         sourceComponent: Card {
                             title: qsTr("转换结果")
                             ColumnLayout {
@@ -1591,26 +1593,6 @@ Item {
                                 spacing: AppStyle.spacing.md
                                 visible: true
 
-                                // 工具栏（显示重试按钮）
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    visible: exportProgressController.failureCount > 0 && !exportProgressController.isExporting
-
-                                    Item {
-                                        Layout.fillWidth: true
-                                    } // Spacer
-
-                                    ModernButton {
-                                        text: qsTr("重试失败项")
-                                        iconName: "play"
-                                        backgroundColor: AppStyle.colors.warning
-                                        hoverColor: AppStyle.colors.warningDark
-                                        pressedColor: AppStyle.colors.warning
-                                        font.pixelSize: 14
-
-                                        onClicked: exportProgressController.retryFailedComponents()
-                                    }
-                                }
                                 // 结果列表（使用 GridView 实现五列显示）
                                 GridView {
                                     id: resultsList
@@ -1618,6 +1600,7 @@ Item {
                                     Layout.minimumHeight: 200
                                     Layout.preferredHeight: Math.min(resultsList.contentHeight + 20, 500)
                                     Layout.topMargin: AppStyle.spacing.md
+                                    visible: exportProgressController.resultsList.length > 0
                                     clip: true
                                     cellWidth: {
                                         var w = width - AppStyle.spacing.md;

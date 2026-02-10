@@ -29,12 +29,16 @@ int main(int argc, char* argv[]) {
     QQuickStyle::setStyle("Basic");
 
     // 尝试设置应用程序图标
-    QStringList iconPaths = {":/resources/app_icon.png", "resources/app_icon.png", "../resources/app_icon.png"};
+    QStringList iconPaths = {":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
+                             ":/resources/icons/app_icon.png",
+                             "resources/icons/app_icon.png",
+                             "../resources/icons/app_icon.png"};
 
     for (const QString& iconPath : iconPaths) {
-        if (QFile::exists(iconPath)) {
-            app.setWindowIcon(QIcon(iconPath));
-            qDebug() << "Application icon set:" << iconPath;
+        QIcon icon(iconPath);
+        if (!icon.isNull()) {
+            app.setWindowIcon(icon);
+            qDebug() << "Application icon set from:" << iconPath;
             break;
         }
     }

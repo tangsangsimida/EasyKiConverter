@@ -171,6 +171,49 @@ void ExportProgressViewModel::cancelExport() {
     });
 }
 
+void ExportProgressViewModel::resetExport() {
+    qDebug() << "ExportProgressViewModel::resetExport() called";
+
+    // 重置所有导出状态
+    m_progress = 0;
+    m_status = "";
+    m_isExporting = false;
+    m_isStopping = false;
+    m_successCount = 0;
+    m_successSymbolCount = 0;
+    m_successFootprintCount = 0;
+    m_successModel3DCount = 0;
+    m_failureCount = 0;
+    m_fetchProgress = 0;
+    m_processProgress = 0;
+    m_writeProgress = 0;
+
+    // 清空结果列表
+    m_resultsList.clear();
+    m_idToIndexMap.clear();
+
+    // 清空统计信息
+    m_hasStatistics = false;
+    m_statisticsReportPath = "";
+    m_statisticsSummary = "";
+    m_statistics = ExportStatistics();
+
+    // 触发所有相关的信号更新
+    emit progressChanged();
+    emit statusChanged();
+    emit isExportingChanged();
+    emit isStoppingChanged();
+    emit successCountChanged();
+    emit failureCountChanged();
+    emit resultsListChanged();
+    emit statisticsChanged();
+    emit fetchProgressChanged();
+    emit processProgressChanged();
+    emit writeProgressChanged();
+
+    qDebug() << "Export status reset completed";
+}
+
 void ExportProgressViewModel::handleExportProgress(int current, int total) {
     int newProgress = total > 0 ? (current * 100 / total) : 0;
     if (m_progress != newProgress) {
@@ -605,16 +648,14 @@ void ExportProgressViewModel::initializeSystemTrayIcon() {
                              ":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
                              ":/resources/icons/app_icon.ico",
                              ":/resources/icons/app_icon.png",
-                             ":/icons/app_icon.ico",
-                             ":/icons/app_icon.png"};
+                             "resources/icons/app_icon.ico",
+                             "resources/icons/app_icon.png"};
 
     for (const QString& path : iconPaths) {
         appIcon = QIcon(path);
         if (!appIcon.isNull()) {
-            qDebug() << "Icon loaded successfully from:" << path;
+            qDebug() << "System tray icon loaded successfully from:" << path;
             break;
-        } else {
-            qDebug() << "Failed to load icon from:" << path;
         }
     }
 
@@ -630,7 +671,7 @@ void ExportProgressViewModel::initializeSystemTrayIcon() {
     }
 
     m_systemTrayIcon->setIcon(appIcon);
-    qDebug() << "System tray icon set";
+    qDebug() << "System tray icon set successfully";
 
     // 设置工具提示
     m_systemTrayIcon->setToolTip(QObject::tr("EasyKiConverter - LCSC 转换工具"));

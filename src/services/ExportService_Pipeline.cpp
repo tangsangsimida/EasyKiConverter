@@ -31,7 +31,10 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     , m_mutex(new QMutex())
     , m_successCount(0)
     , m_failureCount(0)
-    , m_exportStartTimeMs(0) {
+    , m_exportStartTimeMs(0)
+    , m_originalExportStartTimeMs(0)
+    , m_originalTotalTasks(0)
+    , m_isRetryMode(false) {
     // 配置线程池
     m_fetchThreadPool->setMaxThreadCount(5);
     m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());
@@ -47,7 +50,8 @@ ExportServicePipeline::~ExportServicePipeline() {
 }
 
 void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& componentIds,
-                                                            const ExportOptions& options) {
+                                                            const ExportOptions& options,
+                                                            bool isRetry) {
     qDebug() << "Starting pipeline export for" << componentIds.size() << "components";
 
     QMutexLocker locker(m_mutex);
@@ -76,6 +80,26 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& c
     m_pipelineProgress.fetchCompleted = 0;
     m_pipelineProgress.processCompleted = 0;
     m_pipelineProgress.writeCompleted = 0;
+
+    // 设置重试模式标志（使用明确的 isRetry 参数，而不是 options.updateMode）
+    m_isRetryMode = isRetry;
+    qDebug() << "Retry mode set to:" << m_isRetryMode;
+
+    // 只在非重试模式下重置并设置原始总数量和开始时间
+    if (!m_isRetryMode) {
+        // 重置之前的原始统计信息（新的导出流程）
+        m_originalTotalTasks = 0;
+        m_originalExportStartTimeMs = 0;
+        m_originalStatistics = ExportStatistics();  // 重置原始统计信息
+
+        // 设置新的原始统计信息
+        m_originalTotalTasks = componentIds.size();
+        m_originalExportStartTimeMs = QDateTime::currentMSecsSinceEpoch();
+        qDebug() << "New export: Original export start time and total tasks set to:" << m_originalExportStartTimeMs
+                 << m_originalTotalTasks;
+    } else {
+        qDebug() << "Retry mode: Preserving original export statistics from first export.";
+    }
 
     if (!options.updateMode) {
         m_successCount = 0;
@@ -111,7 +135,7 @@ void ExportServicePipeline::retryExport(const QStringList& componentIds, const E
     ExportOptions retryOptions = options;
     retryOptions.overwriteExistingFiles = false;
     retryOptions.updateMode = true;
-    executeExportPipelineWithStages(componentIds, retryOptions);
+    executeExportPipelineWithStages(componentIds, retryOptions, true);  // 明确标识这是重试操作
 }
 
 PipelineProgress ExportServicePipeline::getPipelineProgress() const {
@@ -468,6 +492,13 @@ void ExportServicePipeline::checkPipelineCompletion() {
         QString reportPath = QString("%1/export_report_%2.json")
                                  .arg(m_options.outputPath)
                                  .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
+
+        // 在非重试模式下保存原始统计信息（用于重试时保留时间数据）
+        if (!m_isRetryMode) {
+            m_originalStatistics = statistics;
+            qDebug() << "Original export statistics saved for potential retries";
+        }
+
         if (saveStatisticsReport(statistics, reportPath)) {
             emit statisticsReportGenerated(reportPath, statistics);
         } else {
@@ -527,24 +558,26 @@ bool ExportServicePipeline::mergeSymbolLibrary() {
 
 ExportStatistics ExportServicePipeline::generateStatistics() {
     ExportStatistics statistics;
-    statistics.total = m_pipelineProgress.totalTasks;
-    statistics.success = m_successCount;
-    statistics.failed = m_failureCount;
 
-    // 计算总耗时，添加边界检查 (v3.0.5+ 修复)
-    qint64 currentTimeMs = QDateTime::currentMSecsSinceEpoch();
-    if (m_exportStartTimeMs > 0) {
-        statistics.totalDurationMs = currentTimeMs - m_exportStartTimeMs;
-        qDebug() << "Total duration calculated:" << statistics.totalDurationMs << "ms"
-                 << "(start:" << m_exportStartTimeMs << ", end:" << currentTimeMs << ")";
-    } else {
-        qWarning() << "m_exportStartTimeMs is not initialized, setting totalDurationMs to 0";
-        statistics.totalDurationMs = 0;
-    }
+    // 使用原始总数量（包括重试），如果未设置则使用当前批次数量
+    statistics.total = (m_originalTotalTasks > 0) ? m_originalTotalTasks : m_pipelineProgress.totalTasks;
 
-    qint64 totalFetchTime = 0, totalProcessTime = 0, totalWriteTime = 0;
+    // 计算成功和失败数量
+    // 需要去重统计，因为重试的元器件可能在 m_completedStatuses 中有多个状态
+    QSet<QString> uniqueComponentIds;
+    int actualSuccessCount = 0;
+    int actualFailureCount = 0;
+
     for (const QSharedPointer<ComponentExportStatus>& status : m_completedStatuses) {
-        // 只统计启用的导出选项
+        QString componentId = status->componentId;
+
+        // 只统计每个元器件的最新状态（最后一次导出结果）
+        if (uniqueComponentIds.contains(componentId)) {
+            continue;  // 跳过重复的元器件
+        }
+        uniqueComponentIds.insert(componentId);
+
+        // 统计启用的导出选项
         if (m_options.exportSymbol && status->symbolWritten)
             statistics.successSymbol++;
         if (m_options.exportFootprint && status->footprintWritten)
@@ -552,29 +585,84 @@ ExportStatistics ExportServicePipeline::generateStatistics() {
         if (m_options.exportModel3D && status->model3DWritten)
             statistics.successModel3D++;
 
-        if (!status->isCompleteSuccess()) {
+        if (status->isCompleteSuccess()) {
+            actualSuccessCount++;
+        } else {
+            actualFailureCount++;
             statistics.stageFailures[status->getFailedStage()]++;
             statistics.failureReasons[status->getFailureReason()]++;
         }
-        totalFetchTime += status->fetchDurationMs;
-        totalProcessTime += status->processDurationMs;
-        totalWriteTime += status->writeDurationMs;
-        for (const auto& diag : status->networkDiagnostics) {
-            statistics.totalNetworkRequests++;
-            statistics.totalRetries += diag.retryCount;
-            statistics.avgNetworkLatencyMs += diag.latencyMs;
-            if (diag.wasRateLimited)
-                statistics.rateLimitHitCount++;
-            statistics.statusCodeDistribution[diag.statusCode]++;
+    }
+
+    statistics.success = actualSuccessCount;
+    statistics.failed = actualFailureCount;
+
+    // 只在非重试模式下计算时间统计（避免重试时覆盖原始导出的时间信息）
+    if (!m_isRetryMode) {
+        // 计算总耗时
+        qint64 currentTimeMs = QDateTime::currentMSecsSinceEpoch();
+        if (m_originalExportStartTimeMs > 0) {
+            statistics.totalDurationMs = currentTimeMs - m_originalExportStartTimeMs;
+            qDebug() << "Total duration calculated:" << statistics.totalDurationMs << "ms"
+                     << "(start:" << m_originalExportStartTimeMs << ", end:" << currentTimeMs << ")";
+        } else if (m_exportStartTimeMs > 0) {
+            // 如果原始开始时间未设置（向后兼容），使用当前开始时间
+            statistics.totalDurationMs = currentTimeMs - m_exportStartTimeMs;
+            qDebug() << "Total duration calculated (using current start):" << statistics.totalDurationMs << "ms"
+                     << "(start:" << m_exportStartTimeMs << ", end:" << currentTimeMs << ")";
+        } else {
+            qWarning() << "Neither m_originalExportStartTimeMs nor m_exportStartTimeMs is initialized, setting "
+                          "totalDurationMs to 0";
+            statistics.totalDurationMs = 0;
+        }
+
+        // 计算平均耗时（基于所有完成的元器件状态）
+        qint64 totalFetchTime = 0, totalProcessTime = 0, totalWriteTime = 0;
+        int completedCount = uniqueComponentIds.size();
+
+        for (const QSharedPointer<ComponentExportStatus>& status : m_completedStatuses) {
+            totalFetchTime += status->fetchDurationMs;
+            totalProcessTime += status->processDurationMs;
+            totalWriteTime += status->writeDurationMs;
+            for (const auto& diag : status->networkDiagnostics) {
+                statistics.totalNetworkRequests++;
+                statistics.totalRetries += diag.retryCount;
+                statistics.avgNetworkLatencyMs += diag.latencyMs;
+                if (diag.wasRateLimited)
+                    statistics.rateLimitHitCount++;
+                statistics.statusCodeDistribution[diag.statusCode]++;
+            }
+        }
+
+        if (statistics.totalNetworkRequests > 0)
+            statistics.avgNetworkLatencyMs /= statistics.totalNetworkRequests;
+        if (completedCount > 0) {
+            statistics.avgFetchTimeMs = totalFetchTime / completedCount;
+            statistics.avgProcessTimeMs = totalProcessTime / completedCount;
+            statistics.avgWriteTimeMs = totalWriteTime / completedCount;
+        }
+    } else {
+        // 重试模式：保留原始统计信息的时间数据，但使用最新的基本统计
+        if (m_originalStatistics.total > 0) {
+            statistics.totalDurationMs = m_originalStatistics.totalDurationMs;
+            statistics.avgFetchTimeMs = m_originalStatistics.avgFetchTimeMs;
+            statistics.avgProcessTimeMs = m_originalStatistics.avgProcessTimeMs;
+            statistics.avgWriteTimeMs = m_originalStatistics.avgWriteTimeMs;
+            statistics.totalNetworkRequests = m_originalStatistics.totalNetworkRequests;
+            statistics.totalRetries = m_originalStatistics.totalRetries;
+            statistics.avgNetworkLatencyMs = m_originalStatistics.avgNetworkLatencyMs;
+            statistics.rateLimitHitCount = m_originalStatistics.rateLimitHitCount;
+            statistics.statusCodeDistribution = m_originalStatistics.statusCodeDistribution;
+            qDebug() << "Retry mode: Preserving original timing statistics";
+        } else {
+            qDebug() << "Retry mode: No original statistics available, using default values";
         }
     }
-    if (statistics.totalNetworkRequests > 0)
-        statistics.avgNetworkLatencyMs /= statistics.totalNetworkRequests;
-    if (statistics.total > 0) {
-        statistics.avgFetchTimeMs = totalFetchTime / statistics.total;
-        statistics.avgProcessTimeMs = totalProcessTime / statistics.total;
-        statistics.avgWriteTimeMs = totalWriteTime / statistics.total;
-    }
+
+    qDebug() << "Statistics generated - Total:" << statistics.total << "Success:" << statistics.success
+             << "Failed:" << statistics.failed << "Unique components:" << uniqueComponentIds.size()
+             << "Retry mode:" << m_isRetryMode;
+
     return statistics;
 }
 
