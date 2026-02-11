@@ -219,19 +219,25 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     QString model3DWrlPath;
     QString model3DStepPath;
     if (m_exportModel3D && status.model3DData && !status.model3DData->uuid().isEmpty()) {
-        model3DWrlPath = QString("../%1.3dmodels/%2.wrl").arg(m_libName, footprintName);
+        // 使用模型名称作为文件名，而不是封装名称
+        QString modelName = status.model3DData->name().isEmpty() ? footprintName : status.model3DData->name();
+        model3DWrlPath = QString("../%1.3dmodels/%2.wrl").arg(m_libName, modelName);
         if (!status.model3DStepRaw.isEmpty()) {
-            model3DStepPath = QString("../%1.3dmodels/%2.step").arg(m_libName, footprintName);
+            model3DStepPath = QString("../%1.3dmodels/%2.step").arg(m_libName, modelName);
         }
     }
 
     // 先写入临时文件
     bool exportSuccess = false;
     if (!model3DStepPath.isEmpty()) {
-        exportSuccess =
-            m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath, model3DStepPath);
-    } else {
+        // 有 WRL 和 STEP 两个模型，调用双参数版本
+        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath, model3DStepPath);
+    } else if (!model3DWrlPath.isEmpty()) {
+        // 只有 WRL 模型，调用单参数版本
         exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath);
+    } else {
+        // 没有 3D 模型，调用无参数版本
+        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath);
     }
 
     if (!exportSuccess) {
