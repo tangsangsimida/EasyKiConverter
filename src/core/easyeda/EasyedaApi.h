@@ -195,7 +195,7 @@ private:
     bool m_isFetching;
     RequestType m_requestType;
 
-    // 车规级安全：跟踪所有活跃的并行 NetworkUtils 实例
+    // 跟踪所有活跃的并行 NetworkUtils 实例
     QVector<QPointer<NetworkUtils>> m_activeRequests;
     QMutex m_requestsMutex;  // 保护 m_activeRequests 的线程安全访问
 };
