@@ -247,7 +247,12 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
 
     // 无论整体是否成功，只要符号文件被写入了，就加入清理列表
     if (m_options.exportSymbol && status->symbolWritten) {
-        QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, status->componentId);
+        QString finalFilePath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, status->componentId);
+        QString tempFilePath = finalFilePath + ".tmp";
+        // 优先清理最终文件（.kicad_sym），如果存在临时文件也加入清理列表
+        if (QFile::exists(finalFilePath) && !m_tempSymbolFiles.contains(finalFilePath)) {
+            m_tempSymbolFiles.append(finalFilePath);
+        }
         if (QFile::exists(tempFilePath) && !m_tempSymbolFiles.contains(tempFilePath)) {
             m_tempSymbolFiles.append(tempFilePath);
         }
@@ -487,11 +492,16 @@ void ExportServicePipeline::checkPipelineCompletion() {
         }
         m_tempSymbolFiles.clear();
 
-        // 生成和保存统计报告
+        // 清理符号库合并时的临时文件
+        QString libraryTempPath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, m_options.libName);
+        if (QFile::exists(libraryTempPath)) {
+            if (!QFile::remove(libraryTempPath)) {
+                qWarning() << "Failed to remove temporary symbol library file:" << libraryTempPath;
+            }
+        }
+
+        // 生成统计信息（始终生成，用于显示基本统计卡片）
         ExportStatistics statistics = generateStatistics();
-        QString reportPath = QString("%1/export_report_%2.json")
-                                 .arg(m_options.outputPath)
-                                 .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
 
         // 在非重试模式下保存原始统计信息（用于重试时保留时间数据）
         if (!m_isRetryMode) {
@@ -499,11 +509,22 @@ void ExportServicePipeline::checkPipelineCompletion() {
             qDebug() << "Original export statistics saved for potential retries";
         }
 
-        if (saveStatisticsReport(statistics, reportPath)) {
-            emit statisticsReportGenerated(reportPath, statistics);
-        } else {
-            qWarning() << "Failed to save statistics report.";
+        // 只在调试模式下保存详细报告到文件
+        QString reportPath;
+        if (m_options.debugMode) {
+            reportPath = QString("%1/export_report_%2.json")
+                             .arg(m_options.outputPath)
+                             .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
+            if (saveStatisticsReport(statistics, reportPath)) {
+                qDebug() << "Statistics report saved to:" << reportPath;
+            } else {
+                qWarning() << "Failed to save statistics report.";
+                reportPath.clear();
+            }
         }
+
+        // 始终发送统计信号，使统计卡片显示
+        emit statisticsReportGenerated(reportPath, statistics);
 
         // 所有清理和统计完成后，才真正标记导出完成
         emit exportCompleted(m_pipelineProgress.totalTasks, m_successCount);
@@ -548,6 +569,11 @@ bool ExportServicePipeline::mergeSymbolLibrary() {
         if (!QFile::rename(tempPath, libraryPath)) {
             QFile::remove(tempPath);
             success = false;
+        } else {
+            // 重命名成功后，验证并清理可能残留的临时文件
+            if (QFile::exists(tempPath)) {
+                QFile::remove(tempPath);
+            }
         }
     } else {
         if (QFile::exists(tempPath))

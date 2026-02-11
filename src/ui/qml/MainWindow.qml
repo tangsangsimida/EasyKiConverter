@@ -489,7 +489,7 @@ Item {
                             Layout.preferredHeight: 32
                             cursorShape: Qt.PointingHandCursor
                             hoverEnabled: true
-                            acceptedButtons: Qt.LeftButton
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
                             z: 100  // 确保在其他元素之上
                             Rectangle {
                                 anchors.fill: parent
@@ -552,8 +552,14 @@ Item {
                                     }
                                 }
                             }
-                            onClicked: {
-                                Qt.openUrlExternally("https://github.com/tangsangsimida/EasyKiConverter_QT");
+                            onClicked: (mouse) => {
+                                const projectUrl = "https://github.com/tangsangsimida/EasyKiConverter_QT";
+                                if (mouse.button === Qt.LeftButton) {
+                                    Qt.openUrlExternally(projectUrl);
+                                } else if (mouse.button === Qt.RightButton) {
+                                    componentListController.copyToClipboard(projectUrl);
+                                    console.log("Project link copied to clipboard:", projectUrl);
+                                }
                             }
                         }
                         // 深色模式切换按钮（灯泡图标）
@@ -1784,35 +1790,36 @@ Item {
                                 Layout.topMargin: AppStyle.spacing.sm
                                 spacing: AppStyle.spacing.lg
 
-                                // 打开详细报告按钮
+                                // 打开详细报告按钮（只在调试模式下显示）
                                 ModernButton {
                                     text: qsTr("打开详细统计报告")
-                                    iconName: "folder" // 或者其他合适的图标
+                                    iconName: "folder"
                                     backgroundColor: AppStyle.colors.surface
                                     textColor: AppStyle.colors.textPrimary
                                     hoverColor: AppStyle.colors.border
                                     pressedColor: AppStyle.colors.borderFocus
-                                    // 稍微加个边框让它看起来像二级按钮
+                                    visible: exportSettingsController.debugMode // 只在调试模式下显示
 
                                     onClicked: {
                                         Qt.openUrlExternally("file:///" + exportProgressController.statisticsReportPath);
                                     }
                                 }
-
-                                // 打开导出目录按钮
-                                ModernButton {
-                                    text: qsTr("打开导出目录")
-                                    iconName: "folder"
-                                    backgroundColor: AppStyle.colors.primary
-                                    hoverColor: AppStyle.colors.primaryHover
-                                    pressedColor: AppStyle.colors.primaryPressed
-
-                                    onClicked: {
-                                        // 打开输出路径
-                                        Qt.openUrlExternally("file:///" + exportSettingsController.outputPath);
-                                    }
-                                }
                             }
+                        }
+                    }
+                    // 打开导出目录按钮（始终显示，只要导出已完成）
+                    ModernButton {
+                        Layout.fillWidth: true
+                        Layout.topMargin: AppStyle.spacing.sm
+                        text: qsTr("打开导出目录")
+                        iconName: "folder"
+                        backgroundColor: AppStyle.colors.primary
+                        hoverColor: AppStyle.colors.primaryHover
+                        pressedColor: AppStyle.colors.primaryPressed
+                        visible: exportProgressController.statisticsTotal > 0 // 只要有导出过就显示
+
+                        onClicked: {
+                            Qt.openUrlExternally("file:///" + exportSettingsController.outputPath);
                         }
                     }
                     // 导出按钮组

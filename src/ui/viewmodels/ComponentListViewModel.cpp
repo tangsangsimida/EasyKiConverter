@@ -5,7 +5,7 @@
 #include <QClipboard>
 #include <QDebug>
 #include <QGuiApplication>
-#include <QRegularExpression>
+#include <QPointer>
 #include <QRunnable>
 #include <QThreadPool>
 #include <QUrl>
@@ -268,27 +268,13 @@ void ComponentListViewModel::setOutputPath(const QString& path) {
 }
 
 bool ComponentListViewModel::validateComponentId(const QString& componentId) const {
-    // LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
-    QRegularExpression re("^C\\d{4,}$");
-    return re.match(componentId).hasMatch();
+    // 委托给 Service 层处理业务逻辑
+    return m_service->validateComponentId(componentId);
 }
 
 QStringList ComponentListViewModel::extractComponentIdFromText(const QString& text) const {
-    QStringList extractedIds;
-
-    // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
-    QRegularExpression re("C\\d{4,}");
-    QRegularExpressionMatchIterator it = re.globalMatch(text);
-
-    while (it.hasNext()) {
-        QRegularExpressionMatch match = it.next();
-        QString id = match.captured();
-        if (!extractedIds.contains(id)) {
-            extractedIds.append(id);
-        }
-    }
-
-    return extractedIds;
+    // 委托给 Service 层处理业务逻辑
+    return m_service->extractComponentIdFromText(text);
 }
 
 bool ComponentListViewModel::componentExists(const QString& componentId) const {
@@ -327,10 +313,17 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
         item->setValid(true);
         item->setErrorMessage("");
 
-        // 异步生成缩略图
-        QThreadPool::globalInstance()->start(QRunnable::create([item, dataPtr]() {
+        // 异步生成缩略图 - 使用 QPointer 防止悬垂指针
+        QPointer<ComponentListItemData> safeItem = item;
+        QThreadPool::globalInstance()->start(QRunnable::create([safeItem, dataPtr]() {
             QImage thumbnail = ThumbnailGenerator::generateThumbnail(dataPtr);
-            QMetaObject::invokeMethod(item, [item, thumbnail]() { item->setThumbnail(thumbnail); });
+            if (safeItem) {  // 检查对象是否仍然有效
+                QMetaObject::invokeMethod(safeItem, [safeItem, thumbnail]() {
+                    if (safeItem) {  // 再次检查，确保在 invokeMethod 执行时仍然有效
+                        safeItem->setThumbnail(thumbnail);
+                    }
+                });
+            }
         }));
 
         // 尝试获取 LCSC 预览图覆盖生成的缩略图

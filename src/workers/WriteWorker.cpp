@@ -1,4 +1,4 @@
-﻿#include "WriteWorker.h"
+#include "WriteWorker.h"
 
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
@@ -152,20 +152,44 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
     }
 
     QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_outputPath, status.componentId);
+    QString finalFilePath = QString("%1/%2.kicad_sym").arg(m_outputPath, status.componentId);
 
+    // 先写入临时文件
     if (!m_symbolExporter.exportSymbol(*status.symbolData, tempFilePath)) {
         status.addDebugLog(QString("ERROR: Failed to write symbol file: %1").arg(tempFilePath));
-        return false;  // 导出器报告失败
+        QFile::remove(tempFilePath);  // 清理临时文件
+        return false;                 // 导出器报告失败
     }
 
-    // 验证文件是否真的被写入
-    if (QFile::exists(tempFilePath)) {
-        status.addDebugLog(QString("Symbol file written: %1").arg(tempFilePath));
+    // 验证临时文件是否真的被写入
+    if (!QFile::exists(tempFilePath)) {
+        status.addDebugLog(QString("ERROR: Symbol file not found after export: %1").arg(tempFilePath));
+        return false;  // 文件未找到，视为失败
+    }
+
+    // 删除旧文件（如果存在）
+    if (QFile::exists(finalFilePath)) {
+        if (!QFile::remove(finalFilePath)) {
+            status.addDebugLog(QString("WARNING: Failed to remove old symbol file: %1").arg(finalFilePath));
+            // 继续尝试重命名，可能操作系统会处理
+        }
+    }
+
+    // 原子性地重命名临时文件到最终文件
+    if (!QFile::rename(tempFilePath, finalFilePath)) {
+        status.addDebugLog(QString("ERROR: Failed to rename symbol file: %1 -> %2").arg(tempFilePath, finalFilePath));
+        QFile::remove(tempFilePath);  // 清理临时文件
+        return false;
+    }
+
+    // 验证最终文件是否存在
+    if (QFile::exists(finalFilePath)) {
+        status.addDebugLog(QString("Symbol file written atomically: %1").arg(finalFilePath));
         status.symbolWritten = true;
         return true;
     } else {
-        status.addDebugLog(QString("ERROR: Symbol file not found after export: %1").arg(tempFilePath));
-        return false;  // 文件未找到，视为失败
+        status.addDebugLog(QString("ERROR: Final symbol file not found after rename: %1").arg(finalFilePath));
+        return false;
     }
 }
 
@@ -190,37 +214,68 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
 
     QString footprintName = status.footprintData->info().name;
     QString filePath = QString("%1/%2.kicad_mod").arg(footprintLibPath, footprintName);
+    QString tempFilePath = filePath + ".tmp";
 
     QString model3DWrlPath;
     QString model3DStepPath;
     if (m_exportModel3D && status.model3DData && !status.model3DData->uuid().isEmpty()) {
-        model3DWrlPath = QString("../%1.3dmodels/%2.wrl").arg(m_libName, footprintName);
+        // 使用模型名称作为文件名，而不是封装名称
+        QString modelName = status.model3DData->name().isEmpty() ? footprintName : status.model3DData->name();
+        model3DWrlPath = QString("../%1.3dmodels/%2.wrl").arg(m_libName, modelName);
         if (!status.model3DStepRaw.isEmpty()) {
-            model3DStepPath = QString("../%1.3dmodels/%2.step").arg(m_libName, footprintName);
+            model3DStepPath = QString("../%1.3dmodels/%2.step").arg(m_libName, modelName);
         }
     }
 
+    // 先写入临时文件
     bool exportSuccess = false;
     if (!model3DStepPath.isEmpty()) {
+        // 有 WRL 和 STEP 两个模型，调用双参数版本
         exportSuccess =
-            m_footprintExporter.exportFootprint(*status.footprintData, filePath, model3DWrlPath, model3DStepPath);
+            m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath, model3DStepPath);
+    } else if (!model3DWrlPath.isEmpty()) {
+        // 只有 WRL 模型，调用单参数版本
+        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath);
     } else {
-        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, filePath, model3DWrlPath);
+        // 没有 3D 模型，调用无参数版本
+        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath);
     }
 
     if (!exportSuccess) {
-        status.addDebugLog(QString("ERROR: Failed to write footprint file (exporter): %1").arg(filePath));
-        return false;  // 导出器报告失败
+        status.addDebugLog(QString("ERROR: Failed to write footprint file (exporter): %1").arg(tempFilePath));
+        QFile::remove(tempFilePath);  // 清理临时文件
+        return false;                 // 导出器报告失败
     }
 
-    // 验证文件是否真的被写入
+    // 验证临时文件是否真的被写入
+    if (!QFile::exists(tempFilePath)) {
+        status.addDebugLog(QString("ERROR: Footprint file not found after export: %1").arg(tempFilePath));
+        return false;  // 文件未找到，视为失败
+    }
+
+    // 删除旧文件（如果存在）
     if (QFile::exists(filePath)) {
-        status.addDebugLog(QString("Footprint file written: %1").arg(filePath));
+        if (!QFile::remove(filePath)) {
+            status.addDebugLog(QString("WARNING: Failed to remove old footprint file: %1").arg(filePath));
+            // 继续尝试重命名
+        }
+    }
+
+    // 原子性地重命名临时文件到最终文件
+    if (!QFile::rename(tempFilePath, filePath)) {
+        status.addDebugLog(QString("ERROR: Failed to rename footprint file: %1 -> %2").arg(tempFilePath, filePath));
+        QFile::remove(tempFilePath);  // 清理临时文件
+        return false;
+    }
+
+    // 验证最终文件是否存在
+    if (QFile::exists(filePath)) {
+        status.addDebugLog(QString("Footprint file written atomically: %1").arg(filePath));
         status.footprintWritten = true;
         return true;
     } else {
-        status.addDebugLog(QString("ERROR: Footprint file not found after export: %1").arg(filePath));
-        return false;  // 文件未找到，视为失败
+        status.addDebugLog(QString("ERROR: Final footprint file not found after rename: %1").arg(filePath));
+        return false;
     }
 }
 
@@ -240,38 +295,58 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     bool wrlSuccess = false;
     bool stepSuccess = false;
 
-    // 导出 WRL 文件
+    // 导出 WRL 文件（使用 Write-Temp-Move 模式）
     QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
-    wrlSuccess = m_model3DExporter.exportToWrl(*status.model3DData, wrlFilePath);
+    QString wrlTempFilePath = wrlFilePath + ".tmp";
+    wrlSuccess = m_model3DExporter.exportToWrl(*status.model3DData, wrlTempFilePath);
 
-    if (wrlSuccess) {
-        if (QFile::exists(wrlFilePath)) {
-            status.addDebugLog(QString("3D model WRL file written: %1").arg(wrlFilePath));
-        } else {
-            status.addDebugLog(QString("ERROR: WRL file not found after export: %1").arg(wrlFilePath));
-            wrlSuccess = false;  // 文件不存在，视为写入失败
+    if (wrlSuccess && QFile::exists(wrlTempFilePath)) {
+        // 删除旧文件（如果存在）
+        if (QFile::exists(wrlFilePath) && !QFile::remove(wrlFilePath)) {
+            status.addDebugLog(QString("WARNING: Failed to remove old WRL file: %1").arg(wrlFilePath));
         }
+        // 原子性地重命名
+        if (QFile::rename(wrlTempFilePath, wrlFilePath)) {
+            status.addDebugLog(QString("3D model WRL file written atomically: %1").arg(wrlFilePath));
+        } else {
+            status.addDebugLog(QString("ERROR: Failed to rename WRL file: %1 -> %2").arg(wrlTempFilePath, wrlFilePath));
+            QFile::remove(wrlTempFilePath);
+            wrlSuccess = false;
+        }
+    } else if (wrlSuccess) {
+        status.addDebugLog(QString("ERROR: WRL file not found after export: %1").arg(wrlTempFilePath));
+        wrlSuccess = false;
     } else {
-        status.addDebugLog(QString("ERROR: Failed to write WRL file: %1").arg(wrlFilePath));
+        status.addDebugLog(QString("ERROR: Failed to write WRL file: %1").arg(wrlTempFilePath));
+        QFile::remove(wrlTempFilePath);
     }
 
-    // 导出 STEP 文件（如果有）
+    // 导出 STEP 文件（如果有，使用 Write-Temp-Move 模式）
     if (!status.model3DStepRaw.isEmpty()) {
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
-        QFile stepFile(stepFilePath);
+        QString stepTempFilePath = stepFilePath + ".tmp";
+        QFile stepFile(stepTempFilePath);
         if (stepFile.open(QIODevice::WriteOnly)) {
             stepFile.write(status.model3DStepRaw);
             stepFile.close();
 
-            if (QFile::exists(stepFilePath)) {
-                status.addDebugLog(QString("3D model STEP file written: %1").arg(stepFilePath));
-                stepSuccess = true;
-            } else {
-                status.addDebugLog(QString("WARNING: STEP file not found after write: %1").arg(stepFilePath));
-                // STEP 文件失败不影响整体 3D 模型成功，只要有 WRL 就算成功
+            if (QFile::exists(stepTempFilePath)) {
+                // 删除旧文件（如果存在）
+                if (QFile::exists(stepFilePath) && !QFile::remove(stepFilePath)) {
+                    status.addDebugLog(QString("WARNING: Failed to remove old STEP file: %1").arg(stepFilePath));
+                }
+                // 原子性地重命名
+                if (QFile::rename(stepTempFilePath, stepFilePath)) {
+                    status.addDebugLog(QString("3D model STEP file written atomically: %1").arg(stepFilePath));
+                    stepSuccess = true;
+                } else {
+                    status.addDebugLog(
+                        QString("ERROR: Failed to rename STEP file: %1 -> %2").arg(stepTempFilePath, stepFilePath));
+                    QFile::remove(stepTempFilePath);
+                }
             }
         } else {
-            status.addDebugLog(QString("ERROR: Failed to write STEP file: %1").arg(stepFilePath));
+            status.addDebugLog(QString("ERROR: Failed to write STEP file: %1").arg(stepTempFilePath));
             // STEP 文件失败不影响整体 3D 模型成功
         }
     }

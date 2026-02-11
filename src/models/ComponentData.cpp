@@ -100,13 +100,17 @@ bool ComponentData::isValid() const {
         return false;
     }
 
-    bool ok;
-    m_lcscId.mid(1).toInt(&ok);
-    if (!ok && m_lcscId.length() > 1) {
+    // 检查后面是否为数字
+    bool ok = false;
+    QString numberPart = m_lcscId.mid(1);
+    if (numberPart.length() > 0) {
+        numberPart.toInt(&ok);
+    }
+    if (!ok) {
         return false;
     }
 
-    // 至少要有符号或封装数�?
+    // 至少要有符号或封装数据
     if (!m_symbolData && !m_footprintData) {
         return false;
     }
@@ -123,9 +127,13 @@ QString ComponentData::validate() const {
         return QString("LCSC ID must start with 'C': %1").arg(m_lcscId);
     }
 
-    bool ok;
-    m_lcscId.mid(1).toInt(&ok);
-    if (!ok && m_lcscId.length() > 1) {
+    // 检查后面是否为数字
+    bool ok = false;
+    QString numberPart = m_lcscId.mid(1);
+    if (numberPart.length() > 0) {
+        numberPart.toInt(&ok);
+    }
+    if (!ok) {
         return QString("LCSC ID must be in format 'C' followed by numbers: %1").arg(m_lcscId);
     }
 

@@ -40,16 +40,11 @@ void NetworkUtils::sendGetRequest(const QString& url, int timeout, int maxRetrie
     qDebug() << "sendGetRequest called - URL:" << url << "m_isRequesting:" << m_isRequesting
              << "m_currentReply:" << (m_currentReply != nullptr);
 
-    if (m_isRequesting) {
-        // 检查状态是否不一致：m_isRequesting 为 true，但没有活跃的请求
-        if (!m_currentReply && !m_timeoutTimer->isActive()) {
-            qWarning() << "Inconsistent state detected: m_isRequesting is true but no active request. Resetting state.";
-            m_isRequesting = false;
-        } else {
-            qWarning() << "A request is already in progress - m_currentReply:" << (m_currentReply != nullptr)
-                       << "m_timeoutTimer active:" << m_timeoutTimer->isActive();
-            return;
-        }
+    // 使用 m_currentReply 作为单一事实来源检查是否有活跃请求
+    if (m_currentReply != nullptr) {
+        qWarning() << "A request is already in progress - m_currentReply:" << (m_currentReply != nullptr)
+                   << "m_timeoutTimer active:" << m_timeoutTimer->isActive();
+        return;
     }
 
     m_url = url;
@@ -320,14 +315,14 @@ QByteArray NetworkUtils::decompressGzip(const QByteArray& compressedData) {
     // 检查是否是 gzip 格式
     if (compressedData.size() < 2) {
         qWarning() << "Data too small to be gzip compressed";
-        return compressedData;
+        return QByteArray();
     }
 
     // 检查 gzip 魔数数字 (0x1F, 0x8B)
     if (static_cast<unsigned char>(compressedData[0]) != 0x1F ||
         static_cast<unsigned char>(compressedData[1]) != 0x8B) {
         qWarning() << "Data is not gzip compressed";
-        return compressedData;
+        return QByteArray();
     }
 
     // 使用 zlib 解压
@@ -337,7 +332,7 @@ QByteArray NetworkUtils::decompressGzip(const QByteArray& compressedData) {
     // 初始化 zlib
     if (inflateInit2(&stream, 15 + 16) != Z_OK) {  // 15 + 16 启用 gzip 解码
         qWarning() << "Failed to initialize zlib for gzip decompression";
-        return compressedData;
+        return QByteArray();
     }
 
     stream.next_in = const_cast<Bytef*>(reinterpret_cast<const Bytef*>(compressedData.constData()));
@@ -359,7 +354,7 @@ QByteArray NetworkUtils::decompressGzip(const QByteArray& compressedData) {
         } else {
             qWarning() << "Gzip decompression error:" << ret;
             inflateEnd(&stream);
-            return compressedData;
+            return QByteArray();
         }
     } while (ret != Z_STREAM_END && stream.avail_in > 0);
 
@@ -367,6 +362,7 @@ QByteArray NetworkUtils::decompressGzip(const QByteArray& compressedData) {
 
     if (ret != Z_STREAM_END) {
         qWarning() << "Gzip decompression did not complete successfully";
+        return QByteArray();
     }
 
     qDebug() << "Gzip decompression completed. Original size:" << compressedData.size()

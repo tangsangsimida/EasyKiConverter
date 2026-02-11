@@ -4,8 +4,11 @@
 #include "core/utils/NetworkUtils.h"
 
 #include <QJsonObject>
+#include <QMutex>
 #include <QObject>
+#include <QPointer>
 #include <QString>
+#include <QVector>
 
 namespace EasyKiConverter {
 
@@ -191,6 +194,10 @@ private:
     QString m_currentUuid;
     bool m_isFetching;
     RequestType m_requestType;
+
+    // 跟踪所有活跃的并行 NetworkUtils 实例
+    QVector<QPointer<NetworkUtils>> m_activeRequests;
+    QMutex m_requestsMutex;  // 保护 m_activeRequests 的线程安全访问
 };
 
 }  // namespace EasyKiConverter

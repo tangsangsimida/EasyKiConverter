@@ -430,8 +430,15 @@ QString ExporterFootprint::generatePad(const FootprintPad& pad, double bboxX, do
             QString path;
             for (int i = 0; i < pointList.size(); i += 2) {
                 if (i + 1 < pointList.size()) {
-                    double px = pointList[i].toDouble();
-                    double py = pointList[i + 1].toDouble();
+                    bool okX = false;
+                    bool okY = false;
+                    double px = pointList[i].toDouble(&okX);
+                    double py = pointList[i + 1].toDouble(&okY);
+                    // 检查转换是否成功
+                    if (!okX || !okY) {
+                        qWarning() << "Failed to parse point coordinates at index" << i << "for pad" << pad.id;
+                        continue;
+                    }
 
 
                     double relX = pxToMmRounded(px - bboxX) - x;
@@ -506,10 +513,16 @@ QString ExporterFootprint::generateTrack(const FootprintTrack& track, double bbo
 
 
     for (int i = 0; i + 3 < pointList.size(); i += 2) {
-        double startX = pxToMmRounded(pointList[i].toDouble() - bboxX);
-        double startY = pxToMmRounded(pointList[i + 1].toDouble() - bboxY);
-        double endX = pxToMmRounded(pointList[i + 2].toDouble() - bboxX);
-        double endY = pxToMmRounded(pointList[i + 3].toDouble() - bboxY);
+        bool ok1 = false, ok2 = false, ok3 = false, ok4 = false;
+        double startX = pxToMmRounded(pointList[i].toDouble(&ok1) - bboxX);
+        double startY = pxToMmRounded(pointList[i + 1].toDouble(&ok2) - bboxY);
+        double endX = pxToMmRounded(pointList[i + 2].toDouble(&ok3) - bboxX);
+        double endY = pxToMmRounded(pointList[i + 3].toDouble(&ok4) - bboxY);
+        // 检查转换是否成功
+        if (!ok1 || !ok2 || !ok3 || !ok4) {
+            qWarning() << "Failed to parse track coordinates at index" << i;
+            continue;
+        }
 
         content += QString("  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
                        .arg(startX, 0, 'f', 2)
@@ -772,22 +785,25 @@ QString ExporterFootprint::generateModel3D(const Model3DData& model3D,
 
 
     double rotX = (360.0 - model3D.rotation().x);
-
-    while (rotX >= 360.0)
-
-        rotX -= 360.0;
+    // 使用 fmod 替代 while 循环，避免死循环风险
+    rotX = fmod(rotX, 360.0);
+    if (rotX < 0.0) {
+        rotX += 360.0;
+    }
 
     double rotY = (360.0 - model3D.rotation().y);
-
-    while (rotY >= 360.0)
-
-        rotY -= 360.0;
+    // 使用 fmod 替代 while 循环，避免死循环风险
+    rotY = fmod(rotY, 360.0);
+    if (rotY < 0.0) {
+        rotY += 360.0;
+    }
 
     double rotZ = (360.0 - model3D.rotation().z);
-
-    while (rotZ >= 360.0)
-
-        rotZ -= 360.0;
+    // 使用 fmod 替代 while 循环，避免死循环风险
+    rotZ = fmod(rotZ, 360.0);
+    if (rotZ < 0.0) {
+        rotZ += 360.0;
+    }
 
 
     // 计算 3D 模型的 offset

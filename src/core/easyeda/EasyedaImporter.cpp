@@ -843,6 +843,11 @@ FootprintSolidRegion EasyedaImporter::importSolidRegionData(const QString& solid
 }
 
 void EasyedaImporter::importSvgNodeData(const QString& svgNodeData, QSharedPointer<FootprintData> footprintData) {
+    if (!footprintData) {
+        qWarning() << "importSvgNodeData called with null footprintData";
+        return;
+    }
+
     QStringList parts = svgNodeData.split("~");
     if (parts.size() < 2) {
         qWarning() << "Invalid SVGNODE data format";

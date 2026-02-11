@@ -116,8 +116,9 @@ xcode-select --install
 # 更新包管理器
 sudo apt-get update
 
-# 安装 Qt 6
-sudo apt-get install qt6-base-dev qt6-declarative-dev qt6-tools-dev qt6-network-dev
+# 安装 Qt 6 基础和必需模块
+# 注意：Network 模块已包含在 qt6-base-dev 中，无需单独安装 qt6-network-dev
+sudo apt-get install qt6-base-dev qt6-declarative-dev qt6-tools-dev qt6-websockets-dev
 
 # 安装 CMake
 sudo apt-get install cmake
@@ -127,6 +128,9 @@ sudo apt-get install build-essential g++
 
 # 安装 zlib
 sudo apt-get install zlib1g-dev
+
+# 安装 XKB 支持（Qt 6 GuiPrivate 模块需要）
+sudo apt-get install libxkbcommon-dev libxkbcommon-x11-dev qt6-base-private-dev
 ```
 
 **Fedora**
@@ -369,6 +373,31 @@ sudo dnf install zlib-devel       # Fedora
 sudo pacman -S zlib               # Arch Linux
 ```
 
+### 找不到 XKB 或 GuiPrivate 相关错误
+
+**错误信息：**
+```
+Could NOT find XKB (missing: XKB_LIBRARY XKB_INCLUDE_DIR)
+CMake Error: The link interface of target "Qt6::GuiPrivate" contains XKB::XKB but the target was not found.
+```
+
+**解决方案：**
+
+**Ubuntu/Debian：**
+```bash
+sudo apt-get install libxkbcommon-dev libxkbcommon-x11-dev qt6-base-private-dev
+```
+
+**Fedora：**
+```bash
+sudo dnf install libxkbcommon-devel libxkbcommon-x11-devel qt6-qtbase-private-devel
+```
+
+**Arch Linux：**
+```bash
+sudo pacman -S libxkbcommon qt6-base
+```
+
 ### 找不到 Qt 动态库
 
 **错误信息：**
@@ -533,6 +562,86 @@ gdb ./EasyKiConverter
 1. 在 Qt Creator 中打开项目
 2. 设置断点
 3. 点击 "调试"按钮（或按 F5）
+
+## 在远程服务器上运行 Qt 应用
+
+EasyKiConverter 是一个 Qt Quick 应用，需要图形界面支持。在远程服务器上运行时，需要配置 X11 转发或使用 VNC。
+
+### 方案 1: X11 转发（推荐用于简单测试）
+
+**步骤：**
+
+1. **在本地 Windows 上安装 X Server：**
+   - **VcXsrv** (推荐): https://sourceforge.net/projects/vcxsrv/
+   - **MobaXterm** (自带 X Server): https://mobaxterm.mobatek.net/
+
+2. **配置 SSH 连接：**
+   - 使用 PuTTY：在 `Connection → SSH → X11` 中启用 `Enable X11 forwarding`
+   - 使用 MobaXterm：X11 转发已自动启用
+   - 使用命令行 SSH：添加 `-X` 参数
+     ```bash
+     ssh -X user@server-ip
+     ```
+
+3. **运行应用：**
+   ```bash
+   export DISPLAY=localhost:10.0  # 通常由 SSH 自动设置
+   cd build
+   ./bin/EasyKiConverter
+   ```
+
+### 方案 2: VNC（更稳定）
+
+**步骤：**
+
+1. **在服务器上安装 VNC 服务器：**
+   ```bash
+   sudo apt-get install tightvncserver
+   ```
+
+2. **启动 VNC 服务器：**
+   ```bash
+   vncserver :1
+   # 第一次运行时会提示设置密码
+   ```
+
+3. **在本地使用 VNC 客户端连接：**
+   - 下载 RealVNC Viewer 或 TigerVNC
+   - 连接地址: `your-server-ip:5901`
+
+4. **运行应用：**
+   ```bash
+   cd build
+   ./bin/EasyKiConverter
+   ```
+
+5. **停止 VNC 服务器（可选）：**
+   ```bash
+   vncserver -kill :1
+   ```
+
+### 方案 3: 使用虚拟显示（用于测试/CI）
+
+**步骤：**
+
+1. **安装 Xvfb（虚拟帧缓冲）：**
+   ```bash
+   sudo apt-get install xvfb
+   ```
+
+2. **在虚拟显示中运行应用：**
+   ```bash
+   xvfb-run ./bin/EasyKiConverter
+   ```
+
+**注意：** 此方案主要用于自动化测试，应用窗口不可见。
+
+### 推荐做法
+
+对于开发测试，推荐使用 **MobaXterm**，因为它：
+- 自带 X Server，无需额外配置
+- 支持 SSH、SFTP 等多种协议
+- 界面友好，开箱即用
 
 ## 获取帮助
 
