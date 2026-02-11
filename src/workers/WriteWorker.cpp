@@ -231,7 +231,8 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     bool exportSuccess = false;
     if (!model3DStepPath.isEmpty()) {
         // 有 WRL 和 STEP 两个模型，调用双参数版本
-        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath, model3DStepPath);
+        exportSuccess =
+            m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath, model3DStepPath);
     } else if (!model3DWrlPath.isEmpty()) {
         // 只有 WRL 模型，调用单参数版本
         exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath);
