@@ -2,11 +2,77 @@
 
 本文档记录了 EasyKiConverter 每个版本的新增、修复和更改内容。
 
+## [3.0.3] - 2026-02-08
+
+### 新增
+- **LCSC 预览图功能**
+  - **网络图片获取**: 实现 `fetchLcscPreviewImage` 方法，支持从 LCSC 网站获取元件预览图
+  - **重试机制**: 添加网络请求重试机制，提高图片获取成功率
+  - **Fallback 爬虫模式**: 当 API 不可用时，使用爬虫模式获取元件预览图片
+  - **缩略图生成**: 新增 `ThumbnailGenerator` 工具类，自动生成 Base64 缩略图
+  - **数据模型扩展**: 新增 `ComponentListItemData` 类，包含缩略图、验证状态等 UI 相关信息
+  - 代码位置：`src/services/ComponentService.cpp`, `src/models/ComponentListItemData.h/cpp`, `src/ui/utils/ThumbnailGenerator.h/cpp`
+
+- **组件列表功能增强**
+  - **ID 复制功能**: 在 `ComponentListItem` 中添加右键点击复制组件 ID 到剪贴板
+  - **复制提示**: 显示复制成功的工具提示，提升用户体验
+  - 代码位置：`src/ui/qml/components/ComponentListItem.qml`, `src/ui/viewmodels/ComponentListViewModel.cpp`
+
+- **响应式布局和窗口调整**
+  - **自适应网格布局**: 组件列表从固定 5 列改为自适应网格布局，动态计算列数
+  - **窗口边缘调整**: 添加 8 个方向的拖拽调整手柄，支持窗口大小调整
+  - **鼠标交互优化**: 优化组件列表项的鼠标交互区域层级结构
+  - **缩略图悬停预览**: 改进缩略图悬停预览功能的显示逻辑和视觉效果
+  - 代码位置：`src/ui/qml/MainWindow.qml`, `src/ui/qml/components/ComponentListItem.qml`
+
+- **预加载数据支持**
+  - **预加载数据功能**: 在 `ExportService_Pipeline` 中添加 `setPreloadedData` 方法
+  - **优化数据流**: 改进进度跟踪机制，使数据流更加高效
+  - **临时文件管理**: 优化临时文件清理逻辑，确保符号文件正确处理
+  - **符号库合并修复**: 修复符号库合并时的临时文件管理问题
+  - 代码位置：`src/services/ExportService_Pipeline.cpp/h`
+
+### 重大变更
+- **组件列表模型重构**
+  - **迁移至 QAbstractListModel**: 将 `ComponentListViewModel` 从 `QQmlListProperty` 迁移至 `QAbstractListModel`
+  - **性能提升**: 提供更高效的 UI 更新机制
+  - **API 变更**: QML 中组件列表访问方式变更，不再使用 `componentList` 属性，而是直接通过 `model` 绑定访问
+  - **新方法**: 添加 `getAllComponentIds` 方法优化导出流程
+  - 代码位置：`src/ui/viewmodels/ComponentListViewModel.cpp/h`, `src/ui/qml/MainWindow.qml`
+
+### 修复
+- **导出服务统计缺失问题修复**
+  - **完成状态统计修复**: 在预加载数据使用场景下，添加状态到完成状态列表以供统计
+  - **关键修复**: 解决了预加载数据场景下统计数据不准确的问题，确保所有导出状态都被正确统计
+  - 代码位置：`src/services/ExportService_Pipeline.cpp:316`
+
+- **MainWindow 代码结构修复**
+  - **组件删除逻辑优化**: 将组件删除逻辑从索引查找改为 ID 查找，简化删除操作流程
+  - **条件判断修复**: 修复数据为空时的条件判断逻辑，避免潜在的空指针异常
+  - **过滤逻辑修正**: 修正组件列表过滤的 ID 提取逻辑
+  - 代码位置：`src/ui/qml/MainWindow.qml`
+
+- **ExportProgressViewModel 构造参数修复**
+  - **依赖注入**: 在 `ExportProgressViewModel` 构造函数中添加 `componentListViewModel` 参数
+  - **正确初始化**: 确保视图模型正确初始化依赖关系
+  - 代码位置：`main.cpp`, `src/ui/viewmodels/ExportProgressViewModel.cpp/h`
+
+### 重构
+- **组件列表视图模型简化**
+  - **枚举定义优化**: 简化 `ComponentListViewModel` 中的枚举定义格式
+  - **代码整洁性**: 移除不必要的多行枚举定义格式，使代码更加紧凑和一致
+  - 代码位置：`src/ui/viewmodels/ComponentListViewModel.h:27`
+
+- **代码格式优化**
+  - **日志格式统一**: 整理 `LanguageManager.cpp` 中的调试日志输出格式
+  - **可读性提升**: 移除多余空行，统一调试信息的日志格式
+  - 代码位置：`src/core/LanguageManager.cpp`
+
 ## [3.0.2] - 2026-01-27
 
 ### 修复
 - **批量导出卡顿问题**
-  - **降低并发数**: 将 `FetchWorker` 线程池的最大线程数从 32 降低至 8。这有效防止了因并发连接数过多导致的服务器端限流或拒绝服务，解决了批量导出时个别组件下载"卡死"的问题。
+  - **降低并发数**: 将 `FetchWorker` 线程池的最大线程数从 32 降低至 5。这有效防止了因并发连接数过多导致的服务器端限流或拒绝服务，解决了批量导出时个别组件下载"卡死"的问题。
   - **增加重试机制**: 为 `FetchWorker` 的网络请求添加了自动重试逻辑。
     - 策略：遇到网络错误或 HTTP 429/5xx 错误时自动重试。
     - 延迟：第1次重试等待3秒，第2次等待5秒，第3次及以后等待10秒。

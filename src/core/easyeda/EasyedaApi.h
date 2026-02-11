@@ -93,6 +93,14 @@ signals:
      */
     void fetchError(const QString& errorMessage);
 
+    /**
+     * @brief 请求失败信号（带 ID?
+         *
+     * @param id 组件 ID 或 UUID
+     * @param errorMessage 错误消息
+     */
+    void fetchError(const QString& id, const QString& errorMessage);
+
 private slots:
     /**
      * @brief 处理组件信息响应

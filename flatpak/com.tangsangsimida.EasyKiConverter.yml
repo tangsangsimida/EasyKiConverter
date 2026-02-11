@@ -22,6 +22,8 @@ modules:
     build-options:
       cflags: -O2 -g
       cxxflags: -O2 -g
+      build-args:
+        - --share=network
     build-commands:
       - cmake --build . --parallel
       - cmake --install .

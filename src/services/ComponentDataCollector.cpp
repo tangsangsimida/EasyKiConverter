@@ -195,7 +195,11 @@ void ComponentDataCollector::initializeApiConnections() {
     connect(m_api, &EasyedaApi::componentInfoFetched, this, &ComponentDataCollector::handleComponentInfoFetched);
     connect(m_api, &EasyedaApi::cadDataFetched, this, &ComponentDataCollector::handleCadDataFetched);
     connect(m_api, &EasyedaApi::model3DFetched, this, &ComponentDataCollector::handleModel3DFetched);
-    connect(m_api, &EasyedaApi::fetchError, this, &ComponentDataCollector::handleFetchError);
+    connect(m_api, qOverload<const QString&>(&EasyedaApi::fetchError), this, &ComponentDataCollector::handleFetchError);
+    connect(m_api,
+            qOverload<const QString&, const QString&>(&EasyedaApi::fetchError),
+            this,
+            [this](const QString&, const QString& errorMessage) { handleFetchError(errorMessage); });
 }
 
 }  // namespace EasyKiConverter

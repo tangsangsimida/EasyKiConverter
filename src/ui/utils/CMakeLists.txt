@@ -2,6 +2,7 @@
 
 add_library(EasyKiConverterUIUtils STATIC
     ConfigManager.cpp
+    ThumbnailGenerator.cpp
 )
 
 target_include_directories(EasyKiConverterUIUtils
@@ -13,4 +14,5 @@ target_include_directories(EasyKiConverterUIUtils
 target_link_libraries(EasyKiConverterUIUtils
     PUBLIC
         Qt6::Core
+        Qt6::Gui
 )

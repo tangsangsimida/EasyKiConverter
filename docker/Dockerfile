@@ -33,6 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     libgl1-mesa-dev \
     libxkbcommon-x11-0 \
+    libxkbcommon-dev \
     libvulkan1 \
     libwayland-cursor0 \
     libglib2.0-0 \
@@ -83,9 +84,15 @@ RUN pip3 install --no-cache-dir aqtinstall \
 # 设置 Qt 环境变量
 ENV Qt6_DIR=/opt/qt/${QT_VERSION}/gcc_64
 ENV PATH=$Qt6_DIR/bin:$PATH
-ENV LD_LIBRARY_PATH=$Qt6_DIR/lib:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=${Qt6_DIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 
-# 3. 安装 LinuxDeploy & 插件
+# 3. 预下载 QXlsx 源码（用于 Excel BOM 解析）
+RUN git clone https://github.com/QtExcel/QXlsx.git /opt/QXlsx
+
+# 设置 QXlsx 环境变量（指向源码目录）
+ENV QXLSX_ROOT=/opt/QXlsx/QXlsx
+
+# 4. 安装 LinuxDeploy & 插件
 # 直接下载并提取，减少临时文件
 RUN mkdir -p /opt/linuxdeploy /opt/linuxdeploy-plugin-qt \
     && wget -q -O /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \

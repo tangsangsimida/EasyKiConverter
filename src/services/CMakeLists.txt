@@ -28,3 +28,8 @@ target_link_libraries(EasyKiConverterServices
         EasyKiConverterUtils
         EasyKiConverterWorkers
 )
+
+# 条件链接 QXlsx
+if(TARGET QXlsx::QXlsx)
+    target_link_libraries(EasyKiConverterServices PUBLIC QXlsx::QXlsx)
+endif()

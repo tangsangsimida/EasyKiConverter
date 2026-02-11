@@ -18,6 +18,7 @@ target_link_libraries(EasyKiConverterViewModels
         Qt6::Core
         Qt6::Quick
         Qt6::QuickControls2
+        Qt6::Widgets
         EasyKiConverterServices
         EasyKiConverterModels
 )

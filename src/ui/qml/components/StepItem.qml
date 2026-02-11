@@ -29,11 +29,10 @@ Item {
             width: 32
             height: 32
             radius: 16
-            
+
             // 背景色：完成(绿) / 进行中(白+边框) / 等待(灰)
-            color: root.isCompleted ? AppStyle.colors.success : 
-                   (root.isActive ? "transparent" : AppStyle.colors.border)
-            
+            color: root.isCompleted ? AppStyle.colors.success : (root.isActive ? "transparent" : AppStyle.colors.border)
+
             // 边框：进行中(亮色) / 其他(无)
             border.width: root.isActive ? 2 : 0
             border.color: root.isActive ? root.activeColor : "transparent"
@@ -42,8 +41,16 @@ Item {
             SequentialAnimation on scale {
                 running: root.isActive
                 loops: Animation.Infinite
-                NumberAnimation { to: 1.1; duration: 800; easing.type: Easing.InOutQuad }
-                NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
+                NumberAnimation {
+                    to: 1.1
+                    duration: 800
+                    easing.type: Easing.InOutQuad
+                }
+                NumberAnimation {
+                    to: 1.0
+                    duration: 800
+                    easing.type: Easing.InOutQuad
+                }
             }
 
             // 图标/数字
@@ -71,8 +78,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             text: Math.round(root.progress) + "%"
             font.pixelSize: 10
-            color: root.isCompleted ? AppStyle.colors.success : 
-                   (root.isActive ? root.activeColor : "transparent")
+            color: root.isCompleted ? AppStyle.colors.success : (root.isActive ? root.activeColor : "transparent")
             visible: root.progress > 0
         }
     }

@@ -4,10 +4,12 @@
 #include "services/ComponentService.h"
 #include "services/ExportService.h"
 #include "services/ExportService_Pipeline.h"
+#include "ui/viewmodels/ComponentListViewModel.h"
 
 #include <QHash>
 #include <QObject>
 #include <QString>
+#include <QSystemTrayIcon>
 #include <QTimer>
 #include <QVariantList>
 
@@ -47,6 +49,7 @@ class ExportProgressViewModel : public QObject {
 public:
     explicit ExportProgressViewModel(ExportService* exportService,
                                      ComponentService* componentService,
+                                     ComponentListViewModel* componentListViewModel,
                                      QObject* parent = nullptr);
     ~ExportProgressViewModel() override;
 
@@ -152,6 +155,7 @@ public slots:
     Q_INVOKABLE void retryFailedComponents();
     Q_INVOKABLE void retryComponent(const QString& componentId);
     Q_INVOKABLE void cancelExport();
+    Q_INVOKABLE void resetExport();
 
 signals:
     void progressChanged();
@@ -194,10 +198,13 @@ private:
     void prepopulateResultsList(const QStringList& componentIds);
     void startExportInternal(const QStringList& componentIds, bool isRetry);
     void updateStatistics();
+    void showExportCompleteNotification();
+    void initializeSystemTrayIcon();
 
 private:
     ExportService* m_exportService;
     ComponentService* m_componentService;
+    ComponentListViewModel* m_componentListViewModel;
     QString m_status;
     int m_progress;
     bool m_isExporting;
@@ -223,6 +230,7 @@ private:
     int m_successFootprintCount;
     int m_successModel3DCount;
     int m_failureCount;
+    QSystemTrayIcon* m_systemTrayIcon;
 };
 }  // namespace EasyKiConverter
 
