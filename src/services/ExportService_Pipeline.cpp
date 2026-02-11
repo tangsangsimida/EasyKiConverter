@@ -247,7 +247,12 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
 
     // 无论整体是否成功，只要符号文件被写入了，就加入清理列表
     if (m_options.exportSymbol && status->symbolWritten) {
-        QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, status->componentId);
+        QString finalFilePath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, status->componentId);
+        QString tempFilePath = finalFilePath + ".tmp";
+        // 优先清理最终文件（.kicad_sym），如果存在临时文件也加入清理列表
+        if (QFile::exists(finalFilePath) && !m_tempSymbolFiles.contains(finalFilePath)) {
+            m_tempSymbolFiles.append(finalFilePath);
+        }
         if (QFile::exists(tempFilePath) && !m_tempSymbolFiles.contains(tempFilePath)) {
             m_tempSymbolFiles.append(tempFilePath);
         }
@@ -487,6 +492,14 @@ void ExportServicePipeline::checkPipelineCompletion() {
         }
         m_tempSymbolFiles.clear();
 
+        // 清理符号库合并时的临时文件
+        QString libraryTempPath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, m_options.libName);
+        if (QFile::exists(libraryTempPath)) {
+            if (!QFile::remove(libraryTempPath)) {
+                qWarning() << "Failed to remove temporary symbol library file:" << libraryTempPath;
+            }
+        }
+
         // 生成和保存统计报告
         ExportStatistics statistics = generateStatistics();
         QString reportPath = QString("%1/export_report_%2.json")
@@ -548,6 +561,11 @@ bool ExportServicePipeline::mergeSymbolLibrary() {
         if (!QFile::rename(tempPath, libraryPath)) {
             QFile::remove(tempPath);
             success = false;
+        } else {
+            // 重命名成功后，验证并清理可能残留的临时文件
+            if (QFile::exists(tempPath)) {
+                QFile::remove(tempPath);
+            }
         }
     } else {
         if (QFile::exists(tempPath))
