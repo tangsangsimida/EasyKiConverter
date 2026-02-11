@@ -696,7 +696,11 @@ QString ExporterSymbol::generatePin(const SymbolPin& pin, const SymbolBBox& bbox
         // 提取数值部分（可能包含其他命令�?
         QStringList parts = lengthStr.split(QRegularExpression("[^0-9.-]"), Qt::SkipEmptyParts);
         if (!parts.isEmpty()) {
-            length = parts[0].toDouble();
+            bool ok = false;
+            double tempLength = parts[0].toDouble(&ok);
+            if (ok) {
+                length = tempLength;
+            }
         }
     }
 
@@ -749,8 +753,11 @@ QString ExporterSymbol::generatePin(const SymbolPin& pin, const SymbolBBox& bbox
     // Python 版本使用 (180 + orientation) % 360 计算方向
     // 注意：orientation �?0, 90, 180, 270 的整�?
     double kicadOrientation = (180.0 + orientation);
-    while (kicadOrientation >= 360.0)
-        kicadOrientation -= 360.0;
+    // 使用 fmod 替代 while 循环，避免死循环风险
+    kicadOrientation = fmod(kicadOrientation, 360.0);
+    if (kicadOrientation < 0.0) {
+        kicadOrientation += 360.0;
+    }
 
     // 规范化为 KiCad 要求的标准角度：0, 90, 180, 270
     // 找到最接近的标准角�?
