@@ -489,7 +489,7 @@ Item {
                             Layout.preferredHeight: 32
                             cursorShape: Qt.PointingHandCursor
                             hoverEnabled: true
-                            acceptedButtons: Qt.LeftButton
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
                             z: 100  // 确保在其他元素之上
                             Rectangle {
                                 anchors.fill: parent
@@ -552,8 +552,14 @@ Item {
                                     }
                                 }
                             }
-                            onClicked: {
-                                Qt.openUrlExternally("https://github.com/tangsangsimida/EasyKiConverter_QT");
+                            onClicked: (mouse) => {
+                                const projectUrl = "https://github.com/tangsangsimida/EasyKiConverter_QT";
+                                if (mouse.button === Qt.LeftButton) {
+                                    Qt.openUrlExternally(projectUrl);
+                                } else if (mouse.button === Qt.RightButton) {
+                                    componentListController.copyToClipboard(projectUrl);
+                                    console.log("Project link copied to clipboard:", projectUrl);
+                                }
                             }
                         }
                         // 深色模式切换按钮（灯泡图标）

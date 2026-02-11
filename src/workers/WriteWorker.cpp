@@ -1,4 +1,4 @@
-﻿#include "WriteWorker.h"
+#include "WriteWorker.h"
 
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
