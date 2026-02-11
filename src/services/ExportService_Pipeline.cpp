@@ -500,11 +500,8 @@ void ExportServicePipeline::checkPipelineCompletion() {
             }
         }
 
-        // 生成和保存统计报告
+        // 生成统计信息（始终生成，用于显示基本统计卡片）
         ExportStatistics statistics = generateStatistics();
-        QString reportPath = QString("%1/export_report_%2.json")
-                                 .arg(m_options.outputPath)
-                                 .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
 
         // 在非重试模式下保存原始统计信息（用于重试时保留时间数据）
         if (!m_isRetryMode) {
@@ -512,11 +509,22 @@ void ExportServicePipeline::checkPipelineCompletion() {
             qDebug() << "Original export statistics saved for potential retries";
         }
 
-        if (saveStatisticsReport(statistics, reportPath)) {
-            emit statisticsReportGenerated(reportPath, statistics);
-        } else {
-            qWarning() << "Failed to save statistics report.";
+        // 只在调试模式下保存详细报告到文件
+        QString reportPath;
+        if (m_options.debugMode) {
+            reportPath = QString("%1/export_report_%2.json")
+                             .arg(m_options.outputPath)
+                             .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
+            if (saveStatisticsReport(statistics, reportPath)) {
+                qDebug() << "Statistics report saved to:" << reportPath;
+            } else {
+                qWarning() << "Failed to save statistics report.";
+                reportPath.clear();
+            }
         }
+
+        // 始终发送统计信号，使统计卡片显示
+        emit statisticsReportGenerated(reportPath, statistics);
 
         // 所有清理和统计完成后，才真正标记导出完成
         emit exportCompleted(m_pipelineProgress.totalTasks, m_successCount);
