@@ -6,6 +6,7 @@
 #include <QEventLoop>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMutexLocker>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -63,7 +64,7 @@ void NetworkWorker::run() {
 
 bool NetworkWorker::fetchComponentInfo() {
     try {
-        // 创建网络访问管理�?
+        // 创建网络访问管理器
         QNetworkAccessManager manager;
         QEventLoop loop;
 
@@ -73,35 +74,47 @@ bool NetworkWorker::fetchComponentInfo() {
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         request.setRawHeader("Accept", "application/json");
 
-        // 发送请�?
-        QNetworkReply* reply = manager.get(request);
+        // 发送请求
+        QMutexLocker locker(&m_mutex);
+        m_currentReply = manager.get(request);
+        locker.unlock();
 
         // 连接信号
         QObject::connect(
-            reply, &QNetworkReply::downloadProgress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
+            m_currentReply, &QNetworkReply::downloadProgress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
                 if (bytesTotal > 0) {
                     int progress = static_cast<int>((static_cast<double>(bytesReceived) / bytesTotal) * 100);
                     emit requestProgress(m_componentId, progress);
                 }
             });
 
-        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        QObject::connect(m_currentReply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
 
         // 等待响应
         loop.exec();
 
-        // 检查错�?
-        if (reply->error() != QNetworkReply::NoError) {
-            QString errorMessage = QString("Network error: %1").arg(reply->errorString());
+        // 检查是否被中止
+        if (!m_currentReply) {
+            QString errorMessage = "Request aborted";
+            qWarning() << "Request aborted in fetchComponentInfo:" << m_componentId;
+            emit fetchError(m_componentId, errorMessage);
+            return false;
+        }
+
+        // 检查错误
+        if (m_currentReply->error() != QNetworkReply::NoError) {
+            QString errorMessage = QString("Network error: %1").arg(m_currentReply->errorString());
             qWarning() << "Network error in fetchComponentInfo:" << errorMessage;
             emit fetchError(m_componentId, errorMessage);
-            reply->deleteLater();
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
             return false;
         }
 
         // 读取响应数据
-        QByteArray responseData = reply->readAll();
-        reply->deleteLater();
+        QByteArray responseData = m_currentReply->readAll();
+        m_currentReply->deleteLater();
+        m_currentReply.clear();
 
         // 解析JSON
         QJsonDocument doc = QJsonDocument::fromJson(responseData);
@@ -112,7 +125,7 @@ bool NetworkWorker::fetchComponentInfo() {
             return false;
         }
 
-        // 发送成功信�?
+        // 发送成功信号
         QJsonObject data = doc.object();
         emit componentInfoFetched(m_componentId, data);
 
@@ -121,17 +134,27 @@ bool NetworkWorker::fetchComponentInfo() {
     } catch (const std::exception& e) {
         qWarning() << "Exception in fetchComponentInfo:" << e.what();
         emit fetchError(m_componentId, QString("Exception: %1").arg(e.what()));
+        QMutexLocker locker(&m_mutex);
+        if (m_currentReply) {
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
+        }
         return false;
     } catch (...) {
         qWarning() << "Unknown exception in fetchComponentInfo";
         emit fetchError(m_componentId, "Unknown exception occurred");
+        QMutexLocker locker(&m_mutex);
+        if (m_currentReply) {
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
+        }
         return false;
     }
 }
 
 bool NetworkWorker::fetchCadData() {
     try {
-        // 创建网络访问管理�?
+        // 创建网络访问管理器
         QNetworkAccessManager manager;
         QEventLoop loop;
 
@@ -141,35 +164,47 @@ bool NetworkWorker::fetchCadData() {
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         request.setRawHeader("Accept", "application/json");
 
-        // 发送请�?
-        QNetworkReply* reply = manager.get(request);
+        // 发送请求
+        QMutexLocker locker(&m_mutex);
+        m_currentReply = manager.get(request);
+        locker.unlock();
 
         // 连接信号
         QObject::connect(
-            reply, &QNetworkReply::downloadProgress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
+            m_currentReply, &QNetworkReply::downloadProgress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
                 if (bytesTotal > 0) {
                     int progress = static_cast<int>((static_cast<double>(bytesReceived) / bytesTotal) * 100);
                     emit requestProgress(m_componentId, progress);
                 }
             });
 
-        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        QObject::connect(m_currentReply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
 
         // 等待响应
         loop.exec();
 
-        // 检查错�?
-        if (reply->error() != QNetworkReply::NoError) {
-            QString errorMessage = QString("Network error: %1").arg(reply->errorString());
+        // 检查是否被中止
+        if (!m_currentReply) {
+            QString errorMessage = "Request aborted";
+            qWarning() << "Request aborted in fetchCadData:" << m_componentId;
+            emit fetchError(m_componentId, errorMessage);
+            return false;
+        }
+
+        // 检查错误
+        if (m_currentReply->error() != QNetworkReply::NoError) {
+            QString errorMessage = QString("Network error: %1").arg(m_currentReply->errorString());
             qWarning() << "Network error in fetchCadData:" << errorMessage;
             emit fetchError(m_componentId, errorMessage);
-            reply->deleteLater();
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
             return false;
         }
 
         // 读取响应数据
-        QByteArray responseData = reply->readAll();
-        reply->deleteLater();
+        QByteArray responseData = m_currentReply->readAll();
+        m_currentReply->deleteLater();
+        m_currentReply.clear();
 
         // 解压gzip数据
         QByteArray decompressedData = decompressGzip(responseData);
@@ -189,7 +224,7 @@ bool NetworkWorker::fetchCadData() {
             return false;
         }
 
-        // 发送成功信�?
+        // 发送成功信号
         QJsonObject data = doc.object();
         emit cadDataFetched(m_componentId, data);
 
@@ -198,17 +233,27 @@ bool NetworkWorker::fetchCadData() {
     } catch (const std::exception& e) {
         qWarning() << "Exception in fetchCadData:" << e.what();
         emit fetchError(m_componentId, QString("Exception: %1").arg(e.what()));
+        QMutexLocker locker(&m_mutex);
+        if (m_currentReply) {
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
+        }
         return false;
     } catch (...) {
         qWarning() << "Unknown exception in fetchCadData";
         emit fetchError(m_componentId, "Unknown exception occurred");
+        QMutexLocker locker(&m_mutex);
+        if (m_currentReply) {
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
+        }
         return false;
     }
 }
 
 bool NetworkWorker::fetch3DModelObj() {
     try {
-        // 创建网络访问管理�?
+        // 创建网络访问管理器
         QNetworkAccessManager manager;
         QEventLoop loop;
 
@@ -218,37 +263,49 @@ bool NetworkWorker::fetch3DModelObj() {
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
         request.setRawHeader("Accept", "application/octet-stream");
 
-        // 发送请�?
-        QNetworkReply* reply = manager.get(request);
+        // 发送请求
+        QMutexLocker locker(&m_mutex);
+        m_currentReply = manager.get(request);
+        locker.unlock();
 
         // 连接信号
         QObject::connect(
-            reply, &QNetworkReply::downloadProgress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
+            m_currentReply, &QNetworkReply::downloadProgress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
                 if (bytesTotal > 0) {
                     int progress = static_cast<int>((static_cast<double>(bytesReceived) / bytesTotal) * 100);
                     emit requestProgress(m_componentId, progress);
                 }
             });
 
-        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        QObject::connect(m_currentReply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
 
         // 等待响应
         loop.exec();
 
-        // 检查错�?
-        if (reply->error() != QNetworkReply::NoError) {
-            QString errorMessage = QString("Network error: %1").arg(reply->errorString());
+        // 检查是否被中止
+        if (!m_currentReply) {
+            QString errorMessage = "Request aborted";
+            qWarning() << "Request aborted in fetch3DModelObj:" << m_componentId;
+            emit fetchError(m_componentId, errorMessage);
+            return false;
+        }
+
+        // 检查错误
+        if (m_currentReply->error() != QNetworkReply::NoError) {
+            QString errorMessage = QString("Network error: %1").arg(m_currentReply->errorString());
             qWarning() << "Network error in fetch3DModelObj:" << errorMessage;
             emit fetchError(m_componentId, errorMessage);
-            reply->deleteLater();
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
             return false;
         }
 
         // 读取响应数据
-        QByteArray responseData = reply->readAll();
-        reply->deleteLater();
+        QByteArray responseData = m_currentReply->readAll();
+        m_currentReply->deleteLater();
+        m_currentReply.clear();
 
-        // 发送成功信�?
+        // 发送成功信号
         emit model3DFetched(m_componentId, m_uuid, responseData);
 
         qDebug() << "3D model OBJ data fetched successfully for:" << m_componentId;
@@ -256,17 +313,27 @@ bool NetworkWorker::fetch3DModelObj() {
     } catch (const std::exception& e) {
         qWarning() << "Exception in fetch3DModelObj:" << e.what();
         emit fetchError(m_componentId, QString("Exception: %1").arg(e.what()));
+        QMutexLocker locker(&m_mutex);
+        if (m_currentReply) {
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
+        }
         return false;
     } catch (...) {
         qWarning() << "Unknown exception in fetch3DModelObj";
         emit fetchError(m_componentId, "Unknown exception occurred");
+        QMutexLocker locker(&m_mutex);
+        if (m_currentReply) {
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
+        }
         return false;
     }
 }
 
 bool NetworkWorker::fetch3DModelMtl() {
     try {
-        // 创建网络访问管理�?
+        // 创建网络访问管理器
         QNetworkAccessManager manager;
         QEventLoop loop;
 
@@ -276,37 +343,49 @@ bool NetworkWorker::fetch3DModelMtl() {
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
         request.setRawHeader("Accept", "application/octet-stream");
 
-        // 发送请�?
-        QNetworkReply* reply = manager.get(request);
+        // 发送请求
+        QMutexLocker locker(&m_mutex);
+        m_currentReply = manager.get(request);
+        locker.unlock();
 
         // 连接信号
         QObject::connect(
-            reply, &QNetworkReply::downloadProgress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
+            m_currentReply, &QNetworkReply::downloadProgress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
                 if (bytesTotal > 0) {
                     int progress = static_cast<int>((static_cast<double>(bytesReceived) / bytesTotal) * 100);
                     emit requestProgress(m_componentId, progress);
                 }
             });
 
-        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        QObject::connect(m_currentReply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
 
         // 等待响应
         loop.exec();
 
-        // 检查错�?
-        if (reply->error() != QNetworkReply::NoError) {
-            QString errorMessage = QString("Network error: %1").arg(reply->errorString());
+        // 检查是否被中止
+        if (!m_currentReply) {
+            QString errorMessage = "Request aborted";
+            qWarning() << "Request aborted in fetch3DModelMtl:" << m_componentId;
+            emit fetchError(m_componentId, errorMessage);
+            return false;
+        }
+
+        // 检查错误
+        if (m_currentReply->error() != QNetworkReply::NoError) {
+            QString errorMessage = QString("Network error: %1").arg(m_currentReply->errorString());
             qWarning() << "Network error in fetch3DModelMtl:" << errorMessage;
             emit fetchError(m_componentId, errorMessage);
-            reply->deleteLater();
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
             return false;
         }
 
         // 读取响应数据
-        QByteArray responseData = reply->readAll();
-        reply->deleteLater();
+        QByteArray responseData = m_currentReply->readAll();
+        m_currentReply->deleteLater();
+        m_currentReply.clear();
 
-        // 发送成功信�?
+        // 发送成功信号
         emit model3DFetched(m_componentId, m_uuid, responseData);
 
         qDebug() << "3D model MTL data fetched successfully for:" << m_componentId;
@@ -314,11 +393,31 @@ bool NetworkWorker::fetch3DModelMtl() {
     } catch (const std::exception& e) {
         qWarning() << "Exception in fetch3DModelMtl:" << e.what();
         emit fetchError(m_componentId, QString("Exception: %1").arg(e.what()));
+        QMutexLocker locker(&m_mutex);
+        if (m_currentReply) {
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
+        }
         return false;
     } catch (...) {
         qWarning() << "Unknown exception in fetch3DModelMtl";
         emit fetchError(m_componentId, "Unknown exception occurred");
+        QMutexLocker locker(&m_mutex);
+        if (m_currentReply) {
+            m_currentReply->deleteLater();
+            m_currentReply.clear();
+        }
         return false;
+    }
+}
+
+void NetworkWorker::abort() {
+    QMutexLocker locker(&m_mutex);
+    if (m_currentReply) {
+        qDebug() << "Aborting network request for component:" << m_componentId;
+        m_currentReply->abort();
+        m_currentReply->deleteLater();
+        m_currentReply.clear();
     }
 }
 

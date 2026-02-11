@@ -2,8 +2,10 @@
 #define NETWORKWORKER_H
 
 #include <QJsonObject>
+#include <QMutex>
 #include <QNetworkReply>
 #include <QObject>
+#include <QPointer>
 #include <QRunnable>
 
 namespace EasyKiConverter {
@@ -113,10 +115,18 @@ private:
      */
     QByteArray decompressGzip(const QByteArray& compressedData);
 
+public slots:
+    /**
+     * @brief 中断当前网络请求
+     */
+    void abort();
+
 private:
     QString m_componentId;
     TaskType m_taskType;
     QString m_uuid;
+    QPointer<QNetworkReply> m_currentReply;
+    QMutex m_mutex;
 };
 
 }  // namespace EasyKiConverter

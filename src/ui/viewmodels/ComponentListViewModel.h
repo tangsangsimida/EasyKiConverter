@@ -5,8 +5,8 @@
 #include "services/ComponentService.h"
 
 #include <QAbstractListModel>
+#include <QPointer>
 #include <QStringList>
-#include <QVector>
 
 namespace EasyKiConverter {
 
