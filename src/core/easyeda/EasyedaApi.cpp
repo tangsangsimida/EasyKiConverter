@@ -61,13 +61,13 @@ void EasyedaApi::fetchCadData(const QString& lcscId) {
     // 为每个请求创建独立的 NetworkUtils 实例以支持并行请求
     NetworkUtils* networkUtils = new NetworkUtils(this);
 
-    // 车规级安全：注册到活跃请求集合
+    // 注册到活跃请求集合
     {
         QMutexLocker locker(&m_requestsMutex);
         m_activeRequests.append(QPointer<NetworkUtils>(networkUtils));
     }
 
-    // 连接信号（使用 QPointer 保护，车规级安全）
+    // 连接信号（使用 QPointer 保护）
     connect(networkUtils, &NetworkUtils::requestSuccess, this, [this, networkUtils, lcscId](const QJsonObject& data) {
         handleRequestSuccess(networkUtils, lcscId, data);
     });
@@ -104,13 +104,13 @@ void EasyedaApi::fetch3DModelObj(const QString& uuid) {
     // 为每个请求创建独立的 NetworkUtils 实例以支持并行请求
     NetworkUtils* networkUtils = new NetworkUtils(this);
 
-    // 车规级安全：注册到活跃请求集合
+    // 注册到活跃请求集合
     {
         QMutexLocker locker(&m_requestsMutex);
         m_activeRequests.append(QPointer<NetworkUtils>(networkUtils));
     }
 
-    // 连接信号（使用 QPointer 保护，车规级安全）
+    // 连接信号（使用 QPointer 保护）
     connect(networkUtils, &NetworkUtils::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray& data) {
         handleBinaryDataFetched(networkUtils, uuid, data);
     });
@@ -144,13 +144,13 @@ void EasyedaApi::fetch3DModelStep(const QString& uuid) {
     // 为每个请求创建独立的 NetworkUtils 实例以支持并行请求
     NetworkUtils* networkUtils = new NetworkUtils(this);
 
-    // 车规级安全：注册到活跃请求集合
+    // 注册到活跃请求集合
     {
         QMutexLocker locker(&m_requestsMutex);
         m_activeRequests.append(QPointer<NetworkUtils>(networkUtils));
     }
 
-    // 连接信号（使用 QPointer 保护，车规级安全）
+    // 连接信号（使用 QPointer 保护）
     connect(networkUtils, &NetworkUtils::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray& data) {
         handleBinaryDataFetched(networkUtils, uuid, data);
     });
@@ -190,7 +190,7 @@ void EasyedaApi::handleRequestSuccess(const QJsonObject& data) {
 }
 
 void EasyedaApi::handleRequestSuccess(NetworkUtils* networkUtils, const QString& lcscId, const QJsonObject& data) {
-    // 车规级安全：检查指针有效性
+    // 检查指针有效性
     if (networkUtils == nullptr) {
         qWarning() << "handleRequestSuccess called with null networkUtils";
         return;
@@ -206,7 +206,7 @@ void EasyedaApi::handleRequestSuccess(NetworkUtils* networkUtils, const QString&
     // 恢复 LCSC ID
     m_currentLcscId = savedLcscId;
 
-    // 车规级安全：从活跃请求集合中移除并清理
+    // 从活跃请求集合中移除并清理
     {
         QMutexLocker locker(&m_requestsMutex);
         m_activeRequests.removeOne(QPointer<NetworkUtils>(networkUtils));
@@ -215,7 +215,7 @@ void EasyedaApi::handleRequestSuccess(NetworkUtils* networkUtils, const QString&
 }
 
 void EasyedaApi::handleRequestError(NetworkUtils* networkUtils, const QString& lcscId, const QString& error) {
-    // 车规级安全：检查指针有效性
+    // 检查指针有效性
     if (networkUtils == nullptr) {
         qWarning() << "handleRequestError called with null networkUtils";
         emit fetchError(lcscId, error);
@@ -225,7 +225,7 @@ void EasyedaApi::handleRequestError(NetworkUtils* networkUtils, const QString& l
     qWarning() << "Request error for" << lcscId << ":" << error;
     emit fetchError(lcscId, error);
 
-    // 车规级安全：从活跃请求集合中移除并清理
+    // 从活跃请求集合中移除并清理
     {
         QMutexLocker locker(&m_requestsMutex);
         m_activeRequests.removeOne(QPointer<NetworkUtils>(networkUtils));
@@ -234,7 +234,7 @@ void EasyedaApi::handleRequestError(NetworkUtils* networkUtils, const QString& l
 }
 
 void EasyedaApi::handleBinaryDataFetched(NetworkUtils* networkUtils, const QString& lcscId, const QByteArray& data) {
-    // 车规级安全：检查指针有效性
+    // 检查指针有效性
     if (networkUtils == nullptr) {
         qWarning() << "handleBinaryDataFetched called with null networkUtils";
         emit model3DFetched(lcscId, data);
@@ -244,7 +244,7 @@ void EasyedaApi::handleBinaryDataFetched(NetworkUtils* networkUtils, const QStri
     // qDebug() << "Binary data fetched for:" << lcscId << "Size:" << data.size();
     emit model3DFetched(lcscId, data);
 
-    // 车规级安全：从活跃请求集合中移除并清理
+    // 从活跃请求集合中移除并清理
     {
         QMutexLocker locker(&m_requestsMutex);
         m_activeRequests.removeOne(QPointer<NetworkUtils>(networkUtils));
@@ -257,7 +257,7 @@ void EasyedaApi::cancelRequest() {
     m_networkUtils->cancelRequest();
     m_isFetching = false;
 
-    // 车规级安全：取消所有活跃的并行请求
+    // 取消所有活跃的并行请求
     QMutexLocker locker(&m_requestsMutex);
     for (const QPointer<NetworkUtils>& request : m_activeRequests) {
         if (request) {
