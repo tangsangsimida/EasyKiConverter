@@ -1,7 +1,8 @@
-﻿#include "EasyedaApi.h"
+#include "EasyedaApi.h"
 
 #include <QDebug>
 #include <QJsonDocument>
+#include <QMutexLocker>
 
 namespace EasyKiConverter {
 
@@ -12,9 +13,9 @@ static const QString ENDPOINT_3D_MODEL_STEP = "https://modules.easyeda.com/qAxj6
 
 EasyedaApi::EasyedaApi(QObject* parent)
     : QObject(parent), m_networkUtils(new NetworkUtils(this)), m_isFetching(false), m_requestType(RequestType::None) {
-    // 注意：不再连接默认的 m_networkUtils 信号，因为并行请求会创建独立�?NetworkUtils 实例
+    // 注意：不再连接默认的 m_networkUtils 信号，因为并行请求会创建独立的 NetworkUtils 实例
 
-    // 设置请求�?
+    // 设置请求头
     m_networkUtils->setHeader("Accept-Encoding", "gzip, deflate");
     m_networkUtils->setHeader("Accept", "application/json, text/javascript, */*; q=0.01");
     m_networkUtils->setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
@@ -57,8 +58,16 @@ void EasyedaApi::fetchCadData(const QString& lcscId) {
         return;
     }
 
-    // 为每个请求创建独立的 NetworkUtils 实例以支持并行请�?
+    // 为每个请求创建独立的 NetworkUtils 实例以支持并行请求
     NetworkUtils* networkUtils = new NetworkUtils(this);
+
+    // 车规级安全：注册到活跃请求集合
+    {
+        QMutexLocker locker(&m_requestsMutex);
+        m_activeRequests.append(QPointer<NetworkUtils>(networkUtils));
+    }
+
+    // 连接信号（使用 QPointer 保护，车规级安全）
     connect(networkUtils, &NetworkUtils::requestSuccess, this, [this, networkUtils, lcscId](const QJsonObject& data) {
         handleRequestSuccess(networkUtils, lcscId, data);
     });
@@ -69,7 +78,7 @@ void EasyedaApi::fetchCadData(const QString& lcscId) {
         handleBinaryDataFetched(networkUtils, lcscId, data);
     });
 
-    // 设置请求�?
+    // 设置请求头
     networkUtils->setHeader("Accept-Encoding", "gzip, deflate");
     networkUtils->setHeader("Accept", "application/json, text/javascript, */*; q=0.01");
     networkUtils->setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
@@ -92,8 +101,16 @@ void EasyedaApi::fetch3DModelObj(const QString& uuid) {
         return;
     }
 
-    // 为每个请求创建独立的 NetworkUtils 实例以支持并行请�?
+    // 为每个请求创建独立的 NetworkUtils 实例以支持并行请求
     NetworkUtils* networkUtils = new NetworkUtils(this);
+
+    // 车规级安全：注册到活跃请求集合
+    {
+        QMutexLocker locker(&m_requestsMutex);
+        m_activeRequests.append(QPointer<NetworkUtils>(networkUtils));
+    }
+
+    // 连接信号（使用 QPointer 保护，车规级安全）
     connect(networkUtils, &NetworkUtils::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray& data) {
         handleBinaryDataFetched(networkUtils, uuid, data);
     });
@@ -101,13 +118,13 @@ void EasyedaApi::fetch3DModelObj(const QString& uuid) {
         handleRequestError(networkUtils, uuid, error);
     });
 
-    // 设置请求�?
+    // 设置请求头
     networkUtils->setHeader("Accept-Encoding", "gzip, deflate");
     networkUtils->setHeader("Accept", "application/octet-stream, */*");
     networkUtils->setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
     networkUtils->setHeader("User-Agent", "EasyKiConverter/1.0.0");
 
-    // 设置期望接收二进制数�?
+    // 设置期望接收二进制数据
     networkUtils->setExpectBinaryData(true);
 
     QString apiUrl = build3DModelObjUrl(uuid);
@@ -124,8 +141,16 @@ void EasyedaApi::fetch3DModelStep(const QString& uuid) {
         return;
     }
 
-    // 为每个请求创建独立的 NetworkUtils 实例以支持并行请�?
+    // 为每个请求创建独立的 NetworkUtils 实例以支持并行请求
     NetworkUtils* networkUtils = new NetworkUtils(this);
+
+    // 车规级安全：注册到活跃请求集合
+    {
+        QMutexLocker locker(&m_requestsMutex);
+        m_activeRequests.append(QPointer<NetworkUtils>(networkUtils));
+    }
+
+    // 连接信号（使用 QPointer 保护，车规级安全）
     connect(networkUtils, &NetworkUtils::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray& data) {
         handleBinaryDataFetched(networkUtils, uuid, data);
     });
@@ -133,13 +158,13 @@ void EasyedaApi::fetch3DModelStep(const QString& uuid) {
         handleRequestError(networkUtils, uuid, error);
     });
 
-    // 设置请求�?
+    // 设置请求头
     networkUtils->setHeader("Accept-Encoding", "gzip, deflate");
     networkUtils->setHeader("Accept", "application/octet-stream, */*");
     networkUtils->setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
     networkUtils->setHeader("User-Agent", "EasyKiConverter/1.0.0");
 
-    // 设置期望接收二进制数�?
+    // 设置期望接收二进制数据
     networkUtils->setExpectBinaryData(true);
 
     QString apiUrl = build3DModelStepUrl(uuid);
@@ -149,7 +174,7 @@ void EasyedaApi::fetch3DModelStep(const QString& uuid) {
 }
 
 void EasyedaApi::handleRequestSuccess(const QJsonObject& data) {
-    // 根据请求类型调用相应的处理函�?
+    // 根据请求类型调用相应的处理函数
     switch (m_requestType) {
         case RequestType::ComponentInfo:
             handleComponentInfoResponse(data);
@@ -165,7 +190,13 @@ void EasyedaApi::handleRequestSuccess(const QJsonObject& data) {
 }
 
 void EasyedaApi::handleRequestSuccess(NetworkUtils* networkUtils, const QString& lcscId, const QJsonObject& data) {
-    // 保存当前处理�?LCSC ID
+    // 车规级安全：检查指针有效性
+    if (networkUtils == nullptr) {
+        qWarning() << "handleRequestSuccess called with null networkUtils";
+        return;
+    }
+
+    // 保存当前处理的 LCSC ID
     QString savedLcscId = m_currentLcscId;
     m_currentLcscId = lcscId;
 
@@ -175,25 +206,66 @@ void EasyedaApi::handleRequestSuccess(NetworkUtils* networkUtils, const QString&
     // 恢复 LCSC ID
     m_currentLcscId = savedLcscId;
 
-    // 清理 NetworkUtils
+    // 车规级安全：从活跃请求集合中移除并清理
+    {
+        QMutexLocker locker(&m_requestsMutex);
+        m_activeRequests.removeOne(QPointer<NetworkUtils>(networkUtils));
+    }
     networkUtils->deleteLater();
 }
 
 void EasyedaApi::handleRequestError(NetworkUtils* networkUtils, const QString& lcscId, const QString& error) {
+    // 车规级安全：检查指针有效性
+    if (networkUtils == nullptr) {
+        qWarning() << "handleRequestError called with null networkUtils";
+        emit fetchError(lcscId, error);
+        return;
+    }
+
     qWarning() << "Request error for" << lcscId << ":" << error;
     emit fetchError(lcscId, error);
+
+    // 车规级安全：从活跃请求集合中移除并清理
+    {
+        QMutexLocker locker(&m_requestsMutex);
+        m_activeRequests.removeOne(QPointer<NetworkUtils>(networkUtils));
+    }
     networkUtils->deleteLater();
 }
 
 void EasyedaApi::handleBinaryDataFetched(NetworkUtils* networkUtils, const QString& lcscId, const QByteArray& data) {
+    // 车规级安全：检查指针有效性
+    if (networkUtils == nullptr) {
+        qWarning() << "handleBinaryDataFetched called with null networkUtils";
+        emit model3DFetched(lcscId, data);
+        return;
+    }
+
     // qDebug() << "Binary data fetched for:" << lcscId << "Size:" << data.size();
     emit model3DFetched(lcscId, data);
+
+    // 车规级安全：从活跃请求集合中移除并清理
+    {
+        QMutexLocker locker(&m_requestsMutex);
+        m_activeRequests.removeOne(QPointer<NetworkUtils>(networkUtils));
+    }
     networkUtils->deleteLater();
 }
 
 void EasyedaApi::cancelRequest() {
+    // 取消主 NetworkUtils
     m_networkUtils->cancelRequest();
     m_isFetching = false;
+
+    // 车规级安全：取消所有活跃的并行请求
+    QMutexLocker locker(&m_requestsMutex);
+    for (const QPointer<NetworkUtils>& request : m_activeRequests) {
+        if (request) {
+            request->cancelRequest();
+        }
+    }
+    // 清空活跃请求集合（它们会在完成后通过回调自动删除）
+    m_activeRequests.clear();
 }
 
 void EasyedaApi::handleComponentInfoResponse(const QJsonObject& data) {
@@ -206,7 +278,7 @@ void EasyedaApi::handleComponentInfoResponse(const QJsonObject& data) {
         return;
     }
 
-    // 检查响应是否包含错�?
+    // 检查响应是否包含错误
     if (data.contains("success") && data["success"].toBool() == false) {
         QString errorMsg = QString("API returned error for LCSC ID: %1").arg(m_currentLcscId);
         qWarning() << errorMsg;
@@ -214,7 +286,7 @@ void EasyedaApi::handleComponentInfoResponse(const QJsonObject& data) {
         return;
     }
 
-    // 发送成功信�?
+    // 发送成功信号
     emit componentInfoFetched(data);
 }
 
@@ -228,7 +300,7 @@ void EasyedaApi::handleCadDataResponse(const QJsonObject& data) {
         return;
     }
 
-    // 检查是否包�?result �?
+    // 检查是否包含 result 字段
     if (!data.contains("result")) {
         QString errorMsg = QString("Response missing 'result' key for LCSC ID: %1").arg(m_currentLcscId);
         qWarning() << errorMsg;
@@ -238,18 +310,18 @@ void EasyedaApi::handleCadDataResponse(const QJsonObject& data) {
 
     QJsonObject result = data["result"].toObject();
 
-    // 添加 LCSC ID �?result 对象�?
+    // 添加 LCSC ID 到 result 对象中
     result["lcscId"] = m_currentLcscId;
 
-    // 发送成功信�?
+    // 发送成功信号
     emit cadDataFetched(result);
 }
 
 void EasyedaApi::handleModel3DResponse(const QJsonObject& data) {
     m_isFetching = false;
 
-    // 注意�?D 模型数据可能是二进制数据，这里需要特殊处�?
-    // 检查是否有二进制数�?
+    // 注意：3D 模型数据可能是二进制数据，这里需要特殊处理
+    // 检查是否有二进制数据
     if (data.contains("binaryData")) {
         QByteArray binaryData = QByteArray::fromBase64(data["binaryData"].toString().toUtf8());
         emit model3DFetched(m_currentUuid, binaryData);
