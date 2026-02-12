@@ -161,6 +161,17 @@ set(QML_FILES
     src/ui/qml/components/ModernButton.qml
     src/ui/qml/components/StatItem.qml
     src/ui/qml/components/StepItem.qml
+    src/ui/qml/components/TitleBar.qml
+    src/ui/qml/components/HeaderSection.qml
+    src/ui/qml/components/ComponentInputCard.qml
+    src/ui/qml/components/BomImportCard.qml
+    src/ui/qml/components/ComponentListCard.qml
+    src/ui/qml/components/ExportSettingsCard.qml
+    src/ui/qml/components/ExportProgressCard.qml
+    src/ui/qml/components/ExportResultsCard.qml
+    src/ui/qml/components/ExportStatisticsCard.qml
+    src/ui/qml/components/ExportButtonsSection.qml
+    src/ui/qml/components/WindowResizeHandles.qml
     src/ui/qml/styles/AppStyle.qml
 )
 

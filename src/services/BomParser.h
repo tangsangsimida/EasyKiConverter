@@ -7,7 +7,6 @@
 #include <QStringList>
 
 
-
 namespace EasyKiConverter {
 
 /**
