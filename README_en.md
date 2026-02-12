@@ -42,7 +42,7 @@
 
 **EasyKiConverter** is a modern C++ desktop tool based on Qt 6 and MVVM architecture, designed for electronics engineers to efficiently convert component data from LCSC and EasyEDA into KiCad libraries.
 
-## ✨ Key Features
+## Key Features
 
 *   **Complete Conversion**: Full export support for Symbols (.kicad_sym), Footprints (.kicad_mod), and 3D Models (STEP/WRL).
 *   **Multi-unit Symbols**: Support for multi-unit symbol conversion.
@@ -52,7 +52,7 @@
 *   **Smart Assistance**: Intelligent extraction of component IDs from the clipboard.
 *   **LCSC Preview Images**: Automatically fetch LCSC component preview images with thumbnail display and hover preview support.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 Please visit the [Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) page to download the version for your platform:
@@ -64,7 +64,13 @@ Please visit the [Releases](https://github.com/tangsangsimida/EasyKiConverter_QT
 ### Build from Source
 This project has implemented full-platform CI/CD automated building. If you are a developer or wish to compile it yourself, please refer to the [Build Guide](docs/developer/BUILD_en.md).
 
-## 📚 Documentation
+## System Architecture
+
+#### Workflow Diagram
+
+![Project Workflow Diagram](docs/diagrams/EasyKiConverter_Workflow.svg)
+
+## Documentation
 
 **User Guide**
 *   [Getting Started](docs/user/GETTING_STARTED.md) | [User Manual](docs/user/USER_GUIDE.md) | [FAQ](docs/user/FAQ.md)
@@ -73,7 +79,7 @@ This project has implemented full-platform CI/CD automated building. If you are 
 **Developer Resources**
 *   [Contributing Guide](docs/developer/CONTRIBUTING.md) | [Architecture](docs/developer/ARCHITECTURE.md) | [Build Guide](docs/developer/BUILD.md)
 
-## 🤝 Contribution & Credits
+## Contribution & Credits
 
 ### Contributors
 
@@ -85,6 +91,6 @@ We would like to thank the following contributors to EasyKiConverter:
 
 Issues and Pull Requests are welcome! Please see the [Contributing Guide](docs/developer/CONTRIBUTING.md) for details.
 
-## 📄 License
+## License
 
 This project is licensed under the **GPL-3.0** License. See the [LICENSE](LICENSE) file for details.
