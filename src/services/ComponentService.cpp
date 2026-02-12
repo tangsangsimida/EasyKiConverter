@@ -57,7 +57,7 @@ void ComponentService::fetchComponentData(const QString& componentId, bool fetch
 void ComponentService::fetchComponentDataInternal(const QString& componentId, bool fetch3DModel) {
     qDebug() << "Fetching component data (internal) for:" << componentId << "Fetch 3D:" << fetch3DModel;
 
-    // 暂时存储当前请求的元件ID?D模型标志
+    // 暂时存储当前请求的元件ID和3D模型标志
     m_currentComponentId = componentId;
 
     // 初始化或更新 m_fetchingComponents 中的条目，确保存储 fetch3DModel 配置
@@ -78,7 +78,7 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
         fetchingComponent.hasStepData = false;
     }
 
-    // 首先获取 CAD 数据（包含符号和封装信息?
+    // 首先获取 CAD 数据（包含符号和封装信息）
     m_api->fetchCadData(componentId);
 }
 
@@ -346,7 +346,7 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     if (data.contains("lcscId")) {
         lcscId = data["lcscId"].toString();
     } else {
-        // 如果没有 lcscId 字段，尝试从 lcsc.szlcsc.number 中提?
+        // 如果没有 lcscId 字段，尝试从 lcsc.szlcsc.number 中提取
         if (data.contains("lcsc")) {
             QJsonObject lcsc = data["lcsc"].toObject();
             if (lcsc.contains("number")) {
@@ -362,7 +362,7 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
 
     qDebug() << "CAD data fetched for:" << lcscId;
 
-    // 临时保存当前的组?ID
+    // 临时保存当前的组件ID
     QString savedComponentId = m_currentComponentId;
     m_currentComponentId = lcscId;
 
@@ -392,7 +392,7 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
         return;
     }
 
-    // 调试：打印resultData的结?
+    // 调试：打印resultData的结构
     qDebug() << "=== CAD Data Structure ===";
     qDebug() << "Top-level keys:" << resultData.keys();
     if (resultData.contains("dataStr")) {
@@ -448,13 +448,13 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
         qWarning() << "Failed to import footprint data for:" << m_currentComponentId;
     }
 
-    // 检查是否需要获?3D 模型
+    // 检查是否需要获取3D 模型
     // 使用本地变量 need3DModel 而不是成员变量 m_fetch3DModel
     if (need3DModel && footprintData) {
         // 检查封装数据中是否包含 3D 模型 UUID
         QString modelUuid = footprintData->model3D().uuid();
 
-        // 如果封装数据中没?UUID，尝试从 head.uuid_3d 字段中提?
+        // 如果封装数据中没有UUID，尝试从 head.uuid_3d 字段中提取
         if (modelUuid.isEmpty() && resultData.contains("head")) {
             QJsonObject head = resultData["head"].toObject();
             if (head.contains("uuid_3d")) {
@@ -478,7 +478,7 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
 
             componentData.setModel3DData(model3DData);
 
-            // 在并行模式下，使?m_fetchingComponents 存储待处理的组件数据
+            // 在并行模式下，使用 m_fetchingComponents 存储待处理的组件数据
             if (m_parallelFetching) {
                 // 更新已有的 entry
                 FetchingComponent& fetchingComponent = m_fetchingComponents[m_currentComponentId];
@@ -495,7 +495,7 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
                 m_hasDownloadedWrl = false;
             }
 
-            // 获取 WRL 格式?3D 模型
+            // 获取 WRL 格式的3D 模型
             m_api->fetch3DModelObj(modelUuid);
             return;  // 等待 3D 模型数据
         } else {
@@ -503,15 +503,15 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
         }
     }
 
-    // 不需?3D 模型或没有找?UUID，直接发送完成信?
+    // 不需要3D 模型或没有找到UUID，直接发送完成信号
     emit cadDataReady(m_currentComponentId, componentData);
 
-    // 如果在并行模式下，处理并行数据收?
+    // 如果在并行模式下，处理并行数据收集
     if (m_parallelFetching) {
         handleParallelDataCollected(m_currentComponentId, componentData);
     }
 
-    // 推进请求队?
+    // 推进请求队列
     advanceQueue();
 
     // 恢复组件 ID
@@ -523,37 +523,37 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
 
     // 在并行模式下，查找对应的组件
     if (m_parallelFetching) {
-        // 在并行模式下，查找对?UUID 的组?
+        // 在并行模式下，查找对应UUID的组件
         for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
             if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == uuid) {
                 QString componentId = it.key();
                 FetchingComponent& fetchingComponent = it.value();
 
                 if (!fetchingComponent.hasObjData) {
-                    // 这是 WRL 格式?3D 模型
+                    // 这是 WRL 格式的3D 模型
                     fetchingComponent.data.model3DData()->setRawObj(QString::fromUtf8(data));
                     fetchingComponent.hasObjData = true;
                     qDebug() << "WRL data saved for:" << uuid << "Size:" << data.size();
 
-                    // 继续下载 STEP 格式?3D 模型
+                    // 继续下载 STEP 格式的3D 模型
                     qDebug() << "Fetching STEP model with UUID:" << uuid;
                     m_api->fetch3DModelStep(uuid);
                 } else {
-                    // 这是 STEP 格式?3D 模型
+                    // 这是 STEP 格式的3D 模型
                     fetchingComponent.data.model3DData()->setStep(data);
                     fetchingComponent.hasStepData = true;
                     qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
 
-                    // 发送完成信?
+                    // 发送完成信号
                     emit cadDataReady(componentId, fetchingComponent.data);
 
                     // 处理并行数据收集
                     handleParallelDataCollected(componentId, fetchingComponent.data);
 
-                    // 从待处理列表中移?
+                    // 从待处理列表中移除
                     m_fetchingComponents.remove(componentId);
 
-                    // 推进请求队?
+                    // 推进请求队列
                     advanceQueue();
                 }
                 return;
@@ -564,30 +564,30 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
         // 串行模式下的处理
         if (m_pendingComponentData.model3DData() && m_pendingComponentData.model3DData()->uuid() == uuid) {
             if (!m_hasDownloadedWrl) {
-                // 这是 WRL 格式?3D 模型
+                // 这是 WRL 格式的3D 模型
                 m_pendingComponentData.model3DData()->setRawObj(QString::fromUtf8(data));
                 qDebug() << "WRL data saved for:" << uuid << "Size:" << data.size();
 
-                // 标记已经下载?WRL 格式
+                // 标记已经下载了WRL 格式
                 m_hasDownloadedWrl = true;
 
-                // 继续下载 STEP 格式?3D 模型
+                // 继续下载 STEP 格式的3D 模型
                 qDebug() << "Fetching STEP model with UUID:" << uuid;
                 m_api->fetch3DModelStep(uuid);
             } else {
-                // 这是 STEP 格式?3D 模型
+                // 这是 STEP 格式的3D 模型
                 m_pendingComponentData.model3DData()->setStep(data);
                 qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
 
-                // 发送完成信?
+                // 发送完成信号
                 emit cadDataReady(m_currentComponentId, m_pendingComponentData);
 
-                // 清空待处理数?
+                // 清空待处理数据
                 m_pendingComponentData = ComponentData();
                 m_pendingModelUuid.clear();
                 m_hasDownloadedWrl = false;
 
-                // 推进请求队?
+                // 推进请求队列
                 advanceQueue();
             }
         } else {
@@ -631,7 +631,7 @@ void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QSt
 
     emit fetchError(componentId, error);
 
-    // 推进请求队?
+    // 推进请求队列
     advanceQueue();
 }
 
@@ -646,7 +646,7 @@ QString ComponentService::getOutputPath() const {
 void ComponentService::fetchMultipleComponentsData(const QStringList& componentIds, bool fetch3DModel) {
     qDebug() << "Fetching data for" << componentIds.size() << "components in parallel";
 
-    // 初始化并行数据收集状?
+    // 初始化并行数据收集状态
     m_parallelCollectedData.clear();
     m_parallelFetchingStatus.clear();
     m_parallelPendingComponents = componentIds;
@@ -654,7 +654,7 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
     m_parallelCompletedCount = 0;
     m_parallelFetching = true;
 
-    // 初始化请求队?
+    // 初始化请求队列
     m_requestQueue.clear();
     m_activeRequests = 0;
     for (const QString& componentId : componentIds) {
@@ -662,7 +662,7 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
         m_parallelFetchingStatus[componentId] = true;
     }
 
-    // 开始处理请?
+    // 开始处理请求
     processNextRequest();
 }
 
@@ -694,18 +694,18 @@ void ComponentService::handleParallelDataCollected(const QString& componentId, c
     m_parallelCollectedData[componentId] = data;
     m_parallelCompletedCount++;
 
-    // 更新状?
+    // 更新状态
     m_parallelFetchingStatus[componentId] = false;
 
-    // 检查是否所有元件都已收集完?
+    // 检查是否所有元件都已收集完毕
     if (m_parallelCompletedCount >= m_parallelTotalCount) {
         qDebug() << "All components data collected in parallel:" << m_parallelCollectedData.size();
 
-        // 发送完成信?
+        // 发送完成信号
         QList<ComponentData> allData = m_parallelCollectedData.values();
         emit allComponentsDataCollected(allData);
 
-        // 重置状?
+        // 重置状态
         m_parallelFetching = false;
         m_parallelCollectedData.clear();
         m_parallelFetchingStatus.clear();
@@ -718,19 +718,19 @@ void ComponentService::handleParallelDataCollected(const QString& componentId, c
 void ComponentService::handleParallelFetchError(const QString& componentId, const QString& error) {
     qDebug() << "Parallel fetch error for:" << componentId << error;
 
-    // 更新状?
+    // 更新状态
     m_parallelFetchingStatus[componentId] = false;
     m_parallelCompletedCount++;
 
-    // 检查是否所有元件都已处理完?
+    // 检查是否所有元件都已处理完毕
     if (m_parallelCompletedCount >= m_parallelTotalCount) {
         qDebug() << "All components data collected (with errors):" << m_parallelCollectedData.size();
 
-        // 发送完成信?
+        // 发送完成信号
         QList<ComponentData> allData = m_parallelCollectedData.values();
         emit allComponentsDataCollected(allData);
 
-        // 重置状?
+        // 重置状态
         m_parallelFetching = false;
         m_parallelCollectedData.clear();
         m_parallelFetchingStatus.clear();

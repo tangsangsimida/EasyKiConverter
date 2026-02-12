@@ -1,4 +1,4 @@
-﻿#include "ExporterSymbol.h"
+#include "ExporterSymbol.h"
 
 #include "core/utils/GeometryUtils.h"
 #include "core/utils/SvgPathParser.h"
@@ -23,7 +23,7 @@ bool ExporterSymbol::exportSymbol(const SymbolData& symbolData, const QString& f
     QTextStream out(&file);
     out.setEncoding(QStringConverter::Utf8);
 
-    // 生成符号内容（不包含库头，仅单个符号定义�?
+    // 生成符号内容（不包含库头，仅单个符号定义
     QString content = generateSymbolContent(symbolData, "");
 
     out << content;
@@ -63,7 +63,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         // 生成头部
         out << generateHeader(libName);
 
-        // 生成所有符�?
+        // 生成所有符
         int index = 0;
         for (const SymbolData& symbol : symbols) {
             qDebug() << "Exporting symbol" << (++index) << "of" << symbols.count() << ":" << symbol.info().name;
@@ -81,7 +81,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     // 文件存在，需要处理追加或更新
     qDebug() << "Existing library found, reading content...";
 
-    // 读取现有库内�?
+    // 读取现有库内
     QString existingContent;
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         existingContent = QTextStream(&file).readAll();
@@ -93,33 +93,33 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     }
 
     // 提取现有符号
-    QMap<QString, QString> existingSymbols;  // 符号�?-> 符号内容
-    QSet<QString> subSymbolNames;            // 属于分体式符号的子符号名�?
+    QMap<QString, QString> existingSymbols;  // 符号-> 符号内容
+    QSet<QString> subSymbolNames;            // 属于分体式符号的子符号名称
 
     // 使用更可靠的方法来提取符号：手动解析括号匹配
     QStringList lines = existingContent.split('\n');
     int symbolStart = -1;
     QString currentSymbolName;
     int braceCount = 0;
-    int parentSymbolDepth = 0;  // 父符号的深度（用于识别子符号�?
+    int parentSymbolDepth = 0;  // 父符号的深度（用于识别子符号
 
     for (int i = 0; i < lines.size(); ++i) {
         QString line = lines[i].trimmed();
 
-        // 检查是否是符号定义的开�?
+        // 检查是否是符号定义的开始
         if (line.startsWith("(symbol \"")) {
-            // 提取符号�?
+            // 提取符号
             int nameStart = line.indexOf("\"") + 1;
             int nameEnd = line.indexOf("\"", nameStart);
             if (nameEnd > nameStart) {
                 QString symbolName = line.mid(nameStart, nameEnd - nameStart);
 
                 if (symbolStart >= 0) {
-                    // 这是一个嵌套的符号定义（子符号�?
+                    // 这是一个嵌套的符号定义（子符号
                     subSymbolNames.insert(symbolName);
                     qDebug() << "Found sub-symbol:" << symbolName << "inside parent symbol";
                 } else {
-                    // 这是一个顶层符号定�?
+                    // 这是一个顶层符号定位
                     currentSymbolName = symbolName;
                     symbolStart = i;
                     braceCount = 1;
@@ -131,7 +131,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
             for (int j = 0; j < line.length(); ++j) {
                 if (line[j] == '(') {
                     braceCount++;
-                    // 如果括号深度大于 1，说明我们在父符号内�?
+                    // 如果括号深度大于 1，说明我们在父符号内
                     if (braceCount > 1)
                         parentSymbolDepth++;
                 } else if (line[j] == ')') {
@@ -141,7 +141,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                 }
             }
 
-            // 当括号数量归零时，符号定义结�?
+            // 当括号数量归零时，符号定义结
             if (braceCount == 0) {
                 // 只保存顶层符号，不保存子符号
                 QString symbolContent;
@@ -151,7 +151,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                 existingSymbols[currentSymbolName] = symbolContent;
                 qDebug() << "Found existing symbol:" << currentSymbolName << "at lines" << symbolStart << "-" << i;
 
-                // 重置状�?
+                // 重置状
                 symbolStart = -1;
                 currentSymbolName.clear();
                 parentSymbolDepth = 0;
@@ -185,7 +185,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                 symbolsToExport.append(symbol);
             }
         } else {
-            // 新符�?
+            // 新符
             qDebug() << "New symbol, adding:" << symbolName;
             appendCount++;
             symbolsToExport.append(symbol);
@@ -216,20 +216,20 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     // 生成所有符号（包括未覆盖的现有符号和新导出的符号）
     int index = 0;
 
-    // 收集要被覆盖的符号名�?
+    // 收集要被覆盖的符号名
     QSet<QString> overwrittenSymbolNames;
     for (const SymbolData& symbol : symbolsToExport) {
         overwrittenSymbolNames.insert(symbol.info().name);
     }
 
-    // 收集要被删除的子符号名称（属于被覆盖的父符号的子符号�?
+    // 收集要被删除的子符号名称（属于被覆盖的父符号的子符号
     // 改进的逻辑：准确识别分体式符号的子符号
     QSet<QString> subSymbolsToDelete;
 
-    // 首先分析现有符号，确定哪些是分体式符号（有多个子符号�?
-    QMap<QString, QStringList> parentToSubSymbols;  // 父符号名 -> 子符号列�?
+    // 首先分析现有符号，确定哪些是分体式符号（有多个子符号
+    QMap<QString, QStringList> parentToSubSymbols;  // 父符号名 -> 子符号列
     for (const QString& subSymbolName : subSymbolNames) {
-        // 从子符号名称中提取父符号�?
+        // 从子符号名称中提取父符号
         // 子符号格式：{parentName}_{unitNumber}_1
         int lastUnderscore = subSymbolName.lastIndexOf('_');
         if (lastUnderscore > 0) {
@@ -251,7 +251,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                          << "(parent:" << parentSymbolName << ")";
             }
         } else {
-            // 这是一个单体符号，查找其子符号（格式：{parentName}_0_1�?
+            // 这是一个单体符号，查找其子符号（格式：{parentName}_0_1）
             QString expectedSubSymbolName = parentSymbolName + "_0_1";
             if (subSymbolNames.contains(expectedSubSymbolName)) {
                 subSymbolsToDelete.insert(expectedSubSymbolName);
@@ -261,11 +261,11 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         }
     }
 
-    // 先导出未覆盖的现有符号（需要过滤掉被覆盖的子符号和以被覆盖符号名开头的顶层符号�?
+    // 先导出未覆盖的现有符号（需要过滤掉被覆盖的子符号和以被覆盖符号名开头的顶层符号
     for (const QString& symbolName : existingSymbols.keys()) {
         bool isOverwritten = overwrittenSymbolNames.contains(symbolName);
 
-        // 检查是否是以被覆盖符号名开头的顶层符号（可能是之前错误导出的子符号�?
+        // 检查是否是以被覆盖符号名开头的顶层符号（可能是之前错误导出的子符号
         bool isOrphanedSubSymbol = false;
         if (!isOverwritten) {
             for (const QString& parentSymbolName : overwrittenSymbolNames) {
@@ -279,7 +279,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         }
 
         if (!isOverwritten && !isOrphanedSubSymbol) {
-            // 导出未覆盖的符号，但需要过滤掉子符�?
+            // 导出未覆盖的符号，但需要过滤掉子符号
             QString symbolContent = existingSymbols[symbolName];
             QStringList lines = symbolContent.split('\n');
             QString filteredContent;
@@ -289,7 +289,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
             for (const QString& line : lines) {
                 QString trimmedLine = line.trimmed();
 
-                // 检查是否是子符号定义的开�?
+                // 检查是否是子符号定义的开始
                 if (trimmedLine.startsWith("(symbol \"")) {
                     int nameStart = trimmedLine.indexOf("\"") + 1;
                     int nameEnd = trimmedLine.indexOf("\"", nameStart);
@@ -328,7 +328,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         }
     }
 
-    // 再导出新符号和被覆盖的符�?
+    // 再导出新符号和被覆盖的符号
     for (const SymbolData& symbol : symbolsToExport) {
         qDebug() << "Exporting symbol" << (++index) << "of" << symbolsToExport.count() << ":" << symbol.info().name;
         out << generateSymbolContent(symbol, libName);
@@ -355,13 +355,13 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     // V6 格式 - 主符号定义（包含属性）
     // 在更新模式下，保持符号名称不变；在新符号中，替换空格为下划线
     QString cleanSymbolName = symbolData.info().name;
-    // 注意：KiCad 6.x 允许符号名称中包含空格，所以不需要替�?
+    // 注意：KiCad 6.x 允许符号名称中包含空格，所以不需要替换
     // 保持原始名称以确保更新模式下能正确匹配和替换
     content += QString("  (symbol \"%1\"\n").arg(cleanSymbolName);
     content += "    (in_bom yes)\n";
     content += "    (on_board yes)\n";
 
-    // 设置当前边界框，用于图形元素的相对坐标计�?
+    // 设置当前边界框，用于图形元素的相对坐标计算
     SymbolBBox originalBBox = symbolData.bbox();
     m_currentBBox = originalBBox;
     qDebug() << "BBox - x:" << m_currentBBox.x << "y:" << m_currentBBox.y << "width:" << m_currentBBox.width
@@ -370,12 +370,12 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     double centerX = m_currentBBox.x + m_currentBBox.width / 2.0;
     double centerY = m_currentBBox.y + m_currentBBox.height / 2.0;
     qDebug() << "Symbol center - centerX:" << centerX << "centerY:" << centerY;
-    // 修改边界框，使其指向中心点，这样所有图形元素都会相对于中心点定�?
+    // 修改边界框，使其指向中心点，这样所有图形元素都会相对于中心点定位
     m_currentBBox.x = centerX;
     m_currentBBox.y = centerY;
     qDebug() << "Adjusted BBox for centering - x:" << m_currentBBox.x << "y:" << m_currentBBox.y;
-    // 计算 y_high �?y_low（使用引脚坐标，�?Python 版本保持一致）
-    // 如果没有引脚，使用默认值以确保属性位置正�?
+    // 计算 y_high 和 y_low（使用引脚坐标，与 Python 版本保持一致）
+    // 如果没有引脚，使用默认值以确保属性位置正
     double yHigh = 2.54;  // 默认值：100mil
     double yLow = -2.54;  // 默认值：-100mil
     QList<SymbolPin> pins = symbolData.pins();
@@ -393,20 +393,20 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     }
     qDebug() << "Final yHigh:" << yHigh << "yLow:" << yLow;
 
-    // 生成属�?
+    // 生成属性
     double fieldOffset = 5.08;  // FIELD_OFFSET_START
     double fontSize = 1.27;     // PROPERTY_FONT_SIZE
 
-    // 辅助函数：转义属性�?
+    // 辅助函数：转义属性值
     auto escapePropertyValue = [](const QString& value) -> QString {
         QString escaped = value;
         escaped.replace("\"", "\\\"");  // 转义引号
-        escaped.replace("\n", " ");     // 移除换行�?
-        escaped.replace("\t", " ");     // 移除制表�?
+        escaped.replace("\n", " ");     // 移除换行符
+        escaped.replace("\t", " ");     // 移除制表符
         return escaped.trimmed();
     };
 
-    // Reference 属�?
+    // Reference 属性
     QString refPrefix = symbolData.info().prefix;
     refPrefix.replace("?", "");  // 移除 "?" 后缀
     content += QString("    (property\n");
@@ -419,7 +419,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
                    .arg(fontSize, 0, 'f', 2);
     content += "    )\n";
 
-    // Value 属�?
+    // Value 属性
     content += QString("    (property\n");
     content += QString("      \"Value\"\n");
     content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().name));
@@ -430,7 +430,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
                    .arg(fontSize, 0, 'f', 2);
     content += "    )\n";
 
-    // Footprint 属�?
+    // Footprint 属性
     if (!symbolData.info().package.isEmpty()) {
         fieldOffset += 2.54;  // FIELD_OFFSET_INCREMENT
         content += QString("    (property\n");
@@ -446,7 +446,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += "    )\n";
     }
 
-    // Datasheet 属�?
+    // Datasheet 属性
     if (!symbolData.info().datasheet.isEmpty()) {
         fieldOffset += 2.54;
         content += QString("    (property\n");
@@ -460,7 +460,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += "    )\n";
     }
 
-    // Manufacturer 属�?
+    // Manufacturer 属性
     if (!symbolData.info().manufacturer.isEmpty()) {
         fieldOffset += 2.54;
         content += QString("    (property\n");
@@ -474,7 +474,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += "    )\n";
     }
 
-    // LCSC Part 属�?
+    // LCSC Part 属性
     if (!symbolData.info().lcscId.isEmpty()) {
         fieldOffset += 2.54;
         content += QString("    (property\n");
@@ -488,7 +488,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += "    )\n";
     }
 
-    // 检查是否为多部分符�?
+    // 检查是否为多部分符
     bool isMultiPart = symbolData.isMultiPart();
     qDebug() << "=== Symbol Type Check ===";
     qDebug() << "Symbol name:" << cleanSymbolName;
@@ -541,7 +541,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         }
     }
 
-    content += "  )\n";  // 结束主符�?
+    content += "  )\n";  // 结束主符号
 
     qDebug() << "=== Generated Symbol Content ===";
     qDebug() << "Content length:" << content.length();
@@ -559,7 +559,7 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
                                           double centerX,
                                           double centerY) const {
     QString content;
-    // 单部分符号：使用 _0_1 作为子符号名�?
+    // 单部分符号：使用 _0_1 作为子符号名称
     content += QString("    (symbol \"%1_0_1\"\n").arg(symbolName);
     // 生成图形元素（直接生成，不添加任何属性）
     for (const SymbolRectangle& rect : symbolData.rectangles()) {
@@ -596,7 +596,7 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
     for (const SymbolPin& pin : symbolData.pins()) {
         content += generatePin(pin, centeredBBox);
     }
-    content += "    )\n";  // 结束子符�?
+    content += "    )\n";  // 结束子符号
     return content;
 }
 
@@ -608,8 +608,8 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
                                           double centerY) const {
     QString content;
 
-    // 多部分符号：使用 _{unitNumber}_1 作为子符号名?
-    // 注意：Unit 编号必须?1 开始，而不是从 0 开?
+    // 多部分符号：使用 _{unitNumber}_1 作为子符号名称
+    // 注意：Unit 编号必须从1 开始，而不是从 0 开始
     content += QString("    (symbol \"%1_%2_1\"\n").arg(symbolName).arg(part.unitNumber + 1);
 
     // 计算子部分的边界框和中心点
@@ -673,7 +673,7 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
     // 恢复原始边界框
     m_currentBBox = originalBBox;
 
-    content += "    )\n";  // 结束子符?
+    content += "    )\n";  // 结束子符号
 
     return content;
 }
@@ -683,17 +683,17 @@ QString ExporterSymbol::generatePin(const SymbolPin& pin, const SymbolBBox& bbox
 
     // 使用边界框偏移量计算相对坐标
     double x = pxToMm(pin.settings.posX - bbox.x);
-    double y = -pxToMm(pin.settings.posY - bbox.y);  // Y 轴翻�?
+    double y = -pxToMm(pin.settings.posY - bbox.y);  // Y 轴翻转
 
-    // 计算引脚长度（Python版本的做法：直接从路径字符串中提�?h'后面的数字）
+    // 计算引脚长度（Python版本的做法：直接从路径字符串中提h'后面的数字）
     QString path = pin.pinPath.path;
     double length = 0;
 
-    // 查找 'h' 命令并提取其后的数值作为引脚长�?
+    // 查找 'h' 命令并提取其后的数值作为引脚长度
     int hIndex = path.indexOf('h');
     if (hIndex >= 0) {
         QString lengthStr = path.mid(hIndex + 1);
-        // 提取数值部分（可能包含其他命令�?
+        // 提取数值部分（可能包含其他命令）
         QStringList parts = lengthStr.split(QRegularExpression("[^0-9.-]"), Qt::SkipEmptyParts);
         if (!parts.isEmpty()) {
             bool ok = false;
@@ -704,10 +704,10 @@ QString ExporterSymbol::generatePin(const SymbolPin& pin, const SymbolBBox& bbox
         }
     }
 
-    // 转换为毫米单�?
+    // 转换为毫米单位
     length = pxToMm(length);
 
-    // 调试：输出引脚信�?
+    // 调试：输出引脚信息
     qDebug() << "Pin Debug - Name:" << pin.name.text << "Number:" << pin.settings.spicePinNumber;
     qDebug() << "  Original posX:" << pin.settings.posX << "bbox.x:" << bbox.x;
     qDebug() << "  Calculated x:" << x << "y:" << y;
@@ -719,14 +719,14 @@ QString ExporterSymbol::generatePin(const SymbolPin& pin, const SymbolBBox& bbox
 
     // 确保引脚长度不为 0
     if (length < 0.01) {
-        length = 2.54;  // 默认引脚长度�?00mil�?
+        length = 2.54;  // 默认引脚长度（100mil）
     }
 
     // 直接使用原始引脚类型，不进行自动推断
     PinType pinType = pin.settings.type;
     QString kicadPinType = pinTypeToKicad(pinType);
 
-    // 动态计算引脚样式（根据 dot �?clock 的显示状态）
+    // 动态计算引脚样式（根据 dot 和 clock 的显示状态）
     PinStyle pinStyle = PinStyle::Line;
     if (pin.dot.isDisplayed && pin.clock.isDisplayed) {
         pinStyle = PinStyle::InvertedClock;
@@ -737,13 +737,13 @@ QString ExporterSymbol::generatePin(const SymbolPin& pin, const SymbolBBox& bbox
     }
     QString kicadPinStyle = pinStyleToKicad(pinStyle);
 
-    // 处理引脚名称和编�?
+    // 处理引脚名称和编
     QString pinName = pin.name.text;
     pinName.replace(" ", "");
     QString pinNumber = pin.settings.spicePinNumber;
     pinNumber.replace(" ", "");
 
-    // 如果引脚名称为空，使用引脚编�?
+    // 如果引脚名称为空，使用引脚编号
     if (pinName.isEmpty()) {
         pinName = pinNumber;
     }
@@ -751,7 +751,7 @@ QString ExporterSymbol::generatePin(const SymbolPin& pin, const SymbolBBox& bbox
     double orientation = pin.settings.rotation;
 
     // Python 版本使用 (180 + orientation) % 360 计算方向
-    // 注意：orientation �?0, 90, 180, 270 的整�?
+    // 注意：orientation 为 0, 90, 180, 270 的整数
     double kicadOrientation = (180.0 + orientation);
     // 使用 fmod 替代 while 循环，避免死循环风险
     kicadOrientation = fmod(kicadOrientation, 360.0);
@@ -760,7 +760,7 @@ QString ExporterSymbol::generatePin(const SymbolPin& pin, const SymbolBBox& bbox
     }
 
     // 规范化为 KiCad 要求的标准角度：0, 90, 180, 270
-    // 找到最接近的标准角�?
+    // 找到最接近的标准角度
     double standardAngles[] = {0.0, 90.0, 180.0, 270.0};
     double closestAngle = 0.0;
     double minDiff = 360.0;
@@ -789,9 +789,9 @@ QString ExporterSymbol::generateRectangle(const SymbolRectangle& rect) const {
     // V6 使用毫米单位
     // 使用原始矩形的坐标和尺寸
     double x0 = pxToMm(rect.posX - m_currentBBox.x);
-    double y0 = -pxToMm(rect.posY - m_currentBBox.y);  // Y 轴翻�?
+    double y0 = -pxToMm(rect.posY - m_currentBBox.y);  // Y 轴翻转
     double x1 = pxToMm(rect.posX + rect.width - m_currentBBox.x);
-    double y1 = -pxToMm(rect.posY + rect.height - m_currentBBox.y);  // Y 轴翻�?
+    double y1 = -pxToMm(rect.posY + rect.height - m_currentBBox.y);  // Y 轴翻转
     double strokeWidth = pxToMm(rect.strokeWidth);
 
     content += "    (rectangle\n";
@@ -809,7 +809,7 @@ QString ExporterSymbol::generateCircle(const SymbolCircle& circle) const {
 
     // V6 使用毫米单位
     double cx = pxToMm(circle.centerX - m_currentBBox.x);
-    double cy = -pxToMm(circle.centerY - m_currentBBox.y);  // Y 轴翻�?
+    double cy = -pxToMm(circle.centerY - m_currentBBox.y);  // Y 轴翻转
     double radius = pxToMm(circle.radius);
     double strokeWidth = pxToMm(circle.strokeWidth);
 
@@ -829,22 +829,22 @@ QString ExporterSymbol::generateArc(const SymbolArc& arc) const {
 
     // KiCad V6 使用三点法定义圆弧：start、mid、end
     if (arc.path.size() >= 3) {
-        // 提取起点、中点、终�?
+        // 提取起点、中点、终点
         const auto path = arc.path;  // 避免临时对象detach
         QPointF startPoint = path.first();
         QPointF endPoint = path.last();
 
-        // 计算中点（取中间的点�?
+        // 计算中点（取中间的点）
         int midIndex = path.size() / 2;
         QPointF midPoint = path[midIndex];
 
-        // 转换为相对于边界框的坐标，并转换为毫�?
+        // 转换为相对于边界框的坐标，并转换为毫米
         double startX = pxToMm(startPoint.x() - m_currentBBox.x);
-        double startY = -pxToMm(startPoint.y() - m_currentBBox.y);  // Y 轴翻�?
+        double startY = -pxToMm(startPoint.y() - m_currentBBox.y);  // Y 轴翻转
         double midX = pxToMm(midPoint.x() - m_currentBBox.x);
-        double midY = -pxToMm(midPoint.y() - m_currentBBox.y);  // Y 轴翻�?
+        double midY = -pxToMm(midPoint.y() - m_currentBBox.y);  // Y 轴翻转
         double endX = pxToMm(endPoint.x() - m_currentBBox.x);
-        double endY = -pxToMm(endPoint.y() - m_currentBBox.y);  // Y 轴翻�?
+        double endY = -pxToMm(endPoint.y() - m_currentBBox.y);  // Y 轴翻转
 
         content += "    (arc\n";
         content += QString("      (start %1 %2)\n").arg(startX, 0, 'f', 2).arg(startY, 0, 'f', 2);
@@ -867,13 +867,13 @@ QString ExporterSymbol::generateArc(const SymbolArc& arc) const {
         QPointF endPoint = path.last();
         QPointF midPoint = (startPoint + endPoint) / 2;
 
-        // 转换为相对于边界框的坐标，并转换为毫�?
+        // 转换为相对于边界框的坐标，并转换为毫米
         double startX = pxToMm(startPoint.x() - m_currentBBox.x);
-        double startY = -pxToMm(startPoint.y() - m_currentBBox.y);  // Y 轴翻�?
+        double startY = -pxToMm(startPoint.y() - m_currentBBox.y);  // Y 轴翻转
         double midX = pxToMm(midPoint.x() - m_currentBBox.x);
-        double midY = -pxToMm(midPoint.y() - m_currentBBox.y);  // Y 轴翻�?
+        double midY = -pxToMm(midPoint.y() - m_currentBBox.y);  // Y 轴翻转
         double endX = pxToMm(endPoint.x() - m_currentBBox.x);
-        double endY = -pxToMm(endPoint.y() - m_currentBBox.y);  // Y 轴翻�?
+        double endY = -pxToMm(endPoint.y() - m_currentBBox.y);  // Y 轴翻转
 
         content += "    (arc\n";
         content += QString("      (start %1 %2)\n").arg(startX, 0, 'f', 2).arg(startY, 0, 'f', 2);
@@ -902,12 +902,12 @@ QString ExporterSymbol::generateEllipse(const SymbolEllipse& ellipse) const {
 
     // V6 使用毫米单位
     double cx = pxToMm(ellipse.centerX - m_currentBBox.x);
-    double cy = -pxToMm(ellipse.centerY - m_currentBBox.y);  // Y 轴翻�?
+    double cy = -pxToMm(ellipse.centerY - m_currentBBox.y);  // Y 轴翻转
     double radiusX = pxToMm(ellipse.radiusX);
     double radiusY = pxToMm(ellipse.radiusY);
     double strokeWidth = pxToMm(ellipse.strokeWidth);
 
-    // 如果是圆形（radiusX �?radiusY），使用 circle 元素
+    // 如果是圆形（radiusX 等于 radiusY），使用 circle 元素
     if (qAbs(radiusX - radiusY) < 0.01) {
         content += "    (circle\n";
         content += QString("      (center %1 %2)\n").arg(cx, 0, 'f', 2).arg(cy, 0, 'f', 2);
@@ -917,7 +917,7 @@ QString ExporterSymbol::generateEllipse(const SymbolEllipse& ellipse) const {
         content += "    )\n";
     } else {
         // 椭圆：转换为路径
-        // 使用 32 段折线近似椭�?
+        // 使用 32 段折线近似椭圆
         content += "    (polyline\n";
         content += "      (pts";
 
@@ -932,7 +932,7 @@ QString ExporterSymbol::generateEllipse(const SymbolEllipse& ellipse) const {
         content += ")\n";
         content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
 
-        // 根据 fillColor 属性设置填充类�?
+        // 根据 fillColor 属性设置填充类型
         if (ellipse.fillColor) {
             content += "      (fill (type background))\n";
         } else {
@@ -948,27 +948,27 @@ QString ExporterSymbol::generatePolygon(const SymbolPolygon& polygon) const {
     QString content;
     double strokeWidth = pxToMm(polygon.strokeWidth);
 
-    // 解析点数�?
+    // 解析点数据
     QStringList points = polygon.points.split(" ");
-    // 过滤掉空字符�?
+    // 过滤掉空字符串
     points.removeAll("");
 
-    // 至少需�?2 个有效的点（4 个坐标值）
+    // 至少需要2 个有效的点（4 个坐标值）
     if (points.size() >= 4) {
-        // KiCad V6 不支�?polygon 元素，使�?polyline 代替
+        // KiCad V6 不支持 polygon 元素，使用 polyline 代替
         content += "    (polyline\n";
         content += "      (pts";
-        // 存储第一个点以便在最后重�?
+        // 存储第一个点以便在最后重
         QString firstPoint;
         QString lastPoint;  // 用于检测重复点
         for (int i = 0; i < points.size(); i += 2) {
             if (i + 1 < points.size()) {
-                // 转换为相对于边界框的坐标，并转换为毫�?
+                // 转换为相对于边界框的坐标，并转换为毫米
                 double x = pxToMm(points[i].toDouble() - m_currentBBox.x);
                 double y = -pxToMm(points[i + 1].toDouble() - m_currentBBox.y);
                 QString point = QString(" (xy %1 %2)").arg(x, 0, 'f', 2).arg(y, 0, 'f', 2);
 
-                // 避免重复�?
+                // 避免重复点
                 if (point != lastPoint) {
                     content += point;
                     if (i == 0) {
@@ -978,13 +978,13 @@ QString ExporterSymbol::generatePolygon(const SymbolPolygon& polygon) const {
                 }
             }
         }
-        // 多边形总是重复第一个点以闭�?
+        // 多边形总是重复第一个点以闭合
         if (!firstPoint.isEmpty() && firstPoint != lastPoint) {
             content += firstPoint;
         }
         content += ")\n";
         content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
-        // 根据 fillColor 属性设置填充类�?
+        // 根据 fillColor 属性设置填充类型
         if (polygon.fillColor) {
             content += "      (fill (type background))\n";
         } else {
@@ -999,12 +999,12 @@ QString ExporterSymbol::generatePolyline(const SymbolPolyline& polyline) const {
     QString content;
     double strokeWidth = pxToMm(polyline.strokeWidth);
 
-    // 解析点数�?
+    // 解析点数据
     QStringList points = polyline.points.split(" ");
-    // 过滤掉空字符�?
+    // 过滤掉空字符串
     points.removeAll("");
 
-    // 至少需�?2 个有效的点（4 个坐标值）
+    // 至少需要2 个有效的点（4 个坐标值）
     if (points.size() >= 4) {
         content += "    (polyline\n";
         content += "      (pts";
@@ -1013,12 +1013,12 @@ QString ExporterSymbol::generatePolyline(const SymbolPolyline& polyline) const {
         QString lastPoint;  // 用于检测重复点
         for (int i = 0; i < points.size(); i += 2) {
             if (i + 1 < points.size()) {
-                // 转换为相对于边界框的坐标，并转换为毫�?
+                // 转换为相对于边界框的坐标，并转换为毫米
                 double x = pxToMm(points[i].toDouble() - m_currentBBox.x);
                 double y = -pxToMm(points[i + 1].toDouble() - m_currentBBox.y);
                 QString point = QString(" (xy %1 %2)").arg(x, 0, 'f', 2).arg(y, 0, 'f', 2);
 
-                // 避免重复�?
+                // 避免重复点
                 if (point != lastPoint) {
                     content += point;
                     if (i == 0) {
@@ -1028,13 +1028,13 @@ QString ExporterSymbol::generatePolyline(const SymbolPolyline& polyline) const {
                 }
             }
         }
-        // 只有�?fillColor �?true 时才重复第一个点
+        // 只有fillColor 为 true 时才重复第一个点
         if (polyline.fillColor && !firstPoint.isEmpty() && firstPoint != lastPoint) {
             content += firstPoint;
         }
         content += ")\n";
         content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
-        // 填充类型�?fillColor 决定
+        // 填充类型fillColor 决定
         if (polyline.fillColor) {
             content += "      (fill (type background))\n";
         } else {
@@ -1058,13 +1058,13 @@ QString ExporterSymbol::generatePath(const SymbolPath& path) const {
 
         QString lastPoint;
         for (const QPointF& pt : points) {
-            // 转换为相对于边界框的坐标，并转换为毫�?
+            // 转换为相对于边界框的坐标，并转换为毫米
             double x = pxToMm(pt.x() - m_currentBBox.x);
-            double y = -pxToMm(pt.y() - m_currentBBox.y);  // Y 轴翻�?
+            double y = -pxToMm(pt.y() - m_currentBBox.y);  // Y 轴翻转
 
             QString point = QString(" (xy %1 %2)").arg(x, 0, 'f', 2).arg(y, 0, 'f', 2);
 
-            // 避免重复�?
+            // 避免重复点
             if (point != lastPoint) {
                 content += point;
                 lastPoint = point;
@@ -1074,7 +1074,7 @@ QString ExporterSymbol::generatePath(const SymbolPath& path) const {
         content += ")\n";
         content += QString("      (stroke (width %1) (type default))\n").arg(pxToMm(path.strokeWidth), 0, 'f', 3);
 
-        // 填充类型�?fillColor 决定
+        // 填充类型fillColor 决定
         if (path.fillColor) {
             content += "      (fill (type background))\n";
         } else {
@@ -1083,7 +1083,7 @@ QString ExporterSymbol::generatePath(const SymbolPath& path) const {
 
         content += "    )\n";
     } else {
-        // 如果没有有效点，生成占位�?
+        // 如果没有有效点，生成占位
         content += "    (polyline (pts (xy 0 0))\n";
         content += "      (stroke (width 0.127) (type default))\n";
         content += "      (fill (type none))\n";
@@ -1098,12 +1098,12 @@ QString ExporterSymbol::generateText(const SymbolText& text) const {
 
     // V6 使用毫米单位
     double x = pxToMm(text.posX - m_currentBBox.x);
-    double y = -pxToMm(text.posY - m_currentBBox.y);  // Y 轴翻�?
+    double y = -pxToMm(text.posY - m_currentBBox.y);  // Y 轴翻转
 
-    // 计算字体大小（从pt转换为mm�?
+    // 计算字体大小（从pt转换为mm）
     double fontSize = text.textSize * 0.352778;  // 1pt = 0.352778mm
 
-    // 处理粗体和斜�?
+    // 处理粗体和斜
     QString fontStyle = "";
     if (text.bold) {
         fontStyle += "bold ";
@@ -1123,7 +1123,7 @@ QString ExporterSymbol::generateText(const SymbolText& text) const {
         rotation = 360 - rotation;
     }
 
-    // 处理可见�?
+    // 处理可见
     QString hide = text.visible ? "" : "hide";
 
     // 转义文本内容

@@ -1,4 +1,4 @@
-﻿#ifndef WRITEWORKER_H
+#ifndef WRITEWORKER_H
 #define WRITEWORKER_H
 
 #include "core/kicad/Exporter3DModel.h"
@@ -21,16 +21,16 @@ class WriteWorker : public QObject, public QRunnable {
 
 public:
     /**
-     * @brief 构造函�?
-         * @param status 导出状态（使用 QSharedPointer 避免拷贝�?
+     * @brief 构造函数
+         * @param status 导出状态（使用 QSharedPointer 避免拷贝）
          * @param
      * outputPath 输出路径
-     * @param libName 库名�?
+     * @param libName 库名称
          * @param exportSymbol 是否导出符号
      * @param exportFootprint 是否导出封装
      * @param exportModel3D 是否导出3D模型
      * @param debugMode 是否启用调试模式
-     * @param parent 父对�?
+     * @param parent 父对象
          */
     explicit WriteWorker(QSharedPointer<ComponentExportStatus> status,
                          const QString& outputPath,
@@ -66,21 +66,21 @@ signals:
 private:
     /**
      * @brief 写入符号文件
-     * @param status 导出状�?
+     * @param status 导出状态
          * @return bool 是否成功
      */
     bool writeSymbolFile(ComponentExportStatus& status);
 
     /**
      * @brief 写入封装文件
-     * @param status 导出状�?
+     * @param status 导出状态
          * @return bool 是否成功
      */
     bool writeFootprintFile(ComponentExportStatus& status);
 
     /**
      * @brief 写入3D模型文件
-     * @param status 导出状�?
+     * @param status 导出状态
          * @return bool 是否成功
      */
     bool write3DModelFile(ComponentExportStatus& status);
@@ -94,7 +94,7 @@ private:
 
     /**
      * @brief 导出调试数据
-     * @param status 导出状�?
+     * @param status 导出状态
          * @return bool 是否成功
      */
     bool exportDebugData(ComponentExportStatus& status);

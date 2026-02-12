@@ -1,4 +1,4 @@
-﻿#ifndef SYMBOLDATA_H
+#ifndef SYMBOLDATA_H
 #define SYMBOLDATA_H
 
 #include <QJsonArray>
@@ -50,11 +50,11 @@ struct SymbolInfo {
     bool verify;
     bool smt;
 
-    // 时间�?
+    // 时间
     qint64 updateTime;
     QString updatedAt;
 
-    // 编辑器信�?
+    // 编辑器信
     QString editorVersion;
 
     // 项目信息
@@ -75,10 +75,10 @@ struct SymbolInfo {
     bool fromJson(const QJsonObject& json);
 };
 
-// ==================== 边界�?====================
+// ==================== 边界====================
 
 /**
- * @brief 边界�?
+ * @brief 边界
  */
 struct SymbolBBox {
     double x;
@@ -110,7 +110,7 @@ struct SymbolPinSettings {
 };
 
 /**
- * @brief 引脚�?
+ * @brief 引脚
  */
 struct SymbolPinDot {
     double dotX;
@@ -149,7 +149,7 @@ struct SymbolPinName {
 };
 
 /**
- * @brief 引脚圆点（第二个�?
+ * @brief 引脚圆点（第二个
  */
 struct SymbolPinDotBis {
     bool isDisplayed;
@@ -210,7 +210,7 @@ struct SymbolRectangle {
 };
 
 /**
- * @brief �?
+ * @brief 符号部分数据
  */
 struct SymbolCircle {
     double centerX;
@@ -264,7 +264,7 @@ struct SymbolEllipse {
 };
 
 /**
- * @brief 多段�?
+ * @brief 多段
  */
 struct SymbolPolyline {
     QString points;
@@ -280,7 +280,7 @@ struct SymbolPolyline {
 };
 
 /**
- * @brief 多边�?
+ * @brief 多边
  */
 struct SymbolPolygon {
     QString points;
@@ -362,16 +362,16 @@ struct SymbolPart {
 // ==================== 符号数据 ====================
 
 /**
- * @brief 符号数据�?
+ * @brief 符号数据
  *
- * 包含符号的所有信息，包括引脚和各种图形元�?
+ * 包含符号的所有信息，包括引脚和各种图形元
  */
 class SymbolData {
 public:
     SymbolData();
     ~SymbolData() = default;
 
-    // Getter �?Setter 方法
+    // Getter 和 Setter 方法
     SymbolInfo info() const {
         return m_info;
     }
@@ -477,7 +477,7 @@ public:
         m_texts.append(text);
     }
 
-    // 多部分符号接�?
+    // 多部分符号接
     QList<SymbolPart> parts() const {
         return m_parts;
     }
@@ -491,7 +491,7 @@ public:
         return m_parts.size() > 1;
     }
 
-    // JSON 序列�?
+    // JSON 序列
     QJsonObject toJson() const;
     bool fromJson(const QJsonObject& json);
 

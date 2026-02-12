@@ -20,7 +20,7 @@ class QNetworkAccessManager;
 namespace EasyKiConverter {
 
 /**
- * @brief 元件服务?
+ * @brief 元件服务类
  *
  * 负责处理与元件相关的业务逻辑，不依赖任何 UI 组件
  * 包括数据获取、验证、解析和缓存管理
@@ -30,9 +30,9 @@ class ComponentService : public QObject {
 
 public:
     /**
-     * @brief 构造函?
+     * @brief 构造函数
      *
-     * @param parent 父对?
+     * @param parent 父对象
      */
     explicit ComponentService(QObject* parent = nullptr);
 
@@ -57,7 +57,7 @@ public:
     void fetchLcscPreviewImage(const QString& componentId);
 
     /**
-     * @brief 并行获取多个元件的数?
+     * @brief 并行获取多个元件的数据
      *
      * @param componentIds 元件ID列表
      * @param fetch3DModel 是否获取3D模型
@@ -76,7 +76,7 @@ public:
      * @brief 从文本中智能提取元件编号
      *
      * @param text 输入文本
-     * @return QStringList 提取的元件编号列?
+     * @return QStringList 提取的元件编号列表
      */
     QStringList extractComponentIdFromText(const QString& text) const;
 
@@ -157,7 +157,7 @@ signals:
     void fetchError(const QString& componentId, const QString& error);
 
     /**
-     * @brief 所有元件数据收集完成信?
+     * @brief 所有元件数据收集完成信号
      *
      * @param componentDataList 元件数据列表
      */
@@ -194,7 +194,7 @@ private slots:
     void handleFetchError(const QString& errorMessage);
 
     /**
-     * @brief 处理获取错误（带 ID?
+     * @brief 处理获取错误（带 ID）
      *
      * @param componentId 元件ID
      * @param error 错误信息
@@ -296,7 +296,7 @@ private:
     // 数据缓存
     QMap<QString, ComponentData> m_componentCache;
 
-    // 当前正在获取的元件数?
+    // 当前正在获取的元件数据
     struct FetchingComponent {
         QString componentId;
         ComponentData data;
@@ -312,16 +312,16 @@ private:
     // 当前处理的元件ID
     QString m_currentComponentId;
 
-    // 待处理的组件数据（用于等?3D 模型数据?
+    // 待处理的组件数据（用于等待3D 模型数据）
     ComponentData m_pendingComponentData;
 
     // 待处理的 3D 模型 UUID
     QString m_pendingModelUuid;
 
-    // 是否已经下载?WRL 格式
+    // 是否已经下载了WRL 格式
     bool m_hasDownloadedWrl;
 
-    // 并行数据收集状?
+    // 并行数据收集状态
     QMap<QString, ComponentData> m_parallelCollectedData;  // 已收集的数据
     QMap<QString, bool> m_parallelFetchingStatus;          // 元件ID -> 是否正在获取
     QStringList m_parallelPendingComponents;               // 待获取的元件列表

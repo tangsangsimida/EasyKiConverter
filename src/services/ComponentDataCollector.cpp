@@ -1,4 +1,4 @@
-﻿#include "ComponentDataCollector.h"
+#include "ComponentDataCollector.h"
 
 #include "core/easyeda/EasyedaApi.h"
 #include "core/easyeda/EasyedaImporter.h"
@@ -31,7 +31,7 @@ void ComponentDataCollector::start() {
     m_isCancelled = false;
     setState(FetchingCadData);
 
-    // 直接获取 CAD 数据（包含符号和封装信息�?
+    // 直接获取 CAD 数据（包含符号和封装信息
     m_api->fetchCadData(m_componentId);
 }
 
@@ -62,7 +62,7 @@ void ComponentDataCollector::handleCadDataFetched(const QJsonObject& data) {
         return;
     }
 
-    // 检查响应结�?
+    // 检查响应结
     QJsonObject resultData;
     if (data.contains("result")) {
         resultData = data["result"].toObject();
@@ -109,9 +109,9 @@ void ComponentDataCollector::handleCadDataFetched(const QJsonObject& data) {
         qWarning() << "Failed to import footprint data";
     }
 
-    // 检查是否需要获�?3D 模型
+    // 检查是否需要获3D 模型
     if (m_export3DModel && footprintData && footprintData->model3D().uuid().isEmpty()) {
-        // �?CAD 数据中提�?3D 模型 UUID
+        // 从 CAD 数据中提取 3D 模型 UUID
         if (resultData.contains("head")) {
             QJsonObject head = resultData["head"].toObject();
             if (head.contains("uuid_3d")) {
@@ -119,12 +119,12 @@ void ComponentDataCollector::handleCadDataFetched(const QJsonObject& data) {
                 if (!uuid.isEmpty()) {
                     qDebug() << "Fetching 3D model with UUID:" << uuid;
 
-                    // 更新 Model3DData �?UUID
+                    // 更新 Model3DData 的 UUID
                     QSharedPointer<Model3DData> model3DData(new Model3DData());
                     model3DData->setUuid(uuid);
                     m_componentData.setModel3DData(model3DData);
 
-                    // 进入获取 OBJ 数据状�?
+                    // 进入获取 OBJ 数据状
                     setState(FetchingObjData);
                     m_api->fetch3DModelObj(uuid);
                     return;
@@ -133,7 +133,7 @@ void ComponentDataCollector::handleCadDataFetched(const QJsonObject& data) {
         }
     }
 
-    // 不需�?3D 模型或没有找�?UUID，直接完�?
+    // 不需3D 模型或没有找UUID，直接完
     complete();
 }
 
@@ -145,7 +145,7 @@ void ComponentDataCollector::handleModel3DFetched(const QString& uuid, const QBy
         return;
     }
 
-    // 根据当前状态决定如何处�?
+    // 根据当前状态决定如何处
     if (m_state == FetchingObjData) {
         // 保存 OBJ 数据
         if (m_componentData.model3DData()) {
@@ -153,7 +153,7 @@ void ComponentDataCollector::handleModel3DFetched(const QString& uuid, const QBy
             qDebug() << "OBJ data saved for:" << uuid;
         }
 
-        // 检查是否需要获�?STEP 数据
+        // 检查是否需要获STEP 数据
         if (m_export3DModel) {
             setState(FetchingStepData);
             m_api->fetch3DModelStep(uuid);

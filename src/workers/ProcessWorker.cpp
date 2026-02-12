@@ -1,4 +1,4 @@
-﻿#include "ProcessWorker.h"
+#include "ProcessWorker.h"
 
 #include "core/easyeda/EasyedaApi.h"
 #include "core/easyeda/EasyedaImporter.h"
@@ -137,7 +137,7 @@ bool ProcessWorker::parseCadData(ComponentExportStatus& status) {
 
     QJsonObject rootObj = doc.object();
 
-    // API 返回的数据在 result 字段中，需要提取出�?
+    // API 返回的数据在 result 字段中，需要提取出来
     QJsonObject obj;
     if (rootObj.contains("result") && rootObj["result"].isObject()) {
         obj = rootObj["result"].toObject();
@@ -147,7 +147,7 @@ bool ProcessWorker::parseCadData(ComponentExportStatus& status) {
         obj = rootObj;
     }
 
-    // 调试：打印obj的结�?
+    // 调试：打印obj的结构
     status.addDebugLog("=== ProcessWorker CAD Data Structure ===");
     status.addDebugLog(QString("Top-level keys: %1").arg(obj.keys().join(", ")));
     if (obj.contains("dataStr")) {
@@ -167,7 +167,7 @@ bool ProcessWorker::parseCadData(ComponentExportStatus& status) {
     }
     status.addDebugLog("==========================================");
 
-    // 使用EasyedaImporter导入符号和封装数�?
+    // 使用EasyedaImporter导入符号和封装数据
     EasyedaImporter importer;
 
     // 导入符号数据
@@ -204,7 +204,7 @@ bool ProcessWorker::parse3DModelData(ComponentExportStatus& status) {
     status.model3DData = QSharedPointer<Model3DData>::create();
     status.model3DData->setRawObj(QString::fromUtf8(status.model3DObjRaw));
 
-    // �?footprintData �?model3D 中获�?UUID
+    // 从 footprintData 的 model3D 中获取 UUID
     if (status.footprintData && !status.footprintData->model3D().uuid().isEmpty()) {
         status.model3DData->setUuid(status.footprintData->model3D().uuid());
         status.addDebugLog(QString("Using 3D model UUID from footprintData: %1").arg(status.model3DData->uuid()));

@@ -1,4 +1,4 @@
-﻿#ifndef LAYERMAPPER_H
+#ifndef LAYERMAPPER_H
 #define LAYERMAPPER_H
 
 #include <QMap>
@@ -10,7 +10,7 @@ namespace EasyKiConverter {
 /**
  * @brief 图层映射器类
  *
- * 用于将嘉立创 EDA 图层映射�?KiCad 图层，并处理单位转换
+ * 用于将嘉立创 EDA 图层映射KiCad 图层，并处理单位转换
  */
 class LayerMapper {
 public:
@@ -18,8 +18,8 @@ public:
      * @brief KiCad 图层枚举
      */
     enum KiCadLayer {
-        // 信号�?
-        F_Cu = 0,      // 顶层�?
+        // 信号
+        F_Cu = 0,      // 顶层
         In1_Cu = 1,    // 内层1
         In2_Cu = 2,    // 内层2
         In3_Cu = 3,    // 内层3
@@ -50,42 +50,42 @@ public:
         In28_Cu = 28,  // 内层28
         In29_Cu = 29,  // 内层29
         In30_Cu = 30,  // 内层30
-        B_Cu = 31,     // 底层�?
+        B_Cu = 31,     // 底层
 
-        // 丝印�?
+        // 丝印
         F_SilkS = 32,  // 顶层丝印
         B_SilkS = 33,  // 底层丝印
 
-        // 阻焊�?
+        // 阻焊
         F_Mask = 34,  // 顶层阻焊
         B_Mask = 35,  // 底层阻焊
 
-        // 助焊�?
+        // 助焊
         F_Paste = 36,  // 顶层锡膏
         B_Paste = 37,  // 底层锡膏
 
-        // 粘合�?
+        // 粘合
         F_Adhes = 38,  // 顶层粘合
         B_Adhes = 39,  // 底层粘合
 
-        // 边缘�?
+        // 边缘
         Edge_Cuts = 44,  // 板框轮廓
 
-        // 边界�?
+        // 边界
         F_CrtYd = 45,  // 顶层边界
         B_CrtYd = 46,  // 底层边界
 
-        // 装配�?
+        // 装配
         F_Fab = 47,  // 顶层装配
         B_Fab = 48,  // 底层装配
 
-        // 文档�?
+        // 文档
         Dwgs_User = 49,  // 用户绘图
         Cmts_User = 50,  // 用户注释
         Eco1_User = 51,  // 用户1
         Eco2_User = 52,  // 用户2
 
-        // 边缘�?
+        // 边缘
         Margin = 53,  // 边缘
 
         // 用户自定义层
@@ -101,7 +101,7 @@ public:
     };
 
     /**
-     * @brief 构造函�?
+     * @brief 构造函数
          */
     LayerMapper();
 
@@ -111,17 +111,17 @@ public:
     ~LayerMapper();
 
     /**
-     * @brief 将嘉立创 EDA 图层 ID 映射�?KiCad 图层
+     * @brief 将嘉立创 EDA 图层 ID 映射KiCad 图层
      *
-     * @param easyedaLayerId 嘉立�?EDA 图层 ID
+     * @param easyedaLayerId 嘉立EDA 图层 ID
      * @return int KiCad 图层 ID，如果无法映射则返回 -1
      */
     int mapToKiCadLayer(int easyedaLayerId) const;
 
     /**
-     * @brief 将嘉立创 EDA 图层名称映射�?KiCad 图层
+     * @brief 将嘉立创 EDA 图层名称映射KiCad 图层
      *
-     * @param easyedaLayerName 嘉立�?EDA 图层名称
+     * @param easyedaLayerName 嘉立EDA 图层名称
      * @return int KiCad 图层 ID，如果无法映射则返回 -1
      */
     int mapToKiCadLayer(const QString& easyedaLayerName) const;
@@ -135,18 +135,18 @@ public:
     QString getKiCadLayerName(int kicadLayerId) const;
 
     /**
-     * @brief �?mil 转换�?mm
+     * @brief 将 mil 转换为 mm
      *
-     * @param milValue mil �?
-         * @return double mm �?
+     * @param milValue mil 值
+         * @return double mm 值
          */
     static double milToMm(double milValue);
 
     /**
-     * @brief �?mm 转换�?mil
+     * @brief 将 mm 转换为 mil
      *
-     * @param mmValue mm �?
-         * @return double mil �?
+     * @param mmValue mm 值
+         * @return double mil 值
          */
     static double mmToMil(double mmValue);
 
@@ -191,28 +191,28 @@ public:
     static bool isMechanicalLayer(int kicadLayerId);
 
     /**
-     * @brief 判断是否为元件外形层（边界层�?
+     * @brief 判断是否为元件外形层（边界层
          *
-     * 元件外形层用于布局避让，应映射�?F.CrtYd �?B.CrtYd
-     * 参�?LCKiConverter: src/jlc/pro_footprint.ts isCourtYard()
+     * 元件外形层用于布局避让，应映射F.CrtYd 或 B.CrtYd
+     * 参LCKiConverter: src/jlc/pro_footprint.ts isCourtYard()
      *
-     * @param easyedaLayerId 嘉立�?EDA 图层 ID
+     * @param easyedaLayerId 嘉立EDA 图层 ID
      * @return bool 是否为元件外形层
      */
     static bool isCourtYardLayer(int easyedaLayerId);
 
     /**
-     * @brief 判断是否为内�?
+     * @brief 判断是否为内
          *
-     * @param easyedaLayerId 嘉立�?EDA 图层 ID
-     * @return bool 是否为内�?
+     * @param easyedaLayerId 嘉立EDA 图层 ID
+     * @return bool 是否为内
          */
     static bool isInnerLayer(int easyedaLayerId);
 
     /**
      * @brief 判断是否为焊盘层
      *
-     * @param easyedaLayerId 嘉立�?EDA 图层 ID
+     * @param easyedaLayerId 嘉立EDA 图层 ID
      * @return bool 是否为焊盘层
      */
     static bool isPadLayer(int easyedaLayerId);
@@ -220,11 +220,11 @@ public:
     /**
      * @brief 获取元件外形层对应的 KiCad 图层
      *
-     * 元件外形层应映射�?F.CrtYd（顶层）�?B.CrtYd（底层）
-     * 参�?LCKiConverter: src/jlc/pro_footprint.ts isCourtYard()
+     * 元件外形层应映射F.CrtYd（顶层）或 B.CrtYd（底层）
+     * 参LCKiConverter: src/jlc/pro_footprint.ts isCourtYard()
      *
-     * @param easyedaLayerId 嘉立�?EDA 图层 ID
-     * @return QString KiCad 图层名称，如果不是元件外形层则返回空字符�?
+     * @param easyedaLayerId 嘉立EDA 图层 ID
+     * @return QString KiCad 图层名称，如果不是元件外形层则返回空字符串
          */
     static QString getCourtYardLayerName(int easyedaLayerId);
 
@@ -242,8 +242,8 @@ private:
     void initializeLayerMapping();
 
 private:
-    QMap<int, int> m_layerIdMapping;        // 嘉立创图�?ID -> KiCad 图层 ID
-    QMap<QString, int> m_layerNameMapping;  // 嘉立创图层名�?-> KiCad 图层 ID
+    QMap<int, int> m_layerIdMapping;        // 嘉立创图ID -> KiCad 图层 ID
+    QMap<QString, int> m_layerNameMapping;  // 嘉立创图层名-> KiCad 图层 ID
     QMap<int, QString> m_kicadLayerNames;   // KiCad 图层 ID -> 图层名称
 };
 

@@ -1,4 +1,4 @@
-﻿#include "ComponentData.h"
+#include "ComponentData.h"
 
 #include <QDebug>
 #include <QJsonDocument>

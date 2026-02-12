@@ -922,7 +922,7 @@ void EasyedaImporter::importSvgNodeData(const QString& svgNodeData, QSharedPoint
         if (attrs.contains("layerid")) {
             outline.layerId = attrs["layerid"].toString().toInt();
         } else {
-            outline.layerId = 19;  // 默认�?3DModel �?
+            outline.layerId = 19;  // 默认3DModel 层
         }
 
         if (root.contains("childNodes")) {

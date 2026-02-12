@@ -1,4 +1,4 @@
-﻿#include "SymbolData.h"
+#include "SymbolData.h"
 
 #include <QDebug>
 
@@ -202,11 +202,11 @@ QJsonObject SymbolInfo::toJson() const {
     json["verify"] = verify;
     json["smt"] = smt;
 
-    // 时间�?
+    // 时间
     json["update_time"] = updateTime;
     json["updated_at"] = updatedAt;
 
-    // 编辑器信�?
+    // 编辑器信
     json["editor_version"] = editorVersion;
 
     // 项目信息
@@ -249,11 +249,11 @@ bool SymbolInfo::fromJson(const QJsonObject& json) {
     verify = json["verify"].toBool(false);
     smt = json["smt"].toBool(false);
 
-    // 时间�?
+    // 时间
     updateTime = json["update_time"].toVariant().toLongLong();
     updatedAt = json["updated_at"].toString();
 
-    // 编辑器信�?
+    // 编辑器信
     editorVersion = json["editor_version"].toString();
 
     // 项目信息
@@ -612,7 +612,7 @@ bool SymbolData::fromJson(const QJsonObject& json) {
         }
     }
 
-    // 读取边界�?
+    // 读取边界
     if (json.contains("bbox") && json["bbox"].isObject()) {
         if (!m_bbox.fromJson(json["bbox"].toObject())) {
             qWarning() << "Failed to parse symbol bbox";
@@ -648,7 +648,7 @@ bool SymbolData::fromJson(const QJsonObject& json) {
         }
     }
 
-    // 读取�?
+    // 读取
     if (json.contains("circles") && json["circles"].isArray()) {
         QJsonArray circlesArray = json["circles"].toArray();
         m_circles.clear();
@@ -690,7 +690,7 @@ bool SymbolData::fromJson(const QJsonObject& json) {
         }
     }
 
-    // 读取多段�?
+    // 读取多段
     if (json.contains("polylines") && json["polylines"].isArray()) {
         QJsonArray polylinesArray = json["polylines"].toArray();
         m_polylines.clear();
@@ -704,7 +704,7 @@ bool SymbolData::fromJson(const QJsonObject& json) {
         }
     }
 
-    // 读取多边�?
+    // 读取多边
     if (json.contains("polygons") && json["polygons"].isArray()) {
         QJsonArray polygonsArray = json["polygons"].toArray();
         m_polygons.clear();
@@ -764,7 +764,7 @@ bool SymbolData::fromJson(const QJsonObject& json) {
 }
 
 bool SymbolData::isValid() const {
-    // 检查基本字�?
+    // 检查基本字
     if (m_bbox.x == 0.0 && m_bbox.y == 0.0) {
         return false;
     }
@@ -778,7 +778,7 @@ QString SymbolData::validate() const {
         return "Symbol name is empty";
     }
 
-    // 验证边界�?
+    // 验证边界
     if (m_bbox.x == 0.0 && m_bbox.y == 0.0) {
         return "Symbol bbox is empty";
     }

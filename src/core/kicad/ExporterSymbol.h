@@ -1,4 +1,4 @@
-﻿#ifndef EXPORTERSYMBOL_H
+#ifndef EXPORTERSYMBOL_H
 #define EXPORTERSYMBOL_H
 
 #include "models/SymbolData.h"
@@ -13,16 +13,16 @@ namespace EasyKiConverter {
 /**
  * @brief KiCad 符号导出器类
  *
- * 用于�?EasyEDA 符号数据导出�?KiCad 符号库格�?
+ * 用于EasyEDA 符号数据导出KiCad 符号库格
      */
 class ExporterSymbol : public QObject {
     Q_OBJECT
 
 public:
     /**
-     * @brief 构造函�?
+     * @brief 构造函数
          *
-     * @param parent 父对�?
+     * @param parent 父对象
          */
     explicit ExporterSymbol(QObject* parent = nullptr);
 
@@ -32,7 +32,7 @@ public:
     ~ExporterSymbol() override;
 
     /**
-     * @brief 导出符号�?KiCad 格式
+     * @brief 导出符号库KiCad 格式
      *
      * @param symbolData 符号数据
      * @param filePath 输出文件路径
@@ -41,14 +41,14 @@ public:
     bool exportSymbol(const SymbolData& symbolData, const QString& filePath);
 
     /**
-     * @brief 导出多个符号�?KiCad 符号�?
+     * @brief 导出多个符号KiCad 符号
          *
      * @param symbols 符号列表
-     * @param libName 库名�?
+     * @param libName 库名称
          * @param filePath 输出文件路径
-     * @param appendMode 是否使用追加模式（默�?true�?
+     * @param appendMode 是否使用追加模式（默认true）
          * @param updateMode
-     * 是否使用更新模式（默�?false）。如果为 true，则替换已存在的符号
+     * 是否使用更新模式（默false）。如果为 true，则替换已存在的符号
      * @return bool 是否成功
      */
     bool exportSymbolLibrary(const QList<SymbolData>& symbols,
@@ -59,9 +59,9 @@ public:
 
 private:
     /**
-     * @brief 生成 KiCad 符号�?
+     * @brief 生成 KiCad 符号
          *
-     * @param libName 库名�?
+     * @param libName 库名称
          * @return QString 头部文本
      */
     QString generateHeader(const QString& libName) const;
@@ -70,7 +70,7 @@ private:
      * @brief 生成 KiCad 符号内容
      *
      * @param symbolData 符号数据
-     * @param libName 库名称（用于 Footprint 前缀�?
+     * @param libName 库名称（用于 Footprint 前缀
          * @return QString 符号内容
      */
     QString generateSymbolContent(const SymbolData& symbolData, const QString& libName) const;
@@ -79,7 +79,7 @@ private:
      * @brief 生成 KiCad 引脚
      *
      * @param pin 引脚数据
-     * @param bbox 边界�?
+     * @param bbox 边界
          * @return QString 引脚文本
      */
     QString generatePin(const SymbolPin& pin, const SymbolBBox& bbox) const;
@@ -93,10 +93,10 @@ private:
     QString generateRectangle(const SymbolRectangle& rect) const;
 
     /**
-     * @brief 生成 KiCad �?
+     * @brief 生成 KiCad 引脚
          *
-     * @param circle 圆数�?
-         * @return QString 圆文�?
+     * @param circle 圆数
+         * @return QString 圆文
          */
     QString generateCircle(const SymbolCircle& circle) const;
 
@@ -117,18 +117,18 @@ private:
     QString generateEllipse(const SymbolEllipse& ellipse) const;
 
     /**
-     * @brief 生成 KiCad 多边�?
+     * @brief 生成 KiCad 多边
          *
-     * @param polygon 多边形数�?
-         * @return QString 多边形文�?
+     * @param polygon 多边形数
+         * @return QString 多边形文
          */
     QString generatePolygon(const SymbolPolygon& polygon) const;
 
     /**
-     * @brief 生成 KiCad 多段�?
+     * @brief 生成 KiCad 多段
          *
-     * @param polyline 多段线数�?
-         * @return QString 多段线文�?
+     * @param polyline 多段线数
+         * @return QString 多段线文
          */
     QString generatePolyline(const SymbolPolyline& polyline) const;
 
@@ -154,10 +154,10 @@ private:
      * @param symbolData 符号数据
      * @param part 部分数据
      * @param symbolName 符号名称
-     * @param libName 库名�?
+     * @param libName 库名称
          * @param centerX 符号中心X坐标
      * @param centerY 符号中心Y坐标
-     * @return QString 子符号文�?
+     * @return QString 子符号文
          */
     QString generateSubSymbol(const SymbolData& symbolData,
                               const SymbolPart& part,
@@ -171,10 +171,10 @@ private:
      *
      * @param symbolData 符号数据
      * @param symbolName 符号名称
-     * @param libName 库名�?
+     * @param libName 库名称
          * @param centerX 符号中心X坐标
      * @param centerY 符号中心Y坐标
-     * @return QString 子符号文�?
+     * @return QString 子符号文
          */
     QString generateSubSymbol(const SymbolData& symbolData,
                               const QString& symbolName,
@@ -185,16 +185,16 @@ private:
     /**
      * @brief 将像素转换为 mil
      *
-     * @param px 像素�?
-         * @return double mil �?
+     * @param px 像素
+         * @return double mil 值
          */
     double pxToMil(double px) const;
 
     /**
      * @brief 将像素转换为毫米
      *
-     * @param px 像素�?
-         * @return double 毫米�?
+     * @param px 像素
+         * @return double 毫米
          */
     double pxToMm(double px) const;
 

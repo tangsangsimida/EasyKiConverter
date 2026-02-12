@@ -115,6 +115,7 @@ Follow Qt coding standards:
 - Use smart pointers (QSharedPointer, QScopedPointer) for resource management
 - Use Qt's signal-slot mechanism for object communication
 - Follow RAII principles
+- **File Encoding**: All source files (`.cpp`, `.h`, `.qml`, `CMakeLists.txt`, etc.) MUST use **UTF-8 (without BOM)** encoding. Encodings like UTF-8 with BOM or GBK are strictly prohibited.
 
 ### QML Coding Standards
 

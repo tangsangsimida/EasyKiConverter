@@ -67,7 +67,7 @@ public:
         return m_status;
     }
 
-    // Setter 方法（标记为 Q_INVOKABLE 以便�?QML 中调用）
+    // Setter 方法（标记为 Q_INVOKABLE 以便QML 中调用）
     Q_INVOKABLE void setOutputPath(const QString& path);
     Q_INVOKABLE void setLibName(const QString& name);
     Q_INVOKABLE void setExportSymbol(bool enabled);

@@ -1,4 +1,4 @@
-﻿#include "ExporterFootprint.h"
+#include "ExporterFootprint.h"
 
 #include "core/utils/GeometryUtils.h"
 

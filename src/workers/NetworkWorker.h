@@ -1,4 +1,4 @@
-﻿#ifndef NETWORKWORKER_H
+#ifndef NETWORKWORKER_H
 #define NETWORKWORKER_H
 
 #include <QJsonObject>
@@ -26,11 +26,11 @@ public:
     enum class TaskType { FetchComponentInfo, FetchCadData, Fetch3DModelObj, Fetch3DModelMtl };
 
     /**
-     * @brief 构造函�?
+     * @brief 构造函数
          * @param componentId 元件ID
      * @param taskType 任务类型
-     * @param uuid UUID（用�?D模型下载�?
-         * @param parent 父对�?
+     * @param uuid UUID（用于3D模型下载）
+         * @param parent 父对象
          */
     explicit NetworkWorker(const QString& componentId,
                            TaskType taskType,
@@ -80,7 +80,7 @@ signals:
     /**
      * @brief 请求进度信号
      * @param componentId 元件ID
-     * @param progress 进度�?-100�?
+     * @param progress 进度（0-100）
          */
     void requestProgress(const QString& componentId, int progress);
 
@@ -111,7 +111,7 @@ private:
 
     /**
      * @brief 解压gzip数据
-     * @param compressedData 压缩的数�?
+     * @param compressedData 压缩的数据
          * @return QByteArray 解压后的数据
      */
     QByteArray decompressGzip(const QByteArray& compressedData);

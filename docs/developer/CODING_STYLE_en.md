@@ -100,6 +100,13 @@ This guide is primarily based on the [Qt Coding Style](https://wiki.qt.io/Qt_Cod
 *   Use a space between a keyword (`if`, `for`, `while`) and the following parenthesis `(`.
 *   Do **not** use a space between a function name and its argument list's parenthesis `(`.
 
+### 2.5. File Encoding
+
+*   **All source files** (`.cpp`, `.h`, `.qml`, `CMakeLists.txt`, etc.) MUST use **UTF-8 (without BOM)** encoding.
+*   **Strictly avoid** UTF-8 with BOM or other encodings (e.g., GBK) to ensure that comments and string literals are displayed correctly across different platforms.
+*   **Comment Language**: While technical terms should remain in English, descriptive comments in Chinese (Simplified) are allowed and encouraged for internal development efficiency, provided the file is saved as pure UTF-8.
+*   **Compiler Compatibility**: The project's `CMakeLists.txt` is configured with the `/utf-8` flag for MSVC to ensure correct parsing of No-BOM UTF-8 files on Windows.
+
 ## 3. Comments
 
 *   Prefer self-documenting code. Add comments only when the intent of the code is not obvious.
