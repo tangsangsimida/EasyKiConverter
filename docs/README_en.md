@@ -29,6 +29,7 @@ These documents help other developers (or your future self) understand the proje
 - [贡献指南](developer/CONTRIBUTING.md) - 贡献指南
 - [Architecture](developer/ARCHITECTURE_en.md) - Project architecture design
 - [架构文档](developer/ARCHITECTURE.md) - 架构文档
+- [Testing Guide](developer/TESTING_GUIDE_en.md) - Testing architecture & Mocking strategy
 
 ### For Project & Strategy (project/)
 
@@ -56,7 +57,8 @@ All documents are available in both Chinese and English:
 
 1. Read [Build Guide](developer/BUILD_en.md) to learn how to build the project
 2. Review [Architecture](developer/ARCHITECTURE_en.md) to understand the project architecture
-3. Read [Contributing Guide](developer/CONTRIBUTING_en.md) to learn how to contribute code
+3. Read [Testing Guide](developer/TESTING_GUIDE_en.md) for testing standards and Mock implementation
+4. Read [Contributing Guide](developer/CONTRIBUTING_en.md) to learn how to contribute code
 
 ### If You Want to Understand Project Planning
 

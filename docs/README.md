@@ -29,6 +29,7 @@
 - [贡献指南 (英文)](developer/CONTRIBUTING_en.md) - Contributing Guide
 - [架构文档](developer/ARCHITECTURE.md) - 项目架构设计
 - [架构文档 (英文)](developer/ARCHITECTURE_en.md) - Architecture
+- [测试开发指南](developer/TESTING_GUIDE.md) - 测试架构与 Mock 策略
 
 ### 面向项目决策 (project/)
 
@@ -63,7 +64,8 @@
 
 1. 阅读 [构建指南](developer/BUILD.md) 了解如何构建项目
 2. 查看 [架构文档](developer/ARCHITECTURE.md) 理解项目架构
-3. 阅读 [贡献指南](developer/CONTRIBUTING.md) 了解如何贡献代码
+3. 阅读 [测试开发指南](developer/TESTING_GUIDE.md) 了解测试规范与 Mock 编写
+4. 阅读 [贡献指南](developer/CONTRIBUTING.md) 了解如何贡献代码
 
 ### 如果您想了解项目规划
 

@@ -150,6 +150,16 @@ FetchContent_MakeAvailable(QXlsx)
 # 添加源码模块（包含所有子模块的 CMakeLists.txt）
 add_subdirectory(src)
 
+# 添加测试模块（可选构建）
+option(EASYKICONVERTER_BUILD_TESTS "Build tests for EasyKiConverter" OFF)
+if(EASYKICONVERTER_BUILD_TESTS)
+    message(STATUS "Tests build is ENABLED")
+    enable_testing()
+    add_subdirectory(tests)
+else()
+    message(STATUS "Tests build is DISABLED (default)")
+endif()
+
 # QML 文件列表
 set(QML_FILES
     src/ui/qml/Main.qml
