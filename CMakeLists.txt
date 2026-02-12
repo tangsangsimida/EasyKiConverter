@@ -72,6 +72,18 @@ else()
     message(STATUS "Symbol and footprint debug export is DISABLED")
 endif()
 
+# 覆盖率支持
+option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
+if(ENABLE_COVERAGE)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        message(STATUS "Coverage reporting is ENABLED")
+        add_compile_options(--coverage)
+        add_link_options(--coverage)
+    else()
+        message(WARNING "Coverage is only supported for GCC/MinGW")
+    endif()
+endif()
+
 # CI 环境检测
 if(DEFINED ENV{CI})
     message(STATUS "Running in CI environment")

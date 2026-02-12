@@ -59,11 +59,17 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DEASYKICONVERTER_BUILD_TESTS=ON \
             -DCI=ON
 
       - name: 'Build'
         run: |
           cmake --build build --config $BUILD_TYPE --parallel 16
+
+      - name: 'Run Tests'
+        run: |
+          ctest --test-dir build -C $BUILD_TYPE --output-on-failure --no-tests=error
+
 
   windows-build:
     name: 'Build Windows'
@@ -114,12 +120,17 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
+            -DEASYKICONVERTER_BUILD_TESTS=ON `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
             -DCI=ON
 
       - name: 'Build'
         run: |
           cmake --build build --config $env:BUILD_TYPE --parallel 16
+
+      - name: 'Run Tests'
+        run: |
+          ctest --test-dir build -C $env:BUILD_TYPE --output-on-failure --no-tests=error
 
   macos-build:
     name: 'Build macOS'
@@ -156,8 +167,14 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DEASYKICONVERTER_BUILD_TESTS=ON \
             -DCI=ON
 
       - name: 'Build'
         run: |
           cmake --build build --config $BUILD_TYPE --parallel 4
+
+      - name: 'Run Tests'
+        run: |
+          ctest --test-dir build -C $BUILD_TYPE --output-on-failure --no-tests=error
+
