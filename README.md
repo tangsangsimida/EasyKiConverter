@@ -68,7 +68,9 @@
 
 ## 系统架构
 
-#### 运行流程图
+EasyKiConverter 采用现代化的 MVVM 架构设计，实现了清晰的分层结构和高效的并行处理。
+
+![系统架构图](docs/diagrams/EasyKiConverter_Architecture.svg)
 
 ![项目运行流程图](docs/diagrams/EasyKiConverter_Workflow.svg)
 
