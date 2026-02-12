@@ -210,56 +210,55 @@ bool NetworkWorker::executeRequest(QNetworkAccessManager& manager,
         // 连接信号
         QObject::connect(
             reply, &QNetworkReply::downloadProgress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
-                if (bytesTotal > 0) {
-                    int progress = static_cast<int>((static_cast<double>(bytesReceived) / bytesTotal) * 100);
-                    progress = qBound(0, progress, 100);
-                    emit requestProgress(m_componentId, progress);
-                }
+            if (bytesTotal > 0) {
+                int progress = static_cast<int>((static_cast<double>(bytesReceived) / bytesTotal) * 100);
+                progress = qBound(0, progress, 100);
+                emit requestProgress(m_componentId, progress);
+            }
             }
             emit requestProgress(m_componentId, progress);
-        }
-    });
-
-        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        QObject::connect(&timeoutTimer, &QTimer::timeout, [&]() {
-            if (reply && reply->isRunning()) {
-                reply->abort();
-            }
-            loop.quit();
-        });
-
-        timeoutTimer.start(timeoutMs);
-        loop.exec();
-
-        // 清理跟踪
-        {
-            QMutexLocker locker(&m_mutex);
-            m_currentReply.clear();
-        }
-
-        // 检查是否被中断
-        if (reply.isNull()) {
-            errorMsg = "Request aborted";
-            qWarning() << "NetworkWorker: Request aborted for:" << m_componentId;
-            return false;  // 主动中断不重试
-        }
-
-        if (reply->error() == QNetworkReply::NoError) {
-            outData = reply->readAll();
-            reply->deleteLater();
-            return true;
-        }
     }
+});
 
-        // 超时或网络错误，继续重试
-        errorMsg =
-            QString("Network error: %1 (attempt %2/%3)").arg(reply->errorString()).arg(retry + 1).arg(maxRetries + 1);
-        qWarning() << "NetworkWorker:" << errorMsg << "for:" << m_componentId;
-
-        reply->deleteLater();
+QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+QObject::connect(&timeoutTimer, &QTimer::timeout, [&]() {
+    if (reply && reply->isRunning()) {
+        reply->abort();
     }
+    loop.quit();
+});
 
-    return false;
+timeoutTimer.start(timeoutMs);
+loop.exec();
+
+// 清理跟踪
+{
+    QMutexLocker locker(&m_mutex);
+    m_currentReply.clear();
+}
+
+// 检查是否被中断
+if (reply.isNull()) {
+    errorMsg = "Request aborted";
+    qWarning() << "NetworkWorker: Request aborted for:" << m_componentId;
+    return false;  // 主动中断不重试
+}
+
+if (reply->error() == QNetworkReply::NoError) {
+    outData = reply->readAll();
+    reply->deleteLater();
+    return true;
+}
+}
+
+// 超时或网络错误，继续重试
+errorMsg = QString("Network error: %1 (attempt %2/%3)").arg(reply->errorString()).arg(retry + 1).arg(maxRetries + 1);
+qWarning() << "NetworkWorker:" << errorMsg << "for:" << m_componentId;
+
+reply->deleteLater();
+}
+
+return false;
 }
 
 void NetworkWorker::abort() {
