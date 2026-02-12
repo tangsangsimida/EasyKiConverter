@@ -48,9 +48,6 @@ struct FootprintInfo {
 
     // 对象可见
     QString objects;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 边界====================
@@ -60,9 +57,6 @@ struct FootprintBBox {
     double y;
     double width;
     double height;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 焊盘 ====================
@@ -84,9 +78,6 @@ struct FootprintPad {
     QString holePoint;
     bool isPlated;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 走线 ====================
@@ -98,9 +89,6 @@ struct FootprintTrack {
     QString points;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 圆弧 ====================
@@ -111,9 +99,6 @@ struct FootprintHole {
     double radius;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 圆弧 ====================
@@ -126,9 +111,6 @@ struct FootprintCircle {
     int layerId;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 矩形 ====================
@@ -142,9 +124,6 @@ struct FootprintRectangle {
     QString id;
     int layerId;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 圆弧 ====================
@@ -157,9 +136,6 @@ struct FootprintArc {
     QString helperDots;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 文本 ====================
@@ -179,9 +155,6 @@ struct FootprintText {
     bool isDisplayed;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 实体填充区域 ====================
@@ -195,9 +168,6 @@ struct FootprintSolidRegion {
     QString id;         // 唯一标识
     bool isKeepOut;     // 是否为禁止布线区
     bool isLocked;      // 是否锁定
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 外形轮廓 ====================
@@ -210,9 +180,6 @@ struct FootprintOutline {
     double strokeWidth;  // 线宽
     QString id;          // 唯一标识
     bool isLocked;       // 是否锁定
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 层定位====================
@@ -226,9 +193,6 @@ struct LayerDefinition {
     bool isVisible;               // 是否可见
     bool isUsedForManufacturing;  // 是否用于制
     double expansion;             // 扩展值（如阻焊层扩展
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 对象可见性配====================
@@ -239,9 +203,6 @@ struct ObjectVisibility {
     QString objectType;  // 对象类型（Pad, Track, Text等）
     bool isEnabled;      // 是否启用
     bool isVisible;      // 是否可见
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 封装数据 ====================

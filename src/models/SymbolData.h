@@ -70,9 +70,6 @@ struct SymbolInfo {
     QString supplier;
     QString manufacturerPart;
     QString jlcpcbPartClass;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 边界====================
@@ -85,9 +82,6 @@ struct SymbolBBox {
     double y;
     double width;
     double height;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 引脚相关数据结构 ====================
@@ -104,9 +98,6 @@ struct SymbolPinSettings {
     int rotation;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -115,9 +106,6 @@ struct SymbolPinSettings {
 struct SymbolPinDot {
     double dotX;
     double dotY;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -126,9 +114,6 @@ struct SymbolPinDot {
 struct SymbolPinPath {
     QString path;
     QString color;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -143,9 +128,6 @@ struct SymbolPinName {
     QString textAnchor;
     QString font;
     double fontSize;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -155,9 +137,6 @@ struct SymbolPinDotBis {
     bool isDisplayed;
     double circleX;
     double circleY;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -166,9 +145,6 @@ struct SymbolPinDotBis {
 struct SymbolPinClock {
     bool isDisplayed;
     QString path;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -181,9 +157,6 @@ struct SymbolPin {
     SymbolPinName name;
     SymbolPinDotBis dot;
     SymbolPinClock clock;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 图形元素 ====================
@@ -204,9 +177,6 @@ struct SymbolRectangle {
     QString fillColor;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -222,9 +192,6 @@ struct SymbolCircle {
     bool fillColor;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -239,9 +206,6 @@ struct SymbolArc {
     bool fillColor;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -258,9 +222,6 @@ struct SymbolEllipse {
     bool fillColor;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -274,9 +235,6 @@ struct SymbolPolyline {
     bool fillColor;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -290,9 +248,6 @@ struct SymbolPolygon {
     bool fillColor;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -306,9 +261,6 @@ struct SymbolPath {
     bool fillColor;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 /**
@@ -331,9 +283,6 @@ struct SymbolText {
     QString anchor;
     QString id;
     bool isLocked;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 符号部分 ====================
@@ -354,9 +303,6 @@ struct SymbolPart {
     QList<SymbolPolygon> polygons;
     QList<SymbolPath> paths;
     QList<SymbolText> texts;
-
-    QJsonObject toJson() const;
-    bool fromJson(const QJsonObject& json);
 };
 
 // ==================== 符号数据 ====================

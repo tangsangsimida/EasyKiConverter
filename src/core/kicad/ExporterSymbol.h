@@ -1,6 +1,7 @@
 #ifndef EXPORTERSYMBOL_H
 #define EXPORTERSYMBOL_H
 
+#include "SymbolGraphicsGenerator.h"
 #include "models/SymbolData.h"
 
 #include <QJsonObject>
@@ -76,79 +77,6 @@ private:
     QString generateSymbolContent(const SymbolData& symbolData, const QString& libName) const;
 
     /**
-     * @brief 生成 KiCad 引脚
-     *
-     * @param pin 引脚数据
-     * @param bbox 边界
-         * @return QString 引脚文本
-     */
-    QString generatePin(const SymbolPin& pin, const SymbolBBox& bbox) const;
-
-    /**
-     * @brief 生成 KiCad 矩形
-     *
-     * @param rect 矩形数据
-     * @return QString 矩形文本
-     */
-    QString generateRectangle(const SymbolRectangle& rect) const;
-
-    /**
-     * @brief 生成 KiCad 引脚
-         *
-     * @param circle 圆数
-         * @return QString 圆文
-         */
-    QString generateCircle(const SymbolCircle& circle) const;
-
-    /**
-     * @brief 生成 KiCad 圆弧
-     *
-     * @param arc 圆弧数据
-     * @return QString 圆弧文本
-     */
-    QString generateArc(const SymbolArc& arc) const;
-
-    /**
-     * @brief 生成 KiCad 椭圆
-     *
-     * @param ellipse 椭圆数据
-     * @return QString 椭圆文本
-     */
-    QString generateEllipse(const SymbolEllipse& ellipse) const;
-
-    /**
-     * @brief 生成 KiCad 多边
-         *
-     * @param polygon 多边形数
-         * @return QString 多边形文
-         */
-    QString generatePolygon(const SymbolPolygon& polygon) const;
-
-    /**
-     * @brief 生成 KiCad 多段
-         *
-     * @param polyline 多段线数
-         * @return QString 多段线文
-         */
-    QString generatePolyline(const SymbolPolyline& polyline) const;
-
-    /**
-     * @brief 生成 KiCad 路径
-     *
-     * @param path 路径数据
-     * @return QString 路径文本
-     */
-    QString generatePath(const SymbolPath& path) const;
-
-    /**
-     * @brief 生成 KiCad 文本
-     *
-     * @param text 文本数据
-     * @return QString 文本文本
-     */
-    QString generateText(const SymbolText& text) const;
-
-    /**
      * @brief 生成 KiCad 子符号（用于多部分符号）
      *
      * @param symbolData 符号数据
@@ -182,56 +110,8 @@ private:
                               double centerX,
                               double centerY) const;
 
-    /**
-     * @brief 将像素转换为 mil
-     *
-     * @param px 像素
-         * @return double mil 值
-         */
-    double pxToMil(double px) const;
-
-    /**
-     * @brief 将像素转换为毫米
-     *
-     * @param px 像素
-         * @return double 毫米
-         */
-    double pxToMm(double px) const;
-
-    /**
-     * @brief 将引脚类型转换为 KiCad 引脚类型
-     *
-     * @param pinType EasyEDA 引脚类型
-     * @return QString KiCad 引脚类型
-     */
-    QString pinTypeToKicad(PinType pinType) const;
-
-    /**
-     * @brief 将引脚样式转换为 KiCad 引脚样式
-     *
-     * @param pinStyle EasyEDA 引脚样式
-     * @return QString KiCad 引脚样式
-     */
-    QString pinStyleToKicad(PinStyle pinStyle) const;
-
-    /**
-     * @brief 将引脚方向转换为 KiCad 引脚方向
-     *
-     * @param rotation 旋转角度
-     * @return QString KiCad 引脚方向
-     */
-    QString rotationToKicadOrientation(int rotation) const;
-
-    /**
-     * @brief 计算子部分的边界框
-     *
-     * @param part 子部分数据
-     * @return SymbolBBox 子部分的边界框
-     */
-    SymbolBBox calculatePartBBox(const SymbolPart& part) const;
-
 private:
-    mutable SymbolBBox m_currentBBox;  // 当前处理的边界框
+    mutable SymbolGraphicsGenerator m_graphicsGenerator;  // 图形元素生成器
 };
 
 }  // namespace EasyKiConverter
