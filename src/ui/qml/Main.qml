@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+
 ApplicationWindow {
     id: appWindow
     width: Screen.desktopAvailableWidth * 0.8
@@ -15,8 +16,8 @@ ApplicationWindow {
 
     // Move to center on startup to ensure window manager registers the position correctly
     Component.onCompleted: {
-        x = (Screen.width - width) / 2
-        y = (Screen.height - height) / 2
+        x = (Screen.width - width) / 2;
+        y = (Screen.height - height) / 2;
     }
 
     // 加载主窗口内容

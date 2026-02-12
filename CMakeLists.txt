@@ -26,6 +26,9 @@ endif()
 
 project(EasyKiconverter_Cpp_Version VERSION ${PROJECT_VERSION_SANITIZED} LANGUAGES CXX)
 
+# 生成 compile_commands.json 用于 VS Code IntelliSense
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 
 # 显式设置版本号变量，确保 configure_file 能正确替换
 # 如果补丁号未定义或为空，默认设置为 0
@@ -263,6 +266,3 @@ install(TARGETS appEasyKiconverter_Cpp_Version
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "Qt version: ${Qt6_VERSION}")
-
-# 生成 compile_commands.json 用于 VS Code IntelliSense
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

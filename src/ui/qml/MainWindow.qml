@@ -552,7 +552,7 @@ Item {
                                     }
                                 }
                             }
-                            onClicked: (mouse) => {
+                            onClicked: mouse => {
                                 const projectUrl = "https://github.com/tangsangsimida/EasyKiConverter_QT";
                                 if (mouse.button === Qt.LeftButton) {
                                     Qt.openUrlExternally(projectUrl);

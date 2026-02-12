@@ -57,29 +57,25 @@ void ComponentService::fetchComponentData(const QString& componentId, bool fetch
 void ComponentService::fetchComponentDataInternal(const QString& componentId, bool fetch3DModel) {
     qDebug() << "Fetching component data (internal) for:" << componentId << "Fetch 3D:" << fetch3DModel;
 
-    // 暂时存储当前请求的元件ID和3D模型标志
-    m_currentComponentId = componentId;
+    // 确保 componentId 格式统一（大写）
+    QString normalizedId = componentId.toUpper();
+    m_currentComponentId = normalizedId;
 
-    // 初始化或更新 m_fetchingComponents 中的条目，确保存储 fetch3DModel 配置
-    FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
-    fetchingComponent.componentId = componentId;
+    // 获取或创建 FetchingComponent 条目
+    FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
+    fetchingComponent.componentId = normalizedId;
     fetchingComponent.fetch3DModel = fetch3DModel;
-    // 重置其他标志，如果是新请求
-    if (!m_parallelFetching) {
-        // 非并行模式下也利用这个结构来存储配置，保持一致性
-        // 但注意并行模式下 m_fetchingComponents 用于追踪进度，非并行模式下可能只用于存储 fetch3DModel
-        // 为了安全起见，非并行模式下我们不重置 has... 标志，或者由调用者负责清理
-        // 简单起见，这里只更新 fetch3DModel
-    } else {
-        // 并行模式下，这些已经在 fetchMultipleComponentsData 中初始化了，但为了保险再次确认
-        fetchingComponent.hasComponentInfo = false;
-        fetchingComponent.hasCadData = false;
-        fetchingComponent.hasObjData = false;
-        fetchingComponent.hasStepData = false;
-    }
+
+    // 初始化/重置状态标志
+    fetchingComponent.hasComponentInfo = false;
+    fetchingComponent.hasCadData = false;
+    fetchingComponent.hasObjData = false;
+    fetchingComponent.hasStepData = false;
+    fetchingComponent.errorMessage.clear();
 
     // 首先获取 CAD 数据（包含符号和封装信息）
-    m_api->fetchCadData(componentId);
+    // CAD 数据是后续流程的基础
+    m_api->fetchCadData(normalizedId);
 }
 
 void ComponentService::fetchLcscPreviewImage(const QString& componentId) {
