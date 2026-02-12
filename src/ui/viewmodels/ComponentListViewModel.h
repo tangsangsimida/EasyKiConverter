@@ -6,6 +6,7 @@
 
 #include <QAbstractListModel>
 #include <QPointer>
+#include <QSet>
 #include <QStringList>
 
 namespace EasyKiConverter {
@@ -83,6 +84,15 @@ public slots:
      * @brief 清空元件列表
      */
     Q_INVOKABLE void clearComponentList();
+
+    /**
+     * @brief 批量添加元器件效率更高
+     *
+     * 将多个元器件一次性插入模型，避免 N 次 beginInsertRows/endInsertRows 导致的 N 次 UI 重建
+     *
+     * @param componentIds 元件ID列表
+     */
+    Q_INVOKABLE void addComponentsBatch(const QStringList& componentIds);
 
     /**
      * @brief 从剪贴板粘贴元器件编号
@@ -216,6 +226,7 @@ private:
 private:
     ComponentService* m_service;
     QList<ComponentListItemData*> m_componentList;
+    QSet<QString> m_componentIdIndex;  // 快速查重集合，O(1) 查找
     QString m_outputPath;
     QString m_bomFilePath;
     QString m_bomResult;

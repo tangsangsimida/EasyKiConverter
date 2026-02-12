@@ -330,9 +330,9 @@ private:
     bool m_parallelFetching;                               // 是否正在并行获取
 
     // 请求队列控制
-    QQueue<QPair<QString, bool>> m_requestQueue;    // 请求队列 (ID, fetch3DModel)
-    int m_activeRequests;                           // 当前活动请求数
-    static const int MAX_CONCURRENT_REQUESTS = 20;  // 最大并发请求数
+    QQueue<QPair<QString, bool>> m_requestQueue;   // 请求队列 (ID, fetch3DModel)
+    int m_activeRequests;                          // 当前活动请求数
+    static const int MAX_CONCURRENT_REQUESTS = 5;  // 最大并发请求数（降低以避免批量添加时回调密集卡UI）
 
     // 图片请求队列控制
     QQueue<QString> m_imageRequestQueue;                  // 图片请求队列

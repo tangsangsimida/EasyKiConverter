@@ -80,6 +80,7 @@ private:
     QString m_name;
     QString m_package;
     QImage m_thumbnail;
+    mutable QString m_thumbnailBase64Cache;  // 缓存 base64 编码结果，避免重复计算
     bool m_isValid;
     bool m_isFetching;
     QString m_errorMessage;
