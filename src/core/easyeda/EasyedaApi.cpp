@@ -181,12 +181,14 @@ void EasyedaApi::handleBinaryDataFetched(INetworkAdapter* adapter, const QString
 }
 
 void EasyedaApi::cancelRequest() {
-    if (m_networkUtils) m_networkUtils->cancelRequest();
+    if (m_networkUtils)
+        m_networkUtils->cancelRequest();
     m_isFetching = false;
 
     QMutexLocker locker(&m_requestsMutex);
     for (auto& req : m_activeRequests) {
-        if (req) req->cancelRequest();
+        if (req)
+            req->cancelRequest();
     }
     m_activeRequests.clear();
 }
@@ -221,18 +223,26 @@ void EasyedaApi::handleNetworkError(const QString& errorMessage) {
 }
 
 void EasyedaApi::resetRequestState() {
-    if (m_networkUtils) m_networkUtils->setExpectBinaryData(false);
+    if (m_networkUtils)
+        m_networkUtils->setExpectBinaryData(false);
 }
 
-QString EasyedaApi::buildComponentApiUrl(const QString& lcscId) const { return API_ENDPOINT.arg(lcscId); }
-QString EasyedaApi::build3DModelObjUrl(const QString& uuid) const { return ENDPOINT_3D_MODEL.arg(uuid); }
-QString EasyedaApi::build3DModelStepUrl(const QString& uuid) const { return ENDPOINT_3D_MODEL_STEP.arg(uuid); }
+QString EasyedaApi::buildComponentApiUrl(const QString& lcscId) const {
+    return API_ENDPOINT.arg(lcscId);
+}
+QString EasyedaApi::build3DModelObjUrl(const QString& uuid) const {
+    return ENDPOINT_3D_MODEL.arg(uuid);
+}
+QString EasyedaApi::build3DModelStepUrl(const QString& uuid) const {
+    return ENDPOINT_3D_MODEL_STEP.arg(uuid);
+}
 
 bool EasyedaApi::validateLcscId(const QString& lcscId) const {
-    if (!lcscId.startsWith('C', Qt::CaseInsensitive)) return false;
+    if (!lcscId.startsWith('C', Qt::CaseInsensitive))
+        return false;
     bool ok;
     lcscId.mid(1).toInt(&ok);
     return ok;
 }
 
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter

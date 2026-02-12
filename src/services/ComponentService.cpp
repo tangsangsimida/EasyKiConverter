@@ -23,8 +23,7 @@
 
 namespace EasyKiConverter {
 
-ComponentService::ComponentService(QObject* parent)
-    : ComponentService(new EasyedaApi(this), parent) {}
+ComponentService::ComponentService(QObject* parent) : ComponentService(new EasyedaApi(this), parent) {}
 
 ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     : QObject(parent)
@@ -37,7 +36,6 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     , m_parallelCompletedCount(0)
     , m_parallelFetching(false)
     , m_imageService(new LcscImageService(this)) {
-
     // 如果 api 没有父对象，则将其设为本服务的子对象以管理生命周期
     if (m_api && !m_api->parent()) {
         m_api->setParent(this);
