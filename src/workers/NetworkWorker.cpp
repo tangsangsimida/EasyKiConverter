@@ -215,7 +215,10 @@ bool NetworkWorker::executeRequest(QNetworkAccessManager& manager,
                     progress = qBound(0, progress, 100);
                     emit requestProgress(m_componentId, progress);
                 }
-            });
+            }
+            emit requestProgress(m_componentId, progress);
+        }
+    });
 
         QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
         QObject::connect(&timeoutTimer, &QTimer::timeout, [&]() {
@@ -246,6 +249,7 @@ bool NetworkWorker::executeRequest(QNetworkAccessManager& manager,
             reply->deleteLater();
             return true;
         }
+    }
 
         // 超时或网络错误，继续重试
         errorMsg =
