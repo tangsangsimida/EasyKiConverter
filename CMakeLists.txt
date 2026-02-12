@@ -149,7 +149,7 @@ add_subdirectory(src)
 
 # QML 文件列表
 set(QML_FILES
-    Main.qml
+    src/ui/qml/Main.qml
     src/ui/qml/MainWindow.qml
     src/ui/qml/components/Card.qml
     src/ui/qml/components/ComponentListItem.qml
@@ -169,7 +169,7 @@ endif()
 
 # 创建可执行文件
 qt_add_executable(appEasyKiconverter_Cpp_Version
-    main.cpp
+    src/main.cpp
 )
 
 # 添加 Windows 资源文件

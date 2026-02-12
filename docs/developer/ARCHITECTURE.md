@@ -16,6 +16,7 @@ EasyKiConverter 采用 MVVM (Model-View-ViewModel) 架构模式，提供清晰�
 ┌─────────────────────────────────────────┐
 │              View Layer                  │
 │         (QML Components)                 │
+│  - src/ui/qml/Main.qml                  │
 │  - MainWindow.qml                        │
 │  - Components (Card, Button, etc.)       │
 │  - Styles (AppStyle)                     │
@@ -528,7 +529,8 @@ ExportServicePipeline.executeExportPipelineWithStages()
 
 ```
 EasyKiConverter_QT/
-├── src/
+├── src/                        # 源代码
+│   ├── main.cpp                # 应用程序入口
 │   ├── core/                   # 核心转换引擎
 │   │   ├── easyeda/            # EasyEDA 相关
 │   │   ├── kicad/              # KiCad 相关
@@ -536,12 +538,15 @@ EasyKiConverter_QT/
 │   ├── models/                 # 数据模型
 │   ├── services/               # 服务层
 │   ├── ui/                     # UI 层
-│   │   ├── qml/                # QML 界面
+│   │   ├── qml/                # QML 界面 (包含 Main.qml)
 │   │   ├── viewmodels/         # 视图模型
 │   │   └── utils/              # UI 工具
 │   └── workers/                # 工作线程
+├── deploy/                     # 部署与打包 (Docker, Flatpak, nFPM)
 ├── docs/                       # 文档
-└── resources/                  # 资源文件
+├── resources/                  # 资源文件
+├── test_data/                  # 测试用例与临时数据
+└── tools/                      # 开发辅助脚本
 ```
 
 ## 扩展性

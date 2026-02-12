@@ -13,8 +13,8 @@
 
 ### 1.2. 文件名
 
-*   C++ 源文件和头文件使用大驼峰命名法（PascalCase），例如 `ExportServicePipeline.cpp` 和 `ExportServicePipeline.h`。
-*   QML 文件使用大驼峰命名法（PascalCase），例如 `MainWindow.qml`。
+*   C++ 源文件和头文件使用大驼峰命名法（PascalCase），例如 `ExportServicePipeline.cpp` 和 `ExportServicePipeline.h`。主入口文件为 `src/main.cpp`。
+*   QML 文件使用大驼峰命名法（PascalCase），例如 `MainWindow.qml`。主入口文件为 `src/ui/qml/Main.qml`。
 *   测试文件通常使用下划线命名法（snake_case），例如 `test_component_service.cpp`。
 
 ### 1.3. 类、结构体和命名空间

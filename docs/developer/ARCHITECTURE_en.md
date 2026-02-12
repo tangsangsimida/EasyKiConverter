@@ -16,6 +16,7 @@ The project uses the MVVM architecture pattern, dividing the application into fo
 ┌─────────────────────────────────────────┐
 │              View Layer                  │
 │         (QML Components)                 │
+│  - src/ui/qml/Main.qml                  │
 │  - MainWindow.qml                        │
 │  - Components (Card, Button, etc.)       │
 │  - Styles (AppStyle)                     │
@@ -285,7 +286,8 @@ Use Qt signal-slot mechanism to implement the observer pattern, achieving loose 
 
 ```
 EasyKiConverter_QT/
-├── src/
+├── src/                        # Source code
+│   ├── main.cpp                # Application entry point
 │   ├── core/                   # Core conversion engine
 │   │   ├── easyeda/            # EasyEDA related
 │   │   ├── kicad/              # KiCad related
@@ -293,12 +295,15 @@ EasyKiConverter_QT/
 │   ├── models/                 # Data models
 │   ├── services/               # Service layer
 │   ├── ui/                     # UI layer
-│   │   ├── qml/                # QML interface
+│   │   ├── qml/                # QML interface (contains Main.qml)
 │   │   ├── viewmodels/         # View models
 │   │   └── utils/              # UI utilities
 │   └── workers/                # Worker threads
+├── deploy/                     # Deployment & Packaging (Docker, Flatpak, nFPM)
 ├── docs/                       # Documentation
-└── resources/                  # Resource files
+├── resources/                  # Resource files
+├── test_data/                  # Test cases & Temporary data
+└── tools/                      # Development scripts
 ```
 
 ## Extensibility

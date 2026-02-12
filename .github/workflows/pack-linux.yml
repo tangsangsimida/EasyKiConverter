@@ -67,11 +67,11 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
             -DVERSION_FROM_CI=${{ env.VERSION }}
-          
+
           cmake --build build --config RelWithDebInfo --parallel
           cmake --install build --prefix ${APPIMAGE_DST_PATH}/usr
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
-          
+
           # 配置元数据
           cat > ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop <<EOF
           [Desktop Entry]
@@ -116,7 +116,7 @@ jobs:
       - uses: actions/checkout@v4 # 需要 checkout 以便 linuxdeploy 某些插件工作正常
       - uses: ./.github/actions/get-version
         id: version
-      
+
       - name: Download AppDir
         uses: actions/download-artifact@v4
         with:
@@ -134,11 +134,11 @@ jobs:
             --executable ${{ env.PRODUCT }}.AppDir/usr/bin/EasyKiConverter \
             --desktop-file ${{ env.PRODUCT }}.AppDir/EasyKiConverter.desktop \
             --output appimage
-          
+
           # 重命名
           mv EasyKiConverter-*.AppImage \
              ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}.x86_64.AppImage
-          
+
           # Checksum
           sha256sum *.AppImage | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}.x86_64.AppImage.sha256sum
 
@@ -184,7 +184,7 @@ jobs:
       - name: Generate DEB
         run: |
           export VERSION="${{ steps.version.outputs.VERSION}}"
-          
+
           # 自动检测 AppDir 位置
           echo "=== Searching for AppDir ==="
           if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
@@ -216,11 +216,11 @@ jobs:
               fi
             fi
           fi
-          
+
           echo "=== APP_DIR = $APP_DIR ==="
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
-          
+
           # 准备脚本（创建所有必需的脚本文件）
           mkdir -p scripts
           echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
@@ -228,14 +228,14 @@ jobs:
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
-          sed "s|\${APP_DIR}|$APP_DIR|g" nfpm.yaml > nfpm_temp.yaml
+          sed "s|\${APP_DIR}|$APP_DIR|g" deploy/nfpm.yaml > nfpm_temp.yaml
 
           # 打包
           nfpm pkg --packager deb --target . --config nfpm_temp.yaml
 
           # 重命名
           find . -name "*.deb" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_amd64.deb \;
-          
+
           # Checksum
           sha256sum *.deb | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_amd64.deb.sha256sum
 
@@ -281,7 +281,7 @@ jobs:
       - name: Generate RPM
         run: |
           export VERSION="${{ steps.version.outputs.VERSION}}"
-          
+
           # 自动检测 AppDir 位置
           echo "=== Searching for AppDir ==="
           if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
@@ -313,11 +313,11 @@ jobs:
               fi
             fi
           fi
-          
+
           echo "=== APP_DIR = $APP_DIR ==="
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
-          
+
           # 准备脚本（创建所有必需的脚本文件）
           mkdir -p scripts
           echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
@@ -325,7 +325,7 @@ jobs:
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
-          sed "s|\${APP_DIR}|$APP_DIR|g" nfpm.yaml > nfpm_temp.yaml
+          sed "s|\${APP_DIR}|$APP_DIR|g" deploy/nfpm.yaml > nfpm_temp.yaml
 
           nfpm pkg --packager rpm --target . --config nfpm_temp.yaml
 
@@ -374,7 +374,7 @@ jobs:
       - name: Generate Arch Package
         run: |
           export VERSION="${{ steps.version.outputs.VERSION}}"
-          
+
           # 自动检测 AppDir 位置
           echo "=== Searching for AppDir ==="
           if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
@@ -406,11 +406,11 @@ jobs:
               fi
             fi
           fi
-          
+
           echo "=== APP_DIR = $APP_DIR ==="
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
-          
+
           # 准备脚本（创建所有必需的脚本文件）
           mkdir -p scripts
           echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
@@ -418,7 +418,7 @@ jobs:
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
-          sed "s|\${APP_DIR}|$APP_DIR|g" nfpm.yaml > nfpm_temp.yaml
+          sed "s|\${APP_DIR}|$APP_DIR|g" deploy/nfpm.yaml > nfpm_temp.yaml
 
           nfpm pkg --packager archlinux --target . --config nfpm_temp.yaml
 
@@ -452,86 +452,16 @@ jobs:
         id: version
       - run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
-      - name: Prepare Flatpak Source
-        run: |
-          # 将源代码复制到 flatpak 目录中，以便 flatpak-builder 能找到
-          # 使用 cp 命令代替 rsync（容器中可能没有 rsync）
-          mkdir -p flatpak
-          
-          # 复制所有文件和目录（排除不需要的）
-          for item in *; do
-            case "$item" in
-              .git|build|temp_project|test_date|demo|.github|snap|flatpak|nfpm.yaml|mkdocs.yml|AGENTS.md|GEMINI.md|*.md)
-                # 跳过这些文件/目录
-                ;;
-              *)
-                # 复制其他文件/目录
-                cp -r "$item" flatpak/
-                ;;
-            esac
-          done
-          
-          # 复制隐藏文件（如 .clang-format, .gitignore）
-          for hidden in .clang-format .gitignore; do
-            if [ -f "$hidden" ]; then
-              cp "$hidden" flatpak/
-            fi
-          done
-
-      - name: Debug Flatpak Source
-        run: |
-          echo "=== Listing flatpak directory ==="
-          ls -la flatpak/
-          echo "=== Checking for CMakeLists.txt ==="
-          if [ -f "flatpak/CMakeLists.txt" ]; then
-            echo "CMakeLists.txt found"
-            echo "=== First 30 lines of CMakeLists.txt ==="
-            head -30 flatpak/CMakeLists.txt
-          else
-            echo "ERROR: CMakeLists.txt not found!"
-            echo "=== All files in flatpak ==="
-            find flatpak -maxdepth 2 -type f
-          fi
-          echo "=== Checking for src directory ==="
-          if [ -d "flatpak/src" ]; then
-            echo "src directory found"
-            echo "=== Files in src ==="
-            ls -la flatpak/src/
-          else
-            echo "ERROR: src directory not found!"
-          fi
 
       - name: Build Flatpak
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: EasyKiConverter.flatpak
-          manifest-path: flatpak/com.tangsangsimida.EasyKiConverter.yml
+          manifest-path: deploy/flatpak/com.tangsangsimida.EasyKiConverter.yml
           cache-key: flatpak-builder-${{ github.sha }}
           upload-artifact: false
           verbose: true
 
-      - name: Check Flatpak Bundle Size
-        run: |
-          if [ -f "EasyKiConverter.flatpak" ]; then
-            SIZE=$(du -h EasyKiConverter.flatpak | cut -f1)
-            echo "Flatpak bundle size: $SIZE"
-            if [ "$SIZE" = "2.0M" ] || [ "$SIZE" = "2.1M" ]; then
-              echo "WARNING: Flatpak bundle is suspiciously small!"
-              echo "Listing contents of flatpak directory:"
-              find flatpak -type f -name "*.cpp" -o -name "*.h" | head -20
-              echo "Checking if CMakeLists.txt exists:"
-              if [ -f "flatpak/CMakeLists.txt" ]; then
-                echo "CMakeLists.txt found in flatpak directory"
-                head -20 flatpak/CMakeLists.txt
-              else
-                echo "ERROR: CMakeLists.txt not found in flatpak directory!"
-                ls -la flatpak/
-              fi
-            fi
-          else
-            echo "ERROR: EasyKiConverter.flatpak was not created!"
-            exit 1
-          fi
 
       - name: Rename & Checksum
         run: |
@@ -558,7 +488,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Download All Artifacts
         uses: actions/download-artifact@v4

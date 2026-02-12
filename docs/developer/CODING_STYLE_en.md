@@ -13,8 +13,8 @@ This guide is primarily based on the [Qt Coding Style](https://wiki.qt.io/Qt_Cod
 
 ### 1.2. File Names
 
-*   C++ source and header files should use PascalCase, e.g., `ExportServicePipeline.cpp` and `ExportServicePipeline.h`.
-*   QML files should use PascalCase, e.g., `MainWindow.qml`.
+*   C++ source and header files should use PascalCase, e.g., `ExportServicePipeline.cpp` and `ExportServicePipeline.h`. The main entry point is `src/main.cpp`.
+*   QML files should use PascalCase, e.g., `MainWindow.qml`. The main entry point is `src/ui/qml/Main.qml`.
 *   Test files usually use snake_case, e.g., `test_component_service.cpp`.
 
 ### 1.3. Classes, Structs, and Namespaces

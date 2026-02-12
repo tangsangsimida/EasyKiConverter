@@ -1,4 +1,4 @@
-﻿import QtQuick
+import QtQuick
 import QtQuick.Controls
 ApplicationWindow {
     id: appWindow
@@ -12,7 +12,7 @@ ApplicationWindow {
     title: "EasyKiConverter - 元器件转换工具"
     color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint
-    
+
     // Move to center on startup to ensure window manager registers the position correctly
     Component.onCompleted: {
         x = (Screen.width - width) / 2
