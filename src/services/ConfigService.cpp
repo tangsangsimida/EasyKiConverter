@@ -13,7 +13,7 @@ ConfigService* ConfigService::s_instance = nullptr;
 QMutex ConfigService::s_mutex;
 
 ConfigService::ConfigService(QObject* parent) : QObject(parent) {
-    // 初始化默认配�?
+    // 初始化默认配
     initializeDefaultConfig();
 }
 

@@ -1,6 +1,8 @@
-﻿# Services 模块
+# Services 模块
 
 add_library(EasyKiConverterServices STATIC
+    BomParser.cpp
+    LcscImageService.cpp
     ComponentService.cpp
     ExportService.cpp
     ExportService_Pipeline.cpp
@@ -12,7 +14,7 @@ add_library(EasyKiConverterServices STATIC
 target_include_directories(EasyKiConverterServices
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../..
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
 )
 
 target_link_libraries(EasyKiConverterServices

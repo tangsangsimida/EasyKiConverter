@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+      - 'V*'
   workflow_dispatch:
     inputs:
       create_release:
@@ -124,7 +125,7 @@ jobs:
           EOF
 
           # 使用 macdeployqt 部署 Qt 运行时库和插件
-          macdeployqt ${APP_NAME}.app -qmldir=src -verbose=1
+          macdeployqt ${APP_NAME}.app -qmldir=src/ui/qml -verbose=1
 
       - name: 'Create DMG'
         run: |

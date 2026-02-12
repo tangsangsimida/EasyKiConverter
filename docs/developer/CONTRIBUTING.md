@@ -74,6 +74,7 @@ git checkout -b feature/your-feature-name
 - 类和公共方法添加 Doxygen 风格注释
 - 复杂逻辑添加行内注释
 - 使用 `///` 或 `/** */` 格式的注释
+- **文件编码**: 所有文件必须使用 **UTF-8 (无 BOM)** 编码。严禁使用带有 BOM 的 UTF-8 或本地编码（如 GBK）。
 
 #### 架构要求
 

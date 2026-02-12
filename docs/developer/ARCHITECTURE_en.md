@@ -16,6 +16,7 @@ The project uses the MVVM architecture pattern, dividing the application into fo
 ┌─────────────────────────────────────────┐
 │              View Layer                  │
 │         (QML Components)                 │
+│  - src/ui/qml/Main.qml                  │
 │  - MainWindow.qml                        │
 │  - Components (Card, Button, etc.)       │
 │  - Styles (AppStyle)                     │
@@ -285,7 +286,8 @@ Use Qt signal-slot mechanism to implement the observer pattern, achieving loose 
 
 ```
 EasyKiConverter_QT/
-├── src/
+├── src/                        # Source code
+│   ├── main.cpp                # Application entry point
 │   ├── core/                   # Core conversion engine
 │   │   ├── easyeda/            # EasyEDA related
 │   │   ├── kicad/              # KiCad related
@@ -293,12 +295,15 @@ EasyKiConverter_QT/
 │   ├── models/                 # Data models
 │   ├── services/               # Service layer
 │   ├── ui/                     # UI layer
-│   │   ├── qml/                # QML interface
+│   │   ├── qml/                # QML interface (contains Main.qml)
 │   │   ├── viewmodels/         # View models
 │   │   └── utils/              # UI utilities
 │   └── workers/                # Worker threads
+├── deploy/                     # Deployment & Packaging (Docker, Flatpak, nFPM)
 ├── docs/                       # Documentation
-└── resources/                  # Resource files
+├── resources/                  # Resource files
+├── test_data/                  # Test cases & Temporary data
+└── tools/                      # Development scripts
 ```
 
 ## Extensibility
@@ -342,6 +347,17 @@ EasyKiConverter_QT/
 - Automatic retry mechanism
 - GZIP decompression
 - Connection pool management
+
+### Weak Network Resilience (v3.0.4 Analysis)
+
+The project has four independent network request implementations with inconsistent weak network resilience:
+
+- **`FetchWorker`** (pipeline batch export): Supports timeout (8-10s) and retry (3x), but does not retry after timeout
+- **`NetworkUtils`** (single component preview): Most complete weak network support with timeout (30s) + retry + incremental delays
+- **`NetworkWorker`** (legacy single fetch): No timeout or retry mechanism; may block permanently under weak network conditions
+- **`ComponentService`** (LCSC preview images): Supports timeout (15s) + retry with fallback mechanism
+
+For known issues and improvement directions, see the [Weak Network Analysis Report](../WEAK_NETWORK_ANALYSIS_en.md) and [ADR-007](../project/adr/007-weak-network-resilience-analysis_en.md).
 
 ## Security
 

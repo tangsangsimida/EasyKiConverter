@@ -1,4 +1,4 @@
-﻿#include "src/core/LanguageManager.h"
+#include "src/core/LanguageManager.h"
 #include "src/services/ConfigService.h"
 #include "src/services/ExportService_Pipeline.h"
 #include "src/ui/viewmodels/ComponentListViewModel.h"
@@ -6,15 +6,16 @@
 #include "src/ui/viewmodels/ExportSettingsViewModel.h"
 #include "src/ui/viewmodels/ThemeSettingsViewModel.h"
 
+#include <QApplication>
 #include <QDebug>
 #include <QFile>
-#include <QApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickStyle>
 #include <QUrl>
+
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);

@@ -1,4 +1,4 @@
-﻿#include "ProcessWorker.h"
+#include "ProcessWorker.h"
 
 #include "core/easyeda/EasyedaApi.h"
 #include "core/easyeda/EasyedaImporter.h"
@@ -137,7 +137,7 @@ bool ProcessWorker::parseCadData(ComponentExportStatus& status) {
 
     QJsonObject rootObj = doc.object();
 
-    // API 返回的数据在 result 字段中，需要提取出�?
+    // API 返回的数据在 result 字段中，需要提取出来
     QJsonObject obj;
     if (rootObj.contains("result") && rootObj["result"].isObject()) {
         obj = rootObj["result"].toObject();
@@ -147,7 +147,7 @@ bool ProcessWorker::parseCadData(ComponentExportStatus& status) {
         obj = rootObj;
     }
 
-    // 调试：打印obj的结�?
+    // 调试：打印obj的结构
     status.addDebugLog("=== ProcessWorker CAD Data Structure ===");
     status.addDebugLog(QString("Top-level keys: %1").arg(obj.keys().join(", ")));
     if (obj.contains("dataStr")) {
@@ -167,30 +167,33 @@ bool ProcessWorker::parseCadData(ComponentExportStatus& status) {
     }
     status.addDebugLog("==========================================");
 
-    // 使用EasyedaImporter导入符号和封装数�?
+    // 使用EasyedaImporter导入符号和封装数据
     EasyedaImporter importer;
 
     // 导入符号数据
     status.symbolData = importer.importSymbolData(obj);
 
-    // 调试：打印符号数据的统计信息
-    if (status.symbolData) {
-        status.addDebugLog(QString("Symbol data imported successfully"));
-        status.addDebugLog(QString("  - Pins: %1").arg(status.symbolData->pins().size()));
-        status.addDebugLog(QString("  - Rectangles: %1").arg(status.symbolData->rectangles().size()));
-        status.addDebugLog(QString("  - Circles: %1").arg(status.symbolData->circles().size()));
-        status.addDebugLog(QString("  - Arcs: %1").arg(status.symbolData->arcs().size()));
-        status.addDebugLog(QString("  - Polylines: %1").arg(status.symbolData->polylines().size()));
-        status.addDebugLog(QString("  - Polygons: %1").arg(status.symbolData->polygons().size()));
-        status.addDebugLog(QString("  - Paths: %1").arg(status.symbolData->paths().size()));
-        status.addDebugLog(QString("  - Ellipses: %1").arg(status.symbolData->ellipses().size()));
-        status.addDebugLog(QString("  - Texts: %1").arg(status.symbolData->texts().size()));
-    } else {
-        status.addDebugLog("WARNING: Symbol data is null after import!");
+    // 严格检查: 如果启用了符号导出但导入失败
+    if (!status.symbolData) {
+        status.addDebugLog("ERROR: Symbol data import failed or missing in CAD data.");
+        // 如果 symbolData 为空，说明解析失败。
+        return false;
     }
+
+    // 调试：打印符号数据的统计信息
+    status.addDebugLog(QString("Symbol data imported successfully. Pins: %1").arg(status.symbolData->pins().size()));
 
     // 导入封装数据
     status.footprintData = importer.importFootprintData(obj);
+
+    // 严格检查: 如果启用了封装导出但导入失败
+    if (!status.footprintData || status.footprintData->info().name.isEmpty()) {
+        status.addDebugLog("ERROR: Footprint data import failed or footprint name is empty.");
+        return false;
+    }
+
+    status.addDebugLog(
+        QString("Footprint data imported successfully - Name: %1").arg(status.footprintData->info().name));
 
     return true;
 }
@@ -204,7 +207,7 @@ bool ProcessWorker::parse3DModelData(ComponentExportStatus& status) {
     status.model3DData = QSharedPointer<Model3DData>::create();
     status.model3DData->setRawObj(QString::fromUtf8(status.model3DObjRaw));
 
-    // �?footprintData �?model3D 中获�?UUID
+    // 从 footprintData 的 model3D 中获取 UUID
     if (status.footprintData && !status.footprintData->model3D().uuid().isEmpty()) {
         status.model3DData->setUuid(status.footprintData->model3D().uuid());
         status.addDebugLog(QString("Using 3D model UUID from footprintData: %1").arg(status.model3DData->uuid()));

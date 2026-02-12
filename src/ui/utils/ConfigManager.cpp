@@ -1,4 +1,4 @@
-﻿#include "ConfigManager.h"
+#include "ConfigManager.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -15,7 +15,7 @@ ConfigManager::ConfigManager(QObject* parent) : QObject(parent), m_settings(null
     QString configFile = configPath + "/config.ini";
     m_settings = new QSettings(configFile, QSettings::IniFormat, this);
 
-    // 初始化默认配�?
+    // 初始化默认配
     initDefaults();
 
     // 加载配置
@@ -51,7 +51,7 @@ bool ConfigManager::save() {
         QJsonValue model3dValue = exportOptions.value("model3d");
         m_settings->setValue("export/export_3d_model", model3dValue.isUndefined() ? true : model3dValue.toBool());
 
-        // 同步到磁�?
+        // 同步到磁
         m_settings->sync();
 
         qDebug() << "Configuration saved successfully";
@@ -131,7 +131,7 @@ void ConfigManager::initDefaults() {
     // 设置默认导出路径
     m_config["export_path"] = "";
 
-    // 设置默认库名�?
+    // 设置默认库名称
     m_config["lib_name"] = "easyeda_convertlib";
 
     // 设置默认导出选项

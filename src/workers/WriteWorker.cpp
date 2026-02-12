@@ -3,6 +3,8 @@
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
+#include "models/FootprintDataSerializer.h"
+#include "models/SymbolDataSerializer.h"
 
 #include <QDebug>
 #include <QDir>
@@ -119,19 +121,29 @@ cleanup:
     }
 
     // 根据用户请求的导出项和实际完成情况，决定最终的成功状态
-    bool finalSuccess = true;
+    // 注意：3D模型导出失败不影响符号和封装的导出成功状态
+    // 符号和封装是捆绑的核心输出，3D模型是可选附加输出
+    bool coreSuccess = true;
+    bool model3DFailed = false;
     if (m_exportSymbol && !m_status->symbolWritten) {
-        finalSuccess = false;
+        coreSuccess = false;
     }
     if (m_exportFootprint && !m_status->footprintWritten) {
-        finalSuccess = false;
+        coreSuccess = false;
     }
     if (m_exportModel3D && !m_status->model3DWritten) {
-        finalSuccess = false;
+        model3DFailed = true;  // 仅记录，不影响核心成功状态
+        m_status->addDebugLog("WARNING: 3D model export failed, but symbol/footprint export is not affected.");
     }
 
-    m_status->writeSuccess = finalSuccess;
-    m_status->writeMessage = finalSuccess ? "Write completed successfully" : "Failed to write one or more files";
+    m_status->writeSuccess = coreSuccess;
+    if (coreSuccess && model3DFailed) {
+        m_status->writeMessage = "Write completed (3D model export failed, symbol/footprint OK)";
+    } else if (coreSuccess) {
+        m_status->writeMessage = "Write completed successfully";
+    } else {
+        m_status->writeMessage = "Failed to write one or more core files (symbol/footprint)";
+    }
 
     if (m_debugMode) {
         exportDebugData(*m_status);
@@ -219,9 +231,8 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     QString model3DWrlPath;
     QString model3DStepPath;
     if (m_exportModel3D && status.model3DData && !status.model3DData->uuid().isEmpty()) {
-        // 使用模型名称作为文件名，而不是封装名称
-        QString modelName = status.model3DData->name().isEmpty() ? footprintName : status.model3DData->name();
-        model3DWrlPath = QString("../%1.3dmodels/%2.wrl").arg(m_libName, modelName);
+        // 始终使用封装名作为 3D 模型的文件名和引用路径，以确保与 write3DModelFile 写入磁盘的命名一致
+        model3DWrlPath = QString("../%1.3dmodels/%2.wrl").arg(m_libName, footprintName);
         if (!status.model3DStepRaw.isEmpty()) {
             model3DStepPath = QString("../%1.3dmodels/%2.step").arg(m_libName, modelName);
         }
@@ -458,7 +469,7 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
 
     if (status.symbolData) {
-        QJsonObject symbolInfo = status.symbolData->info().toJson();
+        QJsonObject symbolInfo = SymbolDataSerializer::toJson(status.symbolData->info());
         symbolInfo["pinCount"] = status.symbolData->pins().size();
         symbolInfo["rectangleCount"] = status.symbolData->rectangles().size();
         symbolInfo["circleCount"] = status.symbolData->circles().size();
@@ -479,56 +490,56 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
         QJsonArray pinsArray;
         for (const SymbolPin& pin : status.symbolData->pins()) {
-            pinsArray.append(pin.toJson());
+            pinsArray.append(SymbolDataSerializer::toJson(pin));
         }
         symbolInfo["pins"] = pinsArray;
 
 
         QJsonArray rectanglesArray;
         for (const SymbolRectangle& rect : status.symbolData->rectangles()) {
-            rectanglesArray.append(rect.toJson());
+            rectanglesArray.append(SymbolDataSerializer::toJson(rect));
         }
         symbolInfo["rectangles"] = rectanglesArray;
 
 
         QJsonArray circlesArray;
         for (const SymbolCircle& circle : status.symbolData->circles()) {
-            circlesArray.append(circle.toJson());
+            circlesArray.append(SymbolDataSerializer::toJson(circle));
         }
         symbolInfo["circles"] = circlesArray;
 
 
         QJsonArray arcsArray;
         for (const SymbolArc& arc : status.symbolData->arcs()) {
-            arcsArray.append(arc.toJson());
+            arcsArray.append(SymbolDataSerializer::toJson(arc));
         }
         symbolInfo["arcs"] = arcsArray;
 
 
         QJsonArray polylinesArray;
         for (const SymbolPolyline& polyline : status.symbolData->polylines()) {
-            polylinesArray.append(polyline.toJson());
+            polylinesArray.append(SymbolDataSerializer::toJson(polyline));
         }
         symbolInfo["polylines"] = polylinesArray;
 
 
         QJsonArray polygonsArray;
         for (const SymbolPolygon& polygon : status.symbolData->polygons()) {
-            polygonsArray.append(polygon.toJson());
+            polygonsArray.append(SymbolDataSerializer::toJson(polygon));
         }
         symbolInfo["polygons"] = polygonsArray;
 
 
         QJsonArray pathsArray;
         for (const SymbolPath& path : status.symbolData->paths()) {
-            pathsArray.append(path.toJson());
+            pathsArray.append(SymbolDataSerializer::toJson(path));
         }
         symbolInfo["paths"] = pathsArray;
 
 
         QJsonArray ellipsesArray;
         for (const SymbolEllipse& ellipse : status.symbolData->ellipses()) {
-            ellipsesArray.append(ellipse.toJson());
+            ellipsesArray.append(SymbolDataSerializer::toJson(ellipse));
         }
         symbolInfo["ellipses"] = ellipsesArray;
 
@@ -537,7 +548,7 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
 
     if (status.footprintData) {
-        QJsonObject footprintInfo = status.footprintData->info().toJson();
+        QJsonObject footprintInfo = FootprintDataSerializer::toJson(status.footprintData->info());
         footprintInfo["padCount"] = status.footprintData->pads().size();
         footprintInfo["trackCount"] = status.footprintData->tracks().size();
         footprintInfo["holeCount"] = status.footprintData->holes().size();
@@ -559,63 +570,63 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
         QJsonArray padsArray;
         for (const FootprintPad& pad : status.footprintData->pads()) {
-            padsArray.append(pad.toJson());
+            padsArray.append(FootprintDataSerializer::toJson(pad));
         }
         footprintInfo["pads"] = padsArray;
 
 
         QJsonArray tracksArray;
         for (const FootprintTrack& track : status.footprintData->tracks()) {
-            tracksArray.append(track.toJson());
+            tracksArray.append(FootprintDataSerializer::toJson(track));
         }
         footprintInfo["tracks"] = tracksArray;
 
 
         QJsonArray holesArray;
         for (const FootprintHole& hole : status.footprintData->holes()) {
-            holesArray.append(hole.toJson());
+            holesArray.append(FootprintDataSerializer::toJson(hole));
         }
         footprintInfo["holes"] = holesArray;
 
 
         QJsonArray circlesArray;
         for (const FootprintCircle& circle : status.footprintData->circles()) {
-            circlesArray.append(circle.toJson());
+            circlesArray.append(FootprintDataSerializer::toJson(circle));
         }
         footprintInfo["circles"] = circlesArray;
 
 
         QJsonArray arcsArray;
         for (const FootprintArc& arc : status.footprintData->arcs()) {
-            arcsArray.append(arc.toJson());
+            arcsArray.append(FootprintDataSerializer::toJson(arc));
         }
         footprintInfo["arcs"] = arcsArray;
 
 
         QJsonArray rectanglesArray;
         for (const FootprintRectangle& rect : status.footprintData->rectangles()) {
-            rectanglesArray.append(rect.toJson());
+            rectanglesArray.append(FootprintDataSerializer::toJson(rect));
         }
         footprintInfo["rectangles"] = rectanglesArray;
 
 
         QJsonArray textsArray;
         for (const FootprintText& text : status.footprintData->texts()) {
-            textsArray.append(text.toJson());
+            textsArray.append(FootprintDataSerializer::toJson(text));
         }
         footprintInfo["texts"] = textsArray;
 
 
         QJsonArray solidRegionsArray;
         for (const FootprintSolidRegion& region : status.footprintData->solidRegions()) {
-            solidRegionsArray.append(region.toJson());
+            solidRegionsArray.append(FootprintDataSerializer::toJson(region));
         }
         footprintInfo["solidRegions"] = solidRegionsArray;
 
 
         QJsonArray outlinesArray;
         for (const FootprintOutline& outline : status.footprintData->outlines()) {
-            outlinesArray.append(outline.toJson());
+            outlinesArray.append(FootprintDataSerializer::toJson(outline));
         }
         footprintInfo["outlines"] = outlinesArray;
 

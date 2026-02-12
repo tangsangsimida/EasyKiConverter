@@ -1,6 +1,7 @@
 #ifndef COMPONENTSERVICE_H
 #define COMPONENTSERVICE_H
 
+#include "LcscImageService.h"
 #include "models/ComponentData.h"
 #include "models/FootprintData.h"
 #include "models/Model3DData.h"
@@ -15,12 +16,13 @@
 #include <QString>
 #include <QStringList>
 
+
 class QNetworkAccessManager;
 
 namespace EasyKiConverter {
 
 /**
- * @brief 元件服务?
+ * @brief 元件服务类
  *
  * 负责处理与元件相关的业务逻辑，不依赖任何 UI 组件
  * 包括数据获取、验证、解析和缓存管理
@@ -30,9 +32,9 @@ class ComponentService : public QObject {
 
 public:
     /**
-     * @brief 构造函?
+     * @brief 构造函数
      *
-     * @param parent 父对?
+     * @param parent 父对象
      */
     explicit ComponentService(QObject* parent = nullptr);
 
@@ -57,7 +59,7 @@ public:
     void fetchLcscPreviewImage(const QString& componentId);
 
     /**
-     * @brief 并行获取多个元件的数?
+     * @brief 并行获取多个元件的数据
      *
      * @param componentIds 元件ID列表
      * @param fetch3DModel 是否获取3D模型
@@ -76,7 +78,7 @@ public:
      * @brief 从文本中智能提取元件编号
      *
      * @param text 输入文本
-     * @return QStringList 提取的元件编号列?
+     * @return QStringList 提取的元件编号列表
      */
     QStringList extractComponentIdFromText(const QString& text) const;
 
@@ -157,7 +159,7 @@ signals:
     void fetchError(const QString& componentId, const QString& error);
 
     /**
-     * @brief 所有元件数据收集完成信?
+     * @brief 所有元件数据收集完成信号
      *
      * @param componentDataList 元件数据列表
      */
@@ -186,15 +188,15 @@ private slots:
      */
     void handleModel3DFetched(const QString& uuid, const QByteArray& data);
 
-    /**
-     * @brief 处理获取错误
-     *
-     * @param errorMessage 错误信息
-     */
     void handleFetchError(const QString& errorMessage);
 
     /**
-     * @brief 处理获取错误（带 ID?
+     * @brief 处理预览图就绪
+     */
+    void handleImageReady(const QString& componentId, const QString& imagePath);
+
+    /**
+     * @brief 处理获取错误（带 ID）
      *
      * @param componentId 元件ID
      * @param error 错误信息
@@ -238,65 +240,20 @@ private:
      */
     void handleParallelFetchError(const QString& componentId, const QString& error);
 
-    /**
-     * @brief 解析 CSV 格式的 BOM 文件
-     *
-     * @param filePath 文件路径
-     * @return QStringList 解析出的元件ID列表
-     */
-    QStringList parseCsvBomFile(const QString& filePath);
+    // BOM 解析已移至独立的 BomParser 类
 
-    /**
-     * @brief 解析 Excel 格式的 BOM 文件
-     *
-     * @param filePath 文件路径
-     * @return QStringList 解析出的元件ID列表
-     */
-    QStringList parseExcelBomFile(const QString& filePath);
-
-    /**
-     * @brief 获取 LCSC 预览图（带重试）
-     *
-     * @param componentId 元件ID
-     * @param retryCount 重试次数
-     */
-    void fetchLcscPreviewImageWithRetry(const QString& componentId, int retryCount = 0);
-
-    /**
-     * @brief 执行获取 LCSC 预览图请求
-     *
-     * @param componentId 元件ID
-     * @param retryCount 重试次数
-     */
-    void performFetchLcscPreviewImage(const QString& componentId, int retryCount);
-
-    /**
-     * @brief 获取 LCSC 预览图（Fallback 爬虫模式）
-     *
-     * 当标准 API 无法获取图片 URL 时，尝试直接爬取搜索页面 HTML
-     * @param componentId 元件ID
-     */
-    void fetchLcscPreviewImageFallback(const QString& componentId);
-
-    /**
-     * @brief 下载 LCSC 图片（带重试）
-     *
-     * @param componentId 元件ID
-     * @param imageUrl 图片URL
-     * @param retryCount 重试次数
-     */
-    void downloadLcscImage(const QString& componentId, const QString& imageUrl, int retryCount);
+    // 图片抓取已移至独立的 LcscImageService 类
 
 private:
-    // 核心API和导入器
     class EasyedaApi* m_api;
     class EasyedaImporter* m_importer;
     QNetworkAccessManager* m_networkManager;
+    LcscImageService* m_imageService;
 
     // 数据缓存
     QMap<QString, ComponentData> m_componentCache;
 
-    // 当前正在获取的元件数?
+    // 当前正在获取的元件数据
     struct FetchingComponent {
         QString componentId;
         ComponentData data;
@@ -312,16 +269,16 @@ private:
     // 当前处理的元件ID
     QString m_currentComponentId;
 
-    // 待处理的组件数据（用于等?3D 模型数据?
+    // 待处理的组件数据（用于等待3D 模型数据）
     ComponentData m_pendingComponentData;
 
     // 待处理的 3D 模型 UUID
     QString m_pendingModelUuid;
 
-    // 是否已经下载?WRL 格式
+    // 是否已经下载了WRL 格式
     bool m_hasDownloadedWrl;
 
-    // 并行数据收集状?
+    // 并行数据收集状态
     QMap<QString, ComponentData> m_parallelCollectedData;  // 已收集的数据
     QMap<QString, bool> m_parallelFetchingStatus;          // 元件ID -> 是否正在获取
     QStringList m_parallelPendingComponents;               // 待获取的元件列表
@@ -329,30 +286,7 @@ private:
     int m_parallelCompletedCount;                          // 已完成数
     bool m_parallelFetching;                               // 是否正在并行获取
 
-    // 请求队列控制
-    QQueue<QPair<QString, bool>> m_requestQueue;    // 请求队列 (ID, fetch3DModel)
-    int m_activeRequests;                           // 当前活动请求数
-    static const int MAX_CONCURRENT_REQUESTS = 20;  // 最大并发请求数
-
-    // 图片请求队列控制
-    QQueue<QString> m_imageRequestQueue;                  // 图片请求队列
-    int m_activeImageRequests;                            // 当前活动图片请求数
-    static const int MAX_CONCURRENT_IMAGE_REQUESTS = 10;  // 最大并发图片请求数
-
-    /**
-     * @brief 处理下一个请求
-     */
-    void processNextRequest();
-
-    /**
-     * @brief 处理下一个图片请求
-     */
-    void processNextImageRequest();
-
-    /**
-     * @brief 推进图片队列
-     */
-    void advanceImageQueue();
+    // 内部状态处理
 
     /**
      * @brief 内部获取元件数据方法
@@ -362,10 +296,6 @@ private:
      */
     void fetchComponentDataInternal(const QString& componentId, bool fetch3DModel);
 
-    /**
-     * @brief 推进队列处理（请求完成或失败时调用）
-     */
-    void advanceQueue();
 
     // 输出路径
     QString m_outputPath;

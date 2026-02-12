@@ -38,6 +38,13 @@
 - [项目路线图 (英文)](project/ROADMAP_en.md) - Roadmap
 - [架构决策记录](project/adr/) - 技术决策记录
 
+### 分析报告
+
+- [弱网支持分析报告](WEAK_NETWORK_ANALYSIS.md) - v3.0.4 弱网容错分析
+- [弱网支持分析报告 (英文)](WEAK_NETWORK_ANALYSIS_en.md) - Weak Network Analysis
+- [性能优化报告](PERFORMANCE_OPTIMIZATION_REPORT.md) - v3.0.0 性能优化
+- [性能优化报告 (英文)](PERFORMANCE_OPTIMIZATION_REPORT_en.md) - Performance Report
+
 ## 文档语言
 
 所有文档都提供中英文双语版本：

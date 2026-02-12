@@ -66,6 +66,12 @@
 ### 从源码构建
 本项目已实现全平台 CI/CD 自动化构建。如果您是开发者或希望自行编译，请参考 [构建指南](docs/developer/BUILD.md)。
 
+## 系统架构
+
+#### 运行流程图
+
+![项目运行流程图](docs/diagrams/EasyKiConverter_Workflow.svg)
+
 ## 文档中心
 
 **用户指南**

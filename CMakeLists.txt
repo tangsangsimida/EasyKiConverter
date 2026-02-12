@@ -26,6 +26,9 @@ endif()
 
 project(EasyKiconverter_Cpp_Version VERSION ${PROJECT_VERSION_SANITIZED} LANGUAGES CXX)
 
+# 生成 compile_commands.json 用于 VS Code IntelliSense
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 
 # 显式设置版本号变量，确保 configure_file 能正确替换
 # 如果补丁号未定义或为空，默认设置为 0
@@ -51,7 +54,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # 启用多线程编译
 if(MSVC)
     # MSVC 使用 /MP 选项，自动使用最大可用线程
-    add_compile_options(/MP)
+    # /utf-8 确保编译器将源文件视为 UTF-8 编码（无需 BOM）
+    add_compile_options(/MP /utf-8)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     # GCC 使用 -j 选项，但需要通过 make 的 -j 参数来控制
     # 这里不添加编译选项，而是在构建时使用 make -j
@@ -148,7 +152,7 @@ add_subdirectory(src)
 
 # QML 文件列表
 set(QML_FILES
-    Main.qml
+    src/ui/qml/Main.qml
     src/ui/qml/MainWindow.qml
     src/ui/qml/components/Card.qml
     src/ui/qml/components/ComponentListItem.qml
@@ -157,6 +161,17 @@ set(QML_FILES
     src/ui/qml/components/ModernButton.qml
     src/ui/qml/components/StatItem.qml
     src/ui/qml/components/StepItem.qml
+    src/ui/qml/components/TitleBar.qml
+    src/ui/qml/components/HeaderSection.qml
+    src/ui/qml/components/ComponentInputCard.qml
+    src/ui/qml/components/BomImportCard.qml
+    src/ui/qml/components/ComponentListCard.qml
+    src/ui/qml/components/ExportSettingsCard.qml
+    src/ui/qml/components/ExportProgressCard.qml
+    src/ui/qml/components/ExportResultsCard.qml
+    src/ui/qml/components/ExportStatisticsCard.qml
+    src/ui/qml/components/ExportButtonsSection.qml
+    src/ui/qml/components/WindowResizeHandles.qml
     src/ui/qml/styles/AppStyle.qml
 )
 
@@ -168,7 +183,7 @@ endif()
 
 # 创建可执行文件
 qt_add_executable(appEasyKiconverter_Cpp_Version
-    main.cpp
+    src/main.cpp
 )
 
 # 添加 Windows 资源文件
@@ -262,6 +277,3 @@ install(TARGETS appEasyKiconverter_Cpp_Version
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "Qt version: ${Qt6_VERSION}")
-
-# 生成 compile_commands.json 用于 VS Code IntelliSense
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

@@ -1,4 +1,4 @@
-﻿#ifndef COMPONENTEXPORTTASK_H
+#ifndef COMPONENTEXPORTTASK_H
 #define COMPONENTEXPORTTASK_H
 
 #include "ExportService.h"
@@ -10,23 +10,23 @@
 namespace EasyKiConverter {
 
 /**
- * @brief 元件导出任务�?
+ * @brief 元件导出任务
  *
- * 用于�?QThreadPool 中并行执行元件导出任�?
+ * 用于QThreadPool 中并行执行元件导出任
  */
 class ComponentExportTask : public QObject, public QRunnable {
     Q_OBJECT
 
 public:
     /**
-     * @brief 构造函�?
+     * @brief 构造函数
      *
      * @param componentData 元件数据
      * @param options 导出选项
-     * @param symbolExporter 符号导出�?
-     * @param footprintExporter 封装导出�?
-     * @param modelExporter 3D模型导出�?
-     * @param parent 父对�?
+     * @param symbolExporter 符号导出
+     * @param footprintExporter 封装导出
+     * @param modelExporter 3D模型导出
+     * @param parent 父对象
      */
     explicit ComponentExportTask(const ComponentData& componentData,
                                  const ExportOptions& options,

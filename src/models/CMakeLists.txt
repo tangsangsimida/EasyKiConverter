@@ -3,7 +3,9 @@
 add_library(EasyKiConverterModels STATIC
     ComponentData.cpp
     SymbolData.cpp
+    SymbolDataSerializer.cpp
     FootprintData.cpp
+    FootprintDataSerializer.cpp
     Model3DData.cpp
     ComponentListItemData.cpp
 )

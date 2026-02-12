@@ -1,4 +1,4 @@
-﻿#ifndef MODEL3DDATA_H
+#ifndef MODEL3DDATA_H
 #define MODEL3DDATA_H
 
 #include <QByteArray>
@@ -28,7 +28,7 @@ public:
     Model3DData();
     ~Model3DData() = default;
 
-    // Getter �?Setter 方法
+    // Getter 和 Setter 方法
     QString name() const {
         return m_name;
     }
@@ -71,7 +71,7 @@ public:
         m_step = step;
     }
 
-    // JSON 序列�?
+    // JSON 序列
     QJsonObject toJson() const;
     bool fromJson(const QJsonObject& json);
 

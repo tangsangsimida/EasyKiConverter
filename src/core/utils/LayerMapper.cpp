@@ -1,4 +1,4 @@
-﻿#include "LayerMapper.h"
+#include "LayerMapper.h"
 
 #include <QDebug>
 
@@ -15,7 +15,7 @@ LayerMapper::LayerMapper() {
 LayerMapper::~LayerMapper() {}
 
 void LayerMapper::initializeLayerMapping() {
-    // 初始�?KiCad 图层名称
+    // 初始KiCad 图层名称
     m_kicadLayerNames[F_Cu] = "F.Cu";
     m_kicadLayerNames[B_Cu] = "B.Cu";
     for (int i = 1; i <= 30; i++) {
@@ -48,7 +48,7 @@ void LayerMapper::initializeLayerMapping() {
     m_layerIdMapping[1] = F_Cu;  // TopLayer -> F.Cu
     m_layerIdMapping[2] = B_Cu;  // BottomLayer -> B.Cu
 
-    // 内电�?Inner1~Inner32 (ID 21-52) -> In1.Cu~In32.Cu
+    // 内电Inner1~Inner32 (ID 21-52) -> In1.Cu~In32.Cu
     for (int i = 0; i < 32; i++) {
         m_layerIdMapping[21 + i] = In1_Cu + i;
     }
@@ -65,14 +65,14 @@ void LayerMapper::initializeLayerMapping() {
     m_layerIdMapping[5] = F_Paste;  // TopPasteMaskLayer -> F.Paste
     m_layerIdMapping[6] = B_Paste;  // BottomPasteMaskLayer -> B.Paste
 
-    // 五、机械与结构�?
+    // 五、机械与结构
     m_layerIdMapping[10] = Edge_Cuts;  // BoardOutLine -> Edge.Cuts
     m_layerIdMapping[15] = F_Fab;      // Mechanical -> F.Fab (顶层装配)
     m_layerIdMapping[99] = F_CrtYd;    // ComponentShapeLayer -> F.CrtYd (元件占位)
     m_layerIdMapping[100] = F_Fab;     // LeadShapeLayer -> F.Fab (引脚形状)
-    m_layerIdMapping[101] = F_SilkS;   // ComponentPolarityLayer -> F.SilkS (极性标�?
+    m_layerIdMapping[101] = F_SilkS;   // ComponentPolarityLayer -> F.SilkS (极性标
 
-    // 六、装配与文档�?
+    // 六、装配与文档
     m_layerIdMapping[13] = F_Fab;      // TopAssembly -> F.Fab
     m_layerIdMapping[14] = B_Fab;      // BottomAssembly -> B.Fab
     m_layerIdMapping[12] = Dwgs_User;  // Document -> Dwgs.User
@@ -81,7 +81,7 @@ void LayerMapper::initializeLayerMapping() {
     m_layerIdMapping[9] = Dwgs_User;    // Ratlines -> Dwgs.User (飞线)
     m_layerIdMapping[11] = F_Cu;        // Multi-Layer -> F.Cu (通孔焊盘，实际在所有层)
     m_layerIdMapping[19] = Dwgs_User;   // 3DModel -> Dwgs.User (3D 模型引用)
-    m_layerIdMapping[102] = Dwgs_User;  // Hole -> Dwgs.User (非金属化�?
+    m_layerIdMapping[102] = Dwgs_User;  // Hole -> Dwgs.User (非金属化
     m_layerIdMapping[103] = Cmts_User;  // DRCError -> Cmts.User (DRC 错误)
 
     // 初始化嘉立创图层名称 -> KiCad 图层 ID 映射
@@ -91,7 +91,7 @@ void LayerMapper::initializeLayerMapping() {
     m_layerNameMapping["BottomLayer"] = B_Cu;
     for (int i = 1; i <= 32; i++) {
         // 使用清晰的公式：In1_Cu + (i - 1)
-        // �?LCKiConverter �?In.(n-14).Cu 更直�?
+        // 与 LCKiConverter 的 In.(n-14).Cu 更直观
         m_layerNameMapping[QString("Inner%1").arg(i)] = In1_Cu + (i - 1);
     }
     m_layerNameMapping["TopSilkLayer"] = F_SilkS;
@@ -178,43 +178,43 @@ bool LayerMapper::isMechanicalLayer(int kicadLayerId) {
 }
 
 QString LayerMapper::getMappingDescription() const {
-    QString desc = "=== 嘉立�?EDA -> KiCad 图层映射�?===\n\n";
+    QString desc = "=== 嘉立EDA -> KiCad 图层映射===\n\n";
 
     desc += "【一、电气信号层】\n";
-    desc += "  嘉立�?ID 1 (TopLayer)           -> KiCad F.Cu (0)\n";
-    desc += "  嘉立�?ID 2 (BottomLayer)       -> KiCad B.Cu (31)\n";
-    desc += "  嘉立�?ID 21-52 (Inner1-32)    -> KiCad In1.Cu~In32.Cu (1-30)\n\n";
+    desc += "  嘉立ID 1 (TopLayer)           -> KiCad F.Cu (0)\n";
+    desc += "  嘉立ID 2 (BottomLayer)       -> KiCad B.Cu (31)\n";
+    desc += "  嘉立ID 21-52 (Inner1-32)    -> KiCad In1.Cu~In32.Cu (1-30)\n\n";
 
     desc += "【二、丝印层】\n";
-    desc += "  嘉立�?ID 3 (TopSilkLayer)      -> KiCad F.SilkS (32)\n";
-    desc += "  嘉立�?ID 4 (BottomSilkLayer)   -> KiCad B.SilkS (33)\n\n";
+    desc += "  嘉立ID 3 (TopSilkLayer)      -> KiCad F.SilkS (32)\n";
+    desc += "  嘉立ID 4 (BottomSilkLayer)   -> KiCad B.SilkS (33)\n\n";
 
     desc += "【三、阻焊层】\n";
-    desc += "  嘉立�?ID 7 (TopSolderMaskLayer) -> KiCad F.Mask (34)\n";
-    desc += "  嘉立�?ID 8 (BottomSolderMaskLayer) -> KiCad B.Mask (35)\n\n";
+    desc += "  嘉立ID 7 (TopSolderMaskLayer) -> KiCad F.Mask (34)\n";
+    desc += "  嘉立ID 8 (BottomSolderMaskLayer) -> KiCad B.Mask (35)\n\n";
 
     desc += "【四、助焊层】\n";
-    desc += "  嘉立�?ID 5 (TopPasteMaskLayer) -> KiCad F.Paste (36)\n";
-    desc += "  嘉立�?ID 6 (BottomPasteMaskLayer) -> KiCad B.Paste (37)\n\n";
+    desc += "  嘉立ID 5 (TopPasteMaskLayer) -> KiCad F.Paste (36)\n";
+    desc += "  嘉立ID 6 (BottomPasteMaskLayer) -> KiCad B.Paste (37)\n\n";
 
     desc += "【五、机械与结构层】\n";
-    desc += "  嘉立�?ID 10 (BoardOutLine)    -> KiCad Edge.Cuts (44)\n";
-    desc += "  嘉立�?ID 15 (Mechanical)      -> KiCad F.Fab (47)\n";
-    desc += "  嘉立�?ID 99 (ComponentShapeLayer) -> KiCad F.CrtYd (45)\n";
-    desc += "  嘉立�?ID 100 (LeadShapeLayer)  -> KiCad F.Fab (47)\n";
-    desc += "  嘉立�?ID 101 (ComponentPolarityLayer) -> KiCad F.SilkS (32)\n\n";
+    desc += "  嘉立ID 10 (BoardOutLine)    -> KiCad Edge.Cuts (44)\n";
+    desc += "  嘉立ID 15 (Mechanical)      -> KiCad F.Fab (47)\n";
+    desc += "  嘉立ID 99 (ComponentShapeLayer) -> KiCad F.CrtYd (45)\n";
+    desc += "  嘉立ID 100 (LeadShapeLayer)  -> KiCad F.Fab (47)\n";
+    desc += "  嘉立ID 101 (ComponentPolarityLayer) -> KiCad F.SilkS (32)\n\n";
 
     desc += "【六、装配与文档层】\n";
-    desc += "  嘉立�?ID 13 (TopAssembly)      -> KiCad F.Fab (47)\n";
-    desc += "  嘉立�?ID 14 (BottomAssembly)   -> KiCad B.Fab (48)\n";
-    desc += "  嘉立�?ID 12 (Document)         -> KiCad Dwgs.User (49)\n\n";
+    desc += "  嘉立ID 13 (TopAssembly)      -> KiCad F.Fab (47)\n";
+    desc += "  嘉立ID 14 (BottomAssembly)   -> KiCad B.Fab (48)\n";
+    desc += "  嘉立ID 12 (Document)         -> KiCad Dwgs.User (49)\n\n";
 
     desc += "【七、特殊功能层】\n";
-    desc += "  嘉立�?ID 9 (Ratlines)          -> KiCad Dwgs.User (49)\n";
-    desc += "  嘉立�?ID 11 (Multi-Layer)      -> KiCad F.Cu (0) [通孔焊盘]\n";
-    desc += "  嘉立�?ID 19 (3DModel)          -> KiCad Dwgs.User (49)\n";
-    desc += "  嘉立�?ID 102 (Hole)            -> KiCad Dwgs.User (49)\n";
-    desc += "  嘉立�?ID 103 (DRCError)        -> KiCad Cmts.User (50)\n\n";
+    desc += "  嘉立ID 9 (Ratlines)          -> KiCad Dwgs.User (49)\n";
+    desc += "  嘉立ID 11 (Multi-Layer)      -> KiCad F.Cu (0) [通孔焊盘]\n";
+    desc += "  嘉立ID 19 (3DModel)          -> KiCad Dwgs.User (49)\n";
+    desc += "  嘉立ID 102 (Hole)            -> KiCad Dwgs.User (49)\n";
+    desc += "  嘉立ID 103 (DRCError)        -> KiCad Cmts.User (50)\n\n";
 
     desc += "【单位转换】\n";
     desc += "  1 mil = 0.0254 mm\n";
@@ -222,30 +222,30 @@ QString LayerMapper::getMappingDescription() const {
 
     desc += "【注意事项】\n";
     desc += "  1. Multi-Layer 层的通孔焊盘需要在 KiCad 中设置为 'through' 类型\n";
-    desc += "  2. 内层 (Inner1-32) 仅在多层板中有效�? 层板会自动忽略\n";
-    desc += "  3. 阻焊层扩展�?(�?0.3) 需要在导出时转换为 mm\n";
-    desc += "  4. 未知图层默认映射�?Dwgs.User 层\n";
+    desc += "  2. 内层 (Inner1-32) 仅在多层板中有效 层板会自动忽略\n";
+    desc += "  3. 阻焊层扩展(约0.3) 需要在导出时转换为 mm\n";
+    desc += "  4. 未知图层默认映射Dwgs.User 层\n";
 
     return desc;
 }
 
 // 元件外形层（边界层）判断
-// 元件外形用于布局避让，应映射�?F.CrtYd �?B.CrtYd
+// 元件外形用于布局避让，应映射F.CrtYd 或 B.CrtYd
 bool LayerMapper::isCourtYardLayer(int easyedaLayerId) {
-    // 根据 LCKiConverter，元件外形层 ID �?48
-    // 注意：需要验证这�?ID 是否正确
+    // 根据 LCKiConverter，元件外形层 ID 为 48
+    // 注意：需要验证这ID 是否正确
     return easyedaLayerId == 48;
 }
 
-// 移植�?LCKiConverter: src/jlc/pro_footprint.ts getLayer()
+// 移植LCKiConverter: src/jlc/pro_footprint.ts getLayer()
 // 内层判断
 bool LayerMapper::isInnerLayer(int easyedaLayerId) {
-    // 内层范围�?5-46 (对应 In1.Cu - In32.Cu)
-    // 参�?LCKiConverter: n>=15 && n<=46
+    // 内层范围5-46 (对应 In1.Cu - In32.Cu)
+    // 参LCKiConverter: n>=15 && n<=46
     return easyedaLayerId >= 15 && easyedaLayerId <= 46;
 }
 
-// 焊盘层判�?
+// 焊盘层判
 bool LayerMapper::isPadLayer(int easyedaLayerId) {
     // 焊盘层包括：
     // 1, 2 (SMD焊盘)

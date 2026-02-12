@@ -4,7 +4,7 @@ This document shows the future direction of the project and the main features pl
 
 ## Current Status
 
-- **Current Version**: 3.0.0
+- **Current Version**: 3.0.4
 - **Development Status**: Refactoring complete, entering optimization phase
 - **Completion**: ~95% (core features implemented, architecture refactoring complete)
 
@@ -21,7 +21,8 @@ This document shows the future direction of the project and the main features pl
 
 **Export Functionality Enhancements**:
 - [ ] Quick access to export destination folder after completion
-- [ ] Network request retry mechanism
+- [x] Network request retry mechanism (implemented in v3.0.2)
+- [ ] Weak network resilience improvements (timeout retry, unified backoff strategy, NetworkWorker timeout protection)
 - [ ] 3D model path export options (relative/absolute)
   - [ ] Relative path: Use KiCad project path + 3D model path
   - [ ] Absolute path: Use export path + 3D model path

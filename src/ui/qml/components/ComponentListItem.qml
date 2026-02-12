@@ -94,7 +94,8 @@ Rectangle {
                 source: (itemData && itemData.thumbnailBase64) ? "data:image/png;base64," + itemData.thumbnailBase64 : ""
                 fillMode: Image.PreserveAspectFit
                 visible: itemData && itemData.hasThumbnail && !itemData.isFetching
-                cache: false
+                cache: true  // 启用缓存避免 GridView 回收委托时重复解码
+                asynchronous: true  // 异步解码不阻塞 UI 线程
             }
 
             // 加载状态
@@ -262,6 +263,8 @@ Rectangle {
                 anchors.margins: 4
                 source: (itemData && itemData.thumbnailBase64) ? "data:image/png;base64," + itemData.thumbnailBase64 : ""
                 fillMode: Image.PreserveAspectFit
+                cache: true
+                asynchronous: true
             }
 
             // 底部文字遮罩
