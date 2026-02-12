@@ -213,6 +213,9 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
         qDebug() << "Symbol imported successfully - Name:" << symbolData->info().name;
     } else {
         qWarning() << "Failed to import symbol data for:" << m_currentComponentId;
+        emit fetchError(lcscId, "Failed to parse Symbol data from EasyEDA JSON");
+        m_currentComponentId = savedComponentId;
+        return;
     }
 
     // 导入封装数据
@@ -222,6 +225,9 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
         qDebug() << "Footprint imported successfully - Name:" << footprintData->info().name;
     } else {
         qWarning() << "Failed to import footprint data for:" << m_currentComponentId;
+        emit fetchError(lcscId, "Failed to parse Footprint data from EasyEDA JSON (Library might be corrupted)");
+        m_currentComponentId = savedComponentId;
+        return;
     }
 
     // 检查是否需要获取3D 模型

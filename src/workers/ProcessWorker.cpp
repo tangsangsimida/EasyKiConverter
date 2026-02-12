@@ -173,24 +173,27 @@ bool ProcessWorker::parseCadData(ComponentExportStatus& status) {
     // 导入符号数据
     status.symbolData = importer.importSymbolData(obj);
 
-    // 调试：打印符号数据的统计信息
-    if (status.symbolData) {
-        status.addDebugLog(QString("Symbol data imported successfully"));
-        status.addDebugLog(QString("  - Pins: %1").arg(status.symbolData->pins().size()));
-        status.addDebugLog(QString("  - Rectangles: %1").arg(status.symbolData->rectangles().size()));
-        status.addDebugLog(QString("  - Circles: %1").arg(status.symbolData->circles().size()));
-        status.addDebugLog(QString("  - Arcs: %1").arg(status.symbolData->arcs().size()));
-        status.addDebugLog(QString("  - Polylines: %1").arg(status.symbolData->polylines().size()));
-        status.addDebugLog(QString("  - Polygons: %1").arg(status.symbolData->polygons().size()));
-        status.addDebugLog(QString("  - Paths: %1").arg(status.symbolData->paths().size()));
-        status.addDebugLog(QString("  - Ellipses: %1").arg(status.symbolData->ellipses().size()));
-        status.addDebugLog(QString("  - Texts: %1").arg(status.symbolData->texts().size()));
-    } else {
-        status.addDebugLog("WARNING: Symbol data is null after import!");
+    // 严格检查: 如果启用了符号导出但导入失败
+    if (!status.symbolData) {
+        status.addDebugLog("ERROR: Symbol data import failed or missing in CAD data.");
+        // 如果 symbolData 为空，说明解析失败。
+        return false;
     }
+
+    // 调试：打印符号数据的统计信息
+    status.addDebugLog(QString("Symbol data imported successfully. Pins: %1").arg(status.symbolData->pins().size()));
 
     // 导入封装数据
     status.footprintData = importer.importFootprintData(obj);
+
+    // 严格检查: 如果启用了封装导出但导入失败
+    if (!status.footprintData || status.footprintData->info().name.isEmpty()) {
+        status.addDebugLog("ERROR: Footprint data import failed or footprint name is empty.");
+        return false;
+    }
+
+    status.addDebugLog(
+        QString("Footprint data imported successfully - Name: %1").arg(status.footprintData->info().name));
 
     return true;
 }

@@ -37,14 +37,14 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     , m_isRetryMode(false) {
     // 线程池初始化
     m_fetchThreadPool = new QThreadPool(this);
-    m_fetchThreadPool->setMaxThreadCount(32);  // I/O 密集型
+    m_fetchThreadPool->setMaxThreadCount(5);  // I/O 密集型
     m_fetchThreadPool->setExpiryTimeout(60000);
 
     m_processThreadPool = new QThreadPool(this);
     m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());  // CPU 密集型
 
     m_writeThreadPool = new QThreadPool(this);
-    m_writeThreadPool->setMaxThreadCount(8);  // 磁盘 I/O 密集型
+    m_writeThreadPool->setMaxThreadCount(3);  // 磁盘 I/O 密集型
 
     // 状态统计初始化
     m_pipelineProgress = PipelineProgress();
@@ -316,6 +316,11 @@ void ExportServicePipeline::startFetchStage() {
             continue;
         }
 
+        // 创建导出状态对象
+        QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
+        status->componentId = componentId;
+        status->need3DModel = m_options.exportModel3D;
+
         // 检查是否有预加载数据
         bool canUsePreloaded = false;
         QSharedPointer<ComponentData> preloadedData;
@@ -323,97 +328,88 @@ void ExportServicePipeline::startFetchStage() {
         if (m_preloadedData.contains(componentId)) {
             preloadedData = m_preloadedData.value(componentId);
             if (preloadedData && preloadedData->isValid()) {
-                // 如果需要导出3D模型，必须检查预加载数据中是否有有效的3D模型信息
-                // 如果预加载数据没有3D信息（例如列表验证时没有勾选获取3D），则不能使用预加载数据，必须重新获取
-                if (m_options.exportModel3D) {
-                    if (preloadedData->model3DData() && !preloadedData->model3DData()->uuid().isEmpty()) {
-                        canUsePreloaded = true;
-                    } else {
-                        qDebug() << "Preloaded data for" << componentId << "misses 3D model data, forcing fetch.";
-                        canUsePreloaded = false;
+                // 严格完整性检查: 确保预加载数据包含用户请求的所有导出项
+                bool isDataComplete = true;
+
+                if (m_options.exportSymbol) {
+                    if (!preloadedData->symbolData() || preloadedData->symbolData()->pins().isEmpty()) {
+                        isDataComplete = false;
+                        status->addDebugLog("Preloaded symbol data incomplete, fallback to fetch.");
                     }
-                } else {
+                }
+
+                if (m_options.exportFootprint) {
+                    if (!preloadedData->footprintData() || preloadedData->footprintData()->info().name.isEmpty()) {
+                        isDataComplete = false;
+                        status->addDebugLog("Preloaded footprint data incomplete or name missing, fallback to fetch.");
+                    }
+                }
+
+                if (m_options.exportModel3D) {
+                    if (!preloadedData->model3DData() || preloadedData->model3DData()->uuid().isEmpty()) {
+                        isDataComplete = false;
+                        status->addDebugLog("Preloaded 3D model data missing, fallback to fetch.");
+                    }
+                }
+
+                if (isDataComplete) {
                     canUsePreloaded = true;
                 }
             }
         }
 
         if (canUsePreloaded) {
-            qDebug() << "Using preloaded data for component:" << componentId;
-
-            QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
-            status->componentId = componentId;
-            status->need3DModel = m_options.exportModel3D;
-
-            // 填充数据
-            // 注意：这里我们需要把 ComponentData 转换回原始 JSON 或者直接填充 Status 对象
-            // ProcessWorker 主要是从 status->cadDataRaw 解析，或者我们可以修改 ProcessWorker 接受 ComponentData
-
-            // 现在的架构是 FetchWorker -> raw JSON -> ProcessWorker -> ComponentData -> WriteWorker
-            // 如果我们已经有 ComponentData，我们应该跳过 Fetch 和 Process 阶段吗？
-            // 或者我们可以把 ComponentData 序列化回 JSON (有点多余)，
-            // 或者修改 Status 对象以支持直接持有 ComponentData，并让 ProcessWorker 识别它。
-
-            // 既然 ComponentExportStatus 已经有 symbolData, footprintData 等成员，
-            // 我们可以直接填充这些，并标记 fetchSuccess 和 processSuccess 为 true。
-
+            status->addDebugLog("Re-using preloaded data from validation stage.");
             status->fetchSuccess = true;
-            status->fetchMessage = "Used preloaded data";
+            status->fetchMessage = "Re-used preloaded data";
             status->fetchDurationMs = 0;
 
-            // 填充 CAD 数据
+            // 填充预加载的数据到状态对象中
             status->symbolData = preloadedData->symbolData();
             status->footprintData = preloadedData->footprintData();
             status->model3DData = preloadedData->model3DData();
 
-            // 标记处理成功 (因为数据已经是处理过的 ComponentData)
+            // 因为数据已经是处理过的 ComponentData，直接标记处理成功
             status->processSuccess = true;
-            status->processMessage = "Preloaded data used";
+            status->processMessage = "Pre-processed during validation";
             status->processDurationMs = 0;
 
-            // 添加到完成状态列表以供统计 (Critical Fix)
+            // 更新进度 (模拟已完成抓取和处理)
             {
                 QMutexLocker locker(m_mutex);
                 m_completedStatuses.append(status);
             }
-
-            // 直接推送到写入队列
             m_pipelineProgress.fetchCompleted++;
             m_pipelineProgress.processCompleted++;
 
-            // 发送信号更新 UI
             emit componentExported(
-                componentId, true, "Used preloaded data", static_cast<int>(PipelineStage::Fetch), false, false, false);
-            emit componentExported(componentId,
-                                   true,
-                                   "Used preloaded data",
-                                   static_cast<int>(PipelineStage::Process),
-                                   false,
-                                   false,
-                                   false);
+                componentId, true, "Ready", static_cast<int>(PipelineStage::Fetch), false, false, false);
+            emit componentExported(
+                componentId, true, "Ready", static_cast<int>(PipelineStage::Process), false, false, false);
             emit pipelineProgressUpdated(m_pipelineProgress);
 
-            if (m_processWriteQueue->push(status)) {
-                // 成功推送到写入队列
-            } else {
-                m_failureCount++;
-                // Handle failure
-            }
-
+            // 直接跳过前两个阶段，推送到写入队列
+            m_processWriteQueue->push(status);
             continue;
         }
 
-        FetchWorker* worker = new FetchWorker(componentId, m_networkAccessManager, m_options.exportModel3D, nullptr);
-        {
-            QMutexLocker locker(&m_workerMutex);
-            m_activeFetchWorkers.insert(worker);
-        }
+        // 走到这里说明：数据未验证、验证失败或勾选了导出3D但验证数据缺失3D。
+        // 这时不是显示失败，而是强制发起后台异步抓取，确保即使未手动验证也能导出。
+        status->addDebugLog("Component data incomplete or unvalidated, starting background fetch...");
+
+        FetchWorker* worker = new FetchWorker(componentId, m_networkAccessManager, m_options.exportModel3D, this);
         connect(worker,
                 &FetchWorker::fetchCompleted,
                 this,
                 &ExportServicePipeline::handleFetchCompleted,
                 Qt::QueuedConnection);
         connect(worker, &FetchWorker::fetchCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
+
+        {
+            QMutexLocker locker(&m_workerMutex);
+            m_activeFetchWorkers.insert(worker);
+        }
+
         m_fetchThreadPool->start(worker);
     }
 }
