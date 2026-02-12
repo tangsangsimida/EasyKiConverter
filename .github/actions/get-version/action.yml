@@ -23,7 +23,10 @@ runs:
 
         # 1. VERSION (from Tag or default)
         if [[ $GITHUB_REF == refs/tags/* ]]; then
-          VERSION=${GITHUB_REF#refs/tags/v}
+          # Strip 'refs/tags/'
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          # Strip 'v' or 'V' prefix (case-insensitive)
+          VERSION=${TAG_NAME#[vV]}
         else
           VERSION="dev"
         fi
@@ -35,16 +38,16 @@ runs:
         if [ -z "$last_committed_tag" ]; then
            last_committed_tag="v0.0.0"
         fi
-        
+
         # Safe handling for shallow clones or no tags
         git_revno=$(git rev-list ${last_committed_tag}..HEAD --count 2>/dev/null || echo "0")
         git_hash=$(git rev-parse --short HEAD)
-        
+
         ver_info="${last_committed_tag}+git${git_revno}.${git_hash}"
-        
+
         echo "VER_INFO=${ver_info}" >> $GITHUB_OUTPUT
         echo "GIT_HASH=${git_hash}" >> $GITHUB_OUTPUT
-        
+
         echo "======= VERSION INFO ========"
         echo "Version:  ${VERSION}"
         echo "Info:     ${ver_info}"

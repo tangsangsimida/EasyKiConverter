@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+      - 'V*'
   workflow_dispatch:
     inputs:
       create_release:
