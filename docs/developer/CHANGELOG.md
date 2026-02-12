@@ -6,6 +6,22 @@
 
 ### 修复
 
+- **MainWindow 模块化重构**
+  - 将 `MainWindow` 的内联 UI 逻辑拆分为独立的高性能组件：`TitleBar`, `HeaderSection`, `ComponentInputCard`, `BomImportCard`, `ComponentListCard`, `ExportSettingsCard`, `ExportProgressCard`, `ExportResultsCard`, `ExportStatisticsCard`, `ExportButtonsSection` 等。
+  - 通过组件解耦显著提升了 QML 代码的可维护性和渲染效率。
+  - 代码位置: `src/ui/qml/components/`
+
+- **核心导入导出模块单一职责重构**
+  - 将臃肿的 `EasyedaImporter` 和 `Exporter` 类拆分为专用类。
+  - 新增 `EasyedaSymbolImporter`（符号导入）、`EasyedaFootprintImporter`（封装导入）、`EasyedaUtils`（通用工具）。
+  - 核心逻辑代码量减少，可测试性提升。
+  - 代码位置: `src/core/`
+
+- **BOM 解析库与服务重构**
+  - 新增 `BomParser` 模块，优化 BOM 文件导入流程。
+  - 实现导出流水线取消机制与线程池配置优化，降低解析失败率。
+  - 代码位置: `src/services/`
+
 - **弱网容错 P0-1: NetworkWorker 添加超时机制**
   - 新增 `executeRequest` 通用网络请求方法，统一处理超时、重试和错误恢复
   - 所有 4 个 fetch 方法（组件信息、CAD数据、3D模型OBJ/MTL）均增加 QTimer 超时保护
@@ -58,6 +74,10 @@
   - 提取 `executeRequest` 通用方法，消除四个 fetch 方法中的大量重复代码
   - 统一超时、重试、进度报告和错误处理逻辑
   - 代码行数从约 430 行减少至约 280 行，可维护性显著提升
+
+- **构建系统优化**
+  - 启用 `compile_commands.json` 生成，提供更好的 IDE/LSP（如 VS Code）智能提示支持。
+  - 统一项目所有源文件编码为 UTF-8 (No BOM)。
 
 ## [3.0.3] - 2026-02-08
 

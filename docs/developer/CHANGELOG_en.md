@@ -2,6 +2,60 @@
 
 This document records the additions, fixes, and changes in each version of EasyKiConverter.
 
+## [3.0.5] - 2026-02-12
+
+### Added
+- **MainWindow Modular Architecture**
+  - Refactored `MainWindow`'s inline UI logic into independent, high-performance components: `TitleBar`, `HeaderSection`, `ComponentInputCard`, `BomImportCard`, `ComponentListCard`, `ExportSettingsCard`, `ExportProgressCard`, `ExportResultsCard`, `ExportStatisticsCard`, `ExportButtonsSection`, etc.
+  - Significantly improved QML maintainability and rendering efficiency through component decoupling.
+  - Code location: `src/ui/qml/components/`
+
+- **Core Import/Export Module Single Responsibility Refactoring**
+  - Split the monolithic `EasyedaImporter` and `Exporter` classes into specialized classes.
+  - Added `EasyedaSymbolImporter` (Symbol import), `EasyedaFootprintImporter` (Footprint import), and `EasyedaUtils` (Shared utilities).
+  - Reduced core logic complexity and improved testability.
+  - Code location: `src/core/`
+
+- **BOM Parser & Service Refactoring**
+  - Added `BomParser` module to optimize the BOM file import process.
+  - Implemented export pipeline cancellation mechanism and thread pool configuration optimization.
+  - Code location: `src/services/`
+
+### Fixed
+- **Network Resilience P0-1: Timeout Mechanism for NetworkWorker**
+  - Added universal `executeRequest` method for unified timeout, retry, and error recovery handling.
+  - Added `QTimer` protection for all 4 fetch methods (Component Info, CAD Data, 3D Model OBJ/MTL).
+  - Default timeout: 30s (Component Info/CAD Data), 45s (3D Models).
+  - Eliminated the risk of thread blocking caused by `QEventLoop::exec()` in weak network conditions.
+  - Code location: `src/workers/NetworkWorker.h`, `src/workers/NetworkWorker.cpp`
+
+- **Network Resilience P0-2: Allow Retry After Timeout in FetchWorker**
+  - Removed internal logic that skipped retries on timeout.
+  - Timeouts (OperationCanceledError) now trigger the standard retry flow.
+  - Code location: `src/workers/FetchWorker.cpp`
+
+- **Network Resilience P1-4 to P1-6: Exponential Backoff & Jitter**
+  - Changed rate-limit backoff from linear (+1000) to exponential (*2).
+  - Increased retry delays (3s / 5s / 10s) and added +/-20% random jitter.
+  - Code location: `src/workers/FetchWorker.h`, `src/workers/FetchWorker.cpp`
+
+- **Network Resilience P1-7: Fixed thread_local QNAM Memory Leak**
+  - Registered `QThread::finished` cleanup callback for `thread_local QNetworkAccessManager*`.
+  - Code location: `src/workers/FetchWorker.cpp`
+
+- **3D Model Export Failures no longer block Symbol/Footprint export**
+  - Changed success condition to prioritize core symbol/footprint output.
+  - Code location: `src/workers/WriteWorker.cpp`
+
+### Refactor
+- **NetworkWorker Code Cleanup**
+  - Extracted `executeRequest` to eliminate duplicate code in fetch methods.
+  - Reduced code lines from ~430 to ~280.
+
+- **Build System Optimization**
+  - Enabled `compile_commands.json` generation for better IDE/LSP (e.g., VS Code) support.
+  - Unified all source file encodings to UTF-8 (No BOM).
+
 ## [3.0.3] - 2026-02-08
 
 ### Added
