@@ -1,5 +1,6 @@
 #include "ComponentService.h"
 
+#include "BomParser.h"
 #include "core/easyeda/EasyedaApi.h"
 #include "core/easyeda/EasyedaImporter.h"
 
@@ -14,12 +15,11 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QProcess>
+#include <QQueue>
 #include <QRegularExpression>
 #include <QTextStream>
 #include <QTimer>
 #include <QUuid>
-
-#include <xlsxdocument.h>
 
 namespace EasyKiConverter {
 
@@ -33,8 +33,9 @@ ComponentService::ComponentService(QObject* parent)
     , m_parallelTotalCount(0)
     , m_parallelCompletedCount(0)
     , m_parallelFetching(false)
-    , m_activeRequests(0)
-    , m_activeImageRequests(0) {
+    , m_imageService(new LcscImageService(this)) {
+    // 连接图片服务信号
+    connect(m_imageService, &LcscImageService::imageReady, this, &ComponentService::handleImageReady);
     // 连接 API 信号
     connect(m_api, &EasyedaApi::componentInfoFetched, this, &ComponentService::handleComponentInfoFetched);
     connect(m_api, &EasyedaApi::cadDataFetched, this, &ComponentService::handleCadDataFetched);
@@ -49,9 +50,7 @@ ComponentService::ComponentService(QObject* parent)
 ComponentService::~ComponentService() {}
 
 void ComponentService::fetchComponentData(const QString& componentId, bool fetch3DModel) {
-    qDebug() << "Enqueuing request for:" << componentId << "Fetch 3D:" << fetch3DModel;
-    m_requestQueue.enqueue(qMakePair(componentId, fetch3DModel));
-    processNextRequest();
+    fetchComponentDataInternal(componentId, fetch3DModel);
 }
 
 void ComponentService::fetchComponentDataInternal(const QString& componentId, bool fetch3DModel) {
@@ -79,233 +78,14 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
 }
 
 void ComponentService::fetchLcscPreviewImage(const QString& componentId) {
-    qDebug() << "Enqueuing LCSC preview image request for:" << componentId;
-    m_imageRequestQueue.enqueue(componentId);
-    processNextImageRequest();
+    m_imageService->fetchPreviewImage(componentId);
 }
 
-void ComponentService::performFetchLcscPreviewImage(const QString& componentId, int retryCount) {
-    qDebug() << "Executing LCSC preview image request for:" << componentId << "Retry:" << retryCount;
-
-    QString url =
-        QString("https://overseas.szlcsc.com/overseas/global/search?keyword=%1&pageNumber=1&noShowSelf=false&from=%1")
-            .arg(componentId);
-    QNetworkRequest request{QUrl(url)};
-    request.setHeader(QNetworkRequest::UserAgentHeader,
-                      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/114.0.0.0 Safari/537.36");
-    request.setRawHeader("Accept", "application/json");
-    request.setTransferTimeout(15000);
-
-    QNetworkReply* reply = m_networkManager->get(request);
-    connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, retryCount]() {
-        reply->deleteLater();
-        if (reply->error() != QNetworkReply::NoError) {
-            qWarning() << "LCSC search request failed:" << reply->errorString() << "Retry:" << retryCount;
-            if (retryCount < 3) {
-                QTimer::singleShot(1000 * (retryCount + 1), this, [this, componentId, retryCount]() {
-                    performFetchLcscPreviewImage(componentId, retryCount + 1);
-                });
-            } else {
-                // 放弃重试，释放资源
-                advanceImageQueue();
-            }
-            return;
-        }
-
-        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
-        QJsonObject root = doc.object();
-
-        // Parse: result[2].products[0].selfBreviaryImageUrl
-        // 为了提高鲁棒性，放宽解析条件
-
-        QString imageUrl;
-        bool found = false;
-
-        if (root.contains("result")) {
-            QJsonArray resultArray = root["result"].toArray();
-            // 遍历 result 数组寻找包含 products 的对象
-            for (const auto& resVal : resultArray) {
-                QJsonObject resObj = resVal.toObject();
-                if (resObj.contains("products")) {
-                    QJsonArray products = resObj["products"].toArray();
-                    if (!products.isEmpty()) {
-                        QJsonObject product0 = products[0].toObject();
-                        if (product0.contains("selfBreviaryImageUrl")) {
-                            imageUrl = product0["selfBreviaryImageUrl"].toString();
-                            if (!imageUrl.isEmpty()) {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (!found) {
-            qWarning() << "LCSC response parsing failed for:" << componentId << "- Switching to Fallback";
-            fetchLcscPreviewImageFallback(componentId);
-            return;
-        }
-
-        qDebug() << "Found LCSC preview image URL:" << imageUrl << "for:" << componentId;
-        downloadLcscImage(componentId, imageUrl, 0);
-    });
-}
-
-// 保持兼容性，如果有旧代码调用 fetchLcscPreviewImageWithRetry，将其转发到 performFetchLcscPreviewImage
-void ComponentService::fetchLcscPreviewImageWithRetry(const QString& componentId, int retryCount) {
-    if (retryCount == 0) {
-        fetchLcscPreviewImage(componentId);
-    } else {
-        performFetchLcscPreviewImage(componentId, retryCount);
+void ComponentService::handleImageReady(const QString& componentId, const QString& imagePath) {
+    QImage image(imagePath);
+    if (!image.isNull()) {
+        emit previewImageReady(componentId, image);
     }
-}
-
-void ComponentService::processNextImageRequest() {
-    qDebug() << "Processing next image request. Active:" << m_activeImageRequests
-             << "Queue size:" << m_imageRequestQueue.size();
-
-    while (m_activeImageRequests < MAX_CONCURRENT_IMAGE_REQUESTS && !m_imageRequestQueue.isEmpty()) {
-        QString componentId = m_imageRequestQueue.dequeue();
-        m_activeImageRequests++;
-
-        // 实际发起请求
-        performFetchLcscPreviewImage(componentId, 0);
-    }
-}
-
-void ComponentService::advanceImageQueue() {
-    if (m_activeImageRequests > 0) {
-        m_activeImageRequests--;
-    }
-    qDebug() << "Image queue advanced. Active:" << m_activeImageRequests << "Queue:" << m_imageRequestQueue.size();
-    processNextImageRequest();
-}
-
-void ComponentService::fetchLcscPreviewImageFallback(const QString& componentId) {
-    qDebug() << "Starting LCSC Fallback scraping for:" << componentId;
-    QString url =
-        QString(
-            "https://so.szlcsc.com/"
-            "global.html?k=%1&hot-key=KLM8G1GETF-B041&lcsc_vid="
-            "RQQKVgVeQFdeVwUFFgcLX1UAFVEMUV1TQVkKVgFST1QxVlNRR1VbXlBfQ1ddVjtW&spm=sc.gbn.hd.ss___sc.gbn.hd.ss")
-            .arg(componentId);
-
-    QNetworkRequest request{QUrl(url)};
-    request.setHeader(QNetworkRequest::UserAgentHeader,
-                      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/144.0.0.0 Safari/537.36");
-    request.setRawHeader("accept",
-                         "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/"
-                         "*;q=0.8,application/signed-exchange;v=b3;q=0.7");
-    request.setRawHeader("accept-language", "zh-CN,zh;q=0.9,en;q=0.8");
-    request.setRawHeader("cache-control", "no-cache");
-    request.setTransferTimeout(15000);
-    // request.setRawHeader(
-    //     "cookie",
-    //     "lcb_cid_pro=7c5c2031b1f74f61b1a374c6c150866c1767537144388; _lcsc_fid=2ed1a87600acafe81fb0b69568d1e485; "
-    //     "lotteryKey=b6da0ab85f7f9d7d257c; noLoginCustomerFlag2=347162dfb4193385adc2; "
-    //     "PRO_NEW_SID=c309f8b3-416b-4bb6-a4e4-ec6e9abd1b65; customer_info=30-5-0-1; "
-    //     "currentCartVo={%22cartCode%22:%22%22%2C%22cartName%22:%22%E8%B4%AD%E7%89%A9%E8%BD%A6%EF%BC%88%E9%BB%98%E8%AE%"
-    //     "A4%EF%BC%89%22%2C%22productCount%22:30}; uvCookie=2ed1a87600acafe81fb0b69568d1e485_1770459162862_T5Qboa; "
-    //     "JSESSIONID=8287734B6C5B5FB19C8F3B642CDC9273; cookies_save_operation_code_mark=; isLoginCustomerFlag=6104950A; "
-    //     "noLoginCustomerFlag=42e8f7115e25f0fb574e; "
-    //     "acw_tc=76b20fb417704674515477679eb5b37ce59da5c291482c056a3064f85e4b21; "
-    //     "searchHistoryRecord=C3018718%EF%BC%9AC12345%EF%BC%9ASM712_C7420375%EF%BC%9AC8734%EF%BC%9AUFQFPN-48_L7.0-W7.0-"
-    //     "P0.50-BL-EP%EF%BC%9AC35556%EF%BC%9AC8323%EF%BC%9AC414042%EF%BC%9AC23345%EF%BC%9ASOT-23; soBuriedPointData=; "
-    //     "_lcsc_asid=19c3819a4e7e2509cd4c04e8ded46ad0c7d; _uetsid=86bad040040d11f18c3cd1c583eb7e2e; "
-    //     "_uetvid=dfdaa240e97911f0b6908526265f8f7c");
-    request.setRawHeader("pragma", "no-cache");
-    request.setRawHeader("priority", "u=0, i");
-    request.setRawHeader("referer", QString("https://so.szlcsc.com/global.html?k=%1").arg(componentId).toUtf8());
-    request.setRawHeader("sec-ch-ua", "\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144\"");
-    request.setRawHeader("sec-ch-ua-mobile", "?0");
-    request.setRawHeader("sec-ch-ua-platform", "\"Windows\"");
-    request.setRawHeader("sec-fetch-dest", "document");
-    request.setRawHeader("sec-fetch-mode", "navigate");
-    request.setRawHeader("sec-fetch-site", "same-origin");
-    request.setRawHeader("sec-fetch-user", "?1");
-    request.setRawHeader("upgrade-insecure-requests", "1");
-
-    QNetworkReply* reply = m_networkManager->get(request);
-    connect(reply, &QNetworkReply::finished, this, [this, reply, componentId]() {
-        reply->deleteLater();
-        if (reply->error() != QNetworkReply::NoError) {
-            qWarning() << "LCSC Fallback scraping failed:" << reply->errorString();
-            advanceImageQueue();  // 失败也要释放资源
-            return;
-        }
-
-        QString html = QString::fromUtf8(reply->readAll());
-
-        // 放宽正则，匹配更多可能的图片 URL
-        // 原始: src="(https?://[^"]+/upload/public/product/breviary/[^"]+)"
-        // 新: src="(https?://[^"]+/upload/public/[^"]+\.(?:jpg|png|jpeg|webp))" 且包含 product
-
-        QRegularExpression re("src=\"(https?://[^\"]+/upload/public/[^\"]+)\"");
-        QRegularExpressionMatchIterator it = re.globalMatch(html);
-
-        QString imageUrl;
-        bool found = false;
-
-        while (it.hasNext()) {
-            QRegularExpressionMatch match = it.next();
-            QString url = match.captured(1);
-            // 简单过滤，通常预览图包含 breviary 或 product
-            if (url.contains("product") && (url.endsWith(".jpg") || url.endsWith(".png") || url.endsWith(".jpeg"))) {
-                imageUrl = url;
-                found = true;
-                break;  // 取第一个匹配的
-            }
-        }
-
-        if (found) {
-            qDebug() << "Fallback: Found image URL:" << imageUrl;
-            downloadLcscImage(componentId, imageUrl, 0);
-        } else {
-            qWarning() << "Fallback: Could not find image URL in HTML response for:" << componentId;
-            advanceImageQueue();  // 失败也要释放资源
-        }
-    });
-}
-
-void ComponentService::downloadLcscImage(const QString& componentId, const QString& imageUrl, int retryCount) {
-    qDebug() << "Downloading LCSC image from:" << imageUrl << "Retry:" << retryCount;
-    QNetworkRequest imgRequest{QUrl(imageUrl)};
-    imgRequest.setHeader(QNetworkRequest::UserAgentHeader,
-                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                         "Chrome/114.0.0.0 Safari/537.36");
-    imgRequest.setTransferTimeout(15000);
-
-    QNetworkReply* imgReply = m_networkManager->get(imgRequest);
-    connect(imgReply, &QNetworkReply::finished, this, [this, imgReply, componentId, imageUrl, retryCount]() {
-        imgReply->deleteLater();
-        if (imgReply->error() != QNetworkReply::NoError) {
-            qWarning() << "LCSC image download failed:" << imgReply->errorString() << "Retry:" << retryCount;
-            if (retryCount < 3) {
-                QTimer::singleShot(1000 * (retryCount + 1), this, [this, componentId, imageUrl, retryCount]() {
-                    downloadLcscImage(componentId, imageUrl, retryCount + 1);
-                });
-            } else {
-                advanceImageQueue();  // 放弃
-            }
-            return;
-        }
-
-        QByteArray data = imgReply->readAll();
-        QImage image;
-        if (image.loadFromData(data)) {
-            qDebug() << "LCSC preview image downloaded successfully for:" << componentId << "Size:" << data.size();
-            emit previewImageReady(componentId, image);
-        } else {
-            qWarning() << "Failed to load LCSC image from data for:" << componentId << "Size:" << data.size();
-        }
-
-        // 成功完成
-        advanceImageQueue();
-    });
 }
 
 void ComponentService::handleComponentInfoFetched(const QJsonObject& data) {
@@ -507,9 +287,6 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
         handleParallelDataCollected(m_currentComponentId, componentData);
     }
 
-    // 推进请求队列
-    advanceQueue();
-
     // 恢复组件 ID
     m_currentComponentId = savedComponentId;
 }
@@ -548,9 +325,6 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
 
                     // 从待处理列表中移除
                     m_fetchingComponents.remove(componentId);
-
-                    // 推进请求队列
-                    advanceQueue();
                 }
                 return;
             }
@@ -582,9 +356,6 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
                 m_pendingComponentData = ComponentData();
                 m_pendingModelUuid.clear();
                 m_hasDownloadedWrl = false;
-
-                // 推进请求队列
-                advanceQueue();
             }
         } else {
             qWarning() << "Received 3D model data for unexpected UUID:" << uuid;
@@ -626,9 +397,6 @@ void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QSt
     }
 
     emit fetchError(componentId, error);
-
-    // 推进请求队列
-    advanceQueue();
 }
 
 void ComponentService::setOutputPath(const QString& path) {
@@ -642,47 +410,14 @@ QString ComponentService::getOutputPath() const {
 void ComponentService::fetchMultipleComponentsData(const QStringList& componentIds, bool fetch3DModel) {
     qDebug() << "Fetching data for" << componentIds.size() << "components in parallel";
 
-    // 初始化并行数据收集状态
-    m_parallelCollectedData.clear();
+    // 初始化请求
     m_parallelFetchingStatus.clear();
-    m_parallelPendingComponents = componentIds;
-    m_parallelTotalCount = componentIds.size();
-    m_parallelCompletedCount = 0;
-    m_parallelFetching = true;
-
-    // 初始化请求队列
-    m_requestQueue.clear();
-    m_activeRequests = 0;
-    for (const QString& componentId : componentIds) {
-        m_requestQueue.enqueue(qMakePair(componentId, fetch3DModel));
-        m_parallelFetchingStatus[componentId] = true;
-    }
-
-    // 开始处理请求
-    processNextRequest();
-}
-
-void ComponentService::processNextRequest() {
-    qDebug() << "Processing next request. Active:" << m_activeRequests << "Queue size:" << m_requestQueue.size();
-
-    while (m_activeRequests < MAX_CONCURRENT_REQUESTS && !m_requestQueue.isEmpty()) {
-        QPair<QString, bool> request = m_requestQueue.dequeue();
-        QString componentId = request.first;
-        bool fetch3DModel = request.second;
-
-        m_activeRequests++;
-
-        qDebug() << "Starting request for:" << componentId;
-        fetchComponentDataInternal(componentId, fetch3DModel);
+    for (const QString& id : componentIds) {
+        m_parallelFetchingStatus[id] = true;
+        fetchComponentDataInternal(id, fetch3DModel);
     }
 }
 
-void ComponentService::advanceQueue() {
-    if (m_activeRequests > 0) {
-        m_activeRequests--;
-    }
-    processNextRequest();
-}
 void ComponentService::handleParallelDataCollected(const QString& componentId, const ComponentData& data) {
     qDebug() << "Parallel data collected for:" << componentId;
 
@@ -706,8 +441,6 @@ void ComponentService::handleParallelDataCollected(const QString& componentId, c
         m_parallelCollectedData.clear();
         m_parallelFetchingStatus.clear();
         m_parallelPendingComponents.clear();
-        m_requestQueue.clear();
-        m_activeRequests = 0;
     }
 }
 
@@ -731,187 +464,32 @@ void ComponentService::handleParallelFetchError(const QString& componentId, cons
         m_parallelCollectedData.clear();
         m_parallelFetchingStatus.clear();
         m_parallelPendingComponents.clear();
-        m_requestQueue.clear();
-        m_activeRequests = 0;
     }
 }
 
 bool ComponentService::validateComponentId(const QString& componentId) const {
-    // LCSC 元件ID格式：以 'C' 或 'c' 开头，后面跟至少4位数字
-    QRegularExpression re("^[Cc]\\d{4,}$");
-    return re.match(componentId).hasMatch();
+    return BomParser::validateId(componentId);
 }
 
 QStringList ComponentService::extractComponentIdFromText(const QString& text) const {
+    // 依然保留简单的提取逻辑，或者可以进一步整合进 BomParser
     QStringList extractedIds;
-
-    // 匹配 LCSC 元件ID格式：以 'C' 或 'c' 开头，后面跟至少4位数字
     QRegularExpression re("[Cc]\\d{4,}");
     QRegularExpressionMatchIterator it = re.globalMatch(text);
 
     while (it.hasNext()) {
         QRegularExpressionMatch match = it.next();
-        QString id = match.captured();
-        // 统一转换为大写
-        id = id.toUpper();
-        if (!extractedIds.contains(id)) {
+        QString id = match.captured().toUpper();
+        if (!BomParser::getExcludedIds().contains(id) && !extractedIds.contains(id)) {
             extractedIds.append(id);
         }
     }
-
     return extractedIds;
 }
 
 QStringList ComponentService::parseBomFile(const QString& filePath) {
-    qDebug() << "Parsing BOM file:" << filePath;
-
-    QStringList componentIds;
-    QFileInfo fileInfo(filePath);
-
-    if (!fileInfo.exists()) {
-        qWarning() << "BOM file does not exist:" << filePath;
-        return componentIds;
-    }
-
-    QString suffix = fileInfo.suffix().toLower();
-
-    if (suffix == "csv" || suffix == "txt") {
-        componentIds = parseCsvBomFile(filePath);
-    } else if (suffix == "xlsx" || suffix == "xls") {
-        componentIds = parseExcelBomFile(filePath);
-    } else {
-        qWarning() << "Unsupported BOM file format:" << suffix;
-    }
-
-    qDebug() << "Extracted" << componentIds.size() << "component IDs from BOM file";
-    return componentIds;
-}
-
-QStringList ComponentService::parseCsvBomFile(const QString& filePath) {
-    qDebug() << "Parsing CSV BOM file:" << filePath;
-
-    QStringList componentIds;
-    QFile file(filePath);
-
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qWarning() << "Failed to open CSV file:" << filePath << file.errorString();
-        return componentIds;
-    }
-
-    QTextStream in(&file);
-    in.setEncoding(QStringConverter::Utf8);
-
-    // 匹配 LCSC 元件ID格式：整个单元格必须以 'C' 或 'c' 开头，后面跟至少4位数字
-    QRegularExpression re("^[Cc]\\d{4,}$");
-
-    // 排除列表：这些元器件编号不会被检索
-    QSet<QString> excludedIds = {"C0402", "C0603", "C0805"};
-
-    while (!in.atEnd()) {
-        QString line = in.readLine();
-        if (line.isEmpty()) {
-            continue;
-        }
-
-        // 检索所有以 C 或 c 开头的单元格（按逗号分隔）
-        QStringList cells = line.split(',', Qt::SkipEmptyParts);
-
-        for (const QString& cell : cells) {
-            QString trimmedCell = cell.trimmed();
-
-            // 去除可能的引号
-            if (trimmedCell.startsWith('"') && trimmedCell.endsWith('"')) {
-                trimmedCell = trimmedCell.mid(1, trimmedCell.length() - 2);
-            }
-
-            // 检查是否匹配元件ID格式
-            QRegularExpressionMatch match = re.match(trimmedCell);
-            if (match.hasMatch()) {
-                QString componentId = match.captured();
-                // 统一转换为大写
-                componentId = componentId.toUpper();
-
-                // 检查是否在排除列表中
-                if (excludedIds.contains(componentId)) {
-                    qDebug() << "Skipping excluded component ID:" << componentId;
-                    continue;
-                }
-
-                if (!componentIds.contains(componentId)) {
-                    componentIds.append(componentId);
-                    qDebug() << "Found component ID:" << componentId;
-                }
-            }
-        }
-    }
-
-    file.close();
-    return componentIds;
-}
-
-QStringList ComponentService::parseExcelBomFile(const QString& filePath) {
-    qDebug() << "Parsing Excel BOM file:" << filePath;
-
-    QStringList componentIds;
-
-    // 使用 QXlsx 库解析 Excel 文件
-    QXlsx::Document xlsx(filePath);
-    if (!xlsx.load()) {
-        qWarning() << "Failed to load Excel file:" << filePath;
-        return componentIds;
-    }
-
-    // 匹配 LCSC 元件ID格式：整个单元格必须以 'C' 或 'c' 开头，后面跟至少4位数字
-    QRegularExpression re("^[Cc]\\d{4,}$");
-
-    // 排除列表：这些元器件编号不会被检索
-    QSet<QString> excludedIds = {"C0402", "C0603", "C0805"};
-
-    // 遍历所有工作表
-    for (const QString& sheetName : xlsx.sheetNames()) {
-        xlsx.selectSheet(sheetName);
-
-        // 遍历所有单元格
-        QXlsx::CellRange range = xlsx.dimension();
-        for (int row = range.firstRow(); row <= range.lastRow(); ++row) {
-            for (int col = range.firstColumn(); col <= range.lastColumn(); ++col) {
-                std::shared_ptr<QXlsx::Cell> cell = xlsx.cellAt(row, col);
-                if (!cell) {
-                    continue;
-                }
-
-                QVariant value = cell->readValue();
-                if (value.isNull() || !value.isValid()) {
-                    continue;
-                }
-
-                QString cellText = value.toString().trimmed();
-
-                // 检查是否匹配元件ID格式
-                QRegularExpressionMatch match = re.match(cellText);
-                if (match.hasMatch()) {
-                    QString componentId = match.captured();
-                    // 统一转换为大写
-                    componentId = componentId.toUpper();
-
-                    // 检查是否在排除列表中
-                    if (excludedIds.contains(componentId)) {
-                        qDebug() << "Skipping excluded component ID:" << componentId << "at" << sheetName << ":" << row
-                                 << "," << col;
-                        continue;
-                    }
-
-                    if (!componentIds.contains(componentId)) {
-                        componentIds.append(componentId);
-                        qDebug() << "Found component ID:" << componentId << "at" << sheetName << ":" << row << ","
-                                 << col;
-                    }
-                }
-            }
-        }
-    }
-
-    return componentIds;
+    BomParser parser;
+    return parser.parse(filePath);
 }
 
 ComponentData ComponentService::getComponentData(const QString& componentId) const {
