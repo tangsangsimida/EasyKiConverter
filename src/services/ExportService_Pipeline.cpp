@@ -20,11 +20,11 @@ namespace EasyKiConverter {
 
 ExportServicePipeline::ExportServicePipeline(QObject* parent)
     : ExportService(parent)
-    , m_fetchThreadPool(new QThreadPool(this))
-    , m_processThreadPool(new QThreadPool(this))
-    , m_writeThreadPool(new QThreadPool(this))
-    , m_fetchProcessQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100))
-    , m_processWriteQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100))
+    , m_fetchThreadPool(nullptr)
+    , m_processThreadPool(nullptr)
+    , m_writeThreadPool(nullptr)
+    , m_fetchProcessQueue(nullptr)
+    , m_processWriteQueue(nullptr)
     , m_networkAccessManager(new QNetworkAccessManager(this))
     , m_isPipelineRunning(false)
     , m_isCancelled(0)
@@ -35,10 +35,19 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     , m_originalExportStartTimeMs(0)
     , m_originalTotalTasks(0)
     , m_isRetryMode(false) {
-    // 配置线程池
-    m_fetchThreadPool->setMaxThreadCount(5);
-    m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());
-    m_writeThreadPool->setMaxThreadCount(3);
+    // 线程池初始化
+    m_fetchThreadPool = new QThreadPool(this);
+    m_fetchThreadPool->setMaxThreadCount(32);  // I/O 密集型
+    m_fetchThreadPool->setExpiryTimeout(60000);
+
+    m_processThreadPool = new QThreadPool(this);
+    m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());  // CPU 密集型
+
+    m_writeThreadPool = new QThreadPool(this);
+    m_writeThreadPool->setMaxThreadCount(8);  // 磁盘 I/O 密集型
+
+    // 状态统计初始化
+    m_pipelineProgress = PipelineProgress();
 
     qDebug() << "ExportServicePipeline initialized with thread pools:"
              << "Fetch:" << m_fetchThreadPool->maxThreadCount() << "Process:" << m_processThreadPool->maxThreadCount()
@@ -46,7 +55,9 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
 }
 
 ExportServicePipeline::~ExportServicePipeline() {
+    cancelExport();  // 确保退出时停止所有请求
     cleanupPipeline();
+    delete m_mutex;
 }
 
 void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& componentIds,
@@ -287,6 +298,24 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
 
 void ExportServicePipeline::startFetchStage() {
     for (const QString& componentId : m_componentIds) {
+        if (m_isCancelled.loadAcquire()) {  // Batch-level cancellation check
+            qDebug() << "Fetch stage cancelled early for component:" << componentId;
+            QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
+            status->componentId = componentId;
+            status->fetchSuccess = false;
+            status->fetchMessage = "Export cancelled";
+            m_completedStatuses.append(status);  // Add to completed statuses for proper count
+            m_pipelineProgress.fetchCompleted++;
+            m_pipelineProgress.processCompleted++;
+            m_pipelineProgress.writeCompleted++;
+            m_failureCount++;
+            emit componentExported(
+                componentId, false, "Export cancelled", static_cast<int>(PipelineStage::Fetch), false, false, false);
+            emit pipelineProgressUpdated(m_pipelineProgress);
+            checkPipelineCompletion();
+            continue;
+        }
+
         // 检查是否有预加载数据
         bool canUsePreloaded = false;
         QSharedPointer<ComponentData> preloadedData;
@@ -393,6 +422,10 @@ void ExportServicePipeline::startProcessStage() {
     for (int i = 0; i < m_processThreadPool->maxThreadCount(); i++) {
         m_processThreadPool->start(QRunnable::create([this]() {
             while (true) {
+                if (m_isCancelled.loadAcquire()) {  // Batch-level cancellation check
+                    qDebug() << "Process stage worker exiting due to cancellation.";
+                    break;
+                }
                 QSharedPointer<ComponentExportStatus> status;
                 if (!m_fetchProcessQueue->pop(status, 1000)) {
                     if (m_fetchProcessQueue->isClosed())
@@ -416,6 +449,10 @@ void ExportServicePipeline::startWriteStage() {
     for (int i = 0; i < m_writeThreadPool->maxThreadCount(); i++) {
         m_writeThreadPool->start(QRunnable::create([this]() {
             while (true) {
+                if (m_isCancelled.loadAcquire()) {  // Batch-level cancellation check
+                    qDebug() << "Write stage worker exiting due to cancellation.";
+                    break;
+                }
                 QSharedPointer<ComponentExportStatus> status;
                 if (!m_processWriteQueue->pop(status, 1000)) {
                     if (m_processWriteQueue->isClosed())
@@ -542,10 +579,16 @@ void ExportServicePipeline::cleanupPipeline() {
     if (!m_isPipelineRunning)
         return;
     m_isPipelineRunning = false;
-    if (m_fetchProcessQueue)
+    if (m_fetchProcessQueue) {
         m_fetchProcessQueue->close();
-    if (m_processWriteQueue)
+        delete m_fetchProcessQueue;
+        m_fetchProcessQueue = nullptr;
+    }
+    if (m_processWriteQueue) {
         m_processWriteQueue->close();
+        delete m_processWriteQueue;
+        m_processWriteQueue = nullptr;
+    }
 }
 
 bool ExportServicePipeline::mergeSymbolLibrary() {
@@ -733,38 +776,44 @@ void ExportServicePipeline::cancelExport() {
     m_isCancelled.storeRelease(1);
     ExportService::cancelExport();
 
-    qDebug() << "Starting pipeline cancellation...";
+    qDebug() << "Cancelling ExportPipeline...";
 
-    // 异步执行清理操作，确保不阻塞 UI 线程
+    // 1. 同步中断所有正在运行的抓取任务 (确保立即起效)
+    {
+        QMutexLocker locker(&m_workerMutex);
+        qDebug() << "Aborting" << m_activeFetchWorkers.size() << "active fetch workers immediately.";
+        for (FetchWorker* worker : m_activeFetchWorkers) {
+            if (worker) {
+                worker->abort();
+            }
+        }
+    }
+
+    // 2. 异步清理剩余资源，防止阻塞 UI
     QThreadPool::globalInstance()->start(QRunnable::create([this]() {
-        qDebug() << "Executing cancellation cleanup (async)...";
+        // 使用 QPointer 检查 this 是否还存活？
+        // 其实在 QThreadPool 里的 Lambda 访问 this 比较危险，
+        // 但由于我们使用了 QThreadPool::globalInstance() 且 lambda 内部逻辑较快，
+        // 且上面的同步 abort 已经解决了大部分请求残留问题。
 
-        // 清空线程池队列中尚未开始的任务
         if (m_fetchThreadPool) {
             m_fetchThreadPool->clear();
-            qDebug() << "Cleared FetchWorker thread pool queue.";
         }
         if (m_processThreadPool) {
             m_processThreadPool->clear();
-            qDebug() << "Cleared ProcessWorker thread pool queue.";
         }
         if (m_writeThreadPool) {
             m_writeThreadPool->clear();
-            qDebug() << "Cleared WriteWorker thread pool queue.";
         }
 
-        // 关闭队列（唤醒所有等待的线程，使它们退出循环）
         if (m_fetchProcessQueue) {
             m_fetchProcessQueue->close();
-            qDebug() << "Closed FetchProcessQueue.";
         }
         if (m_processWriteQueue) {
             m_processWriteQueue->close();
-            qDebug() << "Closed ProcessWriteQueue.";
         }
 
-        qDebug() << "Cancellation cleanup completed.";
-
+        qDebug() << "ExportPipeline cancelled and queues closed.";
         // 触发完成检查，这将最终发出 exportCompleted 信号
         checkPipelineCompletion();
     }));

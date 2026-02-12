@@ -198,7 +198,15 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
             int delay = calculateRetryDelay(retryCount - 1);
             qDebug() << "Retrying request to" << url << "in" << delay << "ms (Retry" << retryCount << "/"
                      << MAX_HTTP_RETRIES << ")";
-            QThread::msleep(delay);
+
+            // 使用分段休眠并发检查中断标志，而不是长时间阻塞休眠
+            const int step = 100;
+            for (int i = 0; i < delay; i += step) {
+                if (m_isAborted.loadRelaxed()) {
+                    return QByteArray();
+                }
+                QThread::msleep(qMin(step, delay - i));
+            }
         }
         QNetworkRequest request{QUrl(url)};
         request.setRawHeader("User-Agent", "EasyKiConverter/1.0");
