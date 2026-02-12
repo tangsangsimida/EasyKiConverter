@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Test)
+find_package(Qt6 REQUIRED COMPONENTS Test Gui Network)
 
 add_executable(test_easyeda_api
     test_easyeda_api.cpp
@@ -27,3 +27,19 @@ target_include_directories(test_models PRIVATE
     ${CMAKE_SOURCE_DIR}
 )
 add_test(NAME test_models COMMAND test_models)
+
+add_executable(test_viewmodels
+    test_viewmodels.cpp
+    ../common/MockNetworkAdapter.hpp
+)
+target_link_libraries(test_viewmodels PRIVATE
+    Qt6::Test
+    Qt6::Gui
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_viewmodels PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_viewmodels COMMAND test_viewmodels)

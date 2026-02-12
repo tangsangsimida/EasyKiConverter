@@ -39,6 +39,14 @@ public:
     explicit ComponentService(QObject* parent = nullptr);
 
     /**
+     * @brief 构造函数（支持注入 API 实例）
+     *
+     * @param api API 实例
+     * @param parent 父对象
+     */
+    explicit ComponentService(class EasyedaApi* api, QObject* parent = nullptr);
+
+    /**
      * @brief 析构函数
      */
     ~ComponentService() override;
