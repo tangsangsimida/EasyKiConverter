@@ -75,7 +75,11 @@ void FetchWorker::run() {
     static thread_local QNetworkAccessManager* threadQNAM = nullptr;
     if (!threadQNAM) {
         threadQNAM = new QNetworkAccessManager();
-        // QNAM 创建于当前线程，自动归属于当前线程
+        // 注册线程退出清理回调，确保 QNAM 被正确析构（修复内存泄漏）
+        QObject::connect(QThread::currentThread(), &QThread::finished, [=]() {
+            delete threadQNAM;
+            threadQNAM = nullptr;
+        });
         qDebug() << "Created thread-local QNetworkAccessManager for thread:" << QThread::currentThreadId();
     }
     m_ownNetworkManager = threadQNAM;
@@ -191,9 +195,10 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
         requestTimer.restart();
 
         if (retryCount > 0) {
-            qDebug() << "Retrying request to" << url << "in" << HTTP_RETRY_DELAY_MS << "ms (Retry" << retryCount << "/"
+            int delay = calculateRetryDelay(retryCount - 1);
+            qDebug() << "Retrying request to" << url << "in" << delay << "ms (Retry" << retryCount << "/"
                      << MAX_HTTP_RETRIES << ")";
-            QThread::msleep(HTTP_RETRY_DELAY_MS);
+            QThread::msleep(delay);
         }
         QNetworkRequest request{QUrl(url)};
         request.setRawHeader("User-Agent", "EasyKiConverter/1.0");
@@ -256,7 +261,9 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 // 触发速率限制退避
                 QMutexLocker locker(&s_rateLimitMutex);
                 s_lastRateLimitTime = QDateTime::currentDateTime();
-                s_backoffMs = qMin(s_backoffMs + 1000, 5000);  // 指数退避，最大5秒
+                s_backoffMs = qMin(s_backoffMs * 2, 8000);  // 指数退避，最大8秒
+                if (s_backoffMs == 0)
+                    s_backoffMs = 1000;  // 初始退避1秒
                 qWarning() << "Rate limit backoff increased to" << s_backoffMs
                            << "ms, active requests:" << s_activeRequests.loadRelaxed();
 
@@ -295,7 +302,8 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 status->networkDiagnostics.append(diag);
             }
 
-            retryCount = MAX_HTTP_RETRIES + 1;  // Skip retries
+            // 超时后进行正常重试（弱网环境下超时是最常见的错误类型）
+            // Will retry
         } else {
             qWarning() << "Network error:" << reply->errorString() << "URL:" << url;
 
@@ -556,7 +564,7 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
 
     QString stepUrl = QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(uuid);
     status->addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));
-    QByteArray stepData = httpGet(stepUrl, 10000, status);
+    QByteArray stepData = httpGet(stepUrl, MODEL_3D_TIMEOUT_MS, status);
 
     if (!stepData.isEmpty() && stepData.size() > 100) {
         status->model3DStepRaw = stepData;
@@ -580,6 +588,21 @@ void FetchWorker::abort() {
         qDebug() << "Aborting network request for component:" << m_componentId;
         m_currentReply->abort();
     }
+}
+
+int FetchWorker::calculateRetryDelay(int retryCount) {
+    // 使用递增延迟表，超出范围则使用最大值
+    int baseDelay;
+    if (retryCount >= 0 && retryCount < static_cast<int>(sizeof(RETRY_DELAYS_MS) / sizeof(RETRY_DELAYS_MS[0]))) {
+        baseDelay = RETRY_DELAYS_MS[retryCount];
+    } else {
+        baseDelay = RETRY_DELAYS_MS[sizeof(RETRY_DELAYS_MS) / sizeof(RETRY_DELAYS_MS[0]) - 1];
+    }
+
+    // 添加 ±20% 随机抖动，避免惊群效应
+    int jitter = static_cast<int>(baseDelay * 0.2);
+    int randomOffset = QRandomGenerator::global()->bounded(-jitter, jitter + 1);
+    return qMax(100, baseDelay + randomOffset);  // 确保最小延迟100ms
 }
 
 }  // namespace EasyKiConverter

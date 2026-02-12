@@ -8,6 +8,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QObject>
+#include <QRandomGenerator>
 #include <QRunnable>
 
 namespace EasyKiConverter {
@@ -88,6 +89,13 @@ private:
      */
     bool fetch3DModelData(QSharedPointer<ComponentExportStatus> status);
 
+    /**
+     * @brief 计算重试延迟（含随机抖动）
+     * @param retryCount 当前重试次数（0-based）
+     * @return int 延迟时间（毫秒）
+     */
+    static int calculateRetryDelay(int retryCount);
+
 private:
     QString m_componentId;
     QNetworkAccessManager* m_networkAccessManager;
@@ -99,10 +107,12 @@ private:
     QAtomicInt m_isAborted;
 
     // 超时配置（静态常量，可配置）
-    static const int COMPONENT_INFO_TIMEOUT_MS = 8000;  // 组件信息超时（毫秒）
-    static const int MODEL_3D_TIMEOUT_MS = 10000;       // 3D模型超时（毫秒）
-    static const int HTTP_RETRY_DELAY_MS = 500;         // HTTP重试延迟（毫秒）
-    static const int MAX_HTTP_RETRIES = 3;              // 最大HTTP重试次数
+    static const int COMPONENT_INFO_TIMEOUT_MS = 15000;  // 组件信息超时（毫秒）
+    static const int MODEL_3D_TIMEOUT_MS = 30000;        // 3D模型超时（毫秒）
+    static const int MAX_HTTP_RETRIES = 3;               // 最大HTTP重试次数
+
+    // 递增重试延迟（毫秒），对应第1/2/3次重试
+    static constexpr int RETRY_DELAYS_MS[] = {3000, 5000, 10000};
 
     // 速率限制检测（静态成员，所有 FetchWorker 共享）
     static QAtomicInt s_activeRequests;    // 活跃请求计数
