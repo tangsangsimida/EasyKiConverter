@@ -234,7 +234,7 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
         // 始终使用封装名作为 3D 模型的文件名和引用路径，以确保与 write3DModelFile 写入磁盘的命名一致
         model3DWrlPath = QString("../%1.3dmodels/%2.wrl").arg(m_libName, footprintName);
         if (!status.model3DStepRaw.isEmpty()) {
-            model3DStepPath = QString("../%1.3dmodels/%2.step").arg(m_libName, modelName);
+            model3DStepPath = QString("../%1.3dmodels/%2.step").arg(m_libName, footprintName);
         }
     }
 
