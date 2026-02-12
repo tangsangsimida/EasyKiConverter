@@ -491,6 +491,39 @@ jobs:
       contents: write
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Version
+        id: version
+        uses: ./.github/actions/get-version
+
+      - name: Generate Changelog
+        id: changelog
+        shell: bash
+        run: |
+          PREV_TAG="${{ steps.version.outputs.PREVIOUS_TAG }}"
+          CURR_TAG="${{ github.ref_name }}"
+
+          echo "### 变更内容 / Changes" > changelog.md
+          echo "" >> changelog.md
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "首次发布 / Initial release" >> changelog.md
+          else
+            echo "对比版本: $PREV_TAG -> $CURR_TAG" >> changelog.md
+            echo "" >> changelog.md
+            git log ${PREV_TAG}..${CURR_TAG} --oneline --pretty=format:"* %s (%h)" >> changelog.md
+          fi
+
+          # 处理特殊字符
+          body=$(cat changelog.md)
+          echo "BODY<<EOF" >> $GITHUB_OUTPUT
+          echo "$body" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -502,7 +535,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: release_assets/*
-          generate_release_notes: true
+          body: ${{ steps.changelog.outputs.BODY }}
+          generate_release_notes: false
           draft: true
           prerelease: false
           fail_on_unmatched_files: false
