@@ -343,8 +343,8 @@ BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>> *m_queue;
 **总进度计算**：
 ```cpp
 int overallProgress() {
-    return (fetchProgress() * 30 + 
-            processProgress() * 50 + 
+    return (fetchProgress() * 30 +
+            processProgress() * 50 +
             writeProgress() * 20) / 100;
 }
 ```
@@ -585,6 +585,17 @@ EasyKiConverter_QT/
 - 自动重试机制
 - GZIP 解压缩
 - 连接池管理
+
+### 弱网容错（v3.0.4 分析）
+
+项目存在四套网络请求实现，弱网容错能力不一致：
+
+- **`FetchWorker`**（流水线批量导出）：支持超时（8-10s）和重试（3次），但超时后不重试
+- **`NetworkUtils`**（单件预览获取）：最完善的弱网支持，支持超时（30s）+重试+递增延迟
+- **`NetworkWorker`**（旧版单件获取）：无超时和重试机制，弱网下可能永久阻塞
+- **`ComponentService`**（LCSC 预览图）：支持超时（15s）+重试，有 Fallback 备用方案
+
+已知问题及改进方向详见 [弱网支持分析报告](../WEAK_NETWORK_ANALYSIS.md) 和 [ADR-007](../project/adr/007-weak-network-resilience-analysis.md)。
 
 ## 安全性
 

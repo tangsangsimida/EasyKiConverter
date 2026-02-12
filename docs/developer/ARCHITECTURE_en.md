@@ -343,6 +343,17 @@ EasyKiConverter_QT/
 - GZIP decompression
 - Connection pool management
 
+### Weak Network Resilience (v3.0.4 Analysis)
+
+The project has four independent network request implementations with inconsistent weak network resilience:
+
+- **`FetchWorker`** (pipeline batch export): Supports timeout (8-10s) and retry (3x), but does not retry after timeout
+- **`NetworkUtils`** (single component preview): Most complete weak network support with timeout (30s) + retry + incremental delays
+- **`NetworkWorker`** (legacy single fetch): No timeout or retry mechanism; may block permanently under weak network conditions
+- **`ComponentService`** (LCSC preview images): Supports timeout (15s) + retry with fallback mechanism
+
+For known issues and improvement directions, see the [Weak Network Analysis Report](../WEAK_NETWORK_ANALYSIS_en.md) and [ADR-007](../project/adr/007-weak-network-resilience-analysis_en.md).
+
 ## Security
 
 ### Input Validation
