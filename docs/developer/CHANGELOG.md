@@ -2,7 +2,65 @@
 
 本文档记录了 EasyKiConverter 每个版本的新增、修复和更改内容。
 
+## [3.0.5] - 2026-02-12
+
+### 修复
+
+- **弱网容错 P0-1: NetworkWorker 添加超时机制**
+  - 新增 `executeRequest` 通用网络请求方法，统一处理超时、重试和错误恢复
+  - 所有 4 个 fetch 方法（组件信息、CAD数据、3D模型OBJ/MTL）均增加 QTimer 超时保护
+  - 默认超时 30 秒（组件信息/CAD数据），3D 模型超时 45 秒
+  - 消除了弱网环境下 `QEventLoop::exec()` 导致线程永久阻塞的风险
+  - 代码位置: `src/workers/NetworkWorker.h`, `src/workers/NetworkWorker.cpp`
+
+- **弱网容错 P0-2: FetchWorker 超时后允许重试**
+  - 移除 `retryCount = MAX_HTTP_RETRIES + 1` 跳过逻辑
+  - 超时（OperationCanceledError）现在会触发正常的重试流程
+  - 弱网环境下超时是最常见的错误类型，此修复显著提高弱网下的成功率
+  - 代码位置: `src/workers/FetchWorker.cpp`
+
+- **弱网容错 P0-3: FetchWorker 增加超时时间**
+  - 组件信息超时: 8s -> 15s
+  - 3D 模型超时: 10s -> 30s
+  - STEP 模型超时: 10s -> 30s（不再硬编码，统一使用 MODEL_3D_TIMEOUT_MS 常量）
+  - 代码位置: `src/workers/FetchWorker.h`
+
+- **弱网容错 P1-4: 速率限制退避改为真正的指数退避**
+  - 退避策略从 `+1000`（线性）改为 `*2`（指数），初始 1s，上限 8s
+  - 更有效地应对 API 速率限制
+  - 代码位置: `src/workers/FetchWorker.cpp`
+
+- **弱网容错 P1-5: 递增重试延迟**
+  - 重试延迟从固定 500ms 改为递增延迟: 3s / 5s / 10s
+  - 参考 NetworkUtils 的成熟策略，给服务端更充分的恢复时间
+  - 代码位置: `src/workers/FetchWorker.h`, `src/workers/FetchWorker.cpp`
+
+- **弱网容错 P1-6: 重试延迟添加随机抖动（Jitter）**
+  - 新增 `calculateRetryDelay` 辅助方法
+  - 在基础延迟上添加 +/-20% 的随机抖动，有效缓解惊群效应
+  - FetchWorker 和 NetworkWorker 均采用带抖动的递增延迟策略
+  - 代码位置: `src/workers/FetchWorker.h`, `src/workers/FetchWorker.cpp`
+
+- **弱网容错 P1-7: 修复 thread_local QNAM 内存泄漏**
+  - 为 `thread_local QNetworkAccessManager*` 注册 `QThread::finished` 清理回调
+  - 确保线程池线程回收时 QNAM 被正确 delete，而非永久泄漏
+  - 代码位置: `src/workers/FetchWorker.cpp`
+
+- **3D 模型导出失败不再阻止符号/封装导出**
+  - `writeSuccess` 判定从"符号+封装+3D模型全部成功"改为"符号+封装核心输出成功"
+  - 3D 模型导出失败仅记录警告，不影响符号和封装的正常导出和合并
+  - 修复了 3D 模型下载失败导致已解析的符号和封装也不写入的问题
+  - 代码位置: `src/workers/WriteWorker.cpp`
+
+### 改进
+
+- **NetworkWorker 代码重构**
+  - 提取 `executeRequest` 通用方法，消除四个 fetch 方法中的大量重复代码
+  - 统一超时、重试、进度报告和错误处理逻辑
+  - 代码行数从约 430 行减少至约 280 行，可维护性显著提升
+
 ## [3.0.3] - 2026-02-08
+
 
 ### 新增
 - **LCSC 预览图功能**

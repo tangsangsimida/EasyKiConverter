@@ -119,19 +119,29 @@ cleanup:
     }
 
     // 根据用户请求的导出项和实际完成情况，决定最终的成功状态
-    bool finalSuccess = true;
+    // 注意：3D模型导出失败不影响符号和封装的导出成功状态
+    // 符号和封装是捆绑的核心输出，3D模型是可选附加输出
+    bool coreSuccess = true;
+    bool model3DFailed = false;
     if (m_exportSymbol && !m_status->symbolWritten) {
-        finalSuccess = false;
+        coreSuccess = false;
     }
     if (m_exportFootprint && !m_status->footprintWritten) {
-        finalSuccess = false;
+        coreSuccess = false;
     }
     if (m_exportModel3D && !m_status->model3DWritten) {
-        finalSuccess = false;
+        model3DFailed = true;  // 仅记录，不影响核心成功状态
+        m_status->addDebugLog("WARNING: 3D model export failed, but symbol/footprint export is not affected.");
     }
 
-    m_status->writeSuccess = finalSuccess;
-    m_status->writeMessage = finalSuccess ? "Write completed successfully" : "Failed to write one or more files";
+    m_status->writeSuccess = coreSuccess;
+    if (coreSuccess && model3DFailed) {
+        m_status->writeMessage = "Write completed (3D model export failed, symbol/footprint OK)";
+    } else if (coreSuccess) {
+        m_status->writeMessage = "Write completed successfully";
+    } else {
+        m_status->writeMessage = "Failed to write one or more core files (symbol/footprint)";
+    }
 
     if (m_debugMode) {
         exportDebugData(*m_status);
