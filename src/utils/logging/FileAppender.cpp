@@ -17,14 +17,13 @@ static const QStringList s_allowedDirs = {
 
 FileAppender::FileAppender(const QString& filePath, qint64 maxSize, int maxFiles, bool async)
     : m_maxSize(maxSize), m_maxFiles(qMax(1, maxFiles)), m_async(async) {
-    
     // 验证和规范化路径
     if (!validateAndNormalizePath(filePath)) {
         m_lastError = "Invalid or unsafe file path: " + filePath;
         m_pathValid = false;
         return;
     }
-    
+
     m_pathValid = true;
 
     // 确保目录存在
@@ -64,71 +63,71 @@ bool FileAppender::validateAndNormalizePath(const QString& filePath) {
 
     // 检查路径中的危险字符和模式
     QString cleanPath = filePath;
-    
+
     // 检查路径遍历攻击模式
     if (cleanPath.contains("..") || cleanPath.contains("~")) {
         return false;
     }
-    
+
     // 检查绝对路径是否指向系统敏感目录
     QFileInfo fileInfo(cleanPath);
     QString absolutePath = fileInfo.absoluteFilePath();
-    
+
     // 规范化路径（解析符号链接等）
     QDir dir = fileInfo.absoluteDir();
     m_baseDir = dir.absolutePath();
-    
+
     // 获取规范的绝对路径
     QString canonicalDir = dir.canonicalPath();
     if (!canonicalDir.isEmpty()) {
         m_baseDir = canonicalDir;
     }
-    
+
     // 检查路径是否在允许的目录范围内
     if (!isPathInAllowedDir(absolutePath)) {
         return false;
     }
-    
+
     // 存储规范化的路径
     m_filePath = absolutePath;
     m_canonicalPath = absolutePath;
-    
+
     return true;
 }
 
 bool FileAppender::isPathInAllowedDir(const QString& path) const {
     // 允许的根目录列表
     QStringList allowedRoots;
-    
+
     // 应用程序目录
     if (QCoreApplication::instance()) {
         allowedRoots << QCoreApplication::applicationDirPath();
     }
-    
+
     // 用户数据目录
     allowedRoots << QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     allowedRoots << QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     allowedRoots << QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    
+
     // 用户主目录
     allowedRoots << QDir::homePath();
-    
+
     // 当前工作目录
     allowedRoots << QDir::currentPath();
-    
+
     // 检查路径是否在允许的根目录下
     for (const QString& root : allowedRoots) {
         if (path.startsWith(root)) {
             return true;
         }
     }
-    
+
     return false;
 }
 
 void FileAppender::append(const LogRecord& record, const QString& formatted) {
     Q_UNUSED(record);
-    
+
     if (!m_pathValid) {
         return;
     }
@@ -136,14 +135,14 @@ void FileAppender::append(const LogRecord& record, const QString& formatted) {
     if (m_async) {
         // 异步写入：加入队列（带大小限制）
         QMutexLocker locker(&m_queueMutex);
-        
+
         // 检查队列大小
         if (m_maxQueueSize > 0 && m_writeQueue.size() >= m_maxQueueSize) {
             // 队列已满，设置溢出标记并丢弃最旧的消息
             m_queueOverflow.storeRelaxed(1);
             m_writeQueue.dequeue();
         }
-        
+
         m_writeQueue.enqueue(formatted);
         m_queueCondition.wakeOne();
     } else {
@@ -156,7 +155,7 @@ void FileAppender::flush() {
     if (!m_pathValid) {
         return;
     }
-    
+
     if (m_async) {
         // 请求刷新
         m_flushRequested.storeRelaxed(1);
@@ -188,7 +187,7 @@ void FileAppender::close() {
     if (m_async && m_writerThread) {
         m_running.storeRelaxed(0);
         m_queueCondition.wakeAll();
-        
+
         // 等待线程结束（带超时保护）
         if (!m_writerThread->wait(3000)) {
             m_writerThread->terminate();
@@ -214,13 +213,13 @@ bool FileAppender::openFile() {
     }
 
     m_file.setFileName(m_filePath);
-    
+
     // 验证文件路径没有被篡改
     QFileInfo fileInfo(m_file);
     if (!isPathInAllowedDir(fileInfo.absoluteFilePath())) {
         return false;
     }
-    
+
     return m_file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text);
 }
 
@@ -238,12 +237,12 @@ void FileAppender::rollOver() {
 
     // 重命名现有文件
     QString rolledName = generateRolledFileName(1);
-    
+
     // 确保目标文件不存在
     if (QFile::exists(rolledName)) {
         QFile::remove(rolledName);
     }
-    
+
     if (!QFile::rename(m_filePath, rolledName)) {
         // 重命名失败，尝试直接删除并重新创建
         QFile::remove(m_filePath);
@@ -310,7 +309,7 @@ void FileAppender::writerThreadFunc() {
             if (!m_writeQueue.isEmpty()) {
                 message = m_writeQueue.dequeue();
             }
-            
+
             // 检查是否有溢出发生过
             if (m_queueOverflow.loadRelaxed()) {
                 overflowed = true;
@@ -322,7 +321,7 @@ void FileAppender::writerThreadFunc() {
         if (overflowed) {
             writeDirect("[WARNING] Log queue overflow occurred, some messages were dropped");
         }
-        
+
         if (!message.isEmpty()) {
             writeDirect(message);
         }
@@ -356,7 +355,7 @@ void FileAppender::writerThreadFunc() {
 
 void FileAppender::writeDirect(const QString& formatted) {
     QMutexLocker locker(&m_fileMutex);
-    
+
     if (!m_pathValid) {
         return;
     }
@@ -372,7 +371,7 @@ void FileAppender::writeDirect(const QString& formatted) {
         // 检查是否需要滚动（避免在锁内调用 rollOver，因为它也使用同一个递归锁）
         if (needsRollover()) {
             locker.unlock();  // 释放锁
-            rollOver();        // rollOver 会重新获取锁
+            rollOver();       // rollOver 会重新获取锁
         }
     }
 }

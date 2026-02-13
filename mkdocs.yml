@@ -104,10 +104,3 @@ plugins:
       lang:
         - zh
         - en
-  - macros:
-      verbose: false
-  - minify:
-      minify_html: true
-      minify_js: true
-      htmlmin_opts:
-        remove_comments: true

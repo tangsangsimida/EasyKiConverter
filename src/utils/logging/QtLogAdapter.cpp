@@ -63,10 +63,10 @@ void QtLogAdapter::qtMessageHandler(QtMsgType type, const QMessageLogContext& co
         }
         return;
     }
-    
+
     // 设置递归保护标志
     s_inHandler.storeRelaxed(1);
-    
+
     // 使用 RAII 确保标志在退出时被清除
     struct RecursionGuardReset {
         ~RecursionGuardReset() {
@@ -102,14 +102,14 @@ void QtLogAdapter::qtMessageHandler(QtMsgType type, const QMessageLogContext& co
     if (!logger) {
         return;
     }
-    
+
     if (!logger->shouldLog(level, s_defaultModule)) {
         return;
     }
 
     // 构建日志消息（安全地处理字符串）
     QString message;
-    
+
     // 避免格式化字符串攻击：不对用户消息进行额外格式化
     // 仅在消息中添加分类信息
     if (context.category && strlen(context.category) > 0) {
@@ -127,7 +127,7 @@ void QtLogAdapter::qtMessageHandler(QtMsgType type, const QMessageLogContext& co
     const char* safeFile = context.file ? context.file : "";
     const char* safeFunction = context.function ? context.function : "";
     int safeLine = context.line >= 0 ? context.line : 0;
-    
+
     logger->log(level, s_defaultModule, message, safeFile, safeFunction, safeLine);
 
     // 如果需要保留原始行为
