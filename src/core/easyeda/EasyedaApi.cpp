@@ -14,7 +14,24 @@ static const QString API_ENDPOINT = "https://easyeda.com/api/products/%1/compone
 static const QString ENDPOINT_3D_MODEL = "https://modules.easyeda.com/3dmodel/%1";
 static const QString ENDPOINT_3D_MODEL_STEP = "https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1";
 
-EasyedaApi::EasyedaApi(QObject* parent) : EasyedaApi(new NetworkUtils(this), parent) {}
+EasyedaApi::EasyedaApi(QObject* parent) {
+    m_networkUtils = new NetworkUtils(this);
+    m_isFetching = false;
+    m_requestType = RequestType::None;
+    setParent(parent);
+
+    if (m_networkUtils) {
+        connect(m_networkUtils, &INetworkAdapter::requestSuccess, this, [this](const QJsonObject& data) {
+            handleRequestSuccess(data);
+        });
+        connect(m_networkUtils, &INetworkAdapter::requestError, this, [this](const QString& error) {
+            handleNetworkError(error);
+        });
+        connect(m_networkUtils, &INetworkAdapter::binaryDataFetched, this, [this](const QByteArray& data) {
+            handleBinaryDataFetched(m_networkUtils, m_currentUuid, data);
+        });
+    }
+}
 
 EasyedaApi::EasyedaApi(INetworkAdapter* adapter, QObject* parent)
     : QObject(parent), m_networkUtils(adapter), m_isFetching(false), m_requestType(RequestType::None) {
@@ -23,7 +40,6 @@ EasyedaApi::EasyedaApi(INetworkAdapter* adapter, QObject* parent)
             m_networkUtils->setParent(this);
         }
 
-        // 使用 Lambda 解决重载冲突
         connect(m_networkUtils, &INetworkAdapter::requestSuccess, this, [this](const QJsonObject& data) {
             handleRequestSuccess(data);
         });

@@ -35,6 +35,7 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     , m_originalExportStartTimeMs(0)
     , m_originalTotalTasks(0)
     , m_isRetryMode(false) {
+    qDebug() << "ExportServicePipeline: Initializing thread pools...";
     // 线程池初始化
     m_fetchThreadPool = new QThreadPool(this);
     m_fetchThreadPool->setMaxThreadCount(5);  // I/O 密集型

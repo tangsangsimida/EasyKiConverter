@@ -18,6 +18,10 @@
 
 
 int main(int argc, char* argv[]) {
+    // 设置 QML 样式为 Basic，以消除原生样式自定义警告
+    // 注意：样式必须在创建应用程序实例之前设置
+    QQuickStyle::setStyle("Basic");
+
     QApplication app(argc, argv);
 
     // 设置应用程序信息
@@ -25,9 +29,6 @@ int main(int argc, char* argv[]) {
     app.setApplicationVersion("3.0.2");
     app.setOrganizationName("EasyKiConverter");
     app.setOrganizationDomain("easykiconverter.com");
-
-    // 设置 QML 样式为 Basic，以消除原生样式自定义警告
-    QQuickStyle::setStyle("Basic");
 
     // 尝试设置应用程序图标
     QStringList iconPaths = {":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
@@ -66,13 +67,6 @@ int main(int argc, char* argv[]) {
     // 创建 QML 引擎
     QQmlApplicationEngine engine;
 
-    // 注册 AppStyle 单例类型
-    qmlRegisterSingletonType(QUrl("qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/styles/AppStyle.qml"),
-                             "EasyKiconverter_Cpp_Version.src.ui.qml.styles",
-                             1,
-                             0,
-                             "AppStyle");
-
     // 注册 LanguageManager 到 QML
     qmlRegisterSingletonType<QObject>(
         "EasyKiconverter_Cpp_Version", 1, 0, "LanguageManager", [](QQmlEngine*, QJSEngine*) -> QObject* {
@@ -84,11 +78,7 @@ int main(int argc, char* argv[]) {
         EasyKiConverter::LanguageManager::instance(),
         &EasyKiConverter::LanguageManager::refreshRequired,
         &engine,
-        [&engine]() {
-            // 重新翻译 QML 引擎
-            engine.retranslate();
-            qDebug() << "QML engine retranslated";
-        },
+        [&engine]() { engine.retranslate(); },
         Qt::QueuedConnection);
 
     // 将 ViewModel 注册到 QML 上下文
@@ -102,21 +92,23 @@ int main(int argc, char* argv[]) {
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,
         &app,
-        []() {
-            qCritical() << "Failed to create QML objects";
+        [](const QUrl& url) {
+            qCritical() << "Failed to create QML object from:" << url;
             QCoreApplication::exit(-1);
         },
         Qt::QueuedConnection);
 
-    // 加载 QML 模块
-    engine.loadFromModule("EasyKiconverter_Cpp_Version", "Main");
+    // 加载 QML 文件
+    const QUrl url("qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/Main.qml");
+    engine.load(url);
 
     if (engine.rootObjects().isEmpty()) {
-        qCritical() << "Failed to load QML module";
+        qCritical() << "CRITICAL: QML engine root objects are empty after load!";
         return -1;
     }
 
-    qDebug() << "EasyKiConverter started successfully with Pipeline Architecture";
+    // 防止主窗口尚未完全显示时因事件循环检测到无窗口而退出
+    app.setQuitOnLastWindowClosed(false);
 
     return app.exec();
 }

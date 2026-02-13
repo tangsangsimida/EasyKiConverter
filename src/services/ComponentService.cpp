@@ -23,35 +23,47 @@
 
 namespace EasyKiConverter {
 
-ComponentService::ComponentService(QObject* parent) : ComponentService(new EasyedaApi(this), parent) {}
-
-ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
+ComponentService::ComponentService(QObject* parent)
     : QObject(parent)
-    , m_api(api)
-    , m_importer(new EasyedaImporter(this))
-    , m_networkManager(new QNetworkAccessManager(this))
+    , m_api(nullptr)
+    , m_importer(nullptr)
+    , m_networkManager(nullptr)
     , m_currentComponentId()
     , m_hasDownloadedWrl(false)
     , m_parallelTotalCount(0)
     , m_parallelCompletedCount(0)
     , m_parallelFetching(false)
-    , m_imageService(new LcscImageService(this)) {
-    // 如果 api 没有父对象，则将其设为本服务的子对象以管理生命周期
-    if (m_api && !m_api->parent()) {
-        m_api->setParent(this);
+    , m_imageService(nullptr) {
+    try {
+        m_api = new EasyedaApi();
+        if (m_api) {
+            m_api->setParent(this);
+        }
+        m_importer = new EasyedaImporter(this);
+        m_networkManager = new QNetworkAccessManager(this);
+        m_imageService = new LcscImageService(this);
+    } catch (...) {
+        qCritical() << "ComponentService: Failed to initialize sub-services!";
     }
 
     // 连接图片服务信号
-    connect(m_imageService, &LcscImageService::imageReady, this, &ComponentService::handleImageReady);
+    if (m_imageService) {
+        connect(m_imageService, &LcscImageService::imageReady, this, &ComponentService::handleImageReady);
+    }
+
     // 连接 API 信号
-    connect(m_api, &EasyedaApi::componentInfoFetched, this, &ComponentService::handleComponentInfoFetched);
-    connect(m_api, &EasyedaApi::cadDataFetched, this, &ComponentService::handleCadDataFetched);
-    connect(m_api, &EasyedaApi::model3DFetched, this, &ComponentService::handleModel3DFetched);
-    connect(m_api, qOverload<const QString&>(&EasyedaApi::fetchError), this, &ComponentService::handleFetchError);
-    connect(m_api,
-            qOverload<const QString&, const QString&>(&EasyedaApi::fetchError),
-            this,
-            &ComponentService::handleFetchErrorWithId);
+    if (m_api) {
+        connect(m_api, &EasyedaApi::componentInfoFetched, this, &ComponentService::handleComponentInfoFetched);
+        connect(m_api, &EasyedaApi::cadDataFetched, this, &ComponentService::handleCadDataFetched);
+        connect(m_api, &EasyedaApi::model3DFetched, this, &ComponentService::handleModel3DFetched);
+        connect(m_api, qOverload<const QString&>(&EasyedaApi::fetchError), this, &ComponentService::handleFetchError);
+        connect(m_api,
+                qOverload<const QString&, const QString&>(&EasyedaApi::fetchError),
+                this,
+                &ComponentService::handleFetchErrorWithId);
+    }
+
+    qDebug() << "ComponentService: Initialized successfully.";
 }
 
 ComponentService::~ComponentService() {}
