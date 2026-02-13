@@ -1,0 +1,316 @@
+# Doxyfile 1.9.1
+# EasyKiConverter API 文档配置
+# 适用于 Qt 6 C++/QML 项目
+
+#---------------------------------------------------------------------------
+# 项目相关配置
+#---------------------------------------------------------------------------
+
+# 项目名称
+PROJECT_NAME           = "EasyKiConverter"
+
+# 项目简介
+PROJECT_BRIEF          = "LCSC/EasyEDA 元件转 KiCad 库文件转换器"
+
+# 项目版本（从 vcpkg.json 或 CMakeLists.txt 同步）
+PROJECT_NUMBER         = 3.0.5
+
+# 项目 logo（可选）
+# PROJECT_LOGO           = resources/icons/app_icon.png
+
+# 输出目录
+OUTPUT_DIRECTORY       = docs/api
+
+# 创建子目录结构
+CREATE_SUBDIRS         = NO
+
+# 输出语言
+OUTPUT_LANGUAGE        = Chinese
+
+#---------------------------------------------------------------------------
+# 构建相关配置
+#---------------------------------------------------------------------------
+
+# 提取所有信息（包括静态成员）
+EXTRACT_ALL            = YES
+
+# 提取私有成员
+EXTRACT_PRIVATE        = YES
+
+# 提取静态成员
+EXTRACT_STATIC         = YES
+
+# 提取局部类
+EXTRACT_LOCAL_CLASSES  = YES
+
+# 显示命名空间
+SHOW_NAMESPACES        = YES
+
+# 显示文件
+SHOW_FILES             = YES
+
+# 显示包含的文件
+SHOW_INCLUDE_FILES     = YES
+
+# 源代码浏览
+SOURCE_BROWSER         = YES
+
+# 内联源代码
+INLINE_SOURCES         = NO
+
+# 生成 todo 列表
+GENERATE_TODOLIST      = YES
+
+# 生成测试列表
+GENERATE_TESTLIST      = YES
+
+# 生成 bug 列表
+GENERATE_BUGLIST       = YES
+
+#---------------------------------------------------------------------------
+# 输入相关配置
+#---------------------------------------------------------------------------
+
+# 输入目录
+INPUT                  = src \
+                         README.md
+
+# 递归扫描
+RECURSIVE              = YES
+
+# 文件模式
+FILE_PATTERNS          = *.cpp \
+                         *.h \
+                         *.qml \
+                         *.md
+
+# 排除模式
+EXCLUDE_PATTERNS       = */build/* \
+                         */.git/* \
+                         */_deps/* \
+                         */autogen/* \
+                         */mocs_compilation.cpp
+
+# 排除符号
+EXCLUDE_SYMBOLS        = QT_WARNING_* \
+                         Q_PRIVATE_SLOT \
+                         Q_OBJECT \
+                         signals \
+                         slots
+
+#---------------------------------------------------------------------------
+# 源代码相关配置
+#---------------------------------------------------------------------------
+
+# 启用预处理
+ENABLE_PREPROCESSING   = YES
+
+# 宏展开
+MACRO_EXPANSION        = YES
+
+# 展开递归深度
+EXPAND_ONLY_PREDEF     = NO
+
+# 预定义宏（Qt 相关）
+PREDEFINED             = Q_OBJECT= \
+                         Q_SIGNALS= \
+                         Q_SLOTS= \
+                         signals=public \
+                         slots= \
+                         Q_PROPERTY(x)= \
+                         Q_DECLARE_METATYPE(x)= \
+                         Q_ENUM(x)= \
+                         Q_FLAG(x)= \
+                         Q_GADGET= \
+                         Q_NAMESPACE= \
+                         Q_SIGNAL= \
+                         Q_SLOT= \
+                         Q_INVOKABLE= \
+                         Q_INTERFACES(x)= \
+                         Q_DECLARE_INTERFACE(x,y)= \
+                         __cplusplus \
+                         QT_CORE_LIB \
+                         QT_GUI_LIB \
+                         QT_WIDGETS_LIB \
+                         QT_NETWORK_LIB \
+                         QT_QML_LIB \
+                         QT_QUICK_LIB \
+                         QT_QUICKCONTROLS2_LIB \
+                         QT_CONCURRENT_LIB
+
+# 跳过函数宏
+SKIP_FUNCTION_MACROS   = YES
+
+#---------------------------------------------------------------------------
+# Qt/QML 特定配置
+#---------------------------------------------------------------------------
+
+# 优化 C++ 输出
+OPTIMIZE_OUTPUT_FOR_C  = NO
+
+# 优化 Java 输出（类似 Qt 风格）
+OPTIMIZE_OUTPUT_JAVA   = YES
+
+# 内联继承的成员
+INLINE_INHERITED_MEMB  = NO
+
+# 成员组分组
+SORT_MEMBER_DOCS       = YES
+
+# 按成员类型分组
+GROUP_GRAPHS           = YES
+
+#---------------------------------------------------------------------------
+# HTML 输出配置
+#---------------------------------------------------------------------------
+
+# 生成 HTML
+GENERATE_HTML          = YES
+
+# HTML 输出目录
+HTML_OUTPUT            = html
+
+# HTML 文件扩展名
+HTML_FILE_EXTENSION    = .html
+
+# HTML 页眉
+HTML_HEADER            =
+
+# HTML 页脚
+HTML_FOOTER            =
+
+# HTML 样式表
+HTML_STYLESHEET        =
+
+# HTML 时间戳
+HTML_TIMESTAMP         = YES
+
+# 动态章节
+HTML_DYNAMIC_SECTIONS  = YES
+
+# 数学公式支持
+USE_MATHJAX            = YES
+MATHJAX_RELPATH        = https://cdn.jsdelivr.net/npm/mathjax@3
+
+# 搜索引擎
+SEARCHENGINE           = YES
+SERVER_BASED_SEARCH    = NO
+
+# 外部引用标签文件（Qt 文档）
+TAGFILES               =
+
+#---------------------------------------------------------------------------
+# LaTeX 输出配置（禁用）
+#---------------------------------------------------------------------------
+
+GENERATE_LATEX         = NO
+
+#---------------------------------------------------------------------------
+# 其他输出格式（禁用）
+#---------------------------------------------------------------------------
+
+GENERATE_XML           = NO
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_DOCBOOK       = NO
+
+#---------------------------------------------------------------------------
+# 图表配置
+#---------------------------------------------------------------------------
+
+# 类图
+CLASS_DIAGRAMS         = YES
+
+# 使用 dot 工具
+HAVE_DOT               = YES
+
+# Dot 路径（自动检测）
+# DOT_PATH             =
+
+# 类图最大深度
+MAX_DOT_GRAPH_DEPTH    = 0
+
+# 包含图
+INCLUDE_GRAPH          = YES
+
+# 被包含图
+INCLUDED_BY_GRAPH      = YES
+
+# 协作图
+COLLABORATION_GRAPH    = YES
+
+# 继承图
+INHERIT_DOCS           = YES
+
+# 图表方向（从左到右）
+DOT_IMAGE_FORMAT       = svg
+DOT_GRAPH_MAX_NODES    = 50
+
+# 模板关系
+TEMPLATE_RELATIONS     = YES
+
+# UML 外观
+UML_LOOK               = YES
+UML_LIMIT_NUM_FIELDS   = 10
+
+#---------------------------------------------------------------------------
+# 其他配置
+#---------------------------------------------------------------------------
+
+# 引用标签文件
+REFERENCED_BY_RELATION = YES
+
+# 引用关系
+REFERENCES_RELATION    = YES
+
+# 引用链接来源
+REFERENCES_LINK_SOURCE = YES
+
+# 排序分组
+SORT_GROUP_NAMES       = YES
+
+# 排序成员文档
+SORT_MEMBERS_CTORS_1ST = YES
+
+# 生成树视图
+GENERATE_TREEVIEW      = YES
+
+# 树视图宽度
+TREEVIEW_WIDTH         = 250
+
+# 禁用索引
+DISABLE_INDEX          = NO
+
+# 完全路径成员
+FULL_PATH_NAMES        = YES
+
+# 代码片段目录
+STRIP_FROM_PATH        = src/
+
+# 简短描述
+BRIEF_MEMBER_DESC      = YES
+
+# 重复简要描述
+REPEAT_BRIEF           = YES
+
+# 缩进内联标签
+INDENT_INLINES         = YES
+
+# 内联信息
+INLINE_INFO            = YES
+
+# 文件版本过滤器
+FILE_VERSION_FILTER    =
+
+# 布局文件
+LAYOUT_FILE            =
+
+# 引用标签
+GENERATE_TAGFILE       = docs/api/easykiconverter.tag
+
+# 警告配置
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = YES
+WARN_FORMAT            = "$file:$line: $text"
+WARN_LOGFILE           = docs/api/doxygen_warnings.log

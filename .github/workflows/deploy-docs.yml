@@ -5,7 +5,9 @@ on:
     branches: [ 'master']
     paths:
       - 'docs/**'
+      - 'src/**'
       - 'mkdocs.yml'
+      - 'Doxyfile'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
@@ -29,8 +31,14 @@ jobs:
         with:
           python-version: 3.x
 
-      - name: Install MkDocs Material
-        run: pip install mkdocs-material
+      - name: Install MkDocs and Plugins
+        run: pip install mkdocs-material mkdocs-macros-plugin mkdocs-minify-plugin
+
+      - name: Install Doxygen
+        run: sudo apt-get install -y doxygen graphviz
+
+      - name: Generate Doxygen API Documentation
+        run: doxygen Doxyfile
 
       - name: Build and Deploy
         run: mkdocs gh-deploy --force

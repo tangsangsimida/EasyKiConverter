@@ -107,3 +107,11 @@ AGENTS.md
 gha-creds-*.json
 .gemini*
 .cache
+
+# Documentation build
+docs/api/html/
+docs/api/latex/
+docs/api/xml/
+docs/api/doxygen_warnings.log
+docs/api/easykiconverter.tag
+site/
