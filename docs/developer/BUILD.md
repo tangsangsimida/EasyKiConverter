@@ -12,7 +12,7 @@
 
 ### Qt 版本
 
-- Qt 6.8 或更高版本
+- Qt 6.6 或更高版本
 - 推荐 Qt 6.10.1
 
 ### CMake 版本
@@ -265,6 +265,85 @@ cmake --build . --config Release
 # 运行应用程序
 ./bin/EasyKiConverter
 ```
+
+## 编译项目（含测试）
+
+### Windows + MinGW
+
+```bash
+# 创建构建目录
+mkdir build
+cd build
+
+# 配置项目（启用测试构建）
+cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64" -DEASYKICONVERTER_BUILD_TESTS=ON
+
+# 编译项目（Debug 版本）
+cmake --build . --config Debug
+
+# 编译项目（Release 版本）
+cmake --build . --config Release
+
+# 运行应用程序
+./bin/EasyKiConverter.exe
+
+# 运行测试
+ctest --output-on-failure
+```
+
+### Windows + MSVC
+
+```bash
+# 创建构建目录
+mkdir build
+cd build
+
+# 配置项目（启用测试构建）
+cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/msvc2019_64" -DEASYKICONVERTER_BUILD_TESTS=ON
+
+# 编译项目（Debug 版本）
+cmake --build . --config Debug
+
+# 编译项目（Release 版本）
+cmake --build . --config Release
+
+# 运行应用程序
+./bin/Debug/EasyKiConverter.exe
+
+# 运行测试
+ctest --output-on-failure
+```
+
+### macOS/Linux
+
+```bash
+# 创建构建目录
+mkdir build
+cd build
+
+# 配置项目（启用测试构建和覆盖率支持）
+cmake .. -DCMAKE_PREFIX_PATH="/opt/Qt/6.10.1/gcc_64" -DEASYKICONVERTER_BUILD_TESTS=ON -DENABLE_COVERAGE=ON
+
+# 编译项目（Debug 版本）
+cmake --build . --config Debug
+
+# 编译项目（Release 版本）
+cmake --build . --config Release
+
+# 运行应用程序
+./bin/EasyKiConverter
+
+# 运行测试
+ctest --output-on-failure
+```
+
+### 测试选项说明
+
+- `-DEASYKICONVERTER_BUILD_TESTS=ON`: 启用测试构建，编译测试代码
+- `-DENABLE_COVERAGE=ON`: 启用代码覆盖率支持（仅 GCC/MinGW）
+- `ctest --output-on-failure`: 运行所有测试，失败时显示详细输出
+
+详见: [测试指南](TESTING_GUIDE.md)
 
 ## 使用 Qt Creator 编译
 
@@ -656,6 +735,33 @@ EasyKiConverter 是一个 Qt Quick 应用，需要图形界面支持。在远程
    - 编译器版本
    - 完整的错误信息
    - CMake 配置命令
+
+## 版本管理
+
+项目提供了 `tools/python/manage_version.py` 工具来同步更新版本信息，确保各处版本号一致。
+
+### 使用方法
+
+```bash
+# 检查当前版本
+python tools/python/manage_version.py --check
+
+# 更新版本到 3.1.0（自动更新以下文件）
+python tools/python/manage_version.py 3.1.0
+```
+
+### 同步的文件
+
+- `vcpkg.json`: 更新 `"version-string"` 字段
+- `CMakeLists.txt`: 更新默认的 `VERSION_FROM_CI` 和 `qt_add_qml_module` 版本
+- `src/main.cpp`: 更新 `app.setApplicationVersion`
+
+### 环境要求
+
+- Python 3.6+
+- 建议在项目根目录运行
+
+详见: [工具文档](../../tools/README.md)
 
 ## 相关资源
 

@@ -238,7 +238,51 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad 符号库格式（.kicad
 - Model 负责数据存储
 - Service 负责业务逻辑
 
-详细架构说明请参考：[ARCHITECTURE.md](ARCHITECTURE.md)
+详细架构说明请参考：[ARCHITECTURE.md](../developer/ARCHITECTURE.md)
+
+### 弱网容错优化
+
+针对弱网环境的多重容错机制。
+
+- **超时保护**: NetworkWorker 统一超时机制，默认 30-45 秒
+- **智能重试**: 超时后允许重试，递增延迟策略（3s/5s/10s）
+- **指数退避**: 速率限制时采用指数退避策略（初始 1s，上限 8s）
+- **随机抖动**: 重试延迟添加 +/-20% 随机抖动，缓解惊群效应
+- **内存泄漏修复**: 修复 thread_local QNAM 内存泄漏问题
+- **容错导出**: 3D 模型导出失败不影响符号/封装导出
+
+详见: [弱网支持分析](../WEAK_NETWORK_ANALYSIS.md)
+
+## 开发工具
+
+### 版本管理工具
+
+自动同步项目版本信息。
+
+- `manage_version.py`: 统一管理 vcpkg.json、CMakeLists.txt 和 src/main.cpp 中的版本
+- 支持版本检查和更新
+- 语义化版本验证
+
+详见: [工具文档](../../tools/README.md)
+
+### 代码格式化工具
+
+自动化代码格式化。
+
+- `format_code.bat`: Windows 平台 C++ 代码格式化
+- `format_qml.bat`: Windows 平台 QML 代码格式化
+- 基于 clang-format 和 qmlformat
+- 统一代码风格
+
+### 代码分析工具
+
+代码质量和性能分析。
+
+- `analyze_lines.py`: 代码行数统计
+- `convert_to_utf8.py`: 文件编码转换
+- `fix_qml_translations.py`: QML 翻译修复
+
+详见: [工具文档](../../tools/README.md)
 
 ### 设计模式
 
@@ -263,6 +307,32 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad 符号库格式（.kicad
 - 格式迁移支持
 
 ## 测试支持
+
+### QtTest 框架
+
+项目集成了 QtTest 测试框架，提供完整的测试支持。
+
+- **单元测试**: 测试核心逻辑（EasyEDA API、数据模型、ViewModels）
+- **集成测试**: 测试组件间的交互
+- **基准测试**: 性能测试和基准对比
+- **手动测试**: UI 组件的手动测试场景
+- **Mock 支持**: 依赖注入模式，支持 Mock 网络请求
+
+详见: [测试指南](../developer/TESTING_GUIDE.md)
+
+### 代码覆盖率
+
+支持代码覆盖率分析（GCC/MinGW）。
+
+- 覆盖率报告生成
+- HTML 格式报告
+- 覆盖率统计
+- 覆盖率目标追踪
+
+启用方法：
+```bash
+cmake -B build -DENABLE_COVERAGE=ON
+```
 
 ## 配置管理
 

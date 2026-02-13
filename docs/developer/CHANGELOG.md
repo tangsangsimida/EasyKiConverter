@@ -79,6 +79,29 @@
   - 启用 `compile_commands.json` 生成，提供更好的 IDE/LSP（如 VS Code）智能提示支持。
   - 统一项目所有源文件编码为 UTF-8 (No BOM)。
 
+- **测试框架集成**
+  - 引入 QtTest 测试框架，支持单元测试、集成测试、基准测试和手动测试
+  - 新增 `tests/` 目录结构，包含单元测试（EasyEDA API、数据模型、ViewModels）、集成测试、基准测试和 UI 测试
+  - 实现依赖注入模式，使用 `INetworkAdapter` 接口支持 Mock 网络请求
+  - 新增覆盖率支持选项（GCC/MinGW），可通过 `-DENABLE_COVERAGE=ON` 启用
+  - 代码位置：`tests/`, `src/core/utils/INetworkAdapter.h`, `CMakeLists.txt`
+
+- **开发工具扩展**
+  - 新增 `tools/python/manage_version.py` 版本管理工具，自动同步 vcpkg.json、CMakeLists.txt 和 src/main.cpp 中的版本信息
+  - 新增 `tools/python/analyze_lines.py` 代码行数分析工具
+  - 新增 `tools/python/convert_to_utf8.py` 文件编码转换工具
+  - 新增 `tools/python/fix_qml_translations.py` QML 翻译修复工具
+  - 完善 `tools/README.md` 和 `tools/README_en.md` 工具文档，添加详细的使用说明和环境要求
+  - 为 `tools/windows/format_code.bat` 和 `tools/python/manage_version.py` 添加详细的头部注释和文档说明
+  - 代码位置：`tools/`
+
+- **文档体系完善**
+  - 新增架构决策记录（ADR）系统，记录重要的架构决策
+  - 新增测试指南文档（`docs/developer/TESTING_GUIDE.md`）
+  - 新增性能基准线文档（`docs/developer/performance_baseline.md`）
+  - 更新架构文档，添加系统架构图和工作流程图（Excalidraw 格式）
+  - 代码位置：`docs/project/adr/`, `docs/developer/`, `docs/diagrams/`
+
 ## [3.0.3] - 2026-02-08
 
 
