@@ -1,8 +1,8 @@
 site_name: EasyKiConverter Documentation
 site_description: Documentation for EasyKiConverter - LCSC and EasyEDA component to KiCad library converter
 site_author: tangsangsimida
-site_url: https://tangsangsimida.github.io/EasyKiConverter_QT/
-repo_url: https://github.com/tangsangsimida/EasyKiConverter_QT
+site_url: https://tangsangsimida.github.io/EasyKiConverter/
+repo_url: https://github.com/tangsangsimida/EasyKiConverter
 edit_uri: edit/master/docs/
 
 # 未在导航中列出的页面不产生警告（英文版本文档）
@@ -15,7 +15,7 @@ extra:
   version: 3.0.5
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/tangsangsimida/EasyKiConverter_QT
+      link: https://github.com/tangsangsimida/EasyKiConverter
       name: GitHub
 
 theme:

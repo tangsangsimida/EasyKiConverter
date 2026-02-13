@@ -6,7 +6,7 @@
 
 API 文档由 CI 工作流自动生成并部署到 GitHub Pages：
 
-- **[C++ API 参考](https://tangsangsimida.github.io/EasyKiConverter_QT/api/html/index.html)** - 完整的类、函数、信号槽参考
+- **[C++ API 参考](https://tangsangsimida.github.io/EasyKiConverter/api/html/index.html)** - 完整的类、函数、信号槽参考
 
 ## 本地生成
 
