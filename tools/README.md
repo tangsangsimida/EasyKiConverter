@@ -13,11 +13,14 @@
 ```
 tools/
 ├── windows/          # Windows 平台特定工具
-│   └── format_code.bat
+│   ├── format_code.bat
+│   └── build_project.bat     # 一键构建脚本 [NEW]
 ├── linux/            # Linux 平台特定工具 (暂未实现)
 ├── macos/            # macOS 平台特定工具 (暂未实现)
 └── python/           # 跨平台 Python 工具
-    └── manage_version.py
+    ├── manage_version.py
+    ├── manage_translations.py # 翻译管理工具 [NEW]
+    └── check_env.py          # 环境检查工具 [NEW]
 ```
 
 ## Windows 工具
@@ -26,38 +29,48 @@ tools/
 
 基于 `clang-format` 的 C++ 代码格式化工具。
 
+### [build_project.bat](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/windows/build_project.bat)
+
+Windows 下的一键构建脚本，支持 Debug/Release 模式。
+
 **快速用法:**
 ```bash
-cd tools/windows
-format_code.bat
+# 默认 Debug 构建
+tools\windows\build_project.bat
+# Release 构建
+tools\windows\build_project.bat Release
 ```
 
-**核心要求:**
-- 需安装 `clang-format` 并加入 PATH。
-- 项目根目录需有 `.clang-format` 配置文件。
-
 > [!TIP]
-> 更多关于环境配置、功能细节和注意事项，请参阅 `format_code.bat` 脚本头部的详细注释。
+> 更多关于环境配置、功能细节和注意事项，请参阅对应脚本头部的详细注释。
 
 ## Python 工具
 
 ### [manage_version.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/manage_version.py)
 
-跨平台版本同步管理工具，确保全局版本一致性。
+跨平台版本同步管理工具。
+
+### [manage_translations.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/manage_translations.py)
+
+自动化 Qt 翻译流程（lupdate/lrelease）。
 
 **快速用法:**
 ```bash
-# 更新版本
-python tools/python/manage_version.py 3.1.0
-# 检查当前版本
-python tools/python/manage_version.py --check
+# 更新并编译所有翻译文件
+python tools/python/manage_translations.py --all
 ```
 
-**核心要求:**
-- Python 3.6+。
+### [check_env.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/check_env.py)
+
+开发依赖环境检查工具。
+
+**快速用法:**
+```bash
+python tools/python/check_env.py
+```
 
 > [!TIP]
-> 更多关于版本更新逻辑、格式校验和多文件同步的详细说明，请参阅 `manage_version.py` 顶部的说明文档。
+> 以上 Python 工具均支持优先使用环境变量中的工具链，若未配置则回退到脚本内定义的路径变量。详情请参阅各脚本顶部的说明文档。
 
 ## 添加新工具
 
