@@ -1,3 +1,32 @@
+"""
+EasyKiConverter 版本管理工具
+============================================================================
+说明:
+    本工具用于自动化同步更新项目各处的版本信息，确保 vcpkg、CMake 和源码中的版本号一致。
+
+主要功能:
+    1. 集中管理: 从 vcpkg.json 读取并同步版本号到各关键配置文件。
+    2. 自动更新:
+       - vcpkg.json: 更新 "version-string" 字段。
+       - CMakeLists.txt: 更新 VERSION_FROM_CI 及 qt_add_qml_module 的版本。
+       - src/main.cpp: 更新 app.setApplicationVersion。
+    3. 校验: 强制要求版本号符合 X.Y.Z (语义化版本) 格式。
+
+环境要求:
+    - Python: 3.6+
+    - 依赖: 标准库 (argparse, json, re, os, sys)
+    - 运行位置: 建议在项目根目录运行，或确保脚本相对于项目的路径结构不发生变化。
+
+用法示例:
+    1. 检查当前版本:
+       python tools/python/manage_version.py --check
+    2. 更新所有文件到新版本:
+       python tools/python/manage_version.py 3.1.0
+
+注意事项:
+    - 脚本会直接修改文件，建议在 Git 工作区干净的状态下运行以便回滚。
+============================================================================
+"""
 import argparse
 import json
 import re
