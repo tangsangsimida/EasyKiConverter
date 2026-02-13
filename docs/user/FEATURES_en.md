@@ -492,6 +492,6 @@ Typical performance metrics:
 
 ## Related Documentation
 
-- [Getting Started Guide](GETTING_STARTED.md) - Learn how to use features
-- [Architecture Documentation](ARCHITECTURE.md) - Understand feature implementation
-- [Build Guide](BUILD.md) - Build the application with specific features
+- [Getting Started Guide](GETTING_STARTED_en.md) - Learn how to use features
+- [Architecture Documentation](../developer/ARCHITECTURE_en.md) - Understand feature implementation
+- [Build Guide](../developer/BUILD_en.md) - Build the application with specific features

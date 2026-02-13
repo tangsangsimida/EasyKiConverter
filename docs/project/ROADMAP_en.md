@@ -125,7 +125,7 @@ This document shows the future direction of the project and the main features pl
 
 If you want to participate in project development:
 
-1. Check the [Contributing Guide](CONTRIBUTING_en.md)
+1. Check the [Contributing Guide](../developer/CONTRIBUTING_en.md)
 2. Choose a task you're interested in
 3. Create an Issue to discuss your ideas
 4. Submit a Pull Request

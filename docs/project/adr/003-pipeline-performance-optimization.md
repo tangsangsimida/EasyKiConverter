@@ -198,5 +198,4 @@
 ## 参考资料
 
 - [ADR-002: 流水线并行架构](002-pipeline-parallelism-for-export.md)
-- [性能测试指南](../../tests/PERFORMANCE_TEST_GUIDE.md)
-- [架构文档](../developer/ARCHITECTURE.md)
+- [架构文档](../../developer/ARCHITECTURE.md)

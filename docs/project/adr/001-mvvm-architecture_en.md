@@ -285,5 +285,5 @@ After evaluation, we chose MVVM architecture as the architecture pattern for Eas
 
 ## Related ADRs
 
-- [ADR 002: Choose Qt Quick as UI Framework](002-qt-quick-ui-framework_en.md) (to be created)
-- [ADR 003: Two-Stage Export Strategy](003-two-stage-export-strategy_en.md) (to be created)
+- [ADR 002: Pipeline Parallelism Architecture](002-pipeline-parallelism-for-export_en.md)
+- [ADR 003: Pipeline Performance Optimization](003-pipeline-performance-optimization_en.md)

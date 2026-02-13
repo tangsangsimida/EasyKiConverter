@@ -27,7 +27,7 @@ EasyKiConverter 支持：
 
 ### 如何安装 EasyKiConverter？
 
-请参考[安装指南](USER_GUIDE.md#安装)。
+请参考[安装指南](USER_GUIDE.md)。
 
 ### 系统要求是什么？
 
@@ -38,7 +38,7 @@ EasyKiConverter 支持：
 
 ### 如何从源代码构建？
 
-请参考[构建指南](BUILD.md)。
+请参考[构建指南](../developer/BUILD.md)。
 
 ### 构建时遇到 Qt 找不到的错误怎么办？
 
@@ -56,7 +56,7 @@ EasyKiConverter 支持：
 2. **智能提取**：复制元件编号，点击"智能提取"按钮
 3. **BOM 导入**：点击"BOM 导入"按钮，选择 BOM 文件
 
-详细步骤请参考[基本操作](USER_GUIDE.md#基本操作)。
+详细步骤请参考[用户手册](USER_GUIDE.md)。
 
 ### 支持哪些元件编号格式？
 
@@ -80,7 +80,7 @@ EasyKiConverter 支持：
 
 ### 如何在 KiCad 中使用转换后的元件？
 
-详细步骤请参考[在 KiCad 中使用转换后的元件](USER_GUIDE.md#在-kicad-中使用转换后的元件)。
+详细步骤请参考[用户手册](USER_GUIDE.md)。
 
 ### 支持哪些 KiCad 版本？
 
@@ -302,7 +302,7 @@ EasyKiConverter --input components.txt --output ./export --batch
 
 ### 如何贡献代码？
 
-请参考[贡献指南](CONTRIBUTING.md)。
+请参考[贡献指南](../developer/CONTRIBUTING.md)。
 
 ### 如何报告 Bug？
 
@@ -357,8 +357,8 @@ EasyKiConverter --input components.txt --output ./export --batch
 - [用户手册](USER_GUIDE.md) - 详细使用说明
 - [快速开始](GETTING_STARTED.md) - 快速入门
 - [功能特性](FEATURES.md) - 了解所有功能
-- [构建指南](BUILD.md) - 从源代码构建
-- [贡献指南](CONTRIBUTING.md) - 贡献代码
+- [构建指南](../developer/BUILD.md) - 从源代码构建
+- [贡献指南](../developer/CONTRIBUTING.md) - 贡献代码
 - [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues) - 报告问题
 - [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions) - 问答和讨论
 

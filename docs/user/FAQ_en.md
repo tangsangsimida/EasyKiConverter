@@ -27,7 +27,7 @@ No. EasyKiConverter uses the public EasyEDA API and does not require an account.
 
 ### How do I install EasyKiConverter?
 
-Please refer to the [Installation Guide](USER_GUIDE_en.md#installation).
+Please refer to the [Installation Guide](USER_GUIDE_en.md).
 
 ### What are the system requirements?
 
@@ -38,7 +38,7 @@ Please refer to the [Installation Guide](USER_GUIDE_en.md#installation).
 
 ### How do I build from source?
 
-Please refer to the [Build Guide](BUILD_en.md).
+Please refer to the [Build Guide](../developer/BUILD_en.md).
 
 ### I get a "Qt not found" error when building. What should I do?
 
@@ -56,7 +56,7 @@ There are three methods:
 2. **Smart Extraction**: Copy component IDs and click the "Smart Extraction" button
 3. **BOM Import**: Click the "BOM Import" button and select a BOM file
 
-For detailed steps, please refer to [Basic Operations](USER_GUIDE_en.md#basic-operations).
+For detailed steps, please refer to the [User Guide](USER_GUIDE_en.md).
 
 ### What component ID formats are supported?
 
@@ -80,7 +80,7 @@ Converted files are saved in the directory you specified in export settings. You
 
 ### How do I use converted components in KiCad?
 
-For detailed steps, please refer to [Using Converted Components in KiCad](USER_GUIDE_en.md#using-converted-components-in-kicad).
+For detailed steps, please refer to the [User Guide](USER_GUIDE_en.md).
 
 ### Which KiCad versions are supported?
 
@@ -302,7 +302,7 @@ Configure in export settings:
 
 ### How do I contribute code?
 
-Please refer to the [Contributing Guide](CONTRIBUTING_en.md).
+Please refer to the [Contributing Guide](../developer/CONTRIBUTING_en.md).
 
 ### How do I report a bug?
 
@@ -357,8 +357,8 @@ There are currently no video tutorials. You can learn by:
 - [User Guide](USER_GUIDE_en.md) - Detailed usage instructions
 - [Getting Started](GETTING_STARTED_en.md) - Quick start guide
 - [Features](FEATURES_en.md) - Learn about all features
-- [Build Guide](BUILD_en.md) - Build from source
-- [Contributing Guide](CONTRIBUTING_en.md) - Contribute code
+- [Build Guide](../developer/BUILD_en.md) - Build from source
+- [Contributing Guide](../developer/CONTRIBUTING_en.md) - Contribute code
 - [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues) - Report issues
 - [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions) - Q&A and discussions
 

@@ -166,4 +166,4 @@ cmake --build build
 ## 相关文档
 
 - [CHANGELOG.md](CHANGELOG.md) - 版本更新日志
-- [AGENTS.md](../../AGENTS.md) - 开发者指南
+- [ARCHITECTURE.md](ARCHITECTURE.md) - 架构文档

@@ -319,7 +319,7 @@ if (!isOverwritten && !isOrphanedSubSymbol)
 - [ADR-001: MVVM 架构](001-mvvm-architecture.md)
 - [ADR-002: 流水线并行架构](002-pipeline-parallelism-for-export.md)
 - [ADR-003: 流水线性能优化](003-pipeline-performance-optimization.md)
-- [符号导出器文档](../developer/ARCHITECTURE.md)
+- [符号导出器文档](../../developer/ARCHITECTURE.md)
 
 ## 参考资料
 

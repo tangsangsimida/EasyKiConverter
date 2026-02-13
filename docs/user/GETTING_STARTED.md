@@ -323,16 +323,16 @@ export PATH="/path/to/Qt/6.10.1/gcc_64/bin:$PATH"
 如果遇到问题：
 
 1. 查阅项目文档
-2. 查看 [常见问题](#常见问题)
+2. 查看 [常见问题](FAQ.md)
 3. 搜索 [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues)
 4. 提交新的 Issue
 
 ## 下一步
 
 - 阅读功能特性文档：[FEATURES.md](FEATURES.md)
-- 了解架构设计：[ARCHITECTURE.md](ARCHITECTURE.md)
-- 参与贡献：[CONTRIBUTING.md](CONTRIBUTING.md)
-- 查看编译指南：[BUILD.md](BUILD.md)
+- 了解架构设计：[ARCHITECTURE.md](../developer/ARCHITECTURE.md)
+- 参与贡献：[CONTRIBUTING.md](../developer/CONTRIBUTING.md)
+- 查看编译指南：[BUILD.md](../developer/BUILD.md)
 
 ## 相关资源
 

@@ -37,7 +37,7 @@ These documents record the project's evolution and future direction, helping the
 
 - [Roadmap](project/ROADMAP_en.md) - Future development directions
 - [项目路线图](project/ROADMAP.md) - 项目路线图
-- [Architecture Decision Records](project/adr/) - Technical decision records
+- [Architecture Decision Records](project/adr/README_en.md) - Technical decision records
 
 ## Documentation Languages
 
@@ -63,7 +63,7 @@ All documents are available in both Chinese and English:
 ### If You Want to Understand Project Planning
 
 1. Check [Roadmap](project/ROADMAP_en.md) to understand future directions
-2. Read [Architecture Decision Records](project/adr/) to understand technical decisions
+2. Read [Architecture Decision Records](project/adr/README_en.md) to understand technical decisions
 
 ## Documentation Principles
 
@@ -82,6 +82,6 @@ If you want to improve documentation:
 
 ## Related Resources
 
-- [Project Homepage](../README_en.md)
+- [Project Homepage](README_en.md)
 - [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues)
 - [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions)

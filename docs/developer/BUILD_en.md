@@ -385,9 +385,9 @@ cpack -G DEB
 ## Next Steps
 
 After successful build, refer to:
-- [Getting Started Guide](GETTING_STARTED.md) - Learn how to use the application
-- [Features Documentation](FEATURES.md) - Understand available features
-- [Architecture Documentation](ARCHITECTURE.md) - Learn about project architecture
+- [Getting Started Guide](../user/GETTING_STARTED_en.md) - Learn how to use the application
+- [Features Documentation](../user/FEATURES_en.md) - Understand available features
+- [Architecture Documentation](ARCHITECTURE_en.md) - Learn about project architecture
 
 ## Support
 

@@ -37,7 +37,7 @@
 
 - [项目路线图](project/ROADMAP.md) - 未来发展方向
 - [项目路线图 (英文)](project/ROADMAP_en.md) - Roadmap
-- [架构决策记录](project/adr/) - 技术决策记录
+- [架构决策记录](project/adr/README.md) - 技术决策记录
 
 ### 分析报告
 
@@ -89,6 +89,6 @@
 
 ## 相关资源
 
-- [项目主页](../README.md)
+- [项目主页](https://github.com/tangsangsimida/EasyKiConverter_QT)
 - [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues)
 - [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions)

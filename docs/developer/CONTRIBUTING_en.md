@@ -9,9 +9,9 @@ Thank you for your interest in contributing to EasyKiConverter! This document pr
 Before contributing, make sure you:
 
 1. Have read the project documentation:
-   - [Project Architecture](ARCHITECTURE.md)
-   - [Build Guide](BUILD.md)
-   - [Features Documentation](FEATURES.md)
+   - [Project Architecture](ARCHITECTURE_en.md)
+   - [Build Guide](BUILD_en.md)
+   - [Features Documentation](../user/FEATURES_en.md)
 
 2. Have successfully built the project locally
 

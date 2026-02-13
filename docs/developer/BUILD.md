@@ -761,7 +761,7 @@ python tools/python/manage_version.py 3.1.0
 - Python 3.6+
 - 建议在项目根目录运行
 
-详见: [工具文档](../../tools/README.md)
+详见: [GitHub 工具目录](https://github.com/tangsangsimida/EasyKiConverter_QT/tree/main/tools)
 
 ## 相关资源
 

@@ -194,6 +194,6 @@ set EASYKICONVERTER_DEBUG_MODE=false
 
 ## Related Documentation
 
-- [BUILD_en.md](docs/developer/BUILD_en.md) - Build instructions with debug options
-- [FAQ.md](docs/user/FAQ.md) - Common questions about debug mode
-- [FEATURES.md](docs/user/FEATURES.md) - Debug mode feature details
+- [BUILD_en.md](../developer/BUILD_en.md) - Build instructions with debug options
+- [FAQ_en.md](FAQ_en.md) - Common questions about debug mode
+- [FEATURES_en.md](FEATURES_en.md) - Debug mode feature details
