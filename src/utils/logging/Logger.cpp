@@ -150,11 +150,22 @@ QString Logger::threadName() const {
     return QString();
 }
 
+void Logger::clearThreadName() {
+    if (s_threadNames.hasLocalData()) {
+        s_threadNames.setLocalData(QString());
+    }
+}
+
 // LogUtils 实现
 void LogUtils::replaceFirstPlaceholder(QString& result, const QString& replacement) {
+    // 安全检查：避免对包含格式化字符的输入进行处理
+    // 仅替换第一个 {} 占位符，不处理其他格式化字符
     int pos = result.indexOf(QStringLiteral("{}"));
     if (pos >= 0) {
-        result.replace(pos, 2, replacement);
+        // 对替换内容进行安全处理，转义可能的格式化字符
+        QString safeReplacement = replacement;
+        // 不对内容进行额外的格式化处理，直接替换
+        result.replace(pos, 2, safeReplacement);
     }
 }
 

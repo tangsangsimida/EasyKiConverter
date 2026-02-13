@@ -126,6 +126,11 @@ public:
      */
     QString threadName() const;
 
+    /**
+     * @brief 清除当前线程的名称设置
+     */
+    void clearThreadName();
+
 signals:
     /**
      * @brief 日志记录信号（可用于 UI 集成）

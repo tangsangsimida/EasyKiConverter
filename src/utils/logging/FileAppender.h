@@ -21,6 +21,8 @@ namespace EasyKiConverter {
  * - 保留历史文件数量限制
  * - 异步写入（后台线程）
  * - 缓冲刷新
+ * - 路径安全验证
+ * - 有界队列防止内存溢出
  */
 class FileAppender : public IAppender {
 public:
@@ -98,14 +100,48 @@ public:
         return m_async;
     }
 
+    /**
+     * @brief 设置异步队列最大大小
+     * @param maxSize 最大消息数（0 表示无限制，默认 10000）
+     */
+    void setMaxQueueSize(int maxSize) {
+        m_maxQueueSize = maxSize;
+    }
+
+    /**
+     * @brief 获取异步队列最大大小
+     */
+    int maxQueueSize() const {
+        return m_maxQueueSize;
+    }
+
+    /**
+     * @brief 检查文件路径是否有效
+     */
+    bool isValidPath() const {
+        return m_pathValid;
+    }
+
+    /**
+     * @brief 获取最后一次错误信息
+     */
+    QString lastError() const {
+        return m_lastError;
+    }
+
 private:
     QString m_filePath;
+    QString m_canonicalPath;  // 规范化后的路径
+    QString m_baseDir;        // 基础目录
     qint64 m_maxSize;
     int m_maxFiles;
     bool m_async;
+    int m_maxQueueSize = 10000;  // 默认队列大小限制
+    bool m_pathValid = false;
+    QString m_lastError;
 
     QFile m_file;
-    mutable QMutex m_fileMutex;
+    mutable QRecursiveMutex m_fileMutex;  // 使用递归锁支持嵌套调用
 
     // 异步写入相关
     QThread* m_writerThread = nullptr;
@@ -114,6 +150,17 @@ private:
     QWaitCondition m_queueCondition;
     QAtomicInt m_running;
     QAtomicInt m_flushRequested;
+    QAtomicInt m_queueOverflow;  // 队列溢出标记
+
+    /**
+     * @brief 验证和规范化文件路径
+     */
+    bool validateAndNormalizePath(const QString& filePath);
+
+    /**
+     * @brief 检查路径是否在允许的目录范围内
+     */
+    bool isPathInAllowedDir(const QString& path) const;
 
     /**
      * @brief 打开日志文件
