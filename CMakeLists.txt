@@ -255,12 +255,15 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/translations/translations_easykiconverter_zh_CN.qm
 )
 
+# 控制台模式选项（调试时启用可看到控制台日志）
+option(EASYKICONVERTER_CONSOLE_MODE "Build as console application (shows terminal output)" OFF)
+
 # 设置目标属性
 set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
-    WIN32_EXECUTABLE TRUE
+    WIN32_EXECUTABLE $<NOT:$<BOOL:${EASYKICONVERTER_CONSOLE_MODE}>>
     OUTPUT_NAME "EasyKiConverter"
 )
 

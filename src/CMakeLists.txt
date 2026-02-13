@@ -1,6 +1,7 @@
 ﻿# EasyKiConverter 源码模块
 
-# 添加子模块（注意顺序：Workers 需要在 Services 之前添加，因为 Services 依赖 Workers）
+# 添加子模块（注意顺序：Utils 需要最先添加，因为其他模块依赖日志系统）
+add_subdirectory(utils)
 add_subdirectory(models)
 add_subdirectory(core)
 add_subdirectory(workers)
@@ -13,6 +14,7 @@ add_library(EasyKiConverterLib STATIC)
 # 链接所有子模块（QXlsx 是必须的依赖）
 target_link_libraries(EasyKiConverterLib
     PRIVATE
+        EasyKiConverterLogging
         EasyKiConverterModels
         EasyKiConverterCore
         EasyKiConverterWorkers
