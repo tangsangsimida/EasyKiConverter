@@ -10,6 +10,9 @@ outputs:
   GIT_HASH:
     description: 'Short git hash'
     value: ${{ steps.get_version.outputs.GIT_HASH }}
+  PREVIOUS_TAG:
+    description: 'The tag before the current one'
+    value: ${{ steps.get_version.outputs.PREVIOUS_TAG }}
 
 runs:
   using: 'composite'
@@ -23,30 +26,46 @@ runs:
 
         # 1. VERSION (from Tag or default)
         if [[ $GITHUB_REF == refs/tags/* ]]; then
-          VERSION=${GITHUB_REF#refs/tags/v}
+          # Strip 'refs/tags/'
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          # Strip 'v' or 'V' prefix (case-insensitive)
+          VERSION=${TAG_NAME#[vV]}
         else
           VERSION="dev"
         fi
         echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
         echo "Extracted version: ${VERSION}"
 
-        # 2. GIT INFO (Hash & Rev)
-        last_committed_tag=$(git tag -l --sort=-v:refname | head -1)
-        if [ -z "$last_committed_tag" ]; then
-           last_committed_tag="v0.0.0"
+        # 2. GIT INFO (Hash & Rev & Previous Tag)
+        # 获取最新的两个符合版本规范的标签
+        latest_tags=$(git tag -l --sort=-v:refname "v*" "V*" | head -n 2)
+        current_tag=$(echo "$latest_tags" | head -n 1)
+        prev_tag=$(echo "$latest_tags" | sed -n '2p')
+
+        if [ -z "$current_tag" ]; then
+           current_tag="v0.0.0"
         fi
-        
+
+        if [ -z "$prev_tag" ]; then
+           # 如果没找到上一个版本标签，尝试找任何标签或者用空
+           prev_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        fi
+
+        echo "PREVIOUS_TAG=${prev_tag}" >> $GITHUB_OUTPUT
+
         # Safe handling for shallow clones or no tags
-        git_revno=$(git rev-list ${last_committed_tag}..HEAD --count 2>/dev/null || echo "0")
+        git_revno=$(git rev-list ${current_tag}..HEAD --count 2>/dev/null || echo "0")
         git_hash=$(git rev-parse --short HEAD)
-        
-        ver_info="${last_committed_tag}+git${git_revno}.${git_hash}"
-        
+
+        ver_info="${current_tag}+git${git_revno}.${git_hash}"
+
         echo "VER_INFO=${ver_info}" >> $GITHUB_OUTPUT
         echo "GIT_HASH=${git_hash}" >> $GITHUB_OUTPUT
-        
+
         echo "======= VERSION INFO ========"
-        echo "Version:  ${VERSION}"
-        echo "Info:     ${ver_info}"
-        echo "Hash:     ${git_hash}"
+        echo "Version:      ${VERSION}"
+        echo "Current Tag:  ${current_tag}"
+        echo "Previous Tag: ${prev_tag}"
+        echo "Info:         ${ver_info}"
+        echo "Hash:         ${git_hash}"
         echo "============================="

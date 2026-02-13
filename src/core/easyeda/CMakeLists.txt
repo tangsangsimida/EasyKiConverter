@@ -3,6 +3,8 @@
 add_library(EasyKiConverterEasyeda STATIC
     EasyedaApi.cpp
     EasyedaImporter.cpp
+    EasyedaSymbolImporter.cpp
+    EasyedaFootprintImporter.cpp
     JLCDatasheet.cpp
 )
 

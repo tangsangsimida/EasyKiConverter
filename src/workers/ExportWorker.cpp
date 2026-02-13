@@ -1,4 +1,4 @@
-﻿#include "ExportWorker.h"
+#include "ExportWorker.h"
 
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
@@ -29,7 +29,7 @@ ExportWorker::ExportWorker(const QString& componentId,
     , m_exportSymbol(exportSymbol)
     , m_exportFootprint(exportFootprint)
     , m_exportModel3D(exportModel3D) {
-    setAutoDelete(true);  // 任务完成后自动删�?
+    setAutoDelete(true);  // 任务完成后自动删除
 }
 
 ExportWorker::~ExportWorker() {
@@ -67,7 +67,7 @@ void ExportWorker::run() {
         if (m_exportModel3D && m_footprintData && !m_footprintData->model3D().uuid().isEmpty()) {
             Model3DData model3D = m_footprintData->model3D();
 
-            // 清理模型名称，移除文件系统不支持的字�?
+            // 清理模型名称，移除文件系统不支持的字符
             QString sanitizedName = model3D.name();
             sanitizedName.replace(QRegularExpression("[<>:\"/\\\\|?*]"), "_");
 
@@ -191,7 +191,7 @@ bool ExportWorker::createOutputDirectories() {
     try {
         QDir outputDir(m_outputPath);
 
-        // 创建主输出目�?
+        // 创建主输出目录
         if (!outputDir.exists()) {
             if (!outputDir.mkpath(".")) {
                 qWarning() << "Failed to create output directory:" << m_outputPath;
@@ -199,7 +199,7 @@ bool ExportWorker::createOutputDirectories() {
             }
         }
 
-        // 创建符号库目�?
+        // 创建符号库目录
         if (m_exportSymbol) {
             QString symbolDir = outputDir.filePath(m_libName);
             QDir dir(symbolDir);
@@ -211,7 +211,7 @@ bool ExportWorker::createOutputDirectories() {
             }
         }
 
-        // 创建封装库目�?
+        // 创建封装库目录
         if (m_exportFootprint) {
             QString footprintDir = outputDir.filePath(QString("%1.pretty").arg(m_libName));
             QDir dir(footprintDir);

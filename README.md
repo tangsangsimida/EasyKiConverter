@@ -66,6 +66,14 @@
 ### 从源码构建
 本项目已实现全平台 CI/CD 自动化构建。如果您是开发者或希望自行编译，请参考 [构建指南](docs/developer/BUILD.md)。
 
+## 系统架构
+
+EasyKiConverter 采用现代化的 MVVM 架构设计，实现了清晰的分层结构和高效的并行处理。
+
+![系统架构图](docs/diagrams/EasyKiConverter_Architecture.svg)
+
+![项目运行流程图](docs/diagrams/EasyKiConverter_Workflow.svg)
+
 ## 文档中心
 
 **用户指南**

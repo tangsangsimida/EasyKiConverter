@@ -2,7 +2,9 @@
 
 add_library(EasyKiConverterKicad STATIC
     ExporterSymbol.cpp
+    SymbolGraphicsGenerator.cpp
     ExporterFootprint.cpp
+    FootprintGraphicsGenerator.cpp
     Exporter3DModel.cpp
 )
 

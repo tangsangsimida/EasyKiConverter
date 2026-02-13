@@ -74,6 +74,11 @@ git checkout -b feature/your-feature-name
 - 类和公共方法添加 Doxygen 风格注释
 - 复杂逻辑添加行内注释
 - 使用 `///` 或 `/** */` 格式的注释
+- **文件编码**: 所有文件必须使用 **UTF-8 (无 BOM)** 编码。严禁使用带有 BOM 的 UTF-8 或本地编码（如 GBK）。
+- **工具校验**: 在提交代码前，请务必使用项目提供的编码转换工具对代码进行格式化处理。
+  - 工具路径：`tools/python/convert_to_utf8.py`
+  - 使用命令：`python tools/python/convert_to_utf8.py`
+  - 该工具将自动确保所有 `.cpp`, `.h`, `.qml`, `.cmake` 等文件均符合 UTF-8 无 BOM 规范。
 
 #### 架构要求
 

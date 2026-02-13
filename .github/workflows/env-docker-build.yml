@@ -4,7 +4,7 @@ on:
   push:
     branches: ['master', 'dev', 'feat/**', 'feat*']
     paths:
-      - 'docker/**'
+      - 'deploy/docker/**'
       - '.github/workflows/env-docker-build.yml'
   workflow_dispatch:
 
@@ -51,7 +51,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./docker
+          context: ./deploy/docker
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

@@ -16,6 +16,7 @@ EasyKiConverter 采用 MVVM (Model-View-ViewModel) 架构模式，提供清晰�
 ┌─────────────────────────────────────────┐
 │              View Layer                  │
 │         (QML Components)                 │
+│  - src/ui/qml/Main.qml                  │
 │  - MainWindow.qml                        │
 │  - Components (Card, Button, etc.)       │
 │  - Styles (AppStyle)                     │
@@ -343,8 +344,8 @@ BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>> *m_queue;
 **总进度计算**：
 ```cpp
 int overallProgress() {
-    return (fetchProgress() * 30 + 
-            processProgress() * 50 + 
+    return (fetchProgress() * 30 +
+            processProgress() * 50 +
             writeProgress() * 20) / 100;
 }
 ```
@@ -528,7 +529,8 @@ ExportServicePipeline.executeExportPipelineWithStages()
 
 ```
 EasyKiConverter_QT/
-├── src/
+├── src/                        # 源代码
+│   ├── main.cpp                # 应用程序入口
 │   ├── core/                   # 核心转换引擎
 │   │   ├── easyeda/            # EasyEDA 相关
 │   │   ├── kicad/              # KiCad 相关
@@ -536,12 +538,15 @@ EasyKiConverter_QT/
 │   ├── models/                 # 数据模型
 │   ├── services/               # 服务层
 │   ├── ui/                     # UI 层
-│   │   ├── qml/                # QML 界面
+│   │   ├── qml/                # QML 界面 (包含 Main.qml)
 │   │   ├── viewmodels/         # 视图模型
 │   │   └── utils/              # UI 工具
 │   └── workers/                # 工作线程
+├── deploy/                     # 部署与打包 (Docker, Flatpak, nFPM)
 ├── docs/                       # 文档
-└── resources/                  # 资源文件
+├── resources/                  # 资源文件
+├── test_data/                  # 测试用例与临时数据
+└── tools/                      # 开发辅助脚本
 ```
 
 ## 扩展性
@@ -585,6 +590,17 @@ EasyKiConverter_QT/
 - 自动重试机制
 - GZIP 解压缩
 - 连接池管理
+
+### 弱网容错（v3.0.4 分析）
+
+项目存在四套网络请求实现，弱网容错能力不一致：
+
+- **`FetchWorker`**（流水线批量导出）：支持超时（8-10s）和重试（3次），但超时后不重试
+- **`NetworkUtils`**（单件预览获取）：最完善的弱网支持，支持超时（30s）+重试+递增延迟
+- **`NetworkWorker`**（旧版单件获取）：无超时和重试机制，弱网下可能永久阻塞
+- **`ComponentService`**（LCSC 预览图）：支持超时（15s）+重试，有 Fallback 备用方案
+
+已知问题及改进方向详见 [弱网支持分析报告](../WEAK_NETWORK_ANALYSIS.md) 和 [ADR-007](../project/adr/007-weak-network-resilience-analysis.md)。
 
 ## 安全性
 

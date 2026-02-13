@@ -1,4 +1,4 @@
-﻿#ifndef COMPONENTDATA_H
+#ifndef COMPONENTDATA_H
 #define COMPONENTDATA_H
 
 #include "FootprintData.h"
@@ -13,7 +13,7 @@
 namespace EasyKiConverter {
 
 /**
- * @brief 元件数据�?
+ * @brief 元件数据
      *
  * 包含元件的所有信息，包括符号、封装和 3D 模型
  */
@@ -22,7 +22,7 @@ public:
     ComponentData();
     ~ComponentData() = default;
 
-    // Getter �?Setter 方法
+    // Getter 和 Setter 方法
     QString lcscId() const {
         return m_lcscId;
     }
@@ -86,7 +86,7 @@ public:
         m_model3DData = data;
     }
 
-    // JSON 序列�?
+    // JSON 序列
     QJsonObject toJson() const;
     bool fromJson(const QJsonObject& json);
 

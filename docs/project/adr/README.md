@@ -62,6 +62,8 @@ ADR 文件应使用以下命名格式：
 - [ADR 004: 符号库更新导出修复](004-symbol-library-update-fix.md)
 - [ADR 005: 流水线 Worker 微观性能优化](005-pipeline-worker-micro-optimization.md)
 - [ADR 006: 网络性能优化](006-network-performance-optimization.md)
+- [ADR 007: 弱网容错分析](007-weak-network-resilience-analysis.md)
+- [ADR 007: Weak Network Resilience Analysis](007-weak-network-resilience-analysis_en.md) (English)
 
 ## 参考资料
 

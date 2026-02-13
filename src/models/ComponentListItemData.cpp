@@ -26,6 +26,7 @@ void ComponentListItemData::setPackage(const QString& package) {
 
 void ComponentListItemData::setThumbnail(const QImage& thumbnail) {
     m_thumbnail = thumbnail;
+    m_thumbnailBase64Cache.clear();  // 清除缓存，下次访问时重新生成
     emit thumbnailChanged();
 }
 
@@ -34,12 +35,16 @@ QString ComponentListItemData::thumbnailBase64() const {
         return QString();
     }
 
-    QByteArray byteArray;
-    QBuffer buffer(&byteArray);
-    buffer.open(QIODevice::WriteOnly);
-    m_thumbnail.save(&buffer, "PNG");
+    // 使用缓存避免每次 QML 访问都重新编码
+    if (m_thumbnailBase64Cache.isEmpty()) {
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        buffer.open(QIODevice::WriteOnly);
+        m_thumbnail.save(&buffer, "PNG");
+        m_thumbnailBase64Cache = QString::fromLatin1(byteArray.toBase64().data());
+    }
 
-    return QString::fromLatin1(byteArray.toBase64().data());
+    return m_thumbnailBase64Cache;
 }
 
 void ComponentListItemData::setComponentData(const QSharedPointer<ComponentData>& data) {

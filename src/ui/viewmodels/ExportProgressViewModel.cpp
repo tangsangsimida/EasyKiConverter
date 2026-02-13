@@ -701,6 +701,21 @@ void ExportProgressViewModel::initializeSystemTrayIcon() {
 
     m_systemTrayIcon->setContextMenu(trayMenu);
 
+    // 连接点击事件：左键点击显示窗口
+    connect(m_systemTrayIcon, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason reason) {
+        if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::DoubleClick) {
+            qDebug() << "System tray icon triggered (left click/double click)";
+            auto windows = QGuiApplication::topLevelWindows();
+            for (auto* window : windows) {
+                if (window) {
+                    window->show();
+                    window->raise();
+                    window->requestActivate();
+                }
+            }
+        }
+    });
+
     // 显示托盘图标
     m_systemTrayIcon->show();
 

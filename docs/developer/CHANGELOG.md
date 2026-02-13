@@ -2,7 +2,108 @@
 
 本文档记录了 EasyKiConverter 每个版本的新增、修复和更改内容。
 
+## [3.0.5] - 2026-02-12
+
+### 修复
+
+- **MainWindow 模块化重构**
+  - 将 `MainWindow` 的内联 UI 逻辑拆分为独立的高性能组件：`TitleBar`, `HeaderSection`, `ComponentInputCard`, `BomImportCard`, `ComponentListCard`, `ExportSettingsCard`, `ExportProgressCard`, `ExportResultsCard`, `ExportStatisticsCard`, `ExportButtonsSection` 等。
+  - 通过组件解耦显著提升了 QML 代码的可维护性和渲染效率。
+  - 代码位置: `src/ui/qml/components/`
+
+- **核心导入导出模块单一职责重构**
+  - 将臃肿的 `EasyedaImporter` 和 `Exporter` 类拆分为专用类。
+  - 新增 `EasyedaSymbolImporter`（符号导入）、`EasyedaFootprintImporter`（封装导入）、`EasyedaUtils`（通用工具）。
+  - 核心逻辑代码量减少，可测试性提升。
+  - 代码位置: `src/core/`
+
+- **BOM 解析库与服务重构**
+  - 新增 `BomParser` 模块，优化 BOM 文件导入流程。
+  - 实现导出流水线取消机制与线程池配置优化，降低解析失败率。
+  - 代码位置: `src/services/`
+
+- **弱网容错 P0-1: NetworkWorker 添加超时机制**
+  - 新增 `executeRequest` 通用网络请求方法，统一处理超时、重试和错误恢复
+  - 所有 4 个 fetch 方法（组件信息、CAD数据、3D模型OBJ/MTL）均增加 QTimer 超时保护
+  - 默认超时 30 秒（组件信息/CAD数据），3D 模型超时 45 秒
+  - 消除了弱网环境下 `QEventLoop::exec()` 导致线程永久阻塞的风险
+  - 代码位置: `src/workers/NetworkWorker.h`, `src/workers/NetworkWorker.cpp`
+
+- **弱网容错 P0-2: FetchWorker 超时后允许重试**
+  - 移除 `retryCount = MAX_HTTP_RETRIES + 1` 跳过逻辑
+  - 超时（OperationCanceledError）现在会触发正常的重试流程
+  - 弱网环境下超时是最常见的错误类型，此修复显著提高弱网下的成功率
+  - 代码位置: `src/workers/FetchWorker.cpp`
+
+- **弱网容错 P0-3: FetchWorker 增加超时时间**
+  - 组件信息超时: 8s -> 15s
+  - 3D 模型超时: 10s -> 30s
+  - STEP 模型超时: 10s -> 30s（不再硬编码，统一使用 MODEL_3D_TIMEOUT_MS 常量）
+  - 代码位置: `src/workers/FetchWorker.h`
+
+- **弱网容错 P1-4: 速率限制退避改为真正的指数退避**
+  - 退避策略从 `+1000`（线性）改为 `*2`（指数），初始 1s，上限 8s
+  - 更有效地应对 API 速率限制
+  - 代码位置: `src/workers/FetchWorker.cpp`
+
+- **弱网容错 P1-5: 递增重试延迟**
+  - 重试延迟从固定 500ms 改为递增延迟: 3s / 5s / 10s
+  - 参考 NetworkUtils 的成熟策略，给服务端更充分的恢复时间
+  - 代码位置: `src/workers/FetchWorker.h`, `src/workers/FetchWorker.cpp`
+
+- **弱网容错 P1-6: 重试延迟添加随机抖动（Jitter）**
+  - 新增 `calculateRetryDelay` 辅助方法
+  - 在基础延迟上添加 +/-20% 的随机抖动，有效缓解惊群效应
+  - FetchWorker 和 NetworkWorker 均采用带抖动的递增延迟策略
+  - 代码位置: `src/workers/FetchWorker.h`, `src/workers/FetchWorker.cpp`
+
+- **弱网容错 P1-7: 修复 thread_local QNAM 内存泄漏**
+  - 为 `thread_local QNetworkAccessManager*` 注册 `QThread::finished` 清理回调
+  - 确保线程池线程回收时 QNAM 被正确 delete，而非永久泄漏
+  - 代码位置: `src/workers/FetchWorker.cpp`
+
+- **3D 模型导出失败不再阻止符号/封装导出**
+  - `writeSuccess` 判定从"符号+封装+3D模型全部成功"改为"符号+封装核心输出成功"
+  - 3D 模型导出失败仅记录警告，不影响符号和封装的正常导出和合并
+  - 修复了 3D 模型下载失败导致已解析的符号和封装也不写入的问题
+  - 代码位置: `src/workers/WriteWorker.cpp`
+
+### 改进
+
+- **NetworkWorker 代码重构**
+  - 提取 `executeRequest` 通用方法，消除四个 fetch 方法中的大量重复代码
+  - 统一超时、重试、进度报告和错误处理逻辑
+  - 代码行数从约 430 行减少至约 280 行，可维护性显著提升
+
+- **构建系统优化**
+  - 启用 `compile_commands.json` 生成，提供更好的 IDE/LSP（如 VS Code）智能提示支持。
+  - 统一项目所有源文件编码为 UTF-8 (No BOM)。
+
+- **测试框架集成**
+  - 引入 QtTest 测试框架，支持单元测试、集成测试、基准测试和手动测试
+  - 新增 `tests/` 目录结构，包含单元测试（EasyEDA API、数据模型、ViewModels）、集成测试、基准测试和 UI 测试
+  - 实现依赖注入模式，使用 `INetworkAdapter` 接口支持 Mock 网络请求
+  - 新增覆盖率支持选项（GCC/MinGW），可通过 `-DENABLE_COVERAGE=ON` 启用
+  - 代码位置：`tests/`, `src/core/utils/INetworkAdapter.h`, `CMakeLists.txt`
+
+- **开发工具扩展**
+  - 新增 `tools/python/manage_version.py` 版本管理工具，自动同步 vcpkg.json、CMakeLists.txt 和 src/main.cpp 中的版本信息
+  - 新增 `tools/python/analyze_lines.py` 代码行数分析工具
+  - 新增 `tools/python/convert_to_utf8.py` 文件编码转换工具
+  - 新增 `tools/python/fix_qml_translations.py` QML 翻译修复工具
+  - 完善 `tools/README.md` 和 `tools/README_en.md` 工具文档，添加详细的使用说明和环境要求
+  - 为 `tools/windows/format_code.bat` 和 `tools/python/manage_version.py` 添加详细的头部注释和文档说明
+  - 代码位置：`tools/`
+
+- **文档体系完善**
+  - 新增架构决策记录（ADR）系统，记录重要的架构决策
+  - 新增测试指南文档（`docs/developer/TESTING_GUIDE.md`）
+  - 新增性能基准线文档（`docs/developer/performance_baseline.md`）
+  - 更新架构文档，添加系统架构图和工作流程图（Excalidraw 格式）
+  - 代码位置：`docs/project/adr/`, `docs/developer/`, `docs/diagrams/`
+
 ## [3.0.3] - 2026-02-08
+
 
 ### 新增
 - **LCSC 预览图功能**

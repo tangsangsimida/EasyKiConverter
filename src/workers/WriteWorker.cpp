@@ -1,8 +1,10 @@
-﻿#include "WriteWorker.h"
+#include "WriteWorker.h"
 
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
+#include "models/FootprintDataSerializer.h"
+#include "models/SymbolDataSerializer.h"
 
 #include <QDebug>
 #include <QDir>
@@ -119,19 +121,29 @@ cleanup:
     }
 
     // 根据用户请求的导出项和实际完成情况，决定最终的成功状态
-    bool finalSuccess = true;
+    // 注意：3D模型导出失败不影响符号和封装的导出成功状态
+    // 符号和封装是捆绑的核心输出，3D模型是可选附加输出
+    bool coreSuccess = true;
+    bool model3DFailed = false;
     if (m_exportSymbol && !m_status->symbolWritten) {
-        finalSuccess = false;
+        coreSuccess = false;
     }
     if (m_exportFootprint && !m_status->footprintWritten) {
-        finalSuccess = false;
+        coreSuccess = false;
     }
     if (m_exportModel3D && !m_status->model3DWritten) {
-        finalSuccess = false;
+        model3DFailed = true;  // 仅记录，不影响核心成功状态
+        m_status->addDebugLog("WARNING: 3D model export failed, but symbol/footprint export is not affected.");
     }
 
-    m_status->writeSuccess = finalSuccess;
-    m_status->writeMessage = finalSuccess ? "Write completed successfully" : "Failed to write one or more files";
+    m_status->writeSuccess = coreSuccess;
+    if (coreSuccess && model3DFailed) {
+        m_status->writeMessage = "Write completed (3D model export failed, symbol/footprint OK)";
+    } else if (coreSuccess) {
+        m_status->writeMessage = "Write completed successfully";
+    } else {
+        m_status->writeMessage = "Failed to write one or more core files (symbol/footprint)";
+    }
 
     if (m_debugMode) {
         exportDebugData(*m_status);
@@ -152,20 +164,44 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
     }
 
     QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_outputPath, status.componentId);
+    QString finalFilePath = QString("%1/%2.kicad_sym").arg(m_outputPath, status.componentId);
 
+    // 先写入临时文件
     if (!m_symbolExporter.exportSymbol(*status.symbolData, tempFilePath)) {
         status.addDebugLog(QString("ERROR: Failed to write symbol file: %1").arg(tempFilePath));
-        return false;  // 导出器报告失败
+        QFile::remove(tempFilePath);  // 清理临时文件
+        return false;                 // 导出器报告失败
     }
 
-    // 验证文件是否真的被写入
-    if (QFile::exists(tempFilePath)) {
-        status.addDebugLog(QString("Symbol file written: %1").arg(tempFilePath));
+    // 验证临时文件是否真的被写入
+    if (!QFile::exists(tempFilePath)) {
+        status.addDebugLog(QString("ERROR: Symbol file not found after export: %1").arg(tempFilePath));
+        return false;  // 文件未找到，视为失败
+    }
+
+    // 删除旧文件（如果存在）
+    if (QFile::exists(finalFilePath)) {
+        if (!QFile::remove(finalFilePath)) {
+            status.addDebugLog(QString("WARNING: Failed to remove old symbol file: %1").arg(finalFilePath));
+            // 继续尝试重命名，可能操作系统会处理
+        }
+    }
+
+    // 原子性地重命名临时文件到最终文件
+    if (!QFile::rename(tempFilePath, finalFilePath)) {
+        status.addDebugLog(QString("ERROR: Failed to rename symbol file: %1 -> %2").arg(tempFilePath, finalFilePath));
+        QFile::remove(tempFilePath);  // 清理临时文件
+        return false;
+    }
+
+    // 验证最终文件是否存在
+    if (QFile::exists(finalFilePath)) {
+        status.addDebugLog(QString("Symbol file written atomically: %1").arg(finalFilePath));
         status.symbolWritten = true;
         return true;
     } else {
-        status.addDebugLog(QString("ERROR: Symbol file not found after export: %1").arg(tempFilePath));
-        return false;  // 文件未找到，视为失败
+        status.addDebugLog(QString("ERROR: Final symbol file not found after rename: %1").arg(finalFilePath));
+        return false;
     }
 }
 
@@ -190,37 +226,67 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
 
     QString footprintName = status.footprintData->info().name;
     QString filePath = QString("%1/%2.kicad_mod").arg(footprintLibPath, footprintName);
+    QString tempFilePath = filePath + ".tmp";
 
     QString model3DWrlPath;
     QString model3DStepPath;
     if (m_exportModel3D && status.model3DData && !status.model3DData->uuid().isEmpty()) {
+        // 始终使用封装名作为 3D 模型的文件名和引用路径，以确保与 write3DModelFile 写入磁盘的命名一致
         model3DWrlPath = QString("../%1.3dmodels/%2.wrl").arg(m_libName, footprintName);
         if (!status.model3DStepRaw.isEmpty()) {
             model3DStepPath = QString("../%1.3dmodels/%2.step").arg(m_libName, footprintName);
         }
     }
 
+    // 先写入临时文件
     bool exportSuccess = false;
     if (!model3DStepPath.isEmpty()) {
+        // 有 WRL 和 STEP 两个模型，调用双参数版本
         exportSuccess =
-            m_footprintExporter.exportFootprint(*status.footprintData, filePath, model3DWrlPath, model3DStepPath);
+            m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath, model3DStepPath);
+    } else if (!model3DWrlPath.isEmpty()) {
+        // 只有 WRL 模型，调用单参数版本
+        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath);
     } else {
-        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, filePath, model3DWrlPath);
+        // 没有 3D 模型，调用无参数版本
+        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath);
     }
 
     if (!exportSuccess) {
-        status.addDebugLog(QString("ERROR: Failed to write footprint file (exporter): %1").arg(filePath));
-        return false;  // 导出器报告失败
+        status.addDebugLog(QString("ERROR: Failed to write footprint file (exporter): %1").arg(tempFilePath));
+        QFile::remove(tempFilePath);  // 清理临时文件
+        return false;                 // 导出器报告失败
     }
 
-    // 验证文件是否真的被写入
+    // 验证临时文件是否真的被写入
+    if (!QFile::exists(tempFilePath)) {
+        status.addDebugLog(QString("ERROR: Footprint file not found after export: %1").arg(tempFilePath));
+        return false;  // 文件未找到，视为失败
+    }
+
+    // 删除旧文件（如果存在）
     if (QFile::exists(filePath)) {
-        status.addDebugLog(QString("Footprint file written: %1").arg(filePath));
+        if (!QFile::remove(filePath)) {
+            status.addDebugLog(QString("WARNING: Failed to remove old footprint file: %1").arg(filePath));
+            // 继续尝试重命名
+        }
+    }
+
+    // 原子性地重命名临时文件到最终文件
+    if (!QFile::rename(tempFilePath, filePath)) {
+        status.addDebugLog(QString("ERROR: Failed to rename footprint file: %1 -> %2").arg(tempFilePath, filePath));
+        QFile::remove(tempFilePath);  // 清理临时文件
+        return false;
+    }
+
+    // 验证最终文件是否存在
+    if (QFile::exists(filePath)) {
+        status.addDebugLog(QString("Footprint file written atomically: %1").arg(filePath));
         status.footprintWritten = true;
         return true;
     } else {
-        status.addDebugLog(QString("ERROR: Footprint file not found after export: %1").arg(filePath));
-        return false;  // 文件未找到，视为失败
+        status.addDebugLog(QString("ERROR: Final footprint file not found after rename: %1").arg(filePath));
+        return false;
     }
 }
 
@@ -240,38 +306,58 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     bool wrlSuccess = false;
     bool stepSuccess = false;
 
-    // 导出 WRL 文件
+    // 导出 WRL 文件（使用 Write-Temp-Move 模式）
     QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
-    wrlSuccess = m_model3DExporter.exportToWrl(*status.model3DData, wrlFilePath);
+    QString wrlTempFilePath = wrlFilePath + ".tmp";
+    wrlSuccess = m_model3DExporter.exportToWrl(*status.model3DData, wrlTempFilePath);
 
-    if (wrlSuccess) {
-        if (QFile::exists(wrlFilePath)) {
-            status.addDebugLog(QString("3D model WRL file written: %1").arg(wrlFilePath));
-        } else {
-            status.addDebugLog(QString("ERROR: WRL file not found after export: %1").arg(wrlFilePath));
-            wrlSuccess = false;  // 文件不存在，视为写入失败
+    if (wrlSuccess && QFile::exists(wrlTempFilePath)) {
+        // 删除旧文件（如果存在）
+        if (QFile::exists(wrlFilePath) && !QFile::remove(wrlFilePath)) {
+            status.addDebugLog(QString("WARNING: Failed to remove old WRL file: %1").arg(wrlFilePath));
         }
+        // 原子性地重命名
+        if (QFile::rename(wrlTempFilePath, wrlFilePath)) {
+            status.addDebugLog(QString("3D model WRL file written atomically: %1").arg(wrlFilePath));
+        } else {
+            status.addDebugLog(QString("ERROR: Failed to rename WRL file: %1 -> %2").arg(wrlTempFilePath, wrlFilePath));
+            QFile::remove(wrlTempFilePath);
+            wrlSuccess = false;
+        }
+    } else if (wrlSuccess) {
+        status.addDebugLog(QString("ERROR: WRL file not found after export: %1").arg(wrlTempFilePath));
+        wrlSuccess = false;
     } else {
-        status.addDebugLog(QString("ERROR: Failed to write WRL file: %1").arg(wrlFilePath));
+        status.addDebugLog(QString("ERROR: Failed to write WRL file: %1").arg(wrlTempFilePath));
+        QFile::remove(wrlTempFilePath);
     }
 
-    // 导出 STEP 文件（如果有）
+    // 导出 STEP 文件（如果有，使用 Write-Temp-Move 模式）
     if (!status.model3DStepRaw.isEmpty()) {
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
-        QFile stepFile(stepFilePath);
+        QString stepTempFilePath = stepFilePath + ".tmp";
+        QFile stepFile(stepTempFilePath);
         if (stepFile.open(QIODevice::WriteOnly)) {
             stepFile.write(status.model3DStepRaw);
             stepFile.close();
 
-            if (QFile::exists(stepFilePath)) {
-                status.addDebugLog(QString("3D model STEP file written: %1").arg(stepFilePath));
-                stepSuccess = true;
-            } else {
-                status.addDebugLog(QString("WARNING: STEP file not found after write: %1").arg(stepFilePath));
-                // STEP 文件失败不影响整体 3D 模型成功，只要有 WRL 就算成功
+            if (QFile::exists(stepTempFilePath)) {
+                // 删除旧文件（如果存在）
+                if (QFile::exists(stepFilePath) && !QFile::remove(stepFilePath)) {
+                    status.addDebugLog(QString("WARNING: Failed to remove old STEP file: %1").arg(stepFilePath));
+                }
+                // 原子性地重命名
+                if (QFile::rename(stepTempFilePath, stepFilePath)) {
+                    status.addDebugLog(QString("3D model STEP file written atomically: %1").arg(stepFilePath));
+                    stepSuccess = true;
+                } else {
+                    status.addDebugLog(
+                        QString("ERROR: Failed to rename STEP file: %1 -> %2").arg(stepTempFilePath, stepFilePath));
+                    QFile::remove(stepTempFilePath);
+                }
             }
         } else {
-            status.addDebugLog(QString("ERROR: Failed to write STEP file: %1").arg(stepFilePath));
+            status.addDebugLog(QString("ERROR: Failed to write STEP file: %1").arg(stepTempFilePath));
             // STEP 文件失败不影响整体 3D 模型成功
         }
     }
@@ -383,7 +469,7 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
 
     if (status.symbolData) {
-        QJsonObject symbolInfo = status.symbolData->info().toJson();
+        QJsonObject symbolInfo = SymbolDataSerializer::toJson(status.symbolData->info());
         symbolInfo["pinCount"] = status.symbolData->pins().size();
         symbolInfo["rectangleCount"] = status.symbolData->rectangles().size();
         symbolInfo["circleCount"] = status.symbolData->circles().size();
@@ -404,56 +490,56 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
         QJsonArray pinsArray;
         for (const SymbolPin& pin : status.symbolData->pins()) {
-            pinsArray.append(pin.toJson());
+            pinsArray.append(SymbolDataSerializer::toJson(pin));
         }
         symbolInfo["pins"] = pinsArray;
 
 
         QJsonArray rectanglesArray;
         for (const SymbolRectangle& rect : status.symbolData->rectangles()) {
-            rectanglesArray.append(rect.toJson());
+            rectanglesArray.append(SymbolDataSerializer::toJson(rect));
         }
         symbolInfo["rectangles"] = rectanglesArray;
 
 
         QJsonArray circlesArray;
         for (const SymbolCircle& circle : status.symbolData->circles()) {
-            circlesArray.append(circle.toJson());
+            circlesArray.append(SymbolDataSerializer::toJson(circle));
         }
         symbolInfo["circles"] = circlesArray;
 
 
         QJsonArray arcsArray;
         for (const SymbolArc& arc : status.symbolData->arcs()) {
-            arcsArray.append(arc.toJson());
+            arcsArray.append(SymbolDataSerializer::toJson(arc));
         }
         symbolInfo["arcs"] = arcsArray;
 
 
         QJsonArray polylinesArray;
         for (const SymbolPolyline& polyline : status.symbolData->polylines()) {
-            polylinesArray.append(polyline.toJson());
+            polylinesArray.append(SymbolDataSerializer::toJson(polyline));
         }
         symbolInfo["polylines"] = polylinesArray;
 
 
         QJsonArray polygonsArray;
         for (const SymbolPolygon& polygon : status.symbolData->polygons()) {
-            polygonsArray.append(polygon.toJson());
+            polygonsArray.append(SymbolDataSerializer::toJson(polygon));
         }
         symbolInfo["polygons"] = polygonsArray;
 
 
         QJsonArray pathsArray;
         for (const SymbolPath& path : status.symbolData->paths()) {
-            pathsArray.append(path.toJson());
+            pathsArray.append(SymbolDataSerializer::toJson(path));
         }
         symbolInfo["paths"] = pathsArray;
 
 
         QJsonArray ellipsesArray;
         for (const SymbolEllipse& ellipse : status.symbolData->ellipses()) {
-            ellipsesArray.append(ellipse.toJson());
+            ellipsesArray.append(SymbolDataSerializer::toJson(ellipse));
         }
         symbolInfo["ellipses"] = ellipsesArray;
 
@@ -462,7 +548,7 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
 
     if (status.footprintData) {
-        QJsonObject footprintInfo = status.footprintData->info().toJson();
+        QJsonObject footprintInfo = FootprintDataSerializer::toJson(status.footprintData->info());
         footprintInfo["padCount"] = status.footprintData->pads().size();
         footprintInfo["trackCount"] = status.footprintData->tracks().size();
         footprintInfo["holeCount"] = status.footprintData->holes().size();
@@ -484,63 +570,63 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
         QJsonArray padsArray;
         for (const FootprintPad& pad : status.footprintData->pads()) {
-            padsArray.append(pad.toJson());
+            padsArray.append(FootprintDataSerializer::toJson(pad));
         }
         footprintInfo["pads"] = padsArray;
 
 
         QJsonArray tracksArray;
         for (const FootprintTrack& track : status.footprintData->tracks()) {
-            tracksArray.append(track.toJson());
+            tracksArray.append(FootprintDataSerializer::toJson(track));
         }
         footprintInfo["tracks"] = tracksArray;
 
 
         QJsonArray holesArray;
         for (const FootprintHole& hole : status.footprintData->holes()) {
-            holesArray.append(hole.toJson());
+            holesArray.append(FootprintDataSerializer::toJson(hole));
         }
         footprintInfo["holes"] = holesArray;
 
 
         QJsonArray circlesArray;
         for (const FootprintCircle& circle : status.footprintData->circles()) {
-            circlesArray.append(circle.toJson());
+            circlesArray.append(FootprintDataSerializer::toJson(circle));
         }
         footprintInfo["circles"] = circlesArray;
 
 
         QJsonArray arcsArray;
         for (const FootprintArc& arc : status.footprintData->arcs()) {
-            arcsArray.append(arc.toJson());
+            arcsArray.append(FootprintDataSerializer::toJson(arc));
         }
         footprintInfo["arcs"] = arcsArray;
 
 
         QJsonArray rectanglesArray;
         for (const FootprintRectangle& rect : status.footprintData->rectangles()) {
-            rectanglesArray.append(rect.toJson());
+            rectanglesArray.append(FootprintDataSerializer::toJson(rect));
         }
         footprintInfo["rectangles"] = rectanglesArray;
 
 
         QJsonArray textsArray;
         for (const FootprintText& text : status.footprintData->texts()) {
-            textsArray.append(text.toJson());
+            textsArray.append(FootprintDataSerializer::toJson(text));
         }
         footprintInfo["texts"] = textsArray;
 
 
         QJsonArray solidRegionsArray;
         for (const FootprintSolidRegion& region : status.footprintData->solidRegions()) {
-            solidRegionsArray.append(region.toJson());
+            solidRegionsArray.append(FootprintDataSerializer::toJson(region));
         }
         footprintInfo["solidRegions"] = solidRegionsArray;
 
 
         QJsonArray outlinesArray;
         for (const FootprintOutline& outline : status.footprintData->outlines()) {
-            outlinesArray.append(outline.toJson());
+            outlinesArray.append(FootprintDataSerializer::toJson(outline));
         }
         footprintInfo["outlines"] = outlinesArray;
 

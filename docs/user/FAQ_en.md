@@ -251,6 +251,19 @@ Ensure that:
 - Try using a VPN
 - Check firewall settings
 
+### What should I do if conversions frequently fail under weak network conditions?
+
+If your network environment is unstable (high latency, high packet loss), you may encounter the following issues:
+- Many components marked as failed during batch export
+- 3D model download timeouts
+- Requests hanging with no response for extended periods
+
+**Solutions:**
+- Use a more stable network connection (wired preferred over wireless)
+- Reduce the number of components exported simultaneously
+- Use the "Retry Export" feature for failed components
+- If the problem persists, report the issue on GitHub with a description of your network environment
+
 ### "File write failed"
 
 **Cause:** Insufficient disk space or permission issues

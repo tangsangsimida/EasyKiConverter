@@ -12,7 +12,7 @@
 
 ### Qt 版本
 
-- Qt 6.8 或更高版本
+- Qt 6.6 或更高版本
 - 推荐 Qt 6.10.1
 
 ### CMake 版本
@@ -116,8 +116,9 @@ xcode-select --install
 # 更新包管理器
 sudo apt-get update
 
-# 安装 Qt 6
-sudo apt-get install qt6-base-dev qt6-declarative-dev qt6-tools-dev qt6-network-dev
+# 安装 Qt 6 基础和必需模块
+# 注意：Network 模块已包含在 qt6-base-dev 中，无需单独安装 qt6-network-dev
+sudo apt-get install qt6-base-dev qt6-declarative-dev qt6-tools-dev qt6-websockets-dev
 
 # 安装 CMake
 sudo apt-get install cmake
@@ -127,6 +128,9 @@ sudo apt-get install build-essential g++
 
 # 安装 zlib
 sudo apt-get install zlib1g-dev
+
+# 安装 XKB 支持（Qt 6 GuiPrivate 模块需要）
+sudo apt-get install libxkbcommon-dev libxkbcommon-x11-dev qt6-base-private-dev
 ```
 
 **Fedora**
@@ -262,6 +266,85 @@ cmake --build . --config Release
 ./bin/EasyKiConverter
 ```
 
+## 编译项目（含测试）
+
+### Windows + MinGW
+
+```bash
+# 创建构建目录
+mkdir build
+cd build
+
+# 配置项目（启用测试构建）
+cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64" -DEASYKICONVERTER_BUILD_TESTS=ON
+
+# 编译项目（Debug 版本）
+cmake --build . --config Debug
+
+# 编译项目（Release 版本）
+cmake --build . --config Release
+
+# 运行应用程序
+./bin/EasyKiConverter.exe
+
+# 运行测试
+ctest --output-on-failure
+```
+
+### Windows + MSVC
+
+```bash
+# 创建构建目录
+mkdir build
+cd build
+
+# 配置项目（启用测试构建）
+cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/msvc2019_64" -DEASYKICONVERTER_BUILD_TESTS=ON
+
+# 编译项目（Debug 版本）
+cmake --build . --config Debug
+
+# 编译项目（Release 版本）
+cmake --build . --config Release
+
+# 运行应用程序
+./bin/Debug/EasyKiConverter.exe
+
+# 运行测试
+ctest --output-on-failure
+```
+
+### macOS/Linux
+
+```bash
+# 创建构建目录
+mkdir build
+cd build
+
+# 配置项目（启用测试构建和覆盖率支持）
+cmake .. -DCMAKE_PREFIX_PATH="/opt/Qt/6.10.1/gcc_64" -DEASYKICONVERTER_BUILD_TESTS=ON -DENABLE_COVERAGE=ON
+
+# 编译项目（Debug 版本）
+cmake --build . --config Debug
+
+# 编译项目（Release 版本）
+cmake --build . --config Release
+
+# 运行应用程序
+./bin/EasyKiConverter
+
+# 运行测试
+ctest --output-on-failure
+```
+
+### 测试选项说明
+
+- `-DEASYKICONVERTER_BUILD_TESTS=ON`: 启用测试构建，编译测试代码
+- `-DENABLE_COVERAGE=ON`: 启用代码覆盖率支持（仅 GCC/MinGW）
+- `ctest --output-on-failure`: 运行所有测试，失败时显示详细输出
+
+详见: [测试指南](TESTING_GUIDE.md)
+
 ## 使用 Qt Creator 编译
 
 1. 安装 Qt Creator
@@ -367,6 +450,31 @@ brew install zlib
 sudo apt-get install zlib1g-dev  # Ubuntu/Debian
 sudo dnf install zlib-devel       # Fedora
 sudo pacman -S zlib               # Arch Linux
+```
+
+### 找不到 XKB 或 GuiPrivate 相关错误
+
+**错误信息：**
+```
+Could NOT find XKB (missing: XKB_LIBRARY XKB_INCLUDE_DIR)
+CMake Error: The link interface of target "Qt6::GuiPrivate" contains XKB::XKB but the target was not found.
+```
+
+**解决方案：**
+
+**Ubuntu/Debian：**
+```bash
+sudo apt-get install libxkbcommon-dev libxkbcommon-x11-dev qt6-base-private-dev
+```
+
+**Fedora：**
+```bash
+sudo dnf install libxkbcommon-devel libxkbcommon-x11-devel qt6-qtbase-private-devel
+```
+
+**Arch Linux：**
+```bash
+sudo pacman -S libxkbcommon qt6-base
 ```
 
 ### 找不到 Qt 动态库
@@ -534,6 +642,86 @@ gdb ./EasyKiConverter
 2. 设置断点
 3. 点击 "调试"按钮（或按 F5）
 
+## 在远程服务器上运行 Qt 应用
+
+EasyKiConverter 是一个 Qt Quick 应用，需要图形界面支持。在远程服务器上运行时，需要配置 X11 转发或使用 VNC。
+
+### 方案 1: X11 转发（推荐用于简单测试）
+
+**步骤：**
+
+1. **在本地 Windows 上安装 X Server：**
+   - **VcXsrv** (推荐): https://sourceforge.net/projects/vcxsrv/
+   - **MobaXterm** (自带 X Server): https://mobaxterm.mobatek.net/
+
+2. **配置 SSH 连接：**
+   - 使用 PuTTY：在 `Connection → SSH → X11` 中启用 `Enable X11 forwarding`
+   - 使用 MobaXterm：X11 转发已自动启用
+   - 使用命令行 SSH：添加 `-X` 参数
+     ```bash
+     ssh -X user@server-ip
+     ```
+
+3. **运行应用：**
+   ```bash
+   export DISPLAY=localhost:10.0  # 通常由 SSH 自动设置
+   cd build
+   ./bin/EasyKiConverter
+   ```
+
+### 方案 2: VNC（更稳定）
+
+**步骤：**
+
+1. **在服务器上安装 VNC 服务器：**
+   ```bash
+   sudo apt-get install tightvncserver
+   ```
+
+2. **启动 VNC 服务器：**
+   ```bash
+   vncserver :1
+   # 第一次运行时会提示设置密码
+   ```
+
+3. **在本地使用 VNC 客户端连接：**
+   - 下载 RealVNC Viewer 或 TigerVNC
+   - 连接地址: `your-server-ip:5901`
+
+4. **运行应用：**
+   ```bash
+   cd build
+   ./bin/EasyKiConverter
+   ```
+
+5. **停止 VNC 服务器（可选）：**
+   ```bash
+   vncserver -kill :1
+   ```
+
+### 方案 3: 使用虚拟显示（用于测试/CI）
+
+**步骤：**
+
+1. **安装 Xvfb（虚拟帧缓冲）：**
+   ```bash
+   sudo apt-get install xvfb
+   ```
+
+2. **在虚拟显示中运行应用：**
+   ```bash
+   xvfb-run ./bin/EasyKiConverter
+   ```
+
+**注意：** 此方案主要用于自动化测试，应用窗口不可见。
+
+### 推荐做法
+
+对于开发测试，推荐使用 **MobaXterm**，因为它：
+- 自带 X Server，无需额外配置
+- 支持 SSH、SFTP 等多种协议
+- 界面友好，开箱即用
+
 ## 获取帮助
 
 如果遇到编译问题：
@@ -547,6 +735,33 @@ gdb ./EasyKiConverter
    - 编译器版本
    - 完整的错误信息
    - CMake 配置命令
+
+## 版本管理
+
+项目提供了 `tools/python/manage_version.py` 工具来同步更新版本信息，确保各处版本号一致。
+
+### 使用方法
+
+```bash
+# 检查当前版本
+python tools/python/manage_version.py --check
+
+# 更新版本到 3.1.0（自动更新以下文件）
+python tools/python/manage_version.py 3.1.0
+```
+
+### 同步的文件
+
+- `vcpkg.json`: 更新 `"version-string"` 字段
+- `CMakeLists.txt`: 更新默认的 `VERSION_FROM_CI` 和 `qt_add_qml_module` 版本
+- `src/main.cpp`: 更新 `app.setApplicationVersion`
+
+### 环境要求
+
+- Python 3.6+
+- 建议在项目根目录运行
+
+详见: [工具文档](../../tools/README.md)
 
 ## 相关资源
 

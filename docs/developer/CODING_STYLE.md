@@ -13,8 +13,8 @@
 
 ### 1.2. 文件名
 
-*   C++ 源文件和头文件使用大驼峰命名法（PascalCase），例如 `ExportServicePipeline.cpp` 和 `ExportServicePipeline.h`。
-*   QML 文件使用大驼峰命名法（PascalCase），例如 `MainWindow.qml`。
+*   C++ 源文件和头文件使用大驼峰命名法（PascalCase），例如 `ExportServicePipeline.cpp` 和 `ExportServicePipeline.h`。主入口文件为 `src/main.cpp`。
+*   QML 文件使用大驼峰命名法（PascalCase），例如 `MainWindow.qml`。主入口文件为 `src/ui/qml/Main.qml`。
 *   测试文件通常使用下划线命名法（snake_case），例如 `test_component_service.cpp`。
 
 ### 1.3. 类、结构体和命名空间
@@ -99,6 +99,16 @@
 *   在逗号 `,` 和分号 `;` (在 for 循环中) 后使用空格。
 *   在关键字（`if`, `for`, `while`）和其后的括号 `(` 之间使用空格。
 *   在函数名和参数列表的括号 `(` 之间**不**使用空格。
+
+### 2.5. 文件编码 (File Encoding)
+
+*   **所有源文件**（`.cpp`, `.h`, `.qml`, `CMakeLists.txt` 等）必须使用 **UTF-8 (无 BOM)** 编码。
+*   **严禁使用** UTF-8 with BOM 或 GBK 等其他编码，以确保跨平台协作时注释和字符串字面量不会出现乱码。
+*   **强制工具校验**: 开发者在贡献代码和提交 PR 前，**必须使用**项目中提供的转换工具进行编码规范校验：
+    *   **工具路径**: `tools/python/convert_to_utf8.py`
+    *   **运行命令**: `python tools/python/convert_to_utf8.py` (默认扫描整个项目根目录)。
+*   **注释规范**: 鼓励在注释中使用中文（简体）以提高国内开发者的沟通效率，但必须确保文件保存为纯 UTF-8 编码。
+*   **编译器兼容性**: 项目在 `CMakeLists.txt` 中已配置 `/utf-8` 选项，确保 MSVC 在 Windows 下能正确解析无 BOM 的 UTF-8 源文件。
 
 ## 3. 注释 (Comments)
 

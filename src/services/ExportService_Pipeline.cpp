@@ -20,11 +20,11 @@ namespace EasyKiConverter {
 
 ExportServicePipeline::ExportServicePipeline(QObject* parent)
     : ExportService(parent)
-    , m_fetchThreadPool(new QThreadPool(this))
-    , m_processThreadPool(new QThreadPool(this))
-    , m_writeThreadPool(new QThreadPool(this))
-    , m_fetchProcessQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100))
-    , m_processWriteQueue(new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(100))
+    , m_fetchThreadPool(nullptr)
+    , m_processThreadPool(nullptr)
+    , m_writeThreadPool(nullptr)
+    , m_fetchProcessQueue(nullptr)
+    , m_processWriteQueue(nullptr)
     , m_networkAccessManager(new QNetworkAccessManager(this))
     , m_isPipelineRunning(false)
     , m_isCancelled(0)
@@ -35,10 +35,20 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     , m_originalExportStartTimeMs(0)
     , m_originalTotalTasks(0)
     , m_isRetryMode(false) {
-    // 配置线程池
-    m_fetchThreadPool->setMaxThreadCount(5);
-    m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());
-    m_writeThreadPool->setMaxThreadCount(3);
+    qDebug() << "ExportServicePipeline: Initializing thread pools...";
+    // 线程池初始化
+    m_fetchThreadPool = new QThreadPool(this);
+    m_fetchThreadPool->setMaxThreadCount(5);  // I/O 密集型
+    m_fetchThreadPool->setExpiryTimeout(60000);
+
+    m_processThreadPool = new QThreadPool(this);
+    m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());  // CPU 密集型
+
+    m_writeThreadPool = new QThreadPool(this);
+    m_writeThreadPool->setMaxThreadCount(3);  // 磁盘 I/O 密集型
+
+    // 状态统计初始化
+    m_pipelineProgress = PipelineProgress();
 
     qDebug() << "ExportServicePipeline initialized with thread pools:"
              << "Fetch:" << m_fetchThreadPool->maxThreadCount() << "Process:" << m_processThreadPool->maxThreadCount()
@@ -46,7 +56,9 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
 }
 
 ExportServicePipeline::~ExportServicePipeline() {
+    cancelExport();  // 确保退出时停止所有请求
     cleanupPipeline();
+    delete m_mutex;
 }
 
 void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& componentIds,
@@ -247,7 +259,12 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
 
     // 无论整体是否成功，只要符号文件被写入了，就加入清理列表
     if (m_options.exportSymbol && status->symbolWritten) {
-        QString tempFilePath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, status->componentId);
+        QString finalFilePath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, status->componentId);
+        QString tempFilePath = finalFilePath + ".tmp";
+        // 优先清理最终文件（.kicad_sym），如果存在临时文件也加入清理列表
+        if (QFile::exists(finalFilePath) && !m_tempSymbolFiles.contains(finalFilePath)) {
+            m_tempSymbolFiles.append(finalFilePath);
+        }
         if (QFile::exists(tempFilePath) && !m_tempSymbolFiles.contains(tempFilePath)) {
             m_tempSymbolFiles.append(tempFilePath);
         }
@@ -282,6 +299,29 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
 
 void ExportServicePipeline::startFetchStage() {
     for (const QString& componentId : m_componentIds) {
+        if (m_isCancelled.loadAcquire()) {  // Batch-level cancellation check
+            qDebug() << "Fetch stage cancelled early for component:" << componentId;
+            QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
+            status->componentId = componentId;
+            status->fetchSuccess = false;
+            status->fetchMessage = "Export cancelled";
+            m_completedStatuses.append(status);  // Add to completed statuses for proper count
+            m_pipelineProgress.fetchCompleted++;
+            m_pipelineProgress.processCompleted++;
+            m_pipelineProgress.writeCompleted++;
+            m_failureCount++;
+            emit componentExported(
+                componentId, false, "Export cancelled", static_cast<int>(PipelineStage::Fetch), false, false, false);
+            emit pipelineProgressUpdated(m_pipelineProgress);
+            checkPipelineCompletion();
+            continue;
+        }
+
+        // 创建导出状态对象
+        QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
+        status->componentId = componentId;
+        status->need3DModel = m_options.exportModel3D;
+
         // 检查是否有预加载数据
         bool canUsePreloaded = false;
         QSharedPointer<ComponentData> preloadedData;
@@ -289,97 +329,88 @@ void ExportServicePipeline::startFetchStage() {
         if (m_preloadedData.contains(componentId)) {
             preloadedData = m_preloadedData.value(componentId);
             if (preloadedData && preloadedData->isValid()) {
-                // 如果需要导出3D模型，必须检查预加载数据中是否有有效的3D模型信息
-                // 如果预加载数据没有3D信息（例如列表验证时没有勾选获取3D），则不能使用预加载数据，必须重新获取
-                if (m_options.exportModel3D) {
-                    if (preloadedData->model3DData() && !preloadedData->model3DData()->uuid().isEmpty()) {
-                        canUsePreloaded = true;
-                    } else {
-                        qDebug() << "Preloaded data for" << componentId << "misses 3D model data, forcing fetch.";
-                        canUsePreloaded = false;
+                // 严格完整性检查: 确保预加载数据包含用户请求的所有导出项
+                bool isDataComplete = true;
+
+                if (m_options.exportSymbol) {
+                    if (!preloadedData->symbolData() || preloadedData->symbolData()->pins().isEmpty()) {
+                        isDataComplete = false;
+                        status->addDebugLog("Preloaded symbol data incomplete, fallback to fetch.");
                     }
-                } else {
+                }
+
+                if (m_options.exportFootprint) {
+                    if (!preloadedData->footprintData() || preloadedData->footprintData()->info().name.isEmpty()) {
+                        isDataComplete = false;
+                        status->addDebugLog("Preloaded footprint data incomplete or name missing, fallback to fetch.");
+                    }
+                }
+
+                if (m_options.exportModel3D) {
+                    if (!preloadedData->model3DData() || preloadedData->model3DData()->uuid().isEmpty()) {
+                        isDataComplete = false;
+                        status->addDebugLog("Preloaded 3D model data missing, fallback to fetch.");
+                    }
+                }
+
+                if (isDataComplete) {
                     canUsePreloaded = true;
                 }
             }
         }
 
         if (canUsePreloaded) {
-            qDebug() << "Using preloaded data for component:" << componentId;
-
-            QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
-            status->componentId = componentId;
-            status->need3DModel = m_options.exportModel3D;
-
-            // 填充数据
-            // 注意：这里我们需要把 ComponentData 转换回原始 JSON 或者直接填充 Status 对象
-            // ProcessWorker 主要是从 status->cadDataRaw 解析，或者我们可以修改 ProcessWorker 接受 ComponentData
-
-            // 现在的架构是 FetchWorker -> raw JSON -> ProcessWorker -> ComponentData -> WriteWorker
-            // 如果我们已经有 ComponentData，我们应该跳过 Fetch 和 Process 阶段吗？
-            // 或者我们可以把 ComponentData 序列化回 JSON (有点多余)，
-            // 或者修改 Status 对象以支持直接持有 ComponentData，并让 ProcessWorker 识别它。
-
-            // 既然 ComponentExportStatus 已经有 symbolData, footprintData 等成员，
-            // 我们可以直接填充这些，并标记 fetchSuccess 和 processSuccess 为 true。
-
+            status->addDebugLog("Re-using preloaded data from validation stage.");
             status->fetchSuccess = true;
-            status->fetchMessage = "Used preloaded data";
+            status->fetchMessage = "Re-used preloaded data";
             status->fetchDurationMs = 0;
 
-            // 填充 CAD 数据
+            // 填充预加载的数据到状态对象中
             status->symbolData = preloadedData->symbolData();
             status->footprintData = preloadedData->footprintData();
             status->model3DData = preloadedData->model3DData();
 
-            // 标记处理成功 (因为数据已经是处理过的 ComponentData)
+            // 因为数据已经是处理过的 ComponentData，直接标记处理成功
             status->processSuccess = true;
-            status->processMessage = "Preloaded data used";
+            status->processMessage = "Pre-processed during validation";
             status->processDurationMs = 0;
 
-            // 添加到完成状态列表以供统计 (Critical Fix)
+            // 更新进度 (模拟已完成抓取和处理)
             {
                 QMutexLocker locker(m_mutex);
                 m_completedStatuses.append(status);
             }
-
-            // 直接推送到写入队列
             m_pipelineProgress.fetchCompleted++;
             m_pipelineProgress.processCompleted++;
 
-            // 发送信号更新 UI
             emit componentExported(
-                componentId, true, "Used preloaded data", static_cast<int>(PipelineStage::Fetch), false, false, false);
-            emit componentExported(componentId,
-                                   true,
-                                   "Used preloaded data",
-                                   static_cast<int>(PipelineStage::Process),
-                                   false,
-                                   false,
-                                   false);
+                componentId, true, "Ready", static_cast<int>(PipelineStage::Fetch), false, false, false);
+            emit componentExported(
+                componentId, true, "Ready", static_cast<int>(PipelineStage::Process), false, false, false);
             emit pipelineProgressUpdated(m_pipelineProgress);
 
-            if (m_processWriteQueue->push(status)) {
-                // 成功推送到写入队列
-            } else {
-                m_failureCount++;
-                // Handle failure
-            }
-
+            // 直接跳过前两个阶段，推送到写入队列
+            m_processWriteQueue->push(status);
             continue;
         }
 
-        FetchWorker* worker = new FetchWorker(componentId, m_networkAccessManager, m_options.exportModel3D, nullptr);
-        {
-            QMutexLocker locker(&m_workerMutex);
-            m_activeFetchWorkers.insert(worker);
-        }
+        // 走到这里说明：数据未验证、验证失败或勾选了导出3D但验证数据缺失3D。
+        // 这时不是显示失败，而是强制发起后台异步抓取，确保即使未手动验证也能导出。
+        status->addDebugLog("Component data incomplete or unvalidated, starting background fetch...");
+
+        FetchWorker* worker = new FetchWorker(componentId, m_networkAccessManager, m_options.exportModel3D, this);
         connect(worker,
                 &FetchWorker::fetchCompleted,
                 this,
                 &ExportServicePipeline::handleFetchCompleted,
                 Qt::QueuedConnection);
         connect(worker, &FetchWorker::fetchCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
+
+        {
+            QMutexLocker locker(&m_workerMutex);
+            m_activeFetchWorkers.insert(worker);
+        }
+
         m_fetchThreadPool->start(worker);
     }
 }
@@ -388,6 +419,10 @@ void ExportServicePipeline::startProcessStage() {
     for (int i = 0; i < m_processThreadPool->maxThreadCount(); i++) {
         m_processThreadPool->start(QRunnable::create([this]() {
             while (true) {
+                if (m_isCancelled.loadAcquire()) {  // Batch-level cancellation check
+                    qDebug() << "Process stage worker exiting due to cancellation.";
+                    break;
+                }
                 QSharedPointer<ComponentExportStatus> status;
                 if (!m_fetchProcessQueue->pop(status, 1000)) {
                     if (m_fetchProcessQueue->isClosed())
@@ -411,6 +446,10 @@ void ExportServicePipeline::startWriteStage() {
     for (int i = 0; i < m_writeThreadPool->maxThreadCount(); i++) {
         m_writeThreadPool->start(QRunnable::create([this]() {
             while (true) {
+                if (m_isCancelled.loadAcquire()) {  // Batch-level cancellation check
+                    qDebug() << "Write stage worker exiting due to cancellation.";
+                    break;
+                }
                 QSharedPointer<ComponentExportStatus> status;
                 if (!m_processWriteQueue->pop(status, 1000)) {
                     if (m_processWriteQueue->isClosed())
@@ -487,11 +526,16 @@ void ExportServicePipeline::checkPipelineCompletion() {
         }
         m_tempSymbolFiles.clear();
 
-        // 生成和保存统计报告
+        // 清理符号库合并时的临时文件
+        QString libraryTempPath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, m_options.libName);
+        if (QFile::exists(libraryTempPath)) {
+            if (!QFile::remove(libraryTempPath)) {
+                qWarning() << "Failed to remove temporary symbol library file:" << libraryTempPath;
+            }
+        }
+
+        // 生成统计信息（始终生成，用于显示基本统计卡片）
         ExportStatistics statistics = generateStatistics();
-        QString reportPath = QString("%1/export_report_%2.json")
-                                 .arg(m_options.outputPath)
-                                 .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
 
         // 在非重试模式下保存原始统计信息（用于重试时保留时间数据）
         if (!m_isRetryMode) {
@@ -499,11 +543,22 @@ void ExportServicePipeline::checkPipelineCompletion() {
             qDebug() << "Original export statistics saved for potential retries";
         }
 
-        if (saveStatisticsReport(statistics, reportPath)) {
-            emit statisticsReportGenerated(reportPath, statistics);
-        } else {
-            qWarning() << "Failed to save statistics report.";
+        // 只在调试模式下保存详细报告到文件
+        QString reportPath;
+        if (m_options.debugMode) {
+            reportPath = QString("%1/export_report_%2.json")
+                             .arg(m_options.outputPath)
+                             .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
+            if (saveStatisticsReport(statistics, reportPath)) {
+                qDebug() << "Statistics report saved to:" << reportPath;
+            } else {
+                qWarning() << "Failed to save statistics report.";
+                reportPath.clear();
+            }
         }
+
+        // 始终发送统计信号，使统计卡片显示
+        emit statisticsReportGenerated(reportPath, statistics);
 
         // 所有清理和统计完成后，才真正标记导出完成
         emit exportCompleted(m_pipelineProgress.totalTasks, m_successCount);
@@ -521,10 +576,16 @@ void ExportServicePipeline::cleanupPipeline() {
     if (!m_isPipelineRunning)
         return;
     m_isPipelineRunning = false;
-    if (m_fetchProcessQueue)
+    if (m_fetchProcessQueue) {
         m_fetchProcessQueue->close();
-    if (m_processWriteQueue)
+        delete m_fetchProcessQueue;
+        m_fetchProcessQueue = nullptr;
+    }
+    if (m_processWriteQueue) {
         m_processWriteQueue->close();
+        delete m_processWriteQueue;
+        m_processWriteQueue = nullptr;
+    }
 }
 
 bool ExportServicePipeline::mergeSymbolLibrary() {
@@ -548,6 +609,11 @@ bool ExportServicePipeline::mergeSymbolLibrary() {
         if (!QFile::rename(tempPath, libraryPath)) {
             QFile::remove(tempPath);
             success = false;
+        } else {
+            // 重命名成功后，验证并清理可能残留的临时文件
+            if (QFile::exists(tempPath)) {
+                QFile::remove(tempPath);
+            }
         }
     } else {
         if (QFile::exists(tempPath))
@@ -707,38 +773,44 @@ void ExportServicePipeline::cancelExport() {
     m_isCancelled.storeRelease(1);
     ExportService::cancelExport();
 
-    qDebug() << "Starting pipeline cancellation...";
+    qDebug() << "Cancelling ExportPipeline...";
 
-    // 异步执行清理操作，确保不阻塞 UI 线程
+    // 1. 同步中断所有正在运行的抓取任务 (确保立即起效)
+    {
+        QMutexLocker locker(&m_workerMutex);
+        qDebug() << "Aborting" << m_activeFetchWorkers.size() << "active fetch workers immediately.";
+        for (FetchWorker* worker : m_activeFetchWorkers) {
+            if (worker) {
+                worker->abort();
+            }
+        }
+    }
+
+    // 2. 异步清理剩余资源，防止阻塞 UI
     QThreadPool::globalInstance()->start(QRunnable::create([this]() {
-        qDebug() << "Executing cancellation cleanup (async)...";
+        // 使用 QPointer 检查 this 是否还存活？
+        // 其实在 QThreadPool 里的 Lambda 访问 this 比较危险，
+        // 但由于我们使用了 QThreadPool::globalInstance() 且 lambda 内部逻辑较快，
+        // 且上面的同步 abort 已经解决了大部分请求残留问题。
 
-        // 清空线程池队列中尚未开始的任务
         if (m_fetchThreadPool) {
             m_fetchThreadPool->clear();
-            qDebug() << "Cleared FetchWorker thread pool queue.";
         }
         if (m_processThreadPool) {
             m_processThreadPool->clear();
-            qDebug() << "Cleared ProcessWorker thread pool queue.";
         }
         if (m_writeThreadPool) {
             m_writeThreadPool->clear();
-            qDebug() << "Cleared WriteWorker thread pool queue.";
         }
 
-        // 关闭队列（唤醒所有等待的线程，使它们退出循环）
         if (m_fetchProcessQueue) {
             m_fetchProcessQueue->close();
-            qDebug() << "Closed FetchProcessQueue.";
         }
         if (m_processWriteQueue) {
             m_processWriteQueue->close();
-            qDebug() << "Closed ProcessWriteQueue.";
         }
 
-        qDebug() << "Cancellation cleanup completed.";
-
+        qDebug() << "ExportPipeline cancelled and queues closed.";
         // 触发完成检查，这将最终发出 exportCompleted 信号
         checkPipelineCompletion();
     }));

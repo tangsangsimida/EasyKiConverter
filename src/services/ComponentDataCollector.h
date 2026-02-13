@@ -1,4 +1,4 @@
-﻿#ifndef COMPONENTDATACOLLECTOR_H
+#ifndef COMPONENTDATACOLLECTOR_H
 #define COMPONENTDATACOLLECTOR_H
 
 #include "models/ComponentData.h"
@@ -22,10 +22,10 @@ class ComponentDataCollector : public QObject {
 
 public:
     /**
-     * @brief 收集状态枚�?
+     * @brief 收集状态枚
      */
     enum State {
-        Idle,                   // 空闲状�?
+        Idle,                   // 空闲状
         FetchingComponentInfo,  // 正在获取组件信息
         FetchingCadData,        // 正在获取CAD数据
         FetchingObjData,        // 正在获取OBJ数据
@@ -36,10 +36,10 @@ public:
     Q_ENUM(State)
 
     /**
-     * @brief 构造函�?
+     * @brief 构造函数
      *
      * @param componentId 元件ID
-     * @param parent 父对�?
+     * @param parent 父对象
      */
     explicit ComponentDataCollector(const QString& componentId, QObject* parent = nullptr);
 
@@ -49,7 +49,7 @@ public:
     ~ComponentDataCollector() override;
 
     /**
-     * @brief 开始数据收�?
+     * @brief 开始数据收
      */
     void start();
 
@@ -59,9 +59,9 @@ public:
     void cancel();
 
     /**
-     * @brief 获取当前状�?
+     * @brief 获取当前状
      *
-     * @return State 当前状�?
+     * @return State 当前状
      */
     State state() const {
         return m_state;
@@ -95,7 +95,7 @@ public:
     }
 
     /**
-     * @brief 设置是否需要导�?D模型
+     * @brief 设置是否需要导D模型
      *
      * @param export3D 是否导出3D模型
      */
@@ -105,9 +105,9 @@ public:
 
 signals:
     /**
-     * @brief 状态改变信�?
+     * @brief 状态改变信
      *
-     * @param state 新状�?
+     * @param state 新状
      */
     void stateChanged(State state);
 
@@ -159,9 +159,9 @@ private slots:
 
 private:
     /**
-     * @brief 设置状�?
+     * @brief 设置状
      *
-     * @param state 新状�?
+     * @param state 新状
      */
     void setState(State state);
 

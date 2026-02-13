@@ -1,4 +1,4 @@
-﻿#ifndef EXPORTER3DMODEL_H
+#ifndef EXPORTER3DMODEL_H
 #define EXPORTER3DMODEL_H
 
 #include "models/Model3DData.h"
@@ -33,9 +33,9 @@ public:
     Q_ENUM(ModelFormat)
 
     /**
-     * @brief 构造函�?
+     * @brief 构造函数
          *
-     * @param parent 父对�?
+     * @param parent 父对象
          */
     explicit Exporter3DModel(QObject* parent = nullptr);
 
@@ -45,7 +45,7 @@ public:
     ~Exporter3DModel() override;
 
     /**
-     * @brief 下载 3D 模型（OBJ 格式�?
+     * @brief 下载 3D 模型（OBJ 格式
          *
      * @param uuid 模型 UUID
      * @param savePath 保存路径
@@ -53,7 +53,7 @@ public:
     void downloadObjModel(const QString& uuid, const QString& savePath);
 
     /**
-     * @brief 下载 3D 模型（STEP 格式�?
+     * @brief 下载 3D 模型（STEP 格式
          *
      * @param uuid 模型 UUID
      * @param savePath 保存路径
@@ -61,7 +61,7 @@ public:
     void downloadStepModel(const QString& uuid, const QString& savePath);
 
     /**
-     * @brief 导出模型�?KiCad WRL 格式
+     * @brief 导出模型KiCad WRL 格式
      *
      * @param modelData 模型数据
      * @param savePath 保存路径
@@ -70,7 +70,7 @@ public:
     bool exportToWrl(const Model3DData& modelData, const QString& savePath);
 
     /**
-     * @brief 导出模型�?STEP 格式
+     * @brief 导出模型STEP 格式
      *
      * @param modelData 模型数据
      * @param savePath 保存路径
@@ -79,7 +79,7 @@ public:
     bool exportToStep(const Model3DData& modelData, const QString& savePath);
 
     /**
-     * @brief �?3D 模型转换�?KiCad 坐标�?
+     * @brief 符号部分数据3D 模型转换KiCad 坐标
          *
      * @param modelData 模型数据
      */
@@ -94,7 +94,7 @@ signals:
     /**
      * @brief 下载成功信号
      *
-     * @param filePath 保存的文件路�?
+     * @param filePath 保存的文件路
          */
     void downloadSuccess(const QString& filePath);
 
@@ -108,7 +108,7 @@ signals:
     /**
      * @brief 下载进度信号
      *
-     * @param bytesReceived 已接收的字节�?
+     * @param bytesReceived 已接收的字节
          * @param bytesTotal 总字节数
      */
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);

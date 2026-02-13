@@ -29,6 +29,7 @@
 - [贡献指南 (英文)](developer/CONTRIBUTING_en.md) - Contributing Guide
 - [架构文档](developer/ARCHITECTURE.md) - 项目架构设计
 - [架构文档 (英文)](developer/ARCHITECTURE_en.md) - Architecture
+- [测试开发指南](developer/TESTING_GUIDE.md) - 测试架构与 Mock 策略
 
 ### 面向项目决策 (project/)
 
@@ -37,6 +38,13 @@
 - [项目路线图](project/ROADMAP.md) - 未来发展方向
 - [项目路线图 (英文)](project/ROADMAP_en.md) - Roadmap
 - [架构决策记录](project/adr/) - 技术决策记录
+
+### 分析报告
+
+- [弱网支持分析报告](WEAK_NETWORK_ANALYSIS.md) - v3.0.4 弱网容错分析
+- [弱网支持分析报告 (英文)](WEAK_NETWORK_ANALYSIS_en.md) - Weak Network Analysis
+- [性能优化报告](PERFORMANCE_OPTIMIZATION_REPORT.md) - v3.0.0 性能优化
+- [性能优化报告 (英文)](PERFORMANCE_OPTIMIZATION_REPORT_en.md) - Performance Report
 
 ## 文档语言
 
@@ -56,7 +64,8 @@
 
 1. 阅读 [构建指南](developer/BUILD.md) 了解如何构建项目
 2. 查看 [架构文档](developer/ARCHITECTURE.md) 理解项目架构
-3. 阅读 [贡献指南](developer/CONTRIBUTING.md) 了解如何贡献代码
+3. 阅读 [测试开发指南](developer/TESTING_GUIDE.md) 了解测试规范与 Mock 编写
+4. 阅读 [贡献指南](developer/CONTRIBUTING.md) 了解如何贡献代码
 
 ### 如果您想了解项目规划
 

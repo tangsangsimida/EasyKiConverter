@@ -5,9 +5,11 @@
 #include <QClipboard>
 #include <QDebug>
 #include <QGuiApplication>
-#include <QRegularExpression>
+#include <QPointer>
 #include <QRunnable>
+#include <QSet>
 #include <QThreadPool>
+#include <QTimer>
 #include <QUrl>
 #include <QtConcurrent>
 
@@ -80,22 +82,8 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
             return;
         }
 
-        // 添加提取的元件编号
-        for (const QString& id : extractedIds) {
-            if (!componentExists(id)) {
-                beginInsertRows(QModelIndex(), m_componentList.count(), m_componentList.count());
-                auto item = new ComponentListItemData(id, this);
-                item->setFetching(true);  // 开始添加时标记为正在获取
-                m_componentList.append(item);
-                endInsertRows();
-
-                // 触发获取数据
-                m_service->fetchComponentData(id, false);  // 验证时不获取 3D 模型以加快速度
-
-                emit componentCountChanged();
-                emit componentAdded(id, true, "Component added");
-            }
-        }
+        // 添加提取的元件编号 - 使用批量添加
+        addComponentsBatch(extractedIds);
         return;
     }
 
@@ -110,6 +98,7 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
     auto item = new ComponentListItemData(trimmedId, this);
     item->setFetching(true);
     m_componentList.append(item);
+    m_componentIdIndex.insert(trimmedId);  // 维护索引
     endInsertRows();
 
     // 触发获取数据
@@ -124,6 +113,7 @@ void ComponentListViewModel::removeComponent(int index) {
         beginRemoveRows(QModelIndex(), index, index);
         auto item = m_componentList.takeAt(index);
         QString removedId = item->componentId();
+        m_componentIdIndex.remove(removedId);  // 维护索引
         delete item;
         endRemoveRows();
 
@@ -146,10 +136,63 @@ void ComponentListViewModel::clearComponentList() {
         beginResetModel();
         qDeleteAll(m_componentList);
         m_componentList.clear();
+        m_componentIdIndex.clear();  // 清空索引
         endResetModel();
 
         emit componentCountChanged();
         emit listCleared();
+    }
+}
+
+void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds) {
+    // 收集需要添加的新 ID（去重 + 验证）
+    QStringList newIds;
+    for (const QString& rawId : componentIds) {
+        QString id = rawId.trimmed().toUpper();
+        if (id.isEmpty())
+            continue;
+
+        // 验证格式
+        if (!validateComponentId(id)) {
+            // 尝试提取
+            QStringList extracted = extractComponentIdFromText(id);
+            for (const QString& extractedId : extracted) {
+                if (!componentExists(extractedId) && !newIds.contains(extractedId)) {
+                    newIds.append(extractedId);
+                }
+            }
+            continue;
+        }
+
+        if (!componentExists(id) && !newIds.contains(id)) {
+            newIds.append(id);
+        }
+    }
+
+    if (newIds.isEmpty())
+        return;
+
+    // 一次性插入所有新元器件，只触发 1 次 UI 重建
+    int first = m_componentList.count();
+    int last = first + newIds.count() - 1;
+    beginInsertRows(QModelIndex(), first, last);
+
+    for (const QString& id : newIds) {
+        auto item = new ComponentListItemData(id, this);
+        item->setFetching(true);
+        m_componentList.append(item);
+        m_componentIdIndex.insert(id);
+    }
+
+    endInsertRows();
+    emit componentCountChanged();
+
+    // 延迟分散发送网络请求，避免同时回调集中到达卡 UI
+    for (int i = 0; i < newIds.count(); ++i) {
+        const QString& id = newIds[i];
+        // 每个请求间隔 50ms，避免回调集中在同一帧
+        QTimer::singleShot(i * 50, this, [this, id]() { m_service->fetchComponentData(id, false); });
+        emit componentAdded(id, true, "Component added");
     }
 }
 
@@ -169,20 +212,23 @@ void ComponentListViewModel::pasteFromClipboard() {
         return;
     }
 
-    int added = 0;
+    // 统计新增和跳过数量
     int skipped = 0;
-
+    QStringList newIds;
     for (const QString& id : extractedIds) {
-        if (!componentExists(id)) {
-            addComponent(id);  // 使用 addComponent 处理添加和验证逻辑
-            added++;
-        } else {
+        if (componentExists(id)) {
             skipped++;
+        } else {
+            newIds.append(id);
         }
     }
 
-    // addComponent 已发出变更信号
-    emit pasteCompleted(added, skipped);
+    // 使用批量添加
+    if (!newIds.isEmpty()) {
+        addComponentsBatch(newIds);
+    }
+
+    emit pasteCompleted(newIds.count(), skipped);
 }
 
 void ComponentListViewModel::copyAllComponentIds() {
@@ -234,21 +280,23 @@ void ComponentListViewModel::selectBomFile(const QString& filePath) {
         return;
     }
 
-    // 添加提取的元件编号到列表
-    int added = 0;
+    // 使用批量添加方法
+    QStringList newIds;
     int skipped = 0;
 
-    // 为了性能，这里可以考虑批量添加，但目前简单起见还是逐个添加
     for (const QString& id : componentIds) {
         if (!componentExists(id)) {
-            addComponent(id);  // 使用 addComponent 触发验证
-            added++;
+            newIds.append(id);
         } else {
             skipped++;
         }
     }
 
-    QString resultMsg = QString("BOM file imported: %1 components added, %2 skipped").arg(added).arg(skipped);
+    if (!newIds.isEmpty()) {
+        addComponentsBatch(newIds);
+    }
+
+    QString resultMsg = QString("BOM file imported: %1 components added, %2 skipped").arg(newIds.count()).arg(skipped);
     m_bomResult = resultMsg;
     qDebug() << resultMsg;
     emit bomResultChanged();
@@ -268,36 +316,17 @@ void ComponentListViewModel::setOutputPath(const QString& path) {
 }
 
 bool ComponentListViewModel::validateComponentId(const QString& componentId) const {
-    // LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
-    QRegularExpression re("^C\\d{4,}$");
-    return re.match(componentId).hasMatch();
+    // 委托给 Service 层处理业务逻辑
+    return m_service->validateComponentId(componentId);
 }
 
 QStringList ComponentListViewModel::extractComponentIdFromText(const QString& text) const {
-    QStringList extractedIds;
-
-    // 匹配 LCSC 元件ID格式：以 'C' 开头，后面跟至少4位数字
-    QRegularExpression re("C\\d{4,}");
-    QRegularExpressionMatchIterator it = re.globalMatch(text);
-
-    while (it.hasNext()) {
-        QRegularExpressionMatch match = it.next();
-        QString id = match.captured();
-        if (!extractedIds.contains(id)) {
-            extractedIds.append(id);
-        }
-    }
-
-    return extractedIds;
+    // 委托给 Service 层处理业务逻辑
+    return m_service->extractComponentIdFromText(text);
 }
 
 bool ComponentListViewModel::componentExists(const QString& componentId) const {
-    for (const auto& item : m_componentList) {
-        if (item->componentId() == componentId) {
-            return true;
-        }
-    }
-    return false;
+    return m_componentIdIndex.contains(componentId);
 }
 
 ComponentListItemData* ComponentListViewModel::findItemData(const QString& componentId) const {
@@ -327,10 +356,17 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
         item->setValid(true);
         item->setErrorMessage("");
 
-        // 异步生成缩略图
-        QThreadPool::globalInstance()->start(QRunnable::create([item, dataPtr]() {
+        // 异步生成缩略图 - 使用 QPointer 防止悬垂指针
+        QPointer<ComponentListItemData> safeItem = item;
+        QThreadPool::globalInstance()->start(QRunnable::create([safeItem, dataPtr]() {
             QImage thumbnail = ThumbnailGenerator::generateThumbnail(dataPtr);
-            QMetaObject::invokeMethod(item, [item, thumbnail]() { item->setThumbnail(thumbnail); });
+            if (safeItem) {  // 检查对象是否仍然有效
+                QMetaObject::invokeMethod(safeItem, [safeItem, thumbnail]() {
+                    if (safeItem) {  // 再次检查，确保在 invokeMethod 执行时仍然有效
+                        safeItem->setThumbnail(thumbnail);
+                    }
+                });
+            }
         }));
 
         // 尝试获取 LCSC 预览图覆盖生成的缩略图

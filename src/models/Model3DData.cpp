@@ -1,4 +1,4 @@
-﻿#include "Model3DData.h"
+#include "Model3DData.h"
 
 #include <QDebug>
 
@@ -34,7 +34,7 @@ QJsonObject Model3DData::toJson() const {
     json["rotation"] = m_rotation.toJson();
     json["raw_obj"] = m_rawObj;
 
-    // STEP 数据�?Base64 编码存储
+    // STEP 数据Base64 编码存储
     if (!m_step.isEmpty()) {
         json["step"] = QString::fromLatin1(m_step.toBase64());
     }
@@ -62,7 +62,7 @@ bool Model3DData::fromJson(const QJsonObject& json) {
 
     m_rawObj = json["raw_obj"].toString();
 
-    // 解析 Base64 编码�?STEP 数据
+    // 解析 Base64 编码STEP 数据
     if (json.contains("step") && json["step"].isString()) {
         QString stepBase64 = json["step"].toString();
         m_step = QByteArray::fromBase64(stepBase64.toLatin1());
@@ -72,7 +72,7 @@ bool Model3DData::fromJson(const QJsonObject& json) {
 }
 
 bool Model3DData::isValid() const {
-    // 至少要有名称�?UUID
+    // 至少要有名称UUID
     if (m_name.isEmpty() && m_uuid.isEmpty()) {
         return false;
     }
