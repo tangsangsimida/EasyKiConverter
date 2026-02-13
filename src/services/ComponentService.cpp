@@ -46,6 +46,34 @@ ComponentService::ComponentService(QObject* parent)
         qCritical() << "ComponentService: Failed to initialize sub-services!";
     }
 
+    initializeApiConnections();
+    qDebug() << "ComponentService: Initialized successfully.";
+}
+
+ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
+    : QObject(parent)
+    , m_api(api)
+    , m_importer(nullptr)
+    , m_networkManager(nullptr)
+    , m_currentComponentId()
+    , m_hasDownloadedWrl(false)
+    , m_parallelTotalCount(0)
+    , m_parallelCompletedCount(0)
+    , m_parallelFetching(false)
+    , m_imageService(nullptr) {
+    if (m_api && !m_api->parent()) {
+        m_api->setParent(this);
+    }
+
+    m_importer = new EasyedaImporter(this);
+    m_networkManager = new QNetworkAccessManager(this);
+    m_imageService = new LcscImageService(this);
+
+    initializeApiConnections();
+    qDebug() << "ComponentService (Injected API): Initialized successfully.";
+}
+
+void ComponentService::initializeApiConnections() {
     // 连接图片服务信号
     if (m_imageService) {
         connect(m_imageService, &LcscImageService::imageReady, this, &ComponentService::handleImageReady);
@@ -62,8 +90,6 @@ ComponentService::ComponentService(QObject* parent)
                 this,
                 &ComponentService::handleFetchErrorWithId);
     }
-
-    qDebug() << "ComponentService: Initialized successfully.";
 }
 
 ComponentService::~ComponentService() {}
@@ -524,6 +550,30 @@ ComponentData ComponentService::getComponentData(const QString& componentId) con
 void ComponentService::clearCache() {
     m_componentCache.clear();
     qDebug() << "Component cache cleared";
+}
+
+void ComponentService::completeComponentData(const QString& componentId) {
+    if (m_fetchingComponents.contains(componentId)) {
+        FetchingComponent& fc = m_fetchingComponents[componentId];
+        // 判定标准：CAD 数据必须有，如果需要 3D 则 OBJ 和 STEP 也必须有
+        bool isComplete = fc.hasCadData && (!fc.fetch3DModel || (fc.hasObjData && fc.hasStepData));
+
+        if (isComplete) {
+            emit cadDataReady(componentId, fc.data);
+            if (m_parallelFetching) {
+                handleParallelDataCollected(componentId, fc.data);
+            }
+            m_fetchingComponents.remove(componentId);
+        }
+    }
+}
+
+void ComponentService::handleFetchErrorForComponent(const QString& componentId, const QString& error) {
+    qWarning() << "Fetch error for component" << componentId << ":" << error;
+    if (m_parallelFetching) {
+        handleParallelFetchError(componentId, error);
+    }
+    emit fetchError(componentId, error);
 }
 
 }  // namespace EasyKiConverter
