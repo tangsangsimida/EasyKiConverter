@@ -75,7 +75,6 @@ nav:
     - 弱网分析: WEAK_NETWORK_ANALYSIS.md
   - API 参考:
     - 概述: api/index.md
-    - C++ API: api/html/index.html
 
 markdown_extensions:
   - admonition
