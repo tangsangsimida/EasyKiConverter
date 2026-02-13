@@ -141,7 +141,7 @@ private:
     /**
      * @brief 请求类型枚举
      */
-    enum class RequestType { None, ComponentInfo, CadData };
+    enum class RequestType { None, ComponentInfo, CadData, Model3DObj, Model3DStep };
 
     /**
      * @brief 处理总体请求成功

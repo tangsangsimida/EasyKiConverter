@@ -1,6 +1,7 @@
 #include <QtTest>
 #include <QSignalSpy>
 #include <QCoreApplication>
+#include <QThreadPool>
 #include "ui/viewmodels/ComponentListViewModel.h"
 #include "services/ComponentService.h"
 #include "core/easyeda/EasyedaApi.h"
@@ -24,11 +25,9 @@ private slots:
     void cleanupTestCase() {}
 
     void testComponentListAdditionRemoval() {
-        // 为了避开析构崩溃，测试中采用堆分配但不显式释放
-        // 单元测试进程生命周期短，内核会自动回收
         auto adapter = new MockNetworkAdapter();
-        auto api = new EasyedaApi(adapter);
-        auto service = new ComponentService(api);
+        auto api = new EasyedaApi(adapter);  // adapter 成为 api 的子对象
+        auto service = new ComponentService(api);  // api 成为 service 的子对象
         auto viewModel = new ComponentListViewModel(service);
 
         QCOMPARE(viewModel->rowCount(), 0);
@@ -37,12 +36,15 @@ private slots:
         const QString validId2 = "C45678";
 
         viewModel->addComponent(validId1);
+        QCoreApplication::processEvents();
         QCOMPARE(viewModel->rowCount(), 1);
 
         viewModel->addComponent(validId1);
+        QCoreApplication::processEvents();
         QCOMPARE(viewModel->rowCount(), 1);
 
         viewModel->addComponent(validId2);
+        QCoreApplication::processEvents();
         QCOMPARE(viewModel->rowCount(), 2);
 
         viewModel->removeComponent(0);
@@ -51,7 +53,10 @@ private slots:
         viewModel->clearComponentList();
         QCOMPARE(viewModel->rowCount(), 0);
 
-        // 有意跳过 delete ... 强制通过
+        // 只删除顶层对象，子对象会自动删除
+        // 对象树：service -> api -> adapter
+        delete viewModel;
+        delete service;
     }
 
     void testViewModelSignalHandling() {
@@ -77,7 +82,8 @@ private slots:
         QCOMPARE(spy.count(), 1);
         QTRY_COMPARE_WITH_TIMEOUT(viewModel->rowCount(), 1, 1000);
 
-        // 有意跳过 delete ... 强制通过
+        delete viewModel;
+        delete service;
     }
 
     void testBatchAdditionWithUserIds() {
@@ -98,7 +104,8 @@ private slots:
 
         QCOMPARE(viewModel->rowCount(), 21);
 
-        // 有意跳过 delete ... 强制通过
+        delete viewModel;
+        delete service;
     }
 };
 
