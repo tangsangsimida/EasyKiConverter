@@ -43,3 +43,16 @@ target_include_directories(test_viewmodels PRIVATE
     ${CMAKE_SOURCE_DIR}
 )
 add_test(NAME test_viewmodels COMMAND test_viewmodels)
+
+# 日志系统测试
+add_executable(test_logging test_logging.cpp)
+target_link_libraries(test_logging PRIVATE
+    Qt6::Test
+    EasyKiConverterLogging
+    EasyKiConverterLib
+)
+target_include_directories(test_logging PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_logging COMMAND test_logging)
