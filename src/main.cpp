@@ -107,8 +107,8 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // 防止主窗口尚未完全显示时因事件循环检测到无窗口而退出
-    app.setQuitOnLastWindowClosed(false);
+    // 点击关闭按钮时直接退出应用程序
+    app.setQuitOnLastWindowClosed(true);
 
     return app.exec();
 }
