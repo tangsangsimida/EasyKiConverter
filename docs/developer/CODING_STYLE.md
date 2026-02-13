@@ -104,6 +104,9 @@
 
 *   **所有源文件**（`.cpp`, `.h`, `.qml`, `CMakeLists.txt` 等）必须使用 **UTF-8 (无 BOM)** 编码。
 *   **严禁使用** UTF-8 with BOM 或 GBK 等其他编码，以确保跨平台协作时注释和字符串字面量不会出现乱码。
+*   **强制工具校验**: 开发者在贡献代码和提交 PR 前，**必须使用**项目中提供的转换工具进行编码规范校验：
+    *   **工具路径**: `tools/python/convert_to_utf8.py`
+    *   **运行命令**: `python tools/python/convert_to_utf8.py` (默认扫描整个项目根目录)。
 *   **注释规范**: 鼓励在注释中使用中文（简体）以提高国内开发者的沟通效率，但必须确保文件保存为纯 UTF-8 编码。
 *   **编译器兼容性**: 项目在 `CMakeLists.txt` 中已配置 `/utf-8` 选项，确保 MSVC 在 Windows 下能正确解析无 BOM 的 UTF-8 源文件。
 

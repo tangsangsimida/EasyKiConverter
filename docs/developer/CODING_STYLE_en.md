@@ -104,6 +104,9 @@ This guide is primarily based on the [Qt Coding Style](https://wiki.qt.io/Qt_Cod
 
 *   **All source files** (`.cpp`, `.h`, `.qml`, `CMakeLists.txt`, etc.) MUST use **UTF-8 (without BOM)** encoding.
 *   **Strictly avoid** UTF-8 with BOM or other encodings (e.g., GBK) to ensure that comments and string literals are displayed correctly across different platforms.
+*   **Mandatory Tool Validation**: Developers MUST use the provided conversion tool for encoding compliance before contributing or submitting a PR:
+    *   **Tool Path**: `tools/python/convert_to_utf8.py`
+    *   **Usage**: `python tools/python/convert_to_utf8.py` (defaults to scanning the entire project root).
 *   **Comment Language**: While technical terms should remain in English, descriptive comments in Chinese (Simplified) are allowed and encouraged for internal development efficiency, provided the file is saved as pure UTF-8.
 *   **Compiler Compatibility**: The project's `CMakeLists.txt` is configured with the `/utf-8` flag for MSVC to ensure correct parsing of No-BOM UTF-8 files on Windows.
 

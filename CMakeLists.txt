@@ -72,6 +72,18 @@ else()
     message(STATUS "Symbol and footprint debug export is DISABLED")
 endif()
 
+# 覆盖率支持
+option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
+if(ENABLE_COVERAGE)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        message(STATUS "Coverage reporting is ENABLED")
+        add_compile_options(--coverage)
+        add_link_options(--coverage)
+    else()
+        message(WARNING "Coverage is only supported for GCC/MinGW")
+    endif()
+endif()
+
 # CI 环境检测
 if(DEFINED ENV{CI})
     message(STATUS "Running in CI environment")
@@ -149,6 +161,16 @@ FetchContent_MakeAvailable(QXlsx)
 
 # 添加源码模块（包含所有子模块的 CMakeLists.txt）
 add_subdirectory(src)
+
+# 添加测试模块（可选构建）
+option(EASYKICONVERTER_BUILD_TESTS "Build tests for EasyKiConverter" OFF)
+if(EASYKICONVERTER_BUILD_TESTS)
+    message(STATUS "Tests build is ENABLED")
+    enable_testing()
+    add_subdirectory(tests)
+else()
+    message(STATUS "Tests build is DISABLED (default)")
+endif()
 
 # QML 文件列表
 set(QML_FILES

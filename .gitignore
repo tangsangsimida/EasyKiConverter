@@ -106,3 +106,4 @@ pin_segment5_analysis.txt
 AGENTS.md
 gha-creds-*.json
 .gemini*
+.cache

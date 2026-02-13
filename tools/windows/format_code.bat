@@ -1,6 +1,32 @@
 @echo off
 setlocal enabledelayedexpansion
 
+REM ============================================================================
+REM EasyKiConverter 代码格式化工具 (C++)
+REM ============================================================================
+REM 说明:
+REM   本工具通过集成 clang-format 自动格式化项目中的 C++ 源代码，确保代码风格统一。
+REM
+REM 主要功能:
+REM   1. 递归扫描 src 目录下的所有 .cpp 和 .h 文件。
+REM   2. 使用项目根目录中的 .clang-format 配置文件进行就地修改。
+REM   3. 统计并输出处理的文件总数和成功格式化的数量。
+REM
+REM 环境要求:
+REM   - 操作系统: Windows
+REM   - 依赖: 必须安装 clang-format 并将其路径添加到 PATH 环境变量中。
+REM   - 配置文件: 项目根目录必须存在 .clang-format 文件。
+REM
+REM 使用方法:
+REM   1. 打开终端 (CMD 或 PowerShell)。
+REM   2. 进入项目 tools/windows 目录。
+REM   3. 执行 format_code.bat。
+REM
+REM 注意事项:
+REM   - 本脚本目前仅处理 C++ 文件，不处理 QML 文件。
+REM   - 执行前请确保当前工作区已提交或备份，以防非预期修改。
+REM ============================================================================
+
 echo ========================================
 echo EasyKiConverter Code Formatter
 echo ========================================
