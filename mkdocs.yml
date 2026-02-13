@@ -1,8 +1,22 @@
 site_name: EasyKiConverter Documentation
 site_description: Documentation for EasyKiConverter - LCSC and EasyEDA component to KiCad library converter
 site_author: tangsangsimida
+site_url: https://tangsangsimida.github.io/EasyKiConverter_QT/
 repo_url: https://github.com/tangsangsimida/EasyKiConverter_QT
 edit_uri: edit/master/docs/
+
+# 未在导航中列出的页面不产生警告（英文版本文档）
+not_in_nav: |
+  /**/*_en.md
+  /project/adr/*.md
+
+# 版本信息（可通过 macros 插件在页面中使用）
+extra:
+  version: 3.0.5
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/tangsangsimida/EasyKiConverter_QT
+      name: GitHub
 
 theme:
   name: material
@@ -13,18 +27,30 @@ theme:
       accent: deep purple
       toggle:
         icon: material/brightness-7
-        name: Switch to dark mode
+        name: 切换到深色模式
     - scheme: slate
       primary: teal
       accent: deep purple
       toggle:
         icon: material/brightness-4
-        name: Switch to light mode
+        name: 切换到浅色模式
   features:
     - navigation.tabs
     - navigation.sections
     - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
     - content.code.copy
+    - content.action.edit
+    - content.action.view
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
 
 nav:
   - 首页: index.md
@@ -32,16 +58,23 @@ nav:
     - 快速入门: user/GETTING_STARTED.md
     - 用户手册: user/USER_GUIDE.md
     - 功能特性: user/FEATURES.md
+    - 调试模式: user/DEBUG_MODE.md
     - 常见问题: user/FAQ.md
   - 开发者指南:
     - 贡献指南: developer/CONTRIBUTING.md
     - 架构设计: developer/ARCHITECTURE.md
     - 构建指南: developer/BUILD.md
     - 代码风格: developer/CODING_STYLE.md
+    - 测试指南: developer/TESTING_GUIDE.md
+    - BOM 解析指南: developer/BOM_PARSING_GUIDE.md
     - 变更日志: developer/CHANGELOG.md
   - 项目信息:
     - 路线图: project/ROADMAP.md
+    - 日志架构: project/LOGGING_ARCHITECTURE.md
     - 性能报告: PERFORMANCE_OPTIMIZATION_REPORT.md
+    - 弱网分析: WEAK_NETWORK_ANALYSIS.md
+  - API 参考:
+    - 概述: api/index.md
 
 markdown_extensions:
   - admonition
@@ -49,10 +82,24 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.highlight:
       anchor_linenums: true
+      line_spans: __span
+  - pymdownx.inlinehilite
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - attr_list
   - md_in_html
+  - def_list
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+      toc_depth: 3
 
 plugins:
-  - search
+  - search:
+      lang:
+        - zh
+        - en

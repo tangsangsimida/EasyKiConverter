@@ -40,4 +40,3 @@
 
 ## 参考资料
 - [ADR-003: 流水线性能优化](./003-pipeline-performance-optimization.md)
-- [PERFORMANCE_ANALYSIS_20260127.md](../../developer/PERFORMANCE_ANALYSIS_20260127.md)

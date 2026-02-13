@@ -198,5 +198,4 @@ We implemented two rounds of optimizations, P0 and P1, to address these issues.
 ## References
 
 - [ADR-002: Pipeline Parallelism Architecture](002-pipeline-parallelism-for-export_en.md)
-- [Performance Testing Guide](../../tests/PERFORMANCE_TEST_GUIDE.md)
-- [Architecture Document](../developer/ARCHITECTURE_en.md)
+- [Architecture Document](../../developer/ARCHITECTURE_en.md)

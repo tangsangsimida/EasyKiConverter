@@ -62,7 +62,7 @@
 
 如果您想参与项目开发，请：
 
-1. 查看[贡献指南](CONTRIBUTING.md)
+1. 查看[贡献指南](../developer/CONTRIBUTING.md)
 2. 选择您感兴趣的任务
 3. 创建 Issue 讨论您的想法
 4. 提交 Pull Request

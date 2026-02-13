@@ -230,9 +230,9 @@ Potential improvements for BOM parsing:
 
 ## Related Documentation
 
-- [User Guide](../user/USER_GUIDE.md)
-- [API Documentation](ARCHITECTURE.md)
-- [Component Service](../developer/ARCHITECTURE.md#component-service)
+- [User Guide](../user/USER_GUIDE_en.md)
+- [API Documentation](ARCHITECTURE_en.md)
+- [Component Service](ARCHITECTURE_en.md#component-service)
 
 ## Version History
 

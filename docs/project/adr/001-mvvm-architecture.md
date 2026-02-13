@@ -285,5 +285,5 @@ EasyKiConverter 是一个基于 Qt 6 Quick 的桌面应用程序，用于将 Eas
 
 ## 相关 ADR
 
-- [ADR 002: 选择 Qt Quick 作为 UI 框架](002-qt-quick-ui-framework.md) (待创建)
-- [ADR 003: 两阶段导出策略](003-two-stage-export-strategy.md) (待创建)
+- [ADR 002: 流水线并行架构](002-pipeline-parallelism-for-export.md)
+- [ADR 003: 流水线性能优化](003-pipeline-performance-optimization.md)

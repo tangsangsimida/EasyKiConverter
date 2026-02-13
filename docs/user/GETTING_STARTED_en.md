@@ -36,7 +36,7 @@ Before using EasyKiConverter, ensure you have:
 
 ### Option 2: Build from Source
 
-If you prefer to build from source, follow the [Build Guide](BUILD.md).
+If you prefer to build from source, follow the [Build Guide](../developer/BUILD_en.md).
 
 ## Quick Start
 
@@ -270,10 +270,10 @@ Integrate EasyKiConverter into your build workflow:
 
 ### Documentation
 
-- [Features Documentation](FEATURES.md) - Learn about all features
-- [Architecture Documentation](ARCHITECTURE.md) - Understand the architecture
-- [Build Guide](BUILD.md) - Build from source
-- [Contributing Guide](CONTRIBUTING.md) - Contribute to the project
+- [Features Documentation](FEATURES_en.md) - Learn about all features
+- [Architecture Documentation](../developer/ARCHITECTURE_en.md) - Understand the architecture
+- [Build Guide](../developer/BUILD_en.md) - Build from source
+- [Contributing Guide](../developer/CONTRIBUTING_en.md) - Contribute to the project
 
 ### Community
 
@@ -291,9 +291,9 @@ If you need help:
 
 Now that you're familiar with the basics:
 
-1. Explore advanced features in the [Features Documentation](FEATURES.md)
-2. Learn about the project [Architecture](ARCHITECTURE.md)
-3. Consider [Contributing](CONTRIBUTING.md) to the project
+1. Explore advanced features in the [Features Documentation](FEATURES_en.md)
+2. Learn about the project [Architecture](../developer/ARCHITECTURE_en.md)
+3. Consider [Contributing](../developer/CONTRIBUTING_en.md) to the project
 4. Customize the application for your workflow
 
 ## Best Practices

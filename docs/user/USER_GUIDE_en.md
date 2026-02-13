@@ -4,12 +4,12 @@ This manual provides detailed instructions for using all features of EasyKiConve
 
 ## Table of Contents
 
-- [Installation](#installation)
-- [Interface Overview](#interface-overview)
-- [Basic Operations](#basic-operations)
-- [Advanced Features](#advanced-features)
-- [Configuration Options](#configuration-options)
-- [Troubleshooting](#troubleshooting)
+- [Installation](#system-requirements)
+- [Interface Overview](#main-interface)
+- [Basic Operations](#adding-components)
+- [Advanced Features](#batch-conversion)
+- [Configuration Options](#output-settings)
+- [Troubleshooting](#common-issues)
 
 ## Installation
 

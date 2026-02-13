@@ -263,7 +263,7 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad 符号库格式（.kicad
 - 支持版本检查和更新
 - 语义化版本验证
 
-详见: [工具文档](../../tools/README.md)
+详见: [GitHub 工具目录](https://github.com/tangsangsimida/EasyKiConverter_QT/tree/main/tools)
 
 ### 代码格式化工具
 
@@ -282,7 +282,7 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad 符号库格式（.kicad
 - `convert_to_utf8.py`: 文件编码转换
 - `fix_qml_translations.py`: QML 翻译修复
 
-详见: [工具文档](../../tools/README.md)
+详见: [GitHub 工具目录](https://github.com/tangsangsimida/EasyKiConverter_QT/tree/main/tools)
 
 ### 设计模式
 

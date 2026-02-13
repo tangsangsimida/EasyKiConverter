@@ -194,6 +194,6 @@ set EASYKICONVERTER_DEBUG_MODE=false
 
 ## 相关文档
 
-- [BUILD.md](docs/developer/BUILD.md) - 带有调试选项的构建说明
-- [FAQ.md](docs/user/FAQ.md) - 关于调试模式的常见问题
-- [FEATURES.md](docs/user/FEATURES.md) - 调试模式功能详情
+- [BUILD.md](../developer/BUILD.md) - 带有调试选项的构建说明
+- [FAQ.md](FAQ.md) - 关于调试模式的常见问题
+- [FEATURES.md](FEATURES.md) - 调试模式功能详情
