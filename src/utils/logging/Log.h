@@ -53,9 +53,9 @@
 #include "PatternFormatter.h"
 
 // 输出器
-#include "IAppender.h"
 #include "ConsoleAppender.h"
 #include "FileAppender.h"
+#include "IAppender.h"
 
 // 日志管理器
 #include "Logger.h"
@@ -66,4 +66,4 @@
 // Qt 日志适配器
 #include "QtLogAdapter.h"
 
-#endif // LOG_H
+#endif  // LOG_H

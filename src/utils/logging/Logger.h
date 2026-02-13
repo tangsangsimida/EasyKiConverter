@@ -32,57 +32,59 @@ public:
      * @brief 获取单例实例
      */
     static Logger* instance();
-    
+
     /**
      * @brief 设置全局日志级别
      */
     void setGlobalLevel(LogLevel level);
-    
+
     /**
      * @brief 获取全局日志级别
      */
-    LogLevel globalLevel() const { return m_globalLevel; }
-    
+    LogLevel globalLevel() const {
+        return m_globalLevel;
+    }
+
     /**
      * @brief 设置特定模块的日志级别
      */
     void setModuleLevel(LogModule module, LogLevel level);
-    
+
     /**
      * @brief 获取特定模块的日志级别
      */
     LogLevel moduleLevel(LogModule module) const;
-    
+
     /**
      * @brief 清除模块级别设置（恢复使用全局级别）
      */
     void clearModuleLevel(LogModule module);
-    
+
     /**
      * @brief 清除所有模块级别设置
      */
     void clearAllModuleLevels();
-    
+
     /**
      * @brief 添加 Appender
      */
     void addAppender(QSharedPointer<IAppender> appender);
-    
+
     /**
      * @brief 移除 Appender
      */
     void removeAppender(QSharedPointer<IAppender> appender);
-    
+
     /**
      * @brief 清除所有 Appender
      */
     void clearAppenders();
-    
+
     /**
      * @brief 获取所有 Appender
      */
     QList<QSharedPointer<IAppender>> appenders() const;
-    
+
     /**
      * @brief 核心日志方法
      * @param level 日志级别
@@ -92,29 +94,33 @@ public:
      * @param function 函数名（可选）
      * @param line 行号（可选）
      */
-    void log(LogLevel level, LogModule module, const QString& message,
-              const char* file = nullptr, const char* function = nullptr, int line = 0);
-    
+    void log(LogLevel level,
+             LogModule module,
+             const QString& message,
+             const char* file = nullptr,
+             const char* function = nullptr,
+             int line = 0);
+
     /**
      * @brief 检查是否应该记录日志（用于条件求值优化）
      */
     bool shouldLog(LogLevel level, LogModule module) const;
-    
+
     /**
      * @brief 刷新所有 Appender
      */
     void flush();
-    
+
     /**
      * @brief 关闭所有 Appender
      */
     void close();
-    
+
     /**
      * @brief 设置线程名称（用于日志输出）
      */
     void setThreadName(const QString& name);
-    
+
     /**
      * @brief 获取当前线程名称
      */
@@ -129,16 +135,16 @@ signals:
 private:
     Logger();
     ~Logger();
-    
+
     // 禁止拷贝
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
-    
+
     LogLevel m_globalLevel = LogLevel::Info;
     QHash<LogModule, LogLevel> m_moduleLevels;
     QList<QSharedPointer<IAppender>> m_appenders;
     mutable QMutex m_mutex;
-    
+
     // 线程本地存储的线程名称
     static QThreadStorage<QString> s_threadNames;
 };
@@ -155,13 +161,13 @@ public:
      * format("Hello {}", "World") -> "Hello World"
      * format("Count: {}, Value: {}", 42, 3.14) -> "Count: 42, Value: 3.14"
      */
-    template<typename... Args>
+    template <typename... Args>
     static QString format(const QString& pattern, const Args&... args) {
         QString result = pattern;
         formatHelper(result, args...);
         return result;
     }
-    
+
     /**
      * @brief 格式化字符串（单参数版本）
      */
@@ -170,17 +176,17 @@ public:
     }
 
 private:
-    template<typename T, typename... Args>
+    template <typename T, typename... Args>
     static void formatHelper(QString& result, const T& first, const Args&... rest) {
         replaceFirstPlaceholder(result, toString(first));
         formatHelper(result, rest...);
     }
-    
+
     static void formatHelper(QString& /*result*/) {
         // 递归终止
     }
-    
-    template<typename T>
+
+    template <typename T>
     static QString toString(const T& value) {
         if constexpr (std::is_same_v<T, QString>) {
             return value;
@@ -192,7 +198,7 @@ private:
             return QString(value);
         }
     }
-    
+
     static void replaceFirstPlaceholder(QString& result, const QString& replacement);
 };
 
@@ -205,7 +211,7 @@ class ScopedTracer {
 public:
     ScopedTracer(LogModule module, const QString& operation);
     ~ScopedTracer();
-    
+
 private:
     LogModule m_module;
     QString m_operation;
@@ -219,10 +225,10 @@ class TimeLogger {
 public:
     TimeLogger(LogModule module, const QString& operation);
     ~TimeLogger();
-    
+
     void checkpoint(const QString& name);
     void finish();
-    
+
 private:
     LogModule m_module;
     QString m_operation;
@@ -230,6 +236,6 @@ private:
     bool m_finished;
 };
 
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter
 
-#endif // LOGGER_H
+#endif  // LOGGER_H

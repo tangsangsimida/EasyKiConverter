@@ -1,9 +1,9 @@
 #ifndef LOGMACROS_H
 #define LOGMACROS_H
 
-#include "Logger.h"
 #include "LogLevel.h"
 #include "LogModule.h"
+#include "Logger.h"
 
 namespace EasyKiConverter {
 
@@ -15,16 +15,14 @@ namespace EasyKiConverter {
 
 // 基础日志宏实现
 #define _LOG_IMPL(level, module, message) \
-    EasyKiConverter::Logger::instance()->log( \
-        level, module, message, __FILE__, __FUNCTION__, __LINE__)
+    EasyKiConverter::Logger::instance()->log(level, module, message, __FILE__, __FUNCTION__, __LINE__)
 
 // 带格式化的日志宏实现
-#define _LOG_FORMAT_IMPL(level, module, ...) \
+#define _LOG_FORMAT_IMPL(level, module, ...)  \
     EasyKiConverter::Logger::instance()->log( \
-        level, module, EasyKiConverter::LogUtils::format(__VA_ARGS__), \
-        __FILE__, __FUNCTION__, __LINE__)
+        level, module, EasyKiConverter::LogUtils::format(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
 
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter
 
 //=============================================================================
 // 公开日志宏
@@ -35,78 +33,72 @@ namespace EasyKiConverter {
  * @param module 日志模块
  * @param ... 消息或格式化字符串+参数
  */
-#define LOG_TRACE(module, ...) \
-    do { \
-        if (EasyKiConverter::Logger::instance()->shouldLog( \
-            EasyKiConverter::LogLevel::Trace, module)) { \
-            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Trace, module, __VA_ARGS__); \
-        } \
-    } while(0)
+#define LOG_TRACE(module, ...)                                                                          \
+    do {                                                                                                \
+        if (EasyKiConverter::Logger::instance()->shouldLog(EasyKiConverter::LogLevel::Trace, module)) { \
+            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Trace, module, __VA_ARGS__);                    \
+        }                                                                                               \
+    } while (0)
 
 /**
  * @brief 调试级别日志
  * @param module 日志模块
  * @param ... 消息或格式化字符串+参数
  */
-#define LOG_DEBUG(module, ...) \
-    do { \
-        if (EasyKiConverter::Logger::instance()->shouldLog( \
-            EasyKiConverter::LogLevel::Debug, module)) { \
-            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Debug, module, __VA_ARGS__); \
-        } \
-    } while(0)
+#define LOG_DEBUG(module, ...)                                                                          \
+    do {                                                                                                \
+        if (EasyKiConverter::Logger::instance()->shouldLog(EasyKiConverter::LogLevel::Debug, module)) { \
+            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Debug, module, __VA_ARGS__);                    \
+        }                                                                                               \
+    } while (0)
 
 /**
  * @brief 信息级别日志
  * @param module 日志模块
  * @param ... 消息或格式化字符串+参数
  */
-#define LOG_INFO(module, ...) \
-    do { \
-        if (EasyKiConverter::Logger::instance()->shouldLog( \
-            EasyKiConverter::LogLevel::Info, module)) { \
-            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Info, module, __VA_ARGS__); \
-        } \
-    } while(0)
+#define LOG_INFO(module, ...)                                                                          \
+    do {                                                                                               \
+        if (EasyKiConverter::Logger::instance()->shouldLog(EasyKiConverter::LogLevel::Info, module)) { \
+            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Info, module, __VA_ARGS__);                    \
+        }                                                                                              \
+    } while (0)
 
 /**
  * @brief 警告级别日志
  * @param module 日志模块
  * @param ... 消息或格式化字符串+参数
  */
-#define LOG_WARN(module, ...) \
-    do { \
-        if (EasyKiConverter::Logger::instance()->shouldLog( \
-            EasyKiConverter::LogLevel::Warn, module)) { \
-            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Warn, module, __VA_ARGS__); \
-        } \
-    } while(0)
+#define LOG_WARN(module, ...)                                                                          \
+    do {                                                                                               \
+        if (EasyKiConverter::Logger::instance()->shouldLog(EasyKiConverter::LogLevel::Warn, module)) { \
+            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Warn, module, __VA_ARGS__);                    \
+        }                                                                                              \
+    } while (0)
 
 /**
  * @brief 错误级别日志
  * @param module 日志模块
  * @param ... 消息或格式化字符串+参数
  */
-#define LOG_ERROR(module, ...) \
-    do { \
-        if (EasyKiConverter::Logger::instance()->shouldLog( \
-            EasyKiConverter::LogLevel::Error, module)) { \
-            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Error, module, __VA_ARGS__); \
-        } \
-    } while(0)
+#define LOG_ERROR(module, ...)                                                                          \
+    do {                                                                                                \
+        if (EasyKiConverter::Logger::instance()->shouldLog(EasyKiConverter::LogLevel::Error, module)) { \
+            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Error, module, __VA_ARGS__);                    \
+        }                                                                                               \
+    } while (0)
 
 /**
  * @brief 致命错误级别日志
  * @param module 日志模块
  * @param ... 消息或格式化字符串+参数
  */
-#define LOG_FATAL(module, ...) \
-    do { \
-        if (EasyKiConverter::Logger::instance()->shouldLog( \
-            EasyKiConverter::LogLevel::Fatal, module)) { \
-            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Fatal, module, __VA_ARGS__); \
-        } \
-    } while(0)
+#define LOG_FATAL(module, ...)                                                                          \
+    do {                                                                                                \
+        if (EasyKiConverter::Logger::instance()->shouldLog(EasyKiConverter::LogLevel::Fatal, module)) { \
+            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Fatal, module, __VA_ARGS__);                    \
+        }                                                                                               \
+    } while (0)
 
 //=============================================================================
 // 条件日志宏
@@ -115,24 +107,22 @@ namespace EasyKiConverter {
 /**
  * @brief 条件调试日志（仅在条件为真时记录）
  */
-#define LOG_DEBUG_IF(module, condition, ...) \
-    do { \
-        if ((condition) && EasyKiConverter::Logger::instance()->shouldLog( \
-            EasyKiConverter::LogLevel::Debug, module)) { \
-            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Debug, module, __VA_ARGS__); \
-        } \
-    } while(0)
+#define LOG_DEBUG_IF(module, condition, ...)                                                                           \
+    do {                                                                                                               \
+        if ((condition) && EasyKiConverter::Logger::instance()->shouldLog(EasyKiConverter::LogLevel::Debug, module)) { \
+            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Debug, module, __VA_ARGS__);                                   \
+        }                                                                                                              \
+    } while (0)
 
 /**
  * @brief 条件信息日志
  */
-#define LOG_INFO_IF(module, condition, ...) \
-    do { \
-        if ((condition) && EasyKiConverter::Logger::instance()->shouldLog( \
-            EasyKiConverter::LogLevel::Info, module)) { \
-            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Info, module, __VA_ARGS__); \
-        } \
-    } while(0)
+#define LOG_INFO_IF(module, condition, ...)                                                                           \
+    do {                                                                                                              \
+        if ((condition) && EasyKiConverter::Logger::instance()->shouldLog(EasyKiConverter::LogLevel::Info, module)) { \
+            _LOG_FORMAT_IMPL(EasyKiConverter::LogLevel::Info, module, __VA_ARGS__);                                   \
+        }                                                                                                             \
+    } while (0)
 
 //=============================================================================
 // 性能追踪宏
@@ -148,8 +138,7 @@ namespace EasyKiConverter {
  *     // 函数退出时自动打印耗时
  * }
  */
-#define LOG_TRACE_SCOPE(module, operation) \
-    EasyKiConverter::ScopedTracer _scopedTracer_##__LINE__(module, operation)
+#define LOG_TRACE_SCOPE(module, operation) EasyKiConverter::ScopedTracer _scopedTracer_##__LINE__(module, operation)
 
 /**
  * @brief 时间日志记录器（可记录多个检查点）
@@ -164,8 +153,7 @@ namespace EasyKiConverter {
  *     // 析构时自动打印总耗时
  * }
  */
-#define LOG_TIME(module, operation) \
-    EasyKiConverter::TimeLogger _timeLogger_##__LINE__(module, operation)
+#define LOG_TIME(module, operation) EasyKiConverter::TimeLogger _timeLogger_##__LINE__(module, operation)
 
 //=============================================================================
 // 便捷宏
@@ -184,12 +172,11 @@ namespace EasyKiConverter {
 /**
  * @brief 设置模块日志级别
  */
-#define LOG_SET_MODULE_LEVEL(module, level) \
-    EasyKiConverter::Logger::instance()->setModuleLevel(module, level)
+#define LOG_SET_MODULE_LEVEL(module, level) EasyKiConverter::Logger::instance()->setModuleLevel(module, level)
 
 /**
  * @brief 刷新日志
  */
 #define LOG_FLUSH() EasyKiConverter::Logger::instance()->flush()
 
-#endif // LOGMACROS_H
+#endif  // LOGMACROS_H

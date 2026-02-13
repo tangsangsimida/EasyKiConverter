@@ -5,38 +5,34 @@
 
 namespace EasyKiConverter {
 
-const QRegularExpression PatternFormatter::s_placeholderRegex(
-    QStringLiteral("%\\{([a-zA-Z]+)\\}"));
+const QRegularExpression PatternFormatter::s_placeholderRegex(QStringLiteral("%\\{([a-zA-Z]+)\\}"));
 
-PatternFormatter::PatternFormatter(const QString& pattern)
-    : m_pattern(pattern)
-{
-}
+PatternFormatter::PatternFormatter(const QString& pattern) : m_pattern(pattern) {}
 
 QString PatternFormatter::format(const LogRecord& record) {
     QString result = m_pattern;
-    
+
     QRegularExpressionMatchIterator it = s_placeholderRegex.globalMatch(m_pattern);
     QStringList processed;
-    
+
     while (it.hasNext()) {
         QRegularExpressionMatch match = it.next();
         QString placeholder = match.captured(1).toLower();
-        
+
         // 避免重复处理相同的占位符
         QString fullMatch = match.captured(0);
         if (processed.contains(fullMatch)) {
             continue;
         }
         processed.append(fullMatch);
-        
+
         QString replacement = replacePlaceholder(placeholder, record);
         result.replace(fullMatch, replacement);
     }
-    
+
     // 处理 %% 转义
     result.replace(QStringLiteral("%%"), QStringLiteral("%"));
-    
+
     return result;
 }
 
@@ -68,9 +64,9 @@ QString PatternFormatter::replacePlaceholder(const QString& placeholder, const L
         return QString::number(reinterpret_cast<quintptr>(record.threadId), 16).toUpper().rightJustified(5, '0');
     }
     if (placeholder == "threadname") {
-        return record.threadName.isEmpty() 
-            ? QString::number(reinterpret_cast<quintptr>(record.threadId), 16).toUpper().rightJustified(5, '0')
-            : record.threadName;
+        return record.threadName.isEmpty()
+                   ? QString::number(reinterpret_cast<quintptr>(record.threadId), 16).toUpper().rightJustified(5, '0')
+                   : record.threadName;
     }
     if (placeholder == "file") {
         return record.fileName;
@@ -90,9 +86,9 @@ QString PatternFormatter::replacePlaceholder(const QString& placeholder, const L
     if (placeholder == "newline") {
         return QStringLiteral("\n");
     }
-    
+
     // 未知占位符，保持原样
     return QStringLiteral("%{") + placeholder + QStringLiteral("}");
 }
 
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter

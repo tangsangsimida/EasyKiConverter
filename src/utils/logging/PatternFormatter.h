@@ -36,60 +36,63 @@ public:
      * @param pattern 格式化模式
      */
     explicit PatternFormatter(const QString& pattern = defaultPattern());
-    
+
     /**
      * @brief 格式化日志记录
      */
     QString format(const LogRecord& record) override;
-    
+
     /**
      * @brief 克隆格式化器
      */
     QSharedPointer<IFormatter> clone() const override;
-    
+
     /**
      * @brief 设置格式化模式
      */
     void setPattern(const QString& pattern);
-    
+
     /**
      * @brief 获取当前格式化模式
      */
-    QString pattern() const { return m_pattern; }
-    
+    QString pattern() const {
+        return m_pattern;
+    }
+
     /**
      * @brief 获取默认模式
      */
     static QString defaultPattern() {
         return QStringLiteral("[%{timestamp}] [%{level}] [%{module}] [%{thread}] %{message} (%{shortfile}:%{line})");
     }
-    
+
     /**
      * @brief 获取简单模式（不含文件位置）
      */
     static QString simplePattern() {
         return QStringLiteral("[%{timestamp}] [%{level}] [%{module}] %{message}");
     }
-    
+
     /**
      * @brief 获取详细模式（包含函数名）
      */
     static QString verbosePattern() {
-        return QStringLiteral("[%{timestamp}] [%{level}] [%{module}] [%{thread}] %{function}(): %{message} (%{shortfile}:%{line})");
+        return QStringLiteral(
+            "[%{timestamp}] [%{level}] [%{module}] [%{thread}] %{function}(): %{message} (%{shortfile}:%{line})");
     }
 
 private:
     QString m_pattern;
-    
+
     // 预编译的占位符正则
     static const QRegularExpression s_placeholderRegex;
-    
+
     /**
      * @brief 替换单个占位符
      */
     QString replacePlaceholder(const QString& placeholder, const LogRecord& record) const;
 };
 
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter
 
-#endif // PATTERNFORMATTER_H
+#endif  // PATTERNFORMATTER_H

@@ -14,7 +14,7 @@ void QtLogAdapter::install() {
     if (s_installed) {
         return;
     }
-    
+
     s_originalHandler = qInstallMessageHandler(qtMessageHandler);
     s_installed = true;
 }
@@ -23,7 +23,7 @@ void QtLogAdapter::uninstall() {
     if (!s_installed) {
         return;
     }
-    
+
     qInstallMessageHandler(s_originalHandler);
     s_originalHandler = nullptr;
     s_installed = false;
@@ -68,15 +68,15 @@ void QtLogAdapter::qtMessageHandler(QtMsgType type, const QMessageLogContext& co
             level = LogLevel::Info;
             break;
     }
-    
+
     // 检查是否应该记录
     if (!Logger::instance()->shouldLog(level, s_defaultModule)) {
         return;
     }
-    
+
     // 构建日志消息
     QString message = msg;
-    
+
     // 如果有分类信息，添加到消息中
     if (context.category && strlen(context.category) > 0) {
         QByteArray category = context.category;
@@ -84,16 +84,15 @@ void QtLogAdapter::qtMessageHandler(QtMsgType type, const QMessageLogContext& co
             message = QString("[%1] %2").arg(QString::fromUtf8(category), msg);
         }
     }
-    
+
     // 记录日志
-    Logger::instance()->log(level, s_defaultModule, message,
-                            context.file, context.function, context.line);
-    
+    Logger::instance()->log(level, s_defaultModule, message, context.file, context.function, context.line);
+
     // 如果需要保留原始行为
     if (s_preserveOriginal && s_originalHandler) {
         s_originalHandler(type, context, msg);
     }
-    
+
     // Qt 的 qFatal 默认会终止程序，这里保持这个行为
     if (type == QtFatalMsg) {
         Logger::instance()->flush();
@@ -101,4 +100,4 @@ void QtLogAdapter::qtMessageHandler(QtMsgType type, const QMessageLogContext& co
     }
 }
 
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter

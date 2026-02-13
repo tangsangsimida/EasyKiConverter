@@ -27,27 +27,27 @@ public:
      * - qFatalMsg -> LOG_FATAL(LogModule::Core, ...)
      */
     static void install();
-    
+
     /**
      * @brief 卸载 Qt 日志处理器
      */
     static void uninstall();
-    
+
     /**
      * @brief 设置 Qt 日志的默认模块
      */
     static void setDefaultModule(LogModule module);
-    
+
     /**
      * @brief 获取默认模块
      */
     static LogModule defaultModule();
-    
+
     /**
      * @brief 设置是否保留原始 Qt 日志行为（同时输出到原目标）
      */
     static void setPreserveOriginal(bool preserve);
-    
+
     /**
      * @brief 是否保留原始 Qt 日志行为
      */
@@ -55,13 +55,13 @@ public:
 
 private:
     static void qtMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg);
-    
+
     static QtMessageHandler s_originalHandler;
     static LogModule s_defaultModule;
     static bool s_preserveOriginal;
     static bool s_installed;
 };
 
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter
 
-#endif // QTLOGADAPTER_H
+#endif  // QTLOGADAPTER_H

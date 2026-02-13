@@ -17,38 +17,38 @@ namespace EasyKiConverter {
 class IAppender {
 public:
     virtual ~IAppender() = default;
-    
+
     /**
      * @brief 输出日志记录
      * @param record 原始日志记录
      * @param formatted 格式化后的字符串
      */
     virtual void append(const LogRecord& record, const QString& formatted) = 0;
-    
+
     /**
      * @brief 刷新缓冲区
      */
     virtual void flush() {}
-    
+
     /**
      * @brief 关闭输出器
      */
     virtual void close() {}
-    
+
     /**
      * @brief 设置格式化器
      */
     void setFormatter(QSharedPointer<IFormatter> formatter) {
         m_formatter = formatter;
     }
-    
+
     /**
      * @brief 获取格式化器
      */
     QSharedPointer<IFormatter> formatter() const {
         return m_formatter;
     }
-    
+
     /**
      * @brief 格式化日志记录（使用设置的格式化器）
      */
@@ -63,6 +63,6 @@ protected:
     QSharedPointer<IFormatter> m_formatter;
 };
 
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter
 
-#endif // IAPPENDER_H
+#endif  // IAPPENDER_H

@@ -32,58 +32,55 @@ bool isDebugMode() {
 
 void setupLogging(bool debugMode) {
     using namespace EasyKiConverter;
-    
+
     auto logger = Logger::instance();
-    
+
     if (debugMode) {
         // 调试模式：启用最详细的日志
         logger->setGlobalLevel(LogLevel::Trace);
-        
+
         // 控制台输出（彩色）
         auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true);
-        consoleAppender->setFormatter(
-            QSharedPointer<PatternFormatter>::create(PatternFormatter::verbosePattern()));
+        consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::verbosePattern()));
         logger->addAppender(consoleAppender);
-        
+
         // 文件输出
         QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
         QDir().mkpath(logDir);
         QString logPath = logDir + "/easykiconverter_debug.log";
-        
-        auto fileAppender = QSharedPointer<FileAppender>::create(
-            logPath, 10 * 1024 * 1024, 5, true);  // 10MB, 5 files, async
-        fileAppender->setFormatter(
-            QSharedPointer<PatternFormatter>::create(PatternFormatter::verbosePattern()));
+
+        auto fileAppender =
+            QSharedPointer<FileAppender>::create(logPath, 10 * 1024 * 1024, 5, true);  // 10MB, 5 files, async
+        fileAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::verbosePattern()));
         logger->addAppender(fileAppender);
-        
+
         LOG_INFO(LogModule::Core, "Debug mode enabled - logging to: {}", logPath);
     } else {
         // 正常模式：仅输出 Info 及以上级别
         logger->setGlobalLevel(LogLevel::Info);
-        
+
         // 仅控制台输出（不输出到文件）
         auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true);
-        consoleAppender->setFormatter(
-            QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
+        consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
         logger->addAppender(consoleAppender);
     }
-    
+
     // 安装 Qt 日志适配器（将 qDebug/qWarning/qCritical 重定向到新系统）
     QtLogAdapter::install();
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 int main(int argc, char* argv[]) {
     // 检查调试模式（在 QApplication 创建前检查）
     bool debugMode = isDebugMode();
-    
+
     // 设置 QML 样式为 Basic，以消除原生样式自定义警告
     // 注意：样式必须在创建应用程序实例之前设置
     QQuickStyle::setStyle("Basic");
 
     QApplication app(argc, argv);
-    
+
     // 初始化日志系统（在 QApplication 创建后立即初始化）
     setupLogging(debugMode);
 

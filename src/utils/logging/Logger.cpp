@@ -15,8 +15,7 @@ Logger* Logger::instance() {
     return &instance;
 }
 
-Logger::Logger() {
-}
+Logger::Logger() {}
 
 Logger::~Logger() {
     close();
@@ -69,13 +68,17 @@ QList<QSharedPointer<IAppender>> Logger::appenders() const {
     return m_appenders;
 }
 
-void Logger::log(LogLevel level, LogModule module, const QString& message,
-                  const char* file, const char* function, int line) {
+void Logger::log(LogLevel level,
+                 LogModule module,
+                 const QString& message,
+                 const char* file,
+                 const char* function,
+                 int line) {
     // 快速检查是否应该记录
     if (!shouldLog(level, module)) {
         return;
     }
-    
+
     // 构建日志记录
     LogRecord record;
     record.level = level;
@@ -83,7 +86,7 @@ void Logger::log(LogLevel level, LogModule module, const QString& message,
     record.message = message;
     record.timestamp = QDateTime::currentMSecsSinceEpoch();
     record.threadId = QThread::currentThreadId();
-    
+
     if (file) {
         record.fileName = QString::fromUtf8(file);
     }
@@ -91,15 +94,15 @@ void Logger::log(LogLevel level, LogModule module, const QString& message,
         record.functionName = QString::fromUtf8(function);
     }
     record.line = line;
-    
+
     // 获取线程名称
     if (s_threadNames.hasLocalData()) {
         record.threadName = s_threadNames.localData();
     }
-    
+
     // 发射信号
     emit logRecord(record);
-    
+
     // 分发到各 Appender
     QMutexLocker locker(&m_mutex);
     for (auto& appender : m_appenders) {
@@ -115,10 +118,10 @@ void Logger::log(LogLevel level, LogModule module, const QString& message,
 
 bool Logger::shouldLog(LogLevel level, LogModule module) const {
     QMutexLocker locker(&m_mutex);
-    
+
     // 获取模块级别，如果没有设置则使用全局级别
     LogLevel effectiveLevel = m_moduleLevels.value(module, m_globalLevel);
-    
+
     return static_cast<int>(level) >= static_cast<int>(effectiveLevel);
 }
 
@@ -157,30 +160,20 @@ void LogUtils::replaceFirstPlaceholder(QString& result, const QString& replaceme
 
 // ScopedTracer 实现
 ScopedTracer::ScopedTracer(LogModule module, const QString& operation)
-    : m_module(module)
-    , m_operation(operation)
-    , m_startTime(QDateTime::currentMSecsSinceEpoch())
-{
-    Logger::instance()->log(LogLevel::Trace, m_module,
-                            LogUtils::format("[BEGIN] {}", m_operation),
-                            nullptr, nullptr, 0);
+    : m_module(module), m_operation(operation), m_startTime(QDateTime::currentMSecsSinceEpoch()) {
+    Logger::instance()->log(
+        LogLevel::Trace, m_module, LogUtils::format("[BEGIN] {}", m_operation), nullptr, nullptr, 0);
 }
 
 ScopedTracer::~ScopedTracer() {
     qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - m_startTime;
-    Logger::instance()->log(LogLevel::Trace, m_module,
-                            LogUtils::format("[END] {} ({} ms)", m_operation, elapsed),
-                            nullptr, nullptr, 0);
+    Logger::instance()->log(
+        LogLevel::Trace, m_module, LogUtils::format("[END] {} ({} ms)", m_operation, elapsed), nullptr, nullptr, 0);
 }
 
 // TimeLogger 实现
 TimeLogger::TimeLogger(LogModule module, const QString& operation)
-    : m_module(module)
-    , m_operation(operation)
-    , m_startTime(QDateTime::currentMSecsSinceEpoch())
-    , m_finished(false)
-{
-}
+    : m_module(module), m_operation(operation), m_startTime(QDateTime::currentMSecsSinceEpoch()), m_finished(false) {}
 
 TimeLogger::~TimeLogger() {
     if (!m_finished) {
@@ -190,19 +183,25 @@ TimeLogger::~TimeLogger() {
 
 void TimeLogger::checkpoint(const QString& name) {
     qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - m_startTime;
-    Logger::instance()->log(LogLevel::Debug, m_module,
+    Logger::instance()->log(LogLevel::Debug,
+                            m_module,
                             LogUtils::format("[{}] {} - {} ms", m_operation, name, elapsed),
-                            nullptr, nullptr, 0);
+                            nullptr,
+                            nullptr,
+                            0);
 }
 
 void TimeLogger::finish() {
     if (!m_finished) {
         qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - m_startTime;
-        Logger::instance()->log(LogLevel::Info, m_module,
+        Logger::instance()->log(LogLevel::Info,
+                                m_module,
                                 LogUtils::format("[FINISH] {} ({} ms)", m_operation, elapsed),
-                                nullptr, nullptr, 0);
+                                nullptr,
+                                nullptr,
+                                0);
         m_finished = true;
     }
 }
 
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter

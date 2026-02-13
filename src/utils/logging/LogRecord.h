@@ -16,23 +16,23 @@ namespace EasyKiConverter {
  * 包含单条日志的所有上下文信息
  */
 struct LogRecord {
-    LogLevel level = LogLevel::Info;        ///< 日志级别
-    LogModule module = LogModule::Core;     ///< 日志模块
-    QString message;                         ///< 日志消息
-    QString fileName;                        ///< 源文件名
-    QString functionName;                    ///< 函数名
-    int line = 0;                            ///< 行号
-    Qt::HANDLE threadId = nullptr;           ///< 线程 ID
-    qint64 timestamp = 0;                    ///< 毫秒级时间戳
-    QString threadName;                      ///< 可选：线程名称
-    
+    LogLevel level = LogLevel::Info;     ///< 日志级别
+    LogModule module = LogModule::Core;  ///< 日志模块
+    QString message;                     ///< 日志消息
+    QString fileName;                    ///< 源文件名
+    QString functionName;                ///< 函数名
+    int line = 0;                        ///< 行号
+    Qt::HANDLE threadId = nullptr;       ///< 线程 ID
+    qint64 timestamp = 0;                ///< 毫秒级时间戳
+    QString threadName;                  ///< 可选：线程名称
+
     /**
      * @brief 获取格式化的时间戳字符串
      */
     QString formattedTimestamp() const {
         return QDateTime::fromMSecsSinceEpoch(timestamp).toString("yyyy-MM-dd HH:mm:ss.zzz");
     }
-    
+
     /**
      * @brief 获取简化的文件名（不含路径）
      */
@@ -44,6 +44,6 @@ struct LogRecord {
     }
 };
 
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter
 
-#endif // LOGRECORD_H
+#endif  // LOGRECORD_H
