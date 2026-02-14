@@ -94,7 +94,12 @@ jobs:
         if: matrix.type == 'installer'
         shell: pwsh
         run: |
-          choco install innosetup --no-progress --params "/Languages=chinesesimplified"
+          # 安装 Inno Setup
+          choco install innosetup --no-progress
+          # 下载并安装简体中文语言文件
+          $langDir = "${env:ProgramFiles(x86)}\Inno Setup 6\Languages"
+          $langUrl = "https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/Unofficial/ChineseSimplified.isl"
+          Invoke-WebRequest -Uri $langUrl -OutFile "$langDir\ChineseSimplified.isl" -UseBasicParsing
 
       - name: 'Configure'
         shell: pwsh
