@@ -94,7 +94,7 @@ jobs:
         if: matrix.type == 'installer'
         shell: pwsh
         run: |
-          choco install innosetup --no-progress
+          choco install innosetup --no-progress --params "/Languages=chinesesimplified"
 
       - name: 'Configure'
         shell: pwsh
