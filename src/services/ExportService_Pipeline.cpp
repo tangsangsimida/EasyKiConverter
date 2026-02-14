@@ -81,10 +81,9 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& c
     }
 
     const size_t FIXED_QUEUE_SIZE = 64;
-    delete m_fetchProcessQueue;
-    delete m_processWriteQueue;
-    m_fetchProcessQueue = new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(FIXED_QUEUE_SIZE);
-    m_processWriteQueue = new BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>(FIXED_QUEUE_SIZE);
+    // 使用 QSharedPointer 创建新队列，自动管理内存
+    m_fetchProcessQueue = QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>>::create(FIXED_QUEUE_SIZE);
+    m_processWriteQueue = QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>>::create(FIXED_QUEUE_SIZE);
 
     m_componentIds = componentIds;
     m_options = options;
@@ -126,9 +125,11 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& c
     qDebug() << "Export started at:" << m_exportStartTimeMs;
 
     m_isPipelineRunning = true;
-    m_isCancelled.storeRelease(0);
+    m_isCancelled.storeRelease(0);      // 重置取消标志
+    m_completionScheduled.storeRelease(0);  // 重置完成安排标志
     m_isExporting.storeRelease(1);
     m_isStopping.storeRelease(0);
+    m_completionScheduled.storeRelease(0);  // 重置完成处理标志
 
     QDir dir;
     if (!dir.exists(m_options.outputPath)) {
@@ -260,9 +261,18 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
 }
 
 void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExportStatus> status) {
+    if (ProcessWorker* worker = qobject_cast<ProcessWorker*>(sender())) {
+        QMutexLocker locker(&m_workerMutex);
+        m_activeProcessWorkers.remove(worker);
+    }
+    
     QMutexLocker locker(m_mutex);
+    if (!m_isPipelineRunning) return;
+
     qDebug() << "Process completed for component:" << status->componentId << "Success:" << status->processSuccess;
     m_pipelineProgress.processCompleted++;
+
+    if (!m_processWriteQueue) return;
 
     if (status->processSuccess) {
         if (m_processWriteQueue->push(status)) {
@@ -303,7 +313,14 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
 }
 
 void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportStatus> status) {
+    if (WriteWorker* worker = qobject_cast<WriteWorker*>(sender())) {
+        QMutexLocker locker(&m_workerMutex);
+        m_activeWriteWorkers.remove(worker);
+    }
+
     QMutexLocker locker(m_mutex);
+    if (!m_isPipelineRunning) return;
+
     qDebug() << "Write completed for component:" << status->componentId << "Success:" << status->writeSuccess;
     m_pipelineProgress.writeCompleted++;
 
@@ -464,46 +481,82 @@ void ExportServicePipeline::startFetchStage() {
 }
 
 void ExportServicePipeline::startProcessStage() {
+    // 捕获队列的共享指针副本，确保在 Service 被销毁时队列依然有效
+    auto fetchProcessQueue = m_fetchProcessQueue;
+
     for (int i = 0; i < m_processThreadPool->maxThreadCount(); i++) {
-        m_processThreadPool->start(QRunnable::create([this]() {
+        m_processThreadPool->start(QRunnable::create([this, fetchProcessQueue]() {
             while (true) {
                 if (m_isCancelled.loadAcquire()) {  // Batch-level cancellation check
                     qDebug() << "Process stage worker exiting due to cancellation.";
                     break;
                 }
+                
+                // 使用捕获的队列指针进行操作
+                if (!fetchProcessQueue) break;
+
                 QSharedPointer<ComponentExportStatus> status;
-                if (!m_fetchProcessQueue->pop(status, 1000)) {
-                    if (m_fetchProcessQueue->isClosed())
+                if (!fetchProcessQueue->pop(status, 1000)) {
+                    if (fetchProcessQueue->isClosed())
                         break;
                     continue;
                 }
+                
                 ProcessWorker* worker = new ProcessWorker(status, nullptr);
+                
+                // 关键修复：将 worker 移动到主线程，确保 deleteLater() 能在主线程事件循环中被执行
+                // 线程池线程通常不运行事件循环，直接 deleteLater 可能导致内存泄漏
+                worker->moveToThread(this->thread());
+                
+                // 注册活跃 worker
+                {
+                    QMutexLocker locker(&m_workerMutex);
+                    m_activeProcessWorkers.insert(worker);
+                }
+
                 connect(worker,
                         &ProcessWorker::processCompleted,
                         this,
                         &ExportServicePipeline::handleProcessCompleted,
                         Qt::QueuedConnection);
+                
+                // 让 Worker 在信号处理完成后自动销毁
                 connect(worker, &ProcessWorker::processCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
+                
                 worker->run();
+                
+                // 注销活跃 worker
+                {
+                    QMutexLocker locker(&m_workerMutex);
+                    m_activeProcessWorkers.remove(worker);
+                }
             }
         }));
     }
 }
 
 void ExportServicePipeline::startWriteStage() {
+    // 捕获队列的共享指针副本，确保在 Service 被销毁时队列依然有效
+    auto processWriteQueue = m_processWriteQueue;
+
     for (int i = 0; i < m_writeThreadPool->maxThreadCount(); i++) {
-        m_writeThreadPool->start(QRunnable::create([this]() {
+        m_writeThreadPool->start(QRunnable::create([this, processWriteQueue]() {
             while (true) {
                 if (m_isCancelled.loadAcquire()) {  // Batch-level cancellation check
                     qDebug() << "Write stage worker exiting due to cancellation.";
                     break;
                 }
+                
+                // 使用捕获的队列指针进行操作
+                if (!processWriteQueue) break;
+                
                 QSharedPointer<ComponentExportStatus> status;
-                if (!m_processWriteQueue->pop(status, 1000)) {
-                    if (m_processWriteQueue->isClosed())
+                if (!processWriteQueue->pop(status, 1000)) {
+                    if (processWriteQueue->isClosed())
                         break;
                     continue;
                 }
+                
                 WriteWorker* worker = new WriteWorker(status,
                                                       m_options.outputPath,
                                                       m_options.libName,
@@ -512,76 +565,129 @@ void ExportServicePipeline::startWriteStage() {
                                                       m_options.exportModel3D,
                                                       m_options.debugMode,
                                                       nullptr);
+                                                      
+                // 关键修复：将 worker 移动到主线程，确保 deleteLater() 能在主线程事件循环中被执行
+                worker->moveToThread(this->thread());
+                                                      
+                // 注册活跃 worker
+                {
+                    QMutexLocker locker(&m_workerMutex);
+                    m_activeWriteWorkers.insert(worker);
+                }
+
                 connect(worker,
                         &WriteWorker::writeCompleted,
                         this,
                         &ExportServicePipeline::handleWriteCompleted,
                         Qt::QueuedConnection);
+                
+                // 让 Worker 在信号处理完成后自动销毁
                 connect(worker, &WriteWorker::writeCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
+                
                 worker->run();
+                
+                // 注销活跃 worker
+                {
+                    QMutexLocker locker(&m_workerMutex);
+                    m_activeWriteWorkers.remove(worker);
+                }
             }
         }));
     }
 }
 
 void ExportServicePipeline::checkPipelineCompletion() {
+    // 防止重复触发：如果已经安排了完成处理，直接返回
+    if (m_completionScheduled.loadAcquire()) {
+        qDebug() << "Completion already scheduled, skipping.";
+        return;
+    }
+
     // 抓取阶段完成检查
     bool fetchDone = m_pipelineProgress.fetchCompleted >= m_pipelineProgress.totalTasks;
-    if (m_isCancelled.loadAcquire() && m_fetchProcessQueue->isEmpty())
-        fetchDone = true;
-    if (fetchDone && !m_fetchProcessQueue->isClosed())
+    if (m_isCancelled.loadAcquire()) {
+        bool fetchQueueEmpty = m_fetchProcessQueue ? m_fetchProcessQueue->isEmpty() : true;
+        if (fetchQueueEmpty) fetchDone = true;
+    }
+    if (fetchDone && m_fetchProcessQueue && !m_fetchProcessQueue->isClosed())
         m_fetchProcessQueue->close();
     if (!fetchDone)
         return;
 
     // 处理阶段完成检查
     bool processDone = m_pipelineProgress.processCompleted >= m_pipelineProgress.totalTasks;
-    if (m_isCancelled.loadAcquire() && m_fetchProcessQueue->isEmpty())
-        processDone = true;
-    if (processDone && !m_processWriteQueue->isClosed())
+    if (m_isCancelled.loadAcquire()) {
+        bool processQueueEmpty = m_fetchProcessQueue ? m_fetchProcessQueue->isEmpty() : true;
+        if (processQueueEmpty) processDone = true;
+    }
+    if (processDone && m_processWriteQueue && !m_processWriteQueue->isClosed())
         m_processWriteQueue->close();
     if (!processDone)
         return;
 
     // 写入阶段完成检查
     bool writeDone = m_pipelineProgress.writeCompleted >= m_pipelineProgress.totalTasks;
-    if (m_isCancelled.loadAcquire() && m_processWriteQueue->isEmpty())
-        writeDone = true;
+    if (m_isCancelled.loadAcquire()) {
+        bool writeQueueEmpty = m_processWriteQueue ? m_processWriteQueue->isEmpty() : true;
+        if (writeQueueEmpty) writeDone = true;
+    }
     if (!writeDone)
         return;
+
+    // 标记完成处理已安排，防止重复调用
+    m_completionScheduled.storeRelease(1);
 
     // 所有阶段都完成，开始清理和统计
     qDebug() << "Pipeline completed. Success:" << m_successCount << "Failed:" << m_failureCount;
 
-    // 将合并符号库、生成统计报告和清理临时文件的耗时操作放到异步线程中执行
-    QThreadPool::globalInstance()->start(QRunnable::create([this]() {
-        qDebug() << "Starting asynchronous cleanup and statistics generation...";
-        bool mergeSuccess = true;
-        if (m_options.exportSymbol && !m_symbols.isEmpty()) {
-            mergeSuccess = mergeSymbolLibrary();
-            if (!mergeSuccess) {
-                qWarning() << "Failed to merge symbol library during cleanup.";
+    // 直接同步执行清理和统计，不使用 QTimer
+    // 这样可以避免异步回调导致的崩溃和状态不一致
+    
+    // 检查是否已被取消
+    bool wasCancelled = m_isCancelled.loadAcquire();
+    if (wasCancelled) {
+        qDebug() << "Pipeline was cancelled, performing cleanup...";
+    }
+    
+    // 1. 合并符号库（如果有符号数据）
+    if (m_options.exportSymbol && !m_symbols.isEmpty() && 
+        !m_options.outputPath.isEmpty() && !m_options.libName.isEmpty()) {
+        bool mergeSuccess = mergeSymbolLibrary();
+        if (!mergeSuccess) {
+            qWarning() << "Failed to merge symbol library during cleanup.";
+        }
+    }
+
+    // 2. 清理单独的元件符号文件（无论合并是否成功都要清理）
+    int cleanedCount = 0;
+    for (const QString& tempFile : m_tempSymbolFiles) {
+        if (!tempFile.isEmpty() && QFile::exists(tempFile)) {
+            if (QFile::remove(tempFile)) {
+                cleanedCount++;
+            } else {
+                qWarning() << "Failed to remove temporary symbol file:" << tempFile;
             }
         }
+    }
+    m_tempSymbolFiles.clear();
+    if (cleanedCount > 0) {
+        qDebug() << "Cleaned" << cleanedCount << "temporary symbol files.";
+    }
 
-        // 临时文件清理
-        for (const QString& tempFile : m_tempSymbolFiles) {
-            if (QFile::exists(tempFile)) {
-                if (!QFile::remove(tempFile)) {
-                    qWarning() << "Failed to remove temporary symbol file:" << tempFile;
-                }
-            }
-        }
-        m_tempSymbolFiles.clear();
-
-        // 清理符号库合并时的临时文件
+    // 3. 清理符号库合并时的临时文件
+    if (!m_options.outputPath.isEmpty() && !m_options.libName.isEmpty()) {
         QString libraryTempPath = QString("%1/%2.kicad_sym.tmp").arg(m_options.outputPath, m_options.libName);
         if (QFile::exists(libraryTempPath)) {
-            if (!QFile::remove(libraryTempPath)) {
+            if (QFile::remove(libraryTempPath)) {
+                qDebug() << "Removed library temp file:" << libraryTempPath;
+            } else {
                 qWarning() << "Failed to remove temporary symbol library file:" << libraryTempPath;
             }
         }
+    }
 
+    // 4. 只在非取消模式下生成统计报告
+    if (!wasCancelled) {
         // 生成统计信息（始终生成，用于显示基本统计卡片）
         ExportStatistics statistics = generateStatistics();
 
@@ -607,33 +713,55 @@ void ExportServicePipeline::checkPipelineCompletion() {
 
         // 始终发送统计信号，使统计卡片显示
         emit statisticsReportGenerated(reportPath, statistics);
+    }
 
-        // 所有清理和统计完成后，才真正标记导出完成
-        emit exportCompleted(m_pipelineProgress.totalTasks, m_successCount);
-        m_isExporting.storeRelease(0);
-        m_isStopping.storeRelease(0);
-        m_isCancelled.storeRelease(0);
+    // 所有清理完成后，发出完成信号
+    emit exportCompleted(m_pipelineProgress.totalTasks, m_successCount);
+    m_isExporting.storeRelease(0);
+    m_isStopping.storeRelease(0);
+    m_isCancelled.storeRelease(0);
+    m_completionScheduled.storeRelease(0);
 
-        QTimer::singleShot(0, this, [this]() { cleanupPipeline(); });
-        qDebug() << "Asynchronous cleanup and statistics generation completed.";
-    }));
+    cleanupPipeline();
+    qDebug() << "Cleanup and statistics generation completed.";
 }
 
 void ExportServicePipeline::cleanupPipeline() {
-    QMutexLocker locker(m_mutex);
-    if (!m_isPipelineRunning)
+    // 使用原子标志检查，避免锁带来的死锁问题
+    // cleanupPipeline 只在主线程的事件循环中被调用，此时所有 worker 已停止
+    if (!m_isPipelineRunning) {
         return;
+    }
     m_isPipelineRunning = false;
+    
+    // 关键修复：移除 waitForDone() 调用
+    // 之前这里调用 waitForDone() 会导致死锁，因为 worker 线程可能正试图通过 Qt::QueuedConnection 发送信号给主线程
+    // 而主线程被 waitForDone() 阻塞，无法处理信号
+    //
+    // 现在我们采用以下策略：
+    // 1. 在 cancelExport() 中已经发出了取消信号并 abort 了所有 worker
+    // 2. 队列使用了 QSharedPointer，并被 worker 的 Lambda 捕获
+    // 3. 这里我们只需要 reset 成员变量中的指针，不仅是安全的，而且是必须的
+    // 4. 当最后一个 worker 结束时，队列的引用计数归零，自动销毁
+
     if (m_fetchProcessQueue) {
         m_fetchProcessQueue->close();
-        delete m_fetchProcessQueue;
-        m_fetchProcessQueue = nullptr;
+        m_fetchProcessQueue.reset();
     }
     if (m_processWriteQueue) {
         m_processWriteQueue->close();
-        delete m_processWriteQueue;
-        m_processWriteQueue = nullptr;
+        m_processWriteQueue.reset();
     }
+    
+    // 清理 worker 追踪集合
+    {
+        QMutexLocker locker(&m_workerMutex);
+        m_activeFetchWorkers.clear();
+        m_activeProcessWorkers.clear();
+        m_activeWriteWorkers.clear();
+    }
+    
+    qDebug() << "Pipeline resources cleaned up (queues released, threads detached).";
 }
 
 bool ExportServicePipeline::mergeSymbolLibrary() {
@@ -816,55 +944,67 @@ bool ExportServicePipeline::saveStatisticsReport(const ExportStatistics& statist
 }
 
 void ExportServicePipeline::cancelExport() {
-    if (m_isCancelled.loadAcquire())
+    // 防止重复取消
+    if (m_isCancelled.loadAcquire()) {
+        qDebug() << "ExportPipeline already cancelled, skipping.";
         return;
+    }
+    
+    qDebug() << "Cancelling ExportPipeline...";
+    
+    // 1. 设置取消标志（原子操作，不阻塞）
     m_isCancelled.storeRelease(1);
+    m_isStopping.storeRelease(1);
     ExportService::cancelExport();
 
-    qDebug() << "Cancelling ExportPipeline...";
-
-    // 1. 同步中断所有正在运行的抓取任务 (确保立即起效)
+    // 2. 中断所有任务
     {
         QMutexLocker locker(&m_workerMutex);
-        qDebug() << "Aborting" << m_activeFetchWorkers.size() << "active fetch workers immediately.";
+        
+        // 中断 Fetch 任务
         for (FetchWorker* worker : m_activeFetchWorkers) {
-            if (worker) {
-                worker->abort();
-            }
+            if (worker) worker->abort();
         }
+        m_activeFetchWorkers.clear();
+        
+        // 中断 Process 任务
+        for (ProcessWorker* worker : m_activeProcessWorkers) {
+            if (worker) worker->abort();
+        }
+        m_activeProcessWorkers.clear();
+        
+        // 中断 Write 任务
+        for (WriteWorker* worker : m_activeWriteWorkers) {
+            if (worker) worker->abort();
+        }
+        m_activeWriteWorkers.clear();
     }
 
-    // 2. 异步清理剩余资源，防止阻塞 UI
-    QThreadPool::globalInstance()->start(QRunnable::create([this]() {
-        // 使用 QPointer 检查 this 是否还存活？
-        // 其实在 QThreadPool 里的 Lambda 访问 this 比较危险，
-        // 但由于我们使用了 QThreadPool::globalInstance() 且 lambda 内部逻辑较快，
-        // 且上面的同步 abort 已经解决了大部分请求残留问题。
+    // 3. 关闭队列（close() 是非阻塞的）
+    if (m_fetchProcessQueue) {
+        m_fetchProcessQueue->close();
+    }
+    if (m_processWriteQueue) {
+        m_processWriteQueue->close();
+    }
 
-        if (m_fetchThreadPool) {
-            m_fetchThreadPool->clear();
-        }
-        if (m_processThreadPool) {
-            m_processThreadPool->clear();
-        }
-        if (m_writeThreadPool) {
-            m_writeThreadPool->clear();
-        }
+    // 4. 清空线程池（clear() 是非阻塞的）
+    if (m_fetchThreadPool) {
+        m_fetchThreadPool->clear();
+    }
+    if (m_processThreadPool) {
+        m_processThreadPool->clear();
+    }
+    if (m_writeThreadPool) {
+        m_writeThreadPool->clear();
+    }
 
-        if (m_fetchProcessQueue) {
-            m_fetchProcessQueue->close();
-        }
-        if (m_processWriteQueue) {
-            m_processWriteQueue->close();
-        }
-
-        qDebug() << "ExportPipeline cancelled and queues closed.";
-        // 触发完成检查，这将最终发出 exportCompleted 信号
-        checkPipelineCompletion();
-    }));
-
-    // 移除 10 秒超时保护，因为异步清理应该足够快且 Worker 内部会响应取消
-    // QTimer::singleShot(10000, this, [this]() { ... });
+    // 注意：不在这里发出 exportCompleted 信号
+    // 也不在这里做任何清理
+    // 所有清理和信号发出都在 checkPipelineCompletion() 中统一处理
+    // 这样可以避免竞争条件和状态不一致
+    
+    qDebug() << "ExportPipeline cancellation requested. Cleanup will be done by checkPipelineCompletion.";
 }
 
 }  // namespace EasyKiConverter

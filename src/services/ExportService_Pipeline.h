@@ -184,9 +184,9 @@ private:
     QThreadPool* m_processThreadPool;  // 处理线程池（CPU密集型，等于核心数）
     QThreadPool* m_writeThreadPool;    // 写入线程池（磁盘I/O密集型，8个线程）
 
-    // 线程安全队列（使用 QSharedPointer 避免数据拷贝）
-    BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>* m_fetchProcessQueue;  // 抓取->处理队列
-    BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>* m_processWriteQueue;  // 处理->写入队列
+    // 线程安全队列（使用 QSharedPointer 管理生命周期，防止 Use-after-free）
+    QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>> m_fetchProcessQueue;  // 抓取->处理队列
+    QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>> m_processWriteQueue;  // 处理->写入队列
 
     // 网络访问管理器（共享）
     QNetworkAccessManager* m_networkAccessManager;
@@ -197,13 +197,16 @@ private:
     ExportOptions m_options;
     bool m_isPipelineRunning;
     QAtomicInt m_isCancelled;
+    QAtomicInt m_completionScheduled;  // 防止重复触发完成处理
 
     // 互斥锁
     QMutex* m_mutex;
     QMutex m_workerMutex;  // 保护活跃工作线程列表
 
-    // 活跃的抓取工作线程列表（用于中断）
-    QSet<FetchWorker*> m_activeFetchWorkers;
+    // 活跃的工作线程列表（用于中断）
+    QSet<class FetchWorker*> m_activeFetchWorkers;
+    QSet<class ProcessWorker*> m_activeProcessWorkers;
+    QSet<class WriteWorker*> m_activeWriteWorkers;
 
     // 预加载的数据
     QMap<QString, QSharedPointer<ComponentData>> m_preloadedData;

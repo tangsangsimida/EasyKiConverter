@@ -35,7 +35,10 @@ FetchWorker::FetchWorker(const QString& componentId,
     , m_fetch3DOnly(fetch3DOnly)
     , m_existing3DUuid(existing3DUuid)
     , m_currentReply(nullptr)
-    , m_isAborted(0) {}
+    , m_isAborted(0) {
+    // 禁用自动删除，因为我们使用 deleteLater 管理生命周期
+    setAutoDelete(false);
+}
 
 FetchWorker::~FetchWorker() {
     // 不要删除 m_ownNetworkManager，因为它现在是线程局部存储的共享实例
