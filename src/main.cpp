@@ -19,6 +19,12 @@
 #include <QStandardPaths>
 #include <QUrl>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <io.h>
+#include <fcntl.h>
+#endif
+
 namespace {
 
 bool isDebugMode() {
@@ -32,6 +38,32 @@ bool isDebugMode() {
 
 void setupLogging(bool debugMode) {
     using namespace EasyKiConverter;
+
+#ifdef _WIN32
+    // 如果启用调试模式，动态分配控制台（仅对 GUI 应用有效）
+    if (debugMode) {
+        // 尝试分配控制台
+        if (AllocConsole()) {
+            // 重定向标准输出
+            freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+            freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+            freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
+
+            // 设置控制台标题
+            SetConsoleTitleA("EasyKiConverter - Debug Console");
+
+            // 启用 ANSI 转义序列支持（彩色输出）
+            HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+            if (hOut != INVALID_HANDLE_VALUE) {
+                DWORD mode = 0;
+                if (GetConsoleMode(hOut, &mode)) {
+                    mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+                    SetConsoleMode(hOut, mode);
+                }
+            }
+        }
+    }
+#endif
 
     auto logger = Logger::instance();
 
