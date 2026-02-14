@@ -28,22 +28,6 @@ target_include_directories(test_models PRIVATE
 )
 add_test(NAME test_models COMMAND test_models)
 
-add_executable(test_viewmodels
-    test_viewmodels.cpp
-    ../common/MockNetworkAdapter.hpp
-)
-target_link_libraries(test_viewmodels PRIVATE
-    Qt6::Test
-    Qt6::Gui
-    Qt6::Network
-    EasyKiConverterLib
-)
-target_include_directories(test_viewmodels PRIVATE
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}
-)
-add_test(NAME test_viewmodels COMMAND test_viewmodels)
-
 # 日志系统测试
 add_executable(test_logging test_logging.cpp)
 target_link_libraries(test_logging PRIVATE

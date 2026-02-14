@@ -234,14 +234,19 @@ void EasyedaApi::handleBinaryDataFetched(INetworkAdapter* adapter, const QString
 }
 
 void EasyedaApi::cancelRequest() {
-    if (m_networkUtils)
-        m_networkUtils->cancelRequest();
+    // Use QPointer to safely check if m_networkUtils is still valid
+    // (it might be during destruction when parent-child relationships are being torn down)
+    QPointer<INetworkAdapter> networkUtilsPtr(m_networkUtils);
+    if (networkUtilsPtr && !networkUtilsPtr.isNull()) {
+        networkUtilsPtr->cancelRequest();
+    }
     m_isFetching = false;
 
     QMutexLocker locker(&m_requestsMutex);
     for (auto& req : m_activeRequests) {
-        if (req)
+        if (req && !req.isNull()) {
             req->cancelRequest();
+        }
     }
     m_activeRequests.clear();
 }
