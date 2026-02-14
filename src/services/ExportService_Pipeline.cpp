@@ -1,10 +1,11 @@
 #include "ExportService_Pipeline.h"
 
+#include "utils/PathSecurity.h"
 #include "workers/FetchWorker.h"
 #include "workers/ProcessWorker.h"
 #include "workers/WriteWorker.h"
-#include "utils/PathSecurity.h"
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
@@ -12,6 +13,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QRandomGenerator>
 #include <QTextStream>
 #include <QTimer>
 
@@ -192,7 +194,8 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
         return;
 
     if (status->fetchSuccess) {
-        if (m_fetchProcessQueue->push(status)) {
+        // 使用 safePushToQueue 替代直接 push
+        if (safePushToQueue(m_fetchProcessQueue, status)) {
             emit componentExported(status->componentId,
                                    true,
                                    "Fetch completed",
@@ -203,10 +206,10 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
         } else {
             m_failureCount++;
             status->processSuccess = false;
-            status->processMessage = "Export cancelled";
+            status->processMessage = "Export cancelled or Queue Timeout";
             emit componentExported(status->componentId,
                                    false,
-                                   "Export cancelled",
+                                   "Export cancelled or Queue Timeout",
                                    static_cast<int>(PipelineStage::Fetch),
                                    status->symbolWritten,
                                    status->footprintWritten,
@@ -226,7 +229,7 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                 status->fetchMessage = "3D model fetch failed, but symbol/footprint OK";
                 status->need3DModel = false;  // 禁用 3D 导出，避免后续写入失败
 
-                if (m_fetchProcessQueue->push(status)) {
+                if (safePushToQueue(m_fetchProcessQueue, status)) {
                     emit componentExported(status->componentId,
                                            true,
                                            "Fetch completed (3D failed)",
@@ -237,10 +240,10 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                 } else {
                     m_failureCount++;
                     status->processSuccess = false;
-                    status->processMessage = "Export cancelled";
+                    status->processMessage = "Export cancelled or Queue Timeout";
                     emit componentExported(status->componentId,
                                            false,
-                                           "Export cancelled",
+                                           "Export cancelled or Queue Timeout",
                                            static_cast<int>(PipelineStage::Fetch),
                                            status->symbolWritten,
                                            status->footprintWritten,
@@ -296,7 +299,8 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
         return;
 
     if (status->processSuccess) {
-        if (m_processWriteQueue->push(status)) {
+        // 使用 safePushToQueue 替代直接 push
+        if (safePushToQueue(m_processWriteQueue, status)) {
             emit componentExported(status->componentId,
                                    true,
                                    "Process completed",
@@ -308,10 +312,10 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
             m_failureCount++;
             m_pipelineProgress.writeCompleted++;
             status->writeSuccess = false;
-            status->writeMessage = "Export cancelled";
+            status->writeMessage = "Export cancelled or Queue Timeout";
             emit componentExported(status->componentId,
                                    false,
-                                   "Export cancelled",
+                                   "Export cancelled or Queue Timeout",
                                    static_cast<int>(PipelineStage::Process),
                                    status->symbolWritten,
                                    status->footprintWritten,
@@ -462,7 +466,8 @@ void ExportServicePipeline::startFetchStage() {
                                    false);
             emit pipelineProgressUpdated(m_pipelineProgress);
 
-            if (m_processWriteQueue->push(status)) {
+            // 使用 safePushToQueue
+            if (safePushToQueue(m_processWriteQueue, status)) {
                 // 成功推送到写入队列
             } else {
                 // 关键修复：如果推送失败，必须增加写入完成计数并发送失败信号，否则流水线会卡死
@@ -925,7 +930,95 @@ ExportStatistics ExportServicePipeline::generateStatistics() {
              << "Failed:" << statistics.failed << "Unique components:" << uniqueComponentIds.size()
              << "Retry mode:" << m_isRetryMode;
 
+    // v3.0.5: 内存峰值统计
+    // 无论是否重试模式，都使用当前记录的最大值
+    statistics.peakMemoryUsage = m_originalStatistics.peakMemoryUsage;
+
     return statistics;
+}
+
+bool ExportServicePipeline::safePushToQueue(
+    QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>> queue,
+    QSharedPointer<ComponentExportStatus> status) {
+    if (!queue || m_isCancelled.loadAcquire())
+        return false;
+
+    // 统计内存峰值
+    MemorySnapshot snapshot = status->getMemorySnapshot();
+    // 无论是否重试模式，只要当前峰值更高，就更新
+    // 由于 safePushToQueue 是在主线程调用的（通过 handle...Completed），所以是线程安全的
+    if (snapshot.totalSize > m_originalStatistics.peakMemoryUsage) {
+        m_originalStatistics.peakMemoryUsage = snapshot.totalSize;
+    }
+
+    // 快速尝试
+    if (queue->tryPush(status))
+        return true;
+
+    // 指数退避策略
+    constexpr int MAX_RETRIES = 5;
+    constexpr int BASE_DELAY_MS = 10;          // 减少初始延迟到 10ms
+    constexpr int MAX_TOTAL_TIMEOUT_MS = 500;  // 减少总超时到 500ms
+
+    int retryCount = 0;
+    int totalDelay = 0;
+
+    while (retryCount < MAX_RETRIES) {
+        if (m_isCancelled.loadAcquire())
+            return false;
+
+        // 防止 UI 冻结
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+        // 尝试非阻塞推送
+        if (queue->tryPush(status)) {
+            if (retryCount > 0) {
+                qDebug() << "Queue backoff successful after" << retryCount << "retries for" << status->componentId;
+            }
+            return true;
+        }
+
+        // 计算延迟
+        int delay = BASE_DELAY_MS * (1 << retryCount);
+        delay += QRandomGenerator::global()->bounded(0, 20);  // 抖动
+
+        if (totalDelay + delay > MAX_TOTAL_TIMEOUT_MS) {
+            qWarning() << "Queue push timed out after" << totalDelay << "ms for component:" << status->componentId;
+            return false;
+        }
+
+        // QThread::msleep 是阻塞当前线程（主线程）
+        // 因为我们在循环中调用了 processEvents，所以界面不会完全死锁
+        QThread::msleep(delay);
+        totalDelay += delay;
+        retryCount++;
+    }
+
+    return false;
+}
+
+void ExportServicePipeline::emergencyCleanup() {
+    qDebug() << "Performing emergency cleanup...";
+
+    QMutexLocker locker(m_mutex);
+
+    // 清理已完成状态中的临时数据（这些数据可能占用大量内存）
+    for (const auto& status : m_completedStatuses) {
+        if (status) {
+            status->clearIntermediateData(false);
+            // 既然是紧急清理，说明不再继续，STEP 数据也可以清了
+            status->clearStepData();
+        }
+    }
+    m_completedStatuses.clear();
+
+    // 清理预加载数据
+    m_preloadedData.clear();
+
+    // 清理符号数据
+    m_symbols.clear();
+
+    qDebug() << "Emergency cleanup completed: Memory released.";
 }
 
 bool ExportServicePipeline::saveStatisticsReport(const ExportStatistics& statistics, const QString& reportPath) {
@@ -938,6 +1031,9 @@ bool ExportServicePipeline::saveStatisticsReport(const ExportStatistics& statist
     overview["successModel3D"] = statistics.successModel3D;
     overview["successRate"] = QString::number(statistics.getSuccessRate(), 'f', 2) + "%";
     overview["totalDurationMs"] = statistics.totalDurationMs;
+    // v3.0.5 新增：内存峰值（转换为 MB 显示）
+    overview["peakMemoryUsageMB"] = QString::number(statistics.peakMemoryUsage / (1024.0 * 1024.0), 'f', 2) + " MB";
+
     reportObj["overview"] = overview;
     timing["avgFetchTimeMs"] = statistics.avgFetchTimeMs;
     timing["avgProcessTimeMs"] = statistics.avgProcessTimeMs;
@@ -1003,7 +1099,10 @@ void ExportServicePipeline::cancelExport() {
         m_activeWriteWorkers.clear();
     }
 
-    // 3. 关闭队列（close() 是非阻塞的）
+    // 3. 启动异步紧急清理，释放内存 (在任务中断后执行，减少数据生成)
+    QTimer::singleShot(0, this, &ExportServicePipeline::emergencyCleanup);
+
+    // 4. 关闭队列（close() 是非阻塞的）
     if (m_fetchProcessQueue) {
         m_fetchProcessQueue->close();
     }
@@ -1011,7 +1110,7 @@ void ExportServicePipeline::cancelExport() {
         m_processWriteQueue->close();
     }
 
-    // 4. 清空线程池（clear() 是非阻塞的）
+    // 5. 清空线程池（clear() 是非阻塞的）
     if (m_fetchThreadPool) {
         m_fetchThreadPool->clear();
     }

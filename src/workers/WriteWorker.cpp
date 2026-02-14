@@ -70,12 +70,13 @@ void WriteWorker::run() {
     // 假设输出路径必须在应用有权限的某个基准目录下（这里暂不强制基准，只检查路径格式）
     // 实际上，更重要的是检查 m_tempDir 是否在 m_outputPath 内，或者至少是安全的
     if (!PathSecurity::isSafePath(m_tempDir, m_outputPath)) {
-         m_status->writeDurationMs = writeTimer.elapsed();
-         m_status->writeSuccess = false;
-         m_status->writeMessage = "Security Error: Temp dir is outside output path";
-         m_status->addDebugLog(QString("SECURITY ERROR: Temp dir %1 is not within Output path %2").arg(m_tempDir, m_outputPath));
-         emit writeCompleted(m_status);
-         return;
+        m_status->writeDurationMs = writeTimer.elapsed();
+        m_status->writeSuccess = false;
+        m_status->writeMessage = "Security Error: Temp dir is outside output path";
+        m_status->addDebugLog(
+            QString("SECURITY ERROR: Temp dir %1 is not within Output path %2").arg(m_tempDir, m_outputPath));
+        emit writeCompleted(m_status);
+        return;
     }
 
     // 初始化所有写入状态
@@ -423,6 +424,9 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
             status.addDebugLog(QString("ERROR: Failed to write STEP file: %1").arg(stepTempFilePath));
             // STEP 文件失败不影响整体 3D 模型成功
         }
+
+        // 内存优化：写入完成后立即清理 STEP 数据
+        status.clearStepData();
     }
 
     // 只有在 WRL 文件成功导出且存在时才设置 model3DWritten 标志

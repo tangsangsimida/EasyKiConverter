@@ -43,6 +43,6 @@ private:
     static int countFilesRecursively(const QString& path, int limit, int currentCount = 0);
 };
 
-} // namespace EasyKiConverter
+}  // namespace EasyKiConverter
 
-#endif // PATHSECURITY_H
+#endif  // PATHSECURITY_H

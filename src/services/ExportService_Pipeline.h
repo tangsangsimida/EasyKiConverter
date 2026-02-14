@@ -113,6 +113,12 @@ signals:
      */
     void statisticsReportGenerated(const QString& reportPath, const ExportStatistics& statistics);
 
+public slots:
+    /**
+     * @brief 紧急清理（用于取消时的异步清理）
+     */
+    void emergencyCleanup();
+
 private slots:
     /**
      * @brief 处理抓取完成
@@ -166,6 +172,15 @@ private:
      * @return bool 是否成功
      */
     bool mergeSymbolLibrary();
+
+    /**
+     * @brief 安全推送任务到队列（带退避重试）
+     * @param queue 目标队列
+     * @param status 导出状态
+     * @return bool 是否成功
+     */
+    bool safePushToQueue(QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>> queue,
+                         QSharedPointer<ComponentExportStatus> status);
 
     /**
      * @brief 生成统计报告

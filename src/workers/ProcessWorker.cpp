@@ -95,6 +95,10 @@ void ProcessWorker::run() {
                               .arg(m_status->componentId)
                               .arg(m_status->processDurationMs));
 
+    // 内存优化：处理完成后立即清理中间数据（JSON缓冲、OBJ Raw等）
+    // STEP 数据保留给 WriteWorker 使用
+    m_status->clearIntermediateData();
+
     emit processCompleted(m_status);
 }
 
