@@ -445,7 +445,8 @@ void ExportServicePipeline::startFetchStage() {
             continue;
         }
 
-        FetchWorker* worker = new FetchWorker(componentId, m_networkAccessManager, m_options.exportModel3D, false, QString(), nullptr);
+        FetchWorker* worker =
+            new FetchWorker(componentId, m_networkAccessManager, m_options.exportModel3D, false, QString(), nullptr);
         connect(worker,
                 &FetchWorker::fetchCompleted,
                 this,
