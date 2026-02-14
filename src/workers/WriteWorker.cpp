@@ -115,7 +115,7 @@ void WriteWorker::run() {
             goto cleanup;
     }
 
-    if (m_exportModel3D && m_status->model3DData && !m_status->model3DObjRaw.isEmpty()) {
+    if (m_exportModel3D && m_status->model3DData && !m_status->model3DData->rawObj().isEmpty()) {
         write3DModelFile(*m_status);
     }
 
@@ -346,7 +346,9 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
 }
 
 bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
-    if (!status.model3DData || status.model3DObjRaw.isEmpty()) {
+    // 注意：model3DObjRaw 可能在 Process 阶段被 clearIntermediateData 清理
+    // 所以必须检查 model3DData 对象中的 rawObj 字符串
+    if (!status.model3DData || status.model3DData->rawObj().isEmpty()) {
         return true;  // 没有 WRL 数据可写，不应视为失败 (如果只请求 STEP，则应在ProcessWorker中处理)
     }
 
@@ -357,7 +359,8 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     }
     // 2. 检查路径安全性（仅对临时目录路径检查）
     if (!PathSecurity::isSafePath(m_tempDir, m_outputPath)) {
-        status.addDebugLog(QString("SECURITY ERROR: Temp dir %1 is outside output path %2").arg(m_tempDir, m_outputPath));
+        status.addDebugLog(
+            QString("SECURITY ERROR: Temp dir %1 is outside output path %2").arg(m_tempDir, m_outputPath));
         return false;
     }
 

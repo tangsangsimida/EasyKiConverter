@@ -135,40 +135,40 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& c
     m_isStopping.storeRelease(0);
     m_completionScheduled.storeRelease(0);  // 重置完成处理标志
 
-        QDir dir;
-        // 1. 确保输出目录存在
-        if (!dir.exists(m_options.outputPath)) {
-            if (!dir.mkpath(m_options.outputPath)) {
-                qCritical() << "FATAL: Failed to create output directory:" << m_options.outputPath;
-                m_isPipelineRunning = false;
-                locker.unlock();
-                emit exportFailed("Failed to create output directory");
-                return;
-            }
-            qDebug() << "Created output directory:" << m_options.outputPath;
-        }
-    
-        // 2. 创建临时目录
-        m_tempDir = QString("%1/temp").arg(m_options.outputPath);
-        if (!dir.exists(m_tempDir)) {
-            if (!dir.mkpath(m_tempDir)) {
-                qCritical() << "FATAL: Failed to create temp directory:" << m_tempDir;
-                m_isPipelineRunning = false;
-                locker.unlock();
-                emit exportFailed("Failed to create temp directory");
-                return;
-            }
-        }
-        
-        // 3. 验证临时目录是否可写
-        QFileInfo tempInfo(m_tempDir);
-        if (!tempInfo.isWritable()) {
-            qCritical() << "FATAL: Temp directory is not writable:" << m_tempDir;
+    QDir dir;
+    // 1. 确保输出目录存在
+    if (!dir.exists(m_options.outputPath)) {
+        if (!dir.mkpath(m_options.outputPath)) {
+            qCritical() << "FATAL: Failed to create output directory:" << m_options.outputPath;
             m_isPipelineRunning = false;
             locker.unlock();
-            emit exportFailed("Temp directory is not writable");
+            emit exportFailed("Failed to create output directory");
             return;
         }
+        qDebug() << "Created output directory:" << m_options.outputPath;
+    }
+
+    // 2. 创建临时目录
+    m_tempDir = QString("%1/temp").arg(m_options.outputPath);
+    if (!dir.exists(m_tempDir)) {
+        if (!dir.mkpath(m_tempDir)) {
+            qCritical() << "FATAL: Failed to create temp directory:" << m_tempDir;
+            m_isPipelineRunning = false;
+            locker.unlock();
+            emit exportFailed("Failed to create temp directory");
+            return;
+        }
+    }
+
+    // 3. 验证临时目录是否可写
+    QFileInfo tempInfo(m_tempDir);
+    if (!tempInfo.isWritable()) {
+        qCritical() << "FATAL: Temp directory is not writable:" << m_tempDir;
+        m_isPipelineRunning = false;
+        locker.unlock();
+        emit exportFailed("Temp directory is not writable");
+        return;
+    }
     locker.unlock();
     emit exportProgress(0, m_pipelineProgress.totalTasks);
     startFetchStage();
