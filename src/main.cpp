@@ -68,22 +68,23 @@ void setupLogging(bool debugMode) {
     auto logger = Logger::instance();
 
     if (debugMode) {
-        // 调试模式：启用 Debug 级别（不是 Trace，避免过多日志影响性能）
-        logger->setGlobalLevel(LogLevel::Debug);
+        // 调试模式：使用 Info 级别（避免 Debug 级别产生过多日志影响性能和成功率）
+        // 注意：调试模式主要用于开发时查看错误和网络请求详情，不建议在生产环境使用
+        logger->setGlobalLevel(LogLevel::Info);
 
         // 控制台输出（彩色，异步模式减少性能影响）
         auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
-        consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::verbosePattern()));
+        consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
         logger->addAppender(consoleAppender);
 
-        // 文件输出
+        // 文件输出（仅记录错误和警告）
         QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
         QDir().mkpath(logDir);
         QString logPath = logDir + "/easykiconverter_debug.log";
 
         auto fileAppender =
             QSharedPointer<FileAppender>::create(logPath, 10 * 1024 * 1024, 5, true);  // 10MB, 5 files, async
-        fileAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::verbosePattern()));
+        fileAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
         logger->addAppender(fileAppender);
 
         LOG_INFO(LogModule::Core, "调试模式已启用 - 日志文件: {}", logPath);
