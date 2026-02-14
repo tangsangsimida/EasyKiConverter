@@ -1,90 +1,54 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: ==============================================================================
-:: EasyKiConverter 一键构建脚本 (One-Click Build Script)
-::
-:: 功能说明:
-::     1. 清理并重新配置 CMake 构建环境。
-::     2. 使用指定的构建系统（默认 Ninja 或 MSVC）进行编译。
-::     3. 自动检测环境中的必要工具。
-::
-:: 使用示例:
-::     build_project.bat          - 默认 Debug 模式构建
-::     build_project.bat Release  - Release 模式构建
-::     build_project.bat Clean    - 仅清理构建目录
-::
-:: 环境要求:
-::     - 已安装 CMake
-::     - 已安装构建器 (Ninja, MSVC, 或 MinGW)
-::     - 已安装 Qt6 并配置好环境变量
-:: ==============================================================================
+:: EasyKiConverter 构建脚本
+:: 功能：Python 脚本的轻量级包装器
 
-:: ==============================================================================
-:: 工具链路径配置 (如果工具不在 PATH 中，请在此处指定路径)
-:: ==============================================================================
-set "QT_DIR="       :: 例如: C:\Qt\6.6.1\mingw_64
-set "CMAKE_DIR="    :: 例如: C:\Program Files\CMake\bin
-:: ==============================================================================
-
-echo ============================================================
-echo EasyKiConverter 项目一键构建
-echo ============================================================
-
-:: 1. 检查环境变量
-where cmake >nul 2>nul
+:: 检查 Python
+where python >nul 2>nul
 if %ERRORLEVEL% neq 0 (
-    if "!CMAKE_DIR!"=="" (
-        echo [错误] 未在 PATH 中找到 cmake.exe，且未在脚本中配置 CMAKE_DIR。
-        echo 请安装 CMake 并将其添加到环境变量，或修改此脚本开头。
-        pause
-        exit /b 1
-    )
-    set "PATH=!CMAKE_DIR!;%PATH%"
+    echo [错误] 未找到 Python 解释器
+    echo 请安装 Python 3.6+ 并将其添加到 PATH
+    pause
+    exit /b 1
 )
 
-:: 2. 处理参数
-set "BUILD_TYPE=Debug"
-if /i "%~1"=="Release" set "BUILD_TYPE=Release"
-if /i "%~1"=="Clean" (
-    echo 正在清理构建目录...
-    if exist "..\..\build" rd /s /q "..\..\build"
-    echo 清理完成。
-    exit /b 0
+:: 检查 Python 版本 (需要 3.x)
+for /f "tokens=2" %%i in ('python --version') do set py_ver=%%i
+echo %py_ver% | findstr "^3\." >nul
+if %ERRORLEVEL% neq 0 (
+    echo [错误] Python 版本过低 (%py_ver%)，需要 3.6+
+    pause
+    exit /b 1
 )
 
-:: 3. 确定构建目录 (假设脚本在 tools/windows)
+:: 获取项目根目录
 set "PROJECT_ROOT=%~dp0..\.."
-set "BUILD_DIR=%PROJECT_ROOT%\build"
+cd /d "%PROJECT_ROOT%"
 
-if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
+:: 检查帮助请求
+if "%~1"=="-h" goto help
+if "%~1"=="--help" goto help
+if "%~1"=="/h" goto help
+if "%~1"=="help" goto help
 
-echo [配置] 构建模式: %BUILD_TYPE%
-echo [配置] 项目根目录: %PROJECT_ROOT%
-echo [配置] 构建目录: %BUILD_DIR%
-
-:: 4. 配置并构建
-cd /d "%BUILD_DIR%"
-
+:: 显示构建信息
+echo ============================================================
+echo EasyKiConverter 项目构建
+echo ============================================================
+echo 项目根目录: %PROJECT_ROOT%
+echo Python 版本: %py_ver%
 echo.
-echo >>> 正在配置 CMake...
-cmake -G "Ninja" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% "%PROJECT_ROOT%"
-if %ERRORLEVEL% neq 0 (
-    echo [警告] 默认使用 Ninja 失败，尝试系统默认生成器...
-    cmake -DCMAKE_BUILD_TYPE=%BUILD_TYPE% "%PROJECT_ROOT%"
-    if %ERRORLEVEL% neq 0 (
-        echo [错误] CMake 配置失败！
-        echo 提示: 请检查是否安装了编译器（如 MSVC 或 MinGW）以及 Qt 是否配置正确。
-        pause
-        exit /b 1
-    )
-)
 
-echo.
-echo >>> 正在开始编译 (并行)...
-cmake --build . --parallel %NUMBER_OF_PROCESSORS%
+:: 调用 Python 构建管理器
+python tools\python\build_project.py %*
+
+:: 检查执行结果
 if %ERRORLEVEL% neq 0 (
-    echo [错误] 编译失败！
+    echo.
+    echo ============================================================
+    echo [错误] 构建失败，请查看 build.log 了解详情
+    echo ============================================================
     pause
     exit /b 1
 )
@@ -92,7 +56,22 @@ if %ERRORLEVEL% neq 0 (
 echo.
 echo ============================================================
 echo 构建成功完成！
-echo 可执行文件位于: %BUILD_DIR%\bin\EasyKiConverter.exe
 echo ============================================================
 pause
-exit /b 0
+goto :eof
+
+:help
+echo EasyKiConverter 构建工具快捷入口
+echo.
+echo 用法:
+echo   build_project.bat                 - 执行默认 Debug 构建
+echo   build_project.bat -t Release      - 执行 Release 构建
+echo   build_project.bat -c              - 清理构建目录 (会有确认提示)
+echo   build_project.bat -c -y           - 强制清理并构建
+echo   build_project.bat --check         - 仅执行环境 dependencies 检查
+echo   build_project.bat --config-only   - 仅执行 CMake 配置，不进行编译
+echo   build_project.bat -t Release -i   - 构建 Release 并安装
+echo   build_project.bat -v              - 详细日志模式
+echo.
+pause
+goto :eof

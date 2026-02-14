@@ -1,0 +1,18 @@
+{
+    "qt_version": "6.10.1",
+    "cmake_options": {
+        "ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT": true,
+        "EASYKICONVERTER_BUILD_TESTS": false
+    },
+    "build_types": [
+        "Debug",
+        "Release",
+        "RelWithDebInfo",
+        "MinSizeRel"
+    ],
+    "_comments": {
+        "qt_version": "预期的 Qt 版本号，用于构建环境验证",
+        "cmake_options": "传递给 CMake 的默认构建选项",
+        "build_types": "支持的构建类型列表"
+    }
+}
