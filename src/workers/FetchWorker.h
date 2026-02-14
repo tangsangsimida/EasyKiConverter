@@ -24,14 +24,18 @@ class FetchWorker : public QObject, public QRunnable {
 public:
     /**
      * @brief 构造函数
-         * @param componentId 元件ID
+     * @param componentId 元件ID
      * @param networkAccessManager 共享的网络访问管理器
      * @param need3DModel 是否需要3D模型
+     * @param fetch3DOnly 是否只获取3D模型（复用已有的符号/封装数据）
+     * @param existing3DUuid 已有的3D模型UUID（如果非空，直接下载3D模型，无需获取CAD数据）
      * @param parent 父对象
-         */
+     */
     explicit FetchWorker(const QString& componentId,
                          QNetworkAccessManager* networkAccessManager,
                          bool need3DModel,
+                         bool fetch3DOnly = false,
+                         const QString& existing3DUuid = QString(),
                          QObject* parent = nullptr);
 
     /**
@@ -101,6 +105,8 @@ private:
     QNetworkAccessManager* m_networkAccessManager;
     QNetworkAccessManager* m_ownNetworkManager;
     bool m_need3DModel;
+    bool m_fetch3DOnly;        // 是否只获取3D模型
+    QString m_existing3DUuid;  // 已有的3D模型UUID
 
     QNetworkReply* m_currentReply;
     QMutex m_replyMutex;

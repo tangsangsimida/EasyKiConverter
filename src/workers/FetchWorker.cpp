@@ -24,12 +24,16 @@ int FetchWorker::s_backoffMs = 0;
 FetchWorker::FetchWorker(const QString& componentId,
                          QNetworkAccessManager* networkAccessManager,
                          bool need3DModel,
+                         bool fetch3DOnly,
+                         const QString& existing3DUuid,
                          QObject* parent)
     : QObject(parent)
     , m_componentId(componentId)
     , m_networkAccessManager(networkAccessManager)
     , m_ownNetworkManager(nullptr)
     , m_need3DModel(need3DModel)
+    , m_fetch3DOnly(fetch3DOnly)
+    , m_existing3DUuid(existing3DUuid)
     , m_currentReply(nullptr)
     , m_isAborted(0) {}
 
@@ -49,7 +53,11 @@ void FetchWorker::run() {
     status->componentId = m_componentId;
     status->need3DModel = m_need3DModel;
 
-    status->addDebugLog(QString("FetchWorker started for component: %1").arg(m_componentId));
+    if (m_fetch3DOnly) {
+        status->addDebugLog(QString("FetchWorker started for 3D model only: %1").arg(m_componentId));
+    } else {
+        status->addDebugLog(QString("FetchWorker started for component: %1").arg(m_componentId));
+    }
 
     // 速率限制：如果最近被限流，延迟启动
     if (s_backoffMs > 0) {
@@ -87,73 +95,149 @@ void FetchWorker::run() {
     bool hasError = false;
     QString errorMessage;
 
-    QString componentInfoUrl =
-        QString("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(m_componentId);
-    status->addDebugLog(QString("Fetching component info from: %1").arg(componentInfoUrl));
+    // 只获取 3D 模式的处理
+    if (m_fetch3DOnly) {
+        // 只获取 3D 模型，符号和封装数据已经存在
+        if (!m_existing3DUuid.isEmpty()) {
+            // 已有 UUID，直接下载 3D 模型
+            status->addDebugLog(QString("Using existing 3D model UUID: %1, skipping CAD fetch").arg(m_existing3DUuid));
 
-    QByteArray componentInfoData = httpGet(componentInfoUrl, COMPONENT_INFO_TIMEOUT_MS, status);
+            // 直接调用 fetch3DModelData 的核心逻辑（跳过 UUID 解析）
+            QString objUrl = QString("https://modules.easyeda.com/3dmodel/%1").arg(m_existing3DUuid);
+            status->addDebugLog(QString("Downloading 3D model from: %1").arg(objUrl));
 
-    if (componentInfoData.isEmpty()) {
-        hasError = true;
-        errorMessage = "Failed to fetch component info (empty response)";
-        status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
-    } else {
-        // Validate JSON content
-        QJsonParseError parseError;
-        QJsonDocument doc = QJsonDocument::fromJson(componentInfoData, &parseError);
+            QByteArray objData = httpGet(objUrl, MODEL_3D_TIMEOUT_MS, status);
 
-        if (parseError.error != QJsonParseError::NoError) {
-            hasError = true;
-            errorMessage = "Invalid JSON response: " + parseError.errorString();
-            status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
-        } else {
-            QJsonObject rootObj = doc.object();
-
-            // Check for API specific error fields
-            if (rootObj.contains("success") && !rootObj["success"].toBool()) {
+            if (objData.isEmpty()) {
                 hasError = true;
-                errorMessage = "API returned error: " +
-                               (rootObj.contains("message") ? rootObj["message"].toString() : "Unknown error");
-                status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
-            }
-            // Check if result exists and is valid
-            else if (!rootObj.contains("result") || rootObj["result"].isNull()) {
-                hasError = true;
-                errorMessage = "Component not found (null result)";
-                status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
-            }
-            // Check if result is empty object (sometimes happens for invalid IDs)
-            else if (rootObj["result"].isObject() && rootObj["result"].toObject().isEmpty()) {
-                hasError = true;
-                errorMessage = "Component data is empty";
+                errorMessage = "Failed to download 3D model (empty response)";
                 status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
             } else {
-                // Data seems valid
-                status->componentInfoRaw = componentInfoData;
-                status->cinfoJsonRaw = componentInfoData;
-                status->cadDataRaw = componentInfoData;
-                status->cadJsonRaw = componentInfoData;
-                status->addDebugLog(QString("Component info (including CAD) fetched for: %1, Size: %2 bytes")
-                                        .arg(m_componentId)
-                                        .arg(componentInfoData.size()));
+                status->addDebugLog(QString("Downloaded 3D model data size: %1 bytes").arg(objData.size()));
 
-                if (m_need3DModel && !hasError) {
-                    status->addDebugLog("Parsing CAD data to extract 3D model UUID...");
-                    // Re-use doc/rootObj since we already parsed it
-                    QJsonObject obj;
-                    if (rootObj.contains("result") && rootObj["result"].isObject()) {
-                        obj = rootObj["result"].toObject();
-                    } else {
-                        obj = rootObj;
-                    }
+                // 处理压缩数据
+                QByteArray actualObjData = objData;
+                if (objData.size() >= 2 && objData[0] == 0x50 && objData[1] == 0x4B) {
+                    status->addDebugLog("3D model data is ZIP compressed, decompressing...");
+                    actualObjData = decompressZip(objData);
+                    status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
+                }
+                if (actualObjData.size() >= 2 && (unsigned char)actualObjData[0] == 0x1f &&
+                    (unsigned char)actualObjData[1] == 0x8b) {
+                    status->addDebugLog("3D model data is gzip compressed, decompressing...");
+                    actualObjData = decompressGzip(actualObjData);
+                    status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
+                }
 
-                    if (!fetch3DModelData(status)) {
-                        // 3D model fetch failure is not fatal for the whole component
+                status->model3DObjRaw = actualObjData;
+                status->addDebugLog(QString("3D model OBJ data ready: %1 bytes").arg(actualObjData.size()));
+
+                // 下载 STEP 格式
+                QString stepUrl = QString("https://modules.easyeda.com/3dmodel/%1.step").arg(m_existing3DUuid);
+                status->addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));
+
+                QByteArray stepData = httpGet(stepUrl, MODEL_3D_TIMEOUT_MS, status);
+                if (!stepData.isEmpty()) {
+                    status->model3DStepRaw = stepData;
+                    status->addDebugLog(QString("STEP model data ready: %1 bytes").arg(stepData.size()));
+                } else {
+                    status->addDebugLog("No STEP model data available (this is optional)");
+                }
+            }
+        } else {
+            // 没有 UUID，需要先获取 CAD 数据来提取 3D 模型 UUID
+            QString cadUrl =
+                QString("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(m_componentId);
+            status->addDebugLog(QString("Fetching CAD data for 3D UUID: %1").arg(cadUrl));
+
+            QByteArray cadData = httpGet(cadUrl, COMPONENT_INFO_TIMEOUT_MS, status);
+
+            if (cadData.isEmpty()) {
+                hasError = true;
+                errorMessage = "Failed to fetch CAD data for 3D model UUID (empty response)";
+                status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+            } else {
+                status->cadDataRaw = cadData;
+                status->cadJsonRaw = cadData;
+
+                // 获取 3D 模型
+                if (!fetch3DModelData(status)) {
+                    hasError = true;
+                    errorMessage = "Failed to fetch 3D model data";
+                    status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+                }
+            }
+        }
+    } else {
+        // 完整获取模式
+        QString componentInfoUrl =
+            QString("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(m_componentId);
+        status->addDebugLog(QString("Fetching component info from: %1").arg(componentInfoUrl));
+
+        QByteArray componentInfoData = httpGet(componentInfoUrl, COMPONENT_INFO_TIMEOUT_MS, status);
+
+        if (componentInfoData.isEmpty()) {
+            hasError = true;
+            errorMessage = "Failed to fetch component info (empty response)";
+            status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+        } else {
+            // Validate JSON content
+            QJsonParseError parseError;
+            QJsonDocument doc = QJsonDocument::fromJson(componentInfoData, &parseError);
+
+            if (parseError.error != QJsonParseError::NoError) {
+                hasError = true;
+                errorMessage = "Invalid JSON response: " + parseError.errorString();
+                status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+            } else {
+                QJsonObject rootObj = doc.object();
+
+                // Check for API specific error fields
+                if (rootObj.contains("success") && !rootObj["success"].toBool()) {
+                    hasError = true;
+                    errorMessage = "API returned error: " +
+                                   (rootObj.contains("message") ? rootObj["message"].toString() : "Unknown error");
+                    status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+                }
+                // Check if result exists and is valid
+                else if (!rootObj.contains("result") || rootObj["result"].isNull()) {
+                    hasError = true;
+                    errorMessage = "Component not found (null result)";
+                    status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+                }
+                // Check if result is empty object (sometimes happens for invalid IDs)
+                else if (rootObj["result"].isObject() && rootObj["result"].toObject().isEmpty()) {
+                    hasError = true;
+                    errorMessage = "Component data is empty";
+                    status->addDebugLog(QString("ERROR: %1").arg(errorMessage));
+                } else {
+                    // Data seems valid
+                    status->componentInfoRaw = componentInfoData;
+                    status->cinfoJsonRaw = componentInfoData;
+                    status->cadDataRaw = componentInfoData;
+                    status->cadJsonRaw = componentInfoData;
+                    status->addDebugLog(QString("Component info (including CAD) fetched for: %1, Size: %2 bytes")
+                                            .arg(m_componentId)
+                                            .arg(componentInfoData.size()));
+
+                    if (m_need3DModel && !hasError) {
+                        status->addDebugLog("Parsing CAD data to extract 3D model UUID...");
+                        // Re-use doc/rootObj since we already parsed it
+                        QJsonObject obj;
+                        if (rootObj.contains("result") && rootObj["result"].isObject()) {
+                            obj = rootObj["result"].toObject();
+                        } else {
+                            obj = rootObj;
+                        }
+
+                        if (!fetch3DModelData(status)) {
+                            // 3D model fetch failure is not fatal for the whole component
+                        }
                     }
                 }
             }
         }
-    }
+    }  // end of else (complete fetch mode)
 
     // 不要删除或清空 m_ownNetworkManager
     m_ownNetworkManager = nullptr;  // 解除引用，防止析构函数误删（虽然析构函数已修改，但为了安全）

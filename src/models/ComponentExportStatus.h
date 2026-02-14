@@ -58,6 +58,7 @@ struct ComponentExportStatus {
 
     QStringList debugLog;
     bool need3DModel = false;
+    bool fetch3DOnly = false;  // 是否是仅获取 3D 模式（符号和封装已从预加载数据复用）
 
     struct NetworkDiagnostics {
         QString url;

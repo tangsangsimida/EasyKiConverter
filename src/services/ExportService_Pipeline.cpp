@@ -167,7 +167,8 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
     }
 
     QMutexLocker locker(m_mutex);
-    qDebug() << "Fetch completed for component:" << status->componentId << "Success:" << status->fetchSuccess;
+    qDebug() << "Fetch completed for component:" << status->componentId << "Success:" << status->fetchSuccess
+             << "fetch3DOnly:" << status->fetch3DOnly;
     m_pipelineProgress.fetchCompleted++;
     m_completedStatuses.append(status);
 
@@ -193,16 +194,65 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                    status->model3DWritten);
         }
     } else {
-        m_failureCount++;
-        m_pipelineProgress.processCompleted++;
-        m_pipelineProgress.writeCompleted++;
-        emit componentExported(status->componentId,
-                               false,
-                               status->fetchMessage,
-                               static_cast<int>(PipelineStage::Fetch),
-                               status->symbolWritten,
-                               status->footprintWritten,
-                               status->model3DWritten);
+        // 特殊处理 fetch3DOnly 模式：如果 3D 获取失败但符号和封装数据完整，仍然继续处理
+        if (status->fetch3DOnly && status->symbolData && status->footprintData) {
+            bool hasSymbolData = !status->symbolData->pins().isEmpty();
+            bool hasFootprintData = !status->footprintData->info().name.isEmpty();
+
+            if (hasSymbolData && hasFootprintData) {
+                // 符号和封装数据完整，3D 模型获取失败，仍然继续处理
+                status->addDebugLog(
+                    "3D model fetch failed, but symbol/footprint data is complete. Continuing export...");
+                status->fetchSuccess = true;  // 标记为成功（符号和封装部分）
+                status->fetchMessage = "3D model fetch failed, but symbol/footprint OK";
+                status->need3DModel = false;  // 禁用 3D 导出，避免后续写入失败
+
+                if (m_fetchProcessQueue->push(status)) {
+                    emit componentExported(status->componentId,
+                                           true,
+                                           "Fetch completed (3D failed)",
+                                           static_cast<int>(PipelineStage::Fetch),
+                                           status->symbolWritten,
+                                           status->footprintWritten,
+                                           false);
+                } else {
+                    m_failureCount++;
+                    status->processSuccess = false;
+                    status->processMessage = "Export cancelled";
+                    emit componentExported(status->componentId,
+                                           false,
+                                           "Export cancelled",
+                                           static_cast<int>(PipelineStage::Fetch),
+                                           status->symbolWritten,
+                                           status->footprintWritten,
+                                           false);
+                }
+            } else {
+                // 符号或封装数据不完整，完全失败
+                m_failureCount++;
+                m_pipelineProgress.processCompleted++;
+                m_pipelineProgress.writeCompleted++;
+                emit componentExported(status->componentId,
+                                       false,
+                                       status->fetchMessage,
+                                       static_cast<int>(PipelineStage::Fetch),
+                                       status->symbolWritten,
+                                       status->footprintWritten,
+                                       status->model3DWritten);
+            }
+        } else {
+            // 非 fetch3DOnly 模式或数据不完整，完全失败
+            m_failureCount++;
+            m_pipelineProgress.processCompleted++;
+            m_pipelineProgress.writeCompleted++;
+            emit componentExported(status->componentId,
+                                   false,
+                                   status->fetchMessage,
+                                   static_cast<int>(PipelineStage::Fetch),
+                                   status->symbolWritten,
+                                   status->footprintWritten,
+                                   status->model3DWritten);
+        }
     }
 
     emit pipelineProgressUpdated(m_pipelineProgress);
@@ -324,37 +374,35 @@ void ExportServicePipeline::startFetchStage() {
 
         // 检查是否有预加载数据
         bool canUsePreloaded = false;
+        bool needFetch3DOnly = false;  // 是否只需要获取 3D 模型
         QSharedPointer<ComponentData> preloadedData;
 
         if (m_preloadedData.contains(componentId)) {
             preloadedData = m_preloadedData.value(componentId);
             if (preloadedData && preloadedData->isValid()) {
-                // 严格完整性检查: 确保预加载数据包含用户请求的所有导出项
-                bool isDataComplete = true;
+                // 检查符号和封装数据是否完整
+                // 注意：这里使用与 ComponentData::isValid() 一致的检查条件
+                // ComponentData::isValid() 只要求符号或封装数据存在即可
+                bool hasSymbolData = !m_options.exportSymbol || preloadedData->symbolData();
+                bool hasFootprintData = !m_options.exportFootprint || preloadedData->footprintData();
+                bool has3DData = !m_options.exportModel3D ||
+                                 (preloadedData->model3DData() && !preloadedData->model3DData()->uuid().isEmpty());
 
-                if (m_options.exportSymbol) {
-                    if (!preloadedData->symbolData() || preloadedData->symbolData()->pins().isEmpty()) {
-                        isDataComplete = false;
-                        status->addDebugLog("Preloaded symbol data incomplete, fallback to fetch.");
-                    }
-                }
-
-                if (m_options.exportFootprint) {
-                    if (!preloadedData->footprintData() || preloadedData->footprintData()->info().name.isEmpty()) {
-                        isDataComplete = false;
-                        status->addDebugLog("Preloaded footprint data incomplete or name missing, fallback to fetch.");
-                    }
-                }
-
-                if (m_options.exportModel3D) {
-                    if (!preloadedData->model3DData() || preloadedData->model3DData()->uuid().isEmpty()) {
-                        isDataComplete = false;
-                        status->addDebugLog("Preloaded 3D model data missing, fallback to fetch.");
-                    }
-                }
-
-                if (isDataComplete) {
+                if (hasSymbolData && hasFootprintData && has3DData) {
+                    // 所有数据都完整，直接使用预加载数据
                     canUsePreloaded = true;
+                } else if (hasSymbolData && hasFootprintData && m_options.exportModel3D && !has3DData) {
+                    // 符号和封装完整，只需要获取 3D 模型
+                    needFetch3DOnly = true;
+                    status->addDebugLog("Preloaded symbol/footprint data OK, only need to fetch 3D model.");
+                } else {
+                    // 数据不完整，需要完全重新获取
+                    if (!hasSymbolData) {
+                        status->addDebugLog("Preloaded symbol data missing, fallback to full fetch.");
+                    }
+                    if (!hasFootprintData) {
+                        status->addDebugLog("Preloaded footprint data missing, fallback to full fetch.");
+                    }
                 }
             }
         }
@@ -394,9 +442,47 @@ void ExportServicePipeline::startFetchStage() {
             continue;
         }
 
-        // 走到这里说明：数据未验证、验证失败或勾选了导出3D但验证数据缺失3D。
+        if (needFetch3DOnly) {
+            // 只需要获取 3D 模型，复用预加载的符号和封装数据
+            status->symbolData = preloadedData->symbolData();
+            status->footprintData = preloadedData->footprintData();
+
+            // 检查预加载数据中是否有 3D 模型 UUID
+            QString existing3DUuid;
+            if (preloadedData->model3DData() && !preloadedData->model3DData()->uuid().isEmpty()) {
+                existing3DUuid = preloadedData->model3DData()->uuid();
+                status->addDebugLog(QString("Using existing 3D UUID from preloaded data: %1").arg(existing3DUuid));
+            } else {
+                status->addDebugLog("No 3D UUID in preloaded data, will fetch CAD data to extract UUID.");
+            }
+
+            status->addDebugLog("Fetching 3D model only, reusing preloaded symbol/footprint data.");
+
+            // 标记这是仅获取 3D 模式（符号和封装已从预加载数据复用）
+            status->fetch3DOnly = true;
+
+            // 创建只获取 3D 模型的 Worker（传入已有的 UUID）
+            FetchWorker* worker =
+                new FetchWorker(componentId, m_networkAccessManager, true, true, existing3DUuid, this);
+            connect(worker,
+                    &FetchWorker::fetchCompleted,
+                    this,
+                    &ExportServicePipeline::handleFetchCompleted,
+                    Qt::QueuedConnection);
+            connect(worker, &FetchWorker::fetchCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
+
+            {
+                QMutexLocker locker(&m_workerMutex);
+                m_activeFetchWorkers.insert(worker);
+            }
+
+            m_fetchThreadPool->start(worker);
+            continue;
+        }
+
+        // 走到这里说明：数据未验证、验证失败或数据不完整。
         // 这时不是显示失败，而是强制发起后台异步抓取，确保即使未手动验证也能导出。
-        status->addDebugLog("Component data incomplete or unvalidated, starting background fetch...");
+        status->addDebugLog("Component data incomplete or unvalidated, starting full fetch...");
 
         FetchWorker* worker = new FetchWorker(componentId, m_networkAccessManager, m_options.exportModel3D, this);
         connect(worker,
