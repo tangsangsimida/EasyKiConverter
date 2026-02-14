@@ -5,6 +5,7 @@
 #include "core/kicad/ExporterSymbol.h"
 #include "models/FootprintDataSerializer.h"
 #include "models/SymbolDataSerializer.h"
+#include "utils/PathSecurity.h"
 
 #include <QDateTime>
 #include <QDebug>
@@ -64,6 +65,18 @@ void WriteWorker::run() {
     writeTimer.start();
 
     m_status->addDebugLog(QString("WriteWorker started for component: %1").arg(m_status->componentId));
+
+    // 安全检查：验证输出路径和临时目录是否安全
+    // 假设输出路径必须在应用有权限的某个基准目录下（这里暂不强制基准，只检查路径格式）
+    // 实际上，更重要的是检查 m_tempDir 是否在 m_outputPath 内，或者至少是安全的
+    if (!PathSecurity::isSafePath(m_tempDir, m_outputPath)) {
+         m_status->writeDurationMs = writeTimer.elapsed();
+         m_status->writeSuccess = false;
+         m_status->writeMessage = "Security Error: Temp dir is outside output path";
+         m_status->addDebugLog(QString("SECURITY ERROR: Temp dir %1 is not within Output path %2").arg(m_tempDir, m_outputPath));
+         emit writeCompleted(m_status);
+         return;
+    }
 
     // 初始化所有写入状态
     m_status->symbolWritten = false;
@@ -243,7 +256,7 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
         }
     }
 
-    QString footprintName = status.footprintData->info().name;
+    QString footprintName = PathSecurity::sanitizeFilename(status.footprintData->info().name);
     QString filePath = QString("%1/%2.kicad_mod").arg(footprintLibPath, footprintName);
 
     // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
@@ -332,6 +345,7 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     }
 
     QString footprintName = status.footprintData ? status.footprintData->info().name : status.componentId;
+    footprintName = PathSecurity::sanitizeFilename(footprintName);
 
     bool wrlSuccess = false;
     bool stepSuccess = false;

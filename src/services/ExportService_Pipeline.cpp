@@ -3,6 +3,7 @@
 #include "workers/FetchWorker.h"
 #include "workers/ProcessWorker.h"
 #include "workers/WriteWorker.h"
+#include "utils/PathSecurity.h"
 
 #include <QDateTime>
 #include <QDebug>
@@ -694,13 +695,11 @@ void ExportServicePipeline::checkPipelineCompletion() {
 
     // 2. 清理临时文件夹（无论合并是否成功都要清理）
     if (!m_tempDir.isEmpty()) {
-        QDir tempDir(m_tempDir);
-        if (tempDir.exists()) {
-            if (tempDir.removeRecursively()) {
-                qDebug() << "Temp folder removed:" << m_tempDir;
-            } else {
-                qWarning() << "Failed to remove temp folder:" << m_tempDir;
-            }
+        // 使用安全删除，防止意外的大规模删除
+        if (PathSecurity::safeRemoveRecursively(m_tempDir)) {
+            qDebug() << "Temp folder removed safely:" << m_tempDir;
+        } else {
+            qWarning() << "Failed to remove temp folder (or aborted for security):" << m_tempDir;
         }
     }
     m_tempDir.clear();

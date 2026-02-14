@@ -15,6 +15,7 @@ add_library(EasyKiConverterLib STATIC)
 target_link_libraries(EasyKiConverterLib
     PRIVATE
         EasyKiConverterLogging
+        EasyKiConverterSafeUtils
         EasyKiConverterModels
         EasyKiConverterCore
         EasyKiConverterWorkers

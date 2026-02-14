@@ -4,6 +4,7 @@
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
+#include "utils/PathSecurity.h"
 
 #include <QDebug>
 #include <QDir>
