@@ -118,6 +118,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                     // 这是一个嵌套的符号定义（子符号
                     subSymbolNames.insert(symbolName);
                     qDebug() << "Found sub-symbol:" << symbolName << "inside parent symbol";
+                    braceCount++;  // 增加括号计数以进入子符号定义
                 } else {
                     // 这是一个顶层符号定位
                     currentSymbolName = symbolName;
