@@ -31,6 +31,7 @@ WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
                          bool exportFootprint,
                          bool exportModel3D,
                          bool debugMode,
+                         const QString& tempDir,
                          QObject* parent)
     : QObject(parent)
     , m_status(status)
@@ -40,6 +41,7 @@ WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
     , m_exportFootprint(exportFootprint)
     , m_exportModel3D(exportModel3D)
     , m_debugMode(debugMode)
+    , m_tempDir(tempDir)
     , m_symbolExporter()
     , m_footprintExporter()
     , m_model3DExporter()
@@ -172,9 +174,10 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
     // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
     qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
     qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
+    // 使用统一的临时文件夹
     QString tempFilePath =
-        QString("%1/%2_%3_%4.kicad_sym.tmp").arg(m_outputPath, status.componentId).arg(threadId).arg(timestamp);
-    QString finalFilePath = QString("%1/%2.kicad_sym").arg(m_outputPath, status.componentId);
+        QString("%1/%2_%3_%4.kicad_sym.tmp").arg(m_tempDir, status.componentId).arg(threadId).arg(timestamp);
+    QString finalFilePath = QString("%1/%2.kicad_sym").arg(m_tempDir, status.componentId);
 
     // 先写入临时文件
     if (!m_symbolExporter.exportSymbol(*status.symbolData, tempFilePath)) {
@@ -246,8 +249,9 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
     qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
     qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
+    // 使用统一的临时文件夹
     QString tempFilePath =
-        QString("%1/%2_%3_%4.kicad_mod.tmp").arg(footprintLibPath, footprintName).arg(threadId).arg(timestamp);
+        QString("%1/%2_%3_%4.kicad_mod.tmp").arg(m_tempDir, footprintName).arg(threadId).arg(timestamp);
 
     QString model3DWrlPath;
     QString model3DStepPath;
@@ -338,8 +342,8 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
     qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
     qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
-    QString wrlTempFilePath =
-        QString("%1/%2_%3_%4.wrl.tmp").arg(modelsDirPath, footprintName).arg(threadId).arg(timestamp);
+    // 使用统一的临时文件夹
+    QString wrlTempFilePath = QString("%1/%2_%3_%4.wrl.tmp").arg(m_tempDir, footprintName).arg(threadId).arg(timestamp);
 
     wrlSuccess = m_model3DExporter.exportToWrl(*status.model3DData, wrlTempFilePath);
 
@@ -374,8 +378,9 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
         // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
         qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
         qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
+        // 使用统一的临时文件夹
         QString stepTempFilePath =
-            QString("%1/%2_%3_%4.step.tmp").arg(modelsDirPath, footprintName).arg(threadId).arg(timestamp);
+            QString("%1/%2_%3_%4.step.tmp").arg(m_tempDir, footprintName).arg(threadId).arg(timestamp);
 
         QFile stepFile(stepTempFilePath);
         if (stepFile.open(QIODevice::WriteOnly)) {

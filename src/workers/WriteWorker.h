@@ -40,6 +40,7 @@ public:
                          bool exportFootprint,
                          bool exportModel3D,
                          bool debugMode,
+                         const QString& tempDir,  // 新增参数
                          QObject* parent = nullptr);
 
     /**
@@ -108,6 +109,7 @@ private:
     bool m_exportFootprint;
     bool m_exportModel3D;
     bool m_debugMode;
+    QString m_tempDir;  // 新增成员
 
     ExporterSymbol m_symbolExporter;
     ExporterFootprint m_footprintExporter;

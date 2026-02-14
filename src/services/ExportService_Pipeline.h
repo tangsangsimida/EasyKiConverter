@@ -188,8 +188,10 @@ private:
     QThreadPool* m_writeThreadPool;    // 写入线程池（磁盘I/O密集型，8个线程）
 
     // 线程安全队列（使用 QSharedPointer 管理生命周期，防止 Use-after-free）
-    QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>> m_fetchProcessQueue;  // 抓取->处理队列
-    QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>> m_processWriteQueue;  // 处理->写入队列
+    QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>>
+        m_fetchProcessQueue;  // 抓取->处理队列
+    QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>>
+        m_processWriteQueue;  // 处理->写入队列
 
     // 网络访问管理器（共享）
     QNetworkAccessManager* m_networkAccessManager;
@@ -214,8 +216,8 @@ private:
     // 预加载的数据
     QMap<QString, QSharedPointer<ComponentData>> m_preloadedData;
 
-    // 临时文件列表（用于合并符号库）
-    QStringList m_tempSymbolFiles;
+    // 临时文件夹路径
+    QString m_tempDir;
 
     // 符号数据列表（用于合并符号库）
     QList<SymbolData> m_symbols;
