@@ -56,6 +56,16 @@ void FetchWorker::run() {
     status->componentId = m_componentId;
     status->need3DModel = m_need3DModel;
 
+    // 早期取消检查
+    if (m_isAborted.loadRelaxed()) {
+        status->fetchSuccess = false;
+        status->fetchMessage = "Export cancelled";
+        status->isCancelled = true;
+        status->addDebugLog(QString("FetchWorker cancelled early for component: %1").arg(m_componentId));
+        emit fetchCompleted(status);
+        return;
+    }
+
     if (m_fetch3DOnly) {
         status->addDebugLog(QString("FetchWorker started for 3D model only: %1").arg(m_componentId));
     } else {

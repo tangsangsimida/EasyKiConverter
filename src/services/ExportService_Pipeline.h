@@ -116,21 +116,24 @@ signals:
 private slots:
     /**
      * @brief 处理抓取完成
-     * @param status 导出状态（使用 QSharedPointer 避免拷贝）
+     * @param status 导出状态
+     * @param worker 工作线程指针
      */
-    void handleFetchCompleted(QSharedPointer<ComponentExportStatus> status);
+    void handleFetchCompleted(QSharedPointer<ComponentExportStatus> status, class FetchWorker* worker);
 
     /**
      * @brief 处理处理完成
-     * @param status 导出状态（使用 QSharedPointer 避免拷贝）
+     * @param status 导出状态
+     * @param worker 工作线程指针
      */
-    void handleProcessCompleted(QSharedPointer<ComponentExportStatus> status);
+    void handleProcessCompleted(QSharedPointer<ComponentExportStatus> status, class ProcessWorker* worker);
 
     /**
      * @brief 处理写入完成
-     * @param status 导出状态（使用 QSharedPointer 避免拷贝）
+     * @param status 导出状态
+     * @param worker 工作线程指针
      */
-    void handleWriteCompleted(QSharedPointer<ComponentExportStatus> status);
+    void handleWriteCompleted(QSharedPointer<ComponentExportStatus> status, class WriteWorker* worker);
 
 private:
     /**

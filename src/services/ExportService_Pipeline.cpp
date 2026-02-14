@@ -161,17 +161,22 @@ void ExportServicePipeline::setPreloadedData(const QMap<QString, QSharedPointer<
     m_preloadedData = data;
 }
 
-void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportStatus> status) {
-    if (FetchWorker* worker = qobject_cast<FetchWorker*>(sender())) {
+void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportStatus> status, FetchWorker* worker) {
+    if (worker) {
         QMutexLocker locker(&m_workerMutex);
         m_activeFetchWorkers.remove(worker);
     }
 
     QMutexLocker locker(m_mutex);
+    if (!m_isPipelineRunning) return;
+
     qDebug() << "Fetch completed for component:" << status->componentId << "Success:" << status->fetchSuccess
              << "fetch3DOnly:" << status->fetch3DOnly;
     m_pipelineProgress.fetchCompleted++;
     m_completedStatuses.append(status);
+
+    // 安全检查队列
+    if (!m_fetchProcessQueue) return;
 
     if (status->fetchSuccess) {
         if (m_fetchProcessQueue->push(status)) {
@@ -260,8 +265,8 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
     checkPipelineCompletion();
 }
 
-void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExportStatus> status) {
-    if (ProcessWorker* worker = qobject_cast<ProcessWorker*>(sender())) {
+void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExportStatus> status, ProcessWorker* worker) {
+    if (worker) {
         QMutexLocker locker(&m_workerMutex);
         m_activeProcessWorkers.remove(worker);
     }
@@ -312,8 +317,8 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
     checkPipelineCompletion();
 }
 
-void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportStatus> status) {
-    if (WriteWorker* worker = qobject_cast<WriteWorker*>(sender())) {
+void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportStatus> status, WriteWorker* worker) {
+    if (worker) {
         QMutexLocker locker(&m_workerMutex);
         m_activeWriteWorkers.remove(worker);
     }
@@ -456,7 +461,20 @@ void ExportServicePipeline::startFetchStage() {
             if (m_processWriteQueue->push(status)) {
                 // 成功推送到写入队列
             } else {
+                // 关键修复：如果推送失败，必须增加写入完成计数并发送失败信号，否则流水线会卡死
                 m_failureCount++;
+                m_pipelineProgress.writeCompleted++;
+                status->writeSuccess = false;
+                status->writeMessage = "Failed to push preloaded data to write queue";
+                emit componentExported(status->componentId,
+                                       false,
+                                       "Export failed (Queue Error)",
+                                       static_cast<int>(PipelineStage::Write),
+                                       status->symbolWritten,
+                                       status->footprintWritten,
+                                       status->model3DWritten);
+                emit pipelineProgressUpdated(m_pipelineProgress);
+                checkPipelineCompletion();
             }
 
             continue;
@@ -464,11 +482,18 @@ void ExportServicePipeline::startFetchStage() {
 
         FetchWorker* worker =
             new FetchWorker(componentId, m_networkAccessManager, m_options.exportModel3D, false, QString(), nullptr);
-        connect(worker,
-                &FetchWorker::fetchCompleted,
-                this,
-                &ExportServicePipeline::handleFetchCompleted,
-                Qt::QueuedConnection);
+        
+        // 标准化生命周期管理：确保 deleteLater 在主线程执行
+        worker->moveToThread(this->thread());
+        
+        // 使用 Lambda 捕获 worker 指针，避免在槽函数中使用 sender()
+        // Context 设为 this，确保 Service 销毁时连接自动断开，避免回调悬空指针
+        connect(worker, &FetchWorker::fetchCompleted, this,
+            [this, worker](QSharedPointer<ComponentExportStatus> status) {
+                handleFetchCompleted(status, worker);
+            }, Qt::QueuedConnection);
+                
+        // 让 Worker 在信号处理完成后自动销毁
         connect(worker, &FetchWorker::fetchCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
 
         {
@@ -514,22 +539,17 @@ void ExportServicePipeline::startProcessStage() {
                     m_activeProcessWorkers.insert(worker);
                 }
 
-                connect(worker,
-                        &ProcessWorker::processCompleted,
-                        this,
-                        &ExportServicePipeline::handleProcessCompleted,
-                        Qt::QueuedConnection);
+                // 使用 Lambda 捕获 worker 指针，避免在槽函数中使用 sender()
+                // Context 设为 this，确保 Service 销毁时连接自动断开
+                connect(worker, &ProcessWorker::processCompleted, this,
+                    [this, worker](QSharedPointer<ComponentExportStatus> status) {
+                        handleProcessCompleted(status, worker);
+                    }, Qt::QueuedConnection);
                 
                 // 让 Worker 在信号处理完成后自动销毁
                 connect(worker, &ProcessWorker::processCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
                 
                 worker->run();
-                
-                // 注销活跃 worker
-                {
-                    QMutexLocker locker(&m_workerMutex);
-                    m_activeProcessWorkers.remove(worker);
-                }
             }
         }));
     }
@@ -575,22 +595,17 @@ void ExportServicePipeline::startWriteStage() {
                     m_activeWriteWorkers.insert(worker);
                 }
 
-                connect(worker,
-                        &WriteWorker::writeCompleted,
-                        this,
-                        &ExportServicePipeline::handleWriteCompleted,
-                        Qt::QueuedConnection);
+                // 使用 Lambda 捕获 worker 指针，避免在槽函数中使用 sender()
+                // Context 设为 this，确保 Service 销毁时连接自动断开
+                connect(worker, &WriteWorker::writeCompleted, this,
+                    [this, worker](QSharedPointer<ComponentExportStatus> status) {
+                        handleWriteCompleted(status, worker);
+                    }, Qt::QueuedConnection);
                 
                 // 让 Worker 在信号处理完成后自动销毁
                 connect(worker, &WriteWorker::writeCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
                 
                 worker->run();
-                
-                // 注销活跃 worker
-                {
-                    QMutexLocker locker(&m_workerMutex);
-                    m_activeWriteWorkers.remove(worker);
-                }
             }
         }));
     }
@@ -617,7 +632,7 @@ void ExportServicePipeline::checkPipelineCompletion() {
     // 处理阶段完成检查
     bool processDone = m_pipelineProgress.processCompleted >= m_pipelineProgress.totalTasks;
     if (m_isCancelled.loadAcquire()) {
-        bool processQueueEmpty = m_fetchProcessQueue ? m_fetchProcessQueue->isEmpty() : true;
+        bool processQueueEmpty = m_processWriteQueue ? m_processWriteQueue->isEmpty() : true;
         if (processQueueEmpty) processDone = true;
     }
     if (processDone && m_processWriteQueue && !m_processWriteQueue->isClosed())
