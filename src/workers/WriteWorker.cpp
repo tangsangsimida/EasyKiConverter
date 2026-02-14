@@ -6,6 +6,7 @@
 #include "models/FootprintDataSerializer.h"
 #include "models/SymbolDataSerializer.h"
 
+#include <QDateTime>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -14,7 +15,6 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QThread>
-#include <QDateTime>
 #include <QThreadPool>
 #include <QWaitCondition>
 
@@ -172,10 +172,8 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
     // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
     qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
     qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
-    QString tempFilePath = QString("%1/%2_%3_%4.kicad_sym.tmp")
-                                .arg(m_outputPath, status.componentId)
-                                .arg(threadId)
-                                .arg(timestamp);
+    QString tempFilePath =
+        QString("%1/%2_%3_%4.kicad_sym.tmp").arg(m_outputPath, status.componentId).arg(threadId).arg(timestamp);
     QString finalFilePath = QString("%1/%2.kicad_sym").arg(m_outputPath, status.componentId);
 
     // 先写入临时文件
@@ -205,7 +203,8 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
 
         // 原子性地重命名临时文件到最终文件
         if (!QFile::rename(tempFilePath, finalFilePath)) {
-            status.addDebugLog(QString("ERROR: Failed to rename symbol file: %1 -> %2").arg(tempFilePath, finalFilePath));
+            status.addDebugLog(
+                QString("ERROR: Failed to rename symbol file: %1 -> %2").arg(tempFilePath, finalFilePath));
             QFile::remove(tempFilePath);  // 清理临时文件
             return false;
         }
@@ -247,10 +246,8 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
     qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
     qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
-    QString tempFilePath = QString("%1/%2_%3_%4.kicad_mod.tmp")
-                                .arg(footprintLibPath, footprintName)
-                                .arg(threadId)
-                                .arg(timestamp);
+    QString tempFilePath =
+        QString("%1/%2_%3_%4.kicad_mod.tmp").arg(footprintLibPath, footprintName).arg(threadId).arg(timestamp);
 
     QString model3DWrlPath;
     QString model3DStepPath;
@@ -341,10 +338,8 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
     qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
     qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
-    QString wrlTempFilePath = QString("%1/%2_%3_%4.wrl.tmp")
-                                   .arg(modelsDirPath, footprintName)
-                                   .arg(threadId)
-                                   .arg(timestamp);
+    QString wrlTempFilePath =
+        QString("%1/%2_%3_%4.wrl.tmp").arg(modelsDirPath, footprintName).arg(threadId).arg(timestamp);
 
     wrlSuccess = m_model3DExporter.exportToWrl(*status.model3DData, wrlTempFilePath);
 
@@ -379,37 +374,36 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
         // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
         qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
         qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
-        QString stepTempFilePath = QString("%1/%2_%3_%4.step.tmp")
-                                       .arg(modelsDirPath, footprintName)
-                                       .arg(threadId)
-                                       .arg(timestamp);
+        QString stepTempFilePath =
+            QString("%1/%2_%3_%4.step.tmp").arg(modelsDirPath, footprintName).arg(threadId).arg(timestamp);
 
         QFile stepFile(stepTempFilePath);
         if (stepFile.open(QIODevice::WriteOnly)) {
-                        stepFile.write(status.model3DStepRaw);
-                        stepFile.close();
-            
-                        if (QFile::exists(stepTempFilePath)) {
-                            // 使用互斥锁保护文件删除和重命名操作
-                            QMutexLocker locker(&s_fileWriteMutex);
-            
-                            // 删除旧文件（如果存在）
-                            if (QFile::exists(stepFilePath) && !QFile::remove(stepFilePath)) {
-                                status.addDebugLog(QString("WARNING: Failed to remove old STEP file: %1").arg(stepFilePath));
-                            }
-                            // 原子性地重命名
-                            if (QFile::rename(stepTempFilePath, stepFilePath)) {
-                                status.addDebugLog(QString("3D model STEP file written atomically: %1").arg(stepFilePath));
-                                stepSuccess = true;
-                            } else {
-                                status.addDebugLog(QString("ERROR: Failed to rename STEP file: %1 -> %2").arg(stepTempFilePath, stepFilePath));
-                                QFile::remove(stepTempFilePath);
-                            }
-                        }
-                    } else {
-                        status.addDebugLog(QString("ERROR: Failed to write STEP file: %1").arg(stepTempFilePath));
-                        // STEP 文件失败不影响整体 3D 模型成功
-                    }
+            stepFile.write(status.model3DStepRaw);
+            stepFile.close();
+
+            if (QFile::exists(stepTempFilePath)) {
+                // 使用互斥锁保护文件删除和重命名操作
+                QMutexLocker locker(&s_fileWriteMutex);
+
+                // 删除旧文件（如果存在）
+                if (QFile::exists(stepFilePath) && !QFile::remove(stepFilePath)) {
+                    status.addDebugLog(QString("WARNING: Failed to remove old STEP file: %1").arg(stepFilePath));
+                }
+                // 原子性地重命名
+                if (QFile::rename(stepTempFilePath, stepFilePath)) {
+                    status.addDebugLog(QString("3D model STEP file written atomically: %1").arg(stepFilePath));
+                    stepSuccess = true;
+                } else {
+                    status.addDebugLog(
+                        QString("ERROR: Failed to rename STEP file: %1 -> %2").arg(stepTempFilePath, stepFilePath));
+                    QFile::remove(stepTempFilePath);
+                }
+            }
+        } else {
+            status.addDebugLog(QString("ERROR: Failed to write STEP file: %1").arg(stepTempFilePath));
+            // STEP 文件失败不影响整体 3D 模型成功
+        }
     }
 
     // 只有在 WRL 文件成功导出且存在时才设置 model3DWritten 标志
