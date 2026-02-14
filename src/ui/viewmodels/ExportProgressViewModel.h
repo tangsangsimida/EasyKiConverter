@@ -231,6 +231,7 @@ private:
     int m_successModel3DCount;
     int m_failureCount;
     QSystemTrayIcon* m_systemTrayIcon;
+    QMenu* m_trayMenu;
 };
 }  // namespace EasyKiConverter
 

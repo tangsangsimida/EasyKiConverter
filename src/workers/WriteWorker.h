@@ -6,6 +6,7 @@
 #include "core/kicad/ExporterSymbol.h"
 #include "models/ComponentExportStatus.h"
 
+#include <QMutex>
 #include <QObject>
 #include <QRunnable>
 
@@ -112,6 +113,9 @@ private:
     ExporterFootprint m_footprintExporter;
     Exporter3DModel m_model3DExporter;
     QAtomicInt m_isAborted;  // 取消标志 (v3.0.5+)
+
+    // 静态互斥锁，保护文件写入操作，防止并发竞态条件
+    static QMutex s_fileWriteMutex;
 };
 
 }  // namespace EasyKiConverter

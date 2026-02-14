@@ -39,7 +39,8 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
     , m_usePipelineMode(false)
     , m_pendingUpdate(false)
     , m_hasStatistics(false)
-    , m_systemTrayIcon(nullptr) {
+    , m_systemTrayIcon(nullptr)
+    , m_trayMenu(nullptr) {
     // 初始化节流定时器
     m_throttleTimer = new QTimer(this);
     m_throttleTimer->setInterval(100);
@@ -90,12 +91,23 @@ void ExportProgressViewModel::setUsePipelineMode(bool usePipeline) {
 }
 
 ExportProgressViewModel::~ExportProgressViewModel() {
+    // 停止并删除定时器
     if (m_throttleTimer) {
         m_throttleTimer->stop();
+        m_throttleTimer->deleteLater();
+        m_throttleTimer = nullptr;
     }
+
+    // 清理系统托盘图标和菜单
     if (m_systemTrayIcon) {
         m_systemTrayIcon->hide();
+        if (m_trayMenu) {
+            m_systemTrayIcon->setContextMenu(nullptr);
+            m_trayMenu->deleteLater();
+            m_trayMenu = nullptr;
+        }
         m_systemTrayIcon->deleteLater();
+        m_systemTrayIcon = nullptr;
     }
 }
 
@@ -676,10 +688,10 @@ void ExportProgressViewModel::initializeSystemTrayIcon() {
     // 设置工具提示
     m_systemTrayIcon->setToolTip(QObject::tr("EasyKiConverter - LCSC 转换工具"));
 
-    // 创建托盘菜单
-    QMenu* trayMenu = new QMenu();
+    // 创建托盘菜单并保存指针
+    m_trayMenu = new QMenu();
 
-    QAction* showAction = trayMenu->addAction(QObject::tr("显示窗口"));
+    QAction* showAction = m_trayMenu->addAction(QObject::tr("显示窗口"));
     connect(showAction, &QAction::triggered, this, []() {
         qDebug() << "Show window action triggered";
         // 显示主窗口（如果最小化或隐藏）
@@ -693,13 +705,13 @@ void ExportProgressViewModel::initializeSystemTrayIcon() {
         }
     });
 
-    QAction* quitAction = trayMenu->addAction(QObject::tr("退出"));
+    QAction* quitAction = m_trayMenu->addAction(QObject::tr("退出"));
     connect(quitAction, &QAction::triggered, this, []() {
         qDebug() << "Quit action triggered";
         QGuiApplication::quit();
     });
 
-    m_systemTrayIcon->setContextMenu(trayMenu);
+    m_systemTrayIcon->setContextMenu(m_trayMenu);
 
     // 连接点击事件：左键点击显示窗口
     connect(m_systemTrayIcon, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason reason) {
