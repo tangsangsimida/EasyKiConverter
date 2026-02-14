@@ -88,17 +88,18 @@ void EasyedaApi::fetchCadData(const QString& lcscId) {
 
     // 为每个请求创建独立的 NetworkUtils 实例，支持并行请求
     NetworkUtils* networkUtils = new NetworkUtils(nullptr);
-    
+
     // 跟踪活跃请求
     {
         QMutexLocker locker(&m_requestsMutex);
         m_activeRequests.append(QPointer<INetworkAdapter>(networkUtils));
     }
-    
+
     // 连接信号
-    connect(networkUtils, &INetworkAdapter::requestSuccess, this, [this, networkUtils, lcscId](const QJsonObject& data) {
-        handleRequestSuccess(networkUtils, lcscId, data);
-    });
+    connect(
+        networkUtils, &INetworkAdapter::requestSuccess, this, [this, networkUtils, lcscId](const QJsonObject& data) {
+            handleRequestSuccess(networkUtils, lcscId, data);
+        });
     connect(networkUtils, &INetworkAdapter::requestError, this, [this, networkUtils, lcscId](const QString& error) {
         handleRequestError(networkUtils, lcscId, error);
     });
@@ -116,17 +117,18 @@ void EasyedaApi::fetch3DModelObj(const QString& uuid) {
     // 为每个请求创建独立的 NetworkUtils 实例，支持并行请求
     NetworkUtils* networkUtils = new NetworkUtils(nullptr);
     networkUtils->setExpectBinaryData(true);
-    
+
     // 跟踪活跃请求
     {
         QMutexLocker locker(&m_requestsMutex);
         m_activeRequests.append(QPointer<INetworkAdapter>(networkUtils));
     }
-    
+
     // 连接信号
-    connect(networkUtils, &INetworkAdapter::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray& data) {
-        handleBinaryDataFetched(networkUtils, uuid, data);
-    });
+    connect(
+        networkUtils, &INetworkAdapter::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray& data) {
+            handleBinaryDataFetched(networkUtils, uuid, data);
+        });
     connect(networkUtils, &INetworkAdapter::requestError, this, [this, networkUtils, uuid](const QString& error) {
         emit fetchError(uuid, error);
         {
@@ -148,22 +150,23 @@ void EasyedaApi::fetch3DModelStep(const QString& uuid) {
     // 为每个请求创建独立的 NetworkUtils 实例，支持并行请求
     NetworkUtils* networkUtils = new NetworkUtils(nullptr);
     networkUtils->setExpectBinaryData(true);
-    
+
     // 跟踪活跃请求
     {
         QMutexLocker locker(&m_requestsMutex);
         m_activeRequests.append(QPointer<INetworkAdapter>(networkUtils));
     }
-    
+
     // 连接信号
-    connect(networkUtils, &INetworkAdapter::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray& data) {
-        emit model3DFetched(uuid, data);
-        {
-            QMutexLocker locker(&m_requestsMutex);
-            m_activeRequests.removeOne(QPointer<INetworkAdapter>(networkUtils));
-        }
-        networkUtils->deleteLater();
-    });
+    connect(
+        networkUtils, &INetworkAdapter::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray& data) {
+            emit model3DFetched(uuid, data);
+            {
+                QMutexLocker locker(&m_requestsMutex);
+                m_activeRequests.removeOne(QPointer<INetworkAdapter>(networkUtils));
+            }
+            networkUtils->deleteLater();
+        });
     connect(networkUtils, &INetworkAdapter::requestError, this, [this, networkUtils, uuid](const QString& error) {
         emit fetchError(uuid, error);
         {

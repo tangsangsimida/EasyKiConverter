@@ -4,9 +4,13 @@
 #include "IAppender.h"
 #include "LogLevel.h"
 
+#include <QAtomicInt>
 #include <QHash>
 #include <QMutex>
+#include <QQueue>
 #include <QString>
+#include <QThread>
+#include <QWaitCondition>
 
 namespace EasyKiConverter {
 
@@ -20,14 +24,22 @@ namespace EasyKiConverter {
  * - Warn:  黄色
  * - Error: 红色
  * - Fatal: 红底白字
+ * 
+ * 支持异步输出模式，减少对主线程的性能影响。
  */
 class ConsoleAppender : public IAppender {
 public:
     /**
      * @brief 构造函数
      * @param useColors 是否启用彩色输出
+     * @param async 是否启用异步输出（默认 false）
      */
-    explicit ConsoleAppender(bool useColors = true);
+    explicit ConsoleAppender(bool useColors = true, bool async = false);
+
+    /**
+     * @brief 析构函数
+     */
+    ~ConsoleAppender() override;
 
     /**
      * @brief 输出日志到控制台
@@ -38,6 +50,11 @@ public:
      * @brief 刷新输出流
      */
     void flush() override;
+
+    /**
+     * @brief 关闭输出器
+     */
+    void close() override;
 
     /**
      * @brief 启用/禁用彩色输出
@@ -63,9 +80,27 @@ public:
      */
     void setLevelBackground(LogLevel level, const QString& bgColorCode);
 
+    /**
+     * @brief 设置异步队列最大大小
+     */
+    void setMaxQueueSize(int size) {
+        m_maxQueueSize = size;
+    }
+
 private:
     bool m_useColors;
+    bool m_async;
     QMutex m_mutex;
+
+    // 异步写入相关
+    QThread* m_writerThread = nullptr;
+    QMutex m_queueMutex;
+    QQueue<QByteArray> m_writeQueue;
+    QWaitCondition m_queueCondition;
+    QAtomicInt m_running;
+    QAtomicInt m_flushRequested;
+    QAtomicInt m_queueOverflow;
+    int m_maxQueueSize = 1000;  // 最大队列大小
 
     // ANSI 颜色代码
     QHash<LogLevel, QString> m_levelColors;
@@ -89,6 +124,16 @@ private:
      * @brief 获取带颜色的字符串
      */
     QString colorize(const QString& text, LogLevel level) const;
+
+    /**
+     * @brief 异步写入线程函数
+     */
+    void writerThreadFunc();
+
+    /**
+     * @brief 直接写入控制台
+     */
+    void writeDirect(const QByteArray& data, bool isError);
 };
 
 }  // namespace EasyKiConverter

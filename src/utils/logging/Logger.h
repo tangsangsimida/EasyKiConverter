@@ -7,10 +7,12 @@
 #include "LogModule.h"
 #include "LogRecord.h"
 
+#include <QAtomicInt>
 #include <QHash>
 #include <QList>
 #include <QMutex>
 #include <QObject>
+#include <QReadWriteLock>
 #include <QSharedPointer>
 #include <QThreadStorage>
 
@@ -23,6 +25,11 @@ namespace EasyKiConverter {
  * - 管理全局日志级别和模块级别
  * - 分发日志到各个 Appender
  * - 提供线程安全的日志接口
+ * 
+ * 性能优化：
+ * - 使用原子变量存储全局日志级别，避免锁竞争
+ * - 使用读写锁保护模块级别映射
+ * - shouldLog() 快速路径无需获取锁
  */
 class Logger : public QObject {
     Q_OBJECT
@@ -42,7 +49,7 @@ public:
      * @brief 获取全局日志级别
      */
     LogLevel globalLevel() const {
-        return m_globalLevel;
+        return static_cast<LogLevel>(m_globalLevel.loadRelaxed());
     }
 
     /**
@@ -103,6 +110,8 @@ public:
 
     /**
      * @brief 检查是否应该记录日志（用于条件求值优化）
+     * 
+     * 性能优化：快速路径使用原子变量，无需获取锁
      */
     bool shouldLog(LogLevel level, LogModule module) const;
 
@@ -145,10 +154,16 @@ private:
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
 
-    LogLevel m_globalLevel = LogLevel::Info;
+    // 使用原子变量存储全局日志级别，实现无锁快速检查
+    mutable QAtomicInt m_globalLevel{static_cast<int>(LogLevel::Info)};
+
+    // 模块级别使用读写锁保护
     QHash<LogModule, LogLevel> m_moduleLevels;
+    mutable QReadWriteLock m_moduleLevelsLock;
+
+    // Appender 列表使用互斥锁保护
     QList<QSharedPointer<IAppender>> m_appenders;
-    mutable QMutex m_mutex;
+    mutable QMutex m_appendersMutex;
 
     // 线程本地存储的线程名称
     static QThreadStorage<QString> s_threadNames;

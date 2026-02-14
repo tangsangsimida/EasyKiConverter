@@ -36,11 +36,11 @@ void setupLogging(bool debugMode) {
     auto logger = Logger::instance();
 
     if (debugMode) {
-        // 调试模式：启用最详细的日志
-        logger->setGlobalLevel(LogLevel::Trace);
+        // 调试模式：启用 Debug 级别（不是 Trace，避免过多日志影响性能）
+        logger->setGlobalLevel(LogLevel::Debug);
 
-        // 控制台输出（彩色）
-        auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true);
+        // 控制台输出（彩色，异步模式减少性能影响）
+        auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
         consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::verbosePattern()));
         logger->addAppender(consoleAppender);
 
@@ -54,13 +54,13 @@ void setupLogging(bool debugMode) {
         fileAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::verbosePattern()));
         logger->addAppender(fileAppender);
 
-        LOG_INFO(LogModule::Core, "Debug mode enabled - logging to: {}", logPath);
+        LOG_INFO(LogModule::Core, "调试模式已启用 - 日志文件: {}", logPath);
     } else {
         // 正常模式：仅输出 Info 及以上级别
         logger->setGlobalLevel(LogLevel::Info);
 
-        // 仅控制台输出（不输出到文件）
-        auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true);
+        // 仅控制台输出（异步模式）
+        auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
         consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
         logger->addAppender(consoleAppender);
     }
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
         QIcon icon(iconPath);
         if (!icon.isNull()) {
             app.setWindowIcon(icon);
-            qDebug() << "Application icon set from:" << iconPath;
+            qDebug() << "应用程序图标已设置：" << iconPath;
             break;
         }
     }
@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
         &QQmlApplicationEngine::objectCreationFailed,
         &app,
         [](const QUrl& url) {
-            qCritical() << "Failed to create QML object from:" << url;
+            qCritical() << "创建QML对象失败：" << url;
             QCoreApplication::exit(-1);
         },
         Qt::QueuedConnection);
@@ -163,7 +163,7 @@ int main(int argc, char* argv[]) {
     engine.load(url);
 
     if (engine.rootObjects().isEmpty()) {
-        qCritical() << "CRITICAL: QML engine root objects are empty after load!";
+        qCritical() << "严重错误：QML引擎根对象加载后为空！";
         return -1;
     }
 

@@ -4,7 +4,9 @@
 
 #include <QDateTime>
 #include <QMutexLocker>
+#include <QReadLocker>
 #include <QThread>
+#include <QWriteLocker>
 
 namespace EasyKiConverter {
 
@@ -22,49 +24,48 @@ Logger::~Logger() {
 }
 
 void Logger::setGlobalLevel(LogLevel level) {
-    QMutexLocker locker(&m_mutex);
-    m_globalLevel = level;
+    m_globalLevel.storeRelaxed(static_cast<int>(level));
 }
 
 void Logger::setModuleLevel(LogModule module, LogLevel level) {
-    QMutexLocker locker(&m_mutex);
+    QWriteLocker locker(&m_moduleLevelsLock);
     m_moduleLevels[module] = level;
 }
 
 LogLevel Logger::moduleLevel(LogModule module) const {
-    QMutexLocker locker(&m_mutex);
-    return m_moduleLevels.value(module, m_globalLevel);
+    QReadLocker locker(&m_moduleLevelsLock);
+    return m_moduleLevels.value(module, static_cast<LogLevel>(m_globalLevel.loadRelaxed()));
 }
 
 void Logger::clearModuleLevel(LogModule module) {
-    QMutexLocker locker(&m_mutex);
+    QWriteLocker locker(&m_moduleLevelsLock);
     m_moduleLevels.remove(module);
 }
 
 void Logger::clearAllModuleLevels() {
-    QMutexLocker locker(&m_mutex);
+    QWriteLocker locker(&m_moduleLevelsLock);
     m_moduleLevels.clear();
 }
 
 void Logger::addAppender(QSharedPointer<IAppender> appender) {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_appendersMutex);
     if (!m_appenders.contains(appender)) {
         m_appenders.append(appender);
     }
 }
 
 void Logger::removeAppender(QSharedPointer<IAppender> appender) {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_appendersMutex);
     m_appenders.removeOne(appender);
 }
 
 void Logger::clearAppenders() {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_appendersMutex);
     m_appenders.clear();
 }
 
 QList<QSharedPointer<IAppender>> Logger::appenders() const {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_appendersMutex);
     return m_appenders;
 }
 
@@ -74,7 +75,7 @@ void Logger::log(LogLevel level,
                  const char* file,
                  const char* function,
                  int line) {
-    // 快速检查是否应该记录
+    // 快速检查是否应该记录（无锁快速路径）
     if (!shouldLog(level, module)) {
         return;
     }
@@ -104,7 +105,7 @@ void Logger::log(LogLevel level,
     emit logRecord(record);
 
     // 分发到各 Appender
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_appendersMutex);
     for (auto& appender : m_appenders) {
         QString formatted;
         if (appender->formatter()) {
@@ -117,23 +118,47 @@ void Logger::log(LogLevel level,
 }
 
 bool Logger::shouldLog(LogLevel level, LogModule module) const {
-    QMutexLocker locker(&m_mutex);
+    // 快速路径：先检查全局级别（使用原子变量，无锁）
+    int globalLvl = m_globalLevel.loadRelaxed();
+    if (static_cast<int>(level) < globalLvl) {
+        // 如果全局级别已经过滤掉了，直接返回
+        // 但还需要检查模块级别（可能模块级别更低）
 
-    // 获取模块级别，如果没有设置则使用全局级别
-    LogLevel effectiveLevel = m_moduleLevels.value(module, m_globalLevel);
+        // 检查模块级别（需要读锁）
+        QReadLocker locker(&m_moduleLevelsLock);
+        if (m_moduleLevels.isEmpty()) {
+            return false;  // 没有模块级别设置，全局过滤生效
+        }
 
-    return static_cast<int>(level) >= static_cast<int>(effectiveLevel);
+        auto it = m_moduleLevels.find(module);
+        if (it == m_moduleLevels.end()) {
+            return false;  // 该模块没有特定设置，全局过滤生效
+        }
+
+        // 模块有特定设置，使用模块级别
+        return static_cast<int>(level) >= static_cast<int>(it.value());
+    }
+
+    // 全局级别检查通过
+    // 但还需要检查模块是否有更严格的级别设置
+    QReadLocker locker(&m_moduleLevelsLock);
+    auto it = m_moduleLevels.find(module);
+    if (it != m_moduleLevels.end()) {
+        return static_cast<int>(level) >= static_cast<int>(it.value());
+    }
+
+    return true;  // 模块没有特定设置，使用全局结果
 }
 
 void Logger::flush() {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_appendersMutex);
     for (auto& appender : m_appenders) {
         appender->flush();
     }
 }
 
 void Logger::close() {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_appendersMutex);
     for (auto& appender : m_appenders) {
         appender->close();
     }
