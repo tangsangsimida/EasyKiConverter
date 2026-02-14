@@ -86,20 +86,25 @@ void EasyedaApi::fetchCadData(const QString& lcscId) {
         return;
     }
 
-    // 使用注入的 m_networkUtils 而不是创建新的 NetworkUtils
-    // 这样测试可以注入 MockNetworkAdapter
-    if (!m_networkUtils) {
-        emit fetchError(lcscId, "Network adapter not available");
-        return;
+    // 为每个请求创建独立的 NetworkUtils 实例，支持并行请求
+    NetworkUtils* networkUtils = new NetworkUtils(nullptr);
+    
+    // 跟踪活跃请求
+    {
+        QMutexLocker locker(&m_requestsMutex);
+        m_activeRequests.append(QPointer<INetworkAdapter>(networkUtils));
     }
-
-    resetRequestState();
-    m_currentLcscId = lcscId;
-    m_isFetching = true;
-    m_requestType = RequestType::CadData;
+    
+    // 连接信号
+    connect(networkUtils, &INetworkAdapter::requestSuccess, this, [this, networkUtils, lcscId](const QJsonObject& data) {
+        handleRequestSuccess(networkUtils, lcscId, data);
+    });
+    connect(networkUtils, &INetworkAdapter::requestError, this, [this, networkUtils, lcscId](const QString& error) {
+        handleRequestError(networkUtils, lcscId, error);
+    });
 
     QString apiUrl = buildComponentApiUrl(lcscId);
-    m_networkUtils->sendGetRequest(apiUrl);
+    networkUtils->sendGetRequest(apiUrl);
 }
 
 void EasyedaApi::fetch3DModelObj(const QString& uuid) {
@@ -108,18 +113,30 @@ void EasyedaApi::fetch3DModelObj(const QString& uuid) {
         return;
     }
 
-    if (!m_networkUtils) {
-        emit fetchError("Network adapter not available");
-        return;
+    // 为每个请求创建独立的 NetworkUtils 实例，支持并行请求
+    NetworkUtils* networkUtils = new NetworkUtils(nullptr);
+    networkUtils->setExpectBinaryData(true);
+    
+    // 跟踪活跃请求
+    {
+        QMutexLocker locker(&m_requestsMutex);
+        m_activeRequests.append(QPointer<INetworkAdapter>(networkUtils));
     }
+    
+    // 连接信号
+    connect(networkUtils, &INetworkAdapter::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray& data) {
+        handleBinaryDataFetched(networkUtils, uuid, data);
+    });
+    connect(networkUtils, &INetworkAdapter::requestError, this, [this, networkUtils, uuid](const QString& error) {
+        emit fetchError(uuid, error);
+        {
+            QMutexLocker locker(&m_requestsMutex);
+            m_activeRequests.removeOne(QPointer<INetworkAdapter>(networkUtils));
+        }
+        networkUtils->deleteLater();
+    });
 
-    resetRequestState();
-    m_currentUuid = uuid;
-    m_isFetching = true;
-    m_requestType = RequestType::Model3DObj;
-
-    m_networkUtils->setExpectBinaryData(true);
-    m_networkUtils->sendGetRequest(build3DModelObjUrl(uuid));
+    networkUtils->sendGetRequest(build3DModelObjUrl(uuid));
 }
 
 void EasyedaApi::fetch3DModelStep(const QString& uuid) {
@@ -128,18 +145,35 @@ void EasyedaApi::fetch3DModelStep(const QString& uuid) {
         return;
     }
 
-    if (!m_networkUtils) {
-        emit fetchError("Network adapter not available");
-        return;
+    // 为每个请求创建独立的 NetworkUtils 实例，支持并行请求
+    NetworkUtils* networkUtils = new NetworkUtils(nullptr);
+    networkUtils->setExpectBinaryData(true);
+    
+    // 跟踪活跃请求
+    {
+        QMutexLocker locker(&m_requestsMutex);
+        m_activeRequests.append(QPointer<INetworkAdapter>(networkUtils));
     }
+    
+    // 连接信号
+    connect(networkUtils, &INetworkAdapter::binaryDataFetched, this, [this, networkUtils, uuid](const QByteArray& data) {
+        emit model3DFetched(uuid, data);
+        {
+            QMutexLocker locker(&m_requestsMutex);
+            m_activeRequests.removeOne(QPointer<INetworkAdapter>(networkUtils));
+        }
+        networkUtils->deleteLater();
+    });
+    connect(networkUtils, &INetworkAdapter::requestError, this, [this, networkUtils, uuid](const QString& error) {
+        emit fetchError(uuid, error);
+        {
+            QMutexLocker locker(&m_requestsMutex);
+            m_activeRequests.removeOne(QPointer<INetworkAdapter>(networkUtils));
+        }
+        networkUtils->deleteLater();
+    });
 
-    resetRequestState();
-    m_currentUuid = uuid;
-    m_isFetching = true;
-    m_requestType = RequestType::Model3DStep;
-
-    m_networkUtils->setExpectBinaryData(true);
-    m_networkUtils->sendGetRequest(build3DModelStepUrl(uuid));
+    networkUtils->sendGetRequest(build3DModelStepUrl(uuid));
 }
 
 void EasyedaApi::handleRequestSuccess(const QJsonObject& data) {
@@ -160,10 +194,14 @@ void EasyedaApi::handleRequestSuccess(const QJsonObject& data) {
 }
 
 void EasyedaApi::handleRequestSuccess(INetworkAdapter* adapter, const QString& lcscId, const QJsonObject& data) {
-    QString oldId = m_currentLcscId;
-    m_currentLcscId = lcscId;
-    handleCadDataResponse(data);
-    m_currentLcscId = oldId;
+    // 直接使用传入的 lcscId 处理响应
+    if (!data.contains("result")) {
+        emit fetchError(lcscId, "No result");
+    } else {
+        QJsonObject result = data["result"].toObject();
+        result["lcscId"] = lcscId;
+        emit cadDataFetched(result);
+    }
 
     {
         QMutexLocker locker(&m_requestsMutex);
