@@ -66,20 +66,9 @@ void WriteWorker::run() {
 
     m_status->addDebugLog(QString("WriteWorker started for component: %1").arg(m_status->componentId));
 
-    // 安全检查：验证输出路径和临时目录是否安全
-    // 假设输出路径必须在应用有权限的某个基准目录下（这里暂不强制基准，只检查路径格式）
-    // 实际上，更重要的是检查 m_tempDir 是否在 m_outputPath 内，或者至少是安全的
-    if (!PathSecurity::isSafePath(m_tempDir, m_outputPath)) {
-        m_status->writeDurationMs = writeTimer.elapsed();
-        m_status->writeSuccess = false;
-        m_status->writeMessage = "Security Error: Temp dir is outside output path";
-        m_status->addDebugLog(
-            QString("SECURITY ERROR: Temp dir %1 is not within Output path %2").arg(m_tempDir, m_outputPath));
-        emit writeCompleted(m_status);
-        return;
-    }
 
     // 初始化所有写入状态
+
     m_status->symbolWritten = false;
     m_status->footprintWritten = false;
     m_status->model3DWritten = false;
@@ -185,6 +174,17 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
         return true;  // 没有数据可写，不应视为失败
     }
 
+    // 1. 检查临时目录是否存在
+    if (!QDir(m_tempDir).exists()) {
+        status.addDebugLog(QString("ERROR: Temp directory does not exist: %1").arg(m_tempDir));
+        return false;
+    }
+    // 2. 检查路径安全性
+    if (!PathSecurity::isSafePath(m_tempDir, m_outputPath)) {
+        status.addDebugLog(QString("SECURITY ERROR: Temp dir outside output path: %1").arg(m_tempDir));
+        return false;
+    }
+
     // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
     qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
     qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
@@ -241,6 +241,17 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
 bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     if (!status.footprintData) {
         return true;  // 没有数据可写，不应视为失败
+    }
+
+    // 1. 检查临时目录是否存在
+    if (!QDir(m_tempDir).exists()) {
+        status.addDebugLog(QString("ERROR: Temp directory does not exist: %1").arg(m_tempDir));
+        return false;
+    }
+    // 2. 检查路径安全性
+    if (!PathSecurity::isSafePath(m_tempDir, m_outputPath)) {
+        status.addDebugLog(QString("SECURITY ERROR: Temp dir outside output path: %1").arg(m_tempDir));
+        return false;
     }
 
     QString footprintLibPath = QString("%1/%2.pretty").arg(m_outputPath, m_libName);
@@ -337,6 +348,17 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
 bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     if (!status.model3DData || status.model3DObjRaw.isEmpty()) {
         return true;  // 没有 WRL 数据可写，不应视为失败 (如果只请求 STEP，则应在ProcessWorker中处理)
+    }
+
+    // 1. 检查临时目录是否存在
+    if (!QDir(m_tempDir).exists()) {
+        status.addDebugLog(QString("ERROR: Temp directory does not exist: %1").arg(m_tempDir));
+        return false;
+    }
+    // 2. 检查路径安全性（仅对临时目录路径检查）
+    if (!PathSecurity::isSafePath(m_tempDir, m_outputPath)) {
+        status.addDebugLog(QString("SECURITY ERROR: Temp dir %1 is outside output path %2").arg(m_tempDir, m_outputPath));
+        return false;
     }
 
     QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_outputPath, m_libName);
