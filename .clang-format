@@ -44,8 +44,11 @@ IncludeCategories:
     Priority: 3
 
 # 空行
-MaxEmptyLinesToKeep: 2
+MaxEmptyLinesToKeep: 1
 KeepEmptyLinesAtTheStartOfBlocks: false
+EmptyLineAfterAccessModifier: Never
+EmptyLineBeforeAccessModifier: LogicalBlock
+SeparateDefinitionBlocks: Always
 
 # 对齐
 AlignAfterOpenBracket: Align

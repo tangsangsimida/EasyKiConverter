@@ -55,6 +55,7 @@ public:
                                                const ExportOptions& options);
 
     virtual void cancelExport();
+    virtual bool waitForCompletion(int timeoutMs = 5000);
     void setExportOptions(const ExportOptions& options);
     ExportOptions getExportOptions() const;
     bool isExporting() const;

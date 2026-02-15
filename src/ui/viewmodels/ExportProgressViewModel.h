@@ -15,6 +15,11 @@
 
 namespace EasyKiConverter {
 
+class ExportService;
+class ExportServicePipeline;
+struct PipelineProgress;
+struct ExportStatistics;
+
 class ExportProgressViewModel : public QObject {
     Q_OBJECT
     Q_PROPERTY(int progress READ progress NOTIFY progressChanged)
@@ -156,6 +161,16 @@ public slots:
     Q_INVOKABLE void retryComponent(const QString& componentId);
     Q_INVOKABLE void cancelExport();
     Q_INVOKABLE void resetExport();
+
+    // 窗口关闭处理
+    Q_INVOKABLE bool handleCloseRequest();
+
+    void setExportService(ExportService* service) {
+        m_exportService = service;
+        if (qobject_cast<ExportServicePipeline*>(service)) {
+            m_usePipelineMode = true;
+        }
+    }
 
 signals:
     void progressChanged();

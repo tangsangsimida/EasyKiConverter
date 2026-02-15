@@ -138,6 +138,27 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     startExportInternal(componentIds, false);
 }
 
+bool ExportProgressViewModel::handleCloseRequest() {
+    // 如果正在导出，先尝试停止
+    if (m_isExporting && m_exportService) {
+        qDebug() << "Close requested while exporting. Initiating cancel sequence...";
+
+        // 1. 发送取消信号
+        cancelExport();
+
+        // 2. 尝试等待一段时间让 Worker 结束 (最多 5 秒)
+        // 注意：这里不能使用 processEvents，否则可能会导致递归调用或其他 UI 问题
+        // 我们依靠 ExportService::waitForCompletion 来进行有限的等待
+        if (!m_exportService->waitForCompletion(5000)) {
+            qWarning() << "Workers did not stop within timeout, forcing close.";
+        } else {
+            qDebug() << "All workers stopped gracefully.";
+        }
+    }
+
+    return true;  // 允许关闭
+}
+
 void ExportProgressViewModel::cancelExport() {
     if (!m_exportService)
         return;

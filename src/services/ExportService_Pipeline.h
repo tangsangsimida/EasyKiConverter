@@ -91,6 +91,7 @@ public:
      * @brief 取消导出
      */
     void cancelExport() override;
+    bool waitForCompletion(int timeoutMs = 5000) override;
 
     /**
      * @brief 设置预加载的数据

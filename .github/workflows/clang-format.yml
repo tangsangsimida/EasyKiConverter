@@ -27,9 +27,9 @@ jobs:
           fetch-depth: 0
 
       - name: 'Run clang-format check'
-        uses: DoozyX/clang-format-lint-action@v0.13
+        uses: DoozyX/clang-format-lint-action@v0.18
         with:
           source: './src'
           extensions: 'h,cpp'
-          clangFormatVersion: 13
+          clangFormatVersion: 18
           style: file
