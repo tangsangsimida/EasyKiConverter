@@ -1,0 +1,20 @@
+<map id="EasyKiConverter::ExportService::ExportData" name="EasyKiConverter::ExportService::ExportData">
+<area shape="rect" id="Node000001" title=" " alt="" coords="711,1164,931,1284"/>
+<area shape="rect" id="Node000002" href="$classEasyKiConverter_1_1SymbolData.html" title="符号数据" alt="" coords="235,646,446,1091"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="448,945,729,1152,726,1156,444,950"/>
+<area shape="rect" id="Node000003" href="$structEasyKiConverter_1_1SymbolInfo.html" title="符号信息" alt="" coords="5,278,209,543"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="177,542,230,646,225,648,172,545"/>
+<area shape="rect" id="Node000004" href="$structEasyKiConverter_1_1SymbolBBox.html" title="边界" alt="" coords="234,348,447,473"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="343,473,343,630,338,630,338,473"/>
+<area shape="rect" id="Node000005" href="$classEasyKiConverter_1_1FootprintData.html" title=" " alt="" coords="711,636,930,1101"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="823,1102,823,1147,818,1147,818,1102"/>
+<area shape="rect" id="Node000006" href="$structEasyKiConverter_1_1FootprintInfo.html" title=" " alt="" coords="471,278,685,543"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="651,542,706,647,701,649,646,545"/>
+<area shape="rect" id="Node000007" href="$structEasyKiConverter_1_1FootprintBBox.html" title=" " alt="" coords="709,348,932,473"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="823,473,823,620,818,620,818,473"/>
+<area shape="rect" id="Node000008" href="$classEasyKiConverter_1_1Model3DData.html" title=" " alt="" coords="957,248,1175,573"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="1047,574,1006,824,978,964,945,1102,940,1123,931,1141,921,1154,917,1151,926,1139,935,1121,939,1101,973,963,1001,823,1042,573"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="962,575,948,599,936,622,931,620,944,596,957,572"/>
+<area shape="rect" id="Node000009" href="$structEasyKiConverter_1_1Model3DBase.html" title=" " alt="" coords="956,5,1176,171"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="1069,171,1069,231,1063,231,1063,171"/>
+</map>

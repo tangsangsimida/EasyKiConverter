@@ -1,0 +1,23 @@
+<map id="EasyKiConverter::ComponentListViewModel" name="EasyKiConverter::ComponentListViewModel">
+<area shape="rect" id="Node000001" title="元件列表视图模型" alt="" coords="199,2339,431,2859"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="223,1863,364,1929"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="298,1942,310,2339,304,2339,292,1943"/>
+<area shape="rect" id="Node000003" href="$classEasyKiConverter_1_1ComponentService.html" title="元件服务类" alt="" coords="389,1516,633,2276"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="407,2277,394,2324,389,2322,402,2275"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="346,5,412,71"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="334,58,293,83,275,101,261,121,174,313,100,488,71,571,46,651,27,729,14,807,9,883,10,960,20,1037,38,1115,66,1195,103,1277,150,1363,208,1452,226,1471,245,1480,265,1484,287,1485,333,1489,356,1497,378,1514,391,1528,387,1531,374,1518,353,1502,332,1494,287,1491,265,1490,243,1486,222,1475,204,1455,145,1366,98,1280,61,1197,33,1116,15,1038,5,960,3,883,9,806,22,728,41,650,66,569,96,486,169,311,257,119,271,97,289,79,332,54"/>
+<area shape="rect" id="Node000005" href="$classEasyKiConverter_1_1EasyedaApi.html" title="EasyEDA API 客户端类" alt="" coords="218,788,463,1453"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="335,64,301,88,286,104,275,121,271,155,268,230,267,449,268,764,271,787,266,788,263,764,261,449,263,230,266,154,270,119,282,100,297,84,332,59"/>
+<area shape="rect" id="Node000006" href="$classEasyKiConverter_1_1INetworkAdapter.html" title="网络适配器接口" alt="" coords="284,120,474,400"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="382,84,382,120,376,120,376,84"/>
+<area shape="rect" id="Node000007" href="$classEasyKiConverter_1_1EasyedaImporter.html" title="EasyEDA 数据导入器类" alt="" coords="418,524,604,664"/>
+<area shape="poly" id="edge9_Node000007_Node000004" title=" " alt="" coords="426,59,460,84,476,100,488,119,510,170,525,223,535,279,539,334,537,438,527,524,522,523,532,438,534,334,529,279,520,225,505,171,483,121,471,104,457,88,423,64"/>
+<area shape="rect" id="Node000008" href="$classEasyKiConverter_1_1LcscImageService.html" title="LCSC 图片服务类" alt="" coords="610,424,844,764"/>
+<area shape="poly" id="edge11_Node000008_Node000004" title=" " alt="" coords="426,51,481,77,509,96,533,118,585,189,628,267,662,346,689,423,684,425,657,348,623,269,581,192,529,122,506,100,479,82,424,56"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="416,1453,426,1499,421,1500,411,1454"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="302,401,295,425,279,510,272,598,271,686,277,772,271,772,266,686,266,597,274,509,290,423,297,399"/>
+<area shape="poly" id="edge8_Node000003_Node000007" title=" " alt="" coords="514,664,514,1500,508,1500,508,664"/>
+<area shape="poly" id="edge10_Node000003_Node000008" title=" " alt="" coords="666,765,660,789,641,888,631,973,624,1119,622,1266,616,1353,604,1454,597,1500,592,1499,599,1453,611,1352,617,1266,619,1119,625,973,636,887,655,787,661,764"/>
+<area shape="rect" id="Node000009" href="$classEasyKiConverter_1_1ComponentData.html" title="元件数据" alt="" coords="788,908,1024,1333"/>
+<area shape="poly" id="edge12_Node000003_Node000009" title=" " alt="" coords="825,1334,771,1455,709,1572,644,1686,639,1683,704,1570,766,1452,821,1332"/>
+</map>

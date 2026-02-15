@@ -1,0 +1,15 @@
+<map id="services" name="services">
+<area shape="rect" id="node1" href="dir_056ec8f0377ddc4293192cbc6b19c99c.html" title="services" alt="" coords="143,5,219,31"/>
+<area shape="rect" id="node2" href="dir_16b488fbba2495673abe79f720aebac4.html" title="workers" alt="" coords="5,79,79,104"/>
+<area shape="poly" id="edge1" href="dir_000007_000014.html" alt="" coords="160,33,78,75,76,70,157,28"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000007_000014.html" title="4" alt="" coords="80,70,89,85"/>
+<area shape="rect" id="node3" href="dir_1ae4179d5e953611aae20c997279e02c.html" title="models" alt="" coords="103,79,173,104"/>
+<area shape="poly" id="edge2" href="dir_000007_000005.html" alt="" coords="176,32,154,68,150,66,171,30"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000007_000005.html" title="15" alt="" coords="153,60,170,75"/>
+<area shape="rect" id="node4" href="dir_4270bfced15e0e73154b13468c7c9ad9.html" title="core" alt="" coords="198,79,249,104"/>
+<area shape="poly" id="edge3" href="dir_000007_000001.html" alt="" coords="190,30,212,66,207,68,185,32"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000007_000001.html" title="10" alt="" coords="206,51,223,66"/>
+<area shape="rect" id="node5" href="dir_cbdb8362360e11eafe2fa3bc74cf0ffd.html" title="utils" alt="" coords="273,79,323,104"/>
+<area shape="poly" id="edge4" href="dir_000007_000012.html" alt="" coords="201,28,268,69,266,74,198,33"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000007_000012.html" title="3" alt="" coords="263,55,272,69"/>
+</map>

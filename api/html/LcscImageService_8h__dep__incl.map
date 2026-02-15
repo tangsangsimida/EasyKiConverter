@@ -1,0 +1,21 @@
+<map id="services/LcscImageService.h" name="services/LcscImageService.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="387,5,596,31"/>
+<area shape="rect" id="Node000002" href="$ComponentService_8h.html" title=" " alt="" coords="263,79,477,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="461,40,391,81,389,76,458,35"/>
+<area shape="rect" id="Node000009" href="$LcscImageService_8cpp.html" title=" " alt="" coords="502,79,726,104"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="524,35,595,76,593,81,521,40"/>
+<area shape="rect" id="Node000003" href="$ComponentService_8cpp.html" title=" " alt="" coords="5,159,236,185"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="322,111,158,162,156,157,320,106"/>
+<area shape="rect" id="Node000004" href="$ComponentListViewModel_8h.html" title=" " alt="" coords="261,152,479,192"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="373,118,373,152,367,152,367,118"/>
+<area shape="rect" id="Node000007" href="$ExportProgressViewModel_8h.html" title=" " alt="" coords="479,240,698,280"/>
+<area shape="poly" id="edge9_Node000002_Node000007" title=" " alt="" coords="415,107,454,126,493,150,541,195,577,238,573,241,538,199,490,154,452,130,413,112"/>
+<area shape="rect" id="Node000005" href="$main_8cpp.html" title=" " alt="" coords="266,335,349,361"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="278,200,249,217,227,241,221,260,227,279,238,296,253,311,285,333,282,337,249,315,234,299,222,281,216,260,222,239,246,213,275,195"/>
+<area shape="rect" id="Node000006" href="$ComponentListViewModel_8cpp.html" title=" " alt="" coords="237,240,455,280"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="364,206,354,241,349,239,358,204"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="432,195,542,237,540,242,430,200"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="515,286,346,338,344,333,513,281"/>
+<area shape="rect" id="Node000008" href="$ExportProgressViewModel_8cpp.html" title=" " alt="" coords="479,328,698,368"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="591,294,591,328,586,328,586,294"/>
+</map>

@@ -1,0 +1,25 @@
+var classEasyKiConverter_1_1SymbolGraphicsGenerator =
+[
+    [ "SymbolGraphicsGenerator", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a1ee577b20891ac1c639c8c7d4f22719b", null ],
+    [ "calculatePartBBox", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a3b870c9055d170357ad5b8d9025bebe8", null ],
+    [ "currentBBox", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a9279993f18206902a8d785efb619cfc4", null ],
+    [ "generateArc", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a8b51a8bb9e9a41c5b2a16ec5828ae705", null ],
+    [ "generateCircle", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a166d1335c4f20431191a04ad04e8d016", null ],
+    [ "generateDrawings", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ab9984cbae388c8e1e8c3d4407f6b2649", null ],
+    [ "generateDrawings", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a145c293620bcd2a5655c53ce430f5c0b", null ],
+    [ "generateEllipse", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a5850ca752993f10337e00d821facc232", null ],
+    [ "generatePath", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ae4b1e12f6ee140068eae508bc9cb1124", null ],
+    [ "generatePin", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ab147a5c853b82cc7d88f365b5cecd9a0", null ],
+    [ "generatePins", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a1e1a82af722287b82633f7882f3e015f", null ],
+    [ "generatePolygon", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ac695449fbd6bdcf6c180a906b004a175", null ],
+    [ "generatePolyline", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a69766ba634bf9bf33a1a1450ed90b584", null ],
+    [ "generateRectangle", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a8b1b25b3a68b1bf27a05c55ad58b8f44", null ],
+    [ "generateText", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#abd7fcd2bfbde309740c9e87e471fa892", null ],
+    [ "pinStyleToKicad", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a5a627fb569a215b79b8f032402b3698a", null ],
+    [ "pinTypeToKicad", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#afd62023ba3b818e3de4f8460761ab270", null ],
+    [ "pxToMil", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a33b1f9ecce261fbd7ff9c1d614f1869d", null ],
+    [ "pxToMm", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#aaadac1c42b35f77d327fa42b5fe69362", null ],
+    [ "rotationToKicadOrientation", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a86fa010d86a60fcd379c2e1e0731b300", null ],
+    [ "setCurrentBBox", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a22f934a5eec17e27424a7bae104409dd", null ],
+    [ "m_currentBBox", "classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a32fdac79b8ad2ac1d4fa775bb0f6702e", null ]
+];

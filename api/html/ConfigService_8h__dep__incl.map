@@ -1,0 +1,17 @@
+<map id="services/ConfigService.h" name="services/ConfigService.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="321,5,503,31"/>
+<area shape="rect" id="Node000002" href="$main_8cpp.html" title=" " alt="" coords="424,174,507,199"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="434,40,457,78,464,104,468,131,469,174,463,174,463,131,459,105,452,80,430,43"/>
+<area shape="rect" id="Node000003" href="$ConfigService_8cpp.html" title=" " alt="" coords="246,86,442,111"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="395,43,356,88,352,84,391,39"/>
+<area shape="rect" id="Node000004" href="$ExportSettingsViewModel_8h.html" title=" " alt="" coords="5,79,221,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="356,37,186,81,184,76,355,31"/>
+<area shape="rect" id="Node000006" href="$ThemeSettingsViewModel_8h.html" title=" " alt="" coords="517,79,736,119"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="457,33,576,76,574,81,455,38"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="205,119,425,173,423,178,203,125"/>
+<area shape="rect" id="Node000005" href="$ExportSettingsViewModel_8cpp.html" title=" " alt="" coords="5,167,221,207"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="116,133,116,166,111,166,111,133"/>
+<area shape="poly" id="edge7_Node000006_Node000002" title=" " alt="" coords="580,128,488,176,486,172,578,123"/>
+<area shape="rect" id="Node000007" href="$ThemeSettingsViewModel_8cpp.html" title=" " alt="" coords="531,167,749,207"/>
+<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="634,132,640,166,634,167,629,133"/>
+</map>

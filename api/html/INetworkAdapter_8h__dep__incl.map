@@ -1,0 +1,20 @@
+<map id="core/utils/INetworkAdapter.h" name="core/utils/INetworkAdapter.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="241,5,447,31"/>
+<area shape="rect" id="Node000002" href="$EasyedaApi_8cpp.html" title=" " alt="" coords="5,152,221,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="304,38,263,58,221,81,168,119,127,154,124,150,165,115,219,76,261,53,302,34"/>
+<area shape="rect" id="Node000003" href="$INetworkAdapter_8cpp.html" title=" " alt="" coords="233,79,455,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="347,44,347,79,341,79,341,44"/>
+<area shape="rect" id="Node000004" href="$NetworkUtils_8h.html" title=" " alt="" coords="493,79,675,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="397,32,546,76,544,81,395,37"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="496,109,190,155,189,149,495,103"/>
+<area shape="rect" id="Node000005" href="$JLCDatasheet_8h.html" title=" " alt="" coords="246,152,458,177"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="535,110,390,154,389,149,533,105"/>
+<area shape="rect" id="Node000007" href="$Exporter3DModel_8cpp.html" title=" " alt="" coords="482,152,715,177"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="592,117,599,151,594,152,587,118"/>
+<area shape="rect" id="Node000008" href="$NetworkUtils_8cpp.html" title=" " alt="" coords="739,152,938,177"/>
+<area shape="poly" id="edge8_Node000004_Node000008" title=" " alt="" coords="639,105,798,149,797,154,638,110"/>
+<area shape="rect" id="Node000009" href="$ProcessWorker_8cpp.html" title=" " alt="" coords="962,152,1161,177"/>
+<area shape="poly" id="edge9_Node000004_Node000009" title=" " alt="" coords="675,103,985,149,984,155,674,109"/>
+<area shape="rect" id="Node000006" href="$JLCDatasheet_8cpp.html" title=" " alt="" coords="239,225,465,251"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="355,191,355,225,349,225,349,191"/>
+</map>
