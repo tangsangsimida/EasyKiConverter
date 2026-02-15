@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
+import "components"
+import "styles"
 
 ApplicationWindow {
     id: appWindow
@@ -15,13 +16,14 @@ ApplicationWindow {
     color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint
 
-    // 确认关闭对话框
-    MessageDialog {
+    // 美化的确认关闭对话框
+    ConfirmDialog {
         id: closeConfirmDialog
         title: qsTr("确认退出")
-        text: qsTr("转换正在进行中。确定要退出吗？")
-        informativeText: qsTr("退出将取消当前转换，已导出的文件会保留。")
-        buttons: MessageDialog.Ok | MessageDialog.Cancel
+        message: qsTr("转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？")
+        confirmText: qsTr("强制退出")
+        cancelText: qsTr("继续转换")
+        confirmColor: AppStyle.colors.danger
         onAccepted: {
             if (exportProgressViewModel.handleCloseRequest()) {
                 Qt.quit();
