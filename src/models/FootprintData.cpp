@@ -2,7 +2,6 @@
 
 #include "FootprintDataSerializer.h"
 
-
 namespace EasyKiConverter {
 
 FootprintData::FootprintData() {}

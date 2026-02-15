@@ -341,6 +341,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     qDebug() << "Symbol library exported successfully:" << filePath;
     return true;
 }
+
 QString ExporterSymbol::generateHeader(const QString& libName) const {
     Q_UNUSED(libName);
     return QString(

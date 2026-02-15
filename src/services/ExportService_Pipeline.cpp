@@ -1160,113 +1160,77 @@ void ExportServicePipeline::cancelExport() {
 }
 
 bool ExportServicePipeline::waitForCompletion(int timeoutMs) {
-
     if (!m_isPipelineRunning)
 
         return true;
 
-
-
     // 检查 QApplication 实例是否存在
 
     if (!QCoreApplication::instance()) {
-
         qWarning() << "QCoreApplication instance not available, skipping graceful wait.";
 
         return false;
-
     }
 
-
-
     qDebug() << "Waiting for pipeline completion (timeout:" << timeoutMs << "ms)...";
-
-
 
     // 确保已设置取消标志，加速 Worker 退出
 
     if (!m_isCancelled.loadAcquire()) {
-
         m_isCancelled.storeRelease(1);
-
     }
-
-
 
     QElapsedTimer timer;
 
     timer.start();
 
-
-
     // 缓存主线程指针
 
     QThread* mainThread = QCoreApplication::instance()->thread();
 
-
-
     // 定义一个辅助 lambda 用于安全等待线程池
 
     auto safeWaitForPool = [&](QThreadPool* pool, const char* name) -> bool {
-
-        if (!pool) return true;
-
-        
+        if (!pool)
+            return true;
 
         while (pool->activeThreadCount() > 0) {
-
             if (timer.elapsed() > timeoutMs) {
-
                 qWarning() << name << "thread pool wait timed out";
 
                 return false;
-
             }
-
-            
 
             // 尝试非阻塞等待一小段时间
 
             if (pool->waitForDone(50)) {
-
                 break;
-
             }
-
-            
 
             // 关键：仅在主线程处理事件循环，防止死锁并确保线程安全
 
             if (QThread::currentThread() == mainThread) {
-
                 QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-
             }
-
         }
 
         return true;
-
     };
-
-
 
     // 1. 等待 fetch 线程池
 
-    if (!safeWaitForPool(m_fetchThreadPool, "Fetch")) return false;
-
+    if (!safeWaitForPool(m_fetchThreadPool, "Fetch"))
+        return false;
 
     // 2. 等待 process 线程池
 
     if (!safeWaitForPool(m_processThreadPool, "Process"))
         return false;
 
-
     // 3. 等待 write 线程池
 
     if (!safeWaitForPool(m_writeThreadPool, "Write"))
         return false;
-
 
     qDebug() << "Pipeline wait finished successfully in" << timer.elapsed() << "ms";
 

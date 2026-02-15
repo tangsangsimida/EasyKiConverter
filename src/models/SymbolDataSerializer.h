@@ -5,7 +5,6 @@
 
 #include <QJsonObject>
 
-
 namespace EasyKiConverter {
 
 class SymbolDataSerializer {

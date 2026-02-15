@@ -16,7 +16,6 @@
 #include <QString>
 #include <QStringList>
 
-
 class QNetworkAccessManager;
 
 namespace EasyKiConverter {
@@ -272,6 +271,7 @@ private:
         bool fetch3DModel;  // 是否需要获取 3D 模型
         QString errorMessage;
     };
+
     QMap<QString, FetchingComponent> m_fetchingComponents;
 
     // 当前处理的元件ID
@@ -303,7 +303,6 @@ private:
      * @param fetch3DModel 是否获取3D模型
      */
     void fetchComponentDataInternal(const QString& componentId, bool fetch3DModel);
-
 
     // 输出路径
     QString m_outputPath;

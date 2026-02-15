@@ -462,7 +462,6 @@ QByteArray FetchWorker::decompressGzip(const QByteArray& compressedData) {
     stream.next_out = nullptr;
     stream.avail_out = 0;
 
-
     QByteArray decompressed;
     const int bufferSize = 8192;
     char buffer[bufferSize];
@@ -601,7 +600,6 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
     status->addDebugLog(QString("Fetching 3D model for UUID: %1").arg(uuid));
     qDebug() << "Fetching 3D model for UUID:" << uuid;
 
-
     QString objUrl = QString("https://modules.easyeda.com/3dmodel/%1").arg(uuid);
     status->addDebugLog(QString("Downloading 3D model from: %1").arg(objUrl));
     qDebug() << "Downloading 3D model from:" << objUrl;
@@ -616,56 +614,41 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
 
     status->addDebugLog(QString("Downloaded 3D model data size: %1 bytes").arg(objData.size()));
 
-
     QByteArray actualObjData = objData;
-
 
     if (objData.size() >= 2 && objData[0] == 0x50 && objData[1] == 0x4B) {
         status->addDebugLog("3D model data is ZIP compressed, decompressing...");
 
-
         actualObjData = decompressZip(objData);
-
 
         status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
     }
 
-
     if (actualObjData.size() >= 2 && (unsigned char)actualObjData[0] == 0x1f &&
-
 
         (unsigned char)actualObjData[1] == 0x8b) {
         status->addDebugLog("3D model data is gzip compressed, decompressing...");
 
-
         actualObjData = decompressGzip(actualObjData);
-
 
         status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
     }
 
-
     if (actualObjData.isEmpty()) {
         QString msg = "ERROR: Failed to decompress 3D model data";
 
-
         status->addDebugLog(msg);
 
-
         qWarning() << msg;
-
 
         return false;
     }
 
-
     status->model3DObjRaw = actualObjData;
-
 
     QString successMsg = QString("3D model (OBJ) data fetched successfully for: %1").arg(status->componentId);
     status->addDebugLog(successMsg);
     qDebug() << successMsg;
-
 
     QString stepUrl = QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(uuid);
     status->addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));

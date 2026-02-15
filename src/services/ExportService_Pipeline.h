@@ -38,9 +38,11 @@ struct PipelineProgress {
     int fetchProgress() const {
         return totalTasks > 0 ? (fetchCompleted * 100 / totalTasks) : 0;
     }
+
     int processProgress() const {
         return totalTasks > 0 ? (processCompleted * 100 / totalTasks) : 0;
     }
+
     int writeProgress() const {
         return totalTasks > 0 ? (writeCompleted * 100 / totalTasks) : 0;
     }

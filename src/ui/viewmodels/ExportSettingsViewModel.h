@@ -36,33 +36,43 @@ public:
     QString outputPath() const {
         return m_outputPath;
     }
+
     QString libName() const {
         return m_libName;
     }
+
     bool exportSymbol() const {
         return m_exportSymbol;
     }
+
     bool exportFootprint() const {
         return m_exportFootprint;
     }
+
     bool exportModel3D() const {
         return m_exportModel3D;
     }
+
     bool overwriteExistingFiles() const {
         return m_overwriteExistingFiles;
     }
+
     int exportMode() const {
         return m_exportMode;
     }
+
     bool debugMode() const {
         return m_debugMode;
     }
+
     bool isExporting() const {
         return m_isExporting;
     }
+
     int progress() const {
         return m_progress;
     }
+
     QString status() const {
         return m_status;
     }

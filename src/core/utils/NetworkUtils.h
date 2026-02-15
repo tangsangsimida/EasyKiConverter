@@ -11,7 +11,6 @@
 #include <QObject>
 #include <QTimer>
 
-
 namespace EasyKiConverter {
 
 /**

@@ -125,6 +125,7 @@ private:
         bool success;
         QString errorMessage;
     };
+
     QList<ExportData> m_exportDataList;
 
     bool m_parallelExporting;
