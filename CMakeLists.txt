@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 # 从 CI 环境动态获取版本号，如果没有定义则使用默认版本
 if(NOT DEFINED VERSION_FROM_CI)
-    set(VERSION_FROM_CI "0.1")
+    set(VERSION_FROM_CI "3.0.7")
     message(STATUS "VERSION_FROM_CI not defined, using default: ${VERSION_FROM_CI}")
 else()
     message(STATUS "VERSION_FROM_CI defined: ${VERSION_FROM_CI}")
@@ -225,7 +225,7 @@ endif()
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
     URI EasyKiconverter_Cpp_Version
-    VERSION 1.0
+    VERSION 3.0
     QML_FILES
         ${QML_FILES}
     RESOURCES
