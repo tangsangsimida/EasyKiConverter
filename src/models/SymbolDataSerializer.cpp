@@ -3,7 +3,6 @@
 #include <QDebug>
 #include <QJsonArray>
 
-
 namespace EasyKiConverter {
 
 // ==================== SymbolPinSettings ====================

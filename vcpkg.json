@@ -1,6 +1,6 @@
 {
   "name": "easykiconverter",
-  "version-string": "3.0.5",
+  "version-string": "3.0.7",
   "description": "EasyKiConverter - LCSC and EasyEDA component to KiCad library converter",
   "dependencies": [
     {

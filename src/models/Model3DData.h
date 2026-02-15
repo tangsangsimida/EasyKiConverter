@@ -15,6 +15,7 @@ struct Model3DBase {
     double z;
 
     Model3DBase() : x(0.0), y(0.0), z(0.0) {}
+
     Model3DBase(double x, double y, double z) : x(x), y(y), z(z) {}
 
     QJsonObject toJson() const;
@@ -32,6 +33,7 @@ public:
     QString name() const {
         return m_name;
     }
+
     void setName(const QString& name) {
         m_name = name;
     }
@@ -39,6 +41,7 @@ public:
     QString uuid() const {
         return m_uuid;
     }
+
     void setUuid(const QString& uuid) {
         m_uuid = uuid;
     }
@@ -46,6 +49,7 @@ public:
     Model3DBase translation() const {
         return m_translation;
     }
+
     void setTranslation(const Model3DBase& translation) {
         m_translation = translation;
     }
@@ -53,6 +57,7 @@ public:
     Model3DBase rotation() const {
         return m_rotation;
     }
+
     void setRotation(const Model3DBase& rotation) {
         m_rotation = rotation;
     }
@@ -60,6 +65,7 @@ public:
     QString rawObj() const {
         return m_rawObj;
     }
+
     void setRawObj(const QString& rawObj) {
         m_rawObj = rawObj;
     }
@@ -67,6 +73,7 @@ public:
     QByteArray step() const {
         return m_step;
     }
+
     void setStep(const QByteArray& step) {
         m_step = step;
     }

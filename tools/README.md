@@ -20,7 +20,8 @@ tools/
 └── python/           # 跨平台 Python 工具
     ├── manage_version.py
     ├── manage_translations.py # 翻译管理工具 [NEW]
-    └── check_env.py          # 环境检查工具 [NEW]
+    ├── check_env.py          # 环境检查工具 [NEW]
+    └── count_lines.py        # 代码行数统计工具 [NEW]
 ```
 
 ## Windows 工具
@@ -67,6 +68,15 @@ python tools/python/manage_translations.py --all
 **快速用法:**
 ```bash
 python tools/python/check_env.py
+```
+
+### [count_lines.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/count_lines.py)
+
+跨平台代码行数统计工具，以 KLoC (千行代码) 为单位输出项目规模。
+
+**快速用法:**
+```bash
+python tools/python/count_lines.py
 ```
 
 > [!TIP]

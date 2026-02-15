@@ -216,6 +216,7 @@ public:
     FootprintInfo info() const {
         return m_info;
     }
+
     void setInfo(const FootprintInfo& info) {
         m_info = info;
     }
@@ -223,6 +224,7 @@ public:
     FootprintBBox bbox() const {
         return m_bbox;
     }
+
     void setBbox(const FootprintBBox& bbox) {
         m_bbox = bbox;
     }
@@ -230,9 +232,11 @@ public:
     QList<FootprintPad> pads() const {
         return m_pads;
     }
+
     void setPads(const QList<FootprintPad>& pads) {
         m_pads = pads;
     }
+
     void addPad(const FootprintPad& pad) {
         m_pads.append(pad);
     }
@@ -240,9 +244,11 @@ public:
     QList<FootprintTrack> tracks() const {
         return m_tracks;
     }
+
     void setTracks(const QList<FootprintTrack>& tracks) {
         m_tracks = tracks;
     }
+
     void addTrack(const FootprintTrack& track) {
         m_tracks.append(track);
     }
@@ -250,9 +256,11 @@ public:
     QList<FootprintHole> holes() const {
         return m_holes;
     }
+
     void setHoles(const QList<FootprintHole>& holes) {
         m_holes = holes;
     }
+
     void addHole(const FootprintHole& hole) {
         m_holes.append(hole);
     }
@@ -260,9 +268,11 @@ public:
     QList<FootprintCircle> circles() const {
         return m_circles;
     }
+
     void setCircles(const QList<FootprintCircle>& circles) {
         m_circles = circles;
     }
+
     void addCircle(const FootprintCircle& circle) {
         m_circles.append(circle);
     }
@@ -270,9 +280,11 @@ public:
     QList<FootprintRectangle> rectangles() const {
         return m_rectangles;
     }
+
     void setRectangles(const QList<FootprintRectangle>& rectangles) {
         m_rectangles = rectangles;
     }
+
     void addRectangle(const FootprintRectangle& rect) {
         m_rectangles.append(rect);
     }
@@ -280,9 +292,11 @@ public:
     QList<FootprintArc> arcs() const {
         return m_arcs;
     }
+
     void setArcs(const QList<FootprintArc>& arcs) {
         m_arcs = arcs;
     }
+
     void addArc(const FootprintArc& arc) {
         m_arcs.append(arc);
     }
@@ -290,9 +304,11 @@ public:
     QList<FootprintText> texts() const {
         return m_texts;
     }
+
     void setTexts(const QList<FootprintText>& texts) {
         m_texts = texts;
     }
+
     void addText(const FootprintText& text) {
         m_texts.append(text);
     }
@@ -300,9 +316,11 @@ public:
     QList<FootprintSolidRegion> solidRegions() const {
         return m_solidRegions;
     }
+
     void setSolidRegions(const QList<FootprintSolidRegion>& solidRegions) {
         m_solidRegions = solidRegions;
     }
+
     void addSolidRegion(const FootprintSolidRegion& solidRegion) {
         m_solidRegions.append(solidRegion);
     }
@@ -310,9 +328,11 @@ public:
     QList<FootprintOutline> outlines() const {
         return m_outlines;
     }
+
     void setOutlines(const QList<FootprintOutline>& outlines) {
         m_outlines = outlines;
     }
+
     void addOutline(const FootprintOutline& outline) {
         m_outlines.append(outline);
     }
@@ -320,9 +340,11 @@ public:
     QList<LayerDefinition> layers() const {
         return m_layers;
     }
+
     void setLayers(const QList<LayerDefinition>& layers) {
         m_layers = layers;
     }
+
     void addLayer(const LayerDefinition& layer) {
         m_layers.append(layer);
     }
@@ -330,9 +352,11 @@ public:
     QList<ObjectVisibility> objectVisibilities() const {
         return m_objectVisibilities;
     }
+
     void setObjectVisibilities(const QList<ObjectVisibility>& objectVisibilities) {
         m_objectVisibilities = objectVisibilities;
     }
+
     void addObjectVisibility(const ObjectVisibility& objectVisibility) {
         m_objectVisibilities.append(objectVisibility);
     }
@@ -340,6 +364,7 @@ public:
     Model3DData model3D() const {
         return m_model3D;
     }
+
     void setModel3D(const Model3DData& model3D) {
         m_model3D = model3D;
     }

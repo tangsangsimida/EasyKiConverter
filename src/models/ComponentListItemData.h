@@ -34,28 +34,37 @@ public:
     QString componentId() const {
         return m_componentId;
     }
+
     QString name() const {
         return m_name;
     }
+
     QString package() const {
         return m_package;
     }
+
     QImage thumbnail() const {
         return m_thumbnail;
     }
+
     QString thumbnailBase64() const;
+
     bool isValid() const {
         return m_isValid;
     }
+
     bool isFetching() const {
         return m_isFetching;
     }
+
     bool hasThumbnail() const {
         return !m_thumbnail.isNull();
     }
+
     QString errorMessage() const {
         return m_errorMessage;
     }
+
     QSharedPointer<ComponentData> componentData() const {
         return m_componentData;
     }

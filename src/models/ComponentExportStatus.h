@@ -75,6 +75,7 @@ struct ComponentExportStatus {
         qint64 latencyMs = 0;
         bool wasRateLimited = false;
     };
+
     QList<NetworkDiagnostics> networkDiagnostics;
 
     bool isCompleteSuccess() const {

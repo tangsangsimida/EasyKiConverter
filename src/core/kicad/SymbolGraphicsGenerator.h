@@ -23,6 +23,7 @@ public:
     void setCurrentBBox(const SymbolBBox& bbox) {
         m_currentBBox = bbox;
     }
+
     const SymbolBBox& currentBBox() const {
         return m_currentBBox;
     }

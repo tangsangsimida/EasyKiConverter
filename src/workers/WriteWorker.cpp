@@ -24,7 +24,6 @@ namespace EasyKiConverter {
 // 初始化静态互斥锁
 QMutex WriteWorker::s_fileWriteMutex;
 
-
 WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
                          const QString& outputPath,
                          const QString& libName,
@@ -65,7 +64,6 @@ void WriteWorker::run() {
     writeTimer.start();
 
     m_status->addDebugLog(QString("WriteWorker started for component: %1").arg(m_status->componentId));
-
 
     // 初始化所有写入状态
 
@@ -479,7 +477,6 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         return false;
     }
 
-
     QString componentDebugDir = QString("%1/%2").arg(debugDirPath, status.componentId);
     if (!createOutputDirectory(componentDebugDir)) {
         status.addDebugLog(QString("ERROR: Failed to create component debug directory: %1").arg(componentDebugDir));
@@ -487,7 +484,6 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
     }
 
     status.addDebugLog(QString("Exporting debug data to: %1").arg(componentDebugDir));
-
 
     if (!status.cinfoJsonRaw.isEmpty()) {
         QString cinfoFilePath = QString("%1/cinfo_raw.json").arg(componentDebugDir);
@@ -519,7 +515,6 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         }
     }
 
-
     if (!status.model3DObjRaw.isEmpty()) {
         QString objFilePath = QString("%1/model3d_raw.obj").arg(componentDebugDir);
         QFile objFile(objFilePath);
@@ -540,7 +535,6 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         }
     }
 
-
     QJsonObject debugInfo;
     debugInfo["componentId"] = status.componentId;
     debugInfo["fetchSuccess"] = status.fetchSuccess;
@@ -550,7 +544,6 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
     debugInfo["writeSuccess"] = status.writeSuccess;
     debugInfo["writeMessage"] = status.writeMessage;
 
-
     if (!status.debugLog.isEmpty()) {
         QJsonArray logArray;
         for (const QString& log : status.debugLog) {
@@ -558,7 +551,6 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         }
         debugInfo["debugLog"] = logArray;
     }
-
 
     if (status.symbolData) {
         QJsonObject symbolInfo = SymbolDataSerializer::toJson(status.symbolData->info());
@@ -571,7 +563,6 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         symbolInfo["pathCount"] = status.symbolData->paths().size();
         symbolInfo["ellipseCount"] = status.symbolData->ellipses().size();
 
-
         QJsonObject bbox;
         bbox["x"] = status.symbolData->bbox().x;
         bbox["y"] = status.symbolData->bbox().y;
@@ -579,13 +570,11 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         bbox["height"] = status.symbolData->bbox().height;
         symbolInfo["bbox"] = bbox;
 
-
         QJsonArray pinsArray;
         for (const SymbolPin& pin : status.symbolData->pins()) {
             pinsArray.append(SymbolDataSerializer::toJson(pin));
         }
         symbolInfo["pins"] = pinsArray;
-
 
         QJsonArray rectanglesArray;
         for (const SymbolRectangle& rect : status.symbolData->rectangles()) {
@@ -593,13 +582,11 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         }
         symbolInfo["rectangles"] = rectanglesArray;
 
-
         QJsonArray circlesArray;
         for (const SymbolCircle& circle : status.symbolData->circles()) {
             circlesArray.append(SymbolDataSerializer::toJson(circle));
         }
         symbolInfo["circles"] = circlesArray;
-
 
         QJsonArray arcsArray;
         for (const SymbolArc& arc : status.symbolData->arcs()) {
@@ -607,13 +594,11 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         }
         symbolInfo["arcs"] = arcsArray;
 
-
         QJsonArray polylinesArray;
         for (const SymbolPolyline& polyline : status.symbolData->polylines()) {
             polylinesArray.append(SymbolDataSerializer::toJson(polyline));
         }
         symbolInfo["polylines"] = polylinesArray;
-
 
         QJsonArray polygonsArray;
         for (const SymbolPolygon& polygon : status.symbolData->polygons()) {
@@ -621,13 +606,11 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         }
         symbolInfo["polygons"] = polygonsArray;
 
-
         QJsonArray pathsArray;
         for (const SymbolPath& path : status.symbolData->paths()) {
             pathsArray.append(SymbolDataSerializer::toJson(path));
         }
         symbolInfo["paths"] = pathsArray;
-
 
         QJsonArray ellipsesArray;
         for (const SymbolEllipse& ellipse : status.symbolData->ellipses()) {
@@ -637,7 +620,6 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
         debugInfo["symbolData"] = symbolInfo;
     }
-
 
     if (status.footprintData) {
         QJsonObject footprintInfo = FootprintDataSerializer::toJson(status.footprintData->info());
@@ -651,7 +633,6 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         footprintInfo["solidRegionCount"] = status.footprintData->solidRegions().size();
         footprintInfo["outlineCount"] = status.footprintData->outlines().size();
 
-
         QJsonObject bbox;
         bbox["x"] = status.footprintData->bbox().x;
         bbox["y"] = status.footprintData->bbox().y;
@@ -659,13 +640,11 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         bbox["height"] = status.footprintData->bbox().height;
         footprintInfo["bbox"] = bbox;
 
-
         QJsonArray padsArray;
         for (const FootprintPad& pad : status.footprintData->pads()) {
             padsArray.append(FootprintDataSerializer::toJson(pad));
         }
         footprintInfo["pads"] = padsArray;
-
 
         QJsonArray tracksArray;
         for (const FootprintTrack& track : status.footprintData->tracks()) {
@@ -673,13 +652,11 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         }
         footprintInfo["tracks"] = tracksArray;
 
-
         QJsonArray holesArray;
         for (const FootprintHole& hole : status.footprintData->holes()) {
             holesArray.append(FootprintDataSerializer::toJson(hole));
         }
         footprintInfo["holes"] = holesArray;
-
 
         QJsonArray circlesArray;
         for (const FootprintCircle& circle : status.footprintData->circles()) {
@@ -687,13 +664,11 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         }
         footprintInfo["circles"] = circlesArray;
 
-
         QJsonArray arcsArray;
         for (const FootprintArc& arc : status.footprintData->arcs()) {
             arcsArray.append(FootprintDataSerializer::toJson(arc));
         }
         footprintInfo["arcs"] = arcsArray;
-
 
         QJsonArray rectanglesArray;
         for (const FootprintRectangle& rect : status.footprintData->rectangles()) {
@@ -701,20 +676,17 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         }
         footprintInfo["rectangles"] = rectanglesArray;
 
-
         QJsonArray textsArray;
         for (const FootprintText& text : status.footprintData->texts()) {
             textsArray.append(FootprintDataSerializer::toJson(text));
         }
         footprintInfo["texts"] = textsArray;
 
-
         QJsonArray solidRegionsArray;
         for (const FootprintSolidRegion& region : status.footprintData->solidRegions()) {
             solidRegionsArray.append(FootprintDataSerializer::toJson(region));
         }
         footprintInfo["solidRegions"] = solidRegionsArray;
-
 
         QJsonArray outlinesArray;
         for (const FootprintOutline& outline : status.footprintData->outlines()) {
@@ -725,7 +697,6 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         debugInfo["footprintData"] = footprintInfo;
     }
 
-
     if (status.model3DData) {
         QJsonObject model3DInfo;
         model3DInfo["uuid"] = status.model3DData->uuid();
@@ -733,7 +704,6 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         model3DInfo["stepSize"] = status.model3DStepRaw.size();
         debugInfo["model3DData"] = model3DInfo;
     }
-
 
     QString debugInfoFilePath = QString("%1/debug_info.json").arg(componentDebugDir);
     QFile debugInfoFile(debugInfoFilePath);

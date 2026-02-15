@@ -1,7 +1,8 @@
-#include <QtTest>
-#include <QSignalSpy>
 #include "core/easyeda/EasyedaApi.h"
 #include "tests/common/MockNetworkAdapter.hpp"
+
+#include <QSignalSpy>
+#include <QtTest>
 
 using namespace EasyKiConverter;
 using namespace EasyKiConverter::Test;
@@ -10,6 +11,7 @@ class TestEasyedaApi : public QObject {
     Q_OBJECT
 
 private slots:
+
     void init() {
         m_mockAdapter = new MockNetworkAdapter();
         m_api = new EasyedaApi(m_mockAdapter);

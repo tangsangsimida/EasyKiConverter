@@ -9,6 +9,7 @@
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -1038,7 +1039,15 @@ void ExportServicePipeline::emergencyCleanup() {
     // 清理符号数据
     m_symbols.clear();
 
-    qDebug() << "Emergency cleanup completed: Memory released.";
+    // 新增：清理临时目录，防止强行退出后残留大量临时文件
+    if (!m_tempDir.isEmpty()) {
+        if (PathSecurity::safeRemoveRecursively(m_tempDir)) {
+            qDebug() << "Emergency cleanup: Temp folder removed safely:" << m_tempDir;
+        }
+        m_tempDir.clear();
+    }
+
+    qDebug() << "Emergency cleanup completed: Memory released and disk cleaned.";
 }
 
 bool ExportServicePipeline::saveStatisticsReport(const ExportStatistics& statistics, const QString& reportPath) {
@@ -1120,7 +1129,8 @@ void ExportServicePipeline::cancelExport() {
     }
 
     // 3. 启动异步紧急清理，释放内存 (在任务中断后执行，减少数据生成)
-    QTimer::singleShot(0, this, &ExportServicePipeline::emergencyCleanup);
+    // 直接调用紧急清理，不使用 QTimer，确保在退出时也能执行
+    emergencyCleanup();
 
     // 4. 关闭队列（close() 是非阻塞的）
     if (m_fetchProcessQueue) {
@@ -1147,6 +1157,84 @@ void ExportServicePipeline::cancelExport() {
     // 这样可以避免竞争条件和状态不一致
 
     qDebug() << "ExportPipeline cancellation requested. Cleanup will be done by checkPipelineCompletion.";
+}
+
+bool ExportServicePipeline::waitForCompletion(int timeoutMs) {
+    if (!m_isPipelineRunning)
+
+        return true;
+
+    // 检查 QApplication 实例是否存在
+
+    if (!QCoreApplication::instance()) {
+        qWarning() << "QCoreApplication instance not available, skipping graceful wait.";
+
+        return false;
+    }
+
+    qDebug() << "Waiting for pipeline completion (timeout:" << timeoutMs << "ms)...";
+
+    // 确保已设置取消标志，加速 Worker 退出
+
+    if (!m_isCancelled.loadAcquire()) {
+        m_isCancelled.storeRelease(1);
+    }
+
+    QElapsedTimer timer;
+
+    timer.start();
+
+    // 缓存主线程指针
+
+    QThread* mainThread = QCoreApplication::instance()->thread();
+
+    // 定义一个辅助 lambda 用于安全等待线程池
+
+    auto safeWaitForPool = [&](QThreadPool* pool, const char* name) -> bool {
+        if (!pool)
+            return true;
+
+        while (pool->activeThreadCount() > 0) {
+            if (timer.elapsed() > timeoutMs) {
+                qWarning() << name << "thread pool wait timed out";
+
+                return false;
+            }
+
+            // 尝试非阻塞等待一小段时间
+
+            if (pool->waitForDone(50)) {
+                break;
+            }
+
+            // 关键：仅在主线程处理事件循环，防止死锁并确保线程安全
+
+            if (QThread::currentThread() == mainThread) {
+                QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+            }
+        }
+
+        return true;
+    };
+
+    // 1. 等待 fetch 线程池
+
+    if (!safeWaitForPool(m_fetchThreadPool, "Fetch"))
+        return false;
+
+    // 2. 等待 process 线程池
+
+    if (!safeWaitForPool(m_processThreadPool, "Process"))
+        return false;
+
+    // 3. 等待 write 线程池
+
+    if (!safeWaitForPool(m_writeThreadPool, "Write"))
+        return false;
+
+    qDebug() << "Pipeline wait finished successfully in" << timer.elapsed() << "ms";
+
+    return true;
 }
 
 }  // namespace EasyKiConverter

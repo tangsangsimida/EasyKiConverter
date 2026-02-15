@@ -6,7 +6,6 @@
 #include <QObject>
 #include <QString>
 
-
 namespace EasyKiConverter {
 
 /**
@@ -16,6 +15,7 @@ class INetworkAdapter : public QObject {
     Q_OBJECT
 public:
     explicit INetworkAdapter(QObject* parent = nullptr) : QObject(parent) {}
+
     virtual ~INetworkAdapter();
 
     virtual void sendGetRequest(const QString& url, int timeout = 30, int maxRetries = 3) = 0;

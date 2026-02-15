@@ -1,10 +1,11 @@
-#include <QtTest>
-#include <QJsonObject>
-#include <QJsonDocument>
-#include "models/SymbolData.h"
 #include "models/FootprintData.h"
-#include "models/SymbolDataSerializer.h"
 #include "models/FootprintDataSerializer.h"
+#include "models/SymbolData.h"
+#include "models/SymbolDataSerializer.h"
+
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QtTest>
 
 using namespace EasyKiConverter;
 
@@ -12,7 +13,9 @@ class TestModels : public QObject {
     Q_OBJECT
 
 private slots:
+
     void initTestCase() {}
+
     void cleanupTestCase() {}
 
     void testSymbolDataRoundTrip() {
@@ -90,14 +93,17 @@ private slots:
 
         // 添加矩形
         SymbolRectangle rect;
-        rect.posX = 10; rect.posY = 10;
-        rect.width = 50; rect.height = 30;
+        rect.posX = 10;
+        rect.posY = 10;
+        rect.width = 50;
+        rect.height = 30;
         rect.strokeWidth = 1.0;
         original.addRectangle(rect);
 
         // 添加圆
         SymbolCircle circle;
-        circle.centerX = 100; circle.centerY = 100;
+        circle.centerX = 100;
+        circle.centerY = 100;
         circle.radius = 20;
         original.addCircle(circle);
 

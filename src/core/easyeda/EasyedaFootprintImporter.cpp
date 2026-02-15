@@ -7,7 +7,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-
 namespace EasyKiConverter {
 
 EasyedaFootprintImporter::EasyedaFootprintImporter() {}

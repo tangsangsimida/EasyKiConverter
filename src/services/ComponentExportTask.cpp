@@ -43,7 +43,6 @@ void ComponentExportTask::run() {
             }
         }
 
-
         if (m_options.exportSymbol && m_componentData.symbolData() &&
             !m_componentData.symbolData()->info().name.isEmpty()) {
             QString symbolPath = QString("%1/%2.kicad_sym").arg(m_options.outputPath, componentId);
@@ -57,7 +56,6 @@ void ComponentExportTask::run() {
             }
         }
 
-
         QString model3DPath;
         if (m_options.exportModel3D && m_componentData.model3DData() &&
             !m_componentData.model3DData()->uuid().isEmpty()) {
@@ -66,7 +64,6 @@ void ComponentExportTask::run() {
             if (footprintName.isEmpty()) {
                 footprintName = m_componentData.model3DData()->uuid();
             }
-
 
             QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_options.outputPath, m_options.libName);
             if (!dir.exists(modelsDirPath)) {
@@ -86,7 +83,6 @@ void ComponentExportTask::run() {
             }
             model3DPath = QString("../%1.3dmodels/%2.wrl").arg(m_options.libName, footprintName);
         }
-
 
         if (m_options.exportFootprint && m_componentData.footprintData() &&
             !m_componentData.footprintData()->info().name.isEmpty()) {

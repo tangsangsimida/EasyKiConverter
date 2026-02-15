@@ -15,6 +15,11 @@
 
 namespace EasyKiConverter {
 
+class ExportService;
+class ExportServicePipeline;
+struct PipelineProgress;
+struct ExportStatistics;
+
 class ExportProgressViewModel : public QObject {
     Q_OBJECT
     Q_PROPERTY(int progress READ progress NOTIFY progressChanged)
@@ -56,48 +61,63 @@ public:
     int progress() const {
         return m_progress;
     }
+
     QString status() const {
         return m_status;
     }
+
     bool isExporting() const {
         return m_isExporting;
     }
+
     bool isStopping() const {
         return m_isStopping;
     }
+
     int successCount() const {
         return m_successCount;
     }
+
     int successSymbolCount() const {
         return m_successSymbolCount;
     }
+
     int successFootprintCount() const {
         return m_successFootprintCount;
     }
+
     int successModel3DCount() const {
         return m_successModel3DCount;
     }
+
     int failureCount() const {
         return m_failureCount;
     }
+
     int fetchProgress() const {
         return m_fetchProgress;
     }
+
     int processProgress() const {
         return m_processProgress;
     }
+
     int writeProgress() const {
         return m_writeProgress;
     }
+
     QVariantList resultsList() const {
         return m_resultsList;
     }
+
     bool hasStatistics() const {
         return m_hasStatistics;
     }
+
     QString statisticsReportPath() const {
         return m_statisticsReportPath;
     }
+
     QString statisticsSummary() const {
         return m_statisticsSummary;
     }
@@ -105,12 +125,15 @@ public:
     int statisticsTotal() const {
         return m_resultsList.size();
     }
+
     int statisticsSuccess() const {
         return m_successCount;
     }
+
     int statisticsFailed() const {
         return m_failureCount;
     }
+
     double statisticsSuccessRate() const {
         return m_resultsList.isEmpty() ? 0.0 : (m_successCount * 100.0 / m_resultsList.size());
     }
@@ -118,24 +141,31 @@ public:
     qint64 statisticsTotalDuration() const {
         return m_statistics.totalDurationMs;
     }
+
     qint64 statisticsAvgFetchTime() const {
         return m_statistics.avgFetchTimeMs;
     }
+
     qint64 statisticsAvgProcessTime() const {
         return m_statistics.avgProcessTimeMs;
     }
+
     qint64 statisticsAvgWriteTime() const {
         return m_statistics.avgWriteTimeMs;
     }
+
     int statisticsTotalNetworkRequests() const {
         return m_statistics.totalNetworkRequests;
     }
+
     int statisticsTotalRetries() const {
         return m_statistics.totalRetries;
     }
+
     qint64 statisticsAvgNetworkLatency() const {
         return m_statistics.avgNetworkLatencyMs;
     }
+
     int statisticsRateLimitHitCount() const {
         return m_statistics.rateLimitHitCount;
     }
@@ -156,6 +186,16 @@ public slots:
     Q_INVOKABLE void retryComponent(const QString& componentId);
     Q_INVOKABLE void cancelExport();
     Q_INVOKABLE void resetExport();
+
+    // 窗口关闭处理
+    Q_INVOKABLE bool handleCloseRequest();
+
+    void setExportService(ExportService* service) {
+        m_exportService = service;
+        if (qobject_cast<ExportServicePipeline*>(service)) {
+            m_usePipelineMode = true;
+        }
+    }
 
 signals:
     void progressChanged();

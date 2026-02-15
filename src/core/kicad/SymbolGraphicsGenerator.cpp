@@ -8,7 +8,6 @@
 
 #include <cmath>
 
-
 namespace EasyKiConverter {
 
 QString SymbolGraphicsGenerator::generateDrawings(const SymbolData& data) const {
@@ -394,6 +393,7 @@ QString SymbolGraphicsGenerator::generatePolygon(const SymbolPolygon& polygon) c
 
     return content;
 }
+
 QString SymbolGraphicsGenerator::generatePolyline(const SymbolPolyline& polyline) const {
     QString content;
     double strokeWidth = pxToMm(polyline.strokeWidth);
@@ -444,6 +444,7 @@ QString SymbolGraphicsGenerator::generatePolyline(const SymbolPolyline& polyline
 
     return content;
 }
+
 QString SymbolGraphicsGenerator::generatePath(const SymbolPath& path) const {
     QString content;
 

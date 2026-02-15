@@ -1,12 +1,10 @@
 
-#include <QtQuickTest>
-#include <QQmlEngine>
 #include <QQmlContext>
-
+#include <QQmlEngine>
 #include <QQuickStyle>
+#include <QtQuickTest>
 
-class Setup : public QObject
-{
+class Setup : public QObject {
     Q_OBJECT
 
 public:
@@ -15,8 +13,8 @@ public:
     }
 
 public slots:
-    void qmlEngineAvailable(QQmlEngine *engine)
-    {
+
+    void qmlEngineAvailable(QQmlEngine* engine) {
         engine->addImportPath("qrc:/qt/qml");
 
         // 注册 AppStyle 单例类型 (必须手动注册以匹配 ModernButton.qml 中的导入 URI)

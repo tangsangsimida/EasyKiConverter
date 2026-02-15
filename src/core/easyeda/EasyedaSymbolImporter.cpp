@@ -6,7 +6,6 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 
-
 namespace EasyKiConverter {
 
 EasyedaSymbolImporter::EasyedaSymbolImporter() {}
