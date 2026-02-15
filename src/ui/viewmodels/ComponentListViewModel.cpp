@@ -32,9 +32,6 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
 }
 
 ComponentListViewModel::~ComponentListViewModel() {
-    // 等待所有异步缩略图生成任务完成，防止访问已销毁对象
-    QThreadPool::globalInstance()->waitForDone(3000);  // 最多等待 3 秒
-
     qDeleteAll(m_componentList);
     m_componentList.clear();
 }
