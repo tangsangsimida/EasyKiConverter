@@ -144,18 +144,18 @@ int main(int argc, char* argv[]) {
     // 初始化语言管理器
     EasyKiConverter::LanguageManager::instance();
 
-    // 创建 Service 实例（使用流水线架构）
-    EasyKiConverter::ComponentService* componentService = new EasyKiConverter::ComponentService(&app);
-    EasyKiConverter::ExportServicePipeline* exportService = new EasyKiConverter::ExportServicePipeline(&app);
+    // 创建 Service 实例（使用流水线架构，不设置 parent，手动管理生命周期）
+    EasyKiConverter::ComponentService* componentService = new EasyKiConverter::ComponentService();
+    EasyKiConverter::ExportServicePipeline* exportService = new EasyKiConverter::ExportServicePipeline();
 
-    // 创建 ViewModel 实例
+    // 创建 ViewModel 实例（不设置 parent，手动管理生命周期）
     EasyKiConverter::ComponentListViewModel* componentListViewModel =
-        new EasyKiConverter::ComponentListViewModel(componentService, &app);
+        new EasyKiConverter::ComponentListViewModel(componentService);
     EasyKiConverter::ExportSettingsViewModel* exportSettingsViewModel =
-        new EasyKiConverter::ExportSettingsViewModel(exportService, &app);
+        new EasyKiConverter::ExportSettingsViewModel(exportService);
     EasyKiConverter::ExportProgressViewModel* exportProgressViewModel =
-        new EasyKiConverter::ExportProgressViewModel(exportService, componentService, componentListViewModel, &app);
-    EasyKiConverter::ThemeSettingsViewModel* themeSettingsViewModel = new EasyKiConverter::ThemeSettingsViewModel(&app);
+        new EasyKiConverter::ExportProgressViewModel(exportService, componentService, componentListViewModel);
+    EasyKiConverter::ThemeSettingsViewModel* themeSettingsViewModel = new EasyKiConverter::ThemeSettingsViewModel();
 
     // 创建 QML 引擎
     QQmlApplicationEngine engine;
@@ -203,5 +203,28 @@ int main(int argc, char* argv[]) {
     // 点击关闭按钮时直接退出应用程序
     app.setQuitOnLastWindowClosed(true);
 
-    return app.exec();
+    // 运行事件循环
+    int exitCode = app.exec();
+
+    // === 重要：显式按顺序销毁对象，防止退出时崩溃 ===
+    // 1. 首先销毁依赖度高的 ViewModel
+    delete themeSettingsViewModel;
+    delete exportProgressViewModel;
+    delete exportSettingsViewModel;
+    delete componentListViewModel;
+
+    // 2. 然后销毁单例/核心服务
+    delete exportService;
+    delete componentService;
+
+    // 3. 最后卸载日志适配器并关闭 Logger
+    // 确保所有 worker 线程已在上述 delete 过程中停止后再关闭日志线程
+    EasyKiConverter::QtLogAdapter::uninstall();
+    auto* logger = EasyKiConverter::Logger::instance();
+    if (logger) {
+        logger->flush();
+        logger->close();
+    }
+
+    return exitCode;
 }
