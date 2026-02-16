@@ -166,57 +166,7 @@ Use multi-stage pipeline parallelism architecture (ExportServicePipeline):
 
 The following diagram illustrates the complete feature development, release, and hotfix workflow:
 
-```mermaid
-%%{init: {'theme':'base', 'flowchart': {'nodeSpacing': 60, 'rankSpacing': 80}}}%%
-flowchart TD
-    %% ========== Subgraphs ==========
-    subgraph 开发流程 [Feature Development]
-        A([Create feature branch<br/>git checkout -b feature/xxx dev]):::dev
-        B([Develop & atomic commits]):::feature
-        C([PR/MR to dev<br/>Merge commit, preserve history]):::feature
-        D([dev integration<br/>CI / Test verification]):::dev
-        
-        A --> B
-        B --> C
-        C --> D
-    end
-
-    subgraph 发布流程 [Release Process]
-        E{Ready to release?}:::decision
-        F([PR/MR to master<br/>Merge commit]):::master
-        G([Tag master<br/>git tag -a v1.x.x]):::master
-        
-        D --> E
-        E -->|Yes| F
-        F --> G
-        E -.->|No<br/>Continue development| D
-    end
-
-    subgraph Hotfix [Hotfix Process]
-        H([Create hotfix from master<br/>git checkout -b hotfix/xxx master]):::hotfix
-        I([Fix & test]):::hotfix
-        J([Merge to master<br/>Tag patch version]):::master
-        K([Sync merge to dev<br/>Prevent fix loss]):::master
-        
-        H --> I
-        I --> J
-        I --> K
-    end
-
-    %% ========== Cross-subgraph connections ==========
-    D -.->|Need hotfix| H
-    G -.->|Sync released fix| K
-
-    %% ========== Style definitions ==========
-    classDef dev     fill:#5B9BD5,stroke:#333,stroke-width:2px,color:#fff
-    classDef feature fill:#70AD47,stroke:#333,stroke-width:2px,color:#fff
-    classDef master  fill:#2E7D32,stroke:#333,stroke-width:2px,color:#fff
-    classDef hotfix  fill:#FF8F00,stroke:#333,stroke-width:2px,color:#fff
-    classDef decision fill:#E6E6FA,stroke:#7D26CD,stroke-width:3px,color:#000
-
-    %% Bold key paths
-    linkStyle 0,1,2,3,4,5,7,8,9 stroke:#2E7D32,stroke-width:4px
-```
+![Git Workflow](../diagrams/Git_Workflow.svg)
 
 **Workflow Summary:**
 
