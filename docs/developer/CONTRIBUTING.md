@@ -97,6 +97,70 @@ git checkout -b feature/your-feature-name
 - 阶段间通过线程安全的有界队列通信
 - 详见：[ADR-002: 流水线并行架构](../project/adr/002-pipeline-parallelism-for-export.md)
 
+#### 开发流程图
+
+以下流程图展示了完整的功能开发、发布和紧急修复流程：
+
+```mermaid
+%%{init: {'theme':'base', 'flowchart': {'nodeSpacing': 60, 'rankSpacing': 80}}}%%
+flowchart TD
+    %% ========== 子图分组 ==========
+    subgraph 开发流程 [功能开发流程]
+        A([创建功能分支<br/>git checkout -b feature/xxx dev]):::dev
+        B([开发 & 原子化 commit]):::feature
+        C([PR/MR 到 dev<br/>普通合并，保留历史]):::feature
+        D([dev 分支集成<br/>CI / 测试验证]):::dev
+        
+        A --> B
+        B --> C
+        C --> D
+    end
+
+    subgraph 发布流程 [发布流程]
+        E{准备发布？}:::decision
+        F([PR/MR 到 master<br/>普通合并]):::master
+        G([master 打版本标签<br/>git tag -a v1.x.x]):::master
+        
+        D --> E
+        E -->|是| F
+        F --> G
+        E -.->|否<br/>继续开发| D
+    end
+
+    subgraph Hotfix [紧急修复流程]
+        H([从 master 创建 hotfix<br/>git checkout -b hotfix/xxx master]):::hotfix
+        I([修复 & 测试]):::hotfix
+        J([合并到 master<br/>并打 patch 标签]):::master
+        K([同步合并到 dev<br/>防止修复丢失]):::master
+        
+        H --> I
+        I --> J
+        I --> K
+    end
+
+    %% ========== 跨子图连接 ==========
+    D -.->|若需紧急修复| H
+    G -.->|同步已发布修复| K
+
+    %% ========== 样式定义（最简兼容） ==========
+    classDef dev     fill:#5B9BD5,stroke:#333,stroke-width:2px,color:#fff
+    classDef feature fill:#70AD47,stroke:#333,stroke-width:2px,color:#fff
+    classDef master  fill:#2E7D32,stroke:#333,stroke-width:2px,color:#fff
+    classDef hotfix  fill:#FF8F00,stroke:#333,stroke-width:2px,color:#fff
+    classDef decision fill:#E6E6FA,stroke:#7D26CD,stroke-width:3px,color:#000
+
+    %% 关键路径加粗（仅实线主流程，索引经验证）
+    linkStyle 0,1,2,3,4,5,7,8,9 stroke:#2E7D32,stroke-width:4px
+```
+
+**流程说明：**
+
+| 流程 | 分支策略 | 合并方式 |
+|------|----------|----------|
+| 功能开发 | `feature/*` → `dev` | 普通合并，保留提交历史 |
+| 发布 | `dev` → `master` | 普通合并，打版本标签 |
+| 紧急修复 | `hotfix/*` → `master` + `dev` | 双向合并，防止修复丢失 |
+
 #### 提交流程
 
 1. 提交您的更改：
