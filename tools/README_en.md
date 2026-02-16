@@ -100,28 +100,12 @@ Examples:
     args = parser.parse_args()
 ```
 
-### Current Tool Status
-
-| Tool | `--help` Support |
-|------|------------------|
-| `manage_version.py` | ✅ |
-| `convert_to_utf8.py` | ✅ |
-| `build_project.py` | ✅ |
-| `manage_translations.py` | ✅ |
-| `build_docs.py` | ✅ |
-| `format_code.py` | ✅ |
-| `analyze_lines.py` | ⚠️ Pending |
-| `check_env.py` | ⚠️ Pending |
-| `count_lines.py` | ⚠️ Pending |
-| `fix_qml_translations.py` | ⚠️ Pending |
-| `build_project.bat` | ✅ |
-| `format_code.bat` | ⚠️ Pending |
-| `format_qml.bat` | ⚠️ Pending |
-
 ## Adding New Tools
 
-When adding new tools:
+When adding new tools, you must follow these requirements:
+
 1. Create the appropriate subdirectory (`windows/`, `linux/`, `macos/`, or `python/`)
-2. Add the tool script or executable
-3. Update this README with documentation
-4. Consider adding usage examples and requirements
+2. **Help Support**: All command-line tools **must** support `-h` and `--help` flags to display usage information. See "Command Line Help Support" section above for implementation details.
+3. Add the tool script or executable
+4. Update this README with documentation
+5. Consider adding usage examples and requirements

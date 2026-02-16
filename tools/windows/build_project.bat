@@ -1,14 +1,20 @@
-@echo off
+﻿@echo off
 setlocal enabledelayedexpansion
 
 :: EasyKiConverter 构建脚本
 :: 功能：Python 脚本的轻量级包装器
 
+:: 检查帮助请求 (必须在最开始)
+if "%~1"=="-h" goto help
+if "%~1"=="--help" goto help
+if "%~1"=="/h" goto help
+if "%~1"=="help" goto help
+
 :: 检查 Python
 where python >nul 2>nul
 if %ERRORLEVEL% neq 0 (
-    echo [错误] 未找到 Python 解释器
-    echo 请安装 Python 3.6+ 并将其添加到 PATH
+    echo [ERROR] Python interpreter not found
+    echo Please install Python 3.6+ and add to PATH
     pause
     exit /b 1
 )
@@ -17,27 +23,21 @@ if %ERRORLEVEL% neq 0 (
 for /f "tokens=2" %%i in ('python --version') do set py_ver=%%i
 echo %py_ver% | findstr "^3\." >nul
 if %ERRORLEVEL% neq 0 (
-    echo [错误] Python 版本过低 (%py_ver%)，需要 3.6+
+    echo [ERROR] Python version too low (%py_ver%), need 3.6+
     pause
     exit /b 1
 )
 
 :: 获取项目根目录
-set "PROJECT_ROOT=%~dp0..\.."
-cd /d "%PROJECT_ROOT%"
-
-:: 检查帮助请求
-if "%~1"=="-h" goto help
-if "%~1"=="--help" goto help
-if "%~1"=="/h" goto help
-if "%~1"=="help" goto help
+set "PROJECT_ROOT=%~dp0..\"
+cd /d "%PROJECT_ROOT%\"
 
 :: 显示构建信息
 echo ============================================================
-echo EasyKiConverter 项目构建
+echo EasyKiConverter Build
 echo ============================================================
-echo 项目根目录: %PROJECT_ROOT%
-echo Python 版本: %py_ver%
+echo Project root: %PROJECT_ROOT%
+echo Python version: %py_ver%
 echo.
 
 :: 调用 Python 构建管理器
@@ -47,7 +47,7 @@ python tools\python\build_project.py %*
 if %ERRORLEVEL% neq 0 (
     echo.
     echo ============================================================
-    echo [错误] 构建失败，请查看 build.log 了解详情
+    echo [ERROR] Build failed, see build.log for details
     echo ============================================================
     pause
     exit /b 1
@@ -55,7 +55,7 @@ if %ERRORLEVEL% neq 0 (
 
 echo.
 echo ============================================================
-echo 构建成功完成！
+echo Build completed successfully!
 echo ============================================================
 pause
 goto :eof
@@ -68,7 +68,7 @@ echo   build_project.bat                 - 执行默认 Debug 构建
 echo   build_project.bat -t Release      - 执行 Release 构建
 echo   build_project.bat -c              - 清理构建目录 (会有确认提示)
 echo   build_project.bat -c -y           - 强制清理并构建
-echo   build_project.bat --check         - 仅执行环境 dependencies 检查
+echo   build_project.bat --check         - 仅执行环境依赖检查
 echo   build_project.bat --config-only   - 仅执行 CMake 配置，不进行编译
 echo   build_project.bat -t Release -i   - 构建 Release 并安装
 echo   build_project.bat -v              - 详细日志模式

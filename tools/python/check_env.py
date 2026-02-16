@@ -3,23 +3,8 @@
 
 """
 EasyKiConverter 环境检查工具 (Environment Dependency Checker)
-
-功能说明:
-    1. 检查构建依赖: 验证 CMake, Ninja/Make, 编译器是否可用。
-    2. 检查 Qt 环境: 验证 Qt6 核心组件及翻译工具 (lupdate, lrelease) 是否可用。
-    3. 工具链路径管理: 优先从系统环境变量中查找，支持自定义路径变量回退。
-
-使用示例:
-    # 执行完整环境检查
-    python tools/python/check_env.py
-
-    # 仅检查 Qt 开发环境
-    python tools/python/check_env.py --qt-only
-
-环境要求:
-    - Python 3.6+
 """
-
+import argparse
 import os
 import sys
 import shutil
@@ -56,6 +41,28 @@ def check_command_version(tool_path, version_args=["--version"]):
         return "无法获取版本信息"
 
 def main():
+    parser = argparse.ArgumentParser(
+        description="EasyKiConverter 开发环境检查工具",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+功能说明:
+  1. 检查构建依赖: 验证 CMake, Ninja/Make, Git 是否可用
+  2. 检查 Qt 环境: 验证 lupdate, lrelease, qmake 是否可用
+  3. 工具链路径管理: 优先从系统 PATH 查找，支持自定义路径变量回退
+
+示例:
+  python tools/python/check_env.py           # 执行完整环境检查
+  python tools/python/check_env.py --qt-only # 仅检查 Qt 开发环境
+        """
+    )
+    parser.add_argument(
+        "--qt-only",
+        action="store_true",
+        help="仅检查 Qt 开发环境"
+    )
+
+    args = parser.parse_args()
+
     print("=" * 60)
     print("EasyKiConverter 开发环境检查")
     print("=" * 60)
@@ -63,24 +70,26 @@ def main():
     all_dependencies_met = True
 
     # 1. 基础构建工具检查
-    print("\n[1/2] 基础构建工具检查:")
-    build_tools = {
-        "CMake": ("cmake.exe" if sys.platform == "win32" else "cmake", CMAKE_BIN_PATH),
-        "Ninja": ("ninja.exe" if sys.platform == "win32" else "ninja", None),
-        "Git": ("git.exe" if sys.platform == "win32" else "git", None)
-    }
+    if not args.qt_only:
+        print("\n[1/2] 基础构建工具检查:")
+        build_tools = {
+            "CMake": ("cmake.exe" if sys.platform == "win32" else "cmake", CMAKE_BIN_PATH),
+            "Ninja": ("ninja.exe" if sys.platform == "win32" else "ninja", None),
+            "Git": ("git.exe" if sys.platform == "win32" else "git", None)
+        }
 
-    for name, (exe, custom) in build_tools.items():
-        path = find_tool(exe, custom)
-        if path:
-            version = check_command_version(path)
-            print(f"  [OK] {name:8}: {version}")
-        else:
-            print(f"  [缺失] {name:8} (建议安装并添加到 PATH)")
-            all_dependencies_met = False
+        for name, (exe, custom) in build_tools.items():
+            path = find_tool(exe, custom)
+            if path:
+                version = check_command_version(path)
+                print(f"  [OK] {name:8}: {version}")
+            else:
+                print(f"  [缺失] {name:8} (建议安装并添加到 PATH)")
+                all_dependencies_met = False
 
     # 2. Qt 环境检查
-    print("\n[2/2] Qt 开发环境检查:")
+    stage_label = "[Qt]" if args.qt_only else "[2/2]"
+    print(f"\n{stage_label} Qt 开发环境检查:")
     qt_tools = {
         "lupdate": ("lupdate.exe" if sys.platform == "win32" else "lupdate", QT_BIN_PATH),
         "lrelease": ("lrelease.exe" if sys.platform == "win32" else "lrelease", QT_BIN_PATH),

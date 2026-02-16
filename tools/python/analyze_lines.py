@@ -1,11 +1,8 @@
 """
 代码行数分析工具
 用途：扫描项目源文件，按行数降序排列，识别高耦合风险文件。
-用法：python tools/python/analyze_lines.py [目录路径] [--link]
-
-选项:
-    --link    启用终端超链接，点击文件路径可用默认程序打开
 """
+import argparse
 import os
 import sys
 
@@ -132,23 +129,45 @@ def analyze(src_dir, base_dir=None, use_links=False):
 
 def main():
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    default_src = os.path.join(base_dir, "src")
 
-    # 解析命令行参数
-    use_links = '--link' in sys.argv
-    args = [arg for arg in sys.argv[1:] if arg != '--link']
+    parser = argparse.ArgumentParser(
+        description="代码行数分析工具 - 扫描项目源文件，按行数降序排列，识别高耦合风险文件",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  python tools/python/analyze_lines.py                 # 分析 src 目录
+  python tools/python/analyze_lines.py tests           # 分析 tests 目录
+  python tools/python/analyze_lines.py --link          # 启用终端超链接
+  python tools/python/analyze_lines.py src --link      # 分析指定目录并启用超链接
 
-    if len(args) > 0:
-        src_dir = args[0]
-    else:
-        src_dir = os.path.join(base_dir, "src")
+风险等级说明:
+  🔴 高风险: > 500 行，建议拆分重构
+  🟡 中风险: > 300 行，可考虑优化
+  🟢 低风险: > 200 行，基本可接受
+        """
+    )
+    parser.add_argument(
+        "directory",
+        nargs="?",
+        default=default_src,
+        help=f"要扫描的目录路径 (默认: {default_src})"
+    )
+    parser.add_argument(
+        "--link",
+        action="store_true",
+        help="启用终端超链接，点击文件路径可用默认程序打开 (需要支持的终端)"
+    )
+
+    args = parser.parse_args()
 
     # 如果指定了 --link 但终端不支持，给出警告
-    if use_links and not detect_hyperlink_support():
+    if args.link and not detect_hyperlink_support():
         print("⚠ 警告: 当前终端可能不支持 OSC 8 超链接", file=sys.stderr)
         print("  支持的终端: Windows Terminal, VS Code, JetBrains IDE, iTerm2 等", file=sys.stderr)
         print()
 
-    analyze(src_dir, base_dir, use_links=use_links)
+    analyze(args.directory, base_dir, use_links=args.link)
 
 
 if __name__ == "__main__":
