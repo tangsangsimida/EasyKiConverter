@@ -46,8 +46,8 @@ void ProcessStageHandler::start() {
                             QMutexLocker locker(&m_workerMutex);
                             m_activeWorkers.remove(worker);
                         }
-                        if (!m_isCancelled.loadAcquire())
-                            emit componentProcessCompleted(s);
+                        // 即使取消了也要发出信号，让流水线能够正确完成
+                        emit componentProcessCompleted(s);
                     },
                     Qt::QueuedConnection);
 

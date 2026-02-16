@@ -116,9 +116,8 @@ void FetchStageHandler::onWorkerCompleted(QSharedPointer<ComponentExportStatus> 
         m_activeWorkers.remove(worker);
     }
 
-    if (m_isCancelled.loadAcquire())
-        return;
-
+    // 即使取消了也要发出信号，让流水线能够正确完成
+    // 外部通过检查 status 中的状态来判断是否真的成功
     emit componentFetchCompleted(status, false);
 }
 
