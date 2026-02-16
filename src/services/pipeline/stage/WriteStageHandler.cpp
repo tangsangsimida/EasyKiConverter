@@ -60,8 +60,8 @@ void WriteStageHandler::start() {
                             QMutexLocker locker(&m_workerMutex);
                             m_activeWorkers.remove(worker);
                         }
-                        if (!m_isCancelled.loadAcquire())
-                            emit componentWriteCompleted(s);
+                        // 即使取消了也要发出信号，让流水线能够正确完成
+                        emit componentWriteCompleted(s);
                     },
                     Qt::QueuedConnection);
 

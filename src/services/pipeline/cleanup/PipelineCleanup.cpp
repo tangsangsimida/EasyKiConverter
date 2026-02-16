@@ -25,12 +25,8 @@ void PipelineCleanup::emergencyCleanup(
     }
     completedStatuses.clear();
     preloadedData.clear();
-    symbols.clear();
-
-    if (!tempDir.isEmpty()) {
-        removeTempDir(tempDir);
-        tempDir.clear();
-    }
+    // 不清空 symbols，因为它们已被写入临时文件，需要在合并后再清理
+    // 不清理 tempDir，因为需要用它来合并符号库
 }
 
 bool PipelineCleanup::removeTempDir(const QString& tempDir) {
