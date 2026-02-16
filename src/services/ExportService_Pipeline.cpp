@@ -536,7 +536,9 @@ void ExportServicePipeline::checkPipelineCompletion() {
     m_isExporting.storeRelease(0);
     m_isStopping.storeRelease(0);
     m_isCancelled.storeRelease(0);
-    m_completionScheduled.storeRelease(0);
+    // 注意：这里不再重置 m_completionScheduled，让它保持为 1
+    // 这样可以防止在 cleanupPipeline 执行期间有任何异步调用重复触发完成逻辑
+    // 下一次导出开始时会显式重置这个标志
 
     cleanupPipeline();
     qDebug() << "Cleanup and statistics generation completed.";
