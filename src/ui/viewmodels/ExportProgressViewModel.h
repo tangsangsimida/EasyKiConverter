@@ -35,6 +35,11 @@ class ExportProgressViewModel : public QObject {
     Q_PROPERTY(int processProgress READ processProgress NOTIFY processProgressChanged)
     Q_PROPERTY(int writeProgress READ writeProgress NOTIFY writeProgressChanged)
     Q_PROPERTY(QVariantList resultsList READ resultsList NOTIFY resultsListChanged)
+    Q_PROPERTY(QString filterMode READ filterMode NOTIFY filterModeChanged)
+    Q_PROPERTY(QVariantList filteredResultsList READ filteredResultsList NOTIFY filteredResultsListChanged)
+    Q_PROPERTY(int filteredSuccessCount READ filteredSuccessCount NOTIFY filteredResultsListChanged)
+    Q_PROPERTY(int filteredFailedCount READ filteredFailedCount NOTIFY filteredResultsListChanged)
+    Q_PROPERTY(int filteredPendingCount READ filteredPendingCount NOTIFY filteredResultsListChanged)
     Q_PROPERTY(bool hasStatistics READ hasStatistics NOTIFY statisticsChanged)
     Q_PROPERTY(QString statisticsReportPath READ statisticsReportPath NOTIFY statisticsChanged)
     Q_PROPERTY(QString statisticsSummary READ statisticsSummary NOTIFY statisticsChanged)
@@ -108,6 +113,24 @@ public:
 
     QVariantList resultsList() const {
         return m_resultsList;
+    }
+
+    QString filterMode() const {
+        return m_filterMode;
+    }
+
+    QVariantList filteredResultsList() const;
+
+    int filteredSuccessCount() const {
+        return m_successCount;
+    }
+
+    int filteredFailedCount() const {
+        return m_failureCount;
+    }
+
+    int filteredPendingCount() const {
+        return m_resultsList.size() - m_successCount - m_failureCount;
     }
 
     bool hasStatistics() const {
@@ -186,6 +209,7 @@ public slots:
     Q_INVOKABLE void retryComponent(const QString& componentId);
     Q_INVOKABLE void cancelExport();
     Q_INVOKABLE void resetExport();
+    Q_INVOKABLE void setFilterMode(const QString& mode);
 
     // 窗口关闭处理
     Q_INVOKABLE bool handleCloseRequest();
@@ -210,6 +234,8 @@ signals:
     void processProgressChanged();
     void writeProgressChanged();
     void resultsListChanged();
+    void filterModeChanged();
+    void filteredResultsListChanged();
     void statisticsChanged();
 
 private slots:
@@ -257,6 +283,7 @@ private:
     int m_processProgress;
     int m_writeProgress;
     bool m_usePipelineMode;
+    QString m_filterMode;
     QVariantList m_resultsList;
     QHash<QString, int> m_idToIndexMap;
     QTimer* m_throttleTimer;

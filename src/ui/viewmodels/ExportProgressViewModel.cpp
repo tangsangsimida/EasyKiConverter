@@ -37,6 +37,7 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
     , m_processProgress(0)
     , m_writeProgress(0)
     , m_usePipelineMode(false)
+    , m_filterMode("all")
     , m_pendingUpdate(false)
     , m_hasStatistics(false)
     , m_systemTrayIcon(nullptr)
@@ -239,12 +240,41 @@ void ExportProgressViewModel::resetExport() {
     emit successCountChanged();
     emit failureCountChanged();
     emit resultsListChanged();
+    emit filteredResultsListChanged();
     emit statisticsChanged();
     emit fetchProgressChanged();
     emit processProgressChanged();
     emit writeProgressChanged();
 
     qDebug() << "Export status reset completed";
+}
+
+void ExportProgressViewModel::setFilterMode(const QString& mode) {
+    if (m_filterMode != mode) {
+        m_filterMode = mode;
+        emit filterModeChanged();
+        emit filteredResultsListChanged();
+    }
+}
+
+QVariantList ExportProgressViewModel::filteredResultsList() const {
+    if (m_filterMode == "all") {
+        return m_resultsList;
+    }
+
+    QVariantList filtered;
+    for (const auto& var : m_resultsList) {
+        QVariantMap item = var.toMap();
+        QString status = item["status"].toString();
+        if (m_filterMode == "success" && status == "success") {
+            filtered.append(var);
+        } else if (m_filterMode == "failed" && status == "failed") {
+            filtered.append(var);
+        } else if (m_filterMode == "exporting" && status != "success" && status != "failed") {
+            filtered.append(var);
+        }
+    }
+    return filtered;
 }
 
 void ExportProgressViewModel::handleExportProgress(int current, int total) {
@@ -377,6 +407,7 @@ void ExportProgressViewModel::flushPendingUpdates() {
     if (m_pendingUpdate) {
         m_pendingUpdate = false;
         emit resultsListChanged();
+        emit filteredResultsListChanged();
     }
 }
 
