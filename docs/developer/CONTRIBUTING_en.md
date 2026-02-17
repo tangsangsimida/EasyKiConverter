@@ -162,6 +162,20 @@ Use multi-stage pipeline parallelism architecture (ExportServicePipeline):
 - Stages communicate via thread-safe bounded queues
 - See: [ADR-002: Pipeline Parallelism](../project/adr/002-pipeline-parallelism-for-export_en.md)
 
+## Development Workflow Diagram
+
+The following diagram illustrates the complete feature development, release, and hotfix workflow:
+
+![Git Workflow](../diagrams/Git_Workflow.svg)
+
+**Workflow Summary:**
+
+| Process | Branch Strategy | Merge Method |
+|---------|-----------------|--------------|
+| Feature Development | `feature/*` → `dev` | Merge commit, preserve history |
+| Release | `dev` → `master` | Merge commit, tag version |
+| Hotfix | `hotfix/*` → `master` + `dev` | Bidirectional merge, prevent fix loss |
+
 ## Development Workflow
 
 ### 1. Make Changes

@@ -105,6 +105,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # 查找 Qt 6 组件
 find_package(Qt6 REQUIRED COMPONENTS Quick Network Core Gui Widgets QuickControls2 Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Gui) # 再次确保 Gui
 
 # 尝试查找 zlib 库
 # 在 Windows + MinGW 环境下，Qt 的 zlib 库通常在 Qt 安装目录中

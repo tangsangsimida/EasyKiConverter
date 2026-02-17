@@ -97,6 +97,20 @@ git checkout -b feature/your-feature-name
 - 阶段间通过线程安全的有界队列通信
 - 详见：[ADR-002: 流水线并行架构](../project/adr/002-pipeline-parallelism-for-export.md)
 
+#### 开发流程图
+
+以下流程图展示了完整的功能开发、发布和紧急修复流程：
+
+![Git Workflow](../diagrams/Git_Workflow.svg)
+
+**流程说明：**
+
+| 流程 | 分支策略 | 合并方式 |
+|------|----------|----------|
+| 功能开发 | `feature/*` → `dev` | 普通合并，保留提交历史 |
+| 发布 | `dev` → `master` | 普通合并，打版本标签 |
+| 紧急修复 | `hotfix/*` → `master` + `dev` | 双向合并，防止修复丢失 |
+
 #### 提交流程
 
 1. 提交您的更改：

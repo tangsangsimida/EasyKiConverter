@@ -5,11 +5,9 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Card {
     id: exportStatisticsCard
-
     // 外部依赖
     property var exportProgressController
     property var exportSettingsController
-
     title: qsTranslate("MainWindow", "导出统计")
     visible: exportStatisticsCard.exportProgressController.hasStatistics
     ColumnLayout {
@@ -137,7 +135,6 @@ Card {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: AppStyle.spacing.sm
             spacing: AppStyle.spacing.lg
-
             // 打开详细报告按钮（只在调试模式下显示）
             ModernButton {
                 text: qsTranslate("MainWindow", "打开详细统计报告")
@@ -147,7 +144,6 @@ Card {
                 hoverColor: AppStyle.colors.border
                 pressedColor: AppStyle.colors.borderFocus
                 visible: exportStatisticsCard.exportSettingsController.debugMode // 只在调试模式下显示
-
                 onClicked: {
                     Qt.openUrlExternally("file:///" + exportStatisticsCard.exportProgressController.statisticsReportPath);
                 }

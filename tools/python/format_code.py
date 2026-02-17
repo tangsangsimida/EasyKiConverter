@@ -380,9 +380,8 @@ class CodeFormatter:
                     # 格式化模式
                     original = file_path.read_text(encoding='utf-8')
 
-                    config_arg = []
-                    if config_file.exists():
-                        config_arg = ["-s", str(config_file)]
+                    # 确保使用配置文件
+                    config_arg = ["-s", str(config_file)] if config_file.exists() else []
 
                     result = subprocess.run(
                         ["qmlformat", "-i"] + config_arg + [str(file_path)],
@@ -409,6 +408,100 @@ class CodeFormatter:
             except subprocess.TimeoutExpired:
                 self.stats.failed_files.append((str(relative_path), "超时"))
                 self.logger.error(f"    ✗ {relative_path} - 超时")
+            except Exception as e:
+                self.stats.failed_files.append((str(relative_path), str(e)))
+                self.logger.error(f"    ✗ {relative_path} - {e}")
+
+        return len(self.stats.failed_files) == 0
+
+    def fix_qml_empty_lines(self, directories: List[str] = None) -> bool:
+        """修复 QML 文件中的多余空行"""
+        if directories is None:
+            directories = ["src/ui/qml"]
+
+        self.logger.info("")
+        self.logger.info(colorize("[修复 QML 空行]", Colors.CYAN))
+        self.logger.info(f"  目录: {', '.join(directories)}")
+
+        # 查找文件
+        files = self._find_files(directories, [".qml"])
+        self.logger.info(f"  扫描到 {len(files)} 个文件")
+        self.logger.info("")
+
+        if not files:
+            self.logger.info("  没有找到 QML 文件")
+            return True
+
+        def remove_extra_empty_lines(content: str) -> str:
+            """删除多余的空行"""
+            lines = content.split('\n')
+            result = []
+
+            i = 0
+            while i < len(lines):
+                line = lines[i]
+                stripped = line.strip()
+
+                if stripped == '':
+                    # 空行：检查是否需要保留
+                    should_keep = False
+
+                    # 检查上一行
+                    if i > 0:
+                        prev_line = lines[i - 1].strip()
+                        if prev_line.endswith('}'):
+                            should_keep = True
+                        if prev_line.startswith('//') or prev_line.startswith('/*') or prev_line.endswith('*/'):
+                            should_keep = True
+                        if prev_line.startswith('import '):
+                            should_keep = True
+
+                    # 检查下一行
+                    if i + 1 < len(lines):
+                        next_line = lines[i + 1].strip()
+                        if next_line == '':
+                            should_keep = False
+                        if next_line == '}':
+                            should_keep = False
+
+                    if should_keep:
+                        result.append(line)
+                else:
+                    result.append(line)
+                i += 1
+
+            # 删除文件末尾的空行
+            while result and result[-1].strip() == '':
+                result.pop()
+
+            # 确保文件以换行符结尾
+            if result:
+                result.append('')
+
+            return '\n'.join(result)
+
+        # 处理文件
+        for file_path in files:
+            relative_path = file_path.relative_to(self.project_root)
+            self.stats.total_files += 1
+
+            try:
+                content = file_path.read_text(encoding='utf-8')
+                original_lines = len(content.split('\n'))
+
+                fixed_content = remove_extra_empty_lines(content)
+                fixed_lines = len(fixed_content.split('\n'))
+
+                if fixed_content != content:
+                    if not self.check_mode:
+                        file_path.write_text(fixed_content, encoding='utf-8')
+                    self.stats.modified_files.append(str(relative_path))
+                    self.logger.info(f"    ⚡ {relative_path} ({original_lines} → {fixed_lines} 行)")
+                else:
+                    self.stats.unchanged_files.append(str(relative_path))
+                    if self.verbose:
+                        self.logger.debug(f"    ✓ {relative_path} - 无变化")
+
             except Exception as e:
                 self.stats.failed_files.append((str(relative_path), str(e)))
                 self.logger.error(f"    ✗ {relative_path} - {e}")
@@ -470,12 +563,13 @@ def main():
   python tools/python/format_code.py --check --all   # CI 检查模式
   python tools/python/format_code.py --all -v        # 详细模式
   python tools/python/format_code.py --all --report logs/format.log  # 生成报告
+  python tools/python/format_code.py --qml --fix-empty-lines  # 修复 QML 空行
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     # 格式化目标
-    target_group = parser.add_mutually_exclusive_group(required=True)
+    target_group = parser.add_mutually_exclusive_group()
     target_group.add_argument("--cpp", action="store_true", help="格式化 C++ 文件")
     target_group.add_argument("--qml", action="store_true", help="格式化 QML 文件")
     target_group.add_argument("--all", action="store_true", help="格式化所有文件 (C++ + QML)")
@@ -485,6 +579,8 @@ def main():
                         help="检查模式：仅检查不修改，用于 CI")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="显示详细输出")
+    parser.add_argument("--fix-empty-lines", action="store_true",
+                        help="修复 QML 文件中的多余空行（每行代码后的空行）")
 
     # 目录配置
     parser.add_argument("--dirs", nargs="+",
@@ -495,6 +591,11 @@ def main():
                         help="生成报告文件路径")
 
     args = parser.parse_args()
+
+    # 检查参数：如果没有指定任何操作，显示帮助
+    if not (args.cpp or args.qml or args.all or args.fix_empty_lines):
+        parser.print_help()
+        sys.exit(1)
 
     # 创建格式化器
     formatter = CodeFormatter(check_mode=args.check, verbose=args.verbose)
@@ -508,13 +609,19 @@ def main():
     # 执行格式化
     success = True
 
-    if args.cpp or args.all:
-        if not formatter.format_cpp(args.dirs):
+    if args.fix_empty_lines:
+        # 仅修复空行
+        if not formatter.fix_qml_empty_lines(args.dirs if args.dirs else ["src/ui/qml"]):
             success = False
+    else:
+        # 正常格式化
+        if args.cpp or args.all:
+            if not formatter.format_cpp(args.dirs):
+                success = False
 
-    if args.qml or args.all:
-        if not formatter.format_qml(args.dirs if args.dirs else ["src/ui/qml"]):
-            success = False
+        if args.qml or args.all:
+            if not formatter.format_qml(args.dirs if args.dirs else ["src/ui/qml"]):
+                success = False
 
     # 生成报告
     if args.report:

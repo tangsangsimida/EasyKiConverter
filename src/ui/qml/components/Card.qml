@@ -5,17 +5,13 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Rectangle {
     id: card
-
     // API
     property alias title: titleText.text
     default property alias content: contentLayout.children
-
     // 新增：折叠功能属性
     property bool collapsible: true
     property bool isCollapsed: false
-
     implicitHeight: contentColumn.implicitHeight + 48
-
     // 根据主题模式动态计算颜色
     color: {
         if (AppStyle.isDarkMode) {
@@ -34,7 +30,6 @@ Rectangle {
         }
     }
     border.width: 1
-
     // 颜色变化动画
     Behavior on color {
         ColorAnimation {
@@ -80,7 +75,6 @@ Rectangle {
             }
         }
     ]
-
     transitions: [
         Transition {
             from: "*"
@@ -92,7 +86,6 @@ Rectangle {
             }
         }
     ]
-
     MouseArea {
         id: cardMouseArea
         anchors.fill: parent
@@ -108,17 +101,14 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: AppStyle.spacing.xl
         spacing: AppStyle.spacing.lg
-
         // 标题栏区域
         Item {
             Layout.fillWidth: true
             Layout.preferredHeight: titleRow.implicitHeight
-
             RowLayout {
                 id: titleRow
                 anchors.fill: parent
                 spacing: AppStyle.spacing.sm
-
                 // 标题文本
                 Text {
                     id: titleText
@@ -136,10 +126,8 @@ Rectangle {
                     color: AppStyle.colors.textSecondary
                     font.pixelSize: AppStyle.fontSizes.md
                     visible: card.collapsible && titleText.text.length > 0
-
                     // 旋转状态
                     rotation: card.isCollapsed ? -90 : 0
-
                     Behavior on rotation {
                         NumberAnimation {
                             duration: AppStyle.durations.normal
@@ -167,7 +155,6 @@ Rectangle {
             color: AppStyle.colors.border
             visible: titleText.text.length > 0
             opacity: card.isCollapsed ? 0 : 1
-
             Behavior on opacity {
                 NumberAnimation {
                     duration: AppStyle.durations.fast
@@ -181,9 +168,7 @@ Rectangle {
             Layout.fillWidth: true
             // 如果折叠，高度为0；否则为内容高度
             Layout.preferredHeight: card.isCollapsed ? 0 : contentLayout.implicitHeight
-
             clip: true // 裁剪溢出内容，确保折叠时内容不可见
-
             Behavior on Layout.preferredHeight {
                 NumberAnimation {
                     duration: AppStyle.durations.normal
@@ -199,7 +184,6 @@ Rectangle {
                 // 它的 implicitHeight 会被外部 Wrapper 读取
 
                 spacing: AppStyle.spacing.md
-
                 // 内容淡入淡出
                 opacity: card.isCollapsed ? 0 : 1
                 Behavior on opacity {

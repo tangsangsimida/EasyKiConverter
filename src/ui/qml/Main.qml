@@ -15,7 +15,6 @@ ApplicationWindow {
     title: "EasyKiConverter - 元器件转换工具"
     color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint
-
     // 美化的确认关闭对话框
     ConfirmDialog {
         id: closeConfirmDialog

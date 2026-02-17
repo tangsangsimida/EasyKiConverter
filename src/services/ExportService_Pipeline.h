@@ -4,7 +4,10 @@
 #include "ExportService.h"
 #include "models/ComponentExportStatus.h"
 #include "models/SymbolData.h"
-#include "utils/BoundedThreadSafeQueue.h"
+#include "pipeline/queue/PipelineQueueManager.h"
+#include "pipeline/stage/FetchStageHandler.h"
+#include "pipeline/stage/ProcessStageHandler.h"
+#include "pipeline/stage/WriteStageHandler.h"
 #include "workers/FetchWorker.h"
 
 #include <QAtomicInt>
@@ -126,23 +129,20 @@ private slots:
     /**
      * @brief 处理抓取完成
      * @param status 导出状态
-     * @param worker 工作线程指针
      */
-    void handleFetchCompleted(QSharedPointer<ComponentExportStatus> status, class FetchWorker* worker);
+    void handleFetchCompleted(QSharedPointer<ComponentExportStatus> status);
 
     /**
      * @brief 处理处理完成
      * @param status 导出状态
-     * @param worker 工作线程指针
      */
-    void handleProcessCompleted(QSharedPointer<ComponentExportStatus> status, class ProcessWorker* worker);
+    void handleProcessCompleted(QSharedPointer<ComponentExportStatus> status);
 
     /**
      * @brief 处理写入完成
      * @param status 导出状态
-     * @param worker 工作线程指针
      */
-    void handleWriteCompleted(QSharedPointer<ComponentExportStatus> status, class WriteWorker* worker);
+    void handleWriteCompleted(QSharedPointer<ComponentExportStatus> status);
 
 private:
     /**
@@ -177,13 +177,9 @@ private:
     bool mergeSymbolLibrary();
 
     /**
-     * @brief 安全推送任务到队列（带退避重试）
-     * @param queue 目标队列
-     * @param status 导出状态
-     * @return bool 是否成功
+     * @brief 更新内存峰值统计
      */
-    bool safePushToQueue(QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>> queue,
-                         QSharedPointer<ComponentExportStatus> status);
+    void updateMemoryPeak(const QSharedPointer<ComponentExportStatus>& status);
 
     /**
      * @brief 生成统计报告
@@ -205,11 +201,8 @@ private:
     QThreadPool* m_processThreadPool;  // 处理线程池（CPU密集型，等于核心数）
     QThreadPool* m_writeThreadPool;    // 写入线程池（磁盘I/O密集型，8个线程）
 
-    // 线程安全队列（使用 QSharedPointer 管理生命周期，防止 Use-after-free）
-    QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>>
-        m_fetchProcessQueue;  // 抓取->处理队列
-    QSharedPointer<BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>>>
-        m_processWriteQueue;  // 处理->写入队列
+    // 队列管理器
+    PipelineQueueManager m_queueManager;
 
     // 网络访问管理器（共享）
     QNetworkAccessManager* m_networkAccessManager;
@@ -224,12 +217,11 @@ private:
 
     // 互斥锁
     QMutex* m_mutex;
-    QMutex m_workerMutex;  // 保护活跃工作线程列表
 
-    // 活跃的工作线程列表（用于中断）
-    QSet<class FetchWorker*> m_activeFetchWorkers;
-    QSet<class ProcessWorker*> m_activeProcessWorkers;
-    QSet<class WriteWorker*> m_activeWriteWorkers;
+    // 处理器
+    FetchStageHandler* m_fetchHandler;
+    ProcessStageHandler* m_processHandler;
+    WriteStageHandler* m_writeHandler;
 
     // 预加载的数据
     QMap<QString, QSharedPointer<ComponentData>> m_preloadedData;

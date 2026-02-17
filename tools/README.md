@@ -4,6 +4,7 @@
 
 > [!IMPORTANT]
 > **使用须知**:
+>
 > - 运行脚本前，请确保您已满足该工具的所有先决条件。
 > - 建议始终在项目的根目录执行工具，以确保路径引用正确。
 > - 请在执行可能修改源代码的工具（如格式化工具）前，确保您的工作区是干净的（已提交或备份）。
@@ -82,12 +83,54 @@ python tools/python/count_lines.py
 > [!TIP]
 > 以上 Python 工具均支持优先使用环境变量中的工具链，若未配置则回退到脚本内定义的路径变量。详情请参阅各脚本顶部的说明文档。
 
+## 命令行帮助支持
+
+所有命令行工具必须支持 `--help` 或 `-h` 参数，以提供使用说明。
+
+### 实现要求
+
+| 工具类型 | 推荐实现方式 | 示例 |
+|----------|-------------|------|
+| Python 脚本 | 使用 `argparse` 模块 | `parser = argparse.ArgumentParser(...)` |
+| Windows 批处理 | 检测 `-h`, `--help`, `/h` 参数 | `if "%~1"=="--help" goto help` |
+| Shell 脚本 | 检测 `-h`, `--help` 参数 | `case "$1" in --help) show_help ;; esac` |
+
+### 帮助内容要求
+
+帮助信息应包含：
+1. **工具名称和简介** - 一句话说明工具用途
+2. **用法格式** - 命令行语法 (Usage)
+3. **参数说明** - 每个参数的含义和默认值
+4. **使用示例** - 常见使用场景
+5. **环境要求** - 依赖的工具或库
+
+### 示例 (Python)
+
+```python
+import argparse
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="工具简述",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  python tool.py --option value
+  python tool.py --help
+        """
+    )
+    parser.add_argument("--input", help="输入文件路径")
+    parser.add_argument("--verbose", action="store_true", help="详细输出")
+    args = parser.parse_args()
+```
+
 ## 添加新工具
 
 为了保持项目工具链的可维护性和一致性，添加新工具时必须遵循以下严格要求：
 
 1.  **目录规范**: 根据工具类型和目标平台，将其放置在合适的子目录中 (`windows/`, `linux/`, `macos/` 或 `python/`)。
-2.  **详细文档**:
+2.  **帮助支持**: 所有命令行工具**必须**支持 `-h` 和 `--help` 参数，显示用法说明。实现方式请参考上方的"命令行帮助支持"章节。
+3.  **详细文档**:
     - 必须在下方“工具列表”中添加该工具的详细描述。
     - 必须明确列出所有环境要求（如 Python 版本、依赖库、特定环境变量或第三方二进制文件）。
     - 必须提供清晰的使用示例和命令行说明。
