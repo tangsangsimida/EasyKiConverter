@@ -1,0 +1,20 @@
+var searchData=
+[
+  ['name_0',['name',['../classEasyKiConverter_1_1Model3DData.html#aff325c5de9e54b321677755f62dbe8a3',1,'EasyKiConverter::Model3DData::name()'],['../classEasyKiConverter_1_1ComponentListItemData.html#a50a28b9c5486d751dce6258936407faa',1,'EasyKiConverter::ComponentListItemData::name()'],['../classEasyKiConverter_1_1ComponentData.html#ad9f5477c261e7367c0f2871443021e68',1,'EasyKiConverter::ComponentData::name()'],['../structEasyKiConverter_1_1FootprintInfo.html#a1527794703dc0a359af26c8ca0e76fa0',1,'EasyKiConverter::FootprintInfo::name'],['../structEasyKiConverter_1_1LayerDefinition.html#a8cd0e06519419057c507c52f341c415d',1,'EasyKiConverter::LayerDefinition::name'],['../structEasyKiConverter_1_1SymbolInfo.html#aeb446721ae0e0af92b43159eaad60c62',1,'EasyKiConverter::SymbolInfo::name'],['../structEasyKiConverter_1_1SymbolPin.html#aab4e9290e41c3d083290ea30088eb310',1,'EasyKiConverter::SymbolPin::name']]],
+  ['need3dmodel_1',['need3DModel',['../structEasyKiConverter_1_1ComponentExportStatus.html#ad7e8665da4c3b6a09a2bdac1cd391b4b',1,'EasyKiConverter::ComponentExportStatus']]],
+  ['needsrollover_2',['needsRollover',['../classEasyKiConverter_1_1FileAppender.html#abe17a0ca0cfb2ca778930d7d4fcc54ac',1,'EasyKiConverter::FileAppender']]],
+  ['net_3',['net',['../structEasyKiConverter_1_1FootprintTrack.html#ad334856481fb1665f12b28bc19c20838',1,'EasyKiConverter::FootprintTrack::net'],['../structEasyKiConverter_1_1FootprintPad.html#a15833281fe401d75507e22c843b8a47d',1,'EasyKiConverter::FootprintPad::net'],['../structEasyKiConverter_1_1FootprintArc.html#a28a7c3b8b52b6a949b50908543bb0284',1,'EasyKiConverter::FootprintArc::net'],['../structEasyKiConverter_1_1FootprintText.html#a5455c9da995a1b6ebd34c137da291811',1,'EasyKiConverter::FootprintText::net']]],
+  ['network_4',['Network',['../namespaceEasyKiConverter.html#aff134bbe6cc1ac962014dd264d0ee04faeec89088ee408b80387155272b113256',1,'EasyKiConverter']]],
+  ['networkdiagnostics_5',['networkdiagnostics',['../structEasyKiConverter_1_1ComponentExportStatus.html#a620ec4b7633df9f1147381cfbd3b6c78',1,'EasyKiConverter::ComponentExportStatus::networkDiagnostics'],['../structEasyKiConverter_1_1ComponentExportStatus_1_1NetworkDiagnostics.html',1,'EasyKiConverter::ComponentExportStatus::NetworkDiagnostics']]],
+  ['networkutils_6',['networkutils',['../classEasyKiConverter_1_1NetworkUtils.html#a08a56a169f50344c8e62a458278f8b74',1,'EasyKiConverter::NetworkUtils::NetworkUtils()'],['../classEasyKiConverter_1_1NetworkUtils.html',1,'EasyKiConverter::NetworkUtils']]],
+  ['networkutils_2ecpp_7',['NetworkUtils.cpp',['../NetworkUtils_8cpp.html',1,'']]],
+  ['networkutils_2eh_8',['NetworkUtils.h',['../NetworkUtils_8h.html',1,'']]],
+  ['networkworker_9',['networkworker',['../classEasyKiConverter_1_1NetworkWorker.html#a5c50805ada9da335867eb968fe15c97a',1,'EasyKiConverter::NetworkWorker::NetworkWorker()'],['../classEasyKiConverter_1_1NetworkWorker.html',1,'EasyKiConverter::NetworkWorker']]],
+  ['networkworker_2ecpp_10',['NetworkWorker.cpp',['../NetworkWorker_8cpp.html',1,'']]],
+  ['networkworker_2eh_11',['NetworkWorker.h',['../NetworkWorker_8h.html',1,'']]],
+  ['newgid_12',['newgId',['../structEasyKiConverter_1_1FootprintInfo.html#a538d640f3d0c318eac4b6c2d0a72a73c',1,'EasyKiConverter::FootprintInfo']]],
+  ['none_13',['none',['../classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12faca6adf97f83acf6453d4a6a4b1070f3754',1,'EasyKiConverter::EasyedaApi::None'],['../namespaceEasyKiConverter.html#aff134bbe6cc1ac962014dd264d0ee04fa6adf97f83acf6453d4a6a4b1070f3754',1,'EasyKiConverter::None']]],
+  ['nonlogic_14',['NonLogic',['../namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44da237fc47cc8fcdbcc4890eea4e1049177',1,'EasyKiConverter']]],
+  ['normalizeangle_15',['normalizeAngle',['../classEasyKiConverter_1_1GeometryUtils.html#a5dbd59951d4a1555901e57a578741c1f',1,'EasyKiConverter::GeometryUtils']]],
+  ['number_16',['number',['../structEasyKiConverter_1_1FootprintPad.html#aeb7e57e09822ee424f6ea44874045075',1,'EasyKiConverter::FootprintPad']]]
+];

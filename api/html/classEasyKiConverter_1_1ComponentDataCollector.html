@@ -1,0 +1,1163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::ComponentDataCollector类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1ComponentDataCollector.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-types">Public 类型</a> &#124;
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pri-methods">Private 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1ComponentDataCollector-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::ComponentDataCollector类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>元件数据收集器类  
+ <a href="classEasyKiConverter_1_1ComponentDataCollector.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::ComponentDataCollector 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ComponentDataCollector__inherit__graph.svg" width="244" height="724"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::ComponentDataCollector 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ComponentDataCollector__coll__graph.svg" width="778" height="1862"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public 类型</h2></td></tr>
+<tr class="memitem:a8f7af3323c1894a5450325f748c6aba6" id="r_a8f7af3323c1894a5450325f748c6aba6"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a> { <br />
+&#160;&#160;<a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6aa89b3da008aafddb77bf358f9c5c1c22">Idle</a>
+, <a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a46b78755fb774f328fe1f3f70f9ef7d5">FetchingComponentInfo</a>
+, <a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6afca9b0f1a973c309369cf53e00707b9f">FetchingCadData</a>
+, <a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a46efca2c65c8c13f0c0131e0a174c064">FetchingObjData</a>
+, <br />
+&#160;&#160;<a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6aef3f65978b18f47a85f7e106d75d37c3">FetchingStepData</a>
+, <a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a6d42951a039ed19cea1f76478c74dee7">Completed</a>
+, <a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6ab559556060b8f218b6393b46096d13df">Failed</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:a8f7af3323c1894a5450325f748c6aba6"><td class="mdescLeft">&#160;</td><td class="mdescRight">收集状态枚  <a href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">更多...</a><br /></td></tr>
+<tr class="separator:a8f7af3323c1894a5450325f748c6aba6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:ad705f8a5c5119ed863ac51aed8304fb5" id="r_ad705f8a5c5119ed863ac51aed8304fb5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#ad705f8a5c5119ed863ac51aed8304fb5">ComponentDataCollector</a> (const QString &amp;<a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a9e50cb9d87f353b7ec6ba0fbc16c572d">componentId</a>, QObject *parent=nullptr)</td></tr>
+<tr class="memdesc:ad705f8a5c5119ed863ac51aed8304fb5"><td class="mdescLeft">&#160;</td><td class="mdescRight">构造函数  <br /></td></tr>
+<tr class="separator:ad705f8a5c5119ed863ac51aed8304fb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0abfe6ad5b03a371c4cd8bd5c3ad6fbf" id="r_a0abfe6ad5b03a371c4cd8bd5c3ad6fbf"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a0abfe6ad5b03a371c4cd8bd5c3ad6fbf">~ComponentDataCollector</a> () override</td></tr>
+<tr class="memdesc:a0abfe6ad5b03a371c4cd8bd5c3ad6fbf"><td class="mdescLeft">&#160;</td><td class="mdescRight">析构函数  <br /></td></tr>
+<tr class="separator:a0abfe6ad5b03a371c4cd8bd5c3ad6fbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b95f0d132c1ec3b768a9fdd4b3ee222" id="r_a3b95f0d132c1ec3b768a9fdd4b3ee222"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a3b95f0d132c1ec3b768a9fdd4b3ee222">start</a> ()</td></tr>
+<tr class="memdesc:a3b95f0d132c1ec3b768a9fdd4b3ee222"><td class="mdescLeft">&#160;</td><td class="mdescRight">开始数据收  <br /></td></tr>
+<tr class="separator:a3b95f0d132c1ec3b768a9fdd4b3ee222"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef1303c549979975d8567d8076113beb" id="r_aef1303c549979975d8567d8076113beb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#aef1303c549979975d8567d8076113beb">cancel</a> ()</td></tr>
+<tr class="memdesc:aef1303c549979975d8567d8076113beb"><td class="mdescLeft">&#160;</td><td class="mdescRight">取消数据收集  <br /></td></tr>
+<tr class="separator:aef1303c549979975d8567d8076113beb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3aea8c35482f0f7b998b2af88409dbac" id="r_a3aea8c35482f0f7b998b2af88409dbac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a3aea8c35482f0f7b998b2af88409dbac">state</a> () const</td></tr>
+<tr class="memdesc:a3aea8c35482f0f7b998b2af88409dbac"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取当前状  <br /></td></tr>
+<tr class="separator:a3aea8c35482f0f7b998b2af88409dbac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e50cb9d87f353b7ec6ba0fbc16c572d" id="r_a9e50cb9d87f353b7ec6ba0fbc16c572d"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a9e50cb9d87f353b7ec6ba0fbc16c572d">componentId</a> () const</td></tr>
+<tr class="memdesc:a9e50cb9d87f353b7ec6ba0fbc16c572d"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取元件ID  <br /></td></tr>
+<tr class="separator:a9e50cb9d87f353b7ec6ba0fbc16c572d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adaf1bb5f4e538f25d29cc9b589805421" id="r_adaf1bb5f4e538f25d29cc9b589805421"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#adaf1bb5f4e538f25d29cc9b589805421">componentData</a> () const</td></tr>
+<tr class="memdesc:adaf1bb5f4e538f25d29cc9b589805421"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取收集到的元件数据  <br /></td></tr>
+<tr class="separator:adaf1bb5f4e538f25d29cc9b589805421"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e4caa298b6c6346a658c49921fb065a" id="r_a5e4caa298b6c6346a658c49921fb065a"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a5e4caa298b6c6346a658c49921fb065a">errorMessage</a> () const</td></tr>
+<tr class="memdesc:a5e4caa298b6c6346a658c49921fb065a"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取错误信息  <br /></td></tr>
+<tr class="separator:a5e4caa298b6c6346a658c49921fb065a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1150d49d4279bcdd9f9d7d4d12c1794e" id="r_a1150d49d4279bcdd9f9d7d4d12c1794e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a1150d49d4279bcdd9f9d7d4d12c1794e">setExport3DModel</a> (bool export3D)</td></tr>
+<tr class="memdesc:a1150d49d4279bcdd9f9d7d4d12c1794e"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置是否需要导D模型  <br /></td></tr>
+<tr class="separator:a1150d49d4279bcdd9f9d7d4d12c1794e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87eb49d39e5d2a4b49c48d7c3114468a" id="r_a87eb49d39e5d2a4b49c48d7c3114468a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a87eb49d39e5d2a4b49c48d7c3114468a">stateChanged</a> (<a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a> <a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a3aea8c35482f0f7b998b2af88409dbac">state</a>)</td></tr>
+<tr class="memdesc:a87eb49d39e5d2a4b49c48d7c3114468a"><td class="mdescLeft">&#160;</td><td class="mdescRight">状态改变信  <br /></td></tr>
+<tr class="separator:a87eb49d39e5d2a4b49c48d7c3114468a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6fd79801023b7a197bcd0dde2474adb" id="r_aa6fd79801023b7a197bcd0dde2474adb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#aa6fd79801023b7a197bcd0dde2474adb">dataCollected</a> (const QString &amp;<a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a9e50cb9d87f353b7ec6ba0fbc16c572d">componentId</a>, const <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &amp;data)</td></tr>
+<tr class="memdesc:aa6fd79801023b7a197bcd0dde2474adb"><td class="mdescLeft">&#160;</td><td class="mdescRight">数据收集完成信号  <br /></td></tr>
+<tr class="separator:aa6fd79801023b7a197bcd0dde2474adb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78f4fd77838154d3f31cebd79305b386" id="r_a78f4fd77838154d3f31cebd79305b386"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a78f4fd77838154d3f31cebd79305b386">errorOccurred</a> (const QString &amp;<a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a9e50cb9d87f353b7ec6ba0fbc16c572d">componentId</a>, const QString &amp;error)</td></tr>
+<tr class="memdesc:a78f4fd77838154d3f31cebd79305b386"><td class="mdescLeft">&#160;</td><td class="mdescRight">错误发生信号  <br /></td></tr>
+<tr class="separator:a78f4fd77838154d3f31cebd79305b386"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private 成员函数</h2></td></tr>
+<tr class="memitem:a7b2cb3c0592951f0853a6bf5c91fe198" id="r_a7b2cb3c0592951f0853a6bf5c91fe198"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a7b2cb3c0592951f0853a6bf5c91fe198">handleComponentInfoFetched</a> (const QJsonObject &amp;data)</td></tr>
+<tr class="memdesc:a7b2cb3c0592951f0853a6bf5c91fe198"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理组件信息获取成功  <br /></td></tr>
+<tr class="separator:a7b2cb3c0592951f0853a6bf5c91fe198"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7230c6fa78e32f6276d0b348861faab3" id="r_a7230c6fa78e32f6276d0b348861faab3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a7230c6fa78e32f6276d0b348861faab3">handleCadDataFetched</a> (const QJsonObject &amp;data)</td></tr>
+<tr class="memdesc:a7230c6fa78e32f6276d0b348861faab3"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理CAD数据获取成功  <br /></td></tr>
+<tr class="separator:a7230c6fa78e32f6276d0b348861faab3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2558bac41c8ecbab5a0f8874c32a5837" id="r_a2558bac41c8ecbab5a0f8874c32a5837"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a2558bac41c8ecbab5a0f8874c32a5837">handleModel3DFetched</a> (const QString &amp;uuid, const QByteArray &amp;data)</td></tr>
+<tr class="memdesc:a2558bac41c8ecbab5a0f8874c32a5837"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理3D模型数据获取成功  <br /></td></tr>
+<tr class="separator:a2558bac41c8ecbab5a0f8874c32a5837"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b5d2c61c21cc32f7dce8ea5a48026d9" id="r_a6b5d2c61c21cc32f7dce8ea5a48026d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a6b5d2c61c21cc32f7dce8ea5a48026d9">handleFetchError</a> (const QString &amp;<a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a5e4caa298b6c6346a658c49921fb065a">errorMessage</a>)</td></tr>
+<tr class="memdesc:a6b5d2c61c21cc32f7dce8ea5a48026d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理获取错误  <br /></td></tr>
+<tr class="separator:a6b5d2c61c21cc32f7dce8ea5a48026d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94d865621f04cc4fd7ff236ea3fa43a8" id="r_a94d865621f04cc4fd7ff236ea3fa43a8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a94d865621f04cc4fd7ff236ea3fa43a8">setState</a> (<a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a> <a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a3aea8c35482f0f7b998b2af88409dbac">state</a>)</td></tr>
+<tr class="memdesc:a94d865621f04cc4fd7ff236ea3fa43a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置状  <br /></td></tr>
+<tr class="separator:a94d865621f04cc4fd7ff236ea3fa43a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a878a8c444ad7000d1841095916c6b8b8" id="r_a878a8c444ad7000d1841095916c6b8b8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a878a8c444ad7000d1841095916c6b8b8">complete</a> ()</td></tr>
+<tr class="memdesc:a878a8c444ad7000d1841095916c6b8b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">完成数据收集  <br /></td></tr>
+<tr class="separator:a878a8c444ad7000d1841095916c6b8b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2cae12b6c931034688c03f9b64d5e67" id="r_ab2cae12b6c931034688c03f9b64d5e67"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#ab2cae12b6c931034688c03f9b64d5e67">handleError</a> (const QString &amp;error)</td></tr>
+<tr class="memdesc:ab2cae12b6c931034688c03f9b64d5e67"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理错误  <br /></td></tr>
+<tr class="separator:ab2cae12b6c931034688c03f9b64d5e67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ac8e9691597f9ba839feed08cca33b7" id="r_a3ac8e9691597f9ba839feed08cca33b7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a3ac8e9691597f9ba839feed08cca33b7">initializeApiConnections</a> ()</td></tr>
+<tr class="memdesc:a3ac8e9691597f9ba839feed08cca33b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">初始化API连接  <br /></td></tr>
+<tr class="separator:a3ac8e9691597f9ba839feed08cca33b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:a245f322006a39b0bbd4d4d7cf3e2f729" id="r_a245f322006a39b0bbd4d4d7cf3e2f729"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a245f322006a39b0bbd4d4d7cf3e2f729">m_componentId</a></td></tr>
+<tr class="separator:a245f322006a39b0bbd4d4d7cf3e2f729"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2f496cec0849c070ac858d0b547f99c" id="r_ad2f496cec0849c070ac858d0b547f99c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#ad2f496cec0849c070ac858d0b547f99c">m_state</a></td></tr>
+<tr class="separator:ad2f496cec0849c070ac858d0b547f99c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a80aa2e95d4e0c3754f2845c483ce9eba" id="r_a80aa2e95d4e0c3754f2845c483ce9eba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a80aa2e95d4e0c3754f2845c483ce9eba">m_componentData</a></td></tr>
+<tr class="separator:a80aa2e95d4e0c3754f2845c483ce9eba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32adb2ab2c331d31a91eef058c6208be" id="r_a32adb2ab2c331d31a91eef058c6208be"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a32adb2ab2c331d31a91eef058c6208be">m_errorMessage</a></td></tr>
+<tr class="separator:a32adb2ab2c331d31a91eef058c6208be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1635202d4d17f7b481a3e4cb3c9ccb7" id="r_ad1635202d4d17f7b481a3e4cb3c9ccb7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#ad1635202d4d17f7b481a3e4cb3c9ccb7">m_export3DModel</a></td></tr>
+<tr class="separator:ad1635202d4d17f7b481a3e4cb3c9ccb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb3b3f6213e7c1f2a739743f6bfd0ba5" id="r_acb3b3f6213e7c1f2a739743f6bfd0ba5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#acb3b3f6213e7c1f2a739743f6bfd0ba5">m_isCancelled</a></td></tr>
+<tr class="separator:acb3b3f6213e7c1f2a739743f6bfd0ba5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17e68d161fcf9481ef44a675bb7a61f7" id="r_a17e68d161fcf9481ef44a675bb7a61f7"><td class="memItemLeft" align="right" valign="top">class <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html">EasyedaApi</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a17e68d161fcf9481ef44a675bb7a61f7">m_api</a></td></tr>
+<tr class="separator:a17e68d161fcf9481ef44a675bb7a61f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91323d0a0fb62e06a7548760e0f2d0c0" id="r_a91323d0a0fb62e06a7548760e0f2d0c0"><td class="memItemLeft" align="right" valign="top">class <a class="el" href="classEasyKiConverter_1_1EasyedaImporter.html">EasyedaImporter</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a91323d0a0fb62e06a7548760e0f2d0c0">m_importer</a></td></tr>
+<tr class="separator:a91323d0a0fb62e06a7548760e0f2d0c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>元件数据收集器类 </p>
+<p>使用状态机模式实现异步数据收集 移除 QEventLoop 阻塞，提高并发性能 </p>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00020">20</a> 行定义.</p>
+</div><h2 class="groupheader">成员枚举类型说明</h2>
+<a id="a8f7af3323c1894a5450325f748c6aba6" name="a8f7af3323c1894a5450325f748c6aba6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f7af3323c1894a5450325f748c6aba6">&#9670;&#160;</a></span>State</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">EasyKiConverter::ComponentDataCollector::State</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>收集状态枚 </p>
+<table class="fieldtable">
+<tr><th colspan="2">枚举值</th></tr><tr><td class="fieldname"><a id="a8f7af3323c1894a5450325f748c6aba6aa89b3da008aafddb77bf358f9c5c1c22" name="a8f7af3323c1894a5450325f748c6aba6aa89b3da008aafddb77bf358f9c5c1c22"></a>Idle&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a8f7af3323c1894a5450325f748c6aba6a46b78755fb774f328fe1f3f70f9ef7d5" name="a8f7af3323c1894a5450325f748c6aba6a46b78755fb774f328fe1f3f70f9ef7d5"></a>FetchingComponentInfo&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a8f7af3323c1894a5450325f748c6aba6afca9b0f1a973c309369cf53e00707b9f" name="a8f7af3323c1894a5450325f748c6aba6afca9b0f1a973c309369cf53e00707b9f"></a>FetchingCadData&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a8f7af3323c1894a5450325f748c6aba6a46efca2c65c8c13f0c0131e0a174c064" name="a8f7af3323c1894a5450325f748c6aba6a46efca2c65c8c13f0c0131e0a174c064"></a>FetchingObjData&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a8f7af3323c1894a5450325f748c6aba6aef3f65978b18f47a85f7e106d75d37c3" name="a8f7af3323c1894a5450325f748c6aba6aef3f65978b18f47a85f7e106d75d37c3"></a>FetchingStepData&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a8f7af3323c1894a5450325f748c6aba6a6d42951a039ed19cea1f76478c74dee7" name="a8f7af3323c1894a5450325f748c6aba6a6d42951a039ed19cea1f76478c74dee7"></a>Completed&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a8f7af3323c1894a5450325f748c6aba6ab559556060b8f218b6393b46096d13df" name="a8f7af3323c1894a5450325f748c6aba6ab559556060b8f218b6393b46096d13df"></a>Failed&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00027">27</a> 行定义.</p>
+
+</div>
+</div>
+<h2 class="groupheader">构造及析构函数说明</h2>
+<a id="ad705f8a5c5119ed863ac51aed8304fb5" name="ad705f8a5c5119ed863ac51aed8304fb5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad705f8a5c5119ed863ac51aed8304fb5">&#9670;&#160;</a></span>ComponentDataCollector()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::ComponentDataCollector::ComponentDataCollector </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>构造函数 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentId</td><td>元件ID </td></tr>
+    <tr><td class="paramname">parent</td><td>父对象 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00010">10</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">initializeApiConnections()</a>.</p>
+
+</div>
+</div>
+<a id="a0abfe6ad5b03a371c4cd8bd5c3ad6fbf" name="a0abfe6ad5b03a371c4cd8bd5c3ad6fbf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0abfe6ad5b03a371c4cd8bd5c3ad6fbf">&#9670;&#160;</a></span>~ComponentDataCollector()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::ComponentDataCollector::~ComponentDataCollector </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>析构函数 </p>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00021">21</a> 行定义.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="aef1303c549979975d8567d8076113beb" name="aef1303c549979975d8567d8076113beb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef1303c549979975d8567d8076113beb">&#9670;&#160;</a></span>cancel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::cancel </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>取消数据收集 </p>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00038">38</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="EasyedaApi_8cpp_source.html#l00236">EasyKiConverter::EasyedaApi::cancelRequest()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00194">m_api</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00186">m_componentId</a> , 以及 <a class="el" href="ComponentDataCollector_8h_source.html#l00191">m_isCancelled</a>.</p>
+
+</div>
+</div>
+<a id="a878a8c444ad7000d1841095916c6b8b8" name="a878a8c444ad7000d1841095916c6b8b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a878a8c444ad7000d1841095916c6b8b8">&#9670;&#160;</a></span>complete()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::complete </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>完成数据收集 </p>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00181">181</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentDataCollector_8h_source.html#l00033">Completed</a>, <a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#aa6fd79801023b7a197bcd0dde2474adb">dataCollected()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00188">m_componentData</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00186">m_componentId</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00044">setState()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">handleCadDataFetched()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00140">handleModel3DFetched()</a>.</p>
+
+</div>
+</div>
+<a id="adaf1bb5f4e538f25d29cc9b589805421" name="adaf1bb5f4e538f25d29cc9b589805421"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adaf1bb5f4e538f25d29cc9b589805421">&#9670;&#160;</a></span>componentData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> EasyKiConverter::ComponentDataCollector::componentData </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取收集到的元件数据 </p>
+<dl class="section return"><dt>返回</dt><dd><a class="el" href="classEasyKiConverter_1_1ComponentData.html" title="元件数据">ComponentData</a> 元件数据 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00084">84</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentDataCollector_8h_source.html#l00188">m_componentData</a>.</p>
+
+</div>
+</div>
+<a id="a9e50cb9d87f353b7ec6ba0fbc16c572d" name="a9e50cb9d87f353b7ec6ba0fbc16c572d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9e50cb9d87f353b7ec6ba0fbc16c572d">&#9670;&#160;</a></span>componentId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentDataCollector::componentId </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取元件ID </p>
+<dl class="section return"><dt>返回</dt><dd>QString 元件ID </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00075">75</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentDataCollector_8h_source.html#l00186">m_componentId</a>.</p>
+
+</div>
+</div>
+<a id="aa6fd79801023b7a197bcd0dde2474adb" name="aa6fd79801023b7a197bcd0dde2474adb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa6fd79801023b7a197bcd0dde2474adb">&#9670;&#160;</a></span>dataCollected()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::dataCollected </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &amp;&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>数据收集完成信号 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentId</td><td>元件ID </td></tr>
+    <tr><td class="paramname">data</td><td>元件数据 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00181">complete()</a>.</p>
+
+</div>
+</div>
+<a id="a5e4caa298b6c6346a658c49921fb065a" name="a5e4caa298b6c6346a658c49921fb065a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e4caa298b6c6346a658c49921fb065a">&#9670;&#160;</a></span>errorMessage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentDataCollector::errorMessage </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取错误信息 </p>
+<dl class="section return"><dt>返回</dt><dd>QString 错误信息 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00093">93</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentDataCollector_8h_source.html#l00189">m_errorMessage</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00176">handleFetchError()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">initializeApiConnections()</a>.</p>
+
+</div>
+</div>
+<a id="a78f4fd77838154d3f31cebd79305b386" name="a78f4fd77838154d3f31cebd79305b386"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78f4fd77838154d3f31cebd79305b386">&#9670;&#160;</a></span>errorOccurred()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::errorOccurred </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>error</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>错误发生信号 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentId</td><td>元件ID </td></tr>
+    <tr><td class="paramname">error</td><td>错误信息 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00187">handleError()</a>.</p>
+
+</div>
+</div>
+<a id="a7230c6fa78e32f6276d0b348861faab3" name="a7230c6fa78e32f6276d0b348861faab3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7230c6fa78e32f6276d0b348861faab3">&#9670;&#160;</a></span>handleCadDataFetched()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::handleCadDataFetched </td>
+          <td>(</td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理CAD数据获取成功 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">data</td><td>CAD数据 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">57</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00181">complete()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00111">EasyKiConverter::EasyedaApi::fetch3DModelObj()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00031">FetchingObjData</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00187">handleError()</a>, <a class="el" href="EasyedaImporter_8cpp_source.html#l00017">EasyKiConverter::EasyedaImporter::importFootprintData()</a>, <a class="el" href="EasyedaImporter_8cpp_source.html#l00012">EasyKiConverter::EasyedaImporter::importSymbolData()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00194">m_api</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00188">m_componentData</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00186">m_componentId</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00190">m_export3DModel</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00195">m_importer</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00191">m_isCancelled</a>, <a class="el" href="ComponentData_8h_source.html#l00070">EasyKiConverter::ComponentData::setDatasheet()</a>, <a class="el" href="ComponentData_8h_source.html#l00086">EasyKiConverter::ComponentData::setFootprintData()</a>, <a class="el" href="ComponentData_8h_source.html#l00030">EasyKiConverter::ComponentData::setLcscId()</a>, <a class="el" href="ComponentData_8h_source.html#l00062">EasyKiConverter::ComponentData::setManufacturer()</a>, <a class="el" href="ComponentData_8h_source.html#l00094">EasyKiConverter::ComponentData::setModel3DData()</a>, <a class="el" href="ComponentData_8h_source.html#l00038">EasyKiConverter::ComponentData::setName()</a>, <a class="el" href="ComponentData_8h_source.html#l00054">EasyKiConverter::ComponentData::setPackage()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00044">setState()</a> , 以及 <a class="el" href="ComponentData_8h_source.html#l00078">EasyKiConverter::ComponentData::setSymbolData()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">initializeApiConnections()</a>.</p>
+
+</div>
+</div>
+<a id="a7b2cb3c0592951f0853a6bf5c91fe198" name="a7b2cb3c0592951f0853a6bf5c91fe198"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7b2cb3c0592951f0853a6bf5c91fe198">&#9670;&#160;</a></span>handleComponentInfoFetched()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::handleComponentInfoFetched </td>
+          <td>(</td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理组件信息获取成功 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">data</td><td>组件信息数据 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00052">52</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">initializeApiConnections()</a>.</p>
+
+</div>
+</div>
+<a id="ab2cae12b6c931034688c03f9b64d5e67" name="ab2cae12b6c931034688c03f9b64d5e67"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2cae12b6c931034688c03f9b64d5e67">&#9670;&#160;</a></span>handleError()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::handleError </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>error</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理错误 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">error</td><td>错误信息 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00187">187</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a78f4fd77838154d3f31cebd79305b386">errorOccurred()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00034">Failed</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00186">m_componentId</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00189">m_errorMessage</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00044">setState()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">handleCadDataFetched()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00176">handleFetchError()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00140">handleModel3DFetched()</a>.</p>
+
+</div>
+</div>
+<a id="a6b5d2c61c21cc32f7dce8ea5a48026d9" name="a6b5d2c61c21cc32f7dce8ea5a48026d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b5d2c61c21cc32f7dce8ea5a48026d9">&#9670;&#160;</a></span>handleFetchError()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::handleFetchError </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>errorMessage</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理获取错误 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">errorMessage</td><td>错误信息 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00176">176</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentDataCollector_8h_source.html#l00093">errorMessage()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00187">handleError()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">initializeApiConnections()</a>.</p>
+
+</div>
+</div>
+<a id="a2558bac41c8ecbab5a0f8874c32a5837" name="a2558bac41c8ecbab5a0f8874c32a5837"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2558bac41c8ecbab5a0f8874c32a5837">&#9670;&#160;</a></span>handleModel3DFetched()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::handleModel3DFetched </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>uuid</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QByteArray &amp;&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理3D模型数据获取成功 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">uuid</td><td>模型UUID </td></tr>
+    <tr><td class="paramname">data</td><td>3D模型数据 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00140">140</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00181">complete()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00144">EasyKiConverter::EasyedaApi::fetch3DModelStep()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00031">FetchingObjData</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00032">FetchingStepData</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00187">handleError()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00194">m_api</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00188">m_componentData</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00190">m_export3DModel</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00191">m_isCancelled</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00187">m_state</a>, <a class="el" href="ComponentData_8h_source.html#l00090">EasyKiConverter::ComponentData::model3DData()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00044">setState()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">initializeApiConnections()</a>.</p>
+
+</div>
+</div>
+<a id="a3ac8e9691597f9ba839feed08cca33b7" name="a3ac8e9691597f9ba839feed08cca33b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ac8e9691597f9ba839feed08cca33b7">&#9670;&#160;</a></span>initializeApiConnections()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::initializeApiConnections </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>初始化API连接 </p>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">194</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad133c23a3219c2ca6d36fecc01321f51">EasyKiConverter::EasyedaApi::cadDataFetched()</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#acf66a3a17fde1e7e241bf2003cc7640b">EasyKiConverter::EasyedaApi::componentInfoFetched()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00093">errorMessage()</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">EasyKiConverter::EasyedaApi::fetchError()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">handleCadDataFetched()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00052">handleComponentInfoFetched()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00176">handleFetchError()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00140">handleModel3DFetched()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00194">m_api</a> , 以及 <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a2b086a78ac6435f4e0ec2af802c1d90e">EasyKiConverter::EasyedaApi::model3DFetched()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00010">ComponentDataCollector()</a>.</p>
+
+</div>
+</div>
+<a id="a1150d49d4279bcdd9f9d7d4d12c1794e" name="a1150d49d4279bcdd9f9d7d4d12c1794e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1150d49d4279bcdd9f9d7d4d12c1794e">&#9670;&#160;</a></span>setExport3DModel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::setExport3DModel </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>export3D</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置是否需要导D模型 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">export3D</td><td>是否导出3D模型 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00102">102</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentDataCollector_8h_source.html#l00190">m_export3DModel</a>.</p>
+
+</div>
+</div>
+<a id="a94d865621f04cc4fd7ff236ea3fa43a8" name="a94d865621f04cc4fd7ff236ea3fa43a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a94d865621f04cc4fd7ff236ea3fa43a8">&#9670;&#160;</a></span>setState()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::setState </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a>&#160;</td>
+          <td class="paramname"><em>state</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>设置状 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">state</td><td>新状 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00044">44</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentDataCollector_8h_source.html#l00186">m_componentId</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00187">m_state</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00066">state()</a> , 以及 <a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a87eb49d39e5d2a4b49c48d7c3114468a">stateChanged()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00181">complete()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">handleCadDataFetched()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00187">handleError()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00140">handleModel3DFetched()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00023">start()</a>.</p>
+
+</div>
+</div>
+<a id="a3b95f0d132c1ec3b768a9fdd4b3ee222" name="a3b95f0d132c1ec3b768a9fdd4b3ee222"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b95f0d132c1ec3b768a9fdd4b3ee222">&#9670;&#160;</a></span>start()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::start </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>开始数据收 </p>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a> 第 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00023">23</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="EasyedaApi_8cpp_source.html#l00082">EasyKiConverter::EasyedaApi::fetchCadData()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00030">FetchingCadData</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00028">Idle</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00194">m_api</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00186">m_componentId</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00191">m_isCancelled</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00187">m_state</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00044">setState()</a>.</p>
+
+</div>
+</div>
+<a id="a3aea8c35482f0f7b998b2af88409dbac" name="a3aea8c35482f0f7b998b2af88409dbac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3aea8c35482f0f7b998b2af88409dbac">&#9670;&#160;</a></span>state()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a> EasyKiConverter::ComponentDataCollector::state </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取当前状 </p>
+<dl class="section return"><dt>返回</dt><dd>State 当前状 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00066">66</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentDataCollector_8h_source.html#l00187">m_state</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00044">setState()</a>.</p>
+
+</div>
+</div>
+<a id="a87eb49d39e5d2a4b49c48d7c3114468a" name="a87eb49d39e5d2a4b49c48d7c3114468a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a87eb49d39e5d2a4b49c48d7c3114468a">&#9670;&#160;</a></span>stateChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentDataCollector::stateChanged </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a>&#160;</td>
+          <td class="paramname"><em>state</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>状态改变信 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">state</td><td>新状 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00044">setState()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a17e68d161fcf9481ef44a675bb7a61f7" name="a17e68d161fcf9481ef44a675bb7a61f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17e68d161fcf9481ef44a675bb7a61f7">&#9670;&#160;</a></span>m_api</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">class <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html">EasyedaApi</a>* EasyKiConverter::ComponentDataCollector::m_api</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00194">194</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00038">cancel()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">handleCadDataFetched()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00140">handleModel3DFetched()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">initializeApiConnections()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00023">start()</a>.</p>
+
+</div>
+</div>
+<a id="a80aa2e95d4e0c3754f2845c483ce9eba" name="a80aa2e95d4e0c3754f2845c483ce9eba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a80aa2e95d4e0c3754f2845c483ce9eba">&#9670;&#160;</a></span>m_componentData</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> EasyKiConverter::ComponentDataCollector::m_componentData</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00188">188</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00181">complete()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00084">componentData()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">handleCadDataFetched()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00140">handleModel3DFetched()</a>.</p>
+
+</div>
+</div>
+<a id="a245f322006a39b0bbd4d4d7cf3e2f729" name="a245f322006a39b0bbd4d4d7cf3e2f729"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a245f322006a39b0bbd4d4d7cf3e2f729">&#9670;&#160;</a></span>m_componentId</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentDataCollector::m_componentId</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00186">186</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00038">cancel()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00181">complete()</a>, <a class="el" href="ComponentDataCollector_8h_source.html#l00075">componentId()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">handleCadDataFetched()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00187">handleError()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00044">setState()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00023">start()</a>.</p>
+
+</div>
+</div>
+<a id="a32adb2ab2c331d31a91eef058c6208be" name="a32adb2ab2c331d31a91eef058c6208be"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a32adb2ab2c331d31a91eef058c6208be">&#9670;&#160;</a></span>m_errorMessage</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentDataCollector::m_errorMessage</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00189">189</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8h_source.html#l00093">errorMessage()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00187">handleError()</a>.</p>
+
+</div>
+</div>
+<a id="ad1635202d4d17f7b481a3e4cb3c9ccb7" name="ad1635202d4d17f7b481a3e4cb3c9ccb7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1635202d4d17f7b481a3e4cb3c9ccb7">&#9670;&#160;</a></span>m_export3DModel</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ComponentDataCollector::m_export3DModel</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00190">190</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">handleCadDataFetched()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00140">handleModel3DFetched()</a> , 以及 <a class="el" href="ComponentDataCollector_8h_source.html#l00102">setExport3DModel()</a>.</p>
+
+</div>
+</div>
+<a id="a91323d0a0fb62e06a7548760e0f2d0c0" name="a91323d0a0fb62e06a7548760e0f2d0c0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a91323d0a0fb62e06a7548760e0f2d0c0">&#9670;&#160;</a></span>m_importer</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">class <a class="el" href="classEasyKiConverter_1_1EasyedaImporter.html">EasyedaImporter</a>* EasyKiConverter::ComponentDataCollector::m_importer</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00195">195</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">handleCadDataFetched()</a>.</p>
+
+</div>
+</div>
+<a id="acb3b3f6213e7c1f2a739743f6bfd0ba5" name="acb3b3f6213e7c1f2a739743f6bfd0ba5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb3b3f6213e7c1f2a739743f6bfd0ba5">&#9670;&#160;</a></span>m_isCancelled</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ComponentDataCollector::m_isCancelled</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00191">191</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00038">cancel()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">handleCadDataFetched()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00140">handleModel3DFetched()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00023">start()</a>.</p>
+
+</div>
+</div>
+<a id="ad2f496cec0849c070ac858d0b547f99c" name="ad2f496cec0849c070ac858d0b547f99c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad2f496cec0849c070ac858d0b547f99c">&#9670;&#160;</a></span>m_state</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a> EasyKiConverter::ComponentDataCollector::m_state</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a> 第 <a class="el" href="ComponentDataCollector_8h_source.html#l00187">187</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00140">handleModel3DFetched()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00044">setState()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00023">start()</a> , 以及 <a class="el" href="ComponentDataCollector_8h_source.html#l00066">state()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>services/<a class="el" href="ComponentDataCollector_8h_source.html">ComponentDataCollector.h</a></li>
+<li>services/<a class="el" href="ComponentDataCollector_8cpp_source.html">ComponentDataCollector.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1ComponentDataCollector.html">ComponentDataCollector</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,939 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::ComponentListItemData类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1ComponentListItemData.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1ComponentListItemData-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::ComponentListItemData类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>元器件列表项数据模型  
+ <a href="classEasyKiConverter_1_1ComponentListItemData.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::ComponentListItemData 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ComponentListItemData__inherit__graph.svg" width="216" height="564"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::ComponentListItemData 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ComponentListItemData__coll__graph.svg" width="216" height="564"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a7139458e5955818691b735f894141a95" id="r_a7139458e5955818691b735f894141a95"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a7139458e5955818691b735f894141a95">ComponentListItemData</a> (const QString &amp;<a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a028e6d3602531d0bb769172aa5ec45a8">componentId</a>, QObject *parent=nullptr)</td></tr>
+<tr class="separator:a7139458e5955818691b735f894141a95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a028e6d3602531d0bb769172aa5ec45a8" id="r_a028e6d3602531d0bb769172aa5ec45a8"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a028e6d3602531d0bb769172aa5ec45a8">componentId</a> () const</td></tr>
+<tr class="separator:a028e6d3602531d0bb769172aa5ec45a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50a28b9c5486d751dce6258936407faa" id="r_a50a28b9c5486d751dce6258936407faa"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a50a28b9c5486d751dce6258936407faa">name</a> () const</td></tr>
+<tr class="separator:a50a28b9c5486d751dce6258936407faa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a98bcff5e90bcefddf97a6bab0fb1a2" id="r_a2a98bcff5e90bcefddf97a6bab0fb1a2"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a2a98bcff5e90bcefddf97a6bab0fb1a2">package</a> () const</td></tr>
+<tr class="separator:a2a98bcff5e90bcefddf97a6bab0fb1a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9f3f84de0e976c577f353273744fc97" id="r_aa9f3f84de0e976c577f353273744fc97"><td class="memItemLeft" align="right" valign="top">QImage&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#aa9f3f84de0e976c577f353273744fc97">thumbnail</a> () const</td></tr>
+<tr class="separator:aa9f3f84de0e976c577f353273744fc97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd5ce030df4f649a02a3bf3f187e210b" id="r_abd5ce030df4f649a02a3bf3f187e210b"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#abd5ce030df4f649a02a3bf3f187e210b">thumbnailBase64</a> () const</td></tr>
+<tr class="separator:abd5ce030df4f649a02a3bf3f187e210b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4732ac7b0229d744f185779a1be6bff" id="r_ac4732ac7b0229d744f185779a1be6bff"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#ac4732ac7b0229d744f185779a1be6bff">isValid</a> () const</td></tr>
+<tr class="separator:ac4732ac7b0229d744f185779a1be6bff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0945b78159c34ba62755c0e2dfa7fab5" id="r_a0945b78159c34ba62755c0e2dfa7fab5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a0945b78159c34ba62755c0e2dfa7fab5">isFetching</a> () const</td></tr>
+<tr class="separator:a0945b78159c34ba62755c0e2dfa7fab5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac019436a36a07995e7ebf42fe088a5b4" id="r_ac019436a36a07995e7ebf42fe088a5b4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#ac019436a36a07995e7ebf42fe088a5b4">hasThumbnail</a> () const</td></tr>
+<tr class="separator:ac019436a36a07995e7ebf42fe088a5b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbb212959392ac28ab61d202eac32112" id="r_afbb212959392ac28ab61d202eac32112"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#afbb212959392ac28ab61d202eac32112">errorMessage</a> () const</td></tr>
+<tr class="separator:afbb212959392ac28ab61d202eac32112"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a122a9a8d520ddfb4d32d4ca2649d763b" id="r_a122a9a8d520ddfb4d32d4ca2649d763b"><td class="memItemLeft" align="right" valign="top">QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a122a9a8d520ddfb4d32d4ca2649d763b">componentData</a> () const</td></tr>
+<tr class="separator:a122a9a8d520ddfb4d32d4ca2649d763b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47d1ca204e44c167d10c1741a673e109" id="r_a47d1ca204e44c167d10c1741a673e109"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a47d1ca204e44c167d10c1741a673e109">setName</a> (const QString &amp;<a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a50a28b9c5486d751dce6258936407faa">name</a>)</td></tr>
+<tr class="separator:a47d1ca204e44c167d10c1741a673e109"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed874d08aa05dce2df2eb54a59f03cc6" id="r_aed874d08aa05dce2df2eb54a59f03cc6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#aed874d08aa05dce2df2eb54a59f03cc6">setPackage</a> (const QString &amp;<a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a2a98bcff5e90bcefddf97a6bab0fb1a2">package</a>)</td></tr>
+<tr class="separator:aed874d08aa05dce2df2eb54a59f03cc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad273b8b41e37bb86a0c5eb2ff4f8bc53" id="r_ad273b8b41e37bb86a0c5eb2ff4f8bc53"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#ad273b8b41e37bb86a0c5eb2ff4f8bc53">setThumbnail</a> (const QImage &amp;<a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#aa9f3f84de0e976c577f353273744fc97">thumbnail</a>)</td></tr>
+<tr class="separator:ad273b8b41e37bb86a0c5eb2ff4f8bc53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d98dd9945c45725847895a7a57ea338" id="r_a4d98dd9945c45725847895a7a57ea338"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a4d98dd9945c45725847895a7a57ea338">setComponentData</a> (const QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &amp;data)</td></tr>
+<tr class="separator:a4d98dd9945c45725847895a7a57ea338"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a67b8b172ab3f32ee47eb20037752cb73" id="r_a67b8b172ab3f32ee47eb20037752cb73"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a67b8b172ab3f32ee47eb20037752cb73">setValid</a> (bool valid)</td></tr>
+<tr class="separator:a67b8b172ab3f32ee47eb20037752cb73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af067d83d8c0e23612aae65d1283c3e7d" id="r_af067d83d8c0e23612aae65d1283c3e7d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#af067d83d8c0e23612aae65d1283c3e7d">setFetching</a> (bool fetching)</td></tr>
+<tr class="separator:af067d83d8c0e23612aae65d1283c3e7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e10df657d15a6b52f9f55aef2d9a328" id="r_a9e10df657d15a6b52f9f55aef2d9a328"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a9e10df657d15a6b52f9f55aef2d9a328">setErrorMessage</a> (const QString &amp;error)</td></tr>
+<tr class="separator:a9e10df657d15a6b52f9f55aef2d9a328"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6468d75fc1c0f1c38c1c093174dba59c" id="r_a6468d75fc1c0f1c38c1c093174dba59c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a6468d75fc1c0f1c38c1c093174dba59c">dataChanged</a> ()</td></tr>
+<tr class="separator:a6468d75fc1c0f1c38c1c093174dba59c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b7108623e9801febf354181659b0faf" id="r_a6b7108623e9801febf354181659b0faf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a6b7108623e9801febf354181659b0faf">thumbnailChanged</a> ()</td></tr>
+<tr class="separator:a6b7108623e9801febf354181659b0faf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70bd07fc1bc3ec9c11dd9db5bc767490" id="r_a70bd07fc1bc3ec9c11dd9db5bc767490"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a70bd07fc1bc3ec9c11dd9db5bc767490">validationStatusChanged</a> ()</td></tr>
+<tr class="separator:a70bd07fc1bc3ec9c11dd9db5bc767490"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaee05f9f3904947c501360f4f1489ac5" id="r_aaee05f9f3904947c501360f4f1489ac5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#aaee05f9f3904947c501360f4f1489ac5">fetchingStatusChanged</a> ()</td></tr>
+<tr class="separator:aaee05f9f3904947c501360f4f1489ac5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:a478ce9a6693ef7601ee1f6be915af78e" id="r_a478ce9a6693ef7601ee1f6be915af78e"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a478ce9a6693ef7601ee1f6be915af78e">m_componentId</a></td></tr>
+<tr class="separator:a478ce9a6693ef7601ee1f6be915af78e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6217f7be47e648568f5e1f4d92666014" id="r_a6217f7be47e648568f5e1f4d92666014"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a6217f7be47e648568f5e1f4d92666014">m_name</a></td></tr>
+<tr class="separator:a6217f7be47e648568f5e1f4d92666014"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49e32142351a6db2b083f1df4301ca78" id="r_a49e32142351a6db2b083f1df4301ca78"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a49e32142351a6db2b083f1df4301ca78">m_package</a></td></tr>
+<tr class="separator:a49e32142351a6db2b083f1df4301ca78"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a595bbcea10a488e6268061adace3c7ab" id="r_a595bbcea10a488e6268061adace3c7ab"><td class="memItemLeft" align="right" valign="top">QImage&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a595bbcea10a488e6268061adace3c7ab">m_thumbnail</a></td></tr>
+<tr class="separator:a595bbcea10a488e6268061adace3c7ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af75f231c0533927d66bdc3df3a03eaa8" id="r_af75f231c0533927d66bdc3df3a03eaa8"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#af75f231c0533927d66bdc3df3a03eaa8">m_thumbnailBase64Cache</a></td></tr>
+<tr class="separator:af75f231c0533927d66bdc3df3a03eaa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae460bf9dcfe67e612805054a22c90101" id="r_ae460bf9dcfe67e612805054a22c90101"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#ae460bf9dcfe67e612805054a22c90101">m_isValid</a></td></tr>
+<tr class="separator:ae460bf9dcfe67e612805054a22c90101"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69682503a28f65b47e86a37b7cca1c4f" id="r_a69682503a28f65b47e86a37b7cca1c4f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a69682503a28f65b47e86a37b7cca1c4f">m_isFetching</a></td></tr>
+<tr class="separator:a69682503a28f65b47e86a37b7cca1c4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9dcb14c6fc41b507be8a683c37869a5" id="r_ab9dcb14c6fc41b507be8a683c37869a5"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#ab9dcb14c6fc41b507be8a683c37869a5">m_errorMessage</a></td></tr>
+<tr class="separator:ab9dcb14c6fc41b507be8a683c37869a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa61cd8907764d41db8b92fcc91a8836" id="r_aaa61cd8907764d41db8b92fcc91a8836"><td class="memItemLeft" align="right" valign="top">QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#aaa61cd8907764d41db8b92fcc91a8836">m_componentData</a></td></tr>
+<tr class="separator:aaa61cd8907764d41db8b92fcc91a8836"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>元器件列表项数据模型 </p>
+<p>扩展 ComponentData，增加 UI 相关的状态信息 </p>
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00018">18</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a7139458e5955818691b735f894141a95" name="a7139458e5955818691b735f894141a95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7139458e5955818691b735f894141a95">&#9670;&#160;</a></span>ComponentListItemData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::ComponentListItemData::ComponentListItemData </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8cpp_source.html">ComponentListItemData.cpp</a> 第 <a class="el" href="ComponentListItemData_8cpp_source.html#l00007">7</a> 行定义.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="a122a9a8d520ddfb4d32d4ca2649d763b" name="a122a9a8d520ddfb4d32d4ca2649d763b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a122a9a8d520ddfb4d32d4ca2649d763b">&#9670;&#160;</a></span>componentData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; EasyKiConverter::ComponentListItemData::componentData </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00068">68</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00096">m_componentData</a>.</p>
+
+</div>
+</div>
+<a id="a028e6d3602531d0bb769172aa5ec45a8" name="a028e6d3602531d0bb769172aa5ec45a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a028e6d3602531d0bb769172aa5ec45a8">&#9670;&#160;</a></span>componentId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentListItemData::componentId </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00034">34</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00088">m_componentId</a>.</p>
+
+</div>
+</div>
+<a id="a6468d75fc1c0f1c38c1c093174dba59c" name="a6468d75fc1c0f1c38c1c093174dba59c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6468d75fc1c0f1c38c1c093174dba59c">&#9670;&#160;</a></span>dataChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentListItemData::dataChanged </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8cpp_source.html#l00050">setComponentData()</a>, <a class="el" href="ComponentListItemData_8cpp_source.html#l00013">setName()</a> , 以及 <a class="el" href="ComponentListItemData_8cpp_source.html#l00020">setPackage()</a>.</p>
+
+</div>
+</div>
+<a id="afbb212959392ac28ab61d202eac32112" name="afbb212959392ac28ab61d202eac32112"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afbb212959392ac28ab61d202eac32112">&#9670;&#160;</a></span>errorMessage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentListItemData::errorMessage </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00064">64</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00095">m_errorMessage</a>.</p>
+
+</div>
+</div>
+<a id="aaee05f9f3904947c501360f4f1489ac5" name="aaee05f9f3904947c501360f4f1489ac5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaee05f9f3904947c501360f4f1489ac5">&#9670;&#160;</a></span>fetchingStatusChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentListItemData::fetchingStatusChanged </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8cpp_source.html#l00068">setFetching()</a>.</p>
+
+</div>
+</div>
+<a id="ac019436a36a07995e7ebf42fe088a5b4" name="ac019436a36a07995e7ebf42fe088a5b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac019436a36a07995e7ebf42fe088a5b4">&#9670;&#160;</a></span>hasThumbnail()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ComponentListItemData::hasThumbnail </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00060">60</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00091">m_thumbnail</a>.</p>
+
+</div>
+</div>
+<a id="a0945b78159c34ba62755c0e2dfa7fab5" name="a0945b78159c34ba62755c0e2dfa7fab5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0945b78159c34ba62755c0e2dfa7fab5">&#9670;&#160;</a></span>isFetching()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ComponentListItemData::isFetching </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00056">56</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00094">m_isFetching</a>.</p>
+
+</div>
+</div>
+<a id="ac4732ac7b0229d744f185779a1be6bff" name="ac4732ac7b0229d744f185779a1be6bff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac4732ac7b0229d744f185779a1be6bff">&#9670;&#160;</a></span>isValid()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ComponentListItemData::isValid </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00052">52</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00093">m_isValid</a>.</p>
+
+</div>
+</div>
+<a id="a50a28b9c5486d751dce6258936407faa" name="a50a28b9c5486d751dce6258936407faa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50a28b9c5486d751dce6258936407faa">&#9670;&#160;</a></span>name()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentListItemData::name </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00038">38</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00089">m_name</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8cpp_source.html#l00013">setName()</a>.</p>
+
+</div>
+</div>
+<a id="a2a98bcff5e90bcefddf97a6bab0fb1a2" name="a2a98bcff5e90bcefddf97a6bab0fb1a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a98bcff5e90bcefddf97a6bab0fb1a2">&#9670;&#160;</a></span>package()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentListItemData::package </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00042">42</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00090">m_package</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8cpp_source.html#l00020">setPackage()</a>.</p>
+
+</div>
+</div>
+<a id="a4d98dd9945c45725847895a7a57ea338" name="a4d98dd9945c45725847895a7a57ea338"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4d98dd9945c45725847895a7a57ea338">&#9670;&#160;</a></span>setComponentData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentListItemData::setComponentData </td>
+          <td>(</td>
+          <td class="paramtype">const QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8cpp_source.html">ComponentListItemData.cpp</a> 第 <a class="el" href="ComponentListItemData_8cpp_source.html#l00050">50</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a6468d75fc1c0f1c38c1c093174dba59c">dataChanged()</a>, <a class="el" href="ComponentListItemData_8h_source.html#l00096">m_componentData</a>, <a class="el" href="ComponentListItemData_8cpp_source.html#l00013">setName()</a> , 以及 <a class="el" href="ComponentListItemData_8cpp_source.html#l00020">setPackage()</a>.</p>
+
+</div>
+</div>
+<a id="a9e10df657d15a6b52f9f55aef2d9a328" name="a9e10df657d15a6b52f9f55aef2d9a328"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9e10df657d15a6b52f9f55aef2d9a328">&#9670;&#160;</a></span>setErrorMessage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentListItemData::setErrorMessage </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>error</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8cpp_source.html">ComponentListItemData.cpp</a> 第 <a class="el" href="ComponentListItemData_8cpp_source.html#l00075">75</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00095">m_errorMessage</a> , 以及 <a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a70bd07fc1bc3ec9c11dd9db5bc767490">validationStatusChanged()</a>.</p>
+
+</div>
+</div>
+<a id="af067d83d8c0e23612aae65d1283c3e7d" name="af067d83d8c0e23612aae65d1283c3e7d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af067d83d8c0e23612aae65d1283c3e7d">&#9670;&#160;</a></span>setFetching()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentListItemData::setFetching </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>fetching</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8cpp_source.html">ComponentListItemData.cpp</a> 第 <a class="el" href="ComponentListItemData_8cpp_source.html#l00068">68</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#aaee05f9f3904947c501360f4f1489ac5">fetchingStatusChanged()</a> , 以及 <a class="el" href="ComponentListItemData_8h_source.html#l00094">m_isFetching</a>.</p>
+
+</div>
+</div>
+<a id="a47d1ca204e44c167d10c1741a673e109" name="a47d1ca204e44c167d10c1741a673e109"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a47d1ca204e44c167d10c1741a673e109">&#9670;&#160;</a></span>setName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentListItemData::setName </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8cpp_source.html">ComponentListItemData.cpp</a> 第 <a class="el" href="ComponentListItemData_8cpp_source.html#l00013">13</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a6468d75fc1c0f1c38c1c093174dba59c">dataChanged()</a>, <a class="el" href="ComponentListItemData_8h_source.html#l00089">m_name</a> , 以及 <a class="el" href="ComponentListItemData_8h_source.html#l00038">name()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8cpp_source.html#l00050">setComponentData()</a>.</p>
+
+</div>
+</div>
+<a id="aed874d08aa05dce2df2eb54a59f03cc6" name="aed874d08aa05dce2df2eb54a59f03cc6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aed874d08aa05dce2df2eb54a59f03cc6">&#9670;&#160;</a></span>setPackage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentListItemData::setPackage </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>package</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8cpp_source.html">ComponentListItemData.cpp</a> 第 <a class="el" href="ComponentListItemData_8cpp_source.html#l00020">20</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a6468d75fc1c0f1c38c1c093174dba59c">dataChanged()</a>, <a class="el" href="ComponentListItemData_8h_source.html#l00090">m_package</a> , 以及 <a class="el" href="ComponentListItemData_8h_source.html#l00042">package()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8cpp_source.html#l00050">setComponentData()</a>.</p>
+
+</div>
+</div>
+<a id="ad273b8b41e37bb86a0c5eb2ff4f8bc53" name="ad273b8b41e37bb86a0c5eb2ff4f8bc53"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad273b8b41e37bb86a0c5eb2ff4f8bc53">&#9670;&#160;</a></span>setThumbnail()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentListItemData::setThumbnail </td>
+          <td>(</td>
+          <td class="paramtype">const QImage &amp;&#160;</td>
+          <td class="paramname"><em>thumbnail</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8cpp_source.html">ComponentListItemData.cpp</a> 第 <a class="el" href="ComponentListItemData_8cpp_source.html#l00027">27</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00091">m_thumbnail</a>, <a class="el" href="ComponentListItemData_8h_source.html#l00092">m_thumbnailBase64Cache</a>, <a class="el" href="ComponentListItemData_8h_source.html#l00046">thumbnail()</a> , 以及 <a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a6b7108623e9801febf354181659b0faf">thumbnailChanged()</a>.</p>
+
+</div>
+</div>
+<a id="a67b8b172ab3f32ee47eb20037752cb73" name="a67b8b172ab3f32ee47eb20037752cb73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a67b8b172ab3f32ee47eb20037752cb73">&#9670;&#160;</a></span>setValid()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentListItemData::setValid </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>valid</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8cpp_source.html">ComponentListItemData.cpp</a> 第 <a class="el" href="ComponentListItemData_8cpp_source.html#l00061">61</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00093">m_isValid</a> , 以及 <a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html#a70bd07fc1bc3ec9c11dd9db5bc767490">validationStatusChanged()</a>.</p>
+
+</div>
+</div>
+<a id="aa9f3f84de0e976c577f353273744fc97" name="aa9f3f84de0e976c577f353273744fc97"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9f3f84de0e976c577f353273744fc97">&#9670;&#160;</a></span>thumbnail()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QImage EasyKiConverter::ComponentListItemData::thumbnail </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00046">46</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00091">m_thumbnail</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8cpp_source.html#l00027">setThumbnail()</a>.</p>
+
+</div>
+</div>
+<a id="abd5ce030df4f649a02a3bf3f187e210b" name="abd5ce030df4f649a02a3bf3f187e210b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd5ce030df4f649a02a3bf3f187e210b">&#9670;&#160;</a></span>thumbnailBase64()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentListItemData::thumbnailBase64 </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8cpp_source.html">ComponentListItemData.cpp</a> 第 <a class="el" href="ComponentListItemData_8cpp_source.html#l00033">33</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentListItemData_8h_source.html#l00091">m_thumbnail</a> , 以及 <a class="el" href="ComponentListItemData_8h_source.html#l00092">m_thumbnailBase64Cache</a>.</p>
+
+</div>
+</div>
+<a id="a6b7108623e9801febf354181659b0faf" name="a6b7108623e9801febf354181659b0faf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b7108623e9801febf354181659b0faf">&#9670;&#160;</a></span>thumbnailChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentListItemData::thumbnailChanged </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8cpp_source.html#l00027">setThumbnail()</a>.</p>
+
+</div>
+</div>
+<a id="a70bd07fc1bc3ec9c11dd9db5bc767490" name="a70bd07fc1bc3ec9c11dd9db5bc767490"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a70bd07fc1bc3ec9c11dd9db5bc767490">&#9670;&#160;</a></span>validationStatusChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ComponentListItemData::validationStatusChanged </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8cpp_source.html#l00075">setErrorMessage()</a> , 以及 <a class="el" href="ComponentListItemData_8cpp_source.html#l00061">setValid()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="aaa61cd8907764d41db8b92fcc91a8836" name="aaa61cd8907764d41db8b92fcc91a8836"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa61cd8907764d41db8b92fcc91a8836">&#9670;&#160;</a></span>m_componentData</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QSharedPointer&lt;<a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a>&gt; EasyKiConverter::ComponentListItemData::m_componentData</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00096">96</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8h_source.html#l00068">componentData()</a> , 以及 <a class="el" href="ComponentListItemData_8cpp_source.html#l00050">setComponentData()</a>.</p>
+
+</div>
+</div>
+<a id="a478ce9a6693ef7601ee1f6be915af78e" name="a478ce9a6693ef7601ee1f6be915af78e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a478ce9a6693ef7601ee1f6be915af78e">&#9670;&#160;</a></span>m_componentId</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentListItemData::m_componentId</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00088">88</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8h_source.html#l00034">componentId()</a>.</p>
+
+</div>
+</div>
+<a id="ab9dcb14c6fc41b507be8a683c37869a5" name="ab9dcb14c6fc41b507be8a683c37869a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab9dcb14c6fc41b507be8a683c37869a5">&#9670;&#160;</a></span>m_errorMessage</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentListItemData::m_errorMessage</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00095">95</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8h_source.html#l00064">errorMessage()</a> , 以及 <a class="el" href="ComponentListItemData_8cpp_source.html#l00075">setErrorMessage()</a>.</p>
+
+</div>
+</div>
+<a id="a69682503a28f65b47e86a37b7cca1c4f" name="a69682503a28f65b47e86a37b7cca1c4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a69682503a28f65b47e86a37b7cca1c4f">&#9670;&#160;</a></span>m_isFetching</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ComponentListItemData::m_isFetching</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00094">94</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8h_source.html#l00056">isFetching()</a> , 以及 <a class="el" href="ComponentListItemData_8cpp_source.html#l00068">setFetching()</a>.</p>
+
+</div>
+</div>
+<a id="ae460bf9dcfe67e612805054a22c90101" name="ae460bf9dcfe67e612805054a22c90101"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae460bf9dcfe67e612805054a22c90101">&#9670;&#160;</a></span>m_isValid</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ComponentListItemData::m_isValid</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00093">93</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8h_source.html#l00052">isValid()</a> , 以及 <a class="el" href="ComponentListItemData_8cpp_source.html#l00061">setValid()</a>.</p>
+
+</div>
+</div>
+<a id="a6217f7be47e648568f5e1f4d92666014" name="a6217f7be47e648568f5e1f4d92666014"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6217f7be47e648568f5e1f4d92666014">&#9670;&#160;</a></span>m_name</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentListItemData::m_name</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00089">89</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8h_source.html#l00038">name()</a> , 以及 <a class="el" href="ComponentListItemData_8cpp_source.html#l00013">setName()</a>.</p>
+
+</div>
+</div>
+<a id="a49e32142351a6db2b083f1df4301ca78" name="a49e32142351a6db2b083f1df4301ca78"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a49e32142351a6db2b083f1df4301ca78">&#9670;&#160;</a></span>m_package</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentListItemData::m_package</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00090">90</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8h_source.html#l00042">package()</a> , 以及 <a class="el" href="ComponentListItemData_8cpp_source.html#l00020">setPackage()</a>.</p>
+
+</div>
+</div>
+<a id="a595bbcea10a488e6268061adace3c7ab" name="a595bbcea10a488e6268061adace3c7ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a595bbcea10a488e6268061adace3c7ab">&#9670;&#160;</a></span>m_thumbnail</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QImage EasyKiConverter::ComponentListItemData::m_thumbnail</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00091">91</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8h_source.html#l00060">hasThumbnail()</a>, <a class="el" href="ComponentListItemData_8cpp_source.html#l00027">setThumbnail()</a>, <a class="el" href="ComponentListItemData_8h_source.html#l00046">thumbnail()</a> , 以及 <a class="el" href="ComponentListItemData_8cpp_source.html#l00033">thumbnailBase64()</a>.</p>
+
+</div>
+</div>
+<a id="af75f231c0533927d66bdc3df3a03eaa8" name="af75f231c0533927d66bdc3df3a03eaa8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af75f231c0533927d66bdc3df3a03eaa8">&#9670;&#160;</a></span>m_thumbnailBase64Cache</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ComponentListItemData::m_thumbnailBase64Cache</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">mutable</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a> 第 <a class="el" href="ComponentListItemData_8h_source.html#l00092">92</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentListItemData_8cpp_source.html#l00027">setThumbnail()</a> , 以及 <a class="el" href="ComponentListItemData_8cpp_source.html#l00033">thumbnailBase64()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>models/<a class="el" href="ComponentListItemData_8h_source.html">ComponentListItemData.h</a></li>
+<li>models/<a class="el" href="ComponentListItemData_8cpp_source.html">ComponentListItemData.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1ComponentListItemData.html">ComponentListItemData</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

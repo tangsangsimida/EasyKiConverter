@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: ui/viewmodels/ComponentListViewModel.h 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('ComponentListViewModel_8h_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">ComponentListViewModel.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="ComponentListViewModel_8h.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef COMPONENTLISTVIEWMODEL_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define COMPONENTLISTVIEWMODEL_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="ComponentListItemData_8h.html">models/ComponentListItemData.h</a>&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;<a class="code" href="ComponentService_8h.html">services/ComponentService.h</a>&quot;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;QAbstractListModel&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;QPointer&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;QSet&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;QStringList&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
+<div class="foldopen" id="foldopen00021" data-start="{" data-end="};">
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html">   21</a></span><span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1ComponentListViewModel.html">ComponentListViewModel</a> : <span class="keyword">public</span> QAbstractListModel {</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    Q_OBJECT</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    Q_PROPERTY(<span class="keywordtype">int</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a3be42f8f8b8d356ca5987c69292efbd5">componentCount</a> READ <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a3be42f8f8b8d356ca5987c69292efbd5">componentCount</a> NOTIFY <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a8f6666c03f503bee73dfd58ac66615da">componentCountChanged</a>)</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    Q_PROPERTY(QString <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a5659ef66d92782caf14d34852c0bc3bc">bomFilePath</a> READ <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a5659ef66d92782caf14d34852c0bc3bc">bomFilePath</a> NOTIFY <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a952f2df628b6715b8de9f1e064a2c074">bomFilePathChanged</a>)</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    Q_PROPERTY(QString <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a25f89172424075c61c9b389f560aff57">bomResult</a> READ <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a25f89172424075c61c9b389f560aff57">bomResult</a> NOTIFY <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#ad8d11919cf1ca49334b366d82422cfd5">bomResultChanged</a>)</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a30bdf7153e52e81e4c01650b327f0d39">   28</a></span>    <span class="keyword">enum</span> <a class="code hl_enumeration" href="classEasyKiConverter_1_1ComponentListViewModel.html#a30bdf7153e52e81e4c01650b327f0d39">ComponentRoles</a> { <a class="code hl_enumvalue" href="classEasyKiConverter_1_1ComponentListViewModel.html#a30bdf7153e52e81e4c01650b327f0d39a35fa7e7cd973faebd6cb0145d358e779">ItemDataRole</a> = Qt::UserRole + 1 };</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keyword">explicit</span> <a class="code hl_class" href="classEasyKiConverter_1_1ComponentListViewModel.html">ComponentListViewModel</a>(<a class="code hl_class" href="classEasyKiConverter_1_1ComponentService.html">ComponentService</a>* service, QObject* parent = <span class="keyword">nullptr</span>);</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a8af555c0ee5f0bf002ecacb9b9c7718a">~ComponentListViewModel</a>() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="comment">// QAbstractListModel 接口实现</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keywordtype">int</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a57813844d6cf60b36dc8f3f92191460b">rowCount</a>(<span class="keyword">const</span> QModelIndex&amp; parent = QModelIndex()) <span class="keyword">const override</span>;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    QVariant <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a200ca4d5fa54bd645fc0f4f4c6ece5ab">data</a>(<span class="keyword">const</span> QModelIndex&amp; index, <span class="keywordtype">int</span> role = Qt::DisplayRole) <span class="keyword">const override</span>;</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    QHash&lt;int, QByteArray&gt; <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#adfbbd7e959c37b66464a10837b7bd283">roleNames</a>() <span class="keyword">const override</span>;</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
+<div class="foldopen" id="foldopen00048" data-start="{" data-end="}">
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a3be42f8f8b8d356ca5987c69292efbd5">   48</a></span>    <span class="keywordtype">int</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a3be42f8f8b8d356ca5987c69292efbd5">componentCount</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentListViewModel.html#a38125d10134b4878b616940486386dda">m_componentList</a>.count();</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    }</div>
+</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
+<div class="foldopen" id="foldopen00052" data-start="{" data-end="}">
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a5659ef66d92782caf14d34852c0bc3bc">   52</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a5659ef66d92782caf14d34852c0bc3bc">bomFilePath</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentListViewModel.html#aaf6f134c63da8bbbff9386d7aa950a94">m_bomFilePath</a>;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    }</div>
+</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
+<div class="foldopen" id="foldopen00056" data-start="{" data-end="}">
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a25f89172424075c61c9b389f560aff57">   56</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a25f89172424075c61c9b389f560aff57">bomResult</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentListViewModel.html#a96e581d0ec6c4c1afba202dc24355f70">m_bomResult</a>;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    }</div>
+</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="comment">// 获取预加载的数据（用于导出流程）</span></div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    QSharedPointer&lt;ComponentData&gt; <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a12b00dbbba36010a3d93c2e195e6254a">getPreloadedData</a>(<span class="keyword">const</span> QString&amp; componentId) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="keyword">public</span> slots:</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a0a0f9203b2d14f0e8b84fd777dd9f681">addComponent</a>(<span class="keyword">const</span> QString&amp; componentId);</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a220383eb09823db4af6d2f78805bd3c8">removeComponent</a>(<span class="keywordtype">int</span> index);</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a51e66510e8c95635b918873397e7208e">removeComponentById</a>(<span class="keyword">const</span> QString&amp; componentId);</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span> </div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a833c3e3f22bc5519d9eaf9cd03598c91">clearComponentList</a>();</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a4235a53eb636e5ee63a0b435b1a283b5">addComponentsBatch</a>(<span class="keyword">const</span> QStringList&amp; componentIds);</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a53ff5b0166de796a84c539ec16e8ff07">pasteFromClipboard</a>();</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a7b173e1ecf02c89811cc47177b9a1d85">copyAllComponentIds</a>();</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span> </div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#adf99f86c637f7a331ef23670cdbd3c9f">selectBomFile</a>(<span class="keyword">const</span> QString&amp; filePath);</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#af50b62402a0ec62a248c93374cd380dc">fetchComponentData</a>(<span class="keyword">const</span> QString&amp; componentId, <span class="keywordtype">bool</span> fetch3DModel = <span class="keyword">true</span>);</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a9718f331740d3006e25b84f5d4ae5117">setOutputPath</a>(<span class="keyword">const</span> QString&amp; path);</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
+<div class="foldopen" id="foldopen00136" data-start="{" data-end="}">
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a0cb18e15689fdc84d7c81da7ab8ecef1">  136</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a0cb18e15689fdc84d7c81da7ab8ecef1">outputPath</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentListViewModel.html#a70bf0df6f7f4832d788d77d63177b639">m_outputPath</a>;</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    }</div>
+</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>    <span class="comment">// 重新验证/获取信息</span></div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#aa4561cd18279b008c36c621a81ed36f0">refreshComponentInfo</a>(<span class="keywordtype">int</span> index);</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span> </div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    Q_INVOKABLE QStringList <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a8f75fa14a43619cc35bbba136895632c">getAllComponentIds</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span> </div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#aeeee038f87131e3db10befec1684547b">copyToClipboard</a>(<span class="keyword">const</span> QString&amp; text);</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span> </div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>signals:</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    <span class="comment">// componentListChanged 信号不再需要，因为 QAbstractListModel 有自己的信号机制</span></div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a8f6666c03f503bee73dfd58ac66615da">  158</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a8f6666c03f503bee73dfd58ac66615da">componentCountChanged</a>();</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a952f2df628b6715b8de9f1e064a2c074">  159</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a952f2df628b6715b8de9f1e064a2c074">bomFilePathChanged</a>();</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#ad8d11919cf1ca49334b366d82422cfd5">  160</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#ad8d11919cf1ca49334b366d82422cfd5">bomResultChanged</a>();</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#af13a62af7421f0fffe97bdb5081b40ec">  161</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#af13a62af7421f0fffe97bdb5081b40ec">componentAdded</a>(<span class="keyword">const</span> QString&amp; componentId, <span class="keywordtype">bool</span> success, <span class="keyword">const</span> QString&amp; message);</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#ac8a34eafa722af0a56f0343dd4ce7bd9">  162</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#ac8a34eafa722af0a56f0343dd4ce7bd9">componentRemoved</a>(<span class="keyword">const</span> QString&amp; componentId);</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#af540aa63e0ecc80a278f687e8d0781d7">  163</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#af540aa63e0ecc80a278f687e8d0781d7">listCleared</a>();</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a33908fa8da69a645ceca742e07fc6003">  164</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a33908fa8da69a645ceca742e07fc6003">pasteCompleted</a>(<span class="keywordtype">int</span> added, <span class="keywordtype">int</span> skipped);</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#ad82d6bc55937435b2bd3afea40d700f4">  165</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#ad82d6bc55937435b2bd3afea40d700f4">outputPathChanged</a>();</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span> </div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span><span class="keyword">private</span> slots:</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a536ac29b0f81922c1a3f49e4282f6ac2">handleComponentInfoReady</a>(<span class="keyword">const</span> QString&amp; componentId, <span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a>&amp; <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a200ca4d5fa54bd645fc0f4f4c6ece5ab">data</a>);</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span> </div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a711164c6836d44e4eba0bcc44fa811a7">handleCadDataReady</a>(<span class="keyword">const</span> QString&amp; componentId, <span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a>&amp; <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a200ca4d5fa54bd645fc0f4f4c6ece5ab">data</a>);</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span> </div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a760142d3db2410240892c3b322ebb939">handleModel3DReady</a>(<span class="keyword">const</span> QString&amp; uuid, <span class="keyword">const</span> QString&amp; filePath);</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#ac949aa1e6ff6c87de986af1a83c502cc">handleFetchError</a>(<span class="keyword">const</span> QString&amp; componentId, <span class="keyword">const</span> QString&amp; error);</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span> </div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a5c1a9c767b1cafb49d5b37849703ed60">componentExists</a>(<span class="keyword">const</span> QString&amp; componentId) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span> </div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#adc15fdb5ae5cacd125884599eecc03d4">validateComponentId</a>(<span class="keyword">const</span> QString&amp; componentId) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span> </div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    QStringList <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a77f701510b9083575ca790736ef205fd">extractComponentIdFromText</a>(<span class="keyword">const</span> QString&amp; text) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span> </div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    <span class="comment">// 查找列表项数据</span></div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>    <a class="code hl_class" href="classEasyKiConverter_1_1ComponentListItemData.html">ComponentListItemData</a>* <a class="code hl_function" href="classEasyKiConverter_1_1ComponentListViewModel.html#a3b9f4f277e231e599ecba69fdf6ceaa6">findItemData</a>(<span class="keyword">const</span> QString&amp; componentId) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span> </div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a774db8d9491ffb91aa2cfd557699f68a">  229</a></span>    <a class="code hl_class" href="classEasyKiConverter_1_1ComponentService.html">ComponentService</a>* <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentListViewModel.html#a774db8d9491ffb91aa2cfd557699f68a">m_service</a>;</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a38125d10134b4878b616940486386dda">  230</a></span>    QList&lt;ComponentListItemData*&gt; <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentListViewModel.html#a38125d10134b4878b616940486386dda">m_componentList</a>;</div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a8679d6293f65cfaed460a5cc626986f2">  231</a></span>    QSet&lt;QString&gt; <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentListViewModel.html#a8679d6293f65cfaed460a5cc626986f2">m_componentIdIndex</a>;  <span class="comment">// 快速查重集合，O(1) 查找</span></div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a70bf0df6f7f4832d788d77d63177b639">  232</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentListViewModel.html#a70bf0df6f7f4832d788d77d63177b639">m_outputPath</a>;</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#aaf6f134c63da8bbbff9386d7aa950a94">  233</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentListViewModel.html#aaf6f134c63da8bbbff9386d7aa950a94">m_bomFilePath</a>;</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentListViewModel.html#a96e581d0ec6c4c1afba202dc24355f70">  234</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentListViewModel.html#a96e581d0ec6c4c1afba202dc24355f70">m_bomResult</a>;</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>};</div>
+</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span> </div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span> </div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span><span class="preprocessor">#endif  </span><span class="comment">// COMPONENTLISTVIEWMODEL_H</span></div>
+<div class="ttc" id="aComponentListItemData_8h_html"><div class="ttname"><a href="ComponentListItemData_8h.html">ComponentListItemData.h</a></div></div>
+<div class="ttc" id="aComponentService_8h_html"><div class="ttname"><a href="ComponentService_8h.html">ComponentService.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentData_html"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentData.html">EasyKiConverter::ComponentData</a></div><div class="ttdoc">元件数据</div><div class="ttdef"><b>Definition</b> <a href="ComponentData_8h_source.html#l00020">ComponentData.h:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListItemData_html"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListItemData.html">EasyKiConverter::ComponentListItemData</a></div><div class="ttdoc">元器件列表项数据模型</div><div class="ttdef"><b>Definition</b> <a href="ComponentListItemData_8h_source.html#l00018">ComponentListItemData.h:18</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html">EasyKiConverter::ComponentListViewModel</a></div><div class="ttdoc">元件列表视图模型</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00021">ComponentListViewModel.h:21</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a0a0f9203b2d14f0e8b84fd777dd9f681"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a0a0f9203b2d14f0e8b84fd777dd9f681">EasyKiConverter::ComponentListViewModel::addComponent</a></div><div class="ttdeci">void addComponent(const QString &amp;componentId)</div><div class="ttdoc">添加元件到列表</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00062">ComponentListViewModel.cpp:62</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a0cb18e15689fdc84d7c81da7ab8ecef1"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a0cb18e15689fdc84d7c81da7ab8ecef1">EasyKiConverter::ComponentListViewModel::outputPath</a></div><div class="ttdeci">QString outputPath() const</div><div class="ttdoc">获取输出路径</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00136">ComponentListViewModel.h:136</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a12b00dbbba36010a3d93c2e195e6254a"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a12b00dbbba36010a3d93c2e195e6254a">EasyKiConverter::ComponentListViewModel::getPreloadedData</a></div><div class="ttdeci">QSharedPointer&lt; ComponentData &gt; getPreloadedData(const QString &amp;componentId) const</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00414">ComponentListViewModel.cpp:414</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a200ca4d5fa54bd645fc0f4f4c6ece5ab"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a200ca4d5fa54bd645fc0f4f4c6ece5ab">EasyKiConverter::ComponentListViewModel::data</a></div><div class="ttdeci">QVariant data(const QModelIndex &amp;index, int role=Qt::DisplayRole) const override</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00045">ComponentListViewModel.cpp:45</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a220383eb09823db4af6d2f78805bd3c8"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a220383eb09823db4af6d2f78805bd3c8">EasyKiConverter::ComponentListViewModel::removeComponent</a></div><div class="ttdeci">void removeComponent(int index)</div><div class="ttdoc">从列表中移除元件</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00111">ComponentListViewModel.cpp:111</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a25f89172424075c61c9b389f560aff57"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a25f89172424075c61c9b389f560aff57">EasyKiConverter::ComponentListViewModel::bomResult</a></div><div class="ttdeci">QString bomResult() const</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00056">ComponentListViewModel.h:56</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a30bdf7153e52e81e4c01650b327f0d39"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a30bdf7153e52e81e4c01650b327f0d39">EasyKiConverter::ComponentListViewModel::ComponentRoles</a></div><div class="ttdeci">ComponentRoles</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00028">ComponentListViewModel.h:28</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a30bdf7153e52e81e4c01650b327f0d39a35fa7e7cd973faebd6cb0145d358e779"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a30bdf7153e52e81e4c01650b327f0d39a35fa7e7cd973faebd6cb0145d358e779">EasyKiConverter::ComponentListViewModel::ItemDataRole</a></div><div class="ttdeci">@ ItemDataRole</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00028">ComponentListViewModel.h:28</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a33908fa8da69a645ceca742e07fc6003"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a33908fa8da69a645ceca742e07fc6003">EasyKiConverter::ComponentListViewModel::pasteCompleted</a></div><div class="ttdeci">void pasteCompleted(int added, int skipped)</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a38125d10134b4878b616940486386dda"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a38125d10134b4878b616940486386dda">EasyKiConverter::ComponentListViewModel::m_componentList</a></div><div class="ttdeci">QList&lt; ComponentListItemData * &gt; m_componentList</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00230">ComponentListViewModel.h:230</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a3b9f4f277e231e599ecba69fdf6ceaa6"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a3b9f4f277e231e599ecba69fdf6ceaa6">EasyKiConverter::ComponentListViewModel::findItemData</a></div><div class="ttdeci">ComponentListItemData * findItemData(const QString &amp;componentId) const</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00332">ComponentListViewModel.cpp:332</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a3be42f8f8b8d356ca5987c69292efbd5"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a3be42f8f8b8d356ca5987c69292efbd5">EasyKiConverter::ComponentListViewModel::componentCount</a></div><div class="ttdeci">int componentCount() const</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00048">ComponentListViewModel.h:48</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a4235a53eb636e5ee63a0b435b1a283b5"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a4235a53eb636e5ee63a0b435b1a283b5">EasyKiConverter::ComponentListViewModel::addComponentsBatch</a></div><div class="ttdeci">void addComponentsBatch(const QStringList &amp;componentIds)</div><div class="ttdoc">批量添加元器件效率更高</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00147">ComponentListViewModel.cpp:147</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a51e66510e8c95635b918873397e7208e"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a51e66510e8c95635b918873397e7208e">EasyKiConverter::ComponentListViewModel::removeComponentById</a></div><div class="ttdeci">void removeComponentById(const QString &amp;componentId)</div><div class="ttdoc">根据ID移除元件</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00125">ComponentListViewModel.cpp:125</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a536ac29b0f81922c1a3f49e4282f6ac2"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a536ac29b0f81922c1a3f49e4282f6ac2">EasyKiConverter::ComponentListViewModel::handleComponentInfoReady</a></div><div class="ttdeci">void handleComponentInfoReady(const QString &amp;componentId, const ComponentData &amp;data)</div><div class="ttdoc">处理元件信息获取成功</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00341">ComponentListViewModel.cpp:341</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a53ff5b0166de796a84c539ec16e8ff07"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a53ff5b0166de796a84c539ec16e8ff07">EasyKiConverter::ComponentListViewModel::pasteFromClipboard</a></div><div class="ttdeci">void pasteFromClipboard()</div><div class="ttdoc">从剪贴板粘贴元器件编号</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00199">ComponentListViewModel.cpp:199</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a5659ef66d92782caf14d34852c0bc3bc"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a5659ef66d92782caf14d34852c0bc3bc">EasyKiConverter::ComponentListViewModel::bomFilePath</a></div><div class="ttdeci">QString bomFilePath() const</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00052">ComponentListViewModel.h:52</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a57813844d6cf60b36dc8f3f92191460b"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a57813844d6cf60b36dc8f3f92191460b">EasyKiConverter::ComponentListViewModel::rowCount</a></div><div class="ttdeci">int rowCount(const QModelIndex &amp;parent=QModelIndex()) const override</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00039">ComponentListViewModel.cpp:39</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a5c1a9c767b1cafb49d5b37849703ed60"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a5c1a9c767b1cafb49d5b37849703ed60">EasyKiConverter::ComponentListViewModel::componentExists</a></div><div class="ttdeci">bool componentExists(const QString &amp;componentId) const</div><div class="ttdoc">检查元件是否已存在</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00328">ComponentListViewModel.cpp:328</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a70bf0df6f7f4832d788d77d63177b639"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a70bf0df6f7f4832d788d77d63177b639">EasyKiConverter::ComponentListViewModel::m_outputPath</a></div><div class="ttdeci">QString m_outputPath</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00232">ComponentListViewModel.h:232</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a711164c6836d44e4eba0bcc44fa811a7"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a711164c6836d44e4eba0bcc44fa811a7">EasyKiConverter::ComponentListViewModel::handleCadDataReady</a></div><div class="ttdeci">void handleCadDataReady(const QString &amp;componentId, const ComponentData &amp;data)</div><div class="ttdoc">处理CAD数据获取成功</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00349">ComponentListViewModel.cpp:349</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a760142d3db2410240892c3b322ebb939"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a760142d3db2410240892c3b322ebb939">EasyKiConverter::ComponentListViewModel::handleModel3DReady</a></div><div class="ttdeci">void handleModel3DReady(const QString &amp;uuid, const QString &amp;filePath)</div><div class="ttdoc">处理3D模型数据获取成功</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00377">ComponentListViewModel.cpp:377</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a774db8d9491ffb91aa2cfd557699f68a"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a774db8d9491ffb91aa2cfd557699f68a">EasyKiConverter::ComponentListViewModel::m_service</a></div><div class="ttdeci">ComponentService * m_service</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00229">ComponentListViewModel.h:229</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a77f701510b9083575ca790736ef205fd"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a77f701510b9083575ca790736ef205fd">EasyKiConverter::ComponentListViewModel::extractComponentIdFromText</a></div><div class="ttdeci">QStringList extractComponentIdFromText(const QString &amp;text) const</div><div class="ttdoc">从文本中提取元件编号</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00323">ComponentListViewModel.cpp:323</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a7b173e1ecf02c89811cc47177b9a1d85"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a7b173e1ecf02c89811cc47177b9a1d85">EasyKiConverter::ComponentListViewModel::copyAllComponentIds</a></div><div class="ttdeci">void copyAllComponentIds()</div><div class="ttdoc">复制所有元器件编号到剪贴板</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00234">ComponentListViewModel.cpp:234</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a833c3e3f22bc5519d9eaf9cd03598c91"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a833c3e3f22bc5519d9eaf9cd03598c91">EasyKiConverter::ComponentListViewModel::clearComponentList</a></div><div class="ttdeci">void clearComponentList()</div><div class="ttdoc">清空元件列表</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00134">ComponentListViewModel.cpp:134</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a8679d6293f65cfaed460a5cc626986f2"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a8679d6293f65cfaed460a5cc626986f2">EasyKiConverter::ComponentListViewModel::m_componentIdIndex</a></div><div class="ttdeci">QSet&lt; QString &gt; m_componentIdIndex</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00231">ComponentListViewModel.h:231</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a8af555c0ee5f0bf002ecacb9b9c7718a"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a8af555c0ee5f0bf002ecacb9b9c7718a">EasyKiConverter::ComponentListViewModel::~ComponentListViewModel</a></div><div class="ttdeci">~ComponentListViewModel() override</div><div class="ttdoc">析构函数</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00034">ComponentListViewModel.cpp:34</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a8f6666c03f503bee73dfd58ac66615da"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a8f6666c03f503bee73dfd58ac66615da">EasyKiConverter::ComponentListViewModel::componentCountChanged</a></div><div class="ttdeci">void componentCountChanged()</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a8f75fa14a43619cc35bbba136895632c"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a8f75fa14a43619cc35bbba136895632c">EasyKiConverter::ComponentListViewModel::getAllComponentIds</a></div><div class="ttdeci">QStringList getAllComponentIds() const</div><div class="ttdoc">获取所有元件ID列表</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00406">ComponentListViewModel.cpp:406</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a952f2df628b6715b8de9f1e064a2c074"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a952f2df628b6715b8de9f1e064a2c074">EasyKiConverter::ComponentListViewModel::bomFilePathChanged</a></div><div class="ttdeci">void bomFilePathChanged()</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a96e581d0ec6c4c1afba202dc24355f70"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a96e581d0ec6c4c1afba202dc24355f70">EasyKiConverter::ComponentListViewModel::m_bomResult</a></div><div class="ttdeci">QString m_bomResult</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00234">ComponentListViewModel.h:234</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_a9718f331740d3006e25b84f5d4ae5117"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#a9718f331740d3006e25b84f5d4ae5117">EasyKiConverter::ComponentListViewModel::setOutputPath</a></div><div class="ttdeci">void setOutputPath(const QString &amp;path)</div><div class="ttdoc">设置输出路径</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00311">ComponentListViewModel.cpp:311</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_aa4561cd18279b008c36c621a81ed36f0"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#aa4561cd18279b008c36c621a81ed36f0">EasyKiConverter::ComponentListViewModel::refreshComponentInfo</a></div><div class="ttdeci">void refreshComponentInfo(int index)</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00397">ComponentListViewModel.cpp:397</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_aaf6f134c63da8bbbff9386d7aa950a94"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#aaf6f134c63da8bbbff9386d7aa950a94">EasyKiConverter::ComponentListViewModel::m_bomFilePath</a></div><div class="ttdeci">QString m_bomFilePath</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8h_source.html#l00233">ComponentListViewModel.h:233</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_ac8a34eafa722af0a56f0343dd4ce7bd9"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#ac8a34eafa722af0a56f0343dd4ce7bd9">EasyKiConverter::ComponentListViewModel::componentRemoved</a></div><div class="ttdeci">void componentRemoved(const QString &amp;componentId)</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_ac949aa1e6ff6c87de986af1a83c502cc"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#ac949aa1e6ff6c87de986af1a83c502cc">EasyKiConverter::ComponentListViewModel::handleFetchError</a></div><div class="ttdeci">void handleFetchError(const QString &amp;componentId, const QString &amp;error)</div><div class="ttdoc">处理数据获取失败</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00382">ComponentListViewModel.cpp:382</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_ad82d6bc55937435b2bd3afea40d700f4"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#ad82d6bc55937435b2bd3afea40d700f4">EasyKiConverter::ComponentListViewModel::outputPathChanged</a></div><div class="ttdeci">void outputPathChanged()</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_ad8d11919cf1ca49334b366d82422cfd5"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#ad8d11919cf1ca49334b366d82422cfd5">EasyKiConverter::ComponentListViewModel::bomResultChanged</a></div><div class="ttdeci">void bomResultChanged()</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_adc15fdb5ae5cacd125884599eecc03d4"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#adc15fdb5ae5cacd125884599eecc03d4">EasyKiConverter::ComponentListViewModel::validateComponentId</a></div><div class="ttdeci">bool validateComponentId(const QString &amp;componentId) const</div><div class="ttdoc">验证元件ID格式</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00318">ComponentListViewModel.cpp:318</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_adf99f86c637f7a331ef23670cdbd3c9f"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#adf99f86c637f7a331ef23670cdbd3c9f">EasyKiConverter::ComponentListViewModel::selectBomFile</a></div><div class="ttdeci">void selectBomFile(const QString &amp;filePath)</div><div class="ttdoc">选择BOM文件</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00258">ComponentListViewModel.cpp:258</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_adfbbd7e959c37b66464a10837b7bd283"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#adfbbd7e959c37b66464a10837b7bd283">EasyKiConverter::ComponentListViewModel::roleNames</a></div><div class="ttdeci">QHash&lt; int, QByteArray &gt; roleNames() const override</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00056">ComponentListViewModel.cpp:56</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_aeeee038f87131e3db10befec1684547b"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#aeeee038f87131e3db10befec1684547b">EasyKiConverter::ComponentListViewModel::copyToClipboard</a></div><div class="ttdeci">void copyToClipboard(const QString &amp;text)</div><div class="ttdoc">复制文本到剪贴板</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00422">ComponentListViewModel.cpp:422</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_af13a62af7421f0fffe97bdb5081b40ec"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#af13a62af7421f0fffe97bdb5081b40ec">EasyKiConverter::ComponentListViewModel::componentAdded</a></div><div class="ttdeci">void componentAdded(const QString &amp;componentId, bool success, const QString &amp;message)</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_af50b62402a0ec62a248c93374cd380dc"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#af50b62402a0ec62a248c93374cd380dc">EasyKiConverter::ComponentListViewModel::fetchComponentData</a></div><div class="ttdeci">void fetchComponentData(const QString &amp;componentId, bool fetch3DModel=true)</div><div class="ttdoc">获取元件数据</div><div class="ttdef"><b>Definition</b> <a href="ComponentListViewModel_8cpp_source.html#l00305">ComponentListViewModel.cpp:305</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentListViewModel_html_af540aa63e0ecc80a278f687e8d0781d7"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentListViewModel.html#af540aa63e0ecc80a278f687e8d0781d7">EasyKiConverter::ComponentListViewModel::listCleared</a></div><div class="ttdeci">void listCleared()</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentService_html"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentService.html">EasyKiConverter::ComponentService</a></div><div class="ttdoc">元件服务类</div><div class="ttdef"><b>Definition</b> <a href="ComponentService_8h_source.html#l00029">ComponentService.h:29</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_1788f8309b1a812dcb800a185471cf6c.html">ui</a></li><li class="navelem"><a class="el" href="dir_fea4d5651ef76d72b143e7607c90e565.html">viewmodels</a></li><li class="navelem"><a class="el" href="ComponentListViewModel_8h.html">ComponentListViewModel.h</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

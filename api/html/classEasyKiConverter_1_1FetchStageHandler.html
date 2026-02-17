@@ -1,0 +1,649 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::FetchStageHandler类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1FetchStageHandler.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pri-methods">Private 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1FetchStageHandler-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::FetchStageHandler类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>抓取阶段处理器  
+ <a href="classEasyKiConverter_1_1FetchStageHandler.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::FetchStageHandler 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1FetchStageHandler__inherit__graph.svg" width="230" height="638"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::FetchStageHandler 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1FetchStageHandler__coll__graph.svg" width="478" height="714"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a00f8bd2d6218074b68aeab5f6ea1dbde" id="r_a00f8bd2d6218074b68aeab5f6ea1dbde"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#a00f8bd2d6218074b68aeab5f6ea1dbde">FetchStageHandler</a> (QAtomicInt &amp;isCancelled, QNetworkAccessManager *networkManager, QThreadPool *threadPool, QObject *parent=nullptr)</td></tr>
+<tr class="separator:a00f8bd2d6218074b68aeab5f6ea1dbde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71037a70d443584369a787d85ad0b1a5" id="r_a71037a70d443584369a787d85ad0b1a5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#a71037a70d443584369a787d85ad0b1a5">start</a> () override</td></tr>
+<tr class="memdesc:a71037a70d443584369a787d85ad0b1a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">启动抓取阶段  <br /></td></tr>
+<tr class="separator:a71037a70d443584369a787d85ad0b1a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08c9f307ad2d94e6d0dd72e60c0c158e" id="r_a08c9f307ad2d94e6d0dd72e60c0c158e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#a08c9f307ad2d94e6d0dd72e60c0c158e">setComponentIds</a> (const QStringList &amp;componentIds)</td></tr>
+<tr class="separator:a08c9f307ad2d94e6d0dd72e60c0c158e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3f967ed1049d8a12e2ef1c02e318afe8" id="r_a3f967ed1049d8a12e2ef1c02e318afe8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#a3f967ed1049d8a12e2ef1c02e318afe8">setOptions</a> (const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;options)</td></tr>
+<tr class="separator:a3f967ed1049d8a12e2ef1c02e318afe8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a20788564724ddb33df6a0fcec0ef85ac" id="r_a20788564724ddb33df6a0fcec0ef85ac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#a20788564724ddb33df6a0fcec0ef85ac">setPreloadedData</a> (const QMap&lt; QString, QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &gt; &amp;data)</td></tr>
+<tr class="separator:a20788564724ddb33df6a0fcec0ef85ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a240d87a87ba313149d74cb125224d465" id="r_a240d87a87ba313149d74cb125224d465"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#a240d87a87ba313149d74cb125224d465">stop</a> () override</td></tr>
+<tr class="memdesc:a240d87a87ba313149d74cb125224d465"><td class="mdescLeft">&#160;</td><td class="mdescRight">停止/取消阶段工作  <br /></td></tr>
+<tr class="separator:a240d87a87ba313149d74cb125224d465"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae25eb3de4720806c52f7daa3137f965e" id="r_ae25eb3de4720806c52f7daa3137f965e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#ae25eb3de4720806c52f7daa3137f965e">componentFetchCompleted</a> (QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt; status, bool isPreloaded)</td></tr>
+<tr class="memdesc:ae25eb3de4720806c52f7daa3137f965e"><td class="mdescLeft">&#160;</td><td class="mdescRight">当一个元器件抓取完成时发出  <br /></td></tr>
+<tr class="separator:ae25eb3de4720806c52f7daa3137f965e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classEasyKiConverter_1_1StageHandler"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classEasyKiConverter_1_1StageHandler')"><img src="closed.png" alt="-"/>&#160;Public 成员函数 继承自 <a class="el" href="classEasyKiConverter_1_1StageHandler.html">EasyKiConverter::StageHandler</a></td></tr>
+<tr class="memitem:adf8014d97e4ad3d05f3bdde18e82d514 inherit pub_methods_classEasyKiConverter_1_1StageHandler" id="r_adf8014d97e4ad3d05f3bdde18e82d514"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1StageHandler.html#adf8014d97e4ad3d05f3bdde18e82d514">StageHandler</a> (QAtomicInt &amp;isCancelled, QObject *parent=nullptr)</td></tr>
+<tr class="separator:adf8014d97e4ad3d05f3bdde18e82d514 inherit pub_methods_classEasyKiConverter_1_1StageHandler"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8596112c0e9431cb8430731421db13f2 inherit pub_methods_classEasyKiConverter_1_1StageHandler" id="r_a8596112c0e9431cb8430731421db13f2"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1StageHandler.html#a8596112c0e9431cb8430731421db13f2">~StageHandler</a> ()=default</td></tr>
+<tr class="separator:a8596112c0e9431cb8430731421db13f2 inherit pub_methods_classEasyKiConverter_1_1StageHandler"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private 成员函数</h2></td></tr>
+<tr class="memitem:a6d26387b3f0f1c8072fcec53e351a6e0" id="r_a6d26387b3f0f1c8072fcec53e351a6e0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#a6d26387b3f0f1c8072fcec53e351a6e0">onWorkerCompleted</a> (QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt; status, <a class="el" href="classEasyKiConverter_1_1FetchWorker.html">FetchWorker</a> *worker)</td></tr>
+<tr class="separator:a6d26387b3f0f1c8072fcec53e351a6e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:ae625a5cfeae9217dc92c6aa45df2694f" id="r_ae625a5cfeae9217dc92c6aa45df2694f"><td class="memItemLeft" align="right" valign="top">QNetworkAccessManager *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#ae625a5cfeae9217dc92c6aa45df2694f">m_networkManager</a></td></tr>
+<tr class="separator:ae625a5cfeae9217dc92c6aa45df2694f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd22e544c45327eac60331f5b8b219ec" id="r_afd22e544c45327eac60331f5b8b219ec"><td class="memItemLeft" align="right" valign="top">QThreadPool *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#afd22e544c45327eac60331f5b8b219ec">m_threadPool</a></td></tr>
+<tr class="separator:afd22e544c45327eac60331f5b8b219ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a961c7cdaa5583a81b8b475b308abbf5f" id="r_a961c7cdaa5583a81b8b475b308abbf5f"><td class="memItemLeft" align="right" valign="top">QStringList&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#a961c7cdaa5583a81b8b475b308abbf5f">m_componentIds</a></td></tr>
+<tr class="separator:a961c7cdaa5583a81b8b475b308abbf5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ecdfdf3548ca136118ee373f8ab2fc8" id="r_a2ecdfdf3548ca136118ee373f8ab2fc8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#a2ecdfdf3548ca136118ee373f8ab2fc8">m_options</a></td></tr>
+<tr class="separator:a2ecdfdf3548ca136118ee373f8ab2fc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27e0a238bc16a55d3a9a13d859f35bc9" id="r_a27e0a238bc16a55d3a9a13d859f35bc9"><td class="memItemLeft" align="right" valign="top">QMap&lt; QString, QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#a27e0a238bc16a55d3a9a13d859f35bc9">m_preloadedData</a></td></tr>
+<tr class="separator:a27e0a238bc16a55d3a9a13d859f35bc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28de362434508b8585e1793fc8617824" id="r_a28de362434508b8585e1793fc8617824"><td class="memItemLeft" align="right" valign="top">QSet&lt; <a class="el" href="classEasyKiConverter_1_1FetchWorker.html">FetchWorker</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#a28de362434508b8585e1793fc8617824">m_activeWorkers</a></td></tr>
+<tr class="separator:a28de362434508b8585e1793fc8617824"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef9148c5f41ef0c67e5909611abfb496" id="r_aef9148c5f41ef0c67e5909611abfb496"><td class="memItemLeft" align="right" valign="top">QMutex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#aef9148c5f41ef0c67e5909611abfb496">m_workerMutex</a></td></tr>
+<tr class="separator:aef9148c5f41ef0c67e5909611abfb496"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
+额外继承的成员函数</h2></td></tr>
+<tr class="inherit_header pro_attribs_classEasyKiConverter_1_1StageHandler"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classEasyKiConverter_1_1StageHandler')"><img src="closed.png" alt="-"/>&#160;Protected 属性 继承自 <a class="el" href="classEasyKiConverter_1_1StageHandler.html">EasyKiConverter::StageHandler</a></td></tr>
+<tr class="memitem:add9f2f641518d01e2c2c5ff7b8dfe1c6 inherit pro_attribs_classEasyKiConverter_1_1StageHandler" id="r_add9f2f641518d01e2c2c5ff7b8dfe1c6"><td class="memItemLeft" align="right" valign="top">QAtomicInt &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1StageHandler.html#add9f2f641518d01e2c2c5ff7b8dfe1c6">m_isCancelled</a></td></tr>
+<tr class="separator:add9f2f641518d01e2c2c5ff7b8dfe1c6 inherit pro_attribs_classEasyKiConverter_1_1StageHandler"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>抓取阶段处理器 </p>
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a> 第 <a class="el" href="FetchStageHandler_8h_source.html#l00020">20</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a00f8bd2d6218074b68aeab5f6ea1dbde" name="a00f8bd2d6218074b68aeab5f6ea1dbde"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a00f8bd2d6218074b68aeab5f6ea1dbde">&#9670;&#160;</a></span>FetchStageHandler()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::FetchStageHandler::FetchStageHandler </td>
+          <td>(</td>
+          <td class="paramtype">QAtomicInt &amp;&#160;</td>
+          <td class="paramname"><em>isCancelled</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QNetworkAccessManager *&#160;</td>
+          <td class="paramname"><em>networkManager</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QThreadPool *&#160;</td>
+          <td class="paramname"><em>threadPool</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8cpp_source.html">FetchStageHandler.cpp</a> 第 <a class="el" href="FetchStageHandler_8cpp_source.html#l00007">7</a> 行定义.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="ae25eb3de4720806c52f7daa3137f965e" name="ae25eb3de4720806c52f7daa3137f965e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae25eb3de4720806c52f7daa3137f965e">&#9670;&#160;</a></span>componentFetchCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FetchStageHandler::componentFetchCompleted </td>
+          <td>(</td>
+          <td class="paramtype">QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt;&#160;</td>
+          <td class="paramname"><em>status</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>isPreloaded</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>当一个元器件抓取完成时发出 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">status</td><td>导出状态 </td></tr>
+    <tr><td class="paramname">isPreloaded</td><td>是否是预加载数据 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00027">EasyKiConverter::ExportServicePipeline::ExportServicePipeline()</a>, <a class="el" href="FetchStageHandler_8cpp_source.html#l00113">onWorkerCompleted()</a> , 以及 <a class="el" href="FetchStageHandler_8cpp_source.html#l00013">start()</a>.</p>
+
+</div>
+</div>
+<a id="a6d26387b3f0f1c8072fcec53e351a6e0" name="a6d26387b3f0f1c8072fcec53e351a6e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d26387b3f0f1c8072fcec53e351a6e0">&#9670;&#160;</a></span>onWorkerCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FetchStageHandler::onWorkerCompleted </td>
+          <td>(</td>
+          <td class="paramtype">QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt;&#160;</td>
+          <td class="paramname"><em>status</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1FetchWorker.html">FetchWorker</a> *&#160;</td>
+          <td class="paramname"><em>worker</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8cpp_source.html">FetchStageHandler.cpp</a> 第 <a class="el" href="FetchStageHandler_8cpp_source.html#l00113">113</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#ae25eb3de4720806c52f7daa3137f965e">componentFetchCompleted()</a>, <a class="el" href="FetchStageHandler_8h_source.html#l00064">m_activeWorkers</a> , 以及 <a class="el" href="FetchStageHandler_8h_source.html#l00065">m_workerMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FetchStageHandler_8cpp_source.html#l00013">start()</a>.</p>
+
+</div>
+</div>
+<a id="a08c9f307ad2d94e6d0dd72e60c0c158e" name="a08c9f307ad2d94e6d0dd72e60c0c158e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a08c9f307ad2d94e6d0dd72e60c0c158e">&#9670;&#160;</a></span>setComponentIds()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FetchStageHandler::setComponentIds </td>
+          <td>(</td>
+          <td class="paramtype">const QStringList &amp;&#160;</td>
+          <td class="paramname"><em>componentIds</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a> 第 <a class="el" href="FetchStageHandler_8h_source.html#l00033">33</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="FetchStageHandler_8h_source.html#l00061">m_componentIds</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00419">EasyKiConverter::ExportServicePipeline::startFetchStage()</a>.</p>
+
+</div>
+</div>
+<a id="a3f967ed1049d8a12e2ef1c02e318afe8" name="a3f967ed1049d8a12e2ef1c02e318afe8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3f967ed1049d8a12e2ef1c02e318afe8">&#9670;&#160;</a></span>setOptions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FetchStageHandler::setOptions </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a> 第 <a class="el" href="FetchStageHandler_8h_source.html#l00037">37</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="FetchStageHandler_8h_source.html#l00062">m_options</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00419">EasyKiConverter::ExportServicePipeline::startFetchStage()</a>.</p>
+
+</div>
+</div>
+<a id="a20788564724ddb33df6a0fcec0ef85ac" name="a20788564724ddb33df6a0fcec0ef85ac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a20788564724ddb33df6a0fcec0ef85ac">&#9670;&#160;</a></span>setPreloadedData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FetchStageHandler::setPreloadedData </td>
+          <td>(</td>
+          <td class="paramtype">const QMap&lt; QString, QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a> 第 <a class="el" href="FetchStageHandler_8h_source.html#l00041">41</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="FetchStageHandler_8h_source.html#l00063">m_preloadedData</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00419">EasyKiConverter::ExportServicePipeline::startFetchStage()</a>.</p>
+
+</div>
+</div>
+<a id="a71037a70d443584369a787d85ad0b1a5" name="a71037a70d443584369a787d85ad0b1a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a71037a70d443584369a787d85ad0b1a5">&#9670;&#160;</a></span>start()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FetchStageHandler::start </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>启动抓取阶段 </p>
+
+<p>实现了 <a class="el" href="classEasyKiConverter_1_1StageHandler.html#a3e74e985d85a9e6fb220e5a3903af8e5">EasyKiConverter::StageHandler</a>.</p>
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8cpp_source.html">FetchStageHandler.cpp</a> 第 <a class="el" href="FetchStageHandler_8cpp_source.html#l00013">13</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html#ae25eb3de4720806c52f7daa3137f965e">componentFetchCompleted()</a>, <a class="el" href="ExportService_8h_source.html#l00026">EasyKiConverter::ExportOptions::exportModel3D</a>, <a class="el" href="classEasyKiConverter_1_1FetchWorker.html#acc6b6e328401b887da6659e88c7c0e96">EasyKiConverter::FetchWorker::fetchCompleted()</a>, <a class="el" href="FetchStageHandler_8h_source.html#l00064">m_activeWorkers</a>, <a class="el" href="FetchStageHandler_8h_source.html#l00061">m_componentIds</a>, <a class="el" href="StageHandler_8h_source.html#l00034">EasyKiConverter::StageHandler::m_isCancelled</a>, <a class="el" href="FetchStageHandler_8h_source.html#l00059">m_networkManager</a>, <a class="el" href="FetchStageHandler_8h_source.html#l00062">m_options</a>, <a class="el" href="FetchStageHandler_8h_source.html#l00063">m_preloadedData</a>, <a class="el" href="FetchStageHandler_8h_source.html#l00060">m_threadPool</a>, <a class="el" href="FetchStageHandler_8h_source.html#l00065">m_workerMutex</a> , 以及 <a class="el" href="FetchStageHandler_8cpp_source.html#l00113">onWorkerCompleted()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00419">EasyKiConverter::ExportServicePipeline::startFetchStage()</a>.</p>
+
+</div>
+</div>
+<a id="a240d87a87ba313149d74cb125224d465" name="a240d87a87ba313149d74cb125224d465"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a240d87a87ba313149d74cb125224d465">&#9670;&#160;</a></span>stop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FetchStageHandler::stop </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>停止/取消阶段工作 </p>
+
+<p>重载 <a class="el" href="classEasyKiConverter_1_1StageHandler.html#af75e45eef56a1cda08dbddb251ff8ba7">EasyKiConverter::StageHandler</a> .</p>
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8cpp_source.html">FetchStageHandler.cpp</a> 第 <a class="el" href="FetchStageHandler_8cpp_source.html#l00104">104</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="FetchStageHandler_8h_source.html#l00064">m_activeWorkers</a> , 以及 <a class="el" href="FetchStageHandler_8h_source.html#l00065">m_workerMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00625">EasyKiConverter::ExportServicePipeline::cancelExport()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a28de362434508b8585e1793fc8617824" name="a28de362434508b8585e1793fc8617824"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28de362434508b8585e1793fc8617824">&#9670;&#160;</a></span>m_activeWorkers</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QSet&lt;<a class="el" href="classEasyKiConverter_1_1FetchWorker.html">FetchWorker</a>*&gt; EasyKiConverter::FetchStageHandler::m_activeWorkers</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a> 第 <a class="el" href="FetchStageHandler_8h_source.html#l00064">64</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FetchStageHandler_8cpp_source.html#l00113">onWorkerCompleted()</a>, <a class="el" href="FetchStageHandler_8cpp_source.html#l00013">start()</a> , 以及 <a class="el" href="FetchStageHandler_8cpp_source.html#l00104">stop()</a>.</p>
+
+</div>
+</div>
+<a id="a961c7cdaa5583a81b8b475b308abbf5f" name="a961c7cdaa5583a81b8b475b308abbf5f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a961c7cdaa5583a81b8b475b308abbf5f">&#9670;&#160;</a></span>m_componentIds</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QStringList EasyKiConverter::FetchStageHandler::m_componentIds</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a> 第 <a class="el" href="FetchStageHandler_8h_source.html#l00061">61</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FetchStageHandler_8h_source.html#l00033">setComponentIds()</a> , 以及 <a class="el" href="FetchStageHandler_8cpp_source.html#l00013">start()</a>.</p>
+
+</div>
+</div>
+<a id="ae625a5cfeae9217dc92c6aa45df2694f" name="ae625a5cfeae9217dc92c6aa45df2694f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae625a5cfeae9217dc92c6aa45df2694f">&#9670;&#160;</a></span>m_networkManager</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QNetworkAccessManager* EasyKiConverter::FetchStageHandler::m_networkManager</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a> 第 <a class="el" href="FetchStageHandler_8h_source.html#l00059">59</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FetchStageHandler_8cpp_source.html#l00013">start()</a>.</p>
+
+</div>
+</div>
+<a id="a2ecdfdf3548ca136118ee373f8ab2fc8" name="a2ecdfdf3548ca136118ee373f8ab2fc8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ecdfdf3548ca136118ee373f8ab2fc8">&#9670;&#160;</a></span>m_options</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> EasyKiConverter::FetchStageHandler::m_options</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a> 第 <a class="el" href="FetchStageHandler_8h_source.html#l00062">62</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FetchStageHandler_8h_source.html#l00037">setOptions()</a> , 以及 <a class="el" href="FetchStageHandler_8cpp_source.html#l00013">start()</a>.</p>
+
+</div>
+</div>
+<a id="a27e0a238bc16a55d3a9a13d859f35bc9" name="a27e0a238bc16a55d3a9a13d859f35bc9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a27e0a238bc16a55d3a9a13d859f35bc9">&#9670;&#160;</a></span>m_preloadedData</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMap&lt;QString, QSharedPointer&lt;<a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a>&gt; &gt; EasyKiConverter::FetchStageHandler::m_preloadedData</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a> 第 <a class="el" href="FetchStageHandler_8h_source.html#l00063">63</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FetchStageHandler_8h_source.html#l00041">setPreloadedData()</a> , 以及 <a class="el" href="FetchStageHandler_8cpp_source.html#l00013">start()</a>.</p>
+
+</div>
+</div>
+<a id="afd22e544c45327eac60331f5b8b219ec" name="afd22e544c45327eac60331f5b8b219ec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afd22e544c45327eac60331f5b8b219ec">&#9670;&#160;</a></span>m_threadPool</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QThreadPool* EasyKiConverter::FetchStageHandler::m_threadPool</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a> 第 <a class="el" href="FetchStageHandler_8h_source.html#l00060">60</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FetchStageHandler_8cpp_source.html#l00013">start()</a>.</p>
+
+</div>
+</div>
+<a id="aef9148c5f41ef0c67e5909611abfb496" name="aef9148c5f41ef0c67e5909611abfb496"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef9148c5f41ef0c67e5909611abfb496">&#9670;&#160;</a></span>m_workerMutex</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMutex EasyKiConverter::FetchStageHandler::m_workerMutex</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a> 第 <a class="el" href="FetchStageHandler_8h_source.html#l00065">65</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FetchStageHandler_8cpp_source.html#l00113">onWorkerCompleted()</a>, <a class="el" href="FetchStageHandler_8cpp_source.html#l00013">start()</a> , 以及 <a class="el" href="FetchStageHandler_8cpp_source.html#l00104">stop()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>services/pipeline/stage/<a class="el" href="FetchStageHandler_8h_source.html">FetchStageHandler.h</a></li>
+<li>services/pipeline/stage/<a class="el" href="FetchStageHandler_8cpp_source.html">FetchStageHandler.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1FetchStageHandler.html">FetchStageHandler</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<map id="models/SymbolDataSerializer.h" name="models/SymbolDataSerializer.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="53,5,280,31"/>
+<area shape="rect" id="Node000002" href="$SymbolData_8h.html" title=" " alt="" coords="220,79,335,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,28,249,69,246,73,183,33"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,152,107,177"/>
+<area shape="poly" id="edge8_Node000001_Node000004" title=" " alt="" coords="160,33,75,142,71,139,155,29"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="131,152,226,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="263,106,207,146,204,142,260,102"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="243,107,105,150,104,145,241,101"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="250,152,305,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="280,104,280,138,275,138,275,104"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="329,152,402,177"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="293,102,342,141,339,145,290,106"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="427,152,496,177"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="308,102,419,144,417,149,306,107"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="521,152,591,177"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="323,101,508,148,507,154,321,107"/>
+</map>

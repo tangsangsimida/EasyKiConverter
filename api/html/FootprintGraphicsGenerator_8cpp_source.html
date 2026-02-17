@@ -1,0 +1,949 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: core/kicad/FootprintGraphicsGenerator.cpp 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('FootprintGraphicsGenerator_8cpp_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">FootprintGraphicsGenerator.cpp</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="FootprintGraphicsGenerator_8cpp.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#include &quot;<a class="code" href="FootprintGraphicsGenerator_8h.html">FootprintGraphicsGenerator.h</a>&quot;</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &quot;<a class="code" href="GeometryUtils_8h.html">core/utils/GeometryUtils.h</a>&quot;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span> </div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;QDebug&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;QRegularExpression&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;cmath&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="foldopen" id="foldopen00012" data-start="{" data-end="}">
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a686f5032d2b59f22280fd47f98235d78">   12</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a686f5032d2b59f22280fd47f98235d78">FootprintGraphicsGenerator::generatePad</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1FootprintPad.html">FootprintPad</a>&amp; pad, <span class="keywordtype">double</span> bboxX, <span class="keywordtype">double</span> bboxY)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>    QString content;</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    <span class="keywordtype">double</span> x = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#adee107561c3ef6de678097ef74e0ae73">centerX</a> - bboxX);</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    <span class="keywordtype">double</span> y = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#ae03338b428348f16289e51e9ab6b60eb">centerY</a> - bboxY);</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    <span class="keywordtype">double</span> width = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#a2b3b6693ce3a4bd99f496a48f544423f">width</a>);</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>    <span class="keywordtype">double</span> height = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#ae8e6b464f9280f2edee38fccdf752a6e">height</a>);</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    <span class="keywordtype">double</span> holeRadius = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#a802bbf29574fa84bf3dc62e867c4f64b">holeRadius</a>);</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    QString padNumber = pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#aeb7e57e09822ee424f6ea44874045075">number</a>;</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keywordflow">if</span> (padNumber.contains(<span class="stringliteral">&quot;(&quot;</span>) &amp;&amp; padNumber.contains(<span class="stringliteral">&quot;)&quot;</span>)) {</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>        <span class="keywordtype">int</span> start = padNumber.indexOf(<span class="stringliteral">&quot;(&quot;</span>);</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>        <span class="keywordtype">int</span> end = padNumber.indexOf(<span class="stringliteral">&quot;)&quot;</span>);</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>        padNumber = padNumber.mid(start + 1, end - start - 1);</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    }</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keywordtype">double</span> rotation = pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#a7fddfb23a98cb5c7718101044ad213aa">rotation</a>;</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keywordflow">if</span> (rotation &gt; 180.0) {</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>        rotation = rotation - 360.0;</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    }</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keywordtype">bool</span> isCustomShape = (<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a98639d631e49fa36f2d6ef045ecfa7ee">padShapeToKicad</a>(pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#a121c4baf286dee34fc638909f544f265">shape</a>) == <span class="stringliteral">&quot;custom&quot;</span>);</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    QString polygonStr;</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keywordflow">if</span> (isCustomShape) {</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        QStringList pointList = pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#a621b908eba3a529567758e7e0cf6f3f7">points</a>.split(<span class="stringliteral">&quot; &quot;</span>, Qt::SkipEmptyParts);</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        <span class="keywordflow">if</span> (pointList.isEmpty()) {</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>            qWarning() &lt;&lt; <span class="stringliteral">&quot;Pad&quot;</span> &lt;&lt; pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#a8641f5614ff847da55a211330f589f11">id</a> &lt;&lt; <span class="stringliteral">&quot;is a custom polygon, but has no points defined&quot;</span>;</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>            width = 0.005;</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>            height = 0.005;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>            rotation = 0.0;</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>            QString path;</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; pointList.size(); i += 2) {</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>                <span class="keywordflow">if</span> (i + 1 &lt; pointList.size()) {</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>                    <span class="keywordtype">bool</span> okX = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>                    <span class="keywordtype">bool</span> okY = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>                    <span class="keywordtype">double</span> px = pointList[i].toDouble(&amp;okX);</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>                    <span class="keywordtype">double</span> py = pointList[i + 1].toDouble(&amp;okY);</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                    <span class="comment">// 检查转换是否成功</span></div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                    <span class="keywordflow">if</span> (!okX || !okY) {</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>                        qWarning() &lt;&lt; <span class="stringliteral">&quot;Failed to parse point coordinates at index&quot;</span> &lt;&lt; i &lt;&lt; <span class="stringliteral">&quot;for pad&quot;</span> &lt;&lt; pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#a8641f5614ff847da55a211330f589f11">id</a>;</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>                        <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                    }</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>                    <span class="keywordtype">double</span> relX = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(px - bboxX) - x;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                    <span class="keywordtype">double</span> relY = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(py - bboxY) - y;</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>                    path += QString(<span class="stringliteral">&quot;(xy %1 %2) &quot;</span>).arg(relX, 0, <span class="charliteral">&#39;f&#39;</span>, 2).arg(relY, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                }</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>            }</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>            polygonStr = QString(</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                             <span class="stringliteral">&quot;\n    (primitives\n      (gr_poly\n        (pts %1)\n        (width 0.1)\n        (fill &quot;</span></div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                             <span class="stringliteral">&quot;yes)\n      )\n    )\n  &quot;</span>)</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                             .arg(path);</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>        }</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>        width = qMax(width, 0.01);</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        height = qMax(height, 0.01);</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    }</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    QString kicadShape;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    <span class="keywordflow">if</span> (isCustomShape) {</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        kicadShape = <span class="stringliteral">&quot;custom&quot;</span>;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        kicadShape = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a98639d631e49fa36f2d6ef045ecfa7ee">padShapeToKicad</a>(pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#a121c4baf286dee34fc638909f544f265">shape</a>);</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    }</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    QString kicadType = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ab1d297638f905c32b75af4513e22ee0e">padTypeToKicad</a>(pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#ab2778e9557e4338a2e716d50fb54d745">layerId</a>);</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    QString layers = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a693ac26dd9c36da028ff20d779309761">padLayersToKicad</a>(pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#ab2778e9557e4338a2e716d50fb54d745">layerId</a>);</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    QString drillStr;</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keywordflow">if</span> (holeRadius &gt; 0 &amp;&amp; pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#ae4c72eac2c6be2b2b272eafbce2878f4">holeLength</a> &gt; 0) {</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        <span class="keywordtype">double</span> holeLengthMm = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pad.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintPad.html#ae4c72eac2c6be2b2b272eafbce2878f4">holeLength</a>);</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        <span class="keywordtype">double</span> maxDistanceHole = qMax(holeRadius * 2, holeLengthMm);</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>        <span class="keywordtype">double</span> pos0 = height - maxDistanceHole;</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        <span class="keywordtype">double</span> pos90 = width - maxDistanceHole;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        <span class="keywordtype">double</span> maxDistance = qMax(pos0, pos90);</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>        <span class="keywordflow">if</span> (qAbs(maxDistance - pos0) &lt; qAbs(maxDistance - pos90)) {</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>            drillStr = QString(<span class="stringliteral">&quot; (drill oval %1 %2)&quot;</span>).arg(holeRadius * 2, 0, <span class="charliteral">&#39;f&#39;</span>, 2).arg(holeLengthMm, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>            drillStr = QString(<span class="stringliteral">&quot; (drill oval %1 %2)&quot;</span>).arg(holeLengthMm, 0, <span class="charliteral">&#39;f&#39;</span>, 2).arg(holeRadius * 2, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        }</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (holeRadius &gt; 0) {</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>        <span class="keywordtype">double</span> drillDiameter = holeRadius * 2;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>        drillStr = QString(<span class="stringliteral">&quot; (drill %1)&quot;</span>).arg(drillDiameter, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    }</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    content += QString(<span class="stringliteral">&quot;  (pad %1 %2 %3 (at %4 %5 %6) (size %7 %8) (layers %9)%10%11)\n&quot;</span>)</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>                   .arg(padNumber)</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                   .arg(kicadType)</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                   .arg(kicadShape)</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                   .arg(x, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                   .arg(y, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                   .arg(rotation, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>                   .arg(width, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>                   .arg(height, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>                   .arg(layers)</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>                   .arg(drillStr)</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>                   .arg(polygonStr);</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span> </div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <span class="keywordflow">return</span> content;</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>}</div>
+</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
+<div class="foldopen" id="foldopen00122" data-start="{" data-end="}">
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a4b66e160c7a5bbd5f47b9404ecffc959">  122</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a4b66e160c7a5bbd5f47b9404ecffc959">FootprintGraphicsGenerator::generateTrack</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1FootprintTrack.html">FootprintTrack</a>&amp; track, <span class="keywordtype">double</span> bboxX, <span class="keywordtype">double</span> bboxY)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    QString content;</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    QStringList pointList = track.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintTrack.html#a75c00c2ea4383ed23e5d38a180ca0f70">points</a>.split(<span class="stringliteral">&quot; &quot;</span>, Qt::SkipEmptyParts);</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i + 3 &lt; pointList.size(); i += 2) {</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>        <span class="keywordtype">bool</span> ok1 = <span class="keyword">false</span>, ok2 = <span class="keyword">false</span>, ok3 = <span class="keyword">false</span>, ok4 = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        <span class="keywordtype">double</span> startX = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pointList[i].toDouble(&amp;ok1) - bboxX);</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>        <span class="keywordtype">double</span> startY = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pointList[i + 1].toDouble(&amp;ok2) - bboxY);</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>        <span class="keywordtype">double</span> endX = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pointList[i + 2].toDouble(&amp;ok3) - bboxX);</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>        <span class="keywordtype">double</span> endY = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pointList[i + 3].toDouble(&amp;ok4) - bboxY);</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>        <span class="comment">// 检查转换是否成功</span></div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>        <span class="keywordflow">if</span> (!ok1 || !ok2 || !ok3 || !ok4) {</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>            qWarning() &lt;&lt; <span class="stringliteral">&quot;Failed to parse track coordinates at index&quot;</span> &lt;&lt; i;</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>            <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>        }</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span> </div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        content += QString(<span class="stringliteral">&quot;  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n&quot;</span>)</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>                       .arg(startX, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>                       .arg(startY, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>                       .arg(endX, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>                       .arg(endY, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>                       .arg(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1c6cfa103aa2950e9245eaa0037218d3">layerIdToKicad</a>(track.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintTrack.html#a2c1cf6b7b2cbb4b1287fab4c3140a755">layerId</a>))</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>                       .arg(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(track.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintTrack.html#a5e0e1ba4ee99d2939eec40f56621045f">strokeWidth</a>), 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    }</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span> </div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    <span class="keywordflow">return</span> content;</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>}</div>
+</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
+<div class="foldopen" id="foldopen00151" data-start="{" data-end="}">
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a4ab96d2200f5004e45e08a82c295ebe2">  151</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a4ab96d2200f5004e45e08a82c295ebe2">FootprintGraphicsGenerator::generateHole</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1FootprintHole.html">FootprintHole</a>&amp; hole, <span class="keywordtype">double</span> bboxX, <span class="keywordtype">double</span> bboxY)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    QString content;</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    <span class="keywordtype">double</span> cx = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(hole.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintHole.html#ab5100fd1f6e989b14293e42e48d9197d">centerX</a> - bboxX);</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    <span class="keywordtype">double</span> cy = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(hole.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintHole.html#a0276113aa703692c5f6fb203c7f79287">centerY</a> - bboxY);</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>    <span class="keywordtype">double</span> radius = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(hole.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintHole.html#ad82fb822223a3026b4607bb2431648a2">radius</a>);</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span> </div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    content += QString(<span class="stringliteral">&quot;  (pad \&quot;\&quot; thru_hole circle (at %1 %2) (size %3 %3) (drill %3) (layers *.Cu *.Mask))\n&quot;</span>)</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                   .arg(cx, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>                   .arg(cy, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>                   .arg(radius * 2, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span> </div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    <span class="keywordflow">return</span> content;</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>}</div>
+</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span> </div>
+<div class="foldopen" id="foldopen00165" data-start="{" data-end="}">
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1148f15804d2559ab471b61bd2420d4e">  165</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1148f15804d2559ab471b61bd2420d4e">FootprintGraphicsGenerator::generateCircle</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1FootprintCircle.html">FootprintCircle</a>&amp; circle, <span class="keywordtype">double</span> bboxX, <span class="keywordtype">double</span> bboxY)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    QString content;</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>    <span class="keywordtype">double</span> cx = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(circle.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintCircle.html#abd23f3a85b27d044bc2ae33ab616c95b">cx</a> - bboxX);</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    <span class="keywordtype">double</span> cy = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(circle.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintCircle.html#af9baab0d75a96279faf59fc444530b96">cy</a> - bboxY);</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    <span class="keywordtype">double</span> radius = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(circle.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintCircle.html#a69e4f7b9d56bd9c23e749a81b1d9932b">radius</a>);</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span> </div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    content += QString(<span class="stringliteral">&quot;  (fp_circle (center %1 %2) (end %3 %4) (layer %5) (width %6))\n&quot;</span>)</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>                   .arg(cx, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>                   .arg(cy, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>                   .arg(cx + radius, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>                   .arg(cy, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>                   .arg(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1c6cfa103aa2950e9245eaa0037218d3">layerIdToKicad</a>(circle.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintCircle.html#a5003f17da27acf19455801852d3ba66c">layerId</a>))</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>                   .arg(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a932af20f9002d03de05aee0b2f2081a5">pxToMm</a>(circle.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintCircle.html#ab926046cde3129f2018725795bc6817d">strokeWidth</a>), 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span> </div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <span class="keywordflow">return</span> content;</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>}</div>
+</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span> </div>
+<div class="foldopen" id="foldopen00182" data-start="{" data-end="}">
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#af7a6b549cf89ac35977f80070d9fcdc0">  182</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#af7a6b549cf89ac35977f80070d9fcdc0">FootprintGraphicsGenerator::generateRectangle</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1FootprintRectangle.html">FootprintRectangle</a>&amp; rectangle,</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>                                                      <span class="keywordtype">double</span> bboxX,</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>                                                      <span class="keywordtype">double</span> bboxY)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    QString content;</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    <span class="keywordtype">double</span> x = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(rectangle.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintRectangle.html#a323f0784174e88fa3bd3bc9f1ff1849c">x</a> - bboxX);</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    <span class="keywordtype">double</span> y = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(rectangle.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintRectangle.html#af5dd0061634822f7ea327208ed562020">y</a> - bboxY);</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="keywordtype">double</span> width = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(rectangle.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintRectangle.html#ab51728e30061f06c16e887b25f30c9a5">width</a>);</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <span class="keywordtype">double</span> height = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(rectangle.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintRectangle.html#add9bfaee7930ff4c58c786ca35873187">height</a>);</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    QString layer = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1c6cfa103aa2950e9245eaa0037218d3">layerIdToKicad</a>(rectangle.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintRectangle.html#aa67343293165dce7850193e0bf1928ef">layerId</a>);</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>    <span class="keywordtype">double</span> strokeWidth = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(rectangle.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintRectangle.html#a449cf84237e814499b1a392cf6ab07bd">strokeWidth</a>);</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span> </div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    content += QString(<span class="stringliteral">&quot;  (fp_line (start %1 %2) (end %3 %2) (layer %4) (width %5))\n&quot;</span>)</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>                   .arg(x, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>                   .arg(y, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>                   .arg(x + width, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>                   .arg(layer)</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>                   .arg(strokeWidth, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span> </div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>    content += QString(<span class="stringliteral">&quot;  (fp_line (start %1 %2) (end %1 %3) (layer %4) (width %5))\n&quot;</span>)</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>                   .arg(x + width, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>                   .arg(y, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>                   .arg(y + height, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>                   .arg(layer)</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>                   .arg(strokeWidth, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span> </div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>    content += QString(<span class="stringliteral">&quot;  (fp_line (start %1 %2) (end %3 %2) (layer %4) (width %5))\n&quot;</span>)</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>                   .arg(x, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>                   .arg(y + height, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>                   .arg(x + width, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>                   .arg(layer)</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>                   .arg(strokeWidth, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span> </div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>    content += QString(<span class="stringliteral">&quot;  (fp_line (start %1 %2) (end %1 %3) (layer %4) (width %5))\n&quot;</span>)</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>                   .arg(x, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>                   .arg(y, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>                   .arg(y + height, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>                   .arg(layer)</div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>                   .arg(strokeWidth, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span> </div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>    <span class="keywordflow">return</span> content;</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>}</div>
+</div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span> </div>
+<div class="foldopen" id="foldopen00224" data-start="{" data-end="}">
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ac829f6869c0b4f002830676febbe4b8b">  224</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ac829f6869c0b4f002830676febbe4b8b">FootprintGraphicsGenerator::generateArc</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1FootprintArc.html">FootprintArc</a>&amp; arc, <span class="keywordtype">double</span> bboxX, <span class="keywordtype">double</span> bboxY)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    QString content;</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span> </div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>    QString arcParam = <span class="stringliteral">&quot;M &quot;</span> + arc.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintArc.html#a116f06050139d7d0e5d74b46b23f0063">path</a>;</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span> </div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    <a class="code hl_struct" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html">GeometryUtils::SvgArcResult</a> svgArc = <a class="code hl_function" href="classEasyKiConverter_1_1GeometryUtils.html#a0c8b0600b42eab25c6b5a489ac8e0cd8">GeometryUtils::solveSvgArc</a>(arcParam);</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span> </div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    <span class="keywordtype">double</span> cx = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(svgArc.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a7e7bf5ba7ed4da8d05c8e5926da1d303">cx</a> - bboxX);</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    <span class="keywordtype">double</span> cy = -<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(svgArc.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a2d6e234d756d45d2d90433aeebd7fa62">cy</a> - bboxY);</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span> </div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>    <span class="keywordflow">if</span> (svgArc.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a619565639e7de734e3bf5c5b6f3be2f0">rx</a> == svgArc.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#ac3fca45c838e482fb2e16b838c13a07e">ry</a> &amp;&amp; svgArc.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a619565639e7de734e3bf5c5b6f3be2f0">rx</a> &gt; 0) {</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>        <span class="keywordtype">double</span> startAngle = svgArc.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a62f8429f843d317bb52f4adab31df10c">startAngle</a>;</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>        <span class="keywordtype">double</span> deltaAngle = svgArc.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a8a8b4f7f982bb767a6f8237a7319f89d">deltaAngle</a>;</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>        <span class="keywordtype">double</span> step = 180.0;</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span> </div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>        <span class="keywordflow">if</span> (deltaAngle &lt; 0) {</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>            startAngle = startAngle + deltaAngle;</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>            deltaAngle = -deltaAngle;</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>        }</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span> </div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>        <span class="keywordflow">while</span> (deltaAngle &gt; 0.1) {</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>            <span class="keywordflow">if</span> (deltaAngle &lt; step) {</div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>                step = deltaAngle;</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>            }</div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span> </div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>            svgArc.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a62f8429f843d317bb52f4adab31df10c">startAngle</a> = startAngle;</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>            svgArc.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a8a8b4f7f982bb767a6f8237a7319f89d">deltaAngle</a> = step;</div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span> </div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>            <a class="code hl_struct" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcEndpoints.html">GeometryUtils::SvgArcEndpoints</a> pt = <a class="code hl_function" href="classEasyKiConverter_1_1GeometryUtils.html#ad4176d199a6ca7c557a7dbb57187fcdc">GeometryUtils::calcSvgArc</a>(svgArc);</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span> </div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>            <span class="keywordtype">double</span> kiEndAngle = svgArc.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a62f8429f843d317bb52f4adab31df10c">startAngle</a>;</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>            <span class="keywordflow">if</span> (step == 180.0)</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>                kiEndAngle += 0.1;</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span> </div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>            content += QString(<span class="stringliteral">&quot;  (fp_arc (start %1 %2) (end %3 %4) (angle %5) (layer %6) (width %7))\n&quot;</span>)</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>                           .arg(cx, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>                           .arg(cy, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>                           .arg(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pt.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcEndpoints.html#a61055e27b6fac4283e7cf07e0296c23c">x2</a> - bboxX), 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>                           .arg(-<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(pt.<a class="code hl_variable" href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcEndpoints.html#a77f6967521324281b4e4d67012169441">y2</a> - bboxY), 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>                           .arg(-kiEndAngle, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>                           .arg(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1c6cfa103aa2950e9245eaa0037218d3">layerIdToKicad</a>(arc.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintArc.html#a6bec106c5d359979fd30a09ef00ccb61">layerId</a>))</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>                           .arg(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(arc.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintArc.html#aae6f93e9c842f386c2b330f28e02b7ae">strokeWidth</a>), 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span> </div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>            deltaAngle -= step;</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>            startAngle += step;</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>        }</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>        QList&lt;GeometryUtils::SvgPoint&gt; points = <a class="code hl_function" href="classEasyKiConverter_1_1GeometryUtils.html#aa1c191bb3d6f64204d01db7d91765c9e">GeometryUtils::arcToPath</a>(svgArc, <span class="keyword">false</span>);</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span> </div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 1; i &lt; points.size(); ++i) {</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>            <span class="keywordtype">double</span> x1 = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(points[i - 1].x - bboxX);</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>            <span class="keywordtype">double</span> y1 = -<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(points[i - 1].y - bboxY);</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>            <span class="keywordtype">double</span> x2 = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(points[i].x - bboxX);</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>            <span class="keywordtype">double</span> y2 = -<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(points[i].y - bboxY);</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span> </div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>            content += QString(<span class="stringliteral">&quot;  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n&quot;</span>)</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>                           .arg(x1, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>                           .arg(y1, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>                           .arg(x2, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>                           .arg(y2, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>                           .arg(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1c6cfa103aa2950e9245eaa0037218d3">layerIdToKicad</a>(arc.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintArc.html#a6bec106c5d359979fd30a09ef00ccb61">layerId</a>))</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>                           .arg(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(arc.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintArc.html#aae6f93e9c842f386c2b330f28e02b7ae">strokeWidth</a>), 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>        }</div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>    }</div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span> </div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>    <span class="keywordflow">return</span> content;</div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>}</div>
+</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span> </div>
+<div class="foldopen" id="foldopen00292" data-start="{" data-end="}">
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a937f1c427cbc3c26512faf5e2f088a6f">  292</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a937f1c427cbc3c26512faf5e2f088a6f">FootprintGraphicsGenerator::generateText</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1FootprintText.html">FootprintText</a>&amp; text, <span class="keywordtype">double</span> bboxX, <span class="keywordtype">double</span> bboxY)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>    QString content;</div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>    <span class="keywordtype">double</span> x = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#a1d4baffcb0d68cebaab8cdfe74b312f1">centerX</a> - bboxX);</div>
+<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>    <span class="keywordtype">double</span> y = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#a9b1e4fdcd545b3f56412f5e99fe44c17">centerY</a> - bboxY);</div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span> </div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>    QString layer = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1c6cfa103aa2950e9245eaa0037218d3">layerIdToKicad</a>(text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#a63bfc008f763641fdea33354fb0bd3fd">layerId</a>);</div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span> </div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>    <span class="keywordflow">if</span> (text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#a8c87717ec2cb9eb3b4ffc81fdfa696e4">type</a> == <span class="stringliteral">&quot;N&quot;</span>) {</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>        layer = layer.replace(<span class="stringliteral">&quot;.SilkS&quot;</span>, <span class="stringliteral">&quot;.Fab&quot;</span>);</div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>    }</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span> </div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>    QString displayStr = text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#aace9ebfc027f0a73aa6cd47f768517f3">isDisplayed</a> ? <span class="stringliteral">&quot;&quot;</span> : <span class="stringliteral">&quot; hide&quot;</span>;</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span> </div>
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>    <span class="keywordtype">bool</span> isNonASCII = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#aebdbfebcfb388bdaaaa4210c9582487b">text</a>.length(); ++i) {</div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>        <span class="keywordflow">if</span> (text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#aebdbfebcfb388bdaaaa4210c9582487b">text</a>[i].unicode() &gt; 127) {</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>            isNonASCII = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>            <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>        }</div>
+<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>    }</div>
+<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>    <span class="keywordflow">if</span> (isNonASCII &amp;&amp; !text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#a9c785d80424484cf7b86736597356ce8">textPath</a>.isEmpty()) {</div>
+<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>        qWarning() &lt;&lt; <span class="stringliteral">&quot;Warning: Converting non-ASCII text to polygon:&quot;</span> &lt;&lt; text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#aebdbfebcfb388bdaaaa4210c9582487b">text</a>;</div>
+<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span> </div>
+<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>        QStringList paths = text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#a9c785d80424484cf7b86736597356ce8">textPath</a>.split(<span class="stringliteral">&quot;M&quot;</span>, Qt::SkipEmptyParts);</div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> QString&amp; pathStr : paths) {</div>
+<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>            <span class="keywordflow">if</span> (pathStr.trimmed().isEmpty())</div>
+<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>                <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span> </div>
+<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>            QStringList tokens = pathStr.split(QRegularExpression(<span class="stringliteral">&quot;[\\s,]+&quot;</span>), Qt::SkipEmptyParts);</div>
+<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>            QList&lt;QPointF&gt; points;</div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i + 1 &lt; tokens.size(); i += 2) {</div>
+<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>                <span class="keywordtype">double</span> px = tokens[i].toDouble();</div>
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>                <span class="keywordtype">double</span> py = tokens[i + 1].toDouble();</div>
+<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span> </div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>                <span class="keywordtype">double</span> relX = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(px - bboxX);</div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span>                <span class="keywordtype">double</span> relY = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(py - bboxY);</div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>                points.append(QPointF(relX, relY));</div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>            }</div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span> </div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>            <span class="keywordflow">if</span> (points.size() &gt;= 2) {</div>
+<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>                <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 1; i &lt; points.size(); ++i) {</div>
+<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>                    content += QString(<span class="stringliteral">&quot;  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n&quot;</span>)</div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>                                   .arg(points[i - 1].x(), 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>                                   .arg(points[i - 1].y(), 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span>                                   .arg(points[i].x(), 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>                                   .arg(points[i].y(), 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>                                   .arg(layer)</div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>                                   .arg(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#a46ee3b8c341b30450639ee3e4f0d5901">strokeWidth</a>) * 0.8, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>                }</div>
+<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>            }</div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>        }</div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>        <span class="keywordtype">bool</span> isBottomLayer = layer.startsWith(<span class="stringliteral">&quot;B&quot;</span>);</div>
+<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span>        QString mirrorStr = isBottomLayer ? <span class="stringliteral">&quot; mirror&quot;</span> : <span class="stringliteral">&quot;&quot;</span>;</div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span> </div>
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>        content += QString(<span class="stringliteral">&quot;  (fp_text user %1 (at %2 %3 %4) (layer %5)%6\n&quot;</span>)</div>
+<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>                       .arg(text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#aebdbfebcfb388bdaaaa4210c9582487b">text</a>)</div>
+<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>                       .arg(x, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>                       .arg(y, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>                       .arg(<span class="keywordtype">double</span>(text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#aaaa1f5b1d1228dd5f890de79b1277214">rotation</a>), 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>                       .arg(layer)</div>
+<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>                       .arg(displayStr);</div>
+<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span> </div>
+<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>        <span class="keywordtype">double</span> fontSize = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#a45d845fcaff719ad08f0788e5bcec63b">fontSize</a>);</div>
+<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>        <span class="keywordtype">double</span> thickness = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(text.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintText.html#a46ee3b8c341b30450639ee3e4f0d5901">strokeWidth</a>);</div>
+<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>        fontSize = qMax(fontSize, 1.0);</div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>        thickness = qMax(thickness, 0.01);</div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>        content += QString(<span class="stringliteral">&quot;    (effects (font (size %1 %2) (thickness %3)) (justify left%4))\n&quot;</span>)</div>
+<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>                       .arg(fontSize, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>                       .arg(fontSize, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>                       .arg(thickness, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>                       .arg(mirrorStr);</div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>        content += <span class="stringliteral">&quot;  )\n&quot;</span>;</div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>    }</div>
+<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span> </div>
+<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>    <span class="keywordflow">return</span> content;</div>
+<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>}</div>
+</div>
+<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span> </div>
+<div class="foldopen" id="foldopen00370" data-start="{" data-end="}">
+<div class="line"><a id="l00370" name="l00370"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a2ff4c2f088e9a31abcba33ed8f556a3e">  370</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a2ff4c2f088e9a31abcba33ed8f556a3e">FootprintGraphicsGenerator::generateSolidRegion</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1FootprintSolidRegion.html">FootprintSolidRegion</a>&amp; region,</div>
+<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>                                                        <span class="keywordtype">double</span> bboxX,</div>
+<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>                                                        <span class="keywordtype">double</span> bboxY)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>    QString content;</div>
+<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span> </div>
+<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span>    <span class="keywordtype">bool</span> isCourtYard = (region.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintSolidRegion.html#a1d9dd85a59fb784c33b8eada825db34f">layerId</a> == 99);</div>
+<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span>    QString layer;</div>
+<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span> </div>
+<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>    <span class="keywordflow">if</span> (isCourtYard) {</div>
+<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>        layer = <span class="stringliteral">&quot;F.CrtYd&quot;</span>;</div>
+<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (region.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintSolidRegion.html#a1d9dd85a59fb784c33b8eada825db34f">layerId</a> == 100) {</div>
+<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>        layer = <span class="stringliteral">&quot;F.Fab&quot;</span>;</div>
+<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (region.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintSolidRegion.html#a1d9dd85a59fb784c33b8eada825db34f">layerId</a> == 101) {</div>
+<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>        layer = <span class="stringliteral">&quot;F.SilkS&quot;</span>;</div>
+<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span>        layer = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1c6cfa103aa2950e9245eaa0037218d3">layerIdToKicad</a>(region.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintSolidRegion.html#a1d9dd85a59fb784c33b8eada825db34f">layerId</a>);</div>
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>    }</div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span> </div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>    QStringList tokens = region.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintSolidRegion.html#a5a10941047ccc3d143973905a2aa1c6d">path</a>.split(QRegularExpression(<span class="stringliteral">&quot;[\\s,]+&quot;</span>), Qt::SkipEmptyParts);</div>
+<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span>    QList&lt;QPointF&gt; points;</div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span> </div>
+<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; tokens.size();) {</div>
+<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>        QString token = tokens[i].toUpper();</div>
+<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span> </div>
+<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span>        <span class="keywordflow">if</span> (token == <span class="stringliteral">&quot;M&quot;</span>) {</div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>            <span class="keywordflow">if</span> (i + 2 &lt; tokens.size()) {</div>
+<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>                <span class="keywordtype">double</span> x = tokens[i + 1].toDouble();</div>
+<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>                <span class="keywordtype">double</span> y = tokens[i + 2].toDouble();</div>
+<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>                points.append(QPointF(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(x - bboxX), <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(y - bboxY)));</div>
+<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>                i += 3;</div>
+<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>                i++;</div>
+<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span>            }</div>
+<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span>        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (token == <span class="stringliteral">&quot;L&quot;</span>) {</div>
+<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span>            <span class="keywordflow">if</span> (i + 2 &lt; tokens.size()) {</div>
+<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span>                <span class="keywordtype">double</span> x = tokens[i + 1].toDouble();</div>
+<div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span>                <span class="keywordtype">double</span> y = tokens[i + 2].toDouble();</div>
+<div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span>                points.append(QPointF(<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(x - bboxX), <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(y - bboxY)));</div>
+<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span>                i += 3;</div>
+<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span>                i++;</div>
+<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span>            }</div>
+<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (token == <span class="stringliteral">&quot;Z&quot;</span>) {</div>
+<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>            <span class="keywordflow">if</span> (!points.isEmpty()) {</div>
+<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span>                points.append(points.first());</div>
+<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span>            }</div>
+<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>            i++;</div>
+<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span>            i++;</div>
+<div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span>        }</div>
+<div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span>    }</div>
+<div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span> </div>
+<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>    <span class="keywordflow">if</span> (points.size() &gt;= 2) {</div>
+<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span>        <span class="keywordflow">if</span> (isCourtYard || region.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintSolidRegion.html#abac2cc3686db9f761e225b3326d4e112">isKeepOut</a>) {</div>
+<div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 1; i &lt; points.size(); ++i) {</div>
+<div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span>                content += QString(<span class="stringliteral">&quot;  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width 0.05))\n&quot;</span>)</div>
+<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span>                               .arg(points[i - 1].x(), 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span>                               .arg(points[i - 1].y(), 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span>                               .arg(points[i].x(), 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span>                               .arg(points[i].y(), 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span>                               .arg(layer);</div>
+<div class="line"><a id="l00431" name="l00431"></a><span class="lineno">  431</span>            }</div>
+<div class="line"><a id="l00432" name="l00432"></a><span class="lineno">  432</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>            content += <span class="stringliteral">&quot;  (fp_poly\n&quot;</span>;</div>
+<div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span>            content += <span class="stringliteral">&quot;    (pts&quot;</span>;</div>
+<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span>            <span class="keywordflow">for</span> (<span class="keyword">const</span> QPointF&amp; pt : points) {</div>
+<div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span>                content += QString(<span class="stringliteral">&quot; (xy %1 %2)&quot;</span>).arg(pt.x(), 0, <span class="charliteral">&#39;f&#39;</span>, 2).arg(pt.y(), 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00437" name="l00437"></a><span class="lineno">  437</span>            }</div>
+<div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span>            content += <span class="stringliteral">&quot;)\n&quot;</span>;</div>
+<div class="line"><a id="l00439" name="l00439"></a><span class="lineno">  439</span>            content += QString(<span class="stringliteral">&quot;    (layer %1)\n&quot;</span>).arg(layer);</div>
+<div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span>            content += <span class="stringliteral">&quot;    (width 0.1)\n&quot;</span>;</div>
+<div class="line"><a id="l00441" name="l00441"></a><span class="lineno">  441</span>            <span class="keywordflow">if</span> (region.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintSolidRegion.html#afbf2878e87a2160d36977824babcbff4">fillStyle</a> == <span class="stringliteral">&quot;solid&quot;</span>) {</div>
+<div class="line"><a id="l00442" name="l00442"></a><span class="lineno">  442</span>                content += <span class="stringliteral">&quot;    (fill solid)\n&quot;</span>;</div>
+<div class="line"><a id="l00443" name="l00443"></a><span class="lineno">  443</span>            }</div>
+<div class="line"><a id="l00444" name="l00444"></a><span class="lineno">  444</span>            content += <span class="stringliteral">&quot;  )\n&quot;</span>;</div>
+<div class="line"><a id="l00445" name="l00445"></a><span class="lineno">  445</span>        }</div>
+<div class="line"><a id="l00446" name="l00446"></a><span class="lineno">  446</span>    }</div>
+<div class="line"><a id="l00447" name="l00447"></a><span class="lineno">  447</span> </div>
+<div class="line"><a id="l00448" name="l00448"></a><span class="lineno">  448</span>    <span class="keywordflow">return</span> content;</div>
+<div class="line"><a id="l00449" name="l00449"></a><span class="lineno">  449</span>}</div>
+</div>
+<div class="line"><a id="l00450" name="l00450"></a><span class="lineno">  450</span> </div>
+<div class="foldopen" id="foldopen00451" data-start="{" data-end="}">
+<div class="line"><a id="l00451" name="l00451"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#add855b62acbeebf1edf7094fd7e43a88">  451</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#add855b62acbeebf1edf7094fd7e43a88">FootprintGraphicsGenerator::generateCourtyardFromBBox</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1FootprintBBox.html">FootprintBBox</a>&amp; bbox,</div>
+<div class="line"><a id="l00452" name="l00452"></a><span class="lineno">  452</span>                                                              <span class="keywordtype">double</span> bboxX,</div>
+<div class="line"><a id="l00453" name="l00453"></a><span class="lineno">  453</span>                                                              <span class="keywordtype">double</span> bboxY)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00454" name="l00454"></a><span class="lineno">  454</span>    QString content;</div>
+<div class="line"><a id="l00455" name="l00455"></a><span class="lineno">  455</span> </div>
+<div class="line"><a id="l00456" name="l00456"></a><span class="lineno">  456</span>    <span class="keywordtype">double</span> x1 = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(bbox.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintBBox.html#a9af2be28bc2fb28e9377c37cfe4003c8">x</a> - bboxX);</div>
+<div class="line"><a id="l00457" name="l00457"></a><span class="lineno">  457</span>    <span class="keywordtype">double</span> y1 = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(bbox.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintBBox.html#a6856e6cabdf4a4b5ea3ab2b4cc427bf3">y</a> - bboxY);</div>
+<div class="line"><a id="l00458" name="l00458"></a><span class="lineno">  458</span>    <span class="keywordtype">double</span> x2 = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(bbox.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintBBox.html#a9af2be28bc2fb28e9377c37cfe4003c8">x</a> + bbox.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintBBox.html#a98d784f50c9253ceb677b5a1440b118c">width</a> - bboxX);</div>
+<div class="line"><a id="l00459" name="l00459"></a><span class="lineno">  459</span>    <span class="keywordtype">double</span> y2 = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(bbox.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintBBox.html#a6856e6cabdf4a4b5ea3ab2b4cc427bf3">y</a> + bbox.<a class="code hl_variable" href="structEasyKiConverter_1_1FootprintBBox.html#a4ca9287f643bbcd1a57cd4be587e7a85">height</a> - bboxY);</div>
+<div class="line"><a id="l00460" name="l00460"></a><span class="lineno">  460</span> </div>
+<div class="line"><a id="l00461" name="l00461"></a><span class="lineno">  461</span>    content += QString(<span class="stringliteral">&quot;  (fp_line (start %1 %2) (end %3 %2) (layer F.CrtYd) (width 0.05))\n&quot;</span>)</div>
+<div class="line"><a id="l00462" name="l00462"></a><span class="lineno">  462</span>                   .arg(x1, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span>                   .arg(y1, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00464" name="l00464"></a><span class="lineno">  464</span>                   .arg(x2, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span>    content += QString(<span class="stringliteral">&quot;  (fp_line (start %3 %2) (end %3 %4) (layer F.CrtYd) (width 0.05))\n&quot;</span>)</div>
+<div class="line"><a id="l00466" name="l00466"></a><span class="lineno">  466</span>                   .arg(x2, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00467" name="l00467"></a><span class="lineno">  467</span>                   .arg(y1, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00468" name="l00468"></a><span class="lineno">  468</span>                   .arg(y2, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00469" name="l00469"></a><span class="lineno">  469</span>    content += QString(<span class="stringliteral">&quot;  (fp_line (start %3 %4) (end %1 %4) (layer F.CrtYd) (width 0.05))\n&quot;</span>)</div>
+<div class="line"><a id="l00470" name="l00470"></a><span class="lineno">  470</span>                   .arg(x1, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00471" name="l00471"></a><span class="lineno">  471</span>                   .arg(x2, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00472" name="l00472"></a><span class="lineno">  472</span>                   .arg(y2, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00473" name="l00473"></a><span class="lineno">  473</span>    content += QString(<span class="stringliteral">&quot;  (fp_line (start %1 %4) (end %1 %2) (layer F.CrtYd) (width 0.05))\n&quot;</span>)</div>
+<div class="line"><a id="l00474" name="l00474"></a><span class="lineno">  474</span>                   .arg(x1, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00475" name="l00475"></a><span class="lineno">  475</span>                   .arg(y1, 0, <span class="charliteral">&#39;f&#39;</span>, 2)</div>
+<div class="line"><a id="l00476" name="l00476"></a><span class="lineno">  476</span>                   .arg(y2, 0, <span class="charliteral">&#39;f&#39;</span>, 2);</div>
+<div class="line"><a id="l00477" name="l00477"></a><span class="lineno">  477</span> </div>
+<div class="line"><a id="l00478" name="l00478"></a><span class="lineno">  478</span>    <span class="keywordflow">return</span> content;</div>
+<div class="line"><a id="l00479" name="l00479"></a><span class="lineno">  479</span>}</div>
+</div>
+<div class="line"><a id="l00480" name="l00480"></a><span class="lineno">  480</span> </div>
+<div class="foldopen" id="foldopen00481" data-start="{" data-end="}">
+<div class="line"><a id="l00481" name="l00481"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#aa19d92061342a9b3b1051f8958153501">  481</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#aa19d92061342a9b3b1051f8958153501">FootprintGraphicsGenerator::generateModel3D</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1Model3DData.html">Model3DData</a>&amp; model3D,</div>
+<div class="line"><a id="l00482" name="l00482"></a><span class="lineno">  482</span>                                                    <span class="keywordtype">double</span> bboxX,</div>
+<div class="line"><a id="l00483" name="l00483"></a><span class="lineno">  483</span>                                                    <span class="keywordtype">double</span> bboxY,</div>
+<div class="line"><a id="l00484" name="l00484"></a><span class="lineno">  484</span>                                                    <span class="keyword">const</span> QString&amp; model3DPath,</div>
+<div class="line"><a id="l00485" name="l00485"></a><span class="lineno">  485</span>                                                    <span class="keyword">const</span> QString&amp; fpType)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00486" name="l00486"></a><span class="lineno">  486</span>    QString content;</div>
+<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span> </div>
+<div class="line"><a id="l00488" name="l00488"></a><span class="lineno">  488</span>    QString finalPath = model3DPath.isEmpty() ? model3D.<a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#aff325c5de9e54b321677755f62dbe8a3">name</a>() : model3DPath;</div>
+<div class="line"><a id="l00489" name="l00489"></a><span class="lineno">  489</span> </div>
+<div class="line"><a id="l00490" name="l00490"></a><span class="lineno">  490</span>    <span class="keywordtype">double</span> z = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(model3D.<a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">translation</a>().<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a2dc08074e60ef54b9d0005a5a942dcae">z</a>);</div>
+<div class="line"><a id="l00491" name="l00491"></a><span class="lineno">  491</span> </div>
+<div class="line"><a id="l00492" name="l00492"></a><span class="lineno">  492</span>    <span class="keywordflow">if</span> (fpType == <span class="stringliteral">&quot;smd&quot;</span>) {</div>
+<div class="line"><a id="l00493" name="l00493"></a><span class="lineno">  493</span>        z = -z;</div>
+<div class="line"><a id="l00494" name="l00494"></a><span class="lineno">  494</span> </div>
+<div class="line"><a id="l00495" name="l00495"></a><span class="lineno">  495</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span>        z = 0.0;</div>
+<div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>    }</div>
+<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span> </div>
+<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>    <span class="keywordtype">double</span> rotX = (360.0 - model3D.<a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a5c71479bc1a35010a08ccdd444e580bc">rotation</a>().<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">x</a>);</div>
+<div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>    <span class="comment">// 使用 fmod 替代 while 循环，避免死循环风险</span></div>
+<div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span>    rotX = fmod(rotX, 360.0);</div>
+<div class="line"><a id="l00502" name="l00502"></a><span class="lineno">  502</span>    <span class="keywordflow">if</span> (rotX &lt; 0.0) {</div>
+<div class="line"><a id="l00503" name="l00503"></a><span class="lineno">  503</span>        rotX += 360.0;</div>
+<div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span>    }</div>
+<div class="line"><a id="l00505" name="l00505"></a><span class="lineno">  505</span> </div>
+<div class="line"><a id="l00506" name="l00506"></a><span class="lineno">  506</span>    <span class="keywordtype">double</span> rotY = (360.0 - model3D.<a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a5c71479bc1a35010a08ccdd444e580bc">rotation</a>().<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">y</a>);</div>
+<div class="line"><a id="l00507" name="l00507"></a><span class="lineno">  507</span>    <span class="comment">// 使用 fmod 替代 while 循环，避免死循环风险</span></div>
+<div class="line"><a id="l00508" name="l00508"></a><span class="lineno">  508</span>    rotY = fmod(rotY, 360.0);</div>
+<div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span>    <span class="keywordflow">if</span> (rotY &lt; 0.0) {</div>
+<div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span>        rotY += 360.0;</div>
+<div class="line"><a id="l00511" name="l00511"></a><span class="lineno">  511</span>    }</div>
+<div class="line"><a id="l00512" name="l00512"></a><span class="lineno">  512</span> </div>
+<div class="line"><a id="l00513" name="l00513"></a><span class="lineno">  513</span>    <span class="keywordtype">double</span> rotZ = (360.0 - model3D.<a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a5c71479bc1a35010a08ccdd444e580bc">rotation</a>().<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a2dc08074e60ef54b9d0005a5a942dcae">z</a>);</div>
+<div class="line"><a id="l00514" name="l00514"></a><span class="lineno">  514</span>    <span class="comment">// 使用 fmod 替代 while 循环，避免死循环风险</span></div>
+<div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span>    rotZ = fmod(rotZ, 360.0);</div>
+<div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span>    <span class="keywordflow">if</span> (rotZ &lt; 0.0) {</div>
+<div class="line"><a id="l00517" name="l00517"></a><span class="lineno">  517</span>        rotZ += 360.0;</div>
+<div class="line"><a id="l00518" name="l00518"></a><span class="lineno">  518</span>    }</div>
+<div class="line"><a id="l00519" name="l00519"></a><span class="lineno">  519</span> </div>
+<div class="line"><a id="l00520" name="l00520"></a><span class="lineno">  520</span>    <span class="comment">// 计算 3D 模型的 offset</span></div>
+<div class="line"><a id="l00521" name="l00521"></a><span class="lineno">  521</span> </div>
+<div class="line"><a id="l00522" name="l00522"></a><span class="lineno">  522</span>    <span class="comment">// 检测是否为异常的小值（来自特殊单位的 c_origin）</span></div>
+<div class="line"><a id="l00523" name="l00523"></a><span class="lineno">  523</span> </div>
+<div class="line"><a id="l00524" name="l00524"></a><span class="lineno">  524</span>    <span class="comment">// 如果 model3D.translation() 的值远小于 bbox（&lt; 100），说明已经转换为毫米单位</span></div>
+<div class="line"><a id="l00525" name="l00525"></a><span class="lineno">  525</span> </div>
+<div class="line"><a id="l00526" name="l00526"></a><span class="lineno">  526</span>    <span class="keywordtype">double</span> finalOffsetX, finalOffsetY;</div>
+<div class="line"><a id="l00527" name="l00527"></a><span class="lineno">  527</span> </div>
+<div class="line"><a id="l00528" name="l00528"></a><span class="lineno">  528</span>    <span class="keywordflow">if</span> (qAbs(model3D.<a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">translation</a>().<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">x</a>) &lt; 100 &amp;&amp; qAbs(model3D.<a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">translation</a>().<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">y</a>) &lt; 100) {</div>
+<div class="line"><a id="l00529" name="l00529"></a><span class="lineno">  529</span>        <span class="comment">// 异常值：translation 已经是毫米单位</span></div>
+<div class="line"><a id="l00530" name="l00530"></a><span class="lineno">  530</span> </div>
+<div class="line"><a id="l00531" name="l00531"></a><span class="lineno">  531</span>        <span class="comment">// 对于异常封装，translation 可能是相对于焊盘中心的偏移，而不是相对于 bbox 的</span></div>
+<div class="line"><a id="l00532" name="l00532"></a><span class="lineno">  532</span> </div>
+<div class="line"><a id="l00533" name="l00533"></a><span class="lineno">  533</span>        <span class="comment">// 需要计算焊盘中心相对于 bbox 左上角的偏移</span></div>
+<div class="line"><a id="l00534" name="l00534"></a><span class="lineno">  534</span> </div>
+<div class="line"><a id="l00535" name="l00535"></a><span class="lineno">  535</span>        <span class="keywordtype">double</span> padsCenterX = bboxX + 3999.5;  <span class="comment">// 使用固定的焊盘中心 (4000, 3000) 作为基准</span></div>
+<div class="line"><a id="l00536" name="l00536"></a><span class="lineno">  536</span> </div>
+<div class="line"><a id="l00537" name="l00537"></a><span class="lineno">  537</span>        <span class="keywordtype">double</span> padsCenterY = bboxY + 2999.5;</div>
+<div class="line"><a id="l00538" name="l00538"></a><span class="lineno">  538</span> </div>
+<div class="line"><a id="l00539" name="l00539"></a><span class="lineno">  539</span>        <span class="comment">// 将焊盘中心转换为毫米单位</span></div>
+<div class="line"><a id="l00540" name="l00540"></a><span class="lineno">  540</span> </div>
+<div class="line"><a id="l00541" name="l00541"></a><span class="lineno">  541</span>        <span class="keywordtype">double</span> padsCenterX_mm = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(padsCenterX - bboxX);</div>
+<div class="line"><a id="l00542" name="l00542"></a><span class="lineno">  542</span> </div>
+<div class="line"><a id="l00543" name="l00543"></a><span class="lineno">  543</span>        <span class="keywordtype">double</span> padsCenterY_mm = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(padsCenterY - bboxY);</div>
+<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span> </div>
+<div class="line"><a id="l00545" name="l00545"></a><span class="lineno">  545</span>        <span class="comment">// 最终偏移 = translation - 焊盘中心偏移</span></div>
+<div class="line"><a id="l00546" name="l00546"></a><span class="lineno">  546</span> </div>
+<div class="line"><a id="l00547" name="l00547"></a><span class="lineno">  547</span>        finalOffsetX = model3D.<a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">translation</a>().<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">x</a> - padsCenterX_mm;</div>
+<div class="line"><a id="l00548" name="l00548"></a><span class="lineno">  548</span> </div>
+<div class="line"><a id="l00549" name="l00549"></a><span class="lineno">  549</span>        finalOffsetY = -(model3D.<a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">translation</a>().<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">y</a> - padsCenterY_mm);  <span class="comment">// Y 轴取反</span></div>
+<div class="line"><a id="l00550" name="l00550"></a><span class="lineno">  550</span> </div>
+<div class="line"><a id="l00551" name="l00551"></a><span class="lineno">  551</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00552" name="l00552"></a><span class="lineno">  552</span>        <span class="comment">// 正常值：translation 和 bbox 都是像素单位，使用标准的 pxToMm 转换逻辑</span></div>
+<div class="line"><a id="l00553" name="l00553"></a><span class="lineno">  553</span> </div>
+<div class="line"><a id="l00554" name="l00554"></a><span class="lineno">  554</span>        <span class="keywordtype">double</span> offsetX = model3D.<a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">translation</a>().<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">x</a> - bboxX;</div>
+<div class="line"><a id="l00555" name="l00555"></a><span class="lineno">  555</span> </div>
+<div class="line"><a id="l00556" name="l00556"></a><span class="lineno">  556</span>        <span class="keywordtype">double</span> offsetY = model3D.<a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">translation</a>().<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">y</a> - bboxY;</div>
+<div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span> </div>
+<div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span>        finalOffsetX = <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(offsetX);</div>
+<div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span> </div>
+<div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span>        finalOffsetY = -<a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">pxToMmRounded</a>(offsetY);  <span class="comment">// Y 轴取反（正常情况）</span></div>
+<div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span>    }</div>
+<div class="line"><a id="l00562" name="l00562"></a><span class="lineno">  562</span> </div>
+<div class="line"><a id="l00563" name="l00563"></a><span class="lineno">  563</span>    content += QString(<span class="stringliteral">&quot;  (model \&quot;%1\&quot;\n&quot;</span>).arg(finalPath);</div>
+<div class="line"><a id="l00564" name="l00564"></a><span class="lineno">  564</span> </div>
+<div class="line"><a id="l00565" name="l00565"></a><span class="lineno">  565</span>    content += QString(<span class="stringliteral">&quot;    (offset (xyz %1 %2 %3))\n&quot;</span>)</div>
+<div class="line"><a id="l00566" name="l00566"></a><span class="lineno">  566</span> </div>
+<div class="line"><a id="l00567" name="l00567"></a><span class="lineno">  567</span>                   .arg(finalOffsetX, 0, <span class="charliteral">&#39;f&#39;</span>, 3)</div>
+<div class="line"><a id="l00568" name="l00568"></a><span class="lineno">  568</span> </div>
+<div class="line"><a id="l00569" name="l00569"></a><span class="lineno">  569</span>                   .arg(finalOffsetY, 0, <span class="charliteral">&#39;f&#39;</span>, 3)</div>
+<div class="line"><a id="l00570" name="l00570"></a><span class="lineno">  570</span> </div>
+<div class="line"><a id="l00571" name="l00571"></a><span class="lineno">  571</span>                   .arg(z, 0, <span class="charliteral">&#39;f&#39;</span>, 3);</div>
+<div class="line"><a id="l00572" name="l00572"></a><span class="lineno">  572</span> </div>
+<div class="line"><a id="l00573" name="l00573"></a><span class="lineno">  573</span>    content += <span class="stringliteral">&quot;    (scale (xyz 1 1 1))\n&quot;</span>;</div>
+<div class="line"><a id="l00574" name="l00574"></a><span class="lineno">  574</span> </div>
+<div class="line"><a id="l00575" name="l00575"></a><span class="lineno">  575</span>    content += QString(<span class="stringliteral">&quot;    (rotate (xyz %1 %2 %3))\n&quot;</span>).arg(rotX, 0, <span class="charliteral">&#39;f&#39;</span>, 0).arg(rotY, 0, <span class="charliteral">&#39;f&#39;</span>, 0).arg(rotZ, 0, <span class="charliteral">&#39;f&#39;</span>, 0);</div>
+<div class="line"><a id="l00576" name="l00576"></a><span class="lineno">  576</span> </div>
+<div class="line"><a id="l00577" name="l00577"></a><span class="lineno">  577</span>    content += <span class="stringliteral">&quot;  )\n&quot;</span>;</div>
+<div class="line"><a id="l00578" name="l00578"></a><span class="lineno">  578</span> </div>
+<div class="line"><a id="l00579" name="l00579"></a><span class="lineno">  579</span>    <span class="keywordflow">return</span> content;</div>
+<div class="line"><a id="l00580" name="l00580"></a><span class="lineno">  580</span>}</div>
+</div>
+<div class="line"><a id="l00581" name="l00581"></a><span class="lineno">  581</span> </div>
+<div class="foldopen" id="foldopen00582" data-start="{" data-end="}">
+<div class="line"><a id="l00582" name="l00582"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a932af20f9002d03de05aee0b2f2081a5">  582</a></span><span class="keywordtype">double</span> <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a932af20f9002d03de05aee0b2f2081a5">FootprintGraphicsGenerator::pxToMm</a>(<span class="keywordtype">double</span> px)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00583" name="l00583"></a><span class="lineno">  583</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="classEasyKiConverter_1_1GeometryUtils.html#aef67ed63d5e31b1a08d5edb04ed166e1">GeometryUtils::convertToMm</a>(px);</div>
+<div class="line"><a id="l00584" name="l00584"></a><span class="lineno">  584</span>}</div>
+</div>
+<div class="line"><a id="l00585" name="l00585"></a><span class="lineno">  585</span> </div>
+<div class="foldopen" id="foldopen00586" data-start="{" data-end="}">
+<div class="line"><a id="l00586" name="l00586"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">  586</a></span><span class="keywordtype">double</span> <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">FootprintGraphicsGenerator::pxToMmRounded</a>(<span class="keywordtype">double</span> px)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00587" name="l00587"></a><span class="lineno">  587</span>    <span class="keywordflow">return</span> std::floor(<a class="code hl_function" href="classEasyKiConverter_1_1GeometryUtils.html#aef67ed63d5e31b1a08d5edb04ed166e1">GeometryUtils::convertToMm</a>(px) * 100.0) / 100.0;</div>
+<div class="line"><a id="l00588" name="l00588"></a><span class="lineno">  588</span>}</div>
+</div>
+<div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span> </div>
+<div class="foldopen" id="foldopen00590" data-start="{" data-end="}">
+<div class="line"><a id="l00590" name="l00590"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a98639d631e49fa36f2d6ef045ecfa7ee">  590</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a98639d631e49fa36f2d6ef045ecfa7ee">FootprintGraphicsGenerator::padShapeToKicad</a>(<span class="keyword">const</span> QString&amp; shape)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>    QString shapeLower = shape.toLower();</div>
+<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span> </div>
+<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>    <span class="keywordflow">if</span> (shapeLower == <span class="stringliteral">&quot;rect&quot;</span> || shapeLower == <span class="stringliteral">&quot;rectangle&quot;</span>) {</div>
+<div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;rect&quot;</span>;</div>
+<div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (shapeLower == <span class="stringliteral">&quot;circle&quot;</span>) {</div>
+<div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;circle&quot;</span>;</div>
+<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (shapeLower == <span class="stringliteral">&quot;oval&quot;</span>) {</div>
+<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;oval&quot;</span>;</div>
+<div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (shapeLower == <span class="stringliteral">&quot;roundrect&quot;</span>) {</div>
+<div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;roundrect&quot;</span>;</div>
+<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (shapeLower == <span class="stringliteral">&quot;trapezoid&quot;</span>) {</div>
+<div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;trapezoid&quot;</span>;</div>
+<div class="line"><a id="l00603" name="l00603"></a><span class="lineno">  603</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;custom&quot;</span>;</div>
+<div class="line"><a id="l00605" name="l00605"></a><span class="lineno">  605</span>    }</div>
+<div class="line"><a id="l00606" name="l00606"></a><span class="lineno">  606</span>}</div>
+</div>
+<div class="line"><a id="l00607" name="l00607"></a><span class="lineno">  607</span> </div>
+<div class="foldopen" id="foldopen00608" data-start="{" data-end="}">
+<div class="line"><a id="l00608" name="l00608"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ab1d297638f905c32b75af4513e22ee0e">  608</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ab1d297638f905c32b75af4513e22ee0e">FootprintGraphicsGenerator::padTypeToKicad</a>(<span class="keywordtype">int</span> layerId)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00609" name="l00609"></a><span class="lineno">  609</span>    <span class="keywordflow">if</span> (layerId == 1) {</div>
+<div class="line"><a id="l00610" name="l00610"></a><span class="lineno">  610</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;smd&quot;</span>;</div>
+<div class="line"><a id="l00611" name="l00611"></a><span class="lineno">  611</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (layerId == 2) {</div>
+<div class="line"><a id="l00612" name="l00612"></a><span class="lineno">  612</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;smd&quot;</span>;</div>
+<div class="line"><a id="l00613" name="l00613"></a><span class="lineno">  613</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00614" name="l00614"></a><span class="lineno">  614</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;thru_hole&quot;</span>;</div>
+<div class="line"><a id="l00615" name="l00615"></a><span class="lineno">  615</span>    }</div>
+<div class="line"><a id="l00616" name="l00616"></a><span class="lineno">  616</span>}</div>
+</div>
+<div class="line"><a id="l00617" name="l00617"></a><span class="lineno">  617</span> </div>
+<div class="foldopen" id="foldopen00618" data-start="{" data-end="}">
+<div class="line"><a id="l00618" name="l00618"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a693ac26dd9c36da028ff20d779309761">  618</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a693ac26dd9c36da028ff20d779309761">FootprintGraphicsGenerator::padLayersToKicad</a>(<span class="keywordtype">int</span> layerId)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00619" name="l00619"></a><span class="lineno">  619</span>    <span class="keywordflow">switch</span> (layerId) {</div>
+<div class="line"><a id="l00620" name="l00620"></a><span class="lineno">  620</span>        <span class="keywordflow">case</span> 1:</div>
+<div class="line"><a id="l00621" name="l00621"></a><span class="lineno">  621</span> </div>
+<div class="line"><a id="l00622" name="l00622"></a><span class="lineno">  622</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.Cu F.Paste F.Mask&quot;</span>;</div>
+<div class="line"><a id="l00623" name="l00623"></a><span class="lineno">  623</span>        <span class="keywordflow">case</span> 2:</div>
+<div class="line"><a id="l00624" name="l00624"></a><span class="lineno">  624</span> </div>
+<div class="line"><a id="l00625" name="l00625"></a><span class="lineno">  625</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;B.Cu B.Paste B.Mask&quot;</span>;</div>
+<div class="line"><a id="l00626" name="l00626"></a><span class="lineno">  626</span>        <span class="keywordflow">case</span> 3:</div>
+<div class="line"><a id="l00627" name="l00627"></a><span class="lineno">  627</span> </div>
+<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.SilkS&quot;</span>;</div>
+<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span>        <span class="keywordflow">case</span> 4:</div>
+<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span> </div>
+<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;B.SilkS&quot;</span>;</div>
+<div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span>        <span class="keywordflow">case</span> 11:</div>
+<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span> </div>
+<div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;*.Cu *.Mask&quot;</span>;</div>
+<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span>        <span class="keywordflow">case</span> 13:</div>
+<div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span> </div>
+<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.Fab&quot;</span>;</div>
+<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span>        <span class="keywordflow">case</span> 14:</div>
+<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span> </div>
+<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;B.Fab&quot;</span>;</div>
+<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>        <span class="keywordflow">case</span> 15:</div>
+<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span> </div>
+<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;Dwgs.User&quot;</span>;</div>
+<div class="line"><a id="l00644" name="l00644"></a><span class="lineno">  644</span>        <span class="keywordflow">default</span>:</div>
+<div class="line"><a id="l00645" name="l00645"></a><span class="lineno">  645</span> </div>
+<div class="line"><a id="l00646" name="l00646"></a><span class="lineno">  646</span>            qWarning() &lt;&lt; <span class="stringliteral">&quot;Unknown pad layer ID:&quot;</span> &lt;&lt; layerId &lt;&lt; <span class="stringliteral">&quot;, using default thru-hole configuration&quot;</span>;</div>
+<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;*.Cu *.Mask&quot;</span>;</div>
+<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span>    }</div>
+<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span>}</div>
+</div>
+<div class="line"><a id="l00650" name="l00650"></a><span class="lineno">  650</span> </div>
+<div class="foldopen" id="foldopen00651" data-start="{" data-end="}">
+<div class="line"><a id="l00651" name="l00651"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1c6cfa103aa2950e9245eaa0037218d3">  651</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1c6cfa103aa2950e9245eaa0037218d3">FootprintGraphicsGenerator::layerIdToKicad</a>(<span class="keywordtype">int</span> layerId)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00652" name="l00652"></a><span class="lineno">  652</span>    <span class="keywordflow">switch</span> (layerId) {</div>
+<div class="line"><a id="l00653" name="l00653"></a><span class="lineno">  653</span>        <span class="keywordflow">case</span> 1:</div>
+<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.Cu&quot;</span>;</div>
+<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span>        <span class="keywordflow">case</span> 2:</div>
+<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;B.Cu&quot;</span>;</div>
+<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span>        <span class="keywordflow">case</span> 3:</div>
+<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.SilkS&quot;</span>;</div>
+<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span>        <span class="keywordflow">case</span> 4:</div>
+<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;B.SilkS&quot;</span>;</div>
+<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span>        <span class="keywordflow">case</span> 5:</div>
+<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.Paste&quot;</span>;</div>
+<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span>        <span class="keywordflow">case</span> 6:</div>
+<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;B.Paste&quot;</span>;</div>
+<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span>        <span class="keywordflow">case</span> 7:</div>
+<div class="line"><a id="l00666" name="l00666"></a><span class="lineno">  666</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.Mask&quot;</span>;</div>
+<div class="line"><a id="l00667" name="l00667"></a><span class="lineno">  667</span>        <span class="keywordflow">case</span> 8:</div>
+<div class="line"><a id="l00668" name="l00668"></a><span class="lineno">  668</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;B.Mask&quot;</span>;</div>
+<div class="line"><a id="l00669" name="l00669"></a><span class="lineno">  669</span>        <span class="keywordflow">case</span> 9:</div>
+<div class="line"><a id="l00670" name="l00670"></a><span class="lineno">  670</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.Cu&quot;</span>;</div>
+<div class="line"><a id="l00671" name="l00671"></a><span class="lineno">  671</span>        <span class="keywordflow">case</span> 10:</div>
+<div class="line"><a id="l00672" name="l00672"></a><span class="lineno">  672</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;Edge.Cuts&quot;</span>;</div>
+<div class="line"><a id="l00673" name="l00673"></a><span class="lineno">  673</span>        <span class="keywordflow">case</span> 11:</div>
+<div class="line"><a id="l00674" name="l00674"></a><span class="lineno">  674</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;Edge.Cuts&quot;</span>;</div>
+<div class="line"><a id="l00675" name="l00675"></a><span class="lineno">  675</span>        <span class="keywordflow">case</span> 12:</div>
+<div class="line"><a id="l00676" name="l00676"></a><span class="lineno">  676</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;Dwgs.User&quot;</span>;</div>
+<div class="line"><a id="l00677" name="l00677"></a><span class="lineno">  677</span>        <span class="keywordflow">case</span> 13:</div>
+<div class="line"><a id="l00678" name="l00678"></a><span class="lineno">  678</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.Fab&quot;</span>;</div>
+<div class="line"><a id="l00679" name="l00679"></a><span class="lineno">  679</span>        <span class="keywordflow">case</span> 14:</div>
+<div class="line"><a id="l00680" name="l00680"></a><span class="lineno">  680</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;B.Fab&quot;</span>;</div>
+<div class="line"><a id="l00681" name="l00681"></a><span class="lineno">  681</span>        <span class="keywordflow">case</span> 15:</div>
+<div class="line"><a id="l00682" name="l00682"></a><span class="lineno">  682</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;Dwgs.User&quot;</span>;</div>
+<div class="line"><a id="l00683" name="l00683"></a><span class="lineno">  683</span>        <span class="keywordflow">case</span> 20:</div>
+<div class="line"><a id="l00684" name="l00684"></a><span class="lineno">  684</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;Cmts.User&quot;</span>;</div>
+<div class="line"><a id="l00685" name="l00685"></a><span class="lineno">  685</span>        <span class="keywordflow">case</span> 21:</div>
+<div class="line"><a id="l00686" name="l00686"></a><span class="lineno">  686</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;Eco1.User&quot;</span>;</div>
+<div class="line"><a id="l00687" name="l00687"></a><span class="lineno">  687</span>        <span class="keywordflow">case</span> 22:</div>
+<div class="line"><a id="l00688" name="l00688"></a><span class="lineno">  688</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;Eco2.User&quot;</span>;</div>
+<div class="line"><a id="l00689" name="l00689"></a><span class="lineno">  689</span>        <span class="keywordflow">case</span> 100:</div>
+<div class="line"><a id="l00690" name="l00690"></a><span class="lineno">  690</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.Fab&quot;</span>;</div>
+<div class="line"><a id="l00691" name="l00691"></a><span class="lineno">  691</span>        <span class="keywordflow">case</span> 101:</div>
+<div class="line"><a id="l00692" name="l00692"></a><span class="lineno">  692</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.SilkS&quot;</span>;</div>
+<div class="line"><a id="l00693" name="l00693"></a><span class="lineno">  693</span>        <span class="keywordflow">default</span>:</div>
+<div class="line"><a id="l00694" name="l00694"></a><span class="lineno">  694</span> </div>
+<div class="line"><a id="l00695" name="l00695"></a><span class="lineno">  695</span>            qWarning() &lt;&lt; <span class="stringliteral">&quot;Unknown layer ID:&quot;</span> &lt;&lt; layerId &lt;&lt; <span class="stringliteral">&quot;, defaulting to F.Fab&quot;</span>;</div>
+<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;F.Fab&quot;</span>;</div>
+<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span>    }</div>
+<div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span>}</div>
+</div>
+<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span> </div>
+<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="ttc" id="aFootprintGraphicsGenerator_8h_html"><div class="ttname"><a href="FootprintGraphicsGenerator_8h.html">FootprintGraphicsGenerator.h</a></div></div>
+<div class="ttc" id="aGeometryUtils_8h_html"><div class="ttname"><a href="GeometryUtils_8h.html">GeometryUtils.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_a1148f15804d2559ab471b61bd2420d4e"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1148f15804d2559ab471b61bd2420d4e">EasyKiConverter::FootprintGraphicsGenerator::generateCircle</a></div><div class="ttdeci">QString generateCircle(const FootprintCircle &amp;circle, double bboxX, double bboxY) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00165">FootprintGraphicsGenerator.cpp:165</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_a1c6cfa103aa2950e9245eaa0037218d3"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a1c6cfa103aa2950e9245eaa0037218d3">EasyKiConverter::FootprintGraphicsGenerator::layerIdToKicad</a></div><div class="ttdeci">QString layerIdToKicad(int layerId) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00651">FootprintGraphicsGenerator.cpp:651</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_a2ff4c2f088e9a31abcba33ed8f556a3e"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a2ff4c2f088e9a31abcba33ed8f556a3e">EasyKiConverter::FootprintGraphicsGenerator::generateSolidRegion</a></div><div class="ttdeci">QString generateSolidRegion(const FootprintSolidRegion &amp;region, double bboxX, double bboxY) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00370">FootprintGraphicsGenerator.cpp:370</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_a4ab96d2200f5004e45e08a82c295ebe2"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a4ab96d2200f5004e45e08a82c295ebe2">EasyKiConverter::FootprintGraphicsGenerator::generateHole</a></div><div class="ttdeci">QString generateHole(const FootprintHole &amp;hole, double bboxX, double bboxY) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00151">FootprintGraphicsGenerator.cpp:151</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_a4b66e160c7a5bbd5f47b9404ecffc959"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a4b66e160c7a5bbd5f47b9404ecffc959">EasyKiConverter::FootprintGraphicsGenerator::generateTrack</a></div><div class="ttdeci">QString generateTrack(const FootprintTrack &amp;track, double bboxX, double bboxY) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00122">FootprintGraphicsGenerator.cpp:122</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_a686f5032d2b59f22280fd47f98235d78"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a686f5032d2b59f22280fd47f98235d78">EasyKiConverter::FootprintGraphicsGenerator::generatePad</a></div><div class="ttdeci">QString generatePad(const FootprintPad &amp;pad, double bboxX, double bboxY) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00012">FootprintGraphicsGenerator.cpp:12</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_a693ac26dd9c36da028ff20d779309761"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a693ac26dd9c36da028ff20d779309761">EasyKiConverter::FootprintGraphicsGenerator::padLayersToKicad</a></div><div class="ttdeci">QString padLayersToKicad(int layerId) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00618">FootprintGraphicsGenerator.cpp:618</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_a932af20f9002d03de05aee0b2f2081a5"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a932af20f9002d03de05aee0b2f2081a5">EasyKiConverter::FootprintGraphicsGenerator::pxToMm</a></div><div class="ttdeci">double pxToMm(double px) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00582">FootprintGraphicsGenerator.cpp:582</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_a937f1c427cbc3c26512faf5e2f088a6f"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a937f1c427cbc3c26512faf5e2f088a6f">EasyKiConverter::FootprintGraphicsGenerator::generateText</a></div><div class="ttdeci">QString generateText(const FootprintText &amp;text, double bboxX, double bboxY) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00292">FootprintGraphicsGenerator.cpp:292</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_a98639d631e49fa36f2d6ef045ecfa7ee"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#a98639d631e49fa36f2d6ef045ecfa7ee">EasyKiConverter::FootprintGraphicsGenerator::padShapeToKicad</a></div><div class="ttdeci">QString padShapeToKicad(const QString &amp;shape) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00590">FootprintGraphicsGenerator.cpp:590</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_aa19d92061342a9b3b1051f8958153501"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#aa19d92061342a9b3b1051f8958153501">EasyKiConverter::FootprintGraphicsGenerator::generateModel3D</a></div><div class="ttdeci">QString generateModel3D(const Model3DData &amp;model3D, double bboxX, double bboxY, const QString &amp;model3DPath, const QString &amp;fpType) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00481">FootprintGraphicsGenerator.cpp:481</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_ab1d297638f905c32b75af4513e22ee0e"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ab1d297638f905c32b75af4513e22ee0e">EasyKiConverter::FootprintGraphicsGenerator::padTypeToKicad</a></div><div class="ttdeci">QString padTypeToKicad(int layerId) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00608">FootprintGraphicsGenerator.cpp:608</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_ac829f6869c0b4f002830676febbe4b8b"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ac829f6869c0b4f002830676febbe4b8b">EasyKiConverter::FootprintGraphicsGenerator::generateArc</a></div><div class="ttdeci">QString generateArc(const FootprintArc &amp;arc, double bboxX, double bboxY) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00224">FootprintGraphicsGenerator.cpp:224</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_add855b62acbeebf1edf7094fd7e43a88"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#add855b62acbeebf1edf7094fd7e43a88">EasyKiConverter::FootprintGraphicsGenerator::generateCourtyardFromBBox</a></div><div class="ttdeci">QString generateCourtyardFromBBox(const FootprintBBox &amp;bbox, double bboxX, double bboxY) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00451">FootprintGraphicsGenerator.cpp:451</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_ade10de0582e0cfcdbcc06c7009faed1d"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#ade10de0582e0cfcdbcc06c7009faed1d">EasyKiConverter::FootprintGraphicsGenerator::pxToMmRounded</a></div><div class="ttdeci">double pxToMmRounded(double px) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00586">FootprintGraphicsGenerator.cpp:586</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html_af7a6b549cf89ac35977f80070d9fcdc0"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html#af7a6b549cf89ac35977f80070d9fcdc0">EasyKiConverter::FootprintGraphicsGenerator::generateRectangle</a></div><div class="ttdeci">QString generateRectangle(const FootprintRectangle &amp;rectangle, double bboxX, double bboxY) const</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8cpp_source.html#l00182">FootprintGraphicsGenerator.cpp:182</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1GeometryUtils_html_a0c8b0600b42eab25c6b5a489ac8e0cd8"><div class="ttname"><a href="classEasyKiConverter_1_1GeometryUtils.html#a0c8b0600b42eab25c6b5a489ac8e0cd8">EasyKiConverter::GeometryUtils::solveSvgArc</a></div><div class="ttdeci">static SvgArcResult solveSvgArc(const QString &amp;param)</div><div class="ttdoc">解析 SVG 弧参</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8cpp_source.html#l00234">GeometryUtils.cpp:234</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1GeometryUtils_html_aa1c191bb3d6f64204d01db7d91765c9e"><div class="ttname"><a href="classEasyKiConverter_1_1GeometryUtils.html#aa1c191bb3d6f64204d01db7d91765c9e">EasyKiConverter::GeometryUtils::arcToPath</a></div><div class="ttdeci">static QList&lt; SvgPoint &gt; arcToPath(const SvgArcResult &amp;arc, bool includeStart=false)</div><div class="ttdoc">将 SVG 弧转换为路径点集</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8cpp_source.html#l00383">GeometryUtils.cpp:383</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1GeometryUtils_html_ad4176d199a6ca7c557a7dbb57187fcdc"><div class="ttname"><a href="classEasyKiConverter_1_1GeometryUtils.html#ad4176d199a6ca7c557a7dbb57187fcdc">EasyKiConverter::GeometryUtils::calcSvgArc</a></div><div class="ttdeci">static SvgArcEndpoints calcSvgArc(const SvgArcResult &amp;arc)</div><div class="ttdoc">计算 SVG 弧的端点</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8cpp_source.html#l00364">GeometryUtils.cpp:364</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1GeometryUtils_html_aef67ed63d5e31b1a08d5edb04ed166e1"><div class="ttname"><a href="classEasyKiConverter_1_1GeometryUtils.html#aef67ed63d5e31b1a08d5edb04ed166e1">EasyKiConverter::GeometryUtils::convertToMm</a></div><div class="ttdeci">static double convertToMm(double dim)</div><div class="ttdoc">将 EasyEDA 单位转换为毫米</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8cpp_source.html#l00082">GeometryUtils.cpp:82</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html">EasyKiConverter::Model3DData</a></div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00027">Model3DData.h:27</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a5c71479bc1a35010a08ccdd444e580bc"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a5c71479bc1a35010a08ccdd444e580bc">EasyKiConverter::Model3DData::rotation</a></div><div class="ttdeci">Model3DBase rotation() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00057">Model3DData.h:57</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_afd38087c6dda7902afa160b84b485534"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">EasyKiConverter::Model3DData::translation</a></div><div class="ttdeci">Model3DBase translation() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00049">Model3DData.h:49</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_aff325c5de9e54b321677755f62dbe8a3"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#aff325c5de9e54b321677755f62dbe8a3">EasyKiConverter::Model3DData::name</a></div><div class="ttdeci">QString name() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00033">Model3DData.h:33</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintArc_html"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintArc.html">EasyKiConverter::FootprintArc</a></div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00131">FootprintData.h:131</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintArc_html_a116f06050139d7d0e5d74b46b23f0063"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintArc.html#a116f06050139d7d0e5d74b46b23f0063">EasyKiConverter::FootprintArc::path</a></div><div class="ttdeci">QString path</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00135">FootprintData.h:135</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintArc_html_a6bec106c5d359979fd30a09ef00ccb61"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintArc.html#a6bec106c5d359979fd30a09ef00ccb61">EasyKiConverter::FootprintArc::layerId</a></div><div class="ttdeci">int layerId</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00133">FootprintData.h:133</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintArc_html_aae6f93e9c842f386c2b330f28e02b7ae"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintArc.html#aae6f93e9c842f386c2b330f28e02b7ae">EasyKiConverter::FootprintArc::strokeWidth</a></div><div class="ttdeci">double strokeWidth</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00132">FootprintData.h:132</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintBBox_html"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintBBox.html">EasyKiConverter::FootprintBBox</a></div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00055">FootprintData.h:55</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintBBox_html_a4ca9287f643bbcd1a57cd4be587e7a85"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintBBox.html#a4ca9287f643bbcd1a57cd4be587e7a85">EasyKiConverter::FootprintBBox::height</a></div><div class="ttdeci">double height</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00059">FootprintData.h:59</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintBBox_html_a6856e6cabdf4a4b5ea3ab2b4cc427bf3"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintBBox.html#a6856e6cabdf4a4b5ea3ab2b4cc427bf3">EasyKiConverter::FootprintBBox::y</a></div><div class="ttdeci">double y</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00057">FootprintData.h:57</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintBBox_html_a98d784f50c9253ceb677b5a1440b118c"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintBBox.html#a98d784f50c9253ceb677b5a1440b118c">EasyKiConverter::FootprintBBox::width</a></div><div class="ttdeci">double width</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00058">FootprintData.h:58</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintBBox_html_a9af2be28bc2fb28e9377c37cfe4003c8"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintBBox.html#a9af2be28bc2fb28e9377c37cfe4003c8">EasyKiConverter::FootprintBBox::x</a></div><div class="ttdeci">double x</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00056">FootprintData.h:56</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintCircle_html"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintCircle.html">EasyKiConverter::FootprintCircle</a></div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00106">FootprintData.h:106</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintCircle_html_a5003f17da27acf19455801852d3ba66c"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintCircle.html#a5003f17da27acf19455801852d3ba66c">EasyKiConverter::FootprintCircle::layerId</a></div><div class="ttdeci">int layerId</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00111">FootprintData.h:111</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintCircle_html_a69e4f7b9d56bd9c23e749a81b1d9932b"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintCircle.html#a69e4f7b9d56bd9c23e749a81b1d9932b">EasyKiConverter::FootprintCircle::radius</a></div><div class="ttdeci">double radius</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00109">FootprintData.h:109</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintCircle_html_ab926046cde3129f2018725795bc6817d"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintCircle.html#ab926046cde3129f2018725795bc6817d">EasyKiConverter::FootprintCircle::strokeWidth</a></div><div class="ttdeci">double strokeWidth</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00110">FootprintData.h:110</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintCircle_html_abd23f3a85b27d044bc2ae33ab616c95b"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintCircle.html#abd23f3a85b27d044bc2ae33ab616c95b">EasyKiConverter::FootprintCircle::cx</a></div><div class="ttdeci">double cx</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00107">FootprintData.h:107</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintCircle_html_af9baab0d75a96279faf59fc444530b96"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintCircle.html#af9baab0d75a96279faf59fc444530b96">EasyKiConverter::FootprintCircle::cy</a></div><div class="ttdeci">double cy</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00108">FootprintData.h:108</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintHole_html"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintHole.html">EasyKiConverter::FootprintHole</a></div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00096">FootprintData.h:96</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintHole_html_a0276113aa703692c5f6fb203c7f79287"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintHole.html#a0276113aa703692c5f6fb203c7f79287">EasyKiConverter::FootprintHole::centerY</a></div><div class="ttdeci">double centerY</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00098">FootprintData.h:98</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintHole_html_ab5100fd1f6e989b14293e42e48d9197d"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintHole.html#ab5100fd1f6e989b14293e42e48d9197d">EasyKiConverter::FootprintHole::centerX</a></div><div class="ttdeci">double centerX</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00097">FootprintData.h:97</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintHole_html_ad82fb822223a3026b4607bb2431648a2"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintHole.html#ad82fb822223a3026b4607bb2431648a2">EasyKiConverter::FootprintHole::radius</a></div><div class="ttdeci">double radius</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00099">FootprintData.h:99</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html">EasyKiConverter::FootprintPad</a></div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00064">FootprintData.h:64</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_a121c4baf286dee34fc638909f544f265"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#a121c4baf286dee34fc638909f544f265">EasyKiConverter::FootprintPad::shape</a></div><div class="ttdeci">QString shape</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00065">FootprintData.h:65</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_a2b3b6693ce3a4bd99f496a48f544423f"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#a2b3b6693ce3a4bd99f496a48f544423f">EasyKiConverter::FootprintPad::width</a></div><div class="ttdeci">double width</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00068">FootprintData.h:68</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_a621b908eba3a529567758e7e0cf6f3f7"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#a621b908eba3a529567758e7e0cf6f3f7">EasyKiConverter::FootprintPad::points</a></div><div class="ttdeci">QString points</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00074">FootprintData.h:74</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_a7fddfb23a98cb5c7718101044ad213aa"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#a7fddfb23a98cb5c7718101044ad213aa">EasyKiConverter::FootprintPad::rotation</a></div><div class="ttdeci">double rotation</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00075">FootprintData.h:75</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_a802bbf29574fa84bf3dc62e867c4f64b"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#a802bbf29574fa84bf3dc62e867c4f64b">EasyKiConverter::FootprintPad::holeRadius</a></div><div class="ttdeci">double holeRadius</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00073">FootprintData.h:73</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_a8641f5614ff847da55a211330f589f11"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#a8641f5614ff847da55a211330f589f11">EasyKiConverter::FootprintPad::id</a></div><div class="ttdeci">QString id</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00076">FootprintData.h:76</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_ab2778e9557e4338a2e716d50fb54d745"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#ab2778e9557e4338a2e716d50fb54d745">EasyKiConverter::FootprintPad::layerId</a></div><div class="ttdeci">int layerId</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00070">FootprintData.h:70</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_adee107561c3ef6de678097ef74e0ae73"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#adee107561c3ef6de678097ef74e0ae73">EasyKiConverter::FootprintPad::centerX</a></div><div class="ttdeci">double centerX</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00066">FootprintData.h:66</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_ae03338b428348f16289e51e9ab6b60eb"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#ae03338b428348f16289e51e9ab6b60eb">EasyKiConverter::FootprintPad::centerY</a></div><div class="ttdeci">double centerY</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00067">FootprintData.h:67</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_ae4c72eac2c6be2b2b272eafbce2878f4"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#ae4c72eac2c6be2b2b272eafbce2878f4">EasyKiConverter::FootprintPad::holeLength</a></div><div class="ttdeci">double holeLength</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00077">FootprintData.h:77</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_ae8e6b464f9280f2edee38fccdf752a6e"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#ae8e6b464f9280f2edee38fccdf752a6e">EasyKiConverter::FootprintPad::height</a></div><div class="ttdeci">double height</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00069">FootprintData.h:69</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintPad_html_aeb7e57e09822ee424f6ea44874045075"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintPad.html#aeb7e57e09822ee424f6ea44874045075">EasyKiConverter::FootprintPad::number</a></div><div class="ttdeci">QString number</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00072">FootprintData.h:72</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintRectangle_html"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintRectangle.html">EasyKiConverter::FootprintRectangle</a></div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00118">FootprintData.h:118</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintRectangle_html_a323f0784174e88fa3bd3bc9f1ff1849c"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintRectangle.html#a323f0784174e88fa3bd3bc9f1ff1849c">EasyKiConverter::FootprintRectangle::x</a></div><div class="ttdeci">double x</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00119">FootprintData.h:119</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintRectangle_html_a449cf84237e814499b1a392cf6ab07bd"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintRectangle.html#a449cf84237e814499b1a392cf6ab07bd">EasyKiConverter::FootprintRectangle::strokeWidth</a></div><div class="ttdeci">double strokeWidth</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00123">FootprintData.h:123</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintRectangle_html_aa67343293165dce7850193e0bf1928ef"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintRectangle.html#aa67343293165dce7850193e0bf1928ef">EasyKiConverter::FootprintRectangle::layerId</a></div><div class="ttdeci">int layerId</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00125">FootprintData.h:125</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintRectangle_html_ab51728e30061f06c16e887b25f30c9a5"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintRectangle.html#ab51728e30061f06c16e887b25f30c9a5">EasyKiConverter::FootprintRectangle::width</a></div><div class="ttdeci">double width</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00121">FootprintData.h:121</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintRectangle_html_add9bfaee7930ff4c58c786ca35873187"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintRectangle.html#add9bfaee7930ff4c58c786ca35873187">EasyKiConverter::FootprintRectangle::height</a></div><div class="ttdeci">double height</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00122">FootprintData.h:122</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintRectangle_html_af5dd0061634822f7ea327208ed562020"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintRectangle.html#af5dd0061634822f7ea327208ed562020">EasyKiConverter::FootprintRectangle::y</a></div><div class="ttdeci">double y</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00120">FootprintData.h:120</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintSolidRegion_html"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintSolidRegion.html">EasyKiConverter::FootprintSolidRegion</a></div><div class="ttdoc">实体填充区域，用于禁止布线区或元件占位区</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00164">FootprintData.h:164</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintSolidRegion_html_a1d9dd85a59fb784c33b8eada825db34f"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintSolidRegion.html#a1d9dd85a59fb784c33b8eada825db34f">EasyKiConverter::FootprintSolidRegion::layerId</a></div><div class="ttdeci">int layerId</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00166">FootprintData.h:166</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintSolidRegion_html_a5a10941047ccc3d143973905a2aa1c6d"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintSolidRegion.html#a5a10941047ccc3d143973905a2aa1c6d">EasyKiConverter::FootprintSolidRegion::path</a></div><div class="ttdeci">QString path</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00165">FootprintData.h:165</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintSolidRegion_html_abac2cc3686db9f761e225b3326d4e112"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintSolidRegion.html#abac2cc3686db9f761e225b3326d4e112">EasyKiConverter::FootprintSolidRegion::isKeepOut</a></div><div class="ttdeci">bool isKeepOut</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00169">FootprintData.h:169</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintSolidRegion_html_afbf2878e87a2160d36977824babcbff4"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintSolidRegion.html#afbf2878e87a2160d36977824babcbff4">EasyKiConverter::FootprintSolidRegion::fillStyle</a></div><div class="ttdeci">QString fillStyle</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00167">FootprintData.h:167</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintText_html"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintText.html">EasyKiConverter::FootprintText</a></div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00143">FootprintData.h:143</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintText_html_a1d4baffcb0d68cebaab8cdfe74b312f1"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintText.html#a1d4baffcb0d68cebaab8cdfe74b312f1">EasyKiConverter::FootprintText::centerX</a></div><div class="ttdeci">double centerX</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00145">FootprintData.h:145</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintText_html_a45d845fcaff719ad08f0788e5bcec63b"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintText.html#a45d845fcaff719ad08f0788e5bcec63b">EasyKiConverter::FootprintText::fontSize</a></div><div class="ttdeci">double fontSize</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00152">FootprintData.h:152</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintText_html_a46ee3b8c341b30450639ee3e4f0d5901"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintText.html#a46ee3b8c341b30450639ee3e4f0d5901">EasyKiConverter::FootprintText::strokeWidth</a></div><div class="ttdeci">double strokeWidth</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00147">FootprintData.h:147</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintText_html_a63bfc008f763641fdea33354fb0bd3fd"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintText.html#a63bfc008f763641fdea33354fb0bd3fd">EasyKiConverter::FootprintText::layerId</a></div><div class="ttdeci">int layerId</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00150">FootprintData.h:150</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintText_html_a8c87717ec2cb9eb3b4ffc81fdfa696e4"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintText.html#a8c87717ec2cb9eb3b4ffc81fdfa696e4">EasyKiConverter::FootprintText::type</a></div><div class="ttdeci">QString type</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00144">FootprintData.h:144</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintText_html_a9b1e4fdcd545b3f56412f5e99fe44c17"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintText.html#a9b1e4fdcd545b3f56412f5e99fe44c17">EasyKiConverter::FootprintText::centerY</a></div><div class="ttdeci">double centerY</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00146">FootprintData.h:146</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintText_html_a9c785d80424484cf7b86736597356ce8"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintText.html#a9c785d80424484cf7b86736597356ce8">EasyKiConverter::FootprintText::textPath</a></div><div class="ttdeci">QString textPath</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00154">FootprintData.h:154</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintText_html_aaaa1f5b1d1228dd5f890de79b1277214"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintText.html#aaaa1f5b1d1228dd5f890de79b1277214">EasyKiConverter::FootprintText::rotation</a></div><div class="ttdeci">int rotation</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00148">FootprintData.h:148</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintText_html_aace9ebfc027f0a73aa6cd47f768517f3"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintText.html#aace9ebfc027f0a73aa6cd47f768517f3">EasyKiConverter::FootprintText::isDisplayed</a></div><div class="ttdeci">bool isDisplayed</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00155">FootprintData.h:155</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintText_html_aebdbfebcfb388bdaaaa4210c9582487b"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintText.html#aebdbfebcfb388bdaaaa4210c9582487b">EasyKiConverter::FootprintText::text</a></div><div class="ttdeci">QString text</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00153">FootprintData.h:153</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintTrack_html"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintTrack.html">EasyKiConverter::FootprintTrack</a></div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00085">FootprintData.h:85</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintTrack_html_a2c1cf6b7b2cbb4b1287fab4c3140a755"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintTrack.html#a2c1cf6b7b2cbb4b1287fab4c3140a755">EasyKiConverter::FootprintTrack::layerId</a></div><div class="ttdeci">int layerId</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00087">FootprintData.h:87</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintTrack_html_a5e0e1ba4ee99d2939eec40f56621045f"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintTrack.html#a5e0e1ba4ee99d2939eec40f56621045f">EasyKiConverter::FootprintTrack::strokeWidth</a></div><div class="ttdeci">double strokeWidth</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00086">FootprintData.h:86</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1FootprintTrack_html_a75c00c2ea4383ed23e5d38a180ca0f70"><div class="ttname"><a href="structEasyKiConverter_1_1FootprintTrack.html#a75c00c2ea4383ed23e5d38a180ca0f70">EasyKiConverter::FootprintTrack::points</a></div><div class="ttdeci">QString points</div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00089">FootprintData.h:89</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1GeometryUtils_1_1SvgArcEndpoints_html"><div class="ttname"><a href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcEndpoints.html">EasyKiConverter::GeometryUtils::SvgArcEndpoints</a></div><div class="ttdoc">SVG 弧端点计算结</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8h_source.html#l00182">GeometryUtils.h:182</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1GeometryUtils_1_1SvgArcEndpoints_html_a61055e27b6fac4283e7cf07e0296c23c"><div class="ttname"><a href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcEndpoints.html#a61055e27b6fac4283e7cf07e0296c23c">EasyKiConverter::GeometryUtils::SvgArcEndpoints::x2</a></div><div class="ttdeci">double x2</div><div class="ttdoc">终点 X</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8h_source.html#l00185">GeometryUtils.h:185</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1GeometryUtils_1_1SvgArcEndpoints_html_a77f6967521324281b4e4d67012169441"><div class="ttname"><a href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcEndpoints.html#a77f6967521324281b4e4d67012169441">EasyKiConverter::GeometryUtils::SvgArcEndpoints::y2</a></div><div class="ttdeci">double y2</div><div class="ttdoc">终点 Y</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8h_source.html#l00186">GeometryUtils.h:186</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult_html"><div class="ttname"><a href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html">EasyKiConverter::GeometryUtils::SvgArcResult</a></div><div class="ttdoc">SVG 弧计算结果结构体</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8h_source.html#l00165">GeometryUtils.h:165</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult_html_a2d6e234d756d45d2d90433aeebd7fa62"><div class="ttname"><a href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a2d6e234d756d45d2d90433aeebd7fa62">EasyKiConverter::GeometryUtils::SvgArcResult::cy</a></div><div class="ttdeci">double cy</div><div class="ttdoc">圆心 Y 坐标</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8h_source.html#l00167">GeometryUtils.h:167</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult_html_a619565639e7de734e3bf5c5b6f3be2f0"><div class="ttname"><a href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a619565639e7de734e3bf5c5b6f3be2f0">EasyKiConverter::GeometryUtils::SvgArcResult::rx</a></div><div class="ttdeci">double rx</div><div class="ttdoc">X 半径</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8h_source.html#l00168">GeometryUtils.h:168</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult_html_a62f8429f843d317bb52f4adab31df10c"><div class="ttname"><a href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a62f8429f843d317bb52f4adab31df10c">EasyKiConverter::GeometryUtils::SvgArcResult::startAngle</a></div><div class="ttdeci">double startAngle</div><div class="ttdoc">起始角度（度</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8h_source.html#l00170">GeometryUtils.h:170</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult_html_a7e7bf5ba7ed4da8d05c8e5926da1d303"><div class="ttname"><a href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a7e7bf5ba7ed4da8d05c8e5926da1d303">EasyKiConverter::GeometryUtils::SvgArcResult::cx</a></div><div class="ttdeci">double cx</div><div class="ttdoc">圆心 X 坐标</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8h_source.html#l00166">GeometryUtils.h:166</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult_html_a8a8b4f7f982bb767a6f8237a7319f89d"><div class="ttname"><a href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a8a8b4f7f982bb767a6f8237a7319f89d">EasyKiConverter::GeometryUtils::SvgArcResult::deltaAngle</a></div><div class="ttdeci">double deltaAngle</div><div class="ttdoc">角度增量（度</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8h_source.html#l00171">GeometryUtils.h:171</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult_html_ac3fca45c838e482fb2e16b838c13a07e"><div class="ttname"><a href="structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#ac3fca45c838e482fb2e16b838c13a07e">EasyKiConverter::GeometryUtils::SvgArcResult::ry</a></div><div class="ttdeci">double ry</div><div class="ttdoc">Y 半径</div><div class="ttdef"><b>Definition</b> <a href="GeometryUtils_8h_source.html#l00169">GeometryUtils.h:169</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1Model3DBase_html_a2dc08074e60ef54b9d0005a5a942dcae"><div class="ttname"><a href="structEasyKiConverter_1_1Model3DBase.html#a2dc08074e60ef54b9d0005a5a942dcae">EasyKiConverter::Model3DBase::z</a></div><div class="ttdeci">double z</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00015">Model3DData.h:15</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1Model3DBase_html_a3d0bfb0fa2d1667e93826ca71dea4afc"><div class="ttname"><a href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">EasyKiConverter::Model3DBase::x</a></div><div class="ttdeci">double x</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00013">Model3DData.h:13</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1Model3DBase_html_ae0215718f005cc9f6ad5804370fd4777"><div class="ttname"><a href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">EasyKiConverter::Model3DBase::y</a></div><div class="ttdeci">double y</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00014">Model3DData.h:14</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_4270bfced15e0e73154b13468c7c9ad9.html">core</a></li><li class="navelem"><a class="el" href="dir_ad1ddbc3e0d75829e0afe087a249d2ba.html">kicad</a></li><li class="navelem"><a class="el" href="FootprintGraphicsGenerator_8cpp.html">FootprintGraphicsGenerator.cpp</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

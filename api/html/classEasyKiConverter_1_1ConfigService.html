@@ -1,0 +1,1124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::ConfigService类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1ConfigService.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pub-static-methods">静态 Public 成员函数</a> &#124;
+<a href="#pri-methods">Private 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="#pri-static-attribs">静态 Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1ConfigService-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::ConfigService类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>配置服务  
+ <a href="classEasyKiConverter_1_1ConfigService.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="ConfigService_8h_source.html">ConfigService.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::ConfigService 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ConfigService__inherit__graph.svg" width="230" height="570"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::ConfigService 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ConfigService__coll__graph.svg" width="332" height="551"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:ab33cde415a488f078857f481d96f852b" id="r_ab33cde415a488f078857f481d96f852b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#ab33cde415a488f078857f481d96f852b">loadConfig</a> (const QString &amp;path=QString())</td></tr>
+<tr class="memdesc:ab33cde415a488f078857f481d96f852b"><td class="mdescLeft">&#160;</td><td class="mdescRight">加载配置  <br /></td></tr>
+<tr class="separator:ab33cde415a488f078857f481d96f852b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11f43d48d6370a91311f65850d9b2ebf" id="r_a11f43d48d6370a91311f65850d9b2ebf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">saveConfig</a> (const QString &amp;path=QString())</td></tr>
+<tr class="memdesc:a11f43d48d6370a91311f65850d9b2ebf"><td class="mdescLeft">&#160;</td><td class="mdescRight">保存配置  <br /></td></tr>
+<tr class="separator:a11f43d48d6370a91311f65850d9b2ebf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6655b58881cb55cf9f3967328ae42929" id="r_a6655b58881cb55cf9f3967328ae42929"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a6655b58881cb55cf9f3967328ae42929">resetToDefaults</a> ()</td></tr>
+<tr class="memdesc:a6655b58881cb55cf9f3967328ae42929"><td class="mdescLeft">&#160;</td><td class="mdescRight">重置为默认配  <br /></td></tr>
+<tr class="separator:a6655b58881cb55cf9f3967328ae42929"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04480dd87e15297b6b795c73702a8b39" id="r_a04480dd87e15297b6b795c73702a8b39"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a04480dd87e15297b6b795c73702a8b39">getOutputPath</a> () const</td></tr>
+<tr class="memdesc:a04480dd87e15297b6b795c73702a8b39"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取输出路径  <br /></td></tr>
+<tr class="separator:a04480dd87e15297b6b795c73702a8b39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af1adb92ee7ec57d03b6ba83d25ec2cf7" id="r_af1adb92ee7ec57d03b6ba83d25ec2cf7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#af1adb92ee7ec57d03b6ba83d25ec2cf7">setOutputPath</a> (const QString &amp;path)</td></tr>
+<tr class="memdesc:af1adb92ee7ec57d03b6ba83d25ec2cf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置输出路径  <br /></td></tr>
+<tr class="separator:af1adb92ee7ec57d03b6ba83d25ec2cf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18480ceb911c7ae2180f8722582374af" id="r_a18480ceb911c7ae2180f8722582374af"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a18480ceb911c7ae2180f8722582374af">getLibName</a> () const</td></tr>
+<tr class="memdesc:a18480ceb911c7ae2180f8722582374af"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取库名称  <br /></td></tr>
+<tr class="separator:a18480ceb911c7ae2180f8722582374af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a63fa7eb05d7ef08826ce843a91e2169e" id="r_a63fa7eb05d7ef08826ce843a91e2169e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a63fa7eb05d7ef08826ce843a91e2169e">setLibName</a> (const QString &amp;name)</td></tr>
+<tr class="memdesc:a63fa7eb05d7ef08826ce843a91e2169e"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置库名称  <br /></td></tr>
+<tr class="separator:a63fa7eb05d7ef08826ce843a91e2169e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee74b87827654910e744ed17a5f740a2" id="r_aee74b87827654910e744ed17a5f740a2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#aee74b87827654910e744ed17a5f740a2">getExportSymbol</a> () const</td></tr>
+<tr class="memdesc:aee74b87827654910e744ed17a5f740a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">是否导出符号  <br /></td></tr>
+<tr class="separator:aee74b87827654910e744ed17a5f740a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6db3f902edca2e15446c191f2d7fa384" id="r_a6db3f902edca2e15446c191f2d7fa384"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a6db3f902edca2e15446c191f2d7fa384">setExportSymbol</a> (bool enabled)</td></tr>
+<tr class="memdesc:a6db3f902edca2e15446c191f2d7fa384"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置是否导出符号  <br /></td></tr>
+<tr class="separator:a6db3f902edca2e15446c191f2d7fa384"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a458ad87b9cfe3825593b429e410ddfa6" id="r_a458ad87b9cfe3825593b429e410ddfa6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a458ad87b9cfe3825593b429e410ddfa6">getExportFootprint</a> () const</td></tr>
+<tr class="memdesc:a458ad87b9cfe3825593b429e410ddfa6"><td class="mdescLeft">&#160;</td><td class="mdescRight">是否导出封装  <br /></td></tr>
+<tr class="separator:a458ad87b9cfe3825593b429e410ddfa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a74524eff0ee54955052bb8d35fafbe15" id="r_a74524eff0ee54955052bb8d35fafbe15"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a74524eff0ee54955052bb8d35fafbe15">setExportFootprint</a> (bool enabled)</td></tr>
+<tr class="memdesc:a74524eff0ee54955052bb8d35fafbe15"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置是否导出封装  <br /></td></tr>
+<tr class="separator:a74524eff0ee54955052bb8d35fafbe15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f0fc43adb5bf470be0015713788c0e9" id="r_a1f0fc43adb5bf470be0015713788c0e9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a1f0fc43adb5bf470be0015713788c0e9">getExportModel3D</a> () const</td></tr>
+<tr class="memdesc:a1f0fc43adb5bf470be0015713788c0e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">是否导出3D模型  <br /></td></tr>
+<tr class="separator:a1f0fc43adb5bf470be0015713788c0e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43d1f08df01f1ea28672267817b66569" id="r_a43d1f08df01f1ea28672267817b66569"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a43d1f08df01f1ea28672267817b66569">setExportModel3D</a> (bool enabled)</td></tr>
+<tr class="memdesc:a43d1f08df01f1ea28672267817b66569"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置是否导出3D模型  <br /></td></tr>
+<tr class="separator:a43d1f08df01f1ea28672267817b66569"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7127de54f0e62aa7264d78f9bcc05a8" id="r_ac7127de54f0e62aa7264d78f9bcc05a8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#ac7127de54f0e62aa7264d78f9bcc05a8">getOverwriteExistingFiles</a> () const</td></tr>
+<tr class="memdesc:ac7127de54f0e62aa7264d78f9bcc05a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">是否覆盖已存在文  <br /></td></tr>
+<tr class="separator:ac7127de54f0e62aa7264d78f9bcc05a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1aee369b5425e145d3ee5eda299fc65" id="r_ae1aee369b5425e145d3ee5eda299fc65"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#ae1aee369b5425e145d3ee5eda299fc65">setOverwriteExistingFiles</a> (bool enabled)</td></tr>
+<tr class="memdesc:ae1aee369b5425e145d3ee5eda299fc65"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置是否覆盖已存在文  <br /></td></tr>
+<tr class="separator:ae1aee369b5425e145d3ee5eda299fc65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9eff8627cf6ef560133e325c9b37f978" id="r_a9eff8627cf6ef560133e325c9b37f978"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a9eff8627cf6ef560133e325c9b37f978">getDarkMode</a> () const</td></tr>
+<tr class="memdesc:a9eff8627cf6ef560133e325c9b37f978"><td class="mdescLeft">&#160;</td><td class="mdescRight">是否启用深色模式  <br /></td></tr>
+<tr class="separator:a9eff8627cf6ef560133e325c9b37f978"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b060d876af0d51ab6dbc8f7e2a6cb94" id="r_a0b060d876af0d51ab6dbc8f7e2a6cb94"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a0b060d876af0d51ab6dbc8f7e2a6cb94">setDarkMode</a> (bool enabled)</td></tr>
+<tr class="memdesc:a0b060d876af0d51ab6dbc8f7e2a6cb94"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置是否启用深色模式  <br /></td></tr>
+<tr class="separator:a0b060d876af0d51ab6dbc8f7e2a6cb94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56faf58099f3a176ed1c02a4fd13d5dc" id="r_a56faf58099f3a176ed1c02a4fd13d5dc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a56faf58099f3a176ed1c02a4fd13d5dc">getDebugMode</a> () const</td></tr>
+<tr class="memdesc:a56faf58099f3a176ed1c02a4fd13d5dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">是否启用调试模式  <br /></td></tr>
+<tr class="separator:a56faf58099f3a176ed1c02a4fd13d5dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fef61176dc04da5e8a34fc13c06bba4" id="r_a4fef61176dc04da5e8a34fc13c06bba4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a4fef61176dc04da5e8a34fc13c06bba4">setDebugMode</a> (bool enabled)</td></tr>
+<tr class="memdesc:a4fef61176dc04da5e8a34fc13c06bba4"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置是否启用调试模式  <br /></td></tr>
+<tr class="separator:a4fef61176dc04da5e8a34fc13c06bba4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad5c95dd91dfd55dcacb2a74a5d2c7e84" id="r_ad5c95dd91dfd55dcacb2a74a5d2c7e84"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged</a> ()</td></tr>
+<tr class="memdesc:ad5c95dd91dfd55dcacb2a74a5d2c7e84"><td class="mdescLeft">&#160;</td><td class="mdescRight">配置改变信号  <br /></td></tr>
+<tr class="separator:ad5c95dd91dfd55dcacb2a74a5d2c7e84"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+静态 Public 成员函数</h2></td></tr>
+<tr class="memitem:a906164be213712863bc564ad0a3151f2" id="r_a906164be213712863bc564ad0a3151f2"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classEasyKiConverter_1_1ConfigService.html">ConfigService</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a906164be213712863bc564ad0a3151f2">instance</a> ()</td></tr>
+<tr class="memdesc:a906164be213712863bc564ad0a3151f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取单例实例  <br /></td></tr>
+<tr class="separator:a906164be213712863bc564ad0a3151f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private 成员函数</h2></td></tr>
+<tr class="memitem:a04f00c943bf61f513500805adfb548c3" id="r_a04f00c943bf61f513500805adfb548c3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a04f00c943bf61f513500805adfb548c3">ConfigService</a> (QObject *parent=nullptr)</td></tr>
+<tr class="memdesc:a04f00c943bf61f513500805adfb548c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">构造函数  <br /></td></tr>
+<tr class="separator:a04f00c943bf61f513500805adfb548c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1f50c359d8b9f97da89a129be47ae89" id="r_ae1f50c359d8b9f97da89a129be47ae89"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#ae1f50c359d8b9f97da89a129be47ae89">~ConfigService</a> () override</td></tr>
+<tr class="memdesc:ae1f50c359d8b9f97da89a129be47ae89"><td class="mdescLeft">&#160;</td><td class="mdescRight">析构函数  <br /></td></tr>
+<tr class="separator:ae1f50c359d8b9f97da89a129be47ae89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b68b47c397e500c5e5fd15a4137c604" id="r_a2b68b47c397e500c5e5fd15a4137c604"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a2b68b47c397e500c5e5fd15a4137c604">initializeDefaultConfig</a> ()</td></tr>
+<tr class="memdesc:a2b68b47c397e500c5e5fd15a4137c604"><td class="mdescLeft">&#160;</td><td class="mdescRight">初始化默认配  <br /></td></tr>
+<tr class="separator:a2b68b47c397e500c5e5fd15a4137c604"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee723a3c895088fca217ebe78d63753c" id="r_aee723a3c895088fca217ebe78d63753c"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#aee723a3c895088fca217ebe78d63753c">getDefaultConfigPath</a> () const</td></tr>
+<tr class="memdesc:aee723a3c895088fca217ebe78d63753c"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取默认配置文件路径  <br /></td></tr>
+<tr class="separator:aee723a3c895088fca217ebe78d63753c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:a245b8240cbf2392e47a0a03da508f07a" id="r_a245b8240cbf2392e47a0a03da508f07a"><td class="memItemLeft" align="right" valign="top">QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a></td></tr>
+<tr class="separator:a245b8240cbf2392e47a0a03da508f07a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab42755d520fb4ec855d1ac272744feda" id="r_ab42755d520fb4ec855d1ac272744feda"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#ab42755d520fb4ec855d1ac272744feda">m_configPath</a></td></tr>
+<tr class="separator:ab42755d520fb4ec855d1ac272744feda"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe61a6ff81bbf68deda61d4bd8a010f8" id="r_abe61a6ff81bbf68deda61d4bd8a010f8"><td class="memItemLeft" align="right" valign="top">QMutex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a></td></tr>
+<tr class="separator:abe61a6ff81bbf68deda61d4bd8a010f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-static-attribs" name="pri-static-attribs"></a>
+静态 Private 属性</h2></td></tr>
+<tr class="memitem:a297f3abbbdade814961bba60151406b3" id="r_a297f3abbbdade814961bba60151406b3"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classEasyKiConverter_1_1ConfigService.html">ConfigService</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#a297f3abbbdade814961bba60151406b3">s_instance</a> = nullptr</td></tr>
+<tr class="separator:a297f3abbbdade814961bba60151406b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af021454ab09973fc82a6d53f7e93f4e6" id="r_af021454ab09973fc82a6d53f7e93f4e6"><td class="memItemLeft" align="right" valign="top">static QMutex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ConfigService.html#af021454ab09973fc82a6d53f7e93f4e6">s_mutex</a></td></tr>
+<tr class="separator:af021454ab09973fc82a6d53f7e93f4e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>配置服务 </p>
+<p>负责配置管理，使用单例模式 不依赖任UI 组件 </p>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8h_source.html">ConfigService.h</a> 第 <a class="el" href="ConfigService_8h_source.html#l00017">17</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a04f00c943bf61f513500805adfb548c3" name="a04f00c943bf61f513500805adfb548c3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a04f00c943bf61f513500805adfb548c3">&#9670;&#160;</a></span>ConfigService()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::ConfigService::ConfigService </td>
+          <td>(</td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>构造函数 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parent</td><td>父对象 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00015">15</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8cpp_source.html#l00223">initializeDefaultConfig()</a>.</p>
+
+</div>
+</div>
+<a id="ae1f50c359d8b9f97da89a129be47ae89" name="ae1f50c359d8b9f97da89a129be47ae89"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1f50c359d8b9f97da89a129be47ae89">&#9670;&#160;</a></span>~ConfigService()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::ConfigService::~ConfigService </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>析构函数 </p>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00020">20</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="ad5c95dd91dfd55dcacb2a74a5d2c7e84" name="ad5c95dd91dfd55dcacb2a74a5d2c7e84"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad5c95dd91dfd55dcacb2a74a5d2c7e84">&#9670;&#160;</a></span>configChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ConfigService::configChanged </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>配置改变信号 </p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ConfigService_8cpp_source.html#l00035">loadConfig()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00095">resetToDefaults()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00202">setDarkMode()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00213">setDebugMode()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00157">setExportFootprint()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00172">setExportModel3D()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00142">setExportSymbol()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00127">setLibName()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00112">setOutputPath()</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00187">setOverwriteExistingFiles()</a>.</p>
+
+</div>
+</div>
+<a id="a9eff8627cf6ef560133e325c9b37f978" name="a9eff8627cf6ef560133e325c9b37f978"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9eff8627cf6ef560133e325c9b37f978">&#9670;&#160;</a></span>getDarkMode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ConfigService::getDarkMode </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>是否启用深色模式 </p>
+<dl class="section return"><dt>返回</dt><dd>bool 是否启用深色模式 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00197">197</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a> , 以及 <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ThemeSettingsViewModel_8cpp_source.html#l00007">EasyKiConverter::ThemeSettingsViewModel::ThemeSettingsViewModel()</a>.</p>
+
+</div>
+</div>
+<a id="a56faf58099f3a176ed1c02a4fd13d5dc" name="a56faf58099f3a176ed1c02a4fd13d5dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a56faf58099f3a176ed1c02a4fd13d5dc">&#9670;&#160;</a></span>getDebugMode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ConfigService::getDebugMode </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>是否启用调试模式 </p>
+<dl class="section return"><dt>返回</dt><dd>bool 是否启用调试模式 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00208">208</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a> , 以及 <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00240">EasyKiConverter::ExportSettingsViewModel::loadFromConfig()</a>.</p>
+
+</div>
+</div>
+<a id="aee723a3c895088fca217ebe78d63753c" name="aee723a3c895088fca217ebe78d63753c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee723a3c895088fca217ebe78d63753c">&#9670;&#160;</a></span>getDefaultConfigPath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ConfigService::getDefaultConfigPath </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>获取默认配置文件路径 </p>
+<dl class="section return"><dt>返回</dt><dd>QString 配置文件路径 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00234">234</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ConfigService_8cpp_source.html#l00035">loadConfig()</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+</div>
+</div>
+<a id="a458ad87b9cfe3825593b429e410ddfa6" name="a458ad87b9cfe3825593b429e410ddfa6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a458ad87b9cfe3825593b429e410ddfa6">&#9670;&#160;</a></span>getExportFootprint()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ConfigService::getExportFootprint </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>是否导出封装 </p>
+<dl class="section return"><dt>返回</dt><dd>bool 是否导出封装 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00152">152</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a> , 以及 <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00240">EasyKiConverter::ExportSettingsViewModel::loadFromConfig()</a>.</p>
+
+</div>
+</div>
+<a id="a1f0fc43adb5bf470be0015713788c0e9" name="a1f0fc43adb5bf470be0015713788c0e9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1f0fc43adb5bf470be0015713788c0e9">&#9670;&#160;</a></span>getExportModel3D()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ConfigService::getExportModel3D </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>是否导出3D模型 </p>
+<dl class="section return"><dt>返回</dt><dd>bool 是否导出3D模型 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00167">167</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a> , 以及 <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00240">EasyKiConverter::ExportSettingsViewModel::loadFromConfig()</a>.</p>
+
+</div>
+</div>
+<a id="aee74b87827654910e744ed17a5f740a2" name="aee74b87827654910e744ed17a5f740a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee74b87827654910e744ed17a5f740a2">&#9670;&#160;</a></span>getExportSymbol()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ConfigService::getExportSymbol </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>是否导出符号 </p>
+<dl class="section return"><dt>返回</dt><dd>bool 是否导出符号 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00137">137</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a> , 以及 <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00240">EasyKiConverter::ExportSettingsViewModel::loadFromConfig()</a>.</p>
+
+</div>
+</div>
+<a id="a18480ceb911c7ae2180f8722582374af" name="a18480ceb911c7ae2180f8722582374af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18480ceb911c7ae2180f8722582374af">&#9670;&#160;</a></span>getLibName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ConfigService::getLibName </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取库名称 </p>
+<dl class="section return"><dt>返回</dt><dd>QString 库名称 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00122">122</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a> , 以及 <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00240">EasyKiConverter::ExportSettingsViewModel::loadFromConfig()</a>.</p>
+
+</div>
+</div>
+<a id="a04480dd87e15297b6b795c73702a8b39" name="a04480dd87e15297b6b795c73702a8b39"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a04480dd87e15297b6b795c73702a8b39">&#9670;&#160;</a></span>getOutputPath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ConfigService::getOutputPath </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取输出路径 </p>
+<dl class="section return"><dt>返回</dt><dd>QString 输出路径 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00107">107</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a> , 以及 <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00240">EasyKiConverter::ExportSettingsViewModel::loadFromConfig()</a>.</p>
+
+</div>
+</div>
+<a id="ac7127de54f0e62aa7264d78f9bcc05a8" name="ac7127de54f0e62aa7264d78f9bcc05a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7127de54f0e62aa7264d78f9bcc05a8">&#9670;&#160;</a></span>getOverwriteExistingFiles()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ConfigService::getOverwriteExistingFiles </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>是否覆盖已存在文 </p>
+<dl class="section return"><dt>返回</dt><dd>bool 是否覆盖 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00182">182</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a> , 以及 <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00240">EasyKiConverter::ExportSettingsViewModel::loadFromConfig()</a>.</p>
+
+</div>
+</div>
+<a id="a2b68b47c397e500c5e5fd15a4137c604" name="a2b68b47c397e500c5e5fd15a4137c604"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2b68b47c397e500c5e5fd15a4137c604">&#9670;&#160;</a></span>initializeDefaultConfig()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ConfigService::initializeDefaultConfig </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>初始化默认配 </p>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00223">223</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ConfigService_8cpp_source.html#l00015">ConfigService()</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00095">resetToDefaults()</a>.</p>
+
+</div>
+</div>
+<a id="a906164be213712863bc564ad0a3151f2" name="a906164be213712863bc564ad0a3151f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a906164be213712863bc564ad0a3151f2">&#9670;&#160;</a></span>instance()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1ConfigService.html">ConfigService</a> * EasyKiConverter::ConfigService::instance </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>获取单例实例 </p>
+<dl class="section return"><dt>返回</dt><dd>ConfigService* 配置服务实例 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00025">25</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8h_source.html#l00195">s_instance</a> , 以及 <a class="el" href="ConfigService_8h_source.html#l00196">s_mutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="main_8cpp_source.html#l00107">main()</a>.</p>
+
+</div>
+</div>
+<a id="ab33cde415a488f078857f481d96f852b" name="ab33cde415a488f078857f481d96f852b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab33cde415a488f078857f481d96f852b">&#9670;&#160;</a></span>loadConfig()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ConfigService::loadConfig </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>path</em> = <code>QString()</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>加载配置 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>配置文件路径，为空时使用默认路径 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>bool 是否成功 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00035">35</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00234">getDefaultConfigPath()</a>, <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a>, <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a>, <a class="el" href="ConfigService_8h_source.html#l00199">m_configPath</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="main_8cpp_source.html#l00107">main()</a>.</p>
+
+</div>
+</div>
+<a id="a6655b58881cb55cf9f3967328ae42929" name="a6655b58881cb55cf9f3967328ae42929"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6655b58881cb55cf9f3967328ae42929">&#9670;&#160;</a></span>resetToDefaults()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ConfigService::resetToDefaults </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>重置为默认配 </p>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00095">95</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00223">initializeDefaultConfig()</a>, <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+</div>
+</div>
+<a id="a11f43d48d6370a91311f65850d9b2ebf" name="a11f43d48d6370a91311f65850d9b2ebf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a11f43d48d6370a91311f65850d9b2ebf">&#9670;&#160;</a></span>saveConfig()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ConfigService::saveConfig </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>path</em> = <code>QString()</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>保存配置 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>配置文件路径，为空时使用默认路径 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>bool 是否成功 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00075">75</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ConfigService_8cpp_source.html#l00234">getDefaultConfigPath()</a>, <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a>, <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a> , 以及 <a class="el" href="ConfigService_8h_source.html#l00199">m_configPath</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ConfigService_8cpp_source.html#l00020">~ConfigService()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00035">loadConfig()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00095">resetToDefaults()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00271">EasyKiConverter::ExportSettingsViewModel::saveConfig()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00213">setDebugMode()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00157">setExportFootprint()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00172">setExportModel3D()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00142">setExportSymbol()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00127">setLibName()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00112">setOutputPath()</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00187">setOverwriteExistingFiles()</a>.</p>
+
+</div>
+</div>
+<a id="a0b060d876af0d51ab6dbc8f7e2a6cb94" name="a0b060d876af0d51ab6dbc8f7e2a6cb94"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b060d876af0d51ab6dbc8f7e2a6cb94">&#9670;&#160;</a></span>setDarkMode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ConfigService::setDarkMode </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置是否启用深色模式 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">enabled</td><td>是否启用 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00202">202</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged()</a>, <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a> , 以及 <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ThemeSettingsViewModel_8cpp_source.html#l00014">EasyKiConverter::ThemeSettingsViewModel::setDarkMode()</a>.</p>
+
+</div>
+</div>
+<a id="a4fef61176dc04da5e8a34fc13c06bba4" name="a4fef61176dc04da5e8a34fc13c06bba4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fef61176dc04da5e8a34fc13c06bba4">&#9670;&#160;</a></span>setDebugMode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ConfigService::setDebugMode </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置是否启用调试模式 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">enabled</td><td>是否启用 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00213">213</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged()</a>, <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a>, <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00277">EasyKiConverter::ExportSettingsViewModel::resetConfig()</a> , 以及 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00107">EasyKiConverter::ExportSettingsViewModel::setDebugMode()</a>.</p>
+
+</div>
+</div>
+<a id="a74524eff0ee54955052bb8d35fafbe15" name="a74524eff0ee54955052bb8d35fafbe15"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a74524eff0ee54955052bb8d35fafbe15">&#9670;&#160;</a></span>setExportFootprint()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ConfigService::setExportFootprint </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置是否导出封装 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">enabled</td><td>是否启用 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00157">157</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged()</a>, <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a>, <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00277">EasyKiConverter::ExportSettingsViewModel::resetConfig()</a> , 以及 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00063">EasyKiConverter::ExportSettingsViewModel::setExportFootprint()</a>.</p>
+
+</div>
+</div>
+<a id="a43d1f08df01f1ea28672267817b66569" name="a43d1f08df01f1ea28672267817b66569"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a43d1f08df01f1ea28672267817b66569">&#9670;&#160;</a></span>setExportModel3D()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ConfigService::setExportModel3D </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置是否导出3D模型 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">enabled</td><td>是否启用 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00172">172</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged()</a>, <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a>, <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00277">EasyKiConverter::ExportSettingsViewModel::resetConfig()</a> , 以及 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00071">EasyKiConverter::ExportSettingsViewModel::setExportModel3D()</a>.</p>
+
+</div>
+</div>
+<a id="a6db3f902edca2e15446c191f2d7fa384" name="a6db3f902edca2e15446c191f2d7fa384"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6db3f902edca2e15446c191f2d7fa384">&#9670;&#160;</a></span>setExportSymbol()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ConfigService::setExportSymbol </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置是否导出符号 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">enabled</td><td>是否启用 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00142">142</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged()</a>, <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a>, <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00277">EasyKiConverter::ExportSettingsViewModel::resetConfig()</a> , 以及 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00055">EasyKiConverter::ExportSettingsViewModel::setExportSymbol()</a>.</p>
+
+</div>
+</div>
+<a id="a63fa7eb05d7ef08826ce843a91e2169e" name="a63fa7eb05d7ef08826ce843a91e2169e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a63fa7eb05d7ef08826ce843a91e2169e">&#9670;&#160;</a></span>setLibName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ConfigService::setLibName </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置库名称 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>库名称 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00127">127</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged()</a>, <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a>, <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00277">EasyKiConverter::ExportSettingsViewModel::resetConfig()</a> , 以及 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00047">EasyKiConverter::ExportSettingsViewModel::setLibName()</a>.</p>
+
+</div>
+</div>
+<a id="af1adb92ee7ec57d03b6ba83d25ec2cf7" name="af1adb92ee7ec57d03b6ba83d25ec2cf7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af1adb92ee7ec57d03b6ba83d25ec2cf7">&#9670;&#160;</a></span>setOutputPath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ConfigService::setOutputPath </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>path</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置输出路径 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>输出路径 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00112">112</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged()</a>, <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a>, <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00277">EasyKiConverter::ExportSettingsViewModel::resetConfig()</a> , 以及 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00039">EasyKiConverter::ExportSettingsViewModel::setOutputPath()</a>.</p>
+
+</div>
+</div>
+<a id="ae1aee369b5425e145d3ee5eda299fc65" name="ae1aee369b5425e145d3ee5eda299fc65"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1aee369b5425e145d3ee5eda299fc65">&#9670;&#160;</a></span>setOverwriteExistingFiles()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ConfigService::setOverwriteExistingFiles </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置是否覆盖已存在文 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">enabled</td><td>是否启用 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a> 第 <a class="el" href="ConfigService_8cpp_source.html#l00187">187</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged()</a>, <a class="el" href="ConfigService_8h_source.html#l00198">m_config</a>, <a class="el" href="ConfigService_8h_source.html#l00200">m_configMutex</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00277">EasyKiConverter::ExportSettingsViewModel::resetConfig()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00087">EasyKiConverter::ExportSettingsViewModel::setExportMode()</a> , 以及 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00079">EasyKiConverter::ExportSettingsViewModel::setOverwriteExistingFiles()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a245b8240cbf2392e47a0a03da508f07a" name="a245b8240cbf2392e47a0a03da508f07a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a245b8240cbf2392e47a0a03da508f07a">&#9670;&#160;</a></span>m_config</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::ConfigService::m_config</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8h_source.html">ConfigService.h</a> 第 <a class="el" href="ConfigService_8h_source.html#l00198">198</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ConfigService_8cpp_source.html#l00197">getDarkMode()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00208">getDebugMode()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00152">getExportFootprint()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00167">getExportModel3D()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00137">getExportSymbol()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00122">getLibName()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00107">getOutputPath()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00182">getOverwriteExistingFiles()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00223">initializeDefaultConfig()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00035">loadConfig()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00202">setDarkMode()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00213">setDebugMode()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00157">setExportFootprint()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00172">setExportModel3D()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00142">setExportSymbol()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00127">setLibName()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00112">setOutputPath()</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00187">setOverwriteExistingFiles()</a>.</p>
+
+</div>
+</div>
+<a id="abe61a6ff81bbf68deda61d4bd8a010f8" name="abe61a6ff81bbf68deda61d4bd8a010f8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abe61a6ff81bbf68deda61d4bd8a010f8">&#9670;&#160;</a></span>m_configMutex</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMutex EasyKiConverter::ConfigService::m_configMutex</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">mutable</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8h_source.html">ConfigService.h</a> 第 <a class="el" href="ConfigService_8h_source.html#l00200">200</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ConfigService_8cpp_source.html#l00197">getDarkMode()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00208">getDebugMode()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00152">getExportFootprint()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00167">getExportModel3D()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00137">getExportSymbol()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00122">getLibName()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00107">getOutputPath()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00182">getOverwriteExistingFiles()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00035">loadConfig()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00095">resetToDefaults()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00202">setDarkMode()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00213">setDebugMode()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00157">setExportFootprint()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00172">setExportModel3D()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00142">setExportSymbol()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00127">setLibName()</a>, <a class="el" href="ConfigService_8cpp_source.html#l00112">setOutputPath()</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00187">setOverwriteExistingFiles()</a>.</p>
+
+</div>
+</div>
+<a id="ab42755d520fb4ec855d1ac272744feda" name="ab42755d520fb4ec855d1ac272744feda"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab42755d520fb4ec855d1ac272744feda">&#9670;&#160;</a></span>m_configPath</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ConfigService::m_configPath</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8h_source.html">ConfigService.h</a> 第 <a class="el" href="ConfigService_8h_source.html#l00199">199</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ConfigService_8cpp_source.html#l00035">loadConfig()</a> , 以及 <a class="el" href="ConfigService_8cpp_source.html#l00075">saveConfig()</a>.</p>
+
+</div>
+</div>
+<a id="a297f3abbbdade814961bba60151406b3" name="a297f3abbbdade814961bba60151406b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a297f3abbbdade814961bba60151406b3">&#9670;&#160;</a></span>s_instance</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1ConfigService.html">ConfigService</a> * EasyKiConverter::ConfigService::s_instance = nullptr</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8h_source.html">ConfigService.h</a> 第 <a class="el" href="ConfigService_8h_source.html#l00195">195</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ConfigService_8cpp_source.html#l00025">instance()</a>.</p>
+
+</div>
+</div>
+<a id="af021454ab09973fc82a6d53f7e93f4e6" name="af021454ab09973fc82a6d53f7e93f4e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af021454ab09973fc82a6d53f7e93f4e6">&#9670;&#160;</a></span>s_mutex</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMutex EasyKiConverter::ConfigService::s_mutex</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ConfigService_8h_source.html">ConfigService.h</a> 第 <a class="el" href="ConfigService_8h_source.html#l00196">196</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ConfigService_8cpp_source.html#l00025">instance()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>services/<a class="el" href="ConfigService_8h_source.html">ConfigService.h</a></li>
+<li>services/<a class="el" href="ConfigService_8cpp_source.html">ConfigService.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1ConfigService.html">ConfigService</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

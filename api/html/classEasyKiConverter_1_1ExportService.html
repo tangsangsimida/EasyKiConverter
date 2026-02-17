@@ -1,0 +1,1654 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::ExportService类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1ExportService.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#nested-classes">类</a> &#124;
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pro-attribs">Protected 属性</a> &#124;
+<a href="#pri-methods">Private 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1ExportService-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::ExportService类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p><code>#include &lt;<a class="el" href="ExportService_8h_source.html">ExportService.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::ExportService 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ExportService__inherit__graph.svg" width="231" height="1716"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::ExportService 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ExportService__coll__graph.svg" width="927" height="2451"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+类</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structEasyKiConverter_1_1ExportService_1_1ExportData.html">ExportData</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a45fbaaa01f05089f730b5063107b1673" id="r_a45fbaaa01f05089f730b5063107b1673"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a45fbaaa01f05089f730b5063107b1673">ExportService</a> (QObject *parent=nullptr)</td></tr>
+<tr class="separator:a45fbaaa01f05089f730b5063107b1673"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a7cbcf6c90ebe825f2d3072e0d8569c" id="r_a1a7cbcf6c90ebe825f2d3072e0d8569c"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a1a7cbcf6c90ebe825f2d3072e0d8569c">~ExportService</a> () override</td></tr>
+<tr class="separator:a1a7cbcf6c90ebe825f2d3072e0d8569c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad43605af9255a36f7029480b67890b76" id="r_ad43605af9255a36f7029480b67890b76"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#ad43605af9255a36f7029480b67890b76">exportSymbol</a> (const <a class="el" href="classEasyKiConverter_1_1SymbolData.html">SymbolData</a> &amp;symbol, const QString &amp;filePath)</td></tr>
+<tr class="separator:ad43605af9255a36f7029480b67890b76"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f1b5231924e87119ed86a4809995afc" id="r_a6f1b5231924e87119ed86a4809995afc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a6f1b5231924e87119ed86a4809995afc">exportFootprint</a> (const <a class="el" href="classEasyKiConverter_1_1FootprintData.html">FootprintData</a> &amp;footprint, const QString &amp;filePath)</td></tr>
+<tr class="separator:a6f1b5231924e87119ed86a4809995afc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac499b4e54e4bd3656d4751c2a49dd62" id="r_aac499b4e54e4bd3656d4751c2a49dd62"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#aac499b4e54e4bd3656d4751c2a49dd62">export3DModel</a> (const <a class="el" href="classEasyKiConverter_1_1Model3DData.html">Model3DData</a> &amp;model, const QString &amp;filePath)</td></tr>
+<tr class="separator:aac499b4e54e4bd3656d4751c2a49dd62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad74d5ba773bafc8b20b32446158a11d5" id="r_ad74d5ba773bafc8b20b32446158a11d5"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#ad74d5ba773bafc8b20b32446158a11d5">executeExportPipeline</a> (const QStringList &amp;componentIds, const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;options)</td></tr>
+<tr class="separator:ad74d5ba773bafc8b20b32446158a11d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2107db9fb518d8e8773435ee273b560" id="r_ab2107db9fb518d8e8773435ee273b560"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#ab2107db9fb518d8e8773435ee273b560">retryExport</a> (const QStringList &amp;componentIds, const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;options)</td></tr>
+<tr class="separator:ab2107db9fb518d8e8773435ee273b560"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa28184b4c344b5c09554aeccf5b9f13f" id="r_aa28184b4c344b5c09554aeccf5b9f13f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#aa28184b4c344b5c09554aeccf5b9f13f">executeExportPipelineWithData</a> (const QList&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &amp;componentDataList, const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;options)</td></tr>
+<tr class="separator:aa28184b4c344b5c09554aeccf5b9f13f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ef167d7a50831719dfc4543b8a0a8f4" id="r_a1ef167d7a50831719dfc4543b8a0a8f4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a1ef167d7a50831719dfc4543b8a0a8f4">executeExportPipelineWithDataParallel</a> (const QList&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &amp;componentDataList, const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;options)</td></tr>
+<tr class="separator:a1ef167d7a50831719dfc4543b8a0a8f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae050a336953996dbd09bfa5be84f7ad1" id="r_ae050a336953996dbd09bfa5be84f7ad1"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#ae050a336953996dbd09bfa5be84f7ad1">cancelExport</a> ()</td></tr>
+<tr class="separator:ae050a336953996dbd09bfa5be84f7ad1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05d3b564eac3bccf67af84aa25770536" id="r_a05d3b564eac3bccf67af84aa25770536"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a05d3b564eac3bccf67af84aa25770536">waitForCompletion</a> (int timeoutMs=5000)</td></tr>
+<tr class="separator:a05d3b564eac3bccf67af84aa25770536"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a601eae421fb3bc3a21062622ecea9ead" id="r_a601eae421fb3bc3a21062622ecea9ead"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a601eae421fb3bc3a21062622ecea9ead">setExportOptions</a> (const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;options)</td></tr>
+<tr class="separator:a601eae421fb3bc3a21062622ecea9ead"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba60099da1df236ec9578e9908ac6937" id="r_aba60099da1df236ec9578e9908ac6937"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#aba60099da1df236ec9578e9908ac6937">getExportOptions</a> () const</td></tr>
+<tr class="separator:aba60099da1df236ec9578e9908ac6937"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af5713ac1d8e635241b037e5f5a1f55c9" id="r_af5713ac1d8e635241b037e5f5a1f55c9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#af5713ac1d8e635241b037e5f5a1f55c9">isExporting</a> () const</td></tr>
+<tr class="separator:af5713ac1d8e635241b037e5f5a1f55c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a243f6eb8b0f0a746ead40ce51bf3e3d0" id="r_a243f6eb8b0f0a746ead40ce51bf3e3d0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a243f6eb8b0f0a746ead40ce51bf3e3d0">exportProgress</a> (int current, int total)</td></tr>
+<tr class="separator:a243f6eb8b0f0a746ead40ce51bf3e3d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb2f61193bad5e55a736265f75225543" id="r_acb2f61193bad5e55a736265f75225543"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#acb2f61193bad5e55a736265f75225543">componentExported</a> (const QString &amp;componentId, bool success, const QString &amp;message, int stage=-1, bool symbolSuccess=false, bool footprintSuccess=false, bool model3DSuccess=false)</td></tr>
+<tr class="memdesc:acb2f61193bad5e55a736265f75225543"><td class="mdescLeft">&#160;</td><td class="mdescRight">元件导出完成信号  <br /></td></tr>
+<tr class="separator:acb2f61193bad5e55a736265f75225543"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76988064ce9bb611c593c88a41a9f93f" id="r_a76988064ce9bb611c593c88a41a9f93f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a76988064ce9bb611c593c88a41a9f93f">exportCompleted</a> (int totalCount, int successCount)</td></tr>
+<tr class="separator:a76988064ce9bb611c593c88a41a9f93f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae84daa52711f148c333a8ad475eddaa6" id="r_ae84daa52711f148c333a8ad475eddaa6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#ae84daa52711f148c333a8ad475eddaa6">exportFailed</a> (const QString &amp;error)</td></tr>
+<tr class="separator:ae84daa52711f148c333a8ad475eddaa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
+Protected 属性</h2></td></tr>
+<tr class="memitem:a505105a6ee06f4f8787416fd8942c13f" id="r_a505105a6ee06f4f8787416fd8942c13f"><td class="memItemLeft" align="right" valign="top">QThreadPool *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a505105a6ee06f4f8787416fd8942c13f">m_threadPool</a></td></tr>
+<tr class="separator:a505105a6ee06f4f8787416fd8942c13f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a459d22c7aa77c26fe37e26bbb9da45ff" id="r_a459d22c7aa77c26fe37e26bbb9da45ff"><td class="memItemLeft" align="right" valign="top">QMutex *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a459d22c7aa77c26fe37e26bbb9da45ff">m_mutex</a></td></tr>
+<tr class="separator:a459d22c7aa77c26fe37e26bbb9da45ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ff0c19753efc5b51e31d793192fdadb" id="r_a5ff0c19753efc5b51e31d793192fdadb"><td class="memItemLeft" align="right" valign="top">QAtomicInt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a5ff0c19753efc5b51e31d793192fdadb">m_isExporting</a></td></tr>
+<tr class="separator:a5ff0c19753efc5b51e31d793192fdadb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6170dc38bfdb8831d945defa78f20202" id="r_a6170dc38bfdb8831d945defa78f20202"><td class="memItemLeft" align="right" valign="top">QAtomicInt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a6170dc38bfdb8831d945defa78f20202">m_isStopping</a></td></tr>
+<tr class="separator:a6170dc38bfdb8831d945defa78f20202"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a194a1cc1e45774729f64d01c2e6045b5" id="r_a194a1cc1e45774729f64d01c2e6045b5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a194a1cc1e45774729f64d01c2e6045b5">m_options</a></td></tr>
+<tr class="separator:a194a1cc1e45774729f64d01c2e6045b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad227aa5d185561df85897b45c96baeac" id="r_ad227aa5d185561df85897b45c96baeac"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#ad227aa5d185561df85897b45c96baeac">m_currentProgress</a></td></tr>
+<tr class="separator:ad227aa5d185561df85897b45c96baeac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b9bde36663063eb0e9542557973bffe" id="r_a2b9bde36663063eb0e9542557973bffe"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a2b9bde36663063eb0e9542557973bffe">m_totalProgress</a></td></tr>
+<tr class="separator:a2b9bde36663063eb0e9542557973bffe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ef7aaf1a1b644f2887194f11a73ac8c" id="r_a9ef7aaf1a1b644f2887194f11a73ac8c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a9ef7aaf1a1b644f2887194f11a73ac8c">m_successCount</a></td></tr>
+<tr class="separator:a9ef7aaf1a1b644f2887194f11a73ac8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78a1b7aecc522380b983c2d8d34ace76" id="r_a78a1b7aecc522380b983c2d8d34ace76"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a78a1b7aecc522380b983c2d8d34ace76">m_failureCount</a></td></tr>
+<tr class="separator:a78a1b7aecc522380b983c2d8d34ace76"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private 成员函数</h2></td></tr>
+<tr class="memitem:aec77240b337e1f57a8f100e93de9e057" id="r_aec77240b337e1f57a8f100e93de9e057"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#aec77240b337e1f57a8f100e93de9e057">handleExportTaskFinished</a> (const QString &amp;componentId, bool success, const QString &amp;message)</td></tr>
+<tr class="separator:aec77240b337e1f57a8f100e93de9e057"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9739273b5b62e544bab0c739c2e3d7e2" id="r_a9739273b5b62e544bab0c739c2e3d7e2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a9739273b5b62e544bab0c739c2e3d7e2">handleParallelExportTaskFinished</a> (const QString &amp;componentId, bool success, const QString &amp;message)</td></tr>
+<tr class="separator:a9739273b5b62e544bab0c739c2e3d7e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a867ba3cb370c111d5124daa5f23fc762" id="r_a867ba3cb370c111d5124daa5f23fc762"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a867ba3cb370c111d5124daa5f23fc762">exportSymbolLibrary</a> (const QList&lt; <a class="el" href="classEasyKiConverter_1_1SymbolData.html">SymbolData</a> &gt; &amp;symbols, const QString &amp;libName, const QString &amp;filePath)</td></tr>
+<tr class="separator:a867ba3cb370c111d5124daa5f23fc762"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a92dc9f5e303921c680f870a8978adb82" id="r_a92dc9f5e303921c680f870a8978adb82"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a92dc9f5e303921c680f870a8978adb82">exportFootprintLibrary</a> (const QList&lt; <a class="el" href="classEasyKiConverter_1_1FootprintData.html">FootprintData</a> &gt; &amp;footprints, const QString &amp;libName, const QString &amp;filePath)</td></tr>
+<tr class="separator:a92dc9f5e303921c680f870a8978adb82"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac017a9d60e52a1f53ccb0c69958dd830" id="r_ac017a9d60e52a1f53ccb0c69958dd830"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#ac017a9d60e52a1f53ccb0c69958dd830">export3DModels</a> (const QList&lt; <a class="el" href="classEasyKiConverter_1_1Model3DData.html">Model3DData</a> &gt; &amp;models, const QString &amp;outputPath)</td></tr>
+<tr class="separator:ac017a9d60e52a1f53ccb0c69958dd830"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab80e74c1c4ecaf63273a452b9e270c6c" id="r_ab80e74c1c4ecaf63273a452b9e270c6c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#ab80e74c1c4ecaf63273a452b9e270c6c">updateProgress</a> (int current, int total)</td></tr>
+<tr class="separator:ab80e74c1c4ecaf63273a452b9e270c6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a72b002edafc042708f29e529f0f00ed4" id="r_a72b002edafc042708f29e529f0f00ed4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a72b002edafc042708f29e529f0f00ed4">fileExists</a> (const QString &amp;filePath) const</td></tr>
+<tr class="separator:a72b002edafc042708f29e529f0f00ed4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef8da89c18d7714aa11713f20a15d588" id="r_aef8da89c18d7714aa11713f20a15d588"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#aef8da89c18d7714aa11713f20a15d588">createOutputDirectory</a> (const QString &amp;path) const</td></tr>
+<tr class="separator:aef8da89c18d7714aa11713f20a15d588"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acad5449b4105cf222296ee86cc832eb4" id="r_acad5449b4105cf222296ee86cc832eb4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#acad5449b4105cf222296ee86cc832eb4">processNextExport</a> ()</td></tr>
+<tr class="separator:acad5449b4105cf222296ee86cc832eb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:a8f2d6253854fc7f807dec780bb07dea9" id="r_a8f2d6253854fc7f807dec780bb07dea9"><td class="memItemLeft" align="right" valign="top">class <a class="el" href="classEasyKiConverter_1_1ExporterSymbol.html">ExporterSymbol</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a8f2d6253854fc7f807dec780bb07dea9">m_symbolExporter</a></td></tr>
+<tr class="separator:a8f2d6253854fc7f807dec780bb07dea9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acad47c32f317dbfc8151430abb9de391" id="r_acad47c32f317dbfc8151430abb9de391"><td class="memItemLeft" align="right" valign="top">class <a class="el" href="classEasyKiConverter_1_1ExporterFootprint.html">ExporterFootprint</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#acad47c32f317dbfc8151430abb9de391">m_footprintExporter</a></td></tr>
+<tr class="separator:acad47c32f317dbfc8151430abb9de391"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4176f97980215aee0554059e3e0202bb" id="r_a4176f97980215aee0554059e3e0202bb"><td class="memItemLeft" align="right" valign="top">class <a class="el" href="classEasyKiConverter_1_1Exporter3DModel.html">Exporter3DModel</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a4176f97980215aee0554059e3e0202bb">m_modelExporter</a></td></tr>
+<tr class="separator:a4176f97980215aee0554059e3e0202bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61d57503f4f3599b90382679e827b620" id="r_a61d57503f4f3599b90382679e827b620"><td class="memItemLeft" align="right" valign="top">QList&lt; <a class="el" href="structEasyKiConverter_1_1ExportService_1_1ExportData.html">ExportData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a61d57503f4f3599b90382679e827b620">m_exportDataList</a></td></tr>
+<tr class="separator:a61d57503f4f3599b90382679e827b620"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade651dc3227be137768f02fad8755203" id="r_ade651dc3227be137768f02fad8755203"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#ade651dc3227be137768f02fad8755203">m_parallelExporting</a></td></tr>
+<tr class="separator:ade651dc3227be137768f02fad8755203"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aada323a6d25914ee1f1b447dbf14e65a" id="r_aada323a6d25914ee1f1b447dbf14e65a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#aada323a6d25914ee1f1b447dbf14e65a">m_parallelCompletedCount</a></td></tr>
+<tr class="separator:aada323a6d25914ee1f1b447dbf14e65a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6342a94151d473580a4adb6f6ce9a0f" id="r_ac6342a94151d473580a4adb6f6ce9a0f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#ac6342a94151d473580a4adb6f6ce9a0f">m_parallelTotalCount</a></td></tr>
+<tr class="separator:ac6342a94151d473580a4adb6f6ce9a0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9023510cf4670e018412dc254009608d" id="r_a9023510cf4670e018412dc254009608d"><td class="memItemLeft" align="right" valign="top">QMap&lt; QString, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ExportService.html#a9023510cf4670e018412dc254009608d">m_parallelExportStatus</a></td></tr>
+<tr class="separator:a9023510cf4670e018412dc254009608d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock">
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00040">40</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a45fbaaa01f05089f730b5063107b1673" name="a45fbaaa01f05089f730b5063107b1673"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45fbaaa01f05089f730b5063107b1673">&#9670;&#160;</a></span>ExportService()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::ExportService::ExportService </td>
+          <td>(</td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00015">15</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8h_source.html#l00102">m_threadPool</a>.</p>
+
+</div>
+</div>
+<a id="a1a7cbcf6c90ebe825f2d3072e0d8569c" name="a1a7cbcf6c90ebe825f2d3072e0d8569c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a7cbcf6c90ebe825f2d3072e0d8569c">&#9670;&#160;</a></span>~ExportService()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::ExportService::~ExportService </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00034">34</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8cpp_source.html#l00297">cancelExport()</a>, <a class="el" href="ExportService_8h_source.html#l00117">m_footprintExporter</a>, <a class="el" href="ExportService_8h_source.html#l00118">m_modelExporter</a>, <a class="el" href="ExportService_8h_source.html#l00103">m_mutex</a>, <a class="el" href="ExportService_8h_source.html#l00116">m_symbolExporter</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00102">m_threadPool</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="ae050a336953996dbd09bfa5be84f7ad1" name="ae050a336953996dbd09bfa5be84f7ad1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae050a336953996dbd09bfa5be84f7ad1">&#9670;&#160;</a></span>cancelExport()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::cancelExport </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>被 <a class="el" href="classEasyKiConverter_1_1ExportServicePipeline.html#ae78ba8cd75c8bfe4e1af11ab96ec6ed1">EasyKiConverter::ExportServicePipeline</a> 重载.</p>
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00297">297</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8h_source.html#l00106">m_isExporting</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00107">m_isStopping</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00034">~ExportService()</a>, <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00163">EasyKiConverter::ExportProgressViewModel::cancelExport()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00173">EasyKiConverter::ExportSettingsViewModel::cancelExport()</a> , 以及 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00625">EasyKiConverter::ExportServicePipeline::cancelExport()</a>.</p>
+
+</div>
+</div>
+<a id="acb2f61193bad5e55a736265f75225543" name="acb2f61193bad5e55a736265f75225543"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb2f61193bad5e55a736265f75225543">&#9670;&#160;</a></span>componentExported()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::componentExported </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>success</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>message</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>stage</em> = <code>-1</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>symbolSuccess</em> = <code>false</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>footprintSuccess</em> = <code>false</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>model3DSuccess</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>元件导出完成信号 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentId</td><td>元件ID </td></tr>
+    <tr><td class="paramname">success</td><td>是否成功 </td></tr>
+    <tr><td class="paramname">message</td><td>消息 </td></tr>
+    <tr><td class="paramname">stage</td><td>阶段 </td></tr>
+    <tr><td class="paramname">symbolSuccess</td><td>符号是否导出成功 </td></tr>
+    <tr><td class="paramname">footprintSuccess</td><td>封装是否导出成功 </td></tr>
+    <tr><td class="paramname">model3DSuccess</td><td>3D模型是否导出成功 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00018">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00009">EasyKiConverter::ExportSettingsViewModel::ExportSettingsViewModel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00332">handleExportTaskFinished()</a>, <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00224">EasyKiConverter::ExportServicePipeline::handleFetchCompleted()</a>, <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a>, <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00331">EasyKiConverter::ExportServicePipeline::handleProcessCompleted()</a> , 以及 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00384">EasyKiConverter::ExportServicePipeline::handleWriteCompleted()</a>.</p>
+
+</div>
+</div>
+<a id="aef8da89c18d7714aa11713f20a15d588" name="aef8da89c18d7714aa11713f20a15d588"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef8da89c18d7714aa11713f20a15d588">&#9670;&#160;</a></span>createOutputDirectory()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ExportService::createOutputDirectory </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>path</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00426">426</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00389">export3DModels()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a>.</p>
+
+</div>
+</div>
+<a id="ad74d5ba773bafc8b20b32446158a11d5" name="ad74d5ba773bafc8b20b32446158a11d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad74d5ba773bafc8b20b32446158a11d5">&#9670;&#160;</a></span>executeExportPipeline()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::executeExportPipeline </td>
+          <td>(</td>
+          <td class="paramtype">const QStringList &amp;&#160;</td>
+          <td class="paramname"><em>componentIds</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00080">80</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8h_source.html#l00121">EasyKiConverter::ExportService::ExportData::componentId</a>, <a class="el" href="ExportService_8h_source.html#l00110">m_currentProgress</a>, <a class="el" href="ExportService_8h_source.html#l00129">m_exportDataList</a>, <a class="el" href="ExportService_8h_source.html#l00113">m_failureCount</a>, <a class="el" href="ExportService_8h_source.html#l00106">m_isExporting</a>, <a class="el" href="ExportService_8h_source.html#l00103">m_mutex</a>, <a class="el" href="ExportService_8h_source.html#l00108">m_options</a>, <a class="el" href="ExportService_8h_source.html#l00112">m_successCount</a>, <a class="el" href="ExportService_8h_source.html#l00111">m_totalProgress</a>, <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00125">EasyKiConverter::ExportService::ExportData::success</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00311">retryExport()</a> , 以及 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00128">EasyKiConverter::ExportSettingsViewModel::startExport()</a>.</p>
+
+</div>
+</div>
+<a id="aa28184b4c344b5c09554aeccf5b9f13f" name="aa28184b4c344b5c09554aeccf5b9f13f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa28184b4c344b5c09554aeccf5b9f13f">&#9670;&#160;</a></span>executeExportPipelineWithData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::executeExportPipelineWithData </td>
+          <td>(</td>
+          <td class="paramtype">const QList&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>componentDataList</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00114">114</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ExportService.html#acb2f61193bad5e55a736265f75225543">componentExported()</a>, <a class="el" href="ExportService_8h_source.html#l00121">EasyKiConverter::ExportService::ExportData::componentId</a>, <a class="el" href="ExportService_8cpp_source.html#l00426">createOutputDirectory()</a>, <a class="el" href="classEasyKiConverter_1_1ExportService.html#a76988064ce9bb611c593c88a41a9f93f">exportCompleted()</a>, <a class="el" href="classEasyKiConverter_1_1ExportService.html#ae84daa52711f148c333a8ad475eddaa6">exportFailed()</a>, <a class="el" href="ExportService_8h_source.html#l00025">EasyKiConverter::ExportOptions::exportFootprint</a>, <a class="el" href="ExportService_8cpp_source.html#l00379">exportFootprintLibrary()</a>, <a class="el" href="ExportService_8h_source.html#l00026">EasyKiConverter::ExportOptions::exportModel3D</a>, <a class="el" href="classEasyKiConverter_1_1ExportService.html#a243f6eb8b0f0a746ead40ce51bf3e3d0">exportProgress()</a>, <a class="el" href="ExportService_8h_source.html#l00024">EasyKiConverter::ExportOptions::exportSymbol</a>, <a class="el" href="ExportService_8cpp_source.html#l00355">exportSymbolLibrary()</a>, <a class="el" href="Exporter3DModel_8cpp_source.html#l00101">EasyKiConverter::Exporter3DModel::exportToStep()</a>, <a class="el" href="Exporter3DModel_8cpp_source.html#l00065">EasyKiConverter::Exporter3DModel::exportToWrl()</a>, <a class="el" href="ExportService_8h_source.html#l00123">EasyKiConverter::ExportService::ExportData::footprintData</a>, <a class="el" href="FootprintData_8h_source.html#l00216">EasyKiConverter::FootprintData::info()</a>, <a class="el" href="SymbolData_8h_source.html#l00321">EasyKiConverter::SymbolData::info()</a>, <a class="el" href="ExportService_8h_source.html#l00023">EasyKiConverter::ExportOptions::libName</a>, <a class="el" href="ExportService_8h_source.html#l00110">m_currentProgress</a>, <a class="el" href="ExportService_8h_source.html#l00129">m_exportDataList</a>, <a class="el" href="ExportService_8h_source.html#l00113">m_failureCount</a>, <a class="el" href="ExportService_8h_source.html#l00106">m_isExporting</a>, <a class="el" href="ExportService_8h_source.html#l00118">m_modelExporter</a>, <a class="el" href="ExportService_8h_source.html#l00103">m_mutex</a>, <a class="el" href="ExportService_8h_source.html#l00108">m_options</a>, <a class="el" href="ExportService_8h_source.html#l00112">m_successCount</a>, <a class="el" href="ExportService_8h_source.html#l00111">m_totalProgress</a>, <a class="el" href="ExportService_8h_source.html#l00124">EasyKiConverter::ExportService::ExportData::model3DData</a>, <a class="el" href="FootprintData_8h_source.html#l00017">EasyKiConverter::FootprintInfo::name</a>, <a class="el" href="SymbolData_8h_source.html#l00031">EasyKiConverter::SymbolInfo::name</a>, <a class="el" href="ExportService_8h_source.html#l00022">EasyKiConverter::ExportOptions::outputPath</a>, <a class="el" href="ExportService_8h_source.html#l00027">EasyKiConverter::ExportOptions::overwriteExistingFiles</a>, <a class="el" href="Model3DData_8h_source.html#l00037">EasyKiConverter::Model3DData::setName()</a>, <a class="el" href="ExportService_8h_source.html#l00125">EasyKiConverter::ExportService::ExportData::success</a>, <a class="el" href="ExportService_8h_source.html#l00122">EasyKiConverter::ExportService::ExportData::symbolData</a> , 以及 <a class="el" href="Model3DData_8h_source.html#l00041">EasyKiConverter::Model3DData::uuid()</a>.</p>
+
+</div>
+</div>
+<a id="a1ef167d7a50831719dfc4543b8a0a8f4" name="a1ef167d7a50831719dfc4543b8a0a8f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ef167d7a50831719dfc4543b8a0a8f4">&#9670;&#160;</a></span>executeExportPipelineWithDataParallel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::executeExportPipelineWithDataParallel </td>
+          <td>(</td>
+          <td class="paramtype">const QList&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>componentDataList</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00510">510</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8cpp_source.html#l00426">createOutputDirectory()</a>, <a class="el" href="classEasyKiConverter_1_1ExportService.html#a76988064ce9bb611c593c88a41a9f93f">exportCompleted()</a>, <a class="el" href="classEasyKiConverter_1_1ExportService.html#ae84daa52711f148c333a8ad475eddaa6">exportFailed()</a>, <a class="el" href="ExportService_8h_source.html#l00025">EasyKiConverter::ExportOptions::exportFootprint</a>, <a class="el" href="ExportService_8cpp_source.html#l00379">exportFootprintLibrary()</a>, <a class="el" href="ExportService_8h_source.html#l00026">EasyKiConverter::ExportOptions::exportModel3D</a>, <a class="el" href="classEasyKiConverter_1_1ExportService.html#a243f6eb8b0f0a746ead40ce51bf3e3d0">exportProgress()</a>, <a class="el" href="ExportService_8h_source.html#l00024">EasyKiConverter::ExportOptions::exportSymbol</a>, <a class="el" href="ExportService_8cpp_source.html#l00355">exportSymbolLibrary()</a>, <a class="el" href="Exporter3DModel_8cpp_source.html#l00101">EasyKiConverter::Exporter3DModel::exportToStep()</a>, <a class="el" href="Exporter3DModel_8cpp_source.html#l00065">EasyKiConverter::Exporter3DModel::exportToWrl()</a>, <a class="el" href="ExportService_8h_source.html#l00023">EasyKiConverter::ExportOptions::libName</a>, <a class="el" href="ExportService_8h_source.html#l00110">m_currentProgress</a>, <a class="el" href="ExportService_8h_source.html#l00113">m_failureCount</a>, <a class="el" href="ExportService_8h_source.html#l00106">m_isExporting</a>, <a class="el" href="ExportService_8h_source.html#l00118">m_modelExporter</a>, <a class="el" href="ExportService_8h_source.html#l00103">m_mutex</a>, <a class="el" href="ExportService_8h_source.html#l00108">m_options</a>, <a class="el" href="ExportService_8h_source.html#l00132">m_parallelCompletedCount</a>, <a class="el" href="ExportService_8h_source.html#l00131">m_parallelExporting</a>, <a class="el" href="ExportService_8h_source.html#l00134">m_parallelExportStatus</a>, <a class="el" href="ExportService_8h_source.html#l00133">m_parallelTotalCount</a>, <a class="el" href="ExportService_8h_source.html#l00112">m_successCount</a>, <a class="el" href="ExportService_8h_source.html#l00111">m_totalProgress</a>, <a class="el" href="ExportService_8h_source.html#l00022">EasyKiConverter::ExportOptions::outputPath</a>, <a class="el" href="ExportService_8h_source.html#l00027">EasyKiConverter::ExportOptions::overwriteExistingFiles</a>, <a class="el" href="Model3DData_8h_source.html#l00037">EasyKiConverter::Model3DData::setName()</a> , 以及 <a class="el" href="Model3DData_8h_source.html#l00077">EasyKiConverter::Model3DData::setStep()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00433">EasyKiConverter::ExportProgressViewModel::handleAllComponentsDataCollected()</a>.</p>
+
+</div>
+</div>
+<a id="aac499b4e54e4bd3656d4751c2a49dd62" name="aac499b4e54e4bd3656d4751c2a49dd62"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aac499b4e54e4bd3656d4751c2a49dd62">&#9670;&#160;</a></span>export3DModel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ExportService::export3DModel </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classEasyKiConverter_1_1Model3DData.html">Model3DData</a> &amp;&#160;</td>
+          <td class="paramname"><em>model</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>filePath</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00067">67</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="Exporter3DModel_8cpp_source.html#l00065">EasyKiConverter::Exporter3DModel::exportToWrl()</a>, <a class="el" href="ExportService_8h_source.html#l00118">m_modelExporter</a>, <a class="el" href="ExportService_8h_source.html#l00108">m_options</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00027">EasyKiConverter::ExportOptions::overwriteExistingFiles</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a>.</p>
+
+</div>
+</div>
+<a id="ac017a9d60e52a1f53ccb0c69958dd830" name="ac017a9d60e52a1f53ccb0c69958dd830"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac017a9d60e52a1f53ccb0c69958dd830">&#9670;&#160;</a></span>export3DModels()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ExportService::export3DModels </td>
+          <td>(</td>
+          <td class="paramtype">const QList&lt; <a class="el" href="classEasyKiConverter_1_1Model3DData.html">Model3DData</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>models</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>outputPath</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00389">389</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8cpp_source.html#l00426">createOutputDirectory()</a>, <a class="el" href="Exporter3DModel_8cpp_source.html#l00065">EasyKiConverter::Exporter3DModel::exportToWrl()</a>, <a class="el" href="ExportService_8h_source.html#l00118">m_modelExporter</a>, <a class="el" href="ExportService_8h_source.html#l00108">m_options</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00027">EasyKiConverter::ExportOptions::overwriteExistingFiles</a>.</p>
+
+</div>
+</div>
+<a id="a76988064ce9bb611c593c88a41a9f93f" name="a76988064ce9bb611c593c88a41a9f93f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76988064ce9bb611c593c88a41a9f93f">&#9670;&#160;</a></span>exportCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::exportCompleted </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>totalCount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>successCount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00018">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00009">EasyKiConverter::ExportSettingsViewModel::ExportSettingsViewModel()</a>, <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00434">EasyKiConverter::ExportServicePipeline::checkPipelineCompletion()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>, <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00090">EasyKiConverter::ExportServicePipeline::executeExportPipelineWithStages()</a>, <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a>.</p>
+
+</div>
+</div>
+<a id="ae84daa52711f148c333a8ad475eddaa6" name="ae84daa52711f148c333a8ad475eddaa6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae84daa52711f148c333a8ad475eddaa6">&#9670;&#160;</a></span>exportFailed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::exportFailed </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>error</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00018">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00009">EasyKiConverter::ExportSettingsViewModel::ExportSettingsViewModel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a> , 以及 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00090">EasyKiConverter::ExportServicePipeline::executeExportPipelineWithStages()</a>.</p>
+
+</div>
+</div>
+<a id="a6f1b5231924e87119ed86a4809995afc" name="a6f1b5231924e87119ed86a4809995afc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f1b5231924e87119ed86a4809995afc">&#9670;&#160;</a></span>exportFootprint()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ExportService::exportFootprint </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classEasyKiConverter_1_1FootprintData.html">FootprintData</a> &amp;&#160;</td>
+          <td class="paramname"><em>footprint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>filePath</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00055">55</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExporterFootprint_8cpp_source.html#l00017">EasyKiConverter::ExporterFootprint::exportFootprint()</a>, <a class="el" href="ExportService_8h_source.html#l00117">m_footprintExporter</a>, <a class="el" href="ExportService_8h_source.html#l00108">m_options</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00027">EasyKiConverter::ExportOptions::overwriteExistingFiles</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a>.</p>
+
+</div>
+</div>
+<a id="a92dc9f5e303921c680f870a8978adb82" name="a92dc9f5e303921c680f870a8978adb82"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a92dc9f5e303921c680f870a8978adb82">&#9670;&#160;</a></span>exportFootprintLibrary()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ExportService::exportFootprintLibrary </td>
+          <td>(</td>
+          <td class="paramtype">const QList&lt; <a class="el" href="classEasyKiConverter_1_1FootprintData.html">FootprintData</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>footprints</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>libName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>filePath</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00379">379</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExporterFootprint_8cpp_source.html#l00062">EasyKiConverter::ExporterFootprint::exportFootprintLibrary()</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00117">m_footprintExporter</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>.</p>
+
+</div>
+</div>
+<a id="a243f6eb8b0f0a746ead40ce51bf3e3d0" name="a243f6eb8b0f0a746ead40ce51bf3e3d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a243f6eb8b0f0a746ead40ce51bf3e3d0">&#9670;&#160;</a></span>exportProgress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::exportProgress </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>current</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>total</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00018">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00009">EasyKiConverter::ExportSettingsViewModel::ExportSettingsViewModel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>, <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00090">EasyKiConverter::ExportServicePipeline::executeExportPipelineWithStages()</a>, <a class="el" href="ExportService_8cpp_source.html#l00332">handleExportTaskFinished()</a>, <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00416">updateProgress()</a>.</p>
+
+</div>
+</div>
+<a id="ad43605af9255a36f7029480b67890b76" name="ad43605af9255a36f7029480b67890b76"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad43605af9255a36f7029480b67890b76">&#9670;&#160;</a></span>exportSymbol()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ExportService::exportSymbol </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classEasyKiConverter_1_1SymbolData.html">SymbolData</a> &amp;&#160;</td>
+          <td class="paramname"><em>symbol</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>filePath</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00043">43</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExporterSymbol_8cpp_source.html#l00016">EasyKiConverter::ExporterSymbol::exportSymbol()</a>, <a class="el" href="ExportService_8h_source.html#l00108">m_options</a>, <a class="el" href="ExportService_8h_source.html#l00116">m_symbolExporter</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00027">EasyKiConverter::ExportOptions::overwriteExistingFiles</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a>.</p>
+
+</div>
+</div>
+<a id="a867ba3cb370c111d5124daa5f23fc762" name="a867ba3cb370c111d5124daa5f23fc762"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a867ba3cb370c111d5124daa5f23fc762">&#9670;&#160;</a></span>exportSymbolLibrary()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ExportService::exportSymbolLibrary </td>
+          <td>(</td>
+          <td class="paramtype">const QList&lt; <a class="el" href="classEasyKiConverter_1_1SymbolData.html">SymbolData</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>symbols</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>libName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>filePath</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00355">355</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExporterSymbol_8cpp_source.html#l00036">EasyKiConverter::ExporterSymbol::exportSymbolLibrary()</a>, <a class="el" href="ExportService_8cpp_source.html#l00422">fileExists()</a>, <a class="el" href="ExportService_8h_source.html#l00108">m_options</a>, <a class="el" href="ExportService_8h_source.html#l00116">m_symbolExporter</a>, <a class="el" href="ExportService_8h_source.html#l00027">EasyKiConverter::ExportOptions::overwriteExistingFiles</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00028">EasyKiConverter::ExportOptions::updateMode</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>.</p>
+
+</div>
+</div>
+<a id="a72b002edafc042708f29e529f0f00ed4" name="a72b002edafc042708f29e529f0f00ed4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a72b002edafc042708f29e529f0f00ed4">&#9670;&#160;</a></span>fileExists()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ExportService::fileExists </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>filePath</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00422">422</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00355">exportSymbolLibrary()</a>.</p>
+
+</div>
+</div>
+<a id="aba60099da1df236ec9578e9908ac6937" name="aba60099da1df236ec9578e9908ac6937"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aba60099da1df236ec9578e9908ac6937">&#9670;&#160;</a></span>getExportOptions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> EasyKiConverter::ExportService::getExportOptions </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00323">323</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8h_source.html#l00103">m_mutex</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00108">m_options</a>.</p>
+
+</div>
+</div>
+<a id="aec77240b337e1f57a8f100e93de9e057" name="aec77240b337e1f57a8f100e93de9e057"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aec77240b337e1f57a8f100e93de9e057">&#9670;&#160;</a></span>handleExportTaskFinished()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::handleExportTaskFinished </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>success</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>message</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00332">332</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ExportService.html#acb2f61193bad5e55a736265f75225543">componentExported()</a>, <a class="el" href="classEasyKiConverter_1_1ExportService.html#a243f6eb8b0f0a746ead40ce51bf3e3d0">exportProgress()</a>, <a class="el" href="ExportService_8h_source.html#l00110">m_currentProgress</a>, <a class="el" href="ExportService_8h_source.html#l00113">m_failureCount</a>, <a class="el" href="ExportService_8h_source.html#l00103">m_mutex</a>, <a class="el" href="ExportService_8h_source.html#l00112">m_successCount</a>, <a class="el" href="ExportService_8h_source.html#l00111">m_totalProgress</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a>.</p>
+
+</div>
+</div>
+<a id="a9739273b5b62e544bab0c739c2e3d7e2" name="a9739273b5b62e544bab0c739c2e3d7e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9739273b5b62e544bab0c739c2e3d7e2">&#9670;&#160;</a></span>handleParallelExportTaskFinished()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::handleParallelExportTaskFinished </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>success</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>message</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00677">677</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ExportService.html#acb2f61193bad5e55a736265f75225543">componentExported()</a>, <a class="el" href="classEasyKiConverter_1_1ExportService.html#a76988064ce9bb611c593c88a41a9f93f">exportCompleted()</a>, <a class="el" href="classEasyKiConverter_1_1ExportService.html#a243f6eb8b0f0a746ead40ce51bf3e3d0">exportProgress()</a>, <a class="el" href="ExportService_8h_source.html#l00110">m_currentProgress</a>, <a class="el" href="ExportService_8h_source.html#l00113">m_failureCount</a>, <a class="el" href="ExportService_8h_source.html#l00106">m_isExporting</a>, <a class="el" href="ExportService_8h_source.html#l00103">m_mutex</a>, <a class="el" href="ExportService_8h_source.html#l00132">m_parallelCompletedCount</a>, <a class="el" href="ExportService_8h_source.html#l00131">m_parallelExporting</a>, <a class="el" href="ExportService_8h_source.html#l00134">m_parallelExportStatus</a>, <a class="el" href="ExportService_8h_source.html#l00133">m_parallelTotalCount</a>, <a class="el" href="ExportService_8h_source.html#l00112">m_successCount</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00111">m_totalProgress</a>.</p>
+
+</div>
+</div>
+<a id="af5713ac1d8e635241b037e5f5a1f55c9" name="af5713ac1d8e635241b037e5f5a1f55c9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af5713ac1d8e635241b037e5f5a1f55c9">&#9670;&#160;</a></span>isExporting()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ExportService::isExporting </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00328">328</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8h_source.html#l00106">m_isExporting</a>.</p>
+
+</div>
+</div>
+<a id="acad5449b4105cf222296ee86cc832eb4" name="acad5449b4105cf222296ee86cc832eb4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acad5449b4105cf222296ee86cc832eb4">&#9670;&#160;</a></span>processNextExport()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::processNextExport </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00431">431</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8h_source.html#l00121">EasyKiConverter::ExportService::ExportData::componentId</a>, <a class="el" href="ExportService_8cpp_source.html#l00426">createOutputDirectory()</a>, <a class="el" href="ExportService_8cpp_source.html#l00067">export3DModel()</a>, <a class="el" href="classEasyKiConverter_1_1ExportService.html#a76988064ce9bb611c593c88a41a9f93f">exportCompleted()</a>, <a class="el" href="ExportService_8h_source.html#l00025">EasyKiConverter::ExportOptions::exportFootprint</a>, <a class="el" href="ExportService_8cpp_source.html#l00055">exportFootprint()</a>, <a class="el" href="ExportService_8h_source.html#l00026">EasyKiConverter::ExportOptions::exportModel3D</a>, <a class="el" href="ExportService_8h_source.html#l00024">EasyKiConverter::ExportOptions::exportSymbol</a>, <a class="el" href="ExportService_8cpp_source.html#l00043">exportSymbol()</a>, <a class="el" href="ExportService_8h_source.html#l00123">EasyKiConverter::ExportService::ExportData::footprintData</a>, <a class="el" href="ExportService_8cpp_source.html#l00332">handleExportTaskFinished()</a>, <a class="el" href="FootprintData_8h_source.html#l00216">EasyKiConverter::FootprintData::info()</a>, <a class="el" href="SymbolData_8h_source.html#l00321">EasyKiConverter::SymbolData::info()</a>, <a class="el" href="ExportService_8h_source.html#l00110">m_currentProgress</a>, <a class="el" href="ExportService_8h_source.html#l00129">m_exportDataList</a>, <a class="el" href="ExportService_8h_source.html#l00113">m_failureCount</a>, <a class="el" href="ExportService_8h_source.html#l00106">m_isExporting</a>, <a class="el" href="ExportService_8h_source.html#l00103">m_mutex</a>, <a class="el" href="ExportService_8h_source.html#l00108">m_options</a>, <a class="el" href="ExportService_8h_source.html#l00112">m_successCount</a>, <a class="el" href="ExportService_8h_source.html#l00111">m_totalProgress</a>, <a class="el" href="ExportService_8h_source.html#l00124">EasyKiConverter::ExportService::ExportData::model3DData</a>, <a class="el" href="FootprintData_8h_source.html#l00017">EasyKiConverter::FootprintInfo::name</a>, <a class="el" href="SymbolData_8h_source.html#l00031">EasyKiConverter::SymbolInfo::name</a>, <a class="el" href="ExportService_8h_source.html#l00022">EasyKiConverter::ExportOptions::outputPath</a>, <a class="el" href="ExportService_8h_source.html#l00122">EasyKiConverter::ExportService::ExportData::symbolData</a> , 以及 <a class="el" href="Model3DData_8h_source.html#l00041">EasyKiConverter::Model3DData::uuid()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00080">executeExportPipeline()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00332">handleExportTaskFinished()</a>.</p>
+
+</div>
+</div>
+<a id="ab2107db9fb518d8e8773435ee273b560" name="ab2107db9fb518d8e8773435ee273b560"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2107db9fb518d8e8773435ee273b560">&#9670;&#160;</a></span>retryExport()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::retryExport </td>
+          <td>(</td>
+          <td class="paramtype">const QStringList &amp;&#160;</td>
+          <td class="paramname"><em>componentIds</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>被 <a class="el" href="classEasyKiConverter_1_1ExportServicePipeline.html#a28267e8e1613bd9d96725c6ed8a2b5e5">EasyKiConverter::ExportServicePipeline</a> 重载.</p>
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00311">311</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8cpp_source.html#l00080">executeExportPipeline()</a>, <a class="el" href="ExportService_8h_source.html#l00027">EasyKiConverter::ExportOptions::overwriteExistingFiles</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00028">EasyKiConverter::ExportOptions::updateMode</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00540">EasyKiConverter::ExportProgressViewModel::startExportInternal()</a>.</p>
+
+</div>
+</div>
+<a id="a601eae421fb3bc3a21062622ecea9ead" name="a601eae421fb3bc3a21062622ecea9ead"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a601eae421fb3bc3a21062622ecea9ead">&#9670;&#160;</a></span>setExportOptions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::setExportOptions </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00318">318</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8h_source.html#l00103">m_mutex</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00108">m_options</a>.</p>
+
+</div>
+</div>
+<a id="ab80e74c1c4ecaf63273a452b9e270c6c" name="ab80e74c1c4ecaf63273a452b9e270c6c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab80e74c1c4ecaf63273a452b9e270c6c">&#9670;&#160;</a></span>updateProgress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ExportService::updateProgress </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>current</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>total</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00416">416</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ExportService.html#a243f6eb8b0f0a746ead40ce51bf3e3d0">exportProgress()</a>, <a class="el" href="ExportService_8h_source.html#l00110">m_currentProgress</a> , 以及 <a class="el" href="ExportService_8h_source.html#l00111">m_totalProgress</a>.</p>
+
+</div>
+</div>
+<a id="a05d3b564eac3bccf67af84aa25770536" name="a05d3b564eac3bccf67af84aa25770536"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a05d3b564eac3bccf67af84aa25770536">&#9670;&#160;</a></span>waitForCompletion()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ExportService::waitForCompletion </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>timeoutMs</em> = <code>5000</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>被 <a class="el" href="classEasyKiConverter_1_1ExportServicePipeline.html#aa03eded002572f95f1cf17ead388086c">EasyKiConverter::ExportServicePipeline</a> 重载.</p>
+
+<p class="definition">在文件 <a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a> 第 <a class="el" href="ExportService_8cpp_source.html#l00304">304</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportService_8h_source.html#l00102">m_threadPool</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00142">EasyKiConverter::ExportProgressViewModel::handleCloseRequest()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="ad227aa5d185561df85897b45c96baeac" name="ad227aa5d185561df85897b45c96baeac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad227aa5d185561df85897b45c96baeac">&#9670;&#160;</a></span>m_currentProgress</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EasyKiConverter::ExportService::m_currentProgress</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00110">110</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00080">executeExportPipeline()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00332">handleExportTaskFinished()</a>, <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a>, <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00416">updateProgress()</a>.</p>
+
+</div>
+</div>
+<a id="a61d57503f4f3599b90382679e827b620" name="a61d57503f4f3599b90382679e827b620"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a61d57503f4f3599b90382679e827b620">&#9670;&#160;</a></span>m_exportDataList</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QList&lt;<a class="el" href="structEasyKiConverter_1_1ExportService_1_1ExportData.html">ExportData</a>&gt; EasyKiConverter::ExportService::m_exportDataList</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00129">129</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00080">executeExportPipeline()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a>.</p>
+
+</div>
+</div>
+<a id="a78a1b7aecc522380b983c2d8d34ace76" name="a78a1b7aecc522380b983c2d8d34ace76"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78a1b7aecc522380b983c2d8d34ace76">&#9670;&#160;</a></span>m_failureCount</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EasyKiConverter::ExportService::m_failureCount</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00113">113</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00080">executeExportPipeline()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00332">handleExportTaskFinished()</a>, <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a>.</p>
+
+</div>
+</div>
+<a id="acad47c32f317dbfc8151430abb9de391" name="acad47c32f317dbfc8151430abb9de391"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acad47c32f317dbfc8151430abb9de391">&#9670;&#160;</a></span>m_footprintExporter</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">class <a class="el" href="classEasyKiConverter_1_1ExporterFootprint.html">ExporterFootprint</a>* EasyKiConverter::ExportService::m_footprintExporter</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00117">117</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00034">~ExportService()</a>, <a class="el" href="ExportService_8cpp_source.html#l00055">exportFootprint()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00379">exportFootprintLibrary()</a>.</p>
+
+</div>
+</div>
+<a id="a5ff0c19753efc5b51e31d793192fdadb" name="a5ff0c19753efc5b51e31d793192fdadb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5ff0c19753efc5b51e31d793192fdadb">&#9670;&#160;</a></span>m_isExporting</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QAtomicInt EasyKiConverter::ExportService::m_isExporting</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00106">106</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00297">cancelExport()</a>, <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00434">EasyKiConverter::ExportServicePipeline::checkPipelineCompletion()</a>, <a class="el" href="ExportService_8cpp_source.html#l00080">executeExportPipeline()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>, <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00090">EasyKiConverter::ExportServicePipeline::executeExportPipelineWithStages()</a>, <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a>, <a class="el" href="ExportService_8cpp_source.html#l00328">isExporting()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a>.</p>
+
+</div>
+</div>
+<a id="a6170dc38bfdb8831d945defa78f20202" name="a6170dc38bfdb8831d945defa78f20202"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6170dc38bfdb8831d945defa78f20202">&#9670;&#160;</a></span>m_isStopping</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QAtomicInt EasyKiConverter::ExportService::m_isStopping</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00107">107</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00297">cancelExport()</a>, <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00625">EasyKiConverter::ExportServicePipeline::cancelExport()</a>, <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00434">EasyKiConverter::ExportServicePipeline::checkPipelineCompletion()</a> , 以及 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00090">EasyKiConverter::ExportServicePipeline::executeExportPipelineWithStages()</a>.</p>
+
+</div>
+</div>
+<a id="a4176f97980215aee0554059e3e0202bb" name="a4176f97980215aee0554059e3e0202bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4176f97980215aee0554059e3e0202bb">&#9670;&#160;</a></span>m_modelExporter</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">class <a class="el" href="classEasyKiConverter_1_1Exporter3DModel.html">Exporter3DModel</a>* EasyKiConverter::ExportService::m_modelExporter</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00118">118</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00034">~ExportService()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00067">export3DModel()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00389">export3DModels()</a>.</p>
+
+</div>
+</div>
+<a id="a459d22c7aa77c26fe37e26bbb9da45ff" name="a459d22c7aa77c26fe37e26bbb9da45ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a459d22c7aa77c26fe37e26bbb9da45ff">&#9670;&#160;</a></span>m_mutex</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMutex* EasyKiConverter::ExportService::m_mutex</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00103">103</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00034">~ExportService()</a>, <a class="el" href="ExportService_8cpp_source.html#l00080">executeExportPipeline()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00323">getExportOptions()</a>, <a class="el" href="ExportService_8cpp_source.html#l00332">handleExportTaskFinished()</a>, <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a>, <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00318">setExportOptions()</a>.</p>
+
+</div>
+</div>
+<a id="a194a1cc1e45774729f64d01c2e6045b5" name="a194a1cc1e45774729f64d01c2e6045b5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a194a1cc1e45774729f64d01c2e6045b5">&#9670;&#160;</a></span>m_options</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> EasyKiConverter::ExportService::m_options</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00108">108</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00080">executeExportPipeline()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00067">export3DModel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00389">export3DModels()</a>, <a class="el" href="ExportService_8cpp_source.html#l00055">exportFootprint()</a>, <a class="el" href="ExportService_8cpp_source.html#l00043">exportSymbol()</a>, <a class="el" href="ExportService_8cpp_source.html#l00355">exportSymbolLibrary()</a>, <a class="el" href="ExportService_8cpp_source.html#l00323">getExportOptions()</a>, <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00318">setExportOptions()</a>.</p>
+
+</div>
+</div>
+<a id="aada323a6d25914ee1f1b447dbf14e65a" name="aada323a6d25914ee1f1b447dbf14e65a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aada323a6d25914ee1f1b447dbf14e65a">&#9670;&#160;</a></span>m_parallelCompletedCount</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EasyKiConverter::ExportService::m_parallelCompletedCount</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00132">132</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a>.</p>
+
+</div>
+</div>
+<a id="ade651dc3227be137768f02fad8755203" name="ade651dc3227be137768f02fad8755203"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade651dc3227be137768f02fad8755203">&#9670;&#160;</a></span>m_parallelExporting</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ExportService::m_parallelExporting</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00131">131</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a>.</p>
+
+</div>
+</div>
+<a id="a9023510cf4670e018412dc254009608d" name="a9023510cf4670e018412dc254009608d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9023510cf4670e018412dc254009608d">&#9670;&#160;</a></span>m_parallelExportStatus</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMap&lt;QString, bool&gt; EasyKiConverter::ExportService::m_parallelExportStatus</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00134">134</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a>.</p>
+
+</div>
+</div>
+<a id="ac6342a94151d473580a4adb6f6ce9a0f" name="ac6342a94151d473580a4adb6f6ce9a0f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6342a94151d473580a4adb6f6ce9a0f">&#9670;&#160;</a></span>m_parallelTotalCount</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EasyKiConverter::ExportService::m_parallelTotalCount</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00133">133</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a>.</p>
+
+</div>
+</div>
+<a id="a9ef7aaf1a1b644f2887194f11a73ac8c" name="a9ef7aaf1a1b644f2887194f11a73ac8c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9ef7aaf1a1b644f2887194f11a73ac8c">&#9670;&#160;</a></span>m_successCount</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EasyKiConverter::ExportService::m_successCount</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00112">112</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00080">executeExportPipeline()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00332">handleExportTaskFinished()</a>, <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a>.</p>
+
+</div>
+</div>
+<a id="a8f2d6253854fc7f807dec780bb07dea9" name="a8f2d6253854fc7f807dec780bb07dea9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f2d6253854fc7f807dec780bb07dea9">&#9670;&#160;</a></span>m_symbolExporter</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">class <a class="el" href="classEasyKiConverter_1_1ExporterSymbol.html">ExporterSymbol</a>* EasyKiConverter::ExportService::m_symbolExporter</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00116">116</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00034">~ExportService()</a>, <a class="el" href="ExportService_8cpp_source.html#l00043">exportSymbol()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00355">exportSymbolLibrary()</a>.</p>
+
+</div>
+</div>
+<a id="a505105a6ee06f4f8787416fd8942c13f" name="a505105a6ee06f4f8787416fd8942c13f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a505105a6ee06f4f8787416fd8942c13f">&#9670;&#160;</a></span>m_threadPool</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QThreadPool* EasyKiConverter::ExportService::m_threadPool</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00102">102</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00015">ExportService()</a>, <a class="el" href="ExportService_8cpp_source.html#l00034">~ExportService()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00304">waitForCompletion()</a>.</p>
+
+</div>
+</div>
+<a id="a2b9bde36663063eb0e9542557973bffe" name="a2b9bde36663063eb0e9542557973bffe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2b9bde36663063eb0e9542557973bffe">&#9670;&#160;</a></span>m_totalProgress</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EasyKiConverter::ExportService::m_totalProgress</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ExportService_8h_source.html">ExportService.h</a> 第 <a class="el" href="ExportService_8h_source.html#l00111">111</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService_8cpp_source.html#l00080">executeExportPipeline()</a>, <a class="el" href="ExportService_8cpp_source.html#l00114">executeExportPipelineWithData()</a>, <a class="el" href="ExportService_8cpp_source.html#l00510">executeExportPipelineWithDataParallel()</a>, <a class="el" href="ExportService_8cpp_source.html#l00332">handleExportTaskFinished()</a>, <a class="el" href="ExportService_8cpp_source.html#l00677">handleParallelExportTaskFinished()</a>, <a class="el" href="ExportService_8cpp_source.html#l00431">processNextExport()</a> , 以及 <a class="el" href="ExportService_8cpp_source.html#l00416">updateProgress()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>services/<a class="el" href="ExportService_8h_source.html">ExportService.h</a></li>
+<li>services/<a class="el" href="ExportService_8cpp_source.html">ExportService.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1ExportService.html">ExportService</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

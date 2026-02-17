@@ -1,0 +1,284 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: models/Model3DData.h 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('Model3DData_8h_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">Model3DData.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="Model3DData_8h.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef MODEL3DDATA_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define MODEL3DDATA_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;QByteArray&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;QJsonObject&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;QString&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="comment">// ==================== 3D 模型基础坐标 ====================</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="foldopen" id="foldopen00012" data-start="{" data-end="};">
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno"><a class="line" href="structEasyKiConverter_1_1Model3DBase.html">   12</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structEasyKiConverter_1_1Model3DBase.html">Model3DBase</a> {</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno"><a class="line" href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">   13</a></span>    <span class="keywordtype">double</span> <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">x</a>;</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno"><a class="line" href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">   14</a></span>    <span class="keywordtype">double</span> <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">y</a>;</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno"><a class="line" href="structEasyKiConverter_1_1Model3DBase.html#a2dc08074e60ef54b9d0005a5a942dcae">   15</a></span>    <span class="keywordtype">double</span> <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a2dc08074e60ef54b9d0005a5a942dcae">z</a>;</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="structEasyKiConverter_1_1Model3DBase.html#ac564a835c01031b9cfd13e9384bb4e5c">   17</a></span>    <a class="code hl_function" href="structEasyKiConverter_1_1Model3DBase.html#ac564a835c01031b9cfd13e9384bb4e5c">Model3DBase</a>() : <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">x</a>(0.0), <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">y</a>(0.0), <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a2dc08074e60ef54b9d0005a5a942dcae">z</a>(0.0) {}</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="structEasyKiConverter_1_1Model3DBase.html#ac8d165c80135939ea25827caf7bbb5f8">   19</a></span>    <a class="code hl_function" href="structEasyKiConverter_1_1Model3DBase.html#ac8d165c80135939ea25827caf7bbb5f8">Model3DBase</a>(<span class="keywordtype">double</span> <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">x</a>, <span class="keywordtype">double</span> <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">y</a>, <span class="keywordtype">double</span> <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a2dc08074e60ef54b9d0005a5a942dcae">z</a>) : <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">x</a>(<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">x</a>), <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">y</a>(<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">y</a>), <a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a2dc08074e60ef54b9d0005a5a942dcae">z</a>(<a class="code hl_variable" href="structEasyKiConverter_1_1Model3DBase.html#a2dc08074e60ef54b9d0005a5a942dcae">z</a>) {}</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    QJsonObject <a class="code hl_function" href="structEasyKiConverter_1_1Model3DBase.html#a933288225dc0344be4fd8910da21dccb">toJson</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="structEasyKiConverter_1_1Model3DBase.html#a818f418bf8525a8362850a4e5e166d71">fromJson</a>(<span class="keyword">const</span> QJsonObject&amp; json);</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>};</div>
+</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment">// ==================== 3D 模型 ====================</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="foldopen" id="foldopen00027" data-start="{" data-end="};">
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html">   27</a></span><span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1Model3DData.html">Model3DData</a> {</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#af1d2b12297e41239e3a303065d6bbda7">Model3DData</a>();</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a28ec7674d572c97cd40839ef1d1825c0">   30</a></span>    <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a28ec7674d572c97cd40839ef1d1825c0">~Model3DData</a>() = <span class="keywordflow">default</span>;</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="comment">// Getter 和 Setter 方法</span></div>
+<div class="foldopen" id="foldopen00033" data-start="{" data-end="}">
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#aff325c5de9e54b321677755f62dbe8a3">   33</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#aff325c5de9e54b321677755f62dbe8a3">name</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a0e33e967ed6edce8fe92c57b6828bb66">m_name</a>;</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    }</div>
+</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
+<div class="foldopen" id="foldopen00037" data-start="{" data-end="}">
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#ae72d275bcee4a8631ed25b637b12fd4a">   37</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#ae72d275bcee4a8631ed25b637b12fd4a">setName</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#aff325c5de9e54b321677755f62dbe8a3">name</a>) {</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a0e33e967ed6edce8fe92c57b6828bb66">m_name</a> = <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#aff325c5de9e54b321677755f62dbe8a3">name</a>;</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    }</div>
+</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
+<div class="foldopen" id="foldopen00041" data-start="{" data-end="}">
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a64cab36ef8902103dcdf1c24e8510738">   41</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a64cab36ef8902103dcdf1c24e8510738">uuid</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a445c70402a92e39009d62e7d03731a00">m_uuid</a>;</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    }</div>
+</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
+<div class="foldopen" id="foldopen00045" data-start="{" data-end="}">
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a9a042658ffdf28be72320dac649ed1d2">   45</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a9a042658ffdf28be72320dac649ed1d2">setUuid</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a64cab36ef8902103dcdf1c24e8510738">uuid</a>) {</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a445c70402a92e39009d62e7d03731a00">m_uuid</a> = <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a64cab36ef8902103dcdf1c24e8510738">uuid</a>;</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    }</div>
+</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
+<div class="foldopen" id="foldopen00049" data-start="{" data-end="}">
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">   49</a></span>    <a class="code hl_struct" href="structEasyKiConverter_1_1Model3DBase.html">Model3DBase</a> <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">translation</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#ac0c9d9db1bd04a830fae2b1ef3bb4e23">m_translation</a>;</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    }</div>
+</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
+<div class="foldopen" id="foldopen00053" data-start="{" data-end="}">
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#af98aabb15e0de900b334fe9b6413f3f4">   53</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#af98aabb15e0de900b334fe9b6413f3f4">setTranslation</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1Model3DBase.html">Model3DBase</a>&amp; <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">translation</a>) {</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#ac0c9d9db1bd04a830fae2b1ef3bb4e23">m_translation</a> = <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">translation</a>;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    }</div>
+</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
+<div class="foldopen" id="foldopen00057" data-start="{" data-end="}">
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a5c71479bc1a35010a08ccdd444e580bc">   57</a></span>    <a class="code hl_struct" href="structEasyKiConverter_1_1Model3DBase.html">Model3DBase</a> <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a5c71479bc1a35010a08ccdd444e580bc">rotation</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a3adcaf51626435adbb9d9aff7ba71a79">m_rotation</a>;</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    }</div>
+</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="foldopen" id="foldopen00061" data-start="{" data-end="}">
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a7293abf14aa1978d0874418836f6c8c3">   61</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a7293abf14aa1978d0874418836f6c8c3">setRotation</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1Model3DBase.html">Model3DBase</a>&amp; <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a5c71479bc1a35010a08ccdd444e580bc">rotation</a>) {</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a3adcaf51626435adbb9d9aff7ba71a79">m_rotation</a> = <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a5c71479bc1a35010a08ccdd444e580bc">rotation</a>;</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    }</div>
+</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="foldopen" id="foldopen00065" data-start="{" data-end="}">
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a84456a2ea89a46ecc7225393e01b9300">   65</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a84456a2ea89a46ecc7225393e01b9300">rawObj</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#aa4abf0299b772cf94781e73afbffb6bc">m_rawObj</a>;</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    }</div>
+</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
+<div class="foldopen" id="foldopen00069" data-start="{" data-end="}">
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#abea38f2ebb150e68bfd083e50bde73e6">   69</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#abea38f2ebb150e68bfd083e50bde73e6">setRawObj</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a84456a2ea89a46ecc7225393e01b9300">rawObj</a>) {</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#aa4abf0299b772cf94781e73afbffb6bc">m_rawObj</a> = <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a84456a2ea89a46ecc7225393e01b9300">rawObj</a>;</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    }</div>
+</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
+<div class="foldopen" id="foldopen00073" data-start="{" data-end="}">
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a67b30f25444a9001c3615f926e24e397">   73</a></span>    QByteArray <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a67b30f25444a9001c3615f926e24e397">step</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a02970bfd148d03318bb4c1d0599ed245">m_step</a>;</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    }</div>
+</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
+<div class="foldopen" id="foldopen00077" data-start="{" data-end="}">
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a48da11a63420c3cedae19244dfa863cd">   77</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a48da11a63420c3cedae19244dfa863cd">setStep</a>(<span class="keyword">const</span> QByteArray&amp; <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a67b30f25444a9001c3615f926e24e397">step</a>) {</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a02970bfd148d03318bb4c1d0599ed245">m_step</a> = <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a67b30f25444a9001c3615f926e24e397">step</a>;</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    }</div>
+</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    <span class="comment">// JSON 序列</span></div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    QJsonObject <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a9dc46c5cf7575232ff210aa1cdf356ee">toJson</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a6f341a47b1149ef20b80dc9f69d0b12f">fromJson</a>(<span class="keyword">const</span> QJsonObject&amp; json);</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span> </div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    <span class="comment">// 数据验证</span></div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a72e0c8d4131ce1e9d475d549d0a6d265">isValid</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a1e3c17991c14f956b511f47475b1c69a">validate</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="comment">// 清空数据</span></div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1Model3DData.html#a8714446e339b5ddfd31545cf6c8b28c6">clear</a>();</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a0e33e967ed6edce8fe92c57b6828bb66">   93</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a0e33e967ed6edce8fe92c57b6828bb66">m_name</a>;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a445c70402a92e39009d62e7d03731a00">   94</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a445c70402a92e39009d62e7d03731a00">m_uuid</a>;</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#ac0c9d9db1bd04a830fae2b1ef3bb4e23">   95</a></span>    <a class="code hl_struct" href="structEasyKiConverter_1_1Model3DBase.html">Model3DBase</a> <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#ac0c9d9db1bd04a830fae2b1ef3bb4e23">m_translation</a>;</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a3adcaf51626435adbb9d9aff7ba71a79">   96</a></span>    <a class="code hl_struct" href="structEasyKiConverter_1_1Model3DBase.html">Model3DBase</a> <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a3adcaf51626435adbb9d9aff7ba71a79">m_rotation</a>;</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#aa4abf0299b772cf94781e73afbffb6bc">   97</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#aa4abf0299b772cf94781e73afbffb6bc">m_rawObj</a>;</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1Model3DData.html#a02970bfd148d03318bb4c1d0599ed245">   98</a></span>    QByteArray <a class="code hl_variable" href="classEasyKiConverter_1_1Model3DData.html#a02970bfd148d03318bb4c1d0599ed245">m_step</a>;</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>};</div>
+</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="preprocessor">#endif  </span><span class="comment">// MODEL3DDATA_H</span></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html">EasyKiConverter::Model3DData</a></div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00027">Model3DData.h:27</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a02970bfd148d03318bb4c1d0599ed245"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a02970bfd148d03318bb4c1d0599ed245">EasyKiConverter::Model3DData::m_step</a></div><div class="ttdeci">QByteArray m_step</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00098">Model3DData.h:98</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a0e33e967ed6edce8fe92c57b6828bb66"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a0e33e967ed6edce8fe92c57b6828bb66">EasyKiConverter::Model3DData::m_name</a></div><div class="ttdeci">QString m_name</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00093">Model3DData.h:93</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a1e3c17991c14f956b511f47475b1c69a"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a1e3c17991c14f956b511f47475b1c69a">EasyKiConverter::Model3DData::validate</a></div><div class="ttdeci">QString validate() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8cpp_source.html#l00083">Model3DData.cpp:83</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a28ec7674d572c97cd40839ef1d1825c0"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a28ec7674d572c97cd40839ef1d1825c0">EasyKiConverter::Model3DData::~Model3DData</a></div><div class="ttdeci">~Model3DData()=default</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a3adcaf51626435adbb9d9aff7ba71a79"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a3adcaf51626435adbb9d9aff7ba71a79">EasyKiConverter::Model3DData::m_rotation</a></div><div class="ttdeci">Model3DBase m_rotation</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00096">Model3DData.h:96</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a445c70402a92e39009d62e7d03731a00"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a445c70402a92e39009d62e7d03731a00">EasyKiConverter::Model3DData::m_uuid</a></div><div class="ttdeci">QString m_uuid</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00094">Model3DData.h:94</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a48da11a63420c3cedae19244dfa863cd"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a48da11a63420c3cedae19244dfa863cd">EasyKiConverter::Model3DData::setStep</a></div><div class="ttdeci">void setStep(const QByteArray &amp;step)</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00077">Model3DData.h:77</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a5c71479bc1a35010a08ccdd444e580bc"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a5c71479bc1a35010a08ccdd444e580bc">EasyKiConverter::Model3DData::rotation</a></div><div class="ttdeci">Model3DBase rotation() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00057">Model3DData.h:57</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a64cab36ef8902103dcdf1c24e8510738"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a64cab36ef8902103dcdf1c24e8510738">EasyKiConverter::Model3DData::uuid</a></div><div class="ttdeci">QString uuid() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00041">Model3DData.h:41</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a67b30f25444a9001c3615f926e24e397"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a67b30f25444a9001c3615f926e24e397">EasyKiConverter::Model3DData::step</a></div><div class="ttdeci">QByteArray step() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00073">Model3DData.h:73</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a6f341a47b1149ef20b80dc9f69d0b12f"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a6f341a47b1149ef20b80dc9f69d0b12f">EasyKiConverter::Model3DData::fromJson</a></div><div class="ttdeci">bool fromJson(const QJsonObject &amp;json)</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8cpp_source.html#l00045">Model3DData.cpp:45</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a7293abf14aa1978d0874418836f6c8c3"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a7293abf14aa1978d0874418836f6c8c3">EasyKiConverter::Model3DData::setRotation</a></div><div class="ttdeci">void setRotation(const Model3DBase &amp;rotation)</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00061">Model3DData.h:61</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a72e0c8d4131ce1e9d475d549d0a6d265"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a72e0c8d4131ce1e9d475d549d0a6d265">EasyKiConverter::Model3DData::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8cpp_source.html#l00074">Model3DData.cpp:74</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a84456a2ea89a46ecc7225393e01b9300"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a84456a2ea89a46ecc7225393e01b9300">EasyKiConverter::Model3DData::rawObj</a></div><div class="ttdeci">QString rawObj() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00065">Model3DData.h:65</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a8714446e339b5ddfd31545cf6c8b28c6"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a8714446e339b5ddfd31545cf6c8b28c6">EasyKiConverter::Model3DData::clear</a></div><div class="ttdeci">void clear()</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8cpp_source.html#l00091">Model3DData.cpp:91</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a9a042658ffdf28be72320dac649ed1d2"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a9a042658ffdf28be72320dac649ed1d2">EasyKiConverter::Model3DData::setUuid</a></div><div class="ttdeci">void setUuid(const QString &amp;uuid)</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00045">Model3DData.h:45</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_a9dc46c5cf7575232ff210aa1cdf356ee"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#a9dc46c5cf7575232ff210aa1cdf356ee">EasyKiConverter::Model3DData::toJson</a></div><div class="ttdeci">QJsonObject toJson() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8cpp_source.html#l00028">Model3DData.cpp:28</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_aa4abf0299b772cf94781e73afbffb6bc"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#aa4abf0299b772cf94781e73afbffb6bc">EasyKiConverter::Model3DData::m_rawObj</a></div><div class="ttdeci">QString m_rawObj</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00097">Model3DData.h:97</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_abea38f2ebb150e68bfd083e50bde73e6"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#abea38f2ebb150e68bfd083e50bde73e6">EasyKiConverter::Model3DData::setRawObj</a></div><div class="ttdeci">void setRawObj(const QString &amp;rawObj)</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00069">Model3DData.h:69</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_ac0c9d9db1bd04a830fae2b1ef3bb4e23"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#ac0c9d9db1bd04a830fae2b1ef3bb4e23">EasyKiConverter::Model3DData::m_translation</a></div><div class="ttdeci">Model3DBase m_translation</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00095">Model3DData.h:95</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_ae72d275bcee4a8631ed25b637b12fd4a"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#ae72d275bcee4a8631ed25b637b12fd4a">EasyKiConverter::Model3DData::setName</a></div><div class="ttdeci">void setName(const QString &amp;name)</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00037">Model3DData.h:37</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_af1d2b12297e41239e3a303065d6bbda7"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#af1d2b12297e41239e3a303065d6bbda7">EasyKiConverter::Model3DData::Model3DData</a></div><div class="ttdeci">Model3DData()</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8cpp_source.html#l00026">Model3DData.cpp:26</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_af98aabb15e0de900b334fe9b6413f3f4"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#af98aabb15e0de900b334fe9b6413f3f4">EasyKiConverter::Model3DData::setTranslation</a></div><div class="ttdeci">void setTranslation(const Model3DBase &amp;translation)</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00053">Model3DData.h:53</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_afd38087c6dda7902afa160b84b485534"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#afd38087c6dda7902afa160b84b485534">EasyKiConverter::Model3DData::translation</a></div><div class="ttdeci">Model3DBase translation() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00049">Model3DData.h:49</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Model3DData_html_aff325c5de9e54b321677755f62dbe8a3"><div class="ttname"><a href="classEasyKiConverter_1_1Model3DData.html#aff325c5de9e54b321677755f62dbe8a3">EasyKiConverter::Model3DData::name</a></div><div class="ttdeci">QString name() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00033">Model3DData.h:33</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1Model3DBase_html"><div class="ttname"><a href="structEasyKiConverter_1_1Model3DBase.html">EasyKiConverter::Model3DBase</a></div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00012">Model3DData.h:12</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1Model3DBase_html_a2dc08074e60ef54b9d0005a5a942dcae"><div class="ttname"><a href="structEasyKiConverter_1_1Model3DBase.html#a2dc08074e60ef54b9d0005a5a942dcae">EasyKiConverter::Model3DBase::z</a></div><div class="ttdeci">double z</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00015">Model3DData.h:15</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1Model3DBase_html_a3d0bfb0fa2d1667e93826ca71dea4afc"><div class="ttname"><a href="structEasyKiConverter_1_1Model3DBase.html#a3d0bfb0fa2d1667e93826ca71dea4afc">EasyKiConverter::Model3DBase::x</a></div><div class="ttdeci">double x</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00013">Model3DData.h:13</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1Model3DBase_html_a818f418bf8525a8362850a4e5e166d71"><div class="ttname"><a href="structEasyKiConverter_1_1Model3DBase.html#a818f418bf8525a8362850a4e5e166d71">EasyKiConverter::Model3DBase::fromJson</a></div><div class="ttdeci">bool fromJson(const QJsonObject &amp;json)</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8cpp_source.html#l00017">Model3DData.cpp:17</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1Model3DBase_html_a933288225dc0344be4fd8910da21dccb"><div class="ttname"><a href="structEasyKiConverter_1_1Model3DBase.html#a933288225dc0344be4fd8910da21dccb">EasyKiConverter::Model3DBase::toJson</a></div><div class="ttdeci">QJsonObject toJson() const</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8cpp_source.html#l00009">Model3DData.cpp:9</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1Model3DBase_html_ac564a835c01031b9cfd13e9384bb4e5c"><div class="ttname"><a href="structEasyKiConverter_1_1Model3DBase.html#ac564a835c01031b9cfd13e9384bb4e5c">EasyKiConverter::Model3DBase::Model3DBase</a></div><div class="ttdeci">Model3DBase()</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00017">Model3DData.h:17</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1Model3DBase_html_ac8d165c80135939ea25827caf7bbb5f8"><div class="ttname"><a href="structEasyKiConverter_1_1Model3DBase.html#ac8d165c80135939ea25827caf7bbb5f8">EasyKiConverter::Model3DBase::Model3DBase</a></div><div class="ttdeci">Model3DBase(double x, double y, double z)</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00019">Model3DData.h:19</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1Model3DBase_html_ae0215718f005cc9f6ad5804370fd4777"><div class="ttname"><a href="structEasyKiConverter_1_1Model3DBase.html#ae0215718f005cc9f6ad5804370fd4777">EasyKiConverter::Model3DBase::y</a></div><div class="ttdeci">double y</div><div class="ttdef"><b>Definition</b> <a href="Model3DData_8h_source.html#l00014">Model3DData.h:14</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_1ae4179d5e953611aae20c997279e02c.html">models</a></li><li class="navelem"><a class="el" href="Model3DData_8h.html">Model3DData.h</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

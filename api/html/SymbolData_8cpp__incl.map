@@ -1,0 +1,21 @@
+<map id="models/SymbolData.cpp" name="models/SymbolData.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="124,5,305,31"/>
+<area shape="rect" id="Node000002" href="$SymbolData_8h.html" title=" " alt="" coords="220,152,335,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,30,254,78,274,137,269,139,250,80,221,32"/>
+<area shape="rect" id="Node000009" href="$SymbolDataSerializer_8h.html" title=" " alt="" coords="65,79,239,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="206,33,173,70,169,66,202,29"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="131,225,226,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="263,180,207,219,204,215,260,175"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,225,107,251"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="243,180,105,224,104,219,241,175"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="250,225,305,251"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="280,178,280,212,275,212,275,178"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="329,225,402,251"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="293,175,342,214,339,219,290,179"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="427,225,496,251"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="308,175,419,218,417,223,306,180"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="521,225,591,251"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="323,175,508,222,507,227,321,180"/>
+<area shape="poly" id="edge9_Node000009_Node000002" title=" " alt="" coords="173,102,246,143,244,147,171,106"/>
+<area shape="poly" id="edge10_Node000009_Node000004" title=" " alt="" coords="146,106,74,215,69,212,142,103"/>
+</map>

@@ -1,0 +1,22 @@
+<map id="core/kicad/FootprintGraphicsGenerator.h" name="core/kicad/FootprintGraphicsGenerator.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="389,5,597,45"/>
+<area shape="rect" id="Node000002" href="$FootprintData_8h.html" title=" " alt="" coords="299,93,474,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="469,48,415,87,412,83,466,43"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="514,240,585,265"/>
+<area shape="poly" id="edge11_Node000001_Node000006" title=" " alt="" coords="506,44,531,98,552,166,555,197,554,226,549,226,550,197,547,167,526,100,501,47"/>
+<area shape="rect" id="Node000003" href="$Model3DData_8h.html" title=" " alt="" coords="93,167,216,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="350,121,206,165,204,160,349,116"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="5,240,107,265"/>
+<area shape="poly" id="edge7_Node000002_Node000005" title=" " alt="" coords="299,117,173,135,119,150,83,169,73,181,66,196,59,226,54,225,61,194,69,178,80,165,117,145,172,130,299,112"/>
+<area shape="poly" id="edge10_Node000002_Node000006" title=" " alt="" coords="441,116,486,134,507,148,526,165,543,194,550,225,545,226,538,196,522,168,504,152,483,139,439,121"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="241,167,335,192"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="372,121,317,161,314,156,369,117"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="359,167,414,192"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="389,119,389,153,384,153,384,119"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="438,167,511,192"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="402,117,451,156,448,160,399,121"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="131,240,229,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="161,191,174,226,169,228,156,193"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="140,194,85,234,82,230,137,190"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="217,189,501,240,500,245,216,194"/>
+</map>

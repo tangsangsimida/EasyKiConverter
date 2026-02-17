@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: services/pipeline/stage/WriteStageHandler.cpp 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('WriteStageHandler_8cpp_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">WriteStageHandler.cpp</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="WriteStageHandler_8cpp.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#include &quot;<a class="code" href="WriteStageHandler_8h.html">WriteStageHandler.h</a>&quot;</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &lt;QDebug&gt;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;QRunnable&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="foldopen" id="foldopen00008" data-start="{" data-end="}">
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1WriteStageHandler.html#ac5d07d351c3fb0886d137b6f42c0f7a4">    8</a></span><a class="code hl_function" href="classEasyKiConverter_1_1WriteStageHandler.html#ac5d07d351c3fb0886d137b6f42c0f7a4">WriteStageHandler::WriteStageHandler</a>(QAtomicInt&amp; isCancelled,</div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span>                                     QThreadPool* threadPool,</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span>                                     <a class="code hl_typedef" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">PipelineQueueManager::StatusQueuePtr</a> inputQueue,</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span>                                     <span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a>&amp; options,</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>                                     <span class="keyword">const</span> QString&amp; tempDir,</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>                                     QObject* parent)</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>    : <a class="code hl_class" href="classEasyKiConverter_1_1StageHandler.html">StageHandler</a>(isCancelled, parent)</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    , m_threadPool(threadPool)</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    , m_inputQueue(inputQueue)</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    , m_options(options)</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>    , m_tempDir(tempDir) {}</div>
+</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
+<div class="foldopen" id="foldopen00020" data-start="{" data-end="}">
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1WriteStageHandler.html#a07a744560b5f77f2869091db9ff5585d">   20</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1WriteStageHandler.html#a07a744560b5f77f2869091db9ff5585d">WriteStageHandler::start</a>() {</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="keyword">auto</span> inputQueue = <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a7f68bb45eaa186d19c5e59f2f8ad3532">m_inputQueue</a>;</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keywordflow">if</span> (!inputQueue)</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#ad86a199e583e3b241060659349753209">m_threadPool</a>-&gt;maxThreadCount(); i++) {</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#ad86a199e583e3b241060659349753209">m_threadPool</a>-&gt;<a class="code hl_function" href="classEasyKiConverter_1_1StageHandler.html#a3e74e985d85a9e6fb220e5a3903af8e5">start</a>(QRunnable::create([<span class="keyword">this</span>, inputQueue]() {</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>            <span class="keywordflow">while</span> (<span class="keyword">true</span>) {</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>                <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1StageHandler.html#add9f2f641518d01e2c2c5ff7b8dfe1c6">m_isCancelled</a>.loadAcquire() || !inputQueue)</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>                    <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>                QSharedPointer&lt;ComponentExportStatus&gt; status;</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>                <span class="keywordflow">if</span> (!inputQueue-&gt;pop(status, 1000)) {</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>                    <span class="keywordflow">if</span> (inputQueue-&gt;isClosed())</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>                        <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>                    <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>                }</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>                <a class="code hl_class" href="classEasyKiConverter_1_1WriteWorker.html">WriteWorker</a>* worker = <span class="keyword">new</span> <a class="code hl_class" href="classEasyKiConverter_1_1WriteWorker.html">WriteWorker</a>(status,</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>                                                      <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a6314ab78bd6df289c8b282f19616119e">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">outputPath</a>,</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>                                                      <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a6314ab78bd6df289c8b282f19616119e">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a37b6e25e2e8a105952358019348c3fc4">libName</a>,</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>                                                      <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a6314ab78bd6df289c8b282f19616119e">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a13878d45419fd1f21742d39efadd4d6d">exportSymbol</a>,</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>                                                      <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a6314ab78bd6df289c8b282f19616119e">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a96a1ae24c16e82474835a8b8e4c568c4">exportFootprint</a>,</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>                                                      <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a6314ab78bd6df289c8b282f19616119e">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a507344fb716c53145ee5a112cf22835d">exportModel3D</a>,</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>                                                      <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a6314ab78bd6df289c8b282f19616119e">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a7c3c0c8c45a5be0a6bf6cb19aba33392">debugMode</a>,</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                                                      <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a5e496aaa0d76dc63adce108dbe53ca62">m_tempDir</a>,</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>                                                      <span class="keyword">nullptr</span>);</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                worker-&gt;moveToThread(this-&gt;thread());</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>                {</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>                    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a387fba1527b1d69c5428fce85cb7ecd6">m_workerMutex</a>);</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>                    <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a24dd05d6fc00c95cf0c524b990988555">m_activeWorkers</a>.insert(worker);</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>                }</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                connect(</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                    worker,</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>                    &amp;<a class="code hl_function" href="classEasyKiConverter_1_1WriteWorker.html#a24cf89f509bfea33d2e9739b393c9fcd">WriteWorker::writeCompleted</a>,</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>                    <span class="keyword">this</span>,</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                    [<span class="keyword">this</span>, worker](QSharedPointer&lt;ComponentExportStatus&gt; s) {</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>                        {</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>                            QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a387fba1527b1d69c5428fce85cb7ecd6">m_workerMutex</a>);</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                            <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a24dd05d6fc00c95cf0c524b990988555">m_activeWorkers</a>.remove(worker);</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                        }</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>                        <span class="comment">// 即使取消了也要发出信号，让流水线能够正确完成</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                        emit <a class="code hl_function" href="classEasyKiConverter_1_1WriteStageHandler.html#acb8cd54dddb8d3d564479c5a70c4b3f9">componentWriteCompleted</a>(s);</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                    },</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                    Qt::QueuedConnection);</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                connect(worker, &amp;<a class="code hl_function" href="classEasyKiConverter_1_1WriteWorker.html#a24cf89f509bfea33d2e9739b393c9fcd">WriteWorker::writeCompleted</a>, worker, &amp;QObject::deleteLater, Qt::QueuedConnection);</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                worker-&gt;<a class="code hl_function" href="classEasyKiConverter_1_1WriteWorker.html#a8f09ef739938279648a6bd59d27b9ba2">run</a>();</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>            }</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        }));</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    }</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>}</div>
+</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
+<div class="foldopen" id="foldopen00076" data-start="{" data-end="}">
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1WriteStageHandler.html#a8ae809f7de46704cb302a7016cfcace6">   76</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1WriteStageHandler.html#a8ae809f7de46704cb302a7016cfcace6">WriteStageHandler::stop</a>() {</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a387fba1527b1d69c5428fce85cb7ecd6">m_workerMutex</a>);</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    <span class="keywordflow">for</span> (<a class="code hl_class" href="classEasyKiConverter_1_1WriteWorker.html">WriteWorker</a>* worker : <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a24dd05d6fc00c95cf0c524b990988555">m_activeWorkers</a>) {</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        <span class="keywordflow">if</span> (worker)</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>            worker-&gt;abort();</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    }</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1WriteStageHandler.html#a24dd05d6fc00c95cf0c524b990988555">m_activeWorkers</a>.clear();</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>}</div>
+</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span> </div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="ttc" id="aWriteStageHandler_8h_html"><div class="ttname"><a href="WriteStageHandler_8h.html">WriteStageHandler.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PipelineQueueManager_html_a604e4dc27abfa18da74c1ed51bdbddf6"><div class="ttname"><a href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">EasyKiConverter::PipelineQueueManager::StatusQueuePtr</a></div><div class="ttdeci">QSharedPointer&lt; StatusQueue &gt; StatusQueuePtr</div><div class="ttdef"><b>Definition</b> <a href="PipelineQueueManager_8h_source.html#l00022">PipelineQueueManager.h:22</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1StageHandler_html"><div class="ttname"><a href="classEasyKiConverter_1_1StageHandler.html">EasyKiConverter::StageHandler</a></div><div class="ttdoc">流水线阶段处理器基类</div><div class="ttdef"><b>Definition</b> <a href="StageHandler_8h_source.html#l00013">StageHandler.h:13</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1StageHandler_html_a3e74e985d85a9e6fb220e5a3903af8e5"><div class="ttname"><a href="classEasyKiConverter_1_1StageHandler.html#a3e74e985d85a9e6fb220e5a3903af8e5">EasyKiConverter::StageHandler::start</a></div><div class="ttdeci">virtual void start()=0</div><div class="ttdoc">启动阶段工作</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1StageHandler_html_add9f2f641518d01e2c2c5ff7b8dfe1c6"><div class="ttname"><a href="classEasyKiConverter_1_1StageHandler.html#add9f2f641518d01e2c2c5ff7b8dfe1c6">EasyKiConverter::StageHandler::m_isCancelled</a></div><div class="ttdeci">QAtomicInt &amp; m_isCancelled</div><div class="ttdef"><b>Definition</b> <a href="StageHandler_8h_source.html#l00034">StageHandler.h:34</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteStageHandler_html_a07a744560b5f77f2869091db9ff5585d"><div class="ttname"><a href="classEasyKiConverter_1_1WriteStageHandler.html#a07a744560b5f77f2869091db9ff5585d">EasyKiConverter::WriteStageHandler::start</a></div><div class="ttdeci">void start() override</div><div class="ttdoc">启动阶段工作</div><div class="ttdef"><b>Definition</b> <a href="WriteStageHandler_8cpp_source.html#l00020">WriteStageHandler.cpp:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteStageHandler_html_a24dd05d6fc00c95cf0c524b990988555"><div class="ttname"><a href="classEasyKiConverter_1_1WriteStageHandler.html#a24dd05d6fc00c95cf0c524b990988555">EasyKiConverter::WriteStageHandler::m_activeWorkers</a></div><div class="ttdeci">QSet&lt; WriteWorker * &gt; m_activeWorkers</div><div class="ttdef"><b>Definition</b> <a href="WriteStageHandler_8h_source.html#l00047">WriteStageHandler.h:47</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteStageHandler_html_a387fba1527b1d69c5428fce85cb7ecd6"><div class="ttname"><a href="classEasyKiConverter_1_1WriteStageHandler.html#a387fba1527b1d69c5428fce85cb7ecd6">EasyKiConverter::WriteStageHandler::m_workerMutex</a></div><div class="ttdeci">QMutex m_workerMutex</div><div class="ttdef"><b>Definition</b> <a href="WriteStageHandler_8h_source.html#l00048">WriteStageHandler.h:48</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteStageHandler_html_a5e496aaa0d76dc63adce108dbe53ca62"><div class="ttname"><a href="classEasyKiConverter_1_1WriteStageHandler.html#a5e496aaa0d76dc63adce108dbe53ca62">EasyKiConverter::WriteStageHandler::m_tempDir</a></div><div class="ttdeci">QString m_tempDir</div><div class="ttdef"><b>Definition</b> <a href="WriteStageHandler_8h_source.html#l00046">WriteStageHandler.h:46</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteStageHandler_html_a6314ab78bd6df289c8b282f19616119e"><div class="ttname"><a href="classEasyKiConverter_1_1WriteStageHandler.html#a6314ab78bd6df289c8b282f19616119e">EasyKiConverter::WriteStageHandler::m_options</a></div><div class="ttdeci">ExportOptions m_options</div><div class="ttdef"><b>Definition</b> <a href="WriteStageHandler_8h_source.html#l00045">WriteStageHandler.h:45</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteStageHandler_html_a7f68bb45eaa186d19c5e59f2f8ad3532"><div class="ttname"><a href="classEasyKiConverter_1_1WriteStageHandler.html#a7f68bb45eaa186d19c5e59f2f8ad3532">EasyKiConverter::WriteStageHandler::m_inputQueue</a></div><div class="ttdeci">PipelineQueueManager::StatusQueuePtr m_inputQueue</div><div class="ttdef"><b>Definition</b> <a href="WriteStageHandler_8h_source.html#l00044">WriteStageHandler.h:44</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteStageHandler_html_a8ae809f7de46704cb302a7016cfcace6"><div class="ttname"><a href="classEasyKiConverter_1_1WriteStageHandler.html#a8ae809f7de46704cb302a7016cfcace6">EasyKiConverter::WriteStageHandler::stop</a></div><div class="ttdeci">void stop() override</div><div class="ttdoc">停止/取消阶段工作</div><div class="ttdef"><b>Definition</b> <a href="WriteStageHandler_8cpp_source.html#l00076">WriteStageHandler.cpp:76</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteStageHandler_html_ac5d07d351c3fb0886d137b6f42c0f7a4"><div class="ttname"><a href="classEasyKiConverter_1_1WriteStageHandler.html#ac5d07d351c3fb0886d137b6f42c0f7a4">EasyKiConverter::WriteStageHandler::WriteStageHandler</a></div><div class="ttdeci">WriteStageHandler(QAtomicInt &amp;isCancelled, QThreadPool *threadPool, PipelineQueueManager::StatusQueuePtr inputQueue, const ExportOptions &amp;options, const QString &amp;tempDir, QObject *parent=nullptr)</div><div class="ttdef"><b>Definition</b> <a href="WriteStageHandler_8cpp_source.html#l00008">WriteStageHandler.cpp:8</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteStageHandler_html_acb8cd54dddb8d3d564479c5a70c4b3f9"><div class="ttname"><a href="classEasyKiConverter_1_1WriteStageHandler.html#acb8cd54dddb8d3d564479c5a70c4b3f9">EasyKiConverter::WriteStageHandler::componentWriteCompleted</a></div><div class="ttdeci">void componentWriteCompleted(QSharedPointer&lt; ComponentExportStatus &gt; status)</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteStageHandler_html_ad86a199e583e3b241060659349753209"><div class="ttname"><a href="classEasyKiConverter_1_1WriteStageHandler.html#ad86a199e583e3b241060659349753209">EasyKiConverter::WriteStageHandler::m_threadPool</a></div><div class="ttdeci">QThreadPool * m_threadPool</div><div class="ttdef"><b>Definition</b> <a href="WriteStageHandler_8h_source.html#l00043">WriteStageHandler.h:43</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteWorker_html"><div class="ttname"><a href="classEasyKiConverter_1_1WriteWorker.html">EasyKiConverter::WriteWorker</a></div><div class="ttdoc">写入工作线程</div><div class="ttdef"><b>Definition</b> <a href="WriteWorker_8h_source.html#l00020">WriteWorker.h:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteWorker_html_a24cf89f509bfea33d2e9739b393c9fcd"><div class="ttname"><a href="classEasyKiConverter_1_1WriteWorker.html#a24cf89f509bfea33d2e9739b393c9fcd">EasyKiConverter::WriteWorker::writeCompleted</a></div><div class="ttdeci">void writeCompleted(QSharedPointer&lt; ComponentExportStatus &gt; status)</div><div class="ttdoc">写入完成信号</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1WriteWorker_html_a8f09ef739938279648a6bd59d27b9ba2"><div class="ttname"><a href="classEasyKiConverter_1_1WriteWorker.html#a8f09ef739938279648a6bd59d27b9ba2">EasyKiConverter::WriteWorker::run</a></div><div class="ttdeci">void run() override</div><div class="ttdoc">执行写入任务</div><div class="ttdef"><b>Definition</b> <a href="WriteWorker_8cpp_source.html#l00052">WriteWorker.cpp:52</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html">EasyKiConverter::ExportOptions</a></div><div class="ttdoc">导出选项结构</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00021">ExportService.h:21</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a13878d45419fd1f21742d39efadd4d6d"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a13878d45419fd1f21742d39efadd4d6d">EasyKiConverter::ExportOptions::exportSymbol</a></div><div class="ttdeci">bool exportSymbol</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00024">ExportService.h:24</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a37b6e25e2e8a105952358019348c3fc4"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a37b6e25e2e8a105952358019348c3fc4">EasyKiConverter::ExportOptions::libName</a></div><div class="ttdeci">QString libName</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00023">ExportService.h:23</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a507344fb716c53145ee5a112cf22835d"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a507344fb716c53145ee5a112cf22835d">EasyKiConverter::ExportOptions::exportModel3D</a></div><div class="ttdeci">bool exportModel3D</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00026">ExportService.h:26</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a7c3c0c8c45a5be0a6bf6cb19aba33392"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a7c3c0c8c45a5be0a6bf6cb19aba33392">EasyKiConverter::ExportOptions::debugMode</a></div><div class="ttdeci">bool debugMode</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00029">ExportService.h:29</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a96a1ae24c16e82474835a8b8e4c568c4"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a96a1ae24c16e82474835a8b8e4c568c4">EasyKiConverter::ExportOptions::exportFootprint</a></div><div class="ttdeci">bool exportFootprint</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00025">ExportService.h:25</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_aaa78da68c28f17c71ba42d1ff433e623"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">EasyKiConverter::ExportOptions::outputPath</a></div><div class="ttdeci">QString outputPath</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00022">ExportService.h:22</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_056ec8f0377ddc4293192cbc6b19c99c.html">services</a></li><li class="navelem"><a class="el" href="dir_a214087799024aa5b87865844b14c613.html">pipeline</a></li><li class="navelem"><a class="el" href="dir_5f0d1fb2c02571320f2b80b1eda20dd1.html">stage</a></li><li class="navelem"><a class="el" href="WriteStageHandler_8cpp.html">WriteStageHandler.cpp</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

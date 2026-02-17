@@ -1,0 +1,735 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::SymbolGraphicsGenerator类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1SymbolGraphicsGenerator.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1SymbolGraphicsGenerator-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::SymbolGraphicsGenerator类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>符号图形元素生成器  
+ <a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="SymbolGraphicsGenerator_8h_source.html">SymbolGraphicsGenerator.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> EasyKiConverter::SymbolGraphicsGenerator 的协作图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1SymbolGraphicsGenerator__coll__graph.svg" width="247" height="479"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a1ee577b20891ac1c639c8c7d4f22719b" id="r_a1ee577b20891ac1c639c8c7d4f22719b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a1ee577b20891ac1c639c8c7d4f22719b">SymbolGraphicsGenerator</a> ()=default</td></tr>
+<tr class="separator:a1ee577b20891ac1c639c8c7d4f22719b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22f934a5eec17e27424a7bae104409dd" id="r_a22f934a5eec17e27424a7bae104409dd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a22f934a5eec17e27424a7bae104409dd">setCurrentBBox</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp;bbox)</td></tr>
+<tr class="memdesc:a22f934a5eec17e27424a7bae104409dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置当前边界框（用于坐标偏移计算）  <br /></td></tr>
+<tr class="separator:a22f934a5eec17e27424a7bae104409dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9279993f18206902a8d785efb619cfc4" id="r_a9279993f18206902a8d785efb619cfc4"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a9279993f18206902a8d785efb619cfc4">currentBBox</a> () const</td></tr>
+<tr class="separator:a9279993f18206902a8d785efb619cfc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9984cbae388c8e1e8c3d4407f6b2649" id="r_ab9984cbae388c8e1e8c3d4407f6b2649"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ab9984cbae388c8e1e8c3d4407f6b2649">generateDrawings</a> (const <a class="el" href="classEasyKiConverter_1_1SymbolData.html">SymbolData</a> &amp;data) const</td></tr>
+<tr class="separator:ab9984cbae388c8e1e8c3d4407f6b2649"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a145c293620bcd2a5655c53ce430f5c0b" id="r_a145c293620bcd2a5655c53ce430f5c0b"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a145c293620bcd2a5655c53ce430f5c0b">generateDrawings</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPart.html">SymbolPart</a> &amp;part) const</td></tr>
+<tr class="separator:a145c293620bcd2a5655c53ce430f5c0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1e1a82af722287b82633f7882f3e015f" id="r_a1e1a82af722287b82633f7882f3e015f"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a1e1a82af722287b82633f7882f3e015f">generatePins</a> (const QList&lt; <a class="el" href="structEasyKiConverter_1_1SymbolPin.html">SymbolPin</a> &gt; &amp;pins, const <a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp;bbox) const</td></tr>
+<tr class="separator:a1e1a82af722287b82633f7882f3e015f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab147a5c853b82cc7d88f365b5cecd9a0" id="r_ab147a5c853b82cc7d88f365b5cecd9a0"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ab147a5c853b82cc7d88f365b5cecd9a0">generatePin</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPin.html">SymbolPin</a> &amp;pin, const <a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp;bbox) const</td></tr>
+<tr class="separator:ab147a5c853b82cc7d88f365b5cecd9a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b1b25b3a68b1bf27a05c55ad58b8f44" id="r_a8b1b25b3a68b1bf27a05c55ad58b8f44"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a8b1b25b3a68b1bf27a05c55ad58b8f44">generateRectangle</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolRectangle.html">SymbolRectangle</a> &amp;rect) const</td></tr>
+<tr class="separator:a8b1b25b3a68b1bf27a05c55ad58b8f44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a166d1335c4f20431191a04ad04e8d016" id="r_a166d1335c4f20431191a04ad04e8d016"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a166d1335c4f20431191a04ad04e8d016">generateCircle</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolCircle.html">SymbolCircle</a> &amp;circle) const</td></tr>
+<tr class="separator:a166d1335c4f20431191a04ad04e8d016"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b51a8bb9e9a41c5b2a16ec5828ae705" id="r_a8b51a8bb9e9a41c5b2a16ec5828ae705"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a8b51a8bb9e9a41c5b2a16ec5828ae705">generateArc</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolArc.html">SymbolArc</a> &amp;arc) const</td></tr>
+<tr class="separator:a8b51a8bb9e9a41c5b2a16ec5828ae705"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5850ca752993f10337e00d821facc232" id="r_a5850ca752993f10337e00d821facc232"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a5850ca752993f10337e00d821facc232">generateEllipse</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolEllipse.html">SymbolEllipse</a> &amp;ellipse) const</td></tr>
+<tr class="separator:a5850ca752993f10337e00d821facc232"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac695449fbd6bdcf6c180a906b004a175" id="r_ac695449fbd6bdcf6c180a906b004a175"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ac695449fbd6bdcf6c180a906b004a175">generatePolygon</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPolygon.html">SymbolPolygon</a> &amp;polygon) const</td></tr>
+<tr class="separator:ac695449fbd6bdcf6c180a906b004a175"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69766ba634bf9bf33a1a1450ed90b584" id="r_a69766ba634bf9bf33a1a1450ed90b584"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a69766ba634bf9bf33a1a1450ed90b584">generatePolyline</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPolyline.html">SymbolPolyline</a> &amp;polyline) const</td></tr>
+<tr class="separator:a69766ba634bf9bf33a1a1450ed90b584"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4b1e12f6ee140068eae508bc9cb1124" id="r_ae4b1e12f6ee140068eae508bc9cb1124"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ae4b1e12f6ee140068eae508bc9cb1124">generatePath</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPath.html">SymbolPath</a> &amp;path) const</td></tr>
+<tr class="separator:ae4b1e12f6ee140068eae508bc9cb1124"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd7fcd2bfbde309740c9e87e471fa892" id="r_abd7fcd2bfbde309740c9e87e471fa892"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#abd7fcd2bfbde309740c9e87e471fa892">generateText</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolText.html">SymbolText</a> &amp;text) const</td></tr>
+<tr class="separator:abd7fcd2bfbde309740c9e87e471fa892"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33b1f9ecce261fbd7ff9c1d614f1869d" id="r_a33b1f9ecce261fbd7ff9c1d614f1869d"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a33b1f9ecce261fbd7ff9c1d614f1869d">pxToMil</a> (double px) const</td></tr>
+<tr class="separator:a33b1f9ecce261fbd7ff9c1d614f1869d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaadac1c42b35f77d327fa42b5fe69362" id="r_aaadac1c42b35f77d327fa42b5fe69362"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#aaadac1c42b35f77d327fa42b5fe69362">pxToMm</a> (double px) const</td></tr>
+<tr class="separator:aaadac1c42b35f77d327fa42b5fe69362"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd62023ba3b818e3de4f8460761ab270" id="r_afd62023ba3b818e3de4f8460761ab270"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#afd62023ba3b818e3de4f8460761ab270">pinTypeToKicad</a> (<a class="el" href="namespaceEasyKiConverter.html#a0b64cf3e5e732b083267e8f5b3b46cbb">PinType</a> pinType) const</td></tr>
+<tr class="separator:afd62023ba3b818e3de4f8460761ab270"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a627fb569a215b79b8f032402b3698a" id="r_a5a627fb569a215b79b8f032402b3698a"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a5a627fb569a215b79b8f032402b3698a">pinStyleToKicad</a> (<a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44d">PinStyle</a> pinStyle) const</td></tr>
+<tr class="separator:a5a627fb569a215b79b8f032402b3698a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86fa010d86a60fcd379c2e1e0731b300" id="r_a86fa010d86a60fcd379c2e1e0731b300"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a86fa010d86a60fcd379c2e1e0731b300">rotationToKicadOrientation</a> (int rotation) const</td></tr>
+<tr class="separator:a86fa010d86a60fcd379c2e1e0731b300"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b870c9055d170357ad5b8d9025bebe8" id="r_a3b870c9055d170357ad5b8d9025bebe8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a3b870c9055d170357ad5b8d9025bebe8">calculatePartBBox</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPart.html">SymbolPart</a> &amp;part) const</td></tr>
+<tr class="separator:a3b870c9055d170357ad5b8d9025bebe8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:a32fdac79b8ad2ac1d4fa775bb0f6702e" id="r_a32fdac79b8ad2ac1d4fa775bb0f6702e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a32fdac79b8ad2ac1d4fa775bb0f6702e">m_currentBBox</a></td></tr>
+<tr class="separator:a32fdac79b8ad2ac1d4fa775bb0f6702e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>符号图形元素生成器 </p>
+<p>从 <a class="el" href="classEasyKiConverter_1_1ExporterSymbol.html" title="KiCad 符号导出器类">ExporterSymbol</a> 中提取的图形生成函数， 负责将各类符号图形元素转换为 KiCad 格式文本。 </p>
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8h_source.html">SymbolGraphicsGenerator.h</a> 第 <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00016">16</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a1ee577b20891ac1c639c8c7d4f22719b" name="a1ee577b20891ac1c639c8c7d4f22719b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ee577b20891ac1c639c8c7d4f22719b">&#9670;&#160;</a></span>SymbolGraphicsGenerator()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::SymbolGraphicsGenerator::SymbolGraphicsGenerator </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="a3b870c9055d170357ad5b8d9025bebe8" name="a3b870c9055d170357ad5b8d9025bebe8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b870c9055d170357ad5b8d9025bebe8">&#9670;&#160;</a></span>calculatePartBBox()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> EasyKiConverter::SymbolGraphicsGenerator::calculatePartBBox </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPart.html">SymbolPart</a> &amp;&#160;</td>
+          <td class="paramname"><em>part</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00615">615</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00300">EasyKiConverter::SymbolPart::arcs</a>, <a class="el" href="SymbolData_8h_source.html#l00299">EasyKiConverter::SymbolPart::circles</a>, <a class="el" href="SymbolData_8h_source.html#l00301">EasyKiConverter::SymbolPart::ellipses</a>, <a class="el" href="SymbolData_8h_source.html#l00084">EasyKiConverter::SymbolBBox::height</a>, <a class="el" href="SymbolData_8h_source.html#l00295">EasyKiConverter::SymbolPart::originX</a>, <a class="el" href="SymbolData_8h_source.html#l00296">EasyKiConverter::SymbolPart::originY</a>, <a class="el" href="SymbolData_8h_source.html#l00297">EasyKiConverter::SymbolPart::pins</a>, <a class="el" href="SymbolData_8h_source.html#l00298">EasyKiConverter::SymbolPart::rectangles</a>, <a class="el" href="SymbolData_8h_source.html#l00305">EasyKiConverter::SymbolPart::texts</a>, <a class="el" href="SymbolData_8h_source.html#l00083">EasyKiConverter::SymbolBBox::width</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExporterSymbol_8cpp_source.html#l00554">EasyKiConverter::ExporterSymbol::generateSubSymbol()</a>.</p>
+
+</div>
+</div>
+<a id="a9279993f18206902a8d785efb619cfc4" name="a9279993f18206902a8d785efb619cfc4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9279993f18206902a8d785efb619cfc4">&#9670;&#160;</a></span>currentBBox()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp; EasyKiConverter::SymbolGraphicsGenerator::currentBBox </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8h_source.html">SymbolGraphicsGenerator.h</a> 第 <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00027">27</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00060">m_currentBBox</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExporterSymbol_8cpp_source.html#l00554">EasyKiConverter::ExporterSymbol::generateSubSymbol()</a> , 以及 <a class="el" href="ExporterSymbol_8cpp_source.html#l00353">EasyKiConverter::ExporterSymbol::generateSymbolContent()</a>.</p>
+
+</div>
+</div>
+<a id="a8b51a8bb9e9a41c5b2a16ec5828ae705" name="a8b51a8bb9e9a41c5b2a16ec5828ae705"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b51a8bb9e9a41c5b2a16ec5828ae705">&#9670;&#160;</a></span>generateArc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generateArc </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolArc.html">SymbolArc</a> &amp;&#160;</td>
+          <td class="paramname"><em>arc</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00224">224</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00206">EasyKiConverter::SymbolArc::fillColor</a>, <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00060">m_currentBBox</a>, <a class="el" href="SymbolData_8h_source.html#l00201">EasyKiConverter::SymbolArc::path</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00554">pxToMm()</a>, <a class="el" href="SymbolData_8h_source.html#l00204">EasyKiConverter::SymbolArc::strokeWidth</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00013">generateDrawings()</a> , 以及 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00042">generateDrawings()</a>.</p>
+
+</div>
+</div>
+<a id="a166d1335c4f20431191a04ad04e8d016" name="a166d1335c4f20431191a04ad04e8d016"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a166d1335c4f20431191a04ad04e8d016">&#9670;&#160;</a></span>generateCircle()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generateCircle </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolCircle.html">SymbolCircle</a> &amp;&#160;</td>
+          <td class="paramname"><em>circle</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00205">205</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00186">EasyKiConverter::SymbolCircle::centerX</a>, <a class="el" href="SymbolData_8h_source.html#l00187">EasyKiConverter::SymbolCircle::centerY</a>, <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00060">m_currentBBox</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00554">pxToMm()</a>, <a class="el" href="SymbolData_8h_source.html#l00188">EasyKiConverter::SymbolCircle::radius</a>, <a class="el" href="SymbolData_8h_source.html#l00190">EasyKiConverter::SymbolCircle::strokeWidth</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00013">generateDrawings()</a> , 以及 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00042">generateDrawings()</a>.</p>
+
+</div>
+</div>
+<a id="ab9984cbae388c8e1e8c3d4407f6b2649" name="ab9984cbae388c8e1e8c3d4407f6b2649"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab9984cbae388c8e1e8c3d4407f6b2649">&#9670;&#160;</a></span>generateDrawings() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generateDrawings </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classEasyKiConverter_1_1SymbolData.html">SymbolData</a> &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00013">13</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00374">EasyKiConverter::SymbolData::arcs()</a>, <a class="el" href="SymbolData_8h_source.html#l00362">EasyKiConverter::SymbolData::circles()</a>, <a class="el" href="SymbolData_8h_source.html#l00386">EasyKiConverter::SymbolData::ellipses()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00224">generateArc()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00205">generateCircle()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00298">generateEllipse()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00448">generatePath()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00345">generatePolygon()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00397">generatePolyline()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00184">generateRectangle()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00496">generateText()</a>, <a class="el" href="SymbolData_8h_source.html#l00422">EasyKiConverter::SymbolData::paths()</a>, <a class="el" href="SymbolData_8h_source.html#l00410">EasyKiConverter::SymbolData::polygons()</a>, <a class="el" href="SymbolData_8h_source.html#l00398">EasyKiConverter::SymbolData::polylines()</a>, <a class="el" href="SymbolData_8h_source.html#l00350">EasyKiConverter::SymbolData::rectangles()</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00434">EasyKiConverter::SymbolData::texts()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExporterSymbol_8cpp_source.html#l00532">EasyKiConverter::ExporterSymbol::generateSubSymbol()</a>, <a class="el" href="ExporterSymbol_8cpp_source.html#l00554">EasyKiConverter::ExporterSymbol::generateSubSymbol()</a> , 以及 <a class="el" href="ExporterSymbol_8cpp_source.html#l00353">EasyKiConverter::ExporterSymbol::generateSymbolContent()</a>.</p>
+
+</div>
+</div>
+<a id="a145c293620bcd2a5655c53ce430f5c0b" name="a145c293620bcd2a5655c53ce430f5c0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a145c293620bcd2a5655c53ce430f5c0b">&#9670;&#160;</a></span>generateDrawings() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generateDrawings </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPart.html">SymbolPart</a> &amp;&#160;</td>
+          <td class="paramname"><em>part</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00042">42</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00300">EasyKiConverter::SymbolPart::arcs</a>, <a class="el" href="SymbolData_8h_source.html#l00299">EasyKiConverter::SymbolPart::circles</a>, <a class="el" href="SymbolData_8h_source.html#l00301">EasyKiConverter::SymbolPart::ellipses</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00224">generateArc()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00205">generateCircle()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00298">generateEllipse()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00448">generatePath()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00345">generatePolygon()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00397">generatePolyline()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00184">generateRectangle()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00496">generateText()</a>, <a class="el" href="SymbolData_8h_source.html#l00304">EasyKiConverter::SymbolPart::paths</a>, <a class="el" href="SymbolData_8h_source.html#l00303">EasyKiConverter::SymbolPart::polygons</a>, <a class="el" href="SymbolData_8h_source.html#l00302">EasyKiConverter::SymbolPart::polylines</a>, <a class="el" href="SymbolData_8h_source.html#l00298">EasyKiConverter::SymbolPart::rectangles</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00305">EasyKiConverter::SymbolPart::texts</a>.</p>
+
+</div>
+</div>
+<a id="a5850ca752993f10337e00d821facc232" name="a5850ca752993f10337e00d821facc232"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5850ca752993f10337e00d821facc232">&#9670;&#160;</a></span>generateEllipse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generateEllipse </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolEllipse.html">SymbolEllipse</a> &amp;&#160;</td>
+          <td class="paramname"><em>ellipse</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00298">298</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00215">EasyKiConverter::SymbolEllipse::centerX</a>, <a class="el" href="SymbolData_8h_source.html#l00216">EasyKiConverter::SymbolEllipse::centerY</a>, <a class="el" href="SymbolData_8h_source.html#l00222">EasyKiConverter::SymbolEllipse::fillColor</a>, <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00060">m_currentBBox</a>, <a class="el" href="GeometryUtils_8cpp_source.html#l00010">M_PI</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00554">pxToMm()</a>, <a class="el" href="SymbolData_8h_source.html#l00217">EasyKiConverter::SymbolEllipse::radiusX</a>, <a class="el" href="SymbolData_8h_source.html#l00218">EasyKiConverter::SymbolEllipse::radiusY</a>, <a class="el" href="SymbolData_8h_source.html#l00220">EasyKiConverter::SymbolEllipse::strokeWidth</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00013">generateDrawings()</a> , 以及 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00042">generateDrawings()</a>.</p>
+
+</div>
+</div>
+<a id="ae4b1e12f6ee140068eae508bc9cb1124" name="ae4b1e12f6ee140068eae508bc9cb1124"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4b1e12f6ee140068eae508bc9cb1124">&#9670;&#160;</a></span>generatePath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generatePath </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPath.html">SymbolPath</a> &amp;&#160;</td>
+          <td class="paramname"><em>path</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00448">448</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00261">EasyKiConverter::SymbolPath::fillColor</a>, <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00060">m_currentBBox</a>, <a class="el" href="SvgPathParser_8cpp_source.html#l00012">EasyKiConverter::SvgPathParser::parsePath()</a>, <a class="el" href="SymbolData_8h_source.html#l00257">EasyKiConverter::SymbolPath::paths</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00554">pxToMm()</a>, <a class="el" href="SymbolData_8h_source.html#l00259">EasyKiConverter::SymbolPath::strokeWidth</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00013">generateDrawings()</a> , 以及 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00042">generateDrawings()</a>.</p>
+
+</div>
+</div>
+<a id="ab147a5c853b82cc7d88f365b5cecd9a0" name="ab147a5c853b82cc7d88f365b5cecd9a0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab147a5c853b82cc7d88f365b5cecd9a0">&#9670;&#160;</a></span>generatePin()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generatePin </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPin.html">SymbolPin</a> &amp;&#160;</td>
+          <td class="paramname"><em>pin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp;&#160;</td>
+          <td class="paramname"><em>bbox</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00079">79</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44da98a892aea3359481ae30e7b66c44d7a8">EasyKiConverter::Clock</a>, <a class="el" href="SymbolData_8h_source.html#l00159">EasyKiConverter::SymbolPin::clock</a>, <a class="el" href="SymbolData_8h_source.html#l00158">EasyKiConverter::SymbolPin::dot</a>, <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44dacf4c2a4bf7c328c4e51f902350475343">EasyKiConverter::Inverted</a>, <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44dacbd1911ea8a954e6e29aa2c4d942984c">EasyKiConverter::InvertedClock</a>, <a class="el" href="SymbolData_8h_source.html#l00137">EasyKiConverter::SymbolPinDotBis::isDisplayed</a>, <a class="el" href="SymbolData_8h_source.html#l00146">EasyKiConverter::SymbolPinClock::isDisplayed</a>, <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44da4803e6b9e63dabf04de980788d6a13c4">EasyKiConverter::Line</a>, <a class="el" href="SymbolData_8h_source.html#l00157">EasyKiConverter::SymbolPin::name</a>, <a class="el" href="SymbolData_8h_source.html#l00115">EasyKiConverter::SymbolPinPath::path</a>, <a class="el" href="SymbolData_8h_source.html#l00156">EasyKiConverter::SymbolPin::pinPath</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00575">pinStyleToKicad()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00558">pinTypeToKicad()</a>, <a class="el" href="SymbolData_8h_source.html#l00096">EasyKiConverter::SymbolPinSettings::posX</a>, <a class="el" href="SymbolData_8h_source.html#l00097">EasyKiConverter::SymbolPinSettings::posY</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00554">pxToMm()</a>, <a class="el" href="SymbolData_8h_source.html#l00098">EasyKiConverter::SymbolPinSettings::rotation</a>, <a class="el" href="SymbolData_8h_source.html#l00154">EasyKiConverter::SymbolPin::settings</a>, <a class="el" href="SymbolData_8h_source.html#l00095">EasyKiConverter::SymbolPinSettings::spicePinNumber</a>, <a class="el" href="SymbolData_8h_source.html#l00127">EasyKiConverter::SymbolPinName::text</a>, <a class="el" href="SymbolData_8h_source.html#l00094">EasyKiConverter::SymbolPinSettings::type</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00071">generatePins()</a>.</p>
+
+</div>
+</div>
+<a id="a1e1a82af722287b82633f7882f3e015f" name="a1e1a82af722287b82633f7882f3e015f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1e1a82af722287b82633f7882f3e015f">&#9670;&#160;</a></span>generatePins()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generatePins </td>
+          <td>(</td>
+          <td class="paramtype">const QList&lt; <a class="el" href="structEasyKiConverter_1_1SymbolPin.html">SymbolPin</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>pins</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp;&#160;</td>
+          <td class="paramname"><em>bbox</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00071">71</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00079">generatePin()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExporterSymbol_8cpp_source.html#l00532">EasyKiConverter::ExporterSymbol::generateSubSymbol()</a>, <a class="el" href="ExporterSymbol_8cpp_source.html#l00554">EasyKiConverter::ExporterSymbol::generateSubSymbol()</a> , 以及 <a class="el" href="ExporterSymbol_8cpp_source.html#l00353">EasyKiConverter::ExporterSymbol::generateSymbolContent()</a>.</p>
+
+</div>
+</div>
+<a id="ac695449fbd6bdcf6c180a906b004a175" name="ac695449fbd6bdcf6c180a906b004a175"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac695449fbd6bdcf6c180a906b004a175">&#9670;&#160;</a></span>generatePolygon()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generatePolygon </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPolygon.html">SymbolPolygon</a> &amp;&#160;</td>
+          <td class="paramname"><em>polygon</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00345">345</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00248">EasyKiConverter::SymbolPolygon::fillColor</a>, <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00060">m_currentBBox</a>, <a class="el" href="SymbolData_8h_source.html#l00244">EasyKiConverter::SymbolPolygon::points</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00554">pxToMm()</a>, <a class="el" href="SymbolData_8h_source.html#l00246">EasyKiConverter::SymbolPolygon::strokeWidth</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00013">generateDrawings()</a> , 以及 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00042">generateDrawings()</a>.</p>
+
+</div>
+</div>
+<a id="a69766ba634bf9bf33a1a1450ed90b584" name="a69766ba634bf9bf33a1a1450ed90b584"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a69766ba634bf9bf33a1a1450ed90b584">&#9670;&#160;</a></span>generatePolyline()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generatePolyline </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPolyline.html">SymbolPolyline</a> &amp;&#160;</td>
+          <td class="paramname"><em>polyline</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00397">397</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00235">EasyKiConverter::SymbolPolyline::fillColor</a>, <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00060">m_currentBBox</a>, <a class="el" href="SymbolData_8h_source.html#l00231">EasyKiConverter::SymbolPolyline::points</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00554">pxToMm()</a>, <a class="el" href="SymbolData_8h_source.html#l00233">EasyKiConverter::SymbolPolyline::strokeWidth</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00013">generateDrawings()</a> , 以及 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00042">generateDrawings()</a>.</p>
+
+</div>
+</div>
+<a id="a8b1b25b3a68b1bf27a05c55ad58b8f44" name="a8b1b25b3a68b1bf27a05c55ad58b8f44"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b1b25b3a68b1bf27a05c55ad58b8f44">&#9670;&#160;</a></span>generateRectangle()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generateRectangle </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolRectangle.html">SymbolRectangle</a> &amp;&#160;</td>
+          <td class="paramname"><em>rect</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00184">184</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00173">EasyKiConverter::SymbolRectangle::height</a>, <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00060">m_currentBBox</a>, <a class="el" href="SymbolData_8h_source.html#l00168">EasyKiConverter::SymbolRectangle::posX</a>, <a class="el" href="SymbolData_8h_source.html#l00169">EasyKiConverter::SymbolRectangle::posY</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00554">pxToMm()</a>, <a class="el" href="SymbolData_8h_source.html#l00175">EasyKiConverter::SymbolRectangle::strokeWidth</a>, <a class="el" href="SymbolData_8h_source.html#l00172">EasyKiConverter::SymbolRectangle::width</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00013">generateDrawings()</a> , 以及 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00042">generateDrawings()</a>.</p>
+
+</div>
+</div>
+<a id="abd7fcd2bfbde309740c9e87e471fa892" name="abd7fcd2bfbde309740c9e87e471fa892"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd7fcd2bfbde309740c9e87e471fa892">&#9670;&#160;</a></span>generateText()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::generateText </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolText.html">SymbolText</a> &amp;&#160;</td>
+          <td class="paramname"><em>text</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00496">496</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00277">EasyKiConverter::SymbolText::bold</a>, <a class="el" href="SymbolData_8h_source.html#l00278">EasyKiConverter::SymbolText::italic</a>, <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00060">m_currentBBox</a>, <a class="el" href="SymbolData_8h_source.html#l00271">EasyKiConverter::SymbolText::posX</a>, <a class="el" href="SymbolData_8h_source.html#l00272">EasyKiConverter::SymbolText::posY</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00554">pxToMm()</a>, <a class="el" href="SymbolData_8h_source.html#l00273">EasyKiConverter::SymbolText::rotation</a>, <a class="el" href="SymbolData_8h_source.html#l00281">EasyKiConverter::SymbolText::text</a>, <a class="el" href="SymbolData_8h_source.html#l00276">EasyKiConverter::SymbolText::textSize</a>, <a class="el" href="SymbolData_8h_source.html#l00282">EasyKiConverter::SymbolText::visible</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00013">generateDrawings()</a> , 以及 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00042">generateDrawings()</a>.</p>
+
+</div>
+</div>
+<a id="a5a627fb569a215b79b8f032402b3698a" name="a5a627fb569a215b79b8f032402b3698a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a627fb569a215b79b8f032402b3698a">&#9670;&#160;</a></span>pinStyleToKicad()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::pinStyleToKicad </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44d">PinStyle</a>&#160;</td>
+          <td class="paramname"><em>pinStyle</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00575">575</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44da98a892aea3359481ae30e7b66c44d7a8">EasyKiConverter::Clock</a>, <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44da8be0ebfbcd9ab228d764fd52b5099c88">EasyKiConverter::ClockLow</a>, <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44dad3f3255b29b901f4bf07ab0e1b6ea03a">EasyKiConverter::EdgeClockHigh</a>, <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44da60a7ac11be97c5dbe60b8b8b30305569">EasyKiConverter::InputLow</a>, <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44dacf4c2a4bf7c328c4e51f902350475343">EasyKiConverter::Inverted</a>, <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44dacbd1911ea8a954e6e29aa2c4d942984c">EasyKiConverter::InvertedClock</a>, <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44da4803e6b9e63dabf04de980788d6a13c4">EasyKiConverter::Line</a>, <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44da237fc47cc8fcdbcc4890eea4e1049177">EasyKiConverter::NonLogic</a> , 以及 <a class="el" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44da99bb3151046d08a40cf9aa69678078f6">EasyKiConverter::OutputLow</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00079">generatePin()</a>.</p>
+
+</div>
+</div>
+<a id="afd62023ba3b818e3de4f8460761ab270" name="afd62023ba3b818e3de4f8460761ab270"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afd62023ba3b818e3de4f8460761ab270">&#9670;&#160;</a></span>pinTypeToKicad()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::pinTypeToKicad </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespaceEasyKiConverter.html#a0b64cf3e5e732b083267e8f5b3b46cbb">PinType</a>&#160;</td>
+          <td class="paramname"><em>pinType</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00558">558</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="namespaceEasyKiConverter.html#a0b64cf3e5e732b083267e8f5b3b46cbbaabd4328c725637aabedbd02d3b7ffd40">EasyKiConverter::Bidirectional</a>, <a class="el" href="namespaceEasyKiConverter.html#a0b64cf3e5e732b083267e8f5b3b46cbba324118a6721dd6b8a9b9f4e327df2bf5">EasyKiConverter::Input</a>, <a class="el" href="namespaceEasyKiConverter.html#a0b64cf3e5e732b083267e8f5b3b46cbba29c2c02a361c9d7028472e5d92cd4a54">EasyKiConverter::Output</a>, <a class="el" href="namespaceEasyKiConverter.html#a0b64cf3e5e732b083267e8f5b3b46cbbadd4fe0cc913f704600b97d1f5dd285de">EasyKiConverter::Power</a> , 以及 <a class="el" href="namespaceEasyKiConverter.html#a0b64cf3e5e732b083267e8f5b3b46cbba6fcdc090caeade09d0efd6253932b6f5">EasyKiConverter::Unspecified</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00079">generatePin()</a>.</p>
+
+</div>
+</div>
+<a id="a33b1f9ecce261fbd7ff9c1d614f1869d" name="a33b1f9ecce261fbd7ff9c1d614f1869d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33b1f9ecce261fbd7ff9c1d614f1869d">&#9670;&#160;</a></span>pxToMil()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double EasyKiConverter::SymbolGraphicsGenerator::pxToMil </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>px</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00550">550</a> 行定义.</p>
+
+</div>
+</div>
+<a id="aaadac1c42b35f77d327fa42b5fe69362" name="aaadac1c42b35f77d327fa42b5fe69362"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaadac1c42b35f77d327fa42b5fe69362">&#9670;&#160;</a></span>pxToMm()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double EasyKiConverter::SymbolGraphicsGenerator::pxToMm </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>px</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00554">554</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="GeometryUtils_8cpp_source.html#l00082">EasyKiConverter::GeometryUtils::convertToMm()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00224">generateArc()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00205">generateCircle()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00298">generateEllipse()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00448">generatePath()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00079">generatePin()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00345">generatePolygon()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00397">generatePolyline()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00184">generateRectangle()</a>, <a class="el" href="ExporterSymbol_8cpp_source.html#l00353">EasyKiConverter::ExporterSymbol::generateSymbolContent()</a> , 以及 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00496">generateText()</a>.</p>
+
+</div>
+</div>
+<a id="a86fa010d86a60fcd379c2e1e0731b300" name="a86fa010d86a60fcd379c2e1e0731b300"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86fa010d86a60fcd379c2e1e0731b300">&#9670;&#160;</a></span>rotationToKicadOrientation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::SymbolGraphicsGenerator::rotationToKicadOrientation </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>rotation</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a> 第 <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00600">600</a> 行定义.</p>
+
+</div>
+</div>
+<a id="a22f934a5eec17e27424a7bae104409dd" name="a22f934a5eec17e27424a7bae104409dd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22f934a5eec17e27424a7bae104409dd">&#9670;&#160;</a></span>setCurrentBBox()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::SymbolGraphicsGenerator::setCurrentBBox </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp;&#160;</td>
+          <td class="paramname"><em>bbox</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置当前边界框（用于坐标偏移计算） </p>
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8h_source.html">SymbolGraphicsGenerator.h</a> 第 <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00023">23</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00060">m_currentBBox</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExporterSymbol_8cpp_source.html#l00554">EasyKiConverter::ExporterSymbol::generateSubSymbol()</a> , 以及 <a class="el" href="ExporterSymbol_8cpp_source.html#l00353">EasyKiConverter::ExporterSymbol::generateSymbolContent()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a32fdac79b8ad2ac1d4fa775bb0f6702e" name="a32fdac79b8ad2ac1d4fa775bb0f6702e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a32fdac79b8ad2ac1d4fa775bb0f6702e">&#9670;&#160;</a></span>m_currentBBox</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> EasyKiConverter::SymbolGraphicsGenerator::m_currentBBox</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolGraphicsGenerator_8h_source.html">SymbolGraphicsGenerator.h</a> 第 <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00060">60</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00027">currentBBox()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00224">generateArc()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00205">generateCircle()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00298">generateEllipse()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00448">generatePath()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00345">generatePolygon()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00397">generatePolyline()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00184">generateRectangle()</a>, <a class="el" href="SymbolGraphicsGenerator_8cpp_source.html#l00496">generateText()</a> , 以及 <a class="el" href="SymbolGraphicsGenerator_8h_source.html#l00023">setCurrentBBox()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>core/kicad/<a class="el" href="SymbolGraphicsGenerator_8h_source.html">SymbolGraphicsGenerator.h</a></li>
+<li>core/kicad/<a class="el" href="SymbolGraphicsGenerator_8cpp_source.html">SymbolGraphicsGenerator.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html">SymbolGraphicsGenerator</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,444 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: services/ConfigService.cpp 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('ConfigService_8cpp_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">ConfigService.cpp</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="ConfigService_8cpp.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#include &quot;<a class="code" href="ConfigService_8h.html">ConfigService.h</a>&quot;</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &lt;QDebug&gt;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;QDir&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;QFile&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;QJsonDocument&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;QStandardPaths&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="comment">// 静态成员初始化</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>ConfigService* <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a297f3abbbdade814961bba60151406b3">ConfigService::s_instance</a> = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>QMutex <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#af021454ab09973fc82a6d53f7e93f4e6">ConfigService::s_mutex</a>;</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
+<div class="foldopen" id="foldopen00015" data-start="{" data-end="}">
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a04f00c943bf61f513500805adfb548c3">   15</a></span><a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a04f00c943bf61f513500805adfb548c3">ConfigService::ConfigService</a>(QObject* parent) : QObject(parent) {</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    <span class="comment">// 初始化默认配</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a2b68b47c397e500c5e5fd15a4137c604">initializeDefaultConfig</a>();</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>}</div>
+</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
+<div class="foldopen" id="foldopen00020" data-start="{" data-end="}">
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#ae1f50c359d8b9f97da89a129be47ae89">   20</a></span><a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ae1f50c359d8b9f97da89a129be47ae89">ConfigService::~ConfigService</a>() {</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="comment">// 自动保存配置</span></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">saveConfig</a>();</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>}</div>
+</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="foldopen" id="foldopen00025" data-start="{" data-end="}">
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a906164be213712863bc564ad0a3151f2">   25</a></span><a class="code hl_class" href="classEasyKiConverter_1_1ConfigService.html">ConfigService</a>* <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a906164be213712863bc564ad0a3151f2">ConfigService::instance</a>() {</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#af021454ab09973fc82a6d53f7e93f4e6">s_mutex</a>);</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a297f3abbbdade814961bba60151406b3">s_instance</a>) {</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a297f3abbbdade814961bba60151406b3">s_instance</a> = <span class="keyword">new</span> <a class="code hl_class" href="classEasyKiConverter_1_1ConfigService.html">ConfigService</a>();</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    }</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a297f3abbbdade814961bba60151406b3">s_instance</a>;</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>}</div>
+</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
+<div class="foldopen" id="foldopen00035" data-start="{" data-end="}">
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#ab33cde415a488f078857f481d96f852b">   35</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ab33cde415a488f078857f481d96f852b">ConfigService::loadConfig</a>(<span class="keyword">const</span> QString&amp; path) {</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    QString configPath = path.isEmpty() ? <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#aee723a3c895088fca217ebe78d63753c">getDefaultConfigPath</a>() : path;</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    QFile file(configPath);</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordflow">if</span> (!file.open(QIODevice::ReadOnly)) {</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>        qWarning() &lt;&lt; <span class="stringliteral">&quot;Failed to open config file:&quot;</span> &lt;&lt; configPath;</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    }</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    QByteArray fileData = file.readAll();</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    file.close();</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    QJsonParseError parseError;</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    QJsonDocument doc = QJsonDocument::fromJson(fileData, &amp;parseError);</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keywordflow">if</span> (parseError.error != QJsonParseError::NoError) {</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        qWarning() &lt;&lt; <span class="stringliteral">&quot;Failed to parse config file:&quot;</span> &lt;&lt; parseError.errorString();</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    }</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="comment">// 合并配置：只更新文件中存在的字段，保留文件中缺失字段的默认值</span></div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    QJsonObject loadedConfig = doc.object();</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordflow">for</span> (<span class="keyword">auto</span> it = loadedConfig.begin(); it != loadedConfig.end(); ++it) {</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[it.key()] = it.value();</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    }</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#ab42755d520fb4ec855d1ac272744feda">m_configPath</a> = configPath;</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    qDebug() &lt;&lt; <span class="stringliteral">&quot;Config loaded from:&quot;</span> &lt;&lt; configPath;</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged</a>();</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="comment">// 释放锁后保存，确保补全缺失的字段（如 debugMode）到文件中</span></div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    locker.unlock();</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">saveConfig</a>();</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span> </div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>}</div>
+</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
+<div class="foldopen" id="foldopen00075" data-start="{" data-end="}">
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">   75</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">ConfigService::saveConfig</a>(<span class="keyword">const</span> QString&amp; path) {</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    QString configPath = path.isEmpty() ? (<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#ab42755d520fb4ec855d1ac272744feda">m_configPath</a>.isEmpty() ? <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#aee723a3c895088fca217ebe78d63753c">getDefaultConfigPath</a>() : <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#ab42755d520fb4ec855d1ac272744feda">m_configPath</a>) : path;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    QJsonDocument doc(<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>);</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    QFile file(configPath);</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <span class="keywordflow">if</span> (!file.open(QIODevice::WriteOnly)) {</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        qWarning() &lt;&lt; <span class="stringliteral">&quot;Failed to open config file for writing:&quot;</span> &lt;&lt; configPath;</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    }</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span> </div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    file.write(doc.toJson());</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    file.close();</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    qDebug() &lt;&lt; <span class="stringliteral">&quot;Config saved to:&quot;</span> &lt;&lt; configPath;</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>}</div>
+</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
+<div class="foldopen" id="foldopen00095" data-start="{" data-end="}">
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a6655b58881cb55cf9f3967328ae42929">   95</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a6655b58881cb55cf9f3967328ae42929">ConfigService::resetToDefaults</a>() {</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a2b68b47c397e500c5e5fd15a4137c604">initializeDefaultConfig</a>();</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged</a>();</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <span class="comment">// 释放锁后保存</span></div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    locker.unlock();</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">saveConfig</a>();</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    qDebug() &lt;&lt; <span class="stringliteral">&quot;Config reset to defaults&quot;</span>;</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>}</div>
+</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
+<div class="foldopen" id="foldopen00107" data-start="{" data-end="}">
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a04480dd87e15297b6b795c73702a8b39">  107</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a04480dd87e15297b6b795c73702a8b39">ConfigService::getOutputPath</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;outputPath&quot;</span>].toString(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>}</div>
+</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span> </div>
+<div class="foldopen" id="foldopen00112" data-start="{" data-end="}">
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#af1adb92ee7ec57d03b6ba83d25ec2cf7">  112</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#af1adb92ee7ec57d03b6ba83d25ec2cf7">ConfigService::setOutputPath</a>(<span class="keyword">const</span> QString&amp; path) {</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;outputPath&quot;</span>] = path;</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged</a>();</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    <span class="comment">// 释放锁后保存（因为 saveConfig 内部也会加锁，避免死锁）</span></div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    locker.unlock();</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">saveConfig</a>();</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>}</div>
+</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
+<div class="foldopen" id="foldopen00122" data-start="{" data-end="}">
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a18480ceb911c7ae2180f8722582374af">  122</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a18480ceb911c7ae2180f8722582374af">ConfigService::getLibName</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;libName&quot;</span>].toString(<span class="stringliteral">&quot;easyeda_convertlib&quot;</span>);</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>}</div>
+</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
+<div class="foldopen" id="foldopen00127" data-start="{" data-end="}">
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a63fa7eb05d7ef08826ce843a91e2169e">  127</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a63fa7eb05d7ef08826ce843a91e2169e">ConfigService::setLibName</a>(<span class="keyword">const</span> QString&amp; name) {</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;libName&quot;</span>] = name;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged</a>();</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    <span class="comment">// 释放锁后保存</span></div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    locker.unlock();</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">saveConfig</a>();</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>}</div>
+</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span> </div>
+<div class="foldopen" id="foldopen00137" data-start="{" data-end="}">
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#aee74b87827654910e744ed17a5f740a2">  137</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#aee74b87827654910e744ed17a5f740a2">ConfigService::getExportSymbol</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;exportSymbol&quot;</span>].toBool(<span class="keyword">true</span>);</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>}</div>
+</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span> </div>
+<div class="foldopen" id="foldopen00142" data-start="{" data-end="}">
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a6db3f902edca2e15446c191f2d7fa384">  142</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a6db3f902edca2e15446c191f2d7fa384">ConfigService::setExportSymbol</a>(<span class="keywordtype">bool</span> enabled) {</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;exportSymbol&quot;</span>] = enabled;</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged</a>();</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span> </div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <span class="comment">// 释放锁后保存</span></div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    locker.unlock();</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">saveConfig</a>();</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>}</div>
+</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span> </div>
+<div class="foldopen" id="foldopen00152" data-start="{" data-end="}">
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a458ad87b9cfe3825593b429e410ddfa6">  152</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a458ad87b9cfe3825593b429e410ddfa6">ConfigService::getExportFootprint</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;exportFootprint&quot;</span>].toBool(<span class="keyword">true</span>);</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>}</div>
+</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span> </div>
+<div class="foldopen" id="foldopen00157" data-start="{" data-end="}">
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a74524eff0ee54955052bb8d35fafbe15">  157</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a74524eff0ee54955052bb8d35fafbe15">ConfigService::setExportFootprint</a>(<span class="keywordtype">bool</span> enabled) {</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;exportFootprint&quot;</span>] = enabled;</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged</a>();</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span> </div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    <span class="comment">// 释放锁后保存</span></div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    locker.unlock();</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">saveConfig</a>();</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>}</div>
+</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span> </div>
+<div class="foldopen" id="foldopen00167" data-start="{" data-end="}">
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a1f0fc43adb5bf470be0015713788c0e9">  167</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a1f0fc43adb5bf470be0015713788c0e9">ConfigService::getExportModel3D</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;exportModel3D&quot;</span>].toBool(<span class="keyword">true</span>);</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>}</div>
+</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span> </div>
+<div class="foldopen" id="foldopen00172" data-start="{" data-end="}">
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a43d1f08df01f1ea28672267817b66569">  172</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a43d1f08df01f1ea28672267817b66569">ConfigService::setExportModel3D</a>(<span class="keywordtype">bool</span> enabled) {</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;exportModel3D&quot;</span>] = enabled;</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged</a>();</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span> </div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>    <span class="comment">// 释放锁后保存</span></div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    locker.unlock();</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">saveConfig</a>();</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>}</div>
+</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span> </div>
+<div class="foldopen" id="foldopen00182" data-start="{" data-end="}">
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#ac7127de54f0e62aa7264d78f9bcc05a8">  182</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ac7127de54f0e62aa7264d78f9bcc05a8">ConfigService::getOverwriteExistingFiles</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;overwriteExistingFiles&quot;</span>].toBool(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>}</div>
+</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span> </div>
+<div class="foldopen" id="foldopen00187" data-start="{" data-end="}">
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#ae1aee369b5425e145d3ee5eda299fc65">  187</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ae1aee369b5425e145d3ee5eda299fc65">ConfigService::setOverwriteExistingFiles</a>(<span class="keywordtype">bool</span> enabled) {</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;overwriteExistingFiles&quot;</span>] = enabled;</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged</a>();</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    <span class="comment">// 释放锁后保存</span></div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    locker.unlock();</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">saveConfig</a>();</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>}</div>
+</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span> </div>
+<div class="foldopen" id="foldopen00197" data-start="{" data-end="}">
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a9eff8627cf6ef560133e325c9b37f978">  197</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a9eff8627cf6ef560133e325c9b37f978">ConfigService::getDarkMode</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;darkMode&quot;</span>].toBool(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>}</div>
+</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span> </div>
+<div class="foldopen" id="foldopen00202" data-start="{" data-end="}">
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a0b060d876af0d51ab6dbc8f7e2a6cb94">  202</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a0b060d876af0d51ab6dbc8f7e2a6cb94">ConfigService::setDarkMode</a>(<span class="keywordtype">bool</span> enabled) {</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;darkMode&quot;</span>] = enabled;</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged</a>();</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>}</div>
+</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span> </div>
+<div class="foldopen" id="foldopen00208" data-start="{" data-end="}">
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a56faf58099f3a176ed1c02a4fd13d5dc">  208</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a56faf58099f3a176ed1c02a4fd13d5dc">ConfigService::getDebugMode</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;debugMode&quot;</span>].toBool(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>}</div>
+</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span> </div>
+<div class="foldopen" id="foldopen00213" data-start="{" data-end="}">
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a4fef61176dc04da5e8a34fc13c06bba4">  213</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a4fef61176dc04da5e8a34fc13c06bba4">ConfigService::setDebugMode</a>(<span class="keywordtype">bool</span> enabled) {</div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>    QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">m_configMutex</a>);</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;debugMode&quot;</span>] = enabled;</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">configChanged</a>();</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span> </div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>    <span class="comment">// 释放锁后保存</span></div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    locker.unlock();</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">saveConfig</a>();</div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>}</div>
+</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span> </div>
+<div class="foldopen" id="foldopen00223" data-start="{" data-end="}">
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#a2b68b47c397e500c5e5fd15a4137c604">  223</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#a2b68b47c397e500c5e5fd15a4137c604">ConfigService::initializeDefaultConfig</a>() {</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;outputPath&quot;</span>] = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;libName&quot;</span>] = <span class="stringliteral">&quot;easyeda_convertlib&quot;</span>;</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;exportSymbol&quot;</span>] = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;exportFootprint&quot;</span>] = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;exportModel3D&quot;</span>] = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;overwriteExistingFiles&quot;</span>] = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;darkMode&quot;</span>] = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">m_config</a>[<span class="stringliteral">&quot;debugMode&quot;</span>] = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>}</div>
+</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span> </div>
+<div class="foldopen" id="foldopen00234" data-start="{" data-end="}">
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ConfigService.html#aee723a3c895088fca217ebe78d63753c">  234</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1ConfigService.html#aee723a3c895088fca217ebe78d63753c">ConfigService::getDefaultConfigPath</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>    QDir dir(configDir);</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span> </div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    <span class="keywordflow">if</span> (!dir.exists()) {</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>        dir.mkpath(<span class="stringliteral">&quot;.&quot;</span>);</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>    }</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span> </div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>    <span class="keywordflow">return</span> configDir + <span class="stringliteral">&quot;/config.json&quot;</span>;</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>}</div>
+</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span> </div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="ttc" id="aConfigService_8h_html"><div class="ttname"><a href="ConfigService_8h.html">ConfigService.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html">EasyKiConverter::ConfigService</a></div><div class="ttdoc">配置服务</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8h_source.html#l00017">ConfigService.h:17</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a04480dd87e15297b6b795c73702a8b39"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a04480dd87e15297b6b795c73702a8b39">EasyKiConverter::ConfigService::getOutputPath</a></div><div class="ttdeci">QString getOutputPath() const</div><div class="ttdoc">获取输出路径</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00107">ConfigService.cpp:107</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a04f00c943bf61f513500805adfb548c3"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a04f00c943bf61f513500805adfb548c3">EasyKiConverter::ConfigService::ConfigService</a></div><div class="ttdeci">ConfigService(QObject *parent=nullptr)</div><div class="ttdoc">构造函数</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00015">ConfigService.cpp:15</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a0b060d876af0d51ab6dbc8f7e2a6cb94"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a0b060d876af0d51ab6dbc8f7e2a6cb94">EasyKiConverter::ConfigService::setDarkMode</a></div><div class="ttdeci">void setDarkMode(bool enabled)</div><div class="ttdoc">设置是否启用深色模式</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00202">ConfigService.cpp:202</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a11f43d48d6370a91311f65850d9b2ebf"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a11f43d48d6370a91311f65850d9b2ebf">EasyKiConverter::ConfigService::saveConfig</a></div><div class="ttdeci">bool saveConfig(const QString &amp;path=QString())</div><div class="ttdoc">保存配置</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00075">ConfigService.cpp:75</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a18480ceb911c7ae2180f8722582374af"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a18480ceb911c7ae2180f8722582374af">EasyKiConverter::ConfigService::getLibName</a></div><div class="ttdeci">QString getLibName() const</div><div class="ttdoc">获取库名称</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00122">ConfigService.cpp:122</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a1f0fc43adb5bf470be0015713788c0e9"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a1f0fc43adb5bf470be0015713788c0e9">EasyKiConverter::ConfigService::getExportModel3D</a></div><div class="ttdeci">bool getExportModel3D() const</div><div class="ttdoc">是否导出3D模型</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00167">ConfigService.cpp:167</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a245b8240cbf2392e47a0a03da508f07a"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a245b8240cbf2392e47a0a03da508f07a">EasyKiConverter::ConfigService::m_config</a></div><div class="ttdeci">QJsonObject m_config</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8h_source.html#l00198">ConfigService.h:198</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a297f3abbbdade814961bba60151406b3"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a297f3abbbdade814961bba60151406b3">EasyKiConverter::ConfigService::s_instance</a></div><div class="ttdeci">static ConfigService * s_instance</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8h_source.html#l00195">ConfigService.h:195</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a2b68b47c397e500c5e5fd15a4137c604"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a2b68b47c397e500c5e5fd15a4137c604">EasyKiConverter::ConfigService::initializeDefaultConfig</a></div><div class="ttdeci">void initializeDefaultConfig()</div><div class="ttdoc">初始化默认配</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00223">ConfigService.cpp:223</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a43d1f08df01f1ea28672267817b66569"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a43d1f08df01f1ea28672267817b66569">EasyKiConverter::ConfigService::setExportModel3D</a></div><div class="ttdeci">void setExportModel3D(bool enabled)</div><div class="ttdoc">设置是否导出3D模型</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00172">ConfigService.cpp:172</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a458ad87b9cfe3825593b429e410ddfa6"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a458ad87b9cfe3825593b429e410ddfa6">EasyKiConverter::ConfigService::getExportFootprint</a></div><div class="ttdeci">bool getExportFootprint() const</div><div class="ttdoc">是否导出封装</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00152">ConfigService.cpp:152</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a4fef61176dc04da5e8a34fc13c06bba4"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a4fef61176dc04da5e8a34fc13c06bba4">EasyKiConverter::ConfigService::setDebugMode</a></div><div class="ttdeci">void setDebugMode(bool enabled)</div><div class="ttdoc">设置是否启用调试模式</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00213">ConfigService.cpp:213</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a56faf58099f3a176ed1c02a4fd13d5dc"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a56faf58099f3a176ed1c02a4fd13d5dc">EasyKiConverter::ConfigService::getDebugMode</a></div><div class="ttdeci">bool getDebugMode() const</div><div class="ttdoc">是否启用调试模式</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00208">ConfigService.cpp:208</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a63fa7eb05d7ef08826ce843a91e2169e"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a63fa7eb05d7ef08826ce843a91e2169e">EasyKiConverter::ConfigService::setLibName</a></div><div class="ttdeci">void setLibName(const QString &amp;name)</div><div class="ttdoc">设置库名称</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00127">ConfigService.cpp:127</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a6655b58881cb55cf9f3967328ae42929"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a6655b58881cb55cf9f3967328ae42929">EasyKiConverter::ConfigService::resetToDefaults</a></div><div class="ttdeci">void resetToDefaults()</div><div class="ttdoc">重置为默认配</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00095">ConfigService.cpp:95</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a6db3f902edca2e15446c191f2d7fa384"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a6db3f902edca2e15446c191f2d7fa384">EasyKiConverter::ConfigService::setExportSymbol</a></div><div class="ttdeci">void setExportSymbol(bool enabled)</div><div class="ttdoc">设置是否导出符号</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00142">ConfigService.cpp:142</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a74524eff0ee54955052bb8d35fafbe15"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a74524eff0ee54955052bb8d35fafbe15">EasyKiConverter::ConfigService::setExportFootprint</a></div><div class="ttdeci">void setExportFootprint(bool enabled)</div><div class="ttdoc">设置是否导出封装</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00157">ConfigService.cpp:157</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a906164be213712863bc564ad0a3151f2"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a906164be213712863bc564ad0a3151f2">EasyKiConverter::ConfigService::instance</a></div><div class="ttdeci">static ConfigService * instance()</div><div class="ttdoc">获取单例实例</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00025">ConfigService.cpp:25</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_a9eff8627cf6ef560133e325c9b37f978"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#a9eff8627cf6ef560133e325c9b37f978">EasyKiConverter::ConfigService::getDarkMode</a></div><div class="ttdeci">bool getDarkMode() const</div><div class="ttdoc">是否启用深色模式</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00197">ConfigService.cpp:197</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_ab33cde415a488f078857f481d96f852b"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#ab33cde415a488f078857f481d96f852b">EasyKiConverter::ConfigService::loadConfig</a></div><div class="ttdeci">bool loadConfig(const QString &amp;path=QString())</div><div class="ttdoc">加载配置</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00035">ConfigService.cpp:35</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_ab42755d520fb4ec855d1ac272744feda"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#ab42755d520fb4ec855d1ac272744feda">EasyKiConverter::ConfigService::m_configPath</a></div><div class="ttdeci">QString m_configPath</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8h_source.html#l00199">ConfigService.h:199</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_abe61a6ff81bbf68deda61d4bd8a010f8"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#abe61a6ff81bbf68deda61d4bd8a010f8">EasyKiConverter::ConfigService::m_configMutex</a></div><div class="ttdeci">QMutex m_configMutex</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8h_source.html#l00200">ConfigService.h:200</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_ac7127de54f0e62aa7264d78f9bcc05a8"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#ac7127de54f0e62aa7264d78f9bcc05a8">EasyKiConverter::ConfigService::getOverwriteExistingFiles</a></div><div class="ttdeci">bool getOverwriteExistingFiles() const</div><div class="ttdoc">是否覆盖已存在文</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00182">ConfigService.cpp:182</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_ad5c95dd91dfd55dcacb2a74a5d2c7e84"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#ad5c95dd91dfd55dcacb2a74a5d2c7e84">EasyKiConverter::ConfigService::configChanged</a></div><div class="ttdeci">void configChanged()</div><div class="ttdoc">配置改变信号</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_ae1aee369b5425e145d3ee5eda299fc65"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#ae1aee369b5425e145d3ee5eda299fc65">EasyKiConverter::ConfigService::setOverwriteExistingFiles</a></div><div class="ttdeci">void setOverwriteExistingFiles(bool enabled)</div><div class="ttdoc">设置是否覆盖已存在文</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00187">ConfigService.cpp:187</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_ae1f50c359d8b9f97da89a129be47ae89"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#ae1f50c359d8b9f97da89a129be47ae89">EasyKiConverter::ConfigService::~ConfigService</a></div><div class="ttdeci">~ConfigService() override</div><div class="ttdoc">析构函数</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00020">ConfigService.cpp:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_aee723a3c895088fca217ebe78d63753c"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#aee723a3c895088fca217ebe78d63753c">EasyKiConverter::ConfigService::getDefaultConfigPath</a></div><div class="ttdeci">QString getDefaultConfigPath() const</div><div class="ttdoc">获取默认配置文件路径</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00234">ConfigService.cpp:234</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_aee74b87827654910e744ed17a5f740a2"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#aee74b87827654910e744ed17a5f740a2">EasyKiConverter::ConfigService::getExportSymbol</a></div><div class="ttdeci">bool getExportSymbol() const</div><div class="ttdoc">是否导出符号</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00137">ConfigService.cpp:137</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_af021454ab09973fc82a6d53f7e93f4e6"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#af021454ab09973fc82a6d53f7e93f4e6">EasyKiConverter::ConfigService::s_mutex</a></div><div class="ttdeci">static QMutex s_mutex</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8h_source.html#l00196">ConfigService.h:196</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ConfigService_html_af1adb92ee7ec57d03b6ba83d25ec2cf7"><div class="ttname"><a href="classEasyKiConverter_1_1ConfigService.html#af1adb92ee7ec57d03b6ba83d25ec2cf7">EasyKiConverter::ConfigService::setOutputPath</a></div><div class="ttdeci">void setOutputPath(const QString &amp;path)</div><div class="ttdoc">设置输出路径</div><div class="ttdef"><b>Definition</b> <a href="ConfigService_8cpp_source.html#l00112">ConfigService.cpp:112</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_056ec8f0377ddc4293192cbc6b19c99c.html">services</a></li><li class="navelem"><a class="el" href="ConfigService_8cpp.html">ConfigService.cpp</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

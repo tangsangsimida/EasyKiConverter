@@ -1,0 +1,33 @@
+<map id="core/easyeda/EasyedaSymbolImporter.cpp" name="core/easyeda/EasyedaSymbolImporter.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="471,5,688,45"/>
+<area shape="rect" id="Node000002" href="$EasyedaSymbolImporter_8h.html" title=" " alt="" coords="303,93,496,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="537,48,439,90,437,85,535,43"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,240,100,265"/>
+<area shape="poly" id="edge16_Node000001_Node000004" title=" " alt="" coords="471,46,382,66,291,96,254,112,227,128,168,169,79,234,76,229,164,164,224,123,252,107,289,91,380,61,470,41"/>
+<area shape="rect" id="Node000012" href="$EasyedaUtils_8h.html" title=" " alt="" coords="520,93,639,119"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="582,46,582,79,577,79,577,46"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="662,93,737,119"/>
+<area shape="poly" id="edge15_Node000001_Node000013" title=" " alt="" coords="610,43,672,84,669,88,607,48"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="761,93,888,119"/>
+<area shape="poly" id="edge17_Node000001_Node000014" title=" " alt="" coords="639,43,777,87,775,92,637,48"/>
+<area shape="rect" id="Node000003" href="$SymbolData_8h.html" title=" " alt="" coords="195,167,361,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="381,121,311,162,308,157,378,116"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="125,240,226,265"/>
+<area shape="poly" id="edge9_Node000002_Node000005" title=" " alt="" coords="324,121,239,141,205,154,184,168,177,181,173,196,173,227,168,227,168,196,172,179,180,165,203,149,238,136,322,116"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="386,167,509,192"/>
+<area shape="poly" id="edge10_Node000002_Node000010" title=" " alt="" coords="409,118,434,154,430,157,405,121"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="533,167,626,192"/>
+<area shape="poly" id="edge11_Node000002_Node000011" title=" " alt="" coords="429,116,538,159,536,164,427,121"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="243,195,103,238,101,233,241,189"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="263,194,205,234,202,230,260,190"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="251,240,305,265"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="281,192,281,226,275,226,275,192"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="329,240,403,265"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="294,190,343,229,339,233,290,194"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="427,240,497,265"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="309,190,420,232,418,237,307,195"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="575,240,645,265"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="332,189,562,238,561,244,331,195"/>
+<area shape="poly" id="edge13_Node000012_Node000009" title=" " alt="" coords="598,117,621,137,640,166,644,182,642,199,629,230,624,227,637,198,639,183,636,168,617,141,595,121"/>
+<area shape="poly" id="edge14_Node000012_Node000011" title=" " alt="" coords="582,119,582,153,577,153,577,119"/>
+</map>

@@ -1,0 +1,1394 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::EasyedaApi类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1EasyedaApi.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pri-types">Private 类型</a> &#124;
+<a href="#pri-methods">Private 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1EasyedaApi-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::EasyedaApi类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>EasyEDA API 客户端类  
+ <a href="classEasyKiConverter_1_1EasyedaApi.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="EasyedaApi_8h_source.html">EasyedaApi.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::EasyedaApi 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1EasyedaApi__inherit__graph.svg" width="256" height="810"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::EasyedaApi 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1EasyedaApi__coll__graph.svg" width="339" height="1134"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:aeb0bb83bd4cdfbac9364b04e18f84fae" id="r_aeb0bb83bd4cdfbac9364b04e18f84fae"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#aeb0bb83bd4cdfbac9364b04e18f84fae">EasyedaApi</a> (QObject *parent=nullptr)</td></tr>
+<tr class="memdesc:aeb0bb83bd4cdfbac9364b04e18f84fae"><td class="mdescLeft">&#160;</td><td class="mdescRight">构造函数  <br /></td></tr>
+<tr class="separator:aeb0bb83bd4cdfbac9364b04e18f84fae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa92d8a652fa8743894f4699472bb35d9" id="r_aa92d8a652fa8743894f4699472bb35d9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#aa92d8a652fa8743894f4699472bb35d9">EasyedaApi</a> (<a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a> *adapter, QObject *parent=nullptr)</td></tr>
+<tr class="memdesc:aa92d8a652fa8743894f4699472bb35d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">构造函数（支持依赖注入）  <br /></td></tr>
+<tr class="separator:aa92d8a652fa8743894f4699472bb35d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa729599dd7a336e7a3e0e6f6204004a6" id="r_aa729599dd7a336e7a3e0e6f6204004a6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#aa729599dd7a336e7a3e0e6f6204004a6">~EasyedaApi</a> () override</td></tr>
+<tr class="memdesc:aa729599dd7a336e7a3e0e6f6204004a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">析构函数  <br /></td></tr>
+<tr class="separator:aa729599dd7a336e7a3e0e6f6204004a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae6cd7358cfd694eb9b8ce38ad2a64653" id="r_ae6cd7358cfd694eb9b8ce38ad2a64653"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ae6cd7358cfd694eb9b8ce38ad2a64653">fetchComponentInfo</a> (const QString &amp;lcscId)</td></tr>
+<tr class="memdesc:ae6cd7358cfd694eb9b8ce38ad2a64653"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取组件信息  <br /></td></tr>
+<tr class="separator:ae6cd7358cfd694eb9b8ce38ad2a64653"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a80ccd488c9493113bbb92507423b124f" id="r_a80ccd488c9493113bbb92507423b124f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a80ccd488c9493113bbb92507423b124f">fetchCadData</a> (const QString &amp;lcscId)</td></tr>
+<tr class="memdesc:a80ccd488c9493113bbb92507423b124f"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取组件 CAD 数据  <br /></td></tr>
+<tr class="separator:a80ccd488c9493113bbb92507423b124f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeca2ff7d82e706345ee9b99e0eee604a" id="r_aeca2ff7d82e706345ee9b99e0eee604a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#aeca2ff7d82e706345ee9b99e0eee604a">fetch3DModelObj</a> (const QString &amp;uuid)</td></tr>
+<tr class="memdesc:aeca2ff7d82e706345ee9b99e0eee604a"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取 3D 模型数据（OBJ 格式）  <br /></td></tr>
+<tr class="separator:aeca2ff7d82e706345ee9b99e0eee604a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad65567e7374be873fa88a57f45754f79" id="r_ad65567e7374be873fa88a57f45754f79"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad65567e7374be873fa88a57f45754f79">fetch3DModelStep</a> (const QString &amp;uuid)</td></tr>
+<tr class="memdesc:ad65567e7374be873fa88a57f45754f79"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取 3D 模型数据（STEP 格式）  <br /></td></tr>
+<tr class="separator:ad65567e7374be873fa88a57f45754f79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8022e60aa19506f390d2f639d27369c" id="r_ad8022e60aa19506f390d2f639d27369c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad8022e60aa19506f390d2f639d27369c">cancelRequest</a> ()</td></tr>
+<tr class="memdesc:ad8022e60aa19506f390d2f639d27369c"><td class="mdescLeft">&#160;</td><td class="mdescRight">取消当前请求  <br /></td></tr>
+<tr class="separator:ad8022e60aa19506f390d2f639d27369c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf66a3a17fde1e7e241bf2003cc7640b" id="r_acf66a3a17fde1e7e241bf2003cc7640b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#acf66a3a17fde1e7e241bf2003cc7640b">componentInfoFetched</a> (const QJsonObject &amp;data)</td></tr>
+<tr class="memdesc:acf66a3a17fde1e7e241bf2003cc7640b"><td class="mdescLeft">&#160;</td><td class="mdescRight">组件信息获取成功信号  <br /></td></tr>
+<tr class="separator:acf66a3a17fde1e7e241bf2003cc7640b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad133c23a3219c2ca6d36fecc01321f51" id="r_ad133c23a3219c2ca6d36fecc01321f51"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad133c23a3219c2ca6d36fecc01321f51">cadDataFetched</a> (const QJsonObject &amp;data)</td></tr>
+<tr class="memdesc:ad133c23a3219c2ca6d36fecc01321f51"><td class="mdescLeft">&#160;</td><td class="mdescRight">CAD 数据获取成功信号  <br /></td></tr>
+<tr class="separator:ad133c23a3219c2ca6d36fecc01321f51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b086a78ac6435f4e0ec2af802c1d90e" id="r_a2b086a78ac6435f4e0ec2af802c1d90e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a2b086a78ac6435f4e0ec2af802c1d90e">model3DFetched</a> (const QString &amp;uuid, const QByteArray &amp;data)</td></tr>
+<tr class="memdesc:a2b086a78ac6435f4e0ec2af802c1d90e"><td class="mdescLeft">&#160;</td><td class="mdescRight">3D 模型数据获取成功信号  <br /></td></tr>
+<tr class="separator:a2b086a78ac6435f4e0ec2af802c1d90e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09f7e10f94d0688d49926711757863c6" id="r_a09f7e10f94d0688d49926711757863c6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">fetchError</a> (const QString &amp;errorMessage)</td></tr>
+<tr class="memdesc:a09f7e10f94d0688d49926711757863c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">请求失败信号  <br /></td></tr>
+<tr class="separator:a09f7e10f94d0688d49926711757863c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a83ec622ff1ec024278559fa9cef1f2be" id="r_a83ec622ff1ec024278559fa9cef1f2be"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a83ec622ff1ec024278559fa9cef1f2be">fetchError</a> (const QString &amp;id, const QString &amp;errorMessage)</td></tr>
+<tr class="memdesc:a83ec622ff1ec024278559fa9cef1f2be"><td class="mdescLeft">&#160;</td><td class="mdescRight">请求失败信号（带 ID）  <br /></td></tr>
+<tr class="separator:a83ec622ff1ec024278559fa9cef1f2be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-types" name="pri-types"></a>
+Private 类型</h2></td></tr>
+<tr class="memitem:ad845c485e7ca0a65eba1857ef0a12fac" id="r_ad845c485e7ca0a65eba1857ef0a12fac"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12fac">RequestType</a> { <br />
+&#160;&#160;<a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12faca6adf97f83acf6453d4a6a4b1070f3754">None</a>
+, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facaf8bda80727c9d0d2149458dc19a71423">ComponentInfo</a>
+, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12faca646f05006f59cd6f5672fab1c4de1c5e">CadData</a>
+, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facaeb7c4837534dea52180df643b80639a2">Model3DObj</a>
+, <br />
+&#160;&#160;<a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facabbf924e0f35a900830a316e10a224090">Model3DStep</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:ad845c485e7ca0a65eba1857ef0a12fac"><td class="mdescLeft">&#160;</td><td class="mdescRight">请求类型枚举  <a href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12fac">更多...</a><br /></td></tr>
+<tr class="separator:ad845c485e7ca0a65eba1857ef0a12fac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private 成员函数</h2></td></tr>
+<tr class="memitem:a7dbdaaffd95da6aa9c96996e8cdac6d6" id="r_a7dbdaaffd95da6aa9c96996e8cdac6d6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a7dbdaaffd95da6aa9c96996e8cdac6d6">handleComponentInfoResponse</a> (const QJsonObject &amp;data)</td></tr>
+<tr class="memdesc:a7dbdaaffd95da6aa9c96996e8cdac6d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理组件信息响应  <br /></td></tr>
+<tr class="separator:a7dbdaaffd95da6aa9c96996e8cdac6d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a591121343057d4175030f683ee25ed96" id="r_a591121343057d4175030f683ee25ed96"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a591121343057d4175030f683ee25ed96">handleCadDataResponse</a> (const QJsonObject &amp;data)</td></tr>
+<tr class="memdesc:a591121343057d4175030f683ee25ed96"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理 CAD 数据响应  <br /></td></tr>
+<tr class="separator:a591121343057d4175030f683ee25ed96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e8ed2da82e016e2b6e1000f199217af" id="r_a5e8ed2da82e016e2b6e1000f199217af"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a5e8ed2da82e016e2b6e1000f199217af">handleModel3DResponse</a> (const QJsonObject &amp;data)</td></tr>
+<tr class="memdesc:a5e8ed2da82e016e2b6e1000f199217af"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理 3D 模型响应  <br /></td></tr>
+<tr class="separator:a5e8ed2da82e016e2b6e1000f199217af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44020c13a9f1f6eaa174c13e02d667f7" id="r_a44020c13a9f1f6eaa174c13e02d667f7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a44020c13a9f1f6eaa174c13e02d667f7">handleNetworkError</a> (const QString &amp;errorMessage)</td></tr>
+<tr class="memdesc:a44020c13a9f1f6eaa174c13e02d667f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理网络错误  <br /></td></tr>
+<tr class="separator:a44020c13a9f1f6eaa174c13e02d667f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace8aa316e328509c694b4177a78f1cab" id="r_ace8aa316e328509c694b4177a78f1cab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ace8aa316e328509c694b4177a78f1cab">handleRequestSuccess</a> (<a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a> *networkUtils, const QString &amp;lcscId, const QJsonObject &amp;data)</td></tr>
+<tr class="memdesc:ace8aa316e328509c694b4177a78f1cab"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理请求成功（支持并行请求）  <br /></td></tr>
+<tr class="separator:ace8aa316e328509c694b4177a78f1cab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a293a9f269c2eab41c410c3e39d589420" id="r_a293a9f269c2eab41c410c3e39d589420"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a293a9f269c2eab41c410c3e39d589420">handleRequestError</a> (<a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a> *networkUtils, const QString &amp;lcscId, const QString &amp;error)</td></tr>
+<tr class="memdesc:a293a9f269c2eab41c410c3e39d589420"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理请求错误（支持并行请求）  <br /></td></tr>
+<tr class="separator:a293a9f269c2eab41c410c3e39d589420"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a620f6d8685287b1b43ab1ad9d0e25899" id="r_a620f6d8685287b1b43ab1ad9d0e25899"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a620f6d8685287b1b43ab1ad9d0e25899">handleBinaryDataFetched</a> (<a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a> *networkUtils, const QString &amp;lcscId, const QByteArray &amp;data)</td></tr>
+<tr class="memdesc:a620f6d8685287b1b43ab1ad9d0e25899"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理二进制数据（支持并行请求）  <br /></td></tr>
+<tr class="separator:a620f6d8685287b1b43ab1ad9d0e25899"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f9321baec897c6940bbbc07ff52dbcb" id="r_a8f9321baec897c6940bbbc07ff52dbcb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a8f9321baec897c6940bbbc07ff52dbcb">handleRequestSuccess</a> (const QJsonObject &amp;data)</td></tr>
+<tr class="memdesc:a8f9321baec897c6940bbbc07ff52dbcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理总体请求成功  <br /></td></tr>
+<tr class="separator:a8f9321baec897c6940bbbc07ff52dbcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8746793a064eef576e828987556518a1" id="r_a8746793a064eef576e828987556518a1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a8746793a064eef576e828987556518a1">resetRequestState</a> ()</td></tr>
+<tr class="memdesc:a8746793a064eef576e828987556518a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">重置请求状态  <br /></td></tr>
+<tr class="separator:a8746793a064eef576e828987556518a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39f0bdf5a346eda3ea50e513501d494f" id="r_a39f0bdf5a346eda3ea50e513501d494f"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a39f0bdf5a346eda3ea50e513501d494f">buildComponentApiUrl</a> (const QString &amp;lcscId) const</td></tr>
+<tr class="memdesc:a39f0bdf5a346eda3ea50e513501d494f"><td class="mdescLeft">&#160;</td><td class="mdescRight">构建 API URL  <br /></td></tr>
+<tr class="separator:a39f0bdf5a346eda3ea50e513501d494f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a095f1aabc5ef938bd74685bdce78c791" id="r_a095f1aabc5ef938bd74685bdce78c791"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a095f1aabc5ef938bd74685bdce78c791">build3DModelObjUrl</a> (const QString &amp;uuid) const</td></tr>
+<tr class="memdesc:a095f1aabc5ef938bd74685bdce78c791"><td class="mdescLeft">&#160;</td><td class="mdescRight">构建 3D 模型 URL（OBJ 格式）  <br /></td></tr>
+<tr class="separator:a095f1aabc5ef938bd74685bdce78c791"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7f920e8769bf6564e5016d625803fa2" id="r_ad7f920e8769bf6564e5016d625803fa2"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad7f920e8769bf6564e5016d625803fa2">build3DModelStepUrl</a> (const QString &amp;uuid) const</td></tr>
+<tr class="memdesc:ad7f920e8769bf6564e5016d625803fa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">构建 3D 模型 URL（STEP 格式）  <br /></td></tr>
+<tr class="separator:ad7f920e8769bf6564e5016d625803fa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae6b395aa72b534d7de736960599ba3d3" id="r_ae6b395aa72b534d7de736960599ba3d3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ae6b395aa72b534d7de736960599ba3d3">validateLcscId</a> (const QString &amp;lcscId) const</td></tr>
+<tr class="memdesc:ae6b395aa72b534d7de736960599ba3d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">验证 LCSC ID 格式  <br /></td></tr>
+<tr class="separator:ae6b395aa72b534d7de736960599ba3d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:aeef6232d2beef3cb1b1e743bc012a849" id="r_aeef6232d2beef3cb1b1e743bc012a849"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#aeef6232d2beef3cb1b1e743bc012a849">m_networkUtils</a></td></tr>
+<tr class="separator:aeef6232d2beef3cb1b1e743bc012a849"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87ea575b6ba9ac428c83034c82f34074" id="r_a87ea575b6ba9ac428c83034c82f34074"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a87ea575b6ba9ac428c83034c82f34074">m_currentLcscId</a></td></tr>
+<tr class="separator:a87ea575b6ba9ac428c83034c82f34074"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3f2c87180614a00f985ef335fb562e27" id="r_a3f2c87180614a00f985ef335fb562e27"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a3f2c87180614a00f985ef335fb562e27">m_currentUuid</a></td></tr>
+<tr class="separator:a3f2c87180614a00f985ef335fb562e27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50772c1418b4932894cd47cf9deaa9c8" id="r_a50772c1418b4932894cd47cf9deaa9c8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a50772c1418b4932894cd47cf9deaa9c8">m_isFetching</a></td></tr>
+<tr class="separator:a50772c1418b4932894cd47cf9deaa9c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9584c4705edfcbf9c69bc0fc538e0dcd" id="r_a9584c4705edfcbf9c69bc0fc538e0dcd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12fac">RequestType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a9584c4705edfcbf9c69bc0fc538e0dcd">m_requestType</a></td></tr>
+<tr class="separator:a9584c4705edfcbf9c69bc0fc538e0dcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a46bba3622007e4879e1c1c5dd01cb4a2" id="r_a46bba3622007e4879e1c1c5dd01cb4a2"><td class="memItemLeft" align="right" valign="top">QVector&lt; QPointer&lt; <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a46bba3622007e4879e1c1c5dd01cb4a2">m_activeRequests</a></td></tr>
+<tr class="separator:a46bba3622007e4879e1c1c5dd01cb4a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a423e91b5898b0fb0f573360ee4adcba1" id="r_a423e91b5898b0fb0f573360ee4adcba1"><td class="memItemLeft" align="right" valign="top">QMutex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a423e91b5898b0fb0f573360ee4adcba1">m_requestsMutex</a></td></tr>
+<tr class="separator:a423e91b5898b0fb0f573360ee4adcba1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>EasyEDA API 客户端类 </p>
+<p>用于与 EasyEDA 服务器通信，获取组件数据。 </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8h_source.html">EasyedaApi.h</a> 第 <a class="el" href="EasyedaApi_8h_source.html#l00020">20</a> 行定义.</p>
+</div><h2 class="groupheader">成员枚举类型说明</h2>
+<a id="ad845c485e7ca0a65eba1857ef0a12fac" name="ad845c485e7ca0a65eba1857ef0a12fac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad845c485e7ca0a65eba1857ef0a12fac">&#9670;&#160;</a></span>RequestType</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12fac">EasyKiConverter::EasyedaApi::RequestType</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>请求类型枚举 </p>
+<table class="fieldtable">
+<tr><th colspan="2">枚举值</th></tr><tr><td class="fieldname"><a id="ad845c485e7ca0a65eba1857ef0a12faca6adf97f83acf6453d4a6a4b1070f3754" name="ad845c485e7ca0a65eba1857ef0a12faca6adf97f83acf6453d4a6a4b1070f3754"></a>None&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ad845c485e7ca0a65eba1857ef0a12facaf8bda80727c9d0d2149458dc19a71423" name="ad845c485e7ca0a65eba1857ef0a12facaf8bda80727c9d0d2149458dc19a71423"></a>ComponentInfo&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ad845c485e7ca0a65eba1857ef0a12faca646f05006f59cd6f5672fab1c4de1c5e" name="ad845c485e7ca0a65eba1857ef0a12faca646f05006f59cd6f5672fab1c4de1c5e"></a>CadData&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ad845c485e7ca0a65eba1857ef0a12facaeb7c4837534dea52180df643b80639a2" name="ad845c485e7ca0a65eba1857ef0a12facaeb7c4837534dea52180df643b80639a2"></a>Model3DObj&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ad845c485e7ca0a65eba1857ef0a12facabbf924e0f35a900830a316e10a224090" name="ad845c485e7ca0a65eba1857ef0a12facabbf924e0f35a900830a316e10a224090"></a>Model3DStep&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8h_source.html">EasyedaApi.h</a> 第 <a class="el" href="EasyedaApi_8h_source.html#l00144">144</a> 行定义.</p>
+
+</div>
+</div>
+<h2 class="groupheader">构造及析构函数说明</h2>
+<a id="aeb0bb83bd4cdfbac9364b04e18f84fae" name="aeb0bb83bd4cdfbac9364b04e18f84fae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeb0bb83bd4cdfbac9364b04e18f84fae">&#9670;&#160;</a></span>EasyedaApi() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::EasyedaApi::EasyedaApi </td>
+          <td>(</td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>构造函数 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parent</td><td>父对象 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00017">17</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a3d1f74c7104a6ae50a77914e9a7a713b">EasyKiConverter::INetworkAdapter::binaryDataFetched()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00225">handleBinaryDataFetched()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00278">handleNetworkError()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00199">handleRequestSuccess()</a>, <a class="el" href="EasyedaApi_8h_source.html#l00179">m_currentUuid</a>, <a class="el" href="EasyedaApi_8h_source.html#l00180">m_isFetching</a>, <a class="el" href="EasyedaApi_8h_source.html#l00177">m_networkUtils</a>, <a class="el" href="EasyedaApi_8h_source.html#l00181">m_requestType</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12faca6adf97f83acf6453d4a6a4b1070f3754">None</a>, <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a414c11c24dd720ca595de36dcf1ed87e">EasyKiConverter::INetworkAdapter::requestError()</a> , 以及 <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a95d90a19fac5597575f525ac2860a6f2">EasyKiConverter::INetworkAdapter::requestSuccess()</a>.</p>
+
+</div>
+</div>
+<a id="aa92d8a652fa8743894f4699472bb35d9" name="aa92d8a652fa8743894f4699472bb35d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa92d8a652fa8743894f4699472bb35d9">&#9670;&#160;</a></span>EasyedaApi() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::EasyedaApi::EasyedaApi </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a> *&#160;</td>
+          <td class="paramname"><em>adapter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>构造函数（支持依赖注入） </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">adapter</td><td>网络适配器 </td></tr>
+    <tr><td class="paramname">parent</td><td>父对象 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00036">36</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a3d1f74c7104a6ae50a77914e9a7a713b">EasyKiConverter::INetworkAdapter::binaryDataFetched()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00225">handleBinaryDataFetched()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00278">handleNetworkError()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00199">handleRequestSuccess()</a>, <a class="el" href="EasyedaApi_8h_source.html#l00179">m_currentUuid</a>, <a class="el" href="EasyedaApi_8h_source.html#l00177">m_networkUtils</a>, <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a414c11c24dd720ca595de36dcf1ed87e">EasyKiConverter::INetworkAdapter::requestError()</a> , 以及 <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a95d90a19fac5597575f525ac2860a6f2">EasyKiConverter::INetworkAdapter::requestSuccess()</a>.</p>
+
+</div>
+</div>
+<a id="aa729599dd7a336e7a3e0e6f6204004a6" name="aa729599dd7a336e7a3e0e6f6204004a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa729599dd7a336e7a3e0e6f6204004a6">&#9670;&#160;</a></span>~EasyedaApi()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::EasyedaApi::~EasyedaApi </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>析构函数 </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00055">55</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="EasyedaApi_8cpp_source.html#l00236">cancelRequest()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="a095f1aabc5ef938bd74685bdce78c791" name="a095f1aabc5ef938bd74685bdce78c791"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a095f1aabc5ef938bd74685bdce78c791">&#9670;&#160;</a></span>build3DModelObjUrl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::EasyedaApi::build3DModelObjUrl </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>uuid</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>构建 3D 模型 URL（OBJ 格式） </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00292">292</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="EasyedaApi_8cpp_source.html#l00014">EasyKiConverter::ENDPOINT_3D_MODEL</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00111">fetch3DModelObj()</a>.</p>
+
+</div>
+</div>
+<a id="ad7f920e8769bf6564e5016d625803fa2" name="ad7f920e8769bf6564e5016d625803fa2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad7f920e8769bf6564e5016d625803fa2">&#9670;&#160;</a></span>build3DModelStepUrl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::EasyedaApi::build3DModelStepUrl </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>uuid</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>构建 3D 模型 URL（STEP 格式） </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00296">296</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="EasyedaApi_8cpp_source.html#l00015">EasyKiConverter::ENDPOINT_3D_MODEL_STEP</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00144">fetch3DModelStep()</a>.</p>
+
+</div>
+</div>
+<a id="a39f0bdf5a346eda3ea50e513501d494f" name="a39f0bdf5a346eda3ea50e513501d494f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a39f0bdf5a346eda3ea50e513501d494f">&#9670;&#160;</a></span>buildComponentApiUrl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::EasyedaApi::buildComponentApiUrl </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>lcscId</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>构建 API URL </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00288">288</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="EasyedaApi_8cpp_source.html#l00013">EasyKiConverter::API_ENDPOINT</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00082">fetchCadData()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00059">fetchComponentInfo()</a>.</p>
+
+</div>
+</div>
+<a id="ad133c23a3219c2ca6d36fecc01321f51" name="ad133c23a3219c2ca6d36fecc01321f51"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad133c23a3219c2ca6d36fecc01321f51">&#9670;&#160;</a></span>cadDataFetched()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::cadDataFetched </td>
+          <td>(</td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>CAD 数据获取成功信号 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">data</td><td>CAD 数据 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00263">handleCadDataResponse()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00199">handleRequestSuccess()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">EasyKiConverter::ComponentDataCollector::initializeApiConnections()</a> , 以及 <a class="el" href="ComponentService_8cpp_source.html#l00076">EasyKiConverter::ComponentService::initializeApiConnections()</a>.</p>
+
+</div>
+</div>
+<a id="ad8022e60aa19506f390d2f639d27369c" name="ad8022e60aa19506f390d2f639d27369c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad8022e60aa19506f390d2f639d27369c">&#9670;&#160;</a></span>cancelRequest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::cancelRequest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>取消当前请求 </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00236">236</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="EasyedaApi_8h_source.html#l00184">m_activeRequests</a>, <a class="el" href="EasyedaApi_8h_source.html#l00180">m_isFetching</a>, <a class="el" href="EasyedaApi_8h_source.html#l00177">m_networkUtils</a> , 以及 <a class="el" href="EasyedaApi_8h_source.html#l00185">m_requestsMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00055">~EasyedaApi()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00038">EasyKiConverter::ComponentDataCollector::cancel()</a>.</p>
+
+</div>
+</div>
+<a id="acf66a3a17fde1e7e241bf2003cc7640b" name="acf66a3a17fde1e7e241bf2003cc7640b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acf66a3a17fde1e7e241bf2003cc7640b">&#9670;&#160;</a></span>componentInfoFetched()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::componentInfoFetched </td>
+          <td>(</td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>组件信息获取成功信号 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">data</td><td>组件数据 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00254">handleComponentInfoResponse()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">EasyKiConverter::ComponentDataCollector::initializeApiConnections()</a> , 以及 <a class="el" href="ComponentService_8cpp_source.html#l00076">EasyKiConverter::ComponentService::initializeApiConnections()</a>.</p>
+
+</div>
+</div>
+<a id="aeca2ff7d82e706345ee9b99e0eee604a" name="aeca2ff7d82e706345ee9b99e0eee604a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeca2ff7d82e706345ee9b99e0eee604a">&#9670;&#160;</a></span>fetch3DModelObj()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::fetch3DModelObj </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>uuid</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取 3D 模型数据（OBJ 格式） </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">uuid</td><td>3D 模型 UUID </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00111">111</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a3d1f74c7104a6ae50a77914e9a7a713b">EasyKiConverter::INetworkAdapter::binaryDataFetched()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00292">build3DModelObjUrl()</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">fetchError()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00225">handleBinaryDataFetched()</a>, <a class="el" href="EasyedaApi_8h_source.html#l00184">m_activeRequests</a>, <a class="el" href="EasyedaApi_8h_source.html#l00185">m_requestsMutex</a>, <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a414c11c24dd720ca595de36dcf1ed87e">EasyKiConverter::INetworkAdapter::requestError()</a>, <a class="el" href="NetworkUtils_8cpp_source.html#l00039">EasyKiConverter::NetworkUtils::sendGetRequest()</a> , 以及 <a class="el" href="NetworkUtils_8cpp_source.html#l00078">EasyKiConverter::NetworkUtils::setExpectBinaryData()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00057">EasyKiConverter::ComponentDataCollector::handleCadDataFetched()</a> , 以及 <a class="el" href="ComponentService_8cpp_source.html#l00164">EasyKiConverter::ComponentService::handleCadDataFetched()</a>.</p>
+
+</div>
+</div>
+<a id="ad65567e7374be873fa88a57f45754f79" name="ad65567e7374be873fa88a57f45754f79"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad65567e7374be873fa88a57f45754f79">&#9670;&#160;</a></span>fetch3DModelStep()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::fetch3DModelStep </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>uuid</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取 3D 模型数据（STEP 格式） </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">uuid</td><td>3D 模型 UUID </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00144">144</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a3d1f74c7104a6ae50a77914e9a7a713b">EasyKiConverter::INetworkAdapter::binaryDataFetched()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00296">build3DModelStepUrl()</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">fetchError()</a>, <a class="el" href="EasyedaApi_8h_source.html#l00184">m_activeRequests</a>, <a class="el" href="EasyedaApi_8h_source.html#l00185">m_requestsMutex</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a2b086a78ac6435f4e0ec2af802c1d90e">model3DFetched()</a>, <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a414c11c24dd720ca595de36dcf1ed87e">EasyKiConverter::INetworkAdapter::requestError()</a>, <a class="el" href="NetworkUtils_8cpp_source.html#l00039">EasyKiConverter::NetworkUtils::sendGetRequest()</a> , 以及 <a class="el" href="NetworkUtils_8cpp_source.html#l00078">EasyKiConverter::NetworkUtils::setExpectBinaryData()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00140">EasyKiConverter::ComponentDataCollector::handleModel3DFetched()</a> , 以及 <a class="el" href="ComponentService_8cpp_source.html#l00345">EasyKiConverter::ComponentService::handleModel3DFetched()</a>.</p>
+
+</div>
+</div>
+<a id="a80ccd488c9493113bbb92507423b124f" name="a80ccd488c9493113bbb92507423b124f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a80ccd488c9493113bbb92507423b124f">&#9670;&#160;</a></span>fetchCadData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::fetchCadData </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>lcscId</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取组件 CAD 数据 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">lcscId</td><td>LCSC 组件 ID </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00082">82</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="EasyedaApi_8cpp_source.html#l00288">buildComponentApiUrl()</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">fetchError()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00216">handleRequestError()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00199">handleRequestSuccess()</a>, <a class="el" href="EasyedaApi_8h_source.html#l00184">m_activeRequests</a>, <a class="el" href="EasyedaApi_8h_source.html#l00185">m_requestsMutex</a>, <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a414c11c24dd720ca595de36dcf1ed87e">EasyKiConverter::INetworkAdapter::requestError()</a>, <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a95d90a19fac5597575f525ac2860a6f2">EasyKiConverter::INetworkAdapter::requestSuccess()</a>, <a class="el" href="NetworkUtils_8cpp_source.html#l00039">EasyKiConverter::NetworkUtils::sendGetRequest()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00300">validateLcscId()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentService_8cpp_source.html#l00101">EasyKiConverter::ComponentService::fetchComponentDataInternal()</a> , 以及 <a class="el" href="ComponentDataCollector_8cpp_source.html#l00023">EasyKiConverter::ComponentDataCollector::start()</a>.</p>
+
+</div>
+</div>
+<a id="ae6cd7358cfd694eb9b8ce38ad2a64653" name="ae6cd7358cfd694eb9b8ce38ad2a64653"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae6cd7358cfd694eb9b8ce38ad2a64653">&#9670;&#160;</a></span>fetchComponentInfo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::fetchComponentInfo </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>lcscId</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取组件信息 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">lcscId</td><td>LCSC 组件 ID（应以 'C' 开头） </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00059">59</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="EasyedaApi_8cpp_source.html#l00288">buildComponentApiUrl()</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facaf8bda80727c9d0d2149458dc19a71423">ComponentInfo</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">fetchError()</a>, <a class="el" href="EasyedaApi_8h_source.html#l00178">m_currentLcscId</a>, <a class="el" href="EasyedaApi_8h_source.html#l00180">m_isFetching</a>, <a class="el" href="EasyedaApi_8h_source.html#l00177">m_networkUtils</a>, <a class="el" href="EasyedaApi_8h_source.html#l00181">m_requestType</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00283">resetRequestState()</a>, <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#ac7848928cdacf50ef4f80b5bf2df3dd6">EasyKiConverter::INetworkAdapter::sendGetRequest()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00300">validateLcscId()</a>.</p>
+
+</div>
+</div>
+<a id="a09f7e10f94d0688d49926711757863c6" name="a09f7e10f94d0688d49926711757863c6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09f7e10f94d0688d49926711757863c6">&#9670;&#160;</a></span>fetchError() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::fetchError </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>errorMessage</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>请求失败信号 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">errorMessage</td><td>错误消息 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00111">fetch3DModelObj()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00144">fetch3DModelStep()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00082">fetchCadData()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00059">fetchComponentInfo()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00263">handleCadDataResponse()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00254">handleComponentInfoResponse()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00278">handleNetworkError()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00216">handleRequestError()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00199">handleRequestSuccess()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">EasyKiConverter::ComponentDataCollector::initializeApiConnections()</a> , 以及 <a class="el" href="ComponentService_8cpp_source.html#l00076">EasyKiConverter::ComponentService::initializeApiConnections()</a>.</p>
+
+</div>
+</div>
+<a id="a83ec622ff1ec024278559fa9cef1f2be" name="a83ec622ff1ec024278559fa9cef1f2be"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a83ec622ff1ec024278559fa9cef1f2be">&#9670;&#160;</a></span>fetchError() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::fetchError </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>errorMessage</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>请求失败信号（带 ID） </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">id</td><td>组件 ID 或 UUID </td></tr>
+    <tr><td class="paramname">errorMessage</td><td>错误消息 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a620f6d8685287b1b43ab1ad9d0e25899" name="a620f6d8685287b1b43ab1ad9d0e25899"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a620f6d8685287b1b43ab1ad9d0e25899">&#9670;&#160;</a></span>handleBinaryDataFetched()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::handleBinaryDataFetched </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a> *&#160;</td>
+          <td class="paramname"><em>networkUtils</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>lcscId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QByteArray &amp;&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理二进制数据（支持并行请求） </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00225">225</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="EasyedaApi_8h_source.html#l00184">m_activeRequests</a>, <a class="el" href="EasyedaApi_8h_source.html#l00185">m_requestsMutex</a> , 以及 <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a2b086a78ac6435f4e0ec2af802c1d90e">model3DFetched()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00036">EasyedaApi()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00017">EasyedaApi()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00111">fetch3DModelObj()</a>.</p>
+
+</div>
+</div>
+<a id="a591121343057d4175030f683ee25ed96" name="a591121343057d4175030f683ee25ed96"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a591121343057d4175030f683ee25ed96">&#9670;&#160;</a></span>handleCadDataResponse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::handleCadDataResponse </td>
+          <td>(</td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理 CAD 数据响应 </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00263">263</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad133c23a3219c2ca6d36fecc01321f51">cadDataFetched()</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">fetchError()</a>, <a class="el" href="EasyedaApi_8h_source.html#l00178">m_currentLcscId</a> , 以及 <a class="el" href="EasyedaApi_8h_source.html#l00180">m_isFetching</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00182">handleRequestSuccess()</a>.</p>
+
+</div>
+</div>
+<a id="a7dbdaaffd95da6aa9c96996e8cdac6d6" name="a7dbdaaffd95da6aa9c96996e8cdac6d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7dbdaaffd95da6aa9c96996e8cdac6d6">&#9670;&#160;</a></span>handleComponentInfoResponse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::handleComponentInfoResponse </td>
+          <td>(</td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理组件信息响应 </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00254">254</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#acf66a3a17fde1e7e241bf2003cc7640b">componentInfoFetched()</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">fetchError()</a> , 以及 <a class="el" href="EasyedaApi_8h_source.html#l00180">m_isFetching</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00182">handleRequestSuccess()</a>.</p>
+
+</div>
+</div>
+<a id="a5e8ed2da82e016e2b6e1000f199217af" name="a5e8ed2da82e016e2b6e1000f199217af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e8ed2da82e016e2b6e1000f199217af">&#9670;&#160;</a></span>handleModel3DResponse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::handleModel3DResponse </td>
+          <td>(</td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理 3D 模型响应 </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00274">274</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00182">handleRequestSuccess()</a>.</p>
+
+</div>
+</div>
+<a id="a44020c13a9f1f6eaa174c13e02d667f7" name="a44020c13a9f1f6eaa174c13e02d667f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a44020c13a9f1f6eaa174c13e02d667f7">&#9670;&#160;</a></span>handleNetworkError()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::handleNetworkError </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>errorMessage</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理网络错误 </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00278">278</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">fetchError()</a> , 以及 <a class="el" href="EasyedaApi_8h_source.html#l00180">m_isFetching</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00036">EasyedaApi()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00017">EasyedaApi()</a>.</p>
+
+</div>
+</div>
+<a id="a293a9f269c2eab41c410c3e39d589420" name="a293a9f269c2eab41c410c3e39d589420"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a293a9f269c2eab41c410c3e39d589420">&#9670;&#160;</a></span>handleRequestError()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::handleRequestError </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a> *&#160;</td>
+          <td class="paramname"><em>networkUtils</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>lcscId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>error</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理请求错误（支持并行请求） </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00216">216</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">fetchError()</a>, <a class="el" href="EasyedaApi_8h_source.html#l00184">m_activeRequests</a> , 以及 <a class="el" href="EasyedaApi_8h_source.html#l00185">m_requestsMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00082">fetchCadData()</a>.</p>
+
+</div>
+</div>
+<a id="a8f9321baec897c6940bbbc07ff52dbcb" name="a8f9321baec897c6940bbbc07ff52dbcb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f9321baec897c6940bbbc07ff52dbcb">&#9670;&#160;</a></span>handleRequestSuccess() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::handleRequestSuccess </td>
+          <td>(</td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理总体请求成功 </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00182">182</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12faca646f05006f59cd6f5672fab1c4de1c5e">CadData</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facaf8bda80727c9d0d2149458dc19a71423">ComponentInfo</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00263">handleCadDataResponse()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00254">handleComponentInfoResponse()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00274">handleModel3DResponse()</a>, <a class="el" href="EasyedaApi_8h_source.html#l00181">m_requestType</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facaeb7c4837534dea52180df643b80639a2">Model3DObj</a> , 以及 <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facabbf924e0f35a900830a316e10a224090">Model3DStep</a>.</p>
+
+</div>
+</div>
+<a id="ace8aa316e328509c694b4177a78f1cab" name="ace8aa316e328509c694b4177a78f1cab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ace8aa316e328509c694b4177a78f1cab">&#9670;&#160;</a></span>handleRequestSuccess() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::handleRequestSuccess </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a> *&#160;</td>
+          <td class="paramname"><em>networkUtils</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>lcscId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理请求成功（支持并行请求） </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00199">199</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad133c23a3219c2ca6d36fecc01321f51">cadDataFetched()</a>, <a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">fetchError()</a>, <a class="el" href="EasyedaApi_8h_source.html#l00184">m_activeRequests</a> , 以及 <a class="el" href="EasyedaApi_8h_source.html#l00185">m_requestsMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00036">EasyedaApi()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00017">EasyedaApi()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00082">fetchCadData()</a>.</p>
+
+</div>
+</div>
+<a id="a2b086a78ac6435f4e0ec2af802c1d90e" name="a2b086a78ac6435f4e0ec2af802c1d90e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2b086a78ac6435f4e0ec2af802c1d90e">&#9670;&#160;</a></span>model3DFetched()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::model3DFetched </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>uuid</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QByteArray &amp;&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>3D 模型数据获取成功信号 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">uuid</td><td>3D 模型 UUID </td></tr>
+    <tr><td class="paramname">data</td><td>3D 模型数据 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00144">fetch3DModelStep()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00225">handleBinaryDataFetched()</a>, <a class="el" href="ComponentDataCollector_8cpp_source.html#l00194">EasyKiConverter::ComponentDataCollector::initializeApiConnections()</a> , 以及 <a class="el" href="ComponentService_8cpp_source.html#l00076">EasyKiConverter::ComponentService::initializeApiConnections()</a>.</p>
+
+</div>
+</div>
+<a id="a8746793a064eef576e828987556518a1" name="a8746793a064eef576e828987556518a1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8746793a064eef576e828987556518a1">&#9670;&#160;</a></span>resetRequestState()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::EasyedaApi::resetRequestState </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>重置请求状态 </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00283">283</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="EasyedaApi_8h_source.html#l00177">m_networkUtils</a> , 以及 <a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a54f804235349c013c863737ad9b72afb">EasyKiConverter::INetworkAdapter::setExpectBinaryData()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00059">fetchComponentInfo()</a>.</p>
+
+</div>
+</div>
+<a id="ae6b395aa72b534d7de736960599ba3d3" name="ae6b395aa72b534d7de736960599ba3d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae6b395aa72b534d7de736960599ba3d3">&#9670;&#160;</a></span>validateLcscId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::EasyedaApi::validateLcscId </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>lcscId</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>验证 LCSC ID 格式 </p>
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a> 第 <a class="el" href="EasyedaApi_8cpp_source.html#l00300">300</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00082">fetchCadData()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00059">fetchComponentInfo()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a46bba3622007e4879e1c1c5dd01cb4a2" name="a46bba3622007e4879e1c1c5dd01cb4a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a46bba3622007e4879e1c1c5dd01cb4a2">&#9670;&#160;</a></span>m_activeRequests</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QVector&lt;QPointer&lt;<a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a>&gt; &gt; EasyKiConverter::EasyedaApi::m_activeRequests</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8h_source.html">EasyedaApi.h</a> 第 <a class="el" href="EasyedaApi_8h_source.html#l00184">184</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00236">cancelRequest()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00111">fetch3DModelObj()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00144">fetch3DModelStep()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00082">fetchCadData()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00225">handleBinaryDataFetched()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00216">handleRequestError()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00199">handleRequestSuccess()</a>.</p>
+
+</div>
+</div>
+<a id="a87ea575b6ba9ac428c83034c82f34074" name="a87ea575b6ba9ac428c83034c82f34074"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a87ea575b6ba9ac428c83034c82f34074">&#9670;&#160;</a></span>m_currentLcscId</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::EasyedaApi::m_currentLcscId</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8h_source.html">EasyedaApi.h</a> 第 <a class="el" href="EasyedaApi_8h_source.html#l00178">178</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00059">fetchComponentInfo()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00263">handleCadDataResponse()</a>.</p>
+
+</div>
+</div>
+<a id="a3f2c87180614a00f985ef335fb562e27" name="a3f2c87180614a00f985ef335fb562e27"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3f2c87180614a00f985ef335fb562e27">&#9670;&#160;</a></span>m_currentUuid</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::EasyedaApi::m_currentUuid</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8h_source.html">EasyedaApi.h</a> 第 <a class="el" href="EasyedaApi_8h_source.html#l00179">179</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00036">EasyedaApi()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00017">EasyedaApi()</a>.</p>
+
+</div>
+</div>
+<a id="a50772c1418b4932894cd47cf9deaa9c8" name="a50772c1418b4932894cd47cf9deaa9c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50772c1418b4932894cd47cf9deaa9c8">&#9670;&#160;</a></span>m_isFetching</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::EasyedaApi::m_isFetching</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8h_source.html">EasyedaApi.h</a> 第 <a class="el" href="EasyedaApi_8h_source.html#l00180">180</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00017">EasyedaApi()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00236">cancelRequest()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00059">fetchComponentInfo()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00263">handleCadDataResponse()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00254">handleComponentInfoResponse()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00278">handleNetworkError()</a>.</p>
+
+</div>
+</div>
+<a id="aeef6232d2beef3cb1b1e743bc012a849" name="aeef6232d2beef3cb1b1e743bc012a849"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeef6232d2beef3cb1b1e743bc012a849">&#9670;&#160;</a></span>m_networkUtils</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a>* EasyKiConverter::EasyedaApi::m_networkUtils</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8h_source.html">EasyedaApi.h</a> 第 <a class="el" href="EasyedaApi_8h_source.html#l00177">177</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00036">EasyedaApi()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00017">EasyedaApi()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00236">cancelRequest()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00059">fetchComponentInfo()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00283">resetRequestState()</a>.</p>
+
+</div>
+</div>
+<a id="a423e91b5898b0fb0f573360ee4adcba1" name="a423e91b5898b0fb0f573360ee4adcba1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a423e91b5898b0fb0f573360ee4adcba1">&#9670;&#160;</a></span>m_requestsMutex</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMutex EasyKiConverter::EasyedaApi::m_requestsMutex</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8h_source.html">EasyedaApi.h</a> 第 <a class="el" href="EasyedaApi_8h_source.html#l00185">185</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00236">cancelRequest()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00111">fetch3DModelObj()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00144">fetch3DModelStep()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00082">fetchCadData()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00225">handleBinaryDataFetched()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00216">handleRequestError()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00199">handleRequestSuccess()</a>.</p>
+
+</div>
+</div>
+<a id="a9584c4705edfcbf9c69bc0fc538e0dcd" name="a9584c4705edfcbf9c69bc0fc538e0dcd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9584c4705edfcbf9c69bc0fc538e0dcd">&#9670;&#160;</a></span>m_requestType</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12fac">RequestType</a> EasyKiConverter::EasyedaApi::m_requestType</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="EasyedaApi_8h_source.html">EasyedaApi.h</a> 第 <a class="el" href="EasyedaApi_8h_source.html#l00181">181</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00017">EasyedaApi()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00059">fetchComponentInfo()</a> , 以及 <a class="el" href="EasyedaApi_8cpp_source.html#l00182">handleRequestSuccess()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>core/easyeda/<a class="el" href="EasyedaApi_8h_source.html">EasyedaApi.h</a></li>
+<li>core/easyeda/<a class="el" href="EasyedaApi_8cpp_source.html">EasyedaApi.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1EasyedaApi.html">EasyedaApi</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

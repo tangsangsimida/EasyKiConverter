@@ -1,0 +1,722 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::LcscImageService类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1LcscImageService.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pri-methods">Private 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="#pri-static-attribs">静态 Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1LcscImageService-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::LcscImageService类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>LCSC 图片服务类  
+ <a href="classEasyKiConverter_1_1LcscImageService.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="LcscImageService_8h_source.html">LcscImageService.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::LcscImageService 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1LcscImageService__inherit__graph.svg" width="244" height="464"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::LcscImageService 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1LcscImageService__coll__graph.svg" width="244" height="464"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a6dffd68a7e1b42891b266d3cb915cfdc" id="r_a6dffd68a7e1b42891b266d3cb915cfdc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#a6dffd68a7e1b42891b266d3cb915cfdc">LcscImageService</a> (QObject *parent=nullptr)</td></tr>
+<tr class="separator:a6dffd68a7e1b42891b266d3cb915cfdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4e7f51197513d58fa407f315b246261" id="r_aa4e7f51197513d58fa407f315b246261"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#aa4e7f51197513d58fa407f315b246261">fetchPreviewImage</a> (const QString &amp;componentId)</td></tr>
+<tr class="memdesc:aa4e7f51197513d58fa407f315b246261"><td class="mdescLeft">&#160;</td><td class="mdescRight">请求获取元件预览图  <br /></td></tr>
+<tr class="separator:aa4e7f51197513d58fa407f315b246261"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad361d8a8f7a8e8e55837f102320f3e43" id="r_ad361d8a8f7a8e8e55837f102320f3e43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#ad361d8a8f7a8e8e55837f102320f3e43">imageReady</a> (const QString &amp;componentId, const QString &amp;imagePath)</td></tr>
+<tr class="memdesc:ad361d8a8f7a8e8e55837f102320f3e43"><td class="mdescLeft">&#160;</td><td class="mdescRight">图片下载成功信号  <br /></td></tr>
+<tr class="separator:ad361d8a8f7a8e8e55837f102320f3e43"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fa9f8b696d2b4dbafaf0a7e14584798" id="r_a4fa9f8b696d2b4dbafaf0a7e14584798"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#a4fa9f8b696d2b4dbafaf0a7e14584798">error</a> (const QString &amp;componentId, const QString &amp;errorMessage)</td></tr>
+<tr class="memdesc:a4fa9f8b696d2b4dbafaf0a7e14584798"><td class="mdescLeft">&#160;</td><td class="mdescRight">错误信号  <br /></td></tr>
+<tr class="separator:a4fa9f8b696d2b4dbafaf0a7e14584798"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private 成员函数</h2></td></tr>
+<tr class="memitem:a85ccbd09692b87413b5d59840799b268" id="r_a85ccbd09692b87413b5d59840799b268"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#a85ccbd09692b87413b5d59840799b268">processQueue</a> ()</td></tr>
+<tr class="separator:a85ccbd09692b87413b5d59840799b268"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e37c5fc0974f493bf5b816e33b800ab" id="r_a3e37c5fc0974f493bf5b816e33b800ab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#a3e37c5fc0974f493bf5b816e33b800ab">handleSearchResponse</a> (QNetworkReply *reply, const QString &amp;componentId, int retryCount)</td></tr>
+<tr class="separator:a3e37c5fc0974f493bf5b816e33b800ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7588b69fc5edee6dc8fdc85c45884a85" id="r_a7588b69fc5edee6dc8fdc85c45884a85"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#a7588b69fc5edee6dc8fdc85c45884a85">handleFallbackResponse</a> (QNetworkReply *reply, const QString &amp;componentId)</td></tr>
+<tr class="separator:a7588b69fc5edee6dc8fdc85c45884a85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5324bbf5eac46534b37617ad762adc3d" id="r_a5324bbf5eac46534b37617ad762adc3d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#a5324bbf5eac46534b37617ad762adc3d">handleDownloadResponse</a> (QNetworkReply *reply, const QString &amp;componentId, int retryCount)</td></tr>
+<tr class="separator:a5324bbf5eac46534b37617ad762adc3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afce42e978cdcecbaa88aca3cb1f8f30f" id="r_afce42e978cdcecbaa88aca3cb1f8f30f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#afce42e978cdcecbaa88aca3cb1f8f30f">performSearch</a> (const QString &amp;componentId, int retryCount)</td></tr>
+<tr class="separator:afce42e978cdcecbaa88aca3cb1f8f30f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0a6f5e1d61703ecf25aff963c94f9d5" id="r_ae0a6f5e1d61703ecf25aff963c94f9d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#ae0a6f5e1d61703ecf25aff963c94f9d5">performFallback</a> (const QString &amp;componentId)</td></tr>
+<tr class="separator:ae0a6f5e1d61703ecf25aff963c94f9d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af762c4ed29f45ed43efe0d5d988470ee" id="r_af762c4ed29f45ed43efe0d5d988470ee"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#af762c4ed29f45ed43efe0d5d988470ee">performDownload</a> (const QString &amp;componentId, const QString &amp;imageUrl, int retryCount)</td></tr>
+<tr class="separator:af762c4ed29f45ed43efe0d5d988470ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:a59d504271d1b0e3e7b3fb26a6b3b8267" id="r_a59d504271d1b0e3e7b3fb26a6b3b8267"><td class="memItemLeft" align="right" valign="top">QNetworkAccessManager *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#a59d504271d1b0e3e7b3fb26a6b3b8267">m_networkManager</a></td></tr>
+<tr class="separator:a59d504271d1b0e3e7b3fb26a6b3b8267"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb593018e829f8aa74a5751f22b91284" id="r_afb593018e829f8aa74a5751f22b91284"><td class="memItemLeft" align="right" valign="top">QQueue&lt; QString &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#afb593018e829f8aa74a5751f22b91284">m_queue</a></td></tr>
+<tr class="separator:afb593018e829f8aa74a5751f22b91284"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a48a41f5e567874adcaddeba9d894fb" id="r_a4a48a41f5e567874adcaddeba9d894fb"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#a4a48a41f5e567874adcaddeba9d894fb">m_activeRequests</a></td></tr>
+<tr class="separator:a4a48a41f5e567874adcaddeba9d894fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-static-attribs" name="pri-static-attribs"></a>
+静态 Private 属性</h2></td></tr>
+<tr class="memitem:acfc3891faf43db071f661235e4f6ad52" id="r_acfc3891faf43db071f661235e4f6ad52"><td class="memItemLeft" align="right" valign="top">static const int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html#acfc3891faf43db071f661235e4f6ad52">MAX_CONCURRENT_REQUESTS</a> = 5</td></tr>
+<tr class="separator:acfc3891faf43db071f661235e4f6ad52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>LCSC 图片服务类 </p>
+<p>专门负责抓取 LCSC 元件预览图，包含爬虫和重试逻辑 </p>
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8h_source.html">LcscImageService.h</a> 第 <a class="el" href="LcscImageService_8h_source.html#l00017">17</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a6dffd68a7e1b42891b266d3cb915cfdc" name="a6dffd68a7e1b42891b266d3cb915cfdc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6dffd68a7e1b42891b266d3cb915cfdc">&#9670;&#160;</a></span>LcscImageService()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::LcscImageService::LcscImageService </td>
+          <td>(</td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8cpp_source.html">LcscImageService.cpp</a> 第 <a class="el" href="LcscImageService_8cpp_source.html#l00015">15</a> 行定义.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="a4fa9f8b696d2b4dbafaf0a7e14584798" name="a4fa9f8b696d2b4dbafaf0a7e14584798"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fa9f8b696d2b4dbafaf0a7e14584798">&#9670;&#160;</a></span>error()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::LcscImageService::error </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>errorMessage</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>错误信号 </p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00138">handleDownloadResponse()</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00107">handleFallbackResponse()</a>.</p>
+
+</div>
+</div>
+<a id="aa4e7f51197513d58fa407f315b246261" name="aa4e7f51197513d58fa407f315b246261"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa4e7f51197513d58fa407f315b246261">&#9670;&#160;</a></span>fetchPreviewImage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::LcscImageService::fetchPreviewImage </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>请求获取元件预览图 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentId</td><td>元件 ID </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8cpp_source.html">LcscImageService.cpp</a> 第 <a class="el" href="LcscImageService_8cpp_source.html#l00018">18</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="LcscImageService_8h_source.html#l00056">m_queue</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00025">processQueue()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ComponentService_8cpp_source.html#l00125">EasyKiConverter::ComponentService::fetchLcscPreviewImage()</a>.</p>
+
+</div>
+</div>
+<a id="a5324bbf5eac46534b37617ad762adc3d" name="a5324bbf5eac46534b37617ad762adc3d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5324bbf5eac46534b37617ad762adc3d">&#9670;&#160;</a></span>handleDownloadResponse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::LcscImageService::handleDownloadResponse </td>
+          <td>(</td>
+          <td class="paramtype">QNetworkReply *&#160;</td>
+          <td class="paramname"><em>reply</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>retryCount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8cpp_source.html">LcscImageService.cpp</a> 第 <a class="el" href="LcscImageService_8cpp_source.html#l00138">138</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1LcscImageService.html#a4fa9f8b696d2b4dbafaf0a7e14584798">error()</a>, <a class="el" href="classEasyKiConverter_1_1LcscImageService.html#ad361d8a8f7a8e8e55837f102320f3e43">imageReady()</a>, <a class="el" href="LcscImageService_8h_source.html#l00057">m_activeRequests</a>, <a class="el" href="LcscImageService_8cpp_source.html#l00127">performDownload()</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00025">processQueue()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00127">performDownload()</a>.</p>
+
+</div>
+</div>
+<a id="a7588b69fc5edee6dc8fdc85c45884a85" name="a7588b69fc5edee6dc8fdc85c45884a85"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7588b69fc5edee6dc8fdc85c45884a85">&#9670;&#160;</a></span>handleFallbackResponse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::LcscImageService::handleFallbackResponse </td>
+          <td>(</td>
+          <td class="paramtype">QNetworkReply *&#160;</td>
+          <td class="paramname"><em>reply</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8cpp_source.html">LcscImageService.cpp</a> 第 <a class="el" href="LcscImageService_8cpp_source.html#l00107">107</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1LcscImageService.html#a4fa9f8b696d2b4dbafaf0a7e14584798">error()</a>, <a class="el" href="LcscImageService_8h_source.html#l00057">m_activeRequests</a>, <a class="el" href="LcscImageService_8cpp_source.html#l00127">performDownload()</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00025">processQueue()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00093">performFallback()</a>.</p>
+
+</div>
+</div>
+<a id="a3e37c5fc0974f493bf5b816e33b800ab" name="a3e37c5fc0974f493bf5b816e33b800ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e37c5fc0974f493bf5b816e33b800ab">&#9670;&#160;</a></span>handleSearchResponse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::LcscImageService::handleSearchResponse </td>
+          <td>(</td>
+          <td class="paramtype">QNetworkReply *&#160;</td>
+          <td class="paramname"><em>reply</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>retryCount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8cpp_source.html">LcscImageService.cpp</a> 第 <a class="el" href="LcscImageService_8cpp_source.html#l00051">51</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="LcscImageService_8cpp_source.html#l00127">performDownload()</a>, <a class="el" href="LcscImageService_8cpp_source.html#l00093">performFallback()</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00033">performSearch()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00033">performSearch()</a>.</p>
+
+</div>
+</div>
+<a id="ad361d8a8f7a8e8e55837f102320f3e43" name="ad361d8a8f7a8e8e55837f102320f3e43"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad361d8a8f7a8e8e55837f102320f3e43">&#9670;&#160;</a></span>imageReady()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::LcscImageService::imageReady </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>imagePath</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>图片下载成功信号 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentId</td><td>元件 ID </td></tr>
+    <tr><td class="paramname">imagePath</td><td>本地缓存路径 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00138">handleDownloadResponse()</a> , 以及 <a class="el" href="ComponentService_8cpp_source.html#l00076">EasyKiConverter::ComponentService::initializeApiConnections()</a>.</p>
+
+</div>
+</div>
+<a id="af762c4ed29f45ed43efe0d5d988470ee" name="af762c4ed29f45ed43efe0d5d988470ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af762c4ed29f45ed43efe0d5d988470ee">&#9670;&#160;</a></span>performDownload()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::LcscImageService::performDownload </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>imageUrl</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>retryCount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8cpp_source.html">LcscImageService.cpp</a> 第 <a class="el" href="LcscImageService_8cpp_source.html#l00127">127</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="LcscImageService_8cpp_source.html#l00138">handleDownloadResponse()</a> , 以及 <a class="el" href="LcscImageService_8h_source.html#l00055">m_networkManager</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00138">handleDownloadResponse()</a>, <a class="el" href="LcscImageService_8cpp_source.html#l00107">handleFallbackResponse()</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00051">handleSearchResponse()</a>.</p>
+
+</div>
+</div>
+<a id="ae0a6f5e1d61703ecf25aff963c94f9d5" name="ae0a6f5e1d61703ecf25aff963c94f9d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae0a6f5e1d61703ecf25aff963c94f9d5">&#9670;&#160;</a></span>performFallback()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::LcscImageService::performFallback </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8cpp_source.html">LcscImageService.cpp</a> 第 <a class="el" href="LcscImageService_8cpp_source.html#l00093">93</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="LcscImageService_8cpp_source.html#l00107">handleFallbackResponse()</a> , 以及 <a class="el" href="LcscImageService_8h_source.html#l00055">m_networkManager</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00051">handleSearchResponse()</a>.</p>
+
+</div>
+</div>
+<a id="afce42e978cdcecbaa88aca3cb1f8f30f" name="afce42e978cdcecbaa88aca3cb1f8f30f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afce42e978cdcecbaa88aca3cb1f8f30f">&#9670;&#160;</a></span>performSearch()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::LcscImageService::performSearch </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>retryCount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8cpp_source.html">LcscImageService.cpp</a> 第 <a class="el" href="LcscImageService_8cpp_source.html#l00033">33</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="LcscImageService_8cpp_source.html#l00051">handleSearchResponse()</a> , 以及 <a class="el" href="LcscImageService_8h_source.html#l00055">m_networkManager</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00051">handleSearchResponse()</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00025">processQueue()</a>.</p>
+
+</div>
+</div>
+<a id="a85ccbd09692b87413b5d59840799b268" name="a85ccbd09692b87413b5d59840799b268"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a85ccbd09692b87413b5d59840799b268">&#9670;&#160;</a></span>processQueue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::LcscImageService::processQueue </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8cpp_source.html">LcscImageService.cpp</a> 第 <a class="el" href="LcscImageService_8cpp_source.html#l00025">25</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="LcscImageService_8h_source.html#l00057">m_activeRequests</a>, <a class="el" href="LcscImageService_8h_source.html#l00056">m_queue</a>, <a class="el" href="LcscImageService_8h_source.html#l00058">MAX_CONCURRENT_REQUESTS</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00033">performSearch()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00018">fetchPreviewImage()</a>, <a class="el" href="LcscImageService_8cpp_source.html#l00138">handleDownloadResponse()</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00107">handleFallbackResponse()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a4a48a41f5e567874adcaddeba9d894fb" name="a4a48a41f5e567874adcaddeba9d894fb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4a48a41f5e567874adcaddeba9d894fb">&#9670;&#160;</a></span>m_activeRequests</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EasyKiConverter::LcscImageService::m_activeRequests</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8h_source.html">LcscImageService.h</a> 第 <a class="el" href="LcscImageService_8h_source.html#l00057">57</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00138">handleDownloadResponse()</a>, <a class="el" href="LcscImageService_8cpp_source.html#l00107">handleFallbackResponse()</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00025">processQueue()</a>.</p>
+
+</div>
+</div>
+<a id="a59d504271d1b0e3e7b3fb26a6b3b8267" name="a59d504271d1b0e3e7b3fb26a6b3b8267"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a59d504271d1b0e3e7b3fb26a6b3b8267">&#9670;&#160;</a></span>m_networkManager</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QNetworkAccessManager* EasyKiConverter::LcscImageService::m_networkManager</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8h_source.html">LcscImageService.h</a> 第 <a class="el" href="LcscImageService_8h_source.html#l00055">55</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00127">performDownload()</a>, <a class="el" href="LcscImageService_8cpp_source.html#l00093">performFallback()</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00033">performSearch()</a>.</p>
+
+</div>
+</div>
+<a id="afb593018e829f8aa74a5751f22b91284" name="afb593018e829f8aa74a5751f22b91284"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afb593018e829f8aa74a5751f22b91284">&#9670;&#160;</a></span>m_queue</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QQueue&lt;QString&gt; EasyKiConverter::LcscImageService::m_queue</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8h_source.html">LcscImageService.h</a> 第 <a class="el" href="LcscImageService_8h_source.html#l00056">56</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00018">fetchPreviewImage()</a> , 以及 <a class="el" href="LcscImageService_8cpp_source.html#l00025">processQueue()</a>.</p>
+
+</div>
+</div>
+<a id="acfc3891faf43db071f661235e4f6ad52" name="acfc3891faf43db071f661235e4f6ad52"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acfc3891faf43db071f661235e4f6ad52">&#9670;&#160;</a></span>MAX_CONCURRENT_REQUESTS</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const int EasyKiConverter::LcscImageService::MAX_CONCURRENT_REQUESTS = 5</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="LcscImageService_8h_source.html">LcscImageService.h</a> 第 <a class="el" href="LcscImageService_8h_source.html#l00058">58</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="LcscImageService_8cpp_source.html#l00025">processQueue()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>services/<a class="el" href="LcscImageService_8h_source.html">LcscImageService.h</a></li>
+<li>services/<a class="el" href="LcscImageService_8cpp_source.html">LcscImageService.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1LcscImageService.html">LcscImageService</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

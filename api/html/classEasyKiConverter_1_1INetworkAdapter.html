@@ -1,0 +1,484 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::INetworkAdapter类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1INetworkAdapter.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="classEasyKiConverter_1_1INetworkAdapter-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::INetworkAdapter类 参考<span class="mlabels"><span class="mlabel">abstract</span></span></div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>网络适配器接口  
+ <a href="classEasyKiConverter_1_1INetworkAdapter.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="INetworkAdapter_8h_source.html">INetworkAdapter.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::INetworkAdapter 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1INetworkAdapter__inherit__graph.svg" width="200" height="992"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::INetworkAdapter 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1INetworkAdapter__coll__graph.svg" width="200" height="404"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a2d4bf6790d452618c0d5fbdbf4a2ab56" id="r_a2d4bf6790d452618c0d5fbdbf4a2ab56"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a2d4bf6790d452618c0d5fbdbf4a2ab56">INetworkAdapter</a> (QObject *parent=nullptr)</td></tr>
+<tr class="separator:a2d4bf6790d452618c0d5fbdbf4a2ab56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a771bb7f85aba759a7cecd0be6511fff8" id="r_a771bb7f85aba759a7cecd0be6511fff8"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a771bb7f85aba759a7cecd0be6511fff8">~INetworkAdapter</a> ()</td></tr>
+<tr class="separator:a771bb7f85aba759a7cecd0be6511fff8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7848928cdacf50ef4f80b5bf2df3dd6" id="r_ac7848928cdacf50ef4f80b5bf2df3dd6"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#ac7848928cdacf50ef4f80b5bf2df3dd6">sendGetRequest</a> (const QString &amp;url, int timeout=30, int maxRetries=3)=0</td></tr>
+<tr class="separator:ac7848928cdacf50ef4f80b5bf2df3dd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d322a97b25875285e5d78510995b708" id="r_a1d322a97b25875285e5d78510995b708"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a1d322a97b25875285e5d78510995b708">cancelRequest</a> ()=0</td></tr>
+<tr class="separator:a1d322a97b25875285e5d78510995b708"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a8e6ceda7ac93dc5183e158b525a33d" id="r_a1a8e6ceda7ac93dc5183e158b525a33d"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a1a8e6ceda7ac93dc5183e158b525a33d">setHeader</a> (const QString &amp;key, const QString &amp;value)=0</td></tr>
+<tr class="separator:a1a8e6ceda7ac93dc5183e158b525a33d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a82d8d4e9314ac746f9d186f89e919efd" id="r_a82d8d4e9314ac746f9d186f89e919efd"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a82d8d4e9314ac746f9d186f89e919efd">clearHeaders</a> ()=0</td></tr>
+<tr class="separator:a82d8d4e9314ac746f9d186f89e919efd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54f804235349c013c863737ad9b72afb" id="r_a54f804235349c013c863737ad9b72afb"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a54f804235349c013c863737ad9b72afb">setExpectBinaryData</a> (bool expectBinaryData)=0</td></tr>
+<tr class="separator:a54f804235349c013c863737ad9b72afb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95d90a19fac5597575f525ac2860a6f2" id="r_a95d90a19fac5597575f525ac2860a6f2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a95d90a19fac5597575f525ac2860a6f2">requestSuccess</a> (const QJsonObject &amp;data)</td></tr>
+<tr class="separator:a95d90a19fac5597575f525ac2860a6f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d1f74c7104a6ae50a77914e9a7a713b" id="r_a3d1f74c7104a6ae50a77914e9a7a713b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a3d1f74c7104a6ae50a77914e9a7a713b">binaryDataFetched</a> (const QByteArray &amp;data)</td></tr>
+<tr class="separator:a3d1f74c7104a6ae50a77914e9a7a713b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a414c11c24dd720ca595de36dcf1ed87e" id="r_a414c11c24dd720ca595de36dcf1ed87e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#a414c11c24dd720ca595de36dcf1ed87e">requestError</a> (const QString &amp;errorMessage)</td></tr>
+<tr class="separator:a414c11c24dd720ca595de36dcf1ed87e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae814ed7e517ec16721beba329d42954c" id="r_ae814ed7e517ec16721beba329d42954c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html#ae814ed7e517ec16721beba329d42954c">requestProgress</a> (qint64 bytesReceived, qint64 bytesTotal)</td></tr>
+<tr class="separator:ae814ed7e517ec16721beba329d42954c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>网络适配器接口 </p>
+
+<p class="definition">在文件 <a class="el" href="INetworkAdapter_8h_source.html">INetworkAdapter.h</a> 第 <a class="el" href="INetworkAdapter_8h_source.html#l00014">14</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a2d4bf6790d452618c0d5fbdbf4a2ab56" name="a2d4bf6790d452618c0d5fbdbf4a2ab56"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d4bf6790d452618c0d5fbdbf4a2ab56">&#9670;&#160;</a></span>INetworkAdapter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::INetworkAdapter::INetworkAdapter </td>
+          <td>(</td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="INetworkAdapter_8h_source.html">INetworkAdapter.h</a> 第 <a class="el" href="INetworkAdapter_8h_source.html#l00017">17</a> 行定义.</p>
+
+</div>
+</div>
+<a id="a771bb7f85aba759a7cecd0be6511fff8" name="a771bb7f85aba759a7cecd0be6511fff8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a771bb7f85aba759a7cecd0be6511fff8">&#9670;&#160;</a></span>~INetworkAdapter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::INetworkAdapter::~INetworkAdapter </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="INetworkAdapter_8cpp_source.html">INetworkAdapter.cpp</a> 第 <a class="el" href="INetworkAdapter_8cpp_source.html#l00004">4</a> 行定义.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="a3d1f74c7104a6ae50a77914e9a7a713b" name="a3d1f74c7104a6ae50a77914e9a7a713b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3d1f74c7104a6ae50a77914e9a7a713b">&#9670;&#160;</a></span>binaryDataFetched()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::INetworkAdapter::binaryDataFetched </td>
+          <td>(</td>
+          <td class="paramtype">const QByteArray &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00036">EasyKiConverter::EasyedaApi::EasyedaApi()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00017">EasyKiConverter::EasyedaApi::EasyedaApi()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00111">EasyKiConverter::EasyedaApi::fetch3DModelObj()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00144">EasyKiConverter::EasyedaApi::fetch3DModelStep()</a> , 以及 <a class="el" href="NetworkUtils_8cpp_source.html#l00098">EasyKiConverter::NetworkUtils::handleResponse()</a>.</p>
+
+</div>
+</div>
+<a id="a1d322a97b25875285e5d78510995b708" name="a1d322a97b25875285e5d78510995b708"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d322a97b25875285e5d78510995b708">&#9670;&#160;</a></span>cancelRequest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void EasyKiConverter::INetworkAdapter::cancelRequest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>在 <a class="el" href="classEasyKiConverter_1_1NetworkUtils.html#ad67d30dd34fa70368d31c88e21c52652">EasyKiConverter::NetworkUtils</a> 内被实现.</p>
+
+</div>
+</div>
+<a id="a82d8d4e9314ac746f9d186f89e919efd" name="a82d8d4e9314ac746f9d186f89e919efd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a82d8d4e9314ac746f9d186f89e919efd">&#9670;&#160;</a></span>clearHeaders()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void EasyKiConverter::INetworkAdapter::clearHeaders </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>在 <a class="el" href="classEasyKiConverter_1_1NetworkUtils.html#ae682d38bd437bbf5b70b95c24b52f71f">EasyKiConverter::NetworkUtils</a> 内被实现.</p>
+
+</div>
+</div>
+<a id="a414c11c24dd720ca595de36dcf1ed87e" name="a414c11c24dd720ca595de36dcf1ed87e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a414c11c24dd720ca595de36dcf1ed87e">&#9670;&#160;</a></span>requestError()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::INetworkAdapter::requestError </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>errorMessage</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00036">EasyKiConverter::EasyedaApi::EasyedaApi()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00017">EasyKiConverter::EasyedaApi::EasyedaApi()</a>, <a class="el" href="Exporter3DModel_8cpp_source.html#l00017">EasyKiConverter::Exporter3DModel::Exporter3DModel()</a>, <a class="el" href="JLCDatasheet_8cpp_source.html#l00009">EasyKiConverter::JLCDatasheet::JLCDatasheet()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00111">EasyKiConverter::EasyedaApi::fetch3DModelObj()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00144">EasyKiConverter::EasyedaApi::fetch3DModelStep()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00082">EasyKiConverter::EasyedaApi::fetchCadData()</a>, <a class="el" href="NetworkUtils_8cpp_source.html#l00157">EasyKiConverter::NetworkUtils::handleError()</a>, <a class="el" href="NetworkUtils_8cpp_source.html#l00098">EasyKiConverter::NetworkUtils::handleResponse()</a> , 以及 <a class="el" href="NetworkUtils_8cpp_source.html#l00183">EasyKiConverter::NetworkUtils::handleTimeout()</a>.</p>
+
+</div>
+</div>
+<a id="ae814ed7e517ec16721beba329d42954c" name="ae814ed7e517ec16721beba329d42954c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae814ed7e517ec16721beba329d42954c">&#9670;&#160;</a></span>requestProgress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::INetworkAdapter::requestProgress </td>
+          <td>(</td>
+          <td class="paramtype">qint64&#160;</td>
+          <td class="paramname"><em>bytesReceived</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">qint64&#160;</td>
+          <td class="paramname"><em>bytesTotal</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="NetworkUtils_8cpp_source.html#l00082">EasyKiConverter::NetworkUtils::executeRequest()</a>.</p>
+
+</div>
+</div>
+<a id="a95d90a19fac5597575f525ac2860a6f2" name="a95d90a19fac5597575f525ac2860a6f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a95d90a19fac5597575f525ac2860a6f2">&#9670;&#160;</a></span>requestSuccess()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::INetworkAdapter::requestSuccess </td>
+          <td>(</td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00036">EasyKiConverter::EasyedaApi::EasyedaApi()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00017">EasyKiConverter::EasyedaApi::EasyedaApi()</a>, <a class="el" href="Exporter3DModel_8cpp_source.html#l00017">EasyKiConverter::Exporter3DModel::Exporter3DModel()</a>, <a class="el" href="JLCDatasheet_8cpp_source.html#l00009">EasyKiConverter::JLCDatasheet::JLCDatasheet()</a>, <a class="el" href="EasyedaApi_8cpp_source.html#l00082">EasyKiConverter::EasyedaApi::fetchCadData()</a> , 以及 <a class="el" href="NetworkUtils_8cpp_source.html#l00098">EasyKiConverter::NetworkUtils::handleResponse()</a>.</p>
+
+</div>
+</div>
+<a id="ac7848928cdacf50ef4f80b5bf2df3dd6" name="ac7848928cdacf50ef4f80b5bf2df3dd6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7848928cdacf50ef4f80b5bf2df3dd6">&#9670;&#160;</a></span>sendGetRequest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void EasyKiConverter::INetworkAdapter::sendGetRequest </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>url</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>timeout</em> = <code>30</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>maxRetries</em> = <code>3</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>在 <a class="el" href="classEasyKiConverter_1_1NetworkUtils.html#a28996eb77f44844ad86d2ef03ecb6881">EasyKiConverter::NetworkUtils</a> 内被实现.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00059">EasyKiConverter::EasyedaApi::fetchComponentInfo()</a>.</p>
+
+</div>
+</div>
+<a id="a54f804235349c013c863737ad9b72afb" name="a54f804235349c013c863737ad9b72afb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54f804235349c013c863737ad9b72afb">&#9670;&#160;</a></span>setExpectBinaryData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void EasyKiConverter::INetworkAdapter::setExpectBinaryData </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>expectBinaryData</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>在 <a class="el" href="classEasyKiConverter_1_1NetworkUtils.html#a85e38cf1c2e3edf335c08f9f88fb5bb5">EasyKiConverter::NetworkUtils</a> 内被实现.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="EasyedaApi_8cpp_source.html#l00283">EasyKiConverter::EasyedaApi::resetRequestState()</a>.</p>
+
+</div>
+</div>
+<a id="a1a8e6ceda7ac93dc5183e158b525a33d" name="a1a8e6ceda7ac93dc5183e158b525a33d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a8e6ceda7ac93dc5183e158b525a33d">&#9670;&#160;</a></span>setHeader()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void EasyKiConverter::INetworkAdapter::setHeader </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>在 <a class="el" href="classEasyKiConverter_1_1NetworkUtils.html#a8e1ecccc97dbc98ec0fd23874b0fdd92">EasyKiConverter::NetworkUtils</a> 内被实现.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>core/utils/<a class="el" href="INetworkAdapter_8h_source.html">INetworkAdapter.h</a></li>
+<li>core/utils/<a class="el" href="INetworkAdapter_8cpp_source.html">INetworkAdapter.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

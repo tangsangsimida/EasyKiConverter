@@ -1,0 +1,16 @@
+<map id="EasyKiConverter::ComponentDataCollector" name="EasyKiConverter::ComponentDataCollector">
+<area shape="rect" id="Node000001" title="元件数据收集器类" alt="" coords="267,1316,500,1856"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="204,5,270,71"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,80,181,99,169,121,103,283,54,426,23,557,14,620,9,682,9,744,12,807,33,940,70,1086,123,1252,151,1314,186,1373,227,1427,269,1475,265,1478,223,1430,182,1376,146,1317,118,1254,64,1088,27,941,7,808,3,744,4,682,9,619,18,556,49,425,98,281,164,119,176,96,192,76"/>
+<area shape="rect" id="Node000004" href="$classEasyKiConverter_1_1EasyedaApi.html" title="EasyEDA API 客户端类" alt="" coords="133,588,378,1253"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="213,84,199,121,180,237,174,356,178,474,189,587,184,588,173,475,169,356,175,236,194,119,208,82"/>
+<area shape="rect" id="Node000005" href="$classEasyKiConverter_1_1INetworkAdapter.html" title="网络适配器接口" alt="" coords="209,120,398,400"/>
+<area shape="poly" id="edge6_Node000005_Node000002" title=" " alt="" coords="253,83,264,119,259,121,248,85"/>
+<area shape="rect" id="Node000006" href="$classEasyKiConverter_1_1EasyedaImporter.html" title="EasyEDA 数据导入器类" alt="" coords="355,424,540,564"/>
+<area shape="poly" id="edge8_Node000006_Node000002" title=" " alt="" coords="284,45,317,55,352,70,385,90,412,118,433,154,449,193,459,234,465,275,468,355,462,424,457,424,462,355,460,276,454,235,444,195,429,157,408,122,382,95,350,74,315,60,283,50"/>
+<area shape="rect" id="Node000003" href="$classEasyKiConverter_1_1ComponentData.html" title="元件数据" alt="" coords="536,708,772,1133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="570,1135,502,1302,497,1300,565,1132"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="322,1253,331,1299,326,1300,317,1254"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="238,401,232,425,220,497,216,572,211,571,215,496,226,423,233,400"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="444,564,442,588,418,959,400,1300,395,1300,413,959,437,588,439,564"/>
+</map>

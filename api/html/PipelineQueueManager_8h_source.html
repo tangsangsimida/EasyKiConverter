@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: services/pipeline/queue/PipelineQueueManager.h 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('PipelineQueueManager_8h_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">PipelineQueueManager.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="PipelineQueueManager_8h.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef EASYKICONVERTER_PIPELINEQUEUEMANAGER_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define EASYKICONVERTER_PIPELINEQUEUEMANAGER_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;../../../models/ComponentExportStatus.h&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;../../../utils/BoundedThreadSafeQueue.h&quot;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;QAtomicInt&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;QObject&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;QSharedPointer&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="foldopen" id="foldopen00019" data-start="{" data-end="};">
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1PipelineQueueManager.html">   19</a></span><span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1PipelineQueueManager.html">PipelineQueueManager</a> {</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1PipelineQueueManager.html#a54bd0248b060bd75d60808736787624a">   21</a></span>    <span class="keyword">using </span><a class="code hl_class" href="classEasyKiConverter_1_1BoundedThreadSafeQueue.html">StatusQueue</a> = <a class="code hl_class" href="classEasyKiConverter_1_1BoundedThreadSafeQueue.html">BoundedThreadSafeQueue&lt;QSharedPointer&lt;ComponentExportStatus&gt;</a>&gt;;</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">   22</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> = QSharedPointer&lt;StatusQueue&gt;;</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <a class="code hl_class" href="classEasyKiConverter_1_1PipelineQueueManager.html">PipelineQueueManager</a>(<span class="keywordtype">size_t</span> queueSize = 64);</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1PipelineQueueManager.html#ae4e0850386ef3be2e69f98067b55535e">reset</a>();</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1PipelineQueueManager.html#a0f979047f9148bd653e55823ef10b035">closeAll</a>();</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
+<div class="foldopen" id="foldopen00029" data-start="{" data-end="}">
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1PipelineQueueManager.html#ae31ad781a549d949b9fa1bd0fd65b91e">   29</a></span>    <a class="code hl_typedef" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> <a class="code hl_function" href="classEasyKiConverter_1_1PipelineQueueManager.html#ae31ad781a549d949b9fa1bd0fd65b91e">fetchProcessQueue</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1PipelineQueueManager.html#a0a4893368bab676c13fa1b865369c8f1">m_fetchProcessQueue</a>;</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    }</div>
+</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
+<div class="foldopen" id="foldopen00033" data-start="{" data-end="}">
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1PipelineQueueManager.html#adf83fcb5df11f00f14871310068cf63e">   33</a></span>    <a class="code hl_typedef" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> <a class="code hl_function" href="classEasyKiConverter_1_1PipelineQueueManager.html#adf83fcb5df11f00f14871310068cf63e">processWriteQueue</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1PipelineQueueManager.html#a4fbcf1c4e241b39f2c67e093372dbf2c">m_processWriteQueue</a>;</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    }</div>
+</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <span class="keyword">static</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1PipelineQueueManager.html#ae3a65d09174a6c5d0dbb58a0041d9c4e">safePush</a>(<a class="code hl_typedef" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> queue, QSharedPointer&lt;ComponentExportStatus&gt; status, QAtomicInt&amp; isCancelled);</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1PipelineQueueManager.html#a35ee241e2aa39f68f1054dd636017920">   43</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_variable" href="classEasyKiConverter_1_1PipelineQueueManager.html#a35ee241e2aa39f68f1054dd636017920">m_queueSize</a>;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1PipelineQueueManager.html#a0a4893368bab676c13fa1b865369c8f1">   44</a></span>    <a class="code hl_typedef" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> <a class="code hl_variable" href="classEasyKiConverter_1_1PipelineQueueManager.html#a0a4893368bab676c13fa1b865369c8f1">m_fetchProcessQueue</a>;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1PipelineQueueManager.html#a4fbcf1c4e241b39f2c67e093372dbf2c">   45</a></span>    <a class="code hl_typedef" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> <a class="code hl_variable" href="classEasyKiConverter_1_1PipelineQueueManager.html#a4fbcf1c4e241b39f2c67e093372dbf2c">m_processWriteQueue</a>;</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>};</div>
+</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="preprocessor">#endif  </span><span class="comment">// EASYKICONVERTER_PIPELINEQUEUEMANAGER_H</span></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BoundedThreadSafeQueue_html"><div class="ttname"><a href="classEasyKiConverter_1_1BoundedThreadSafeQueue.html">EasyKiConverter::BoundedThreadSafeQueue</a></div><div class="ttdoc">有界线程安全队列</div><div class="ttdef"><b>Definition</b> <a href="BoundedThreadSafeQueue_8h_source.html#l00017">BoundedThreadSafeQueue.h:17</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PipelineQueueManager_html"><div class="ttname"><a href="classEasyKiConverter_1_1PipelineQueueManager.html">EasyKiConverter::PipelineQueueManager</a></div><div class="ttdoc">流水线队列管理器</div><div class="ttdef"><b>Definition</b> <a href="PipelineQueueManager_8h_source.html#l00019">PipelineQueueManager.h:19</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PipelineQueueManager_html_a0a4893368bab676c13fa1b865369c8f1"><div class="ttname"><a href="classEasyKiConverter_1_1PipelineQueueManager.html#a0a4893368bab676c13fa1b865369c8f1">EasyKiConverter::PipelineQueueManager::m_fetchProcessQueue</a></div><div class="ttdeci">StatusQueuePtr m_fetchProcessQueue</div><div class="ttdef"><b>Definition</b> <a href="PipelineQueueManager_8h_source.html#l00044">PipelineQueueManager.h:44</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PipelineQueueManager_html_a0f979047f9148bd653e55823ef10b035"><div class="ttname"><a href="classEasyKiConverter_1_1PipelineQueueManager.html#a0f979047f9148bd653e55823ef10b035">EasyKiConverter::PipelineQueueManager::closeAll</a></div><div class="ttdeci">void closeAll()</div><div class="ttdef"><b>Definition</b> <a href="PipelineQueueManager_8cpp_source.html#l00019">PipelineQueueManager.cpp:19</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PipelineQueueManager_html_a35ee241e2aa39f68f1054dd636017920"><div class="ttname"><a href="classEasyKiConverter_1_1PipelineQueueManager.html#a35ee241e2aa39f68f1054dd636017920">EasyKiConverter::PipelineQueueManager::m_queueSize</a></div><div class="ttdeci">size_t m_queueSize</div><div class="ttdef"><b>Definition</b> <a href="PipelineQueueManager_8h_source.html#l00043">PipelineQueueManager.h:43</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PipelineQueueManager_html_a4fbcf1c4e241b39f2c67e093372dbf2c"><div class="ttname"><a href="classEasyKiConverter_1_1PipelineQueueManager.html#a4fbcf1c4e241b39f2c67e093372dbf2c">EasyKiConverter::PipelineQueueManager::m_processWriteQueue</a></div><div class="ttdeci">StatusQueuePtr m_processWriteQueue</div><div class="ttdef"><b>Definition</b> <a href="PipelineQueueManager_8h_source.html#l00045">PipelineQueueManager.h:45</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PipelineQueueManager_html_a604e4dc27abfa18da74c1ed51bdbddf6"><div class="ttname"><a href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">EasyKiConverter::PipelineQueueManager::StatusQueuePtr</a></div><div class="ttdeci">QSharedPointer&lt; StatusQueue &gt; StatusQueuePtr</div><div class="ttdef"><b>Definition</b> <a href="PipelineQueueManager_8h_source.html#l00022">PipelineQueueManager.h:22</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PipelineQueueManager_html_adf83fcb5df11f00f14871310068cf63e"><div class="ttname"><a href="classEasyKiConverter_1_1PipelineQueueManager.html#adf83fcb5df11f00f14871310068cf63e">EasyKiConverter::PipelineQueueManager::processWriteQueue</a></div><div class="ttdeci">StatusQueuePtr processWriteQueue() const</div><div class="ttdef"><b>Definition</b> <a href="PipelineQueueManager_8h_source.html#l00033">PipelineQueueManager.h:33</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PipelineQueueManager_html_ae31ad781a549d949b9fa1bd0fd65b91e"><div class="ttname"><a href="classEasyKiConverter_1_1PipelineQueueManager.html#ae31ad781a549d949b9fa1bd0fd65b91e">EasyKiConverter::PipelineQueueManager::fetchProcessQueue</a></div><div class="ttdeci">StatusQueuePtr fetchProcessQueue() const</div><div class="ttdef"><b>Definition</b> <a href="PipelineQueueManager_8h_source.html#l00029">PipelineQueueManager.h:29</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PipelineQueueManager_html_ae3a65d09174a6c5d0dbb58a0041d9c4e"><div class="ttname"><a href="classEasyKiConverter_1_1PipelineQueueManager.html#ae3a65d09174a6c5d0dbb58a0041d9c4e">EasyKiConverter::PipelineQueueManager::safePush</a></div><div class="ttdeci">static bool safePush(StatusQueuePtr queue, QSharedPointer&lt; ComponentExportStatus &gt; status, QAtomicInt &amp;isCancelled)</div><div class="ttdoc">安全地将状态推送到队列，包含指数退避和 UI 事件处理</div><div class="ttdef"><b>Definition</b> <a href="PipelineQueueManager_8cpp_source.html#l00026">PipelineQueueManager.cpp:26</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PipelineQueueManager_html_ae4e0850386ef3be2e69f98067b55535e"><div class="ttname"><a href="classEasyKiConverter_1_1PipelineQueueManager.html#ae4e0850386ef3be2e69f98067b55535e">EasyKiConverter::PipelineQueueManager::reset</a></div><div class="ttdeci">void reset()</div><div class="ttdef"><b>Definition</b> <a href="PipelineQueueManager_8cpp_source.html#l00014">PipelineQueueManager.cpp:14</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_056ec8f0377ddc4293192cbc6b19c99c.html">services</a></li><li class="navelem"><a class="el" href="dir_a214087799024aa5b87865844b14c613.html">pipeline</a></li><li class="navelem"><a class="el" href="dir_06bda5a56d2a074d8849481c404e4e83.html">queue</a></li><li class="navelem"><a class="el" href="PipelineQueueManager_8h.html">PipelineQueueManager.h</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

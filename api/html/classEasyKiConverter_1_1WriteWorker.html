@@ -1,0 +1,968 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::WriteWorker类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1WriteWorker.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pri-methods">Private 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="#pri-static-attribs">静态 Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1WriteWorker-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::WriteWorker类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>写入工作线程  
+ <a href="classEasyKiConverter_1_1WriteWorker.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::WriteWorker 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1WriteWorker__inherit__graph.svg" width="222" height="610"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::WriteWorker 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1WriteWorker__coll__graph.svg" width="874" height="2147"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a808dbc7c0661a9e972acd21560585b7a" id="r_a808dbc7c0661a9e972acd21560585b7a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a808dbc7c0661a9e972acd21560585b7a">WriteWorker</a> (QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt; status, const QString &amp;outputPath, const QString &amp;libName, bool exportSymbol, bool exportFootprint, bool exportModel3D, bool debugMode, const QString &amp;tempDir, QObject *parent=nullptr)</td></tr>
+<tr class="memdesc:a808dbc7c0661a9e972acd21560585b7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">构造函数  <br /></td></tr>
+<tr class="separator:a808dbc7c0661a9e972acd21560585b7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0077229a34a3761ba3a04d3d4617346d" id="r_a0077229a34a3761ba3a04d3d4617346d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a0077229a34a3761ba3a04d3d4617346d">~WriteWorker</a> () override</td></tr>
+<tr class="memdesc:a0077229a34a3761ba3a04d3d4617346d"><td class="mdescLeft">&#160;</td><td class="mdescRight">析构函数  <br /></td></tr>
+<tr class="separator:a0077229a34a3761ba3a04d3d4617346d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f09ef739938279648a6bd59d27b9ba2" id="r_a8f09ef739938279648a6bd59d27b9ba2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a8f09ef739938279648a6bd59d27b9ba2">run</a> () override</td></tr>
+<tr class="memdesc:a8f09ef739938279648a6bd59d27b9ba2"><td class="mdescLeft">&#160;</td><td class="mdescRight">执行写入任务  <br /></td></tr>
+<tr class="separator:a8f09ef739938279648a6bd59d27b9ba2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0a9bc0ee6368465ab254bc7e76a0fef" id="r_ac0a9bc0ee6368465ab254bc7e76a0fef"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#ac0a9bc0ee6368465ab254bc7e76a0fef">abort</a> ()</td></tr>
+<tr class="memdesc:ac0a9bc0ee6368465ab254bc7e76a0fef"><td class="mdescLeft">&#160;</td><td class="mdescRight">取消写入任务 (v3.0.5+)  <br /></td></tr>
+<tr class="separator:ac0a9bc0ee6368465ab254bc7e76a0fef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24cf89f509bfea33d2e9739b393c9fcd" id="r_a24cf89f509bfea33d2e9739b393c9fcd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a24cf89f509bfea33d2e9739b393c9fcd">writeCompleted</a> (QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt; status)</td></tr>
+<tr class="memdesc:a24cf89f509bfea33d2e9739b393c9fcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">写入完成信号  <br /></td></tr>
+<tr class="separator:a24cf89f509bfea33d2e9739b393c9fcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private 成员函数</h2></td></tr>
+<tr class="memitem:add27e7f95db305080c8dc9a8e3c769c4" id="r_add27e7f95db305080c8dc9a8e3c769c4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#add27e7f95db305080c8dc9a8e3c769c4">writeSymbolFile</a> (<a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &amp;status)</td></tr>
+<tr class="memdesc:add27e7f95db305080c8dc9a8e3c769c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">写入符号文件  <br /></td></tr>
+<tr class="separator:add27e7f95db305080c8dc9a8e3c769c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17927ca8e39652f8759d50581a6906e2" id="r_a17927ca8e39652f8759d50581a6906e2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a17927ca8e39652f8759d50581a6906e2">writeFootprintFile</a> (<a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &amp;status)</td></tr>
+<tr class="memdesc:a17927ca8e39652f8759d50581a6906e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">写入封装文件  <br /></td></tr>
+<tr class="separator:a17927ca8e39652f8759d50581a6906e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c7973241c9ce95c905fc467a63d06a2" id="r_a0c7973241c9ce95c905fc467a63d06a2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a0c7973241c9ce95c905fc467a63d06a2">write3DModelFile</a> (<a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &amp;status)</td></tr>
+<tr class="memdesc:a0c7973241c9ce95c905fc467a63d06a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">写入3D模型文件  <br /></td></tr>
+<tr class="separator:a0c7973241c9ce95c905fc467a63d06a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac156631c48145b604e7e679ab31bc147" id="r_ac156631c48145b604e7e679ab31bc147"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#ac156631c48145b604e7e679ab31bc147">createOutputDirectory</a> (const QString &amp;path)</td></tr>
+<tr class="memdesc:ac156631c48145b604e7e679ab31bc147"><td class="mdescLeft">&#160;</td><td class="mdescRight">创建输出目录  <br /></td></tr>
+<tr class="separator:ac156631c48145b604e7e679ab31bc147"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a580d78f33d681c405154b623511cfa4e" id="r_a580d78f33d681c405154b623511cfa4e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a580d78f33d681c405154b623511cfa4e">exportDebugData</a> (<a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &amp;status)</td></tr>
+<tr class="memdesc:a580d78f33d681c405154b623511cfa4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">导出调试数据  <br /></td></tr>
+<tr class="separator:a580d78f33d681c405154b623511cfa4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:aa0e2d1c15a63a89b864916c43cbca6bb" id="r_aa0e2d1c15a63a89b864916c43cbca6bb"><td class="memItemLeft" align="right" valign="top">QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#aa0e2d1c15a63a89b864916c43cbca6bb">m_status</a></td></tr>
+<tr class="separator:aa0e2d1c15a63a89b864916c43cbca6bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc67dee218986a0ae9a5dba380a5a4d7" id="r_abc67dee218986a0ae9a5dba380a5a4d7"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#abc67dee218986a0ae9a5dba380a5a4d7">m_outputPath</a></td></tr>
+<tr class="separator:abc67dee218986a0ae9a5dba380a5a4d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3ec1acad188c6d44ac5c9d2faf0c7ef" id="r_aa3ec1acad188c6d44ac5c9d2faf0c7ef"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#aa3ec1acad188c6d44ac5c9d2faf0c7ef">m_libName</a></td></tr>
+<tr class="separator:aa3ec1acad188c6d44ac5c9d2faf0c7ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4151c0b1404492b2f52661aa59996b10" id="r_a4151c0b1404492b2f52661aa59996b10"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a4151c0b1404492b2f52661aa59996b10">m_exportSymbol</a></td></tr>
+<tr class="separator:a4151c0b1404492b2f52661aa59996b10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41aa2d9b4de2a57069c26dba835042d6" id="r_a41aa2d9b4de2a57069c26dba835042d6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a41aa2d9b4de2a57069c26dba835042d6">m_exportFootprint</a></td></tr>
+<tr class="separator:a41aa2d9b4de2a57069c26dba835042d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4bee71f80d65e1f273e12791ee9dbe6e" id="r_a4bee71f80d65e1f273e12791ee9dbe6e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a4bee71f80d65e1f273e12791ee9dbe6e">m_exportModel3D</a></td></tr>
+<tr class="separator:a4bee71f80d65e1f273e12791ee9dbe6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56798b0aff4e4038a597f663a0c40d51" id="r_a56798b0aff4e4038a597f663a0c40d51"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a56798b0aff4e4038a597f663a0c40d51">m_debugMode</a></td></tr>
+<tr class="separator:a56798b0aff4e4038a597f663a0c40d51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf761e4a0aad35127462561dca3e95c2" id="r_acf761e4a0aad35127462561dca3e95c2"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#acf761e4a0aad35127462561dca3e95c2">m_tempDir</a></td></tr>
+<tr class="separator:acf761e4a0aad35127462561dca3e95c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d11835ba887e6f9892d2529cdb72aa0" id="r_a9d11835ba887e6f9892d2529cdb72aa0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1ExporterSymbol.html">ExporterSymbol</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a9d11835ba887e6f9892d2529cdb72aa0">m_symbolExporter</a></td></tr>
+<tr class="separator:a9d11835ba887e6f9892d2529cdb72aa0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23b732f69191de8863210dc37a06149a" id="r_a23b732f69191de8863210dc37a06149a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1ExporterFootprint.html">ExporterFootprint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a23b732f69191de8863210dc37a06149a">m_footprintExporter</a></td></tr>
+<tr class="separator:a23b732f69191de8863210dc37a06149a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5594691dd10d189ef8cddcc289a6646b" id="r_a5594691dd10d189ef8cddcc289a6646b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1Exporter3DModel.html">Exporter3DModel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a5594691dd10d189ef8cddcc289a6646b">m_model3DExporter</a></td></tr>
+<tr class="separator:a5594691dd10d189ef8cddcc289a6646b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a67c33f582aeb11e2f40756b82531e926" id="r_a67c33f582aeb11e2f40756b82531e926"><td class="memItemLeft" align="right" valign="top">QAtomicInt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a67c33f582aeb11e2f40756b82531e926">m_isAborted</a></td></tr>
+<tr class="separator:a67c33f582aeb11e2f40756b82531e926"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-static-attribs" name="pri-static-attribs"></a>
+静态 Private 属性</h2></td></tr>
+<tr class="memitem:a878278ec1f93942247c4e8735f04e9d8" id="r_a878278ec1f93942247c4e8735f04e9d8"><td class="memItemLeft" align="right" valign="top">static QMutex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a878278ec1f93942247c4e8735f04e9d8">s_fileWriteMutex</a></td></tr>
+<tr class="separator:a878278ec1f93942247c4e8735f04e9d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>写入工作线程 </p>
+<p>负责将数据写入文件（磁盘I/O密集型任务） </p>
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00020">20</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a808dbc7c0661a9e972acd21560585b7a" name="a808dbc7c0661a9e972acd21560585b7a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a808dbc7c0661a9e972acd21560585b7a">&#9670;&#160;</a></span>WriteWorker()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::WriteWorker::WriteWorker </td>
+          <td>(</td>
+          <td class="paramtype">QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt;&#160;</td>
+          <td class="paramname"><em>status</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>outputPath</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>libName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>exportSymbol</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>exportFootprint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>exportModel3D</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>debugMode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>tempDir</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>构造函数 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">status</td><td>导出状态（使用 QSharedPointer 避免拷贝） </td></tr>
+    <tr><td class="paramname">outputPath</td><td>输出路径 </td></tr>
+    <tr><td class="paramname">libName</td><td>库名称 </td></tr>
+    <tr><td class="paramname">exportSymbol</td><td>是否导出符号 </td></tr>
+    <tr><td class="paramname">exportFootprint</td><td>是否导出封装 </td></tr>
+    <tr><td class="paramname">exportModel3D</td><td>是否导出3D模型 </td></tr>
+    <tr><td class="paramname">debugMode</td><td>是否启用调试模式 </td></tr>
+    <tr><td class="paramname">parent</td><td>父对象 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8cpp_source.html">WriteWorker.cpp</a> 第 <a class="el" href="WriteWorker_8cpp_source.html#l00027">27</a> 行定义.</p>
+
+</div>
+</div>
+<a id="a0077229a34a3761ba3a04d3d4617346d" name="a0077229a34a3761ba3a04d3d4617346d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0077229a34a3761ba3a04d3d4617346d">&#9670;&#160;</a></span>~WriteWorker()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::WriteWorker::~WriteWorker </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>析构函数 </p>
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8cpp_source.html">WriteWorker.cpp</a> 第 <a class="el" href="WriteWorker_8cpp_source.html#l00050">50</a> 行定义.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="ac0a9bc0ee6368465ab254bc7e76a0fef" name="ac0a9bc0ee6368465ab254bc7e76a0fef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0a9bc0ee6368465ab254bc7e76a0fef">&#9670;&#160;</a></span>abort()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::WriteWorker::abort </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>取消写入任务 (v3.0.5+) </p>
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8cpp_source.html">WriteWorker.cpp</a> 第 <a class="el" href="WriteWorker_8cpp_source.html#l00721">721</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="WriteWorker_8h_source.html#l00117">m_isAborted</a> , 以及 <a class="el" href="WriteWorker_8h_source.html#l00105">m_status</a>.</p>
+
+</div>
+</div>
+<a id="ac156631c48145b604e7e679ab31bc147" name="ac156631c48145b604e7e679ab31bc147"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac156631c48145b604e7e679ab31bc147">&#9670;&#160;</a></span>createOutputDirectory()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::WriteWorker::createOutputDirectory </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>path</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>创建输出目录 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>路径 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>bool 是否成功 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8cpp_source.html">WriteWorker.cpp</a> 第 <a class="el" href="WriteWorker_8cpp_source.html#l00462">462</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00473">exportDebugData()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00346">write3DModelFile()</a> , 以及 <a class="el" href="WriteWorker_8cpp_source.html#l00239">writeFootprintFile()</a>.</p>
+
+</div>
+</div>
+<a id="a580d78f33d681c405154b623511cfa4e" name="a580d78f33d681c405154b623511cfa4e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a580d78f33d681c405154b623511cfa4e">&#9670;&#160;</a></span>exportDebugData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::WriteWorker::exportDebugData </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &amp;&#160;</td>
+          <td class="paramname"><em>status</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>导出调试数据 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">status</td><td>导出状态 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>bool 是否成功 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8cpp_source.html">WriteWorker.cpp</a> 第 <a class="el" href="WriteWorker_8cpp_source.html#l00473">473</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentExportStatus_8h_source.html#l00109">EasyKiConverter::ComponentExportStatus::addDebugLog()</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00035">EasyKiConverter::ComponentExportStatus::advJsonRaw</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00034">EasyKiConverter::ComponentExportStatus::cadJsonRaw</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00032">EasyKiConverter::ComponentExportStatus::cinfoJsonRaw</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00028">EasyKiConverter::ComponentExportStatus::componentId</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00462">createOutputDirectory()</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00066">EasyKiConverter::ComponentExportStatus::debugLog</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00047">EasyKiConverter::ComponentExportStatus::fetchMessage</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00046">EasyKiConverter::ComponentExportStatus::fetchSuccess</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00042">EasyKiConverter::ComponentExportStatus::footprintData</a>, <a class="el" href="WriteWorker_8h_source.html#l00106">m_outputPath</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00043">EasyKiConverter::ComponentExportStatus::model3DData</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00036">EasyKiConverter::ComponentExportStatus::model3DObjRaw</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00037">EasyKiConverter::ComponentExportStatus::model3DStepRaw</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00051">EasyKiConverter::ComponentExportStatus::processMessage</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00050">EasyKiConverter::ComponentExportStatus::processSuccess</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00041">EasyKiConverter::ComponentExportStatus::symbolData</a>, <a class="el" href="FootprintDataSerializer_8cpp_source.html#l00397">EasyKiConverter::FootprintDataSerializer::toJson()</a>, <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00708">EasyKiConverter::SymbolDataSerializer::toJson()</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00055">EasyKiConverter::ComponentExportStatus::writeMessage</a> , 以及 <a class="el" href="ComponentExportStatus_8h_source.html#l00054">EasyKiConverter::ComponentExportStatus::writeSuccess</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a>.</p>
+
+</div>
+</div>
+<a id="a8f09ef739938279648a6bd59d27b9ba2" name="a8f09ef739938279648a6bd59d27b9ba2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f09ef739938279648a6bd59d27b9ba2">&#9670;&#160;</a></span>run()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::WriteWorker::run </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>执行写入任务 </p>
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8cpp_source.html">WriteWorker.cpp</a> 第 <a class="el" href="WriteWorker_8cpp_source.html#l00052">52</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="WriteWorker_8cpp_source.html#l00462">createOutputDirectory()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00473">exportDebugData()</a>, <a class="el" href="WriteWorker_8h_source.html#l00111">m_debugMode</a>, <a class="el" href="WriteWorker_8h_source.html#l00109">m_exportFootprint</a>, <a class="el" href="WriteWorker_8h_source.html#l00110">m_exportModel3D</a>, <a class="el" href="WriteWorker_8h_source.html#l00108">m_exportSymbol</a>, <a class="el" href="WriteWorker_8h_source.html#l00117">m_isAborted</a>, <a class="el" href="WriteWorker_8h_source.html#l00106">m_outputPath</a>, <a class="el" href="WriteWorker_8h_source.html#l00105">m_status</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00346">write3DModelFile()</a>, <a class="el" href="classEasyKiConverter_1_1WriteWorker.html#a24cf89f509bfea33d2e9739b393c9fcd">writeCompleted()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00239">writeFootprintFile()</a> , 以及 <a class="el" href="WriteWorker_8cpp_source.html#l00170">writeSymbolFile()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteStageHandler_8cpp_source.html#l00020">EasyKiConverter::WriteStageHandler::start()</a>.</p>
+
+</div>
+</div>
+<a id="a0c7973241c9ce95c905fc467a63d06a2" name="a0c7973241c9ce95c905fc467a63d06a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c7973241c9ce95c905fc467a63d06a2">&#9670;&#160;</a></span>write3DModelFile()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::WriteWorker::write3DModelFile </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &amp;&#160;</td>
+          <td class="paramname"><em>status</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>写入3D模型文件 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">status</td><td>导出状态 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>bool 是否成功 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8cpp_source.html">WriteWorker.cpp</a> 第 <a class="el" href="WriteWorker_8cpp_source.html#l00346">346</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentExportStatus_8h_source.html#l00109">EasyKiConverter::ComponentExportStatus::addDebugLog()</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00142">EasyKiConverter::ComponentExportStatus::clearStepData()</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00028">EasyKiConverter::ComponentExportStatus::componentId</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00462">createOutputDirectory()</a>, <a class="el" href="Exporter3DModel_8cpp_source.html#l00065">EasyKiConverter::Exporter3DModel::exportToWrl()</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00042">EasyKiConverter::ComponentExportStatus::footprintData</a>, <a class="el" href="PathSecurity_8cpp_source.html#l00022">EasyKiConverter::PathSecurity::isSafePath()</a>, <a class="el" href="WriteWorker_8h_source.html#l00107">m_libName</a>, <a class="el" href="WriteWorker_8h_source.html#l00116">m_model3DExporter</a>, <a class="el" href="WriteWorker_8h_source.html#l00106">m_outputPath</a>, <a class="el" href="WriteWorker_8h_source.html#l00112">m_tempDir</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00043">EasyKiConverter::ComponentExportStatus::model3DData</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00037">EasyKiConverter::ComponentExportStatus::model3DStepRaw</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00064">EasyKiConverter::ComponentExportStatus::model3DWritten</a>, <a class="el" href="WriteWorker_8h_source.html#l00120">s_fileWriteMutex</a> , 以及 <a class="el" href="PathSecurity_8cpp_source.html#l00076">EasyKiConverter::PathSecurity::sanitizeFilename()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a>.</p>
+
+</div>
+</div>
+<a id="a24cf89f509bfea33d2e9739b393c9fcd" name="a24cf89f509bfea33d2e9739b393c9fcd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a24cf89f509bfea33d2e9739b393c9fcd">&#9670;&#160;</a></span>writeCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::WriteWorker::writeCompleted </td>
+          <td>(</td>
+          <td class="paramtype">QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt;&#160;</td>
+          <td class="paramname"><em>status</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>写入完成信号 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">status</td><td>导出状态（使用 QSharedPointer 避免拷贝） </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a> , 以及 <a class="el" href="WriteStageHandler_8cpp_source.html#l00020">EasyKiConverter::WriteStageHandler::start()</a>.</p>
+
+</div>
+</div>
+<a id="a17927ca8e39652f8759d50581a6906e2" name="a17927ca8e39652f8759d50581a6906e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17927ca8e39652f8759d50581a6906e2">&#9670;&#160;</a></span>writeFootprintFile()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::WriteWorker::writeFootprintFile </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &amp;&#160;</td>
+          <td class="paramname"><em>status</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>写入封装文件 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">status</td><td>导出状态 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>bool 是否成功 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8cpp_source.html">WriteWorker.cpp</a> 第 <a class="el" href="WriteWorker_8cpp_source.html#l00239">239</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentExportStatus_8h_source.html#l00109">EasyKiConverter::ComponentExportStatus::addDebugLog()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00462">createOutputDirectory()</a>, <a class="el" href="ExporterFootprint_8cpp_source.html#l00017">EasyKiConverter::ExporterFootprint::exportFootprint()</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00042">EasyKiConverter::ComponentExportStatus::footprintData</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00063">EasyKiConverter::ComponentExportStatus::footprintWritten</a>, <a class="el" href="PathSecurity_8cpp_source.html#l00022">EasyKiConverter::PathSecurity::isSafePath()</a>, <a class="el" href="WriteWorker_8h_source.html#l00110">m_exportModel3D</a>, <a class="el" href="WriteWorker_8h_source.html#l00115">m_footprintExporter</a>, <a class="el" href="WriteWorker_8h_source.html#l00107">m_libName</a>, <a class="el" href="WriteWorker_8h_source.html#l00106">m_outputPath</a>, <a class="el" href="WriteWorker_8h_source.html#l00112">m_tempDir</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00043">EasyKiConverter::ComponentExportStatus::model3DData</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00037">EasyKiConverter::ComponentExportStatus::model3DStepRaw</a>, <a class="el" href="WriteWorker_8h_source.html#l00120">s_fileWriteMutex</a> , 以及 <a class="el" href="PathSecurity_8cpp_source.html#l00076">EasyKiConverter::PathSecurity::sanitizeFilename()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a>.</p>
+
+</div>
+</div>
+<a id="add27e7f95db305080c8dc9a8e3c769c4" name="add27e7f95db305080c8dc9a8e3c769c4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#add27e7f95db305080c8dc9a8e3c769c4">&#9670;&#160;</a></span>writeSymbolFile()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::WriteWorker::writeSymbolFile </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &amp;&#160;</td>
+          <td class="paramname"><em>status</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>写入符号文件 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">status</td><td>导出状态 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>bool 是否成功 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8cpp_source.html">WriteWorker.cpp</a> 第 <a class="el" href="WriteWorker_8cpp_source.html#l00170">170</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentExportStatus_8h_source.html#l00109">EasyKiConverter::ComponentExportStatus::addDebugLog()</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00028">EasyKiConverter::ComponentExportStatus::componentId</a>, <a class="el" href="ExporterSymbol_8cpp_source.html#l00016">EasyKiConverter::ExporterSymbol::exportSymbol()</a>, <a class="el" href="PathSecurity_8cpp_source.html#l00022">EasyKiConverter::PathSecurity::isSafePath()</a>, <a class="el" href="WriteWorker_8h_source.html#l00106">m_outputPath</a>, <a class="el" href="WriteWorker_8h_source.html#l00114">m_symbolExporter</a>, <a class="el" href="WriteWorker_8h_source.html#l00112">m_tempDir</a>, <a class="el" href="WriteWorker_8h_source.html#l00120">s_fileWriteMutex</a>, <a class="el" href="ComponentExportStatus_8h_source.html#l00041">EasyKiConverter::ComponentExportStatus::symbolData</a> , 以及 <a class="el" href="ComponentExportStatus_8h_source.html#l00062">EasyKiConverter::ComponentExportStatus::symbolWritten</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a56798b0aff4e4038a597f663a0c40d51" name="a56798b0aff4e4038a597f663a0c40d51"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a56798b0aff4e4038a597f663a0c40d51">&#9670;&#160;</a></span>m_debugMode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::WriteWorker::m_debugMode</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00111">111</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a>.</p>
+
+</div>
+</div>
+<a id="a41aa2d9b4de2a57069c26dba835042d6" name="a41aa2d9b4de2a57069c26dba835042d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41aa2d9b4de2a57069c26dba835042d6">&#9670;&#160;</a></span>m_exportFootprint</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::WriteWorker::m_exportFootprint</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00109">109</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a>.</p>
+
+</div>
+</div>
+<a id="a4bee71f80d65e1f273e12791ee9dbe6e" name="a4bee71f80d65e1f273e12791ee9dbe6e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4bee71f80d65e1f273e12791ee9dbe6e">&#9670;&#160;</a></span>m_exportModel3D</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::WriteWorker::m_exportModel3D</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00110">110</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a> , 以及 <a class="el" href="WriteWorker_8cpp_source.html#l00239">writeFootprintFile()</a>.</p>
+
+</div>
+</div>
+<a id="a4151c0b1404492b2f52661aa59996b10" name="a4151c0b1404492b2f52661aa59996b10"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4151c0b1404492b2f52661aa59996b10">&#9670;&#160;</a></span>m_exportSymbol</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::WriteWorker::m_exportSymbol</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00108">108</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a>.</p>
+
+</div>
+</div>
+<a id="a23b732f69191de8863210dc37a06149a" name="a23b732f69191de8863210dc37a06149a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a23b732f69191de8863210dc37a06149a">&#9670;&#160;</a></span>m_footprintExporter</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1ExporterFootprint.html">ExporterFootprint</a> EasyKiConverter::WriteWorker::m_footprintExporter</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00115">115</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00239">writeFootprintFile()</a>.</p>
+
+</div>
+</div>
+<a id="a67c33f582aeb11e2f40756b82531e926" name="a67c33f582aeb11e2f40756b82531e926"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a67c33f582aeb11e2f40756b82531e926">&#9670;&#160;</a></span>m_isAborted</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QAtomicInt EasyKiConverter::WriteWorker::m_isAborted</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00117">117</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00721">abort()</a> , 以及 <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a>.</p>
+
+</div>
+</div>
+<a id="aa3ec1acad188c6d44ac5c9d2faf0c7ef" name="aa3ec1acad188c6d44ac5c9d2faf0c7ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa3ec1acad188c6d44ac5c9d2faf0c7ef">&#9670;&#160;</a></span>m_libName</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::WriteWorker::m_libName</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00107">107</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00346">write3DModelFile()</a> , 以及 <a class="el" href="WriteWorker_8cpp_source.html#l00239">writeFootprintFile()</a>.</p>
+
+</div>
+</div>
+<a id="a5594691dd10d189ef8cddcc289a6646b" name="a5594691dd10d189ef8cddcc289a6646b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5594691dd10d189ef8cddcc289a6646b">&#9670;&#160;</a></span>m_model3DExporter</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1Exporter3DModel.html">Exporter3DModel</a> EasyKiConverter::WriteWorker::m_model3DExporter</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00116">116</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00346">write3DModelFile()</a>.</p>
+
+</div>
+</div>
+<a id="abc67dee218986a0ae9a5dba380a5a4d7" name="abc67dee218986a0ae9a5dba380a5a4d7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc67dee218986a0ae9a5dba380a5a4d7">&#9670;&#160;</a></span>m_outputPath</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::WriteWorker::m_outputPath</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00106">106</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00473">exportDebugData()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00346">write3DModelFile()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00239">writeFootprintFile()</a> , 以及 <a class="el" href="WriteWorker_8cpp_source.html#l00170">writeSymbolFile()</a>.</p>
+
+</div>
+</div>
+<a id="aa0e2d1c15a63a89b864916c43cbca6bb" name="aa0e2d1c15a63a89b864916c43cbca6bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa0e2d1c15a63a89b864916c43cbca6bb">&#9670;&#160;</a></span>m_status</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QSharedPointer&lt;<a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a>&gt; EasyKiConverter::WriteWorker::m_status</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00105">105</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00721">abort()</a> , 以及 <a class="el" href="WriteWorker_8cpp_source.html#l00052">run()</a>.</p>
+
+</div>
+</div>
+<a id="a9d11835ba887e6f9892d2529cdb72aa0" name="a9d11835ba887e6f9892d2529cdb72aa0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9d11835ba887e6f9892d2529cdb72aa0">&#9670;&#160;</a></span>m_symbolExporter</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1ExporterSymbol.html">ExporterSymbol</a> EasyKiConverter::WriteWorker::m_symbolExporter</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00114">114</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00170">writeSymbolFile()</a>.</p>
+
+</div>
+</div>
+<a id="acf761e4a0aad35127462561dca3e95c2" name="acf761e4a0aad35127462561dca3e95c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acf761e4a0aad35127462561dca3e95c2">&#9670;&#160;</a></span>m_tempDir</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::WriteWorker::m_tempDir</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00112">112</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00346">write3DModelFile()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00239">writeFootprintFile()</a> , 以及 <a class="el" href="WriteWorker_8cpp_source.html#l00170">writeSymbolFile()</a>.</p>
+
+</div>
+</div>
+<a id="a878278ec1f93942247c4e8735f04e9d8" name="a878278ec1f93942247c4e8735f04e9d8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a878278ec1f93942247c4e8735f04e9d8">&#9670;&#160;</a></span>s_fileWriteMutex</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMutex EasyKiConverter::WriteWorker::s_fileWriteMutex</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a> 第 <a class="el" href="WriteWorker_8h_source.html#l00120">120</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00346">write3DModelFile()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00239">writeFootprintFile()</a> , 以及 <a class="el" href="WriteWorker_8cpp_source.html#l00170">writeSymbolFile()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>workers/<a class="el" href="WriteWorker_8h_source.html">WriteWorker.h</a></li>
+<li>workers/<a class="el" href="WriteWorker_8cpp_source.html">WriteWorker.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1WriteWorker.html">WriteWorker</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: core/easyeda/EasyedaApi.h 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('EasyedaApi_8h_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">EasyedaApi.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="EasyedaApi_8h.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef EASYEDAAPI_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define EASYEDAAPI_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;QJsonObject&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;QMutex&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;QObject&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;QPointer&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;QString&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;QVector&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="keyword">class </span>INetworkAdapter;</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
+<div class="foldopen" id="foldopen00020" data-start="{" data-end="};">
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html">   20</a></span><span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1EasyedaApi.html">EasyedaApi</a> : <span class="keyword">public</span> QObject {</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    Q_OBJECT</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keyword">explicit</span> <a class="code hl_class" href="classEasyKiConverter_1_1EasyedaApi.html">EasyedaApi</a>(QObject* parent = <span class="keyword">nullptr</span>);</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    <span class="keyword">explicit</span> <a class="code hl_class" href="classEasyKiConverter_1_1EasyedaApi.html">EasyedaApi</a>(<a class="code hl_class" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a>* adapter, QObject* parent = <span class="keyword">nullptr</span>);</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#aa729599dd7a336e7a3e0e6f6204004a6">~EasyedaApi</a>() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#ae6cd7358cfd694eb9b8ce38ad2a64653">fetchComponentInfo</a>(<span class="keyword">const</span> QString&amp; lcscId);</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a80ccd488c9493113bbb92507423b124f">fetchCadData</a>(<span class="keyword">const</span> QString&amp; lcscId);</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#aeca2ff7d82e706345ee9b99e0eee604a">fetch3DModelObj</a>(<span class="keyword">const</span> QString&amp; uuid);</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#ad65567e7374be873fa88a57f45754f79">fetch3DModelStep</a>(<span class="keyword">const</span> QString&amp; uuid);</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#ad8022e60aa19506f390d2f639d27369c">cancelRequest</a>();</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>signals:</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#acf66a3a17fde1e7e241bf2003cc7640b">   76</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#acf66a3a17fde1e7e241bf2003cc7640b">componentInfoFetched</a>(<span class="keyword">const</span> QJsonObject&amp; data);</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#ad133c23a3219c2ca6d36fecc01321f51">   82</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#ad133c23a3219c2ca6d36fecc01321f51">cadDataFetched</a>(<span class="keyword">const</span> QJsonObject&amp; data);</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#a2b086a78ac6435f4e0ec2af802c1d90e">   89</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a2b086a78ac6435f4e0ec2af802c1d90e">model3DFetched</a>(<span class="keyword">const</span> QString&amp; uuid, <span class="keyword">const</span> QByteArray&amp; data);</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">   95</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">fetchError</a>(<span class="keyword">const</span> QString&amp; errorMessage);</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#a83ec622ff1ec024278559fa9cef1f2be">  102</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a83ec622ff1ec024278559fa9cef1f2be">fetchError</a>(<span class="keyword">const</span> QString&amp; <span class="keywordtype">id</span>, <span class="keyword">const</span> QString&amp; errorMessage);</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span><span class="keyword">private</span> slots:</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a7dbdaaffd95da6aa9c96996e8cdac6d6">handleComponentInfoResponse</a>(<span class="keyword">const</span> QJsonObject&amp; data);</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a591121343057d4175030f683ee25ed96">handleCadDataResponse</a>(<span class="keyword">const</span> QJsonObject&amp; data);</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span> </div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a5e8ed2da82e016e2b6e1000f199217af">handleModel3DResponse</a>(<span class="keyword">const</span> QJsonObject&amp; data);</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span> </div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a44020c13a9f1f6eaa174c13e02d667f7">handleNetworkError</a>(<span class="keyword">const</span> QString&amp; errorMessage);</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#ace8aa316e328509c694b4177a78f1cab">handleRequestSuccess</a>(<a class="code hl_class" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a>* networkUtils, <span class="keyword">const</span> QString&amp; lcscId, <span class="keyword">const</span> QJsonObject&amp; data);</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span> </div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a293a9f269c2eab41c410c3e39d589420">handleRequestError</a>(<a class="code hl_class" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a>* networkUtils, <span class="keyword">const</span> QString&amp; lcscId, <span class="keyword">const</span> QString&amp; error);</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a620f6d8685287b1b43ab1ad9d0e25899">handleBinaryDataFetched</a>(<a class="code hl_class" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a>* networkUtils, <span class="keyword">const</span> QString&amp; lcscId, <span class="keyword">const</span> QByteArray&amp; data);</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12fac">  144</a></span>    <span class="keyword">enum class</span> <a class="code hl_enumeration" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12fac">RequestType</a> { <a class="code hl_enumvalue" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12faca6adf97f83acf6453d4a6a4b1070f3754">None</a>, <a class="code hl_enumvalue" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facaf8bda80727c9d0d2149458dc19a71423">ComponentInfo</a>, <a class="code hl_enumvalue" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12faca646f05006f59cd6f5672fab1c4de1c5e">CadData</a>, <a class="code hl_enumvalue" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facaeb7c4837534dea52180df643b80639a2">Model3DObj</a>, <a class="code hl_enumvalue" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facabbf924e0f35a900830a316e10a224090">Model3DStep</a> };</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span> </div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#ace8aa316e328509c694b4177a78f1cab">handleRequestSuccess</a>(<span class="keyword">const</span> QJsonObject&amp; data);</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a8746793a064eef576e828987556518a1">resetRequestState</a>();</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span> </div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a39f0bdf5a346eda3ea50e513501d494f">buildComponentApiUrl</a>(<span class="keyword">const</span> QString&amp; lcscId) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span> </div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#a095f1aabc5ef938bd74685bdce78c791">build3DModelObjUrl</a>(<span class="keyword">const</span> QString&amp; uuid) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span> </div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#ad7f920e8769bf6564e5016d625803fa2">build3DModelStepUrl</a>(<span class="keyword">const</span> QString&amp; uuid) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span> </div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1EasyedaApi.html#ae6b395aa72b534d7de736960599ba3d3">validateLcscId</a>(<span class="keyword">const</span> QString&amp; lcscId) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span> </div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#aeef6232d2beef3cb1b1e743bc012a849">  177</a></span>    <a class="code hl_class" href="classEasyKiConverter_1_1INetworkAdapter.html">INetworkAdapter</a>* <a class="code hl_variable" href="classEasyKiConverter_1_1EasyedaApi.html#aeef6232d2beef3cb1b1e743bc012a849">m_networkUtils</a>;</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#a87ea575b6ba9ac428c83034c82f34074">  178</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1EasyedaApi.html#a87ea575b6ba9ac428c83034c82f34074">m_currentLcscId</a>;</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#a3f2c87180614a00f985ef335fb562e27">  179</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1EasyedaApi.html#a3f2c87180614a00f985ef335fb562e27">m_currentUuid</a>;</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#a50772c1418b4932894cd47cf9deaa9c8">  180</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classEasyKiConverter_1_1EasyedaApi.html#a50772c1418b4932894cd47cf9deaa9c8">m_isFetching</a>;</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#a9584c4705edfcbf9c69bc0fc538e0dcd">  181</a></span>    <a class="code hl_enumeration" href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12fac">RequestType</a> <a class="code hl_variable" href="classEasyKiConverter_1_1EasyedaApi.html#a9584c4705edfcbf9c69bc0fc538e0dcd">m_requestType</a>;</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span> </div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    <span class="comment">// 跟踪所有活跃的并行 NetworkUtils 实例</span></div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#a46bba3622007e4879e1c1c5dd01cb4a2">  184</a></span>    QVector&lt;QPointer&lt;INetworkAdapter&gt;&gt; <a class="code hl_variable" href="classEasyKiConverter_1_1EasyedaApi.html#a46bba3622007e4879e1c1c5dd01cb4a2">m_activeRequests</a>;</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1EasyedaApi.html#a423e91b5898b0fb0f573360ee4adcba1">  185</a></span>    QMutex <a class="code hl_variable" href="classEasyKiConverter_1_1EasyedaApi.html#a423e91b5898b0fb0f573360ee4adcba1">m_requestsMutex</a>;  <span class="comment">// 保护 m_activeRequests 的线程安全访问</span></div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>};</div>
+</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span> </div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span> </div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span><span class="preprocessor">#endif  </span><span class="comment">// EASYEDAAPI_H</span></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html">EasyKiConverter::EasyedaApi</a></div><div class="ttdoc">EasyEDA API 客户端类</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8h_source.html#l00020">EasyedaApi.h:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a095f1aabc5ef938bd74685bdce78c791"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a095f1aabc5ef938bd74685bdce78c791">EasyKiConverter::EasyedaApi::build3DModelObjUrl</a></div><div class="ttdeci">QString build3DModelObjUrl(const QString &amp;uuid) const</div><div class="ttdoc">构建 3D 模型 URL（OBJ 格式）</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00292">EasyedaApi.cpp:292</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a09f7e10f94d0688d49926711757863c6"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a09f7e10f94d0688d49926711757863c6">EasyKiConverter::EasyedaApi::fetchError</a></div><div class="ttdeci">void fetchError(const QString &amp;errorMessage)</div><div class="ttdoc">请求失败信号</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a293a9f269c2eab41c410c3e39d589420"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a293a9f269c2eab41c410c3e39d589420">EasyKiConverter::EasyedaApi::handleRequestError</a></div><div class="ttdeci">void handleRequestError(INetworkAdapter *networkUtils, const QString &amp;lcscId, const QString &amp;error)</div><div class="ttdoc">处理请求错误（支持并行请求）</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00216">EasyedaApi.cpp:216</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a2b086a78ac6435f4e0ec2af802c1d90e"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a2b086a78ac6435f4e0ec2af802c1d90e">EasyKiConverter::EasyedaApi::model3DFetched</a></div><div class="ttdeci">void model3DFetched(const QString &amp;uuid, const QByteArray &amp;data)</div><div class="ttdoc">3D 模型数据获取成功信号</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a39f0bdf5a346eda3ea50e513501d494f"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a39f0bdf5a346eda3ea50e513501d494f">EasyKiConverter::EasyedaApi::buildComponentApiUrl</a></div><div class="ttdeci">QString buildComponentApiUrl(const QString &amp;lcscId) const</div><div class="ttdoc">构建 API URL</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00288">EasyedaApi.cpp:288</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a3f2c87180614a00f985ef335fb562e27"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a3f2c87180614a00f985ef335fb562e27">EasyKiConverter::EasyedaApi::m_currentUuid</a></div><div class="ttdeci">QString m_currentUuid</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8h_source.html#l00179">EasyedaApi.h:179</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a423e91b5898b0fb0f573360ee4adcba1"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a423e91b5898b0fb0f573360ee4adcba1">EasyKiConverter::EasyedaApi::m_requestsMutex</a></div><div class="ttdeci">QMutex m_requestsMutex</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8h_source.html#l00185">EasyedaApi.h:185</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a44020c13a9f1f6eaa174c13e02d667f7"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a44020c13a9f1f6eaa174c13e02d667f7">EasyKiConverter::EasyedaApi::handleNetworkError</a></div><div class="ttdeci">void handleNetworkError(const QString &amp;errorMessage)</div><div class="ttdoc">处理网络错误</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00278">EasyedaApi.cpp:278</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a46bba3622007e4879e1c1c5dd01cb4a2"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a46bba3622007e4879e1c1c5dd01cb4a2">EasyKiConverter::EasyedaApi::m_activeRequests</a></div><div class="ttdeci">QVector&lt; QPointer&lt; INetworkAdapter &gt; &gt; m_activeRequests</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8h_source.html#l00184">EasyedaApi.h:184</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a50772c1418b4932894cd47cf9deaa9c8"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a50772c1418b4932894cd47cf9deaa9c8">EasyKiConverter::EasyedaApi::m_isFetching</a></div><div class="ttdeci">bool m_isFetching</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8h_source.html#l00180">EasyedaApi.h:180</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a591121343057d4175030f683ee25ed96"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a591121343057d4175030f683ee25ed96">EasyKiConverter::EasyedaApi::handleCadDataResponse</a></div><div class="ttdeci">void handleCadDataResponse(const QJsonObject &amp;data)</div><div class="ttdoc">处理 CAD 数据响应</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00263">EasyedaApi.cpp:263</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a5e8ed2da82e016e2b6e1000f199217af"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a5e8ed2da82e016e2b6e1000f199217af">EasyKiConverter::EasyedaApi::handleModel3DResponse</a></div><div class="ttdeci">void handleModel3DResponse(const QJsonObject &amp;data)</div><div class="ttdoc">处理 3D 模型响应</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00274">EasyedaApi.cpp:274</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a620f6d8685287b1b43ab1ad9d0e25899"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a620f6d8685287b1b43ab1ad9d0e25899">EasyKiConverter::EasyedaApi::handleBinaryDataFetched</a></div><div class="ttdeci">void handleBinaryDataFetched(INetworkAdapter *networkUtils, const QString &amp;lcscId, const QByteArray &amp;data)</div><div class="ttdoc">处理二进制数据（支持并行请求）</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00225">EasyedaApi.cpp:225</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a7dbdaaffd95da6aa9c96996e8cdac6d6"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a7dbdaaffd95da6aa9c96996e8cdac6d6">EasyKiConverter::EasyedaApi::handleComponentInfoResponse</a></div><div class="ttdeci">void handleComponentInfoResponse(const QJsonObject &amp;data)</div><div class="ttdoc">处理组件信息响应</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00254">EasyedaApi.cpp:254</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a80ccd488c9493113bbb92507423b124f"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a80ccd488c9493113bbb92507423b124f">EasyKiConverter::EasyedaApi::fetchCadData</a></div><div class="ttdeci">void fetchCadData(const QString &amp;lcscId)</div><div class="ttdoc">获取组件 CAD 数据</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00082">EasyedaApi.cpp:82</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a83ec622ff1ec024278559fa9cef1f2be"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a83ec622ff1ec024278559fa9cef1f2be">EasyKiConverter::EasyedaApi::fetchError</a></div><div class="ttdeci">void fetchError(const QString &amp;id, const QString &amp;errorMessage)</div><div class="ttdoc">请求失败信号（带 ID）</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a8746793a064eef576e828987556518a1"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a8746793a064eef576e828987556518a1">EasyKiConverter::EasyedaApi::resetRequestState</a></div><div class="ttdeci">void resetRequestState()</div><div class="ttdoc">重置请求状态</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00283">EasyedaApi.cpp:283</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a87ea575b6ba9ac428c83034c82f34074"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a87ea575b6ba9ac428c83034c82f34074">EasyKiConverter::EasyedaApi::m_currentLcscId</a></div><div class="ttdeci">QString m_currentLcscId</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8h_source.html#l00178">EasyedaApi.h:178</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_a9584c4705edfcbf9c69bc0fc538e0dcd"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#a9584c4705edfcbf9c69bc0fc538e0dcd">EasyKiConverter::EasyedaApi::m_requestType</a></div><div class="ttdeci">RequestType m_requestType</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8h_source.html#l00181">EasyedaApi.h:181</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_aa729599dd7a336e7a3e0e6f6204004a6"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#aa729599dd7a336e7a3e0e6f6204004a6">EasyKiConverter::EasyedaApi::~EasyedaApi</a></div><div class="ttdeci">~EasyedaApi() override</div><div class="ttdoc">析构函数</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00055">EasyedaApi.cpp:55</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ace8aa316e328509c694b4177a78f1cab"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ace8aa316e328509c694b4177a78f1cab">EasyKiConverter::EasyedaApi::handleRequestSuccess</a></div><div class="ttdeci">void handleRequestSuccess(INetworkAdapter *networkUtils, const QString &amp;lcscId, const QJsonObject &amp;data)</div><div class="ttdoc">处理请求成功（支持并行请求）</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00199">EasyedaApi.cpp:199</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_acf66a3a17fde1e7e241bf2003cc7640b"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#acf66a3a17fde1e7e241bf2003cc7640b">EasyKiConverter::EasyedaApi::componentInfoFetched</a></div><div class="ttdeci">void componentInfoFetched(const QJsonObject &amp;data)</div><div class="ttdoc">组件信息获取成功信号</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ad133c23a3219c2ca6d36fecc01321f51"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ad133c23a3219c2ca6d36fecc01321f51">EasyKiConverter::EasyedaApi::cadDataFetched</a></div><div class="ttdeci">void cadDataFetched(const QJsonObject &amp;data)</div><div class="ttdoc">CAD 数据获取成功信号</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ad65567e7374be873fa88a57f45754f79"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ad65567e7374be873fa88a57f45754f79">EasyKiConverter::EasyedaApi::fetch3DModelStep</a></div><div class="ttdeci">void fetch3DModelStep(const QString &amp;uuid)</div><div class="ttdoc">获取 3D 模型数据（STEP 格式）</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00144">EasyedaApi.cpp:144</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ad7f920e8769bf6564e5016d625803fa2"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ad7f920e8769bf6564e5016d625803fa2">EasyKiConverter::EasyedaApi::build3DModelStepUrl</a></div><div class="ttdeci">QString build3DModelStepUrl(const QString &amp;uuid) const</div><div class="ttdoc">构建 3D 模型 URL（STEP 格式）</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00296">EasyedaApi.cpp:296</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ad8022e60aa19506f390d2f639d27369c"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ad8022e60aa19506f390d2f639d27369c">EasyKiConverter::EasyedaApi::cancelRequest</a></div><div class="ttdeci">void cancelRequest()</div><div class="ttdoc">取消当前请求</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00236">EasyedaApi.cpp:236</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ad845c485e7ca0a65eba1857ef0a12fac"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12fac">EasyKiConverter::EasyedaApi::RequestType</a></div><div class="ttdeci">RequestType</div><div class="ttdoc">请求类型枚举</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8h_source.html#l00144">EasyedaApi.h:144</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ad845c485e7ca0a65eba1857ef0a12faca646f05006f59cd6f5672fab1c4de1c5e"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12faca646f05006f59cd6f5672fab1c4de1c5e">EasyKiConverter::EasyedaApi::RequestType::CadData</a></div><div class="ttdeci">@ CadData</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ad845c485e7ca0a65eba1857ef0a12faca6adf97f83acf6453d4a6a4b1070f3754"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12faca6adf97f83acf6453d4a6a4b1070f3754">EasyKiConverter::EasyedaApi::RequestType::None</a></div><div class="ttdeci">@ None</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ad845c485e7ca0a65eba1857ef0a12facabbf924e0f35a900830a316e10a224090"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facabbf924e0f35a900830a316e10a224090">EasyKiConverter::EasyedaApi::RequestType::Model3DStep</a></div><div class="ttdeci">@ Model3DStep</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ad845c485e7ca0a65eba1857ef0a12facaeb7c4837534dea52180df643b80639a2"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facaeb7c4837534dea52180df643b80639a2">EasyKiConverter::EasyedaApi::RequestType::Model3DObj</a></div><div class="ttdeci">@ Model3DObj</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ad845c485e7ca0a65eba1857ef0a12facaf8bda80727c9d0d2149458dc19a71423"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ad845c485e7ca0a65eba1857ef0a12facaf8bda80727c9d0d2149458dc19a71423">EasyKiConverter::EasyedaApi::RequestType::ComponentInfo</a></div><div class="ttdeci">@ ComponentInfo</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ae6b395aa72b534d7de736960599ba3d3"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ae6b395aa72b534d7de736960599ba3d3">EasyKiConverter::EasyedaApi::validateLcscId</a></div><div class="ttdeci">bool validateLcscId(const QString &amp;lcscId) const</div><div class="ttdoc">验证 LCSC ID 格式</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00300">EasyedaApi.cpp:300</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_ae6cd7358cfd694eb9b8ce38ad2a64653"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#ae6cd7358cfd694eb9b8ce38ad2a64653">EasyKiConverter::EasyedaApi::fetchComponentInfo</a></div><div class="ttdeci">void fetchComponentInfo(const QString &amp;lcscId)</div><div class="ttdoc">获取组件信息</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00059">EasyedaApi.cpp:59</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_aeca2ff7d82e706345ee9b99e0eee604a"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#aeca2ff7d82e706345ee9b99e0eee604a">EasyKiConverter::EasyedaApi::fetch3DModelObj</a></div><div class="ttdeci">void fetch3DModelObj(const QString &amp;uuid)</div><div class="ttdoc">获取 3D 模型数据（OBJ 格式）</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00111">EasyedaApi.cpp:111</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html_aeef6232d2beef3cb1b1e743bc012a849"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html#aeef6232d2beef3cb1b1e743bc012a849">EasyKiConverter::EasyedaApi::m_networkUtils</a></div><div class="ttdeci">INetworkAdapter * m_networkUtils</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8h_source.html#l00177">EasyedaApi.h:177</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1INetworkAdapter_html"><div class="ttname"><a href="classEasyKiConverter_1_1INetworkAdapter.html">EasyKiConverter::INetworkAdapter</a></div><div class="ttdoc">网络适配器接口</div><div class="ttdef"><b>Definition</b> <a href="INetworkAdapter_8h_source.html#l00014">INetworkAdapter.h:14</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_4270bfced15e0e73154b13468c7c9ad9.html">core</a></li><li class="navelem"><a class="el" href="dir_0eb87cc7e55f2d1b240c9327aae69f5c.html">easyeda</a></li><li class="navelem"><a class="el" href="EasyedaApi_8h.html">EasyedaApi.h</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

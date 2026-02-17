@@ -1,0 +1,15 @@
+<map id="EasyKiConverter::SymbolPin" name="EasyKiConverter::SymbolPin">
+<area shape="rect" id="Node000001" title="引脚" alt="" coords="617,288,816,353"/>
+<area shape="rect" id="Node000002" href="$structEasyKiConverter_1_1SymbolPinSettings.html" title="引脚设置" alt="" coords="5,5,204,225"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,217,217,223,263,245,313,263,414,290,513,306,601,314,600,319,512,311,413,295,311,268,261,250,214,228,203,221"/>
+<area shape="rect" id="Node000003" href="$structEasyKiConverter_1_1SymbolPinDot.html" title="引脚" alt="" coords="228,73,451,158"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="381,157,420,191,465,223,533,257,603,284,601,289,531,262,462,228,417,195,378,161"/>
+<area shape="rect" id="Node000004" href="$structEasyKiConverter_1_1SymbolPinPath.html" title="引脚路径" alt="" coords="475,73,702,158"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="617,157,690,273,686,276,613,160"/>
+<area shape="rect" id="Node000005" href="$structEasyKiConverter_1_1SymbolPinName.html" title="引脚名称" alt="" coords="727,13,965,218"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="783,220,748,276,743,273,779,217"/>
+<area shape="rect" id="Node000006" href="$structEasyKiConverter_1_1SymbolPinDotBis.html" title="引脚圆点（第二个" alt="" coords="989,55,1188,175"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1040,177,1011,204,979,228,907,265,833,292,831,287,905,260,977,223,1008,200,1036,173"/>
+<area shape="rect" id="Node000007" href="$structEasyKiConverter_1_1SymbolPinClock.html" title="引脚时钟" alt="" coords="1212,65,1411,165"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1275,167,1242,200,1202,228,1157,249,1109,267,1012,293,917,309,833,318,832,313,916,304,1011,288,1108,262,1155,244,1199,223,1238,196,1271,164"/>
+</map>

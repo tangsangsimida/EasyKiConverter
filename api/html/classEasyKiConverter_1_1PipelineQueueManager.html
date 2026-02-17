@@ -1,0 +1,452 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::PipelineQueueManager类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1PipelineQueueManager.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-types">Public 类型</a> &#124;
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pub-static-methods">静态 Public 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1PipelineQueueManager-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::PipelineQueueManager类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>流水线队列管理器  
+ <a href="classEasyKiConverter_1_1PipelineQueueManager.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="PipelineQueueManager_8h_source.html">PipelineQueueManager.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> EasyKiConverter::PipelineQueueManager 的协作图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1PipelineQueueManager__coll__graph.svg" width="200" height="231"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public 类型</h2></td></tr>
+<tr class="memitem:a54bd0248b060bd75d60808736787624a" id="r_a54bd0248b060bd75d60808736787624a"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a54bd0248b060bd75d60808736787624a">StatusQueue</a> = <a class="el" href="classEasyKiConverter_1_1BoundedThreadSafeQueue.html">BoundedThreadSafeQueue</a>&lt; QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt; &gt;</td></tr>
+<tr class="separator:a54bd0248b060bd75d60808736787624a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a604e4dc27abfa18da74c1ed51bdbddf6" id="r_a604e4dc27abfa18da74c1ed51bdbddf6"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> = QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a54bd0248b060bd75d60808736787624a">StatusQueue</a> &gt;</td></tr>
+<tr class="separator:a604e4dc27abfa18da74c1ed51bdbddf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:ae98bac2db0b4041e46e36f77e968c30f" id="r_ae98bac2db0b4041e46e36f77e968c30f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#ae98bac2db0b4041e46e36f77e968c30f">PipelineQueueManager</a> (size_t queueSize=64)</td></tr>
+<tr class="separator:ae98bac2db0b4041e46e36f77e968c30f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4e0850386ef3be2e69f98067b55535e" id="r_ae4e0850386ef3be2e69f98067b55535e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#ae4e0850386ef3be2e69f98067b55535e">reset</a> ()</td></tr>
+<tr class="separator:ae4e0850386ef3be2e69f98067b55535e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f979047f9148bd653e55823ef10b035" id="r_a0f979047f9148bd653e55823ef10b035"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a0f979047f9148bd653e55823ef10b035">closeAll</a> ()</td></tr>
+<tr class="separator:a0f979047f9148bd653e55823ef10b035"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae31ad781a549d949b9fa1bd0fd65b91e" id="r_ae31ad781a549d949b9fa1bd0fd65b91e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#ae31ad781a549d949b9fa1bd0fd65b91e">fetchProcessQueue</a> () const</td></tr>
+<tr class="separator:ae31ad781a549d949b9fa1bd0fd65b91e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf83fcb5df11f00f14871310068cf63e" id="r_adf83fcb5df11f00f14871310068cf63e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#adf83fcb5df11f00f14871310068cf63e">processWriteQueue</a> () const</td></tr>
+<tr class="separator:adf83fcb5df11f00f14871310068cf63e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+静态 Public 成员函数</h2></td></tr>
+<tr class="memitem:ae3a65d09174a6c5d0dbb58a0041d9c4e" id="r_ae3a65d09174a6c5d0dbb58a0041d9c4e"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#ae3a65d09174a6c5d0dbb58a0041d9c4e">safePush</a> (<a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> queue, QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt; status, QAtomicInt &amp;isCancelled)</td></tr>
+<tr class="memdesc:ae3a65d09174a6c5d0dbb58a0041d9c4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">安全地将状态推送到队列，包含指数退避和 UI 事件处理  <br /></td></tr>
+<tr class="separator:ae3a65d09174a6c5d0dbb58a0041d9c4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:a35ee241e2aa39f68f1054dd636017920" id="r_a35ee241e2aa39f68f1054dd636017920"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a35ee241e2aa39f68f1054dd636017920">m_queueSize</a></td></tr>
+<tr class="separator:a35ee241e2aa39f68f1054dd636017920"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a4893368bab676c13fa1b865369c8f1" id="r_a0a4893368bab676c13fa1b865369c8f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a0a4893368bab676c13fa1b865369c8f1">m_fetchProcessQueue</a></td></tr>
+<tr class="separator:a0a4893368bab676c13fa1b865369c8f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fbcf1c4e241b39f2c67e093372dbf2c" id="r_a4fbcf1c4e241b39f2c67e093372dbf2c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a4fbcf1c4e241b39f2c67e093372dbf2c">m_processWriteQueue</a></td></tr>
+<tr class="separator:a4fbcf1c4e241b39f2c67e093372dbf2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>流水线队列管理器 </p>
+<p>负责管理 Fetch-&gt;Process 和 Process-&gt;Write 之间的有界并发队列， 并提供线程安全的“安全推送”机制。 </p>
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8h_source.html">PipelineQueueManager.h</a> 第 <a class="el" href="PipelineQueueManager_8h_source.html#l00019">19</a> 行定义.</p>
+</div><h2 class="groupheader">成员类型定义说明</h2>
+<a id="a54bd0248b060bd75d60808736787624a" name="a54bd0248b060bd75d60808736787624a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54bd0248b060bd75d60808736787624a">&#9670;&#160;</a></span>StatusQueue</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a54bd0248b060bd75d60808736787624a">EasyKiConverter::PipelineQueueManager::StatusQueue</a> =  <a class="el" href="classEasyKiConverter_1_1BoundedThreadSafeQueue.html">BoundedThreadSafeQueue</a>&lt;QSharedPointer&lt;<a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a>&gt; &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8h_source.html">PipelineQueueManager.h</a> 第 <a class="el" href="PipelineQueueManager_8h_source.html#l00021">21</a> 行定义.</p>
+
+</div>
+</div>
+<a id="a604e4dc27abfa18da74c1ed51bdbddf6" name="a604e4dc27abfa18da74c1ed51bdbddf6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a604e4dc27abfa18da74c1ed51bdbddf6">&#9670;&#160;</a></span>StatusQueuePtr</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">EasyKiConverter::PipelineQueueManager::StatusQueuePtr</a> =  QSharedPointer&lt;<a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a54bd0248b060bd75d60808736787624a">StatusQueue</a>&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8h_source.html">PipelineQueueManager.h</a> 第 <a class="el" href="PipelineQueueManager_8h_source.html#l00022">22</a> 行定义.</p>
+
+</div>
+</div>
+<h2 class="groupheader">构造及析构函数说明</h2>
+<a id="ae98bac2db0b4041e46e36f77e968c30f" name="ae98bac2db0b4041e46e36f77e968c30f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae98bac2db0b4041e46e36f77e968c30f">&#9670;&#160;</a></span>PipelineQueueManager()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::PipelineQueueManager::PipelineQueueManager </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>queueSize</em> = <code>64</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8cpp_source.html">PipelineQueueManager.cpp</a> 第 <a class="el" href="PipelineQueueManager_8cpp_source.html#l00010">10</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="PipelineQueueManager_8cpp_source.html#l00014">reset()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="a0f979047f9148bd653e55823ef10b035" name="a0f979047f9148bd653e55823ef10b035"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f979047f9148bd653e55823ef10b035">&#9670;&#160;</a></span>closeAll()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::PipelineQueueManager::closeAll </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8cpp_source.html">PipelineQueueManager.cpp</a> 第 <a class="el" href="PipelineQueueManager_8cpp_source.html#l00019">19</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="PipelineQueueManager_8h_source.html#l00044">m_fetchProcessQueue</a> , 以及 <a class="el" href="PipelineQueueManager_8h_source.html#l00045">m_processWriteQueue</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00625">EasyKiConverter::ExportServicePipeline::cancelExport()</a> , 以及 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00547">EasyKiConverter::ExportServicePipeline::cleanupPipeline()</a>.</p>
+
+</div>
+</div>
+<a id="ae31ad781a549d949b9fa1bd0fd65b91e" name="ae31ad781a549d949b9fa1bd0fd65b91e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae31ad781a549d949b9fa1bd0fd65b91e">&#9670;&#160;</a></span>fetchProcessQueue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> EasyKiConverter::PipelineQueueManager::fetchProcessQueue </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8h_source.html">PipelineQueueManager.h</a> 第 <a class="el" href="PipelineQueueManager_8h_source.html#l00029">29</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="PipelineQueueManager_8h_source.html#l00044">m_fetchProcessQueue</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00434">EasyKiConverter::ExportServicePipeline::checkPipelineCompletion()</a>, <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00090">EasyKiConverter::ExportServicePipeline::executeExportPipelineWithStages()</a> , 以及 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00224">EasyKiConverter::ExportServicePipeline::handleFetchCompleted()</a>.</p>
+
+</div>
+</div>
+<a id="adf83fcb5df11f00f14871310068cf63e" name="adf83fcb5df11f00f14871310068cf63e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adf83fcb5df11f00f14871310068cf63e">&#9670;&#160;</a></span>processWriteQueue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> EasyKiConverter::PipelineQueueManager::processWriteQueue </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8h_source.html">PipelineQueueManager.h</a> 第 <a class="el" href="PipelineQueueManager_8h_source.html#l00033">33</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="PipelineQueueManager_8h_source.html#l00045">m_processWriteQueue</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00434">EasyKiConverter::ExportServicePipeline::checkPipelineCompletion()</a>, <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00090">EasyKiConverter::ExportServicePipeline::executeExportPipelineWithStages()</a> , 以及 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00331">EasyKiConverter::ExportServicePipeline::handleProcessCompleted()</a>.</p>
+
+</div>
+</div>
+<a id="ae4e0850386ef3be2e69f98067b55535e" name="ae4e0850386ef3be2e69f98067b55535e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4e0850386ef3be2e69f98067b55535e">&#9670;&#160;</a></span>reset()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::PipelineQueueManager::reset </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8cpp_source.html">PipelineQueueManager.cpp</a> 第 <a class="el" href="PipelineQueueManager_8cpp_source.html#l00014">14</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="PipelineQueueManager_8h_source.html#l00044">m_fetchProcessQueue</a>, <a class="el" href="PipelineQueueManager_8h_source.html#l00045">m_processWriteQueue</a> , 以及 <a class="el" href="PipelineQueueManager_8h_source.html#l00043">m_queueSize</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="PipelineQueueManager_8cpp_source.html#l00010">PipelineQueueManager()</a> , 以及 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00090">EasyKiConverter::ExportServicePipeline::executeExportPipelineWithStages()</a>.</p>
+
+</div>
+</div>
+<a id="ae3a65d09174a6c5d0dbb58a0041d9c4e" name="ae3a65d09174a6c5d0dbb58a0041d9c4e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae3a65d09174a6c5d0dbb58a0041d9c4e">&#9670;&#160;</a></span>safePush()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::PipelineQueueManager::safePush </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a>&#160;</td>
+          <td class="paramname"><em>queue</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt;&#160;</td>
+          <td class="paramname"><em>status</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QAtomicInt &amp;&#160;</td>
+          <td class="paramname"><em>isCancelled</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>安全地将状态推送到队列，包含指数退避和 UI 事件处理 </p>
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8cpp_source.html">PipelineQueueManager.cpp</a> 第 <a class="el" href="PipelineQueueManager_8cpp_source.html#l00026">26</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00224">EasyKiConverter::ExportServicePipeline::handleFetchCompleted()</a> , 以及 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00331">EasyKiConverter::ExportServicePipeline::handleProcessCompleted()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a0a4893368bab676c13fa1b865369c8f1" name="a0a4893368bab676c13fa1b865369c8f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0a4893368bab676c13fa1b865369c8f1">&#9670;&#160;</a></span>m_fetchProcessQueue</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> EasyKiConverter::PipelineQueueManager::m_fetchProcessQueue</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8h_source.html">PipelineQueueManager.h</a> 第 <a class="el" href="PipelineQueueManager_8h_source.html#l00044">44</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="PipelineQueueManager_8cpp_source.html#l00019">closeAll()</a>, <a class="el" href="PipelineQueueManager_8h_source.html#l00029">fetchProcessQueue()</a> , 以及 <a class="el" href="PipelineQueueManager_8cpp_source.html#l00014">reset()</a>.</p>
+
+</div>
+</div>
+<a id="a4fbcf1c4e241b39f2c67e093372dbf2c" name="a4fbcf1c4e241b39f2c67e093372dbf2c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fbcf1c4e241b39f2c67e093372dbf2c">&#9670;&#160;</a></span>m_processWriteQueue</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">StatusQueuePtr</a> EasyKiConverter::PipelineQueueManager::m_processWriteQueue</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8h_source.html">PipelineQueueManager.h</a> 第 <a class="el" href="PipelineQueueManager_8h_source.html#l00045">45</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="PipelineQueueManager_8cpp_source.html#l00019">closeAll()</a>, <a class="el" href="PipelineQueueManager_8h_source.html#l00033">processWriteQueue()</a> , 以及 <a class="el" href="PipelineQueueManager_8cpp_source.html#l00014">reset()</a>.</p>
+
+</div>
+</div>
+<a id="a35ee241e2aa39f68f1054dd636017920" name="a35ee241e2aa39f68f1054dd636017920"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a35ee241e2aa39f68f1054dd636017920">&#9670;&#160;</a></span>m_queueSize</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t EasyKiConverter::PipelineQueueManager::m_queueSize</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="PipelineQueueManager_8h_source.html">PipelineQueueManager.h</a> 第 <a class="el" href="PipelineQueueManager_8h_source.html#l00043">43</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="PipelineQueueManager_8cpp_source.html#l00014">reset()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>services/pipeline/queue/<a class="el" href="PipelineQueueManager_8h_source.html">PipelineQueueManager.h</a></li>
+<li>services/pipeline/queue/<a class="el" href="PipelineQueueManager_8cpp_source.html">PipelineQueueManager.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html">PipelineQueueManager</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

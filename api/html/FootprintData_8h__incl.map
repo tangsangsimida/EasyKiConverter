@@ -1,0 +1,19 @@
+<map id="models/FootprintData.h" name="models/FootprintData.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="234,5,409,31"/>
+<area shape="rect" id="Node000002" href="$Model3DData_8h.html" title=" " alt="" coords="119,79,241,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="300,33,216,75,214,70,297,28"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,152,107,177"/>
+<area shape="poly" id="edge6_Node000001_Node000004" title=" " alt="" coords="234,31,169,49,137,63,108,81,83,109,67,140,62,138,79,106,105,77,135,58,167,44,233,26"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="253,152,323,177"/>
+<area shape="poly" id="edge9_Node000001_Node000005" title=" " alt="" coords="321,32,308,79,295,139,290,138,303,78,315,30"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="317,79,411,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="331,30,352,66,348,68,326,32"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="435,79,490,104"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="345,28,429,70,426,75,343,33"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="514,79,587,104"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="359,28,501,72,500,77,357,33"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="131,152,229,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="183,104,183,138,177,138,177,104"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="161,106,89,147,87,143,159,102"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="199,102,260,142,257,147,196,106"/>
+</map>

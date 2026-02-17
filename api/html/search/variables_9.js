@@ -1,0 +1,11 @@
+var searchData=
+[
+  ['latencyms_0',['latencyMs',['../structEasyKiConverter_1_1ComponentExportStatus_1_1NetworkDiagnostics.html#ae6dbf7fb9ee326d4f0bd36904040d104',1,'EasyKiConverter::ComponentExportStatus::NetworkDiagnostics']]],
+  ['layerid_1',['layerid',['../structEasyKiConverter_1_1FootprintPad.html#ab2778e9557e4338a2e716d50fb54d745',1,'EasyKiConverter::FootprintPad::layerId'],['../structEasyKiConverter_1_1FootprintTrack.html#a2c1cf6b7b2cbb4b1287fab4c3140a755',1,'EasyKiConverter::FootprintTrack::layerId'],['../structEasyKiConverter_1_1FootprintCircle.html#a5003f17da27acf19455801852d3ba66c',1,'EasyKiConverter::FootprintCircle::layerId'],['../structEasyKiConverter_1_1FootprintRectangle.html#aa67343293165dce7850193e0bf1928ef',1,'EasyKiConverter::FootprintRectangle::layerId'],['../structEasyKiConverter_1_1FootprintArc.html#a6bec106c5d359979fd30a09ef00ccb61',1,'EasyKiConverter::FootprintArc::layerId'],['../structEasyKiConverter_1_1FootprintText.html#a63bfc008f763641fdea33354fb0bd3fd',1,'EasyKiConverter::FootprintText::layerId'],['../structEasyKiConverter_1_1FootprintSolidRegion.html#a1d9dd85a59fb784c33b8eada825db34f',1,'EasyKiConverter::FootprintSolidRegion::layerId'],['../structEasyKiConverter_1_1FootprintOutline.html#a1fdedccd078c1291bbab95469bc45e8d',1,'EasyKiConverter::FootprintOutline::layerId'],['../structEasyKiConverter_1_1LayerDefinition.html#ac63f5503f63970afa6ea9acc8d4a578e',1,'EasyKiConverter::LayerDefinition::layerId']]],
+  ['layers_2',['layers',['../structEasyKiConverter_1_1FootprintInfo.html#a78dc230362979392582443ea27585bab',1,'EasyKiConverter::FootprintInfo']]],
+  ['lcscid_3',['lcscId',['../structEasyKiConverter_1_1SymbolInfo.html#ab64ff0ae5a9ae9c352f34e3dfcda8e79',1,'EasyKiConverter::SymbolInfo']]],
+  ['level_4',['level',['../structEasyKiConverter_1_1LogRecord.html#a1e13cfdb0c21a7d8dc57249c4ee8feed',1,'EasyKiConverter::LogRecord']]],
+  ['libname_5',['libName',['../structEasyKiConverter_1_1ExportOptions.html#a37b6e25e2e8a105952358019348c3fc4',1,'EasyKiConverter::ExportOptions']]],
+  ['line_6',['line',['../structEasyKiConverter_1_1LogRecord.html#a4b447dafaa7e870e0f7d495d8dbc87af',1,'EasyKiConverter::LogRecord']]],
+  ['link_7',['link',['../structEasyKiConverter_1_1FootprintInfo.html#abee5a33152b2f75e58d17ba5515ec065',1,'EasyKiConverter::FootprintInfo']]]
+];

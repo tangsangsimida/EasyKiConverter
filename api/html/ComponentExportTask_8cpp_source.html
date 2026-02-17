@@ -1,0 +1,265 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: services/ComponentExportTask.cpp 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('ComponentExportTask_8cpp_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">ComponentExportTask.cpp</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="ComponentExportTask_8cpp.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#include &quot;<a class="code" href="ComponentExportTask_8h.html">ComponentExportTask.h</a>&quot;</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &quot;<a class="code" href="Exporter3DModel_8h.html">core/kicad/Exporter3DModel.h</a>&quot;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="ExporterFootprint_8h.html">core/kicad/ExporterFootprint.h</a>&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;<a class="code" href="ExporterSymbol_8h.html">core/kicad/ExporterSymbol.h</a>&quot;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;QDebug&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;QDir&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;QFile&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="foldopen" id="foldopen00013" data-start="{" data-end="}">
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentExportTask.html#a87769a9e459bb6dbb3aa611f958d4a43">   13</a></span><a class="code hl_function" href="classEasyKiConverter_1_1ComponentExportTask.html#a87769a9e459bb6dbb3aa611f958d4a43">ComponentExportTask::ComponentExportTask</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a>&amp; componentData,</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>                                         <span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a>&amp; options,</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>                                         <a class="code hl_class" href="classEasyKiConverter_1_1ExporterSymbol.html">ExporterSymbol</a>* symbolExporter,</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>                                         <a class="code hl_class" href="classEasyKiConverter_1_1ExporterFootprint.html">ExporterFootprint</a>* footprintExporter,</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>                                         <a class="code hl_class" href="classEasyKiConverter_1_1Exporter3DModel.html">Exporter3DModel</a>* modelExporter,</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>                                         QObject* parent)</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    : QObject(parent)</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    , QRunnable()</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    , m_componentData(componentData)</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    , m_options(options)</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    , m_symbolExporter(symbolExporter)</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    , m_footprintExporter(footprintExporter)</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    , m_modelExporter(modelExporter) {</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    setAutoDelete(<span class="keyword">true</span>);</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>}</div>
+</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentExportTask.html#a7da5b29e23bb38f31693d1c93e2e61b2">   29</a></span><a class="code hl_function" href="classEasyKiConverter_1_1ComponentExportTask.html#a7da5b29e23bb38f31693d1c93e2e61b2">ComponentExportTask::~ComponentExportTask</a>() {}</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
+<div class="foldopen" id="foldopen00031" data-start="{" data-end="}">
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentExportTask.html#afe243325c0513ba196aa1c423499fd2f">   31</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentExportTask.html#afe243325c0513ba196aa1c423499fd2f">ComponentExportTask::run</a>() {</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    qDebug() &lt;&lt; <span class="stringliteral">&quot;Running export task for:&quot;</span> &lt;&lt; <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a29d225ab5c6fa0f92c7d38263489d85d">lcscId</a>();</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    QString componentId = <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a29d225ab5c6fa0f92c7d38263489d85d">lcscId</a>();</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    <span class="keywordtype">bool</span> success = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    QString message;</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="keywordflow">try</span> {</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        QDir dir;</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>        <span class="keywordflow">if</span> (!dir.exists(<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">outputPath</a>)) {</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>            <span class="keywordflow">if</span> (!dir.mkpath(<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">outputPath</a>)) {</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>                <span class="keywordflow">throw</span> QString(<span class="stringliteral">&quot;Failed to create output directory&quot;</span>);</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>            }</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        }</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a13878d45419fd1f21742d39efadd4d6d">exportSymbol</a> &amp;&amp; <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#ab46b464ef6ce4de8dcffc84dd3b7491b">symbolData</a>() &amp;&amp;</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>            !<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#ab46b464ef6ce4de8dcffc84dd3b7491b">symbolData</a>()-&gt;info().name.isEmpty()) {</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>            QString symbolPath = QString(<span class="stringliteral">&quot;%1/%2.kicad_sym&quot;</span>).arg(<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">outputPath</a>, componentId);</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>            <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#ac920adcf9ebcdfe6dd8cf8d6e0a0c544">overwriteExistingFiles</a> &amp;&amp; QFile::exists(symbolPath)) {</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>                qWarning() &lt;&lt; <span class="stringliteral">&quot;Symbol file already exists:&quot;</span> &lt;&lt; symbolPath;</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>                <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ae29b2eee8be5b787cfb75b866cf9ebfa">m_symbolExporter</a>-&gt;<a class="code hl_function" href="classEasyKiConverter_1_1ExporterSymbol.html#ab1be6f3cc9991053bddac586436ab871">exportSymbol</a>(*<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#ab46b464ef6ce4de8dcffc84dd3b7491b">symbolData</a>(), symbolPath)) {</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>                    <span class="keywordflow">throw</span> QString(<span class="stringliteral">&quot;Failed to export symbol&quot;</span>);</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                }</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                qDebug() &lt;&lt; <span class="stringliteral">&quot;Symbol exported successfully:&quot;</span> &lt;&lt; symbolPath;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>            }</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        }</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        QString model3DPath;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a507344fb716c53145ee5a112cf22835d">exportModel3D</a> &amp;&amp; <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a84819ceb7b38a7c9c5f34d97a14e5662">model3DData</a>() &amp;&amp;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>            !<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a84819ceb7b38a7c9c5f34d97a14e5662">model3DData</a>()-&gt;uuid().isEmpty()) {</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>            QString footprintName = <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a1b095da965e77132bca0accee4d185f9">footprintData</a>() ? <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a1b095da965e77132bca0accee4d185f9">footprintData</a>()-&gt;info().name</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>                                                                    : <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a84819ceb7b38a7c9c5f34d97a14e5662">model3DData</a>()-&gt;name();</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>            <span class="keywordflow">if</span> (footprintName.isEmpty()) {</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                footprintName = <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a84819ceb7b38a7c9c5f34d97a14e5662">model3DData</a>()-&gt;uuid();</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>            }</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>            QString modelsDirPath = QString(<span class="stringliteral">&quot;%1/%2.3dmodels&quot;</span>).arg(<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">outputPath</a>, <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a37b6e25e2e8a105952358019348c3fc4">libName</a>);</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>            <span class="keywordflow">if</span> (!dir.exists(modelsDirPath)) {</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                <span class="keywordflow">if</span> (!dir.mkpath(modelsDirPath)) {</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>                    <span class="keywordflow">throw</span> QString(<span class="stringliteral">&quot;Failed to create 3D models directory&quot;</span>);</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>                }</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>            }</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>            QString modelPath = QString(<span class="stringliteral">&quot;%1/%2.wrl&quot;</span>).arg(modelsDirPath, footprintName);</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>            <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#ac920adcf9ebcdfe6dd8cf8d6e0a0c544">overwriteExistingFiles</a> &amp;&amp; QFile::exists(modelPath)) {</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                qWarning() &lt;&lt; <span class="stringliteral">&quot;3D model file already exists:&quot;</span> &lt;&lt; modelPath;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>                <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af586005851c8a4ac86172eb52974723a">m_modelExporter</a>-&gt;<a class="code hl_function" href="classEasyKiConverter_1_1Exporter3DModel.html#ae4aa69033cc1953b340c5b798ea5456e">exportToWrl</a>(*<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a84819ceb7b38a7c9c5f34d97a14e5662">model3DData</a>(), modelPath)) {</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                    <span class="keywordflow">throw</span> QString(<span class="stringliteral">&quot;Failed to export 3D model&quot;</span>);</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>                }</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>                qDebug() &lt;&lt; <span class="stringliteral">&quot;3D model exported successfully:&quot;</span> &lt;&lt; modelPath;</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>            }</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            model3DPath = QString(<span class="stringliteral">&quot;../%1.3dmodels/%2.wrl&quot;</span>).arg(<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a37b6e25e2e8a105952358019348c3fc4">libName</a>, footprintName);</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        }</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a96a1ae24c16e82474835a8b8e4c568c4">exportFootprint</a> &amp;&amp; <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a1b095da965e77132bca0accee4d185f9">footprintData</a>() &amp;&amp;</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>            !<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a1b095da965e77132bca0accee4d185f9">footprintData</a>()-&gt;info().name.isEmpty()) {</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>            QString footprintPath = QString(<span class="stringliteral">&quot;%1/%2.kicad_mod&quot;</span>).arg(<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">outputPath</a>, componentId);</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>            <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#ac920adcf9ebcdfe6dd8cf8d6e0a0c544">overwriteExistingFiles</a> &amp;&amp; QFile::exists(footprintPath)) {</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                qWarning() &lt;&lt; <span class="stringliteral">&quot;Footprint file already exists:&quot;</span> &lt;&lt; footprintPath;</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>                <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#aedc346e3c83ba39de50dd0d0dbfca39e">m_footprintExporter</a>-&gt;<a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#aa2e6205d9dd16122aba9649fd1d5ea6e">exportFootprint</a>(</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>                        *<a class="code hl_variable" href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">m_componentData</a>.<a class="code hl_function" href="classEasyKiConverter_1_1ComponentData.html#a1b095da965e77132bca0accee4d185f9">footprintData</a>(), footprintPath, model3DPath)) {</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                    <span class="keywordflow">throw</span> QString(<span class="stringliteral">&quot;Failed to export footprint&quot;</span>);</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                }</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>                qDebug() &lt;&lt; <span class="stringliteral">&quot;Footprint exported successfully:&quot;</span> &lt;&lt; footprintPath;</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>            }</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        }</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>        message = <span class="stringliteral">&quot;Export successful&quot;</span>;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    } <span class="keywordflow">catch</span> (<span class="keyword">const</span> QString&amp; error) {</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>        success = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        message = error;</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        qWarning() &lt;&lt; <span class="stringliteral">&quot;Export task failed for:&quot;</span> &lt;&lt; componentId &lt;&lt; error;</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    }</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ComponentExportTask.html#a735cdd878e19a7289372f3074eb099d2">exportFinished</a>(componentId, success, message);</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>}</div>
+</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="ttc" id="aComponentExportTask_8h_html"><div class="ttname"><a href="ComponentExportTask_8h.html">ComponentExportTask.h</a></div></div>
+<div class="ttc" id="aExporter3DModel_8h_html"><div class="ttname"><a href="Exporter3DModel_8h.html">Exporter3DModel.h</a></div></div>
+<div class="ttc" id="aExporterFootprint_8h_html"><div class="ttname"><a href="ExporterFootprint_8h.html">ExporterFootprint.h</a></div></div>
+<div class="ttc" id="aExporterSymbol_8h_html"><div class="ttname"><a href="ExporterSymbol_8h.html">ExporterSymbol.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentData_html"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentData.html">EasyKiConverter::ComponentData</a></div><div class="ttdoc">元件数据</div><div class="ttdef"><b>Definition</b> <a href="ComponentData_8h_source.html#l00020">ComponentData.h:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentData_html_a1b095da965e77132bca0accee4d185f9"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentData.html#a1b095da965e77132bca0accee4d185f9">EasyKiConverter::ComponentData::footprintData</a></div><div class="ttdeci">QSharedPointer&lt; FootprintData &gt; footprintData() const</div><div class="ttdef"><b>Definition</b> <a href="ComponentData_8h_source.html#l00082">ComponentData.h:82</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentData_html_a29d225ab5c6fa0f92c7d38263489d85d"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentData.html#a29d225ab5c6fa0f92c7d38263489d85d">EasyKiConverter::ComponentData::lcscId</a></div><div class="ttdeci">QString lcscId() const</div><div class="ttdef"><b>Definition</b> <a href="ComponentData_8h_source.html#l00026">ComponentData.h:26</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentData_html_a84819ceb7b38a7c9c5f34d97a14e5662"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentData.html#a84819ceb7b38a7c9c5f34d97a14e5662">EasyKiConverter::ComponentData::model3DData</a></div><div class="ttdeci">QSharedPointer&lt; Model3DData &gt; model3DData() const</div><div class="ttdef"><b>Definition</b> <a href="ComponentData_8h_source.html#l00090">ComponentData.h:90</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentData_html_ab46b464ef6ce4de8dcffc84dd3b7491b"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentData.html#ab46b464ef6ce4de8dcffc84dd3b7491b">EasyKiConverter::ComponentData::symbolData</a></div><div class="ttdeci">QSharedPointer&lt; SymbolData &gt; symbolData() const</div><div class="ttdef"><b>Definition</b> <a href="ComponentData_8h_source.html#l00074">ComponentData.h:74</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentExportTask_html_a735cdd878e19a7289372f3074eb099d2"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentExportTask.html#a735cdd878e19a7289372f3074eb099d2">EasyKiConverter::ComponentExportTask::exportFinished</a></div><div class="ttdeci">void exportFinished(const QString &amp;componentId, bool success, const QString &amp;message)</div><div class="ttdoc">导出完成信号</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentExportTask_html_a7da5b29e23bb38f31693d1c93e2e61b2"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentExportTask.html#a7da5b29e23bb38f31693d1c93e2e61b2">EasyKiConverter::ComponentExportTask::~ComponentExportTask</a></div><div class="ttdeci">~ComponentExportTask() override</div><div class="ttdoc">析构函数</div><div class="ttdef"><b>Definition</b> <a href="ComponentExportTask_8cpp_source.html#l00029">ComponentExportTask.cpp:29</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentExportTask_html_a87769a9e459bb6dbb3aa611f958d4a43"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentExportTask.html#a87769a9e459bb6dbb3aa611f958d4a43">EasyKiConverter::ComponentExportTask::ComponentExportTask</a></div><div class="ttdeci">ComponentExportTask(const ComponentData &amp;componentData, const ExportOptions &amp;options, class ExporterSymbol *symbolExporter, class ExporterFootprint *footprintExporter, class Exporter3DModel *modelExporter, QObject *parent=nullptr)</div><div class="ttdoc">构造函数</div><div class="ttdef"><b>Definition</b> <a href="ComponentExportTask_8cpp_source.html#l00013">ComponentExportTask.cpp:13</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentExportTask_html_ac6674adb4b20a65ce1b027f527f5609e"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentExportTask.html#ac6674adb4b20a65ce1b027f527f5609e">EasyKiConverter::ComponentExportTask::m_componentData</a></div><div class="ttdeci">ComponentData m_componentData</div><div class="ttdef"><b>Definition</b> <a href="ComponentExportTask_8h_source.html#l00059">ComponentExportTask.h:59</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentExportTask_html_ae29b2eee8be5b787cfb75b866cf9ebfa"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentExportTask.html#ae29b2eee8be5b787cfb75b866cf9ebfa">EasyKiConverter::ComponentExportTask::m_symbolExporter</a></div><div class="ttdeci">class ExporterSymbol * m_symbolExporter</div><div class="ttdef"><b>Definition</b> <a href="ComponentExportTask_8h_source.html#l00061">ComponentExportTask.h:61</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentExportTask_html_aedc346e3c83ba39de50dd0d0dbfca39e"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentExportTask.html#aedc346e3c83ba39de50dd0d0dbfca39e">EasyKiConverter::ComponentExportTask::m_footprintExporter</a></div><div class="ttdeci">class ExporterFootprint * m_footprintExporter</div><div class="ttdef"><b>Definition</b> <a href="ComponentExportTask_8h_source.html#l00062">ComponentExportTask.h:62</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentExportTask_html_af1744d57451d809027140c0abe01f64d"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentExportTask.html#af1744d57451d809027140c0abe01f64d">EasyKiConverter::ComponentExportTask::m_options</a></div><div class="ttdeci">ExportOptions m_options</div><div class="ttdef"><b>Definition</b> <a href="ComponentExportTask_8h_source.html#l00060">ComponentExportTask.h:60</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentExportTask_html_af586005851c8a4ac86172eb52974723a"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentExportTask.html#af586005851c8a4ac86172eb52974723a">EasyKiConverter::ComponentExportTask::m_modelExporter</a></div><div class="ttdeci">class Exporter3DModel * m_modelExporter</div><div class="ttdef"><b>Definition</b> <a href="ComponentExportTask_8h_source.html#l00063">ComponentExportTask.h:63</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentExportTask_html_afe243325c0513ba196aa1c423499fd2f"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentExportTask.html#afe243325c0513ba196aa1c423499fd2f">EasyKiConverter::ComponentExportTask::run</a></div><div class="ttdeci">void run() override</div><div class="ttdoc">执行导出任务</div><div class="ttdef"><b>Definition</b> <a href="ComponentExportTask_8cpp_source.html#l00031">ComponentExportTask.cpp:31</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Exporter3DModel_html"><div class="ttname"><a href="classEasyKiConverter_1_1Exporter3DModel.html">EasyKiConverter::Exporter3DModel</a></div><div class="ttdoc">3D 模型导出器类</div><div class="ttdef"><b>Definition</b> <a href="Exporter3DModel_8h_source.html#l00022">Exporter3DModel.h:22</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1Exporter3DModel_html_ae4aa69033cc1953b340c5b798ea5456e"><div class="ttname"><a href="classEasyKiConverter_1_1Exporter3DModel.html#ae4aa69033cc1953b340c5b798ea5456e">EasyKiConverter::Exporter3DModel::exportToWrl</a></div><div class="ttdeci">bool exportToWrl(const Model3DData &amp;modelData, const QString &amp;savePath)</div><div class="ttdoc">导出模型KiCad WRL 格式</div><div class="ttdef"><b>Definition</b> <a href="Exporter3DModel_8cpp_source.html#l00065">Exporter3DModel.cpp:65</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html">EasyKiConverter::ExporterFootprint</a></div><div class="ttdoc">KiCad 封装导出器类</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8h_source.html#l00020">ExporterFootprint.h:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html_aa2e6205d9dd16122aba9649fd1d5ea6e"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html#aa2e6205d9dd16122aba9649fd1d5ea6e">EasyKiConverter::ExporterFootprint::exportFootprint</a></div><div class="ttdeci">bool exportFootprint(const FootprintData &amp;footprintData, const QString &amp;filePath, const QString &amp;model3DPath=QString())</div><div class="ttdoc">导出封装库KiCad 格式（单D模型</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8cpp_source.html#l00017">ExporterFootprint.cpp:17</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterSymbol_html"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterSymbol.html">EasyKiConverter::ExporterSymbol</a></div><div class="ttdoc">KiCad 符号导出器类</div><div class="ttdef"><b>Definition</b> <a href="ExporterSymbol_8h_source.html#l00019">ExporterSymbol.h:19</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterSymbol_html_ab1be6f3cc9991053bddac586436ab871"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterSymbol.html#ab1be6f3cc9991053bddac586436ab871">EasyKiConverter::ExporterSymbol::exportSymbol</a></div><div class="ttdeci">bool exportSymbol(const SymbolData &amp;symbolData, const QString &amp;filePath)</div><div class="ttdoc">导出符号库KiCad 格式</div><div class="ttdef"><b>Definition</b> <a href="ExporterSymbol_8cpp_source.html#l00016">ExporterSymbol.cpp:16</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html">EasyKiConverter::ExportOptions</a></div><div class="ttdoc">导出选项结构</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00021">ExportService.h:21</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a13878d45419fd1f21742d39efadd4d6d"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a13878d45419fd1f21742d39efadd4d6d">EasyKiConverter::ExportOptions::exportSymbol</a></div><div class="ttdeci">bool exportSymbol</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00024">ExportService.h:24</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a37b6e25e2e8a105952358019348c3fc4"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a37b6e25e2e8a105952358019348c3fc4">EasyKiConverter::ExportOptions::libName</a></div><div class="ttdeci">QString libName</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00023">ExportService.h:23</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a507344fb716c53145ee5a112cf22835d"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a507344fb716c53145ee5a112cf22835d">EasyKiConverter::ExportOptions::exportModel3D</a></div><div class="ttdeci">bool exportModel3D</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00026">ExportService.h:26</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a96a1ae24c16e82474835a8b8e4c568c4"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a96a1ae24c16e82474835a8b8e4c568c4">EasyKiConverter::ExportOptions::exportFootprint</a></div><div class="ttdeci">bool exportFootprint</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00025">ExportService.h:25</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_aaa78da68c28f17c71ba42d1ff433e623"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">EasyKiConverter::ExportOptions::outputPath</a></div><div class="ttdeci">QString outputPath</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00022">ExportService.h:22</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_ac920adcf9ebcdfe6dd8cf8d6e0a0c544"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#ac920adcf9ebcdfe6dd8cf8d6e0a0c544">EasyKiConverter::ExportOptions::overwriteExistingFiles</a></div><div class="ttdeci">bool overwriteExistingFiles</div><div class="ttdef"><b>Definition</b> <a href="ExportService_8h_source.html#l00027">ExportService.h:27</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_056ec8f0377ddc4293192cbc6b19c99c.html">services</a></li><li class="navelem"><a class="el" href="ComponentExportTask_8cpp.html">ComponentExportTask.cpp</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

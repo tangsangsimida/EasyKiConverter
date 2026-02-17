@@ -1,0 +1,18 @@
+<map id="utils/logging/Logger.h" name="utils/logging/Logger.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="167,5,329,31"/>
+<area shape="rect" id="Node000002" href="$Log_8h.html" title="EasyKiConverter 日志系统统一入口" alt="" coords="5,225,147,251"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,33,112,50,93,63,78,80,69,98,63,117,61,158,67,196,74,224,69,226,61,197,56,158,58,116,64,96,74,77,90,59,109,46,153,28"/>
+<area shape="rect" id="Node000004" href="$LogMacros_8h.html" title=" " alt="" coords="89,79,277,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="230,43,195,80,191,77,226,39"/>
+<area shape="rect" id="Node000005" href="$QtLogAdapter_8h.html" title=" " alt="" coords="167,152,374,177"/>
+<area shape="poly" id="edge9_Node000001_Node000005" title=" " alt="" coords="270,40,282,57,292,78,295,99,292,119,280,153,275,151,287,118,289,99,287,79,278,60,266,43"/>
+<area shape="rect" id="Node000007" href="$Logger_8cpp.html" title=" " alt="" coords="352,79,528,104"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="293,33,410,76,408,81,291,38"/>
+<area shape="rect" id="Node000003" href="$main_8cpp.html" title=" " alt="" coords="35,299,117,324"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="79,264,79,299,73,299,73,264"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="168,117,87,227,82,224,164,114"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="209,110,258,150,255,154,206,115"/>
+<area shape="poly" id="edge6_Node000005_Node000002" title=" " alt="" coords="228,184,109,228,107,223,226,179"/>
+<area shape="rect" id="Node000006" href="$QtLogAdapter_8cpp.html" title=" " alt="" coords="171,225,392,251"/>
+<area shape="poly" id="edge7_Node000005_Node000006" title=" " alt="" coords="277,191,282,225,277,226,272,192"/>
+</map>

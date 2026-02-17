@@ -1,0 +1,302 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: utils/logging/FileAppender.h 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('FileAppender_8h_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">FileAppender.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="FileAppender_8h.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef FILEAPPENDER_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define FILEAPPENDER_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="IAppender_8h.html">IAppender.h</a>&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;<a class="code" href="LogLevel_8h.html">LogLevel.h</a>&quot;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;QAtomicInt&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;QFile&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;QMutex&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;QQueue&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;QThread&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;QWaitCondition&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
+<div class="foldopen" id="foldopen00027" data-start="{" data-end="};">
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html">   27</a></span><span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1FileAppender.html">FileAppender</a> : <span class="keyword">public</span> <a class="code hl_class" href="classEasyKiConverter_1_1IAppender.html">IAppender</a> {</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keyword">explicit</span> <a class="code hl_class" href="classEasyKiConverter_1_1FileAppender.html">FileAppender</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#af038dfce21941416e1b21d97bcf6de40">filePath</a>,</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>                          qint64 <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a2a9d8f6ff66f7e1d53606bfb4d224b1f">maxSize</a> = 10 * 1024 * 1024,  <span class="comment">// 10MB</span></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>                          <span class="keywordtype">int</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#ae05a1d78a3b3a34ec1a93edfb8c6017f">maxFiles</a> = 5,</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>                          <span class="keywordtype">bool</span> async = <span class="keyword">true</span>);</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#ad462fecf7a0284206dc526f81325241c">~FileAppender</a>() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a413179f36a1f41aeda58a9c478b8f298">append</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1LogRecord.html">LogRecord</a>&amp; record, <span class="keyword">const</span> QString&amp; formatted) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a788d36cf0b69b16e12ba0f6a3896f135">flush</a>() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a030859e563f0136bcb6dfd1d5d54be94">close</a>() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="foldopen" id="foldopen00064" data-start="{" data-end="}">
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#afe8449c167523a531c5b5f719977c302">   64</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#afe8449c167523a531c5b5f719977c302">setMaxSize</a>(qint64 <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a2a9d8f6ff66f7e1d53606bfb4d224b1f">maxSize</a>) {</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a1b057ec493de5699021ac8592b52a4d2">m_maxSize</a> = <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a2a9d8f6ff66f7e1d53606bfb4d224b1f">maxSize</a>;</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    }</div>
+</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
+<div class="foldopen" id="foldopen00071" data-start="{" data-end="}">
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a2a9d8f6ff66f7e1d53606bfb4d224b1f">   71</a></span>    qint64 <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a2a9d8f6ff66f7e1d53606bfb4d224b1f">maxSize</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a1b057ec493de5699021ac8592b52a4d2">m_maxSize</a>;</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    }</div>
+</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
+<div class="foldopen" id="foldopen00078" data-start="{" data-end="}">
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a09393291b94e8f9a7cdea6df63f7bfc8">   78</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a09393291b94e8f9a7cdea6df63f7bfc8">setMaxFiles</a>(<span class="keywordtype">int</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#ae05a1d78a3b3a34ec1a93edfb8c6017f">maxFiles</a>) {</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a9f6149afd1279e0f71221d0da75ba5e3">m_maxFiles</a> = <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#ae05a1d78a3b3a34ec1a93edfb8c6017f">maxFiles</a>;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    }</div>
+</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="foldopen" id="foldopen00085" data-start="{" data-end="}">
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#ae05a1d78a3b3a34ec1a93edfb8c6017f">   85</a></span>    <span class="keywordtype">int</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#ae05a1d78a3b3a34ec1a93edfb8c6017f">maxFiles</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a9f6149afd1279e0f71221d0da75ba5e3">m_maxFiles</a>;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    }</div>
+</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
+<div class="foldopen" id="foldopen00092" data-start="{" data-end="}">
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#af038dfce21941416e1b21d97bcf6de40">   92</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#af038dfce21941416e1b21d97bcf6de40">filePath</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#af3e745b7e0fd806179e1dd7b16a79771">m_filePath</a>;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    }</div>
+</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
+<div class="foldopen" id="foldopen00099" data-start="{" data-end="}">
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a3afc2c9e34ec83ec925d5f463fabdf0a">   99</a></span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a3afc2c9e34ec83ec925d5f463fabdf0a">isAsync</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a89ba8c9261901b39fa434833fe15cb73">m_async</a>;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    }</div>
+</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="foldopen" id="foldopen00107" data-start="{" data-end="}">
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a0985f49ad8980d6468b729d0ef9b722a">  107</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a0985f49ad8980d6468b729d0ef9b722a">setMaxQueueSize</a>(<span class="keywordtype">int</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a2a9d8f6ff66f7e1d53606bfb4d224b1f">maxSize</a>) {</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a051994d8b710f223ca4dda79d191d284">m_maxQueueSize</a> = <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a2a9d8f6ff66f7e1d53606bfb4d224b1f">maxSize</a>;</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    }</div>
+</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
+<div class="foldopen" id="foldopen00114" data-start="{" data-end="}">
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#aa5e5e85e0c07361e4a792819baf36d53">  114</a></span>    <span class="keywordtype">int</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#aa5e5e85e0c07361e4a792819baf36d53">maxQueueSize</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a051994d8b710f223ca4dda79d191d284">m_maxQueueSize</a>;</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    }</div>
+</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
+<div class="foldopen" id="foldopen00121" data-start="{" data-end="}">
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a60b31ce56be99f6596febdda933f692e">  121</a></span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a60b31ce56be99f6596febdda933f692e">isValidPath</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#aaf6f30f1d1875b827c2fb90ee3f71a3c">m_pathValid</a>;</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    }</div>
+</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
+<div class="foldopen" id="foldopen00128" data-start="{" data-end="}">
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#afc6997a24c8ada8a69c332fa12636b45">  128</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#afc6997a24c8ada8a69c332fa12636b45">lastError</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#ae7dda12441dab5406375ac59d5186deb">m_lastError</a>;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    }</div>
+</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#af3e745b7e0fd806179e1dd7b16a79771">  133</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#af3e745b7e0fd806179e1dd7b16a79771">m_filePath</a>;</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#af8d347a56d8cc00402d4fe0baef55b76">  134</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#af8d347a56d8cc00402d4fe0baef55b76">m_canonicalPath</a>;  <span class="comment">// 规范化后的路径</span></div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a6b96755d0815415e15ff49fdc3c94dd1">  135</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a6b96755d0815415e15ff49fdc3c94dd1">m_baseDir</a>;        <span class="comment">// 基础目录</span></div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a1b057ec493de5699021ac8592b52a4d2">  136</a></span>    qint64 <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a1b057ec493de5699021ac8592b52a4d2">m_maxSize</a>;</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a9f6149afd1279e0f71221d0da75ba5e3">  137</a></span>    <span class="keywordtype">int</span> <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a9f6149afd1279e0f71221d0da75ba5e3">m_maxFiles</a>;</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a89ba8c9261901b39fa434833fe15cb73">  138</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a89ba8c9261901b39fa434833fe15cb73">m_async</a>;</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a051994d8b710f223ca4dda79d191d284">  139</a></span>    <span class="keywordtype">int</span> <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a051994d8b710f223ca4dda79d191d284">m_maxQueueSize</a> = 10000;  <span class="comment">// 默认队列大小限制</span></div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#aaf6f30f1d1875b827c2fb90ee3f71a3c">  140</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#aaf6f30f1d1875b827c2fb90ee3f71a3c">m_pathValid</a> = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#ae7dda12441dab5406375ac59d5186deb">  141</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#ae7dda12441dab5406375ac59d5186deb">m_lastError</a>;</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span> </div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a55e156d4e489cc161be1045d7f30cfd6">  143</a></span>    QFile <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a55e156d4e489cc161be1045d7f30cfd6">m_file</a>;</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#abb61feb06e1c5f269aa96c0974e690c7">  144</a></span>    <span class="keyword">mutable</span> QRecursiveMutex <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#abb61feb06e1c5f269aa96c0974e690c7">m_fileMutex</a>;  <span class="comment">// 使用递归锁支持嵌套调用</span></div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span> </div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    <span class="comment">// 异步写入相关</span></div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a458684b4d0cd3164cc241f6a0deab0be">  147</a></span>    QThread* <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a458684b4d0cd3164cc241f6a0deab0be">m_writerThread</a> = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#adc90b45e4ec12e95b03edc9cc2014778">  148</a></span>    QQueue&lt;QString&gt; <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#adc90b45e4ec12e95b03edc9cc2014778">m_writeQueue</a>;</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#abba7f2896c5e47135416730f252e0e4f">  149</a></span>    <span class="keyword">mutable</span> QMutex <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#abba7f2896c5e47135416730f252e0e4f">m_queueMutex</a>;</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a3cdc2c88fb04be97ba94bce36e77bce1">  150</a></span>    QWaitCondition <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a3cdc2c88fb04be97ba94bce36e77bce1">m_queueCondition</a>;</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a1d0d738fadb9eb81d3c5f79d0adcd8ca">  151</a></span>    QAtomicInt <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a1d0d738fadb9eb81d3c5f79d0adcd8ca">m_running</a>;</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#ad299acc687e49ef64f2434b17c2c4872">  152</a></span>    QAtomicInt <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#ad299acc687e49ef64f2434b17c2c4872">m_flushRequested</a>;</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1FileAppender.html#a88f63be3456e56dfe61382a850a1fc34">  153</a></span>    QAtomicInt <a class="code hl_variable" href="classEasyKiConverter_1_1FileAppender.html#a88f63be3456e56dfe61382a850a1fc34">m_queueOverflow</a>;  <span class="comment">// 队列溢出标记</span></div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span> </div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a261432dea9cda076dff43dadd5196e81">validateAndNormalizePath</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#af038dfce21941416e1b21d97bcf6de40">filePath</a>);</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span> </div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a3e44bb27953a4a938d8cc4dd6310db79">isPathInAllowedDir</a>(<span class="keyword">const</span> QString&amp; path) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span> </div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a35953228663ebb0b90cb732cc2845503">openFile</a>();</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span> </div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#acd8b210870a35f2b48dbd804fd7caf70">rollOver</a>();</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span> </div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#aa0179b2590385818a4f66550174f1c66">cleanupOldFiles</a>();</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span> </div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#abfc00adaed7aa1ddd635eaf502d3fb2c">generateRolledFileName</a>(<span class="keywordtype">int</span> index) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span> </div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a28aff288143deaafe5f42de32e82ecd7">writerThreadFunc</a>();</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span> </div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#a8db3d62e094aa5a0d2687db89b9de6b3">writeDirect</a>(<span class="keyword">const</span> QString&amp; formatted);</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span> </div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1FileAppender.html#abe17a0ca0cfb2ca778930d7d4fcc54ac">needsRollover</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>};</div>
+</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span> </div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span> </div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span><span class="preprocessor">#endif  </span><span class="comment">// FILEAPPENDER_H</span></div>
+<div class="ttc" id="aIAppender_8h_html"><div class="ttname"><a href="IAppender_8h.html">IAppender.h</a></div></div>
+<div class="ttc" id="aLogLevel_8h_html"><div class="ttname"><a href="LogLevel_8h.html">LogLevel.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html">EasyKiConverter::FileAppender</a></div><div class="ttdoc">文件日志输出器</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00027">FileAppender.h:27</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a030859e563f0136bcb6dfd1d5d54be94"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a030859e563f0136bcb6dfd1d5d54be94">EasyKiConverter::FileAppender::close</a></div><div class="ttdeci">void close() override</div><div class="ttdoc">关闭文件和后台线程</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00185">FileAppender.cpp:185</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a051994d8b710f223ca4dda79d191d284"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a051994d8b710f223ca4dda79d191d284">EasyKiConverter::FileAppender::m_maxQueueSize</a></div><div class="ttdeci">int m_maxQueueSize</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00139">FileAppender.h:139</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a09393291b94e8f9a7cdea6df63f7bfc8"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a09393291b94e8f9a7cdea6df63f7bfc8">EasyKiConverter::FileAppender::setMaxFiles</a></div><div class="ttdeci">void setMaxFiles(int maxFiles)</div><div class="ttdoc">设置最大文件数</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00078">FileAppender.h:78</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a0985f49ad8980d6468b729d0ef9b722a"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a0985f49ad8980d6468b729d0ef9b722a">EasyKiConverter::FileAppender::setMaxQueueSize</a></div><div class="ttdeci">void setMaxQueueSize(int maxSize)</div><div class="ttdoc">设置异步队列最大大小</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00107">FileAppender.h:107</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a1b057ec493de5699021ac8592b52a4d2"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a1b057ec493de5699021ac8592b52a4d2">EasyKiConverter::FileAppender::m_maxSize</a></div><div class="ttdeci">qint64 m_maxSize</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00136">FileAppender.h:136</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a1d0d738fadb9eb81d3c5f79d0adcd8ca"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a1d0d738fadb9eb81d3c5f79d0adcd8ca">EasyKiConverter::FileAppender::m_running</a></div><div class="ttdeci">QAtomicInt m_running</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00151">FileAppender.h:151</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a261432dea9cda076dff43dadd5196e81"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a261432dea9cda076dff43dadd5196e81">EasyKiConverter::FileAppender::validateAndNormalizePath</a></div><div class="ttdeci">bool validateAndNormalizePath(const QString &amp;filePath)</div><div class="ttdoc">验证和规范化文件路径</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00059">FileAppender.cpp:59</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a28aff288143deaafe5f42de32e82ecd7"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a28aff288143deaafe5f42de32e82ecd7">EasyKiConverter::FileAppender::writerThreadFunc</a></div><div class="ttdeci">void writerThreadFunc()</div><div class="ttdoc">后台写入线程函数</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00296">FileAppender.cpp:296</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a2a9d8f6ff66f7e1d53606bfb4d224b1f"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a2a9d8f6ff66f7e1d53606bfb4d224b1f">EasyKiConverter::FileAppender::maxSize</a></div><div class="ttdeci">qint64 maxSize() const</div><div class="ttdoc">获取最大文件大小</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00071">FileAppender.h:71</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a35953228663ebb0b90cb732cc2845503"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a35953228663ebb0b90cb732cc2845503">EasyKiConverter::FileAppender::openFile</a></div><div class="ttdeci">bool openFile()</div><div class="ttdoc">打开日志文件</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00208">FileAppender.cpp:208</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a3afc2c9e34ec83ec925d5f463fabdf0a"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a3afc2c9e34ec83ec925d5f463fabdf0a">EasyKiConverter::FileAppender::isAsync</a></div><div class="ttdeci">bool isAsync() const</div><div class="ttdoc">是否启用异步写入</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00099">FileAppender.h:99</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a3cdc2c88fb04be97ba94bce36e77bce1"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a3cdc2c88fb04be97ba94bce36e77bce1">EasyKiConverter::FileAppender::m_queueCondition</a></div><div class="ttdeci">QWaitCondition m_queueCondition</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00150">FileAppender.h:150</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a3e44bb27953a4a938d8cc4dd6310db79"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a3e44bb27953a4a938d8cc4dd6310db79">EasyKiConverter::FileAppender::isPathInAllowedDir</a></div><div class="ttdeci">bool isPathInAllowedDir(const QString &amp;path) const</div><div class="ttdoc">检查路径是否在允许的目录范围内</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00098">FileAppender.cpp:98</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a413179f36a1f41aeda58a9c478b8f298"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a413179f36a1f41aeda58a9c478b8f298">EasyKiConverter::FileAppender::append</a></div><div class="ttdeci">void append(const LogRecord &amp;record, const QString &amp;formatted) override</div><div class="ttdoc">输出日志到文件</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00128">FileAppender.cpp:128</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a458684b4d0cd3164cc241f6a0deab0be"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a458684b4d0cd3164cc241f6a0deab0be">EasyKiConverter::FileAppender::m_writerThread</a></div><div class="ttdeci">QThread * m_writerThread</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00147">FileAppender.h:147</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a55e156d4e489cc161be1045d7f30cfd6"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a55e156d4e489cc161be1045d7f30cfd6">EasyKiConverter::FileAppender::m_file</a></div><div class="ttdeci">QFile m_file</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00143">FileAppender.h:143</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a60b31ce56be99f6596febdda933f692e"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a60b31ce56be99f6596febdda933f692e">EasyKiConverter::FileAppender::isValidPath</a></div><div class="ttdeci">bool isValidPath() const</div><div class="ttdoc">检查文件路径是否有效</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00121">FileAppender.h:121</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a6b96755d0815415e15ff49fdc3c94dd1"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a6b96755d0815415e15ff49fdc3c94dd1">EasyKiConverter::FileAppender::m_baseDir</a></div><div class="ttdeci">QString m_baseDir</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00135">FileAppender.h:135</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a788d36cf0b69b16e12ba0f6a3896f135"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a788d36cf0b69b16e12ba0f6a3896f135">EasyKiConverter::FileAppender::flush</a></div><div class="ttdeci">void flush() override</div><div class="ttdoc">刷新缓冲区到文件</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00154">FileAppender.cpp:154</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a88f63be3456e56dfe61382a850a1fc34"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a88f63be3456e56dfe61382a850a1fc34">EasyKiConverter::FileAppender::m_queueOverflow</a></div><div class="ttdeci">QAtomicInt m_queueOverflow</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00153">FileAppender.h:153</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a89ba8c9261901b39fa434833fe15cb73"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a89ba8c9261901b39fa434833fe15cb73">EasyKiConverter::FileAppender::m_async</a></div><div class="ttdeci">bool m_async</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00138">FileAppender.h:138</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a8db3d62e094aa5a0d2687db89b9de6b3"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a8db3d62e094aa5a0d2687db89b9de6b3">EasyKiConverter::FileAppender::writeDirect</a></div><div class="ttdeci">void writeDirect(const QString &amp;formatted)</div><div class="ttdoc">直接写入（同步模式或关闭时使用）</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00356">FileAppender.cpp:356</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_a9f6149afd1279e0f71221d0da75ba5e3"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#a9f6149afd1279e0f71221d0da75ba5e3">EasyKiConverter::FileAppender::m_maxFiles</a></div><div class="ttdeci">int m_maxFiles</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00137">FileAppender.h:137</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_aa0179b2590385818a4f66550174f1c66"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#aa0179b2590385818a4f66550174f1c66">EasyKiConverter::FileAppender::cleanupOldFiles</a></div><div class="ttdeci">void cleanupOldFiles()</div><div class="ttdoc">清理旧日志文件</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00259">FileAppender.cpp:259</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_aa5e5e85e0c07361e4a792819baf36d53"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#aa5e5e85e0c07361e4a792819baf36d53">EasyKiConverter::FileAppender::maxQueueSize</a></div><div class="ttdeci">int maxQueueSize() const</div><div class="ttdoc">获取异步队列最大大小</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00114">FileAppender.h:114</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_aaf6f30f1d1875b827c2fb90ee3f71a3c"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#aaf6f30f1d1875b827c2fb90ee3f71a3c">EasyKiConverter::FileAppender::m_pathValid</a></div><div class="ttdeci">bool m_pathValid</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00140">FileAppender.h:140</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_abb61feb06e1c5f269aa96c0974e690c7"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#abb61feb06e1c5f269aa96c0974e690c7">EasyKiConverter::FileAppender::m_fileMutex</a></div><div class="ttdeci">QRecursiveMutex m_fileMutex</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00144">FileAppender.h:144</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_abba7f2896c5e47135416730f252e0e4f"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#abba7f2896c5e47135416730f252e0e4f">EasyKiConverter::FileAppender::m_queueMutex</a></div><div class="ttdeci">QMutex m_queueMutex</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00149">FileAppender.h:149</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_abe17a0ca0cfb2ca778930d7d4fcc54ac"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#abe17a0ca0cfb2ca778930d7d4fcc54ac">EasyKiConverter::FileAppender::needsRollover</a></div><div class="ttdeci">bool needsRollover() const</div><div class="ttdoc">检查是否需要滚动</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00379">FileAppender.cpp:379</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_abfc00adaed7aa1ddd635eaf502d3fb2c"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#abfc00adaed7aa1ddd635eaf502d3fb2c">EasyKiConverter::FileAppender::generateRolledFileName</a></div><div class="ttdeci">QString generateRolledFileName(int index) const</div><div class="ttdoc">生成滚动文件名</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00280">FileAppender.cpp:280</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_acd8b210870a35f2b48dbd804fd7caf70"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#acd8b210870a35f2b48dbd804fd7caf70">EasyKiConverter::FileAppender::rollOver</a></div><div class="ttdeci">void rollOver()</div><div class="ttdoc">滚动日志文件</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00226">FileAppender.cpp:226</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_ad299acc687e49ef64f2434b17c2c4872"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#ad299acc687e49ef64f2434b17c2c4872">EasyKiConverter::FileAppender::m_flushRequested</a></div><div class="ttdeci">QAtomicInt m_flushRequested</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00152">FileAppender.h:152</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_ad462fecf7a0284206dc526f81325241c"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#ad462fecf7a0284206dc526f81325241c">EasyKiConverter::FileAppender::~FileAppender</a></div><div class="ttdeci">~FileAppender() override</div><div class="ttdoc">析构函数</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8cpp_source.html#l00055">FileAppender.cpp:55</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_adc90b45e4ec12e95b03edc9cc2014778"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#adc90b45e4ec12e95b03edc9cc2014778">EasyKiConverter::FileAppender::m_writeQueue</a></div><div class="ttdeci">QQueue&lt; QString &gt; m_writeQueue</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00148">FileAppender.h:148</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_ae05a1d78a3b3a34ec1a93edfb8c6017f"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#ae05a1d78a3b3a34ec1a93edfb8c6017f">EasyKiConverter::FileAppender::maxFiles</a></div><div class="ttdeci">int maxFiles() const</div><div class="ttdoc">获取最大文件数</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00085">FileAppender.h:85</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_ae7dda12441dab5406375ac59d5186deb"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#ae7dda12441dab5406375ac59d5186deb">EasyKiConverter::FileAppender::m_lastError</a></div><div class="ttdeci">QString m_lastError</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00141">FileAppender.h:141</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_af038dfce21941416e1b21d97bcf6de40"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#af038dfce21941416e1b21d97bcf6de40">EasyKiConverter::FileAppender::filePath</a></div><div class="ttdeci">QString filePath() const</div><div class="ttdoc">获取当前日志文件路径</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00092">FileAppender.h:92</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_af3e745b7e0fd806179e1dd7b16a79771"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#af3e745b7e0fd806179e1dd7b16a79771">EasyKiConverter::FileAppender::m_filePath</a></div><div class="ttdeci">QString m_filePath</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00133">FileAppender.h:133</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_af8d347a56d8cc00402d4fe0baef55b76"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#af8d347a56d8cc00402d4fe0baef55b76">EasyKiConverter::FileAppender::m_canonicalPath</a></div><div class="ttdeci">QString m_canonicalPath</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00134">FileAppender.h:134</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_afc6997a24c8ada8a69c332fa12636b45"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#afc6997a24c8ada8a69c332fa12636b45">EasyKiConverter::FileAppender::lastError</a></div><div class="ttdeci">QString lastError() const</div><div class="ttdoc">获取最后一次错误信息</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00128">FileAppender.h:128</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FileAppender_html_afe8449c167523a531c5b5f719977c302"><div class="ttname"><a href="classEasyKiConverter_1_1FileAppender.html#afe8449c167523a531c5b5f719977c302">EasyKiConverter::FileAppender::setMaxSize</a></div><div class="ttdeci">void setMaxSize(qint64 maxSize)</div><div class="ttdoc">设置最大文件大小</div><div class="ttdef"><b>Definition</b> <a href="FileAppender_8h_source.html#l00064">FileAppender.h:64</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1IAppender_html"><div class="ttname"><a href="classEasyKiConverter_1_1IAppender.html">EasyKiConverter::IAppender</a></div><div class="ttdoc">日志输出器接口</div><div class="ttdef"><b>Definition</b> <a href="IAppender_8h_source.html#l00017">IAppender.h:17</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1LogRecord_html"><div class="ttname"><a href="structEasyKiConverter_1_1LogRecord.html">EasyKiConverter::LogRecord</a></div><div class="ttdoc">日志记录结构</div><div class="ttdef"><b>Definition</b> <a href="LogRecord_8h_source.html#l00018">LogRecord.h:18</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_cbdb8362360e11eafe2fa3bc74cf0ffd.html">utils</a></li><li class="navelem"><a class="el" href="dir_fb798ecc4aaad6bce5c96e231ca5fd90.html">logging</a></li><li class="navelem"><a class="el" href="FileAppender_8h.html">FileAppender.h</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

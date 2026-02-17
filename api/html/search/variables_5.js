@@ -1,0 +1,19 @@
+var searchData=
+[
+  ['failed_0',['failed',['../structEasyKiConverter_1_1ExportStatistics.html#a551eeae3c5d24e75e87fb60cfc9c6dbd',1,'EasyKiConverter::ExportStatistics']]],
+  ['failurereasons_1',['failureReasons',['../structEasyKiConverter_1_1ExportStatistics.html#ace666d41cef1b5a12978fe0b4523ad2f',1,'EasyKiConverter::ExportStatistics']]],
+  ['fetch3dmodel_2',['fetch3DModel',['../structEasyKiConverter_1_1ComponentService_1_1FetchingComponent.html#a26a7b0cd17ee78401916d3bce0f6139e',1,'EasyKiConverter::ComponentService::FetchingComponent']]],
+  ['fetch3donly_3',['fetch3DOnly',['../structEasyKiConverter_1_1ComponentExportStatus.html#a81f9348eec2c1c9055a840b051f11078',1,'EasyKiConverter::ComponentExportStatus']]],
+  ['fetchcompleted_4',['fetchCompleted',['../structEasyKiConverter_1_1PipelineProgress.html#a000f9d3475f2a3728b2fd77c970bb9cc',1,'EasyKiConverter::PipelineProgress']]],
+  ['fetchdurationms_5',['fetchDurationMs',['../structEasyKiConverter_1_1ComponentExportStatus.html#aec3526af98b62f868cbc20b8b1c78040',1,'EasyKiConverter::ComponentExportStatus']]],
+  ['fetchmessage_6',['fetchMessage',['../structEasyKiConverter_1_1ComponentExportStatus.html#a4c412c58769f1ba24e02e21b330717d0',1,'EasyKiConverter::ComponentExportStatus']]],
+  ['fetchsuccess_7',['fetchSuccess',['../structEasyKiConverter_1_1ComponentExportStatus.html#a8f0134cce18a102fd339138015b0fbef',1,'EasyKiConverter::ComponentExportStatus']]],
+  ['filename_8',['fileName',['../structEasyKiConverter_1_1LogRecord.html#abeb14f39cab78b0d21c41b81269defcb',1,'EasyKiConverter::LogRecord']]],
+  ['fillcolor_9',['fillcolor',['../structEasyKiConverter_1_1SymbolEllipse.html#a36b6c98c8227164e8fa2f2d348e589fe',1,'EasyKiConverter::SymbolEllipse::fillColor'],['../structEasyKiConverter_1_1SymbolPath.html#a5326205405aac20af53a27ac2b5fbdb8',1,'EasyKiConverter::SymbolPath::fillColor'],['../structEasyKiConverter_1_1SymbolPolygon.html#a73e5baf04e971d0bf73a2fc22c151df1',1,'EasyKiConverter::SymbolPolygon::fillColor'],['../structEasyKiConverter_1_1SymbolPolyline.html#a786a4cc9444ef3bd77248147be0d9c86',1,'EasyKiConverter::SymbolPolyline::fillColor'],['../structEasyKiConverter_1_1SymbolArc.html#adf04acf50ddc600a146bbca174d9681e',1,'EasyKiConverter::SymbolArc::fillColor'],['../structEasyKiConverter_1_1SymbolCircle.html#a6f8607561896d8f6b33290047392dc9d',1,'EasyKiConverter::SymbolCircle::fillColor'],['../structEasyKiConverter_1_1SymbolRectangle.html#a34582ceb757018a1bd5c581d926dd23d',1,'EasyKiConverter::SymbolRectangle::fillColor']]],
+  ['fillstyle_10',['fillStyle',['../structEasyKiConverter_1_1FootprintSolidRegion.html#afbf2878e87a2160d36977824babcbff4',1,'EasyKiConverter::FootprintSolidRegion']]],
+  ['font_11',['font',['../structEasyKiConverter_1_1SymbolPinName.html#a7e7773b8dd20a2c9f3b8141ce6436958',1,'EasyKiConverter::SymbolPinName::font'],['../structEasyKiConverter_1_1SymbolText.html#a2f3e47a9c6eb3b48deef6c1c7138a2c4',1,'EasyKiConverter::SymbolText::font']]],
+  ['fontsize_12',['fontsize',['../structEasyKiConverter_1_1FootprintText.html#a45d845fcaff719ad08f0788e5bcec63b',1,'EasyKiConverter::FootprintText::fontSize'],['../structEasyKiConverter_1_1SymbolPinName.html#af3987debbd0aedd340bbfe77162c95aa',1,'EasyKiConverter::SymbolPinName::fontSize']]],
+  ['footprintdata_13',['footprintdata',['../structEasyKiConverter_1_1ComponentExportStatus.html#acc29261679832bc2471dfd8d920d7706',1,'EasyKiConverter::ComponentExportStatus::footprintData'],['../structEasyKiConverter_1_1ExportService_1_1ExportData.html#ab4baed61e11532b63c6784212dbf49b7',1,'EasyKiConverter::ExportService::ExportData::footprintData']]],
+  ['footprintwritten_14',['footprintWritten',['../structEasyKiConverter_1_1ComponentExportStatus.html#a8624376c09d1f9c97fdea1de5d1cc387',1,'EasyKiConverter::ComponentExportStatus']]],
+  ['functionname_15',['functionName',['../structEasyKiConverter_1_1LogRecord.html#a1d20cf6a4b483eff302a5fc624063d12',1,'EasyKiConverter::LogRecord']]]
+];

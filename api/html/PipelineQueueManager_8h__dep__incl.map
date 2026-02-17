@@ -1,0 +1,29 @@
+<map id="services/pipeline/queue/PipelineQueueManager.h" name="services/pipeline/queue/PipelineQueueManager.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="289,5,477,45"/>
+<area shape="rect" id="Node000002" href="$ExportService__Pipeline_8h.html" title=" " alt="" coords="330,181,501,221"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="411,55,430,92,434,116,433,141,425,182,419,181,428,140,429,117,425,94,406,58"/>
+<area shape="rect" id="Node000008" href="$PipelineQueueManager_8cpp.html" title=" " alt="" coords="213,93,415,133"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="361,58,331,95,327,91,357,55"/>
+<area shape="rect" id="Node000009" href="$ProcessStageHandler_8h.html" title=" " alt="" coords="13,93,188,133"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="309,52,163,96,162,91,307,47"/>
+<area shape="rect" id="Node000011" href="$WriteStageHandler_8h.html" title=" " alt="" coords="491,93,663,133"/>
+<area shape="poly" id="edge13_Node000001_Node000011" title=" " alt="" coords="439,49,535,91,533,96,437,53"/>
+<area shape="rect" id="Node000003" href="$main_8cpp.html" title=" " alt="" coords="190,365,273,390"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="317,213,252,221,188,233,134,250,115,260,101,271,94,285,96,298,104,311,118,324,156,346,196,362,194,367,153,350,115,328,100,315,91,300,89,284,97,268,112,255,132,245,187,228,251,216,316,207"/>
+<area shape="rect" id="Node000004" href="$ExportService__Pipeline_8cpp.html" title=" " alt="" coords="111,269,282,309"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="355,229,246,272,244,267,354,224"/>
+<area shape="rect" id="Node000005" href="$ExportProgressViewModel_8cpp.html" title=" " alt="" coords="379,357,598,397"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="491,225,518,243,539,268,545,292,539,317,525,340,510,359,506,356,521,337,534,315,540,292,534,271,514,247,488,230"/>
+<area shape="rect" id="Node000006" href="$ExportProgressViewModel_8h.html" title=" " alt="" coords="306,269,525,309"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="418,235,418,269,413,269,413,235"/>
+<area shape="rect" id="Node000007" href="$ExportSettingsViewModel_8cpp.html" title=" " alt="" coords="599,269,815,309"/>
+<area shape="poly" id="edge8_Node000002_Node000007" title=" " alt="" coords="493,223,644,267,643,272,492,228"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="364,318,257,367,255,362,361,313"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="442,318,474,355,470,359,438,322"/>
+<area shape="poly" id="edge11_Node000009_Node000002" title=" " alt="" coords="184,134,347,179,346,184,182,140"/>
+<area shape="rect" id="Node000010" href="$ProcessStageHandler_8cpp.html" title=" " alt="" coords="5,181,196,221"/>
+<area shape="poly" id="edge12_Node000009_Node000010" title=" " alt="" coords="103,147,103,181,98,181,98,147"/>
+<area shape="poly" id="edge14_Node000011_Node000002" title=" " alt="" coords="531,142,452,184,449,179,528,137"/>
+<area shape="rect" id="Node000012" href="$WriteStageHandler_8cpp.html" title=" " alt="" coords="525,181,700,221"/>
+<area shape="poly" id="edge15_Node000011_Node000012" title=" " alt="" coords="592,145,607,180,602,182,587,147"/>
+</map>

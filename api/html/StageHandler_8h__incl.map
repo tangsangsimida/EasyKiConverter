@@ -1,0 +1,9 @@
+<map id="services/pipeline/stage/StageHandler.h" name="services/pipeline/stage/StageHandler.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="75,5,247,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,100,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="136,48,82,87,79,83,133,43"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="124,93,197,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="163,46,163,79,158,79,158,46"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="222,93,297,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="186,43,235,82,232,87,183,48"/>
+</map>

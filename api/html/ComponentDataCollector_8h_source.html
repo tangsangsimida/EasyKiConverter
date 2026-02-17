@@ -1,0 +1,274 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: services/ComponentDataCollector.h 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('ComponentDataCollector_8h_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">ComponentDataCollector.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="ComponentDataCollector_8h.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef COMPONENTDATACOLLECTOR_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define COMPONENTDATACOLLECTOR_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="ComponentData_8h.html">models/ComponentData.h</a>&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;<a class="code" href="FootprintData_8h.html">models/FootprintData.h</a>&quot;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;<a class="code" href="Model3DData_8h.html">models/Model3DData.h</a>&quot;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &quot;<a class="code" href="SymbolData_8h.html">models/SymbolData.h</a>&quot;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;QObject&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;QString&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
+<div class="foldopen" id="foldopen00020" data-start="{" data-end="};">
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html">   20</a></span><span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1ComponentDataCollector.html">ComponentDataCollector</a> : <span class="keyword">public</span> QObject {</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    Q_OBJECT</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">public</span>:</div>
+<div class="foldopen" id="foldopen00027" data-start="{" data-end="};">
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">   27</a></span>    <span class="keyword">enum</span> <a class="code hl_enumeration" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a> {</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6aa89b3da008aafddb77bf358f9c5c1c22">   28</a></span>        <a class="code hl_enumvalue" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6aa89b3da008aafddb77bf358f9c5c1c22">Idle</a>,                   <span class="comment">// 空闲状</span></div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a46b78755fb774f328fe1f3f70f9ef7d5">   29</a></span>        <a class="code hl_enumvalue" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a46b78755fb774f328fe1f3f70f9ef7d5">FetchingComponentInfo</a>,  <span class="comment">// 正在获取组件信息</span></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6afca9b0f1a973c309369cf53e00707b9f">   30</a></span>        <a class="code hl_enumvalue" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6afca9b0f1a973c309369cf53e00707b9f">FetchingCadData</a>,        <span class="comment">// 正在获取CAD数据</span></div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a46efca2c65c8c13f0c0131e0a174c064">   31</a></span>        <a class="code hl_enumvalue" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a46efca2c65c8c13f0c0131e0a174c064">FetchingObjData</a>,        <span class="comment">// 正在获取OBJ数据</span></div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6aef3f65978b18f47a85f7e106d75d37c3">   32</a></span>        <a class="code hl_enumvalue" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6aef3f65978b18f47a85f7e106d75d37c3">FetchingStepData</a>,       <span class="comment">// 正在获取STEP数据</span></div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a6d42951a039ed19cea1f76478c74dee7">   33</a></span>        <a class="code hl_enumvalue" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a6d42951a039ed19cea1f76478c74dee7">Completed</a>,              <span class="comment">// 完成</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        <a class="code hl_enumvalue" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6ab559556060b8f218b6393b46096d13df">Failed</a>                  <span class="comment">// 失败</span></div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6ab559556060b8f218b6393b46096d13df">   35</a></span>    };</div>
+</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    Q_ENUM(<a class="code hl_enumeration" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a>)</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keyword">explicit</span> <a class="code hl_class" href="classEasyKiConverter_1_1ComponentDataCollector.html">ComponentDataCollector</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a9e50cb9d87f353b7ec6ba0fbc16c572d">componentId</a>, QObject* parent = <span class="keyword">nullptr</span>);</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a0abfe6ad5b03a371c4cd8bd5c3ad6fbf">~ComponentDataCollector</a>() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a3b95f0d132c1ec3b768a9fdd4b3ee222">start</a>();</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#aef1303c549979975d8567d8076113beb">cancel</a>();</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="foldopen" id="foldopen00066" data-start="{" data-end="}">
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a3aea8c35482f0f7b998b2af88409dbac">   66</a></span>    <a class="code hl_enumeration" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a3aea8c35482f0f7b998b2af88409dbac">state</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#ad2f496cec0849c070ac858d0b547f99c">m_state</a>;</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    }</div>
+</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
+<div class="foldopen" id="foldopen00075" data-start="{" data-end="}">
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a9e50cb9d87f353b7ec6ba0fbc16c572d">   75</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a9e50cb9d87f353b7ec6ba0fbc16c572d">componentId</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#a245f322006a39b0bbd4d4d7cf3e2f729">m_componentId</a>;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    }</div>
+</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="foldopen" id="foldopen00084" data-start="{" data-end="}">
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#adaf1bb5f4e538f25d29cc9b589805421">   84</a></span>    <a class="code hl_class" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#adaf1bb5f4e538f25d29cc9b589805421">componentData</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#a80aa2e95d4e0c3754f2845c483ce9eba">m_componentData</a>;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    }</div>
+</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span> </div>
+<div class="foldopen" id="foldopen00093" data-start="{" data-end="}">
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a5e4caa298b6c6346a658c49921fb065a">   93</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a5e4caa298b6c6346a658c49921fb065a">errorMessage</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#a32adb2ab2c331d31a91eef058c6208be">m_errorMessage</a>;</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    }</div>
+</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
+<div class="foldopen" id="foldopen00102" data-start="{" data-end="}">
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a1150d49d4279bcdd9f9d7d4d12c1794e">  102</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a1150d49d4279bcdd9f9d7d4d12c1794e">setExport3DModel</a>(<span class="keywordtype">bool</span> export3D) {</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#ad1635202d4d17f7b481a3e4cb3c9ccb7">m_export3DModel</a> = export3D;</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    }</div>
+</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>signals:</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a87eb49d39e5d2a4b49c48d7c3114468a">  112</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a87eb49d39e5d2a4b49c48d7c3114468a">stateChanged</a>(<a class="code hl_enumeration" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a3aea8c35482f0f7b998b2af88409dbac">state</a>);</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span> </div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#aa6fd79801023b7a197bcd0dde2474adb">  120</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#aa6fd79801023b7a197bcd0dde2474adb">dataCollected</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a9e50cb9d87f353b7ec6ba0fbc16c572d">componentId</a>, <span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a>&amp; data);</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a78f4fd77838154d3f31cebd79305b386">  128</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a78f4fd77838154d3f31cebd79305b386">errorOccurred</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a9e50cb9d87f353b7ec6ba0fbc16c572d">componentId</a>, <span class="keyword">const</span> QString&amp; error);</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span> </div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span><span class="keyword">private</span> slots:</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a7b2cb3c0592951f0853a6bf5c91fe198">handleComponentInfoFetched</a>(<span class="keyword">const</span> QJsonObject&amp; data);</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a7230c6fa78e32f6276d0b348861faab3">handleCadDataFetched</a>(<span class="keyword">const</span> QJsonObject&amp; data);</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span> </div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a2558bac41c8ecbab5a0f8874c32a5837">handleModel3DFetched</a>(<span class="keyword">const</span> QString&amp; uuid, <span class="keyword">const</span> QByteArray&amp; data);</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span> </div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a6b5d2c61c21cc32f7dce8ea5a48026d9">handleFetchError</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a5e4caa298b6c6346a658c49921fb065a">errorMessage</a>);</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span> </div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a94d865621f04cc4fd7ff236ea3fa43a8">setState</a>(<a class="code hl_enumeration" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a3aea8c35482f0f7b998b2af88409dbac">state</a>);</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span> </div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a878a8c444ad7000d1841095916c6b8b8">complete</a>();</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span> </div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#ab2cae12b6c931034688c03f9b64d5e67">handleError</a>(<span class="keyword">const</span> QString&amp; error);</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span> </div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ComponentDataCollector.html#a3ac8e9691597f9ba839feed08cca33b7">initializeApiConnections</a>();</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span> </div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a245f322006a39b0bbd4d4d7cf3e2f729">  186</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#a245f322006a39b0bbd4d4d7cf3e2f729">m_componentId</a>;</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#ad2f496cec0849c070ac858d0b547f99c">  187</a></span>    <a class="code hl_enumeration" href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">State</a> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#ad2f496cec0849c070ac858d0b547f99c">m_state</a>;</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a80aa2e95d4e0c3754f2845c483ce9eba">  188</a></span>    <a class="code hl_class" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#a80aa2e95d4e0c3754f2845c483ce9eba">m_componentData</a>;</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a32adb2ab2c331d31a91eef058c6208be">  189</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#a32adb2ab2c331d31a91eef058c6208be">m_errorMessage</a>;</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#ad1635202d4d17f7b481a3e4cb3c9ccb7">  190</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#ad1635202d4d17f7b481a3e4cb3c9ccb7">m_export3DModel</a>;</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#acb3b3f6213e7c1f2a739743f6bfd0ba5">  191</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#acb3b3f6213e7c1f2a739743f6bfd0ba5">m_isCancelled</a>;</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span> </div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    <span class="comment">// API和导入器</span></div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a17e68d161fcf9481ef44a675bb7a61f7">  194</a></span>    <span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1EasyedaApi.html">EasyedaApi</a>* <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#a17e68d161fcf9481ef44a675bb7a61f7">m_api</a>;</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ComponentDataCollector.html#a91323d0a0fb62e06a7548760e0f2d0c0">  195</a></span>    <span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1EasyedaImporter.html">EasyedaImporter</a>* <a class="code hl_variable" href="classEasyKiConverter_1_1ComponentDataCollector.html#a91323d0a0fb62e06a7548760e0f2d0c0">m_importer</a>;</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>};</div>
+</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span> </div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span> </div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span><span class="preprocessor">#endif  </span><span class="comment">// COMPONENTDATACOLLECTOR_H</span></div>
+<div class="ttc" id="aComponentData_8h_html"><div class="ttname"><a href="ComponentData_8h.html">ComponentData.h</a></div></div>
+<div class="ttc" id="aFootprintData_8h_html"><div class="ttname"><a href="FootprintData_8h.html">FootprintData.h</a></div></div>
+<div class="ttc" id="aModel3DData_8h_html"><div class="ttname"><a href="Model3DData_8h.html">Model3DData.h</a></div></div>
+<div class="ttc" id="aSymbolData_8h_html"><div class="ttname"><a href="SymbolData_8h.html">SymbolData.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html">EasyKiConverter::ComponentDataCollector</a></div><div class="ttdoc">元件数据收集器类</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00020">ComponentDataCollector.h:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a0abfe6ad5b03a371c4cd8bd5c3ad6fbf"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a0abfe6ad5b03a371c4cd8bd5c3ad6fbf">EasyKiConverter::ComponentDataCollector::~ComponentDataCollector</a></div><div class="ttdeci">~ComponentDataCollector() override</div><div class="ttdoc">析构函数</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8cpp_source.html#l00021">ComponentDataCollector.cpp:21</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a1150d49d4279bcdd9f9d7d4d12c1794e"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a1150d49d4279bcdd9f9d7d4d12c1794e">EasyKiConverter::ComponentDataCollector::setExport3DModel</a></div><div class="ttdeci">void setExport3DModel(bool export3D)</div><div class="ttdoc">设置是否需要导D模型</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00102">ComponentDataCollector.h:102</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a17e68d161fcf9481ef44a675bb7a61f7"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a17e68d161fcf9481ef44a675bb7a61f7">EasyKiConverter::ComponentDataCollector::m_api</a></div><div class="ttdeci">class EasyedaApi * m_api</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00194">ComponentDataCollector.h:194</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a245f322006a39b0bbd4d4d7cf3e2f729"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a245f322006a39b0bbd4d4d7cf3e2f729">EasyKiConverter::ComponentDataCollector::m_componentId</a></div><div class="ttdeci">QString m_componentId</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00186">ComponentDataCollector.h:186</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a2558bac41c8ecbab5a0f8874c32a5837"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a2558bac41c8ecbab5a0f8874c32a5837">EasyKiConverter::ComponentDataCollector::handleModel3DFetched</a></div><div class="ttdeci">void handleModel3DFetched(const QString &amp;uuid, const QByteArray &amp;data)</div><div class="ttdoc">处理3D模型数据获取成功</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8cpp_source.html#l00140">ComponentDataCollector.cpp:140</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a32adb2ab2c331d31a91eef058c6208be"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a32adb2ab2c331d31a91eef058c6208be">EasyKiConverter::ComponentDataCollector::m_errorMessage</a></div><div class="ttdeci">QString m_errorMessage</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00189">ComponentDataCollector.h:189</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a3ac8e9691597f9ba839feed08cca33b7"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a3ac8e9691597f9ba839feed08cca33b7">EasyKiConverter::ComponentDataCollector::initializeApiConnections</a></div><div class="ttdeci">void initializeApiConnections()</div><div class="ttdoc">初始化API连接</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8cpp_source.html#l00194">ComponentDataCollector.cpp:194</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a3aea8c35482f0f7b998b2af88409dbac"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a3aea8c35482f0f7b998b2af88409dbac">EasyKiConverter::ComponentDataCollector::state</a></div><div class="ttdeci">State state() const</div><div class="ttdoc">获取当前状</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00066">ComponentDataCollector.h:66</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a3b95f0d132c1ec3b768a9fdd4b3ee222"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a3b95f0d132c1ec3b768a9fdd4b3ee222">EasyKiConverter::ComponentDataCollector::start</a></div><div class="ttdeci">void start()</div><div class="ttdoc">开始数据收</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8cpp_source.html#l00023">ComponentDataCollector.cpp:23</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a5e4caa298b6c6346a658c49921fb065a"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a5e4caa298b6c6346a658c49921fb065a">EasyKiConverter::ComponentDataCollector::errorMessage</a></div><div class="ttdeci">QString errorMessage() const</div><div class="ttdoc">获取错误信息</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00093">ComponentDataCollector.h:93</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a6b5d2c61c21cc32f7dce8ea5a48026d9"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a6b5d2c61c21cc32f7dce8ea5a48026d9">EasyKiConverter::ComponentDataCollector::handleFetchError</a></div><div class="ttdeci">void handleFetchError(const QString &amp;errorMessage)</div><div class="ttdoc">处理获取错误</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8cpp_source.html#l00176">ComponentDataCollector.cpp:176</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a7230c6fa78e32f6276d0b348861faab3"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a7230c6fa78e32f6276d0b348861faab3">EasyKiConverter::ComponentDataCollector::handleCadDataFetched</a></div><div class="ttdeci">void handleCadDataFetched(const QJsonObject &amp;data)</div><div class="ttdoc">处理CAD数据获取成功</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8cpp_source.html#l00057">ComponentDataCollector.cpp:57</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a78f4fd77838154d3f31cebd79305b386"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a78f4fd77838154d3f31cebd79305b386">EasyKiConverter::ComponentDataCollector::errorOccurred</a></div><div class="ttdeci">void errorOccurred(const QString &amp;componentId, const QString &amp;error)</div><div class="ttdoc">错误发生信号</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a7b2cb3c0592951f0853a6bf5c91fe198"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a7b2cb3c0592951f0853a6bf5c91fe198">EasyKiConverter::ComponentDataCollector::handleComponentInfoFetched</a></div><div class="ttdeci">void handleComponentInfoFetched(const QJsonObject &amp;data)</div><div class="ttdoc">处理组件信息获取成功</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8cpp_source.html#l00052">ComponentDataCollector.cpp:52</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a80aa2e95d4e0c3754f2845c483ce9eba"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a80aa2e95d4e0c3754f2845c483ce9eba">EasyKiConverter::ComponentDataCollector::m_componentData</a></div><div class="ttdeci">ComponentData m_componentData</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00188">ComponentDataCollector.h:188</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a878a8c444ad7000d1841095916c6b8b8"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a878a8c444ad7000d1841095916c6b8b8">EasyKiConverter::ComponentDataCollector::complete</a></div><div class="ttdeci">void complete()</div><div class="ttdoc">完成数据收集</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8cpp_source.html#l00181">ComponentDataCollector.cpp:181</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a87eb49d39e5d2a4b49c48d7c3114468a"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a87eb49d39e5d2a4b49c48d7c3114468a">EasyKiConverter::ComponentDataCollector::stateChanged</a></div><div class="ttdeci">void stateChanged(State state)</div><div class="ttdoc">状态改变信</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a8f7af3323c1894a5450325f748c6aba6"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6">EasyKiConverter::ComponentDataCollector::State</a></div><div class="ttdeci">State</div><div class="ttdoc">收集状态枚</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00027">ComponentDataCollector.h:27</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a8f7af3323c1894a5450325f748c6aba6a46b78755fb774f328fe1f3f70f9ef7d5"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a46b78755fb774f328fe1f3f70f9ef7d5">EasyKiConverter::ComponentDataCollector::FetchingComponentInfo</a></div><div class="ttdeci">@ FetchingComponentInfo</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00029">ComponentDataCollector.h:29</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a8f7af3323c1894a5450325f748c6aba6a46efca2c65c8c13f0c0131e0a174c064"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a46efca2c65c8c13f0c0131e0a174c064">EasyKiConverter::ComponentDataCollector::FetchingObjData</a></div><div class="ttdeci">@ FetchingObjData</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00031">ComponentDataCollector.h:31</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a8f7af3323c1894a5450325f748c6aba6a6d42951a039ed19cea1f76478c74dee7"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6a6d42951a039ed19cea1f76478c74dee7">EasyKiConverter::ComponentDataCollector::Completed</a></div><div class="ttdeci">@ Completed</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00033">ComponentDataCollector.h:33</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a8f7af3323c1894a5450325f748c6aba6aa89b3da008aafddb77bf358f9c5c1c22"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6aa89b3da008aafddb77bf358f9c5c1c22">EasyKiConverter::ComponentDataCollector::Idle</a></div><div class="ttdeci">@ Idle</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00028">ComponentDataCollector.h:28</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a8f7af3323c1894a5450325f748c6aba6ab559556060b8f218b6393b46096d13df"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6ab559556060b8f218b6393b46096d13df">EasyKiConverter::ComponentDataCollector::Failed</a></div><div class="ttdeci">@ Failed</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00035">ComponentDataCollector.h:34</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a8f7af3323c1894a5450325f748c6aba6aef3f65978b18f47a85f7e106d75d37c3"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6aef3f65978b18f47a85f7e106d75d37c3">EasyKiConverter::ComponentDataCollector::FetchingStepData</a></div><div class="ttdeci">@ FetchingStepData</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00032">ComponentDataCollector.h:32</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a8f7af3323c1894a5450325f748c6aba6afca9b0f1a973c309369cf53e00707b9f"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a8f7af3323c1894a5450325f748c6aba6afca9b0f1a973c309369cf53e00707b9f">EasyKiConverter::ComponentDataCollector::FetchingCadData</a></div><div class="ttdeci">@ FetchingCadData</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00030">ComponentDataCollector.h:30</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a91323d0a0fb62e06a7548760e0f2d0c0"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a91323d0a0fb62e06a7548760e0f2d0c0">EasyKiConverter::ComponentDataCollector::m_importer</a></div><div class="ttdeci">class EasyedaImporter * m_importer</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00195">ComponentDataCollector.h:195</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a94d865621f04cc4fd7ff236ea3fa43a8"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a94d865621f04cc4fd7ff236ea3fa43a8">EasyKiConverter::ComponentDataCollector::setState</a></div><div class="ttdeci">void setState(State state)</div><div class="ttdoc">设置状</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8cpp_source.html#l00044">ComponentDataCollector.cpp:44</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_a9e50cb9d87f353b7ec6ba0fbc16c572d"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#a9e50cb9d87f353b7ec6ba0fbc16c572d">EasyKiConverter::ComponentDataCollector::componentId</a></div><div class="ttdeci">QString componentId() const</div><div class="ttdoc">获取元件ID</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00075">ComponentDataCollector.h:75</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_aa6fd79801023b7a197bcd0dde2474adb"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#aa6fd79801023b7a197bcd0dde2474adb">EasyKiConverter::ComponentDataCollector::dataCollected</a></div><div class="ttdeci">void dataCollected(const QString &amp;componentId, const ComponentData &amp;data)</div><div class="ttdoc">数据收集完成信号</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_ab2cae12b6c931034688c03f9b64d5e67"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#ab2cae12b6c931034688c03f9b64d5e67">EasyKiConverter::ComponentDataCollector::handleError</a></div><div class="ttdeci">void handleError(const QString &amp;error)</div><div class="ttdoc">处理错误</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8cpp_source.html#l00187">ComponentDataCollector.cpp:187</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_acb3b3f6213e7c1f2a739743f6bfd0ba5"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#acb3b3f6213e7c1f2a739743f6bfd0ba5">EasyKiConverter::ComponentDataCollector::m_isCancelled</a></div><div class="ttdeci">bool m_isCancelled</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00191">ComponentDataCollector.h:191</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_ad1635202d4d17f7b481a3e4cb3c9ccb7"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#ad1635202d4d17f7b481a3e4cb3c9ccb7">EasyKiConverter::ComponentDataCollector::m_export3DModel</a></div><div class="ttdeci">bool m_export3DModel</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00190">ComponentDataCollector.h:190</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_ad2f496cec0849c070ac858d0b547f99c"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#ad2f496cec0849c070ac858d0b547f99c">EasyKiConverter::ComponentDataCollector::m_state</a></div><div class="ttdeci">State m_state</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00187">ComponentDataCollector.h:187</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_adaf1bb5f4e538f25d29cc9b589805421"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#adaf1bb5f4e538f25d29cc9b589805421">EasyKiConverter::ComponentDataCollector::componentData</a></div><div class="ttdeci">ComponentData componentData() const</div><div class="ttdoc">获取收集到的元件数据</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8h_source.html#l00084">ComponentDataCollector.h:84</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentDataCollector_html_aef1303c549979975d8567d8076113beb"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentDataCollector.html#aef1303c549979975d8567d8076113beb">EasyKiConverter::ComponentDataCollector::cancel</a></div><div class="ttdeci">void cancel()</div><div class="ttdoc">取消数据收集</div><div class="ttdef"><b>Definition</b> <a href="ComponentDataCollector_8cpp_source.html#l00038">ComponentDataCollector.cpp:38</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentData_html"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentData.html">EasyKiConverter::ComponentData</a></div><div class="ttdoc">元件数据</div><div class="ttdef"><b>Definition</b> <a href="ComponentData_8h_source.html#l00020">ComponentData.h:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaApi_html"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaApi.html">EasyKiConverter::EasyedaApi</a></div><div class="ttdoc">EasyEDA API 客户端类</div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8h_source.html#l00020">EasyedaApi.h:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1EasyedaImporter_html"><div class="ttname"><a href="classEasyKiConverter_1_1EasyedaImporter.html">EasyKiConverter::EasyedaImporter</a></div><div class="ttdoc">EasyEDA 数据导入器类</div><div class="ttdef"><b>Definition</b> <a href="EasyedaImporter_8h_source.html#l00018">EasyedaImporter.h:18</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_056ec8f0377ddc4293192cbc6b19c99c.html">services</a></li><li class="navelem"><a class="el" href="ComponentDataCollector_8h.html">ComponentDataCollector.h</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

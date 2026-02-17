@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: models/SymbolData.cpp 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('SymbolData_8cpp_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">SymbolData.cpp</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="SymbolData_8cpp.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#include &quot;<a class="code" href="SymbolData_8h.html">SymbolData.h</a>&quot;</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &quot;<a class="code" href="SymbolDataSerializer_8h.html">SymbolDataSerializer.h</a>&quot;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span> </div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolData.html#a72c80115abdb78f713e2e261d378c46f">    7</a></span><a class="code hl_function" href="classEasyKiConverter_1_1SymbolData.html#a72c80115abdb78f713e2e261d378c46f">SymbolData::SymbolData</a>() {}</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="foldopen" id="foldopen00009" data-start="{" data-end="}">
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolData.html#ab6b591dd0ef1f3965d9e4249032ed2ac">    9</a></span>QJsonObject <a class="code hl_function" href="classEasyKiConverter_1_1SymbolData.html#ab6b591dd0ef1f3965d9e4249032ed2ac">SymbolData::toJson</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a745b2a2f8ac9c30136e0bbb20fa9e288">SymbolDataSerializer::toJson</a>(*<span class="keyword">this</span>);</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span>}</div>
+</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="foldopen" id="foldopen00013" data-start="{" data-end="}">
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolData.html#aef4c87db2335a3eeab1d510c5954ece9">   13</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolData.html#aef4c87db2335a3eeab1d510c5954ece9">SymbolData::fromJson</a>(<span class="keyword">const</span> QJsonObject&amp; json) {</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolDataSerializer.html#ab6d8723a51c9f5cc080f573cb4885503">SymbolDataSerializer::fromJson</a>(*<span class="keyword">this</span>, json);</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>}</div>
+</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="foldopen" id="foldopen00017" data-start="{" data-end="}">
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolData.html#a7b117b21f31a76e707ab75aff308bda6">   17</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolData.html#a7b117b21f31a76e707ab75aff308bda6">SymbolData::isValid</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>    <span class="comment">// 检查基本字</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a73c73dfd4b9170a26657fdcfc5ad2b7f">m_bbox</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1SymbolBBox.html#a7acffb7b11fd56d50ac96f5188634d60">x</a> == 0.0 &amp;&amp; <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a73c73dfd4b9170a26657fdcfc5ad2b7f">m_bbox</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1SymbolBBox.html#a89ea53ef2680f88e6cf0f5c5b8ef7247">y</a> == 0.0) {</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>        <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    }</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>}</div>
+</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
+<div class="foldopen" id="foldopen00026" data-start="{" data-end="}">
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolData.html#aff23f0d340af50aabc99855224cfffbb">   26</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolData.html#aff23f0d340af50aabc99855224cfffbb">SymbolData::validate</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="comment">// 验证符号信息</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a0075bb5cd7f33811067be9e61309a7f6">m_info</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1SymbolInfo.html#aeb446721ae0e0af92b43159eaad60c62">name</a>.isEmpty()) {</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;Symbol name is empty&quot;</span>;</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    }</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="comment">// 验证边界</span></div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a73c73dfd4b9170a26657fdcfc5ad2b7f">m_bbox</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1SymbolBBox.html#a7acffb7b11fd56d50ac96f5188634d60">x</a> == 0.0 &amp;&amp; <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a73c73dfd4b9170a26657fdcfc5ad2b7f">m_bbox</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1SymbolBBox.html#a89ea53ef2680f88e6cf0f5c5b8ef7247">y</a> == 0.0) {</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;Symbol bbox is empty&quot;</span>;</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    }</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    <span class="comment">// 验证引脚</span></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a07cf3bfe90a1bb6d9e92cd88ef73780d">m_pins</a>.size(); ++i) {</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        <span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolPin.html">SymbolPin</a>&amp; pin = <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a07cf3bfe90a1bb6d9e92cd88ef73780d">m_pins</a>[i];</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>        <span class="keywordflow">if</span> (pin.<a class="code hl_variable" href="structEasyKiConverter_1_1SymbolPin.html#a7bbf9750122891e9b4e7dcae9da54ffd">settings</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1SymbolPinSettings.html#ab5fa06a9507e0058bb858b778d12e001">spicePinNumber</a>.isEmpty()) {</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>            <span class="keywordflow">return</span> QString(<span class="stringliteral">&quot;Pin %1 has empty number&quot;</span>).arg(i);</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        }</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    }</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="keywordflow">return</span> QString();  <span class="comment">// 空字符串表示验证通过</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>}</div>
+</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
+<div class="foldopen" id="foldopen00048" data-start="{" data-end="}">
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolData.html#a8cfa7deef6a331fb53cb93661ae5e547">   48</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolData.html#a8cfa7deef6a331fb53cb93661ae5e547">SymbolData::clear</a>() {</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a0075bb5cd7f33811067be9e61309a7f6">m_info</a> = <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolInfo.html">SymbolInfo</a>();</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a73c73dfd4b9170a26657fdcfc5ad2b7f">m_bbox</a> = <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a>();</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a07cf3bfe90a1bb6d9e92cd88ef73780d">m_pins</a>.clear();</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#ac80c45cf8c5e1672dc7932bdbe659bd0">m_rectangles</a>.clear();</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#af620f0673413c2eb47eb6a5e6b336278">m_circles</a>.clear();</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#ae102002d49c64fe52a01febe36088e54">m_arcs</a>.clear();</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a2ad7b9bc645e4b33226c1e9a8598880f">m_ellipses</a>.clear();</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#af04860135da7aebdfdd724bd06a3bd80">m_polylines</a>.clear();</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#ac7b8da3c75eb4a957289209b899b5a78">m_polygons</a>.clear();</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#af7337fcfce02a9d663d52f6dbefa1889">m_paths</a>.clear();</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a90fb8a486027dbd8d432fc09a71bfcee">m_texts</a>.clear();</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolData.html#a2d76d07c392d1250578e675f58729736">m_parts</a>.clear();</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>}</div>
+</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="ttc" id="aSymbolDataSerializer_8h_html"><div class="ttname"><a href="SymbolDataSerializer_8h.html">SymbolDataSerializer.h</a></div></div>
+<div class="ttc" id="aSymbolData_8h_html"><div class="ttname"><a href="SymbolData_8h.html">SymbolData.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolDataSerializer_html_a745b2a2f8ac9c30136e0bbb20fa9e288"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolDataSerializer.html#a745b2a2f8ac9c30136e0bbb20fa9e288">EasyKiConverter::SymbolDataSerializer::toJson</a></div><div class="ttdeci">static QJsonObject toJson(const SymbolData &amp;data)</div><div class="ttdef"><b>Definition</b> <a href="SymbolDataSerializer_8cpp_source.html#l00708">SymbolDataSerializer.cpp:708</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolDataSerializer_html_ab6d8723a51c9f5cc080f573cb4885503"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolDataSerializer.html#ab6d8723a51c9f5cc080f573cb4885503">EasyKiConverter::SymbolDataSerializer::fromJson</a></div><div class="ttdeci">static bool fromJson(SymbolData &amp;data, const QJsonObject &amp;json)</div><div class="ttdef"><b>Definition</b> <a href="SymbolDataSerializer_8cpp_source.html#l00777">SymbolDataSerializer.cpp:777</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_a0075bb5cd7f33811067be9e61309a7f6"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#a0075bb5cd7f33811067be9e61309a7f6">EasyKiConverter::SymbolData::m_info</a></div><div class="ttdeci">SymbolInfo m_info</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00475">SymbolData.h:475</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_a07cf3bfe90a1bb6d9e92cd88ef73780d"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#a07cf3bfe90a1bb6d9e92cd88ef73780d">EasyKiConverter::SymbolData::m_pins</a></div><div class="ttdeci">QList&lt; SymbolPin &gt; m_pins</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00477">SymbolData.h:477</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_a2ad7b9bc645e4b33226c1e9a8598880f"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#a2ad7b9bc645e4b33226c1e9a8598880f">EasyKiConverter::SymbolData::m_ellipses</a></div><div class="ttdeci">QList&lt; SymbolEllipse &gt; m_ellipses</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00481">SymbolData.h:481</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_a2d76d07c392d1250578e675f58729736"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#a2d76d07c392d1250578e675f58729736">EasyKiConverter::SymbolData::m_parts</a></div><div class="ttdeci">QList&lt; SymbolPart &gt; m_parts</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00486">SymbolData.h:486</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_a72c80115abdb78f713e2e261d378c46f"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#a72c80115abdb78f713e2e261d378c46f">EasyKiConverter::SymbolData::SymbolData</a></div><div class="ttdeci">SymbolData()</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8cpp_source.html#l00007">SymbolData.cpp:7</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_a73c73dfd4b9170a26657fdcfc5ad2b7f"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#a73c73dfd4b9170a26657fdcfc5ad2b7f">EasyKiConverter::SymbolData::m_bbox</a></div><div class="ttdeci">SymbolBBox m_bbox</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00476">SymbolData.h:476</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_a7b117b21f31a76e707ab75aff308bda6"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#a7b117b21f31a76e707ab75aff308bda6">EasyKiConverter::SymbolData::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8cpp_source.html#l00017">SymbolData.cpp:17</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_a8cfa7deef6a331fb53cb93661ae5e547"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#a8cfa7deef6a331fb53cb93661ae5e547">EasyKiConverter::SymbolData::clear</a></div><div class="ttdeci">void clear()</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8cpp_source.html#l00048">SymbolData.cpp:48</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_a90fb8a486027dbd8d432fc09a71bfcee"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#a90fb8a486027dbd8d432fc09a71bfcee">EasyKiConverter::SymbolData::m_texts</a></div><div class="ttdeci">QList&lt; SymbolText &gt; m_texts</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00485">SymbolData.h:485</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_ab6b591dd0ef1f3965d9e4249032ed2ac"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#ab6b591dd0ef1f3965d9e4249032ed2ac">EasyKiConverter::SymbolData::toJson</a></div><div class="ttdeci">QJsonObject toJson() const</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8cpp_source.html#l00009">SymbolData.cpp:9</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_ac7b8da3c75eb4a957289209b899b5a78"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#ac7b8da3c75eb4a957289209b899b5a78">EasyKiConverter::SymbolData::m_polygons</a></div><div class="ttdeci">QList&lt; SymbolPolygon &gt; m_polygons</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00483">SymbolData.h:483</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_ac80c45cf8c5e1672dc7932bdbe659bd0"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#ac80c45cf8c5e1672dc7932bdbe659bd0">EasyKiConverter::SymbolData::m_rectangles</a></div><div class="ttdeci">QList&lt; SymbolRectangle &gt; m_rectangles</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00478">SymbolData.h:478</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_ae102002d49c64fe52a01febe36088e54"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#ae102002d49c64fe52a01febe36088e54">EasyKiConverter::SymbolData::m_arcs</a></div><div class="ttdeci">QList&lt; SymbolArc &gt; m_arcs</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00480">SymbolData.h:480</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_aef4c87db2335a3eeab1d510c5954ece9"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#aef4c87db2335a3eeab1d510c5954ece9">EasyKiConverter::SymbolData::fromJson</a></div><div class="ttdeci">bool fromJson(const QJsonObject &amp;json)</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8cpp_source.html#l00013">SymbolData.cpp:13</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_af04860135da7aebdfdd724bd06a3bd80"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#af04860135da7aebdfdd724bd06a3bd80">EasyKiConverter::SymbolData::m_polylines</a></div><div class="ttdeci">QList&lt; SymbolPolyline &gt; m_polylines</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00482">SymbolData.h:482</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_af620f0673413c2eb47eb6a5e6b336278"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#af620f0673413c2eb47eb6a5e6b336278">EasyKiConverter::SymbolData::m_circles</a></div><div class="ttdeci">QList&lt; SymbolCircle &gt; m_circles</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00479">SymbolData.h:479</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_af7337fcfce02a9d663d52f6dbefa1889"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#af7337fcfce02a9d663d52f6dbefa1889">EasyKiConverter::SymbolData::m_paths</a></div><div class="ttdeci">QList&lt; SymbolPath &gt; m_paths</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00484">SymbolData.h:484</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html_aff23f0d340af50aabc99855224cfffbb"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html#aff23f0d340af50aabc99855224cfffbb">EasyKiConverter::SymbolData::validate</a></div><div class="ttdeci">QString validate() const</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8cpp_source.html#l00026">SymbolData.cpp:26</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolBBox_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolBBox.html">EasyKiConverter::SymbolBBox</a></div><div class="ttdoc">边界</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00080">SymbolData.h:80</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolBBox_html_a7acffb7b11fd56d50ac96f5188634d60"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolBBox.html#a7acffb7b11fd56d50ac96f5188634d60">EasyKiConverter::SymbolBBox::x</a></div><div class="ttdeci">double x</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00081">SymbolData.h:81</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolBBox_html_a89ea53ef2680f88e6cf0f5c5b8ef7247"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolBBox.html#a89ea53ef2680f88e6cf0f5c5b8ef7247">EasyKiConverter::SymbolBBox::y</a></div><div class="ttdeci">double y</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00082">SymbolData.h:82</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolInfo_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolInfo.html">EasyKiConverter::SymbolInfo</a></div><div class="ttdoc">符号信息</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00030">SymbolData.h:30</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolInfo_html_aeb446721ae0e0af92b43159eaad60c62"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolInfo.html#aeb446721ae0e0af92b43159eaad60c62">EasyKiConverter::SymbolInfo::name</a></div><div class="ttdeci">QString name</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00031">SymbolData.h:31</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolPinSettings_html_ab5fa06a9507e0058bb858b778d12e001"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolPinSettings.html#ab5fa06a9507e0058bb858b778d12e001">EasyKiConverter::SymbolPinSettings::spicePinNumber</a></div><div class="ttdeci">QString spicePinNumber</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00095">SymbolData.h:95</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolPin_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolPin.html">EasyKiConverter::SymbolPin</a></div><div class="ttdoc">引脚</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00153">SymbolData.h:153</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolPin_html_a7bbf9750122891e9b4e7dcae9da54ffd"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolPin.html#a7bbf9750122891e9b4e7dcae9da54ffd">EasyKiConverter::SymbolPin::settings</a></div><div class="ttdeci">SymbolPinSettings settings</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00154">SymbolData.h:154</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_1ae4179d5e953611aae20c997279e02c.html">models</a></li><li class="navelem"><a class="el" href="SymbolData_8cpp.html">SymbolData.cpp</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

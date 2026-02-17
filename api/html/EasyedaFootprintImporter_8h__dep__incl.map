@@ -1,0 +1,7 @@
+<map id="core/easyeda/EasyedaFootprintImporter.h" name="core/easyeda/EasyedaFootprintImporter.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="136,5,363,45"/>
+<area shape="rect" id="Node000002" href="$EasyedaFootprintImporter_8cpp.html" title=" " alt="" coords="5,93,232,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,55,149,95,146,91,208,51"/>
+<area shape="rect" id="Node000003" href="$EasyedaImporter_8cpp.html" title=" " alt="" coords="256,101,507,126"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="291,51,365,98,362,103,288,55"/>
+</map>

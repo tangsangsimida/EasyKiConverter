@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: core/kicad/SymbolGraphicsGenerator.h 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('SymbolGraphicsGenerator_8h_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">SymbolGraphicsGenerator.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="SymbolGraphicsGenerator_8h.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef SYMBOLGRAPHICSGENERATOR_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define SYMBOLGRAPHICSGENERATOR_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="SymbolData_8h.html">models/SymbolData.h</a>&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;QString&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="foldopen" id="foldopen00016" data-start="{" data-end="};">
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html">   16</a></span><span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html">SymbolGraphicsGenerator</a> {</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a1ee577b20891ac1c639c8c7d4f22719b">   18</a></span>    <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a1ee577b20891ac1c639c8c7d4f22719b">SymbolGraphicsGenerator</a>() = <span class="keywordflow">default</span>;</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
+<div class="foldopen" id="foldopen00023" data-start="{" data-end="}">
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a22f934a5eec17e27424a7bae104409dd">   23</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a22f934a5eec17e27424a7bae104409dd">setCurrentBBox</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a>&amp; bbox) {</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a32fdac79b8ad2ac1d4fa775bb0f6702e">m_currentBBox</a> = bbox;</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    }</div>
+</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="foldopen" id="foldopen00027" data-start="{" data-end="}">
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a9279993f18206902a8d785efb619cfc4">   27</a></span>    <span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a>&amp; <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a9279993f18206902a8d785efb619cfc4">currentBBox</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a32fdac79b8ad2ac1d4fa775bb0f6702e">m_currentBBox</a>;</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    }</div>
+</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="comment">// 批量生成函数</span></div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ab9984cbae388c8e1e8c3d4407f6b2649">generateDrawings</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1SymbolData.html">SymbolData</a>&amp; data) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ab9984cbae388c8e1e8c3d4407f6b2649">generateDrawings</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolPart.html">SymbolPart</a>&amp; part) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a1e1a82af722287b82633f7882f3e015f">generatePins</a>(<span class="keyword">const</span> QList&lt;SymbolPin&gt;&amp; pins, <span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a>&amp; bbox) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="comment">// 单个图形元素生成函数</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ab147a5c853b82cc7d88f365b5cecd9a0">generatePin</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolPin.html">SymbolPin</a>&amp; pin, <span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a>&amp; bbox) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a8b1b25b3a68b1bf27a05c55ad58b8f44">generateRectangle</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolRectangle.html">SymbolRectangle</a>&amp; rect) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a166d1335c4f20431191a04ad04e8d016">generateCircle</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolCircle.html">SymbolCircle</a>&amp; circle) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a8b51a8bb9e9a41c5b2a16ec5828ae705">generateArc</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolArc.html">SymbolArc</a>&amp; arc) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a5850ca752993f10337e00d821facc232">generateEllipse</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolEllipse.html">SymbolEllipse</a>&amp; ellipse) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ac695449fbd6bdcf6c180a906b004a175">generatePolygon</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolPolygon.html">SymbolPolygon</a>&amp; polygon) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a69766ba634bf9bf33a1a1450ed90b584">generatePolyline</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolPolyline.html">SymbolPolyline</a>&amp; polyline) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ae4b1e12f6ee140068eae508bc9cb1124">generatePath</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolPath.html">SymbolPath</a>&amp; path) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#abd7fcd2bfbde309740c9e87e471fa892">generateText</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolText.html">SymbolText</a>&amp; text) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="comment">// 单位转换</span></div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordtype">double</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a33b1f9ecce261fbd7ff9c1d614f1869d">pxToMil</a>(<span class="keywordtype">double</span> px) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordtype">double</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#aaadac1c42b35f77d327fa42b5fe69362">pxToMm</a>(<span class="keywordtype">double</span> px) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <span class="comment">// 类型映射</span></div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#afd62023ba3b818e3de4f8460761ab270">pinTypeToKicad</a>(<a class="code hl_enumeration" href="namespaceEasyKiConverter.html#a0b64cf3e5e732b083267e8f5b3b46cbb">PinType</a> pinType) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a5a627fb569a215b79b8f032402b3698a">pinStyleToKicad</a>(<a class="code hl_enumeration" href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44d">PinStyle</a> pinStyle) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a86fa010d86a60fcd379c2e1e0731b300">rotationToKicadOrientation</a>(<span class="keywordtype">int</span> rotation) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="comment">// 边界框计算</span></div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a3b870c9055d170357ad5b8d9025bebe8">calculatePartBBox</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolPart.html">SymbolPart</a>&amp; part) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a32fdac79b8ad2ac1d4fa775bb0f6702e">   60</a></span>    <a class="code hl_struct" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a32fdac79b8ad2ac1d4fa775bb0f6702e">m_currentBBox</a>;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>};</div>
+</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="preprocessor">#endif  </span><span class="comment">// SYMBOLGRAPHICSGENERATOR_H</span></div>
+<div class="ttc" id="aSymbolData_8h_html"><div class="ttname"><a href="SymbolData_8h.html">SymbolData.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolData_html"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolData.html">EasyKiConverter::SymbolData</a></div><div class="ttdoc">符号数据</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00315">SymbolData.h:315</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html">EasyKiConverter::SymbolGraphicsGenerator</a></div><div class="ttdoc">符号图形元素生成器</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8h_source.html#l00016">SymbolGraphicsGenerator.h:16</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a166d1335c4f20431191a04ad04e8d016"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a166d1335c4f20431191a04ad04e8d016">EasyKiConverter::SymbolGraphicsGenerator::generateCircle</a></div><div class="ttdeci">QString generateCircle(const SymbolCircle &amp;circle) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00205">SymbolGraphicsGenerator.cpp:205</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a1e1a82af722287b82633f7882f3e015f"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a1e1a82af722287b82633f7882f3e015f">EasyKiConverter::SymbolGraphicsGenerator::generatePins</a></div><div class="ttdeci">QString generatePins(const QList&lt; SymbolPin &gt; &amp;pins, const SymbolBBox &amp;bbox) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00071">SymbolGraphicsGenerator.cpp:71</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a1ee577b20891ac1c639c8c7d4f22719b"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a1ee577b20891ac1c639c8c7d4f22719b">EasyKiConverter::SymbolGraphicsGenerator::SymbolGraphicsGenerator</a></div><div class="ttdeci">SymbolGraphicsGenerator()=default</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a22f934a5eec17e27424a7bae104409dd"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a22f934a5eec17e27424a7bae104409dd">EasyKiConverter::SymbolGraphicsGenerator::setCurrentBBox</a></div><div class="ttdeci">void setCurrentBBox(const SymbolBBox &amp;bbox)</div><div class="ttdoc">设置当前边界框（用于坐标偏移计算）</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8h_source.html#l00023">SymbolGraphicsGenerator.h:23</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a32fdac79b8ad2ac1d4fa775bb0f6702e"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a32fdac79b8ad2ac1d4fa775bb0f6702e">EasyKiConverter::SymbolGraphicsGenerator::m_currentBBox</a></div><div class="ttdeci">SymbolBBox m_currentBBox</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8h_source.html#l00060">SymbolGraphicsGenerator.h:60</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a33b1f9ecce261fbd7ff9c1d614f1869d"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a33b1f9ecce261fbd7ff9c1d614f1869d">EasyKiConverter::SymbolGraphicsGenerator::pxToMil</a></div><div class="ttdeci">double pxToMil(double px) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00550">SymbolGraphicsGenerator.cpp:550</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a3b870c9055d170357ad5b8d9025bebe8"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a3b870c9055d170357ad5b8d9025bebe8">EasyKiConverter::SymbolGraphicsGenerator::calculatePartBBox</a></div><div class="ttdeci">SymbolBBox calculatePartBBox(const SymbolPart &amp;part) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00615">SymbolGraphicsGenerator.cpp:615</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a5850ca752993f10337e00d821facc232"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a5850ca752993f10337e00d821facc232">EasyKiConverter::SymbolGraphicsGenerator::generateEllipse</a></div><div class="ttdeci">QString generateEllipse(const SymbolEllipse &amp;ellipse) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00298">SymbolGraphicsGenerator.cpp:298</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a5a627fb569a215b79b8f032402b3698a"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a5a627fb569a215b79b8f032402b3698a">EasyKiConverter::SymbolGraphicsGenerator::pinStyleToKicad</a></div><div class="ttdeci">QString pinStyleToKicad(PinStyle pinStyle) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00575">SymbolGraphicsGenerator.cpp:575</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a69766ba634bf9bf33a1a1450ed90b584"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a69766ba634bf9bf33a1a1450ed90b584">EasyKiConverter::SymbolGraphicsGenerator::generatePolyline</a></div><div class="ttdeci">QString generatePolyline(const SymbolPolyline &amp;polyline) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00397">SymbolGraphicsGenerator.cpp:397</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a86fa010d86a60fcd379c2e1e0731b300"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a86fa010d86a60fcd379c2e1e0731b300">EasyKiConverter::SymbolGraphicsGenerator::rotationToKicadOrientation</a></div><div class="ttdeci">QString rotationToKicadOrientation(int rotation) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00600">SymbolGraphicsGenerator.cpp:600</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a8b1b25b3a68b1bf27a05c55ad58b8f44"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a8b1b25b3a68b1bf27a05c55ad58b8f44">EasyKiConverter::SymbolGraphicsGenerator::generateRectangle</a></div><div class="ttdeci">QString generateRectangle(const SymbolRectangle &amp;rect) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00184">SymbolGraphicsGenerator.cpp:184</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a8b51a8bb9e9a41c5b2a16ec5828ae705"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a8b51a8bb9e9a41c5b2a16ec5828ae705">EasyKiConverter::SymbolGraphicsGenerator::generateArc</a></div><div class="ttdeci">QString generateArc(const SymbolArc &amp;arc) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00224">SymbolGraphicsGenerator.cpp:224</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_a9279993f18206902a8d785efb619cfc4"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#a9279993f18206902a8d785efb619cfc4">EasyKiConverter::SymbolGraphicsGenerator::currentBBox</a></div><div class="ttdeci">const SymbolBBox &amp; currentBBox() const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8h_source.html#l00027">SymbolGraphicsGenerator.h:27</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_aaadac1c42b35f77d327fa42b5fe69362"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#aaadac1c42b35f77d327fa42b5fe69362">EasyKiConverter::SymbolGraphicsGenerator::pxToMm</a></div><div class="ttdeci">double pxToMm(double px) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00554">SymbolGraphicsGenerator.cpp:554</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_ab147a5c853b82cc7d88f365b5cecd9a0"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ab147a5c853b82cc7d88f365b5cecd9a0">EasyKiConverter::SymbolGraphicsGenerator::generatePin</a></div><div class="ttdeci">QString generatePin(const SymbolPin &amp;pin, const SymbolBBox &amp;bbox) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00079">SymbolGraphicsGenerator.cpp:79</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_ab9984cbae388c8e1e8c3d4407f6b2649"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ab9984cbae388c8e1e8c3d4407f6b2649">EasyKiConverter::SymbolGraphicsGenerator::generateDrawings</a></div><div class="ttdeci">QString generateDrawings(const SymbolData &amp;data) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00013">SymbolGraphicsGenerator.cpp:13</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_abd7fcd2bfbde309740c9e87e471fa892"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#abd7fcd2bfbde309740c9e87e471fa892">EasyKiConverter::SymbolGraphicsGenerator::generateText</a></div><div class="ttdeci">QString generateText(const SymbolText &amp;text) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00496">SymbolGraphicsGenerator.cpp:496</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_ac695449fbd6bdcf6c180a906b004a175"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ac695449fbd6bdcf6c180a906b004a175">EasyKiConverter::SymbolGraphicsGenerator::generatePolygon</a></div><div class="ttdeci">QString generatePolygon(const SymbolPolygon &amp;polygon) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00345">SymbolGraphicsGenerator.cpp:345</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_ae4b1e12f6ee140068eae508bc9cb1124"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#ae4b1e12f6ee140068eae508bc9cb1124">EasyKiConverter::SymbolGraphicsGenerator::generatePath</a></div><div class="ttdeci">QString generatePath(const SymbolPath &amp;path) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00448">SymbolGraphicsGenerator.cpp:448</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolGraphicsGenerator_html_afd62023ba3b818e3de4f8460761ab270"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolGraphicsGenerator.html#afd62023ba3b818e3de4f8460761ab270">EasyKiConverter::SymbolGraphicsGenerator::pinTypeToKicad</a></div><div class="ttdeci">QString pinTypeToKicad(PinType pinType) const</div><div class="ttdef"><b>Definition</b> <a href="SymbolGraphicsGenerator_8cpp_source.html#l00558">SymbolGraphicsGenerator.cpp:558</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html_a0b64cf3e5e732b083267e8f5b3b46cbb"><div class="ttname"><a href="namespaceEasyKiConverter.html#a0b64cf3e5e732b083267e8f5b3b46cbb">EasyKiConverter::PinType</a></div><div class="ttdeci">PinType</div><div class="ttdoc">引脚类型枚举</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00018">SymbolData.h:18</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html_a9cbea882ea8b390610af2bd7903ba44d"><div class="ttname"><a href="namespaceEasyKiConverter.html#a9cbea882ea8b390610af2bd7903ba44d">EasyKiConverter::PinStyle</a></div><div class="ttdeci">PinStyle</div><div class="ttdoc">引脚样式枚举</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00023">SymbolData.h:23</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolArc_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolArc.html">EasyKiConverter::SymbolArc</a></div><div class="ttdoc">圆弧</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00200">SymbolData.h:200</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolBBox_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolBBox.html">EasyKiConverter::SymbolBBox</a></div><div class="ttdoc">边界</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00080">SymbolData.h:80</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolCircle_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolCircle.html">EasyKiConverter::SymbolCircle</a></div><div class="ttdoc">符号部分数据</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00185">SymbolData.h:185</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolEllipse_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolEllipse.html">EasyKiConverter::SymbolEllipse</a></div><div class="ttdoc">椭圆</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00214">SymbolData.h:214</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolPart_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolPart.html">EasyKiConverter::SymbolPart</a></div><div class="ttdoc">符号部分（用于多部分符号）</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00293">SymbolData.h:293</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolPath_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolPath.html">EasyKiConverter::SymbolPath</a></div><div class="ttdoc">路径</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00256">SymbolData.h:256</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolPin_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolPin.html">EasyKiConverter::SymbolPin</a></div><div class="ttdoc">引脚</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00153">SymbolData.h:153</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolPolygon_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolPolygon.html">EasyKiConverter::SymbolPolygon</a></div><div class="ttdoc">多边</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00243">SymbolData.h:243</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolPolyline_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolPolyline.html">EasyKiConverter::SymbolPolyline</a></div><div class="ttdoc">多段</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00230">SymbolData.h:230</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolRectangle_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolRectangle.html">EasyKiConverter::SymbolRectangle</a></div><div class="ttdoc">矩形</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00167">SymbolData.h:167</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1SymbolText_html"><div class="ttname"><a href="structEasyKiConverter_1_1SymbolText.html">EasyKiConverter::SymbolText</a></div><div class="ttdoc">文本</div><div class="ttdef"><b>Definition</b> <a href="SymbolData_8h_source.html#l00269">SymbolData.h:269</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_4270bfced15e0e73154b13468c7c9ad9.html">core</a></li><li class="navelem"><a class="el" href="dir_ad1ddbc3e0d75829e0afe087a249d2ba.html">kicad</a></li><li class="navelem"><a class="el" href="SymbolGraphicsGenerator_8h.html">SymbolGraphicsGenerator.h</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

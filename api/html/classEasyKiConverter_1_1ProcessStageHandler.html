@@ -1,0 +1,441 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::ProcessStageHandler类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1ProcessStageHandler.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1ProcessStageHandler-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::ProcessStageHandler类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p><code>#include &lt;<a class="el" href="ProcessStageHandler_8h_source.html">ProcessStageHandler.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::ProcessStageHandler 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ProcessStageHandler__inherit__graph.svg" width="244" height="518"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::ProcessStageHandler 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ProcessStageHandler__coll__graph.svg" width="244" height="518"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a1ecf40bf2d400b9e54fa54cac86f500e" id="r_a1ecf40bf2d400b9e54fa54cac86f500e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ProcessStageHandler.html#a1ecf40bf2d400b9e54fa54cac86f500e">ProcessStageHandler</a> (QAtomicInt &amp;isCancelled, QThreadPool *threadPool, <a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">PipelineQueueManager::StatusQueuePtr</a> inputQueue, QObject *parent=nullptr)</td></tr>
+<tr class="separator:a1ecf40bf2d400b9e54fa54cac86f500e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a64941f60c6a0bcb62403d8765affd452" id="r_a64941f60c6a0bcb62403d8765affd452"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ProcessStageHandler.html#a64941f60c6a0bcb62403d8765affd452">start</a> () override</td></tr>
+<tr class="memdesc:a64941f60c6a0bcb62403d8765affd452"><td class="mdescLeft">&#160;</td><td class="mdescRight">启动阶段工作  <br /></td></tr>
+<tr class="separator:a64941f60c6a0bcb62403d8765affd452"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ab32c5310fd997a26b5b53ca25e8f96" id="r_a3ab32c5310fd997a26b5b53ca25e8f96"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ProcessStageHandler.html#a3ab32c5310fd997a26b5b53ca25e8f96">stop</a> () override</td></tr>
+<tr class="memdesc:a3ab32c5310fd997a26b5b53ca25e8f96"><td class="mdescLeft">&#160;</td><td class="mdescRight">停止/取消阶段工作  <br /></td></tr>
+<tr class="separator:a3ab32c5310fd997a26b5b53ca25e8f96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd9f8f17e1a7fd314b35650ea05dcd92" id="r_abd9f8f17e1a7fd314b35650ea05dcd92"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ProcessStageHandler.html#abd9f8f17e1a7fd314b35650ea05dcd92">setInputQueue</a> (<a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">PipelineQueueManager::StatusQueuePtr</a> queue)</td></tr>
+<tr class="separator:abd9f8f17e1a7fd314b35650ea05dcd92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae842935238dc39126ead034784af84e8" id="r_ae842935238dc39126ead034784af84e8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ProcessStageHandler.html#ae842935238dc39126ead034784af84e8">componentProcessCompleted</a> (QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt; status)</td></tr>
+<tr class="separator:ae842935238dc39126ead034784af84e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classEasyKiConverter_1_1StageHandler"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classEasyKiConverter_1_1StageHandler')"><img src="closed.png" alt="-"/>&#160;Public 成员函数 继承自 <a class="el" href="classEasyKiConverter_1_1StageHandler.html">EasyKiConverter::StageHandler</a></td></tr>
+<tr class="memitem:adf8014d97e4ad3d05f3bdde18e82d514 inherit pub_methods_classEasyKiConverter_1_1StageHandler" id="r_adf8014d97e4ad3d05f3bdde18e82d514"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1StageHandler.html#adf8014d97e4ad3d05f3bdde18e82d514">StageHandler</a> (QAtomicInt &amp;isCancelled, QObject *parent=nullptr)</td></tr>
+<tr class="separator:adf8014d97e4ad3d05f3bdde18e82d514 inherit pub_methods_classEasyKiConverter_1_1StageHandler"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8596112c0e9431cb8430731421db13f2 inherit pub_methods_classEasyKiConverter_1_1StageHandler" id="r_a8596112c0e9431cb8430731421db13f2"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1StageHandler.html#a8596112c0e9431cb8430731421db13f2">~StageHandler</a> ()=default</td></tr>
+<tr class="separator:a8596112c0e9431cb8430731421db13f2 inherit pub_methods_classEasyKiConverter_1_1StageHandler"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:a28861a2f7d8d31f6634bf273abcb87ed" id="r_a28861a2f7d8d31f6634bf273abcb87ed"><td class="memItemLeft" align="right" valign="top">QThreadPool *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ProcessStageHandler.html#a28861a2f7d8d31f6634bf273abcb87ed">m_threadPool</a></td></tr>
+<tr class="separator:a28861a2f7d8d31f6634bf273abcb87ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b9b9317adc2a2daccba26553752daac" id="r_a5b9b9317adc2a2daccba26553752daac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">PipelineQueueManager::StatusQueuePtr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ProcessStageHandler.html#a5b9b9317adc2a2daccba26553752daac">m_inputQueue</a></td></tr>
+<tr class="separator:a5b9b9317adc2a2daccba26553752daac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70cb2220af002566789001fbe4d30f15" id="r_a70cb2220af002566789001fbe4d30f15"><td class="memItemLeft" align="right" valign="top">QSet&lt; <a class="el" href="classEasyKiConverter_1_1ProcessWorker.html">ProcessWorker</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ProcessStageHandler.html#a70cb2220af002566789001fbe4d30f15">m_activeWorkers</a></td></tr>
+<tr class="separator:a70cb2220af002566789001fbe4d30f15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d448ec3b08c31bc82a27ada598eb3b0" id="r_a8d448ec3b08c31bc82a27ada598eb3b0"><td class="memItemLeft" align="right" valign="top">QMutex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ProcessStageHandler.html#a8d448ec3b08c31bc82a27ada598eb3b0">m_workerMutex</a></td></tr>
+<tr class="separator:a8d448ec3b08c31bc82a27ada598eb3b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
+额外继承的成员函数</h2></td></tr>
+<tr class="inherit_header pro_attribs_classEasyKiConverter_1_1StageHandler"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classEasyKiConverter_1_1StageHandler')"><img src="closed.png" alt="-"/>&#160;Protected 属性 继承自 <a class="el" href="classEasyKiConverter_1_1StageHandler.html">EasyKiConverter::StageHandler</a></td></tr>
+<tr class="memitem:add9f2f641518d01e2c2c5ff7b8dfe1c6 inherit pro_attribs_classEasyKiConverter_1_1StageHandler" id="r_add9f2f641518d01e2c2c5ff7b8dfe1c6"><td class="memItemLeft" align="right" valign="top">QAtomicInt &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1StageHandler.html#add9f2f641518d01e2c2c5ff7b8dfe1c6">m_isCancelled</a></td></tr>
+<tr class="separator:add9f2f641518d01e2c2c5ff7b8dfe1c6 inherit pro_attribs_classEasyKiConverter_1_1StageHandler"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock">
+<p class="definition">在文件 <a class="el" href="ProcessStageHandler_8h_source.html">ProcessStageHandler.h</a> 第 <a class="el" href="ProcessStageHandler_8h_source.html#l00014">14</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a1ecf40bf2d400b9e54fa54cac86f500e" name="a1ecf40bf2d400b9e54fa54cac86f500e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ecf40bf2d400b9e54fa54cac86f500e">&#9670;&#160;</a></span>ProcessStageHandler()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::ProcessStageHandler::ProcessStageHandler </td>
+          <td>(</td>
+          <td class="paramtype">QAtomicInt &amp;&#160;</td>
+          <td class="paramname"><em>isCancelled</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QThreadPool *&#160;</td>
+          <td class="paramname"><em>threadPool</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">PipelineQueueManager::StatusQueuePtr</a>&#160;</td>
+          <td class="paramname"><em>inputQueue</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ProcessStageHandler_8cpp_source.html">ProcessStageHandler.cpp</a> 第 <a class="el" href="ProcessStageHandler_8cpp_source.html#l00008">8</a> 行定义.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="ae842935238dc39126ead034784af84e8" name="ae842935238dc39126ead034784af84e8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae842935238dc39126ead034784af84e8">&#9670;&#160;</a></span>componentProcessCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ProcessStageHandler::componentProcessCompleted </td>
+          <td>(</td>
+          <td class="paramtype">QSharedPointer&lt; <a class="el" href="structEasyKiConverter_1_1ComponentExportStatus.html">ComponentExportStatus</a> &gt;&#160;</td>
+          <td class="paramname"><em>status</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00027">EasyKiConverter::ExportServicePipeline::ExportServicePipeline()</a> , 以及 <a class="el" href="ProcessStageHandler_8cpp_source.html#l00014">start()</a>.</p>
+
+</div>
+</div>
+<a id="abd9f8f17e1a7fd314b35650ea05dcd92" name="abd9f8f17e1a7fd314b35650ea05dcd92"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd9f8f17e1a7fd314b35650ea05dcd92">&#9670;&#160;</a></span>setInputQueue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ProcessStageHandler::setInputQueue </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">PipelineQueueManager::StatusQueuePtr</a>&#160;</td>
+          <td class="paramname"><em>queue</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ProcessStageHandler_8h_source.html">ProcessStageHandler.h</a> 第 <a class="el" href="ProcessStageHandler_8h_source.html#l00025">25</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ProcessStageHandler_8h_source.html#l00034">m_inputQueue</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00090">EasyKiConverter::ExportServicePipeline::executeExportPipelineWithStages()</a>.</p>
+
+</div>
+</div>
+<a id="a64941f60c6a0bcb62403d8765affd452" name="a64941f60c6a0bcb62403d8765affd452"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a64941f60c6a0bcb62403d8765affd452">&#9670;&#160;</a></span>start()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ProcessStageHandler::start </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>启动阶段工作 </p>
+
+<p>实现了 <a class="el" href="classEasyKiConverter_1_1StageHandler.html#a3e74e985d85a9e6fb220e5a3903af8e5">EasyKiConverter::StageHandler</a>.</p>
+
+<p class="definition">在文件 <a class="el" href="ProcessStageHandler_8cpp_source.html">ProcessStageHandler.cpp</a> 第 <a class="el" href="ProcessStageHandler_8cpp_source.html#l00014">14</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ProcessStageHandler.html#ae842935238dc39126ead034784af84e8">componentProcessCompleted()</a>, <a class="el" href="ProcessStageHandler_8h_source.html#l00035">m_activeWorkers</a>, <a class="el" href="ProcessStageHandler_8h_source.html#l00034">m_inputQueue</a>, <a class="el" href="StageHandler_8h_source.html#l00034">EasyKiConverter::StageHandler::m_isCancelled</a>, <a class="el" href="ProcessStageHandler_8h_source.html#l00033">m_threadPool</a>, <a class="el" href="ProcessStageHandler_8h_source.html#l00036">m_workerMutex</a>, <a class="el" href="classEasyKiConverter_1_1ProcessWorker.html#aec8e300247f603160afd71f0913e0bad">EasyKiConverter::ProcessWorker::processCompleted()</a>, <a class="el" href="ProcessWorker_8cpp_source.html#l00018">EasyKiConverter::ProcessWorker::run()</a> , 以及 <a class="el" href="classEasyKiConverter_1_1StageHandler.html#a3e74e985d85a9e6fb220e5a3903af8e5">EasyKiConverter::StageHandler::start()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00426">EasyKiConverter::ExportServicePipeline::startProcessStage()</a>.</p>
+
+</div>
+</div>
+<a id="a3ab32c5310fd997a26b5b53ca25e8f96" name="a3ab32c5310fd997a26b5b53ca25e8f96"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ab32c5310fd997a26b5b53ca25e8f96">&#9670;&#160;</a></span>stop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ProcessStageHandler::stop </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>停止/取消阶段工作 </p>
+
+<p>重载 <a class="el" href="classEasyKiConverter_1_1StageHandler.html#af75e45eef56a1cda08dbddb251ff8ba7">EasyKiConverter::StageHandler</a> .</p>
+
+<p class="definition">在文件 <a class="el" href="ProcessStageHandler_8cpp_source.html">ProcessStageHandler.cpp</a> 第 <a class="el" href="ProcessStageHandler_8cpp_source.html#l00062">62</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ProcessStageHandler_8h_source.html#l00035">m_activeWorkers</a> , 以及 <a class="el" href="ProcessStageHandler_8h_source.html#l00036">m_workerMutex</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportService__Pipeline_8cpp_source.html#l00625">EasyKiConverter::ExportServicePipeline::cancelExport()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a70cb2220af002566789001fbe4d30f15" name="a70cb2220af002566789001fbe4d30f15"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a70cb2220af002566789001fbe4d30f15">&#9670;&#160;</a></span>m_activeWorkers</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QSet&lt;<a class="el" href="classEasyKiConverter_1_1ProcessWorker.html">ProcessWorker</a>*&gt; EasyKiConverter::ProcessStageHandler::m_activeWorkers</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ProcessStageHandler_8h_source.html">ProcessStageHandler.h</a> 第 <a class="el" href="ProcessStageHandler_8h_source.html#l00035">35</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ProcessStageHandler_8cpp_source.html#l00014">start()</a> , 以及 <a class="el" href="ProcessStageHandler_8cpp_source.html#l00062">stop()</a>.</p>
+
+</div>
+</div>
+<a id="a5b9b9317adc2a2daccba26553752daac" name="a5b9b9317adc2a2daccba26553752daac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b9b9317adc2a2daccba26553752daac">&#9670;&#160;</a></span>m_inputQueue</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1PipelineQueueManager.html#a604e4dc27abfa18da74c1ed51bdbddf6">PipelineQueueManager::StatusQueuePtr</a> EasyKiConverter::ProcessStageHandler::m_inputQueue</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ProcessStageHandler_8h_source.html">ProcessStageHandler.h</a> 第 <a class="el" href="ProcessStageHandler_8h_source.html#l00034">34</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ProcessStageHandler_8h_source.html#l00025">setInputQueue()</a> , 以及 <a class="el" href="ProcessStageHandler_8cpp_source.html#l00014">start()</a>.</p>
+
+</div>
+</div>
+<a id="a28861a2f7d8d31f6634bf273abcb87ed" name="a28861a2f7d8d31f6634bf273abcb87ed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28861a2f7d8d31f6634bf273abcb87ed">&#9670;&#160;</a></span>m_threadPool</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QThreadPool* EasyKiConverter::ProcessStageHandler::m_threadPool</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ProcessStageHandler_8h_source.html">ProcessStageHandler.h</a> 第 <a class="el" href="ProcessStageHandler_8h_source.html#l00033">33</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ProcessStageHandler_8cpp_source.html#l00014">start()</a>.</p>
+
+</div>
+</div>
+<a id="a8d448ec3b08c31bc82a27ada598eb3b0" name="a8d448ec3b08c31bc82a27ada598eb3b0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8d448ec3b08c31bc82a27ada598eb3b0">&#9670;&#160;</a></span>m_workerMutex</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMutex EasyKiConverter::ProcessStageHandler::m_workerMutex</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ProcessStageHandler_8h_source.html">ProcessStageHandler.h</a> 第 <a class="el" href="ProcessStageHandler_8h_source.html#l00036">36</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ProcessStageHandler_8cpp_source.html#l00014">start()</a> , 以及 <a class="el" href="ProcessStageHandler_8cpp_source.html#l00062">stop()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>services/pipeline/stage/<a class="el" href="ProcessStageHandler_8h_source.html">ProcessStageHandler.h</a></li>
+<li>services/pipeline/stage/<a class="el" href="ProcessStageHandler_8cpp_source.html">ProcessStageHandler.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1ProcessStageHandler.html">ProcessStageHandler</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<map id="core/utils/INetworkAdapter.h" name="core/utils/INetworkAdapter.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="131,5,337,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,103,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,33,97,76,95,71,204,28"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="127,79,229,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="227,33,198,69,193,66,223,29"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="253,79,327,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="245,29,275,66,270,69,241,33"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="352,79,423,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="260,28,351,70,349,75,258,33"/>
+</map>

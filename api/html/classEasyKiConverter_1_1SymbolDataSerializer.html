@@ -1,0 +1,1551 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::SymbolDataSerializer类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1SymbolDataSerializer.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-static-methods">静态 Public 成员函数</a> &#124;
+<a href="#pri-static-methods">静态 Private 成员函数</a> &#124;
+<a href="classEasyKiConverter_1_1SymbolDataSerializer-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::SymbolDataSerializer类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p><code>#include &lt;<a class="el" href="SymbolDataSerializer_8h_source.html">SymbolDataSerializer.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> EasyKiConverter::SymbolDataSerializer 的协作图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1SymbolDataSerializer__coll__graph.svg" width="222" height="531"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+静态 Public 成员函数</h2></td></tr>
+<tr class="memitem:a745b2a2f8ac9c30136e0bbb20fa9e288" id="r_a745b2a2f8ac9c30136e0bbb20fa9e288"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a745b2a2f8ac9c30136e0bbb20fa9e288">toJson</a> (const <a class="el" href="classEasyKiConverter_1_1SymbolData.html">SymbolData</a> &amp;data)</td></tr>
+<tr class="separator:a745b2a2f8ac9c30136e0bbb20fa9e288"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6d8723a51c9f5cc080f573cb4885503" id="r_ab6d8723a51c9f5cc080f573cb4885503"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#ab6d8723a51c9f5cc080f573cb4885503">fromJson</a> (<a class="el" href="classEasyKiConverter_1_1SymbolData.html">SymbolData</a> &amp;data, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:ab6d8723a51c9f5cc080f573cb4885503"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f9840ca372191a1d5ab6a53b1ff992f" id="r_a6f9840ca372191a1d5ab6a53b1ff992f"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a6f9840ca372191a1d5ab6a53b1ff992f">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolInfo.html">SymbolInfo</a> &amp;info)</td></tr>
+<tr class="separator:a6f9840ca372191a1d5ab6a53b1ff992f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78b8e455aab1c3c93ff892c9d3cfa288" id="r_a78b8e455aab1c3c93ff892c9d3cfa288"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a78b8e455aab1c3c93ff892c9d3cfa288">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolInfo.html">SymbolInfo</a> &amp;info, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a78b8e455aab1c3c93ff892c9d3cfa288"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8202f553b38b767fa4f667ce21e21114" id="r_a8202f553b38b767fa4f667ce21e21114"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a8202f553b38b767fa4f667ce21e21114">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp;bbox)</td></tr>
+<tr class="separator:a8202f553b38b767fa4f667ce21e21114"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abff14761b53b727dc73ca3c24a1b9884" id="r_abff14761b53b727dc73ca3c24a1b9884"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#abff14761b53b727dc73ca3c24a1b9884">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp;bbox, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:abff14761b53b727dc73ca3c24a1b9884"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44ba50cc53426afb44380767857be865" id="r_a44ba50cc53426afb44380767857be865"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a44ba50cc53426afb44380767857be865">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPin.html">SymbolPin</a> &amp;pin)</td></tr>
+<tr class="separator:a44ba50cc53426afb44380767857be865"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac36d4a2697004ed792d55c06654681d9" id="r_ac36d4a2697004ed792d55c06654681d9"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#ac36d4a2697004ed792d55c06654681d9">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolPin.html">SymbolPin</a> &amp;pin, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:ac36d4a2697004ed792d55c06654681d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad9dd2f01df3cfaf587924c91a4a72f4e" id="r_ad9dd2f01df3cfaf587924c91a4a72f4e"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#ad9dd2f01df3cfaf587924c91a4a72f4e">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolRectangle.html">SymbolRectangle</a> &amp;rect)</td></tr>
+<tr class="separator:ad9dd2f01df3cfaf587924c91a4a72f4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5077316b2f5909cd7c7b2c2a827023ee" id="r_a5077316b2f5909cd7c7b2c2a827023ee"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a5077316b2f5909cd7c7b2c2a827023ee">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolRectangle.html">SymbolRectangle</a> &amp;rect, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a5077316b2f5909cd7c7b2c2a827023ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa55748ef9ab90067d643fc20492407e1" id="r_aa55748ef9ab90067d643fc20492407e1"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#aa55748ef9ab90067d643fc20492407e1">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolCircle.html">SymbolCircle</a> &amp;circle)</td></tr>
+<tr class="separator:aa55748ef9ab90067d643fc20492407e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f453f8e433847b56848f5f8db5f043e" id="r_a4f453f8e433847b56848f5f8db5f043e"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a4f453f8e433847b56848f5f8db5f043e">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolCircle.html">SymbolCircle</a> &amp;circle, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a4f453f8e433847b56848f5f8db5f043e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afea45832a028bc080ed54ceed222789e" id="r_afea45832a028bc080ed54ceed222789e"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#afea45832a028bc080ed54ceed222789e">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolArc.html">SymbolArc</a> &amp;arc)</td></tr>
+<tr class="separator:afea45832a028bc080ed54ceed222789e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea952266e49483deff16a7c61a177200" id="r_aea952266e49483deff16a7c61a177200"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#aea952266e49483deff16a7c61a177200">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolArc.html">SymbolArc</a> &amp;arc, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:aea952266e49483deff16a7c61a177200"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57a4327e30d47d3a78e6fcdb1b92e326" id="r_a57a4327e30d47d3a78e6fcdb1b92e326"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a57a4327e30d47d3a78e6fcdb1b92e326">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolEllipse.html">SymbolEllipse</a> &amp;ellipse)</td></tr>
+<tr class="separator:a57a4327e30d47d3a78e6fcdb1b92e326"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d4a3caa9ff0544b6f28f8d48d7760dc" id="r_a7d4a3caa9ff0544b6f28f8d48d7760dc"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a7d4a3caa9ff0544b6f28f8d48d7760dc">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolEllipse.html">SymbolEllipse</a> &amp;ellipse, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a7d4a3caa9ff0544b6f28f8d48d7760dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47c194668ef2c45b52fe1496695caa70" id="r_a47c194668ef2c45b52fe1496695caa70"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a47c194668ef2c45b52fe1496695caa70">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPolyline.html">SymbolPolyline</a> &amp;polyline)</td></tr>
+<tr class="separator:a47c194668ef2c45b52fe1496695caa70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a834fd0768fe99c7127ab6618e7ae7cb2" id="r_a834fd0768fe99c7127ab6618e7ae7cb2"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a834fd0768fe99c7127ab6618e7ae7cb2">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolPolyline.html">SymbolPolyline</a> &amp;polyline, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a834fd0768fe99c7127ab6618e7ae7cb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac942ccc86524cffdce7c25d7a7c12724" id="r_ac942ccc86524cffdce7c25d7a7c12724"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#ac942ccc86524cffdce7c25d7a7c12724">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPolygon.html">SymbolPolygon</a> &amp;polygon)</td></tr>
+<tr class="separator:ac942ccc86524cffdce7c25d7a7c12724"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aebc2230ccff84e2fe1f8a324a2113ecf" id="r_aebc2230ccff84e2fe1f8a324a2113ecf"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#aebc2230ccff84e2fe1f8a324a2113ecf">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolPolygon.html">SymbolPolygon</a> &amp;polygon, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:aebc2230ccff84e2fe1f8a324a2113ecf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a7cd8436828b3c742b6389c6d885d93" id="r_a3a7cd8436828b3c742b6389c6d885d93"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a3a7cd8436828b3c742b6389c6d885d93">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPath.html">SymbolPath</a> &amp;path)</td></tr>
+<tr class="separator:a3a7cd8436828b3c742b6389c6d885d93"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad148f6328e3c0b115feaeda14109c382" id="r_ad148f6328e3c0b115feaeda14109c382"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#ad148f6328e3c0b115feaeda14109c382">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolPath.html">SymbolPath</a> &amp;path, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:ad148f6328e3c0b115feaeda14109c382"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac5452c10882ee632f97c1d17e80f52a" id="r_aac5452c10882ee632f97c1d17e80f52a"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#aac5452c10882ee632f97c1d17e80f52a">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolText.html">SymbolText</a> &amp;text)</td></tr>
+<tr class="separator:aac5452c10882ee632f97c1d17e80f52a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a596d3338ac999815180e7a990a2de764" id="r_a596d3338ac999815180e7a990a2de764"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a596d3338ac999815180e7a990a2de764">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolText.html">SymbolText</a> &amp;text, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a596d3338ac999815180e7a990a2de764"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0aaf279fcaed9477153cc432d7be0394" id="r_a0aaf279fcaed9477153cc432d7be0394"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a0aaf279fcaed9477153cc432d7be0394">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPart.html">SymbolPart</a> &amp;part)</td></tr>
+<tr class="separator:a0aaf279fcaed9477153cc432d7be0394"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4161a66198379fdec995e272cdebd4df" id="r_a4161a66198379fdec995e272cdebd4df"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a4161a66198379fdec995e272cdebd4df">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolPart.html">SymbolPart</a> &amp;part, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a4161a66198379fdec995e272cdebd4df"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-static-methods" name="pri-static-methods"></a>
+静态 Private 成员函数</h2></td></tr>
+<tr class="memitem:a7e36285ead7c07cd2a74dc61a9088f41" id="r_a7e36285ead7c07cd2a74dc61a9088f41"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a7e36285ead7c07cd2a74dc61a9088f41">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPinSettings.html">SymbolPinSettings</a> &amp;settings)</td></tr>
+<tr class="separator:a7e36285ead7c07cd2a74dc61a9088f41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1432997a00abdcc24247d4748b6a725b" id="r_a1432997a00abdcc24247d4748b6a725b"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a1432997a00abdcc24247d4748b6a725b">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolPinSettings.html">SymbolPinSettings</a> &amp;settings, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a1432997a00abdcc24247d4748b6a725b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e0cb7a3233819e99641dbdae6a72121" id="r_a8e0cb7a3233819e99641dbdae6a72121"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a8e0cb7a3233819e99641dbdae6a72121">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPinDot.html">SymbolPinDot</a> &amp;dot)</td></tr>
+<tr class="separator:a8e0cb7a3233819e99641dbdae6a72121"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c25050b367fb3897e6e37abc8354616" id="r_a9c25050b367fb3897e6e37abc8354616"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a9c25050b367fb3897e6e37abc8354616">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolPinDot.html">SymbolPinDot</a> &amp;dot, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a9c25050b367fb3897e6e37abc8354616"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab595ca021fe41441b1ba48f1e3cea7de" id="r_ab595ca021fe41441b1ba48f1e3cea7de"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#ab595ca021fe41441b1ba48f1e3cea7de">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPinPath.html">SymbolPinPath</a> &amp;path)</td></tr>
+<tr class="separator:ab595ca021fe41441b1ba48f1e3cea7de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5eefa6bdf0eff12cf51d618a9d230abb" id="r_a5eefa6bdf0eff12cf51d618a9d230abb"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a5eefa6bdf0eff12cf51d618a9d230abb">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolPinPath.html">SymbolPinPath</a> &amp;path, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a5eefa6bdf0eff12cf51d618a9d230abb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a819896ae00becf896db8d1146b3eb33d" id="r_a819896ae00becf896db8d1146b3eb33d"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a819896ae00becf896db8d1146b3eb33d">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPinName.html">SymbolPinName</a> &amp;name)</td></tr>
+<tr class="separator:a819896ae00becf896db8d1146b3eb33d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5580cfff55657ab6e848c7f45e90ab44" id="r_a5580cfff55657ab6e848c7f45e90ab44"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a5580cfff55657ab6e848c7f45e90ab44">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolPinName.html">SymbolPinName</a> &amp;name, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a5580cfff55657ab6e848c7f45e90ab44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aafe5a8989589b5097f2aa82f6327547b" id="r_aafe5a8989589b5097f2aa82f6327547b"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#aafe5a8989589b5097f2aa82f6327547b">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPinDotBis.html">SymbolPinDotBis</a> &amp;dot)</td></tr>
+<tr class="separator:aafe5a8989589b5097f2aa82f6327547b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7a7450f8ec02381d2eb38d880f230c3" id="r_ad7a7450f8ec02381d2eb38d880f230c3"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#ad7a7450f8ec02381d2eb38d880f230c3">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolPinDotBis.html">SymbolPinDotBis</a> &amp;dot, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:ad7a7450f8ec02381d2eb38d880f230c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3db870b0a89ece4f0f8bc5a127d6737" id="r_ab3db870b0a89ece4f0f8bc5a127d6737"><td class="memItemLeft" align="right" valign="top">static QJsonObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#ab3db870b0a89ece4f0f8bc5a127d6737">toJson</a> (const <a class="el" href="structEasyKiConverter_1_1SymbolPinClock.html">SymbolPinClock</a> &amp;clock)</td></tr>
+<tr class="separator:ab3db870b0a89ece4f0f8bc5a127d6737"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12e5febc513f1c212b58dd35d44b2375" id="r_a12e5febc513f1c212b58dd35d44b2375"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html#a12e5febc513f1c212b58dd35d44b2375">fromJson</a> (<a class="el" href="structEasyKiConverter_1_1SymbolPinClock.html">SymbolPinClock</a> &amp;clock, const QJsonObject &amp;json)</td></tr>
+<tr class="separator:a12e5febc513f1c212b58dd35d44b2375"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock">
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8h_source.html">SymbolDataSerializer.h</a> 第 <a class="el" href="SymbolDataSerializer_8h_source.html#l00010">10</a> 行定义.</p>
+</div><h2 class="groupheader">成员函数说明</h2>
+<a id="aea952266e49483deff16a7c61a177200" name="aea952266e49483deff16a7c61a177200"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aea952266e49483deff16a7c61a177200">&#9670;&#160;</a></span>fromJson() <span class="overload">[1/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolArc.html">SymbolArc</a> &amp;&#160;</td>
+          <td class="paramname"><em>arc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00363">363</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00206">EasyKiConverter::SymbolArc::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00202">EasyKiConverter::SymbolArc::helperDots</a>, <a class="el" href="SymbolData_8h_source.html#l00207">EasyKiConverter::SymbolArc::id</a>, <a class="el" href="SymbolData_8h_source.html#l00208">EasyKiConverter::SymbolArc::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00201">EasyKiConverter::SymbolArc::path</a>, <a class="el" href="SymbolData_8h_source.html#l00203">EasyKiConverter::SymbolArc::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00205">EasyKiConverter::SymbolArc::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00204">EasyKiConverter::SymbolArc::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="abff14761b53b727dc73ca3c24a1b9884" name="abff14761b53b727dc73ca3c24a1b9884"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abff14761b53b727dc73ca3c24a1b9884">&#9670;&#160;</a></span>fromJson() <span class="overload">[2/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp;&#160;</td>
+          <td class="paramname"><em>bbox</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00172">172</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00084">EasyKiConverter::SymbolBBox::height</a>, <a class="el" href="SymbolData_8h_source.html#l00083">EasyKiConverter::SymbolBBox::width</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+</div>
+</div>
+<a id="a4f453f8e433847b56848f5f8db5f043e" name="a4f453f8e433847b56848f5f8db5f043e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4f453f8e433847b56848f5f8db5f043e">&#9670;&#160;</a></span>fromJson() <span class="overload">[3/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolCircle.html">SymbolCircle</a> &amp;&#160;</td>
+          <td class="paramname"><em>circle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00328">328</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00186">EasyKiConverter::SymbolCircle::centerX</a>, <a class="el" href="SymbolData_8h_source.html#l00187">EasyKiConverter::SymbolCircle::centerY</a>, <a class="el" href="SymbolData_8h_source.html#l00192">EasyKiConverter::SymbolCircle::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00193">EasyKiConverter::SymbolCircle::id</a>, <a class="el" href="SymbolData_8h_source.html#l00194">EasyKiConverter::SymbolCircle::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00188">EasyKiConverter::SymbolCircle::radius</a>, <a class="el" href="SymbolData_8h_source.html#l00189">EasyKiConverter::SymbolCircle::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00191">EasyKiConverter::SymbolCircle::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00190">EasyKiConverter::SymbolCircle::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="ab6d8723a51c9f5cc080f573cb4885503" name="ab6d8723a51c9f5cc080f573cb4885503"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab6d8723a51c9f5cc080f573cb4885503">&#9670;&#160;</a></span>fromJson() <span class="overload">[4/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1SymbolData.html">SymbolData</a> &amp;&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00777">777</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00777">fromJson()</a>, <a class="el" href="SymbolData_8h_source.html#l00378">EasyKiConverter::SymbolData::setArcs()</a>, <a class="el" href="SymbolData_8h_source.html#l00333">EasyKiConverter::SymbolData::setBbox()</a>, <a class="el" href="SymbolData_8h_source.html#l00366">EasyKiConverter::SymbolData::setCircles()</a>, <a class="el" href="SymbolData_8h_source.html#l00390">EasyKiConverter::SymbolData::setEllipses()</a>, <a class="el" href="SymbolData_8h_source.html#l00325">EasyKiConverter::SymbolData::setInfo()</a>, <a class="el" href="SymbolData_8h_source.html#l00451">EasyKiConverter::SymbolData::setParts()</a>, <a class="el" href="SymbolData_8h_source.html#l00426">EasyKiConverter::SymbolData::setPaths()</a>, <a class="el" href="SymbolData_8h_source.html#l00342">EasyKiConverter::SymbolData::setPins()</a>, <a class="el" href="SymbolData_8h_source.html#l00414">EasyKiConverter::SymbolData::setPolygons()</a>, <a class="el" href="SymbolData_8h_source.html#l00402">EasyKiConverter::SymbolData::setPolylines()</a>, <a class="el" href="SymbolData_8h_source.html#l00354">EasyKiConverter::SymbolData::setRectangles()</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00438">EasyKiConverter::SymbolData::setTexts()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="SymbolData_8cpp_source.html#l00013">EasyKiConverter::SymbolData::fromJson()</a>, <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00777">fromJson()</a>, <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00599">fromJson()</a> , 以及 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00146">fromJson()</a>.</p>
+
+</div>
+</div>
+<a id="a7d4a3caa9ff0544b6f28f8d48d7760dc" name="a7d4a3caa9ff0544b6f28f8d48d7760dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d4a3caa9ff0544b6f28f8d48d7760dc">&#9670;&#160;</a></span>fromJson() <span class="overload">[5/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolEllipse.html">SymbolEllipse</a> &amp;&#160;</td>
+          <td class="paramname"><em>ellipse</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00402">402</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00215">EasyKiConverter::SymbolEllipse::centerX</a>, <a class="el" href="SymbolData_8h_source.html#l00216">EasyKiConverter::SymbolEllipse::centerY</a>, <a class="el" href="SymbolData_8h_source.html#l00222">EasyKiConverter::SymbolEllipse::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00223">EasyKiConverter::SymbolEllipse::id</a>, <a class="el" href="SymbolData_8h_source.html#l00224">EasyKiConverter::SymbolEllipse::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00217">EasyKiConverter::SymbolEllipse::radiusX</a>, <a class="el" href="SymbolData_8h_source.html#l00218">EasyKiConverter::SymbolEllipse::radiusY</a>, <a class="el" href="SymbolData_8h_source.html#l00219">EasyKiConverter::SymbolEllipse::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00221">EasyKiConverter::SymbolEllipse::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00220">EasyKiConverter::SymbolEllipse::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="a78b8e455aab1c3c93ff892c9d3cfa288" name="a78b8e455aab1c3c93ff892c9d3cfa288"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78b8e455aab1c3c93ff892c9d3cfa288">&#9670;&#160;</a></span>fromJson() <span class="overload">[6/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolInfo.html">SymbolInfo</a> &amp;&#160;</td>
+          <td class="paramname"><em>info</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00230">230</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00036">EasyKiConverter::SymbolInfo::datasheet</a>, <a class="el" href="SymbolData_8h_source.html#l00046">EasyKiConverter::SymbolInfo::datastrid</a>, <a class="el" href="SymbolData_8h_source.html#l00035">EasyKiConverter::SymbolInfo::description</a>, <a class="el" href="SymbolData_8h_source.html#l00043">EasyKiConverter::SymbolInfo::docType</a>, <a class="el" href="SymbolData_8h_source.html#l00058">EasyKiConverter::SymbolInfo::editorVersion</a>, <a class="el" href="SymbolData_8h_source.html#l00064">EasyKiConverter::SymbolInfo::hasIdFlag</a>, <a class="el" href="SymbolData_8h_source.html#l00063">EasyKiConverter::SymbolInfo::importFlag</a>, <a class="el" href="SymbolData_8h_source.html#l00049">EasyKiConverter::SymbolInfo::isFavorite</a>, <a class="el" href="SymbolData_8h_source.html#l00038">EasyKiConverter::SymbolInfo::jlcId</a>, <a class="el" href="SymbolData_8h_source.html#l00047">EasyKiConverter::SymbolInfo::jlcOnSale</a>, <a class="el" href="SymbolData_8h_source.html#l00072">EasyKiConverter::SymbolInfo::jlcpcbPartClass</a>, <a class="el" href="SymbolData_8h_source.html#l00037">EasyKiConverter::SymbolInfo::lcscId</a>, <a class="el" href="SymbolData_8h_source.html#l00034">EasyKiConverter::SymbolInfo::manufacturer</a>, <a class="el" href="SymbolData_8h_source.html#l00071">EasyKiConverter::SymbolInfo::manufacturerPart</a>, <a class="el" href="SymbolData_8h_source.html#l00031">EasyKiConverter::SymbolInfo::name</a>, <a class="el" href="SymbolData_8h_source.html#l00033">EasyKiConverter::SymbolInfo::package</a>, <a class="el" href="SymbolData_8h_source.html#l00032">EasyKiConverter::SymbolInfo::prefix</a>, <a class="el" href="SymbolData_8h_source.html#l00061">EasyKiConverter::SymbolInfo::puuid</a>, <a class="el" href="SymbolData_8h_source.html#l00051">EasyKiConverter::SymbolInfo::smt</a>, <a class="el" href="SymbolData_8h_source.html#l00068">EasyKiConverter::SymbolInfo::subpartNo</a>, <a class="el" href="SymbolData_8h_source.html#l00070">EasyKiConverter::SymbolInfo::supplier</a>, <a class="el" href="SymbolData_8h_source.html#l00069">EasyKiConverter::SymbolInfo::supplierPart</a>, <a class="el" href="SymbolData_8h_source.html#l00045">EasyKiConverter::SymbolInfo::thumb</a>, <a class="el" href="SymbolData_8h_source.html#l00067">EasyKiConverter::SymbolInfo::timeStamp</a>, <a class="el" href="SymbolData_8h_source.html#l00042">EasyKiConverter::SymbolInfo::title</a>, <a class="el" href="SymbolData_8h_source.html#l00044">EasyKiConverter::SymbolInfo::type</a>, <a class="el" href="SymbolData_8h_source.html#l00055">EasyKiConverter::SymbolInfo::updatedAt</a>, <a class="el" href="SymbolData_8h_source.html#l00054">EasyKiConverter::SymbolInfo::updateTime</a>, <a class="el" href="SymbolData_8h_source.html#l00062">EasyKiConverter::SymbolInfo::utime</a>, <a class="el" href="SymbolData_8h_source.html#l00041">EasyKiConverter::SymbolInfo::uuid</a>, <a class="el" href="SymbolData_8h_source.html#l00050">EasyKiConverter::SymbolInfo::verify</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00048">EasyKiConverter::SymbolInfo::writable</a>.</p>
+
+</div>
+</div>
+<a id="a4161a66198379fdec995e272cdebd4df" name="a4161a66198379fdec995e272cdebd4df"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4161a66198379fdec995e272cdebd4df">&#9670;&#160;</a></span>fromJson() <span class="overload">[7/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolPart.html">SymbolPart</a> &amp;&#160;</td>
+          <td class="paramname"><em>part</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00599">599</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00300">EasyKiConverter::SymbolPart::arcs</a>, <a class="el" href="SymbolData_8h_source.html#l00299">EasyKiConverter::SymbolPart::circles</a>, <a class="el" href="SymbolData_8h_source.html#l00301">EasyKiConverter::SymbolPart::ellipses</a>, <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00777">fromJson()</a>, <a class="el" href="SymbolData_8h_source.html#l00295">EasyKiConverter::SymbolPart::originX</a>, <a class="el" href="SymbolData_8h_source.html#l00296">EasyKiConverter::SymbolPart::originY</a>, <a class="el" href="SymbolData_8h_source.html#l00304">EasyKiConverter::SymbolPart::paths</a>, <a class="el" href="SymbolData_8h_source.html#l00297">EasyKiConverter::SymbolPart::pins</a>, <a class="el" href="SymbolData_8h_source.html#l00303">EasyKiConverter::SymbolPart::polygons</a>, <a class="el" href="SymbolData_8h_source.html#l00302">EasyKiConverter::SymbolPart::polylines</a>, <a class="el" href="SymbolData_8h_source.html#l00298">EasyKiConverter::SymbolPart::rectangles</a>, <a class="el" href="SymbolData_8h_source.html#l00305">EasyKiConverter::SymbolPart::texts</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00294">EasyKiConverter::SymbolPart::unitNumber</a>.</p>
+
+</div>
+</div>
+<a id="ad148f6328e3c0b115feaeda14109c382" name="ad148f6328e3c0b115feaeda14109c382"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad148f6328e3c0b115feaeda14109c382">&#9670;&#160;</a></span>fromJson() <span class="overload">[8/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolPath.html">SymbolPath</a> &amp;&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00480">480</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00261">EasyKiConverter::SymbolPath::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00262">EasyKiConverter::SymbolPath::id</a>, <a class="el" href="SymbolData_8h_source.html#l00263">EasyKiConverter::SymbolPath::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00257">EasyKiConverter::SymbolPath::paths</a>, <a class="el" href="SymbolData_8h_source.html#l00258">EasyKiConverter::SymbolPath::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00260">EasyKiConverter::SymbolPath::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00259">EasyKiConverter::SymbolPath::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="ac36d4a2697004ed792d55c06654681d9" name="ac36d4a2697004ed792d55c06654681d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac36d4a2697004ed792d55c06654681d9">&#9670;&#160;</a></span>fromJson() <span class="overload">[9/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolPin.html">SymbolPin</a> &amp;&#160;</td>
+          <td class="paramname"><em>pin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00146">146</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00159">EasyKiConverter::SymbolPin::clock</a>, <a class="el" href="SymbolData_8h_source.html#l00158">EasyKiConverter::SymbolPin::dot</a>, <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00777">fromJson()</a>, <a class="el" href="SymbolData_8h_source.html#l00157">EasyKiConverter::SymbolPin::name</a>, <a class="el" href="SymbolData_8h_source.html#l00155">EasyKiConverter::SymbolPin::pinDot</a>, <a class="el" href="SymbolData_8h_source.html#l00156">EasyKiConverter::SymbolPin::pinPath</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00154">EasyKiConverter::SymbolPin::settings</a>.</p>
+
+</div>
+</div>
+<a id="a12e5febc513f1c212b58dd35d44b2375" name="a12e5febc513f1c212b58dd35d44b2375"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12e5febc513f1c212b58dd35d44b2375">&#9670;&#160;</a></span>fromJson() <span class="overload">[10/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolPinClock.html">SymbolPinClock</a> &amp;&#160;</td>
+          <td class="paramname"><em>clock</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00127">127</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00146">EasyKiConverter::SymbolPinClock::isDisplayed</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00147">EasyKiConverter::SymbolPinClock::path</a>.</p>
+
+</div>
+</div>
+<a id="a9c25050b367fb3897e6e37abc8354616" name="a9c25050b367fb3897e6e37abc8354616"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c25050b367fb3897e6e37abc8354616">&#9670;&#160;</a></span>fromJson() <span class="overload">[11/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolPinDot.html">SymbolPinDot</a> &amp;&#160;</td>
+          <td class="paramname"><em>dot</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00047">47</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00107">EasyKiConverter::SymbolPinDot::dotX</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00108">EasyKiConverter::SymbolPinDot::dotY</a>.</p>
+
+</div>
+</div>
+<a id="ad7a7450f8ec02381d2eb38d880f230c3" name="ad7a7450f8ec02381d2eb38d880f230c3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad7a7450f8ec02381d2eb38d880f230c3">&#9670;&#160;</a></span>fromJson() <span class="overload">[12/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolPinDotBis.html">SymbolPinDotBis</a> &amp;&#160;</td>
+          <td class="paramname"><em>dot</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00111">111</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00138">EasyKiConverter::SymbolPinDotBis::circleX</a>, <a class="el" href="SymbolData_8h_source.html#l00139">EasyKiConverter::SymbolPinDotBis::circleY</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00137">EasyKiConverter::SymbolPinDotBis::isDisplayed</a>.</p>
+
+</div>
+</div>
+<a id="a5580cfff55657ab6e848c7f45e90ab44" name="a5580cfff55657ab6e848c7f45e90ab44"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5580cfff55657ab6e848c7f45e90ab44">&#9670;&#160;</a></span>fromJson() <span class="overload">[13/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolPinName.html">SymbolPinName</a> &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00086">86</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00129">EasyKiConverter::SymbolPinName::font</a>, <a class="el" href="SymbolData_8h_source.html#l00130">EasyKiConverter::SymbolPinName::fontSize</a>, <a class="el" href="SymbolData_8h_source.html#l00123">EasyKiConverter::SymbolPinName::isDisplayed</a>, <a class="el" href="SymbolData_8h_source.html#l00124">EasyKiConverter::SymbolPinName::posX</a>, <a class="el" href="SymbolData_8h_source.html#l00125">EasyKiConverter::SymbolPinName::posY</a>, <a class="el" href="SymbolData_8h_source.html#l00126">EasyKiConverter::SymbolPinName::rotation</a>, <a class="el" href="SymbolData_8h_source.html#l00127">EasyKiConverter::SymbolPinName::text</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00128">EasyKiConverter::SymbolPinName::textAnchor</a>.</p>
+
+</div>
+</div>
+<a id="a5eefa6bdf0eff12cf51d618a9d230abb" name="a5eefa6bdf0eff12cf51d618a9d230abb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5eefa6bdf0eff12cf51d618a9d230abb">&#9670;&#160;</a></span>fromJson() <span class="overload">[14/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolPinPath.html">SymbolPinPath</a> &amp;&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00062">62</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00116">EasyKiConverter::SymbolPinPath::color</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00115">EasyKiConverter::SymbolPinPath::path</a>.</p>
+
+</div>
+</div>
+<a id="a1432997a00abdcc24247d4748b6a725b" name="a1432997a00abdcc24247d4748b6a725b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1432997a00abdcc24247d4748b6a725b">&#9670;&#160;</a></span>fromJson() <span class="overload">[15/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolPinSettings.html">SymbolPinSettings</a> &amp;&#160;</td>
+          <td class="paramname"><em>settings</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00023">23</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00099">EasyKiConverter::SymbolPinSettings::id</a>, <a class="el" href="SymbolData_8h_source.html#l00093">EasyKiConverter::SymbolPinSettings::isDisplayed</a>, <a class="el" href="SymbolData_8h_source.html#l00100">EasyKiConverter::SymbolPinSettings::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00096">EasyKiConverter::SymbolPinSettings::posX</a>, <a class="el" href="SymbolData_8h_source.html#l00097">EasyKiConverter::SymbolPinSettings::posY</a>, <a class="el" href="SymbolData_8h_source.html#l00098">EasyKiConverter::SymbolPinSettings::rotation</a>, <a class="el" href="SymbolData_8h_source.html#l00095">EasyKiConverter::SymbolPinSettings::spicePinNumber</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00094">EasyKiConverter::SymbolPinSettings::type</a>.</p>
+
+</div>
+</div>
+<a id="aebc2230ccff84e2fe1f8a324a2113ecf" name="aebc2230ccff84e2fe1f8a324a2113ecf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aebc2230ccff84e2fe1f8a324a2113ecf">&#9670;&#160;</a></span>fromJson() <span class="overload">[16/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolPolygon.html">SymbolPolygon</a> &amp;&#160;</td>
+          <td class="paramname"><em>polygon</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00455">455</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00248">EasyKiConverter::SymbolPolygon::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00249">EasyKiConverter::SymbolPolygon::id</a>, <a class="el" href="SymbolData_8h_source.html#l00250">EasyKiConverter::SymbolPolygon::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00244">EasyKiConverter::SymbolPolygon::points</a>, <a class="el" href="SymbolData_8h_source.html#l00245">EasyKiConverter::SymbolPolygon::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00247">EasyKiConverter::SymbolPolygon::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00246">EasyKiConverter::SymbolPolygon::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="a834fd0768fe99c7127ab6618e7ae7cb2" name="a834fd0768fe99c7127ab6618e7ae7cb2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a834fd0768fe99c7127ab6618e7ae7cb2">&#9670;&#160;</a></span>fromJson() <span class="overload">[17/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolPolyline.html">SymbolPolyline</a> &amp;&#160;</td>
+          <td class="paramname"><em>polyline</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00430">430</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00235">EasyKiConverter::SymbolPolyline::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00236">EasyKiConverter::SymbolPolyline::id</a>, <a class="el" href="SymbolData_8h_source.html#l00237">EasyKiConverter::SymbolPolyline::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00231">EasyKiConverter::SymbolPolyline::points</a>, <a class="el" href="SymbolData_8h_source.html#l00232">EasyKiConverter::SymbolPolyline::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00234">EasyKiConverter::SymbolPolyline::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00233">EasyKiConverter::SymbolPolyline::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="a5077316b2f5909cd7c7b2c2a827023ee" name="a5077316b2f5909cd7c7b2c2a827023ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5077316b2f5909cd7c7b2c2a827023ee">&#9670;&#160;</a></span>fromJson() <span class="overload">[18/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolRectangle.html">SymbolRectangle</a> &amp;&#160;</td>
+          <td class="paramname"><em>rect</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00296">296</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00177">EasyKiConverter::SymbolRectangle::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00173">EasyKiConverter::SymbolRectangle::height</a>, <a class="el" href="SymbolData_8h_source.html#l00178">EasyKiConverter::SymbolRectangle::id</a>, <a class="el" href="SymbolData_8h_source.html#l00179">EasyKiConverter::SymbolRectangle::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00168">EasyKiConverter::SymbolRectangle::posX</a>, <a class="el" href="SymbolData_8h_source.html#l00169">EasyKiConverter::SymbolRectangle::posY</a>, <a class="el" href="SymbolData_8h_source.html#l00170">EasyKiConverter::SymbolRectangle::rx</a>, <a class="el" href="SymbolData_8h_source.html#l00171">EasyKiConverter::SymbolRectangle::ry</a>, <a class="el" href="SymbolData_8h_source.html#l00174">EasyKiConverter::SymbolRectangle::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00176">EasyKiConverter::SymbolRectangle::strokeStyle</a>, <a class="el" href="SymbolData_8h_source.html#l00175">EasyKiConverter::SymbolRectangle::strokeWidth</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00172">EasyKiConverter::SymbolRectangle::width</a>.</p>
+
+</div>
+</div>
+<a id="a596d3338ac999815180e7a990a2de764" name="a596d3338ac999815180e7a990a2de764"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a596d3338ac999815180e7a990a2de764">&#9670;&#160;</a></span>fromJson() <span class="overload">[19/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::SymbolDataSerializer::fromJson </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structEasyKiConverter_1_1SymbolText.html">SymbolText</a> &amp;&#160;</td>
+          <td class="paramname"><em>text</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QJsonObject &amp;&#160;</td>
+          <td class="paramname"><em>json</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00514">514</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00283">EasyKiConverter::SymbolText::anchor</a>, <a class="el" href="SymbolData_8h_source.html#l00279">EasyKiConverter::SymbolText::baseline</a>, <a class="el" href="SymbolData_8h_source.html#l00277">EasyKiConverter::SymbolText::bold</a>, <a class="el" href="SymbolData_8h_source.html#l00274">EasyKiConverter::SymbolText::color</a>, <a class="el" href="SymbolData_8h_source.html#l00275">EasyKiConverter::SymbolText::font</a>, <a class="el" href="SymbolData_8h_source.html#l00284">EasyKiConverter::SymbolText::id</a>, <a class="el" href="SymbolData_8h_source.html#l00285">EasyKiConverter::SymbolText::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00278">EasyKiConverter::SymbolText::italic</a>, <a class="el" href="SymbolData_8h_source.html#l00270">EasyKiConverter::SymbolText::mark</a>, <a class="el" href="SymbolData_8h_source.html#l00271">EasyKiConverter::SymbolText::posX</a>, <a class="el" href="SymbolData_8h_source.html#l00272">EasyKiConverter::SymbolText::posY</a>, <a class="el" href="SymbolData_8h_source.html#l00273">EasyKiConverter::SymbolText::rotation</a>, <a class="el" href="SymbolData_8h_source.html#l00281">EasyKiConverter::SymbolText::text</a>, <a class="el" href="SymbolData_8h_source.html#l00276">EasyKiConverter::SymbolText::textSize</a>, <a class="el" href="SymbolData_8h_source.html#l00280">EasyKiConverter::SymbolText::type</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00282">EasyKiConverter::SymbolText::visible</a>.</p>
+
+</div>
+</div>
+<a id="afea45832a028bc080ed54ceed222789e" name="afea45832a028bc080ed54ceed222789e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afea45832a028bc080ed54ceed222789e">&#9670;&#160;</a></span>toJson() <span class="overload">[1/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolArc.html">SymbolArc</a> &amp;&#160;</td>
+          <td class="paramname"><em>arc</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00343">343</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00206">EasyKiConverter::SymbolArc::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00202">EasyKiConverter::SymbolArc::helperDots</a>, <a class="el" href="SymbolData_8h_source.html#l00207">EasyKiConverter::SymbolArc::id</a>, <a class="el" href="SymbolData_8h_source.html#l00208">EasyKiConverter::SymbolArc::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00201">EasyKiConverter::SymbolArc::path</a>, <a class="el" href="SymbolData_8h_source.html#l00203">EasyKiConverter::SymbolArc::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00205">EasyKiConverter::SymbolArc::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00204">EasyKiConverter::SymbolArc::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="a8202f553b38b767fa4f667ce21e21114" name="a8202f553b38b767fa4f667ce21e21114"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8202f553b38b767fa4f667ce21e21114">&#9670;&#160;</a></span>toJson() <span class="overload">[2/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolBBox.html">SymbolBBox</a> &amp;&#160;</td>
+          <td class="paramname"><em>bbox</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00163">163</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00084">EasyKiConverter::SymbolBBox::height</a>, <a class="el" href="SymbolData_8h_source.html#l00083">EasyKiConverter::SymbolBBox::width</a>, <a class="el" href="SymbolData_8h_source.html#l00081">EasyKiConverter::SymbolBBox::x</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00082">EasyKiConverter::SymbolBBox::y</a>.</p>
+
+</div>
+</div>
+<a id="aa55748ef9ab90067d643fc20492407e1" name="aa55748ef9ab90067d643fc20492407e1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa55748ef9ab90067d643fc20492407e1">&#9670;&#160;</a></span>toJson() <span class="overload">[3/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolCircle.html">SymbolCircle</a> &amp;&#160;</td>
+          <td class="paramname"><em>circle</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00314">314</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00186">EasyKiConverter::SymbolCircle::centerX</a>, <a class="el" href="SymbolData_8h_source.html#l00187">EasyKiConverter::SymbolCircle::centerY</a>, <a class="el" href="SymbolData_8h_source.html#l00192">EasyKiConverter::SymbolCircle::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00193">EasyKiConverter::SymbolCircle::id</a>, <a class="el" href="SymbolData_8h_source.html#l00194">EasyKiConverter::SymbolCircle::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00188">EasyKiConverter::SymbolCircle::radius</a>, <a class="el" href="SymbolData_8h_source.html#l00189">EasyKiConverter::SymbolCircle::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00191">EasyKiConverter::SymbolCircle::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00190">EasyKiConverter::SymbolCircle::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="a745b2a2f8ac9c30136e0bbb20fa9e288" name="a745b2a2f8ac9c30136e0bbb20fa9e288"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a745b2a2f8ac9c30136e0bbb20fa9e288">&#9670;&#160;</a></span>toJson() <span class="overload">[4/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classEasyKiConverter_1_1SymbolData.html">SymbolData</a> &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00708">708</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00374">EasyKiConverter::SymbolData::arcs()</a>, <a class="el" href="SymbolData_8h_source.html#l00329">EasyKiConverter::SymbolData::bbox()</a>, <a class="el" href="SymbolData_8h_source.html#l00362">EasyKiConverter::SymbolData::circles()</a>, <a class="el" href="SymbolData_8h_source.html#l00386">EasyKiConverter::SymbolData::ellipses()</a>, <a class="el" href="SymbolData_8h_source.html#l00321">EasyKiConverter::SymbolData::info()</a>, <a class="el" href="SymbolData_8h_source.html#l00447">EasyKiConverter::SymbolData::parts()</a>, <a class="el" href="SymbolData_8h_source.html#l00422">EasyKiConverter::SymbolData::paths()</a>, <a class="el" href="SymbolData_8h_source.html#l00338">EasyKiConverter::SymbolData::pins()</a>, <a class="el" href="SymbolData_8h_source.html#l00410">EasyKiConverter::SymbolData::polygons()</a>, <a class="el" href="SymbolData_8h_source.html#l00398">EasyKiConverter::SymbolData::polylines()</a>, <a class="el" href="SymbolData_8h_source.html#l00350">EasyKiConverter::SymbolData::rectangles()</a>, <a class="el" href="SymbolData_8h_source.html#l00434">EasyKiConverter::SymbolData::texts()</a> , 以及 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00708">toJson()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="WriteWorker_8cpp_source.html#l00473">EasyKiConverter::WriteWorker::exportDebugData()</a>, <a class="el" href="SymbolData_8cpp_source.html#l00009">EasyKiConverter::SymbolData::toJson()</a>, <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00708">toJson()</a>, <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00536">toJson()</a> , 以及 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00135">toJson()</a>.</p>
+
+</div>
+</div>
+<a id="a57a4327e30d47d3a78e6fcdb1b92e326" name="a57a4327e30d47d3a78e6fcdb1b92e326"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a57a4327e30d47d3a78e6fcdb1b92e326">&#9670;&#160;</a></span>toJson() <span class="overload">[5/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolEllipse.html">SymbolEllipse</a> &amp;&#160;</td>
+          <td class="paramname"><em>ellipse</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00387">387</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00215">EasyKiConverter::SymbolEllipse::centerX</a>, <a class="el" href="SymbolData_8h_source.html#l00216">EasyKiConverter::SymbolEllipse::centerY</a>, <a class="el" href="SymbolData_8h_source.html#l00222">EasyKiConverter::SymbolEllipse::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00223">EasyKiConverter::SymbolEllipse::id</a>, <a class="el" href="SymbolData_8h_source.html#l00224">EasyKiConverter::SymbolEllipse::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00217">EasyKiConverter::SymbolEllipse::radiusX</a>, <a class="el" href="SymbolData_8h_source.html#l00218">EasyKiConverter::SymbolEllipse::radiusY</a>, <a class="el" href="SymbolData_8h_source.html#l00219">EasyKiConverter::SymbolEllipse::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00221">EasyKiConverter::SymbolEllipse::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00220">EasyKiConverter::SymbolEllipse::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="a6f9840ca372191a1d5ab6a53b1ff992f" name="a6f9840ca372191a1d5ab6a53b1ff992f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f9840ca372191a1d5ab6a53b1ff992f">&#9670;&#160;</a></span>toJson() <span class="overload">[6/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolInfo.html">SymbolInfo</a> &amp;&#160;</td>
+          <td class="paramname"><em>info</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00182">182</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00036">EasyKiConverter::SymbolInfo::datasheet</a>, <a class="el" href="SymbolData_8h_source.html#l00046">EasyKiConverter::SymbolInfo::datastrid</a>, <a class="el" href="SymbolData_8h_source.html#l00035">EasyKiConverter::SymbolInfo::description</a>, <a class="el" href="SymbolData_8h_source.html#l00043">EasyKiConverter::SymbolInfo::docType</a>, <a class="el" href="SymbolData_8h_source.html#l00058">EasyKiConverter::SymbolInfo::editorVersion</a>, <a class="el" href="SymbolData_8h_source.html#l00064">EasyKiConverter::SymbolInfo::hasIdFlag</a>, <a class="el" href="SymbolData_8h_source.html#l00063">EasyKiConverter::SymbolInfo::importFlag</a>, <a class="el" href="SymbolData_8h_source.html#l00049">EasyKiConverter::SymbolInfo::isFavorite</a>, <a class="el" href="SymbolData_8h_source.html#l00038">EasyKiConverter::SymbolInfo::jlcId</a>, <a class="el" href="SymbolData_8h_source.html#l00047">EasyKiConverter::SymbolInfo::jlcOnSale</a>, <a class="el" href="SymbolData_8h_source.html#l00072">EasyKiConverter::SymbolInfo::jlcpcbPartClass</a>, <a class="el" href="SymbolData_8h_source.html#l00037">EasyKiConverter::SymbolInfo::lcscId</a>, <a class="el" href="SymbolData_8h_source.html#l00034">EasyKiConverter::SymbolInfo::manufacturer</a>, <a class="el" href="SymbolData_8h_source.html#l00071">EasyKiConverter::SymbolInfo::manufacturerPart</a>, <a class="el" href="SymbolData_8h_source.html#l00031">EasyKiConverter::SymbolInfo::name</a>, <a class="el" href="SymbolData_8h_source.html#l00033">EasyKiConverter::SymbolInfo::package</a>, <a class="el" href="SymbolData_8h_source.html#l00032">EasyKiConverter::SymbolInfo::prefix</a>, <a class="el" href="SymbolData_8h_source.html#l00061">EasyKiConverter::SymbolInfo::puuid</a>, <a class="el" href="SymbolData_8h_source.html#l00051">EasyKiConverter::SymbolInfo::smt</a>, <a class="el" href="SymbolData_8h_source.html#l00068">EasyKiConverter::SymbolInfo::subpartNo</a>, <a class="el" href="SymbolData_8h_source.html#l00070">EasyKiConverter::SymbolInfo::supplier</a>, <a class="el" href="SymbolData_8h_source.html#l00069">EasyKiConverter::SymbolInfo::supplierPart</a>, <a class="el" href="SymbolData_8h_source.html#l00045">EasyKiConverter::SymbolInfo::thumb</a>, <a class="el" href="SymbolData_8h_source.html#l00067">EasyKiConverter::SymbolInfo::timeStamp</a>, <a class="el" href="SymbolData_8h_source.html#l00042">EasyKiConverter::SymbolInfo::title</a>, <a class="el" href="SymbolData_8h_source.html#l00044">EasyKiConverter::SymbolInfo::type</a>, <a class="el" href="SymbolData_8h_source.html#l00055">EasyKiConverter::SymbolInfo::updatedAt</a>, <a class="el" href="SymbolData_8h_source.html#l00054">EasyKiConverter::SymbolInfo::updateTime</a>, <a class="el" href="SymbolData_8h_source.html#l00062">EasyKiConverter::SymbolInfo::utime</a>, <a class="el" href="SymbolData_8h_source.html#l00041">EasyKiConverter::SymbolInfo::uuid</a>, <a class="el" href="SymbolData_8h_source.html#l00050">EasyKiConverter::SymbolInfo::verify</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00048">EasyKiConverter::SymbolInfo::writable</a>.</p>
+
+</div>
+</div>
+<a id="a0aaf279fcaed9477153cc432d7be0394" name="a0aaf279fcaed9477153cc432d7be0394"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0aaf279fcaed9477153cc432d7be0394">&#9670;&#160;</a></span>toJson() <span class="overload">[7/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPart.html">SymbolPart</a> &amp;&#160;</td>
+          <td class="paramname"><em>part</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00536">536</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00300">EasyKiConverter::SymbolPart::arcs</a>, <a class="el" href="SymbolData_8h_source.html#l00299">EasyKiConverter::SymbolPart::circles</a>, <a class="el" href="SymbolData_8h_source.html#l00301">EasyKiConverter::SymbolPart::ellipses</a>, <a class="el" href="SymbolData_8h_source.html#l00295">EasyKiConverter::SymbolPart::originX</a>, <a class="el" href="SymbolData_8h_source.html#l00296">EasyKiConverter::SymbolPart::originY</a>, <a class="el" href="SymbolData_8h_source.html#l00304">EasyKiConverter::SymbolPart::paths</a>, <a class="el" href="SymbolData_8h_source.html#l00297">EasyKiConverter::SymbolPart::pins</a>, <a class="el" href="SymbolData_8h_source.html#l00303">EasyKiConverter::SymbolPart::polygons</a>, <a class="el" href="SymbolData_8h_source.html#l00302">EasyKiConverter::SymbolPart::polylines</a>, <a class="el" href="SymbolData_8h_source.html#l00298">EasyKiConverter::SymbolPart::rectangles</a>, <a class="el" href="SymbolData_8h_source.html#l00305">EasyKiConverter::SymbolPart::texts</a>, <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00708">toJson()</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00294">EasyKiConverter::SymbolPart::unitNumber</a>.</p>
+
+</div>
+</div>
+<a id="a3a7cd8436828b3c742b6389c6d885d93" name="a3a7cd8436828b3c742b6389c6d885d93"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a7cd8436828b3c742b6389c6d885d93">&#9670;&#160;</a></span>toJson() <span class="overload">[8/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPath.html">SymbolPath</a> &amp;&#160;</td>
+          <td class="paramname"><em>path</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00468">468</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00261">EasyKiConverter::SymbolPath::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00262">EasyKiConverter::SymbolPath::id</a>, <a class="el" href="SymbolData_8h_source.html#l00263">EasyKiConverter::SymbolPath::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00257">EasyKiConverter::SymbolPath::paths</a>, <a class="el" href="SymbolData_8h_source.html#l00258">EasyKiConverter::SymbolPath::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00260">EasyKiConverter::SymbolPath::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00259">EasyKiConverter::SymbolPath::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="a44ba50cc53426afb44380767857be865" name="a44ba50cc53426afb44380767857be865"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a44ba50cc53426afb44380767857be865">&#9670;&#160;</a></span>toJson() <span class="overload">[9/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPin.html">SymbolPin</a> &amp;&#160;</td>
+          <td class="paramname"><em>pin</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00135">135</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00159">EasyKiConverter::SymbolPin::clock</a>, <a class="el" href="SymbolData_8h_source.html#l00158">EasyKiConverter::SymbolPin::dot</a>, <a class="el" href="SymbolData_8h_source.html#l00157">EasyKiConverter::SymbolPin::name</a>, <a class="el" href="SymbolData_8h_source.html#l00155">EasyKiConverter::SymbolPin::pinDot</a>, <a class="el" href="SymbolData_8h_source.html#l00156">EasyKiConverter::SymbolPin::pinPath</a>, <a class="el" href="SymbolData_8h_source.html#l00154">EasyKiConverter::SymbolPin::settings</a> , 以及 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00708">toJson()</a>.</p>
+
+</div>
+</div>
+<a id="ab3db870b0a89ece4f0f8bc5a127d6737" name="ab3db870b0a89ece4f0f8bc5a127d6737"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3db870b0a89ece4f0f8bc5a127d6737">&#9670;&#160;</a></span>toJson() <span class="overload">[10/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPinClock.html">SymbolPinClock</a> &amp;&#160;</td>
+          <td class="paramname"><em>clock</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00120">120</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00146">EasyKiConverter::SymbolPinClock::isDisplayed</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00147">EasyKiConverter::SymbolPinClock::path</a>.</p>
+
+</div>
+</div>
+<a id="a8e0cb7a3233819e99641dbdae6a72121" name="a8e0cb7a3233819e99641dbdae6a72121"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8e0cb7a3233819e99641dbdae6a72121">&#9670;&#160;</a></span>toJson() <span class="overload">[11/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPinDot.html">SymbolPinDot</a> &amp;&#160;</td>
+          <td class="paramname"><em>dot</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00040">40</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00107">EasyKiConverter::SymbolPinDot::dotX</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00108">EasyKiConverter::SymbolPinDot::dotY</a>.</p>
+
+</div>
+</div>
+<a id="aafe5a8989589b5097f2aa82f6327547b" name="aafe5a8989589b5097f2aa82f6327547b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aafe5a8989589b5097f2aa82f6327547b">&#9670;&#160;</a></span>toJson() <span class="overload">[12/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPinDotBis.html">SymbolPinDotBis</a> &amp;&#160;</td>
+          <td class="paramname"><em>dot</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00103">103</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00138">EasyKiConverter::SymbolPinDotBis::circleX</a>, <a class="el" href="SymbolData_8h_source.html#l00139">EasyKiConverter::SymbolPinDotBis::circleY</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00137">EasyKiConverter::SymbolPinDotBis::isDisplayed</a>.</p>
+
+</div>
+</div>
+<a id="a819896ae00becf896db8d1146b3eb33d" name="a819896ae00becf896db8d1146b3eb33d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a819896ae00becf896db8d1146b3eb33d">&#9670;&#160;</a></span>toJson() <span class="overload">[13/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPinName.html">SymbolPinName</a> &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00073">73</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00129">EasyKiConverter::SymbolPinName::font</a>, <a class="el" href="SymbolData_8h_source.html#l00130">EasyKiConverter::SymbolPinName::fontSize</a>, <a class="el" href="SymbolData_8h_source.html#l00123">EasyKiConverter::SymbolPinName::isDisplayed</a>, <a class="el" href="SymbolData_8h_source.html#l00124">EasyKiConverter::SymbolPinName::posX</a>, <a class="el" href="SymbolData_8h_source.html#l00125">EasyKiConverter::SymbolPinName::posY</a>, <a class="el" href="SymbolData_8h_source.html#l00126">EasyKiConverter::SymbolPinName::rotation</a>, <a class="el" href="SymbolData_8h_source.html#l00127">EasyKiConverter::SymbolPinName::text</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00128">EasyKiConverter::SymbolPinName::textAnchor</a>.</p>
+
+</div>
+</div>
+<a id="ab595ca021fe41441b1ba48f1e3cea7de" name="ab595ca021fe41441b1ba48f1e3cea7de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab595ca021fe41441b1ba48f1e3cea7de">&#9670;&#160;</a></span>toJson() <span class="overload">[14/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPinPath.html">SymbolPinPath</a> &amp;&#160;</td>
+          <td class="paramname"><em>path</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00055">55</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00116">EasyKiConverter::SymbolPinPath::color</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00115">EasyKiConverter::SymbolPinPath::path</a>.</p>
+
+</div>
+</div>
+<a id="a7e36285ead7c07cd2a74dc61a9088f41" name="a7e36285ead7c07cd2a74dc61a9088f41"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e36285ead7c07cd2a74dc61a9088f41">&#9670;&#160;</a></span>toJson() <span class="overload">[15/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPinSettings.html">SymbolPinSettings</a> &amp;&#160;</td>
+          <td class="paramname"><em>settings</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00010">10</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00099">EasyKiConverter::SymbolPinSettings::id</a>, <a class="el" href="SymbolData_8h_source.html#l00093">EasyKiConverter::SymbolPinSettings::isDisplayed</a>, <a class="el" href="SymbolData_8h_source.html#l00100">EasyKiConverter::SymbolPinSettings::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00096">EasyKiConverter::SymbolPinSettings::posX</a>, <a class="el" href="SymbolData_8h_source.html#l00097">EasyKiConverter::SymbolPinSettings::posY</a>, <a class="el" href="SymbolData_8h_source.html#l00098">EasyKiConverter::SymbolPinSettings::rotation</a>, <a class="el" href="SymbolData_8h_source.html#l00095">EasyKiConverter::SymbolPinSettings::spicePinNumber</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00094">EasyKiConverter::SymbolPinSettings::type</a>.</p>
+
+</div>
+</div>
+<a id="ac942ccc86524cffdce7c25d7a7c12724" name="ac942ccc86524cffdce7c25d7a7c12724"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac942ccc86524cffdce7c25d7a7c12724">&#9670;&#160;</a></span>toJson() <span class="overload">[16/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPolygon.html">SymbolPolygon</a> &amp;&#160;</td>
+          <td class="paramname"><em>polygon</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00443">443</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00248">EasyKiConverter::SymbolPolygon::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00249">EasyKiConverter::SymbolPolygon::id</a>, <a class="el" href="SymbolData_8h_source.html#l00250">EasyKiConverter::SymbolPolygon::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00244">EasyKiConverter::SymbolPolygon::points</a>, <a class="el" href="SymbolData_8h_source.html#l00245">EasyKiConverter::SymbolPolygon::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00247">EasyKiConverter::SymbolPolygon::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00246">EasyKiConverter::SymbolPolygon::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="a47c194668ef2c45b52fe1496695caa70" name="a47c194668ef2c45b52fe1496695caa70"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a47c194668ef2c45b52fe1496695caa70">&#9670;&#160;</a></span>toJson() <span class="overload">[17/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolPolyline.html">SymbolPolyline</a> &amp;&#160;</td>
+          <td class="paramname"><em>polyline</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00418">418</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00235">EasyKiConverter::SymbolPolyline::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00236">EasyKiConverter::SymbolPolyline::id</a>, <a class="el" href="SymbolData_8h_source.html#l00237">EasyKiConverter::SymbolPolyline::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00231">EasyKiConverter::SymbolPolyline::points</a>, <a class="el" href="SymbolData_8h_source.html#l00232">EasyKiConverter::SymbolPolyline::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00234">EasyKiConverter::SymbolPolyline::strokeStyle</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00233">EasyKiConverter::SymbolPolyline::strokeWidth</a>.</p>
+
+</div>
+</div>
+<a id="ad9dd2f01df3cfaf587924c91a4a72f4e" name="ad9dd2f01df3cfaf587924c91a4a72f4e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad9dd2f01df3cfaf587924c91a4a72f4e">&#9670;&#160;</a></span>toJson() <span class="overload">[18/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolRectangle.html">SymbolRectangle</a> &amp;&#160;</td>
+          <td class="paramname"><em>rect</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00279">279</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00177">EasyKiConverter::SymbolRectangle::fillColor</a>, <a class="el" href="SymbolData_8h_source.html#l00173">EasyKiConverter::SymbolRectangle::height</a>, <a class="el" href="SymbolData_8h_source.html#l00178">EasyKiConverter::SymbolRectangle::id</a>, <a class="el" href="SymbolData_8h_source.html#l00179">EasyKiConverter::SymbolRectangle::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00168">EasyKiConverter::SymbolRectangle::posX</a>, <a class="el" href="SymbolData_8h_source.html#l00169">EasyKiConverter::SymbolRectangle::posY</a>, <a class="el" href="SymbolData_8h_source.html#l00170">EasyKiConverter::SymbolRectangle::rx</a>, <a class="el" href="SymbolData_8h_source.html#l00171">EasyKiConverter::SymbolRectangle::ry</a>, <a class="el" href="SymbolData_8h_source.html#l00174">EasyKiConverter::SymbolRectangle::strokeColor</a>, <a class="el" href="SymbolData_8h_source.html#l00176">EasyKiConverter::SymbolRectangle::strokeStyle</a>, <a class="el" href="SymbolData_8h_source.html#l00175">EasyKiConverter::SymbolRectangle::strokeWidth</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00172">EasyKiConverter::SymbolRectangle::width</a>.</p>
+
+</div>
+</div>
+<a id="aac5452c10882ee632f97c1d17e80f52a" name="aac5452c10882ee632f97c1d17e80f52a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aac5452c10882ee632f97c1d17e80f52a">&#9670;&#160;</a></span>toJson() <span class="overload">[19/19]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QJsonObject EasyKiConverter::SymbolDataSerializer::toJson </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1SymbolText.html">SymbolText</a> &amp;&#160;</td>
+          <td class="paramname"><em>text</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a> 第 <a class="el" href="SymbolDataSerializer_8cpp_source.html#l00493">493</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="SymbolData_8h_source.html#l00283">EasyKiConverter::SymbolText::anchor</a>, <a class="el" href="SymbolData_8h_source.html#l00279">EasyKiConverter::SymbolText::baseline</a>, <a class="el" href="SymbolData_8h_source.html#l00277">EasyKiConverter::SymbolText::bold</a>, <a class="el" href="SymbolData_8h_source.html#l00274">EasyKiConverter::SymbolText::color</a>, <a class="el" href="SymbolData_8h_source.html#l00275">EasyKiConverter::SymbolText::font</a>, <a class="el" href="SymbolData_8h_source.html#l00284">EasyKiConverter::SymbolText::id</a>, <a class="el" href="SymbolData_8h_source.html#l00285">EasyKiConverter::SymbolText::isLocked</a>, <a class="el" href="SymbolData_8h_source.html#l00278">EasyKiConverter::SymbolText::italic</a>, <a class="el" href="SymbolData_8h_source.html#l00270">EasyKiConverter::SymbolText::mark</a>, <a class="el" href="SymbolData_8h_source.html#l00271">EasyKiConverter::SymbolText::posX</a>, <a class="el" href="SymbolData_8h_source.html#l00272">EasyKiConverter::SymbolText::posY</a>, <a class="el" href="SymbolData_8h_source.html#l00273">EasyKiConverter::SymbolText::rotation</a>, <a class="el" href="SymbolData_8h_source.html#l00281">EasyKiConverter::SymbolText::text</a>, <a class="el" href="SymbolData_8h_source.html#l00276">EasyKiConverter::SymbolText::textSize</a>, <a class="el" href="SymbolData_8h_source.html#l00280">EasyKiConverter::SymbolText::type</a> , 以及 <a class="el" href="SymbolData_8h_source.html#l00282">EasyKiConverter::SymbolText::visible</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>models/<a class="el" href="SymbolDataSerializer_8h_source.html">SymbolDataSerializer.h</a></li>
+<li>models/<a class="el" href="SymbolDataSerializer_8cpp_source.html">SymbolDataSerializer.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1SymbolDataSerializer.html">SymbolDataSerializer</a></li>
+    <li class="footer">生成于 2026年 二月 17日 星期二 09:21:35 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>
