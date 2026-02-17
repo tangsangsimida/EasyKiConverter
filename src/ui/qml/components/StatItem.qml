@@ -8,15 +8,12 @@ Item {
     property string label: ""
     property string value: ""
     property color valueColor: AppStyle.colors.textPrimary
-
     implicitWidth: columnLayout.implicitWidth
     implicitHeight: columnLayout.implicitHeight
-
     ColumnLayout {
         id: columnLayout
         anchors.fill: parent
         spacing: 4
-
         Text {
             text: label
             font.pixelSize: AppStyle.fontSizes.xs

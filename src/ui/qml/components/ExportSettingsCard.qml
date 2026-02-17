@@ -5,13 +5,10 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Card {
     id: exportSettingsCard
-
     // 外部依赖
     property var exportSettingsController
-
     // 信号：请求打开输出目录对话框
     signal openOutputFolderDialog
-
     title: qsTranslate("MainWindow", "导出设置")
     GridLayout {
         width: parent.width
@@ -134,7 +131,6 @@ Card {
                 checked: exportSettingsCard.exportSettingsController.exportSymbol
                 onCheckedChanged: exportSettingsCard.exportSettingsController.setExportSymbol(checked)
                 font.pixelSize: 16
-
                 indicator: Rectangle {
                     implicitWidth: 22
                     implicitHeight: 22
@@ -144,7 +140,6 @@ Card {
                     color: symbolCheckbox.checked ? AppStyle.colors.primary : "transparent"
                     border.color: symbolCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                     border.width: 1.5
-
                     Behavior on color {
                         ColorAnimation {
                             duration: 150
@@ -186,7 +181,6 @@ Card {
                 checked: exportSettingsCard.exportSettingsController.exportFootprint
                 onCheckedChanged: exportSettingsCard.exportSettingsController.setExportFootprint(checked)
                 font.pixelSize: 16
-
                 indicator: Rectangle {
                     implicitWidth: 22
                     implicitHeight: 22
@@ -196,7 +190,6 @@ Card {
                     color: footprintCheckbox.checked ? AppStyle.colors.primary : "transparent"
                     border.color: footprintCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                     border.width: 1.5
-
                     Behavior on color {
                         ColorAnimation {
                             duration: 150
@@ -238,7 +231,6 @@ Card {
                 checked: exportSettingsCard.exportSettingsController.exportModel3D
                 onCheckedChanged: exportSettingsCard.exportSettingsController.setExportModel3D(checked)
                 font.pixelSize: 16
-
                 indicator: Rectangle {
                     implicitWidth: 22
                     implicitHeight: 22
@@ -248,7 +240,6 @@ Card {
                     color: model3dCheckbox.checked ? AppStyle.colors.primary : "transparent"
                     border.color: model3dCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                     border.width: 1.5
-
                     Behavior on color {
                         ColorAnimation {
                             duration: 150
@@ -307,7 +298,6 @@ Card {
                             }
                         }
                         font.pixelSize: 14
-
                         indicator: Rectangle {
                             implicitWidth: 20
                             implicitHeight: 20
@@ -317,7 +307,6 @@ Card {
                             color: "transparent"
                             border.color: appendModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                             border.width: 1.5
-
                             Rectangle {
                                 anchors.centerIn: parent
                                 width: 10
@@ -355,7 +344,6 @@ Card {
                             }
                         }
                         font.pixelSize: 14
-
                         indicator: Rectangle {
                             implicitWidth: 20
                             implicitHeight: 20
@@ -365,7 +353,6 @@ Card {
                             color: "transparent"
                             border.color: updateModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                             border.width: 1.5
-
                             Rectangle {
                                 anchors.centerIn: parent
                                 width: 10

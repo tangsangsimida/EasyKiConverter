@@ -16,7 +16,6 @@ Item {
     z: 9999 // 确保在最顶层
     clip: false // 允许阴影向外扩散
     focus: visible // 可见时获取焦点以监听键盘
-
     // 监听 Escape 键
     Keys.onEscapePressed: {
         root.rejected();
@@ -30,10 +29,8 @@ Item {
     property string cancelText: qsTr("取消")
     property color confirmColor: AppStyle.colors.danger // 默认退出是危险操作
     property int radius: AppStyle.radius.lg
-
     signal accepted
     signal rejected
-
     // 打开/关闭动画
     function open() {
         visible = true;
@@ -53,7 +50,6 @@ Item {
         color: AppStyle.isDarkMode ? "#000000" : "#1e293b"
         opacity: 0
         radius: root.radius
-
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
@@ -71,7 +67,6 @@ Item {
         radius: AppStyle.radius.xl
         scale: 0.9
         opacity: 0
-
         // 阴影效果
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -87,7 +82,6 @@ Item {
             anchors.fill: parent
             anchors.margins: AppStyle.spacing.xxxl
             spacing: AppStyle.spacing.lg
-
             // 标题
             Text {
                 id: titleText
@@ -114,7 +108,6 @@ Item {
                 Layout.fillWidth: true
                 Layout.topMargin: AppStyle.spacing.lg
                 spacing: AppStyle.spacing.md
-
                 ModernButton {
                     id: cancelButton
                     Layout.fillWidth: true

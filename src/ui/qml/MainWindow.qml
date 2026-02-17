@@ -16,11 +16,9 @@ Item {
     property var exportSettingsController: exportSettingsViewModel
     property var exportProgressController: exportProgressViewModel
     property var themeController: themeSettingsViewModel
-
     // 窗口状态属性
     readonly property bool isMaximized: Window.window ? (Window.window.visibility === Window.Maximized || Window.window.visibility === Window.FullScreen) : false
     readonly property int windowRadius: isMaximized ? 0 : AppStyle.radius.lg
-
     // 绑定 AppStyle.isDarkMode 到 themeSettingsViewModel.isDarkMode
     Binding {
         target: AppStyle
@@ -56,7 +54,6 @@ Item {
         anchors.fill: parent
         color: "transparent"
         radius: AppStyle.radius.lg
-
         // 源图片（用于 Canvas 绘制）
         Image {
             id: bgSource
@@ -72,24 +69,19 @@ Item {
         Canvas {
             id: backgroundCanvas
             anchors.fill: parent
-
             onPaint: {
                 var ctx = getContext("2d");
                 ctx.reset();
-
                 // 绘制圆角路径
                 var r = windowRadius;
                 ctx.beginPath();
                 ctx.roundedRect(0, 0, width, height, r, r);
                 ctx.closePath();
-
                 // 裁切
                 ctx.clip();
-
                 // 绘制背景色（作为底色）
                 ctx.fillStyle = AppStyle.colors.background;
                 ctx.fill();
-
                 // 绘制图片
                 if (bgSource.status === Image.Ready) {
                     // 模拟 PreserveAspectCrop
@@ -109,7 +101,6 @@ Item {
             onWidthChanged: requestPaint()
             onHeightChanged: requestPaint()
             onVisibleChanged: requestPaint()
-
             // 监听圆角变化
             property int radiusTrigger: windowRadius
             onRadiusTriggerChanged: requestPaint()
@@ -163,7 +154,6 @@ Item {
                     width: parent.width - AppStyle.spacing.huge * 2
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 30
-
                     // 头部区域（标题 + 语言选择器 + GitHub + 主题切换 + 分隔线）
                     HeaderSection {
                         Layout.fillWidth: true

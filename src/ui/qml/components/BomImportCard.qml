@@ -6,15 +6,11 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Card {
     id: bomImportCard
-
     // 外部依赖
     property var componentListController
-
     // 信号：请求打开BOM文件对话框
     signal openBomFileDialog
-
     title: qsTranslate("MainWindow", "导入BOM文件")
-
     RowLayout {
         width: parent.width
         spacing: 12
