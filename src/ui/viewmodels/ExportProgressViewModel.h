@@ -15,6 +15,11 @@
 
 namespace EasyKiConverter {
 
+class ExportService;
+class ExportServicePipeline;
+struct PipelineProgress;
+struct ExportStatistics;
+
 class ExportProgressViewModel : public QObject {
     Q_OBJECT
     Q_PROPERTY(int progress READ progress NOTIFY progressChanged)
@@ -30,6 +35,11 @@ class ExportProgressViewModel : public QObject {
     Q_PROPERTY(int processProgress READ processProgress NOTIFY processProgressChanged)
     Q_PROPERTY(int writeProgress READ writeProgress NOTIFY writeProgressChanged)
     Q_PROPERTY(QVariantList resultsList READ resultsList NOTIFY resultsListChanged)
+    Q_PROPERTY(QString filterMode READ filterMode NOTIFY filterModeChanged)
+    Q_PROPERTY(QVariantList filteredResultsList READ filteredResultsList NOTIFY filteredResultsListChanged)
+    Q_PROPERTY(int filteredSuccessCount READ filteredSuccessCount NOTIFY filteredResultsListChanged)
+    Q_PROPERTY(int filteredFailedCount READ filteredFailedCount NOTIFY filteredResultsListChanged)
+    Q_PROPERTY(int filteredPendingCount READ filteredPendingCount NOTIFY filteredResultsListChanged)
     Q_PROPERTY(bool hasStatistics READ hasStatistics NOTIFY statisticsChanged)
     Q_PROPERTY(QString statisticsReportPath READ statisticsReportPath NOTIFY statisticsChanged)
     Q_PROPERTY(QString statisticsSummary READ statisticsSummary NOTIFY statisticsChanged)
@@ -56,48 +66,81 @@ public:
     int progress() const {
         return m_progress;
     }
+
     QString status() const {
         return m_status;
     }
+
     bool isExporting() const {
         return m_isExporting;
     }
+
     bool isStopping() const {
         return m_isStopping;
     }
+
     int successCount() const {
         return m_successCount;
     }
+
     int successSymbolCount() const {
         return m_successSymbolCount;
     }
+
     int successFootprintCount() const {
         return m_successFootprintCount;
     }
+
     int successModel3DCount() const {
         return m_successModel3DCount;
     }
+
     int failureCount() const {
         return m_failureCount;
     }
+
     int fetchProgress() const {
         return m_fetchProgress;
     }
+
     int processProgress() const {
         return m_processProgress;
     }
+
     int writeProgress() const {
         return m_writeProgress;
     }
+
     QVariantList resultsList() const {
         return m_resultsList;
     }
+
+    QString filterMode() const {
+        return m_filterMode;
+    }
+
+    QVariantList filteredResultsList() const;
+
+    int filteredSuccessCount() const {
+        return m_successCount;
+    }
+
+    int filteredFailedCount() const {
+        return m_failureCount;
+    }
+
+    int filteredPendingCount() const {
+        return m_resultsList.size() - m_successCount - m_failureCount;
+    }
+
     bool hasStatistics() const {
         return m_hasStatistics;
     }
+
     QString statisticsReportPath() const {
         return m_statisticsReportPath;
     }
+
     QString statisticsSummary() const {
         return m_statisticsSummary;
     }
@@ -105,12 +148,15 @@ public:
     int statisticsTotal() const {
         return m_resultsList.size();
     }
+
     int statisticsSuccess() const {
         return m_successCount;
     }
+
     int statisticsFailed() const {
         return m_failureCount;
     }
+
     double statisticsSuccessRate() const {
         return m_resultsList.isEmpty() ? 0.0 : (m_successCount * 100.0 / m_resultsList.size());
     }
@@ -118,24 +164,31 @@ public:
     qint64 statisticsTotalDuration() const {
         return m_statistics.totalDurationMs;
     }
+
     qint64 statisticsAvgFetchTime() const {
         return m_statistics.avgFetchTimeMs;
     }
+
     qint64 statisticsAvgProcessTime() const {
         return m_statistics.avgProcessTimeMs;
     }
+
     qint64 statisticsAvgWriteTime() const {
         return m_statistics.avgWriteTimeMs;
     }
+
     int statisticsTotalNetworkRequests() const {
         return m_statistics.totalNetworkRequests;
     }
+
     int statisticsTotalRetries() const {
         return m_statistics.totalRetries;
     }
+
     qint64 statisticsAvgNetworkLatency() const {
         return m_statistics.avgNetworkLatencyMs;
     }
+
     int statisticsRateLimitHitCount() const {
         return m_statistics.rateLimitHitCount;
     }
@@ -156,6 +209,17 @@ public slots:
     Q_INVOKABLE void retryComponent(const QString& componentId);
     Q_INVOKABLE void cancelExport();
     Q_INVOKABLE void resetExport();
+    Q_INVOKABLE void setFilterMode(const QString& mode);
+
+    // 窗口关闭处理
+    Q_INVOKABLE bool handleCloseRequest();
+
+    void setExportService(ExportService* service) {
+        m_exportService = service;
+        if (qobject_cast<ExportServicePipeline*>(service)) {
+            m_usePipelineMode = true;
+        }
+    }
 
 signals:
     void progressChanged();
@@ -170,6 +234,8 @@ signals:
     void processProgressChanged();
     void writeProgressChanged();
     void resultsListChanged();
+    void filterModeChanged();
+    void filteredResultsListChanged();
     void statisticsChanged();
 
 private slots:
@@ -217,6 +283,7 @@ private:
     int m_processProgress;
     int m_writeProgress;
     bool m_usePipelineMode;
+    QString m_filterMode;
     QVariantList m_resultsList;
     QHash<QString, int> m_idToIndexMap;
     QTimer* m_throttleTimer;

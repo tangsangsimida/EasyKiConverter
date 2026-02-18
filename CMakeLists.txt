@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 # 从 CI 环境动态获取版本号，如果没有定义则使用默认版本
 if(NOT DEFINED VERSION_FROM_CI)
-    set(VERSION_FROM_CI "0.1")
+    set(VERSION_FROM_CI "3.0.7")
     message(STATUS "VERSION_FROM_CI not defined, using default: ${VERSION_FROM_CI}")
 else()
     message(STATUS "VERSION_FROM_CI defined: ${VERSION_FROM_CI}")
@@ -105,6 +105,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # 查找 Qt 6 组件
 find_package(Qt6 REQUIRED COMPONENTS Quick Network Core Gui Widgets QuickControls2 Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Gui) # 再次确保 Gui
 
 # 尝试查找 zlib 库
 # 在 Windows + MinGW 环境下，Qt 的 zlib 库通常在 Qt 安装目录中
@@ -193,6 +194,7 @@ set(QML_FILES
     src/ui/qml/components/ExportResultsCard.qml
     src/ui/qml/components/ExportStatisticsCard.qml
     src/ui/qml/components/ExportButtonsSection.qml
+    src/ui/qml/components/ConfirmDialog.qml
     src/ui/qml/components/WindowResizeHandles.qml
     src/ui/qml/styles/AppStyle.qml
 )
@@ -224,7 +226,7 @@ endif()
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
     URI EasyKiconverter_Cpp_Version
-    VERSION 1.0
+    VERSION 3.0
     QML_FILES
         ${QML_FILES}
     RESOURCES

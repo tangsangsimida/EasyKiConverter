@@ -48,9 +48,11 @@ public:
     int componentCount() const {
         return m_componentList.count();
     }
+
     QString bomFilePath() const {
         return m_bomFilePath;
     }
+
     QString bomResult() const {
         return m_bomResult;
     }

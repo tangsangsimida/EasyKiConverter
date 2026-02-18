@@ -5,12 +5,9 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Card {
     id: componentInputCard
-
     // 外部依赖
     property var componentListController
-
     title: qsTranslate("MainWindow", "添加元器件")
-
     RowLayout {
         width: parent.width
         spacing: 12

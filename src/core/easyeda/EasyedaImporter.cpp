@@ -3,7 +3,6 @@
 #include "EasyedaFootprintImporter.h"
 #include "EasyedaSymbolImporter.h"
 
-
 namespace EasyKiConverter {
 
 EasyedaImporter::EasyedaImporter(QObject* parent) : QObject(parent) {}

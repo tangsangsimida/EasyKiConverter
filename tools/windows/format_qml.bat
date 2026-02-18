@@ -1,55 +1,46 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:: EasyKiConverter QML 代码格式化工具
+:: 使用 qmlformat 格式化项目中的 QML 源代码
+
+:: 检查帮助请求
+if "%~1"=="-h" goto help
+if "%~1"=="--help" goto help
+if "%~1"=="/h" goto help
+if "%~1"=="help" goto help
+
 echo ========================================
 echo EasyKiConverter QML Formatter
 echo ========================================
 echo.
 
-REM ========================================
-REM Configuration - Please modify paths below for your environment
-REM ========================================
-
-REM qmlformat executable path
-REM If qmlformat is in system PATH, use "qmlformat"
-REM Otherwise, specify the full path
+:: qmlformat 可执行文件路径
 set QMLFORMAT=qmlformat
 
-REM Configuration file path (relative to this script)
+:: 配置文件路径
 set CONFIG_FILE=..\..\.qmlformat.json
 
-REM ========================================
-REM Check if qmlformat is available
-REM ========================================
-
+:: 检查 qmlformat 是否可用
 where %QMLFORMAT% >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ERROR: qmlformat not found in PATH: %QMLFORMAT%
-    echo.
-    echo Please ensure qmlformat is installed and in your PATH,
-    echo or set the full path in the configuration section above.
-    echo.
-    echo Example: set QMLFORMAT=C:\path\to\qmlformat.exe
-    echo.
-    echo qmlformat is typically located in your Qt bin directory:
+    echo [ERROR] qmlformat not found
+    echo Please install qmlformat and add to PATH
+    echo qmlformat is typically in Qt bin directory:
     echo   C:\Qt\6.x.x\mingw_64\bin\qmlformat.exe
-    echo.
     pause
     exit /b 1
 )
 
-echo INFO: Using qmlformat: %QMLFORMAT%
-echo INFO: Configuration file: %CONFIG_FILE%
+echo [INFO] Using qmlformat: %QMLFORMAT%
+echo [INFO] Configuration file: %CONFIG_FILE%
 echo.
 
-REM ========================================
-REM Format QML files with configuration
-REM ========================================
-
+:: 格式化 QML 文件
 set TOTAL_FILES=0
 set FORMATTED_FILES=0
 
-echo Starting formatting QML directory...
+echo Formatting QML directory...
 echo Using configuration: .qmlformat.json
 echo.
 
@@ -68,10 +59,32 @@ echo Formatting Complete
 echo ========================================
 echo Total files: %TOTAL_FILES%
 echo Formatted successfully: %FORMATTED_FILES%
-echo.
 echo Configuration file: .qmlformat.json
-echo NOTE: This tool only formats QML files.
-echo       Use format_code.bat for C++ files.
+echo NOTE: This tool only handles QML files
+echo       Use format_code.bat for C++ files
 echo.
 
 pause
+exit /b 0
+
+:help
+echo EasyKiConverter QML 代码格式化工具
+echo.
+echo 用法: format_qml.bat [选项]
+echo.
+echo 选项:
+echo   -h, --help, /h, help    显示此帮助信息
+echo.
+echo 功能说明:
+echo   使用 qmlformat 格式化 QML 源代码
+echo 环境要求:
+echo   - qmlformat 已安装并添加到 PATH (Qt 6 组件)
+echo 示例:
+echo   format_qml.bat
+echo 注意:
+echo   - 执行前请确保工作区已提交或备份
+echo   - 本工具仅处理 QML 文件
+echo   - C++ 文件请使用 format_code.bat
+echo.
+pause
+exit /b 0

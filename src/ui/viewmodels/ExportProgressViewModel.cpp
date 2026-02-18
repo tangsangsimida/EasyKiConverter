@@ -37,6 +37,7 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
     , m_processProgress(0)
     , m_writeProgress(0)
     , m_usePipelineMode(false)
+    , m_filterMode("all")
     , m_pendingUpdate(false)
     , m_hasStatistics(false)
     , m_systemTrayIcon(nullptr)
@@ -138,6 +139,27 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     startExportInternal(componentIds, false);
 }
 
+bool ExportProgressViewModel::handleCloseRequest() {
+    // 如果正在导出，先尝试停止
+    if (m_isExporting && m_exportService) {
+        qDebug() << "Close requested while exporting. Initiating cancel sequence...";
+
+        // 1. 发送取消信号
+        cancelExport();
+
+        // 2. 尝试等待一段时间让 Worker 结束 (最多 5 秒)
+        // 注意：这里不能使用 processEvents，否则可能会导致递归调用或其他 UI 问题
+        // 我们依靠 ExportService::waitForCompletion 来进行有限的等待
+        if (!m_exportService->waitForCompletion(5000)) {
+            qWarning() << "Workers did not stop within timeout, forcing close.";
+        } else {
+            qDebug() << "All workers stopped gracefully.";
+        }
+    }
+
+    return true;  // 允许关闭
+}
+
 void ExportProgressViewModel::cancelExport() {
     if (!m_exportService)
         return;
@@ -218,12 +240,41 @@ void ExportProgressViewModel::resetExport() {
     emit successCountChanged();
     emit failureCountChanged();
     emit resultsListChanged();
+    emit filteredResultsListChanged();
     emit statisticsChanged();
     emit fetchProgressChanged();
     emit processProgressChanged();
     emit writeProgressChanged();
 
     qDebug() << "Export status reset completed";
+}
+
+void ExportProgressViewModel::setFilterMode(const QString& mode) {
+    if (m_filterMode != mode) {
+        m_filterMode = mode;
+        emit filterModeChanged();
+        emit filteredResultsListChanged();
+    }
+}
+
+QVariantList ExportProgressViewModel::filteredResultsList() const {
+    if (m_filterMode == "all") {
+        return m_resultsList;
+    }
+
+    QVariantList filtered;
+    for (const auto& var : m_resultsList) {
+        QVariantMap item = var.toMap();
+        QString status = item["status"].toString();
+        if (m_filterMode == "success" && status == "success") {
+            filtered.append(var);
+        } else if (m_filterMode == "failed" && status == "failed") {
+            filtered.append(var);
+        } else if (m_filterMode == "exporting" && status != "success" && status != "failed") {
+            filtered.append(var);
+        }
+    }
+    return filtered;
 }
 
 void ExportProgressViewModel::handleExportProgress(int current, int total) {
@@ -356,6 +407,7 @@ void ExportProgressViewModel::flushPendingUpdates() {
     if (m_pendingUpdate) {
         m_pendingUpdate = false;
         emit resultsListChanged();
+        emit filteredResultsListChanged();
     }
 }
 

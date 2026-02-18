@@ -6,13 +6,10 @@ import EasyKiconverter_Cpp_Version 1.0
 
 ColumnLayout {
     id: headerSection
-
     // 外部依赖
     property var themeController
     property var componentListController
-
     spacing: 0
-
     // 欢迎标题
     Text {
         Layout.fillWidth: true
@@ -35,7 +32,6 @@ ColumnLayout {
         Layout.alignment: Qt.AlignRight
         spacing: AppStyle.spacing.sm
         z: 10  // 确保在其他元素之上
-
         // 语言选择器
         ComboBox {
             id: languageComboBox
@@ -52,9 +48,7 @@ ColumnLayout {
             ]
             textRole: "text"
             valueRole: "value"
-
             property string savedLanguage: ""
-
             Component.onCompleted: {
                 // 设置初始语言
                 var currentLang = LanguageManager.currentLanguage;
@@ -101,7 +95,6 @@ ColumnLayout {
                 width: 12
                 height: 8
                 contextType: "2d"
-
                 Connections {
                     target: languageComboBox
                     function onPressedChanged() {
@@ -123,7 +116,6 @@ ColumnLayout {
             delegate: ItemDelegate {
                 width: languageComboBox.width
                 height: 36
-
                 contentItem: Text {
                     text: modelData.text
                     font.pixelSize: 12
@@ -142,7 +134,6 @@ ColumnLayout {
                 width: languageComboBox.width
                 implicitHeight: listview.contentHeight
                 padding: 0
-
                 onClosed: {
                     languageComboBox.currentIndex = languageComboBox.indexOfValue(languageComboBox.savedLanguage);
                 }
@@ -159,7 +150,6 @@ ColumnLayout {
                     delegate: ItemDelegate {
                         width: languageComboBox.width
                         height: 36
-
                         contentItem: Text {
                             text: modelData.text
                             font.pixelSize: 12

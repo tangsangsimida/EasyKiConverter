@@ -36,12 +36,10 @@ Button {
         // 关键：透传隐式尺寸，确保 Button 能正确计算大小，防止界面凌乱
         implicitWidth: contentRow.implicitWidth
         implicitHeight: contentRow.implicitHeight
-
         Row {
             id: contentRow
             anchors.centerIn: parent
             spacing: AppStyle.spacing.sm
-
             // 只有当图标存在时才显示并占用空间
             Icon {
                 id: iconItem
@@ -59,7 +57,6 @@ Button {
                 color: root.textColor
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
-
                 Behavior on color {
                     ColorAnimation {
                         duration: AppStyle.durations.fast

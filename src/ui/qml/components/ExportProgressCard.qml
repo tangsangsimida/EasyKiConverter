@@ -5,23 +5,19 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Card {
     id: exportProgressCard
-
     // 外部依赖
     property var exportProgressController
-
     title: qsTranslate("MainWindow", "转换进度")
     visible: exportProgressCard.exportProgressController.isExporting || exportProgressCard.exportProgressController.progress > 0
     ColumnLayout {
         width: parent.width
         spacing: 12
-
         // 1. 流程指示器 (Step Indicators)
         RowLayout {
             Layout.fillWidth: true
             Layout.topMargin: 8
             Layout.bottomMargin: 8
             spacing: 0
-
             // 步骤 1: 抓取
             StepItem {
                 // 移除 Layout.fillWidth，让它保持最小宽度
@@ -39,7 +35,6 @@ Card {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.bottomMargin: 14
                 color: exportProgressCard.exportProgressController.fetchProgress >= 100 ? AppStyle.colors.success : AppStyle.colors.border
-
                 Behavior on color {
                     ColorAnimation {
                         duration: 300
@@ -63,7 +58,6 @@ Card {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.bottomMargin: 14
                 color: exportProgressCard.exportProgressController.processProgress >= 100 ? AppStyle.colors.success : AppStyle.colors.border
-
                 Behavior on color {
                     ColorAnimation {
                         duration: 300
@@ -85,7 +79,6 @@ Card {
         RowLayout {
             Layout.fillWidth: true
             spacing: 12
-
             // 自定义多色进度条容器
             Rectangle {
                 id: progressBar
@@ -99,7 +92,6 @@ Card {
                 Row {
                     anchors.fill: parent
                     spacing: 0
-
                     // 抓取部分 (Green, 占比 1/3)
                     Rectangle {
                         height: parent.height

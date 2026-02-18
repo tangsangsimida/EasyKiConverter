@@ -321,6 +321,7 @@ public:
     SymbolInfo info() const {
         return m_info;
     }
+
     void setInfo(const SymbolInfo& info) {
         m_info = info;
     }
@@ -328,6 +329,7 @@ public:
     SymbolBBox bbox() const {
         return m_bbox;
     }
+
     void setBbox(const SymbolBBox& bbox) {
         m_bbox = bbox;
     }
@@ -336,9 +338,11 @@ public:
     QList<SymbolPin> pins() const {
         return m_pins;
     }
+
     void setPins(const QList<SymbolPin>& pins) {
         m_pins = pins;
     }
+
     void addPin(const SymbolPin& pin) {
         m_pins.append(pin);
     }
@@ -346,9 +350,11 @@ public:
     QList<SymbolRectangle> rectangles() const {
         return m_rectangles;
     }
+
     void setRectangles(const QList<SymbolRectangle>& rectangles) {
         m_rectangles = rectangles;
     }
+
     void addRectangle(const SymbolRectangle& rect) {
         m_rectangles.append(rect);
     }
@@ -356,9 +362,11 @@ public:
     QList<SymbolCircle> circles() const {
         return m_circles;
     }
+
     void setCircles(const QList<SymbolCircle>& circles) {
         m_circles = circles;
     }
+
     void addCircle(const SymbolCircle& circle) {
         m_circles.append(circle);
     }
@@ -366,9 +374,11 @@ public:
     QList<SymbolArc> arcs() const {
         return m_arcs;
     }
+
     void setArcs(const QList<SymbolArc>& arcs) {
         m_arcs = arcs;
     }
+
     void addArc(const SymbolArc& arc) {
         m_arcs.append(arc);
     }
@@ -376,9 +386,11 @@ public:
     QList<SymbolEllipse> ellipses() const {
         return m_ellipses;
     }
+
     void setEllipses(const QList<SymbolEllipse>& ellipses) {
         m_ellipses = ellipses;
     }
+
     void addEllipse(const SymbolEllipse& ellipse) {
         m_ellipses.append(ellipse);
     }
@@ -386,9 +398,11 @@ public:
     QList<SymbolPolyline> polylines() const {
         return m_polylines;
     }
+
     void setPolylines(const QList<SymbolPolyline>& polylines) {
         m_polylines = polylines;
     }
+
     void addPolyline(const SymbolPolyline& polyline) {
         m_polylines.append(polyline);
     }
@@ -396,9 +410,11 @@ public:
     QList<SymbolPolygon> polygons() const {
         return m_polygons;
     }
+
     void setPolygons(const QList<SymbolPolygon>& polygons) {
         m_polygons = polygons;
     }
+
     void addPolygon(const SymbolPolygon& polygon) {
         m_polygons.append(polygon);
     }
@@ -406,9 +422,11 @@ public:
     QList<SymbolPath> paths() const {
         return m_paths;
     }
+
     void setPaths(const QList<SymbolPath>& paths) {
         m_paths = paths;
     }
+
     void addPath(const SymbolPath& path) {
         m_paths.append(path);
     }
@@ -416,9 +434,11 @@ public:
     QList<SymbolText> texts() const {
         return m_texts;
     }
+
     void setTexts(const QList<SymbolText>& texts) {
         m_texts = texts;
     }
+
     void addText(const SymbolText& text) {
         m_texts.append(text);
     }
@@ -427,12 +447,15 @@ public:
     QList<SymbolPart> parts() const {
         return m_parts;
     }
+
     void setParts(const QList<SymbolPart>& parts) {
         m_parts = parts;
     }
+
     void addPart(const SymbolPart& part) {
         m_parts.append(part);
     }
+
     bool isMultiPart() const {
         return m_parts.size() > 1;
     }

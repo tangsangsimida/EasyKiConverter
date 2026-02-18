@@ -124,6 +124,7 @@ void ExportSettingsViewModel::setDebugMode(bool enabled) {
         m_configService->setDebugMode(enabled);
     }
 }
+
 void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
     qDebug() << "Starting export for" << componentIds.size() << "components";
 
@@ -199,6 +200,7 @@ void ExportSettingsViewModel::handleComponentExported(const QString& componentId
     qDebug() << "Component exported:" << componentId << "Success:" << success;
     // TODO: 需要添加信号声明
 }
+
 void ExportSettingsViewModel::handleExportCompleted(bool success) {
     qDebug() << "Export completed:" << success;
 

@@ -2,7 +2,6 @@
 
 #include "SymbolDataSerializer.h"
 
-
 namespace EasyKiConverter {
 
 SymbolData::SymbolData() {}

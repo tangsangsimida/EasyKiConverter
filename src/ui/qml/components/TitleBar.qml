@@ -6,17 +6,14 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Rectangle {
     id: titleBar
-
     // 外部属性
     property int windowRadius: 0
-
     width: parent.width
     height: 38
     color: AppStyle.colors.surface
     topLeftRadius: windowRadius
     topRightRadius: windowRadius
     z: 1000
-
     // Bottom separator line
     Rectangle {
         anchors.bottom: parent.bottom
@@ -51,7 +48,6 @@ Rectangle {
     RowLayout {
         anchors.fill: parent
         spacing: 0
-
         // 图标
         Image {
             source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png"
@@ -76,18 +72,15 @@ Rectangle {
         // 窗口控制按钮
         Row {
             Layout.alignment: Qt.AlignRight
-
             // 最小化
             Button {
                 width: 46
                 height: 38
                 flat: true
-
                 icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/minimize.svg"
                 icon.color: "transparent"
                 icon.width: 10
                 icon.height: 10
-
                 background: Rectangle {
                     color: parent.hovered ? (AppStyle.isDarkMode ? "#1affffff" : "#1a000000") : "transparent"
                     Behavior on color {
@@ -105,12 +98,10 @@ Rectangle {
                 width: 46
                 height: 38
                 flat: true
-
                 icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/maximize.svg"
                 icon.color: "transparent"
                 icon.width: 10
                 icon.height: 10
-
                 background: Rectangle {
                     color: parent.hovered ? (AppStyle.isDarkMode ? "#1affffff" : "#1a000000") : "transparent"
                     Behavior on color {
@@ -134,12 +125,10 @@ Rectangle {
                 width: 46
                 height: 38
                 flat: true
-
                 icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/close.svg"
                 icon.color: hovered ? "white" : "transparent"
                 icon.width: 10
                 icon.height: 10
-
                 background: Rectangle {
                     color: parent.hovered ? "#c42b1c" : "transparent"
                     Behavior on color {

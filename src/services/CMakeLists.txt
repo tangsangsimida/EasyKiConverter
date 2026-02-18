@@ -1,5 +1,6 @@
 # Services 模块
 
+# 先定义目标，这样子目录里的 target_include_directories 才能找到它
 add_library(EasyKiConverterServices STATIC
     BomParser.cpp
     LcscImageService.cpp
@@ -9,6 +10,16 @@ add_library(EasyKiConverterServices STATIC
     ConfigService.cpp
     ComponentDataCollector.cpp
     ComponentExportTask.cpp
+)
+
+# 然后添加子目录，子目录会填充 PIPELINE_SOURCES 和 PIPELINE_HEADERS 变量
+# 并且子目录里的 target_include_directories 也能正常工作了
+add_subdirectory(pipeline)
+
+# 将子目录定义的源码加入目标
+target_sources(EasyKiConverterServices PRIVATE
+    ${PIPELINE_SOURCES}
+    ${PIPELINE_HEADERS}
 )
 
 target_include_directories(EasyKiConverterServices
@@ -28,7 +39,7 @@ target_link_libraries(EasyKiConverterServices
         EasyKiConverterEasyeda
         EasyKiConverterKicad
         EasyKiConverterUtils
-        EasyKiConverterSafeUtils # 新增链接
+        EasyKiConverterSafeUtils
         EasyKiConverterWorkers
 )
 

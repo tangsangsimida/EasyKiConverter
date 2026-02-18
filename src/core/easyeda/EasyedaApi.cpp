@@ -288,9 +288,11 @@ void EasyedaApi::resetRequestState() {
 QString EasyedaApi::buildComponentApiUrl(const QString& lcscId) const {
     return API_ENDPOINT.arg(lcscId);
 }
+
 QString EasyedaApi::build3DModelObjUrl(const QString& uuid) const {
     return ENDPOINT_3D_MODEL.arg(uuid);
 }
+
 QString EasyedaApi::build3DModelStepUrl(const QString& uuid) const {
     return ENDPOINT_3D_MODEL_STEP.arg(uuid);
 }

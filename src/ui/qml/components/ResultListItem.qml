@@ -9,7 +9,6 @@ Rectangle {
     property string status // "fetching", "fetch_completed", "processing", "process_completed", "writing", "write_completed", "success", "failed"
     property string message
     signal retryClicked
-
     height: message.length > 0 ? 72 : 48
     // 悬停效果
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
@@ -83,7 +82,6 @@ Rectangle {
                 Row {
                     spacing: 4
                     visible: status !== "pending" && status !== "fetching"
-
                     Rectangle {
                         width: 14
                         height: 14
@@ -161,7 +159,6 @@ Rectangle {
             Layout.preferredWidth: 30
             Layout.preferredHeight: 30
             flat: true
-
             contentItem: Text {
                 text: "↺"
                 font.pixelSize: 20
@@ -178,7 +175,6 @@ Rectangle {
             ToolTip.visible: hovered
             ToolTip.text: qsTr("重试")
             ToolTip.delay: 500
-
             onClicked: item.retryClicked()
         }
     }

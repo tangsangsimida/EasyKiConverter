@@ -10,7 +10,6 @@
 #include <QStandardPaths>
 #include <QTimer>
 
-
 namespace EasyKiConverter {
 
 LcscImageService::LcscImageService(QObject* parent)

@@ -59,10 +59,53 @@ python tools/python/manage_version.py 3.0.7
 - `CMakeLists.txt`: Updates the default `VERSION_FROM_CI` and `qt_add_qml_module` version.
 - `src/main.cpp`: Updates `app.setApplicationVersion`.
 
+## Command Line Help Support
+
+All command-line tools must support `--help` or `-h` flag to display usage information.
+
+### Implementation Requirements
+
+| Tool Type | Recommended Implementation | Example |
+|-----------|---------------------------|---------|
+| Python scripts | Use `argparse` module | `parser = argparse.ArgumentParser(...)` |
+| Windows batch | Check for `-h`, `--help`, `/h` | `if "%~1"=="--help" goto help` |
+| Shell scripts | Check for `-h`, `--help` | `case "$1" in --help) show_help ;; esac` |
+
+### Help Content Requirements
+
+The help output should include:
+1. **Tool name and description** - Brief explanation of what the tool does
+2. **Usage format** - Command line syntax
+3. **Arguments** - Description of each argument and default values
+4. **Examples** - Common usage scenarios
+5. **Requirements** - Required tools or libraries
+
+### Example (Python)
+
+```python
+import argparse
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Tool description",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python tool.py --option value
+  python tool.py --help
+        """
+    )
+    parser.add_argument("--input", help="Input file path")
+    parser.add_argument("--verbose", action="store_true", help="Verbose output")
+    args = parser.parse_args()
+```
+
 ## Adding New Tools
 
-When adding new tools:
+When adding new tools, you must follow these requirements:
+
 1. Create the appropriate subdirectory (`windows/`, `linux/`, `macos/`, or `python/`)
-2. Add the tool script or executable
-3. Update this README with documentation
-4. Consider adding usage examples and requirements
+2. **Help Support**: All command-line tools **must** support `-h` and `--help` flags to display usage information. See "Command Line Help Support" section above for implementation details.
+3. Add the tool script or executable
+4. Update this README with documentation
+5. Consider adding usage examples and requirements

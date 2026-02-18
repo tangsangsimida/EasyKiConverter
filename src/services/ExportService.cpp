@@ -301,6 +301,13 @@ void ExportService::cancelExport() {
     }
 }
 
+bool ExportService::waitForCompletion(int timeoutMs) {
+    if (m_threadPool) {
+        return m_threadPool->waitForDone(timeoutMs);
+    }
+    return true;
+}
+
 void ExportService::retryExport(const QStringList& componentIds, const ExportOptions& options) {
     ExportOptions retryOptions = options;
     retryOptions.overwriteExistingFiles = false;

@@ -5,15 +5,11 @@ Item {
     id: resizeHandles
     anchors.fill: parent
     z: 9999 // 确保在最顶层
-
     // 外部属性
     property bool isMaximized: false
-
     visible: !isMaximized
-
     // 边框拖拽宽度
     property int gripSize: 8
-
     // 左
     MouseArea {
         width: parent.gripSize

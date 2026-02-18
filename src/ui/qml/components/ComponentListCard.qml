@@ -6,16 +6,12 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Card {
     id: componentListCard
-
     // 外部依赖
     property var componentListController
     property var exportProgressController
-
     title: qsTranslate("MainWindow", "元器件列表")
-
     // 默认折叠，只有在有元器件时才展开
     isCollapsed: componentListController.componentCount === 0
-
     resources: [
         // 监听组件数量变化，自动展开
         Connections {
@@ -30,7 +26,6 @@ Card {
         DelegateModel {
             id: visualModel
             model: componentListCard.componentListController
-
             groups: [
                 DelegateModelGroup {
                     id: displayGroup
@@ -42,18 +37,14 @@ Card {
                     name: "filter"
                 }
             ]
-
             filterOnGroup: "display"
-
             delegate: ComponentListItem {
                 width: componentList.cellWidth - AppStyle.spacing.md
                 anchors.horizontalCenter: parent ? undefined : undefined
-
                 // 绑定数据和搜索词
                 // 注意：QAbstractListModel 暴露的角色名为 "itemData"
                 itemData: model.itemData
                 searchText: searchInput.text // 传递搜索词用于高亮
-
                 onDeleteClicked: {
                     if (itemData) {
                         componentListCard.componentListController.removeComponentById(itemData.componentId);
@@ -65,11 +56,9 @@ Card {
             function updateFilter() {
                 // 移除所有空格，实现更宽容的搜索 (例如 "C 2040" -> "c2040")
                 var searchTerm = searchInput.text.toLowerCase().replace(/\s+/g, '');
-
                 // 遍历所有项进行处理
                 for (var i = 0; i < items.count; i++) {
                     var item = items.get(i);
-
                     // 如果搜索词为空，显示所有项
                     if (searchTerm === "") {
                         item.inDisplay = true;
@@ -79,7 +68,6 @@ Card {
                     // 获取内容
                     // 对于 QAbstractListModel，item.model 包含角色属性
                     var dataObj = item.model.itemData;
-
                     // 获取 ID
                     var idStr = "";
                     if (dataObj && dataObj.componentId !== undefined) {
@@ -96,7 +84,6 @@ Card {
             }
         }
     ]
-
     RowLayout {
         width: parent.width
         spacing: 12
@@ -115,50 +102,30 @@ Card {
 
         TextField {
             id: searchInput
-
             Layout.preferredWidth: 200
-
             Layout.preferredHeight: 44
-
             placeholderText: qsTranslate("MainWindow", "搜索元器件...")
-
             font.pixelSize: AppStyle.fontSizes.sm
-
             color: AppStyle.colors.textPrimary
-
             placeholderTextColor: AppStyle.colors.textSecondary
-
             leftPadding: 32 // 为图标留出空间
-
             background: Rectangle {
-
                 color: AppStyle.colors.surface
-
                 border.color: searchInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
-
                 border.width: searchInput.focus ? 2 : 1
-
                 radius: AppStyle.radius.md
             }
 
             // 搜索图标
 
             Image {
-
                 anchors.left: parent.left
-
                 anchors.leftMargin: 8
-
                 anchors.verticalCenter: parent.verticalCenter
-
                 width: 16
-
                 height: 16
-
                 source: AppStyle.isDarkMode ? "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark-white.svg" : // 暂时用现有图标替代，或者用文字
-
                 "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark.svg"
-
                 // 注意：实际上应该用一个 'search' 图标，这里暂时复用或忽略，
 
                 // 为了美观，用 Text 替代
@@ -167,17 +134,11 @@ Card {
             }
 
             Text {
-
                 anchors.left: parent.left
-
                 anchors.leftMargin: 10
-
                 anchors.verticalCenter: parent.verticalCenter
-
                 text: ""
-
                 font.pixelSize: 12
-
                 color: AppStyle.colors.textSecondary
             }
 
@@ -190,13 +151,9 @@ Card {
 
         Item {
             id: copyAllButton
-
             Layout.preferredWidth: copyAllButtonContent.width + AppStyle.spacing.xl * 2
-
             Layout.preferredHeight: 44
-
             Layout.alignment: Qt.AlignVCenter
-
             // 按钮背景
             Rectangle {
                 anchors.fill: parent
@@ -272,22 +229,17 @@ Card {
         Layout.preferredHeight: 300
         Layout.topMargin: AppStyle.spacing.md
         clip: true
-
         // 动态计算列宽，实现响应式布局
         property int minCellWidth: 230
         property int availableWidth: width - AppStyle.spacing.md // 减去右侧滚动条/边距空间
         property int columns: Math.max(1, Math.floor(availableWidth / minCellWidth))
-
         cellWidth: Math.floor(availableWidth / columns)
         // 卡片高度 64 + 垂直间距 12 = 76
         cellHeight: 76
-
         flow: GridView.FlowLeftToRight
         layoutDirection: Qt.LeftToRight
-
         // 使用 DelegateModel
         model: visualModel
-
         // delegate 已经在 DelegateModel 中定义了，这里不需要再定义，
         // 但是 GridView 需要直接使用 visualModel 作为 model。
         // 注意：当 model 是 DelegateModel 时，不需要指定 delegate 属性，

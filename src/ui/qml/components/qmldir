@@ -16,3 +16,4 @@ ExportResultsCard 1.0 ExportResultsCard.qml
 ExportStatisticsCard 1.0 ExportStatisticsCard.qml
 ExportButtonsSection 1.0 ExportButtonsSection.qml
 WindowResizeHandles 1.0 WindowResizeHandles.qml
+ConfirmDialog 1.0 ConfirmDialog.qml

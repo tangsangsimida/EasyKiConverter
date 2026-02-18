@@ -26,6 +26,7 @@ public:
     QString lcscId() const {
         return m_lcscId;
     }
+
     void setLcscId(const QString& id) {
         m_lcscId = id;
     }
@@ -33,6 +34,7 @@ public:
     QString name() const {
         return m_name;
     }
+
     void setName(const QString& name) {
         m_name = name;
     }
@@ -40,6 +42,7 @@ public:
     QString prefix() const {
         return m_prefix;
     }
+
     void setPrefix(const QString& prefix) {
         m_prefix = prefix;
     }
@@ -47,6 +50,7 @@ public:
     QString package() const {
         return m_package;
     }
+
     void setPackage(const QString& package) {
         m_package = package;
     }
@@ -54,6 +58,7 @@ public:
     QString manufacturer() const {
         return m_manufacturer;
     }
+
     void setManufacturer(const QString& manufacturer) {
         m_manufacturer = manufacturer;
     }
@@ -61,6 +66,7 @@ public:
     QString datasheet() const {
         return m_datasheet;
     }
+
     void setDatasheet(const QString& datasheet) {
         m_datasheet = datasheet;
     }
@@ -68,6 +74,7 @@ public:
     QSharedPointer<SymbolData> symbolData() const {
         return m_symbolData;
     }
+
     void setSymbolData(const QSharedPointer<SymbolData>& data) {
         m_symbolData = data;
     }
@@ -75,6 +82,7 @@ public:
     QSharedPointer<FootprintData> footprintData() const {
         return m_footprintData;
     }
+
     void setFootprintData(const QSharedPointer<FootprintData>& data) {
         m_footprintData = data;
     }
@@ -82,6 +90,7 @@ public:
     QSharedPointer<Model3DData> model3DData() const {
         return m_model3DData;
     }
+
     void setModel3DData(const QSharedPointer<Model3DData>& data) {
         m_model3DData = data;
     }

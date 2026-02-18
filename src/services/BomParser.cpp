@@ -9,7 +9,6 @@
 
 #include <xlsxdocument.h>
 
-
 namespace EasyKiConverter {
 
 BomParser::BomParser(QObject* parent) : QObject(parent) {}

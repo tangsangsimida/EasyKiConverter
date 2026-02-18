@@ -7,7 +7,6 @@
 #include <QSharedPointer>
 #include <QStringList>
 
-
 namespace EasyKiConverter {
 
 class EasyedaSymbolImporter {

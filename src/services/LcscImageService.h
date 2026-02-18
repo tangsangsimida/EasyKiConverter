@@ -7,7 +7,6 @@
 #include <QQueue>
 #include <QString>
 
-
 namespace EasyKiConverter {
 
 /**

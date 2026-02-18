@@ -9,34 +9,27 @@ Item {
     property real progress: 0
     property int index: 1
     property color activeColor: AppStyle.colors.primary
-
     // 状态判断
     property bool isCompleted: progress >= 100
     property bool isActive: progress > 0 && progress < 100
     property bool isPending: progress <= 0
-
     implicitWidth: 80
     implicitHeight: column.implicitHeight
-
     ColumnLayout {
         id: column
         anchors.centerIn: parent
         spacing: 4
-
         // 圆圈图标
         Rectangle {
             Layout.alignment: Qt.AlignHCenter
             width: 32
             height: 32
             radius: 16
-
             // 背景色：完成(绿) / 进行中(白+边框) / 等待(灰)
             color: root.isCompleted ? AppStyle.colors.success : (root.isActive ? "transparent" : AppStyle.colors.border)
-
             // 边框：进行中(亮色) / 其他(无)
             border.width: root.isActive ? 2 : 0
             border.color: root.isActive ? root.activeColor : "transparent"
-
             // 动画：进行中时呼吸效果
             SequentialAnimation on scale {
                 running: root.isActive

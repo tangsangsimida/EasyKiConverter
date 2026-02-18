@@ -7,7 +7,6 @@
 
 #include <cmath>
 
-
 namespace EasyKiConverter {
 
 QString FootprintGraphicsGenerator::generatePad(const FootprintPad& pad, double bboxX, double bboxY) const {

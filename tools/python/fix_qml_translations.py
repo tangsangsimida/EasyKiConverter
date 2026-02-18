@@ -1,11 +1,10 @@
 """
-翻译上下文修复工具
-用途：将指定 QML 文件中的 qsTr(...) 替换为 qsTranslate("上下文", ...)
-用法：python tools/python/fix_qml_translations.py <context> <file1.qml> [file2.qml ...]
-示例：python tools/python/fix_qml_translations.py MainWindow src/ui/qml/components/HeaderSection.qml
+翻译上下文修复工具 - 将 QML 文件中的 qsTr() 替换为 qsTranslate()
 """
+import argparse
 import os
 import sys
+
 
 def fix_translations(context, filepaths):
     for filepath in filepaths:
@@ -30,12 +29,34 @@ def fix_translations(context, filepaths):
 
         print(f"Updated {filepath}: {count} replacements")
 
-if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python fix_qml_translations.py <context> <file1.qml> [file2.qml ...]")
-        print('Example: python fix_qml_translations.py MainWindow src/ui/qml/components/MyCard.qml')
-        sys.exit(1)
 
-    context = sys.argv[1]
-    files = sys.argv[2:]
-    fix_translations(context, files)
+def main():
+    parser = argparse.ArgumentParser(
+        description="翻译上下文修复工具 - 将 QML 文件中的 qsTr() 替换为 qsTranslate()",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+功能说明:
+  将指定 QML 文件中的 qsTr("text") 替换为 qsTranslate("Context", "text")
+  这有助于 Qt 翻译系统区分不同组件中的相同文本
+
+示例:
+  python tools/python/fix_qml_translations.py MainWindow src/ui/qml/components/HeaderSection.qml
+  python tools/python/fix_qml_translations.py MyCard src/ui/qml/components/MyCard.qml src/ui/qml/components/OtherCard.qml
+        """
+    )
+    parser.add_argument(
+        "context",
+        help="翻译上下文名称 (如 MainWindow, MyCard 等)"
+    )
+    parser.add_argument(
+        "files",
+        nargs="+",
+        help="要处理的 QML 文件路径 (支持多个文件)"
+    )
+
+    args = parser.parse_args()
+    fix_translations(args.context, args.files)
+
+
+if __name__ == "__main__":
+    main()

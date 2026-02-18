@@ -1,12 +1,12 @@
-#include <QtTest>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QDebug>
-
-#include "models/SymbolData.h"
 #include "models/FootprintData.h"
-#include "models/SymbolDataSerializer.h"
 #include "models/FootprintDataSerializer.h"
+#include "models/SymbolData.h"
+#include "models/SymbolDataSerializer.h"
+
+#include <QDebug>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QtTest>
 
 using namespace EasyKiConverter;
 
@@ -14,6 +14,7 @@ class TestBenchmarkCore : public QObject {
     Q_OBJECT
 
 private slots:
+
     void benchmarkSymbolSerialization() {
         // 构建复杂的 SymbolData
         SymbolData symbolData;
@@ -23,7 +24,10 @@ private slots:
         symbolData.setInfo(info);
 
         SymbolBBox bbox;
-        bbox.x = 0; bbox.y = 0; bbox.width = 100; bbox.height = 100;
+        bbox.x = 0;
+        bbox.y = 0;
+        bbox.width = 100;
+        bbox.height = 100;
         symbolData.setBbox(bbox);
 
         // 添加大量的 Pins
@@ -49,8 +53,10 @@ private slots:
         QList<SymbolRectangle> rects;
         for (int i = 0; i < 500; ++i) {
             SymbolRectangle rect;
-            rect.posX = i * 10; rect.posY = i * 10;
-            rect.width = 50; rect.height = 50;
+            rect.posX = i * 10;
+            rect.posY = i * 10;
+            rect.width = 50;
+            rect.height = 50;
             rect.fillColor = "#FF0000";
             rects.append(rect);
         }
@@ -93,8 +99,10 @@ private slots:
         for (int i = 0; i < 1000; ++i) {
             FootprintPad pad;
             pad.number = QString::number(i + 1);
-            pad.centerX = i * 2.54; pad.centerY = 0;
-            pad.width = 1.6; pad.height = 1.6;
+            pad.centerX = i * 2.54;
+            pad.centerY = 0;
+            pad.width = 1.6;
+            pad.height = 1.6;
             pad.shape = "RECT";
             pads.append(pad);
         }
@@ -106,7 +114,7 @@ private slots:
             FootprintTrack track;
             // EasyEDA track points format: x1 y1 x2 y2 ? or logic?
             // Assuming simplified string for benchmark content
-            track.points = QString("%1 0 %2 10").arg(i).arg(i+1);
+            track.points = QString("%1 0 %2 10").arg(i).arg(i + 1);
             track.strokeWidth = 0.2;
             track.layerId = 1;
             tracks.append(track);
