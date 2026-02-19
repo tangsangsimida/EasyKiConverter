@@ -15,6 +15,37 @@ ApplicationWindow {
     title: "EasyKiConverter - 元器件转换工具"
     color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint
+    // 窗口关闭/隐藏动画
+    NumberAnimation {
+        id: closeWindowAnim
+        target: appWindow
+        property: "opacity"
+        to: 0
+        duration: 300
+        easing.type: Easing.OutQuart
+        onFinished: Qt.quit()
+    }
+
+    NumberAnimation {
+        id: hideWindowAnim
+        target: appWindow
+        property: "opacity"
+        to: 0
+        duration: 300
+        easing.type: Easing.OutQuart
+        onFinished: {
+            appWindow.hide();
+            // 恢复不透明度以便下次显示
+            restoreTimer.start();
+        }
+    }
+
+    Timer {
+        id: restoreTimer
+        interval: 100
+        onTriggered: appWindow.opacity = 1
+    }
+
     // 美化的确认关闭对话框
     ConfirmDialog {
         id: closeConfirmDialog
@@ -25,8 +56,20 @@ ApplicationWindow {
         confirmColor: AppStyle.colors.danger
         onAccepted: {
             if (exportProgressViewModel.handleCloseRequest()) {
-                Qt.quit();
+                closeWindowAnim.start();
             }
+        }
+    }
+
+    // 退出选项对话框
+    ExitDialog {
+        id: exitOptionDialog
+        onMinimizeToTray: {
+            hideWindowAnim.start();
+        }
+        onExitApp: {
+            exportProgressViewModel.handleCloseRequest();
+            closeWindowAnim.start();
         }
     }
 
@@ -35,8 +78,9 @@ ApplicationWindow {
             close.accepted = false;
             closeConfirmDialog.open();
         } else {
-            exportProgressViewModel.handleCloseRequest();
-            close.accepted = true;
+            // 拦截默认关闭，显示退出选项
+            close.accepted = false;
+            exitOptionDialog.open();
         }
     }
 

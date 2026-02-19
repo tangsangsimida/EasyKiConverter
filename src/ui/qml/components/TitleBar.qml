@@ -90,7 +90,28 @@ Rectangle {
                     }
                 }
 
-                onClicked: Window.window.showMinimized()
+                onClicked: minimizeAnim.start()
+            }
+
+            // 最小化动画
+            NumberAnimation {
+                id: minimizeAnim
+                target: Window.window
+                property: "opacity"
+                to: 0
+                duration: 250
+                easing.type: Easing.OutQuart
+                onFinished: {
+                    Window.window.showMinimized();
+                    // 恢复不透明度
+                    restoreTimer.start()
+                }
+            }
+
+            Timer {
+                id: restoreTimer
+                interval: 300
+                onTriggered: Window.window.opacity = 1
             }
 
             // 最大化/还原

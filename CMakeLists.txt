@@ -196,6 +196,7 @@ set(QML_FILES
     src/ui/qml/components/ExportButtonsSection.qml
     src/ui/qml/components/ConfirmDialog.qml
     src/ui/qml/components/WindowResizeHandles.qml
+    src/ui/qml/components/ExitDialog.qml
     src/ui/qml/styles/AppStyle.qml
 )
 
