@@ -76,8 +76,8 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     // 状态统计初始化
     m_pipelineProgress = PipelineProgress();
 
-    qDebug() << "ExportServicePipeline initialized with thread pools:"
-             << "Fetch:" << m_fetchThreadPool->maxThreadCount() << "Process:" << m_processThreadPool->maxThreadCount()
+    qDebug() << "ExportServicePipeline initialized with thread pools:" << "Fetch:"
+             << m_fetchThreadPool->maxThreadCount() << "Process:" << m_processThreadPool->maxThreadCount()
              << "Write:" << m_writeThreadPool->maxThreadCount();
 }
 

@@ -11,7 +11,7 @@ Card {
     property var exportProgressController
     title: qsTranslate("MainWindow", "元器件列表")
     // 默认折叠，只有在有元器件时才展开
-    isCollapsed: componentListController.componentCount === 0
+    isCollapsed: componentListController ? componentListController.componentCount === 0 : true
     resources: [
         // 监听组件数量变化，自动展开
         Connections {
@@ -25,7 +25,7 @@ Card {
         // 搜索过滤模型 (作为资源定义，不参与布局)
         DelegateModel {
             id: visualModel
-            model: componentListCard.componentListController
+            model: componentListCard.componentListController ?? null
             groups: [
                 DelegateModelGroup {
                     id: displayGroup
@@ -89,7 +89,7 @@ Card {
         spacing: 12
         Text {
             id: componentCountLabel
-            text: qsTranslate("MainWindow", "共 %1 个元器件").arg(componentListCard.componentListController.componentCount)
+            text: qsTranslate("MainWindow", "共 %1 个元器件").arg(componentListCard.componentListController ? componentListCard.componentListController.componentCount : 0)
             font.pixelSize: 14
             color: AppStyle.colors.textSecondary
         }
@@ -159,8 +159,8 @@ Card {
                 anchors.fill: parent
                 color: copyAllButtonMouseArea.pressed ? AppStyle.colors.textPrimary : copyAllButtonMouseArea.containsMouse ? Qt.darker(AppStyle.colors.textSecondary, 1.2) : AppStyle.colors.textSecondary
                 radius: AppStyle.radius.md
-                enabled: componentListCard.componentListController.componentCount > 0
-                opacity: componentListCard.componentListController.componentCount > 0 ? 1.0 : 0.4
+                enabled: componentListCard.componentListController ? componentListCard.componentListController.componentCount > 0 : false
+                opacity: componentListCard.componentListController ? (componentListCard.componentListController.componentCount > 0 ? 1.0 : 0.4) : 0.4
                 Behavior on color {
                     ColorAnimation {
                         duration: AppStyle.durations.fast
@@ -187,9 +187,9 @@ Card {
                 id: copyAllButtonMouseArea
                 anchors.fill: parent
                 hoverEnabled: true
-                cursorShape: componentListCard.componentListController.componentCount > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                cursorShape: (componentListCard.componentListController && componentListCard.componentListController.componentCount > 0) ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: {
-                    if (componentListCard.componentListController.componentCount > 0) {
+                    if (componentListCard.componentListController && componentListCard.componentListController.componentCount > 0) {
                         componentListCard.componentListController.copyAllComponentIds();
                         copyAllFeedback.visible = true;
                     }
@@ -217,8 +217,12 @@ Card {
             pressedColor: AppStyle.colors.dangerDark
             onClicked: {
                 searchInput.text = ""; // 清空搜索
-                componentListCard.componentListController.clearComponentList();
-                componentListCard.exportProgressController.resetExport(); // 重置导出状态
+                if (componentListCard.componentListController) {
+                    componentListCard.componentListController.clearComponentList();
+                }
+                if (componentListCard.exportProgressController) {
+                    componentListCard.exportProgressController.resetExport(); // 重置导出状态
+                }
             }
         }
     }

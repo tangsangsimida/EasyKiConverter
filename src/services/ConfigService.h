@@ -160,6 +160,76 @@ public:
      */
     void setDebugMode(bool enabled);
 
+    /**
+     * @brief 获取窗口宽度
+     *
+     * @return int 窗口宽度
+     */
+    Q_INVOKABLE int getWindowWidth() const;
+
+    /**
+     * @brief 设置窗口宽度
+     *
+     * @param width 窗口宽度
+     */
+    Q_INVOKABLE void setWindowWidth(int width);
+
+    /**
+     * @brief 获取窗口高度
+     *
+     * @return int 窗口高度
+     */
+    Q_INVOKABLE int getWindowHeight() const;
+
+    /**
+     * @brief 设置窗口高度
+     *
+     * @param height 窗口高度
+     */
+    Q_INVOKABLE void setWindowHeight(int height);
+
+    /**
+     * @brief 获取窗口X坐标
+     *
+     * @return int 窗口X坐标
+     */
+    Q_INVOKABLE int getWindowX() const;
+
+    /**
+     * @brief 设置窗口X坐标
+     *
+     * @param x 窗口X坐标
+     */
+    Q_INVOKABLE void setWindowX(int x);
+
+    /**
+     * @brief 获取窗口Y坐标
+     *
+     * @return int 窗口Y坐标
+     */
+    Q_INVOKABLE int getWindowY() const;
+
+    /**
+     * @brief 设置窗口Y坐标
+     *
+     * @param y 窗口Y坐标
+     */
+    Q_INVOKABLE void setWindowY(int y);
+
+    /**
+     * @brief 获取退出偏好
+     *
+     * @return QString 退出偏好（"minimize" 或 "exit"，空字符串表示未记住）
+     */
+    Q_INVOKABLE QString getExitPreference() const;
+
+    /**
+     * @brief 设置退出偏好
+     *
+     * @param preference 退出偏好（"minimize" 或 "exit"）
+     */
+    Q_INVOKABLE void setExitPreference(const QString& preference);
+
 signals:
     /**
      * @brief 配置改变信号
