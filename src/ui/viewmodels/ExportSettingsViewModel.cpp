@@ -155,8 +155,7 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
     options.updateMode = (m_exportMode == 1);  // 1 = 更新模式
     options.debugMode = m_debugMode;
 
-    qDebug() << "Export options:"
-             << "OutputPath:" << options.outputPath << "LibName:" << options.libName
+    qDebug() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
              << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
              << "3D Model:" << options.exportModel3D << "Update Mode:" << options.updateMode
              << "Debug Mode:" << options.debugMode;

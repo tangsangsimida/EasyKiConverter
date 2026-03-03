@@ -73,9 +73,12 @@ ColumnLayout {
                 var progressController = exportButtonsSection.exportProgressController;
                 var listController = exportButtonsSection.componentListController;
                 var settingsController = exportButtonsSection.exportSettingsController;
-                if (progressController && progressController.isExporting) return false;
-                if (!listController || listController.componentCount <= 0) return false;
-                if (!settingsController) return false;
+                if (progressController && progressController.isExporting)
+                    return false;
+                if (!listController || listController.componentCount <= 0)
+                    return false;
+                if (!settingsController)
+                    return false;
                 return settingsController.exportSymbol || settingsController.exportFootprint || settingsController.exportModel3D;
             }
             onClicked: {
@@ -87,17 +90,7 @@ ColumnLayout {
                     var idList = exportButtonsSection.componentListController ? exportButtonsSection.componentListController.getAllComponentIds() : [];
                     var settingsController = exportButtonsSection.exportSettingsController;
                     if (progressController && settingsController) {
-                        progressController.startExport(
-                            idList,
-                            settingsController.outputPath || "",
-                            settingsController.libName || "",
-                            settingsController.exportSymbol || false,
-                            settingsController.exportFootprint || false,
-                            settingsController.exportModel3D || false,
-                            settingsController.overwriteExistingFiles || false,
-                            (settingsController.exportMode || 0) === 1,
-                            settingsController.debugMode || false
-                        );
+                        progressController.startExport(idList, settingsController.outputPath || "", settingsController.libName || "", settingsController.exportSymbol || false, settingsController.exportFootprint || false, settingsController.exportModel3D || false, settingsController.overwriteExistingFiles || false, (settingsController.exportMode || 0) === 1, settingsController.debugMode || false);
                     }
                 }
             }

@@ -35,7 +35,7 @@ Card {
                     text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.outputPath : ""
                     onTextChanged: {
                         if (exportSettingsCard.exportSettingsController) {
-                            exportSettingsCard.exportSettingsController.setOutputPath(text)
+                            exportSettingsCard.exportSettingsController.setOutputPath(text);
                         }
                     }
                     placeholderText: qsTranslate("MainWindow", "选择输出目录")
@@ -83,15 +83,16 @@ Card {
                 color: AppStyle.colors.textPrimary
                 horizontalAlignment: Text.AlignHCenter
             }
-                            TextField {
-                                id: libNameInput
-                                Layout.fillWidth: true
-                                text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.libName : ""
-                                onTextChanged: {
-                                    if (exportSettingsCard.exportSettingsController) {
-                                        exportSettingsCard.exportSettingsController.setLibName(text)
-                                    }
-                                }                placeholderText: qsTranslate("MainWindow", "输入库名称 (例如: MyLibrary)")
+            TextField {
+                id: libNameInput
+                Layout.fillWidth: true
+                text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.libName : ""
+                onTextChanged: {
+                    if (exportSettingsCard.exportSettingsController) {
+                        exportSettingsCard.exportSettingsController.setLibName(text);
+                    }
+                }
+                placeholderText: qsTranslate("MainWindow", "输入库名称 (例如: MyLibrary)")
                 font.pixelSize: 14
                 color: AppStyle.colors.textPrimary
                 placeholderTextColor: AppStyle.colors.textSecondary
@@ -138,7 +139,7 @@ Card {
                 checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportSymbol : false
                 onCheckedChanged: {
                     if (exportSettingsCard.exportSettingsController) {
-                        exportSettingsCard.exportSettingsController.setExportSymbol(checked)
+                        exportSettingsCard.exportSettingsController.setExportSymbol(checked);
                     }
                 }
                 font.pixelSize: 16
@@ -192,7 +193,7 @@ Card {
                 checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportFootprint : false
                 onCheckedChanged: {
                     if (exportSettingsCard.exportSettingsController) {
-                        exportSettingsCard.exportSettingsController.setExportFootprint(checked)
+                        exportSettingsCard.exportSettingsController.setExportFootprint(checked);
                     }
                 }
                 font.pixelSize: 16
@@ -246,7 +247,7 @@ Card {
                 checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportModel3D : false
                 onCheckedChanged: {
                     if (exportSettingsCard.exportSettingsController) {
-                        exportSettingsCard.exportSettingsController.setExportModel3D(checked)
+                        exportSettingsCard.exportSettingsController.setExportModel3D(checked);
                     }
                 }
                 font.pixelSize: 16
