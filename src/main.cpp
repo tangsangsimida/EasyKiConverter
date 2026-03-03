@@ -207,13 +207,25 @@ int main(int argc, char* argv[]) {
     int exitCode = app.exec();
 
     // === 重要：显式按顺序销毁对象，防止退出时崩溃 ===
-    // 1. 首先销毁依赖度高的 ViewModel
+    // 1. 首先清除 QML 引擎的上下文属性，防止 QML 组件访问已销毁的对象
+    engine.rootContext()->setContextProperty("componentListViewModel", nullptr);
+    engine.rootContext()->setContextProperty("exportSettingsViewModel", nullptr);
+    engine.rootContext()->setContextProperty("exportProgressViewModel", nullptr);
+    engine.rootContext()->setContextProperty("themeSettingsViewModel", nullptr);
+
+    // 2. 销毁 QML 引擎（这会销毁所有 QML 组件）
+    engine.deleteLater();
+
+    // 3. 处理事件队列，确保 QML 引擎销毁完成
+    QCoreApplication::processEvents();
+
+    // 4. 销毁 ViewModel
     delete themeSettingsViewModel;
     delete exportProgressViewModel;
     delete exportSettingsViewModel;
     delete componentListViewModel;
 
-    // 2. 然后销毁单例/核心服务
+    // 5. 销毁单例/核心服务
     delete exportService;
     delete componentService;
 
