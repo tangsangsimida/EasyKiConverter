@@ -37,7 +37,8 @@ bool ConfigService::loadConfig(const QString& path) {
 
     QFile file(configPath);
     if (!file.open(QIODevice::ReadOnly)) {
-        qInfo() << "Config file not found, using defaults:" << configPath;
+        qWarning() << "Config file not found, using defaults:" << configPath;
+        saveConfig();
         return false;
     }
 
