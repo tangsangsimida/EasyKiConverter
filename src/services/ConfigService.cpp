@@ -221,6 +221,66 @@ void ConfigService::setDebugMode(bool enabled) {
     saveConfig();
 }
 
+int ConfigService::getWindowWidth() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["windowWidth"].toInt(-1);  // -1 表示使用默认值
+}
+
+void ConfigService::setWindowWidth(int width) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["windowWidth"] = width;
+    emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
+}
+
+int ConfigService::getWindowHeight() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["windowHeight"].toInt(-1);  // -1 表示使用默认值
+}
+
+void ConfigService::setWindowHeight(int height) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["windowHeight"] = height;
+    emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
+}
+
+int ConfigService::getWindowX() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["windowX"].toInt(-9999);  // -9999 表示使用默认值（居中）
+}
+
+void ConfigService::setWindowX(int x) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["windowX"] = x;
+    emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
+}
+
+int ConfigService::getWindowY() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["windowY"].toInt(-9999);  // -9999 表示使用默认值（居中）
+}
+
+void ConfigService::setWindowY(int y) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["windowY"] = y;
+    emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
+}
+
 void ConfigService::initializeDefaultConfig() {
     m_config["outputPath"] = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     m_config["libName"] = "easyeda_convertlib";
@@ -230,6 +290,11 @@ void ConfigService::initializeDefaultConfig() {
     m_config["overwriteExistingFiles"] = false;
     m_config["darkMode"] = false;
     m_config["debugMode"] = false;
+    // 窗口配置默认值（-1 或 -9999 表示使用默认值）
+    m_config["windowWidth"] = -1;
+    m_config["windowHeight"] = -1;
+    m_config["windowX"] = -9999;
+    m_config["windowY"] = -9999;
 }
 
 QString ConfigService::getDefaultConfigPath() const {

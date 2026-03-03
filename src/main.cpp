@@ -12,11 +12,15 @@
 #include <QDir>
 #include <QFile>
 #include <QIcon>
+#include <QPoint>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickStyle>
+#include <QQuickWindow>
+#include <QScreen>
 #include <QStandardPaths>
+#include <QTimer>
 #include <QUrl>
 
 #ifdef _WIN32
@@ -174,11 +178,12 @@ int main(int argc, char* argv[]) {
         [&engine]() { engine.retranslate(); },
         Qt::QueuedConnection);
 
-    // 将 ViewModel 注册到 QML 上下文
+    // 将 ViewModel 和 Service 注册到 QML 上下文
     engine.rootContext()->setContextProperty("componentListViewModel", componentListViewModel);
     engine.rootContext()->setContextProperty("exportSettingsViewModel", exportSettingsViewModel);
     engine.rootContext()->setContextProperty("exportProgressViewModel", exportProgressViewModel);
     engine.rootContext()->setContextProperty("themeSettingsViewModel", themeSettingsViewModel);
+    engine.rootContext()->setContextProperty("configService", EasyKiConverter::ConfigService::instance());
 
     // 连接对象创建失败信号
     QObject::connect(
@@ -198,6 +203,56 @@ int main(int argc, char* argv[]) {
     if (engine.rootObjects().isEmpty()) {
         qCritical() << "严重错误：QML引擎根对象加载后为空！";
         return -1;
+    }
+
+    // 获取根窗口对象并立即设置窗口位置（在显示之前）
+    auto* rootObject = engine.rootObjects().first();
+    if (auto* window = qobject_cast<QQuickWindow*>(rootObject)) {
+        auto* configService = EasyKiConverter::ConfigService::instance();
+        int savedX = configService->getWindowX();
+        int savedY = configService->getWindowY();
+
+        int posX, posY;
+
+        // 如果配置中保存了有效位置，则使用保存的位置
+        if (savedX != -9999 && savedY != -9999) {
+            posX = savedX;
+            posY = savedY;
+        } else {
+            // 否则居中显示
+            QScreen* screen = window->screen();
+            if (screen) {
+                int screenWidth = screen->availableGeometry().width();
+                int screenHeight = screen->availableGeometry().height();
+                posX = (screenWidth - window->width()) / 2;
+                posY = (screenHeight - window->height()) / 2;
+            } else {
+                posX = 100;
+                posY = 100;
+            }
+        }
+
+        qDebug() << "设置窗口位置到:" << posX << posY << "窗口大小:" << window->width() << window->height();
+
+        // 先隐藏窗口，设置位置后再显示
+        window->hide();
+        window->setFramePosition(QPoint(posX, posY));
+
+        // 强制更新窗口几何信息
+        window->update();
+
+        // 短暂延迟后显示窗口
+        QTimer::singleShot(50, [window, posX, posY]() {
+            window->show();
+            qDebug() << "窗口已显示，实际位置:" << window->x() << window->y();
+
+            // 检测是否在左上角（可能是 GNOME 窗口管理器未启用居中新窗口）
+            if (window->x() < 50 && window->y() < 50) {
+                qWarning() << "窗口在左上角显示，这可能是因为 GNOME 的 center-new-windows 设置未启用。";
+                qWarning() << "如需窗口居中显示，请运行以下命令：";
+                qWarning() << "  gsettings set org.gnome.mutter center-new-windows true";
+            }
+        });
     }
 
     // 点击关闭按钮时直接退出应用程序
