@@ -32,12 +32,34 @@ ApplicationWindow {
         }
     }
 
-    onClosing: close => {
-        if (exportProgressViewModel.isExporting) {
-            close.accepted = false;
-            closeConfirmDialog.open();
-        } else {
-            // 保存窗口大小和位置（仅在正常关闭时，不是强制退出）
+    // 退出选项对话框
+    ExitDialog {
+        id: exitOptionDialog
+        onMinimizeToTray: function (remember) {
+            // 如果选择了记住，保存退出偏好
+            if (remember && configService) {
+                configService.setExitPreference("minimize");
+            }
+
+            // 保存窗口大小和位置
+            if (configService) {
+                configService.setWindowWidth(width);
+                configService.setWindowHeight(height);
+                // 只在窗口不是最大化或全屏时保存位置
+                if (visibility !== Window.Maximized && visibility !== Window.FullScreen) {
+                    configService.setWindowX(x);
+                    configService.setWindowY(y);
+                }
+            }
+            showMinimized();
+        }
+        onExitApp: function (remember) {
+            // 如果选择了记住，保存退出偏好
+            if (remember && configService) {
+                configService.setExitPreference("exit");
+            }
+
+            // 保存窗口大小和位置
             if (configService) {
                 configService.setWindowWidth(width);
                 configService.setWindowHeight(height);
@@ -48,7 +70,43 @@ ApplicationWindow {
                 }
             }
             exportProgressViewModel.handleCloseRequest();
-            close.accepted = true;
+            Qt.quit();
+        }
+    }
+
+    onClosing: close => {
+        if (exportProgressViewModel.isExporting) {
+            close.accepted = false;
+            closeConfirmDialog.open();
+        } else {
+            // 检查是否有记住的退出偏好
+            if (configService) {
+                var exitPreference = configService.getExitPreference();
+                if (exitPreference === "minimize") {
+                    // 直接最小化到托盘
+                    close.accepted = false;
+                    // 保存窗口大小和位置
+                    configService.setWindowWidth(width);
+                    configService.setWindowHeight(height);
+                    if (visibility !== Window.Maximized && visibility !== Window.FullScreen) {
+                        configService.setWindowX(x);
+                        configService.setWindowY(y);
+                    }
+                    showMinimized();
+                } else if (exitPreference === "exit") {
+                    // 直接退出
+                    close.accepted = true;
+                    exportProgressViewModel.handleCloseRequest();
+                } else {
+                    // 没有记住的偏好，显示退出选项对话框
+                    close.accepted = false;
+                    exitOptionDialog.open();
+                }
+            } else {
+                // configService 不可用，显示退出选项对话框
+                close.accepted = false;
+                exitOptionDialog.open();
+            }
         }
     }
 

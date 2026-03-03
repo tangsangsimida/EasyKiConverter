@@ -216,6 +216,20 @@ public:
      */
     Q_INVOKABLE void setWindowY(int y);
 
+    /**
+     * @brief 获取退出偏好
+     *
+     * @return QString 退出偏好（"minimize" 或 "exit"，空字符串表示未记住）
+     */
+    Q_INVOKABLE QString getExitPreference() const;
+
+    /**
+     * @brief 设置退出偏好
+     *
+     * @param preference 退出偏好（"minimize" 或 "exit"）
+     */
+    Q_INVOKABLE void setExitPreference(const QString& preference);
+
 signals:
     /**
      * @brief 配置改变信号

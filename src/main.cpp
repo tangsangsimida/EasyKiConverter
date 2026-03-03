@@ -244,14 +244,7 @@ int main(int argc, char* argv[]) {
         // 短暂延迟后显示窗口
         QTimer::singleShot(50, [window, posX, posY]() {
             window->show();
-            qDebug() << "窗口已显示，实际位置:" << window->x() << window->y();
-
-            // 检测是否在左上角（可能是 GNOME 窗口管理器未启用居中新窗口）
-            if (window->x() < 50 && window->y() < 50) {
-                qWarning() << "窗口在左上角显示，这可能是因为 GNOME 的 center-new-windows 设置未启用。";
-                qWarning() << "如需窗口居中显示，请运行以下命令：";
-                qWarning() << "  gsettings set org.gnome.mutter center-new-windows true";
-            }
+            qDebug() << "窗口已显示，位置: (" << window->x() << "," << window->y() << ")";
         });
     }
 

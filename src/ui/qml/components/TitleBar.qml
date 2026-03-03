@@ -90,7 +90,11 @@ Rectangle {
                     }
                 }
 
-                onClicked: Window.window.showMinimized()
+                onClicked: {
+                    if (Window.window) {
+                        Window.window.showMinimized();
+                    }
+                }
             }
 
             // 最大化/还原

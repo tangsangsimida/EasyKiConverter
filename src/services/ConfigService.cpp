@@ -281,6 +281,21 @@ void ConfigService::setWindowY(int y) {
     saveConfig();
 }
 
+QString ConfigService::getExitPreference() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["exitPreference"].toString("");
+}
+
+void ConfigService::setExitPreference(const QString& preference) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["exitPreference"] = preference;
+    emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
+}
+
 void ConfigService::initializeDefaultConfig() {
     m_config["outputPath"] = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     m_config["libName"] = "easyeda_convertlib";
@@ -295,6 +310,8 @@ void ConfigService::initializeDefaultConfig() {
     m_config["windowHeight"] = -1;
     m_config["windowX"] = -9999;
     m_config["windowY"] = -9999;
+    // 退出偏好默认值（空字符串表示未记住）
+    m_config["exitPreference"] = "";
 }
 
 QString ConfigService::getDefaultConfigPath() const {
