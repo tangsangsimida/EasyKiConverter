@@ -201,11 +201,35 @@ Rectangle {
                             border.width: 1
                             clip: true
                             
+                            property bool imageLoaded: false
+                            property bool loadTriggered: false
+                            
+                            // 延迟加载触发器
+                            Timer {
+                                id: loadDelayTimer
+                                interval: index * 100 // 每张图片延迟100ms加载
+                                onTriggered: {
+                                    parent.loadTriggered = true;
+                                }
+                            }
+                            
+                            // 当 Popup 可见时开始延迟加载
+                            Connections {
+                                target: previewPopup
+                                function onVisibleChanged() {
+                                    if (previewPopup.visible && !loadTriggered) {
+                                        loadDelayTimer.start();
+                                    }
+                                }
+                            }
+                            
                             Image {
                                 anchors.centerIn: parent
                                 width: 198
                                 height: 198
                                 source: {
+                                    if (!parent.loadTriggered)
+                                        return "";
                                     if (!itemData || !itemData.previewImages || itemData.previewImages.length === 0)
                                         return "";
                                     return "data:image/png;base64," + itemData.previewImages[index];
@@ -213,6 +237,40 @@ Rectangle {
                                 fillMode: Image.PreserveAspectFit
                                 cache: true
                                 asynchronous: true
+                                visible: parent.loadTriggered && parent.imageLoaded
+                                
+                                onStatusChanged: {
+                                    if (status === Image.Ready) {
+                                        parent.imageLoaded = true;
+                                    }
+                                }
+                            }
+                            
+                            // 加载状态指示器
+                            BusyIndicator {
+                                anchors.centerIn: parent
+                                width: 32
+                                height: 32
+                                running: parent.loadTriggered && !parent.imageLoaded
+                                visible: parent.loadTriggered && !parent.imageLoaded
+                            }
+                            
+                            // 初始占位符
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 40
+                                height: 40
+                                color: AppStyle.colors.background
+                                radius: AppStyle.radius.md
+                                visible: !parent.loadTriggered
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: index + 1
+                                    font.pixelSize: 18
+                                    font.bold: true
+                                    color: AppStyle.colors.textSecondary
+                                }
                             }
                             
                             // 图片序号标记
