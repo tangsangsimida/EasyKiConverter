@@ -11,6 +11,35 @@ ColumnLayout {
     property var exportSettingsController
     property var componentListController
     spacing: AppStyle.spacing.md
+
+    // 错误提示对话框
+    Dialog {
+        id: errorDialog
+        parent: exportButtonsSection.Window.contentItem
+        modal: true
+        title: qsTranslate("MainWindow", "错误")
+        anchors.centerIn: parent
+
+        contentItem: Text {
+            text: qsTranslate("MainWindow", "打开导出目录失败，请检查导出路径是否存在。")
+            font.pixelSize: AppStyle.fontSizes.md
+            color: AppStyle.colors.textPrimary
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        background: Rectangle {
+            color: AppStyle.colors.surface
+            radius: AppStyle.radius.lg
+            border.color: AppStyle.colors.border
+            border.width: 1
+        }
+
+        standardButtons: Dialog.Ok
+
+        onAccepted: {
+            close();
+        }
+    }
     // 打开导出目录按钮（始终显示，只要导出已完成）
     ModernButton {
         Layout.fillWidth: true
@@ -25,7 +54,7 @@ ColumnLayout {
             if (exportButtonsSection.exportProgressController) {
                 var success = exportButtonsSection.exportProgressController.openLastExportedFolder();
                 if (!success) {
-                    console.error("Failed to open last exported folder");
+                    errorDialog.open();
                 }
             }
         }

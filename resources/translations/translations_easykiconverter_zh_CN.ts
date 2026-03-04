@@ -427,6 +427,16 @@
         <source>打开导出目录</source>
         <translation>打开导出目录</translation>
     </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="15"/>
+        <source>错误</source>
+        <translation>错误</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="18"/>
+        <source>打开导出目录失败，请检查导出路径是否存在。</source>
+        <translation>打开导出目录失败，请检查导出路径是否存在。</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>

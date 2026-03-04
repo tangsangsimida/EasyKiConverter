@@ -2,6 +2,7 @@
 
 #include "services/ExportService_Pipeline.h"
 #include "utils/FileUtils.h"
+#include "utils/logging/LogMacros.h"
 
 #include <QAction>
 #include <QApplication>
@@ -117,23 +118,24 @@ ExportProgressViewModel::~ExportProgressViewModel() {
 
 bool ExportProgressViewModel::openLastExportedFolder() {
     QString path = m_exportOptions.outputPath;
-    qDebug() << "Opening last exported folder:" << path;
+
+    LOG_DEBUG(LogModule::UI, "Opening last exported folder: {}", path);
 
     if (path.isEmpty()) {
-        qWarning() << "No export has been performed yet, or export path is empty";
+        LOG_WARN(LogModule::UI, "No export has been performed yet, or export path is empty");
         return false;
     }
 
-    // 创建 FileUtils 实例来打开文件夹
-    FileUtils* fileUtils = new FileUtils(this);
-    bool success = fileUtils->openFolder(path);
+    // 创建 FileUtils 实例来打开文件夹（使用栈对象避免堆分配）
+    FileUtils fileUtils(this);
+    bool success = fileUtils.openFolder(path);
 
     if (!success) {
-        qWarning() << "Failed to open last exported folder:" << path;
+        LOG_ERROR(LogModule::UI, "Failed to open last exported folder: {}", path);
         return false;
     }
 
-    qDebug() << "Successfully opened last exported folder";
+    LOG_DEBUG(LogModule::UI, "Successfully opened last exported folder");
     return true;
 }
 
@@ -166,15 +168,14 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
 
         // 使用库名称作为导出路径
         absoluteOutputPath = exportDir.absoluteFilePath(libName);
-        qDebug() << "ExportProgressViewModel: Using default export path (empty input):" << absoluteOutputPath;
+        LOG_DEBUG(LogModule::UI, "Using default export path (empty input): {}", absoluteOutputPath);
     } else {
         QDir dir(absoluteOutputPath);
 
         if (dir.isAbsolute()) {
             // 如果是绝对路径，规范化路径（处理 .. 和 . 等）
             absoluteOutputPath = dir.cleanPath(absoluteOutputPath);
-            qDebug() << "ExportProgressViewModel: Normalized absolute path:" << outputPath << "->"
-                     << absoluteOutputPath;
+            LOG_DEBUG(LogModule::UI, "Normalized absolute path: {} -> {}", outputPath, absoluteOutputPath);
         } else {
             // 如果是相对路径，相对于 ~/Documents/EasyKiConverter/ 转换为绝对路径
             QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
@@ -194,15 +195,16 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
 
             // 在子目录下创建库名称目录
             absoluteOutputPath = exportDir.absoluteFilePath(libName);
-            qDebug() << "ExportProgressViewModel: Converted relative path to absolute path "
-                        "(Documents/EasyKiConverter/userPath/libName):"
-                     << outputPath << "->" << absoluteOutputPath;
+            LOG_DEBUG(LogModule::UI,
+                      "Converted relative path to absolute path (Documents/EasyKiConverter/userPath/libName): {} -> {}",
+                      outputPath,
+                      absoluteOutputPath);
         }
     }
 
     // 最终验证路径
     if (absoluteOutputPath.isEmpty()) {
-        qWarning() << "ExportProgressViewModel: Final output path is still empty! Using fallback to Desktop.";
+        LOG_WARN(LogModule::UI, "Final output path is still empty! Using fallback to Desktop.");
         absoluteOutputPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
         absoluteOutputPath = QDir(absoluteOutputPath).absoluteFilePath(libName);
     }
@@ -217,8 +219,10 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     m_exportOptions.updateMode = updateMode;
     m_exportOptions.debugMode = debugMode;
 
-    qDebug() << "ExportProgressViewModel: Export options - OutputPath:" << m_exportOptions.outputPath
-             << "LibName:" << m_exportOptions.libName;
+    LOG_DEBUG(LogModule::UI,
+              "Export options - OutputPath: {}, LibName: {}",
+              m_exportOptions.outputPath,
+              m_exportOptions.libName);
 
     startExportInternal(componentIds, false);
 }
