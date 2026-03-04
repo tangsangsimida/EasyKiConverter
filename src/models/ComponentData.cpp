@@ -12,6 +12,7 @@ ComponentData::ComponentData()
     , m_package()
     , m_manufacturer()
     , m_datasheet()
+    , m_previewImages()
     , m_symbolData(nullptr)
     , m_footprintData(nullptr)
     , m_model3DData(nullptr) {}
@@ -26,6 +27,13 @@ QJsonObject ComponentData::toJson() const {
     json["package"] = m_package;
     json["manufacturer"] = m_manufacturer;
     json["datasheet"] = m_datasheet;
+
+    // 预览图列表
+    QJsonArray previewImagesArray;
+    for (const QString& imageUrl : m_previewImages) {
+        previewImagesArray.append(imageUrl);
+    }
+    json["preview_images"] = previewImagesArray;
 
     // 符号数据
     if (m_symbolData) {
@@ -53,6 +61,15 @@ bool ComponentData::fromJson(const QJsonObject& json) {
     m_package = json["package"].toString();
     m_manufacturer = json["manufacturer"].toString();
     m_datasheet = json["datasheet"].toString();
+
+    // 读取预览图列表
+    if (json.contains("preview_images") && json["preview_images"].isArray()) {
+        QJsonArray previewImagesArray = json["preview_images"].toArray();
+        m_previewImages.clear();
+        for (const QJsonValue& value : previewImagesArray) {
+            m_previewImages.append(value.toString());
+        }
+    }
 
     // 读取符号数据
     if (json.contains("symbol") && json["symbol"].isObject()) {
@@ -165,6 +182,7 @@ void ComponentData::clear() {
     m_package.clear();
     m_manufacturer.clear();
     m_datasheet.clear();
+    m_previewImages.clear();
 
     m_symbolData.reset();
     m_footprintData.reset();

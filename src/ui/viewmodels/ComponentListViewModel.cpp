@@ -25,7 +25,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
         m_service, &ComponentService::previewImageReady, this, [this](const QString& componentId, const QImage& image) {
             auto item = findItemData(componentId);
             if (item) {
-                item->setThumbnail(image);
+                item->addPreviewImage(image);
             }
         });
     connect(m_service, &ComponentService::fetchError, this, &ComponentListViewModel::handleFetchError);

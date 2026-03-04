@@ -7,6 +7,7 @@ namespace EasyKiConverter {
 ComponentListItemData::ComponentListItemData(const QString& componentId, QObject* parent)
     : QObject(parent)
     , m_componentId(componentId)
+    , m_currentPreviewIndex(0)
     , m_isValid(true)  // 默认为 true，直到验证失败
     , m_isFetching(false) {}
 
@@ -76,6 +77,60 @@ void ComponentListItemData::setErrorMessage(const QString& error) {
     if (m_errorMessage != error) {
         m_errorMessage = error;
         emit validationStatusChanged();
+    }
+}
+
+QVariantList ComponentListItemData::previewImages() const {
+    QVariantList result;
+    for (const QImage& image : m_previewImages) {
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        buffer.open(QIODevice::WriteOnly);
+        image.save(&buffer, "PNG");
+        result.append(QString::fromLatin1(byteArray.toBase64().data()));
+    }
+    return result;
+}
+
+void ComponentListItemData::addPreviewImage(const QImage& image) {
+    if (!image.isNull()) {
+        m_previewImages.append(image);
+        // 如果是第一张图片，设置为主缩略图
+        if (m_previewImages.size() == 1) {
+            setThumbnail(image);
+        }
+        emit previewImagesChanged();
+    }
+}
+
+void ComponentListItemData::setPreviewImages(const QList<QImage>& images) {
+    m_previewImages = images;
+    if (!images.isEmpty()) {
+        setThumbnail(images.first());
+        m_currentPreviewIndex = 0;
+    }
+    emit previewImagesChanged();
+}
+
+void ComponentListItemData::setCurrentPreviewIndex(int index) {
+    if (index >= 0 && index < m_previewImages.size() && index != m_currentPreviewIndex) {
+        m_currentPreviewIndex = index;
+        setThumbnail(m_previewImages[index]);
+        emit currentPreviewIndexChanged();
+    }
+}
+
+void ComponentListItemData::nextPreviewImage() {
+    if (!m_previewImages.isEmpty()) {
+        int nextIndex = (m_currentPreviewIndex + 1) % m_previewImages.size();
+        setCurrentPreviewIndex(nextIndex);
+    }
+}
+
+void ComponentListItemData::previousPreviewImage() {
+    if (!m_previewImages.isEmpty()) {
+        int prevIndex = (m_currentPreviewIndex - 1 + m_previewImages.size()) % m_previewImages.size();
+        setCurrentPreviewIndex(prevIndex);
     }
 }
 
