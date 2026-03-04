@@ -68,53 +68,197 @@ Rectangle {
         anchors.margins: AppStyle.spacing.sm
         spacing: AppStyle.spacing.md
         z: 10 // 确保内容在背景 MouseArea 之上
-        // 缩略图区域
-        Rectangle {
+        
+        // 预览图区域 - 支持悬停放大
+        Item {
+            id: previewArea
             Layout.preferredWidth: 48
             Layout.preferredHeight: 48
             Layout.alignment: Qt.AlignVCenter
-            color: "white"
-            radius: AppStyle.radius.sm
-            border.color: AppStyle.colors.border
-            border.width: 1
-            clip: true // 裁剪内部图片圆角
-            Image {
-                id: thumbnail
-                anchors.centerIn: parent
-                width: 46
-                height: 46
-                source: (itemData && itemData.thumbnailBase64) ? "data:image/png;base64," + itemData.thumbnailBase64 : ""
-                fillMode: Image.PreserveAspectFit
-                visible: itemData && itemData.hasThumbnail && !itemData.isFetching
-                cache: true  // 启用缓存避免 GridView 回收委托时重复解码
-                asynchronous: true  // 异步解码不阻塞 UI 线程
+            
+            // 默认显示的单张缩略图
+            Rectangle {
+                id: defaultThumbnail
+                width: 48
+                height: 48
+                color: "white"
+                radius: AppStyle.radius.sm
+                border.color: AppStyle.colors.border
+                border.width: 1
+                clip: true
+                
+                Image {
+                    anchors.centerIn: parent
+                    width: 46
+                    height: 46
+                    source: (itemData && itemData.thumbnailBase64) ? "data:image/png;base64," + itemData.thumbnailBase64 : ""
+                    fillMode: Image.PreserveAspectFit
+                    cache: true
+                    asynchronous: true
+                    visible: itemData && itemData.hasThumbnail && !itemData.isFetching
+                }
+                
+                // 加载状态
+                BusyIndicator {
+                    anchors.centerIn: parent
+                    width: 24
+                    height: 24
+                    running: (itemData && itemData.isFetching) ? true : false
+                    visible: (itemData && itemData.isFetching) ? true : false
+                }
+                
+                // 占位符/错误状态
+                Text {
+                    anchors.centerIn: parent
+                    text: (itemData && !itemData.isValid) ? "✕" : (itemData && !itemData.isFetching && !itemData.hasThumbnail) ? "?" : ""
+                    font.pixelSize: AppStyle.fontSizes.xxl
+                    color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
+                    visible: !(itemData && itemData.hasThumbnail && !itemData.isFetching) && !(itemData && itemData.isFetching)
+                }
             }
-
-            // 加载状态
-            BusyIndicator {
-                anchors.centerIn: parent
-                width: 24
-                height: 24
-                running: (itemData && itemData.isFetching) ? true : false
-                visible: (itemData && itemData.isFetching) ? true : false
+            
+            // 悬停时显示的放大预览图 - 显示三张图片在一排
+            Popup {
+                id: previewPopup
+                parent: defaultThumbnail
+                width: 640 // 三张图片 200x3 + 间距
+                height: 220
+                padding: 0
+                visible: previewMouseArea.containsMouse && itemData && itemData.hasThumbnail
+                closePolicy: Popup.NoAutoClose
+                modal: false
+                focus: false
+                dim: false
+                
+                // 智能位置计算：检测是否超出窗口边界
+                onVisibleChanged: {
+                    if (visible) {
+                        // 获取缩略图在屏幕上的位置
+                        var thumbGlobalPos = defaultThumbnail.mapToGlobal(Qt.point(0, 0));
+                        
+                        // 获取窗口在屏幕上的位置
+                        var window = item.Window.window;
+                        var windowGlobalX = window ? window.x : 0;
+                        var windowWidth = window ? window.width : item.width;
+                        
+                        // 计算缩略图相对于窗口的位置
+                        var thumbRelativeX = thumbGlobalPos.x - windowGlobalX;
+                        
+                        // 预览图宽度（640）+ 间距（60）= 700
+                        var popupWidth = width + 60;
+                        
+                        // 如果右侧空间不足，显示在左侧
+                        if (thumbRelativeX + popupWidth > windowWidth) {
+                            x = -690; // 显示在缩略图左侧
+                        } else {
+                            x = 60; // 显示在缩略图右侧
+                        }
+                        
+                        // 垂直居中显示
+                        y = (defaultThumbnail.height - height) / 2;
+                    }
+                }
+                
+                enter: Transition {
+                    NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 150 }
+                }
+                
+                exit: Transition {
+                    NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 }
+                }
+                
+                background: Rectangle {
+                    color: "white"
+                    border.color: AppStyle.colors.primary
+                    border.width: 2
+                    radius: AppStyle.radius.md
+                    
+                    // 阴影效果
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowBlur: 1.0
+                        shadowColor: "#33000000"
+                        shadowVerticalOffset: 2
+                        shadowHorizontalOffset: 2
+                    }
+                }
+                
+                contentItem: Row {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 10
+                    
+                    Repeater {
+                        model: itemData ? itemData.previewImageCount : 0
+                        
+                        Rectangle {
+                            width: 200
+                            height: 200
+                            color: "white"
+                            radius: AppStyle.radius.sm
+                            border.color: AppStyle.colors.border
+                            border.width: 1
+                            clip: true
+                            
+                            Image {
+                                anchors.centerIn: parent
+                                width: 198
+                                height: 198
+                                source: {
+                                    if (!itemData || !itemData.previewImages || itemData.previewImages.length === 0)
+                                        return "";
+                                    return "data:image/png;base64," + itemData.previewImages[index];
+                                }
+                                fillMode: Image.PreserveAspectFit
+                                cache: true
+                                asynchronous: true
+                            }
+                            
+                            // 图片序号标记
+                            Rectangle {
+                                anchors.top: parent.top
+                                anchors.right: parent.right
+                                width: 24
+                                height: 24
+                                color: AppStyle.colors.primary
+                                radius: 12
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: index + 1
+                                    font.pixelSize: 12
+                                    font.bold: true
+                                    color: "white"
+                                }
+                            }
+                            
+                            // 底部文字遮罩
+                            Rectangle {
+                                anchors.bottom: parent.bottom
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: parent.width
+                                height: 30
+                                color: "#CC000000"
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: itemData ? itemData.componentId : ""
+                                    color: "white"
+                                    font.bold: true
+                                    font.pixelSize: 10
+                                }
+                            }
+                        }
+                    }
+                }
             }
-
-            // 占位符/错误状态
-            Text {
-                anchors.centerIn: parent
-                text: (itemData && !itemData.isValid) ? "✕" : (itemData && !itemData.isFetching && !itemData.hasThumbnail) ? "?" : ""
-                font.pixelSize: AppStyle.fontSizes.xxl
-                color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
-                visible: !thumbnail.visible && !(itemData && itemData.isFetching)
-            }
-
-            // 2. 缩略图交互区域
+            
+            // 预览区域交互
             MouseArea {
-                id: thumbMouseArea
-                anchors.fill: parent
+                id: previewMouseArea
+                width: defaultThumbnail.width
+                height: defaultThumbnail.height
                 hoverEnabled: true
                 cursorShape: (itemData && itemData.hasThumbnail) ? Qt.PointingHandCursor : Qt.ArrowCursor
-                // 这里的 hover 事件现在可以正常触发了，因为 itemMouseArea 在底层
             }
         }
 
@@ -205,147 +349,5 @@ Rectangle {
         }
     }
 
-    // 3. 悬浮预览层 (支持多图轮播)
-    Popup {
-        id: previewOverlay
-        // 绑定可见性：鼠标悬停 && 有数据 && 有缩略图
-        visible: thumbMouseArea.containsMouse && itemData && itemData.hasThumbnail
-        // 相对坐标：显示在缩略图右侧
-        x: 65
-        y: (parent.height - height) / 2
-        width: 200
-        height: 200
-        padding: 0
-        // 关键配置：确保它是被动的，完全由 visible 控制
-        closePolicy: Popup.NoAutoClose
-        modal: false
-        focus: false
-        dim: false // 不变暗背景
-        background: Rectangle {
-            color: "white"
-            border.color: AppStyle.colors.primary
-            border.width: 2
-            radius: AppStyle.radius.md
-            // 阴影效果
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowBlur: 1.0
-                shadowColor: "#33000000"
-                shadowVerticalOffset: 2
-                shadowHorizontalOffset: 2
-            }
-        }
-
-        contentItem: Item {
-            // 当前显示的图片
-            Image {
-                id: currentPreviewImage
-                anchors.fill: parent
-                anchors.margins: 4
-                source: {
-                    if (!itemData || !itemData.previewImages || itemData.previewImages.length === 0)
-                        return "";
-                    return "data:image/png;base64," + itemData.previewImages[itemData.currentPreviewIndex];
-                }
-                fillMode: Image.PreserveAspectFit
-                cache: true
-                asynchronous: true
-            }
-
-            // 左右切换按钮 (当有多张图片时显示)
-            Rectangle {
-                id: prevButton
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: 30
-                height: 60
-                radius: AppStyle.radius.md
-                color: "#80000000"
-                visible: itemData && itemData.previewImageCount > 1
-                opacity: prevMouseArea.containsMouse ? 1.0 : 0.6
-                Behavior on opacity {
-                    ColorAnimation { duration: 150 }
-                }
-                Text {
-                    anchors.centerIn: parent
-                    text: "◀"
-                    color: "white"
-                    font.pixelSize: 20
-                }
-                MouseArea {
-                    id: prevMouseArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        if (itemData) itemData.previousPreviewImage();
-                    }
-                }
-            }
-
-            Rectangle {
-                id: nextButton
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: 30
-                height: 60
-                radius: AppStyle.radius.md
-                color: "#80000000"
-                visible: itemData && itemData.previewImageCount > 1
-                opacity: nextMouseArea.containsMouse ? 1.0 : 0.6
-                Behavior on opacity {
-                    ColorAnimation { duration: 150 }
-                }
-                Text {
-                    anchors.centerIn: parent
-                    text: "▶"
-                    color: "white"
-                    font.pixelSize: 20
-                }
-                MouseArea {
-                    id: nextMouseArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        if (itemData) itemData.nextPreviewImage();
-                    }
-                }
-            }
-
-            // 图片指示器
-            Row {
-                anchors.bottom: parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 6
-                bottomPadding: 8
-                visible: itemData && itemData.previewImageCount > 1
-                Repeater {
-                    model: itemData ? itemData.previewImageCount : 0
-                    Rectangle {
-                        width: 8
-                        height: 8
-                        radius: 4
-                        color: index === (itemData ? itemData.currentPreviewIndex : 0) ? AppStyle.colors.primary : "#60000000"
-                    }
-                }
-            }
-
-            // 底部文字遮罩
-            Rectangle {
-                anchors.bottom: parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width
-                height: 30
-                color: "#CC000000"
-                radius: AppStyle.radius.md
-                visible: itemData && itemData.previewImageCount <= 1
-                Text {
-                    anchors.centerIn: parent
-                    text: itemData ? itemData.componentId : ""
-                    color: "white"
-                    font.bold: true
-                }
-            }
-        }
-    }
+    
 }
