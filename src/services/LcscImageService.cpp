@@ -5,20 +5,32 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QNetworkRequest>
-#include <QRegularExpression>
 #include <QStandardPaths>
 #include <QTimer>
+#include <QUrlQuery>
 
 namespace EasyKiConverter {
 
 LcscImageService::LcscImageService(QObject* parent)
-    : QObject(parent), m_networkManager(new QNetworkAccessManager(this)), m_activeRequests(0) {}
+    : QObject(parent), m_networkManager(new QNetworkAccessManager(this)), m_activeRequests(0) {
+    // 设置缓存目录
+    m_cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/lcsc_images";
+    ensureCacheDir();
+}
 
-void LcscImageService::fetchPreviewImage(const QString& componentId) {
+void LcscImageService::fetchPreviewImages(const QString& componentId) {
     if (componentId.isEmpty())
         return;
     m_queue.enqueue(componentId);
+    processQueue();
+}
+
+void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) {
+    for (const QString& componentId : componentIds) {
+        if (!componentId.isEmpty()) {
+            m_queue.enqueue(componentId);
+        }
+    }
     processQueue();
 }
 
@@ -26,36 +38,47 @@ void LcscImageService::processQueue() {
     while (m_activeRequests < MAX_CONCURRENT_REQUESTS && !m_queue.isEmpty()) {
         QString componentId = m_queue.dequeue();
         m_activeRequests++;
-        performSearch(componentId, 0);
+        performApiSearch(componentId, 0);
     }
 }
 
-void LcscImageService::performSearch(const QString& componentId, int retryCount) {
-    QString url =
-        QString("https://overseas.szlcsc.com/overseas/global/search?keyword=%1&pageNumber=1&noShowSelf=false&from=%1")
-            .arg(componentId);
+void LcscImageService::performApiSearch(const QString& componentId, int retryCount) {
+    // 使用官方 API 搜索产品
+    QString apiUrl = "https://pro.lceda.cn/api/v2/eda/product/search";
 
-    QNetworkRequest request{QUrl(url)};
+    // 构建表单数据
+    QByteArray postData;
+    QUrlQuery query;
+    query.addQueryItem("keyword", componentId);
+    query.addQueryItem("currPage", "1");
+    query.addQueryItem("pageSize", "1");
+    query.addQueryItem("needAggs", "true");
+    postData = query.toString(QUrl::FullyEncoded).toUtf8();
+
+    QNetworkRequest request{QUrl(apiUrl)};
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded; charset=UTF-8");
     request.setHeader(QNetworkRequest::UserAgentHeader,
                       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/114.0.0.0 Safari/537.36");
-    request.setRawHeader("Accept", "application/json");
+                      "Chrome/145.0.0.0 Safari/537.36");
+    request.setRawHeader("Accept", "application/json, text/javascript, */*; q=0.01");
+    request.setRawHeader("X-Requested-With", "XMLHttpRequest");
     request.setTransferTimeout(15000);
 
-    QNetworkReply* reply = m_networkManager->get(request);
+    QNetworkReply* reply = m_networkManager->post(request, postData);
     connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, retryCount]() {
-        handleSearchResponse(reply, componentId, retryCount);
+        handleApiResponse(reply, componentId, retryCount);
     });
 }
 
-void LcscImageService::handleSearchResponse(QNetworkReply* reply, const QString& componentId, int retryCount) {
+void LcscImageService::handleApiResponse(QNetworkReply* reply, const QString& componentId, int retryCount) {
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
         if (retryCount < 2) {
             QTimer::singleShot(
-                1000, this, [this, componentId, retryCount]() { performSearch(componentId, retryCount + 1); });
+                1000 * (retryCount + 1), this, [this, componentId, retryCount]() { performApiSearch(componentId, retryCount + 1); });
         } else {
+            // API 失败，尝试回退到爬虫方式
             performFallback(componentId);
         }
         return;
@@ -63,31 +86,49 @@ void LcscImageService::handleSearchResponse(QNetworkReply* reply, const QString&
 
     QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
     QJsonObject root = doc.object();
-    QString imageUrl;
-    bool found = false;
 
+    // 解析 API 响应
     if (root.contains("result")) {
-        QJsonArray resultArray = root["result"].toArray();
-        for (const auto& resVal : resultArray) {
-            QJsonObject resObj = resVal.toObject();
-            if (resObj.contains("products")) {
-                QJsonArray products = resObj["products"].toArray();
-                if (!products.isEmpty()) {
-                    imageUrl = products[0].toObject()["selfBreviaryImageUrl"].toString();
-                    if (!imageUrl.isEmpty()) {
-                        found = true;
-                        break;
+        QJsonObject result = root["result"].toObject();
+
+        if (result.contains("productList")) {
+            QJsonArray productList = result["productList"].toArray();
+
+            if (!productList.isEmpty()) {
+                QJsonObject product = productList[0].toObject();
+
+                // 提取图片列表
+                QStringList imageUrls;
+                if (product.contains("image")) {
+                    QString imagesStr = product["image"].toString();
+                    if (!imagesStr.isEmpty()) {
+                        // EasyEDA 使用 <$> 分隔多张图片
+                        imageUrls = imagesStr.split("<$>", Qt::SkipEmptyParts);
                     }
+                }
+
+                // 限制最多 3 张图片
+                while (imageUrls.size() > MAX_IMAGES_PER_COMPONENT) {
+                    imageUrls.removeLast();
+                }
+
+                if (!imageUrls.isEmpty()) {
+                    m_pendingImages[componentId] = imageUrls;
+                    m_downloadedImages[componentId].clear();
+                    m_downloadCounts[componentId] = 0;
+
+                    // 开始下载所有图片
+                    for (int i = 0; i < imageUrls.size(); ++i) {
+                        performDownload(componentId, imageUrls[i], i, 0);
+                    }
+                    return;
                 }
             }
         }
     }
 
-    if (found) {
-        performDownload(componentId, imageUrl, 0);
-    } else {
-        performFallback(componentId);
-    }
+    // API 没有找到图片，尝试回退
+    performFallback(componentId);
 }
 
 void LcscImageService::performFallback(const QString& componentId) {
@@ -114,7 +155,12 @@ void LcscImageService::handleFallbackResponse(QNetworkReply* reply, const QStrin
         QRegularExpressionMatch match = re.match(html);
 
         if (match.hasMatch()) {
-            performDownload(componentId, match.captured(1), 0);
+            QStringList imageUrls = {match.captured(1)};
+            m_pendingImages[componentId] = imageUrls;
+            m_downloadedImages[componentId].clear();
+            m_downloadCounts[componentId] = 0;
+
+            performDownload(componentId, imageUrls[0], 0, 0);
             return;
         }
     }
@@ -124,47 +170,95 @@ void LcscImageService::handleFallbackResponse(QNetworkReply* reply, const QStrin
     processQueue();
 }
 
-void LcscImageService::performDownload(const QString& componentId, const QString& imageUrl, int retryCount) {
+void LcscImageService::performDownload(const QString& componentId, const QString& imageUrl, int imageIndex, int retryCount) {
     QNetworkRequest request{QUrl(imageUrl)};
     request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
     request.setTransferTimeout(20000);
 
     QNetworkReply* reply = m_networkManager->get(request);
-    connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, retryCount, imageUrl]() {
-        handleDownloadResponse(reply, componentId, retryCount);
+    connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, imageUrl, imageIndex, retryCount]() {
+        handleDownloadResponse(reply, componentId, imageUrl, imageIndex, retryCount);
     });
 }
 
-void LcscImageService::handleDownloadResponse(QNetworkReply* reply, const QString& componentId, int retryCount) {
+void LcscImageService::handleDownloadResponse(QNetworkReply* reply, const QString& componentId, const QString& imageUrl, int imageIndex, int retryCount) {
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
         if (retryCount < 2) {
-            performDownload(componentId, reply->url().toString(), retryCount + 1);
+            performDownload(componentId, imageUrl, imageIndex, retryCount + 1);
         } else {
-            m_activeRequests--;
-            emit error(componentId, "Download failed");
-            processQueue();
+            // 下载失败，记录但继续处理其他图片
+            qDebug() << "Failed to download image for" << componentId << "index:" << imageIndex << "error:" << reply->errorString();
+            checkDownloadCompletion(componentId);
         }
         return;
     }
 
-    // 保存到临时目录
-    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/lcsc_images";
-    QDir().mkpath(cacheDir);
-    QString filePath = cacheDir + "/" + componentId + ".jpg";
+    // 保存到缓存目录
+    QString cachePath = getCachePath(componentId, imageIndex);
 
-    QFile file(filePath);
+    QFile file(cachePath);
     if (file.open(QIODevice::WriteOnly)) {
         file.write(reply->readAll());
         file.close();
-        emit imageReady(componentId, filePath);
+
+        m_downloadedImages[componentId].append(cachePath);
+        m_downloadCounts[componentId]++;
+
+        emit imageReady(componentId, cachePath, imageIndex);
+
+        // 检查是否所有图片都下载完成
+        checkDownloadCompletion(componentId);
     } else {
-        emit error(componentId, "Disk write error");
+        qDebug() << "Failed to save image for" << componentId << "index:" << imageIndex << "error:" << file.errorString();
+        checkDownloadCompletion(componentId);
+    }
+}
+
+void LcscImageService::checkDownloadCompletion(const QString& componentId) {
+    if (!m_pendingImages.contains(componentId)) {
+        return;
     }
 
-    m_activeRequests--;
-    processQueue();
+    int expectedCount = m_pendingImages[componentId].size();
+    int downloadedCount = m_downloadCounts.value(componentId, 0);
+
+    if (downloadedCount >= expectedCount) {
+        // 所有图片下载完成
+        emitAllImagesReady(componentId);
+
+        m_activeRequests--;
+        processQueue();
+    }
+}
+
+void LcscImageService::emitAllImagesReady(const QString& componentId) {
+    QStringList imagePaths = m_downloadedImages.value(componentId, QStringList());
+
+    if (imagePaths.isEmpty()) {
+        emit error(componentId, "No images downloaded");
+    } else {
+        emit allImagesReady(componentId, imagePaths);
+    }
+
+    // 清理临时数据
+    m_pendingImages.remove(componentId);
+    m_downloadedImages.remove(componentId);
+    m_downloadCounts.remove(componentId);
+}
+
+QString LcscImageService::getCachePath(const QString& componentId, int imageIndex) {
+    QString filename = QString("%1_%2.jpg").arg(componentId).arg(imageIndex);
+    return m_cacheDir + "/" + filename;
+}
+
+bool LcscImageService::ensureCacheDir() {
+    QDir dir(m_cacheDir);
+    if (!dir.exists()) {
+        return dir.mkpath(m_cacheDir);
+    }
+    return true;
 }
 
 }  // namespace EasyKiConverter

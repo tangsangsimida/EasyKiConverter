@@ -205,7 +205,7 @@ Rectangle {
         }
     }
 
-    // 3. 悬浮预览层 (改回 Popup 以确保显示在最顶层且不被裁剪)
+    // 3. 悬浮预览层 (支持多图轮播)
     Popup {
         id: previewOverlay
         // 绑定可见性：鼠标悬停 && 有数据 && 有缩略图
@@ -238,13 +238,96 @@ Rectangle {
         }
 
         contentItem: Item {
+            // 当前显示的图片
             Image {
+                id: currentPreviewImage
                 anchors.fill: parent
                 anchors.margins: 4
-                source: (itemData && itemData.thumbnailBase64) ? "data:image/png;base64," + itemData.thumbnailBase64 : ""
+                source: {
+                    if (!itemData || !itemData.previewImages || itemData.previewImages.length === 0)
+                        return "";
+                    return "data:image/png;base64," + itemData.previewImages[itemData.currentPreviewIndex];
+                }
                 fillMode: Image.PreserveAspectFit
                 cache: true
                 asynchronous: true
+            }
+
+            // 左右切换按钮 (当有多张图片时显示)
+            Rectangle {
+                id: prevButton
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: 30
+                height: 60
+                radius: AppStyle.radius.md
+                color: "#80000000"
+                visible: itemData && itemData.previewImageCount > 1
+                opacity: prevMouseArea.containsMouse ? 1.0 : 0.6
+                Behavior on opacity {
+                    ColorAnimation { duration: 150 }
+                }
+                Text {
+                    anchors.centerIn: parent
+                    text: "◀"
+                    color: "white"
+                    font.pixelSize: 20
+                }
+                MouseArea {
+                    id: prevMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        if (itemData) itemData.previousPreviewImage();
+                    }
+                }
+            }
+
+            Rectangle {
+                id: nextButton
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: 30
+                height: 60
+                radius: AppStyle.radius.md
+                color: "#80000000"
+                visible: itemData && itemData.previewImageCount > 1
+                opacity: nextMouseArea.containsMouse ? 1.0 : 0.6
+                Behavior on opacity {
+                    ColorAnimation { duration: 150 }
+                }
+                Text {
+                    anchors.centerIn: parent
+                    text: "▶"
+                    color: "white"
+                    font.pixelSize: 20
+                }
+                MouseArea {
+                    id: nextMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        if (itemData) itemData.nextPreviewImage();
+                    }
+                }
+            }
+
+            // 图片指示器
+            Row {
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 6
+                bottomPadding: 8
+                visible: itemData && itemData.previewImageCount > 1
+                Repeater {
+                    model: itemData ? itemData.previewImageCount : 0
+                    Rectangle {
+                        width: 8
+                        height: 8
+                        radius: 4
+                        color: index === (itemData ? itemData.currentPreviewIndex : 0) ? AppStyle.colors.primary : "#60000000"
+                    }
+                }
             }
 
             // 底部文字遮罩
@@ -255,6 +338,7 @@ Rectangle {
                 height: 30
                 color: "#CC000000"
                 radius: AppStyle.radius.md
+                visible: itemData && itemData.previewImageCount <= 1
                 Text {
                     anchors.centerIn: parent
                     text: itemData ? itemData.componentId : ""

@@ -22,6 +22,9 @@ class ComponentListItemData : public QObject {
     Q_PROPERTY(QString package READ package NOTIFY dataChanged)
     Q_PROPERTY(QImage thumbnail READ thumbnail NOTIFY thumbnailChanged)
     Q_PROPERTY(QString thumbnailBase64 READ thumbnailBase64 NOTIFY thumbnailChanged)
+    Q_PROPERTY(QVariantList previewImages READ previewImages NOTIFY previewImagesChanged)
+    Q_PROPERTY(int currentPreviewIndex READ currentPreviewIndex NOTIFY currentPreviewIndexChanged)
+    Q_PROPERTY(int previewImageCount READ previewImageCount NOTIFY previewImagesChanged)
     Q_PROPERTY(bool isValid READ isValid NOTIFY validationStatusChanged)
     Q_PROPERTY(bool isFetching READ isFetching NOTIFY fetchingStatusChanged)
     Q_PROPERTY(bool hasThumbnail READ hasThumbnail NOTIFY thumbnailChanged)
@@ -49,6 +52,14 @@ public:
 
     QString thumbnailBase64() const;
 
+    QVariantList previewImages() const;
+    int currentPreviewIndex() const {
+        return m_currentPreviewIndex;
+    }
+    int previewImageCount() const {
+        return m_previewImages.count();
+    }
+
     bool isValid() const {
         return m_isValid;
     }
@@ -73,6 +84,11 @@ public:
     void setName(const QString& name);
     void setPackage(const QString& package);
     void setThumbnail(const QImage& thumbnail);
+    void addPreviewImage(const QImage& image);
+    void setPreviewImages(const QList<QImage>& images);
+    void setCurrentPreviewIndex(int index);
+    void nextPreviewImage();
+    void previousPreviewImage();
     void setComponentData(const QSharedPointer<ComponentData>& data);
     void setValid(bool valid);
     void setFetching(bool fetching);
@@ -81,6 +97,8 @@ public:
 signals:
     void dataChanged();
     void thumbnailChanged();
+    void previewImagesChanged();
+    void currentPreviewIndexChanged();
     void validationStatusChanged();
     void fetchingStatusChanged();
 
@@ -89,6 +107,8 @@ private:
     QString m_name;
     QString m_package;
     QImage m_thumbnail;
+    QList<QImage> m_previewImages;
+    int m_currentPreviewIndex;
     mutable QString m_thumbnailBase64Cache;  // 缓存 base64 编码结果，避免重复计算
     bool m_isValid;
     bool m_isFetching;

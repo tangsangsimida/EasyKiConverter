@@ -123,7 +123,7 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
 }
 
 void ComponentService::fetchLcscPreviewImage(const QString& componentId) {
-    m_imageService->fetchPreviewImage(componentId);
+    m_imageService->fetchPreviewImages(componentId);
 }
 
 void ComponentService::handleImageReady(const QString& componentId, const QString& imagePath) {
