@@ -59,7 +59,23 @@ Card {
             spacing: AppStyle.spacing.lg
             StatItem {
                 label: qsTranslate("MainWindow", "总耗时")
-                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.statisticsTotalDuration || 0 / 1000).toFixed(2) + "s" : "0s"
+                value: {
+                    if (!exportStatisticsCard.exportProgressController) return "0s";
+                    var totalDurationMs = exportStatisticsCard.exportProgressController.statisticsTotalDuration;
+                    if (totalDurationMs < 1000) {
+                        // 小于1秒，显示毫秒
+                        return totalDurationMs.toFixed(0) + "ms";
+                    } else if (totalDurationMs < 60000) {
+                        // 1-60秒，显示秒
+                        return (totalDurationMs / 1000).toFixed(2) + "s";
+                    } else {
+                        // 大于60秒，显示分:秒
+                        var totalSeconds = totalDurationMs / 1000;
+                        var minutes = Math.floor(totalSeconds / 60);
+                        var seconds = (totalSeconds % 60).toFixed(0);
+                        return minutes + "m" + seconds + "s";
+                    }
+                }
                 Layout.fillWidth: true
             }
             StatItem {

@@ -22,7 +22,12 @@ ColumnLayout {
         pressedColor: AppStyle.colors.primaryPressed
         visible: exportButtonsSection.exportProgressController && exportButtonsSection.exportProgressController.statisticsTotal > 0 // 只要有导出过就显示
         onClicked: {
-            Qt.openUrlExternally("file:///" + (exportButtonsSection.exportSettingsController ? exportButtonsSection.exportSettingsController.outputPath : ""));
+            if (exportButtonsSection.exportProgressController) {
+                var success = exportButtonsSection.exportProgressController.openLastExportedFolder();
+                if (!success) {
+                    console.error("Failed to open last exported folder");
+                }
+            }
         }
     }
     // 导出按钮组
