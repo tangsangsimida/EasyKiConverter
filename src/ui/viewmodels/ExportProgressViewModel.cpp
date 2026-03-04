@@ -173,7 +173,8 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
         if (dir.isAbsolute()) {
             // 如果是绝对路径，规范化路径（处理 .. 和 . 等）
             absoluteOutputPath = dir.cleanPath(absoluteOutputPath);
-            qDebug() << "ExportProgressViewModel: Normalized absolute path:" << outputPath << "->" << absoluteOutputPath;
+            qDebug() << "ExportProgressViewModel: Normalized absolute path:" << outputPath << "->"
+                     << absoluteOutputPath;
         } else {
             // 如果是相对路径，相对于 ~/Documents/EasyKiConverter/ 转换为绝对路径
             QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
@@ -193,7 +194,8 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
 
             // 在子目录下创建库名称目录
             absoluteOutputPath = exportDir.absoluteFilePath(libName);
-            qDebug() << "ExportProgressViewModel: Converted relative path to absolute path (Documents/EasyKiConverter/userPath/libName):"
+            qDebug() << "ExportProgressViewModel: Converted relative path to absolute path "
+                        "(Documents/EasyKiConverter/userPath/libName):"
                      << outputPath << "->" << absoluteOutputPath;
         }
     }
@@ -215,7 +217,8 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     m_exportOptions.updateMode = updateMode;
     m_exportOptions.debugMode = debugMode;
 
-    qDebug() << "ExportProgressViewModel: Export options - OutputPath:" << m_exportOptions.outputPath << "LibName:" << m_exportOptions.libName;
+    qDebug() << "ExportProgressViewModel: Export options - OutputPath:" << m_exportOptions.outputPath
+             << "LibName:" << m_exportOptions.libName;
 
     startExportInternal(componentIds, false);
 }

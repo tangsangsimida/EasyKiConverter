@@ -3,9 +3,9 @@
 #include "services/ExportService_Pipeline.h"
 #include "utils/FileUtils.h"
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
-#include <QCoreApplication>
 #include <QStandardPaths>
 
 namespace EasyKiConverter {
@@ -248,10 +248,11 @@ void ExportSettingsViewModel::cancelExport() {
 
 bool ExportSettingsViewModel::openOutputFolder() {
     qDebug() << "openOutputFolder called (ExportSettingsViewModel - deprecated, use ExportProgressViewModel instead)";
-    
+
     // 此方法已弃用，现在使用 ExportProgressViewModel::openLastExportedFolder()
     // 为了向后兼容，保留此方法但不执行任何操作
-    qWarning() << "ExportSettingsViewModel::openOutputFolder() is deprecated. Use ExportProgressViewModel::openLastExportedFolder() instead.";
+    qWarning() << "ExportSettingsViewModel::openOutputFolder() is deprecated. Use "
+                  "ExportProgressViewModel::openLastExportedFolder() instead.";
     return false;
 }
 

@@ -60,7 +60,8 @@ Card {
             StatItem {
                 label: qsTranslate("MainWindow", "总耗时")
                 value: {
-                    if (!exportStatisticsCard.exportProgressController) return "0s";
+                    if (!exportStatisticsCard.exportProgressController)
+                        return "0s";
                     var totalDurationMs = exportStatisticsCard.exportProgressController.statisticsTotalDuration;
                     if (totalDurationMs < 1000) {
                         // 小于1秒，显示毫秒
