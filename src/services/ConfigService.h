@@ -119,6 +119,34 @@ public:
     void setExportModel3D(bool enabled);
 
     /**
+     * @brief 是否导出预览图
+     *
+     * @return bool 是否导出预览图
+     */
+    bool getExportPreviewImages() const;
+
+    /**
+     * @brief 设置是否导出预览图
+     *
+     * @param enabled 是否启用
+     */
+    void setExportPreviewImages(bool enabled);
+
+    /**
+     * @brief 是否导出手册
+     *
+     * @return bool 是否导出手册
+     */
+    bool getExportDatasheet() const;
+
+    /**
+     * @brief 设置是否导出手册
+     *
+     * @param enabled 是否启用
+     */
+    void setExportDatasheet(bool enabled);
+
+    /**
      * @brief 是否覆盖已存在文
      *
      * @return bool 是否覆盖

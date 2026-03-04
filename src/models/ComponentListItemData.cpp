@@ -92,6 +92,10 @@ QVariantList ComponentListItemData::previewImages() const {
     return result;
 }
 
+QStringList ComponentListItemData::previewImagePaths() const {
+    return m_previewImagePaths;
+}
+
 void ComponentListItemData::addPreviewImage(const QImage& image) {
     if (!image.isNull()) {
         m_previewImages.append(image);
@@ -110,6 +114,12 @@ void ComponentListItemData::setPreviewImages(const QList<QImage>& images) {
         m_currentPreviewIndex = 0;
     }
     emit previewImagesChanged();
+}
+
+void ComponentListItemData::addPreviewImagePath(const QString& imagePath) {
+    if (!imagePath.isEmpty() && !m_previewImagePaths.contains(imagePath)) {
+        m_previewImagePaths.append(imagePath);
+    }
 }
 
 void ComponentListItemData::setCurrentPreviewIndex(int index) {

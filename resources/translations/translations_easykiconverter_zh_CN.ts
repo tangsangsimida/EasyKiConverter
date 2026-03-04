@@ -249,6 +249,16 @@
         <translation type="unfinished">3D模型</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="260"/>
+        <source>预览图</source>
+        <translation>预览图</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="310"/>
+        <source>手册</source>
+        <translation>手册</translation>
+    </message>
+    <message>
         <source>调试模式</source>
         <translation type="vanished">调试模式</translation>
     </message>

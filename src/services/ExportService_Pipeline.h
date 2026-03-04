@@ -105,6 +105,13 @@ public:
      */
     void setPreloadedData(const QMap<QString, QSharedPointer<ComponentData>>& data);
 
+    /**
+     * @brief 设置 ComponentListViewModel
+     *
+     * @param componentListViewModel ComponentListViewModel 指针
+     */
+    void setComponentListViewModel(class ComponentListViewModel* componentListViewModel);
+
 signals:
     /**
      * @brief 流水线进度更新信号
@@ -225,6 +232,9 @@ private:
 
     // 预加载的数据
     QMap<QString, QSharedPointer<ComponentData>> m_preloadedData;
+
+    // ComponentListViewModel（用于获取预览图缓存文件路径）
+    class ComponentListViewModel* m_componentListViewModel;
 
     // 临时文件夹路径
     QString m_tempDir;

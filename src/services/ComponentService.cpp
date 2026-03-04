@@ -130,6 +130,35 @@ void ComponentService::handleImageReady(const QString& componentId, const QStrin
     QImage image(imagePath);
     if (!image.isNull()) {
         emit previewImageReady(componentId, image);
+        emit previewImagePathReady(componentId, imagePath);
+    }
+}
+
+void ComponentService::handleLcscDataReady(const QString& componentId, const QString& datasheetUrl, const QStringList& imageUrls) {
+    qDebug() << "LCSC data ready for component:" << componentId
+             << "Datasheet:" << (datasheetUrl.isEmpty() ? "none" : datasheetUrl)
+             << "Images:" << imageUrls.size();
+
+    // 更新 m_fetchingComponents 中的数据
+    if (m_fetchingComponents.contains(componentId)) {
+        FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
+
+        // 保存数据手册 URL
+        if (!datasheetUrl.isEmpty()) {
+            fetchingComponent.data.setDatasheet(datasheetUrl);
+            qDebug() << "Datasheet saved to ComponentData:" << datasheetUrl;
+        }
+
+        // 保存预览图 URL 列表
+        if (!imageUrls.isEmpty()) {
+            fetchingComponent.data.setPreviewImages(imageUrls);
+            qDebug() << "Preview images saved to ComponentData:" << imageUrls.size() << "images";
+        }
+
+        // 发送 LCSC 数据更新信号，以便 ComponentListViewModel 可以更新缓存的 ComponentData
+        emit lcscDataUpdated(componentId, datasheetUrl, imageUrls);
+    } else {
+        qWarning() << "Component" << componentId << "not found in m_fetchingComponents, cannot update LCSC data";
     }
 }
 
@@ -256,6 +285,32 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     if (symbolData) {
         componentData.setSymbolData(symbolData);
         qDebug() << "Symbol imported successfully - Name:" << symbolData->info().name;
+
+        // 从符号数据中提取预览图（作为备用，稍后会被 LCSC API 的数据覆盖）
+        if (!symbolData->info().thumb.isEmpty()) {
+            QString thumbUrl = symbolData->info().thumb;
+            // 检查是否是相对路径，如果是则拼接完整的 URL
+            if (thumbUrl.startsWith("/")) {
+                thumbUrl = "https://image.lceda.cn" + thumbUrl;
+                qDebug() << "Preview image is relative path, constructed full URL:" << thumbUrl;
+            }
+            componentData.setPreviewImages(QStringList() << thumbUrl);
+            qDebug() << "Preview image extracted from symbolData (EasyEDA, will be overridden by LCSC if available):" << thumbUrl;
+        } else {
+            qDebug() << "No preview image found in symbolData";
+        }
+
+        // 从符号数据中提取手册（作为备用，稍后会被 LCSC API 的数据覆盖）
+        if (!symbolData->info().datasheet.isEmpty() && componentData.datasheet().isEmpty()) {
+            QString datasheetUrl = symbolData->info().datasheet;
+            // 检查是否是相对路径，如果是则拼接完整的 URL
+            if (datasheetUrl.startsWith("/")) {
+                datasheetUrl = "https://image.lceda.cn" + datasheetUrl;
+                qDebug() << "Datasheet is relative path, constructed full URL:" << datasheetUrl;
+            }
+            componentData.setDatasheet(datasheetUrl);
+            qDebug() << "Datasheet extracted from symbolData (EasyEDA, will be overridden by LCSC if available):" << datasheetUrl;
+        }
     } else {
         qWarning() << "Failed to import symbol data for:" << m_currentComponentId;
         emit fetchError(lcscId, "Failed to parse Symbol data from EasyEDA JSON");
@@ -330,6 +385,13 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
         }
     }
 
+    // 调用 LCSC API 获取数据手册和预览图 URL（异步）
+    // 注意：这个调用是异步的，handleLcscDataReady 会更新 ComponentData
+    // 我们需要将数据保存到 m_fetchingComponents 中，以便 handleLcscDataReady 可以更新
+    m_fetchingComponents[m_currentComponentId].data = componentData;
+    m_imageService->fetchPreviewImages(m_currentComponentId);
+    qDebug() << "Called fetchPreviewImages to get LCSC datasheet and preview images for" << m_currentComponentId;
+
     // 不需要3D 模型或没有找到UUID，直接发送完成信号
     emit cadDataReady(m_currentComponentId, componentData);
 
@@ -368,6 +430,11 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
                     fetchingComponent.hasStepData = true;
                     qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
 
+                    // 调用 LCSC API 获取数据手册和预览图 URL（异步）
+                    m_fetchingComponents[componentId].data = fetchingComponent.data;
+                    m_imageService->fetchPreviewImages(componentId);
+                    qDebug() << "Called fetchPreviewImages after 3D model loaded for" << componentId;
+
                     // 发送完成信号
                     emit cadDataReady(componentId, fetchingComponent.data);
 
@@ -399,6 +466,11 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
                 // 这是 STEP 格式的3D 模型
                 m_pendingComponentData.model3DData()->setStep(data);
                 qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
+
+                // 调用 LCSC API 获取数据手册和预览图 URL（异步）
+                m_fetchingComponents[m_currentComponentId].data = m_pendingComponentData;
+                m_imageService->fetchPreviewImages(m_currentComponentId);
+                qDebug() << "Called fetchPreviewImages after 3D model loaded (serial mode) for" << m_currentComponentId;
 
                 // 发送完成信号
                 emit cadDataReady(m_currentComponentId, m_pendingComponentData);

@@ -87,15 +87,32 @@ void ComponentDataCollector::handleCadDataFetched(const QJsonObject& data) {
     if (resultData.contains("manufacturer")) {
         m_componentData.setManufacturer(resultData["manufacturer"].toString());
     }
-    if (resultData.contains("datasheet")) {
-        m_componentData.setDatasheet(resultData["datasheet"].toString());
-    }
 
     // 导入符号数据
     QSharedPointer<SymbolData> symbolData = m_importer->importSymbolData(resultData);
     if (symbolData) {
         m_componentData.setSymbolData(symbolData);
         qDebug() << "Symbol imported - Name:" << symbolData->info().name;
+
+        // 从符号数据中提取数据手册（EasyEDA API 将数据手册存储在 lcsc.url 中）
+        if (!symbolData->info().datasheet.isEmpty()) {
+            m_componentData.setDatasheet(symbolData->info().datasheet);
+            qDebug() << "Datasheet extracted:" << symbolData->info().datasheet;
+        } else {
+            qDebug() << "No datasheet found in symbol data";
+        }
+
+        // 从符号数据中提取预览图（EasyEDA API 将预览图存储在 thumb 中）
+        if (!symbolData->info().thumb.isEmpty()) {
+            m_componentData.setPreviewImages(QStringList() << symbolData->info().thumb);
+            qDebug() << "Preview image extracted:" << symbolData->info().thumb;
+        } else {
+            qDebug() << "No preview image found in symbol data";
+        }
+        
+        // 打印最终的数据状态
+        qDebug() << "ComponentData final state - PreviewImages:" << m_componentData.previewImages().size()
+                 << "Datasheet:" << (m_componentData.datasheet().isEmpty() ? "empty" : m_componentData.datasheet());
     } else {
         qWarning() << "Failed to import symbol data";
     }

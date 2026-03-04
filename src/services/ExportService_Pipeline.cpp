@@ -1,5 +1,7 @@
 #include "ExportService_Pipeline.h"
 
+#include "ui/viewmodels/ComponentListViewModel.h"
+
 #include "pipeline/cleanup/PipelineCleanup.h"
 #include "pipeline/stats/PipelineStatistics.h"
 #include "utils/PathSecurity.h"
@@ -219,6 +221,11 @@ PipelineProgress ExportServicePipeline::getPipelineProgress() const {
 void ExportServicePipeline::setPreloadedData(const QMap<QString, QSharedPointer<ComponentData>>& data) {
     QMutexLocker locker(m_mutex);
     m_preloadedData = data;
+}
+
+void ExportServicePipeline::setComponentListViewModel(ComponentListViewModel* componentListViewModel) {
+    QMutexLocker locker(m_mutex);
+    m_componentListViewModel = componentListViewModel;
 }
 
 void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportStatus> status) {
@@ -496,13 +503,103 @@ void ExportServicePipeline::checkPipelineCompletion() {
         }
     }
 
-    // 2. 清理临时文件夹（无论合并是否成功都要清理）
+    // 2. 检查预加载数据状态
+    qDebug() << "Preloaded data count:" << m_preloadedData.size();
+    int componentsWithPreviewImages = 0;
+    int componentsWithDatasheets = 0;
+    for (auto it = m_preloadedData.constBegin(); it != m_preloadedData.constEnd(); ++it) {
+        const QSharedPointer<ComponentData>& componentData = it.value();
+        qDebug() << "Component:" << componentData->lcscId()
+                 << "Preview images:" << componentData->previewImages().size() << "Datasheet:"
+                 << (componentData->datasheet().isEmpty() ? "empty" : componentData->datasheet().left(50));
+        if (!componentData->previewImages().isEmpty()) {
+            componentsWithPreviewImages++;
+        }
+        if (!componentData->datasheet().isEmpty()) {
+            componentsWithDatasheets++;
+        }
+    }
+    qDebug() << "Components with preview images:" << componentsWithPreviewImages;
+    qDebug() << "Components with datasheets:" << componentsWithDatasheets;
+
+    // 3. 导出预览图
+    qDebug() << "ExportPreviewImages option:" << m_options.exportPreviewImages;
+    if (m_options.exportPreviewImages) {
+        int previewImageSuccessCount = 0;
+        for (auto it = m_preloadedData.constBegin(); it != m_preloadedData.constEnd(); ++it) {
+            const QSharedPointer<ComponentData>& componentData = it.value();
+            QString componentId = componentData->lcscId();
+
+            // 从 ComponentListViewModel 获取 ComponentListItemData 中的缓存文件路径
+            QStringList previewImagePaths;
+            bool hasCacheFiles = false;
+            
+            // 暂时使用 ComponentData 中的 previewImages，后续优化为使用缓存文件
+            previewImagePaths = componentData->previewImages();
+            qDebug() << "Using previewImages from ComponentData:" << previewImagePaths.size();
+            
+            // 检查是否是缓存文件路径
+            for (const QString& path : previewImagePaths) {
+                if (QFile::exists(path)) {
+                    hasCacheFiles = true;
+                    break;
+                }
+            }
+
+            if (!previewImagePaths.isEmpty()) {
+                qDebug() << "Exporting preview images for:" << componentId
+                         << "Image count:" << previewImagePaths.size()
+                         << "From cache:" << hasCacheFiles;
+
+                // 使用组件名称或ID作为文件名
+                QString componentName =
+                    componentData->name().isEmpty() ? componentId : componentData->name();
+
+                if (hasCacheFiles) {
+                    // 使用缓存文件路径
+                    if (exportPreviewImagesFromCache(previewImagePaths, m_options.outputPath, componentName)) {
+                        previewImageSuccessCount++;
+                    }
+                } else {
+                    // 使用 URL 下载
+                    if (exportPreviewImages(previewImagePaths, m_options.outputPath, componentName)) {
+                        previewImageSuccessCount++;
+                    }
+                }
+            }
+        }
+        qDebug() << "Preview images export completed:" << previewImageSuccessCount << "components";
+    }
+
+    // 4. 导出手册
+    qDebug() << "ExportDatasheet option:" << m_options.exportDatasheet;
+    if (m_options.exportDatasheet) {
+        int datasheetSuccessCount = 0;
+        for (auto it = m_preloadedData.constBegin(); it != m_preloadedData.constEnd(); ++it) {
+            const QSharedPointer<ComponentData>& componentData = it.value();
+            if (!componentData->datasheet().isEmpty()) {
+                qDebug() << "Exporting datasheet for:" << componentData->lcscId()
+                         << "Datasheet URL:" << componentData->datasheet();
+
+                // 使用组件名称或ID作为文件名
+                QString componentName =
+                    componentData->name().isEmpty() ? componentData->lcscId() : componentData->name();
+
+                if (exportDatasheet(componentData->datasheet(), m_options.outputPath, componentName)) {
+                    datasheetSuccessCount++;
+                }
+            }
+        }
+        qDebug() << "Datasheets export completed:" << datasheetSuccessCount << "components";
+    }
+
+    // 5. 清理临时文件夹（无论导出是否成功都要清理）
     if (!m_tempDir.isEmpty()) {
         PipelineCleanup::removeTempDir(m_tempDir);
         m_tempDir.clear();
     }
 
-    // 4. 只在非取消模式下生成统计报告
+    // 6. 只在非取消模式下生成统计报告
     if (!wasCancelled) {
         // 生成统计信息（始终生成，用于显示基本统计卡片）
         ExportStatistics statistics = generateStatistics();

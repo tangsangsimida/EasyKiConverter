@@ -55,6 +55,15 @@ signals:
     void allImagesReady(const QString& componentId, const QStringList& imagePaths);
 
     /**
+     * @brief LCSC API 数据获取成功信号（包含数据手册和预览图 URL）
+     *
+     * @param componentId 元件 ID
+     * @param datasheetUrl 数据手册 URL
+     * @param imageUrls 预览图 URL 列表
+     */
+    void lcscDataReady(const QString& componentId, const QString& datasheetUrl, const QStringList& imageUrls);
+
+    /**
      * @brief 错误信号
      */
     void error(const QString& componentId, const QString& errorMessage);

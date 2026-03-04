@@ -180,6 +180,36 @@ void ConfigService::setExportModel3D(bool enabled) {
     saveConfig();
 }
 
+bool ConfigService::getExportPreviewImages() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["exportPreviewImages"].toBool(false);
+}
+
+void ConfigService::setExportPreviewImages(bool enabled) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["exportPreviewImages"] = enabled;
+    emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
+}
+
+bool ConfigService::getExportDatasheet() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["exportDatasheet"].toBool(false);
+}
+
+void ConfigService::setExportDatasheet(bool enabled) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["exportDatasheet"] = enabled;
+    emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
+}
+
 bool ConfigService::getOverwriteExistingFiles() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["overwriteExistingFiles"].toBool(false);
@@ -302,6 +332,8 @@ void ConfigService::initializeDefaultConfig() {
     m_config["exportSymbol"] = true;
     m_config["exportFootprint"] = true;
     m_config["exportModel3D"] = true;
+    m_config["exportPreviewImages"] = false;
+    m_config["exportDatasheet"] = false;
     m_config["overwriteExistingFiles"] = false;
     m_config["darkMode"] = false;
     m_config["debugMode"] = false;

@@ -53,6 +53,7 @@ public:
     QString thumbnailBase64() const;
 
     QVariantList previewImages() const;
+    QStringList previewImagePaths() const;
 
     int currentPreviewIndex() const {
         return m_currentPreviewIndex;
@@ -88,6 +89,7 @@ public:
     void setThumbnail(const QImage& thumbnail);
     void addPreviewImage(const QImage& image);
     void setPreviewImages(const QList<QImage>& images);
+    void addPreviewImagePath(const QString& imagePath);
     void setCurrentPreviewIndex(int index);
     void nextPreviewImage();
     void previousPreviewImage();
@@ -110,6 +112,7 @@ private:
     QString m_package;
     QImage m_thumbnail;
     QList<QImage> m_previewImages;
+    QStringList m_previewImagePaths;  // 预览图缓存文件路径列表
     int m_currentPreviewIndex;
     mutable QString m_thumbnailBase64Cache;  // 缓存 base64 编码结果，避免重复计算
     bool m_isValid;

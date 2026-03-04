@@ -113,6 +113,23 @@ void LcscImageService::handleApiResponse(QNetworkReply* reply, const QString& co
                     imageUrls.removeLast();
                 }
 
+                // 提取数据手册 URL（按照 Python 代码的方式）
+                QString datasheetUrl;
+                if (product.contains("device_info")) {
+                    QJsonObject deviceInfo = product["device_info"].toObject();
+                    if (deviceInfo.contains("attributes")) {
+                        QJsonObject attributes = deviceInfo["attributes"].toObject();
+                        if (attributes.contains("Datasheet")) {
+                            datasheetUrl = attributes["Datasheet"].toString();
+                            qDebug() << "Extracted datasheet URL from LCSC API for" << componentId << ":" << datasheetUrl;
+                        }
+                    }
+                }
+
+                // 发送 LCSC 数据就绪信号（包含数据手册 URL 和预览图 URL 列表）
+                emit lcscDataReady(componentId, datasheetUrl, imageUrls);
+                qDebug() << "Emitted lcscDataReady for" << componentId << "with" << imageUrls.size() << "images and datasheet:" << (datasheetUrl.isEmpty() ? "none" : datasheetUrl);
+
                 if (!imageUrls.isEmpty()) {
                     m_pendingImages[componentId] = imageUrls;
                     m_downloadedImages[componentId].clear();

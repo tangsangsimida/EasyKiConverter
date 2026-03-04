@@ -158,6 +158,14 @@ signals:
     void previewImageReady(const QString& componentId, const QImage& image);
 
     /**
+     * @brief 预览图文件路径信号
+     *
+     * @param componentId 元件ID
+     * @param imagePath 预览图缓存文件路径
+     */
+    void previewImagePathReady(const QString& componentId, const QString& imagePath);
+
+    /**
      * @brief 获取错误信号
      *
      * @param componentId 元件ID
@@ -171,6 +179,18 @@ signals:
      * @param componentDataList 元件数据列表
      */
     void allComponentsDataCollected(const QList<ComponentData>& componentDataList);
+
+    /**
+     * @brief LCSC 数据更新信号（数据手册和预览图 URL）
+     *
+     * 当 LCSC API 返回数据手册和预览图 URL 后发送此信号
+     * ComponentListViewModel 可以接收此信号并更新缓存的 ComponentData
+     *
+     * @param componentId 元件 ID
+     * @param datasheetUrl 数据手册 URL
+     * @param imageUrls 预览图 URL 列表
+     */
+    void lcscDataUpdated(const QString& componentId, const QString& datasheetUrl, const QStringList& imageUrls);
 
 private slots:
     /**
@@ -201,6 +221,11 @@ private slots:
      * @brief 处理预览图就绪
      */
     void handleImageReady(const QString& componentId, const QString& imagePath);
+
+    /**
+     * @brief 处理 LCSC API 数据就绪（包含数据手册和预览图 URL）
+     */
+    void handleLcscDataReady(const QString& componentId, const QString& datasheetUrl, const QStringList& imageUrls);
 
     /**
      * @brief 处理获取错误（带 ID）

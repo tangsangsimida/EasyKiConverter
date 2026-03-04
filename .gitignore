@@ -115,3 +115,6 @@ docs/api/xml/
 docs/api/doxygen_warnings.log
 docs/api/easykiconverter.tag
 site/
+tools/python/respose/*
+tools/python/download_results.json
+tools/python/lceda_results.json
