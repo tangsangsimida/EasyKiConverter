@@ -1,13 +1,13 @@
 #ifndef LCSCIMAGESERVICE_H
 #define LCSCIMAGESERVICE_H
 
+#include <QMap>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QObject>
 #include <QQueue>
 #include <QString>
 #include <QStringList>
-#include <QMap>
 
 namespace EasyKiConverter {
 
@@ -63,7 +63,11 @@ private slots:
     void processQueue();
     void handleApiResponse(QNetworkReply* reply, const QString& componentId, int retryCount);
     void handleFallbackResponse(QNetworkReply* reply, const QString& componentId);
-    void handleDownloadResponse(QNetworkReply* reply, const QString& componentId, const QString& imageUrl, int imageIndex, int retryCount);
+    void handleDownloadResponse(QNetworkReply* reply,
+                                const QString& componentId,
+                                const QString& imageUrl,
+                                int imageIndex,
+                                int retryCount);
 
 private:
     void performApiSearch(const QString& componentId, int retryCount);
@@ -76,9 +80,9 @@ private:
 
     QNetworkAccessManager* m_networkManager;
     QQueue<QString> m_queue;
-    QMap<QString, QStringList> m_pendingImages; // componentId -> imageUrls
-    QMap<QString, QStringList> m_downloadedImages; // componentId -> localPaths
-    QMap<QString, int> m_downloadCounts; // componentId -> downloaded count
+    QMap<QString, QStringList> m_pendingImages;     // componentId -> imageUrls
+    QMap<QString, QStringList> m_downloadedImages;  // componentId -> localPaths
+    QMap<QString, int> m_downloadCounts;            // componentId -> downloaded count
     int m_activeRequests;
     static const int MAX_CONCURRENT_REQUESTS = 5;
     static const int MAX_IMAGES_PER_COMPONENT = 3;

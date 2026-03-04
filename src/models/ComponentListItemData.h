@@ -53,9 +53,11 @@ public:
     QString thumbnailBase64() const;
 
     QVariantList previewImages() const;
+
     int currentPreviewIndex() const {
         return m_currentPreviewIndex;
     }
+
     int previewImageCount() const {
         return m_previewImages.count();
     }

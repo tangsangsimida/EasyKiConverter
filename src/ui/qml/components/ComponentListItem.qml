@@ -68,14 +68,14 @@ Rectangle {
         anchors.margins: AppStyle.spacing.sm
         spacing: AppStyle.spacing.md
         z: 10 // 确保内容在背景 MouseArea 之上
-        
+
         // 预览图区域 - 支持悬停放大
         Item {
             id: previewArea
             Layout.preferredWidth: 48
             Layout.preferredHeight: 48
             Layout.alignment: Qt.AlignVCenter
-            
+
             // 默认显示的单张缩略图
             Rectangle {
                 id: defaultThumbnail
@@ -86,7 +86,7 @@ Rectangle {
                 border.color: AppStyle.colors.border
                 border.width: 1
                 clip: true
-                
+
                 Image {
                     anchors.centerIn: parent
                     width: 46
@@ -97,7 +97,7 @@ Rectangle {
                     asynchronous: true
                     visible: itemData && itemData.hasThumbnail && !itemData.isFetching
                 }
-                
+
                 // 加载状态
                 BusyIndicator {
                     anchors.centerIn: parent
@@ -106,7 +106,7 @@ Rectangle {
                     running: (itemData && itemData.isFetching) ? true : false
                     visible: (itemData && itemData.isFetching) ? true : false
                 }
-                
+
                 // 占位符/错误状态
                 Text {
                     anchors.centerIn: parent
@@ -116,7 +116,7 @@ Rectangle {
                     visible: !(itemData && itemData.hasThumbnail && !itemData.isFetching) && !(itemData && itemData.isFetching)
                 }
             }
-            
+
             // 悬停时显示的放大预览图 - 显示三张图片在一排
             Popup {
                 id: previewPopup
@@ -129,50 +129,60 @@ Rectangle {
                 modal: false
                 focus: false
                 dim: false
-                
+
                 // 智能位置计算：检测是否超出窗口边界
                 onVisibleChanged: {
                     if (visible) {
                         // 获取缩略图在屏幕上的位置
                         var thumbGlobalPos = defaultThumbnail.mapToGlobal(Qt.point(0, 0));
-                        
+
                         // 获取窗口在屏幕上的位置
                         var window = item.Window.window;
                         var windowGlobalX = window ? window.x : 0;
                         var windowWidth = window ? window.width : item.width;
-                        
+
                         // 计算缩略图相对于窗口的位置
                         var thumbRelativeX = thumbGlobalPos.x - windowGlobalX;
-                        
+
                         // 预览图宽度（640）+ 间距（60）= 700
                         var popupWidth = width + 60;
-                        
+
                         // 如果右侧空间不足，显示在左侧
                         if (thumbRelativeX + popupWidth > windowWidth) {
                             x = -690; // 显示在缩略图左侧
                         } else {
                             x = 60; // 显示在缩略图右侧
                         }
-                        
+
                         // 垂直居中显示
                         y = (defaultThumbnail.height - height) / 2;
                     }
                 }
-                
+
                 enter: Transition {
-                    NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 150 }
+                    NumberAnimation {
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        duration: 150
+                    }
                 }
-                
+
                 exit: Transition {
-                    NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 }
+                    NumberAnimation {
+                        property: "opacity"
+                        from: 1
+                        to: 0
+                        duration: 150
+                    }
                 }
-                
+
                 background: Rectangle {
                     color: "white"
                     border.color: AppStyle.colors.primary
                     border.width: 2
                     radius: AppStyle.radius.md
-                    
+
                     // 阴影效果
                     layer.enabled: true
                     layer.effect: MultiEffect {
@@ -183,15 +193,15 @@ Rectangle {
                         shadowHorizontalOffset: 2
                     }
                 }
-                
+
                 contentItem: Row {
                     anchors.fill: parent
                     anchors.margins: 10
                     spacing: 10
-                    
+
                     Repeater {
                         model: itemData ? itemData.previewImageCount : 0
-                        
+
                         Rectangle {
                             width: 200
                             height: 200
@@ -200,10 +210,10 @@ Rectangle {
                             border.color: AppStyle.colors.border
                             border.width: 1
                             clip: true
-                            
+
                             property bool imageLoaded: false
                             property bool loadTriggered: false
-                            
+
                             // 延迟加载触发器
                             Timer {
                                 id: loadDelayTimer
@@ -212,7 +222,7 @@ Rectangle {
                                     parent.loadTriggered = true;
                                 }
                             }
-                            
+
                             // 当 Popup 可见时开始延迟加载
                             Connections {
                                 target: previewPopup
@@ -222,7 +232,7 @@ Rectangle {
                                     }
                                 }
                             }
-                            
+
                             Image {
                                 anchors.centerIn: parent
                                 width: 198
@@ -238,14 +248,14 @@ Rectangle {
                                 cache: true
                                 asynchronous: true
                                 visible: parent.loadTriggered && parent.imageLoaded
-                                
+
                                 onStatusChanged: {
                                     if (status === Image.Ready) {
                                         parent.imageLoaded = true;
                                     }
                                 }
                             }
-                            
+
                             // 加载状态指示器
                             BusyIndicator {
                                 anchors.centerIn: parent
@@ -254,7 +264,7 @@ Rectangle {
                                 running: parent.loadTriggered && !parent.imageLoaded
                                 visible: parent.loadTriggered && !parent.imageLoaded
                             }
-                            
+
                             // 初始占位符
                             Rectangle {
                                 anchors.centerIn: parent
@@ -263,7 +273,7 @@ Rectangle {
                                 color: AppStyle.colors.background
                                 radius: AppStyle.radius.md
                                 visible: !parent.loadTriggered
-                                
+
                                 Text {
                                     anchors.centerIn: parent
                                     text: index + 1
@@ -272,7 +282,7 @@ Rectangle {
                                     color: AppStyle.colors.textSecondary
                                 }
                             }
-                            
+
                             // 图片序号标记
                             Rectangle {
                                 anchors.top: parent.top
@@ -289,7 +299,7 @@ Rectangle {
                                     color: "white"
                                 }
                             }
-                            
+
                             // 底部文字遮罩
                             Rectangle {
                                 anchors.bottom: parent.bottom
@@ -309,7 +319,7 @@ Rectangle {
                     }
                 }
             }
-            
+
             // 预览区域交互
             MouseArea {
                 id: previewMouseArea
@@ -406,6 +416,4 @@ Rectangle {
             }
         }
     }
-
-    
 }

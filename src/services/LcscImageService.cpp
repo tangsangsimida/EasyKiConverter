@@ -75,8 +75,9 @@ void LcscImageService::handleApiResponse(QNetworkReply* reply, const QString& co
 
     if (reply->error() != QNetworkReply::NoError) {
         if (retryCount < 2) {
-            QTimer::singleShot(
-                1000 * (retryCount + 1), this, [this, componentId, retryCount]() { performApiSearch(componentId, retryCount + 1); });
+            QTimer::singleShot(1000 * (retryCount + 1), this, [this, componentId, retryCount]() {
+                performApiSearch(componentId, retryCount + 1);
+            });
         } else {
             // API 失败，尝试回退到爬虫方式
             performFallback(componentId);
@@ -170,7 +171,10 @@ void LcscImageService::handleFallbackResponse(QNetworkReply* reply, const QStrin
     processQueue();
 }
 
-void LcscImageService::performDownload(const QString& componentId, const QString& imageUrl, int imageIndex, int retryCount) {
+void LcscImageService::performDownload(const QString& componentId,
+                                       const QString& imageUrl,
+                                       int imageIndex,
+                                       int retryCount) {
     QNetworkRequest request{QUrl(imageUrl)};
     request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
     request.setTransferTimeout(20000);
@@ -181,7 +185,11 @@ void LcscImageService::performDownload(const QString& componentId, const QString
     });
 }
 
-void LcscImageService::handleDownloadResponse(QNetworkReply* reply, const QString& componentId, const QString& imageUrl, int imageIndex, int retryCount) {
+void LcscImageService::handleDownloadResponse(QNetworkReply* reply,
+                                              const QString& componentId,
+                                              const QString& imageUrl,
+                                              int imageIndex,
+                                              int retryCount) {
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
@@ -189,7 +197,8 @@ void LcscImageService::handleDownloadResponse(QNetworkReply* reply, const QStrin
             performDownload(componentId, imageUrl, imageIndex, retryCount + 1);
         } else {
             // 下载失败，记录但继续处理其他图片
-            qDebug() << "Failed to download image for" << componentId << "index:" << imageIndex << "error:" << reply->errorString();
+            qDebug() << "Failed to download image for" << componentId << "index:" << imageIndex
+                     << "error:" << reply->errorString();
             checkDownloadCompletion(componentId);
         }
         return;
@@ -211,7 +220,8 @@ void LcscImageService::handleDownloadResponse(QNetworkReply* reply, const QStrin
         // 检查是否所有图片都下载完成
         checkDownloadCompletion(componentId);
     } else {
-        qDebug() << "Failed to save image for" << componentId << "index:" << imageIndex << "error:" << file.errorString();
+        qDebug() << "Failed to save image for" << componentId << "index:" << imageIndex
+                 << "error:" << file.errorString();
         checkDownloadCompletion(componentId);
     }
 }
