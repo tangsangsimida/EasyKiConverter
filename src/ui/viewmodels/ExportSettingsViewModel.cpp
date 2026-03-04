@@ -1,8 +1,12 @@
 #include "ExportSettingsViewModel.h"
 
 #include "services/ExportService_Pipeline.h"
+#include "utils/FileUtils.h"
 
+#include <QCoreApplication>
 #include <QDebug>
+#include <QDir>
+#include <QStandardPaths>
 
 namespace EasyKiConverter {
 
@@ -147,7 +151,65 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
 
     // 设置导出选项
     ExportOptions options;
-    options.outputPath = m_outputPath;
+
+    // 调试：打印原始输入值
+    qDebug() << "Original input values - outputPath:" << m_outputPath << "libName:" << m_libName;
+
+    // 处理输出路径
+    QString absoluteOutputPath = m_outputPath;
+    if (absoluteOutputPath.isEmpty()) {
+        // 如果导出路径为空，使用默认路径：~/Documents/EasyKiConverter/库名称
+        QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+        QDir exportDir(documentsPath);
+
+        // 创建 EasyKiConverter 目录
+        if (!exportDir.exists("EasyKiConverter")) {
+            exportDir.mkdir("EasyKiConverter");
+        }
+        exportDir.cd("EasyKiConverter");
+
+        // 使用库名称作为导出路径
+        absoluteOutputPath = exportDir.absoluteFilePath(m_libName);
+        qDebug() << "Using default export path (empty input):" << absoluteOutputPath;
+    } else {
+        QDir dir(absoluteOutputPath);
+
+        if (dir.isAbsolute()) {
+            // 如果是绝对路径，规范化路径（处理 .. 和 . 等）
+            absoluteOutputPath = dir.cleanPath(absoluteOutputPath);
+            qDebug() << "Normalized absolute path:" << m_outputPath << "->" << absoluteOutputPath;
+        } else {
+            // 如果是相对路径，相对于 ~/Documents/EasyKiConverter/ 转换为绝对路径
+            QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+            QDir exportDir(documentsPath);
+
+            // 创建 EasyKiConverter 目录
+            if (!exportDir.exists("EasyKiConverter")) {
+                exportDir.mkdir("EasyKiConverter");
+            }
+            exportDir.cd("EasyKiConverter");
+
+            // 创建用户输入的子目录（如 test）
+            if (!exportDir.exists(absoluteOutputPath)) {
+                exportDir.mkdir(absoluteOutputPath);
+            }
+            exportDir.cd(absoluteOutputPath);
+
+            // 在子目录下创建库名称目录
+            absoluteOutputPath = exportDir.absoluteFilePath(m_libName);
+            qDebug() << "Converted relative path to absolute path (Documents/EasyKiConverter/userPath/libName):"
+                     << m_outputPath << "->" << absoluteOutputPath;
+        }
+    }
+
+    // 最终验证路径
+    if (absoluteOutputPath.isEmpty()) {
+        qWarning() << "Final output path is still empty! Using fallback to Desktop.";
+        absoluteOutputPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+        absoluteOutputPath = QDir(absoluteOutputPath).absoluteFilePath(m_libName);
+    }
+
+    options.outputPath = absoluteOutputPath;
     options.libName = m_libName;
     options.exportSymbol = m_exportSymbol;
     options.exportFootprint = m_exportFootprint;
@@ -182,6 +244,16 @@ void ExportSettingsViewModel::cancelExport() {
 
     setIsExporting(false);
     setStatus("Export cancelled");
+}
+
+bool ExportSettingsViewModel::openOutputFolder() {
+    qDebug() << "openOutputFolder called (ExportSettingsViewModel - deprecated, use ExportProgressViewModel instead)";
+
+    // 此方法已弃用，现在使用 ExportProgressViewModel::openLastExportedFolder()
+    // 为了向后兼容，保留此方法但不执行任何操作
+    qWarning() << "ExportSettingsViewModel::openOutputFolder() is deprecated. Use "
+                  "ExportProgressViewModel::openLastExportedFolder() instead.";
+    return false;
 }
 
 void ExportSettingsViewModel::handleExportProgress(int current, int total) {

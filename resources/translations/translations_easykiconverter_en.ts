@@ -220,6 +220,16 @@
         <translation>Open Export Directory</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="15"/>
+        <source>错误</source>
+        <translation>Error</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="18"/>
+        <source>打开导出目录失败，请检查导出路径是否存在。</source>
+        <translation>Failed to open export directory. Please check if the export path exists.</translation>
+    </message>
+    <message>
         <location filename="../../src/ui/qml/components/BomImportCard.qml" line="34"/>
         <source>未选择文件</source>
         <translation>No File Selected</translation>

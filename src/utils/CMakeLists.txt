@@ -50,6 +50,8 @@ add_library(EasyKiConverter::Logging ALIAS EasyKiConverterLogging)
 add_library(EasyKiConverterSafeUtils STATIC
     PathSecurity.cpp
     PathSecurity.h
+    FileUtils.cpp
+    FileUtils.h
     BoundedThreadSafeQueue.h
 )
 
@@ -60,6 +62,7 @@ set_target_properties(EasyKiConverterSafeUtils PROPERTIES
 target_link_libraries(EasyKiConverterSafeUtils
     PUBLIC
         Qt6::Core
+        Qt6::Gui
         EasyKiConverterLogging  # 工具库可能需要打日志
 )
 

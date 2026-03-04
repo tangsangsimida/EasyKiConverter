@@ -99,6 +99,13 @@ public:
         return m_failureCount;
     }
 
+    Q_INVOKABLE QString getLastExportedPath() const {
+        return m_exportOptions.outputPath;
+    }
+
+    // 打开最后导出的文件夹
+    Q_INVOKABLE bool openLastExportedFolder();
+
     int fetchProgress() const {
         return m_fetchProgress;
     }
