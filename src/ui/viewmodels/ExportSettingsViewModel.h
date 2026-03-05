@@ -92,6 +92,7 @@ public slots:
     Q_INVOKABLE void resetConfig();
     Q_INVOKABLE void startExport(const QStringList& componentIds);
     Q_INVOKABLE void cancelExport();
+    Q_INVOKABLE bool openOutputFolder();
 
 signals:
     void outputPathChanged();

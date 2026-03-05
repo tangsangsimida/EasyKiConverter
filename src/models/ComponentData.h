@@ -71,6 +71,20 @@ public:
         m_datasheet = datasheet;
     }
 
+    QStringList previewImages() const {
+        return m_previewImages;
+    }
+
+    void setPreviewImages(const QStringList& images) {
+        m_previewImages = images;
+    }
+
+    void addPreviewImage(const QString& imageUrl) {
+        if (!imageUrl.isEmpty() && !m_previewImages.contains(imageUrl)) {
+            m_previewImages.append(imageUrl);
+        }
+    }
+
     QSharedPointer<SymbolData> symbolData() const {
         return m_symbolData;
     }
@@ -107,12 +121,13 @@ public:
     void clear();
 
 private:
-    QString m_lcscId;        // LCSC 元件编号
-    QString m_name;          // 元件名称
-    QString m_prefix;        // 元件前缀
-    QString m_package;       // 封装名称
-    QString m_manufacturer;  // 制造商
-    QString m_datasheet;     // 数据手册链接
+    QString m_lcscId;             // LCSC 元件编号
+    QString m_name;               // 元件名称
+    QString m_prefix;             // 元件前缀
+    QString m_package;            // 封装名称
+    QString m_manufacturer;       // 制造商
+    QString m_datasheet;          // 数据手册链接
+    QStringList m_previewImages;  // 预览图 URL 列表
 
     QSharedPointer<SymbolData> m_symbolData;        // 符号数据
     QSharedPointer<FootprintData> m_footprintData;  // 封装数据

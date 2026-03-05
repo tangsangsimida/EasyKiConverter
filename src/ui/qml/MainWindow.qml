@@ -23,7 +23,7 @@ Item {
     Binding {
         target: AppStyle
         property: "isDarkMode"
-        value: themeSettingsViewModel.isDarkMode
+        value: themeSettingsViewModel ? themeSettingsViewModel.isDarkMode : false
     }
     // BOM 文件选择对话框
     FileDialog {

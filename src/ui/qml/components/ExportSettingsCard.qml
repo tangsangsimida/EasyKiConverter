@@ -32,8 +32,12 @@ Card {
                 TextField {
                     id: outputPathInput
                     Layout.fillWidth: true
-                    text: exportSettingsCard.exportSettingsController.outputPath
-                    onTextChanged: exportSettingsCard.exportSettingsController.setOutputPath(text)
+                    text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.outputPath : ""
+                    onTextChanged: {
+                        if (exportSettingsCard.exportSettingsController) {
+                            exportSettingsCard.exportSettingsController.setOutputPath(text);
+                        }
+                    }
                     placeholderText: qsTranslate("MainWindow", "选择输出目录")
                     font.pixelSize: 14
                     color: AppStyle.colors.textPrimary
@@ -82,8 +86,12 @@ Card {
             TextField {
                 id: libNameInput
                 Layout.fillWidth: true
-                text: exportSettingsCard.exportSettingsController.libName
-                onTextChanged: exportSettingsCard.exportSettingsController.setLibName(text)
+                text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.libName : ""
+                onTextChanged: {
+                    if (exportSettingsCard.exportSettingsController) {
+                        exportSettingsCard.exportSettingsController.setLibName(text);
+                    }
+                }
                 placeholderText: qsTranslate("MainWindow", "输入库名称 (例如: MyLibrary)")
                 font.pixelSize: 14
                 color: AppStyle.colors.textPrimary
@@ -128,8 +136,12 @@ Card {
                 id: symbolCheckbox
                 Layout.fillWidth: true
                 text: qsTranslate("MainWindow", "符号库")
-                checked: exportSettingsCard.exportSettingsController.exportSymbol
-                onCheckedChanged: exportSettingsCard.exportSettingsController.setExportSymbol(checked)
+                checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportSymbol : false
+                onCheckedChanged: {
+                    if (exportSettingsCard.exportSettingsController) {
+                        exportSettingsCard.exportSettingsController.setExportSymbol(checked);
+                    }
+                }
                 font.pixelSize: 16
                 indicator: Rectangle {
                     implicitWidth: 22
@@ -178,8 +190,12 @@ Card {
                 id: footprintCheckbox
                 Layout.fillWidth: true
                 text: qsTranslate("MainWindow", "封装库")
-                checked: exportSettingsCard.exportSettingsController.exportFootprint
-                onCheckedChanged: exportSettingsCard.exportSettingsController.setExportFootprint(checked)
+                checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportFootprint : false
+                onCheckedChanged: {
+                    if (exportSettingsCard.exportSettingsController) {
+                        exportSettingsCard.exportSettingsController.setExportFootprint(checked);
+                    }
+                }
                 font.pixelSize: 16
                 indicator: Rectangle {
                     implicitWidth: 22
@@ -228,8 +244,12 @@ Card {
                 id: model3dCheckbox
                 Layout.fillWidth: true
                 text: qsTranslate("MainWindow", "3D模型")
-                checked: exportSettingsCard.exportSettingsController.exportModel3D
-                onCheckedChanged: exportSettingsCard.exportSettingsController.setExportModel3D(checked)
+                checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportModel3D : false
+                onCheckedChanged: {
+                    if (exportSettingsCard.exportSettingsController) {
+                        exportSettingsCard.exportSettingsController.setExportModel3D(checked);
+                    }
+                }
                 font.pixelSize: 16
                 indicator: Rectangle {
                     implicitWidth: 22
@@ -291,9 +311,9 @@ Card {
                     RadioButton {
                         id: appendModeRadio
                         text: qsTranslate("MainWindow", "追加")
-                        checked: exportSettingsCard.exportSettingsController.exportMode === 0
+                        checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportMode === 0 : true
                         onCheckedChanged: {
-                            if (checked) {
+                            if (checked && exportSettingsCard.exportSettingsController) {
                                 exportSettingsCard.exportSettingsController.setExportMode(0);
                             }
                         }
@@ -337,9 +357,9 @@ Card {
                     RadioButton {
                         id: updateModeRadio
                         text: qsTranslate("MainWindow", "更新")
-                        checked: exportSettingsCard.exportSettingsController.exportMode === 1
+                        checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportMode === 1 : false
                         onCheckedChanged: {
-                            if (checked) {
+                            if (checked && exportSettingsCard.exportSettingsController) {
                                 exportSettingsCard.exportSettingsController.setExportMode(1);
                             }
                         }

@@ -27,7 +27,7 @@ Card {
         Text {
             id: bomFileLabel
             Layout.fillWidth: true
-            text: bomImportCard.componentListController.bomFilePath.length > 0 ? bomImportCard.componentListController.bomFilePath.split("/").pop() : qsTranslate("MainWindow", "未选择文件")
+            text: bomImportCard.componentListController && bomImportCard.componentListController.bomFilePath && bomImportCard.componentListController.bomFilePath.length > 0 ? bomImportCard.componentListController.bomFilePath.split("/").pop() : qsTranslate("MainWindow", "未选择文件")
             font.pixelSize: AppStyle.fontSizes.sm
             color: AppStyle.colors.textSecondary
             horizontalAlignment: Text.AlignHCenter
@@ -39,10 +39,10 @@ Card {
         id: bomResultLabel
         Layout.fillWidth: true
         Layout.topMargin: AppStyle.spacing.md
-        text: bomImportCard.componentListController.bomResult
+        text: bomImportCard.componentListController ? bomImportCard.componentListController.bomResult : ""
         font.pixelSize: AppStyle.fontSizes.sm
         color: AppStyle.colors.success
         horizontalAlignment: Text.AlignHCenter
-        visible: bomImportCard.componentListController.bomResult.length > 0
+        visible: bomImportCard.componentListController && bomImportCard.componentListController.bomResult && bomImportCard.componentListController.bomResult.length > 0
     }
 }
