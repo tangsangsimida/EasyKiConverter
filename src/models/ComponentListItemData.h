@@ -90,6 +90,7 @@ public:
     void setPackage(const QString& package);
     void setThumbnail(const QImage& thumbnail);
     void addPreviewImage(const QImage& image);
+    void insertPreviewImage(const QImage& image, int index);
     void setPreviewImages(const QList<QImage>& images);
     void setCurrentPreviewIndex(int index);
     void nextPreviewImage();

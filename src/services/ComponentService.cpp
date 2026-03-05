@@ -138,7 +138,7 @@ void ComponentService::handleImageReady(const QString& componentId, const QByteA
     QImage image = QImage::fromData(imageData);
     if (!image.isNull()) {
         // 发送预览图就绪信号（用于 UI 显示）
-        emit previewImageReady(componentId, image);
+        emit previewImageReady(componentId, image, imageIndex);
 
         // 发送预览图数据就绪信号（用于导出）
         emit previewImageDataReady(componentId, imageData, imageIndex);

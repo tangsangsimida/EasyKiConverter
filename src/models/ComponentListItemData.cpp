@@ -103,6 +103,38 @@ void ComponentListItemData::addPreviewImage(const QImage& image) {
     }
 }
 
+void ComponentListItemData::insertPreviewImage(const QImage& image, int index) {
+    if (image.isNull()) {
+        return;
+    }
+
+    // 确保列表大小足够
+    while (m_previewImages.size() <= index) {
+        m_previewImages.append(QImage());
+    }
+
+    // 插入或替换指定位置的图片
+    if (m_previewImages[index].isNull()) {
+        m_previewImages[index] = image;
+        qDebug() << "Inserted preview image at index:" << index;
+    } else {
+        // 如果该位置已有图片，替换它
+        m_previewImages[index] = image;
+        qDebug() << "Replaced preview image at index:" << index;
+    }
+
+    // 第一张预览图始终覆盖缩略图显示
+    if (index == 0) {
+        setThumbnail(image);
+        qDebug() << "First preview image (index 0) set as thumbnail";
+    } else if (!hasThumbnail()) {
+        // 如果没有缩略图且不是第一张，使用当前图片作为缩略图
+        setThumbnail(image);
+    }
+
+    emit previewImagesChanged();
+}
+
 void ComponentListItemData::setPreviewImages(const QList<QImage>& images) {
     m_previewImages = images;
     if (!images.isEmpty()) {

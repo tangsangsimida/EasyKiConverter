@@ -154,8 +154,9 @@ signals:
      *
      * @param componentId 元件ID
      * @param image 预览图
+     * @param imageIndex 图片索引（0-2）
      */
-    void previewImageReady(const QString& componentId, const QImage& image);
+    void previewImageReady(const QString& componentId, const QImage& image, int imageIndex);
 
     /**
      * @brief 预览图数据获取成功信号（内存数据）

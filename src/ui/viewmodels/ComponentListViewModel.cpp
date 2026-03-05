@@ -39,21 +39,24 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
     connect(m_service, &ComponentService::componentInfoReady, this, &ComponentListViewModel::handleComponentInfoReady);
     connect(m_service, &ComponentService::cadDataReady, this, &ComponentListViewModel::handleCadDataReady);
     connect(m_service, &ComponentService::model3DReady, this, &ComponentListViewModel::handleModel3DReady);
-    connect(
-        m_service, &ComponentService::previewImageReady, this, [this](const QString& componentId, const QImage& image) {
-            auto item = findItemData(componentId);
-            if (item) {
-                // 添加到预览图列表，用于UI显示
-                item->addPreviewImage(image);
-                // 如果是第一张图片，设置为主缩略图
-                if (!item->hasThumbnail()) {
-                    item->setThumbnail(image);
+    connect(m_service,
+            &ComponentService::previewImageReady,
+            this,
+            [this](const QString& componentId, const QImage& image, int imageIndex) {
+                auto item = findItemData(componentId);
+                if (item) {
+                    // 按索引顺序插入预览图，确保显示顺序正确
+                    item->insertPreviewImage(image, imageIndex);
+                    // 第一张预览图始终覆盖缩略图显示
+                    if (imageIndex == 0) {
+                        item->setThumbnail(image);
+                        qDebug() << "First preview image (index 0) set as thumbnail for component:" << componentId;
+                    }
+                    // 添加到待更新集合
+                    m_pendingUpdateIndices.insert(componentId);
+                    m_debounceTimer->start();
                 }
-                // 添加到待更新集合
-                m_pendingUpdateIndices.insert(componentId);
-                m_debounceTimer->start();
-            }
-        });
+            });
     connect(m_service,
             &ComponentService::previewImageDataReady,
             this,
