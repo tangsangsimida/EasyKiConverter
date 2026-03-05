@@ -733,7 +733,13 @@ ComponentData ComponentService::getComponentData(const QString& componentId) con
 
 void ComponentService::clearCache() {
     m_componentCache.clear();
-    qDebug() << "Component cache cleared";
+
+    // 清空 LCSC 图片服务的缓存
+    if (m_imageService) {
+        m_imageService->clearCache();
+    }
+
+    qDebug() << "Component cache cleared (including LCSC image service)";
 }
 
 void ComponentService::completeComponentData(const QString& componentId) {

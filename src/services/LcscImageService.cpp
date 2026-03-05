@@ -53,6 +53,25 @@ void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) 
     processQueue();
 }
 
+void LcscImageService::clearCache() {
+    qDebug() << "LcscImageService: Clearing all cache data";
+
+    // 清空所有缓存数据
+    m_requestedComponents.clear();
+    m_manufacturerParts.clear();
+    m_pendingDatasheets.clear();
+    m_downloadedDatasheets.clear();
+    m_pendingImages.clear();
+    m_downloadedImages.clear();
+    m_downloadCounts.clear();
+    m_datasheetDownloadStatus.clear();
+
+    // 清空队列
+    m_queue.clear();
+
+    qDebug() << "LcscImageService: Cache cleared, ready for new requests";
+}
+
 void LcscImageService::processQueue() {
     while (m_activeRequests < MAX_CONCURRENT_REQUESTS && !m_queue.isEmpty()) {
         QString componentId = m_queue.dequeue();

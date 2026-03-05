@@ -166,6 +166,11 @@ void ComponentListViewModel::removeComponentById(const QString& componentId) {
 
 void ComponentListViewModel::clearComponentList() {
     if (!m_componentList.isEmpty()) {
+        // 清空服务层的缓存，包括 LCSC 图片服务的缓存
+        if (m_service) {
+            m_service->clearCache();
+        }
+
         beginResetModel();
         qDeleteAll(m_componentList);
         m_componentList.clear();

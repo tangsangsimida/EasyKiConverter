@@ -38,6 +38,13 @@ public:
      */
     void fetchBatchPreviewImages(const QStringList& componentIds);
 
+    /**
+     * @brief 清空所有缓存数据
+     *
+     * 当清空元器件列表时调用此方法，以便重新添加相同元器件时能够重新请求
+     */
+    void clearCache();
+
 signals:
     /**
      * @brief 单张图片下载成功信号
