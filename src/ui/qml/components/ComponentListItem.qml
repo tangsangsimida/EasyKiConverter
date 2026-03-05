@@ -178,7 +178,7 @@ Rectangle {
                 }
 
                 background: Rectangle {
-                    color: "white"
+                    color: AppStyle.colors.surface
                     border.color: AppStyle.colors.primary
                     border.width: 2
                     radius: AppStyle.radius.md
@@ -188,7 +188,7 @@ Rectangle {
                     layer.effect: MultiEffect {
                         shadowEnabled: true
                         shadowBlur: 1.0
-                        shadowColor: "#33000000"
+                        shadowColor: AppStyle.isDarkMode ? "#00000000" : "#33000000"
                         shadowVerticalOffset: 2
                         shadowHorizontalOffset: 2
                     }
@@ -205,7 +205,7 @@ Rectangle {
                         Rectangle {
                             width: 150
                             height: 150
-                            color: "white"
+                            color: AppStyle.colors.background
                             radius: AppStyle.radius.sm
                             border.color: AppStyle.colors.border
                             border.width: 1
