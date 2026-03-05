@@ -77,6 +77,9 @@ void ComponentService::initializeApiConnections() {
     // 连接图片服务信号
     if (m_imageService) {
         connect(m_imageService, &LcscImageService::imageReady, this, &ComponentService::handleImageReady);
+        connect(m_imageService, &LcscImageService::lcscDataReady, this, &ComponentService::handleLcscDataReady);
+        connect(m_imageService, &LcscImageService::datasheetReady, this, &ComponentService::handleDatasheetReady);
+        connect(m_imageService, &LcscImageService::allImagesReady, this, &ComponentService::handleAllImagesReady);
     }
 
     // 连接 API 信号
@@ -123,42 +126,142 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
 }
 
 void ComponentService::fetchLcscPreviewImage(const QString& componentId) {
+    qDebug() << "ComponentService: Fetching LCSC preview image for component:" << componentId;
     m_imageService->fetchPreviewImages(componentId);
 }
 
-void ComponentService::handleImageReady(const QString& componentId, const QString& imagePath) {
-    QImage image(imagePath);
+void ComponentService::handleImageReady(const QString& componentId, const QByteArray& imageData, int imageIndex) {
+    qDebug() << "ComponentService::handleImageReady - component:" << componentId << "index:" << imageIndex
+             << "data size:" << imageData.size() << "bytes";
+
+    // 从内存数据加载图片
+    QImage image = QImage::fromData(imageData);
     if (!image.isNull()) {
+        // 发送预览图就绪信号（用于 UI 显示）
         emit previewImageReady(componentId, image);
-        emit previewImagePathReady(componentId, imagePath);
+
+        // 发送预览图数据就绪信号（用于导出）
+        emit previewImageDataReady(componentId, imageData, imageIndex);
+
+        // 保存图片数据到 ComponentData（内存），使用索引避免重复
+        if (m_fetchingComponents.contains(componentId)) {
+            FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
+            int currentCount = fetchingComponent.data.previewImageData().size();
+            fetchingComponent.data.addPreviewImageData(imageData, imageIndex);
+            int newCount = fetchingComponent.data.previewImageData().size();
+
+            qDebug() << "Preview image data saved to ComponentData";
+            qDebug() << "  Component ID:" << componentId;
+            qDebug() << "  Image index:" << imageIndex;
+            qDebug() << "  Image size:" << imageData.size() << "bytes";
+            qDebug() << "  Data count before:" << currentCount << "after:" << newCount;
+
+            // 打印当前所有图片数据的状态
+            auto allImageData = fetchingComponent.data.previewImageData();
+            qDebug() << "  Current image data list size:" << allImageData.size();
+            for (int i = 0; i < allImageData.size(); ++i) {
+                qDebug() << "    Image" << i << "size:" << allImageData[i].size() << "bytes"
+                         << (allImageData[i].isEmpty() ? "(EMPTY)" : "(VALID)");
+            }
+        }
+    } else {
+        qDebug() << "Failed to load image from data for component:" << componentId << "index:" << imageIndex
+                 << "data size:" << imageData.size();
     }
 }
 
-void ComponentService::handleLcscDataReady(const QString& componentId, const QString& datasheetUrl, const QStringList& imageUrls) {
+void ComponentService::handleLcscDataReady(const QString& componentId,
+                                           const QString& manufacturerPart,
+                                           const QString& datasheetUrl,
+                                           const QStringList& imageUrls) {
     qDebug() << "LCSC data ready for component:" << componentId
-             << "Datasheet:" << (datasheetUrl.isEmpty() ? "none" : datasheetUrl)
-             << "Images:" << imageUrls.size();
+             << "Manufacturer Part:" << (manufacturerPart.isEmpty() ? "none" : manufacturerPart)
+             << "Datasheet:" << (datasheetUrl.isEmpty() ? "none" : datasheetUrl) << "Images:" << imageUrls.size();
 
     // 更新 m_fetchingComponents 中的数据
     if (m_fetchingComponents.contains(componentId)) {
         FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
 
+        // 保存制造商部件号
+        if (!manufacturerPart.isEmpty()) {
+            fetchingComponent.data.setManufacturerPart(manufacturerPart);
+            qDebug() << "Manufacturer part saved to ComponentData:" << manufacturerPart;
+        }
+
         // 保存数据手册 URL
         if (!datasheetUrl.isEmpty()) {
             fetchingComponent.data.setDatasheet(datasheetUrl);
-            qDebug() << "Datasheet saved to ComponentData:" << datasheetUrl;
+
+            // 检测数据手册格式
+            QString format = "pdf";
+            if (datasheetUrl.toLower().contains(".html")) {
+                format = "html";
+            }
+            fetchingComponent.data.setDatasheetFormat(format);
+
+            qDebug() << "Datasheet saved to ComponentData:" << datasheetUrl << "format:" << format;
         }
 
         // 保存预览图 URL 列表
         if (!imageUrls.isEmpty()) {
             fetchingComponent.data.setPreviewImages(imageUrls);
             qDebug() << "Preview images saved to ComponentData:" << imageUrls.size() << "images";
+
+            // 预先创建指定数量的空元素，确保索引能够正确对应
+            // 这样当图片按乱序下载时，能够填充到正确的索引位置
+            QList<QByteArray> emptyImageDataList;
+            emptyImageDataList.resize(imageUrls.size());
+            fetchingComponent.data.setPreviewImageData(emptyImageDataList);
+            qDebug() << "Pre-allocated" << imageUrls.size() << "empty image data slots";
         }
 
         // 发送 LCSC 数据更新信号，以便 ComponentListViewModel 可以更新缓存的 ComponentData
-        emit lcscDataUpdated(componentId, datasheetUrl, imageUrls);
+        emit lcscDataUpdated(componentId, manufacturerPart, datasheetUrl, imageUrls);
     } else {
         qWarning() << "Component" << componentId << "not found in m_fetchingComponents, cannot update LCSC data";
+    }
+}
+
+void ComponentService::handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData) {
+    qDebug() << "Datasheet downloaded for component:" << componentId << "size:" << datasheetData.size() << "bytes";
+
+    // 更新 m_fetchingComponents 中的数据
+    if (m_fetchingComponents.contains(componentId)) {
+        FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
+        fetchingComponent.data.setDatasheetData(datasheetData);
+
+        // 检测数据手册格式（基于内容）
+        QString format = fetchingComponent.data.datasheetFormat();
+        if (format == "pdf" && !isPDF(datasheetData)) {
+            format = "html";
+            fetchingComponent.data.setDatasheetFormat(format);
+        }
+
+        qDebug() << "Datasheet data saved to ComponentData, size:" << datasheetData.size() << "bytes"
+                 << "format:" << format;
+
+        // 发送数据手册就绪信号
+        emit datasheetReady(componentId, datasheetData);
+    } else {
+        qWarning() << "Component" << componentId << "not found in m_fetchingComponents, cannot update datasheet data";
+    }
+}
+
+void ComponentService::handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList) {
+    qDebug() << "All images ready for component:" << componentId << "count:" << imageDataList.size();
+
+    // 更新 m_fetchingComponents 中的数据
+    if (m_fetchingComponents.contains(componentId)) {
+        FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
+        // 更新图片数据
+        fetchingComponent.data.setPreviewImageData(imageDataList);
+        qDebug() << "All image data updated in ComponentData for component:" << componentId
+                 << "count:" << imageDataList.size();
+
+        // 发送所有图片就绪信号
+        emit allImagesReady(componentId, imageDataList);
+    } else {
+        qWarning() << "Component" << componentId << "not found in m_fetchingComponents, cannot update all images data";
     }
 }
 
@@ -295,7 +398,8 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
                 qDebug() << "Preview image is relative path, constructed full URL:" << thumbUrl;
             }
             componentData.setPreviewImages(QStringList() << thumbUrl);
-            qDebug() << "Preview image extracted from symbolData (EasyEDA, will be overridden by LCSC if available):" << thumbUrl;
+            qDebug() << "Preview image extracted from symbolData (EasyEDA, will be overridden by LCSC if available):"
+                     << thumbUrl;
         } else {
             qDebug() << "No preview image found in symbolData";
         }
@@ -309,7 +413,8 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
                 qDebug() << "Datasheet is relative path, constructed full URL:" << datasheetUrl;
             }
             componentData.setDatasheet(datasheetUrl);
-            qDebug() << "Datasheet extracted from symbolData (EasyEDA, will be overridden by LCSC if available):" << datasheetUrl;
+            qDebug() << "Datasheet extracted from symbolData (EasyEDA, will be overridden by LCSC if available):"
+                     << datasheetUrl;
         }
     } else {
         qWarning() << "Failed to import symbol data for:" << m_currentComponentId;
@@ -389,11 +494,14 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     // 注意：这个调用是异步的，handleLcscDataReady 会更新 ComponentData
     // 我们需要将数据保存到 m_fetchingComponents 中，以便 handleLcscDataReady 可以更新
     m_fetchingComponents[m_currentComponentId].data = componentData;
+
+    // 先发送完成信号，确保 ComponentListViewModel 获取到完整的 ComponentData
+    // 图片下载是异步的，会在后台继续进行
+    emit cadDataReady(m_currentComponentId, componentData);
+
+    // 然后调用 LCSC API 获取数据手册和预览图
     m_imageService->fetchPreviewImages(m_currentComponentId);
     qDebug() << "Called fetchPreviewImages to get LCSC datasheet and preview images for" << m_currentComponentId;
-
-    // 不需要3D 模型或没有找到UUID，直接发送完成信号
-    emit cadDataReady(m_currentComponentId, componentData);
 
     // 如果在并行模式下，处理并行数据收集
     if (m_parallelFetching) {
@@ -431,15 +539,19 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
                     qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
 
                     // 调用 LCSC API 获取数据手册和预览图 URL（异步）
+                    // 注意：这个调用是异步的，handleLcscDataReady 会更新 ComponentData
                     m_fetchingComponents[componentId].data = fetchingComponent.data;
-                    m_imageService->fetchPreviewImages(componentId);
-                    qDebug() << "Called fetchPreviewImages after 3D model loaded for" << componentId;
 
-                    // 发送完成信号
+                    // 先发送完成信号，确保 ComponentListViewModel 获取到完整的 ComponentData
+                    // 图片下载是异步的，会在后台继续进行
                     emit cadDataReady(componentId, fetchingComponent.data);
 
                     // 处理并行数据收集
                     handleParallelDataCollected(componentId, fetchingComponent.data);
+
+                    // 然后调用 LCSC API 获取数据手册和预览图
+                    m_imageService->fetchPreviewImages(componentId);
+                    qDebug() << "Called fetchPreviewImages after 3D model loaded for" << componentId;
 
                     // 从待处理列表中移除
                     m_fetchingComponents.remove(componentId);
@@ -646,6 +758,14 @@ void ComponentService::handleFetchErrorForComponent(const QString& componentId, 
         handleParallelFetchError(componentId, error);
     }
     emit fetchError(componentId, error);
+}
+
+bool ComponentService::isPDF(const QByteArray& data) const {
+    // PDF 文件以 %PDF- 开头
+    if (data.size() < 5) {
+        return false;
+    }
+    return data.startsWith("%PDF-");
 }
 
 }  // namespace EasyKiConverter

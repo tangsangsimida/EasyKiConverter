@@ -53,7 +53,9 @@ public:
     bool exportFootprint(const FootprintData& footprint, const QString& filePath);
     bool export3DModel(const Model3DData& model, const QString& filePath);
     bool exportPreviewImages(const QStringList& imageUrls, const QString& outputPath, const QString& componentName);
-    bool exportPreviewImagesFromCache(const QStringList& imagePaths, const QString& outputPath, const QString& componentName);
+    bool exportPreviewImagesFromCache(const QStringList& imagePaths,
+                                      const QString& outputPath,
+                                      const QString& componentName);
     bool exportDatasheet(const QString& datasheetUrl, const QString& outputPath, const QString& componentName);
 
     virtual void executeExportPipeline(const QStringList& componentIds, const ExportOptions& options);

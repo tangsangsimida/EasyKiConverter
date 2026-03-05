@@ -109,7 +109,7 @@ void ComponentDataCollector::handleCadDataFetched(const QJsonObject& data) {
         } else {
             qDebug() << "No preview image found in symbol data";
         }
-        
+
         // 打印最终的数据状态
         qDebug() << "ComponentData final state - PreviewImages:" << m_componentData.previewImages().size()
                  << "Datasheet:" << (m_componentData.datasheet().isEmpty() ? "empty" : m_componentData.datasheet());

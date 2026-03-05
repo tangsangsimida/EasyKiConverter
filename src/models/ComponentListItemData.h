@@ -29,6 +29,7 @@ class ComponentListItemData : public QObject {
     Q_PROPERTY(bool isFetching READ isFetching NOTIFY fetchingStatusChanged)
     Q_PROPERTY(bool hasThumbnail READ hasThumbnail NOTIFY thumbnailChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY validationStatusChanged)
+    Q_PROPERTY(QString datasheetUrl READ datasheetUrl NOTIFY datasheetChanged)
 
 public:
     explicit ComponentListItemData(const QString& componentId, QObject* parent = nullptr);
@@ -53,7 +54,6 @@ public:
     QString thumbnailBase64() const;
 
     QVariantList previewImages() const;
-    QStringList previewImagePaths() const;
 
     int currentPreviewIndex() const {
         return m_currentPreviewIndex;
@@ -79,6 +79,8 @@ public:
         return m_errorMessage;
     }
 
+    QString datasheetUrl() const;
+
     QSharedPointer<ComponentData> componentData() const {
         return m_componentData;
     }
@@ -89,7 +91,6 @@ public:
     void setThumbnail(const QImage& thumbnail);
     void addPreviewImage(const QImage& image);
     void setPreviewImages(const QList<QImage>& images);
-    void addPreviewImagePath(const QString& imagePath);
     void setCurrentPreviewIndex(int index);
     void nextPreviewImage();
     void previousPreviewImage();
@@ -105,6 +106,7 @@ signals:
     void currentPreviewIndexChanged();
     void validationStatusChanged();
     void fetchingStatusChanged();
+    void datasheetChanged();
 
 private:
     QString m_componentId;
@@ -112,7 +114,6 @@ private:
     QString m_package;
     QImage m_thumbnail;
     QList<QImage> m_previewImages;
-    QStringList m_previewImagePaths;  // 预览图缓存文件路径列表
     int m_currentPreviewIndex;
     mutable QString m_thumbnailBase64Cache;  // 缓存 base64 编码结果，避免重复计算
     bool m_isValid;

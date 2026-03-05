@@ -17,6 +17,24 @@ namespace EasyKiConverter {
 
 ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObject* parent)
     : QAbstractListModel(parent), m_service(service), m_componentList(), m_bomFilePath(), m_bomResult() {
+    // 初始化防抖定时器
+    m_debounceTimer = new QTimer(this);
+    m_debounceTimer->setSingleShot(true);
+    m_debounceTimer->setInterval(100);  // 100ms 防抖延迟
+    connect(m_debounceTimer, &QTimer::timeout, this, [this]() {
+        // 批量更新所有待更新的索引
+        for (const QString& componentId : m_pendingUpdateIndices) {
+            auto item = findItemData(componentId);
+            if (item) {
+                int index = m_componentList.indexOf(item);
+                if (index >= 0) {
+                    emit dataChanged(createIndex(index, 0), createIndex(index, 0));
+                }
+            }
+        }
+        m_pendingUpdateIndices.clear();
+    });
+
     // 连接 Service 信号
     connect(m_service, &ComponentService::componentInfoReady, this, &ComponentListViewModel::handleComponentInfoReady);
     connect(m_service, &ComponentService::cadDataReady, this, &ComponentListViewModel::handleCadDataReady);
@@ -25,9 +43,24 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
         m_service, &ComponentService::previewImageReady, this, [this](const QString& componentId, const QImage& image) {
             auto item = findItemData(componentId);
             if (item) {
+                // 添加到预览图列表，用于UI显示
                 item->addPreviewImage(image);
+                // 如果是第一张图片，设置为主缩略图
+                if (!item->hasThumbnail()) {
+                    item->setThumbnail(image);
+                }
+                // 添加到待更新集合
+                m_pendingUpdateIndices.insert(componentId);
+                m_debounceTimer->start();
             }
         });
+    connect(m_service,
+            &ComponentService::previewImageDataReady,
+            this,
+            &ComponentListViewModel::handlePreviewImageDataReady);
+    connect(m_service, &ComponentService::allImagesReady, this, &ComponentListViewModel::handleAllImagesReady);
+    connect(m_service, &ComponentService::lcscDataUpdated, this, &ComponentListViewModel::handleLcscDataUpdated);
+    connect(m_service, &ComponentService::datasheetReady, this, &ComponentListViewModel::handleDatasheetReady);
     connect(m_service, &ComponentService::fetchError, this, &ComponentListViewModel::handleFetchError);
 }
 
@@ -188,10 +221,11 @@ void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds)
     emit componentCountChanged();
 
     // 延迟分散发送网络请求，避免同时回调集中到达卡 UI
+    // 增加延迟间隔到 150ms，减少同时触发的网络请求数量
     for (int i = 0; i < newIds.count(); ++i) {
         const QString& id = newIds[i];
-        // 每个请求间隔 50ms，避免回调集中在同一帧
-        QTimer::singleShot(i * 50, this, [this, id]() { m_service->fetchComponentData(id, false); });
+        // 每个请求间隔 150ms，避免回调集中在同一帧
+        QTimer::singleShot(i * 150, this, [this, id]() { m_service->fetchComponentData(id, false); });
         emit componentAdded(id, true, "Component added");
     }
 }
@@ -371,6 +405,10 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
 
         // 尝试获取 LCSC 预览图覆盖生成的缩略图
         m_service->fetchLcscPreviewImage(componentId);
+
+        // 添加到待更新集合
+        m_pendingUpdateIndices.insert(componentId);
+        m_debounceTimer->start();
     }
 }
 
@@ -390,6 +428,124 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
             item->setErrorMessage("Not Found");
         } else {
             item->setErrorMessage(error);
+        }
+
+        // 添加到待更新集合
+        m_pendingUpdateIndices.insert(componentId);
+        m_debounceTimer->start();
+    }
+}
+
+void ComponentListViewModel::handleLcscDataUpdated(const QString& componentId,
+                                                   const QString& manufacturerPart,
+                                                   const QString& datasheetUrl,
+                                                   const QStringList& imageUrls) {
+    qDebug() << "LCSC data updated for component:" << componentId
+             << "Manufacturer Part:" << (manufacturerPart.isEmpty() ? "none" : manufacturerPart)
+             << "Datasheet:" << (datasheetUrl.isEmpty() ? "none" : datasheetUrl) << "Images:" << imageUrls.size();
+
+    auto item = findItemData(componentId);
+    if (item) {
+        // 更新 ComponentData
+        if (item->componentData()) {
+            auto data = item->componentData();
+            if (!manufacturerPart.isEmpty()) {
+                data->setManufacturerPart(manufacturerPart);
+                qDebug() << "Manufacturer part updated in ComponentData:" << manufacturerPart;
+            }
+            if (!datasheetUrl.isEmpty()) {
+                data->setDatasheet(datasheetUrl);
+
+                // 检测并同步数据手册格式
+                QString format = "pdf";
+                if (datasheetUrl.toLower().contains(".html")) {
+                    format = "html";
+                }
+                data->setDatasheetFormat(format);
+
+                qDebug() << "Datasheet URL updated in ComponentData:" << datasheetUrl << "format:" << format;
+            }
+            if (!imageUrls.isEmpty()) {
+                data->setPreviewImages(imageUrls);
+                qDebug() << "Preview images updated in ComponentData:" << imageUrls.size() << "images";
+            }
+        }
+
+        // 更新显示名称（使用制造商部件号）
+        if (!manufacturerPart.isEmpty()) {
+            item->setName(manufacturerPart);
+            qDebug() << "Display name updated to manufacturer part:" << manufacturerPart;
+        }
+
+        // 添加到待更新集合
+        m_pendingUpdateIndices.insert(componentId);
+        m_debounceTimer->start();
+    } else {
+        qWarning() << "Component" << componentId << "not found in list, cannot update LCSC data";
+    }
+}
+
+void ComponentListViewModel::handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData) {
+    qDebug() << "Datasheet ready for component:" << componentId << "size:" << datasheetData.size() << "bytes";
+
+    auto item = findItemData(componentId);
+    if (item) {
+        // 更新 ComponentData
+        if (item->componentData()) {
+            auto data = item->componentData();
+            data->setDatasheetData(datasheetData);
+
+            // 确保格式信息正确（从 ComponentService 的 ComponentData 同步）
+            // 如果 ComponentService 的 ComponentData 有格式信息，优先使用它
+            QString format = data->datasheetFormat();
+            if (format.isEmpty()) {
+                // 如果没有格式信息，基于内容检测
+                if (datasheetData.startsWith("%PDF-")) {
+                    format = "pdf";
+                } else {
+                    format = "html";
+                }
+                data->setDatasheetFormat(format);
+            }
+
+            qDebug() << "Datasheet data updated in ComponentData, size:" << datasheetData.size() << "bytes"
+                     << "format:" << format;
+        }
+    } else {
+        qWarning() << "Component" << componentId << "not found in list, cannot update datasheet data";
+    }
+}
+
+void ComponentListViewModel::handlePreviewImageDataReady(const QString& componentId,
+                                                         const QByteArray& imageData,
+                                                         int imageIndex) {
+    qDebug() << "Preview image data ready for component:" << componentId << "index:" << imageIndex
+             << "size:" << imageData.size() << "bytes";
+
+    auto item = findItemData(componentId);
+    if (item && item->componentData()) {
+        // 保存数据到 ComponentListViewModel 的 ComponentData 中（用于导出）
+        int currentCount = item->componentData()->previewImageData().size();
+        item->componentData()->addPreviewImageData(imageData, imageIndex);
+        int newCount = item->componentData()->previewImageData().size();
+        qDebug() << "Preview image data saved to ComponentData, index:" << imageIndex << "count:" << currentCount
+                 << "->" << newCount;
+    }
+}
+
+void ComponentListViewModel::handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList) {
+    qDebug() << "All images ready for component:" << componentId << "count:" << imageDataList.size();
+
+    auto item = findItemData(componentId);
+    if (item && item->componentData()) {
+        // 更新所有图片数据到 ComponentListViewModel 的 ComponentData 中
+        item->componentData()->setPreviewImageData(imageDataList);
+        qDebug() << "All image data updated in ComponentListViewModel for component:" << componentId
+                 << "count:" << imageDataList.size();
+
+        // 打印每张图片的大小
+        for (int i = 0; i < imageDataList.size(); ++i) {
+            qDebug() << "  Image" << i << "size:" << imageDataList[i].size() << "bytes";
         }
     }
 }

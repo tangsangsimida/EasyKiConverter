@@ -202,6 +202,30 @@ private:
      */
     bool saveStatisticsReport(const ExportStatistics& statistics, const QString& reportPath);
 
+    /**
+     * @brief 从内存数据导出预览图
+     * @param imageDataList 图片数据列表
+     * @param outputPath 输出路径
+     * @param componentName 组件名称
+     * @return bool 是否成功
+     */
+    bool exportPreviewImagesFromMemory(const QList<QByteArray>& imageDataList,
+                                       const QString& outputPath,
+                                       const QString& componentName);
+
+    /**
+     * @brief 从内存数据导出数据手册
+     * @param datasheetData 数据手册数据
+     * @param outputPath 输出路径
+     * @param componentName 组件名称
+     * @param format 数据手册格式（pdf/html）
+     * @return bool 是否成功
+     */
+    bool exportDatasheetFromMemory(const QByteArray& datasheetData,
+                                   const QString& outputPath,
+                                   const QString& componentName,
+                                   const QString& format = "pdf");
+
 private:
     // 线程池
     QThreadPool* m_fetchThreadPool;    // 抓取线程池（I/O密集型，32个线程）

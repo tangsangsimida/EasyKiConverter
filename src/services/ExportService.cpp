@@ -855,8 +855,8 @@ bool ExportService::exportPreviewImages(const QStringList& imageUrls,
 }
 
 bool ExportService::exportPreviewImagesFromCache(const QStringList& imagePaths,
-                                                const QString& outputPath,
-                                                const QString& componentName) {
+                                                 const QString& outputPath,
+                                                 const QString& componentName) {
     if (imagePaths.isEmpty()) {
         return true;
     }
@@ -871,7 +871,7 @@ bool ExportService::exportPreviewImagesFromCache(const QStringList& imagePaths,
     bool allSuccess = true;
     for (int i = 0; i < imagePaths.size(); ++i) {
         QString sourcePath = imagePaths[i];
-        
+
         // 检查源文件是否存在
         if (!QFile::exists(sourcePath)) {
             qWarning() << "Source preview image file not found:" << sourcePath;

@@ -92,10 +92,6 @@ QVariantList ComponentListItemData::previewImages() const {
     return result;
 }
 
-QStringList ComponentListItemData::previewImagePaths() const {
-    return m_previewImagePaths;
-}
-
 void ComponentListItemData::addPreviewImage(const QImage& image) {
     if (!image.isNull()) {
         m_previewImages.append(image);
@@ -114,12 +110,6 @@ void ComponentListItemData::setPreviewImages(const QList<QImage>& images) {
         m_currentPreviewIndex = 0;
     }
     emit previewImagesChanged();
-}
-
-void ComponentListItemData::addPreviewImagePath(const QString& imagePath) {
-    if (!imagePath.isEmpty() && !m_previewImagePaths.contains(imagePath)) {
-        m_previewImagePaths.append(imagePath);
-    }
 }
 
 void ComponentListItemData::setCurrentPreviewIndex(int index) {
@@ -142,6 +132,13 @@ void ComponentListItemData::previousPreviewImage() {
         int prevIndex = (m_currentPreviewIndex - 1 + m_previewImages.size()) % m_previewImages.size();
         setCurrentPreviewIndex(prevIndex);
     }
+}
+
+QString ComponentListItemData::datasheetUrl() const {
+    if (m_componentData) {
+        return m_componentData->datasheet();
+    }
+    return QString();
 }
 
 }  // namespace EasyKiConverter
