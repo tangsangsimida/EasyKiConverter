@@ -22,7 +22,7 @@ Card {
 
             // 组件加载完成后自动设置焦点
             Component.onCompleted: {
-                Qt.callLater(function() {
+                Qt.callLater(function () {
                     forceActiveFocus();
                 });
             }
