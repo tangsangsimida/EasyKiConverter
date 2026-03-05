@@ -86,7 +86,7 @@ QString PathSecurity::sanitizeFilename(const QString& name) {
     safeName.replace(controlChars, "");
 
     // 替换 Unicode 零宽字符 (可能导致显示欺骗)
-    static const QRegularExpression zeroWidth(R"([\u200B-\u200D\uFEFF])");
+    static const QRegularExpression zeroWidth(QStringLiteral("[\\u200B-\\u200D\\uFEFF]"));
     safeName.replace(zeroWidth, "");
 
     safeName = safeName.trimmed();

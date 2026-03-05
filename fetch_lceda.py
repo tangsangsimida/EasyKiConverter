@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import random
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
@@ -9,6 +10,7 @@ class LCEImageFetcher:
     def __init__(self, max_workers=5):
         self.max_workers = max_workers
         self.results = {}
+        os.makedirs('./respose', exist_ok=True)
         
     def _search_product(self, keyword: str) -> dict:
         """搜索产品"""

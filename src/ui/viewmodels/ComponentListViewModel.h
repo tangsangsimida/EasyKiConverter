@@ -8,6 +8,7 @@
 #include <QPointer>
 #include <QSet>
 #include <QStringList>
+#include <QTimer>
 
 namespace EasyKiConverter {
 
@@ -197,6 +198,44 @@ private slots:
      */
     void handleFetchError(const QString& componentId, const QString& error);
 
+    /**
+     * @brief 处理 LCSC 数据更新
+     *
+     * @param componentId 元件ID
+     * @param manufacturerPart 制造商部件号
+     * @param datasheetUrl 数据手册 URL
+     * @param imageUrls 预览图 URL 列表
+     */
+    void handleLcscDataUpdated(const QString& componentId,
+                               const QString& manufacturerPart,
+                               const QString& datasheetUrl,
+                               const QStringList& imageUrls);
+
+    /**
+     * @brief 处理数据手册下载完成
+     *
+     * @param componentId 元件ID
+     * @param datasheetData 数据手册数据（内存）
+     */
+    void handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData);
+
+    /**
+     * @brief 处理预览图数据下载完成
+     *
+     * @param componentId 元件ID
+     * @param imageData 预览图数据（内存）
+     * @param imageIndex 图片索引
+     */
+    void handlePreviewImageDataReady(const QString& componentId, const QByteArray& imageData, int imageIndex);
+
+    /**
+     * @brief 处理所有预览图片下载完成
+     *
+     * @param componentId 元件ID
+     * @param imageDataList 图片数据列表
+     */
+    void handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
+
 private:
     /**
      * @brief 检查元件是否已存在
@@ -232,6 +271,10 @@ private:
     QString m_outputPath;
     QString m_bomFilePath;
     QString m_bomResult;
+
+    // 防抖定时器，用于减少频繁的 UI 更新
+    QTimer* m_debounceTimer;
+    QSet<QString> m_pendingUpdateIndices;  // 待更新的索引集合
 };
 
 }  // namespace EasyKiConverter

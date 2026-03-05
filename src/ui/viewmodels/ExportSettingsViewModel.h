@@ -23,6 +23,9 @@ class ExportSettingsViewModel : public QObject {
     Q_PROPERTY(bool exportSymbol READ exportSymbol WRITE setExportSymbol NOTIFY exportSymbolChanged)
     Q_PROPERTY(bool exportFootprint READ exportFootprint WRITE setExportFootprint NOTIFY exportFootprintChanged)
     Q_PROPERTY(bool exportModel3D READ exportModel3D WRITE setExportModel3D NOTIFY exportModel3DChanged)
+    Q_PROPERTY(bool exportPreviewImages READ exportPreviewImages WRITE setExportPreviewImages NOTIFY
+                   exportPreviewImagesChanged)
+    Q_PROPERTY(bool exportDatasheet READ exportDatasheet WRITE setExportDatasheet NOTIFY exportDatasheetChanged)
     Q_PROPERTY(bool overwriteExistingFiles READ overwriteExistingFiles WRITE setOverwriteExistingFiles NOTIFY
                    overwriteExistingFilesChanged)
     Q_PROPERTY(int exportMode READ exportMode WRITE setExportMode NOTIFY exportModeChanged)
@@ -51,6 +54,14 @@ public:
 
     bool exportModel3D() const {
         return m_exportModel3D;
+    }
+
+    bool exportPreviewImages() const {
+        return m_exportPreviewImages;
+    }
+
+    bool exportDatasheet() const {
+        return m_exportDatasheet;
     }
 
     bool overwriteExistingFiles() const {
@@ -83,6 +94,8 @@ public:
     Q_INVOKABLE void setExportSymbol(bool enabled);
     Q_INVOKABLE void setExportFootprint(bool enabled);
     Q_INVOKABLE void setExportModel3D(bool enabled);
+    Q_INVOKABLE void setExportPreviewImages(bool enabled);
+    Q_INVOKABLE void setExportDatasheet(bool enabled);
     Q_INVOKABLE void setOverwriteExistingFiles(bool enabled);
     Q_INVOKABLE void setExportMode(int mode);
     Q_INVOKABLE void setDebugMode(bool enabled);
@@ -100,6 +113,8 @@ signals:
     void exportSymbolChanged();
     void exportFootprintChanged();
     void exportModel3DChanged();
+    void exportPreviewImagesChanged();
+    void exportDatasheetChanged();
     void overwriteExistingFilesChanged();
     void exportModeChanged();
     void debugModeChanged();
@@ -128,6 +143,8 @@ private:
     bool m_exportSymbol;
     bool m_exportFootprint;
     bool m_exportModel3D;
+    bool m_exportPreviewImages;
+    bool m_exportDatasheet;
     bool m_overwriteExistingFiles;
     int m_exportMode;  // 0 = 追加模式, 1 = 更新模式
     bool m_debugMode;

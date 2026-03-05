@@ -145,6 +145,8 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
                                           bool exportSymbol,
                                           bool exportFootprint,
                                           bool exportModel3D,
+                                          bool exportPreviewImages,
+                                          bool exportDatasheet,
                                           bool overwriteExistingFiles,
                                           bool updateMode,
                                           bool debugMode) {
@@ -215,6 +217,8 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     m_exportOptions.exportSymbol = exportSymbol;
     m_exportOptions.exportFootprint = exportFootprint;
     m_exportOptions.exportModel3D = exportModel3D;
+    m_exportOptions.exportPreviewImages = exportPreviewImages;
+    m_exportOptions.exportDatasheet = exportDatasheet;
     m_exportOptions.overwriteExistingFiles = overwriteExistingFiles;
     m_exportOptions.updateMode = updateMode;
     m_exportOptions.debugMode = debugMode;
@@ -675,12 +679,20 @@ void ExportProgressViewModel::startExportInternal(const QStringList& componentId
                 for (const QString& id : componentIds) {
                     auto data = m_componentListViewModel->getPreloadedData(id);
                     if (data) {
+                        qDebug() << "Preloaded component:" << id
+                                 << "PreviewImages (URLs):" << data->previewImages().size()
+                                 << "PreviewImageData (bytes):" << data->previewImageData().size() << "Datasheet (URL):"
+                                 << (data->datasheet().isEmpty() ? "empty" : data->datasheet().left(50))
+                                 << "DatasheetData (bytes):" << data->datasheetData().size();
                         preloadedData.insert(id, data);
                     }
                 }
                 if (!preloadedData.isEmpty()) {
                     qDebug() << "Passing" << preloadedData.size() << "preloaded components to pipeline";
                     pipelineService->setPreloadedData(preloadedData);
+                    pipelineService->setComponentListViewModel(m_componentListViewModel);
+                } else {
+                    qDebug() << "No preloaded data available";
                 }
             }
 

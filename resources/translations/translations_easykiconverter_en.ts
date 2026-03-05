@@ -241,6 +241,16 @@
         <translation>3D Model</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="260"/>
+        <source>预览图</source>
+        <translation>Preview Images</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="310"/>
+        <source>手册</source>
+        <translation>Datasheet</translation>
+    </message>
+    <message>
         <location filename="../../src/ui/qml/components/ExportProgressCard.qml" line="29"/>
         <source>数据抓取</source>
         <translation>Data Fetch</translation>
