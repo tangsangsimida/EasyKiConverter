@@ -205,46 +205,64 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // 获取根窗口对象并立即设置窗口位置（在显示之前）
+    // 获取根窗口对象并设置窗口位置
     auto* rootObject = engine.rootObjects().first();
     if (auto* window = qobject_cast<QQuickWindow*>(rootObject)) {
         auto* configService = EasyKiConverter::ConfigService::instance();
-        int savedX = configService->getWindowX();
-        int savedY = configService->getWindowY();
 
-        int posX, posY;
-
-        // 如果配置中保存了有效位置，则使用保存的位置
-        if (savedX != -9999 && savedY != -9999) {
-            posX = savedX;
-            posY = savedY;
-        } else {
-            // 否则居中显示
-            QScreen* screen = window->screen();
-            if (screen) {
-                int screenWidth = screen->availableGeometry().width();
-                int screenHeight = screen->availableGeometry().height();
-                posX = (screenWidth - window->width()) / 2;
-                posY = (screenHeight - window->height()) / 2;
-            } else {
-                posX = 100;
-                posY = 100;
-            }
-        }
-
-        qDebug() << "设置窗口位置到:" << posX << posY << "窗口大小:" << window->width() << window->height();
-
-        // 先隐藏窗口，设置位置后再显示
+        // 先隐藏窗口，等待 QML 完全加载后再显示
         window->hide();
-        window->setFramePosition(QPoint(posX, posY));
 
-        // 强制更新窗口几何信息
-        window->update();
+        // 使用延迟执行，确保 QML 窗口已经完全初始化并获取到正确的尺寸
+        QTimer::singleShot(100, [window, configService]() {
+            int savedX = configService->getWindowX();
+            int savedY = configService->getWindowY();
 
-        // 短暂延迟后显示窗口
-        QTimer::singleShot(50, [window, posX, posY]() {
+            int posX, posY;
+
+            // 如果配置中保存了有效位置，则使用保存的位置
+            if (savedX != -9999 && savedY != -9999) {
+                posX = savedX;
+                posY = savedY;
+            } else {
+                // 否则居中显示
+                QScreen* screen = window->screen();
+                if (screen) {
+                    int screenWidth = screen->availableGeometry().width();
+                    int screenHeight = screen->availableGeometry().height();
+                    int windowWidth = window->width();
+                    int windowHeight = window->height();
+
+                    // 如果窗口尺寸不合理（小于最小尺寸），使用默认尺寸
+                    if (windowWidth < 800)
+                        windowWidth = 800;
+                    if (windowHeight < 600)
+                        windowHeight = 600;
+
+                    posX = (screenWidth - windowWidth) / 2;
+                    posY = (screenHeight - windowHeight) / 2;
+
+                    qDebug() << "屏幕尺寸:" << screenWidth << "x" << screenHeight << "窗口尺寸:" << windowWidth << "x"
+                             << windowHeight;
+                } else {
+                    posX = 100;
+                    posY = 100;
+                }
+            }
+
+            qDebug() << "设置窗口位置到:" << posX << posY << "窗口大小:" << window->width() << window->height();
+
+            // 设置窗口位置
+            window->setFramePosition(QPoint(posX, posY));
+
+            // 强制更新窗口几何信息
+            window->update();
+
+            // 显示窗口
             window->show();
-            qDebug() << "窗口已显示，位置: (" << window->x() << "," << window->y() << ")";
+
+            qDebug() << "窗口已显示，实际位置: (" << window->x() << "," << window->y() << ") 实际大小: ("
+                     << window->width() << "x" << window->height() << ")";
         });
     }
 

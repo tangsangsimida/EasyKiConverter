@@ -78,11 +78,17 @@ jobs:
           [Desktop Entry]
           Type=Application
           Name=EasyKiConverter
+          Name[zh_CN]=EasyKiConverter
           Comment=Convert LCSC and EasyEDA components to KiCad libraries
-          Exec=EasyKiConverter
-          Icon=app_icon
-          Categories=Development;Electronics;
+          Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库
+          Exec=EasyKiConverter %F
+          Icon=com.tangsangsimida.EasyKiConverter
           Terminal=false
+          Categories=Development;Electronics;Engineering;
+          Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;
+          StartupNotify=true
+          StartupWMClass=EasyKiConverter
+          MimeType=application/vnd.easyeda+json;
           EOF
           cp resources/icons/app_icon.png ${APPIMAGE_DST_PATH}/app_icon.png
 
@@ -224,8 +230,31 @@ jobs:
 
           # 准备脚本（创建所有必需的脚本文件）
           mkdir -p scripts
-          echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
-          echo -e "#!/bin/sh\n# Pre-remove script (empty)" > scripts/preremove.sh
+          cat > scripts/postinstall.sh <<'EOF'
+#!/bin/sh
+set -e
+
+# 更新桌面数据库
+if which update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database -q /usr/share/applications || true
+fi
+
+# 更新图标缓存
+if which gtk-update-icon-cache >/dev/null 2>&1; then
+    for theme in hicolor Adwaita; do
+        if [ -d "/usr/share/icons/$theme" ]; then
+            gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" || true
+        fi
+    done
+fi
+
+exit 0
+EOF
+          cat > scripts/preremove.sh <<'EOF'
+#!/bin/sh
+# Pre-remove script (empty)
+exit 0
+EOF
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
