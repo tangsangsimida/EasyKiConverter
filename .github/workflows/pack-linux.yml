@@ -230,31 +230,8 @@ jobs:
 
           # 准备脚本（创建所有必需的脚本文件）
           mkdir -p scripts
-          cat > scripts/postinstall.sh <<'EOF'
-#!/bin/sh
-set -e
-
-# 更新桌面数据库
-if which update-desktop-database >/dev/null 2>&1; then
-    update-desktop-database -q /usr/share/applications || true
-fi
-
-# 更新图标缓存
-if which gtk-update-icon-cache >/dev/null 2>&1; then
-    for theme in hicolor Adwaita; do
-        if [ -d "/usr/share/icons/$theme" ]; then
-            gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" || true
-        fi
-    done
-fi
-
-exit 0
-EOF
-          cat > scripts/preremove.sh <<'EOF'
-#!/bin/sh
-# Pre-remove script (empty)
-exit 0
-EOF
+          echo -e '#!/bin/sh\nset -e\n\n# 更新桌面数据库\nif which update-desktop-database >/dev/null 2>&1; then\n  update-desktop-database -q /usr/share/applications || true\nfi\n\n# 更新图标缓存\nif which gtk-update-icon-cache >/dev/null 2>&1; then\n  for theme in hicolor Adwaita; do\n    if [ -d "/usr/share/icons/$theme" ]; then\n      gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" || true\n    fi\n  done\nfi\n\nexit 0' > scripts/postinstall.sh
+          echo -e '#!/bin/sh\nset -e\n\n# 更新桌面数据库\nif command -v update-desktop-database >/dev/null 2>&1; then\n  update-desktop-database -q /usr/share/applications || true\nfi\n\n# 更新图标缓存\nif command -v gtk-update-icon-cache >/dev/null 2>&1; then\n  for theme in hicolor Adwaita; do\n    if [ -d "/usr/share/icons/$theme" ]; then\n      gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" || true\n    fi\n  done\nfi\n\nexit 0' > scripts/preremove.sh
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
