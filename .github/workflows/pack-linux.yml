@@ -74,25 +74,31 @@ jobs:
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
 
           # 配置元数据
-          cat > ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop <<EOF
+          cat > ${APPIMAGE_DST_PATH}/com.tangsangsimida.EasyKiConverter.desktop <<EOF
           [Desktop Entry]
           Type=Application
           Name=EasyKiConverter
+          Name[zh_CN]=EasyKiConverter
           Comment=Convert LCSC and EasyEDA components to KiCad libraries
-          Exec=EasyKiConverter
-          Icon=app_icon
-          Categories=Development;Electronics;
+          Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库
+          Exec=EasyKiConverter %F
+          Icon=com.tangsangsimida.EasyKiConverter
           Terminal=false
+          Categories=Development;Electronics;Engineering;
+          Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;
+          StartupNotify=true
+          StartupWMClass=EasyKiConverter
+          MimeType=application/vnd.easyeda+json;
           EOF
-          cp resources/icons/app_icon.png ${APPIMAGE_DST_PATH}/app_icon.png
+          cp resources/icons/app_icon.png ${APPIMAGE_DST_PATH}/com.tangsangsimida.EasyKiConverter.png
 
           # 关键步骤：运行 linuxdeploy 填充依赖库 (Qt libs 等) 到 AppDir
           # 注意：这里不生成 AppImage 文件，只处理目录内容
           # --icon-file 参数必须指向 AppDir 中的图标文件，而不是源路径
           linuxdeploy --appdir ${APPIMAGE_DST_PATH} --plugin qt \
             --executable ${APPIMAGE_DST_PATH}/usr/bin/EasyKiConverter \
-            --desktop-file ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop \
-            --icon-file ${APPIMAGE_DST_PATH}/app_icon.png
+            --desktop-file ${APPIMAGE_DST_PATH}/com.tangsangsimida.EasyKiConverter.desktop \
+            --icon-file ${APPIMAGE_DST_PATH}/com.tangsangsimida.EasyKiConverter.png
 
       - name: Upload AppDir Artifact
         uses: actions/upload-artifact@v4
@@ -133,7 +139,7 @@ jobs:
           # 必须再次指定 executable 和 desktop-file 否则 AppRun 可能不会正确链接
           linuxdeploy --appdir ${{ env.PRODUCT }}.AppDir --plugin qt \
             --executable ${{ env.PRODUCT }}.AppDir/usr/bin/EasyKiConverter \
-            --desktop-file ${{ env.PRODUCT }}.AppDir/EasyKiConverter.desktop \
+            --desktop-file ${{ env.PRODUCT }}.AppDir/com.tangsangsimida.EasyKiConverter.desktop \
             --output appimage
 
           # 重命名
@@ -224,8 +230,8 @@ jobs:
 
           # 准备脚本（创建所有必需的脚本文件）
           mkdir -p scripts
-          echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
-          echo -e "#!/bin/sh\n# Pre-remove script (empty)" > scripts/preremove.sh
+          echo -e '#!/bin/sh\nset -e\n\n# 更新桌面数据库\nif which update-desktop-database >/dev/null 2>&1; then\n  update-desktop-database -q /usr/share/applications || true\nfi\n\n# 更新图标缓存\nif which gtk-update-icon-cache >/dev/null 2>&1; then\n  for theme in hicolor Adwaita; do\n    if [ -d "/usr/share/icons/$theme" ]; then\n      gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" || true\n    fi\n  done\nfi\n\nexit 0' > scripts/postinstall.sh
+          echo -e '#!/bin/sh\nset -e\n\n# 更新桌面数据库\nif command -v update-desktop-database >/dev/null 2>&1; then\n  update-desktop-database -q /usr/share/applications || true\nfi\n\n# 更新图标缓存\nif command -v gtk-update-icon-cache >/dev/null 2>&1; then\n  for theme in hicolor Adwaita; do\n    if [ -d "/usr/share/icons/$theme" ]; then\n      gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" || true\n    fi\n  done\nfi\n\nexit 0' > scripts/preremove.sh
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
