@@ -228,10 +228,10 @@ jobs:
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
 
-          # 准备脚本（创建所有必需的脚本文件）
+          # 准备脚本（复制项目中的脚本文件）
           mkdir -p scripts
-          echo -e '#!/bin/sh\nset -e\n\n# 更新桌面数据库\nif command -v update-desktop-database >/dev/null 2>&1; then\n  update-desktop-database -q /usr/share/applications || true\nfi\n\n# 更新图标缓存\nif command -v gtk-update-icon-cache >/dev/null 2>&1; then\n  for theme in hicolor Adwaita; do\n    if [ -d "/usr/share/icons/$theme" ]; then\n      gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" || true\n    fi\n  done\nfi\n\nexit 0' > scripts/postinstall.sh
-          echo -e '#!/bin/sh\nset -e\n\n# 更新桌面数据库\nif command -v update-desktop-database >/dev/null 2>&1; then\n  update-desktop-database -q /usr/share/applications || true\nfi\n\n# 更新图标缓存\nif command -v gtk-update-icon-cache >/dev/null 2>&1; then\n  for theme in hicolor Adwaita; do\n    if [ -d "/usr/share/icons/$theme" ]; then\n      gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" || true\n    fi\n  done\nfi\n\n# 清理用户级别的桌面文件\nif [ -n "$SUDO_USER" ]; then\n  USER_HOME=$(eval echo ~$SUDO_USER)\n  USER_DESKTOP="$USER_HOME/.local/share/applications"\n  if [ -d "$USER_DESKTOP" ]; then\n    for desktop_file in "$USER_DESKTOP"/*EasyKi*.desktop "$USER_DESKTOP"/*easykiconverter*.desktop; do\n      if [ -f "$desktop_file" ]; then\n        if grep -q "/opt/easykiconverter" "$desktop_file" 2>/dev/null; then\n          rm -f "$desktop_file"\n        fi\n      fi\n    done 2>/dev/null || true\n    if command -v update-desktop-database >/dev/null 2>&1; then\n      update-desktop-database -q "$USER_DESKTOP" 2>/dev/null || true\n    fi\n  fi\nfi\n\nexit 0' > scripts/preremove.sh
+          cp deploy/scripts/postinstall.sh scripts/postinstall.sh
+          cp deploy/scripts/prerm.sh scripts/preremove.sh
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
@@ -325,10 +325,10 @@ jobs:
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
 
-          # 准备脚本（创建所有必需的脚本文件）
+          # 准备脚本（复制项目中的脚本文件）
           mkdir -p scripts
-          echo -e '#!/bin/sh\nif command -v update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi' > scripts/postinstall.sh
-          echo -e '#!/bin/sh\nset -e\n\nif command -v update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi\n\nif command -v gtk-update-icon-cache >/dev/null 2>&1; then\n  for theme in hicolor Adwaita; do\n    if [ -d "/usr/share/icons/$theme" ]; then\n      gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" || true\n    fi\n  done\nfi\n\nif [ -n "$SUDO_USER" ]; then\n  USER_HOME=$(eval echo ~$SUDO_USER)\n  USER_DESKTOP="$USER_HOME/.local/share/applications"\n  if [ -d "$USER_DESKTOP" ]; then\n    for desktop_file in "$USER_DESKTOP"/*EasyKi*.desktop "$USER_DESKTOP"/*easykiconverter*.desktop; do\n      if [ -f "$desktop_file" ]; then\n        if grep -q "/opt/easykiconverter" "$desktop_file" 2>/dev/null; then\n          rm -f "$desktop_file"\n        fi\n      fi\n    done 2>/dev/null || true\n    if command -v update-desktop-database >/dev/null 2>&1; then\n      update-desktop-database -q "$USER_DESKTOP" 2>/dev/null || true\n    fi\n  fi\nfi\n\nexit 0' > scripts/preremove.sh
+          cp deploy/scripts/postinstall.sh scripts/postinstall.sh
+          cp deploy/scripts/prerm.sh scripts/preremove.sh
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
@@ -418,10 +418,10 @@ jobs:
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
 
-          # 准备脚本（创建所有必需的脚本文件）
+          # 准备脚本（复制项目中的脚本文件）
           mkdir -p scripts
-          echo -e "#!/bin/sh\nif command -v update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
-          echo -e '#!/bin/sh\nset -e\n\nif command -v update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi\n\nif command -v gtk-update-icon-cache >/dev/null 2>&1; then\n  for theme in hicolor Adwaita; do\n    if [ -d "/usr/share/icons/$theme" ]; then\n      gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" || true\n    fi\n  done\nfi\n\nif [ -n "$SUDO_USER" ]; then\n  USER_HOME=$(eval echo ~$SUDO_USER)\n  USER_DESKTOP="$USER_HOME/.local/share/applications"\n  if [ -d "$USER_DESKTOP" ]; then\n    for desktop_file in "$USER_DESKTOP"/*EasyKi*.desktop "$USER_DESKTOP"/*easykiconverter*.desktop; do\n      if [ -f "$desktop_file" ]; then\n        if grep -q "/opt/easykiconverter" "$desktop_file" 2>/dev/null; then\n          rm -f "$desktop_file"\n        fi\n      fi\n    done 2>/dev/null || true\n    if command -v update-desktop-database >/dev/null 2>&1; then\n      update-desktop-database -q "$USER_DESKTOP" 2>/dev/null || true\n    fi\n  fi\nfi\n\nexit 0' > scripts/preremove.sh
+          cp deploy/scripts/postinstall.sh scripts/postinstall.sh
+          cp deploy/scripts/prerm.sh scripts/preremove.sh
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量

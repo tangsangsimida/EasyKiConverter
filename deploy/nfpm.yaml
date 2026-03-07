@@ -18,13 +18,14 @@ contents:
     dst: "/opt/easykiconverter/"
     type: tree
 
-  # 创建符号链接 /usr/bin/easykiconverter -> /opt/easykiconverter/AppRun
-  - src: "/opt/easykiconverter/AppRun"
+  # 创建包装脚本 /usr/bin/easykiconverter（包装脚本调用 /opt/easykiconverter/AppRun）
+  - src: "deploy/scripts/easykiconverter-wrapper.sh"
     dst: "/usr/bin/easykiconverter"
-    type: symlink
+    file_info:
+      mode: 0755
 
   # 安装 desktop 文件到系统目录（从实际文件路径，不是符号链接）
-  - src: "${APP_DIR}/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
+  - src: "${APP_DIR}/com.tangsangsimida.EasyKiConverter.desktop"
     dst: "/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
 
   # 安装图标到多个尺寸以支持不同的显示环境
@@ -47,10 +48,10 @@ contents:
 overrides:
   deb:
     scripts:
-      preinstall: deploy/scripts/prerm.sh
       postinstall: deploy/scripts/postinstall.sh
       preremove: deploy/scripts/prerm.sh
   rpm:
     scripts:
       postinstall: deploy/scripts/postinstall.sh
+      preremove: deploy/scripts/prerm.sh
 
