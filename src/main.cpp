@@ -148,13 +148,13 @@ int main(int argc, char* argv[]) {
 
     // 在 Linux 系统上，自动创建桌面集成配置（如果不存在）
 #ifdef __linux__
-    // 设置桌面文件名称
-    app.setDesktopFileName("com.tangsangsimida.EasyKiConverter");
+    // 设置桌面文件名称（使用小写，与安装的 desktop 文件保持一致）
+    app.setDesktopFileName("com.tangsangsimida.easykiconverter");
 
     // 检查并创建桌面集成配置
     QString localAppsDir = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
     QString iconsBaseDir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/icons/hicolor";
-    QString desktopFilePath = localAppsDir + "/com.tangsangsimida.EasyKiConverter.desktop";
+    QString desktopFilePath = localAppsDir + "/com.tangsangsimida.easykiconverter.desktop";
 
     // 检查桌面文件是否存在
     if (!QFile::exists(desktopFilePath)) {
@@ -177,12 +177,12 @@ int main(int argc, char* argv[]) {
             out << "Comment=Convert LCSC and EasyEDA components to KiCad libraries\n";
             out << "Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库\n";
             out << "Exec=" << executablePath << " %F\n";
-            out << "Icon=com.tangsangsimida.EasyKiConverter\n";
+            out << "Icon=com.tangsangsimida.easykiconverter\n";
             out << "Terminal=false\n";
             out << "Categories=Development;Electronics;Engineering;\n";
             out << "Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;\n";
             out << "StartupNotify=true\n";
-            out << "StartupWMClass=EasyKiConverter\n";
+            out << "StartupWMClass=easykiconverter\n";
             out << "MimeType=application/vnd.easyeda+json;\n";
             desktopFile.close();
 
@@ -216,7 +216,7 @@ int main(int argc, char* argv[]) {
                 for (int size : iconSizes) {
                     QString sizeDir = QString("%1/%2x%3/apps").arg(iconsBaseDir).arg(size).arg(size);
                     QDir().mkpath(sizeDir);
-                    QString iconFilePath = sizeDir + "/com.tangsangsimida.EasyKiConverter.png";
+                    QString iconFilePath = sizeDir + "/com.tangsangsimida.easykiconverter.png";
 
                     // 渲染 SVG 到指定尺寸
                     QImage scaledImage = svgImage.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -235,7 +235,7 @@ int main(int argc, char* argv[]) {
             for (int size : iconSizes) {
                 QString sizeDir = QString("%1/%2x%3/apps").arg(iconsBaseDir).arg(size).arg(size);
                 QDir().mkpath(sizeDir);
-                QString iconFilePath = sizeDir + "/com.tangsangsimida.EasyKiConverter.png";
+                QString iconFilePath = sizeDir + "/com.tangsangsimida.easykiconverter.png";
 
                 bool iconCopied = false;
                 for (const QString& iconPath : iconPaths) {

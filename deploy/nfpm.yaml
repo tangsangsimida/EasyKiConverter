@@ -25,19 +25,14 @@ contents:
       mode: 0755
 
   # 安装 desktop 文件到系统目录（使用实际文件路径，不是符号链接）
-  - src: "${APP_DIR}/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
-    dst: "/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
+  - src: "${APP_DIR}/usr/share/applications/com.tangsangsimida.easykiconverter.desktop"
+    dst: "/usr/share/applications/com.tangsangsimida.easykiconverter.desktop"
     file_info:
       mode: 0644
 
   # 安装 AppStream 元数据文件（用于 GNOME 和其他现代桌面环境）
-  - src: "deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml"
-    dst: "/usr/share/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml"
-
-  # 安装应用注册自动启动文件（使用 /usr/share 避免 conffiles 问题）
-  # 注意：现代桌面环境支持从 /usr/share/xdg/autostart/ 读取自动启动文件
-  - src: "deploy/scripts/easykiconverter-register.desktop"
-    dst: "/usr/share/xdg/autostart/easykiconverter-register.desktop"
+  - src: "deploy/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml"
+    dst: "/usr/share/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml"
 
   # 安装应用注册脚本（由自动启动文件调用）
   - src: "deploy/scripts/easykiconverter-register.sh"

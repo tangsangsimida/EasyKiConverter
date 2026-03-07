@@ -9,6 +9,8 @@ APP_INSTALL_DIR="/opt/easykiconverter"
 APP_BIN_LINK="/usr/bin/easykiconverter"
 APP_DESKTOP_FILE="/usr/share/applications/${APP_DESKTOP_NAME}.desktop"
 APP_METAINFO_FILE="/usr/share/metainfo/${APP_DESKTOP_NAME}.metainfo.xml"
+APP_DESKTOP_FILE_COMPAT="/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"  # 兼容旧版本
+APP_METAINFO_FILE_COMPAT="/usr/share/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml"  # 兼容旧版本
 APP_SCRIPT_DIR="/usr/share/easykiconverter"
 AUTOSTART_FILE="/etc/xdg/autostart/easykiconverter-register.desktop"
 AUTOSTART_FILE_SYSTEM="/usr/share/xdg/autostart/easykiconverter-register.desktop"
@@ -87,6 +89,8 @@ remove_app_files() {
 remove_system_desktop_file() {
     log_info "删除系统级别的桌面文件..."
     safe_remove_file "$APP_DESKTOP_FILE"
+    # 删除旧版本的桌面文件（兼容性）
+    safe_remove_file "$APP_DESKTOP_FILE_COMPAT"
 }
 
 # 删除系统级别的图标文件
@@ -102,6 +106,8 @@ remove_system_icons() {
 remove_metainfo_file() {
     log_info "删除 AppStream 元数据文件..."
     safe_remove_file "$APP_METAINFO_FILE"
+    # 删除旧版本的元数据文件（兼容性）
+    safe_remove_file "$APP_METAINFO_FILE_COMPAT"
 }
 
 # 删除自动启动文件

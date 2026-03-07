@@ -4,6 +4,13 @@
 
 set -e
 
+# ==================== 配置变量 ====================
+# 可执行文件名（小写，保持与 desktop 文件一致）
+BINARY_NAME="easykiconverter"
+# 应用标识符（反向域名格式，全小写）
+APP_ID="com.tangsangsimida.easykiconverter"
+# =================================================
+
 # 获取脚本所在目录的绝对路径
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # 项目根目录是脚本目录向上两级（tools/linux -> tools -> 项目根）
@@ -254,33 +261,33 @@ build_appdir() {
     
     # 创建桌面文件
     print_info "创建桌面文件..."
-    cat > "$APP_DIR/com.tangsangsimida.EasyKiConverter.desktop" <<EOF
+    cat > "$APP_DIR/$APP_ID.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=EasyKiConverter
 Name[zh_CN]=EasyKiConverter
 Comment=Convert LCSC and EasyEDA components to KiCad libraries
 Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库
-Exec=easykiconverter %F
-Icon=com.tangsangsimida.EasyKiConverter
+Exec=$BINARY_NAME %F
+Icon=$APP_ID
 Terminal=false
 Categories=Development;Electronics;Engineering;
 Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;
 StartupNotify=true
-StartupWMClass=EasyKiConverter
+StartupWMClass=easykiconverter
 MimeType=application/vnd.easyeda+json;
 EOF
-    
+
     # 复制图标
     print_info "复制图标..."
-    cp resources/icons/app_icon.png "$APP_DIR/com.tangsangsimida.EasyKiConverter.png"
-    
+    cp resources/icons/app_icon.png "$APP_DIR/$APP_ID.png"
+
     # 运行 linuxdeploy 填充依赖
     print_info "运行 linuxdeploy 填充依赖..."
     linuxdeploy --appdir "$APP_DIR" --plugin qt \
-        --executable "$APP_DIR/usr/bin/EasyKiConverter" \
-        --desktop-file "$APP_DIR/com.tangsangsimida.EasyKiConverter.desktop" \
-        --icon-file "$APP_DIR/com.tangsangsimida.EasyKiConverter.png"
+        --executable "$APP_DIR/usr/bin/$BINARY_NAME" \
+        --desktop-file "$APP_DIR/$APP_ID.desktop" \
+        --icon-file "$APP_DIR/$APP_ID.png"
     
     # 修复：复制 QML 模块到 AppDir（linuxdeploy-plugin-qt 可能不会自动复制）
     print_info "复制 QML 模块到 AppDir..."
@@ -347,11 +354,14 @@ export XDG_DATA_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}"
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 
 # 启动应用
-exec "${APPDIR}/usr/bin/EasyKiConverter" "$@"
+exec "${APPDIR}/usr/bin/__BINARY_NAME__" "$@"
 EOF
-    
+
+    # 替换可执行文件名占位符
+    sed -i "s|__BINARY_NAME__|$BINARY_NAME|g" "$APP_DIR/AppRun"
+
     chmod +x "$APP_DIR/AppRun"
-    
+
     print_info "AppDir 构建完成: $APP_DIR"
 }
 
@@ -413,7 +423,7 @@ build_deb() {
         -e "s|deploy/scripts/easykiconverter-register.sh|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.sh|g" \
         -e "s|deploy/scripts/easykiconverter-register.desktop|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.desktop|g" \
         -e "s|deploy/scripts/trigger-gnome-refresh.sh|$PROJECT_ROOT/deploy/scripts/trigger-gnome-refresh.sh|g" \
-        -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$PROJECT_ROOT/deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|g" \
+        -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$PROJECT_ROOT/deploy/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml|g" \
         "$PROJECT_ROOT/deploy/nfpm.yaml" > "$temp_nfpm_config"
     
     # 运行 nfpm 构建（必须指定 --packager）

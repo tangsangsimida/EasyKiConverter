@@ -1,6 +1,6 @@
 #!/bin/bash
 # EasyKiConverter 注册脚本
-# 此脚本在首次登录时运行，用于向 GNOME Shell 注册应用
+# 此脚本在首次登录时运行，用于确保应用图标正确显示
 
 # 检查是否有待处理的刷新请求
 PENDING_REFRESH_FILE="$HOME/.config/easykiconverter/pending-refresh"
@@ -9,11 +9,6 @@ if [ -f "$PENDING_REFRESH_FILE" ]; then
     if command -v gdbus >/dev/null 2>&1; then
         # 尝试使用 D-Bus 刷新 GNOME Shell
         gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval "appSystem.reload()" 2>/dev/null || true
-    fi
-
-    # 尝试使用 gio 触发应用注册
-    if command -v gio >/dev/null 2>&1; then
-        gio launch com.tangsangsimida.EasyKiConverter --gapplication-service 2>/dev/null || true
     fi
 
     # 删除标记文件
@@ -29,11 +24,6 @@ if [ -f "$MARKER_FILE" ]; then
         rm -f "$AUTO_START_FILE"
     fi
     exit 0
-fi
-
-# 使用 gio 命令触发应用注册（不会实际启动应用）
-if command -v gio >/dev/null 2>&1; then
-    gio launch com.tangsangsimida.EasyKiConverter --gapplication-service 2>/dev/null || true
 fi
 
 # 创建标记文件

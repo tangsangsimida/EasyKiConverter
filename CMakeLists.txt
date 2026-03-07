@@ -267,7 +267,7 @@ set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE $<NOT:$<BOOL:${EASYKICONVERTER_CONSOLE_MODE}>>
-    OUTPUT_NAME "EasyKiConverter"
+    OUTPUT_NAME "easykiconverter"
 )
 
 # 链接源码库和 Qt 库

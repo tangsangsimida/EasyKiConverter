@@ -12,23 +12,17 @@ if [ -f "/usr/bin/easykiconverter" ]; then
 fi
 
 # 验证桌面文件存在且可读
-DESKTOP_FILE="/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
+DESKTOP_FILE="/usr/share/applications/com.tangsangsimida.easykiconverter.desktop"
+DESKTOP_FILE_OLD="/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
 if [ -f "$DESKTOP_FILE" ]; then
     chmod 644 "$DESKTOP_FILE"
 else
     echo "警告: 桌面文件不存在: $DESKTOP_FILE"
 fi
 
-# 创建自动启动文件的软链接
-# 从 /usr/share/xdg/autostart/ 创建软链接到 /etc/xdg/autostart/
-# 软链接不会被 DEB 包管理器标记为 conffiles
-AUTOSTART_SRC="/usr/share/xdg/autostart/easykiconverter-register.desktop"
-AUTOSTART_DST="/etc/xdg/autostart/easykiconverter-register.desktop"
-if [ -f "$AUTOSTART_SRC" ]; then
-    # 删除可能存在的旧文件或链接
-    rm -f "$AUTOSTART_DST" 2>/dev/null || true
-    # 创建新的软链接
-    ln -s "$AUTOSTART_SRC" "$AUTOSTART_DST"
+# 删除旧版本的桌面文件（兼容性）
+if [ -f "$DESKTOP_FILE_OLD" ]; then
+    rm -f "$DESKTOP_FILE_OLD"
 fi
 
 # 同步更新桌面数据库（前台执行，确保完成）
@@ -65,19 +59,6 @@ if [ -x "/usr/share/easykiconverter/trigger-gnome-refresh.sh" ]; then
         if [ -n "$user" ] && [ "$user" != "USER" ]; then
             # 为每个用户触发 GNOME 刷新
             /usr/share/easykiconverter/trigger-gnome-refresh.sh "$user" 2>/dev/null || true
-        fi
-    done
-fi
-
-# 备用方案：为所有用户创建一个临时标记文件，在用户下次登录时触发刷新
-if command -v getent >/dev/null 2>&1; then
-    getent passwd | while IFS=: read -r user _ uid _ home _; do
-        # 只为普通用户创建标记文件（UID >= 1000）
-        if [ "$uid" -ge 1000 ] && [ -d "$home" ]; then
-            # 创建标记文件，下次登录时处理
-            mkdir -p "$home/.config/easykiconverter" 2>/dev/null || true
-            touch "$home/.config/easykiconverter/pending-refresh" 2>/dev/null || true
-            chown "$user" "$home/.config/easykiconverter/pending-refresh" 2>/dev/null || true
         fi
     done
 fi
