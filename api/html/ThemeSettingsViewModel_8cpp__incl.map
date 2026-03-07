@@ -1,0 +1,18 @@
+<map id="ui/viewmodels/ThemeSettingsViewModel.cpp" name="ui/viewmodels/ThemeSettingsViewModel.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="269,5,488,45"/>
+<area shape="rect" id="Node000002" href="$ThemeSettingsViewModel_8h.html" title=" " alt="" coords="195,93,399,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="361,47,321,85,318,82,357,44"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="424,93,499,119"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="401,44,441,82,437,86,397,47"/>
+<area shape="rect" id="Node000003" href="$ConfigService_8h.html" title=" " alt="" coords="143,167,324,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="289,121,255,158,251,155,285,117"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="324,240,399,265"/>
+<area shape="poly" id="edge7_Node000002_Node000006" title=" " alt="" coords="309,118,338,166,358,225,353,227,334,168,304,120"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,240,107,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="206,194,98,237,96,232,204,190"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="131,240,205,265"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="225,194,190,232,186,228,221,191"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="255,190,329,231,327,235,253,194"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="229,240,299,265"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="241,191,256,227,251,229,236,193"/>
+</map>

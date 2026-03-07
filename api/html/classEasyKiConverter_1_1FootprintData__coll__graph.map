@@ -1,0 +1,11 @@
+<map id="EasyKiConverter::FootprintData" name="EasyKiConverter::FootprintData">
+<area shape="rect" id="Node000001" title=" " alt="" coords="245,636,464,1101"/>
+<area shape="rect" id="Node000002" href="$structEasyKiConverter_1_1FootprintInfo.html" title=" " alt="" coords="5,278,219,543"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,542,240,647,235,649,180,545"/>
+<area shape="rect" id="Node000003" href="$structEasyKiConverter_1_1FootprintBBox.html" title=" " alt="" coords="243,348,466,473"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="357,473,357,620,352,620,352,473"/>
+<area shape="rect" id="Node000004" href="$classEasyKiConverter_1_1Model3DData.html" title=" " alt="" coords="491,248,709,573"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="515,575,474,651,469,649,510,573"/>
+<area shape="rect" id="Node000005" href="$structEasyKiConverter_1_1Model3DBase.html" title=" " alt="" coords="490,5,710,171"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="603,171,603,231,597,231,597,171"/>
+</map>

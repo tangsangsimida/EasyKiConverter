@@ -1,0 +1,7 @@
+<map id="EasyKiConverter::NetworkWorker" name="EasyKiConverter::NetworkWorker">
+<area shape="rect" id="Node000001" title="网络工作线程" alt="" coords="5,119,193,639"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="17,5,83,71"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="59,84,64,118,59,119,54,85"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="107,5,193,71"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="146,85,141,119,135,118,141,84"/>
+</map>

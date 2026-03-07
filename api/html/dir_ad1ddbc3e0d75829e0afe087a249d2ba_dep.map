@@ -1,0 +1,10 @@
+<map id="core/kicad" name="core/kicad">
+<area shape="rect" id="node1" href="dir_182a39db29e4ad63eb633860d83c5a1d.html" title="utils" alt="" coords="31,125,81,151"/>
+<area shape="rect" id="node2" href="dir_ad1ddbc3e0d75829e0afe087a249d2ba.html" title="kicad" alt="" coords="27,52,85,77"/>
+<area shape="poly" id="edge1" href="dir_000004_000015.html" alt="" coords="59,78,59,112,53,112,53,78"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000004_000015.html" title="7" alt="" coords="60,100,69,114"/>
+<area shape="rect" id="node3" href="dir_1ae4179d5e953611aae20c997279e02c.html" title="models" alt="" coords="107,125,178,151"/>
+<area shape="poly" id="edge2" href="dir_000004_000006.html" alt="" coords="72,75,120,114,116,119,68,79"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000004_000006.html" title="6" alt="" coords="115,100,124,114"/>
+<area shape="rect" id="clust1" href="dir_4270bfced15e0e73154b13468c7c9ad9.html" title="core" alt="" coords="16,16,96,161"/>
+</map>

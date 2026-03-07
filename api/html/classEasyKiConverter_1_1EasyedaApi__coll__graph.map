@@ -1,0 +1,8 @@
+<map id="EasyKiConverter::EasyedaApi" name="EasyKiConverter::EasyedaApi">
+<area shape="rect" id="Node000001" title="EasyEDA API 客户端类" alt="" coords="5,463,251,1128"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="89,5,156,71"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,84,128,462,123,462,120,84"/>
+<area shape="rect" id="Node000003" href="$classEasyKiConverter_1_1INetworkAdapter.html" title="网络适配器接口" alt="" coords="144,120,333,400"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="148,82,168,119,163,121,143,84"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="212,401,203,447,198,446,207,400"/>
+</map>
