@@ -32,9 +32,10 @@ contents:
   - src: "deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml"
     dst: "/usr/share/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml"
 
-  # 安装应用注册自动启动文件（系统级别，首次登录时运行）
+  # 安装应用注册自动启动文件（使用 /usr/share 避免 conffiles 问题）
+  # 注意：现代桌面环境支持从 /usr/share/xdg/autostart/ 读取自动启动文件
   - src: "deploy/scripts/easykiconverter-register.desktop"
-    dst: "/etc/xdg/autostart/easykiconverter-register.desktop"
+    dst: "/usr/share/xdg/autostart/easykiconverter-register.desktop"
 
   # 安装应用注册脚本（由自动启动文件调用）
   - src: "deploy/scripts/easykiconverter-register.sh"

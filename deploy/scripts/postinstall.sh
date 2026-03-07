@@ -19,6 +19,18 @@ else
     echo "警告: 桌面文件不存在: $DESKTOP_FILE"
 fi
 
+# 创建自动启动文件的软链接
+# 从 /usr/share/xdg/autostart/ 创建软链接到 /etc/xdg/autostart/
+# 软链接不会被 DEB 包管理器标记为 conffiles
+AUTOSTART_SRC="/usr/share/xdg/autostart/easykiconverter-register.desktop"
+AUTOSTART_DST="/etc/xdg/autostart/easykiconverter-register.desktop"
+if [ -f "$AUTOSTART_SRC" ]; then
+    # 删除可能存在的旧文件或链接
+    rm -f "$AUTOSTART_DST" 2>/dev/null || true
+    # 创建新的软链接
+    ln -s "$AUTOSTART_SRC" "$AUTOSTART_DST"
+fi
+
 # 同步更新桌面数据库（前台执行，确保完成）
 if command -v update-desktop-database >/dev/null 2>&1; then
     update-desktop-database /usr/share/applications 2>/dev/null || true
