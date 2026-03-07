@@ -361,17 +361,23 @@ int main(int argc, char* argv[]) {
             int savedY = configService->getWindowY();
 
             int posX, posY;
+            bool useSavedPosition = false;
 
-            // 如果配置中保存了有效位置，则使用保存的位置
-            if (savedX != -9999 && savedY != -9999) {
+            // 如果配置中保存了有效位置（不是默认值 (0,0)），则使用保存的位置
+            if (savedX > 0 && savedY > 0) {
                 posX = savedX;
                 posY = savedY;
+                useSavedPosition = true;
+                qDebug() << "使用保存的窗口位置:" << posX << posY;
             } else {
                 // 否则居中显示
                 QScreen* screen = window->screen();
                 if (screen) {
-                    int screenWidth = screen->availableGeometry().width();
-                    int screenHeight = screen->availableGeometry().height();
+                    QRect screenGeometry = screen->availableGeometry();
+                    int screenWidth = screenGeometry.width();
+                    int screenHeight = screenGeometry.height();
+
+                    // 使用窗口的当前尺寸
                     int windowWidth = window->width();
                     int windowHeight = window->height();
 
@@ -381,30 +387,51 @@ int main(int argc, char* argv[]) {
                     if (windowHeight < 600)
                         windowHeight = 600;
 
+                    // 计算居中位置
                     posX = (screenWidth - windowWidth) / 2;
                     posY = (screenHeight - windowHeight) / 2;
 
                     qDebug() << "屏幕尺寸:" << screenWidth << "x" << screenHeight << "窗口尺寸:" << windowWidth << "x"
-                             << windowHeight;
+                             << windowHeight << "计算居中位置:" << posX << "," << posY;
+
+                    // 保存居中位置到配置，避免下次启动时又回到左上角
+                    configService->setWindowX(posX);
+                    configService->setWindowY(posY);
+                    configService->saveConfig();
+                    qDebug() << "已保存居中位置到配置";
                 } else {
                     posX = 100;
                     posY = 100;
                 }
             }
 
-            qDebug() << "设置窗口位置到:" << posX << posY << "窗口大小:" << window->width() << window->height();
+            qDebug() << "设置窗口位置到:" << posX << posY;
 
-            // 设置窗口位置
-            window->setFramePosition(QPoint(posX, posY));
-
-            // 强制更新窗口几何信息
-            window->update();
+            // 使用 setPosition 设置窗口位置
+            window->setPosition(posX, posY);
 
             // 显示窗口
             window->show();
 
-            qDebug() << "窗口已显示，实际位置: (" << window->x() << "," << window->y() << ") 实际大小: ("
-                     << window->width() << "x" << window->height() << ")";
+            // 等待窗口实际显示，然后检查实际位置
+            QTimer::singleShot(100, [window, posX, posY, useSavedPosition]() {
+                QScreen* screen = window->screen();
+                if (screen) {
+                    QRect screenGeometry = screen->availableGeometry();
+                    QRect windowGeometry = window->geometry();
+
+                    qDebug() << "窗口已显示:";
+                    qDebug() << "  期望位置: (" << posX << "," << posY << ")";
+                    qDebug() << "  实际位置: (" << windowGeometry.x() << "," << windowGeometry.y() << ")";
+                    qDebug() << "  窗口大小: (" << windowGeometry.width() << "x" << windowGeometry.height() << ")";
+                    qDebug() << "  屏幕大小: (" << screenGeometry.width() << "x" << screenGeometry.height() << ")";
+
+                    // 如果使用保存位置但实际位置不对，说明保存的位置有问题
+                    if (useSavedPosition && (windowGeometry.x() <= 0 || windowGeometry.y() <= 0)) {
+                        qDebug() << "警告: 保存的窗口位置无效，下次启动将重新居中";
+                    }
+                }
+            });
         });
     }
 
