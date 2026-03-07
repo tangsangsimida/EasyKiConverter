@@ -261,7 +261,7 @@ Name=EasyKiConverter
 Name[zh_CN]=EasyKiConverter
 Comment=Convert LCSC and EasyEDA components to KiCad libraries
 Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库
-Exec=EasyKiConverter %F
+Exec=easykiconverter %F
 Icon=com.tangsangsimida.EasyKiConverter
 Terminal=false
 Categories=Development;Electronics;Engineering;
@@ -408,7 +408,12 @@ build_deb() {
         -e "s|\${VERSION}|$VERSION|g" \
         -e "s|deploy/scripts/postinstall.sh|$PROJECT_ROOT/deploy/scripts/postinstall.sh|g" \
         -e "s|deploy/scripts/prerm.sh|$PROJECT_ROOT/deploy/scripts/prerm.sh|g" \
+        -e "s|deploy/scripts/postrm.sh|$PROJECT_ROOT/deploy/scripts/postrm.sh|g" \
         -e "s|deploy/scripts/easykiconverter-wrapper.sh|$PROJECT_ROOT/deploy/scripts/easykiconverter-wrapper.sh|g" \
+        -e "s|deploy/scripts/easykiconverter-register.sh|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.sh|g" \
+        -e "s|deploy/scripts/easykiconverter-register.desktop|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.desktop|g" \
+        -e "s|deploy/scripts/trigger-gnome-refresh.sh|$PROJECT_ROOT/deploy/scripts/trigger-gnome-refresh.sh|g" \
+        -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$PROJECT_ROOT/deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|g" \
         "$PROJECT_ROOT/deploy/nfpm.yaml" > "$temp_nfpm_config"
     
     # 运行 nfpm 构建（必须指定 --packager）

@@ -81,9 +81,8 @@ jobs:
           Name[zh_CN]=EasyKiConverter
           Comment=Convert LCSC and EasyEDA components to KiCad libraries
           Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库
-          Exec=EasyKiConverter %F
-          Icon=com.tangsangsimida.EasyKiConverter
-          Terminal=false
+          Exec=easykiconverter %F
+          Icon=com.tangsangsimida.EasyKiConverter          Terminal=false
           Categories=Development;Electronics;Engineering;
           Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;
           StartupNotify=true
@@ -232,10 +231,20 @@ jobs:
           mkdir -p scripts
           cp deploy/scripts/postinstall.sh scripts/postinstall.sh
           cp deploy/scripts/prerm.sh scripts/preremove.sh
+          cp deploy/scripts/postrm.sh scripts/postrm.sh
           chmod +x scripts/*.sh
 
-          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
-          sed "s|\${APP_DIR}|$APP_DIR|g" deploy/nfpm.yaml > nfpm_temp.yaml
+          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
+          sed -e "s|\${APP_DIR}|$APP_DIR|g" \
+              -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
+              -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
+              -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
+              -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
+              -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$(pwd)/deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|g" \
+              deploy/nfpm.yaml > nfpm_temp.yaml
 
           # 打包
           nfpm pkg --packager deb --target . --config nfpm_temp.yaml
@@ -329,10 +338,20 @@ jobs:
           mkdir -p scripts
           cp deploy/scripts/postinstall.sh scripts/postinstall.sh
           cp deploy/scripts/prerm.sh scripts/preremove.sh
+          cp deploy/scripts/postrm.sh scripts/postrm.sh
           chmod +x scripts/*.sh
 
-          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
-          sed "s|\${APP_DIR}|$APP_DIR|g" deploy/nfpm.yaml > nfpm_temp.yaml
+          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
+          sed -e "s|\${APP_DIR}|$APP_DIR|g" \
+              -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
+              -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
+              -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
+              -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
+              -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$(pwd)/deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|g" \
+              deploy/nfpm.yaml > nfpm_temp.yaml
 
           nfpm pkg --packager rpm --target . --config nfpm_temp.yaml
 
@@ -422,10 +441,20 @@ jobs:
           mkdir -p scripts
           cp deploy/scripts/postinstall.sh scripts/postinstall.sh
           cp deploy/scripts/prerm.sh scripts/preremove.sh
+          cp deploy/scripts/postrm.sh scripts/postrm.sh
           chmod +x scripts/*.sh
 
-          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
-          sed "s|\${APP_DIR}|$APP_DIR|g" deploy/nfpm.yaml > nfpm_temp.yaml
+          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
+          sed -e "s|\${APP_DIR}|$APP_DIR|g" \
+              -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
+              -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
+              -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
+              -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
+              -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$(pwd)/deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|g" \
+              deploy/nfpm.yaml > nfpm_temp.yaml
 
           nfpm pkg --packager archlinux --target . --config nfpm_temp.yaml
 

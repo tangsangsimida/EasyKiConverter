@@ -24,9 +24,29 @@ contents:
     file_info:
       mode: 0755
 
-  # 安装 desktop 文件到系统目录（从实际文件路径，不是符号链接）
-  - src: "${APP_DIR}/com.tangsangsimida.EasyKiConverter.desktop"
+  # 安装 desktop 文件到系统目录（使用实际文件路径，不是符号链接）
+  - src: "${APP_DIR}/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
     dst: "/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
+
+  # 安装 AppStream 元数据文件（用于 GNOME 和其他现代桌面环境）
+  - src: "deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml"
+    dst: "/usr/share/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml"
+
+  # 安装应用注册自动启动文件（系统级别，首次登录时运行）
+  - src: "deploy/scripts/easykiconverter-register.desktop"
+    dst: "/etc/xdg/autostart/easykiconverter-register.desktop"
+
+  # 安装应用注册脚本（由自动启动文件调用）
+  - src: "deploy/scripts/easykiconverter-register.sh"
+    dst: "/usr/share/easykiconverter/easykiconverter-register.sh"
+    file_info:
+      mode: 0755
+
+  # 安装 GNOME 刷新触发脚本（由 postinstall.sh 调用）
+  - src: "deploy/scripts/trigger-gnome-refresh.sh"
+    dst: "/usr/share/easykiconverter/trigger-gnome-refresh.sh"
+    file_info:
+      mode: 0755
 
   # 安装图标到多个尺寸以支持不同的显示环境
   # 注意：linuxdeploy 只创建了 48x48 的图标，我们将其复制到所有尺寸
@@ -50,8 +70,10 @@ overrides:
     scripts:
       postinstall: deploy/scripts/postinstall.sh
       preremove: deploy/scripts/prerm.sh
+      postremove: deploy/scripts/postrm.sh
   rpm:
     scripts:
       postinstall: deploy/scripts/postinstall.sh
       preremove: deploy/scripts/prerm.sh
+      postremove: deploy/scripts/postrm.sh
 

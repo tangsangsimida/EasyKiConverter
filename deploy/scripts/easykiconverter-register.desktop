@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=EasyKiConverter Registration
+Name[zh_CN]=EasyKiConverter 注册
+Comment=Register EasyKiConverter with the desktop environment
+Comment[zh_CN]=向桌面环境注册 EasyKiConverter
+Exec=/usr/share/easykiconverter/easykiconverter-register.sh
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5
+X-KDE-autostart-after=panel
+X-MATE-Autostart-enabled=true
+OnlyShowIn=GNOME;KDE;MATE;Xfce;LXQt;LXDE;Unity;
