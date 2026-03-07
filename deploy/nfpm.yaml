@@ -27,6 +27,8 @@ contents:
   # 安装 desktop 文件到系统目录（使用实际文件路径，不是符号链接）
   - src: "${APP_DIR}/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
     dst: "/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
+    file_info:
+      mode: 0644
 
   # 安装 AppStream 元数据文件（用于 GNOME 和其他现代桌面环境）
   - src: "deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml"
@@ -51,20 +53,20 @@ contents:
 
   # 安装图标到多个尺寸以支持不同的显示环境
   # 注意：linuxdeploy 只创建了 48x48 的图标，我们将其复制到所有尺寸
-  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
-    dst: "/usr/share/icons/hicolor/16x16/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
-    dst: "/usr/share/icons/hicolor/32x32/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
-    dst: "/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
-    dst: "/usr/share/icons/hicolor/64x64/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
-    dst: "/usr/share/icons/hicolor/128x128/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
-    dst: "/usr/share/icons/hicolor/256x256/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
-    dst: "/usr/share/icons/hicolor/512x512/apps/com.tangsangsimida.EasyKiConverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/16x16/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/32x32/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/64x64/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/128x128/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/256x256/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/512x512/apps/com.tangsangsimida.easykiconverter.png"
 
 overrides:
   deb:

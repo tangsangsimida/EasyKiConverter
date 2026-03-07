@@ -1,10 +1,10 @@
 #!/bin/sh
-# Pre-remove script
-# 在卸载前清理桌面集成和应用程序文件
+# 通用卸载清理函数库
+# 用于 prerm.sh 和 postrm.sh 的共享清理逻辑
 
 # 应用配置变量
 APP_NAME="easykiconverter"
-APP_DESKTOP_NAME="com.tangsangsimida.easykiconverter"
+APP_DESKTOP_NAME="com.tangsangsimida.EasyKiConverter"
 APP_INSTALL_DIR="/opt/easykiconverter"
 APP_BIN_LINK="/usr/bin/easykiconverter"
 APP_DESKTOP_FILE="/usr/share/applications/${APP_DESKTOP_NAME}.desktop"
@@ -255,8 +255,8 @@ refresh_gnome_cache() {
     fi
 
     # 获取所有已登录用户
-    loginctl list-users 2>/dev/null | awk 'NR>1 {print $2}' | while read -r user; do
-        if [ -z "$user" ]; then
+    loginctl list-users 2>/dev/null | awk '{print $2}' | while read -r user; do
+        if [ -z "$user" ] || [ "$user" = "USER" ]; then
             continue
         fi
 
@@ -319,36 +319,48 @@ refresh_gnome_cache() {
     return 0
 }
 
-# === 主清理逻辑 ===
+# 自动清除 dpkg 元数据
+purge_dpkg_metadata() {
+    log_info "清除 dpkg 元数据..."
 
-# 删除应用程序文件和可执行文件
-remove_app_files
+    local purge_flag_file="/tmp/${APP_NAME}-purge-in-progress"
 
-# 删除系统级别的桌面文件
-remove_system_desktop_file
+    if [ "$1" = "purge" ]; then
+        # 已在 purge 模式，清理标志文件
+        safe_remove_file "$purge_flag_file"
+        return 0
+    elif [ "$1" = "remove" ]; then
+        # 在 remove 模式下，等待短暂时间后自动执行 purge
+        (
+            sleep 2
 
-# 删除系统级别的图标文件
-remove_system_icons
+            # 检查标志文件，防止并发执行
+            if [ -f "$purge_flag_file" ]; then
+                exit 0
+            fi
 
-# 删除 AppStream 元数据文件
-remove_metainfo_file
+            # 创建标志文件（使用更安全的临时文件创建方法）
+            if ! mktemp "$purge_flag_file.XXXXXX" >/dev/null 2>&1; then
+                log_error "无法创建标志文件: $purge_flag_file"
+                exit 1
+            fi
 
-# 删除自动启动文件
-remove_autostart_files
+            # 检查包状态
+            if dpkg-query -W -f='${Status}' "$APP_NAME" 2>/dev/null | grep -q "config-files"; then
+                log_info "包处于 config-files 状态，执行 purge"
+                if dpkg --purge "$APP_NAME" >/dev/null 2>&1; then
+                    log_info "dpkg purge 成功"
+                else
+                    log_error "dpkg purge 失败"
+                fi
+            fi
 
-# 删除用户级别的脚本文件
-remove_user_scripts
+            # 清理标志文件
+            safe_remove_file "$purge_flag_file*"
+        ) >/dev/null 2>&1 &
 
-# 同步更新桌面数据库，确保缓存更新完成
-update_desktop_database
+        return 0
+    fi
 
-# 同步更新图标缓存，确保缓存更新完成
-update_icon_cache
-
-# 为所有已登录用户触发 GNOME 应用列表刷新
-refresh_gnome_cache
-
-# 清理用户级别的桌面文件
-remove_user_desktop_files
-
-exit 0
+    return 1
+}
