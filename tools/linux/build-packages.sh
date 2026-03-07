@@ -408,6 +408,7 @@ build_deb() {
         -e "s|\${VERSION}|$VERSION|g" \
         -e "s|deploy/scripts/postinstall.sh|$PROJECT_ROOT/deploy/scripts/postinstall.sh|g" \
         -e "s|deploy/scripts/prerm.sh|$PROJECT_ROOT/deploy/scripts/prerm.sh|g" \
+        -e "s|deploy/scripts/easykiconverter-wrapper.sh|$PROJECT_ROOT/deploy/scripts/easykiconverter-wrapper.sh|g" \
         "$PROJECT_ROOT/deploy/nfpm.yaml" > "$temp_nfpm_config"
     
     # 运行 nfpm 构建（必须指定 --packager）

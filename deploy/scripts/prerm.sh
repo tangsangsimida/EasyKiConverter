@@ -4,16 +4,16 @@ set -e
 # Pre-remove script
 # 在卸载前清理桌面集成
 
-# 更新桌面数据库
+# 在后台异步更新桌面数据库，避免阻塞卸载过程
 if command -v update-desktop-database >/dev/null 2>&1; then
-    update-desktop-database -q /usr/share/applications || true
+    update-desktop-database /usr/share/applications >/dev/null 2>&1 &
 fi
 
-# 更新图标缓存
+# 在后台异步更新图标缓存，避免阻塞卸载过程
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
     for theme in hicolor Adwaita; do
         if [ -d "/usr/share/icons/$theme" ]; then
-            gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" || true
+            gtk-update-icon-cache -q -t -f "/usr/share/icons/$theme" >/dev/null 2>&1 &
         fi
     done
 fi
@@ -36,11 +36,12 @@ if [ -n "$SUDO_USER" ]; then
             fi
         done 2>/dev/null || true
         
-        # 更新用户桌面数据库
+        # 在后台异步更新用户桌面数据库
         if command -v update-desktop-database >/dev/null 2>&1; then
-            update-desktop-database -q "$USER_DESKTOP" 2>/dev/null || true
+            update-desktop-database "$USER_DESKTOP" >/dev/null 2>&1 &
         fi
     fi
 fi
 
+# 不等待后台进程完成，立即退出
 exit 0
