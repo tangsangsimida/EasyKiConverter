@@ -12,14 +12,18 @@
 #include <QDir>
 #include <QFile>
 #include <QIcon>
+#include <QImage>
 #include <QPoint>
+#include <QProcess>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QScreen>
+#include <QSize>
 #include <QStandardPaths>
+#include <QTextStream>
 #include <QTimer>
 #include <QUrl>
 
@@ -141,6 +145,144 @@ int main(int argc, char* argv[]) {
             break;
         }
     }
+
+    // 在 Linux 系统上，自动创建桌面集成配置（如果不存在）
+#ifdef __linux__
+    // 设置桌面文件名称
+    app.setDesktopFileName("com.tangsangsimida.EasyKiConverter");
+
+    // 检查并创建桌面集成配置
+    QString localAppsDir = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
+    QString iconsBaseDir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/icons/hicolor";
+    QString desktopFilePath = localAppsDir + "/com.tangsangsimida.EasyKiConverter.desktop";
+
+    // 检查桌面文件是否存在
+    if (!QFile::exists(desktopFilePath)) {
+        qDebug() << "桌面文件不存在，自动创建：" << desktopFilePath;
+
+        // 创建必要的目录
+        QDir().mkpath(localAppsDir);
+
+        // 获取可执行文件路径
+        QString executablePath = QCoreApplication::applicationFilePath();
+
+        // 创建桌面文件
+        QFile desktopFile(desktopFilePath);
+        if (desktopFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&desktopFile);
+            out << "[Desktop Entry]\n";
+            out << "Type=Application\n";
+            out << "Name=EasyKiConverter\n";
+            out << "Name[zh_CN]=EasyKiConverter\n";
+            out << "Comment=Convert LCSC and EasyEDA components to KiCad libraries\n";
+            out << "Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库\n";
+            out << "Exec=" << executablePath << " %F\n";
+            out << "Icon=com.tangsangsimida.EasyKiConverter\n";
+            out << "Terminal=false\n";
+            out << "Categories=Development;Electronics;Engineering;\n";
+            out << "Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;\n";
+            out << "StartupNotify=true\n";
+            out << "StartupWMClass=EasyKiConverter\n";
+            out << "MimeType=application/vnd.easyeda+json;\n";
+            desktopFile.close();
+
+            // 设置执行权限
+            QFile::setPermissions(
+                desktopFilePath,
+                QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner | QFile::ReadGroup | QFile::ReadOther);
+
+            qDebug() << "桌面文件已创建：" << desktopFilePath;
+        } else {
+            qWarning() << "无法创建桌面文件：" << desktopFilePath;
+        }
+
+        // 创建多个尺寸的图标（支持高DPI显示）
+        QList<int> iconSizes = {16, 32, 48, 64, 128, 256, 512, 1024};
+        int iconsCreated = 0;
+
+        // 查找 SVG 图标（可以生成任意尺寸）
+        QString svgIconPath;
+        for (const QString& iconPath : iconPaths) {
+            if (iconPath.endsWith(".svg") && QFile::exists(iconPath)) {
+                svgIconPath = iconPath;
+                break;
+            }
+        }
+
+        if (!svgIconPath.isEmpty()) {
+            // 从 SVG 生成多个尺寸的图标
+            QImage svgImage(svgIconPath);
+            if (!svgImage.isNull()) {
+                for (int size : iconSizes) {
+                    QString sizeDir = QString("%1/%2x%3/apps").arg(iconsBaseDir).arg(size).arg(size);
+                    QDir().mkpath(sizeDir);
+                    QString iconFilePath = sizeDir + "/com.tangsangsimida.EasyKiConverter.png";
+
+                    // 渲染 SVG 到指定尺寸
+                    QImage scaledImage = svgImage.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                    if (scaledImage.save(iconFilePath, "PNG")) {
+                        iconsCreated++;
+                        qDebug() << "图标已创建：" << iconFilePath << size << "x" << size;
+                    }
+                }
+            } else {
+                qWarning() << "无法加载 SVG 图标：" << svgIconPath;
+            }
+        }
+
+        // 如果没有 SVG，使用 PNG 图标（复制到所有尺寸）
+        if (iconsCreated == 0) {
+            for (int size : iconSizes) {
+                QString sizeDir = QString("%1/%2x%3/apps").arg(iconsBaseDir).arg(size).arg(size);
+                QDir().mkpath(sizeDir);
+                QString iconFilePath = sizeDir + "/com.tangsangsimida.EasyKiConverter.png";
+
+                bool iconCopied = false;
+                for (const QString& iconPath : iconPaths) {
+                    if (iconPath.endsWith(".png") && QFile::exists(iconPath)) {
+                        QImage sourceImage(iconPath);
+                        if (!sourceImage.isNull()) {
+                            QImage scaledImage =
+                                sourceImage.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                            if (scaledImage.save(iconFilePath, "PNG")) {
+                                iconCopied = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (iconCopied) {
+                    iconsCreated++;
+                    qDebug() << "图标已创建：" << iconFilePath << size << "x" << size;
+                }
+            }
+        }
+
+        if (iconsCreated == 0) {
+            qWarning() << "无法创建任何图标文件";
+        } else {
+            qDebug() << "已创建" << iconsCreated << "个尺寸的图标";
+        }
+
+        // 更新桌面数据库
+        QProcess updateDesktopDb;
+        updateDesktopDb.start("update-desktop-database", QStringList() << localAppsDir);
+        updateDesktopDb.waitForFinished(5000);
+
+        // 更新图标缓存
+        QProcess updateIconCache;
+        updateIconCache.start(
+            "gtk-update-icon-cache",
+            QStringList() << "-q" << "-t" << "-f"
+                          << QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/icons/hicolor");
+        updateIconCache.waitForFinished(5000);
+
+        qDebug() << "桌面集成配置已自动创建";
+    } else {
+        qDebug() << "桌面文件已存在：" << desktopFilePath;
+    }
+#endif
 
     // 初始化配置服务
     EasyKiConverter::ConfigService::instance()->loadConfig();

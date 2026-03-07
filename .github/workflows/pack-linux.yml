@@ -74,7 +74,7 @@ jobs:
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
 
           # 配置元数据
-          cat > ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop <<EOF
+          cat > ${APPIMAGE_DST_PATH}/com.tangsangsimida.EasyKiConverter.desktop <<EOF
           [Desktop Entry]
           Type=Application
           Name=EasyKiConverter
@@ -90,15 +90,15 @@ jobs:
           StartupWMClass=EasyKiConverter
           MimeType=application/vnd.easyeda+json;
           EOF
-          cp resources/icons/app_icon.png ${APPIMAGE_DST_PATH}/app_icon.png
+          cp resources/icons/app_icon.png ${APPIMAGE_DST_PATH}/com.tangsangsimida.EasyKiConverter.png
 
           # 关键步骤：运行 linuxdeploy 填充依赖库 (Qt libs 等) 到 AppDir
           # 注意：这里不生成 AppImage 文件，只处理目录内容
           # --icon-file 参数必须指向 AppDir 中的图标文件，而不是源路径
           linuxdeploy --appdir ${APPIMAGE_DST_PATH} --plugin qt \
             --executable ${APPIMAGE_DST_PATH}/usr/bin/EasyKiConverter \
-            --desktop-file ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop \
-            --icon-file ${APPIMAGE_DST_PATH}/app_icon.png
+            --desktop-file ${APPIMAGE_DST_PATH}/com.tangsangsimida.EasyKiConverter.desktop \
+            --icon-file ${APPIMAGE_DST_PATH}/com.tangsangsimida.EasyKiConverter.png
 
       - name: Upload AppDir Artifact
         uses: actions/upload-artifact@v4
@@ -139,7 +139,7 @@ jobs:
           # 必须再次指定 executable 和 desktop-file 否则 AppRun 可能不会正确链接
           linuxdeploy --appdir ${{ env.PRODUCT }}.AppDir --plugin qt \
             --executable ${{ env.PRODUCT }}.AppDir/usr/bin/EasyKiConverter \
-            --desktop-file ${{ env.PRODUCT }}.AppDir/EasyKiConverter.desktop \
+            --desktop-file ${{ env.PRODUCT }}.AppDir/com.tangsangsimida.EasyKiConverter.desktop \
             --output appimage
 
           # 重命名

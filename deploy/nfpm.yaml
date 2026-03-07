@@ -23,33 +23,34 @@ contents:
     dst: "/usr/bin/easykiconverter"
     type: symlink
 
-  # 安装 desktop 文件
-  - src: "${APP_DIR}/EasyKiConverter.desktop"
+  # 安装 desktop 文件到系统目录（从实际文件路径，不是符号链接）
+  - src: "${APP_DIR}/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
     dst: "/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
 
   # 安装图标到多个尺寸以支持不同的显示环境
-  - src: "${APP_DIR}/app_icon.png"
+  # 注意：linuxdeploy 只创建了 48x48 的图标，我们将其复制到所有尺寸
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
     dst: "/usr/share/icons/hicolor/16x16/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/app_icon.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
     dst: "/usr/share/icons/hicolor/32x32/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/app_icon.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
     dst: "/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/app_icon.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
     dst: "/usr/share/icons/hicolor/64x64/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/app_icon.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
     dst: "/usr/share/icons/hicolor/128x128/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/app_icon.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
     dst: "/usr/share/icons/hicolor/256x256/apps/com.tangsangsimida.EasyKiConverter.png"
-  - src: "${APP_DIR}/app_icon.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.EasyKiConverter.png"
     dst: "/usr/share/icons/hicolor/512x512/apps/com.tangsangsimida.EasyKiConverter.png"
 
 overrides:
   deb:
     scripts:
+      preinstall: deploy/scripts/prerm.sh
       postinstall: deploy/scripts/postinstall.sh
-      preremove: deploy/scripts/preremove.sh
+      preremove: deploy/scripts/prerm.sh
   rpm:
     scripts:
       postinstall: deploy/scripts/postinstall.sh
-      preremove: deploy/scripts/preremove.sh
 
