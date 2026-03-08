@@ -412,8 +412,15 @@ ApplicationWindow {
     Shortcut {
         sequence: "Esc"
         onActivated: {
-            // ESC 键：调出关闭对话框
-            if (!closeConfirmDialog.visible && !exitOptionDialog.visible) {
+            // ESC 键：打开或关闭对话框
+            if (closeConfirmDialog.visible) {
+                // 如果 ConfirmDialog 可见，关闭它
+                closeConfirmDialog.close();
+            } else if (exitOptionDialog.visible) {
+                // 如果 ExitDialog 可见，关闭它
+                exitOptionDialog.close();
+            } else {
+                // 如果没有对话框可见，打开相应的对话框
                 if (exportProgressViewModel.isExporting) {
                     closeConfirmDialog.open();
                 } else {

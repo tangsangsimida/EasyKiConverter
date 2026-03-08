@@ -20,11 +20,12 @@ import "../styles"
  * - ExitDialog：无任务时显示，提供"最小化到托盘"/"退出程序"/"取消"选项
  * - ConfirmDialog：有任务时显示，提供"强制退出"/"继续转换"选项
  */
-Item {
+FocusScope {
     id: root
     anchors.fill: parent
     visible: false
     z: 9999
+    focus: visible  // 当对话框可见时接收焦点
 
     // 常量
     readonly property int buttonHeight: 48
@@ -34,6 +35,7 @@ Item {
     property bool rememberChoice: false
     property Item activeButton: null  // 当前活跃的按钮
     property Item selectedButton: exitButton  // 当前键盘选中的按钮，默认为退出按钮
+    property string focusArea: "button"  // 当前聚焦区域："button" 或 "checkbox"，默认为按钮
 
     // 信号
     signal minimizeToTray(bool remember)
@@ -77,6 +79,8 @@ Item {
         selectedButton = exitButton;
         // 设置滑块默认聚焦在退出选项上
         updateSlider(exitButton, AppStyle.colors.danger);
+        // 重置聚焦区域为按钮
+        focusArea = "button";
         // 强制焦点到 root 以便键盘导航
         root.forceActiveFocus();
     }
@@ -409,21 +413,36 @@ Item {
                     }
 
                     indicator: Rectangle {
-                        implicitWidth: 20
-                        implicitHeight: 20
+                        implicitWidth: 22
+                        implicitHeight: 22
                         x: rememberCheckBox.leftPadding
                         y: parent.height / 2 - height / 2
                         radius: 4
-                        border.color: rememberCheckBox.checked ? AppStyle.colors.primary : AppStyle.colors.border
-                        border.width: 2
                         color: rememberCheckBox.checked ? AppStyle.colors.primary : "transparent"
+                        border.color: rememberCheckBox.checked ? AppStyle.colors.primary : (root.focusArea === "checkbox" ? AppStyle.colors.primary : AppStyle.colors.textSecondary)
+                        border.width: root.focusArea === "checkbox" ? 2.5 : 1.5
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 150
+                            }
+                        }
+                        Behavior on border.color {
+                            ColorAnimation {
+                                duration: 150
+                            }
+                        }
+                        Behavior on border.width {
+                            NumberAnimation {
+                                duration: 150
+                            }
+                        }
 
-                        Rectangle {
-                            width: 10
-                            height: 10
+                        Text {
                             anchors.centerIn: parent
-                            radius: 2
-                            color: AppStyle.isDarkMode ? "#ffffff" : "#ffffff"
+                            text: "✓"
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#ffffff"
                             visible: rememberCheckBox.checked
                         }
                     }
@@ -444,47 +463,67 @@ Item {
     // 键盘事件处理
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Up || event.key === Qt.Key_Left) {
-            // 向上/左导航
-            if (selectedButton === exitButton) {
-                selectedButton = minimizeButton;
-                updateSlider(minimizeButton, AppStyle.colors.primary);
-            } else if (selectedButton === cancelButton) {
-                selectedButton = exitButton;
-                updateSlider(exitButton, AppStyle.colors.danger);
-            } else if (selectedButton === minimizeButton) {
-                selectedButton = cancelButton;
-                updateSlider(cancelButton, AppStyle.colors.textSecondary);
+            // 向上/左导航：只在聚焦在按钮时才在按钮之间导航
+            if (focusArea === "button") {
+                if (selectedButton === exitButton) {
+                    selectedButton = minimizeButton;
+                    updateSlider(minimizeButton, AppStyle.colors.primary);
+                } else if (selectedButton === cancelButton) {
+                    selectedButton = exitButton;
+                    updateSlider(exitButton, AppStyle.colors.danger);
+                } else if (selectedButton === minimizeButton) {
+                    selectedButton = cancelButton;
+                    updateSlider(cancelButton, AppStyle.colors.textSecondary);
+                }
             }
             event.accepted = true;
         } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Right) {
-            // 向下/右导航
-            if (selectedButton === minimizeButton) {
-                selectedButton = exitButton;
-                updateSlider(exitButton, AppStyle.colors.danger);
-            } else if (selectedButton === exitButton) {
-                selectedButton = cancelButton;
-                updateSlider(cancelButton, AppStyle.colors.textSecondary);
-            } else if (selectedButton === cancelButton) {
-                selectedButton = minimizeButton;
-                updateSlider(minimizeButton, AppStyle.colors.primary);
+            // 向下/右导航：只在聚焦在按钮时才在按钮之间导航
+            if (focusArea === "button") {
+                if (selectedButton === minimizeButton) {
+                    selectedButton = exitButton;
+                    updateSlider(exitButton, AppStyle.colors.danger);
+                } else if (selectedButton === exitButton) {
+                    selectedButton = cancelButton;
+                    updateSlider(cancelButton, AppStyle.colors.textSecondary);
+                } else if (selectedButton === cancelButton) {
+                    selectedButton = minimizeButton;
+                    updateSlider(minimizeButton, AppStyle.colors.primary);
+                }
             }
             event.accepted = true;
         } else if (event.key === Qt.Key_Tab) {
-            // Tab 键循环导航
-            if (selectedButton === minimizeButton) {
-                selectedButton = exitButton;
-                updateSlider(exitButton, AppStyle.colors.danger);
-            } else if (selectedButton === exitButton) {
-                selectedButton = cancelButton;
-                updateSlider(cancelButton, AppStyle.colors.textSecondary);
-            } else if (selectedButton === cancelButton) {
-                selectedButton = minimizeButton;
-                updateSlider(minimizeButton, AppStyle.colors.primary);
+            // Tab 键：在选项按钮和记住选择复选框之间切换
+            if (focusArea === "button") {
+                // 从选项按钮切换到记住选择复选框，隐藏滑块
+                focusArea = "checkbox";
+                hideSlider();
+            } else {
+                // 从记住选择复选框切换到选项按钮，显示滑块
+                focusArea = "button";
+                // 更新当前选中的按钮的滑块位置
+                if (selectedButton === minimizeButton) {
+                    updateSlider(minimizeButton, AppStyle.colors.primary);
+                } else if (selectedButton === exitButton) {
+                    updateSlider(exitButton, AppStyle.colors.danger);
+                } else if (selectedButton === cancelButton) {
+                    updateSlider(cancelButton, AppStyle.colors.textSecondary);
+                }
             }
             event.accepted = true;
+        } else if (event.key === Qt.Key_Space) {
+            // 空格键：当聚焦在记住选择复选框时切换选择状态
+            if (focusArea === "checkbox") {
+                root.rememberChoice = !root.rememberChoice;
+                event.accepted = true;
+            }
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             // 回车键确认选择
-            if (selectedButton === minimizeButton) {
+            if (focusArea === "checkbox") {
+                // 当聚焦在记住选择复选框时，回车键切换选择状态
+                root.rememberChoice = !root.rememberChoice;
+                event.accepted = true;
+            } else if (selectedButton === minimizeButton) {
                 root.minimizeToTray(rememberChoice);
             } else if (selectedButton === exitButton) {
                 root.exitApp(rememberChoice);
@@ -494,9 +533,10 @@ Item {
             }
             event.accepted = true;
         } else if (event.key === Qt.Key_Escape) {
-            // ESC 键取消
-            root.closeWithAnimation();
-            Qt.callLater(root.canceled);
+            // ESC 键取消 - 不处理，让Main.qml的Shortcut处理
+            event.accepted = false;
+        } else {
+            // 其他键盘事件也被拦截，防止传播到主窗口
             event.accepted = true;
         }
     }
