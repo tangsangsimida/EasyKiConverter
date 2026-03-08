@@ -249,7 +249,7 @@ Item {
                             text: qsTr("最小化到托盘")
                             backgroundColor: "transparent"
                             // 动态文本颜色：当滑块在上方时变亮，键盘选中时使用不同颜色
-                            textColor: root.activeButton === minimizeButton ? Qt.lighter(AppStyle.colors.primary, 1.3) : (root.selectedButton === minimizeButton ? AppStyle.colors.primary : AppStyle.colors.text)
+                            textColor: root.activeButton === minimizeButton ? Qt.lighter(AppStyle.colors.primary, 1.3) : (root.selectedButton === minimizeButton ? AppStyle.colors.primary : AppStyle.colors.textPrimary)
                             hoverColor: "transparent"
 
                             // 文本颜色渐变动画
@@ -301,7 +301,7 @@ Item {
                             text: qsTr("退出程序")
                             backgroundColor: "transparent"
                             // 动态文本颜色：当滑块在上方时变亮
-                            textColor: root.activeButton === exitButton ? Qt.lighter(AppStyle.colors.danger, 1.3) : (root.selectedButton === exitButton ? AppStyle.colors.danger : AppStyle.colors.text)
+                            textColor: root.activeButton === exitButton ? Qt.lighter(AppStyle.colors.danger, 1.3) : (root.selectedButton === exitButton ? AppStyle.colors.danger : AppStyle.colors.textPrimary)
                             hoverColor: "transparent"
 
                             // 文本颜色渐变动画
@@ -353,7 +353,7 @@ Item {
                             text: qsTr("取消")
                             backgroundColor: "transparent"
                             // 动态文本颜色：当滑块在上方时变亮
-                            textColor: root.activeButton === cancelButton ? Qt.lighter(AppStyle.colors.textSecondary, 1.5) : (root.selectedButton === cancelButton ? AppStyle.colors.textSecondary : AppStyle.colors.text)
+                            textColor: root.activeButton === cancelButton ? Qt.lighter(AppStyle.colors.textSecondary, 1.5) : (root.selectedButton === cancelButton ? AppStyle.colors.textSecondary : AppStyle.colors.textPrimary)
                             hoverColor: "transparent"
 
                             // 文本颜色渐变动画
@@ -437,7 +437,7 @@ Item {
     }
 
     // 键盘事件处理
-    Keys.onPressed: (event) => {
+    Keys.onPressed: event => {
         if (event.key === Qt.Key_Up || event.key === Qt.Key_Left) {
             // 向上/左导航
             if (selectedButton === exitButton) {
