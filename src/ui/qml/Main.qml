@@ -5,6 +5,7 @@ import "styles"
 
 ApplicationWindow {
     id: appWindow
+    focus: true  // 确保窗口能够接收键盘事件
     // 默认窗口大小为屏幕的 65%（如果配置中没有保存的值）
     property int defaultWidth: Math.max(800, Screen.desktopAvailableWidth * 0.65)
     property int defaultHeight: Math.max(600, Screen.desktopAvailableHeight * 0.65)
