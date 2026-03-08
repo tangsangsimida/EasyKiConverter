@@ -135,7 +135,7 @@ bool ExportProgressViewModel::openLastExportedFolder() {
         return false;
     }
 
-    LOG_DEBUG(LogModule::UI, "Successfully opened last exported folder");
+    LOG_DEBUG(LogModule::UI, "Successfully opened last exported folder: {}", path);
     return true;
 }
 
