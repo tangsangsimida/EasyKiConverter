@@ -41,8 +41,8 @@ Item {
         onAccepted: {
             // 从 URL 中提取本地路径
             var path = selectedFolder.toString();
-            if (path.startsWith("file:///")) {
-                path = path.substring(8); // 移除 "file:///" 前缀
+            if (path.startsWith("file://")) {
+                path = path.substring(7); // 移除 "file://" 前缀，保留绝对路径的 "/"
             }
             exportSettingsController.setOutputPath(path);
         }
