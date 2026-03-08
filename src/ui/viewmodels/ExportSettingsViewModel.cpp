@@ -1,3 +1,10 @@
+/*
+ * 我发现我在学校，不谈恋爱也不学习，不打游戏也不逃课，每天就是处于认真听课，然后因为听不懂走神了，
+ * 反应过来以后再继续认真听课的循环，进入这种状态的时候，我一般就是左脑和右脑已经聊美了，
+ * 完全就是一个放飞自我，意淫我有多少多少家产，然后怕班里有人会读心术紧急撤回一条意淫，
+ * 那这在恋爱小说里我不就是那种…背景板吗，就每天在学校挂机任务就完成的npc
+ */
+
 #include "ExportSettingsViewModel.h"
 
 #include "services/ExportService_Pipeline.h"
@@ -209,8 +216,8 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
 
             // 直接拼接相对路径，不添加库名称
             absoluteOutputPath = exportDir.absoluteFilePath(absoluteOutputPath);
-            qDebug() << "Converted relative path to absolute path (Documents/EasyKiConverter/userPath):"
-                     << m_outputPath << "->" << absoluteOutputPath;
+            qDebug() << "Converted relative path to absolute path (Documents/EasyKiConverter/userPath):" << m_outputPath
+                     << "->" << absoluteOutputPath;
         }
     }
 
