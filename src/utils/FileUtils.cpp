@@ -76,9 +76,8 @@ bool FileUtils::pathExists(const QString& path) {
 
 bool FileUtils::openFolderOnWindows(const QString& absolutePath) {
 #ifdef Q_OS_WIN
-    // 使用 explorer 命令打开文件夹
+    // 使用 explorer 命令直接打开文件夹
     QStringList arguments;
-    arguments << "/select,";  // /select 参数可以同时选择文件夹
     arguments << QDir::toNativeSeparators(absolutePath);
 
     qDebug() << "FileUtils::openFolderOnWindows: Running explorer with arguments:" << arguments;
