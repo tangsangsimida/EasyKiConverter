@@ -2,7 +2,7 @@ app-id: com.tangsangsimida.EasyKiConverter
 runtime: org.kde.Platform
 runtime-version: '6.6'
 sdk: org.kde.Sdk
-command: EasyKiConverter
+command: easykiconverter
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
@@ -29,13 +29,13 @@ modules:
       - cmake --install .
       - |
         # 验证可执行文件是否被安装
-        if [ ! -f /app/bin/EasyKiConverter ]; then
-          echo "ERROR: EasyKiConverter executable was not installed!"
+        if [ ! -f /app/bin/easykiconverter ]; then
+          echo "ERROR: easykiconverter executable was not installed!"
           ls -la /app/bin/
           exit 1
         fi
-        echo "EasyKiConverter executable installed successfully"
-        ls -lh /app/bin/EasyKiConverter
+        echo "easykiconverter executable installed successfully"
+        ls -lh /app/bin/easykiconverter
     post-install:
       - |
         # 创建 desktop 文件
@@ -45,7 +45,7 @@ modules:
         Type=Application
         Name=EasyKiConverter
         Comment=Convert LCSC and EasyEDA components to KiCad libraries
-        Exec=EasyKiConverter
+        Exec=easykiconverter
         Icon=com.tangsangsimida.EasyKiConverter
         Categories=Development;Electronics;
         Terminal=false

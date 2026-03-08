@@ -3,7 +3,7 @@
 #define MyAppName "EasyKiConverter"
 #define MyAppPublisher "tangsangsimida"
 #define MyAppURL "https://github.com/tangsangsimida/EasyKiConverter"
-#define MyAppExeName "EasyKiConverter.exe"
+#define MyAppExeName "easykiconverter.exe"
 
 ; 这些变量将通过命令行定义传入
 ;#define MyAppVersion "3.0.0"
