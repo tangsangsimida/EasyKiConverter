@@ -10,5 +10,5 @@ Terminal=false
 Categories=Development;Electronics;Engineering;
 Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;
 StartupNotify=true
-StartupWMClass=EasyKiConverter
+StartupWMClass=easykiconverter
 MimeType=application/vnd.easyeda+json;

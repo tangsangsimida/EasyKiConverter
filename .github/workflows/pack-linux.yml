@@ -95,7 +95,7 @@ jobs:
           # 注意：这里不生成 AppImage 文件，只处理目录内容
           # --icon-file 参数必须指向 AppDir 中的图标文件，而不是源路径
           linuxdeploy --appdir ${APPIMAGE_DST_PATH} --plugin qt \
-            --executable ${APPIMAGE_DST_PATH}/usr/bin/EasyKiConverter \
+            --executable ${APPIMAGE_DST_PATH}/usr/bin/easykiconverter \
             --desktop-file ${APPIMAGE_DST_PATH}/com.tangsangsimida.EasyKiConverter.desktop \
             --icon-file ${APPIMAGE_DST_PATH}/com.tangsangsimida.EasyKiConverter.png
 
@@ -137,7 +137,7 @@ jobs:
           # 重新运行 linuxdeploy 以生成 AppImage
           # 必须再次指定 executable 和 desktop-file 否则 AppRun 可能不会正确链接
           linuxdeploy --appdir ${{ env.PRODUCT }}.AppDir --plugin qt \
-            --executable ${{ env.PRODUCT }}.AppDir/usr/bin/EasyKiConverter \
+            --executable ${{ env.PRODUCT }}.AppDir/usr/bin/easykiconverter \
             --desktop-file ${{ env.PRODUCT }}.AppDir/com.tangsangsimida.EasyKiConverter.desktop \
             --output appimage
 
@@ -200,8 +200,8 @@ jobs:
             export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
             echo "Found AppDir at: $APP_DIR"
           else
-            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/EasyKiConverter）
-            if [ -f "usr/bin/EasyKiConverter" ] && [ -f "AppRun" ]; then
+            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/easykiconverter）
+            if [ -f "usr/bin/easykiconverter" ] && [ -f "AppRun" ]; then
               # nfpm 不支持使用根目录，需要创建一个子目录
               echo "Found AppDir structure in current directory, creating subdirectory for nfpm"
               mkdir -p AppDir_temp
@@ -307,8 +307,8 @@ jobs:
             export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
             echo "Found AppDir at: $APP_DIR"
           else
-            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/EasyKiConverter）
-            if [ -f "usr/bin/EasyKiConverter" ] && [ -f "AppRun" ]; then
+            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/easykiconverter）
+            if [ -f "usr/bin/easykiconverter" ] && [ -f "AppRun" ]; then
               # nfpm 不支持使用根目录，需要创建一个子目录
               echo "Found AppDir structure in current directory, creating subdirectory for nfpm"
               mkdir -p AppDir_temp
@@ -410,8 +410,8 @@ jobs:
             export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
             echo "Found AppDir at: $APP_DIR"
           else
-            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/EasyKiConverter）
-            if [ -f "usr/bin/EasyKiConverter" ] && [ -f "AppRun" ]; then
+            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/easykiconverter）
+            if [ -f "usr/bin/easykiconverter" ] && [ -f "AppRun" ]; then
               # nfpm 不支持使用根目录，需要创建一个子目录
               echo "Found AppDir structure in current directory, creating subdirectory for nfpm"
               mkdir -p AppDir_temp
