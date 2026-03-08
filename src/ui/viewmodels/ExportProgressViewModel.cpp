@@ -126,12 +126,19 @@ bool ExportProgressViewModel::openLastExportedFolder() {
         return false;
     }
 
+    // 构建实际的导出路径（包含库名称）
+    QString actualExportPath = path;
+    if (!m_exportOptions.libName.isEmpty()) {
+        actualExportPath = QDir(path).absoluteFilePath(m_exportOptions.libName);
+        LOG_DEBUG(LogModule::UI, "Actual export path (with lib name): {}", actualExportPath);
+    }
+
     // 创建 FileUtils 实例来打开文件夹（使用栈对象避免堆分配）
     FileUtils fileUtils(this);
-    bool success = fileUtils.openFolder(path);
+    bool success = fileUtils.openFolder(actualExportPath);
 
     if (!success) {
-        LOG_ERROR(LogModule::UI, "Failed to open last exported folder: {}", path);
+        LOG_ERROR(LogModule::UI, "Failed to open last exported folder: {}", actualExportPath);
         return false;
     }
 
