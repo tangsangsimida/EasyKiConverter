@@ -262,8 +262,8 @@ Item {
                                 }
                             }
 
-                            // 缩放效果：当滑块在上方时轻微放大，键盘选中时也放大
-                            scale: (root.activeButton === minimizeButton || root.selectedButton === minimizeButton) ? 1.05 : 1.0
+                            // 缩放效果：当滑块在上方时轻微放大，键盘选中时也放大，按下时缩小
+                            scale: pressed ? 0.95 : (root.activeButton === minimizeButton || root.selectedButton === minimizeButton) ? 1.05 : 1.0
                             Behavior on scale {
                                 NumberAnimation {
                                     duration: 150
@@ -274,7 +274,8 @@ Item {
                             onHoveredChanged: {
                                 if (hovered) {
                                     root.updateSlider(this, AppStyle.colors.primary);
-                                } else if (!exitButton.hovered && !cancelButton.hovered) {
+                                } else if (!exitButton.hovered && !cancelButton.hovered && !pressed) {
+                                    // 只在没有按下且没有悬停在其他按钮上时隐藏滑块
                                     root.hideSlider();
                                 }
                             }
@@ -314,8 +315,8 @@ Item {
                                 }
                             }
 
-                            // 缩放效果：当滑块在上方时轻微放大，键盘选中时也放大
-                            scale: (root.activeButton === exitButton || root.selectedButton === exitButton) ? 1.05 : 1.0
+                            // 缩放效果：当滑块在上方时轻微放大，键盘选中时也放大，按下时缩小
+                            scale: pressed ? 0.95 : (root.activeButton === exitButton || root.selectedButton === exitButton) ? 1.05 : 1.0
                             Behavior on scale {
                                 NumberAnimation {
                                     duration: 150
@@ -326,7 +327,8 @@ Item {
                             onHoveredChanged: {
                                 if (hovered) {
                                     root.updateSlider(this, AppStyle.colors.danger);
-                                } else if (!minimizeButton.hovered && !cancelButton.hovered) {
+                                } else if (!minimizeButton.hovered && !cancelButton.hovered && !pressed) {
+                                    // 只在没有按下且没有悬停在其他按钮上时隐藏滑块
                                     root.hideSlider();
                                 }
                             }
@@ -366,8 +368,8 @@ Item {
                                 }
                             }
 
-                            // 缩放效果：当滑块在上方时轻微放大，键盘选中时也放大
-                            scale: (root.activeButton === cancelButton || root.selectedButton === cancelButton) ? 1.05 : 1.0
+                            // 缩放效果：当滑块在上方时轻微放大，键盘选中时也放大，按下时缩小
+                            scale: pressed ? 0.95 : (root.activeButton === cancelButton || root.selectedButton === cancelButton) ? 1.05 : 1.0
                             Behavior on scale {
                                 NumberAnimation {
                                     duration: 150
@@ -378,7 +380,8 @@ Item {
                             onHoveredChanged: {
                                 if (hovered) {
                                     root.updateSlider(this, AppStyle.colors.textSecondary);
-                                } else if (!minimizeButton.hovered && !exitButton.hovered) {
+                                } else if (!minimizeButton.hovered && !exitButton.hovered && !pressed) {
+                                    // 只在没有按下且没有悬停在其他按钮上时隐藏滑块
                                     root.hideSlider();
                                 }
                             }
