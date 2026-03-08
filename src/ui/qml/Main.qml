@@ -408,6 +408,21 @@ ApplicationWindow {
         }
     }
 
+    // 键盘事件处理
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Escape) {
+            // ESC 键：调出关闭对话框
+            event.accepted = true;
+            if (!closeConfirmDialog.visible && !exitOptionDialog.visible) {
+                if (exportProgressViewModel.isExporting) {
+                    closeConfirmDialog.open();
+                } else {
+                    exitOptionDialog.open();
+                }
+            }
+        }
+    }
+
     // 在启动时设置窗口位置
     Component.onCompleted: {
         // 窗口位置由 QML 属性直接控制

@@ -75,6 +75,8 @@ Item {
         dialogBoxTranslate.y = 0;
         // 设置默认选中为退出按钮
         selectedButton = exitButton;
+        // 设置滑块默认聚焦在退出选项上
+        updateSlider(exitButton, AppStyle.colors.danger);
         // 强制焦点到 root 以便键盘导航
         root.forceActiveFocus();
     }
@@ -442,30 +444,39 @@ Item {
             // 向上/左导航
             if (selectedButton === exitButton) {
                 selectedButton = minimizeButton;
+                updateSlider(minimizeButton, AppStyle.colors.primary);
             } else if (selectedButton === cancelButton) {
                 selectedButton = exitButton;
+                updateSlider(exitButton, AppStyle.colors.danger);
             } else if (selectedButton === minimizeButton) {
                 selectedButton = cancelButton;
+                updateSlider(cancelButton, AppStyle.colors.textSecondary);
             }
             event.accepted = true;
         } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Right) {
             // 向下/右导航
             if (selectedButton === minimizeButton) {
                 selectedButton = exitButton;
+                updateSlider(exitButton, AppStyle.colors.danger);
             } else if (selectedButton === exitButton) {
                 selectedButton = cancelButton;
+                updateSlider(cancelButton, AppStyle.colors.textSecondary);
             } else if (selectedButton === cancelButton) {
                 selectedButton = minimizeButton;
+                updateSlider(minimizeButton, AppStyle.colors.primary);
             }
             event.accepted = true;
         } else if (event.key === Qt.Key_Tab) {
             // Tab 键循环导航
             if (selectedButton === minimizeButton) {
                 selectedButton = exitButton;
+                updateSlider(exitButton, AppStyle.colors.danger);
             } else if (selectedButton === exitButton) {
                 selectedButton = cancelButton;
+                updateSlider(cancelButton, AppStyle.colors.textSecondary);
             } else if (selectedButton === cancelButton) {
                 selectedButton = minimizeButton;
+                updateSlider(minimizeButton, AppStyle.colors.primary);
             }
             event.accepted = true;
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
