@@ -207,9 +207,9 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
             }
             exportDir.cd("EasyKiConverter");
 
-            // 直接拼接相对路径和库名称，支持多级目录（如 test/dennis）
-            absoluteOutputPath = exportDir.absoluteFilePath(absoluteOutputPath + "/" + m_libName);
-            qDebug() << "Converted relative path to absolute path (Documents/EasyKiConverter/userPath/libName):"
+            // 直接拼接相对路径，不添加库名称
+            absoluteOutputPath = exportDir.absoluteFilePath(absoluteOutputPath);
+            qDebug() << "Converted relative path to absolute path (Documents/EasyKiConverter/userPath):"
                      << m_outputPath << "->" << absoluteOutputPath;
         }
     }
