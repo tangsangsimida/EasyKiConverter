@@ -189,14 +189,8 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
             }
             exportDir.cd("EasyKiConverter");
 
-            // 创建用户输入的子目录（如 test）
-            if (!exportDir.exists(absoluteOutputPath)) {
-                exportDir.mkdir(absoluteOutputPath);
-            }
-            exportDir.cd(absoluteOutputPath);
-
-            // 在子目录下创建库名称目录
-            absoluteOutputPath = exportDir.absoluteFilePath(libName);
+            // 直接拼接相对路径和库名称，支持多级目录（如 test/dennis）
+            absoluteOutputPath = exportDir.absoluteFilePath(absoluteOutputPath + "/" + libName);
             LOG_DEBUG(LogModule::UI,
                       "Converted relative path to absolute path (Documents/EasyKiConverter/userPath/libName): {} -> {}",
                       outputPath,
