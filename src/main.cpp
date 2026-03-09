@@ -127,7 +127,7 @@ int main(int argc, char* argv[]) {
 
     // 设置应用程序信息
     app.setApplicationName("EasyKiConverter");
-    app.setApplicationVersion("3.0.7");
+    app.setApplicationVersion("3.0.8");
     app.setOrganizationName("EasyKiConverter");
     app.setOrganizationDomain("easykiconverter.com");
 
