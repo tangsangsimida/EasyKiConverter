@@ -172,6 +172,16 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData& footpri
     double bboxX = footprintData.bbox().x;
     double bboxY = footprintData.bbox().y;
 
+    // 计算封装中心点（用于将封装居中显示）
+    double centerX = bboxX + footprintData.bbox().width / 2.0;
+    double centerY = bboxY + footprintData.bbox().height / 2.0;
+    qDebug() << "Footprint center - centerX:" << centerX << "centerY:" << centerY;
+
+    // 调整bboxX和bboxY为中心点，这样所有图形元素都会相对于中心点定位
+    bboxX = centerX;
+    bboxY = centerY;
+    qDebug() << "Adjusted bboxX:" << bboxX << "bboxY:" << bboxY;
+
     content += QString("  (fp_text reference REF** (at 0 %1) (layer F.SilkS)\n")
                    .arg(m_graphicsGenerator.pxToMm(yLow - bboxY - 4));
     content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
@@ -275,6 +285,16 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData& footpri
 
     double bboxX = footprintData.bbox().x;
     double bboxY = footprintData.bbox().y;
+
+    // 计算封装中心点（用于将封装居中显示）
+    double centerX = bboxX + footprintData.bbox().width / 2.0;
+    double centerY = bboxY + footprintData.bbox().height / 2.0;
+    qDebug() << "Footprint center - centerX:" << centerX << "centerY:" << centerY;
+
+    // 调整bboxX和bboxY为中心点，这样所有图形元素都会相对于中心点定位
+    bboxX = centerX;
+    bboxY = centerY;
+    qDebug() << "Adjusted bboxX:" << bboxX << "bboxY:" << bboxY;
 
     content += QString("\t(fp_text reference REF** (at 0 %1) (layer F.SilkS)\n")
                    .arg(m_graphicsGenerator.pxToMm(yLow - bboxY - 4));
