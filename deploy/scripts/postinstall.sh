@@ -13,7 +13,7 @@ fi
 
 # 验证桌面文件存在且可读
 DESKTOP_FILE="/usr/share/applications/com.tangsangsimida.easykiconverter.desktop"
-DESKTOP_FILE_OLD="/usr/share/applications/com.tangsangsimida.EasyKiConverter.desktop"
+DESKTOP_FILE_OLD="/usr/share/applications/com.tangsangsimida.easykiconverter.desktop"
 if [ -f "$DESKTOP_FILE" ]; then
     chmod 644 "$DESKTOP_FILE"
 else

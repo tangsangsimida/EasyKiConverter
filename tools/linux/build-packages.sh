@@ -423,7 +423,7 @@ build_deb() {
         -e "s|deploy/scripts/easykiconverter-register.sh|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.sh|g" \
         -e "s|deploy/scripts/easykiconverter-register.desktop|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.desktop|g" \
         -e "s|deploy/scripts/trigger-gnome-refresh.sh|$PROJECT_ROOT/deploy/scripts/trigger-gnome-refresh.sh|g" \
-        -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$PROJECT_ROOT/deploy/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml|g" \
+        -e "s|deploy/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml|$PROJECT_ROOT/deploy/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml|g" \
         "$PROJECT_ROOT/deploy/nfpm.yaml" > "$temp_nfpm_config"
     
     # 运行 nfpm 构建（必须指定 --packager）
