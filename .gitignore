@@ -89,6 +89,7 @@ vcpkg.json.bak
 
 
 test_date
+test_data/*
 EasyKiConverter_QT
 easyeda_convertlib.kicad_sym
 demo.kicad_sym
@@ -118,3 +119,4 @@ site/
 tools/python/respose/*
 tools/python/download_results.json
 tools/python/lceda_results.json
+
