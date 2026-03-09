@@ -517,57 +517,30 @@ QString FootprintGraphicsGenerator::generateModel3D(const Model3DData& model3D,
         rotZ += 360.0;
     }
 
-    // 计算 3D 模型的 offset
-
-    // 检测是否为异常的小值（来自特殊单位的 c_origin）
-
-    // 如果 model3D.translation() 的值远小于 bbox（< 100），说明已经转换为毫米单位
-
+    // 计算 3D 模型的偏移
+    // 需要区分相对偏移（像素单位）和绝对偏移（毫米单位）两种情况
     double finalOffsetX, finalOffsetY;
 
+    // 判断是否为绝对偏移（毫米单位）：值很小说明已经转换为毫米
     if (qAbs(model3D.translation().x) < 100 && qAbs(model3D.translation().y) < 100) {
-        // 异常值：translation 已经是毫米单位
-
-        // 对于异常封装，translation 可能是相对于焊盘中心的偏移，而不是相对于 bbox 的
-
-        // 需要计算焊盘中心相对于 bbox 左上角的偏移
-
-        double padsCenterX = bboxX + 3999.5;  // 使用固定的焊盘中心 (4000, 3000) 作为基准
-
-        double padsCenterY = bboxY + 2999.5;
-
-        // 将焊盘中心转换为毫米单位
-
-        double padsCenterX_mm = pxToMmRounded(padsCenterX - bboxX);
-
-        double padsCenterY_mm = pxToMmRounded(padsCenterY - bboxY);
-
-        // 最终偏移 = translation - 焊盘中心偏移
-
-        finalOffsetX = model3D.translation().x - padsCenterX_mm;
-
-        finalOffsetY = -(model3D.translation().y - padsCenterY_mm);  // Y 轴取反
-
+        // 绝对偏移：translation 已经是毫米单位
+        // 符号已居中对齐，直接使用绝对偏移值
+        finalOffsetX = model3D.translation().x;
+        finalOffsetY = -model3D.translation().y;  // Y 轴取反
     } else {
-        // 正常值：translation 和 bbox 都是像素单位，使用标准的 pxToMm 转换逻辑
-
+        // 相对偏移：translation 是像素单位，需要转换为毫米
+        // 计算相对于 bbox 的偏移
         double offsetX = model3D.translation().x - bboxX;
-
         double offsetY = model3D.translation().y - bboxY;
-
         finalOffsetX = pxToMmRounded(offsetX);
-
-        finalOffsetY = -pxToMmRounded(offsetY);  // Y 轴取反（正常情况）
+        finalOffsetY = -pxToMmRounded(offsetY);  // Y 轴取反
     }
 
     content += QString("  (model \"%1\"\n").arg(finalPath);
 
     content += QString("    (offset (xyz %1 %2 %3))\n")
-
                    .arg(finalOffsetX, 0, 'f', 3)
-
                    .arg(finalOffsetY, 0, 'f', 3)
-
                    .arg(z, 0, 'f', 3);
 
     content += "    (scale (xyz 1 1 1))\n";
