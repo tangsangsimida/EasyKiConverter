@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 
 # 应用标识符
 APP_ID="com.tangsangsimida.easykiconverter"
-OLD_APP_ID="com.tangsangsimida.EasyKiConverter"
+OLD_APP_ID="com.tangsangsimida.easykiconverter"
 
 # 辅助函数
 print_header() {

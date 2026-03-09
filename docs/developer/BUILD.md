@@ -186,7 +186,50 @@ cd EasyKiConverter_QT
 
 ## 编译项目
 
-### Windows + MinGW
+### 使用 Python 构建工具（推荐）
+
+项目提供了统一的 Python 构建管理工具，支持自动化构建、环境检查和日志管理。
+
+#### Windows
+
+```bash
+# 使用批处理包装器（推荐）
+tools\windows\build_project.bat                # 默认 Debug 构建
+tools\windows\build_project.bat -t Release     # Release 构建
+tools\windows\build_project.bat -c -y          # 强制清理并构建
+tools\windows\build_project.bat --check        # 仅检查依赖环境
+tools\windows\build_project.bat --config-only  # 仅执行 CMake 配置
+tools\windows\build_project.bat -t Release -i  # 构建并安装
+tools\windows\build_project.bat -v             # 详细日志模式
+```
+
+#### 跨平台（Python）
+
+```bash
+# 直接调用 Python 构建脚本
+python tools/python/build_project.py -t Release --parallel
+python tools/python/build_project.py --check
+python tools/python/build_project.py -c -y
+```
+
+**Python 构建脚本参数**:
+
+| 参数 | 说明 |
+|------|------|
+| `-t, --type` | 构建类型: Debug/Release/RelWithDebInfo/MinSizeRel |
+| `-c, --clean` | 清理构建目录 |
+| `-y, --yes` | 自动确认（与 -c 配合使用）|
+| `-i, --install` | 构建后执行安装 |
+| `-v, --verbose` | 详细日志输出 |
+| `--check` | 仅检查环境依赖 |
+| `--config-only` | 仅执行 CMake 配置 |
+| `-j, --parallel` | 并行编译线程数 |
+
+### 手动构建（CMake）
+
+如果您需要手动控制构建过程，可以使用以下方法：
+
+#### Windows + MinGW
 
 ```bash
 # 创建构建目录

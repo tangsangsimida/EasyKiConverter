@@ -4,7 +4,7 @@
 
 # 应用配置变量
 APP_NAME="easykiconverter"
-APP_DESKTOP_NAME="com.tangsangsimida.EasyKiConverter"
+APP_DESKTOP_NAME="com.tangsangsimida.easykiconverter"
 APP_INSTALL_DIR="/opt/easykiconverter"
 APP_BIN_LINK="/usr/bin/easykiconverter"
 APP_DESKTOP_FILE="/usr/share/applications/${APP_DESKTOP_NAME}.desktop"
