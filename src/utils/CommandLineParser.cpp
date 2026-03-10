@@ -1,4 +1,5 @@
 #include "CommandLineParser.h"
+
 #include <QCoreApplication>
 #include <QTextStream>
 
@@ -7,29 +8,18 @@ namespace EasyKiConverter {
 CommandLineParser::CommandLineParser(int argc, char* argv[])
     : m_debugOption(QStringList() << "d"
                                   << "debug",
-                    "启用调试模式（显示详细日志和控制台窗口）"),
-      m_logLevelOption(QStringList() << "log-level",
+                    "启用调试模式（显示详细日志和控制台窗口）")
+    , m_logLevelOption(QStringList() << "log-level",
                        "设置日志级别 (trace/debug/info/warn/error/fatal)",
                        "level",
-                       "info"),
-      m_logFileOption(QStringList() << "log-file",
-                      "指定日志文件路径",
-                      "path"),
-      m_configOption(QStringList() << "config",
-                     "指定配置文件路径",
-                     "path"),
-      m_languageOption(QStringList() << "language",
-                       "设置界面语言 (zh_CN/en)",
-                       "lang",
-                       "zh_CN"),
-      m_themeOption(QStringList() << "theme",
-                    "设置界面主题 (dark/light)",
-                    "theme",
-                    "dark"),
-      m_portableOption(QStringList() << "portable",
-                       "便携模式（配置文件保存在程序目录）") {
-    m_parser.setApplicationDescription(QCoreApplication::translate("main",
-                                                                    "EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具"));
+                       "info")
+    , m_logFileOption(QStringList() << "log-file", "指定日志文件路径", "path")
+    , m_configOption(QStringList() << "config", "指定配置文件路径", "path")
+    , m_languageOption(QStringList() << "language", "设置界面语言 (zh_CN/en)", "lang", "zh_CN")
+    , m_themeOption(QStringList() << "theme", "设置界面主题 (dark/light)", "theme", "dark")
+    , m_portableOption(QStringList() << "portable", "便携模式（配置文件保存在程序目录）") {
+    m_parser.setApplicationDescription(
+        QCoreApplication::translate("main", "EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具"));
 
     // 添加 Qt 内置的帮助和版本选项
     m_parser.addHelpOption();

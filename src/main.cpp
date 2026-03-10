@@ -5,8 +5,8 @@
 #include "src/ui/viewmodels/ExportProgressViewModel.h"
 #include "src/ui/viewmodels/ExportSettingsViewModel.h"
 #include "src/ui/viewmodels/ThemeSettingsViewModel.h"
-#include "src/utils/logging/Log.h"
 #include "src/utils/CommandLineParser.h"
+#include "src/utils/logging/Log.h"
 
 #include <QApplication>
 #include <QDebug>
@@ -29,10 +29,10 @@
 #include <QUrl>
 
 #ifdef _WIN32
+#    include <conio.h>
 #    include <fcntl.h>
 #    include <io.h>
 #    include <windows.h>
-#    include <conio.h>
 #endif
 
 namespace {
@@ -124,7 +124,10 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
     fileAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
     logger->addAppender(fileAppender);
 
-    LOG_INFO(LogModule::Core, "日志系统已初始化 - 级别: {}, 日志文件: {}", logLevelStr.isEmpty() ? "default" : logLevelStr, logPath);
+    LOG_INFO(LogModule::Core,
+             "日志系统已初始化 - 级别: {}, 日志文件: {}",
+             logLevelStr.isEmpty() ? "default" : logLevelStr,
+             logPath);
 
     // 安装 Qt 日志适配器（将 qDebug/qWarning/qCritical 重定向到新系统）
     QtLogAdapter::install();
