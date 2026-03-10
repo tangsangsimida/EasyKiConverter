@@ -211,11 +211,28 @@ EasyKiConverter 自动将 EasyEDA 图层映射到 KiCad 图层。支持的图层
 
 ### 调试设置
 
-仅限开发者使用：
+**方法 1：命令行参数（推荐）**
+```bash
+# 启用调试模式
+EasyKiConverter --debug
 
-1. 在设置中启用调试导出
-2. 原始数据和导出数据将被保存
-3. 检查调试目录以获取详细日志
+# 设置日志级别
+EasyKiConverter --log-level debug
+
+# 指定日志文件
+EasyKiConverter --log-file /path/to/log.txt
+```
+
+**方法 2：环境变量**
+```bash
+# Windows
+set EASYKICONVERTER_DEBUG_MODE=true
+
+# Linux/macOS
+export EASYKICONVERTER_DEBUG_MODE=true
+```
+
+更多详情请参见 [调试模式文档](DEBUG_MODE.md)。
 
 ## 在 KiCad 中使用转换后的元件
 
