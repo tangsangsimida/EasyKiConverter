@@ -96,4 +96,74 @@ QStringList CommandLineParser::positionalArguments() const {
     return m_parser.positionalArguments();
 }
 
+bool CommandLineParser::validate() const {
+    // 验证日志级别
+    if (m_parser.isSet(m_logLevelOption)) {
+        QString level = logLevel();
+        QStringList validLevels = {"trace", "debug", "info", "warn", "error", "fatal"};
+        if (!validLevels.contains(level)) {
+            return false;
+        }
+    }
+
+    // 验证语言设置
+    if (m_parser.isSet(m_languageOption)) {
+        QString lang = language();
+        QStringList validLangs = {"zh_CN", "en"};
+        if (!validLangs.contains(lang)) {
+            return false;
+        }
+    }
+
+    // 验证主题设置
+    if (m_parser.isSet(m_themeOption)) {
+        QString theme = this->theme();
+        QStringList validThemes = {"dark", "light"};
+        if (!validThemes.contains(theme)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+QString CommandLineParser::validationError() const {
+    QStringList errors;
+
+    // 检查日志级别
+    if (m_parser.isSet(m_logLevelOption)) {
+        QString level = logLevel();
+        QStringList validLevels = {"trace", "debug", "info", "warn", "error", "fatal"};
+        if (!validLevels.contains(level)) {
+            errors.append(QString("无效的日志级别: %1（有效值: %2）")
+                               .arg(level)
+                               .arg(validLevels.join(", ")));
+        }
+    }
+
+    // 检查语言设置
+    if (m_parser.isSet(m_languageOption)) {
+        QString lang = language();
+        QStringList validLangs = {"zh_CN", "en"};
+        if (!validLangs.contains(lang)) {
+            errors.append(QString("无效的语言设置: %1（有效值: %2）")
+                               .arg(lang)
+                               .arg(validLangs.join(", ")));
+        }
+    }
+
+    // 检查主题设置
+    if (m_parser.isSet(m_themeOption)) {
+        QString theme = this->theme();
+        QStringList validThemes = {"dark", "light"};
+        if (!validThemes.contains(theme)) {
+            errors.append(QString("无效的主题设置: %1（有效值: %2）")
+                               .arg(theme)
+                               .arg(validThemes.join(", ")));
+        }
+    }
+
+    return errors.join("\n");
+}
+
 }  // namespace EasyKiConverter

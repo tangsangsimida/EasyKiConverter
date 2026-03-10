@@ -188,20 +188,12 @@ int main(int argc, char* argv[]) {
     app.setOrganizationName("EasyKiConverter");
     app.setOrganizationDomain("easykiconverter.com");
 
+    // 创建命令行参数解析器（必须在检查showHelp之前）
+    EasyKiConverter::CommandLineParser cmdParser(argc, argv);
+
     if (showHelp) {
-        QString helpText =
-            "EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具\n\n"
-            "用法: easykiconverter [选项]\n\n"
-            "选项:\n"
-            "  -h, --help          显示帮助信息\n"
-            "  -v, --version       显示版本信息\n"
-            "  -d, --debug         启用调试模式\n"
-            "  --log-level <level> 设置日志级别 (trace/debug/info/warn/error/fatal)\n"
-            "  --log-file <path>   指定日志文件路径\n"
-            "  --config <path>     指定配置文件路径\n"
-            "  --language <lang>   设置界面语言 (zh_CN/en)\n"
-            "  --theme <theme>     设置界面主题 (dark/light)\n"
-            "  --portable          便携模式\n";
+        // 使用 CommandLineParser 生成的帮助文本
+        QString helpText = cmdParser.helpText();
 
 #ifdef _WIN32
         // 将帮助信息写入文件
@@ -214,12 +206,11 @@ int main(int argc, char* argv[]) {
         }
 
         // 在控制台模式下，直接输出到标准输出
-        // 不需要 AttachConsole，因为控制台模式下已经自动附加
-        QTextStream out(stdout);
-        out << helpText;
+        QTextStream consoleOut(stdout);
+        consoleOut << helpText;
 #else
-        QTextStream out(stdout);
-        out << helpText;
+        QTextStream consoleOut(stdout);
+        consoleOut << helpText;
 #endif
         return 0;
     }
@@ -229,17 +220,14 @@ int main(int argc, char* argv[]) {
 
 #ifdef _WIN32
         // 在控制台模式下，直接输出到标准输出
-        QTextStream out(stdout);
-        out << versionText;
+        QTextStream consoleOut(stdout);
+        consoleOut << versionText;
 #else
-        QTextStream out(stdout);
-        out << versionText;
+        QTextStream consoleOut(stdout);
+        consoleOut << versionText;
 #endif
         return 0;
     }
-
-    // 解析命令行参数
-    EasyKiConverter::CommandLineParser cmdParser(argc, argv);
 
     // 解析所有命令行参数
     if (!cmdParser.parse()) {
@@ -256,6 +244,26 @@ int main(int argc, char* argv[]) {
 #endif
         QTextStream err(stderr);
         err << "错误: 无效的命令行参数\n";
+        err << cmdParser.helpText();
+        return 1;
+    }
+
+    // 验证参数值
+    if (!cmdParser.validate()) {
+#ifdef _WIN32
+        // 尝试附加到父进程的控制台（如果是从命令行启动的）
+        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+            // 如果附加失败，创建新的控制台窗口
+            AllocConsole();
+            SetConsoleTitleA("EasyKiConverter - Error");
+        }
+        // 重新打开标准输出
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+#endif
+        QTextStream err(stderr);
+        err << "错误: 参数值无效\n";
+        err << cmdParser.validationError() << "\n\n";
         err << cmdParser.helpText();
         return 1;
     }

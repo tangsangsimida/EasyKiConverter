@@ -38,6 +38,18 @@ public:
     bool parse();
 
     /**
+     * @brief 验证参数值的有效性
+     * @return 所有参数有效返回 true，否则返回 false
+     */
+    bool validate() const;
+
+    /**
+     * @brief 获取验证错误信息
+     * @return 错误信息字符串
+     */
+    QString validationError() const;
+
+    /**
      * @brief 是否启用调试模式
      * @return 启用返回 true，否则返回 false
      */
