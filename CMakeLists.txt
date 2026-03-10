@@ -146,19 +146,30 @@ if(DEFINED ENV{QXLSX_ROOT})
     message(STATUS "Using local QXlsx source from: $ENV{QXLSX_ROOT}")
     FetchContent_Declare(QXlsx SOURCE_DIR $ENV{QXLSX_ROOT})
 else()
-    # 从 GitHub 下载
-    message(STATUS "Downloading QXlsx from GitHub")
-    FetchContent_Declare(
-        QXlsx
-        GIT_REPOSITORY https://github.com/QtExcel/QXlsx.git
-        GIT_TAG        master
-        GIT_SHALLOW    TRUE
-        SOURCE_SUBDIR  QXlsx
-    )
+    # 尝试使用 find_package (Flatpak 构建)
+    message(STATUS "FLATPAK_BUILD=${FLATPAK_BUILD}, CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
+    find_package(QXlsxQt6 QUIET)
+    if(QXlsxQt6_FOUND)
+        # 创建 QXlsx::QXlsx 别名以兼容现有代码
+        message(STATUS "Found QXlsxQt6, creating QXlsx::QXlsx alias")
+        if(NOT TARGET QXlsx::QXlsx)
+            add_library(QXlsx INTERFACE IMPORTED)
+            add_library(QXlsx::QXlsx ALIAS QXlsx)
+            target_link_libraries(QXlsx INTERFACE QXlsxQt6)
+        endif()
+    else()
+        message(STATUS "QXlsxQt6 not found, downloading from GitHub")
+        # 从 GitHub 下载
+        FetchContent_Declare(
+            QXlsx
+            GIT_REPOSITORY https://github.com/QtExcel/QXlsx.git
+            GIT_TAG        master
+            GIT_SHALLOW    TRUE
+            SOURCE_SUBDIR  QXlsx
+        )
+        FetchContent_MakeAvailable(QXlsx)
+    endif()
 endif()
-
-# 使 QXlsx 可用
-FetchContent_MakeAvailable(QXlsx)
 
 # 添加源码模块（包含所有子模块的 CMakeLists.txt）
 add_subdirectory(src)

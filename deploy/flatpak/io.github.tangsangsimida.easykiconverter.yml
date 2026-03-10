@@ -1,4 +1,4 @@
-app-id: com.tangsangsimida.easykiconverter
+app-id: io.github.tangsangsimida.easykiconverter
 runtime: org.kde.Platform
 runtime-version: '6.6'
 sdk: org.kde.Sdk
@@ -12,6 +12,21 @@ finish-args:
   - --filesystem=home
 
 modules:
+  - name: qxlsx
+    buildsystem: cmake-ninja
+    builddir: true
+    subdir: QXlsx
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_INSTALL_PREFIX=/app
+      - -DBUILD_SHARED_LIBS=OFF
+      - -DBUILD_EXAMPLES=OFF
+    sources:
+      - type: archive
+        url: https://github.com/QtExcel/QXlsx/archive/refs/heads/master.zip
+        sha256: 464005b533aefc2c96423dc0a4b238231b3d310a69881102d6430cb279b1701b
+        strip-components: 1
+
   - name: easykiconverter
     buildsystem: cmake-ninja
     builddir: true
@@ -19,11 +34,13 @@ modules:
       - -DCMAKE_BUILD_TYPE=Release
       - -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
       - -DCMAKE_INSTALL_PREFIX=/app
-    build-options:
-      cflags: -O2 -g
-      cxxflags: -O2 -g
-      build-args:
-        - --share=network
+      - -DCMAKE_PREFIX_PATH=/app
+      - -DFLATPAK_BUILD=1
+    sources:
+      - type: git
+        url: https://github.com/tangsangsimida/EasyKiConverter.git
+        branch: master
+        commit: df794e7a99d0ce94b7b29fa3f7b223c0ad709b21
     build-commands:
       - cmake --build . --parallel
       - cmake --install .
@@ -38,15 +55,18 @@ modules:
         ls -lh /app/bin/easykiconverter
     post-install:
       - |
+        # 安装许可证文件
+        install -Dm0644 LICENSE -t ${FLATPAK_DEST}/share/licenses/io.github.tangsangsimida.easykiconverter
+      - |
         # 创建 desktop 文件
         mkdir -p /app/share/applications
-        cat > /app/share/applications/com.tangsangsimida.easykiconverter.desktop <<EOF
+        cat > /app/share/applications/io.github.tangsangsimida.easykiconverter.desktop <<EOF
         [Desktop Entry]
         Type=Application
         Name=EasyKiConverter
         Comment=Convert LCSC and EasyEDA components to KiCad libraries
         Exec=easykiconverter
-        Icon=com.tangsangsimida.easykiconverter
+        Icon=io.github.tangsangsimida.easykiconverter
         Categories=Development;Electronics;
         Terminal=false
         EOF
@@ -54,15 +74,12 @@ modules:
         # 复制图标（使用绝对路径）
         mkdir -p /app/share/icons/hicolor/256x256/apps
         if [ -f "/run/build/easykiconverter/resources/icons/app_icon.png" ]; then
-          cp /run/build/easykiconverter/resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/com.tangsangsimida.easykiconverter.png
+          cp /run/build/easykiconverter/resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png
         elif [ -f "resources/icons/app_icon.png" ]; then
-          cp resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/com.tangsangsimida.easykiconverter.png
+          cp resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png
         else
           echo "Warning: Icon file not found, skipping icon installation"
         fi
 
         # 更新桌面数据库
         update-desktop-database /app/share/applications || true
-    sources:
-      - type: dir
-        path: ../..
