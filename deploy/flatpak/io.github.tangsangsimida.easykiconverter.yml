@@ -3,6 +3,8 @@ runtime: org.kde.Platform
 runtime-version: '6.6'
 sdk: org.kde.Sdk
 command: easykiconverter
+# --filesystem=home is required for importing/exporting KiCad library files
+# Users need to access their project directories and save converted files
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
@@ -44,7 +46,6 @@ modules:
     sources:
       - type: git
         url: https://github.com/tangsangsimida/EasyKiConverter.git
-        branch: master
         commit: c8267ad763884cf10a9485c2c0d226013a6ad8a8
     build-commands:
       - cmake --build . --parallel
@@ -62,6 +63,9 @@ modules:
       - |
         # 安装许可证文件
         install -Dm0644 /run/build/easykiconverter/LICENSE -t ${FLATPAK_DEST}/share/licenses/io.github.tangsangsimida.easykiconverter
+      - |
+        # 安装 AppStream 元数据
+        install -Dm0644 /run/build/easykiconverter/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml -t ${FLATPAK_DEST}/share/metainfo/
       - |
         # 创建 desktop 文件
         mkdir -p /app/share/applications

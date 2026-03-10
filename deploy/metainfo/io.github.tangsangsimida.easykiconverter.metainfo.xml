@@ -39,9 +39,34 @@
   <launchable type="desktop-id">io.github.tangsangsimida.easykiconverter.desktop</launchable>
 
   <screenshots>
+    <!-- 过几天周末了再来做截图宣传演示视频～～～～ -->
+    <!-- 截图1：主应用窗口 -->
+    <!-- TODO: 替换为实际的应用程序截图，显示主窗口和元件转换界面 -->
+    <!-- 推荐：捕获完整主窗口，包含元件输入、列表和导出按钮 -->
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/master/resources/imgs/background.jpg</image>
-      <caption>Main application window</caption>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/master/resources/imgs/background.jpg</image>
+      <caption>Main application window with component conversion interface</caption>
+    </screenshot>
+    <!-- 截图2：元件输入和列表管理 -->
+    <!-- TODO: 替换为实际的应用程序截图，显示元件输入字段和带有 LCSC 预览图的元件列表 -->
+    <!-- 推荐：显示列表中的几个元件及其预览图和数据手册链接 -->
+    <screenshot>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/master/resources/imgs/background.jpg</image>
+      <caption>Component input and list management</caption>
+    </screenshot>
+    <!-- 截图3：导出设置和进度跟踪 -->
+    <!-- TODO: 替换为实际的应用程序截图，显示导出设置面板和转换过程中的进度跟踪 -->
+    <!-- 推荐：显示导出选项、进度条和实时状态更新 -->
+    <screenshot>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/master/resources/imgs/background.jpg</image>
+      <caption>Export settings and progress tracking</caption>
+    </screenshot>
+    <!-- 截图4：深色模式主题支持 -->
+    <!-- TODO: 替换为实际的应用程序截图，显示深色模式主题下的应用程序 -->
+    <!-- 推荐：捕获相同的主窗口界面，但启用深色主题 -->
+    <screenshot>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/master/resources/imgs/background.jpg</image>
+      <caption>Dark mode theme support</caption>
     </screenshot>
   </screenshots>
 
@@ -74,12 +99,103 @@
   <releases>
     <release version="3.0.8" date="2026-03-09">
       <description>
-        <p>Release 3.0.8 - Unified app identifier to lowercase format and optimized 3D model offset calculation</p>
+        <p>命令行参数支持、统一应用标识符为小写格式、路径处理优化</p>
+        <ul>
+          <li>新增完整的命令行参数解析功能（--debug、--log-level、--config、--language、--theme、--portable、--help、--version）</li>
+          <li>统一应用标识符为小写格式（easykiconverter），提高跨平台兼容性</li>
+          <li>新增 Linux 桌面图标修复脚本（fix-desktop-icon.sh）</li>
+          <li>修复 Windows 路径处理问题（多开头斜杠、打开导出目录错误）</li>
+          <li>优化退出对话框键盘导航和 ESC 键处理</li>
+          <li>优化 DEB 包卸载流程和版本号格式</li>
+          <li>优化 3D 模型偏移计算和符号封装导出精度</li>
+          <li>启动时自动聚焦到元器件ID输入框</li>
+          <li>实现内存式数据手册和预览图下载（每个元件最多 3 张预览图）</li>
+        </ul>
       </description>
     </release>
-    <release version="3.0.7" date="2026-03-07">
+    <release version="3.0.7" date="2026-02-15">
       <description>
-        <p>Release 3.0.7 - Linux packaging improvements</p>
+        <p>解决程序退出时的 SIGSEGV 崩溃问题</p>
+        <ul>
+          <li>重构 main.cpp 中的对象生命周期管理，实施显式的"逆序销毁"机制</li>
+          <li>先销毁 UI 相关的 ViewModel，再销毁后端 Service，最后清理日志系统</li>
+          <li>移除 ComponentListViewModel 析构函数中不稳定的 QThreadPool::waitForDone 调用</li>
+          <li>确保所有后台线程在 Qt 核心基础设施销毁前安全停止</li>
+          <li>使用 QPointer 安全模式替代阻塞式线程等待</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.5" date="2026-02-12">
+      <description>
+        <p>MainWindow 模块化重构、核心导入导出模块重构、弱网容错改进</p>
+        <ul>
+          <li>MainWindow 模块化重构，拆分为独立组件（TitleBar、ComponentInputCard、ExportSettingsCard 等）</li>
+          <li>核心导入导出模块单一职责重构（EasyedaSymbolImporter、EasyedaFootprintImporter）</li>
+          <li>新增 BomParser 模块，优化 BOM 文件导入流程</li>
+          <li>NetworkWorker 添加超时机制（组件信息 15s，3D 模型 30s）</li>
+          <li>FetchWorker 超时后允许重试，增加超时时间</li>
+          <li>速率限制改为真正的指数退避策略（初始 1s，上限 8s）</li>
+          <li>递增重试延迟（3s / 5s / 10s）</li>
+          <li>重试延迟添加随机抖动（+/-20%），缓解惊群效应</li>
+          <li>修复 thread_local QNAM 内存泄漏</li>
+          <li>3D 模型导出失败不再阻止符号/封装导出</li>
+          <li>引入 QtTest 测试框架，支持单元测试、集成测试、基准测试</li>
+          <li>新增开发工具（版本管理、代码行数分析、编码转换、QML 翻译修复）</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.3" date="2026-02-08">
+      <description>
+        <p>LCSC 预览图功能、组件列表功能增强、响应式布局</p>
+        <ul>
+          <li>新增 LCSC 元件预览图获取功能（支持重试机制和 Fallback 爬虫模式）</li>
+          <li>新增缩略图生成工具（ThumbnailGenerator）</li>
+          <li>组件列表支持右键复制组件 ID 到剪贴板</li>
+          <li>组件列表从固定 5 列改为自适应网格布局</li>
+          <li>添加 8 个方向的窗口拖拽调整手柄</li>
+          <li>ComponentListViewModel 从 QQmlListProperty 迁移至 QAbstractListModel</li>
+          <li>修复导出服务统计缺失问题</li>
+          <li>优化预加载数据使用和数据流</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.2" date="2026-01-27">
+      <description>
+        <p>修复批量导出卡顿问题</p>
+        <ul>
+          <li>将 FetchWorker 线程池从 32 降低至 5，防止服务器端限流</li>
+          <li>为网络请求添加自动重试逻辑（3s/5s/10s 递增延迟，最多重试 3 次）</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.1" date="2026-01-27">
+      <description>
+        <p>网络性能大幅提升（总耗时降低 94.5%，吞吐量提升 1712%）</p>
+        <ul>
+          <li>优化线程池配置至 3 线程，总耗时从 263.72秒降至 14.43秒</li>
+          <li>降低超时时间（组件信息 15s，3D 模型 30s）</li>
+          <li>实现速率限制检测机制（HTTP 429 指数退避）</li>
+          <li>启用网络诊断功能，记录每个网络请求的诊断信息</li>
+          <li>WriteWorker 优化：移除局部线程池，改为串行写入</li>
+          <li>FetchWorker 优化：实现 QNetworkAccessManager 的 thread_local 缓存</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.0" date="2026-01-18">
+      <description>
+        <p>性能优化和架构改进（总耗时减少 54%，吞吐量提升 117%）</p>
+        <ul>
+          <li>实现多阶段流水线并行架构（Fetch 32 线程、Process CPU 核心数、Write 8 线程）</li>
+          <li>ProcessWorker 移除网络请求，改为纯 CPU 密集型任务</li>
+          <li>使用 QSharedPtr 传递数据，内存占用减少 50%</li>
+          <li>动态队列大小，吞吐量提升 15-25%</li>
+          <li>并行写入文件（符号、封装、3D 模型同时写入）</li>
+          <li>完整的符号转换、封装生成、3D 模型支持</li>
+          <li>完整的图层映射系统（50+ 图层）</li>
+          <li>多边形焊盘、椭圆弧计算、文本层处理</li>
+          <li>现代化 Qt Quick 界面，支持深色/浅色主题切换</li>
+          <li>完整的测试框架（单元测试、集成测试、性能测试）</li>
+        </ul>
       </description>
     </release>
   </releases>
