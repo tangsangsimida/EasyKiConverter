@@ -135,9 +135,7 @@ QString CommandLineParser::validationError() const {
         QString level = logLevel();
         QStringList validLevels = {"trace", "debug", "info", "warn", "error", "fatal"};
         if (!validLevels.contains(level)) {
-            errors.append(QString("无效的日志级别: %1（有效值: %2）")
-                               .arg(level)
-                               .arg(validLevels.join(", ")));
+            errors.append(QString("无效的日志级别: %1（有效值: %2）").arg(level).arg(validLevels.join(", ")));
         }
     }
 
@@ -146,9 +144,7 @@ QString CommandLineParser::validationError() const {
         QString lang = language();
         QStringList validLangs = {"zh_CN", "en"};
         if (!validLangs.contains(lang)) {
-            errors.append(QString("无效的语言设置: %1（有效值: %2）")
-                               .arg(lang)
-                               .arg(validLangs.join(", ")));
+            errors.append(QString("无效的语言设置: %1（有效值: %2）").arg(lang).arg(validLangs.join(", ")));
         }
     }
 
@@ -157,9 +153,7 @@ QString CommandLineParser::validationError() const {
         QString theme = this->theme();
         QStringList validThemes = {"dark", "light"};
         if (!validThemes.contains(theme)) {
-            errors.append(QString("无效的主题设置: %1（有效值: %2）")
-                               .arg(theme)
-                               .arg(validThemes.join(", ")));
+            errors.append(QString("无效的主题设置: %1（有效值: %2）").arg(theme).arg(validThemes.join(", ")));
         }
     }
 
