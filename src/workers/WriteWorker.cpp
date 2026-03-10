@@ -705,7 +705,7 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
         debugInfo["model3DData"] = model3DInfo;
     }
 
-    QString debugInfoFilePath = QString("%1/debug_info.json").arg(componentDebugDir);
+    QString debugInfoFilePath = QString("%1/%2_debug_info.json").arg(componentDebugDir, status.componentId);
     QFile debugInfoFile(debugInfoFilePath);
     if (debugInfoFile.open(QIODevice::WriteOnly)) {
         QJsonDocument debugDoc(debugInfo);

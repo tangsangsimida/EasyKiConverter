@@ -11,7 +11,23 @@ Debug mode allows you to export detailed debugging information during the export
 
 ## Configuration Methods
 
-### Method 1: Environment Variable (Recommended)
+### Method 1: Command Line Arguments (Recommended)
+
+Use startup arguments to quickly enable debug mode:
+
+```bash
+# Use --debug argument
+easykiconverter --debug
+
+# Use -d short option
+easykiconverter -d
+```
+
+#### Parameter Priority
+
+Command line arguments take precedence over other configuration methods.
+
+### Method 2: Environment Variable (Fallback)
 
 Debug mode is controlled by the `EASYKICONVERTER_DEBUG_MODE` environment variable.
 
@@ -88,13 +104,16 @@ If the environment variable is not set, debug mode can be controlled via the con
 
 Debug mode is enabled in the following priority order:
 
-1. **Environment Variable** (Highest Priority)
+1. **Command Line Arguments** (Highest Priority)
+   - `--debug` or `-d` argument
+
+2. **Environment Variable**
    - `EASYKICONVERTER_DEBUG_MODE` environment variable
 
-2. **Configuration File**
+3. **Configuration File**
    - `debugMode` setting in config.json
 
-3. **Default**
+4. **Default Value**
    - `false` (disabled)
 
 ## Debug Output Location

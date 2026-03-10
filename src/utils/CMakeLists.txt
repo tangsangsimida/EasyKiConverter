@@ -53,6 +53,8 @@ add_library(EasyKiConverterSafeUtils STATIC
     FileUtils.cpp
     FileUtils.h
     BoundedThreadSafeQueue.h
+    CommandLineParser.cpp
+    CommandLineParser.h
 )
 
 set_target_properties(EasyKiConverterSafeUtils PROPERTIES
