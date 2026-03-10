@@ -230,6 +230,32 @@ cmake --build . --config Debug -- -j$(nproc)
 ./bin/EasyKiConverter
 ```
 
+### 使用命令行参数
+
+应用程序支持通过命令行参数配置启动行为：
+
+```bash
+# 启用调试模式
+./bin/EasyKiConverter.exe --debug
+
+# 设置日志级别
+./bin/EasyKiConverter.exe --log-level debug
+
+# 设置语言为英文
+./bin/EasyKiConverter.exe --language en
+
+# 设置主题为浅色
+./bin/EasyKiConverter.exe --theme light
+
+# 显示帮助信息
+./bin/EasyKiConverter.exe --help
+
+# 显示版本信息
+./bin/EasyKiConverter.exe --version
+```
+
+更多命令行参数说明，请参见 [调试模式文档](DEBUG_MODE.md)。
+
 ### 基本使用流程
 
 1. **输入元件编号**

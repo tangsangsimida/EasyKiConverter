@@ -61,12 +61,16 @@ bool ConfigService::loadConfig(const QString& path) {
         m_config[it.key()] = it.value();
     }
 
+    // 移除 debugMode 字段，因为它不应该从配置文件加载
+    // 调试模式完全由命令行参数和环境变量控制
+    m_config.remove("debugMode");
+
     m_configPath = configPath;
 
     qDebug() << "Config loaded from:" << configPath;
     emit configChanged();
 
-    // 释放锁后保存，确保补全缺失的字段（如 debugMode）到文件中
+    // 释放锁后保存，确保补全缺失的字段到文件中（但不包含 debugMode）
     locker.unlock();
     saveConfig();
 
@@ -78,7 +82,11 @@ bool ConfigService::saveConfig(const QString& path) {
 
     QMutexLocker locker(&m_configMutex);
 
-    QJsonDocument doc(m_config);
+    // 创建配置的副本，移除 debugMode 字段
+    QJsonObject configToSave = m_config;
+    configToSave.remove("debugMode");
+
+    QJsonDocument doc(configToSave);
 
     QFile file(configPath);
     if (!file.open(QIODevice::WriteOnly)) {
@@ -241,14 +249,19 @@ bool ConfigService::getDebugMode() const {
     return m_config["debugMode"].toBool(false);
 }
 
-void ConfigService::setDebugMode(bool enabled) {
+void ConfigService::setDebugMode(bool enabled, bool save) {
     QMutexLocker locker(&m_configMutex);
     m_config["debugMode"] = enabled;
     emit configChanged();
 
-    // 释放锁后保存
-    locker.unlock();
-    saveConfig();
+    // 注意：调试模式不应该保存到配置文件
+    // 它完全由命令行参数和环境变量控制
+    // 如果 save=true，我们需要从配置中移除 debugMode 字段
+    if (save) {
+        m_config.remove("debugMode");
+        locker.unlock();
+        saveConfig();
+    }
 }
 
 int ConfigService::getWindowWidth() const {
@@ -336,7 +349,9 @@ void ConfigService::initializeDefaultConfig() {
     m_config["exportDatasheet"] = false;
     m_config["overwriteExistingFiles"] = false;
     m_config["darkMode"] = false;
-    m_config["debugMode"] = false;
+    // 注意：debugMode 不在这里设置，因为它不应该保存在配置文件中
+    // 它完全由命令行参数和环境变量控制
+
     // 窗口配置默认值（-1 或 -9999 表示使用默认值）
     m_config["windowWidth"] = -1;
     m_config["windowHeight"] = -1;

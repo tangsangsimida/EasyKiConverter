@@ -185,8 +185,9 @@ public:
      * @brief 设置是否启用调试模式
      *
      * @param enabled 是否启用
+     * @param save 是否保存到配置文件（默认 true）
      */
-    void setDebugMode(bool enabled);
+    void setDebugMode(bool enabled, bool save = true);
 
     /**
      * @brief 获取窗口宽度

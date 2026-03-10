@@ -211,11 +211,36 @@ Intelligent extraction of component IDs from clipboard text:
 
 ### Debug Settings
 
-For developers only:
 
+**Method 1: Command Line Arguments (Recommended)**
+```bash
+# Enable debug mode
+EasyKiConverter --debug
+
+# Set log level
+EasyKiConverter --log-level debug
+
+# Specify log file
+EasyKiConverter --log-file /path/to/log.txt
+```
+
+**Method 2: Environment Variable**
+```bash
+# Windows
+set EASYKICONVERTER_DEBUG_MODE=true
+
+# Linux/macOS
+export EASYKICONVERTER_DEBUG_MODE=true
+```
+
+**Method 3: UI Settings**
 1. Enable debug export in settings
 2. Original and exported data will be saved
 3. Check debug directory for detailed logs
+
+Note: Command line arguments take precedence over other configuration methods.
+
+For more details, please see the [Debug Mode Documentation](DEBUG_MODE_en.md).
 
 ## Using Converted Components in KiCad
 

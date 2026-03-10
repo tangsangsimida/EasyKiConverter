@@ -333,6 +333,22 @@ Validate file paths before export.
 
 ## Configuration Management
 
+### Command Line Arguments
+
+Support configuring application startup behavior via command line arguments.
+
+**Features:**
+- Debug mode control
+- Log level settings
+- Log file path specification
+- Config file path specification
+- Interface language settings
+- Interface theme settings
+- Portable mode enablement
+- Help and version information display
+
+Command line arguments take precedence over other configuration methods, suitable for automation scripts and quick configuration.
+
 ### User Preferences
 
 Save and load user preferences.

@@ -44,6 +44,32 @@ If you prefer to build from source, follow the [Build Guide](../developer/BUILD_
 
 Run EasyKiConverter from your applications menu or by double-clicking the executable.
 
+#### Using Command Line Arguments
+
+EasyKiConverter supports configuring startup behavior via command line arguments:
+
+```bash
+# Enable debug mode
+./EasyKiConverter.exe --debug
+
+# Set log level
+./EasyKiConverter.exe --log-level debug
+
+# Set language to English
+./EasyKiConverter.exe --language en
+
+# Set theme to light
+./EasyKiConverter.exe --theme light
+
+# Display help information
+./EasyKiConverter.exe --help
+
+# Display version information
+./EasyKiConverter.exe --version
+```
+
+For more command line argument information, please see the [Debug Mode Documentation](DEBUG_MODE_en.md).
+
 ### Step 2: Add Components
 
 There are three ways to add components:

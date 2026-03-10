@@ -6,6 +6,20 @@ This document records the additions, fixes, and changes in each version of EasyK
 
 ### Added
 
+- **Command Line Arguments Support**
+  - Added complete command line argument parsing functionality
+  - Support enabling debug mode via `--debug` or `-d` argument
+  - Support setting log level via `--log-level` argument
+  - Support specifying log file path via `--log-file` argument
+  - Support specifying config file path via `--config` argument
+  - Support setting interface language via `--language` argument
+  - Support setting interface theme via `--theme` argument
+  - Support enabling portable mode via `--portable` argument
+  - Support displaying help information via `--help` and `-h` arguments
+  - Support displaying version information via `--version` and `-v` arguments
+  - Command line arguments take precedence over environment variable settings
+  - Added CommandLineParser utility class for argument parsing
+
 - **Unified App Identifier to Lowercase**
   - Unified all platform app identifiers from uppercase `EasyKiConverter` to lowercase `easykiconverter`
   - Updated AppStream metadata, desktop files, and icon names

@@ -11,7 +11,23 @@
 
 ## 配置方法
 
-### 方法 1：环境变量（推荐）
+### 方法 1：命令行参数（推荐）
+
+使用启动参数快速启用调试模式：
+
+```bash
+# 使用 --debug 参数
+easykiconverter --debug
+
+# 使用 -d 短选项
+easykiconverter -d
+```
+
+#### 参数优先级
+
+命令行参数优先于其他配置方法。
+
+### 方法 2：环境变量（备用）
 
 调试模式由 `EASYKICONVERTER_DEBUG_MODE` 环境变量控制。
 
@@ -88,13 +104,16 @@ cmake -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64" 
 
 调试模式按以下优先级顺序启用：
 
-1. **环境变量**（最高优先级）
+1. **命令行参数**（最高优先级）
+   - `--debug` 或 `-d` 参数
+
+2. **环境变量**
    - `EASYKICONVERTER_DEBUG_MODE` 环境变量
 
-2. **配置文件**
+3. **配置文件**
    - config.json 中的 `debugMode` 设置
 
-3. **默认值**
+4. **默认值**
    - `false`（禁用）
 
 ## 调试输出位置

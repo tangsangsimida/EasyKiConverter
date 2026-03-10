@@ -120,3 +120,6 @@ tools/python/respose/*
 tools/python/download_results.json
 tools/python/lceda_results.json
 
+tools/python/response/*
+tools/python/datasheet/*
+tools/python/imgs/*
