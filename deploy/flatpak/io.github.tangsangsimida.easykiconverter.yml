@@ -21,6 +21,11 @@ modules:
       - -DCMAKE_INSTALL_PREFIX=/app
       - -DBUILD_SHARED_LIBS=OFF
       - -DBUILD_EXAMPLES=OFF
+    post-install:
+      - |
+        # 复制所有头文件以确保编译成功
+        cp -r ../header/* /app/include/QXlsxQt6/
+        cp -r ../source/*.h /app/include/QXlsxQt6/ 2>/dev/null || true
     sources:
       - type: archive
         url: https://github.com/QtExcel/QXlsx/archive/refs/heads/master.zip
@@ -40,7 +45,7 @@ modules:
       - type: git
         url: https://github.com/tangsangsimida/EasyKiConverter.git
         branch: master
-        commit: df794e7a99d0ce94b7b29fa3f7b223c0ad709b21
+        commit: c8267ad763884cf10a9485c2c0d226013a6ad8a8
     build-commands:
       - cmake --build . --parallel
       - cmake --install .
@@ -56,7 +61,7 @@ modules:
     post-install:
       - |
         # 安装许可证文件
-        install -Dm0644 LICENSE -t ${FLATPAK_DEST}/share/licenses/io.github.tangsangsimida.easykiconverter
+        install -Dm0644 /run/build/easykiconverter/LICENSE -t ${FLATPAK_DEST}/share/licenses/io.github.tangsangsimida.easykiconverter
       - |
         # 创建 desktop 文件
         mkdir -p /app/share/applications
@@ -71,12 +76,10 @@ modules:
         Terminal=false
         EOF
 
-        # 复制图标（使用绝对路径）
+        # 复制图标
         mkdir -p /app/share/icons/hicolor/256x256/apps
         if [ -f "/run/build/easykiconverter/resources/icons/app_icon.png" ]; then
           cp /run/build/easykiconverter/resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png
-        elif [ -f "resources/icons/app_icon.png" ]; then
-          cp resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png
         else
           echo "Warning: Icon file not found, skipping icon installation"
         fi
