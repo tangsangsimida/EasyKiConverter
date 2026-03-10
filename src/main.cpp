@@ -83,20 +83,28 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
     auto logger = Logger::instance();
 
     // 解析日志级别
+
     LogLevel logLevel = LogLevel::Info;
+
     if (debugMode) {
         logLevel = LogLevel::Debug;
+
     } else if (!logLevelStr.isEmpty()) {
         if (logLevelStr == "trace") {
             logLevel = LogLevel::Trace;
+
         } else if (logLevelStr == "debug") {
             logLevel = LogLevel::Debug;
+
         } else if (logLevelStr == "info") {
             logLevel = LogLevel::Info;
+
         } else if (logLevelStr == "warn") {
             logLevel = LogLevel::Warn;
+
         } else if (logLevelStr == "error") {
             logLevel = LogLevel::Error;
+
         } else if (logLevelStr == "fatal") {
             logLevel = LogLevel::Fatal;
         }
@@ -105,29 +113,47 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
     logger->setGlobalLevel(logLevel);
 
     // 控制台输出（彩色，异步模式减少性能影响）
+
     auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
+
     consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
+
     logger->addAppender(consoleAppender);
 
-    // 文件输出（根据参数或默认路径）
-    QString logPath;
-    if (!logFilePath.isEmpty()) {
-        logPath = logFilePath;
+    // 文件输出（仅在调试模式或明确指定日志文件路径时启用）
+
+    if (debugMode || !logFilePath.isEmpty()) {
+        QString logPath;
+
+        if (!logFilePath.isEmpty()) {
+            logPath = logFilePath;
+
+        } else {
+            QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+
+            QDir().mkpath(logDir);
+
+            logPath = logDir + "/easykiconverter_debug.log";
+        }
+
+        auto fileAppender =
+
+            QSharedPointer<FileAppender>::create(logPath, 10 * 1024 * 1024, 5, true);  // 10MB, 5 files, async
+
+        fileAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
+
+        logger->addAppender(fileAppender);
+
+        LOG_INFO(LogModule::Core,
+                 "日志系统已初始化 - 级别: {}, 日志文件: {}",
+                 logLevelStr.isEmpty() ? "default" : logLevelStr,
+                 logPath);
+
     } else {
-        QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-        QDir().mkpath(logDir);
-        logPath = logDir + "/easykiconverter_debug.log";
+        LOG_INFO(LogModule::Core,
+                 "日志系统已初始化 - 级别: {} (仅控制台输出)",
+                 logLevelStr.isEmpty() ? "default" : logLevelStr);
     }
-
-    auto fileAppender =
-        QSharedPointer<FileAppender>::create(logPath, 10 * 1024 * 1024, 5, true);  // 10MB, 5 files, async
-    fileAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
-    logger->addAppender(fileAppender);
-
-    LOG_INFO(LogModule::Core,
-             "日志系统已初始化 - 级别: {}, 日志文件: {}",
-             logLevelStr.isEmpty() ? "default" : logLevelStr,
-             logPath);
 
     // 安装 Qt 日志适配器（将 qDebug/qWarning/qCritical 重定向到新系统）
     QtLogAdapter::install();
