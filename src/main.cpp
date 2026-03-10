@@ -432,6 +432,15 @@ int main(int argc, char* argv[]) {
     // 初始化配置服务
     EasyKiConverter::ConfigService::instance()->loadConfig(configFilePath);
 
+    // 处理命令行参数 - 调试模式设置（优先于配置文件和环境变量）
+    // 注意：命令行参数的调试模式只在当前会话有效，不会保存到配置文件
+    if (cmdParser.isDebugMode()) {
+        auto* configService = EasyKiConverter::ConfigService::instance();
+        // 设置调试模式，但不保存到配置文件
+        configService->setDebugMode(true, false);
+        qDebug() << "通过命令行参数启用调试模式（仅当前会话有效）";
+    }
+
     // 处理命令行参数 - 语言设置
     if (!cmdParser.language().isEmpty()) {
         auto* langManager = EasyKiConverter::LanguageManager::instance();

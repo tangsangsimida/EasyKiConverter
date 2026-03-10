@@ -241,14 +241,16 @@ bool ConfigService::getDebugMode() const {
     return m_config["debugMode"].toBool(false);
 }
 
-void ConfigService::setDebugMode(bool enabled) {
+void ConfigService::setDebugMode(bool enabled, bool save) {
     QMutexLocker locker(&m_configMutex);
     m_config["debugMode"] = enabled;
     emit configChanged();
 
-    // 释放锁后保存
-    locker.unlock();
-    saveConfig();
+    // 释放锁后保存（如果需要）
+    if (save) {
+        locker.unlock();
+        saveConfig();
+    }
 }
 
 int ConfigService::getWindowWidth() const {
