@@ -129,11 +129,13 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
             logPath = logFilePath;
 
         } else {
-            QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-
+            // 在调试模式下，将日志文件保存到 debug 文件夹
+            QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/debug";
             QDir().mkpath(logDir);
 
-            logPath = logDir + "/easykiconverter_debug.log";
+            // 使用时间戳创建日志文件名
+            QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+            logPath = logDir + QString("/easykiconverter_debug_%1.log").arg(timestamp);
         }
 
         auto fileAppender =
@@ -432,11 +434,11 @@ int main(int argc, char* argv[]) {
     // 初始化配置服务
     EasyKiConverter::ConfigService::instance()->loadConfig(configFilePath);
 
-    // 处理命令行参数 - 调试模式设置（优先于配置文件和环境变量）
-    // 注意：命令行参数的调试模式只在当前会话有效，不会保存到配置文件
+    // 处理命令行参数 - 调试模式设置（优先于环境变量）
+    // 调试模式只通过命令行参数和环境变量控制，不会保存到配置文件
     if (cmdParser.isDebugMode()) {
         auto* configService = EasyKiConverter::ConfigService::instance();
-        // 设置调试模式，但不保存到配置文件
+        // 设置内存中的调试模式（不保存到配置文件）
         configService->setDebugMode(true, false);
         qDebug() << "通过命令行参数启用调试模式（仅当前会话有效）";
     }
