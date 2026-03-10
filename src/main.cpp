@@ -6,6 +6,7 @@
 #include "src/ui/viewmodels/ExportSettingsViewModel.h"
 #include "src/ui/viewmodels/ThemeSettingsViewModel.h"
 #include "src/utils/logging/Log.h"
+#include "src/utils/CommandLineParser.h"
 
 #include <QApplication>
 #include <QDebug>
@@ -31,12 +32,18 @@
 #    include <fcntl.h>
 #    include <io.h>
 #    include <windows.h>
+#    include <conio.h>
 #endif
 
 namespace {
 
-bool isDebugMode() {
-    // 检查环境变量
+bool isDebugMode(const EasyKiConverter::CommandLineParser& parser) {
+    // 优先检查命令行参数
+    if (parser.isDebugMode()) {
+        return true;
+    }
+
+    // 检查环境变量（向后兼容）
     if (qEnvironmentVariableIsSet("EASYKICONVERTER_DEBUG_MODE")) {
         QString debugValue = qEnvironmentVariable("EASYKICONVERTER_DEBUG_MODE", "false").toLower();
         return (debugValue == "true" || debugValue == "1" || debugValue == "yes");
@@ -44,7 +51,7 @@ bool isDebugMode() {
     return false;
 }
 
-void setupLogging(bool debugMode) {
+void setupLogging(bool debugMode, const QString& logLevelStr, const QString& logFilePath) {
     using namespace EasyKiConverter;
 
 #ifdef _WIN32
@@ -75,36 +82,49 @@ void setupLogging(bool debugMode) {
 
     auto logger = Logger::instance();
 
+    // 解析日志级别
+    LogLevel logLevel = LogLevel::Info;
     if (debugMode) {
-        // 调试模式：使用 Debug 级别，以便所有 qDebug() 输出都能被记录
-        // 注意：调试模式主要用于开发时查看错误和网络请求详情，不建议在生产环境使用
-        logger->setGlobalLevel(LogLevel::Debug);
+        logLevel = LogLevel::Debug;
+    } else if (!logLevelStr.isEmpty()) {
+        if (logLevelStr == "trace") {
+            logLevel = LogLevel::Trace;
+        } else if (logLevelStr == "debug") {
+            logLevel = LogLevel::Debug;
+        } else if (logLevelStr == "info") {
+            logLevel = LogLevel::Info;
+        } else if (logLevelStr == "warn") {
+            logLevel = LogLevel::Warn;
+        } else if (logLevelStr == "error") {
+            logLevel = LogLevel::Error;
+        } else if (logLevelStr == "fatal") {
+            logLevel = LogLevel::Fatal;
+        }
+    }
 
-        // 控制台输出（彩色，异步模式减少性能影响）
-        auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
-        consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
-        logger->addAppender(consoleAppender);
+    logger->setGlobalLevel(logLevel);
 
-        // 文件输出（仅记录错误和警告）
+    // 控制台输出（彩色，异步模式减少性能影响）
+    auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
+    consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
+    logger->addAppender(consoleAppender);
+
+    // 文件输出（根据参数或默认路径）
+    QString logPath;
+    if (!logFilePath.isEmpty()) {
+        logPath = logFilePath;
+    } else {
         QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
         QDir().mkpath(logDir);
-        QString logPath = logDir + "/easykiconverter_debug.log";
-
-        auto fileAppender =
-            QSharedPointer<FileAppender>::create(logPath, 10 * 1024 * 1024, 5, true);  // 10MB, 5 files, async
-        fileAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
-        logger->addAppender(fileAppender);
-
-        LOG_INFO(LogModule::Core, "调试模式已启用 - 日志文件: {}", logPath);
-    } else {
-        // 正常模式：仅输出 Info 及以上级别
-        logger->setGlobalLevel(LogLevel::Info);
-
-        // 仅控制台输出（异步模式）
-        auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
-        consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
-        logger->addAppender(consoleAppender);
+        logPath = logDir + "/easykiconverter_debug.log";
     }
+
+    auto fileAppender =
+        QSharedPointer<FileAppender>::create(logPath, 10 * 1024 * 1024, 5, true);  // 10MB, 5 files, async
+    fileAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
+    logger->addAppender(fileAppender);
+
+    LOG_INFO(LogModule::Core, "日志系统已初始化 - 级别: {}, 日志文件: {}", logLevelStr.isEmpty() ? "default" : logLevelStr, logPath);
 
     // 安装 Qt 日志适配器（将 qDebug/qWarning/qCritical 重定向到新系统）
     QtLogAdapter::install();
@@ -113,8 +133,17 @@ void setupLogging(bool debugMode) {
 }  // anonymous namespace
 
 int main(int argc, char* argv[]) {
-    // 检查调试模式（在 QApplication 创建前检查）
-    bool debugMode = isDebugMode();
+    // 在 QApplication 构造函数之前检查命令行参数
+    bool showHelp = false;
+    bool showVersion = false;
+    for (int i = 1; i < argc; ++i) {
+        QString arg = QString::fromLocal8Bit(argv[i]);
+        if (arg == "--help" || arg == "-h") {
+            showHelp = true;
+        } else if (arg == "--version" || arg == "-v") {
+            showVersion = true;
+        }
+    }
 
     // 设置 QML 样式为 Basic，以消除原生样式自定义警告
     // 注意：样式必须在创建应用程序实例之前设置
@@ -122,14 +151,89 @@ int main(int argc, char* argv[]) {
 
     QApplication app(argc, argv);
 
-    // 初始化日志系统（在 QApplication 创建后立即初始化）
-    setupLogging(debugMode);
-
-    // 设置应用程序信息
+    // 设置应用程序信息（必须在解析命令行参数之前）
     app.setApplicationName("EasyKiConverter");
     app.setApplicationVersion("3.0.8");
     app.setOrganizationName("EasyKiConverter");
     app.setOrganizationDomain("easykiconverter.com");
+
+    if (showHelp) {
+        QString helpText =
+            "EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具\n\n"
+            "用法: easykiconverter [选项]\n\n"
+            "选项:\n"
+            "  -h, --help          显示帮助信息\n"
+            "  -v, --version       显示版本信息\n"
+            "  -d, --debug         启用调试模式\n"
+            "  --log-level <level> 设置日志级别 (trace/debug/info/warn/error/fatal)\n"
+            "  --log-file <path>   指定日志文件路径\n"
+            "  --config <path>     指定配置文件路径\n"
+            "  --language <lang>   设置界面语言 (zh_CN/en)\n"
+            "  --theme <theme>     设置界面主题 (dark/light)\n"
+            "  --portable          便携模式\n";
+
+#ifdef _WIN32
+        // 将帮助信息写入文件
+        QFile helpFile("easykiconverter_help.txt");
+        if (helpFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&helpFile);
+            out.setEncoding(QStringConverter::Utf8);
+            out << helpText;
+            helpFile.close();
+        }
+
+        // 在控制台模式下，直接输出到标准输出
+        // 不需要 AttachConsole，因为控制台模式下已经自动附加
+        QTextStream out(stdout);
+        out << helpText;
+#else
+        QTextStream out(stdout);
+        out << helpText;
+#endif
+        return 0;
+    }
+
+    if (showVersion) {
+        QString versionText = "EasyKiConverter " + app.applicationVersion() + "\n";
+
+#ifdef _WIN32
+        // 在控制台模式下，直接输出到标准输出
+        QTextStream out(stdout);
+        out << versionText;
+#else
+        QTextStream out(stdout);
+        out << versionText;
+#endif
+        return 0;
+    }
+
+    // 解析命令行参数
+    EasyKiConverter::CommandLineParser cmdParser(argc, argv);
+
+    // 解析所有命令行参数
+    if (!cmdParser.parse()) {
+#ifdef _WIN32
+        // 尝试附加到父进程的控制台（如果是从命令行启动的）
+        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+            // 如果附加失败，创建新的控制台窗口
+            AllocConsole();
+            SetConsoleTitleA("EasyKiConverter - Error");
+        }
+        // 重新打开标准输出
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+#endif
+        QTextStream err(stderr);
+        err << "错误: 无效的命令行参数\n";
+        err << cmdParser.helpText();
+        return 1;
+    }
+
+    // 检查调试模式（命令行参数优先，环境变量向后兼容）
+    bool debugMode = isDebugMode(cmdParser);
+
+    // 初始化日志系统（在 QApplication 创建后立即初始化）
+    setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile());
 
     // 尝试设置应用程序图标
     QStringList iconPaths = {":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
@@ -284,11 +388,50 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
-    // 初始化配置服务
-    EasyKiConverter::ConfigService::instance()->loadConfig();
+    // 处理命令行参数 - 配置文件路径
+    QString configFilePath;
+    if (!cmdParser.configFile().isEmpty()) {
+        configFilePath = cmdParser.configFile();
+        qDebug() << "使用命令行指定的配置文件:" << configFilePath;
+    } else if (cmdParser.isPortableMode()) {
+        // 便携模式：配置文件保存在程序目录
+        QString appDir = QCoreApplication::applicationDirPath();
+        configFilePath = appDir + "/easykiconverter_config.json";
+        qDebug() << "便携模式：配置文件保存在程序目录:" << configFilePath;
+    }
 
-    // 初始化语言管理器
-    EasyKiConverter::LanguageManager::instance();
+    // 初始化配置服务
+    EasyKiConverter::ConfigService::instance()->loadConfig(configFilePath);
+
+    // 处理命令行参数 - 语言设置
+    if (!cmdParser.language().isEmpty()) {
+        auto* langManager = EasyKiConverter::LanguageManager::instance();
+        QString lang = cmdParser.language();
+        if (lang == "zh_CN" || lang == "en") {
+            langManager->setLanguage(lang);
+            qDebug() << "通过命令行设置语言为:" << lang;
+        } else {
+            qWarning() << "无效的语言设置:" << lang << "，支持的选项: zh_CN, en";
+        }
+    } else {
+        // 初始化语言管理器（使用默认语言）
+        EasyKiConverter::LanguageManager::instance();
+    }
+
+    // 处理命令行参数 - 主题设置
+    if (!cmdParser.theme().isEmpty()) {
+        QString theme = cmdParser.theme();
+        auto* configService = EasyKiConverter::ConfigService::instance();
+        if (theme == "dark") {
+            configService->setDarkMode(true);
+            qDebug() << "通过命令行设置主题为: dark";
+        } else if (theme == "light") {
+            configService->setDarkMode(false);
+            qDebug() << "通过命令行设置主题为: light";
+        } else {
+            qWarning() << "无效的主题设置:" << theme << "，支持的选项: dark, light";
+        }
+    }
 
     // 创建 Service 实例（使用流水线架构，不设置 parent，手动管理生命周期）
     EasyKiConverter::ComponentService* componentService = new EasyKiConverter::ComponentService();
