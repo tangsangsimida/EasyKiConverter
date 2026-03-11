@@ -1,17 +1,23 @@
 app-id: io.github.tangsangsimida.easykiconverter
 runtime: org.kde.Platform
-runtime-version: '6.6'
+runtime-version: '6.9'
 sdk: org.kde.Sdk
 command: easykiconverter
-# --filesystem=home is required for importing/exporting KiCad library files
-# Users need to access their project directories and save converted files
+build-options:
+  append-path: /usr/lib/sdk/rsvg-2.54/bin
+  append-ld-library-path: /usr/lib/sdk/rsvg-2.54/lib
+# Use xdg-documents and xdg-download for user data access
+# These are more granular than --filesystem=home
+# Users can export converted KiCad library files to these directories
+# Flatpak's file dialog will grant temporary access to other directories
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
   - --socket=wayland
   - --device=dri
   - --share=network
-  - --filesystem=home
+  - --filesystem=xdg-documents
+  - --filesystem=xdg-download
 
 modules:
   - name: qxlsx
@@ -67,25 +73,37 @@ modules:
         # 安装 AppStream 元数据
         install -Dm0644 /run/build/easykiconverter/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml -t ${FLATPAK_DEST}/share/metainfo/
       - |
-        # 创建 desktop 文件
+        # 创建 desktop 文件（支持多语言）
         mkdir -p /app/share/applications
         cat > /app/share/applications/io.github.tangsangsimida.easykiconverter.desktop <<EOF
         [Desktop Entry]
         Type=Application
         Name=EasyKiConverter
+        Name[zh_CN]=EasyKiConverter
         Comment=Convert LCSC and EasyEDA components to KiCad libraries
+        Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库
         Exec=easykiconverter
         Icon=io.github.tangsangsimida.easykiconverter
         Categories=Development;Electronics;
         Terminal=false
+        Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;
         EOF
 
-        # 复制图标
-        mkdir -p /app/share/icons/hicolor/256x256/apps
-        if [ -f "/run/build/easykiconverter/resources/icons/app_icon.png" ]; then
-          cp /run/build/easykiconverter/resources/icons/app_icon.png /app/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png
-        else
-          echo "Warning: Icon file not found, skipping icon installation"
+        # 安装多尺寸图标（Flathub 规范要求 16x16 到 512x512）
+        mkdir -p /app/share/icons/hicolor
+        for size in 16 32 48 64 128 256 512; do
+          mkdir -p /app/share/icons/hicolor/${size}x${size}/apps
+          if [ -f "/run/build/easykiconverter/resources/icons/app_icon.svg" ]; then
+            rsvg-convert -w $size -h $size /run/build/easykiconverter/resources/icons/app_icon.svg \
+              > /app/share/icons/hicolor/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png
+          elif [ -f "/run/build/easykiconverter/resources/icons/app_icon.png" ]; then
+            cp /run/build/easykiconverter/resources/icons/app_icon.png /app/share/icons/hicolor/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png
+          fi
+        done
+
+        # 更新图标缓存
+        if command -v gtk-update-icon-cache &> /dev/null; then
+          gtk-update-icon-cache -f -t /app/share/icons/hicolor || true
         fi
 
         # 更新桌面数据库

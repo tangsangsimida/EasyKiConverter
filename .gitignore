@@ -124,3 +124,4 @@ tools/python/response/*
 tools/python/datasheet/*
 tools/python/imgs/*
 repo/*
+logs/*
