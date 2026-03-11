@@ -6,9 +6,7 @@
 namespace EasyKiConverter {
 
 CommandLineParser::CommandLineParser(int argc, char* argv[])
-    : m_debugOption(QStringList() << "d"
-                                  << "debug",
-                    "启用调试模式（显示详细日志和控制台窗口）")
+    : m_debugOption(QStringList() << "d" << "debug", "启用调试模式（显示详细日志和控制台窗口）")
     , m_logLevelOption(QStringList() << "log-level",
                        "设置日志级别 (trace/debug/info/warn/error/fatal)",
                        "level",
