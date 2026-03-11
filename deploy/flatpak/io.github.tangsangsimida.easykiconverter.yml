@@ -27,7 +27,7 @@ modules:
       - -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
     build-options:
       env:
-        QXLSX_ROOT: qlsx-root
+        QXLSX_ROOT: qlsx-root/QXlsx
     sources:
       - type: git
         url: https://github.com/tangsangsimida/EasyKiConverter.git
@@ -37,3 +37,7 @@ modules:
         url: https://github.com/QtExcel/QXlsx/archive/refs/heads/master.zip
         sha256: 464005b533aefc2c96423dc0a4b238231b3d310a69881102d6430cb279b1701b
         dest: qlsx-root
+    cleanup:
+      - /include
+      - /lib/cmake
+      - /lib/libQXlsxQt6.a
