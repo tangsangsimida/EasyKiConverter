@@ -3,10 +3,7 @@ runtime: org.kde.Platform
 runtime-version: '6.9'
 sdk: org.kde.Sdk
 command: easykiconverter
-# Use xdg-documents and xdg-download for user data access
-# These are more granular than --filesystem=home
-# Users can export converted KiCad library files to these directories
-# Flatpak's file dialog will grant temporary access to other directories
+
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
@@ -32,8 +29,8 @@ modules:
         cp -r ../source/*.h /app/include/QXlsxQt6/ 2>/dev/null || true
     sources:
       - type: archive
-        url: https://github.com/QtExcel/QXlsx/archive/refs/heads/master.zip
-        sha256: 464005b533aefc2c96423dc0a4b238231b3d310a69881102d6430cb279b1701b
+        url: https://github.com/QtExcel/QXlsx/archive/refs/tags/v1.5.0.zip
+        sha256: 3b9112ffa6b87d7b16935fe6a232f657a73a7f7e70689df7254635efe66622fb
         strip-components: 1
 
   - name: easykiconverter
@@ -52,49 +49,8 @@ modules:
     build-commands:
       - cmake --build . --parallel
       - cmake --install .
-      - |
-        # 验证可执行文件是否被安装
-        if [ ! -f /app/bin/easykiconverter ]; then
-          echo "ERROR: easykiconverter executable was not installed!"
-          ls -la /app/bin/
-          exit 1
-        fi
-        echo "easykiconverter executable installed successfully"
-        ls -lh /app/bin/easykiconverter
     post-install:
       - |
         install -Dm0644 /run/build/easykiconverter/LICENSE -t ${FLATPAK_DEST}/share/licenses/io.github.tangsangsimida.easykiconverter
       - |
         install -Dm0644 /run/build/easykiconverter/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml -t ${FLATPAK_DEST}/share/metainfo/
-      - |
-        mkdir -p /app/share/applications
-        cat > /app/share/applications/io.github.tangsangsimida.easykiconverter.desktop <<EOF
-        [Desktop Entry]
-        Type=Application
-        Name=EasyKiConverter
-        Name[zh_CN]=EasyKiConverter
-        Comment=Convert LCSC and EasyEDA components to KiCad libraries
-        Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库
-        Exec=easykiconverter
-        Icon=io.github.tangsangsimida.easykiconverter
-        Categories=Development;Electronics;
-        Terminal=false
-        Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;
-        EOF
-
-        mkdir -p /app/share/icons/hicolor
-        for size in 16 32 48 64 128 256 512; do
-          mkdir -p /app/share/icons/hicolor/${size}x${size}/apps
-          if [ -f "/run/build/easykiconverter/resources/icons/app_icon.svg" ]; then
-            rsvg-convert -w $size -h $size /run/build/easykiconverter/resources/icons/app_icon.svg \
-              > /app/share/icons/hicolor/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png
-          elif [ -f "/run/build/easykiconverter/resources/icons/app_icon.png" ]; then
-            cp /run/build/easykiconverter/resources/icons/app_icon.png /app/share/icons/hicolor/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png
-          fi
-        done
-
-        if command -v gtk-update-icon-cache &> /dev/null; then
-          gtk-update-icon-cache -f -t /app/share/icons/hicolor || true
-        fi
-
-        update-desktop-database /app/share/applications || true

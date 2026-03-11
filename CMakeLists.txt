@@ -313,6 +313,17 @@ install(TARGETS appEasyKiconverter_Cpp_Version
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+# 安装图标
+install(DIRECTORY resources/icons/hicolor/
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor
+    FILES_MATCHING PATTERN "*.png"
+)
+
+# 安装 desktop 文件
+install(FILES deploy/linux/io.github.tangsangsimida.easykiconverter.desktop
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+)
+
 # 打印配置信息
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
