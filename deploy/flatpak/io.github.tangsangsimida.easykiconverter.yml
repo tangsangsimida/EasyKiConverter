@@ -31,13 +31,9 @@ modules:
     sources:
       - type: git
         url: https://github.com/tangsangsimida/EasyKiConverter.git
-        tag: v3.0.8
-        commit: bd48b259ad1e1224e543737907f2354f385a74e9
-        disable-lfs: true
-      - type: patch
-        path: deploy/flatpak/cmake-qlsx.patch
+        tag: pre-3.0.9
+        commit: 09bb4295706dd01ec9c1b2224c91e5d41f77d928
       - type: archive
         url: https://github.com/QtExcel/QXlsx/archive/refs/heads/master.zip
         sha256: 464005b533aefc2c96423dc0a4b238231b3d310a69881102d6430cb279b1701b
         dest: qlsx-root
-        strip-components: 1
