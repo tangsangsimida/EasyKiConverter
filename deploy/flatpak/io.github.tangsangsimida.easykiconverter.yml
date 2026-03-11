@@ -53,7 +53,7 @@ modules:
     sources:
       - type: archive
         url: https://github.com/tangsangsimida/EasyKiConverter/archive/refs/tags/v3.0.8.zip
-        sha256: 78ccd7feb3a8d18df4e255f5f1a2d83c7abd6267561aaa65b9dbdc2e37177a8c
+        sha256: 36d286931da9b7fc23f0bc33069ff745e395dc9c3ba84b4159515d04fd9e809d
     build-commands:
       - cmake --build . --parallel
       - cmake --install .
