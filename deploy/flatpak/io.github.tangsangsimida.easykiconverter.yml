@@ -3,6 +3,11 @@ runtime: org.kde.Platform
 runtime-version: '6.9'
 sdk: org.kde.Sdk
 command: easykiconverter
+build-options:
+  append-path: /usr/lib/sdk/rsvg-2.52/bin
+  append-ld-library-path: /usr/lib/qt6/lib:/usr/lib/sdk/llvm17/lib
+  env:
+    QT_PLUGIN_PATH: /app/lib/qt6/plugins:/usr/lib/qt6/plugins
 
 finish-args:
   - --share=ipc
@@ -12,6 +17,9 @@ finish-args:
   - --share=network
   - --filesystem=xdg-documents
   - --filesystem=xdg-download
+  - --filesystem=xdg-config/kdeglobals:ro
+  - --talk-name=org.freedesktop.Notifications
+  - --env=QT_QPA_PLATFORM=wayland;xcb
 
 modules:
   - name: qxlsx
@@ -40,8 +48,8 @@ modules:
       - -DCMAKE_BUILD_TYPE=Release
       - -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
       - -DCMAKE_INSTALL_PREFIX=/app
-      - -DCMAKE_PREFIX_PATH=/app
-      - -DFLATPAK_BUILD=1
+      - -DCMAKE_PREFIX_PATH=/app:/usr
+      - -DQt6_DIR=/app/lib/cmake/QXlsxQt6
     sources:
       - type: archive
         url: https://github.com/tangsangsimida/EasyKiConverter/archive/refs/tags/v3.0.8.zip
