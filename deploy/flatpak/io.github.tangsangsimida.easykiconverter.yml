@@ -4,8 +4,7 @@ runtime-version: '6.9'
 sdk: org.kde.Sdk
 command: easykiconverter
 build-options:
-  append-path: /usr/lib/sdk/rsvg-2.52/bin
-  append-ld-library-path: /usr/lib/qt6/lib:/usr/lib/sdk/llvm17/lib
+  append-ld-library-path: /usr/lib/qt6/lib
   env:
     QT_PLUGIN_PATH: /app/lib/qt6/plugins:/usr/lib/qt6/plugins
 
@@ -48,7 +47,7 @@ modules:
       - -DCMAKE_BUILD_TYPE=Release
       - -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
       - -DCMAKE_INSTALL_PREFIX=/app
-      - -DCMAKE_PREFIX_PATH=/app:/usr
+      - -DCMAKE_PREFIX_PATH=/app
       - -DQt6_DIR=/app/lib/cmake/QXlsxQt6
     sources:
       - type: archive
