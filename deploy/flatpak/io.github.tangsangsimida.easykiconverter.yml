@@ -3,9 +3,6 @@ runtime: org.kde.Platform
 runtime-version: '6.9'
 sdk: org.kde.Sdk
 command: easykiconverter
-build-options:
-  append-path: /usr/lib/sdk/rsvg-2.54/bin
-  append-ld-library-path: /usr/lib/sdk/rsvg-2.54/lib
 # Use xdg-documents and xdg-download for user data access
 # These are more granular than --filesystem=home
 # Users can export converted KiCad library files to these directories
@@ -31,7 +28,6 @@ modules:
       - -DBUILD_EXAMPLES=OFF
     post-install:
       - |
-        # 复制所有头文件以确保编译成功
         cp -r ../header/* /app/include/QXlsxQt6/
         cp -r ../source/*.h /app/include/QXlsxQt6/ 2>/dev/null || true
     sources:
@@ -50,9 +46,9 @@ modules:
       - -DCMAKE_PREFIX_PATH=/app
       - -DFLATPAK_BUILD=1
     sources:
-      - type: git
-        url: https://github.com/tangsangsimida/EasyKiConverter.git
-        commit: c8267ad763884cf10a9485c2c0d226013a6ad8a8
+      - type: archive
+        url: https://github.com/tangsangsimida/EasyKiConverter/archive/refs/tags/v3.0.8.zip
+        sha256: 78ccd7feb3a8d18df4e255f5f1a2d83c7abd6267561aaa65b9dbdc2e37177a8c
     build-commands:
       - cmake --build . --parallel
       - cmake --install .
@@ -67,13 +63,10 @@ modules:
         ls -lh /app/bin/easykiconverter
     post-install:
       - |
-        # 安装许可证文件
         install -Dm0644 /run/build/easykiconverter/LICENSE -t ${FLATPAK_DEST}/share/licenses/io.github.tangsangsimida.easykiconverter
       - |
-        # 安装 AppStream 元数据
         install -Dm0644 /run/build/easykiconverter/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml -t ${FLATPAK_DEST}/share/metainfo/
       - |
-        # 创建 desktop 文件（支持多语言）
         mkdir -p /app/share/applications
         cat > /app/share/applications/io.github.tangsangsimida.easykiconverter.desktop <<EOF
         [Desktop Entry]
@@ -89,7 +82,6 @@ modules:
         Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;
         EOF
 
-        # 安装多尺寸图标（Flathub 规范要求 16x16 到 512x512）
         mkdir -p /app/share/icons/hicolor
         for size in 16 32 48 64 128 256 512; do
           mkdir -p /app/share/icons/hicolor/${size}x${size}/apps
@@ -101,10 +93,8 @@ modules:
           fi
         done
 
-        # 更新图标缓存
         if command -v gtk-update-icon-cache &> /dev/null; then
           gtk-update-icon-cache -f -t /app/share/icons/hicolor || true
         fi
 
-        # 更新桌面数据库
         update-desktop-database /app/share/applications || true
