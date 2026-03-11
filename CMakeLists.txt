@@ -152,8 +152,10 @@ if(QXlsxQt6_FOUND)
     endif()
 elseif(DEFINED ENV{QXLSX_ROOT})
     message(STATUS "Using local QXlsx source from: $ENV{QXLSX_ROOT}")
-    FetchContent_Declare(QXlsx SOURCE_DIR $ENV{QXLSX_ROOT})
-    FetchContent_MakeAvailable(QXlsx)
+    message(STATUS "QXlsx source directory exists: ${CMAKE_CURRENT_SOURCE_DIR}/$ENV{QXLSX_ROOT}/QXlsx")
+    # 添加 QXlsx 子目录
+    add_subdirectory($ENV{QXLSX_ROOT}/QXlsx ${CMAKE_CURRENT_BINARY_DIR}/qxlsx)
+    message(STATUS "QXlsx target created: QXlsx::QXlsx exists: $<TARGET_EXISTS:QXlsx::QXlsx>")
 else()
     # 尝试使用 find_package (Flatpak 构建)
     message(STATUS "FLATPAK_BUILD=${FLATPAK_BUILD}, CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
@@ -330,6 +332,16 @@ install(DIRECTORY resources/icons/hicolor/
 # 安装 desktop 文件
 install(FILES deploy/linux/io.github.tangsangsimida.easykiconverter.desktop
     DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+)
+
+# 安装 license 文件
+install(FILES LICENSE
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/io.github.tangsangsimida.easykiconverter
+)
+
+# 安装 AppStream metainfo 文件
+install(FILES deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
 )
 
 # 打印配置信息
