@@ -494,7 +494,7 @@ jobs:
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: EasyKiConverter.flatpak
-          manifest-path: deploy/flatpak/com.tangsangsimida.easykiconverter.yml
+          manifest-path: deploy/flatpak/io.github.tangsangsimida.easykiconverter.yml
           cache-key: flatpak-builder-${{ github.sha }}
           upload-artifact: false
           verbose: true
