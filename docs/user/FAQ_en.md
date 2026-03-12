@@ -171,19 +171,27 @@ Custom layer mapping is not currently supported. Future versions may add this fe
 
 ### How do I enable debug mode?
 
-Debug mode is now controlled via the `EASYKICONVERTER_DEBUG_MODE` environment variable. Please refer to the [Debug Mode Configuration](DEBUG_MODE_en.md) documentation for detailed configuration instructions.
+**Method 1: Command Line Arguments (Recommended)**
+```bash
+# Windows
+.\build\bin\EasyKiConverter.exe --debug
 
-**Quick Enable (Windows PowerShell):**
-```powershell
-$env:EASYKICONVERTER_DEBUG_MODE="true"
-.\build\bin\EasyKiConverter.exe
+# Linux/macOS
+./build/bin/EasyKiConverter --debug
 ```
 
-**Quick Enable (Linux/macOS):**
+**Method 2: Environment Variable**
 ```bash
+# Windows PowerShell
+$env:EASYKICONVERTER_DEBUG_MODE="true"
+.\build\bin\EasyKiConverter.exe
+
+# Linux/macOS
 export EASYKICONVERTER_DEBUG_MODE=true
 ./build/bin/EasyKiConverter
 ```
+
+Please refer to the [Debug Mode Configuration](DEBUG_MODE_en.md) documentation for detailed configuration instructions and all available command line arguments.
 
 ### How do I change the theme?
 

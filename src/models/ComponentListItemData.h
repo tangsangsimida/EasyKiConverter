@@ -29,6 +29,7 @@ class ComponentListItemData : public QObject {
     Q_PROPERTY(bool isFetching READ isFetching NOTIFY fetchingStatusChanged)
     Q_PROPERTY(bool hasThumbnail READ hasThumbnail NOTIFY thumbnailChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY validationStatusChanged)
+    Q_PROPERTY(QString datasheetUrl READ datasheetUrl NOTIFY datasheetChanged)
 
 public:
     explicit ComponentListItemData(const QString& componentId, QObject* parent = nullptr);
@@ -78,6 +79,8 @@ public:
         return m_errorMessage;
     }
 
+    QString datasheetUrl() const;
+
     QSharedPointer<ComponentData> componentData() const {
         return m_componentData;
     }
@@ -87,6 +90,7 @@ public:
     void setPackage(const QString& package);
     void setThumbnail(const QImage& thumbnail);
     void addPreviewImage(const QImage& image);
+    void insertPreviewImage(const QImage& image, int index);
     void setPreviewImages(const QList<QImage>& images);
     void setCurrentPreviewIndex(int index);
     void nextPreviewImage();
@@ -103,6 +107,7 @@ signals:
     void currentPreviewIndexChanged();
     void validationStatusChanged();
     void fetchingStatusChanged();
+    void datasheetChanged();
 
 private:
     QString m_componentId;

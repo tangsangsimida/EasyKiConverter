@@ -89,6 +89,7 @@ vcpkg.json.bak
 
 
 test_date
+test_data/*
 EasyKiConverter_QT
 easyeda_convertlib.kicad_sym
 demo.kicad_sym
@@ -115,3 +116,12 @@ docs/api/xml/
 docs/api/doxygen_warnings.log
 docs/api/easykiconverter.tag
 site/
+tools/python/respose/*
+tools/python/download_results.json
+tools/python/lceda_results.json
+
+tools/python/response/*
+tools/python/datasheet/*
+tools/python/imgs/*
+repo/*
+logs/*

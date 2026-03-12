@@ -121,8 +121,8 @@ Rectangle {
             Popup {
                 id: previewPopup
                 parent: defaultThumbnail
-                width: 640 // 三张图片 200x3 + 间距
-                height: 220
+                width: 490 // 三张图片 150x3 + 间距
+                height: 170
                 padding: 0
                 visible: previewMouseArea.containsMouse && itemData && itemData.hasThumbnail
                 closePolicy: Popup.NoAutoClose
@@ -144,12 +144,12 @@ Rectangle {
                         // 计算缩略图相对于窗口的位置
                         var thumbRelativeX = thumbGlobalPos.x - windowGlobalX;
 
-                        // 预览图宽度（640）+ 间距（60）= 700
+                        // 预览图宽度（490）+ 间距（60）= 550
                         var popupWidth = width + 60;
 
                         // 如果右侧空间不足，显示在左侧
                         if (thumbRelativeX + popupWidth > windowWidth) {
-                            x = -690; // 显示在缩略图左侧
+                            x = -540; // 显示在缩略图左侧
                         } else {
                             x = 60; // 显示在缩略图右侧
                         }
@@ -178,7 +178,7 @@ Rectangle {
                 }
 
                 background: Rectangle {
-                    color: "white"
+                    color: AppStyle.colors.surface
                     border.color: AppStyle.colors.primary
                     border.width: 2
                     radius: AppStyle.radius.md
@@ -188,7 +188,7 @@ Rectangle {
                     layer.effect: MultiEffect {
                         shadowEnabled: true
                         shadowBlur: 1.0
-                        shadowColor: "#33000000"
+                        shadowColor: AppStyle.isDarkMode ? "#00000000" : "#33000000"
                         shadowVerticalOffset: 2
                         shadowHorizontalOffset: 2
                     }
@@ -203,9 +203,9 @@ Rectangle {
                         model: itemData ? itemData.previewImageCount : 0
 
                         Rectangle {
-                            width: 200
-                            height: 200
-                            color: "white"
+                            width: 150
+                            height: 150
+                            color: AppStyle.colors.background
                             radius: AppStyle.radius.sm
                             border.color: AppStyle.colors.border
                             border.width: 1
@@ -235,8 +235,8 @@ Rectangle {
 
                             Image {
                                 anchors.centerIn: parent
-                                width: 198
-                                height: 198
+                                width: 148
+                                height: 148
                                 source: {
                                     if (!parent.loadTriggered)
                                         return "";
@@ -259,8 +259,8 @@ Rectangle {
                             // 加载状态指示器
                             BusyIndicator {
                                 anchors.centerIn: parent
-                                width: 32
-                                height: 32
+                                width: 28
+                                height: 28
                                 running: parent.loadTriggered && !parent.imageLoaded
                                 visible: parent.loadTriggered && !parent.imageLoaded
                             }
@@ -268,8 +268,8 @@ Rectangle {
                             // 初始占位符
                             Rectangle {
                                 anchors.centerIn: parent
-                                width: 40
-                                height: 40
+                                width: 35
+                                height: 35
                                 color: AppStyle.colors.background
                                 radius: AppStyle.radius.md
                                 visible: !parent.loadTriggered
@@ -277,7 +277,7 @@ Rectangle {
                                 Text {
                                     anchors.centerIn: parent
                                     text: index + 1
-                                    font.pixelSize: 18
+                                    font.pixelSize: 16
                                     font.bold: true
                                     color: AppStyle.colors.textSecondary
                                 }
@@ -287,14 +287,14 @@ Rectangle {
                             Rectangle {
                                 anchors.top: parent.top
                                 anchors.right: parent.right
-                                width: 24
-                                height: 24
+                                width: 20
+                                height: 20
                                 color: AppStyle.colors.primary
-                                radius: 12
+                                radius: 10
                                 Text {
                                     anchors.centerIn: parent
                                     text: index + 1
-                                    font.pixelSize: 12
+                                    font.pixelSize: 11
                                     font.bold: true
                                     color: "white"
                                 }
@@ -305,14 +305,14 @@ Rectangle {
                                 anchors.bottom: parent.bottom
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: parent.width
-                                height: 30
+                                height: 25
                                 color: "#CC000000"
                                 Text {
                                     anchors.centerIn: parent
                                     text: itemData ? itemData.componentId : ""
                                     color: "white"
                                     font.bold: true
-                                    font.pixelSize: 10
+                                    font.pixelSize: 9
                                 }
                             }
                         }

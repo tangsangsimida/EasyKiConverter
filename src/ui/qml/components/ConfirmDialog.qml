@@ -5,9 +5,19 @@ import QtQuick.Effects
 import "../styles"
 
 /**
- * @brief 自定义美化的确认对话框
+ * @brief 转换进行中强制退出确认对话框
  *
- * 包含圆角、主题适配、模糊背景遮罩及平滑动画。
+ * **用途**：当用户尝试关闭窗口且转换任务正在进行时显示
+ * **场景**：用户点击关闭按钮 → 检测到 exportProgressViewModel.isExporting 为 true → 显示此对话框
+ * **提示信息**："转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？"
+ * **按钮**：
+ *   - 确定（强制退出）：停止转换任务，关闭程序
+ *   - 取消（继续转换）：关闭对话框，继续执行转换任务
+ * **动画**：取消按钮点击后向下滑动消失（fade out + slide down + scale down）
+ *
+ * **注意**：不要与 ExitDialog 混淆
+ * - ExitDialog：无任务时显示，提供"最小化到托盘"/"退出程序"/"取消"选项
+ * - ConfirmDialog：有任务时显示，提供"强制退出"/"继续转换"选项
  */
 Item {
     id: root
@@ -19,7 +29,7 @@ Item {
     // 监听 Escape 键
     Keys.onEscapePressed: {
         root.rejected();
-        root.close();
+        root.closeWithAnimation();
     }
 
     // 暴露属性和信号
@@ -31,15 +41,24 @@ Item {
     property int radius: AppStyle.radius.lg
     signal accepted
     signal rejected
-    // 打开/关闭动画
+    // 打开/关闭
     function open() {
         visible = true;
+        // 重置对话框位置和 transform
+        dialogBox.y = 0;
+        dialogBoxTranslate.y = 0;
         showAnim.start();
         // 自动聚焦到取消按钮，确保键盘操作安全性
         cancelButton.forceActiveFocus();
     }
 
     function close() {
+        // 直接隐藏对话框，不播放动画
+        visible = false;
+    }
+
+    function closeWithAnimation() {
+        // 播放消失动画
         hideAnim.start();
     }
 
@@ -67,6 +86,13 @@ Item {
         radius: AppStyle.radius.xl
         scale: 0.9
         opacity: 0
+        y: 0
+
+        transform: Translate {
+            id: dialogBoxTranslate
+            y: 0
+        }
+
         // 阴影效果
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -117,7 +143,7 @@ Item {
                     hoverColor: AppStyle.isDarkMode ? "#334155" : "#f1f5f9"
                     onClicked: {
                         root.rejected();
-                        root.close();
+                        root.closeWithAnimation();
                     }
                 }
 
@@ -173,6 +199,7 @@ Item {
                 from: 0.6
                 to: 0
                 duration: 200
+                easing.type: Easing.OutQuad
             }
             NumberAnimation {
                 target: dialogBox
@@ -180,6 +207,15 @@ Item {
                 from: 1
                 to: 0
                 duration: 200
+                easing.type: Easing.OutQuad
+            }
+            NumberAnimation {
+                target: dialogBoxTranslate
+                property: "y"
+                from: 0
+                to: root.height
+                duration: 200
+                easing.type: Easing.OutQuad
             }
             NumberAnimation {
                 target: dialogBox
@@ -187,6 +223,7 @@ Item {
                 from: 1
                 to: 0.9
                 duration: 200
+                easing.type: Easing.OutQuad
             }
         }
         PropertyAction {

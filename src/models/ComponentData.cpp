@@ -11,8 +11,12 @@ ComponentData::ComponentData()
     , m_prefix()
     , m_package()
     , m_manufacturer()
+    , m_manufacturerPart()
     , m_datasheet()
+    , m_datasheetData()
+    , m_datasheetFormat("pdf")
     , m_previewImages()
+    , m_previewImageData()
     , m_symbolData(nullptr)
     , m_footprintData(nullptr)
     , m_model3DData(nullptr) {}
@@ -26,6 +30,7 @@ QJsonObject ComponentData::toJson() const {
     json["prefix"] = m_prefix;
     json["package"] = m_package;
     json["manufacturer"] = m_manufacturer;
+    json["manufacturer_part"] = m_manufacturerPart;
     json["datasheet"] = m_datasheet;
 
     // 预览图列表
@@ -60,6 +65,7 @@ bool ComponentData::fromJson(const QJsonObject& json) {
     m_prefix = json["prefix"].toString();
     m_package = json["package"].toString();
     m_manufacturer = json["manufacturer"].toString();
+    m_manufacturerPart = json["manufacturer_part"].toString();
     m_datasheet = json["datasheet"].toString();
 
     // 读取预览图列表
@@ -181,8 +187,11 @@ void ComponentData::clear() {
     m_prefix.clear();
     m_package.clear();
     m_manufacturer.clear();
+    m_manufacturerPart.clear();
     m_datasheet.clear();
+    m_datasheetData.clear();
     m_previewImages.clear();
+    m_previewImageData.clear();
 
     m_symbolData.reset();
     m_footprintData.reset();

@@ -154,8 +154,26 @@ signals:
      *
      * @param componentId 元件ID
      * @param image 预览图
+     * @param imageIndex 图片索引（0-2）
      */
-    void previewImageReady(const QString& componentId, const QImage& image);
+    void previewImageReady(const QString& componentId, const QImage& image, int imageIndex);
+
+    /**
+     * @brief 预览图数据获取成功信号（内存数据）
+     *
+     * @param componentId 元件ID
+     * @param imageData 预览图数据
+     * @param imageIndex 图片索引
+     */
+    void previewImageDataReady(const QString& componentId, const QByteArray& imageData, int imageIndex);
+
+    /**
+     * @brief 所有预览图片下载完成信号
+     *
+     * @param componentId 元件ID
+     * @param imageDataList 图片数据列表（内存）
+     */
+    void allImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
 
     /**
      * @brief 获取错误信号
@@ -171,6 +189,30 @@ signals:
      * @param componentDataList 元件数据列表
      */
     void allComponentsDataCollected(const QList<ComponentData>& componentDataList);
+
+    /**
+     * @brief LCSC 数据更新信号（数据手册和预览图 URL）
+     *
+     * 当 LCSC API 返回数据手册和预览图 URL 后发送此信号
+     * ComponentListViewModel 可以接收此信号并更新缓存的 ComponentData
+     *
+     * @param componentId 元件 ID
+     * @param manufacturerPart 制造商部件号
+     * @param datasheetUrl 数据手册 URL
+     * @param imageUrls 预览图 URL 列表
+     */
+    void lcscDataUpdated(const QString& componentId,
+                         const QString& manufacturerPart,
+                         const QString& datasheetUrl,
+                         const QStringList& imageUrls);
+
+    /**
+     * @brief 数据手册下载完成信号
+     *
+     * @param componentId 元件 ID
+     * @param datasheetData 数据手册数据（内存）
+     */
+    void datasheetReady(const QString& componentId, const QByteArray& datasheetData);
 
 private slots:
     /**
@@ -200,7 +242,25 @@ private slots:
     /**
      * @brief 处理预览图就绪
      */
-    void handleImageReady(const QString& componentId, const QString& imagePath);
+    void handleImageReady(const QString& componentId, const QByteArray& imageData, int imageIndex);
+
+    /**
+     * @brief 处理 LCSC API 数据就绪（包含数据手册和预览图 URL）
+     */
+    void handleLcscDataReady(const QString& componentId,
+                             const QString& manufacturerPart,
+                             const QString& datasheetUrl,
+                             const QStringList& imageUrls);
+
+    /**
+     * @brief 处理数据手册下载完成
+     */
+    void handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData);
+
+    /**
+     * @brief 处理所有预览图片下载完成
+     */
+    void handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
 
     /**
      * @brief 处理获取错误（带 ID）
@@ -246,6 +306,14 @@ private:
      * @param error 错误信息
      */
     void handleParallelFetchError(const QString& componentId, const QString& error);
+
+    /**
+     * @brief 检测数据是否为 PDF 格式
+     *
+     * @param data 数据
+     * @return bool 是否为 PDF
+     */
+    bool isPDF(const QByteArray& data) const;
 
     // BOM 解析已移至独立的 BomParser 类
 

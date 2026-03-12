@@ -39,10 +39,14 @@ Item {
         id: outputFolderDialog
         title: qsTr("选择输出目录")
         onAccepted: {
-            // 从 URL 中提取本地路径
+            // 从 URL 中提取本地路径（跨平台处理）
             var path = selectedFolder.toString();
-            if (path.startsWith("file:///")) {
-                path = path.substring(8); // 移除 "file:///" 前缀
+            if (path.startsWith("file://")) {
+                path = path.substring(7); // 移除 "file://" 前缀
+                // Windows路径修复：如果路径以 /开头且包含: (如 /C:/)，移除开头的 /
+                if (path.startsWith("/") && path.indexOf(":") > 0) {
+                    path = path.substring(1);
+                }
             }
             exportSettingsController.setOutputPath(path);
         }

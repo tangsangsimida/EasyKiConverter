@@ -5,6 +5,7 @@
 #include "src/ui/viewmodels/ExportProgressViewModel.h"
 #include "src/ui/viewmodels/ExportSettingsViewModel.h"
 #include "src/ui/viewmodels/ThemeSettingsViewModel.h"
+#include "src/utils/CommandLineParser.h"
 #include "src/utils/logging/Log.h"
 
 #include <QApplication>
@@ -12,18 +13,23 @@
 #include <QDir>
 #include <QFile>
 #include <QIcon>
+#include <QImage>
 #include <QPoint>
+#include <QProcess>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QScreen>
+#include <QSize>
 #include <QStandardPaths>
+#include <QTextStream>
 #include <QTimer>
 #include <QUrl>
 
 #ifdef _WIN32
+#    include <conio.h>
 #    include <fcntl.h>
 #    include <io.h>
 #    include <windows.h>
@@ -31,8 +37,13 @@
 
 namespace {
 
-bool isDebugMode() {
-    // 检查环境变量
+bool isDebugMode(const EasyKiConverter::CommandLineParser& parser) {
+    // 优先检查命令行参数
+    if (parser.isDebugMode()) {
+        return true;
+    }
+
+    // 检查环境变量（向后兼容）
     if (qEnvironmentVariableIsSet("EASYKICONVERTER_DEBUG_MODE")) {
         QString debugValue = qEnvironmentVariable("EASYKICONVERTER_DEBUG_MODE", "false").toLower();
         return (debugValue == "true" || debugValue == "1" || debugValue == "yes");
@@ -40,7 +51,7 @@ bool isDebugMode() {
     return false;
 }
 
-void setupLogging(bool debugMode) {
+void setupLogging(bool debugMode, const QString& logLevelStr, const QString& logFilePath) {
     using namespace EasyKiConverter;
 
 #ifdef _WIN32
@@ -71,35 +82,79 @@ void setupLogging(bool debugMode) {
 
     auto logger = Logger::instance();
 
+    // 解析日志级别
+
+    LogLevel logLevel = LogLevel::Info;
+
     if (debugMode) {
-        // 调试模式：使用 Info 级别（避免 Debug 级别产生过多日志影响性能和成功率）
-        // 注意：调试模式主要用于开发时查看错误和网络请求详情，不建议在生产环境使用
-        logger->setGlobalLevel(LogLevel::Info);
+        logLevel = LogLevel::Debug;
 
-        // 控制台输出（彩色，异步模式减少性能影响）
-        auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
-        consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
-        logger->addAppender(consoleAppender);
+    } else if (!logLevelStr.isEmpty()) {
+        if (logLevelStr == "trace") {
+            logLevel = LogLevel::Trace;
 
-        // 文件输出（仅记录错误和警告）
-        QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-        QDir().mkpath(logDir);
-        QString logPath = logDir + "/easykiconverter_debug.log";
+        } else if (logLevelStr == "debug") {
+            logLevel = LogLevel::Debug;
+
+        } else if (logLevelStr == "info") {
+            logLevel = LogLevel::Info;
+
+        } else if (logLevelStr == "warn") {
+            logLevel = LogLevel::Warn;
+
+        } else if (logLevelStr == "error") {
+            logLevel = LogLevel::Error;
+
+        } else if (logLevelStr == "fatal") {
+            logLevel = LogLevel::Fatal;
+        }
+    }
+
+    logger->setGlobalLevel(logLevel);
+
+    // 控制台输出（彩色，异步模式减少性能影响）
+
+    auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
+
+    consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
+
+    logger->addAppender(consoleAppender);
+
+    // 文件输出（仅在调试模式或明确指定日志文件路径时启用）
+
+    if (debugMode || !logFilePath.isEmpty()) {
+        QString logPath;
+
+        if (!logFilePath.isEmpty()) {
+            logPath = logFilePath;
+
+        } else {
+            // 在调试模式下，将日志文件保存到 debug 文件夹
+            QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/debug";
+            QDir().mkpath(logDir);
+
+            // 使用时间戳创建日志文件名
+            QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+            logPath = logDir + QString("/easykiconverter_debug_%1.log").arg(timestamp);
+        }
 
         auto fileAppender =
+
             QSharedPointer<FileAppender>::create(logPath, 10 * 1024 * 1024, 5, true);  // 10MB, 5 files, async
+
         fileAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
+
         logger->addAppender(fileAppender);
 
-        LOG_INFO(LogModule::Core, "调试模式已启用 - 日志文件: {}", logPath);
-    } else {
-        // 正常模式：仅输出 Info 及以上级别
-        logger->setGlobalLevel(LogLevel::Info);
+        LOG_INFO(LogModule::Core,
+                 "日志系统已初始化 - 级别: {}, 日志文件: {}",
+                 logLevelStr.isEmpty() ? "default" : logLevelStr,
+                 logPath);
 
-        // 仅控制台输出（异步模式）
-        auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
-        consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
-        logger->addAppender(consoleAppender);
+    } else {
+        LOG_INFO(LogModule::Core,
+                 "日志系统已初始化 - 级别: {} (仅控制台输出)",
+                 logLevelStr.isEmpty() ? "default" : logLevelStr);
     }
 
     // 安装 Qt 日志适配器（将 qDebug/qWarning/qCritical 重定向到新系统）
@@ -109,8 +164,17 @@ void setupLogging(bool debugMode) {
 }  // anonymous namespace
 
 int main(int argc, char* argv[]) {
-    // 检查调试模式（在 QApplication 创建前检查）
-    bool debugMode = isDebugMode();
+    // 在 QApplication 构造函数之前检查命令行参数
+    bool showHelp = false;
+    bool showVersion = false;
+    for (int i = 1; i < argc; ++i) {
+        QString arg = QString::fromLocal8Bit(argv[i]);
+        if (arg == "--help" || arg == "-h") {
+            showHelp = true;
+        } else if (arg == "--version" || arg == "-v") {
+            showVersion = true;
+        }
+    }
 
     // 设置 QML 样式为 Basic，以消除原生样式自定义警告
     // 注意：样式必须在创建应用程序实例之前设置
@@ -118,14 +182,97 @@ int main(int argc, char* argv[]) {
 
     QApplication app(argc, argv);
 
-    // 初始化日志系统（在 QApplication 创建后立即初始化）
-    setupLogging(debugMode);
-
-    // 设置应用程序信息
+    // 设置应用程序信息（必须在解析命令行参数之前）
     app.setApplicationName("EasyKiConverter");
-    app.setApplicationVersion("3.0.7");
+    app.setApplicationVersion("3.0.8");
     app.setOrganizationName("EasyKiConverter");
     app.setOrganizationDomain("easykiconverter.com");
+
+    // 创建命令行参数解析器（必须在检查showHelp之前）
+    EasyKiConverter::CommandLineParser cmdParser(argc, argv);
+
+    if (showHelp) {
+        // 使用 CommandLineParser 生成的帮助文本
+        QString helpText = cmdParser.helpText();
+
+#ifdef _WIN32
+        // 将帮助信息写入文件
+        QFile helpFile("easykiconverter_help.txt");
+        if (helpFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&helpFile);
+            out.setEncoding(QStringConverter::Utf8);
+            out << helpText;
+            helpFile.close();
+        }
+
+        // 在控制台模式下，直接输出到标准输出
+        QTextStream consoleOut(stdout);
+        consoleOut << helpText;
+#else
+        QTextStream consoleOut(stdout);
+        consoleOut << helpText;
+#endif
+        return 0;
+    }
+
+    if (showVersion) {
+        QString versionText = "EasyKiConverter " + app.applicationVersion() + "\n";
+
+#ifdef _WIN32
+        // 在控制台模式下，直接输出到标准输出
+        QTextStream consoleOut(stdout);
+        consoleOut << versionText;
+#else
+        QTextStream consoleOut(stdout);
+        consoleOut << versionText;
+#endif
+        return 0;
+    }
+
+    // 解析所有命令行参数
+    if (!cmdParser.parse()) {
+#ifdef _WIN32
+        // 尝试附加到父进程的控制台（如果是从命令行启动的）
+        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+            // 如果附加失败，创建新的控制台窗口
+            AllocConsole();
+            SetConsoleTitleA("EasyKiConverter - Error");
+        }
+        // 重新打开标准输出
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+#endif
+        QTextStream err(stderr);
+        err << "错误: 无效的命令行参数\n";
+        err << cmdParser.helpText();
+        return 1;
+    }
+
+    // 验证参数值
+    if (!cmdParser.validate()) {
+#ifdef _WIN32
+        // 尝试附加到父进程的控制台（如果是从命令行启动的）
+        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+            // 如果附加失败，创建新的控制台窗口
+            AllocConsole();
+            SetConsoleTitleA("EasyKiConverter - Error");
+        }
+        // 重新打开标准输出
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+#endif
+        QTextStream err(stderr);
+        err << "错误: 参数值无效\n";
+        err << cmdParser.validationError() << "\n\n";
+        err << cmdParser.helpText();
+        return 1;
+    }
+
+    // 检查调试模式（命令行参数优先，环境变量向后兼容）
+    bool debugMode = isDebugMode(cmdParser);
+
+    // 初始化日志系统（在 QApplication 创建后立即初始化）
+    setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile());
 
     // 尝试设置应用程序图标
     QStringList iconPaths = {":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
@@ -142,11 +289,197 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // 初始化配置服务
-    EasyKiConverter::ConfigService::instance()->loadConfig();
+    // 在 Linux 系统上，自动创建桌面集成配置（如果不存在）
+#ifdef __linux__
+    // 设置桌面文件名称（使用小写，与安装的 desktop 文件保持一致）
+    app.setDesktopFileName("com.tangsangsimida.easykiconverter");
 
-    // 初始化语言管理器
-    EasyKiConverter::LanguageManager::instance();
+    // 检查并创建桌面集成配置
+    QString localAppsDir = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
+    QString iconsBaseDir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/icons/hicolor";
+    QString desktopFilePath = localAppsDir + "/com.tangsangsimida.easykiconverter.desktop";
+
+    // 检查桌面文件是否存在
+    if (!QFile::exists(desktopFilePath)) {
+        qDebug() << "桌面文件不存在，自动创建：" << desktopFilePath;
+
+        // 创建必要的目录
+        QDir().mkpath(localAppsDir);
+
+        // 获取可执行文件路径
+        QString executablePath = QCoreApplication::applicationFilePath();
+
+        // 创建桌面文件
+        QFile desktopFile(desktopFilePath);
+        if (desktopFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&desktopFile);
+            out << "[Desktop Entry]\n";
+            out << "Type=Application\n";
+            out << "Name=EasyKiConverter\n";
+            out << "Name[zh_CN]=EasyKiConverter\n";
+            out << "Comment=Convert LCSC and EasyEDA components to KiCad libraries\n";
+            out << "Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库\n";
+            out << "Exec=" << executablePath << " %F\n";
+            out << "Icon=com.tangsangsimida.easykiconverter\n";
+            out << "Terminal=false\n";
+            out << "Categories=Development;Electronics;Engineering;\n";
+            out << "Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;\n";
+            out << "StartupNotify=true\n";
+            out << "StartupWMClass=easykiconverter\n";
+            out << "MimeType=application/vnd.easyeda+json;\n";
+            desktopFile.close();
+
+            // 设置执行权限
+            QFile::setPermissions(
+                desktopFilePath,
+                QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner | QFile::ReadGroup | QFile::ReadOther);
+
+            qDebug() << "桌面文件已创建：" << desktopFilePath;
+        } else {
+            qWarning() << "无法创建桌面文件：" << desktopFilePath;
+        }
+
+        // 创建多个尺寸的图标（支持高DPI显示）
+        QList<int> iconSizes = {16, 32, 48, 64, 128, 256, 512, 1024};
+        int iconsCreated = 0;
+
+        // 查找 SVG 图标（可以生成任意尺寸）
+        QString svgIconPath;
+        for (const QString& iconPath : iconPaths) {
+            if (iconPath.endsWith(".svg") && QFile::exists(iconPath)) {
+                svgIconPath = iconPath;
+                break;
+            }
+        }
+
+        if (!svgIconPath.isEmpty()) {
+            // 从 SVG 生成多个尺寸的图标
+            QImage svgImage(svgIconPath);
+            if (!svgImage.isNull()) {
+                for (int size : iconSizes) {
+                    QString sizeDir = QString("%1/%2x%3/apps").arg(iconsBaseDir).arg(size).arg(size);
+                    QDir().mkpath(sizeDir);
+                    QString iconFilePath = sizeDir + "/com.tangsangsimida.easykiconverter.png";
+
+                    // 渲染 SVG 到指定尺寸
+                    QImage scaledImage = svgImage.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                    if (scaledImage.save(iconFilePath, "PNG")) {
+                        iconsCreated++;
+                        qDebug() << "图标已创建：" << iconFilePath << size << "x" << size;
+                    }
+                }
+            } else {
+                qWarning() << "无法加载 SVG 图标：" << svgIconPath;
+            }
+        }
+
+        // 如果没有 SVG，使用 PNG 图标（复制到所有尺寸）
+        if (iconsCreated == 0) {
+            for (int size : iconSizes) {
+                QString sizeDir = QString("%1/%2x%3/apps").arg(iconsBaseDir).arg(size).arg(size);
+                QDir().mkpath(sizeDir);
+                QString iconFilePath = sizeDir + "/com.tangsangsimida.easykiconverter.png";
+
+                bool iconCopied = false;
+                for (const QString& iconPath : iconPaths) {
+                    if (iconPath.endsWith(".png") && QFile::exists(iconPath)) {
+                        QImage sourceImage(iconPath);
+                        if (!sourceImage.isNull()) {
+                            QImage scaledImage =
+                                sourceImage.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                            if (scaledImage.save(iconFilePath, "PNG")) {
+                                iconCopied = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (iconCopied) {
+                    iconsCreated++;
+                    qDebug() << "图标已创建：" << iconFilePath << size << "x" << size;
+                }
+            }
+        }
+
+        if (iconsCreated == 0) {
+            qWarning() << "无法创建任何图标文件";
+        } else {
+            qDebug() << "已创建" << iconsCreated << "个尺寸的图标";
+        }
+
+        // 更新桌面数据库
+        QProcess updateDesktopDb;
+        updateDesktopDb.start("update-desktop-database", QStringList() << localAppsDir);
+        updateDesktopDb.waitForFinished(5000);
+
+        // 更新图标缓存
+        QProcess updateIconCache;
+        updateIconCache.start(
+            "gtk-update-icon-cache",
+            QStringList() << "-q" << "-t" << "-f"
+                          << QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/icons/hicolor");
+        updateIconCache.waitForFinished(5000);
+
+        qDebug() << "桌面集成配置已自动创建";
+    } else {
+        qDebug() << "桌面文件已存在：" << desktopFilePath;
+    }
+#endif
+
+    // 处理命令行参数 - 配置文件路径
+    QString configFilePath;
+    if (!cmdParser.configFile().isEmpty()) {
+        configFilePath = cmdParser.configFile();
+        qDebug() << "使用命令行指定的配置文件:" << configFilePath;
+    } else if (cmdParser.isPortableMode()) {
+        // 便携模式：配置文件保存在程序目录
+        QString appDir = QCoreApplication::applicationDirPath();
+        configFilePath = appDir + "/easykiconverter_config.json";
+        qDebug() << "便携模式：配置文件保存在程序目录:" << configFilePath;
+    }
+
+    // 初始化配置服务
+    EasyKiConverter::ConfigService::instance()->loadConfig(configFilePath);
+
+    // 处理命令行参数 - 调试模式设置（优先于环境变量）
+    // 调试模式只通过命令行参数和环境变量控制，不会保存到配置文件
+    if (cmdParser.isDebugMode()) {
+        auto* configService = EasyKiConverter::ConfigService::instance();
+        // 设置内存中的调试模式（不保存到配置文件）
+        configService->setDebugMode(true, false);
+        qDebug() << "通过命令行参数启用调试模式（仅当前会话有效）";
+    }
+
+    // 处理命令行参数 - 语言设置
+    if (!cmdParser.language().isEmpty()) {
+        auto* langManager = EasyKiConverter::LanguageManager::instance();
+        QString lang = cmdParser.language();
+        if (lang == "zh_CN" || lang == "en") {
+            langManager->setLanguage(lang);
+            qDebug() << "通过命令行设置语言为:" << lang;
+        } else {
+            qWarning() << "无效的语言设置:" << lang << "，支持的选项: zh_CN, en";
+        }
+    } else {
+        // 初始化语言管理器（使用默认语言）
+        EasyKiConverter::LanguageManager::instance();
+    }
+
+    // 处理命令行参数 - 主题设置
+    if (!cmdParser.theme().isEmpty()) {
+        QString theme = cmdParser.theme();
+        auto* configService = EasyKiConverter::ConfigService::instance();
+        if (theme == "dark") {
+            configService->setDarkMode(true);
+            qDebug() << "通过命令行设置主题为: dark";
+        } else if (theme == "light") {
+            configService->setDarkMode(false);
+            qDebug() << "通过命令行设置主题为: light";
+        } else {
+            qWarning() << "无效的主题设置:" << theme << "，支持的选项: dark, light";
+        }
+    }
 
     // 创建 Service 实例（使用流水线架构，不设置 parent，手动管理生命周期）
     EasyKiConverter::ComponentService* componentService = new EasyKiConverter::ComponentService();
@@ -205,46 +538,91 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // 获取根窗口对象并立即设置窗口位置（在显示之前）
+    // 获取根窗口对象并设置窗口位置
     auto* rootObject = engine.rootObjects().first();
     if (auto* window = qobject_cast<QQuickWindow*>(rootObject)) {
         auto* configService = EasyKiConverter::ConfigService::instance();
-        int savedX = configService->getWindowX();
-        int savedY = configService->getWindowY();
 
-        int posX, posY;
-
-        // 如果配置中保存了有效位置，则使用保存的位置
-        if (savedX != -9999 && savedY != -9999) {
-            posX = savedX;
-            posY = savedY;
-        } else {
-            // 否则居中显示
-            QScreen* screen = window->screen();
-            if (screen) {
-                int screenWidth = screen->availableGeometry().width();
-                int screenHeight = screen->availableGeometry().height();
-                posX = (screenWidth - window->width()) / 2;
-                posY = (screenHeight - window->height()) / 2;
-            } else {
-                posX = 100;
-                posY = 100;
-            }
-        }
-
-        qDebug() << "设置窗口位置到:" << posX << posY << "窗口大小:" << window->width() << window->height();
-
-        // 先隐藏窗口，设置位置后再显示
+        // 先隐藏窗口，等待 QML 完全加载后再显示
         window->hide();
-        window->setFramePosition(QPoint(posX, posY));
 
-        // 强制更新窗口几何信息
-        window->update();
+        // 使用延迟执行，确保 QML 窗口已经完全初始化并获取到正确的尺寸
+        QTimer::singleShot(100, [window, configService]() {
+            int savedX = configService->getWindowX();
+            int savedY = configService->getWindowY();
 
-        // 短暂延迟后显示窗口
-        QTimer::singleShot(50, [window, posX, posY]() {
+            int posX, posY;
+            bool useSavedPosition = false;
+
+            // 如果配置中保存了有效位置（不是默认值 (0,0)），则使用保存的位置
+            if (savedX > 0 && savedY > 0) {
+                posX = savedX;
+                posY = savedY;
+                useSavedPosition = true;
+                qDebug() << "使用保存的窗口位置:" << posX << posY;
+            } else {
+                // 否则居中显示
+                QScreen* screen = window->screen();
+                if (screen) {
+                    QRect screenGeometry = screen->availableGeometry();
+                    int screenWidth = screenGeometry.width();
+                    int screenHeight = screenGeometry.height();
+
+                    // 使用窗口的当前尺寸
+                    int windowWidth = window->width();
+                    int windowHeight = window->height();
+
+                    // 如果窗口尺寸不合理（小于最小尺寸），使用默认尺寸
+                    if (windowWidth < 800)
+                        windowWidth = 800;
+                    if (windowHeight < 600)
+                        windowHeight = 600;
+
+                    // 计算居中位置
+                    posX = (screenWidth - windowWidth) / 2;
+                    posY = (screenHeight - windowHeight) / 2;
+
+                    qDebug() << "屏幕尺寸:" << screenWidth << "x" << screenHeight << "窗口尺寸:" << windowWidth << "x"
+                             << windowHeight << "计算居中位置:" << posX << "," << posY;
+
+                    // 保存居中位置到配置，避免下次启动时又回到左上角
+                    configService->setWindowX(posX);
+                    configService->setWindowY(posY);
+                    configService->saveConfig();
+                    qDebug() << "已保存居中位置到配置";
+                } else {
+                    posX = 100;
+                    posY = 100;
+                }
+            }
+
+            qDebug() << "设置窗口位置到:" << posX << posY;
+
+            // 使用 setPosition 设置窗口位置
+            window->setPosition(posX, posY);
+
+            // 显示窗口
             window->show();
-            qDebug() << "窗口已显示，位置: (" << window->x() << "," << window->y() << ")";
+
+            // 等待窗口实际显示，然后检查实际位置
+            QTimer::singleShot(100, [window, posX, posY, useSavedPosition]() {
+                QScreen* screen = window->screen();
+                if (screen) {
+                    QRect screenGeometry = screen->availableGeometry();
+                    QRect windowGeometry = window->geometry();
+
+                    qDebug() << "窗口已显示:";
+                    qDebug() << "  期望位置: (" << posX << "," << posY << ")";
+                    qDebug() << "  实际位置: (" << windowGeometry.x() << "," << windowGeometry.y() << ")";
+                    qDebug() << "  窗口大小: (" << windowGeometry.width() << "x" << windowGeometry.height() << ")";
+                    qDebug() << "  屏幕大小: (" << screenGeometry.width() << "x" << screenGeometry.height() << ")";
+
+                    // 如果使用保存位置但实际位置不对，说明保存的位置有问题
+                    if (useSavedPosition && (windowGeometry.x() <= 0 || windowGeometry.y() <= 0)) {
+                        qDebug() << "警告: 保存的窗口位置无效，下次启动将重新居中";
+                    }
+                }
+            });
         });
     }
 

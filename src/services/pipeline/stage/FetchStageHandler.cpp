@@ -54,6 +54,8 @@ void FetchStageHandler::start() {
 
             status->componentId = componentId;
 
+            status->componentData = preData;  // 设置完整的 ComponentData，包括预览图和手册
+
             status->need3DModel = m_options.exportModel3D;
 
             status->symbolData = preData->symbolData();

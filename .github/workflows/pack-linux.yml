@@ -74,25 +74,31 @@ jobs:
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
 
           # 配置元数据
-          cat > ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop <<EOF
+          cat > ${APPIMAGE_DST_PATH}/com.tangsangsimida.easykiconverter.desktop <<EOF
           [Desktop Entry]
           Type=Application
           Name=EasyKiConverter
+          Name[zh_CN]=EasyKiConverter
           Comment=Convert LCSC and EasyEDA components to KiCad libraries
-          Exec=EasyKiConverter
-          Icon=app_icon
-          Categories=Development;Electronics;
+          Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库
+          Exec=easykiconverter %F
+          Icon=com.tangsangsimida.easykiconverter
           Terminal=false
+          Categories=Development;Electronics;Engineering;
+          Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;
+          StartupNotify=true
+          StartupWMClass=EasyKiConverter
+          MimeType=application/vnd.easyeda+json;
           EOF
-          cp resources/icons/app_icon.png ${APPIMAGE_DST_PATH}/app_icon.png
+          cp resources/icons/app_icon.png ${APPIMAGE_DST_PATH}/com.tangsangsimida.easykiconverter.png
 
           # 关键步骤：运行 linuxdeploy 填充依赖库 (Qt libs 等) 到 AppDir
           # 注意：这里不生成 AppImage 文件，只处理目录内容
           # --icon-file 参数必须指向 AppDir 中的图标文件，而不是源路径
           linuxdeploy --appdir ${APPIMAGE_DST_PATH} --plugin qt \
-            --executable ${APPIMAGE_DST_PATH}/usr/bin/EasyKiConverter \
-            --desktop-file ${APPIMAGE_DST_PATH}/EasyKiConverter.desktop \
-            --icon-file ${APPIMAGE_DST_PATH}/app_icon.png
+            --executable ${APPIMAGE_DST_PATH}/usr/bin/easykiconverter \
+            --desktop-file ${APPIMAGE_DST_PATH}/com.tangsangsimida.easykiconverter.desktop \
+            --icon-file ${APPIMAGE_DST_PATH}/com.tangsangsimida.easykiconverter.png
 
       - name: Upload AppDir Artifact
         uses: actions/upload-artifact@v4
@@ -132,8 +138,8 @@ jobs:
           # 重新运行 linuxdeploy 以生成 AppImage
           # 必须再次指定 executable 和 desktop-file 否则 AppRun 可能不会正确链接
           linuxdeploy --appdir ${{ env.PRODUCT }}.AppDir --plugin qt \
-            --executable ${{ env.PRODUCT }}.AppDir/usr/bin/EasyKiConverter \
-            --desktop-file ${{ env.PRODUCT }}.AppDir/EasyKiConverter.desktop \
+            --executable ${{ env.PRODUCT }}.AppDir/usr/bin/easykiconverter \
+            --desktop-file ${{ env.PRODUCT }}.AppDir/com.tangsangsimida.easykiconverter.desktop \
             --output appimage
 
           # 重命名
@@ -195,8 +201,8 @@ jobs:
             export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
             echo "Found AppDir at: $APP_DIR"
           else
-            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/EasyKiConverter）
-            if [ -f "usr/bin/EasyKiConverter" ] && [ -f "AppRun" ]; then
+            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/easykiconverter）
+            if [ -f "usr/bin/easykiconverter" ] && [ -f "AppRun" ]; then
               # nfpm 不支持使用根目录，需要创建一个子目录
               echo "Found AppDir structure in current directory, creating subdirectory for nfpm"
               mkdir -p AppDir_temp
@@ -222,14 +228,24 @@ jobs:
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
 
-          # 准备脚本（创建所有必需的脚本文件）
+          # 准备脚本（复制项目中的脚本文件）
           mkdir -p scripts
-          echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
-          echo -e "#!/bin/sh\n# Pre-remove script (empty)" > scripts/preremove.sh
+          cp deploy/scripts/postinstall.sh scripts/postinstall.sh
+          cp deploy/scripts/prerm.sh scripts/preremove.sh
+          cp deploy/scripts/postrm.sh scripts/postrm.sh
           chmod +x scripts/*.sh
 
-          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
-          sed "s|\${APP_DIR}|$APP_DIR|g" deploy/nfpm.yaml > nfpm_temp.yaml
+          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
+          sed -e "s|\${APP_DIR}|$APP_DIR|g" \
+              -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
+              -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
+              -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
+              -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
+              -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$(pwd)/deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|g" \
+              deploy/nfpm.yaml > nfpm_temp.yaml
 
           # 打包
           nfpm pkg --packager deb --target . --config nfpm_temp.yaml
@@ -292,8 +308,8 @@ jobs:
             export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
             echo "Found AppDir at: $APP_DIR"
           else
-            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/EasyKiConverter）
-            if [ -f "usr/bin/EasyKiConverter" ] && [ -f "AppRun" ]; then
+            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/easykiconverter）
+            if [ -f "usr/bin/easykiconverter" ] && [ -f "AppRun" ]; then
               # nfpm 不支持使用根目录，需要创建一个子目录
               echo "Found AppDir structure in current directory, creating subdirectory for nfpm"
               mkdir -p AppDir_temp
@@ -319,14 +335,24 @@ jobs:
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
 
-          # 准备脚本（创建所有必需的脚本文件）
+          # 准备脚本（复制项目中的脚本文件）
           mkdir -p scripts
-          echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
-          echo -e "#!/bin/sh\n# Pre-remove script (empty)" > scripts/preremove.sh
+          cp deploy/scripts/postinstall.sh scripts/postinstall.sh
+          cp deploy/scripts/prerm.sh scripts/preremove.sh
+          cp deploy/scripts/postrm.sh scripts/postrm.sh
           chmod +x scripts/*.sh
 
-          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
-          sed "s|\${APP_DIR}|$APP_DIR|g" deploy/nfpm.yaml > nfpm_temp.yaml
+          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
+          sed -e "s|\${APP_DIR}|$APP_DIR|g" \
+              -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
+              -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
+              -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
+              -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
+              -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$(pwd)/deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|g" \
+              deploy/nfpm.yaml > nfpm_temp.yaml
 
           nfpm pkg --packager rpm --target . --config nfpm_temp.yaml
 
@@ -385,8 +411,8 @@ jobs:
             export APP_DIR="${GITHUB_WORKSPACE}/AppDir"
             echo "Found AppDir at: $APP_DIR"
           else
-            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/EasyKiConverter）
-            if [ -f "usr/bin/EasyKiConverter" ] && [ -f "AppRun" ]; then
+            # 检查当前目录是否包含 AppDir 的特征文件（usr/bin/easykiconverter）
+            if [ -f "usr/bin/easykiconverter" ] && [ -f "AppRun" ]; then
               # nfpm 不支持使用根目录，需要创建一个子目录
               echo "Found AppDir structure in current directory, creating subdirectory for nfpm"
               mkdir -p AppDir_temp
@@ -412,14 +438,24 @@ jobs:
           echo "=== Verifying APP_DIR ==="
           ls -la "$APP_DIR" | head -20
 
-          # 准备脚本（创建所有必需的脚本文件）
+          # 准备脚本（复制项目中的脚本文件）
           mkdir -p scripts
-          echo -e "#!/bin/sh\nif which update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi" > scripts/postinstall.sh
-          echo -e "#!/bin/sh\n# Pre-remove script (empty)" > scripts/preremove.sh
+          cp deploy/scripts/postinstall.sh scripts/postinstall.sh
+          cp deploy/scripts/prerm.sh scripts/preremove.sh
+          cp deploy/scripts/postrm.sh scripts/postrm.sh
           chmod +x scripts/*.sh
 
-          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量
-          sed "s|\${APP_DIR}|$APP_DIR|g" deploy/nfpm.yaml > nfpm_temp.yaml
+          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
+          sed -e "s|\${APP_DIR}|$APP_DIR|g" \
+              -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
+              -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
+              -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
+              -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
+              -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
+              -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$(pwd)/deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|g" \
+              deploy/nfpm.yaml > nfpm_temp.yaml
 
           nfpm pkg --packager archlinux --target . --config nfpm_temp.yaml
 
@@ -458,7 +494,7 @@ jobs:
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: EasyKiConverter.flatpak
-          manifest-path: deploy/flatpak/com.tangsangsimida.EasyKiConverter.yml
+          manifest-path: deploy/flatpak/com.tangsangsimida.easykiconverter.yml
           cache-key: flatpak-builder-${{ github.sha }}
           upload-artifact: false
           verbose: true

@@ -1,0 +1,32 @@
+--- original/CMakeLists.txt	2026-03-11 21:35:17.371602684 +0800
++++ modified/CMakeLists.txt	2026-03-11 21:35:35.155796036 +0800
+@@ -152,8 +152,10 @@
+     endif()
+ elseif(DEFINED ENV{QXLSX_ROOT})
+     message(STATUS "Using local QXlsx source from: $ENV{QXLSX_ROOT}")
+-    FetchContent_Declare(QXlsx SOURCE_DIR $ENV{QXLSX_ROOT})
+-    FetchContent_MakeAvailable(QXlsx)
++    message(STATUS "QXlsx source directory exists: ${CMAKE_CURRENT_SOURCE_DIR}/$ENV{QXLSX_ROOT}/QXlsx")
++    # 添加 QXlsx 子目录
++    add_subdirectory($ENV{QXLSX_ROOT}/QXlsx ${CMAKE_CURRENT_BINARY_DIR}/qxlsx)
++    message(STATUS "QXlsx target created: QXlsx::QXlsx exists: $<TARGET_EXISTS:QXlsx::QXlsx>")
+ else()
+     # 尝试使用 find_package (Flatpak 构建)
+     message(STATUS "FLATPAK_BUILD=${FLATPAK_BUILD}, CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
+@@ -332,6 +334,16 @@
+     DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+ )
+ 
++# 安装 license 文件
++install(FILES LICENSE
++    DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/io.github.tangsangsimida.easykiconverter
++)
++
++# 安装 AppStream metainfo 文件
++install(FILES deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml
++    DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
++)
++
+ # 打印配置信息
+ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+ message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")

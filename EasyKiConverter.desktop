@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=EasyKiConverter
+Name[zh_CN]=EasyKiConverter
+Comment=Convert LCSC and EasyEDA components to KiCad libraries
+Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库
+Exec=easykiconverter %F
+Icon=io.github.tangsangsimida.easykiconverter
+Terminal=false
+Categories=Development;Electronics;Engineering;
+Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;
+StartupNotify=true
+StartupWMClass=easykiconverter
+MimeType=application/vnd.easyeda+json;

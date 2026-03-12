@@ -289,6 +289,114 @@ Card {
                 }
             }
         }
+        // 预览图选项
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 100
+            spacing: 8
+            CheckBox {
+                id: previewImagesCheckbox
+                Layout.fillWidth: true
+                text: qsTranslate("MainWindow", "预览图")
+                checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportPreviewImages : false
+                onCheckedChanged: {
+                    if (exportSettingsCard.exportSettingsController) {
+                        exportSettingsCard.exportSettingsController.setExportPreviewImages(checked);
+                    }
+                }
+                font.pixelSize: 16
+                indicator: Rectangle {
+                    implicitWidth: 22
+                    implicitHeight: 22
+                    x: previewImagesCheckbox.leftPadding
+                    y: parent.height / 2 - height / 2
+                    radius: 4
+                    color: previewImagesCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                    border.color: previewImagesCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                    border.width: 1.5
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "✓"
+                        font.pixelSize: 14
+                        color: "#ffffff"
+                        visible: previewImagesCheckbox.checked
+                    }
+                }
+
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: AppStyle.colors.textPrimary
+                    verticalAlignment: Text.AlignVCenter
+                    leftPadding: parent.indicator.width + parent.spacing
+                }
+            }
+        }
+        // 手册选项
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 100
+            spacing: 8
+            CheckBox {
+                id: datasheetCheckbox
+                Layout.fillWidth: true
+                text: qsTranslate("MainWindow", "手册")
+                checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportDatasheet : false
+                onCheckedChanged: {
+                    if (exportSettingsCard.exportSettingsController) {
+                        exportSettingsCard.exportSettingsController.setExportDatasheet(checked);
+                    }
+                }
+                font.pixelSize: 16
+                indicator: Rectangle {
+                    implicitWidth: 22
+                    implicitHeight: 22
+                    x: datasheetCheckbox.leftPadding
+                    y: parent.height / 2 - height / 2
+                    radius: 4
+                    color: datasheetCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                    border.color: datasheetCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                    border.width: 1.5
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "✓"
+                        font.pixelSize: 14
+                        color: "#ffffff"
+                        visible: datasheetCheckbox.checked
+                    }
+                }
+
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: AppStyle.colors.textPrimary
+                    verticalAlignment: Text.AlignVCenter
+                    leftPadding: parent.indicator.width + parent.spacing
+                }
+            }
+        }
         // 导出模式选项
         ColumnLayout {
             Layout.fillWidth: true

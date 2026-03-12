@@ -135,7 +135,7 @@ bool ExportProgressViewModel::openLastExportedFolder() {
         return false;
     }
 
-    LOG_DEBUG(LogModule::UI, "Successfully opened last exported folder");
+    LOG_DEBUG(LogModule::UI, "Successfully opened last exported folder: {}", path);
     return true;
 }
 
@@ -145,6 +145,8 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
                                           bool exportSymbol,
                                           bool exportFootprint,
                                           bool exportModel3D,
+                                          bool exportPreviewImages,
+                                          bool exportDatasheet,
                                           bool overwriteExistingFiles,
                                           bool updateMode,
                                           bool debugMode) {
@@ -187,16 +189,10 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
             }
             exportDir.cd("EasyKiConverter");
 
-            // 创建用户输入的子目录（如 test）
-            if (!exportDir.exists(absoluteOutputPath)) {
-                exportDir.mkdir(absoluteOutputPath);
-            }
-            exportDir.cd(absoluteOutputPath);
-
-            // 在子目录下创建库名称目录
-            absoluteOutputPath = exportDir.absoluteFilePath(libName);
+            // 直接拼接相对路径，不添加库名称
+            absoluteOutputPath = exportDir.absoluteFilePath(absoluteOutputPath);
             LOG_DEBUG(LogModule::UI,
-                      "Converted relative path to absolute path (Documents/EasyKiConverter/userPath/libName): {} -> {}",
+                      "Converted relative path to absolute path (Documents/EasyKiConverter/userPath): {} -> {}",
                       outputPath,
                       absoluteOutputPath);
         }
@@ -215,6 +211,8 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     m_exportOptions.exportSymbol = exportSymbol;
     m_exportOptions.exportFootprint = exportFootprint;
     m_exportOptions.exportModel3D = exportModel3D;
+    m_exportOptions.exportPreviewImages = exportPreviewImages;
+    m_exportOptions.exportDatasheet = exportDatasheet;
     m_exportOptions.overwriteExistingFiles = overwriteExistingFiles;
     m_exportOptions.updateMode = updateMode;
     m_exportOptions.debugMode = debugMode;
@@ -675,12 +673,20 @@ void ExportProgressViewModel::startExportInternal(const QStringList& componentId
                 for (const QString& id : componentIds) {
                     auto data = m_componentListViewModel->getPreloadedData(id);
                     if (data) {
+                        qDebug() << "Preloaded component:" << id
+                                 << "PreviewImages (URLs):" << data->previewImages().size()
+                                 << "PreviewImageData (bytes):" << data->previewImageData().size() << "Datasheet (URL):"
+                                 << (data->datasheet().isEmpty() ? "empty" : data->datasheet().left(50))
+                                 << "DatasheetData (bytes):" << data->datasheetData().size();
                         preloadedData.insert(id, data);
                     }
                 }
                 if (!preloadedData.isEmpty()) {
                     qDebug() << "Passing" << preloadedData.size() << "preloaded components to pipeline";
                     pipelineService->setPreloadedData(preloadedData);
+                    pipelineService->setComponentListViewModel(m_componentListViewModel);
+                } else {
+                    qDebug() << "No preloaded data available";
                 }
             }
 

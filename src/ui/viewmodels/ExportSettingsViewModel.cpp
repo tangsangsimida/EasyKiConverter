@@ -1,3 +1,10 @@
+/*
+ * 我发现我在学校，不谈恋爱也不学习，不打游戏也不逃课，每天就是处于认真听课，然后因为听不懂走神了，
+ * 反应过来以后再继续认真听课的循环，进入这种状态的时候，我一般就是左脑和右脑已经聊美了，
+ * 完全就是一个放飞自我，意淫我有多少多少家产，然后怕班里有人会读心术紧急撤回一条意淫，
+ * 那这在恋爱小说里我不就是那种…背景板吗，就每天在学校挂机任务就完成的npc
+ */
+
 #include "ExportSettingsViewModel.h"
 
 #include "services/ExportService_Pipeline.h"
@@ -19,6 +26,8 @@ ExportSettingsViewModel::ExportSettingsViewModel(ExportService* exportService, Q
     , m_exportSymbol(true)
     , m_exportFootprint(true)
     , m_exportModel3D(true)
+    , m_exportPreviewImages(false)
+    , m_exportDatasheet(false)
     , m_overwriteExistingFiles(false)
     , m_exportMode(0)  // 默认为追加模式
     , m_debugMode(false) {
@@ -77,6 +86,22 @@ void ExportSettingsViewModel::setExportModel3D(bool enabled) {
         m_exportModel3D = enabled;
         m_configService->setExportModel3D(enabled);
         emit exportModel3DChanged();
+    }
+}
+
+void ExportSettingsViewModel::setExportPreviewImages(bool enabled) {
+    if (m_exportPreviewImages != enabled) {
+        m_exportPreviewImages = enabled;
+        m_configService->setExportPreviewImages(enabled);
+        emit exportPreviewImagesChanged();
+    }
+}
+
+void ExportSettingsViewModel::setExportDatasheet(bool enabled) {
+    if (m_exportDatasheet != enabled) {
+        m_exportDatasheet = enabled;
+        m_configService->setExportDatasheet(enabled);
+        emit exportDatasheetChanged();
     }
 }
 
@@ -189,16 +214,10 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
             }
             exportDir.cd("EasyKiConverter");
 
-            // 创建用户输入的子目录（如 test）
-            if (!exportDir.exists(absoluteOutputPath)) {
-                exportDir.mkdir(absoluteOutputPath);
-            }
-            exportDir.cd(absoluteOutputPath);
-
-            // 在子目录下创建库名称目录
-            absoluteOutputPath = exportDir.absoluteFilePath(m_libName);
-            qDebug() << "Converted relative path to absolute path (Documents/EasyKiConverter/userPath/libName):"
-                     << m_outputPath << "->" << absoluteOutputPath;
+            // 直接拼接相对路径，不添加库名称
+            absoluteOutputPath = exportDir.absoluteFilePath(absoluteOutputPath);
+            qDebug() << "Converted relative path to absolute path (Documents/EasyKiConverter/userPath):" << m_outputPath
+                     << "->" << absoluteOutputPath;
         }
     }
 
@@ -214,12 +233,16 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
     options.exportSymbol = m_exportSymbol;
     options.exportFootprint = m_exportFootprint;
     options.exportModel3D = m_exportModel3D;
+    options.exportPreviewImages = m_exportPreviewImages;
+    options.exportDatasheet = m_exportDatasheet;
+    options.overwriteExistingFiles = m_overwriteExistingFiles;
     options.updateMode = (m_exportMode == 1);  // 1 = 更新模式
     options.debugMode = m_debugMode;
 
     qDebug() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
              << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
-             << "3D Model:" << options.exportModel3D << "Update Mode:" << options.updateMode
+             << "3D Model:" << options.exportModel3D << "Preview Images:" << options.exportPreviewImages
+             << "Datasheet:" << options.exportDatasheet << "Update Mode:" << options.updateMode
              << "Debug Mode:" << options.debugMode;
 
     // 设置导出状态
@@ -315,6 +338,8 @@ void ExportSettingsViewModel::loadFromConfig() {
     m_exportSymbol = m_configService->getExportSymbol();
     m_exportFootprint = m_configService->getExportFootprint();
     m_exportModel3D = m_configService->getExportModel3D();
+    m_exportPreviewImages = m_configService->getExportPreviewImages();
+    m_exportDatasheet = m_configService->getExportDatasheet();
     m_overwriteExistingFiles = m_configService->getOverwriteExistingFiles();
 
     // 从环境变量读取调试模式（优先级高于配置文件）
@@ -333,6 +358,8 @@ void ExportSettingsViewModel::loadFromConfig() {
     emit exportSymbolChanged();
     emit exportFootprintChanged();
     emit exportModel3DChanged();
+    emit exportPreviewImagesChanged();
+    emit exportDatasheetChanged();
     emit overwriteExistingFilesChanged();
     emit debugModeChanged();
 

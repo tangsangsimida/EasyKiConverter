@@ -31,7 +31,15 @@ runs:
           # Strip 'v' or 'V' prefix (case-insensitive)
           VERSION=${TAG_NAME#[vV]}
         else
-          VERSION="dev"
+          # 非 tag 触发时，使用最新的 tag 版本号，确保 DEB 包版本号以数字开头
+          latest_tag=$(git tag -l --sort=-v:refname "v*" "V*" | head -n 1)
+          if [ -n "$latest_tag" ]; then
+            # 去除 'v' 或 'V' 前缀
+            VERSION=${latest_tag#[vV]}
+          else
+            # 如果没有 tag，使用默认版本号
+            VERSION="3.0.7"
+          fi
         fi
         echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
         echo "Extracted version: ${VERSION}"

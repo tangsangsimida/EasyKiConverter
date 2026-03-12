@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 # 从 CI 环境动态获取版本号，如果没有定义则使用默认版本
 if(NOT DEFINED VERSION_FROM_CI)
-    set(VERSION_FROM_CI "3.0.7")
+    set(VERSION_FROM_CI "3.0.8")
     message(STATUS "VERSION_FROM_CI not defined, using default: ${VERSION_FROM_CI}")
 else()
     message(STATUS "VERSION_FROM_CI defined: ${VERSION_FROM_CI}")
@@ -141,24 +141,44 @@ set(FETCHCONTENT_QUIET OFF CACHE BOOL "")
 set(FETCHCONTENT_UPDATES_DISCONNECTED OFF CACHE BOOL "")
 set(FETCHCONTENT_FULLY_DISCONNECTED OFF CACHE BOOL "")
 
-# 优先使用本地预下载的源码（CI 环境）
-if(DEFINED ENV{QXLSX_ROOT})
+# 首先尝试查找已安装的 QXlsx（Flatpak 或系统安装）
+find_package(QXlsxQt6 QUIET)
+if(QXlsxQt6_FOUND)
+    message(STATUS "Found system QXlsxQt6, using it")
+    if(NOT TARGET QXlsx::QXlsx)
+        add_library(QXlsx INTERFACE IMPORTED)
+        add_library(QXlsx::QXlsx ALIAS QXlsx)
+        target_link_libraries(QXlsx INTERFACE QXlsxQt6)
+    endif()
+elseif(DEFINED ENV{QXLSX_ROOT})
     message(STATUS "Using local QXlsx source from: $ENV{QXLSX_ROOT}")
-    FetchContent_Declare(QXlsx SOURCE_DIR $ENV{QXLSX_ROOT})
+    add_subdirectory($ENV{QXLSX_ROOT} ${CMAKE_CURRENT_BINARY_DIR}/qxlsx)
+    message(STATUS "QXlsx target created: QXlsx::QXlsx exists: $<TARGET_EXISTS:QXlsx::QXlsx>")
 else()
-    # 从 GitHub 下载
-    message(STATUS "Downloading QXlsx from GitHub")
-    FetchContent_Declare(
-        QXlsx
-        GIT_REPOSITORY https://github.com/QtExcel/QXlsx.git
-        GIT_TAG        master
-        GIT_SHALLOW    TRUE
-        SOURCE_SUBDIR  QXlsx
-    )
+    # 尝试使用 find_package (Flatpak 构建)
+    message(STATUS "FLATPAK_BUILD=${FLATPAK_BUILD}, CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
+    find_package(QXlsxQt6 QUIET)
+    if(QXlsxQt6_FOUND)
+        # 创建 QXlsx::QXlsx 别名以兼容现有代码
+        message(STATUS "Found QXlsxQt6, creating QXlsx::QXlsx alias")
+        if(NOT TARGET QXlsx::QXlsx)
+            add_library(QXlsx INTERFACE IMPORTED)
+            add_library(QXlsx::QXlsx ALIAS QXlsx)
+            target_link_libraries(QXlsx INTERFACE QXlsxQt6)
+        endif()
+    else()
+        message(STATUS "QXlsxQt6 not found, downloading from GitHub")
+        # 从 GitHub 下载
+        FetchContent_Declare(
+            QXlsx
+            GIT_REPOSITORY https://github.com/QtExcel/QXlsx.git
+            GIT_TAG        master
+            GIT_SHALLOW    TRUE
+            SOURCE_SUBDIR  QXlsx
+        )
+        FetchContent_MakeAvailable(QXlsx)
+    endif()
 endif()
-
-# 使 QXlsx 可用
-FetchContent_MakeAvailable(QXlsx)
 
 # 添加源码模块（包含所有子模块的 CMakeLists.txt）
 add_subdirectory(src)
@@ -267,7 +287,7 @@ set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE $<NOT:$<BOOL:${EASYKICONVERTER_CONSOLE_MODE}>>
-    OUTPUT_NAME "EasyKiConverter"
+    OUTPUT_NAME "easykiconverter"
 )
 
 # 链接源码库和 Qt 库
@@ -299,6 +319,27 @@ install(TARGETS appEasyKiconverter_Cpp_Version
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# 安装图标
+install(DIRECTORY resources/icons/hicolor/
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor
+    FILES_MATCHING PATTERN "*.png"
+)
+
+# 安装 desktop 文件
+install(FILES deploy/linux/io.github.tangsangsimida.easykiconverter.desktop
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+)
+
+# 安装 license 文件
+install(FILES LICENSE
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/io.github.tangsangsimida.easykiconverter
+)
+
+# 安装 AppStream metainfo 文件
+install(FILES deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
 )
 
 # 打印配置信息

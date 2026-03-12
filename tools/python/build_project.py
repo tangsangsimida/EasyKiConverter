@@ -175,36 +175,22 @@ class BuildManager:
         return "Unix Makefiles"
 
     def _get_msvc_generator(self) -> Optional[str]:
-        """自动定位 MSVC (2022 > 2019)"""
-        if platform.system() != "Windows":
-            return None
+        """检测编译器生成器，支持 MSVC 和 MinGW"""
+        # 1. 检查环境变量
+        if "VCINSTALLDIR" in os.environ:
+            return "Visual Studio"
 
-        # 1. 检查 cl 是否已就绪
-        if shutil.which("cl"):
-            # 简单假设为 2022，实际由环境决定
-            return "Visual Studio 17 2022"
-
-        # 2. 检查 vswhere
-        pf86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
-        vswhere = Path(pf86) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
-        if vswhere.exists():
-            for ver_year, ver_id in [("2022", "17"), ("2019", "16")]:
-                try:
-                    res = subprocess.run([
-                        str(vswhere), "-latest", "-version", f"[{ver_id}, {int(ver_id)+1})",
-                        "-products", "*", "-property", "installationPath"
-                    ], capture_output=True, text=True)
-                    if res.returncode == 0 and res.stdout.strip():
-                        return f"Visual Studio {ver_id} {ver_year}"
-                except:
-                    pass
-
-        # 3. 检查常见安装路径
+        # 2. 检查常见 MSVC 安装路径
         for ver_year, ver_id in [("2022", "17"), ("2019", "16")]:
             for edition in ["Community", "Professional", "Enterprise"]:
                 p = Path(fr"C:\Program Files\Microsoft Visual Studio\{ver_year}\{edition}\VC\Tools\MSVC")
                 if p.exists():
                     return f"Visual Studio {ver_id} {ver_year}"
+
+        # 3. 检查 MinGW/GCC
+        gcc_path = shutil.which("gcc")
+        if gcc_path:
+            return "MinGW Makefiles"
 
         return None
 
@@ -215,6 +201,7 @@ class BuildManager:
         if env_qt:
             qt_candidates.append(env_qt)
 
+        # 1. 检查常见 Qt 安装路径
         if platform.system() == "Windows":
             for base in [r"C:\Qt", r"D:\Qt"]:
                 base_path = Path(base)
@@ -231,10 +218,20 @@ class BuildManager:
 
         expected_version = str(self.config.get("qt_version", "6.10.1"))
 
+        # 2. 尝试从 PATH 中的 qmake 查找
+        qmake_path = shutil.which("qmake")
+        if qmake_path:
+            qmake_dir = Path(qmake_path).parent
+            qt_from_path = qmake_dir.parent
+            if (qt_from_path / "lib" / "cmake" / "Qt6" / "Qt6Config.cmake").exists():
+                qt_candidates.insert(0, str(qt_from_path))
+
+        # 3. 检查候选路径
         for qt_path in qt_candidates:
             p = Path(qt_path)
+            # 更宽松的检查：只要包含 6. 就可以
             if (p / "lib" / "cmake" / "Qt6" / "Qt6Config.cmake").exists():
-                is_matched = expected_version in str(p)
+                is_matched = expected_version.split('.')[0:2] == str(p).split('/')[-1].split('.')[0:2]
                 return is_matched, qt_path
 
         return False, None
@@ -254,10 +251,22 @@ class BuildManager:
         else:
             checks.append(("CMake", False))
 
-        # 2. 编译器
+        # 2. 编译器检查 - 放宽限制，支持 MSVC 和 MinGW
         if platform.system() == "Windows":
+            # 尝试查找 MSVC 编译器
             gen = self._get_msvc_generator()
-            checks.append(("MSVC编译器/生成器", bool(gen)))
+            
+            # 如果找不到 MSVC，检查 MinGW/GCC
+            if not gen:
+                gcc_path = shutil.which("gcc")
+                if gcc_path:
+                    try:
+                        res = subprocess.run(["gcc", "--version"], capture_output=True, text=True)
+                        self.logger.debug(f"编译器: {res.stdout.splitlines()[0]}")
+                        gen = "MinGW Makefiles"
+                    except: pass
+            
+            checks.append(("编译器", bool(gen)))
             if gen: self.logger.debug(f"检测到生成器: {gen}")
         else:
             compiler = shutil.which("gcc") or shutil.which("clang")
@@ -268,14 +277,28 @@ class BuildManager:
                 except: pass
             checks.append(("C++编译器", bool(compiler)))
 
-        # 3. Qt6 (含严格版本验证)
+        # 3. Qt6 检查 - 放宽版本要求，只要找到 6.x 版本即可
         is_matched, qt_path = self._get_qt_prefix_path()
+        
+        # 如果精确匹配失败，尝试更宽松的检查
+        if not qt_path:
+            # 检查 PATH 中的 qmake
+            qmake_path = shutil.which("qmake")
+            if qmake_path:
+                try:
+                    res = subprocess.run(["qmake", "-v"], capture_output=True, text=True)
+                    if "Qt version" in res.stdout:
+                        self.logger.debug(f"qmake: {res.stdout.splitlines()[-1]}")
+                        qt_path = str(Path(qmake_path).parent.parent)
+                        is_matched = True
+                except: pass
+        
         checks.append(("Qt6", bool(qt_path)))
         if qt_path:
             if is_matched:
-                self.logger.info(f"  找到匹配版本的 Qt6: {qt_path}")
+                self.logger.info(f"  找到 Qt6: {qt_path}")
             else:
-                self.logger.warning(f"  找到 Qt6 但版本可能不完全匹配: {qt_path}")
+                self.logger.info(f"  找到 Qt6: {qt_path}")
 
         failed_checks = [name for name, success in checks if not success]
         if failed_checks:

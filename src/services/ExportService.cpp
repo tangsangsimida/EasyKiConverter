@@ -1,6 +1,7 @@
 #include "ExportService.h"
 
 #include "ComponentExportTask.h"
+#include "core/easyeda/JLCDatasheet.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
@@ -8,7 +9,12 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QEventLoop>
 #include <QFile>
+#include <QFileInfo>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 
 namespace EasyKiConverter {
 
@@ -27,7 +33,8 @@ ExportService::ExportService(QObject* parent)
     , m_failureCount(0)
     , m_parallelExporting(false)
     , m_parallelCompletedCount(0)
-    , m_parallelTotalCount(0) {
+    , m_parallelTotalCount(0)
+    , m_networkManager(new QNetworkAccessManager(this)) {
     m_threadPool->setMaxThreadCount(QThread::idealThreadCount());
 }
 
@@ -162,13 +169,25 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData>& co
             allModels.append(exportData.model3DData);
         }
 
+        // 收集预览图数据
+        if (!componentData.previewImages().isEmpty()) {
+            exportData.previewImages = componentData.previewImages();
+        }
+
+        // 收集手册数据
+        if (!componentData.datasheet().isEmpty()) {
+            exportData.datasheet = componentData.datasheet();
+        }
+
         exportData.success = false;
         m_exportDataList.append(exportData);
 
         qDebug() << "Added export data for:" << exportData.componentId
                  << "Symbol:" << !exportData.symbolData.info().name.isEmpty()
                  << "Footprint:" << !exportData.footprintData.info().name.isEmpty()
-                 << "3D Model:" << !exportData.model3DData.uuid().isEmpty();
+                 << "3D Model:" << !exportData.model3DData.uuid().isEmpty()
+                 << "Preview Images:" << exportData.previewImages.size()
+                 << "Datasheet:" << !exportData.datasheet.isEmpty();
     }
 
     // 创建输出目录
@@ -264,6 +283,65 @@ void ExportService::executeExportPipelineWithData(const QList<ComponentData>& co
                 }
             }
         }
+    }
+
+    // 导出预览图
+    qDebug() << "ExportPreviewImages option:" << m_options.exportPreviewImages;
+    qDebug() << "Total components:" << m_exportDataList.size();
+    int componentsWithPreviewImages = 0;
+    for (const auto& exportData : m_exportDataList) {
+        if (!exportData.previewImages.isEmpty()) {
+            componentsWithPreviewImages++;
+        }
+    }
+    qDebug() << "Components with preview images:" << componentsWithPreviewImages;
+
+    if (m_options.exportPreviewImages) {
+        int previewImageSuccessCount = 0;
+        for (const auto& exportData : m_exportDataList) {
+            if (!exportData.previewImages.isEmpty()) {
+                qDebug() << "Exporting preview images for:" << exportData.componentId
+                         << "Image count:" << exportData.previewImages.size();
+
+                // 使用组件名称或ID作为文件名
+                QString componentName = exportData.symbolData.info().name.isEmpty() ? exportData.componentId
+                                                                                    : exportData.symbolData.info().name;
+
+                if (exportPreviewImages(exportData.previewImages, m_options.outputPath, componentName)) {
+                    previewImageSuccessCount++;
+                }
+            }
+        }
+        qDebug() << "Preview images export completed:" << previewImageSuccessCount << "components";
+    }
+
+    // 导出手册
+    qDebug() << "ExportDatasheet option:" << m_options.exportDatasheet;
+    int componentsWithDatasheets = 0;
+    for (const auto& exportData : m_exportDataList) {
+        if (!exportData.datasheet.isEmpty()) {
+            componentsWithDatasheets++;
+        }
+    }
+    qDebug() << "Components with datasheets:" << componentsWithDatasheets;
+
+    if (m_options.exportDatasheet) {
+        int datasheetSuccessCount = 0;
+        for (const auto& exportData : m_exportDataList) {
+            if (!exportData.datasheet.isEmpty()) {
+                qDebug() << "Exporting datasheet for:" << exportData.componentId
+                         << "Datasheet URL:" << exportData.datasheet;
+
+                // 使用组件名称或ID作为文件名
+                QString componentName = exportData.symbolData.info().name.isEmpty() ? exportData.componentId
+                                                                                    : exportData.symbolData.info().name;
+
+                if (exportDatasheet(exportData.datasheet, m_options.outputPath, componentName)) {
+                    datasheetSuccessCount++;
+                }
+            }
+        }
+        qDebug() << "Datasheets export completed:" << datasheetSuccessCount << "components";
     }
 
     // 创建封装库目录
@@ -705,6 +783,191 @@ void ExportService::handleParallelExportTaskFinished(const QString& componentId,
         m_isExporting = false;
         m_parallelExporting = false;
         emit exportCompleted(m_totalProgress, m_successCount);
+    }
+}
+
+bool ExportService::exportPreviewImages(const QStringList& imageUrls,
+                                        const QString& outputPath,
+                                        const QString& componentName) {
+    if (imageUrls.isEmpty()) {
+        return true;
+    }
+
+    // 创建预览图目录（类似3D模型的处理方式）
+    QString imagesDirPath = QString("%1/%2.preview").arg(outputPath, m_options.libName);
+    if (!createOutputDirectory(imagesDirPath)) {
+        qWarning() << "Failed to create preview images directory:" << imagesDirPath;
+        return false;
+    }
+
+    bool allSuccess = true;
+    for (int i = 0; i < imageUrls.size(); ++i) {
+        QString imageUrl = imageUrls[i];
+        QString fileExtension = QFileInfo(imageUrl).suffix();
+        if (fileExtension.isEmpty()) {
+            fileExtension = "jpg";  // 默认扩展名
+        }
+
+        QString fileName;
+        if (imageUrls.size() == 1) {
+            fileName = QString("%1.%2").arg(componentName, fileExtension);
+        } else {
+            fileName = QString("%1_%2.%3").arg(componentName).arg(i + 1).arg(fileExtension);
+        }
+
+        QString imagePath = QString("%1/%2").arg(imagesDirPath, fileName);
+
+        // 检查文件是否已存在
+        if (!m_options.overwriteExistingFiles && QFile::exists(imagePath)) {
+            qWarning() << "Preview image already exists:" << imagePath;
+            continue;
+        }
+
+        // 下载图片
+        QNetworkRequest request(imageUrl);
+        request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
+        QNetworkReply* reply = m_networkManager->get(request);
+
+        QEventLoop loop;
+        connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        loop.exec();
+
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray imageData = reply->readAll();
+            QFile file(imagePath);
+            if (file.open(QIODevice::WriteOnly)) {
+                file.write(imageData);
+                file.close();
+                qDebug() << "Preview image exported successfully:" << imagePath;
+            } else {
+                qWarning() << "Failed to open file for writing:" << imagePath;
+                allSuccess = false;
+            }
+        } else {
+            qWarning() << "Failed to download preview image:" << imageUrl << reply->errorString();
+            allSuccess = false;
+        }
+
+        reply->deleteLater();
+    }
+
+    return allSuccess;
+}
+
+bool ExportService::exportPreviewImagesFromCache(const QStringList& imagePaths,
+                                                 const QString& outputPath,
+                                                 const QString& componentName) {
+    if (imagePaths.isEmpty()) {
+        return true;
+    }
+
+    // 创建预览图目录（类似3D模型的处理方式）
+    QString imagesDirPath = QString("%1/%2.preview").arg(outputPath, m_options.libName);
+    if (!createOutputDirectory(imagesDirPath)) {
+        qWarning() << "Failed to create preview images directory:" << imagesDirPath;
+        return false;
+    }
+
+    bool allSuccess = true;
+    for (int i = 0; i < imagePaths.size(); ++i) {
+        QString sourcePath = imagePaths[i];
+
+        // 检查源文件是否存在
+        if (!QFile::exists(sourcePath)) {
+            qWarning() << "Source preview image file not found:" << sourcePath;
+            allSuccess = false;
+            continue;
+        }
+
+        QString fileExtension = QFileInfo(sourcePath).suffix();
+        if (fileExtension.isEmpty()) {
+            fileExtension = "jpg";  // 默认扩展名
+        }
+
+        QString fileName;
+        if (imagePaths.size() == 1) {
+            fileName = QString("%1.%2").arg(componentName, fileExtension);
+        } else {
+            fileName = QString("%1_%2.%3").arg(componentName).arg(i + 1).arg(fileExtension);
+        }
+
+        QString destPath = QString("%1/%2").arg(imagesDirPath, fileName);
+
+        // 检查文件是否已存在
+        if (!m_options.overwriteExistingFiles && QFile::exists(destPath)) {
+            qWarning() << "Preview image already exists:" << destPath;
+            continue;
+        }
+
+        // 复制文件
+        if (QFile::copy(sourcePath, destPath)) {
+            qDebug() << "Preview image copied from cache:" << destPath;
+        } else {
+            qWarning() << "Failed to copy preview image from cache:" << sourcePath << "to" << destPath;
+            allSuccess = false;
+        }
+    }
+
+    return allSuccess;
+}
+
+bool ExportService::exportDatasheet(const QString& datasheetUrl,
+                                    const QString& outputPath,
+                                    const QString& componentName) {
+    if (datasheetUrl.isEmpty()) {
+        return true;
+    }
+
+    // 创建手册目录
+    QString datasheetDirPath = QString("%1/%2.datasheet").arg(outputPath, m_options.libName);
+    if (!createOutputDirectory(datasheetDirPath)) {
+        qWarning() << "Failed to create datasheet directory:" << datasheetDirPath;
+        return false;
+    }
+
+    // 确定文件扩展名
+    QString fileExtension = "pdf";  // 默认扩展名
+    QFileInfo urlInfo(datasheetUrl);
+    if (!urlInfo.suffix().isEmpty()) {
+        fileExtension = urlInfo.suffix();
+    }
+
+    QString fileName = QString("%1.%2").arg(componentName, fileExtension);
+    QString datasheetPath = QString("%1/%2").arg(datasheetDirPath, fileName);
+
+    // 检查文件是否已存在
+    if (!m_options.overwriteExistingFiles && QFile::exists(datasheetPath)) {
+        qWarning() << "Datasheet already exists:" << datasheetPath;
+        return true;
+    }
+
+    // 下载手册
+    QNetworkRequest request(datasheetUrl);
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
+    QNetworkReply* reply = m_networkManager->get(request);
+
+    QEventLoop loop;
+    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray datasheetData = reply->readAll();
+        QFile file(datasheetPath);
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write(datasheetData);
+            file.close();
+            qDebug() << "Datasheet exported successfully:" << datasheetPath;
+            reply->deleteLater();
+            return true;
+        } else {
+            qWarning() << "Failed to open file for writing:" << datasheetPath;
+            reply->deleteLater();
+            return false;
+        }
+    } else {
+        qWarning() << "Failed to download datasheet:" << datasheetUrl << reply->errorString();
+        reply->deleteLater();
+        return false;
     }
 }
 

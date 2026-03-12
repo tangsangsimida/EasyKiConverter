@@ -14,15 +14,55 @@
 ```
 tools/
 ├── windows/          # Windows 平台特定工具
-│   ├── format_code.bat
-│   └── build_project.bat     # 一键构建脚本 [NEW]
-├── linux/            # Linux 平台特定工具 (暂未实现)
-├── macos/            # macOS 平台特定工具 (暂未实现)
+│   ├── format_code.bat           # C++ 代码格式化工具
+│   ├── format_qml.bat            # QML 代码格式化工具
+│   └── build_project.bat         # Python 构建工具包装器
+├── linux/            # Linux 平台特定工具
+│   ├── build-packages.sh         # Linux 打包脚本
+│   ├── fix-desktop-icon.sh       # 桌面图标修复脚本
+│   └── BUILD_PACKAGES_README.md  # Linux 打包指南
+├── macos/            # macOS 平台特定工具
 └── python/           # 跨平台 Python 工具
-    ├── manage_version.py
-    ├── manage_translations.py # 翻译管理工具 [NEW]
-    ├── check_env.py          # 环境检查工具 [NEW]
-    └── count_lines.py        # 代码行数统计工具 [NEW]
+    ├── build_project.py          # 项目构建管理器
+    ├── manage_version.py         # 版本号管理工具
+    ├── manage_translations.py    # 翻译文件管理工具
+    ├── format_code.py            # 代码格式化工具
+    ├── count_lines.py            # 代码行数统计工具
+    ├── analyze_lines.py          # 代码复杂度分析工具
+    ├── build_docs.py             # 文档构建工具
+    ├── check_env.py              # 环境依赖检查工具
+    ├── convert_to_utf8.py        # 文件编码转换工具
+    └── fix_qml_translations.py   # QML 翻译修复工具
+```
+
+## Linux 工具
+
+### [build-packages.sh](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/linux/build-packages.sh)
+
+Linux 平台打包脚本，支持 AppImage、DEB、RPM、Arch Linux 和 Flatpak 打包。
+
+**快速用法:**
+```bash
+# 构建所有包
+./tools/linux/build-packages.sh all
+
+# 仅构建 AppImage
+./tools/linux/build-packages.sh appimage
+
+# 仅构建 DEB 包
+./tools/linux/build-packages.sh deb
+
+# 指定版本
+VERSION=3.0.8 ./tools/linux/build-packages.sh all
+```
+
+### [fix-desktop-icon.sh](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/linux/fix-desktop-icon.sh)
+
+Linux 桌面图标修复脚本，用于修复用户级别桌面文件覆盖系统配置的问题。
+
+**快速用法:**
+```bash
+sudo ./tools/linux/fix-desktop-icon.sh
 ```
 
 ## Windows 工具
@@ -48,27 +88,68 @@ tools\windows\build_project.bat Release
 
 ## Python 工具
 
+### [build_project.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/build_project.py)
+
+项目构建管理工具，支持环境检查、CMake 配置、并行编译和日志管理。
+
+**快速用法:**
+```bash
+# 默认 Debug 构建
+python tools/python/build_project.py
+
+# Release 构建
+python tools/python/build_project.py -t Release --parallel
+
+# 仅检查环境
+python tools/python/build_project.py --check
+```
+
 ### [manage_version.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/manage_version.py)
 
-跨平台版本同步管理工具。
+跨平台版本同步管理工具，统一更新 CMakeLists.txt、vcpkg.json 和源码中的版本号。
+
+**快速用法:**
+```bash
+# 检查当前版本
+python tools/python/manage_version.py --check
+
+# 更新到新版本
+python tools/python/manage_version.py 3.0.8
+```
 
 ### [manage_translations.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/manage_translations.py)
 
-自动化 Qt 翻译流程（lupdate/lrelease）。
+自动化 Qt 翻译流程（lupdate/lrelease），支持自动提取和编译翻译文件。
 
 **快速用法:**
 ```bash
 # 更新并编译所有翻译文件
 python tools/python/manage_translations.py --all
+
+# 仅更新翻译源文件
+python tools/python/manage_translations.py --update
+
+# 仅编译翻译文件
+python tools/python/manage_translations.py --release
 ```
 
-### [check_env.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/check_env.py)
+### [format_code.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/format_code.py)
 
-开发依赖环境检查工具。
+统一的代码格式化工具，支持 C++ 和 QML 文件格式化。
 
 **快速用法:**
 ```bash
-python tools/python/check_env.py
+# 格式化所有代码
+python tools/python/format_code.py --all
+
+# 仅格式化 C++ 文件
+python tools/python/format_code.py --cpp
+
+# 仅格式化 QML 文件
+python tools/python/format_code.py --qml
+
+# 检查格式而不修改（CI 模式）
+python tools/python/format_code.py --check --all
 ```
 
 ### [count_lines.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/count_lines.py)
@@ -77,7 +158,71 @@ python tools/python/check_env.py
 
 **快速用法:**
 ```bash
+# 统计项目代码行数
 python tools/python/count_lines.py
+
+# JSON 格式输出
+python tools/python/count_lines.py --json
+```
+
+### [analyze_lines.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/analyze_lines.py)
+
+代码复杂度分析工具，识别高耦合风险文件。
+
+**快速用法:**
+```bash
+# 分析整个项目
+python tools/python/analyze_lines.py
+
+# 启用终端超链接（点击文件可打开）
+python tools/python/analyze_lines.py --link
+
+# 分析指定目录
+python tools/python/analyze_lines.py tests
+```
+
+### [build_docs.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/build_docs.py)
+
+文档构建工具，支持 Doxygen API 文档和 MkDocs 站点生成。
+
+**快速用法:**
+```bash
+# 构建所有文档
+python tools/python/build_docs.py --all
+
+# 仅生成 API 文档
+python tools/python/build_docs.py --doxygen
+
+# 本地预览文档
+python tools/python/build_docs.py --serve
+```
+
+### [check_env.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/check_env.py)
+
+开发依赖环境检查工具，验证 CMake、编译器、Qt6 等依赖。
+
+**快速用法:**
+```bash
+python tools/python/check_env.py
+```
+
+### [convert_to_utf8.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/convert_to_utf8.py)
+
+文件编码转换工具，将文件转换为 UTF-8 编码（无 BOM）。
+
+**快速用法:**
+```bash
+# 转换整个 src 目录
+python tools/python/convert_to_utf8.py src/
+```
+
+### [fix_qml_translations.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/fix_qml_translations.py)
+
+QML 翻译修复工具，修复 QML 文件中的翻译相关问题。
+
+**快速用法:**
+```bash
+python tools/python/fix_qml_translations.py
 ```
 
 > [!TIP]

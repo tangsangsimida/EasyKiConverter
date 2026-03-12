@@ -13,11 +13,19 @@ Card {
         spacing: 12
         TextField {
             id: componentInput
+            objectName: "componentInputField"
             Layout.fillWidth: true
             placeholderText: qsTranslate("MainWindow", "输入LCSC元件编号 (例如: C2040)")
             font.pixelSize: AppStyle.fontSizes.md
             color: AppStyle.colors.textPrimary
             placeholderTextColor: AppStyle.colors.textSecondary
+
+            // 组件加载完成后自动设置焦点
+            Component.onCompleted: {
+                Qt.callLater(function () {
+                    forceActiveFocus();
+                });
+            }
             background: Rectangle {
                 color: componentInput.enabled ? AppStyle.colors.surface : AppStyle.colors.background
                 border.color: componentInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border

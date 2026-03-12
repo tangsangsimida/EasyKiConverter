@@ -9,7 +9,7 @@ maintainer: "EasyKiConverter Team"
 description: |
   Convert LCSC and EasyEDA components to KiCad libraries.
   This package is self-contained and includes all necessary Qt libraries.
-homepage: "https://github.com/tangsangsimida/EasyKiConverter_QT"
+homepage: "https://github.com/tangsangsimida/EasyKiConverter"
 license: "MIT"
 
 contents:
@@ -18,26 +18,60 @@ contents:
     dst: "/opt/easykiconverter/"
     type: tree
 
-  # 创建符号链接 /usr/bin/easykiconverter -> /opt/easykiconverter/AppRun
-  - src: "/opt/easykiconverter/AppRun"
+  # 创建包装脚本 /usr/bin/easykiconverter（包装脚本调用 /opt/easykiconverter/AppRun）
+  - src: "deploy/scripts/easykiconverter-wrapper.sh"
     dst: "/usr/bin/easykiconverter"
-    type: symlink
+    file_info:
+      mode: 0755
 
-  # 安装 desktop 文件
-  - src: "${APP_DIR}/EasyKiConverter.desktop"
-    dst: "/usr/share/applications/easykiconverter.desktop"
+  # 安装 desktop 文件到系统目录（使用实际文件路径，不是符号链接）
+  - src: "${APP_DIR}/usr/share/applications/com.tangsangsimida.easykiconverter.desktop"
+    dst: "/usr/share/applications/com.tangsangsimida.easykiconverter.desktop"
+    file_info:
+      mode: 0644
 
-  # 安装图标
-  - src: "${APP_DIR}/app_icon.png"
-    dst: "/usr/share/icons/hicolor/256x256/apps/easykiconverter.png"
+  # 安装 AppStream 元数据文件（用于 GNOME 和其他现代桌面环境）
+  - src: "deploy/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml"
+    dst: "/usr/share/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml"
+
+  # 安装应用注册脚本（由自动启动文件调用）
+  - src: "deploy/scripts/easykiconverter-register.sh"
+    dst: "/usr/share/easykiconverter/easykiconverter-register.sh"
+    file_info:
+      mode: 0755
+
+  # 安装 GNOME 刷新触发脚本（由 postinstall.sh 调用）
+  - src: "deploy/scripts/trigger-gnome-refresh.sh"
+    dst: "/usr/share/easykiconverter/trigger-gnome-refresh.sh"
+    file_info:
+      mode: 0755
+
+  # 安装图标到多个尺寸以支持不同的显示环境
+  # 注意：linuxdeploy 只创建了 48x48 的图标，我们将其复制到所有尺寸
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/16x16/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/32x32/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/64x64/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/128x128/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/256x256/apps/com.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor/48x48/apps/com.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor/512x512/apps/com.tangsangsimida.easykiconverter.png"
 
 overrides:
   deb:
     scripts:
-      postinstall: scripts/postinstall.sh
-      preremove: scripts/preremove.sh
+      postinstall: deploy/scripts/postinstall.sh
+      preremove: deploy/scripts/prerm.sh
+      postremove: deploy/scripts/postrm.sh
   rpm:
     scripts:
-      postinstall: scripts/postinstall.sh
-      preremove: scripts/preremove.sh
+      postinstall: deploy/scripts/postinstall.sh
+      preremove: deploy/scripts/prerm.sh
+      postremove: deploy/scripts/postrm.sh
 

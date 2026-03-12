@@ -8,6 +8,7 @@
 
 #include <QAtomicInt>
 #include <QMutex>
+#include <QNetworkAccessManager>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -24,6 +25,8 @@ struct ExportOptions {
     bool exportSymbol;
     bool exportFootprint;
     bool exportModel3D;
+    bool exportPreviewImages;
+    bool exportDatasheet;
     bool overwriteExistingFiles;
     bool updateMode;
     bool debugMode;
@@ -32,6 +35,8 @@ struct ExportOptions {
         : exportSymbol(true)
         , exportFootprint(true)
         , exportModel3D(true)
+        , exportPreviewImages(false)
+        , exportDatasheet(false)
         , overwriteExistingFiles(false)
         , updateMode(false)
         , debugMode(false) {}
@@ -47,6 +52,11 @@ public:
     bool exportSymbol(const SymbolData& symbol, const QString& filePath);
     bool exportFootprint(const FootprintData& footprint, const QString& filePath);
     bool export3DModel(const Model3DData& model, const QString& filePath);
+    bool exportPreviewImages(const QStringList& imageUrls, const QString& outputPath, const QString& componentName);
+    bool exportPreviewImagesFromCache(const QStringList& imagePaths,
+                                      const QString& outputPath,
+                                      const QString& componentName);
+    bool exportDatasheet(const QString& datasheetUrl, const QString& outputPath, const QString& componentName);
 
     virtual void executeExportPipeline(const QStringList& componentIds, const ExportOptions& options);
     virtual void retryExport(const QStringList& componentIds, const ExportOptions& options);
@@ -79,7 +89,9 @@ signals:
                            int stage = -1,
                            bool symbolSuccess = false,
                            bool footprintSuccess = false,
-                           bool model3DSuccess = false);
+                           bool model3DSuccess = false,
+                           bool previewImagesSuccess = false,
+                           bool datasheetSuccess = false);
     void exportCompleted(int totalCount, int successCount);
     void exportFailed(const QString& error);
 
@@ -122,6 +134,8 @@ private:
         SymbolData symbolData;
         FootprintData footprintData;
         Model3DData model3DData;
+        QStringList previewImages;
+        QString datasheet;
         bool success;
         QString errorMessage;
     };
@@ -132,6 +146,7 @@ private:
     int m_parallelCompletedCount;
     int m_parallelTotalCount;
     QMap<QString, bool> m_parallelExportStatus;
+    QNetworkAccessManager* m_networkManager;
 };
 
 }  // namespace EasyKiConverter

@@ -2,6 +2,7 @@
 
 #include "pipeline/cleanup/PipelineCleanup.h"
 #include "pipeline/stats/PipelineStatistics.h"
+#include "ui/viewmodels/ComponentListViewModel.h"
 #include "utils/PathSecurity.h"
 #include "workers/FetchWorker.h"
 #include "workers/ProcessWorker.h"
@@ -219,6 +220,11 @@ PipelineProgress ExportServicePipeline::getPipelineProgress() const {
 void ExportServicePipeline::setPreloadedData(const QMap<QString, QSharedPointer<ComponentData>>& data) {
     QMutexLocker locker(m_mutex);
     m_preloadedData = data;
+}
+
+void ExportServicePipeline::setComponentListViewModel(ComponentListViewModel* componentListViewModel) {
+    QMutexLocker locker(m_mutex);
+    m_componentListViewModel = componentListViewModel;
 }
 
 void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportStatus> status) {
@@ -496,13 +502,102 @@ void ExportServicePipeline::checkPipelineCompletion() {
         }
     }
 
-    // 2. 清理临时文件夹（无论合并是否成功都要清理）
+    // 2. 检查预加载数据状态
+    qDebug() << "Preloaded data count:" << m_preloadedData.size();
+    int componentsWithPreviewImages = 0;
+    int componentsWithDatasheets = 0;
+    for (auto it = m_preloadedData.constBegin(); it != m_preloadedData.constEnd(); ++it) {
+        const QSharedPointer<ComponentData>& componentData = it.value();
+        qDebug() << "Component:" << componentData->lcscId()
+                 << "Preview images:" << componentData->previewImages().size() << "Datasheet:"
+                 << (componentData->datasheet().isEmpty() ? "empty" : componentData->datasheet().left(50));
+        if (!componentData->previewImages().isEmpty()) {
+            componentsWithPreviewImages++;
+        }
+        if (!componentData->datasheet().isEmpty()) {
+            componentsWithDatasheets++;
+        }
+    }
+    qDebug() << "Components with preview images:" << componentsWithPreviewImages;
+    qDebug() << "Components with datasheets:" << componentsWithDatasheets;
+
+    // 3. 导出预览图
+    qDebug() << "ExportPreviewImages option:" << m_options.exportPreviewImages;
+    if (m_options.exportPreviewImages) {
+        int previewImageSuccessCount = 0;
+        for (auto it = m_preloadedData.constBegin(); it != m_preloadedData.constEnd(); ++it) {
+            const QSharedPointer<ComponentData>& componentData = it.value();
+            QString componentId = componentData->lcscId();
+
+            // 使用内存中的图片数据
+            QList<QByteArray> previewImageDataList = componentData->previewImageData();
+
+            qDebug() << "Preview image data check for component:" << componentId
+                     << "Image count:" << previewImageDataList.size()
+                     << "Expected: 3, Actual:" << previewImageDataList.size();
+
+            if (!previewImageDataList.isEmpty()) {
+                // 打印每张图片的大小
+                for (int i = 0; i < previewImageDataList.size(); ++i) {
+                    qDebug() << "  Image" << i << "size:" << previewImageDataList[i].size() << "bytes";
+                }
+
+                qDebug() << "Exporting preview images for:" << componentId
+                         << "Image count:" << previewImageDataList.size() << "From memory";
+
+                // 使用组件名称或ID作为文件名
+                QString componentName = componentData->name().isEmpty() ? componentId : componentData->name();
+
+                // 从内存数据导出图片
+                if (exportPreviewImagesFromMemory(previewImageDataList, m_options.outputPath, componentName)) {
+                    previewImageSuccessCount++;
+                } else {
+                    qWarning() << "Failed to export preview images for component:" << componentId;
+                }
+            } else {
+                qDebug() << "No preview image data found for component:" << componentId;
+            }
+        }
+        qDebug() << "Preview images export completed:" << previewImageSuccessCount << "components";
+    }
+
+    // 4. 导出手册
+    qDebug() << "ExportDatasheet option:" << m_options.exportDatasheet;
+    if (m_options.exportDatasheet) {
+        int datasheetSuccessCount = 0;
+        for (auto it = m_preloadedData.constBegin(); it != m_preloadedData.constEnd(); ++it) {
+            const QSharedPointer<ComponentData>& componentData = it.value();
+            // 使用内存中的数据手册数据
+            if (!componentData->datasheetData().isEmpty()) {
+                qDebug() << "Exporting datasheet for:" << componentData->lcscId()
+                         << "Datasheet size:" << componentData->datasheetData().size() << "bytes"
+                         << "format:" << componentData->datasheetFormat();
+
+                // 使用组件名称或ID作为文件名
+                QString componentName =
+                    componentData->name().isEmpty() ? componentData->lcscId() : componentData->name();
+
+                // 从内存数据导出数据手册（传递格式）
+                if (exportDatasheetFromMemory(componentData->datasheetData(),
+                                              m_options.outputPath,
+                                              componentName,
+                                              componentData->datasheetFormat())) {
+                    datasheetSuccessCount++;
+                }
+            } else {
+                qDebug() << "No datasheet data found for component:" << componentData->lcscId();
+            }
+        }
+        qDebug() << "Datasheets export completed:" << datasheetSuccessCount << "components";
+    }
+
+    // 5. 清理临时文件夹（无论导出是否成功都要清理）
     if (!m_tempDir.isEmpty()) {
         PipelineCleanup::removeTempDir(m_tempDir);
         m_tempDir.clear();
     }
 
-    // 4. 只在非取消模式下生成统计报告
+    // 6. 只在非取消模式下生成统计报告
     if (!wasCancelled) {
         // 生成统计信息（始终生成，用于显示基本统计卡片）
         ExportStatistics statistics = generateStatistics();
@@ -743,6 +838,104 @@ bool ExportServicePipeline::waitForCompletion(int timeoutMs) {
     qDebug() << "Pipeline wait finished successfully in" << timer.elapsed() << "ms";
 
     return true;
+}
+
+bool ExportServicePipeline::exportPreviewImagesFromMemory(const QList<QByteArray>& imageDataList,
+                                                          const QString& outputPath,
+                                                          const QString& componentName) {
+    // 创建 images 子目录
+    QString imagesDir = outputPath + "/images";
+    QDir dir;
+    if (!dir.exists(imagesDir)) {
+        if (!dir.mkpath(imagesDir)) {
+            qWarning() << "Failed to create images directory:" << imagesDir;
+            return false;
+        }
+    }
+
+    // 清理组件名称中的非法字符
+    QString safeName = componentName;
+    QRegularExpression invalidChars("[<>:\"/\\\\|?*]");
+    safeName.replace(invalidChars, "_");
+
+    // 导出所有图片
+    bool allSuccess = true;
+    int exportedCount = 0;
+    int skippedCount = 0;
+
+    qDebug() << "Starting preview image export for component:" << componentName;
+    qDebug() << "  Image data list size:" << imageDataList.size();
+
+    for (int i = 0; i < imageDataList.size(); ++i) {
+        qDebug() << "  Processing image" << i << "size:" << imageDataList[i].size() << "bytes";
+
+        // 跳过空图片数据
+        if (imageDataList[i].isEmpty()) {
+            qWarning() << "  Skipping empty preview image at index:" << i << "for component:" << componentName;
+            skippedCount++;
+            continue;
+        }
+
+        QString filename = QString("%1_%2.jpg").arg(safeName).arg(i);
+        QString filePath = imagesDir + "/" + filename;
+
+        QFile file(filePath);
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write(imageDataList[i]);
+            file.close();
+            qDebug() << "  Exported preview image to:" << filePath << "size:" << imageDataList[i].size() << "bytes";
+            exportedCount++;
+        } else {
+            qWarning() << "  Failed to write preview image to:" << filePath;
+            allSuccess = false;
+        }
+    }
+
+    qDebug() << "Preview image export completed for" << componentName << "- Total:" << imageDataList.size()
+             << ", Exported:" << exportedCount << ", Skipped:" << skippedCount;
+
+    return allSuccess;
+}
+
+bool ExportServicePipeline::exportDatasheetFromMemory(const QByteArray& datasheetData,
+                                                      const QString& outputPath,
+                                                      const QString& componentName,
+                                                      const QString& format) {
+    // 创建 datasheets 子目录
+    QString datasheetsDir = outputPath + "/datasheets";
+    QDir dir;
+    if (!dir.exists(datasheetsDir)) {
+        if (!dir.mkpath(datasheetsDir)) {
+            qWarning() << "Failed to create datasheets directory:" << datasheetsDir;
+            return false;
+        }
+    }
+
+    // 清理组件名称中的非法字符
+    QString safeName = componentName;
+    QRegularExpression invalidChars("[<>:\"/\\\\|?*]");
+    safeName.replace(invalidChars, "_");
+
+    // 根据格式确定文件扩展名
+    QString extension = format.toLower();
+    if (extension != "html") {
+        extension = "pdf";  // 默认使用 PDF
+    }
+
+    // 导出数据手册
+    QString filename = QString("%1.%2").arg(safeName).arg(extension);
+    QString filePath = datasheetsDir + "/" + filename;
+
+    QFile file(filePath);
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(datasheetData);
+        file.close();
+        qDebug() << "Exported datasheet to:" << filePath << "format:" << format;
+        return true;
+    } else {
+        qWarning() << "Failed to write datasheet to:" << filePath;
+        return false;
+    }
 }
 
 }  // namespace EasyKiConverter

@@ -63,6 +63,14 @@ public:
         m_manufacturer = manufacturer;
     }
 
+    QString manufacturerPart() const {
+        return m_manufacturerPart;
+    }
+
+    void setManufacturerPart(const QString& manufacturerPart) {
+        m_manufacturerPart = manufacturerPart;
+    }
+
     QString datasheet() const {
         return m_datasheet;
     }
@@ -83,6 +91,59 @@ public:
         if (!imageUrl.isEmpty() && !m_previewImages.contains(imageUrl)) {
             m_previewImages.append(imageUrl);
         }
+    }
+
+    QList<QByteArray> previewImageData() const {
+        return m_previewImageData;
+    }
+
+    void setPreviewImageData(const QList<QByteArray>& data) {
+        m_previewImageData = data;
+    }
+
+    void addPreviewImageData(const QByteArray& data, int imageIndex = -1) {
+        qDebug() << "ComponentData::addPreviewImageData called - data size:" << data.size()
+                 << "bytes, index:" << imageIndex << "current count:" << m_previewImageData.size();
+
+        if (data.isEmpty()) {
+            qDebug() << "  Skipping: data is empty";
+            return;
+        }
+
+        // 如果指定了索引，检查该索引是否已经存在
+        if (imageIndex >= 0 && imageIndex < m_previewImageData.size()) {
+            // 如果该索引已经有数据，跳过（避免重复添加）
+            if (!m_previewImageData[imageIndex].isEmpty()) {
+                qDebug() << "  Skipping: index" << imageIndex << "already has data ("
+                         << m_previewImageData[imageIndex].size() << "bytes)";
+                return;
+            }
+            // 替换该索引的数据
+            qDebug() << "  Replacing data at index:" << imageIndex;
+            m_previewImageData[imageIndex] = data;
+        } else {
+            // 没有指定索引或索引超出范围，直接追加
+            qDebug() << "  Appending data, new count:" << (m_previewImageData.size() + 1);
+            m_previewImageData.append(data);
+        }
+
+        qDebug() << "  Final count:" << m_previewImageData.size();
+    }
+
+    QByteArray datasheetData() const {
+        return m_datasheetData;
+    }
+
+    void setDatasheetData(const QByteArray& data) {
+        m_datasheetData = data;
+    }
+
+    QString datasheetFormat() const {
+        return m_datasheetFormat;
+    }
+
+    void setDatasheetFormat(const QString& format) {
+        m_datasheetFormat = format;
     }
 
     QSharedPointer<SymbolData> symbolData() const {
@@ -121,13 +182,17 @@ public:
     void clear();
 
 private:
-    QString m_lcscId;             // LCSC 元件编号
-    QString m_name;               // 元件名称
-    QString m_prefix;             // 元件前缀
-    QString m_package;            // 封装名称
-    QString m_manufacturer;       // 制造商
-    QString m_datasheet;          // 数据手册链接
-    QStringList m_previewImages;  // 预览图 URL 列表
+    QString m_lcscId;                      // LCSC 元件编号
+    QString m_name;                        // 元件名称
+    QString m_prefix;                      // 元件前缀
+    QString m_package;                     // 封装名称
+    QString m_manufacturer;                // 制造商
+    QString m_manufacturerPart;            // 制造商部件号
+    QString m_datasheet;                   // 数据手册链接
+    QByteArray m_datasheetData;            // 数据手册数据（内存）
+    QString m_datasheetFormat;             // 数据手册格式（pdf/html）
+    QStringList m_previewImages;           // 预览图 URL 列表
+    QList<QByteArray> m_previewImageData;  // 预览图数据列表（内存）
 
     QSharedPointer<SymbolData> m_symbolData;        // 符号数据
     QSharedPointer<FootprintData> m_footprintData;  // 封装数据

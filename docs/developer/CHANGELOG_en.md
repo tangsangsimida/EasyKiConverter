@@ -2,6 +2,70 @@
 
 This document records the additions, fixes, and changes in each version of EasyKiConverter.
 
+## [3.0.8] - 2026-03-09
+
+### Added
+
+- **Command Line Arguments Support**
+  - Added complete command line argument parsing functionality
+  - Support enabling debug mode via `--debug` or `-d` argument
+  - Support setting log level via `--log-level` argument
+  - Support specifying log file path via `--log-file` argument
+  - Support specifying config file path via `--config` argument
+  - Support setting interface language via `--language` argument
+  - Support setting interface theme via `--theme` argument
+  - Support enabling portable mode via `--portable` argument
+  - Support displaying help information via `--help` and `-h` arguments
+  - Support displaying version information via `--version` and `-v` arguments
+  - Command line arguments take precedence over environment variable settings
+  - Added CommandLineParser utility class for argument parsing
+
+- **Unified App Identifier to Lowercase**
+  - Unified all platform app identifiers from uppercase `EasyKiConverter` to lowercase `easykiconverter`
+  - Updated AppStream metadata, desktop files, and icon names
+  - Unified app identifiers for all packaging formats (AppImage, DEB, RPM, Flatpak)
+  - Improved cross-platform compatibility and consistency
+
+- **Linux Desktop Icon Fix Script**
+  - Added `tools/linux/fix-desktop-icon.sh` script
+  - Used to fix issues where user-level desktop files override system configuration
+  - Ensures correct app icon display
+  - Provides interactive fix flow supporting both user-level and system-level cache refresh
+
+### Fixed
+
+- **Path Handling Optimization**
+  - Fixed issue where opening export directory on Windows opens parent directory instead of target directory
+  - Fixed multiple leading slash issues in Windows system paths, supporting cross-platform path handling
+  - Fixed path display and relative path handling issues in Linux environments
+  - Fixed issue where library name directory is added during relative path export
+
+- **Window and Dialog Optimization**
+  - Optimized keyboard navigation and focus management for exit dialog
+  - Fixed issue where ESC key cannot bring up close dialog
+  - Added keyboard navigation functionality to ExitDialog
+  - Fixed slider color and scaling issues on long button press
+
+- **Linux Packaging Improvements**
+  - Fixed app icon residue issue after DEB package uninstallation
+  - Fixed issue where DEB package version numbers must start with numbers
+  - Unified desktop files and icon names to lowercase in Linux packaging workflow
+  - Optimized uninstallation process to clean up user-level desktop files
+
+### Improved
+
+- **3D Model Processing**
+  - Optimized 3D model offset calculation logic
+  - Enhanced precision for symbol and footprint export
+
+- **Startup Experience**
+  - Auto-focus component ID input field on startup
+  - Optimized dark theme display for magnified preview
+
+- **Performance Optimization**
+  - Implemented in-memory datasheet and preview image download to avoid disk I/O
+  - Support up to 3 preview images per component
+
 ## [3.0.5] - 2026-02-12
 
 ### Added

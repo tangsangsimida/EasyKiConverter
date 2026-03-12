@@ -122,7 +122,7 @@ jobs:
       - name: 'Deploy Qt dependencies'
         shell: pwsh
         run: |
-          $exePath = "$env:GITHUB_WORKSPACE\build\bin\Release\EasyKiConverter.exe"
+          $exePath = "$env:GITHUB_WORKSPACE\build\bin\Release\easykiconverter.exe"
           Write-Host "Running windeployqt on $exePath"
           # Rely on PATH to find windeployqt
           windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw --qmldir "$env:GITHUB_WORKSPACE\src\ui\qml" $exePath
