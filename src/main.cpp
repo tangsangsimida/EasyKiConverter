@@ -184,7 +184,7 @@ int main(int argc, char* argv[]) {
 
     // 设置应用程序信息（必须在解析命令行参数之前）
     app.setApplicationName("EasyKiConverter");
-    app.setApplicationVersion("3.0.8");
+    app.setApplicationVersion("3.0.9");
     app.setOrganizationName("EasyKiConverter");
     app.setOrganizationDomain("easykiconverter.com");
 
