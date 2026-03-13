@@ -125,3 +125,4 @@ tools/python/datasheet/*
 tools/python/imgs/*
 repo/*
 logs/*
+flatpak-repo/*
