@@ -191,6 +191,52 @@ jobs:
           $hashString | Out-File -FilePath "$filePath.sha256sum" -Encoding ascii
           Write-Host "Generated SHA256: $hashString"
 
+      - name: 'Create MSIX package'
+        if: matrix.type == 'installer'
+        shell: pwsh
+        run: |
+          # 使用 MSIX 打包工具包装 EXE 安装程序
+          $installerPath = "$env:GITHUB_WORKSPACE\build\Package\installer\${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-setup.exe"
+          $manifestPath = "$env:GITHUB_WORKSPACE\deploy\windows\AppxManifest.xml"
+          $outputDir = "$env:GITHUB_WORKSPACE\build\Package\msix"
+          $msixPath = "$outputDir\${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}.msix"
+          
+          mkdir -p $outputDir
+          
+          # 检查 MSIX 打包工具是否可用
+          $msixPackagingTool = "msixpackagingtool"
+          if (-not (Get-Command $msixPackagingTool -ErrorAction SilentlyContinue)) {
+            Write-Host "MSIX Packaging Tool not found. Skipping MSIX package creation."
+            Write-Host "You can manually create MSIX packages using MSIX Packaging Tool from Microsoft Store."
+            exit 0
+          }
+          
+          # 创建 MSIX 包
+          & $msixPackagingTool createinstaller `
+            --installerPath $installerPath `
+            --output $msixPath `
+            --packageId "EasyKiConverter.EasyKiConverter" `
+            --displayName "EasyKiConverter" `
+            --publisher "CN=tangsangsimida" `
+            --version "${{ env.VERSION }}.0"
+          
+          Write-Host "MSIX package created at: $msixPath"
+
+      - name: 'SHA256Sum of MSIX package'
+        if: matrix.type == 'installer'
+        shell: pwsh
+        run: |
+          $fileName = "${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}.msix"
+          $filePath = "$env:GITHUB_WORKSPACE\build\Package\msix\$fileName"
+          if (Test-Path $filePath) {
+            $hash = Get-FileHash -Path $filePath -Algorithm SHA256
+            $hashString = $hash.Hash.ToLower() + " *" + $fileName
+            $hashString | Out-File -FilePath "$filePath.sha256sum" -Encoding ascii
+            Write-Host "Generated SHA256: $hashString"
+          } else {
+            Write-Host "MSIX package not found, skipping SHA256 generation"
+          }
+
       - name: 'Artifact Upload (portable)'
         if: matrix.type == 'portable'
         uses: actions/upload-artifact@v4
@@ -211,6 +257,17 @@ jobs:
             ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe.sha256sum
           overwrite: true
 
+      - name: 'Artifact Upload (MSIX)'
+        if: matrix.type == 'installer'
+        uses: actions/upload-artifact@v4
+        with:
+          name: EasyKiConverter-${{ env.VERSION }}-g${{ env.GIT_HASH }}-x64-msix
+          path: |
+            ${{ github.workspace }}/build/Package/msix/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.msix
+            ${{ github.workspace }}/build/Package/msix/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.msix.sha256sum
+          overwrite: true
+          if-no-files-found: warn
+
       - name: 'Upload Release Asset (portable)'
         if: startsWith(github.ref, 'refs/tags/') && matrix.type == 'portable'
         uses: softprops/action-gh-release@v2
@@ -230,6 +287,8 @@ jobs:
           files: |
             ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe
             ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe.sha256sum
+            ${{ github.workspace }}/build/Package/msix/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.msix
+            ${{ github.workspace }}/build/Package/msix/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.msix.sha256sum
           generate_release_notes: false
           draft: true
           prerelease: false
