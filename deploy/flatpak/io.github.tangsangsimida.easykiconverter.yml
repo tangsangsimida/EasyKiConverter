@@ -33,7 +33,7 @@ modules:
     post-install:
       - mkdir -p $FLATPAK_DEST/share/licenses/$FLATPAK_ID
       - install -Dm0644 LICENSE -t $FLATPAK_DEST/share/licenses/$FLATPAK_ID/easykiconverter
-      - install -Dm0644 qlsx-root/QXlsx/LICENSE -t $FLATPAK_DEST/share/licenses/$FLATPAK_ID/QXlsx || true
+      - install -Dm0644 qlsx-root/QXlsx/LICENSE -t $FLATPAK_DEST/share/licenses/$FLATPAK_ID/QXlsx
     sources:
       - type: git
         url: https://github.com/tangsangsimida/EasyKiConverter.git
