@@ -58,22 +58,22 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.9/resources/imgs/screenshot1.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.11/resources/imgs/screenshot1.png</image>
       <caption>Main application window with component conversion interface</caption>
       <caption xml:lang="zh_CN">主应用窗口 - 元件转换界面</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.9/resources/imgs/screenshot2.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.11/resources/imgs/screenshot2.png</image>
       <caption>Component input and list management</caption>
       <caption xml:lang="zh_CN">元件输入和列表管理</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.9/resources/imgs/screenshot3.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.11/resources/imgs/screenshot3.png</image>
       <caption>Export settings and progress tracking</caption>
       <caption xml:lang="zh_CN">导出设置和进度跟踪</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.9/resources/imgs/screenshot4.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.11/resources/imgs/screenshot4.png</image>
       <caption>Dark mode theme support</caption>
       <caption xml:lang="zh_CN">深色主题支持</caption>
     </screenshot>
@@ -106,7 +106,27 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
-    <release version="3.0.10" date="2026-03-14" type="development">
+    <release version="3.0.11" date="2026-03-14">
+      <description>
+        <p>Language detection improvements and metainfo updates</p>
+        <p xml:lang="zh_CN">语言检测改进和元数据更新</p>
+        <ul>
+          <li>Improved language detection logic with multi-language mapping support</li>
+          <li xml:lang="zh_CN">改进语言检测逻辑，支持多语言映射</li>
+          <li>Added comprehensive language and region variant detection (zh, zh-CN, zh-TW, en, en-US, en-GB, etc.)</li>
+          <li xml:lang="zh_CN">添加全面的语言和地区变体检测（zh, zh-CN, zh-TW, en, en-US, en-GB 等）</li>
+          <li>Default to English when no supported language is detected</li>
+          <li xml:lang="zh_CN">未检测到支持的语言时默认使用英语</li>
+          <li>Updated application metadata for Flathub compliance</li>
+          <li xml:lang="zh_CN">更新应用元数据以符合 Flathub 要求</li>
+          <li>Added language availability notice in description</li>
+          <li xml:lang="zh_CN">在描述中添加语言可用性说明</li>
+          <li>Updated screenshot and documentation URLs to use immutable tags</li>
+          <li xml:lang="zh_CN">更新截图和文档 URL 使用不可变标签</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.10" date="2026-03-14">
       <description>
         <p><em>This is a preview release. Windows MSIX packaging support and privacy policy documentation</em></p>
         <p xml:lang="zh_CN"><em>这是一个预览版本。Windows MSIX 打包支持和隐私政策文档</em></p>
