@@ -92,6 +92,50 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="3.0.10" date="2026-03-14" type="development">
+      <description>
+        <p><em>This is a preview release. Windows MSIX packaging support and privacy policy documentation</em></p>
+        <p xml:lang="zh_CN"><em>这是一个预览版本。Windows MSIX 打包支持和隐私政策文档</em></p>
+        <ul>
+          <li>Added MSIX packaging support for Microsoft Store submission</li>
+          <li xml:lang="zh_CN">新增 MSIX 打包支持，用于 Microsoft Store 提交</li>
+          <li>Fixed MSIX build workflow indentation issues</li>
+          <li xml:lang="zh_CN">修复 MSIX 构建工作流的缩进问题</li>
+          <li>Optimized MSIX packaging process with MakeAppx.exe</li>
+          <li xml:lang="zh_CN">优化 MSIX 打包流程，使用 MakeAppx.exe</li>
+          <li>Added MSIX manifest configuration with Publisher ID</li>
+          <li xml:lang="zh_CN">添加 MSIX 清单配置，包含 Publisher ID</li>
+          <li>Added bilingual privacy policy documentation (English/Chinese)</li>
+          <li xml:lang="zh_CN">新增中英文双语隐私政策文档</li>
+          <li>Added installer return code documentation</li>
+          <li xml:lang="zh_CN">新增安装程序返回代码文档</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.9" date="2026-03-12">
+      <description>
+        <p>Flatpak packaging improvements and build configuration updates</p>
+        <p xml:lang="zh_CN">Flatpak 打包改进和构建配置更新</p>
+        <ul>
+          <li>Fixed packaging configuration file paths</li>
+          <li xml:lang="zh_CN">修复打包配置文件路径</li>
+          <li>Fixed Flatpak manifest file path</li>
+          <li xml:lang="zh_CN">修复 Flatpak 清单文件路径</li>
+          <li>Updated EasyKiConverter dependency version</li>
+          <li xml:lang="zh_CN">更新 EasyKiConverter 依赖版本</li>
+          <li>Fixed QXlsx subdirectory path configuration</li>
+          <li xml:lang="zh_CN">修复 QXlsx 子目录路径配置</li>
+          <li>Updated build configuration to support QXlsx local source</li>
+          <li xml:lang="zh_CN">更新构建配置以支持 QXlsx 本地源码</li>
+          <li>Added application metainfo support</li>
+          <li xml:lang="zh_CN">新增应用元数据支持</li>
+          <li>Updated EasyKiConverter v3.0.8 sha256 checksum</li>
+          <li xml:lang="zh_CN">更新 EasyKiConverter v3.0.8 sha256 校验和</li>
+          <li>Added project version control system browser URL</li>
+          <li xml:lang="zh_CN">添加项目版本控制系统浏览器 URL</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.0.8" date="2026-03-09">
       <description>
         <p>Command-line arguments support, unified app identifier in lowercase, path handling optimization</p>
