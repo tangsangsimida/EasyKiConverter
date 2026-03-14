@@ -217,12 +217,24 @@ jobs:
             exit 1
           }
 
-          # 3. 复制应用图标到 staging 目录（MakeAppx 需要）
+          # 3. 复制应用图标和清单文件到 staging 目录（MakeAppx 需要）
           $stagingDir = "$env:GITHUB_WORKSPACE\build\Staging"
+          
+          # 复制图标
           $iconSource = "$env:GITHUB_WORKSPACE\resources\icons\app_icon.png"
           if (Test-Path $iconSource) {
             Copy-Item -Path $iconSource -Destination "$stagingDir\app_icon.png" -Force
             Write-Host "Icon copied to staging directory"
+          }
+          
+          # 复制 AppxManifest.xml 到 staging 目录（MakeAppx 必须在源目录中找到此文件）
+          $manifestPath = "$env:GITHUB_WORKSPACE\deploy\windows\AppxManifest.xml"
+          if (Test-Path $manifestPath) {
+            Copy-Item -Path $manifestPath -Destination "$stagingDir\AppxManifest.xml" -Force
+            Write-Host "Manifest copied to staging directory"
+          } else {
+            Write-Error "AppxManifest.xml not found at $manifestPath"
+            exit 1
           }
 
       - name: 'Create MSIX package'
@@ -230,23 +242,29 @@ jobs:
         shell: pwsh
         run: |
                 # 使用 MakeAppx 直接打包已有的文件结构（不使用 MSIX Packaging Tool）
+                # 注意：AppxManifest.xml 必须在 staging 目录中，文件名必须为 AppxManifest.xml
                 $stagingDir = "$env:GITHUB_WORKSPACE\build\Staging"
-                $manifestPath = "$env:GITHUB_WORKSPACE\deploy\windows\AppxManifest.xml"
                 $outputDir = "$env:GITHUB_WORKSPACE\build\Package\msix"
                 $msixPath = "$outputDir\${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}.msix"
       
                 mkdir -p $outputDir
+      
+                # 验证 staging 目录中包含 AppxManifest.xml
+                $manifestInStaging = "$stagingDir\AppxManifest.xml"
+                if (-not (Test-Path $manifestInStaging)) {
+                  Write-Error "AppxManifest.xml not found in staging directory at $manifestInStaging"
+                  exit 1
+                }
       
                 # 查找 MakeAppx.exe (Windows SDK 自带)
                 # GitHub Actions windows-2022 默认安装了 Windows 10/11 SDK
                 $makeAppxPath = "MakeAppx.exe"
       
                 # 打包命令
-                # /d: 源目录
-                # /m: 清单文件
+                # /d: 源目录（必须包含 AppxManifest.xml）
                 # /p: 输出路径
                 # /l: 允许生成未签名的包（稍后由微软签名）
-                & $makeAppxPath pack /d "$stagingDir" /m "$manifestPath" /p "$msixPath" /l
+                & $makeAppxPath pack /d "$stagingDir" /p "$msixPath" /l
       
                 if ($LASTEXITCODE -ne 0) {
                   Write-Error "MakeAppx failed with exit code: $LASTEXITCODE"
