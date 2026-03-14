@@ -49,8 +49,9 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.ArrowCursor
-        acceptedButtons: Qt.RightButton // 只响应右键，左键穿透（如果有需要）或保留默认
+        acceptedButtons: Qt.RightButton | Qt.LeftButton // 同时响应右键和左键
         onClicked: mouse => {
+            // 右键点击复制 ID
             if (mouse.button === Qt.RightButton) {
                 if (itemData && itemData.componentId) {
                     copyHelper.text = itemData.componentId;
@@ -58,6 +59,13 @@ Rectangle {
                     copyHelper.copy();
                     item.copyClicked();
                     copyFeedback.visible = true;
+                }
+            } else
+            // Ctrl + 左键点击打开浏览器
+            if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier)) {
+                if (itemData && itemData.componentId) {
+                    var url = "https://so.szlcsc.com/global.html?k=" + itemData.componentId;
+                    Qt.openUrlExternally(url);
                 }
             }
         }
@@ -67,7 +75,6 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: AppStyle.spacing.sm
         spacing: AppStyle.spacing.md
-        z: 10 // 确保内容在背景 MouseArea 之上
 
         // 预览图区域 - 支持悬停放大
         Item {
@@ -327,6 +334,16 @@ Rectangle {
                 height: defaultThumbnail.height
                 hoverEnabled: true
                 cursorShape: (itemData && itemData.hasThumbnail) ? Qt.PointingHandCursor : Qt.ArrowCursor
+                acceptedButtons: Qt.LeftButton
+                onClicked: function (mouse) {
+                    // Ctrl + 左键点击打开浏览器
+                    if (mouse.modifiers & Qt.ControlModifier) {
+                        if (itemData && itemData.componentId) {
+                            var url = "https://so.szlcsc.com/global.html?k=" + itemData.componentId;
+                            Qt.openUrlExternally(url);
+                        }
+                    }
+                }
             }
         }
 
@@ -338,6 +355,7 @@ Rectangle {
             Layout.alignment: Qt.AlignVCenter
             // 元件ID
             Text {
+                id: componentIdText
                 Layout.fillWidth: true
                 // 使用富文本以支持高亮
                 textFormat: Text.RichText

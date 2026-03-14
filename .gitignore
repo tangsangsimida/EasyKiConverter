@@ -77,6 +77,8 @@ vcpkg.json.bak
 # --------
 *.dll
 *.exe
+*.msix
+*.msi
 
 # Directories with generated files
 .moc/
@@ -125,3 +127,4 @@ tools/python/datasheet/*
 tools/python/imgs/*
 repo/*
 logs/*
+flatpak-repo/*

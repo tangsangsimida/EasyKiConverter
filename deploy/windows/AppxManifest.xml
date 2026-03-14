@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Microsoft Store 提交用的 MSIX 包清单文件
+
+  重要提示：在提交到 Microsoft Store 之前，必须将下方的 Publisher ID
+  替换为您在 Microsoft Partner Center 中的实际 Publisher ID。
+
+  获取 Publisher ID 的步骤：
+  1. 访问 https://partner.microsoft.com/dashboard
+  2. 导航到您的应用概览页面
+  3. 找到 "Publisher ID" 字段（格式如 CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX）
+  4. 将下方的 Publisher 属性替换为您的实际 ID
+
+  示例：
+    替换前：Publisher="CN=tangsangsimida"
+    替换后：  Publisher="CN=835b6c8a-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+  Name 属性也必须与 Partner Center 中的应用 ID 匹配。
+-->
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap rescap">
+
+  <Identity Name="EasyKiConverter.EasyKiConverter"
+            Publisher="CN=674ae893-5637-43c6-894d-d9a3976ec062"
+            Version="3.0.9.0" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>EasyKiConverter</DisplayName>
+    <PublisherDisplayName>tangsangsimida</PublisherDisplayName>
+    <Description>EasyEDA to KiCad component library converter. Convert LCSC/EasyEDA component libraries to KiCad format.</Description>
+    <!-- Logo paths are relative to the MSIX package root -->
+    <Logo>app_icon.png</Logo>
+  </Properties>
+
+  <Resources>
+    <Resource Language="en-us" />
+    <Resource Language="zh-cn" />
+  </Resources>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+  </Dependencies>
+
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+  <Applications>
+    <Application Id="EasyKiConverter" Executable="easykiconverter.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="EasyKiConverter"
+        Description="EasyEDA to KiCad component library converter"
+        Square150x150Logo="app_icon.png"
+        Square44x44Logo="app_icon.png"
+        BackgroundColor="transparent" />
+    </Application>
+  </Applications>
+</Package>

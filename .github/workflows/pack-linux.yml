@@ -244,7 +244,7 @@ jobs:
               -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
               -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
               -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
-              -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$(pwd)/deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|g" \
+              -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$(pwd)/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
               deploy/nfpm.yaml > nfpm_temp.yaml
 
           # 打包
@@ -351,7 +351,7 @@ jobs:
               -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
               -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
               -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
-              -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$(pwd)/deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|g" \
+              -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$(pwd)/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
               deploy/nfpm.yaml > nfpm_temp.yaml
 
           nfpm pkg --packager rpm --target . --config nfpm_temp.yaml
@@ -454,7 +454,7 @@ jobs:
               -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
               -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
               -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
-              -e "s|deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|$(pwd)/deploy/metainfo/com.tangsangsimida.EasyKiConverter.metainfo.xml|g" \
+              -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$(pwd)/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
               deploy/nfpm.yaml > nfpm_temp.yaml
 
           nfpm pkg --packager archlinux --target . --config nfpm_temp.yaml
@@ -494,7 +494,7 @@ jobs:
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: EasyKiConverter.flatpak
-          manifest-path: deploy/flatpak/com.tangsangsimida.easykiconverter.yml
+          manifest-path: deploy/flatpak/io.github.tangsangsimida.easykiconverter.yml
           cache-key: flatpak-builder-${{ github.sha }}
           upload-artifact: false
           verbose: true

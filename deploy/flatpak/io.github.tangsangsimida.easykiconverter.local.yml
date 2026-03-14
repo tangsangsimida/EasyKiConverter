@@ -30,14 +30,11 @@ modules:
     build-options:
       env:
         QXLSX_ROOT: qlsx-root/QXlsx
-    post-install:
-      - mkdir -p $FLATPAK_DEST/share/licenses/$FLATPAK_ID
-      - install -Dm0644 qlsx-root/QXlsx/LICENSE -t $FLATPAK_DEST/share/licenses/$FLATPAK_ID/QXlsx
     sources:
-      - type: git
-        url: https://github.com/tangsangsimida/EasyKiConverter.git
-        tag: v3.0.11
-        commit: 9f5c35ae167e465bc58e1837e1d892076eb2b1c1
+      # 使用本地源码（用于测试本地修改）
+      - type: dir
+        path: ../../
+      # QXlsx 依赖
       - type: archive
         url: https://github.com/QtExcel/QXlsx/archive/9f545935a1effa0144ba76598e95a7597210553a.tar.gz
         sha256: 4629430e80a4a9f9917526b2b02ad0f3d347551560e1f94a8a58434f457e27a6

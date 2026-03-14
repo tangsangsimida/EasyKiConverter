@@ -60,6 +60,8 @@ nav:
     - 功能特性: user/FEATURES.md
     - 调试模式: user/DEBUG_MODE.md
     - 常见问题: user/FAQ.md
+    - 隐私政策: user/PRIVACY_POLICY.md
+    - 安装程序返回代码: user/INSTALLATION_CODES.md
   - 开发者指南:
     - 贡献指南: developer/CONTRIBUTING.md
     - 架构设计: developer/ARCHITECTURE.md
