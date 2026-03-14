@@ -101,26 +101,6 @@ jobs:
           $langUrl = "https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/Unofficial/ChineseSimplified.isl"
           Invoke-WebRequest -Uri $langUrl -OutFile "$langDir\ChineseSimplified.isl" -UseBasicParsing
 
-      - name: 'Setup MSIX Packaging Tool'
-        if: matrix.type == 'installer'
-        shell: pwsh
-        run: |
-          # 从 GitHub 下载 MSIX 打包工具
-          $msixToolUrl = "https://github.com/microsoft/msix-packaging-tool/releases/download/v1.2024.141.2/MsixPackagingTool.exe"
-          $msixToolPath = "$env:TEMP\MsixPackagingTool.exe"
-          Invoke-WebRequest -Uri $msixToolUrl -OutFile $msixToolPath -UseBasicParsing
-          
-          # 安装 MSIX 打包工具
-          Start-Process -FilePath $msixToolPath -ArgumentList "-install" -Wait
-          
-          # 验证安装
-          $msixToolCmd = Get-Command msixpackagingtool -ErrorAction SilentlyContinue
-          if ($msixToolCmd) {
-            Write-Host "MSIX Packaging Tool installed successfully"
-          } else {
-            Write-Host "MSIX Packaging Tool installation may have failed, but will attempt to use"
-          }
-
       - name: 'Configure'
         shell: pwsh
         run: |
@@ -211,51 +191,78 @@ jobs:
           $hashString | Out-File -FilePath "$filePath.sha256sum" -Encoding ascii
           Write-Host "Generated SHA256: $hashString"
 
-      - name: 'Create MSIX package'
+      - name: 'Prepare MSIX Manifest'
         if: matrix.type == 'installer'
         shell: pwsh
         run: |
-          # 使用 MSIX 打包工具包装 EXE 安装程序
-          $installerPath = "$env:GITHUB_WORKSPACE\build\Package\installer\${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-setup.exe"
-          $manifestPath = "$env:GITHUB_WORKSPACE\deploy\windows\AppxManifest.xml"
-          $outputDir = "$env:GITHUB_WORKSPACE\build\Package\msix"
-          $msixPath = "$outputDir\${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}.msix"
-          
-          mkdir -p $outputDir
-          
-          # 检查 MSIX 打包工具是否可用
-          $msixPackagingTool = "msixpackagingtool"
-          if (-not (Get-Command $msixPackagingTool -ErrorAction SilentlyContinue)) {
-            Write-Host "MSIX Packaging Tool not found. Skipping MSIX package creation."
-            Write-Host "You can manually create MSIX packages using MSIX Packaging Tool from Microsoft Store."
-            exit 0
-          }
-          
-          # 创建 MSIX 包
-          & $msixPackagingTool createinstaller `
-            --installerPath $installerPath `
-            --output $msixPath `
-            --packageId "EasyKiConverter.EasyKiConverter" `
-            --displayName "EasyKiConverter" `
-            --publisher "CN=tangsangsimida" `
-            --version "${{ env.VERSION }}.0"
-          
-          Write-Host "MSIX package created at: $msixPath"
+          # 1. 解析版本号为四段数字 (MSIX 严格要求 Major.Minor.Build.Revision)
+          $rawVersion = "${{ env.VERSION }}"
+          # 移除可能的 'v' 前缀或非数字后缀
+          $cleanVersion = $rawVersion -replace '[^0-9.]', ''
+          $parts = $cleanVersion.Split('.')
+          while ($parts.Count -lt 4) { $parts += "0" }
+          $msixVersion = ($parts[0..3] -join '.')
 
+          Write-Host "Converted Version: $rawVersion -> $msixVersion"
+
+          # 2. 更新 AppxManifest.xml 中的版本号
+          $manifestPath = "$env:GITHUB_WORKSPACE\deploy\windows\AppxManifest.xml"
+          if (Test-Path $manifestPath) {
+            [xml]$xml = Get-Content $manifestPath
+            $xml.Package.Identity.Version = $msixVersion
+            $xml.Save($manifestPath)
+            Write-Host "Manifest version updated to: $msixVersion"
+          } else {
+            Write-Error "AppxManifest.xml not found at $manifestPath"
+            exit 1
+          }
+
+          # 3. 复制应用图标到 staging 目录（MakeAppx 需要）
+          $stagingDir = "$env:GITHUB_WORKSPACE\build\Staging"
+          $iconSource = "$env:GITHUB_WORKSPACE\resources\icons\app_icon.png"
+          if (Test-Path $iconSource) {
+            Copy-Item -Path $iconSource -Destination "$stagingDir\app_icon.png" -Force
+            Write-Host "Icon copied to staging directory"
+          }
+
+      - name: 'Create MSIX package'
+              if: matrix.type == 'installer'
+              shell: pwsh              run: |
+                # 使用 MakeAppx 直接打包已有的文件结构（不使用 MSIX Packaging Tool）
+                $stagingDir = "$env:GITHUB_WORKSPACE\build\Staging"
+                $manifestPath = "$env:GITHUB_WORKSPACE\deploy\windows\AppxManifest.xml"
+                $outputDir = "$env:GITHUB_WORKSPACE\build\Package\msix"
+                $msixPath = "$outputDir\${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}.msix"
+      
+                mkdir -p $outputDir
+      
+                # 查找 MakeAppx.exe (Windows SDK 自带)
+                # GitHub Actions windows-2022 默认安装了 Windows 10/11 SDK
+                $makeAppxPath = "MakeAppx.exe"
+      
+                # 打包命令
+                # /d: 源目录
+                # /m: 清单文件
+                # /p: 输出路径
+                # /l: 允许生成未签名的包（稍后由微软签名）
+                & $makeAppxPath pack /d "$stagingDir" /m "$manifestPath" /p "$msixPath" /l
+      
+                if ($LASTEXITCODE -ne 0) {
+                  Write-Error "MakeAppx failed with exit code: $LASTEXITCODE"
+                  exit 1
+                }
+                Write-Host "MSIX package created at: $msixPath"
+                Write-Host "Package size: $((Get-Item $msixPath).Length / 1MB) MB"
       - name: 'SHA256Sum of MSIX package'
         if: matrix.type == 'installer'
         shell: pwsh
         run: |
           $fileName = "${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}.msix"
           $filePath = "$env:GITHUB_WORKSPACE\build\Package\msix\$fileName"
-          if (Test-Path $filePath) {
-            $hash = Get-FileHash -Path $filePath -Algorithm SHA256
-            $hashString = $hash.Hash.ToLower() + " *" + $fileName
-            $hashString | Out-File -FilePath "$filePath.sha256sum" -Encoding ascii
-            Write-Host "Generated SHA256: $hashString"
-          } else {
-            Write-Host "MSIX package not found, skipping SHA256 generation"
-          }
+          $hash = Get-FileHash -Path $filePath -Algorithm SHA256
+          $hashString = $hash.Hash.ToLower() + " *" + $fileName
+          $hashString | Out-File -FilePath "$filePath.sha256sum" -Encoding ascii
+          Write-Host "Generated SHA256: $hashString"
 
       - name: 'Artifact Upload (portable)'
         if: matrix.type == 'portable'
