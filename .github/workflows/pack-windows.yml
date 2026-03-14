@@ -105,10 +105,21 @@ jobs:
         if: matrix.type == 'installer'
         shell: pwsh
         run: |
+          # 从 GitHub 下载 MSIX 打包工具
+          $msixToolUrl = "https://github.com/microsoft/msix-packaging-tool/releases/download/v1.2024.141.2/MsixPackagingTool.exe"
+          $msixToolPath = "$env:TEMP\MsixPackagingTool.exe"
+          Invoke-WebRequest -Uri $msixToolUrl -OutFile $msixToolPath -UseBasicParsing
+          
           # 安装 MSIX 打包工具
-          choco install msix-packaging-tool --no-progress
-          # 从 Microsoft Store 安装
-          # Add-AppxPackage https://aka.ms/msixpackagingtool
+          Start-Process -FilePath $msixToolPath -ArgumentList "-install" -Wait
+          
+          # 验证安装
+          $msixToolCmd = Get-Command msixpackagingtool -ErrorAction SilentlyContinue
+          if ($msixToolCmd) {
+            Write-Host "MSIX Packaging Tool installed successfully"
+          } else {
+            Write-Host "MSIX Packaging Tool installation may have failed, but will attempt to use"
+          }
 
       - name: 'Configure'
         shell: pwsh
