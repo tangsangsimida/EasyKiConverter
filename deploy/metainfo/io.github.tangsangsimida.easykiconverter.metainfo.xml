@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2026 dennisreyoonjiho -->
 <component type="desktop-application">
   <id>io.github.tangsangsimida.easykiconverter</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>GPL-3.0</project_license>
+  <project_license>GPL-3.0-only</project_license>
   <url type="vcs-browser">https://github.com/tangsangsimida/EasyKiConverter</url>
   <developer id="io.github.tangsangsimida">
     <name>dennisreyoonjiho</name>
@@ -11,6 +12,19 @@
   <name xml:lang="zh_CN">EasyKiConverter</name>
   <summary>Convert LCSC and EasyEDA components to KiCad libraries</summary>
   <summary xml:lang="zh_CN">将嘉立创和 EasyEDA 元件转换为 KiCad 库</summary>
+
+  <translation type="qt">easykiconverter</translation>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#2196F3</color>
+    <color type="primary" scheme_preference="dark">#64B5F6</color>
+  </branding>
+
+  <requires>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <display_length compare="ge">768</display_length>
+  </requires>
 
   <description>
     <p>
@@ -44,22 +58,22 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/master/resources/imgs/screenshot1.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.9/resources/imgs/screenshot1.png</image>
       <caption>Main application window with component conversion interface</caption>
       <caption xml:lang="zh_CN">主应用窗口 - 元件转换界面</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/master/resources/imgs/screenshot2.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.9/resources/imgs/screenshot2.png</image>
       <caption>Component input and list management</caption>
       <caption xml:lang="zh_CN">元件输入和列表管理</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/master/resources/imgs/screenshot3.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.9/resources/imgs/screenshot3.png</image>
       <caption>Export settings and progress tracking</caption>
       <caption xml:lang="zh_CN">导出设置和进度跟踪</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/master/resources/imgs/screenshot4.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.9/resources/imgs/screenshot4.png</image>
       <caption>Dark mode theme support</caption>
       <caption xml:lang="zh_CN">深色主题支持</caption>
     </screenshot>
@@ -92,6 +106,50 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="3.0.10" date="2026-03-14" type="development">
+      <description>
+        <p><em>This is a preview release. Windows MSIX packaging support and privacy policy documentation</em></p>
+        <p xml:lang="zh_CN"><em>这是一个预览版本。Windows MSIX 打包支持和隐私政策文档</em></p>
+        <ul>
+          <li>Added MSIX packaging support for Microsoft Store submission</li>
+          <li xml:lang="zh_CN">新增 MSIX 打包支持，用于 Microsoft Store 提交</li>
+          <li>Fixed MSIX build workflow indentation issues</li>
+          <li xml:lang="zh_CN">修复 MSIX 构建工作流的缩进问题</li>
+          <li>Optimized MSIX packaging process with MakeAppx.exe</li>
+          <li xml:lang="zh_CN">优化 MSIX 打包流程，使用 MakeAppx.exe</li>
+          <li>Added MSIX manifest configuration with Publisher ID</li>
+          <li xml:lang="zh_CN">添加 MSIX 清单配置，包含 Publisher ID</li>
+          <li>Added bilingual privacy policy documentation (English/Chinese)</li>
+          <li xml:lang="zh_CN">新增中英文双语隐私政策文档</li>
+          <li>Added installer return code documentation</li>
+          <li xml:lang="zh_CN">新增安装程序返回代码文档</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.9" date="2026-03-12">
+      <description>
+        <p>Flatpak packaging improvements and build configuration updates</p>
+        <p xml:lang="zh_CN">Flatpak 打包改进和构建配置更新</p>
+        <ul>
+          <li>Fixed packaging configuration file paths</li>
+          <li xml:lang="zh_CN">修复打包配置文件路径</li>
+          <li>Fixed Flatpak manifest file path</li>
+          <li xml:lang="zh_CN">修复 Flatpak 清单文件路径</li>
+          <li>Updated EasyKiConverter dependency version</li>
+          <li xml:lang="zh_CN">更新 EasyKiConverter 依赖版本</li>
+          <li>Fixed QXlsx subdirectory path configuration</li>
+          <li xml:lang="zh_CN">修复 QXlsx 子目录路径配置</li>
+          <li>Updated build configuration to support QXlsx local source</li>
+          <li xml:lang="zh_CN">更新构建配置以支持 QXlsx 本地源码</li>
+          <li>Added application metainfo support</li>
+          <li xml:lang="zh_CN">新增应用元数据支持</li>
+          <li>Updated EasyKiConverter v3.0.8 sha256 checksum</li>
+          <li xml:lang="zh_CN">更新 EasyKiConverter v3.0.8 sha256 校验和</li>
+          <li>Added project version control system browser URL</li>
+          <li xml:lang="zh_CN">添加项目版本控制系统浏览器 URL</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.0.8" date="2026-03-09">
       <description>
         <p>Command-line arguments support, unified app identifier in lowercase, path handling optimization</p>
