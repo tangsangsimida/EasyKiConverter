@@ -226,8 +226,9 @@ jobs:
           }
 
       - name: 'Create MSIX package'
-              if: matrix.type == 'installer'
-              shell: pwsh              run: |
+        if: matrix.type == 'installer'
+        shell: pwsh
+        run: |
                 # 使用 MakeAppx 直接打包已有的文件结构（不使用 MSIX Packaging Tool）
                 $stagingDir = "$env:GITHUB_WORKSPACE\build\Staging"
                 $manifestPath = "$env:GITHUB_WORKSPACE\deploy\windows\AppxManifest.xml"
