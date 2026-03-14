@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QLocale>
+#include <QMap>
 #include <QTranslator>
 
 namespace EasyKiConverter {
@@ -58,19 +59,60 @@ QString LanguageManager::detectSystemLanguage() const {
     qDebug() << "System UI languages:" << uiLanguages;
     qDebug() << "System locale name:" << systemLocale.name();
 
+    // 支持的语言映射表
+    const QMap<QString, QString> supportedLanguages = {
+        {"zh", "zh_CN"},       // 中文（通用）
+        {"zh-CN", "zh_CN"},    // 简体中文
+        {"zh_CN", "zh_CN"},    // 简体中文
+        {"zh-SG", "zh_CN"},    // 新加坡中文
+        {"zh-MO", "zh_CN"},    // 澳门中文
+        {"zh-Hans", "zh_CN"},  // 简体中文（脚本）
+        {"zh-TW", "zh_CN"},    // 繁体中文（映射到简体）
+        {"zh-HK", "zh_CN"},    // 香港中文（映射到简体）
+        {"en", "en"},          // 英语（通用）
+        {"en-US", "en"},       // 美式英语
+        {"en-GB", "en"},       // 英式英语
+        {"en-AU", "en"},       // 澳大利亚英语
+        {"en-CA", "en"},       // 加拿大英语
+    };
+
     // 优先检查 UI 语言列表
     if (!uiLanguages.isEmpty()) {
         QString firstLang = uiLanguages.first();
-        if (firstLang.startsWith("zh", Qt::CaseInsensitive)) {
-            return "zh_CN";
+        // 完全匹配
+        if (supportedLanguages.contains(firstLang)) {
+            QString detectedLang = supportedLanguages.value(firstLang);
+            qDebug() << "Detected language from UI list (exact match):" << firstLang << "->" << detectedLang;
+            return detectedLang;
+        }
+
+        // 基础语言匹配（例如 "zh-CN" 匹配 "zh"）
+        QString baseLang = firstLang.split('-').first();
+        if (supportedLanguages.contains(baseLang)) {
+            QString detectedLang = supportedLanguages.value(baseLang);
+            qDebug() << "Detected language from UI list (base match):" << firstLang << "->" << detectedLang;
+            return detectedLang;
         }
     }
 
     // 回退到检查 locale 名称
-    if (systemLocale.name().startsWith("zh", Qt::CaseInsensitive)) {
-        return "zh_CN";
+    QString localeName = systemLocale.name();
+    if (supportedLanguages.contains(localeName)) {
+        QString detectedLang = supportedLanguages.value(localeName);
+        qDebug() << "Detected language from locale (exact match):" << localeName << "->" << detectedLang;
+        return detectedLang;
     }
 
+    // 检查 locale 的基础语言
+    QString baseLocaleLang = localeName.split('_').first();
+    if (supportedLanguages.contains(baseLocaleLang)) {
+        QString detectedLang = supportedLanguages.value(baseLocaleLang);
+        qDebug() << "Detected language from locale (base match):" << localeName << "->" << detectedLang;
+        return detectedLang;
+    }
+
+    // 默认使用英语
+    qDebug() << "No supported language detected, defaulting to English";
     return "en";
 }
 
