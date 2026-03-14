@@ -183,6 +183,15 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        acceptedButtons: Qt.NoButton
+        acceptedButtons: Qt.LeftButton // 响应左键点击
+        onClicked: function (mouse) {
+            // Ctrl + 左键点击打开浏览器
+            if (mouse.modifiers & Qt.ControlModifier) {
+                if (componentId) {
+                    var url = "https://so.szlcsc.com/global.html?k=" + componentId;
+                    Qt.openUrlExternally(url);
+                }
+            }
+        }
     }
 }
