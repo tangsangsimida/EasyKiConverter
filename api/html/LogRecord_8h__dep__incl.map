@@ -1,0 +1,48 @@
+<map id="utils/logging/LogRecord.h" name="utils/logging/LogRecord.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="613,5,800,31"/>
+<area shape="rect" id="Node000002" href="$IAppender_8h.html" title=" " alt="" coords="542,152,725,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="691,43,668,80,650,119,639,153,634,151,645,118,663,77,687,40"/>
+<area shape="rect" id="Node000005" href="$Log_8h.html" title="EasyKiConverter 日志系统统一入口" alt="" coords="649,460,791,485"/>
+<area shape="poly" id="edge28_Node000001_Node000005" title=" " alt="" coords="599,22,424,29,325,37,229,50,142,69,72,93,45,108,25,125,12,143,8,164,8,312,13,335,27,355,51,373,82,390,162,417,260,437,366,451,472,460,649,468,649,473,472,465,366,456,259,442,161,422,79,394,48,378,24,359,8,337,3,313,3,163,7,141,21,121,42,104,69,88,141,63,228,45,325,32,424,24,599,17"/>
+<area shape="rect" id="Node000009" href="$Logger_8h.html" title=" " alt="" coords="842,225,1003,251"/>
+<area shape="poly" id="edge29_Node000001_Node000009" title=" " alt="" coords="797,32,840,49,877,77,901,114,916,156,923,196,925,225,920,225,918,196,911,158,897,116,873,81,837,54,795,37"/>
+<area shape="rect" id="Node000015" href="$IFormatter_8h.html" title=" " alt="" coords="678,79,863,104"/>
+<area shape="poly" id="edge20_Node000001_Node000015" title=" " alt="" coords="728,39,762,77,758,80,724,43"/>
+<area shape="rect" id="Node000003" href="$ConsoleAppender_8h.html" title=" " alt="" coords="151,225,382,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="562,183,327,228,326,223,561,177"/>
+<area shape="poly" id="edge9_Node000002_Node000005" title=" " alt="" coords="528,168,422,171,307,180,206,198,168,211,140,227,121,249,112,271,113,295,121,323,135,354,151,376,172,393,202,410,238,423,287,434,408,451,538,461,649,467,649,472,538,466,408,456,286,439,237,428,200,414,169,397,147,380,131,357,116,325,107,296,107,270,117,246,137,223,165,206,205,193,306,175,421,166,528,163"/>
+<area shape="rect" id="Node000007" href="$FileAppender_8h.html" title=" " alt="" coords="531,225,733,251"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="636,191,635,225,630,225,630,191"/>
+<area shape="poly" id="edge10_Node000002_Node000009" title=" " alt="" coords="694,178,876,223,875,228,692,183"/>
+<area shape="rect" id="Node000004" href="$ConsoleAppender_8cpp.html" title=" " alt="" coords="143,299,390,324"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="269,264,269,299,264,299,264,264"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="202,257,168,269,141,284,132,293,127,302,127,312,133,322,147,337,167,351,220,376,286,398,361,416,517,445,649,462,649,467,517,450,360,421,284,403,218,381,164,355,144,341,129,326,122,313,122,301,128,290,138,280,166,264,201,252"/>
+<area shape="rect" id="Node000006" href="$main_8cpp.html" title=" " alt="" coords="679,533,761,559"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="723,499,723,533,717,533,717,499"/>
+<area shape="poly" id="edge8_Node000007_Node000005" title=" " alt="" coords="644,263,718,459,713,461,639,265"/>
+<area shape="rect" id="Node000008" href="$FileAppender_8cpp.html" title=" " alt="" coords="414,299,631,324"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="604,260,542,301,539,296,602,256"/>
+<area shape="poly" id="edge11_Node000009_Node000005" title=" " alt="" coords="891,260,864,278,838,301,801,344,769,389,728,461,723,458,765,386,797,340,834,297,861,274,888,256"/>
+<area shape="rect" id="Node000010" href="$LogMacros_8h.html" title=" " alt="" coords="849,299,1037,324"/>
+<area shape="poly" id="edge12_Node000009_Node000010" title=" " alt="" coords="932,263,942,298,937,299,927,265"/>
+<area shape="rect" id="Node000012" href="$QtLogAdapter_8h.html" title=" " alt="" coords="1102,379,1309,405"/>
+<area shape="poly" id="edge19_Node000009_Node000012" title=" " alt="" coords="962,254,1051,296,1188,377,1186,381,1048,301,960,259"/>
+<area shape="rect" id="Node000014" href="$Logger_8cpp.html" title=" " alt="" coords="1128,299,1304,324"/>
+<area shape="poly" id="edge18_Node000009_Node000014" title=" " alt="" coords="983,251,1169,296,1168,301,982,256"/>
+<area shape="poly" id="edge14_Node000010_Node000005" title=" " alt="" coords="913,333,848,374,735,462,732,458,845,370,910,329"/>
+<area shape="rect" id="Node000011" href="$ExportProgressViewModel_8cpp.html" title=" " alt="" coords="859,372,1077,412"/>
+<area shape="poly" id="edge13_Node000010_Node000011" title=" " alt="" coords="953,336,964,371,959,373,948,338"/>
+<area shape="poly" id="edge15_Node000010_Node000012" title=" " alt="" coords="995,325,1168,377,1166,382,993,330"/>
+<area shape="poly" id="edge16_Node000012_Node000005" title=" " alt="" coords="1122,409,1090,415,791,463,790,457,1089,409,1121,404"/>
+<area shape="rect" id="Node000013" href="$QtLogAdapter_8cpp.html" title=" " alt="" coords="1095,460,1316,485"/>
+<area shape="poly" id="edge17_Node000012_Node000013" title=" " alt="" coords="1208,418,1208,460,1203,460,1203,418"/>
+<area shape="poly" id="edge21_Node000015_Node000002" title=" " alt="" coords="738,113,657,154,655,149,735,108"/>
+<area shape="poly" id="edge22_Node000015_Node000005" title=" " alt="" coords="773,118,773,237,773,313,768,357,756,399,729,461,724,459,751,397,763,356,768,313,768,237,768,118"/>
+<area shape="poly" id="edge23_Node000015_Node000009" title=" " alt="" coords="793,112,855,175,910,223,907,227,852,179,789,116"/>
+<area shape="rect" id="Node000016" href="$PatternFormatter_8h.html" title=" " alt="" coords="1168,225,1395,251"/>
+<area shape="poly" id="edge24_Node000015_Node000016" title=" " alt="" coords="825,105,1242,223,1240,228,824,110"/>
+<area shape="poly" id="edge25_Node000016_Node000005" title=" " alt="" coords="1300,261,1319,294,1335,334,1340,355,1340,376,1335,396,1323,414,1296,428,1245,439,1100,456,933,467,791,472,791,467,933,461,1100,451,1245,434,1294,423,1320,410,1330,394,1334,376,1334,356,1330,336,1314,296,1295,263"/>
+<area shape="poly" id="edge26_Node000016_Node000014" title=" " alt="" coords="1263,263,1229,300,1225,297,1259,259"/>
+<area shape="rect" id="Node000017" href="$PatternFormatter_8cpp.html" title=" " alt="" coords="1384,299,1627,324"/>
+<area shape="poly" id="edge27_Node000016_Node000017" title=" " alt="" coords="1331,252,1470,296,1468,301,1329,257"/>
+</map>
