@@ -128,3 +128,4 @@ tools/python/imgs/*
 repo/*
 logs/*
 flatpak-repo/*
+.flatpak-builder/*
