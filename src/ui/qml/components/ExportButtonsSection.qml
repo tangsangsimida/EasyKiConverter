@@ -25,6 +25,8 @@ ColumnLayout {
             font.pixelSize: AppStyle.fontSizes.md
             color: AppStyle.colors.textPrimary
             horizontalAlignment: Text.AlignHCenter
+            width: Math.min(400, parent.width - 40)
+            wrapMode: Text.WordWrap
         }
 
         background: Rectangle {
