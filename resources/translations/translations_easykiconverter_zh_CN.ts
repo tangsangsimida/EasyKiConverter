@@ -405,27 +405,27 @@
         <translation>转换结果</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="76"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="78"/>
         <source>正在转换...</source>
         <translation type="unfinished">正在转换...</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="78"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="80"/>
         <source>重试失败项</source>
         <translation>重试失败项</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="79"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="81"/>
         <source>开始转换</source>
         <translation type="unfinished">开始转换</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="140"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="142"/>
         <source>正在停止...</source>
         <translation type="unfinished">正在停止...</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="140"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="142"/>
         <source>停止转换</source>
         <translation type="unfinished">停止转换</translation>
     </message>
@@ -525,7 +525,7 @@
         <translation>打开详细统计报告</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="47"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="49"/>
         <source>打开导出目录</source>
         <translation>打开导出目录</translation>
     </message>

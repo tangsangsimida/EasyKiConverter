@@ -277,7 +277,7 @@
         <translation>Export Results</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="78"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="80"/>
         <source>重试失败项</source>
         <translation>Retry Failed Items</translation>
     </message>
@@ -307,7 +307,7 @@
         <translation>Open Detailed Report</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="47"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="49"/>
         <source>打开导出目录</source>
         <translation>Open Export Directory</translation>
     </message>
@@ -428,22 +428,22 @@
         <translation>Rate Limit</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="76"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="78"/>
         <source>正在转换...</source>
         <translation>Exporting...</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="79"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="81"/>
         <source>开始转换</source>
         <translation>Start Export</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="140"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="142"/>
         <source>正在停止...</source>
         <translation>Stopping...</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="140"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="142"/>
         <source>停止转换</source>
         <translation>Stop Export</translation>
     </message>
