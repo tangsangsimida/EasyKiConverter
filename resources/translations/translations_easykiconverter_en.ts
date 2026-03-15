@@ -6,7 +6,7 @@
     <message>
         <location filename="../../src/ui/qml/components/ComponentListItem.qml" line="40"/>
         <source>已复制 ID</source>
-        <translation type="unfinished"></translation>
+        <translation>ID Copied</translation>
     </message>
 </context>
 <context>
@@ -14,12 +14,12 @@
     <message>
         <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="38"/>
         <source>确定</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="39"/>
         <source>取消</source>
-        <translation type="unfinished"></translation>
+        <translation>Cancel</translation>
     </message>
 </context>
 <context>
@@ -27,32 +27,32 @@
     <message>
         <location filename="../../src/ui/qml/components/ExitDialog.qml" line="147"/>
         <source>关闭程序</source>
-        <translation type="unfinished"></translation>
+        <translation>Close Program</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExitDialog.qml" line="157"/>
         <source>您可以选择最小化到系统托盘以保持后台运行，或者完全退出程序。</source>
-        <translation type="unfinished"></translation>
+        <translation>You can choose to minimize to the system tray to keep running in the background, or completely exit the program.</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExitDialog.qml" line="255"/>
         <source>最小化到托盘</source>
-        <translation type="unfinished"></translation>
+        <translation>Minimize to Tray</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExitDialog.qml" line="308"/>
         <source>退出程序</source>
-        <translation type="unfinished"></translation>
+        <translation>Exit Program</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExitDialog.qml" line="361"/>
         <source>取消</source>
-        <translation type="unfinished"></translation>
+        <translation>Cancel</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExitDialog.qml" line="453"/>
         <source>记住我的选择</source>
-        <translation type="unfinished"></translation>
+        <translation>Remember my choice</translation>
     </message>
 </context>
 <context>
@@ -60,22 +60,22 @@
     <message>
         <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="86"/>
         <source>全部 (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>All (%1)</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="113"/>
         <source>导出中 (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Exporting (%1)</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="140"/>
         <source>成功 (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Success (%1)</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="167"/>
         <source>失败 (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Failed (%1)</translation>
     </message>
 </context>
 <context>
@@ -106,22 +106,22 @@
     <message>
         <location filename="../../src/ui/qml/Main.qml" line="68"/>
         <source>确认退出</source>
-        <translation type="unfinished"></translation>
+        <translation>Confirm Exit</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/Main.qml" line="69"/>
         <source>转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？</source>
-        <translation type="unfinished"></translation>
+        <translation>Conversion is in progress. Exiting will cancel the current conversion, but exported files will be preserved. Are you sure you want to exit?</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/Main.qml" line="70"/>
         <source>强制退出</source>
-        <translation type="unfinished"></translation>
+        <translation>Force Exit</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/Main.qml" line="71"/>
         <source>继续转换</source>
-        <translation type="unfinished"></translation>
+        <translation>Continue</translation>
     </message>
 </context>
 <context>
@@ -277,7 +277,7 @@
         <translation>Export Results</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="78"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="80"/>
         <source>重试失败项</source>
         <translation>Retry Failed Items</translation>
     </message>
@@ -307,7 +307,7 @@
         <translation>Open Detailed Report</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="47"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="49"/>
         <source>打开导出目录</source>
         <translation>Open Export Directory</translation>
     </message>
@@ -428,22 +428,22 @@
         <translation>Rate Limit</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="76"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="78"/>
         <source>正在转换...</source>
         <translation>Exporting...</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="79"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="81"/>
         <source>开始转换</source>
         <translation>Start Export</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="140"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="142"/>
         <source>正在停止...</source>
         <translation>Stopping...</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="140"/>
+        <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="142"/>
         <source>停止转换</source>
         <translation>Stop Export</translation>
     </message>
@@ -454,69 +454,70 @@
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="720"/>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="748"/>
         <source>导出完成</source>
-        <translation type="unfinished"></translation>
+        <translation>Export Complete</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="728"/>
         <source>导出失败：%1 个元器件全部失败</source>
-        <translation type="unfinished"></translation>
+        <translation>Export failed: All %1 components failed</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="732"/>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="735"/>
         <source>成功 %1 个，失败 %2 个</source>
-        <translation type="unfinished"></translation>
+        <translation>Success: %1, Failed: %2</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="740"/>
         <source>
 输出：符号 %1 · 封装 %2 · 3D %3</source>
-        <translation type="unfinished"></translation>
+        <translation>
+Output: Symbols %1 · Footprints %2 · 3D %3</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="752"/>
         <source>成功导出 1 个元器件</source>
-        <translation type="unfinished"></translation>
+        <translation>Successfully exported 1 component</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="754"/>
         <source>成功导出 %1 个元器件</source>
-        <translation type="unfinished"></translation>
+        <translation>Successfully exported %1 components</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="759"/>
         <source>输出：符号 %1 · 封装 %2 · 3D %3</source>
-        <translation type="unfinished"></translation>
+        <translation>Output: Symbols %1 · Footprints %2 · 3D %3</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="769"/>
         <source>%1 秒</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 seconds</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="773"/>
         <source>%1 分 %2 秒</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 min %2 sec</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="775"/>
         <source>耗时：%1</source>
-        <translation type="unfinished"></translation>
+        <translation>Time: %1</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="835"/>
         <source>EasyKiConverter - LCSC 转换工具</source>
-        <translation type="unfinished"></translation>
+        <translation>EasyKiConverter - LCSC Conversion Tool</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="840"/>
         <source>显示窗口</source>
-        <translation type="unfinished"></translation>
+        <translation>Show Window</translation>
     </message>
     <message>
         <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="854"/>
         <source>退出</source>
-        <translation type="unfinished"></translation>
+        <translation>Exit</translation>
     </message>
 </context>
 <context>
@@ -548,7 +549,7 @@
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="138"/>
         <source>3D模型: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>3D Model: %1</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="176"/>
@@ -561,7 +562,7 @@
     <message>
         <location filename="../../src/utils/CommandLineParser.cpp" line="20"/>
         <source>EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具</source>
-        <translation type="unfinished"></translation>
+        <translation>EasyKiConverter - LCSC/EasyEDA to KiCad Library Converter</translation>
     </message>
 </context>
 </TS>

@@ -1,9 +1,10 @@
 #include "LanguageManager.h"
 
+#include "src/services/ConfigService.h"
+
 #include <QCoreApplication>
 #include <QDebug>
-#include <QLocale>
-#include <QMap>
+#include <QTimer>
 #include <QTranslator>
 
 namespace EasyKiConverter {
@@ -12,10 +13,17 @@ LanguageManager* LanguageManager::s_instance = nullptr;
 
 LanguageManager::LanguageManager(QObject* parent)
     : QObject(parent)
-    , m_currentLanguage("auto")
-    , m_settings(new QSettings("EasyKiConverter", "EasyKiConverter", this))
-    , m_translator(nullptr) {
+    , m_currentLanguage("en")
+    , m_translator(nullptr)
+    , m_isInitializing(true)
+    , m_loadedFromConfig(false) {
     loadLanguageSettings();
+
+    // 延迟重置初始化标志，给 QML 组件时间完成加载
+    QTimer::singleShot(500, this, [this]() {
+        m_isInitializing = false;
+        qInfo() << "[LanguageManager] Initialization protection period ended";
+    });
 }
 
 LanguageManager::~LanguageManager() {}
@@ -28,24 +36,49 @@ LanguageManager* LanguageManager::instance() {
 }
 
 void LanguageManager::setLanguage(const QString& languageCode) {
+    qInfo() << "[LanguageManager] setLanguage() called with:" << languageCode << " (current:" << m_currentLanguage
+            << ", initializing:" << m_isInitializing << ", loadedFromConfig:" << m_loadedFromConfig << ")";
+
     if (m_currentLanguage == languageCode) {
+        qInfo() << "[LanguageManager] Language unchanged, returning";
+
+        return;
+    }
+
+    // 如果正在初始化且已经从配置加载了语言，则拒绝覆盖
+
+    // 这样可以防止 QML 组件在初始化时覆盖配置文件的语言设置
+
+    if (m_isInitializing && m_loadedFromConfig) {
+        qWarning() << "[LanguageManager] Refusing to override language during initialization after loading from "
+                      "config. Requested:"
+                   << languageCode << ", Keeping:" << m_currentLanguage;
+
         return;
     }
 
     m_currentLanguage = languageCode;
-    saveLanguageSettings();
 
-    QString actualLanguage = languageCode;
-    if (languageCode == "auto") {
-        actualLanguage = detectSystemLanguage();
+    qInfo() << "[LanguageManager] Language changed to" << m_currentLanguage;
+
+    // 只在非初始化期间保存设置
+
+    if (!m_isInitializing) {
+        saveLanguageSettings();
+
+    } else {
+        qInfo() << "[LanguageManager] Skipping save during initialization";
     }
 
-    // 安装新的翻译器 (installTranslator 会处理旧翻译器的移除)
-    installTranslator(actualLanguage);
+    // 安装新的翻译器
+
+    installTranslator(languageCode);
 
     emit languageChanged(languageCode);
+
     emit refreshRequired();
-    qDebug() << "Language changed to:" << languageCode << "(actual:" << actualLanguage << ")";
+
+    qInfo() << "[LanguageManager] Language changed signal emitted:" << languageCode;
 }
 
 QString LanguageManager::currentLanguage() const {
@@ -53,91 +86,43 @@ QString LanguageManager::currentLanguage() const {
 }
 
 QString LanguageManager::detectSystemLanguage() const {
-    QLocale systemLocale = QLocale::system();
-    QStringList uiLanguages = systemLocale.uiLanguages();
-
-    qDebug() << "System UI languages:" << uiLanguages;
-    qDebug() << "System locale name:" << systemLocale.name();
-
-    // 支持的语言映射表
-    const QMap<QString, QString> supportedLanguages = {
-        {"zh", "zh_CN"},       // 中文（通用）
-        {"zh-CN", "zh_CN"},    // 简体中文
-        {"zh_CN", "zh_CN"},    // 简体中文
-        {"zh-SG", "zh_CN"},    // 新加坡中文
-        {"zh-MO", "zh_CN"},    // 澳门中文
-        {"zh-Hans", "zh_CN"},  // 简体中文（脚本）
-        {"zh-TW", "zh_CN"},    // 繁体中文（映射到简体）
-        {"zh-HK", "zh_CN"},    // 香港中文（映射到简体）
-        {"en", "en"},          // 英语（通用）
-        {"en-US", "en"},       // 美式英语
-        {"en-GB", "en"},       // 英式英语
-        {"en-AU", "en"},       // 澳大利亚英语
-        {"en-CA", "en"},       // 加拿大英语
-    };
-
-    // 优先检查 UI 语言列表
-    if (!uiLanguages.isEmpty()) {
-        QString firstLang = uiLanguages.first();
-        // 完全匹配
-        if (supportedLanguages.contains(firstLang)) {
-            QString detectedLang = supportedLanguages.value(firstLang);
-            qDebug() << "Detected language from UI list (exact match):" << firstLang << "->" << detectedLang;
-            return detectedLang;
-        }
-
-        // 基础语言匹配（例如 "zh-CN" 匹配 "zh"）
-        QString baseLang = firstLang.split('-').first();
-        if (supportedLanguages.contains(baseLang)) {
-            QString detectedLang = supportedLanguages.value(baseLang);
-            qDebug() << "Detected language from UI list (base match):" << firstLang << "->" << detectedLang;
-            return detectedLang;
-        }
-    }
-
-    // 回退到检查 locale 名称
-    QString localeName = systemLocale.name();
-    if (supportedLanguages.contains(localeName)) {
-        QString detectedLang = supportedLanguages.value(localeName);
-        qDebug() << "Detected language from locale (exact match):" << localeName << "->" << detectedLang;
-        return detectedLang;
-    }
-
-    // 检查 locale 的基础语言
-    QString baseLocaleLang = localeName.split('_').first();
-    if (supportedLanguages.contains(baseLocaleLang)) {
-        QString detectedLang = supportedLanguages.value(baseLocaleLang);
-        qDebug() << "Detected language from locale (base match):" << localeName << "->" << detectedLang;
-        return detectedLang;
-    }
-
-    // 默认使用英语
-    qDebug() << "No supported language detected, defaulting to English";
+    // 不再使用系统语言检测，直接返回英文
     return "en";
 }
 
 void LanguageManager::loadLanguageSettings() {
-    QString savedLanguage = m_settings->value("language", "auto").toString();
-    m_currentLanguage = savedLanguage;
-
-    QString actualLanguage = savedLanguage;
-    if (savedLanguage == "auto") {
-        actualLanguage = detectSystemLanguage();
+    // 从 ConfigService 加载语言设置
+    auto* configService = ConfigService::instance();
+    if (configService) {
+        m_currentLanguage = configService->getLanguage();
+        qInfo() << "[LanguageManager] Loaded language settings from ConfigService:" << m_currentLanguage;
+    } else {
+        qWarning() << "[LanguageManager] ConfigService not available, using default language: en";
+        m_currentLanguage = "en";
     }
 
-    installTranslator(actualLanguage);
-    qDebug() << "Loaded language settings:" << savedLanguage << "(actual:" << actualLanguage << ")";
+    m_loadedFromConfig = true;
+
+    // 安装翻译器
+    qInfo() << "[LanguageManager] Installing translator for language:" << m_currentLanguage;
+    installTranslator(m_currentLanguage);
 }
 
 void LanguageManager::saveLanguageSettings() {
-    m_settings->setValue("language", m_currentLanguage);
-    m_settings->sync();
+    // 保存到 ConfigService
+    auto* configService = ConfigService::instance();
+    if (configService) {
+        configService->setLanguage(m_currentLanguage);
+        qInfo() << "[LanguageManager] Saved language settings to ConfigService:" << m_currentLanguage;
+    } else {
+        qWarning() << "[LanguageManager] ConfigService not available, failed to save language settings";
+    }
 }
 
 void LanguageManager::installTranslator(const QString& languageCode) {
     QCoreApplication* app = QCoreApplication::instance();
     if (!app) {
-        qWarning() << "QCoreApplication instance not available";
+        qWarning() << "[LanguageManager] QCoreApplication instance not available";
         return;
     }
 
@@ -146,6 +131,7 @@ void LanguageManager::installTranslator(const QString& languageCode) {
         app->removeTranslator(m_translator);
         m_translator->deleteLater();
         m_translator = nullptr;
+        qInfo() << "[LanguageManager] Removed previous translator";
     }
 
     // Qt 6 qml_module 资源路径 - 使用 compiled .qm files
@@ -158,7 +144,7 @@ void LanguageManager::installTranslator(const QString& languageCode) {
     // 尝试加载翻译文件（.qm 格式）
     if (m_translator->load(translationPath)) {
         app->installTranslator(m_translator);
-        qDebug() << "Installed translator:" << translationPath;
+        qInfo() << "[LanguageManager] ✓ Successfully installed translator from resources:" << translationPath;
         return;
     }
 
@@ -166,12 +152,14 @@ void LanguageManager::installTranslator(const QString& languageCode) {
     QString localPath = QString("resources/translations/translations_easykiconverter_%1.qm").arg(languageCode);
     if (m_translator->load(localPath)) {
         app->installTranslator(m_translator);
-        qDebug() << "Installed translator from file system:" << localPath;
+        qInfo() << "[LanguageManager] ✓ Successfully installed translator from file system:" << localPath;
         return;
     }
 
-    qWarning() << "Failed to load translation file for language:" << languageCode;
-    qWarning() << "Tried paths:" << translationPath << localPath;
+    qWarning() << "[LanguageManager] ✗ Failed to load translation file for language:" << languageCode;
+    qWarning() << "[LanguageManager] Tried paths:";
+    qWarning() << "  1. Resource path:" << translationPath;
+    qWarning() << "  2. File system path:" << localPath;
 
     // 加载失败时，清理创建的翻译器对象
     m_translator->deleteLater();

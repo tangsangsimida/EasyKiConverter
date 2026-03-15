@@ -359,6 +359,8 @@ void ConfigService::initializeDefaultConfig() {
     m_config["windowY"] = -9999;
     // 退出偏好默认值（空字符串表示未记住）
     m_config["exitPreference"] = "";
+    // 语言设置默认值（英文）
+    m_config["language"] = "en";
 }
 
 QString ConfigService::getDefaultConfigPath() const {
@@ -370,6 +372,21 @@ QString ConfigService::getDefaultConfigPath() const {
     }
 
     return configDir + "/config.json";
+}
+
+QString ConfigService::getLanguage() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["language"].toString("en");
+}
+
+void ConfigService::setLanguage(const QString& languageCode) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["language"] = languageCode;
+    emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
 }
 
 }  // namespace EasyKiConverter

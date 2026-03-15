@@ -1,7 +1,6 @@
 #ifndef LANGUAGEMANAGER_H
 #define LANGUAGEMANAGER_H
 
-#include <QSettings>
 #include <QString>
 #include <QTranslator>
 
@@ -11,9 +10,9 @@ namespace EasyKiConverter {
  * @brief 语言管理器
  *
  * 负责管理应用程序的多语言支持
- * - 自动检测系统语言
+ * - 默认使用英文语言
  * - 支持手动切换语言
- * - 持久化语言设置
+ * - 持久化语言设置到软件根目录
  * - 动态加载翻译文件
  */
 class LanguageManager : public QObject {
@@ -29,7 +28,7 @@ public:
 
     /**
      * @brief 设置语言
-     * @param languageCode 语言代码 ("auto", "zh_CN", "en")
+     * @param languageCode 语言代码 ("zh_CN", "en")
      */
     Q_INVOKABLE void setLanguage(const QString& languageCode);
 
@@ -40,8 +39,8 @@ public:
     Q_INVOKABLE QString currentLanguage() const;
 
     /**
-     * @brief 检测系统语言
-     * @return 检测到的语言代码
+     * @brief 检测系统语言（已禁用，直接返回英文）
+     * @return 返回英文语言代码
      */
     Q_INVOKABLE QString detectSystemLanguage() const;
 
@@ -69,8 +68,9 @@ private:
 
     static LanguageManager* s_instance;
     QString m_currentLanguage;
-    QSettings* m_settings;
     QTranslator* m_translator;
+    bool m_isInitializing;
+    bool m_loadedFromConfig;
 };
 
 }  // namespace EasyKiConverter

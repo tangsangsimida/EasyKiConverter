@@ -259,6 +259,20 @@ public:
      */
     Q_INVOKABLE void setExitPreference(const QString& preference);
 
+    /**
+     * @brief 获取语言设置
+     *
+     * @return QString 语言代码（"zh_CN", "en" 等）
+     */
+    Q_INVOKABLE QString getLanguage() const;
+
+    /**
+     * @brief 设置语言
+     *
+     * @param languageCode 语言代码（"zh_CN", "en" 等）
+     */
+    Q_INVOKABLE void setLanguage(const QString& languageCode);
+
 signals:
     /**
      * @brief 配置改变信号
