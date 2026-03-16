@@ -328,8 +328,8 @@ int main(int argc, char* argv[]) {
         EasyKiConverter::LanguageManager::instance();
     }
 
-    // 处理命令行参数 - 主题设置
-    if (!cmdParser.theme().isEmpty()) {
+    // 处理命令行参数 - 主题设置（仅在用户显式指定时应用）
+    if (cmdParser.isThemeSet()) {
         QString theme = cmdParser.theme();
         auto* configService = EasyKiConverter::ConfigService::instance();
         if (theme == "dark") {

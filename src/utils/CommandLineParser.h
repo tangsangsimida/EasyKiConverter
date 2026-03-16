@@ -86,6 +86,12 @@ public:
     QString theme() const;
 
     /**
+     * @brief 是否显式指定了主题参数
+     * @return 用户指定了 --theme 参数返回 true，否则返回 false
+     */
+    bool isThemeSet() const;
+
+    /**
      * @brief 是否为便携模式
      * @return 便携模式返回 true，否则返回 false
      */

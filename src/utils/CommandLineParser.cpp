@@ -70,6 +70,10 @@ QString CommandLineParser::theme() const {
     return m_parser.value(m_themeOption).toLower();
 }
 
+bool CommandLineParser::isThemeSet() const {
+    return m_parser.isSet(m_themeOption);
+}
+
 bool CommandLineParser::isPortableMode() const {
     return m_parser.isSet(m_portableOption);
 }
