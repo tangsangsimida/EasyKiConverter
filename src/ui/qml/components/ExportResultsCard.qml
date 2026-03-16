@@ -61,14 +61,15 @@ Loader {
 
                     Behavior on x {
                         NumberAnimation {
-                            duration: AppStyle.durations.normal
-                            easing.type: AppStyle.easings.easeOut
+                            duration: 450
+                            easing.type: AppStyle.easings.easeInOut
                         }
                     }
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: AppStyle.durations.normal
+                            duration: 450
+                            easing.type: AppStyle.easings.easeInOut
                         }
                     }
                 }
