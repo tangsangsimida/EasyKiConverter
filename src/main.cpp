@@ -289,13 +289,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // 在 Linux 系统上，设置桌面文件名称（与安装的 desktop 文件保持一致）
-    // 注意：桌面文件和图标通过 CMake 安装，不需要在运行时创建
-#ifdef __linux__
-    app.setDesktopFileName("com.tangsangsimida.easykiconverter");
-    qDebug() << "桌面文件名称已设置：" << app.desktopFileName();
-#endif
-
     // 处理命令行参数 - 配置文件路径
     QString configFilePath;
     if (!cmdParser.configFile().isEmpty()) {
