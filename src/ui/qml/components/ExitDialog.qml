@@ -103,7 +103,7 @@ FocusScope {
         radius: AppStyle.radius.xl
         scale: 1.0
         opacity: 1.0
-        rotation: 0  // 添加旋转属性
+        rotation: 0
 
         transform: Translate {
             id: dialogBoxTranslate

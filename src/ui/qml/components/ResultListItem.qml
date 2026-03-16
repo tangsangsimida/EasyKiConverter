@@ -9,6 +9,7 @@ Rectangle {
     property string status // "fetching", "fetch_completed", "processing", "process_completed", "writing", "write_completed", "success", "failed"
     property string message
     signal retryClicked
+    signal copyClicked
     height: message.length > 0 ? 72 : 48
     // 悬停效果
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
@@ -21,6 +22,24 @@ Rectangle {
             duration: AppStyle.durations.fast
             easing.type: AppStyle.easings.easeOut
         }
+    }
+
+    // 复制辅助组件
+    TextEdit {
+        id: copyHelper
+        visible: false
+        text: ""
+    }
+
+    // 复制成功提示
+    ToolTip {
+        id: copyFeedback
+        parent: item
+        x: (parent.width - width) / 2
+        y: (parent.height - height) / 2
+        text: qsTr("已复制 ID")
+        delay: 0
+        timeout: 1500
     }
     RowLayout {
         anchors.fill: parent
@@ -182,11 +201,21 @@ Rectangle {
         id: itemMouseArea
         anchors.fill: parent
         hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        acceptedButtons: Qt.LeftButton // 响应左键点击
-        onClicked: function (mouse) {
+        cursorShape: Qt.ArrowCursor
+        acceptedButtons: Qt.RightButton | Qt.LeftButton // 同时响应右键和左键
+        onClicked: mouse => {
+            // 右键点击复制 ID
+            if (mouse.button === Qt.RightButton) {
+                if (componentId) {
+                    copyHelper.text = componentId;
+                    copyHelper.selectAll();
+                    copyHelper.copy();
+                    item.copyClicked();
+                    copyFeedback.visible = true;
+                }
+            } else
             // Ctrl + 左键点击打开浏览器
-            if (mouse.modifiers & Qt.ControlModifier) {
+            if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier)) {
                 if (componentId) {
                     var url = "https://so.szlcsc.com/global.html?k=" + componentId;
                     Qt.openUrlExternally(url);
