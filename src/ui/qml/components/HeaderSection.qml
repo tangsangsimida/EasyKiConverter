@@ -133,9 +133,6 @@ ColumnLayout {
                 width: languageComboBox.width
                 implicitHeight: listview.contentHeight
                 padding: 0
-                onClosed: {
-                    languageComboBox.currentIndex = languageComboBox.indexOfValue(languageComboBox.savedLanguage);
-                }
 
                 contentItem: ListView {
                     id: listview
