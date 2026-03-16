@@ -280,7 +280,7 @@ void LcscImageService::performDownload(const QString& componentId,
     qDebug() << "Performing download for component:" << componentId << "image index:" << imageIndex
              << "retry:" << retryCount << "from:" << imageUrl;
 
-    // 添加随机延迟（0.05-0.15 秒），异步执行避免阻塞主线程
+    // 随机延迟（0.05-0.15 秒），异步执行避免阻塞主线程
     addRandomDelay([this, componentId, imageUrl, imageIndex, retryCount]() {
         QNetworkRequest request{QUrl(imageUrl)};
         request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
@@ -413,7 +413,7 @@ void LcscImageService::emitAllImagesReady(const QString& componentId) {
 void LcscImageService::performDatasheetDownload(const QString& componentId,
                                                 const QString& datasheetUrl,
                                                 int retryCount) {
-    // 添加随机延迟（0.05-0.15 秒），异步执行避免阻塞主线程
+    // 随机延迟（0.05-0.15 秒），异步执行避免阻塞主线程
     addRandomDelay([this, componentId, datasheetUrl, retryCount]() {
         QNetworkRequest request{QUrl(datasheetUrl)};
         request.setHeader(QNetworkRequest::UserAgentHeader,

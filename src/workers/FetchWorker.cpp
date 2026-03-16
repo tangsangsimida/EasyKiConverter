@@ -687,7 +687,7 @@ int FetchWorker::calculateRetryDelay(int retryCount) {
         baseDelay = RETRY_DELAYS_MS[sizeof(RETRY_DELAYS_MS) / sizeof(RETRY_DELAYS_MS[0]) - 1];
     }
 
-    // 添加 ±20% 随机抖动，避免惊群效应
+    // ±20% 随机抖动，避免惊群效应
     int jitter = static_cast<int>(baseDelay * 0.2);
     int randomOffset = QRandomGenerator::global()->bounded(-jitter, jitter + 1);
     return qMax(100, baseDelay + randomOffset);  // 确保最小延迟100ms

@@ -135,7 +135,34 @@ void ThumbnailGenerator::drawSymbol(QPainter& painter,
 void ThumbnailGenerator::drawFootprint(QPainter& painter,
                                        const QSharedPointer<FootprintData>& footprintData,
                                        const QRect& targetRect) {
-    // TODO: 实现封装绘制
+    // TODO(tangsangsimida): 实现封装绘制
+    //
+    // 当前状态：
+    // - generateThumbnail 优先使用符号数据生成缩略图
+    // - 只有当没有符号数据时才会调用 generateFootprintThumbnail
+    // - generateFootprintThumbnail 目前返回黑色背景占位图
+    //
+    // 技术挑战：
+    // - 封装包含多种图形元素：焊盘(Pads)、丝印(Silkscreen)、铜区(Copper zones)
+    // - 需要处理不同类型的焊盘：通孔(Through-hole)、表贴(SMD)、边缘焊盘(Edge connector)
+    // - 需要绘制多层图形：顶底层、丝印层、阻焊层
+    // - 坐标系转换：KiCad 封装使用毫米单位，需要适配缩略图像素坐标
+    // - 复杂的几何变换：旋转、镜像、分层叠加
+    //
+    // 实现优先级：低
+    // 原因：
+    // 1. 绝大多数元件都有符号数据，符号缩略图已满足需求
+    // 2. 封装缩略图主要用于纯封装库，当前版本应用场景有限
+    // 3. 实现复杂度高，需要完整的封装图形解析和渲染逻辑
+    //
+    // 未来实现建议：
+    // - 参考 KiCad 官方渲染引擎的封装显示逻辑
+    // - 使用 QPainterPath 构建复杂图形（圆形焊盘、多边形焊盘）
+    // - 实现分层渲染：铜层(金色)、丝印层(白色)、阻焊层(绿色)
+    // - 添加边界框自动计算，确保缩略图居中显示
+    //
+    // 预估工作量：3-5个工作日
+    // 相关文件：FootprintData.h, FootprintGraphicsGenerator.cpp
 }
 
 QRectF ThumbnailGenerator::calculateSymbolBoundingBox(const QSharedPointer<SymbolData>& symbolData) {

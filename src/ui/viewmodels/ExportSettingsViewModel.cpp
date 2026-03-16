@@ -291,8 +291,10 @@ void ExportSettingsViewModel::handleComponentExported(const QString& componentId
                                                       bool success,
                                                       const QString& message) {
     Q_UNUSED(message);
-    qDebug() << "Component exported:" << componentId << "Success:" << success;
-    // TODO: 需要添加信号声明
+    Q_UNUSED(componentId);
+    Q_UNUSED(success);
+    // 注意：单个组件导出的通知功能已由 ExportProgressViewModel 完整实现
+    // ExportSettingsViewModel 职责仅限于导出设置管理，不需要重复处理组件导出事件
 }
 
 void ExportSettingsViewModel::handleExportCompleted(bool success) {

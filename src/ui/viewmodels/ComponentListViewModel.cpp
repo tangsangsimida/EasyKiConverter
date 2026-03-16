@@ -52,7 +52,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                         item->setThumbnail(image);
                         qDebug() << "First preview image (index 0) set as thumbnail for component:" << componentId;
                     }
-                    // 添加到待更新集合
+                    // 添加到防抖集合
                     m_pendingUpdateIndices.insert(componentId);
                     m_debounceTimer->start();
                 }
@@ -118,7 +118,6 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
             return;
         }
 
-        // 添加提取的元件编号 - 使用批量添加
         addComponentsBatch(extractedIds);
         return;
     }
@@ -438,7 +437,7 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
             item->setErrorMessage(error);
         }
 
-        // 添加到待更新集合
+        // 添加到防抖集合
         m_pendingUpdateIndices.insert(componentId);
         m_debounceTimer->start();
     }
@@ -485,7 +484,7 @@ void ComponentListViewModel::handleLcscDataUpdated(const QString& componentId,
             qDebug() << "Display name updated to manufacturer part:" << manufacturerPart;
         }
 
-        // 添加到待更新集合
+        // 添加到防抖集合
         m_pendingUpdateIndices.insert(componentId);
         m_debounceTimer->start();
     } else {

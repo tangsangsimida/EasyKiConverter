@@ -59,7 +59,12 @@ struct PipelineProgress {
 /**
  * @brief 流水线导出服务类
  *
- * 扩展ExportService，支持多阶段流水线并行架构
+ * 基于三阶段流水线架构，支持高效批量导出：
+ * - Fetch阶段：并行获取元件数据（32线程）
+ * - Process阶段：CPU密集型数据处理（线程池大小）
+ * - Write阶段：并行写入文件（3x3线程）
+ *
+ * 使用有界队列实现反压控制，防止大批量导出时内存膨胀。
  */
 class ExportServicePipeline : public ExportService {
     Q_OBJECT
