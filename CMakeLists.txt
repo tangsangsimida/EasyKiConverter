@@ -342,6 +342,12 @@ install(FILES deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.
     DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
 )
 
+# 安装 AppStream appdata 文件（Flathub 要求）
+install(FILES deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/appdata
+    RENAME io.github.tangsangsimida.easykiconverter.appdata.xml
+)
+
 # 打印配置信息
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
