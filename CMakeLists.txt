@@ -218,6 +218,7 @@ set(QML_FILES
     src/ui/qml/components/WindowResizeHandles.qml
     src/ui/qml/components/ExitDialog.qml
     src/ui/qml/styles/AppStyle.qml
+    src/ui/qml/styles/ResponsiveHelper.qml
 )
 
 # Windows 资源文件配置

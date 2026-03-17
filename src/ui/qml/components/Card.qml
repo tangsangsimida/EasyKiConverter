@@ -8,7 +8,7 @@ Rectangle {
     // API
     property alias title: titleText.text
     default property alias content: contentLayout.children
-    // 新增：折叠功能属性
+    // 折叠功能属性
     property bool collapsible: true
     property bool isCollapsed: false
     implicitHeight: contentColumn.implicitHeight + 48

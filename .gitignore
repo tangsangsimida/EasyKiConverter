@@ -133,3 +133,4 @@ flatpak-repo-local/*
 flatpak-build-local.log
 .gitignore
 flatpak-build.log
+build.log
