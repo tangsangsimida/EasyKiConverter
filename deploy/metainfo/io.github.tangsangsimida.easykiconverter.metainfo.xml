@@ -110,31 +110,33 @@
       <description>
         <p>Changes from 3.0.12 to 3.0.13</p>
         <p xml:lang="zh_CN">从 3.0.12 到 3.0.13 的变更</p>
-        <p>New Features:</p>
-        <p xml:lang="zh_CN">新功能:</p>
-        <ul>
-          <li xml:lang="zh_CN">为组件列表项和结果列表项添加复制功能</li>
-        </ul>
         <p>Bug Fixes:</p>
         <p xml:lang="zh_CN">修复:</p>
         <ul>
-          <li xml:lang="zh_CN">修复导出结果卡片组件的翻译位置和动画效果</li>
+          <li>Fixed critical crash when adding multiple components in weak network conditions</li>
+          <li xml:lang="zh_CN">修复弱网络环境下添加多个元器件时的严重崩溃问题</li>
+          <li>Added thread-safe mutex locks to protect shared data access in ComponentService</li>
+          <li xml:lang="zh_CN">为 ComponentService 添加线程安全互斥锁保护共享数据访问</li>
+          <li>Fixed data race issues in handleModel3DFetched iterator traversal</li>
+          <li xml:lang="zh_CN">修复 handleModel3DFetched 迭代器遍历中的数据竞争问题</li>
+          <li>Moved network requests outside lock scope to prevent deadlocks</li>
+          <li xml:lang="zh_CN">将网络请求移到锁外执行以避免死锁</li>
+          <li>Fixed missing ResponsiveHelper.qml in UI test resources</li>
+          <li xml:lang="zh_CN">修复 UI 测试资源中缺少 ResponsiveHelper.qml 的问题</li>
         </ul>
-        <p>Refactoring:</p>
-        <p xml:lang="zh_CN">重构:</p>
+        <p>Improvements:</p>
+        <p xml:lang="zh_CN">改进:</p>
         <ul>
-          <li xml:lang="zh_CN">移除3D模型导出器中的调试代码</li>
+          <li>Improved QSharedPointer usage for QNetworkReply lifecycle management</li>
+          <li xml:lang="zh_CN">改进 QSharedPointer 使用以管理 QNetworkReply 生命周期</li>
+          <li>Added Qt::UniqueConnection to signal connections for safety</li>
+          <li xml:lang="zh_CN">为信号连接添加 Qt::UniqueConnection 以提高安全性</li>
         </ul>
-        <p>Chores:</p>
-        <p xml:lang="zh_CN">其他:</p>
+        <p>Testing:</p>
+        <p xml:lang="zh_CN">测试:</p>
         <ul>
-          <li xml:lang="zh_CN">更新EasyKiConverter版本到v3.0.12</li>
-        </ul>
-        <p>Other Changes:</p>
-        <p xml:lang="zh_CN">其他变更:</p>
-        <ul>
-          <li></li>
-          <li></li>
+          <li>Fixed CI test failures related to missing QML resources</li>
+          <li xml:lang="zh_CN">修复与缺失 QML 资源相关的 CI 测试失败</li>
         </ul>
       </description>
     </release>
