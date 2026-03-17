@@ -120,7 +120,9 @@ void LcscImageService::performApiSearch(const QString& componentId, int retryCou
     });
 }
 
-void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply, const QString& componentId, int retryCount) {
+void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
+                                         const QString& componentId,
+                                         int retryCount) {
     // 不再需要手动 deleteLater，QSharedPointer 的删除器会处理
 
     if (!reply) {
@@ -302,16 +304,20 @@ void LcscImageService::performDownload(const QString& componentId,
 
         QNetworkReply* reply = m_networkManager->get(request);
         connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, imageUrl, imageIndex, retryCount]() {
-            handleDownloadResponse(QSharedPointer<QNetworkReply>(reply, [](QNetworkReply* r) { r->deleteLater(); }), componentId, imageUrl, imageIndex, retryCount);
+            handleDownloadResponse(QSharedPointer<QNetworkReply>(reply, [](QNetworkReply* r) { r->deleteLater(); }),
+                                   componentId,
+                                   imageUrl,
+                                   imageIndex,
+                                   retryCount);
         });
     });
 }
 
 void LcscImageService::handleDownloadResponse(QSharedPointer<QNetworkReply> reply,
-                                                  const QString& componentId,
-                                                  const QString& imageUrl,
-                                                  int imageIndex,
-                                                  int retryCount) {
+                                              const QString& componentId,
+                                              const QString& imageUrl,
+                                              int imageIndex,
+                                              int retryCount) {
     // 不再需要手动 deleteLater，QSharedPointer 的删除器会处理
 
     if (!reply) {
