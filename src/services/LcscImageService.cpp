@@ -106,13 +106,29 @@ void LcscImageService::performApiSearch(const QString& componentId, int retryCou
     request.setTransferTimeout(30000);  // 从 15 秒增加到 30 秒
 
     QNetworkReply* reply = m_networkManager->post(request, postData);
-    connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, retryCount]() {
-        handleApiResponse(reply, componentId, retryCount);
+
+    // 使用 QSharedPointer 确保 QNetworkReply 的安全生命周期
+    // 避免在回调中访问可能已被删除的对象
+    QSharedPointer<QNetworkReply> replyPtr(reply, [](QNetworkReply* r) {
+        if (r) {
+            r->deleteLater();
+        }
+    });
+
+    connect(reply, &QNetworkReply::finished, this, [this, replyPtr, componentId, retryCount]() {
+        handleApiResponse(replyPtr, componentId, retryCount);
     });
 }
 
-void LcscImageService::handleApiResponse(QNetworkReply* reply, const QString& componentId, int retryCount) {
-    reply->deleteLater();
+void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
+                                         const QString& componentId,
+                                         int retryCount) {
+    // 不再需要手动 deleteLater，QSharedPointer 的删除器会处理
+
+    if (!reply) {
+        qWarning() << "Invalid reply pointer in handleApiResponse for component:" << componentId;
+        return;
+    }
 
     if (reply->error() != QNetworkReply::NoError) {
         if (retryCount < MAX_RETRY_COUNT) {  // 从 2 改为 MAX_RETRY_COUNT (3)
@@ -288,17 +304,26 @@ void LcscImageService::performDownload(const QString& componentId,
 
         QNetworkReply* reply = m_networkManager->get(request);
         connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, imageUrl, imageIndex, retryCount]() {
-            handleDownloadResponse(reply, componentId, imageUrl, imageIndex, retryCount);
+            handleDownloadResponse(QSharedPointer<QNetworkReply>(reply, [](QNetworkReply* r) { r->deleteLater(); }),
+                                   componentId,
+                                   imageUrl,
+                                   imageIndex,
+                                   retryCount);
         });
     });
 }
 
-void LcscImageService::handleDownloadResponse(QNetworkReply* reply,
+void LcscImageService::handleDownloadResponse(QSharedPointer<QNetworkReply> reply,
                                               const QString& componentId,
                                               const QString& imageUrl,
                                               int imageIndex,
                                               int retryCount) {
-    reply->deleteLater();
+    // 不再需要手动 deleteLater，QSharedPointer 的删除器会处理
+
+    if (!reply) {
+        qWarning() << "Invalid reply in handleDownloadResponse";
+        return;
+    }
 
     if (reply->error() != QNetworkReply::NoError) {
         if (retryCount < MAX_RETRY_COUNT) {  // 从 2 改为 MAX_RETRY_COUNT (3)
