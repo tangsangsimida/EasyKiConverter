@@ -302,7 +302,7 @@ void LcscImageService::performDownload(const QString& componentId,
 
         QNetworkReply* reply = m_networkManager->get(request);
         connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, imageUrl, imageIndex, retryCount]() {
-            handleDownloadResponse(reply, componentId, imageUrl, imageIndex, retryCount);
+            handleDownloadResponse(QSharedPointer<QNetworkReply>(reply, [](QNetworkReply* r) { r->deleteLater(); }), componentId, imageUrl, imageIndex, retryCount);
         });
     });
 }

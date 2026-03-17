@@ -237,6 +237,9 @@ void ComponentService::handleLcscDataReady(const QString& componentId,
 void ComponentService::handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData) {
     qDebug() << "Datasheet downloaded for component:" << componentId << "size:" << datasheetData.size() << "bytes";
 
+    // 加锁保护共享数据的访问
+    QMutexLocker locker(&m_fetchingComponentsMutex);
+
     // 更新 m_fetchingComponents 中的数据
     if (m_fetchingComponents.contains(componentId)) {
         FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
@@ -261,6 +264,9 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
 
 void ComponentService::handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList) {
     qDebug() << "All images ready for component:" << componentId << "count:" << imageDataList.size();
+
+    // 加锁保护共享数据的访问
+    QMutexLocker locker(&m_fetchingComponentsMutex);
 
     // 更新 m_fetchingComponents 中的数据
     if (m_fetchingComponents.contains(componentId)) {
@@ -330,6 +336,9 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     // 临时保存当前的组件ID
     QString savedComponentId = m_currentComponentId;
     m_currentComponentId = lcscId;
+
+    // 加锁保护共享数据的访问
+    QMutexLocker locker(&m_fetchingComponentsMutex);
 
     // 获取 fetch3DModel 配置
     bool need3DModel = true;  // 默认值
@@ -529,49 +538,73 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
 
     // 在并行模式下，查找对应的组件
     if (m_parallelFetching) {
-        // 在并行模式下，查找对应UUID的组件
-        for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
-            if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == uuid) {
-                QString componentId = it.key();
-                FetchingComponent& fetchingComponent = it.value();
+        QString componentId;
+        bool hasObjData = false;
+        bool fetch3DModel = false;
+        ComponentData componentDataCopy;
 
-                if (!fetchingComponent.hasObjData) {
-                    // 这是 WRL 格式的3D 模型
-                    fetchingComponent.data.model3DData()->setRawObj(QString::fromUtf8(data));
-                    fetchingComponent.hasObjData = true;
-                    qDebug() << "WRL data saved for:" << uuid << "Size:" << data.size();
+        // 加锁保护共享数据的访问，迭代器遍历必须加锁
+        {
+            QMutexLocker locker(&m_fetchingComponentsMutex);
 
-                    // 继续下载 STEP 格式的3D 模型
-                    qDebug() << "Fetching STEP model with UUID:" << uuid;
-                    m_api->fetch3DModelStep(uuid);
-                } else {
-                    // 这是 STEP 格式的3D 模型
-                    fetchingComponent.data.model3DData()->setStep(data);
-                    fetchingComponent.hasStepData = true;
-                    qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
+            // 在并行模式下，查找对应UUID的组件
+            for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
+                if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == uuid) {
+                    componentId = it.key();
+                    FetchingComponent& fetchingComponent = it.value();
 
-                    // 调用 LCSC API 获取数据手册和预览图 URL（异步）
-                    // 注意：这个调用是异步的，handleLcscDataReady 会更新 ComponentData
-                    m_fetchingComponents[componentId].data = fetchingComponent.data;
+                    if (!fetchingComponent.hasObjData) {
+                        // 这是 WRL 格式的3D 模型
+                        fetchingComponent.data.model3DData()->setRawObj(QString::fromUtf8(data));
+                        fetchingComponent.hasObjData = true;
+                        qDebug() << "WRL data saved for:" << uuid << "Size:" << data.size();
 
-                    // 先发送完成信号，确保 ComponentListViewModel 获取到完整的 ComponentData
-                    // 图片下载是异步的，会在后台继续进行
-                    emit cadDataReady(componentId, fetchingComponent.data);
+                        hasObjData = false;
+                    } else {
+                        // 这是 STEP 格式的3D 模型
+                        fetchingComponent.data.model3DData()->setStep(data);
+                        fetchingComponent.hasStepData = true;
+                        qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
 
-                    // 处理并行数据收集
-                    handleParallelDataCollected(componentId, fetchingComponent.data);
-
-                    // 然后调用 LCSC API 获取数据手册和预览图
-                    m_imageService->fetchPreviewImages(componentId);
-                    qDebug() << "Called fetchPreviewImages after 3D model loaded for" << componentId;
-
-                    // 从待处理列表中移除
-                    m_fetchingComponents.remove(componentId);
+                        hasObjData = true;
+                        fetch3DModel = fetchingComponent.fetch3DModel;
+                        componentDataCopy = fetchingComponent.data;
+                    }
                 }
-                return;
             }
         }
-        qWarning() << "Received 3D model data for unexpected UUID:" << uuid;
+        // 锁在这里释放
+
+        // 在锁外执行网络请求，避免死锁
+        if (!hasObjData && !componentId.isEmpty()) {
+            // 继续下载 STEP 格式的3D 模型
+            qDebug() << "Fetching STEP model with UUID:" << uuid;
+            m_api->fetch3DModelStep(uuid);
+        } else if (hasObjData && !componentId.isEmpty()) {
+            // 调用 LCSC API 获取数据手册和预览图 URL（异步）
+            // 注意：这个调用是异步的，handleLcscDataReady 会更新 ComponentData
+            {
+                QMutexLocker locker(&m_fetchingComponentsMutex);
+                m_fetchingComponents[componentId].data = componentDataCopy;
+            }
+
+            // 先发送完成信号，确保 ComponentListViewModel 获取到完整的 ComponentData
+            // 图片下载是异步的，会在后台继续进行
+            emit cadDataReady(componentId, componentDataCopy);
+
+            // 处理并行数据收集
+            handleParallelDataCollected(componentId, componentDataCopy);
+
+            // 然后调用 LCSC API 获取数据手册和预览图
+            m_imageService->fetchPreviewImages(componentId);
+            qDebug() << "Called fetchPreviewImages after 3D model loaded for" << componentId;
+
+            // 从待处理列表中移除
+            {
+                QMutexLocker locker(&m_fetchingComponentsMutex);
+                m_fetchingComponents.remove(componentId);
+            }
+        }
     } else {
         // 串行模式下的处理
         if (m_pendingComponentData.model3DData() && m_pendingComponentData.model3DData()->uuid() == uuid) {
@@ -627,6 +660,7 @@ void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QSt
 
     // 如果在并行模式下，尝试解析 UUID 为组件 ID
     if (m_parallelFetching && !m_parallelFetchingStatus.contains(idOrUuid)) {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
         for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
             if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == idOrUuid) {
                 componentId = it.key();
@@ -755,6 +789,7 @@ void ComponentService::clearCache() {
 }
 
 void ComponentService::completeComponentData(const QString& componentId) {
+    QMutexLocker locker(&m_fetchingComponentsMutex);
     if (m_fetchingComponents.contains(componentId)) {
         FetchingComponent& fc = m_fetchingComponents[componentId];
         // 判定标准：CAD 数据必须有，如果需要 3D 则 OBJ 和 STEP 也必须有
