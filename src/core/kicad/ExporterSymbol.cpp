@@ -438,7 +438,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         fieldOffset += 2.54;  // FIELD_OFFSET_INCREMENT
         content += QString("    (property\n");
         content += QString("      \"Footprint\"\n");
-        // 添加库前缀：libName:package
+        // KiCad 符号需要库前缀格式
         QString footprintPath = QString("%1:%2").arg(libName, symbolData.info().package);
         content += QString("      \"%1\"\n").arg(escapePropertyValue(footprintPath));
         content += "      (id 2)\n";

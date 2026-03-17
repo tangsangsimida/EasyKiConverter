@@ -169,12 +169,10 @@ bool ConsoleAppender::supportsColors() {
 QString ConsoleAppender::colorize(const QString& text, LogLevel level) const {
     QString result;
 
-    // 添加背景色（如果有）
     if (m_levelBackgrounds.contains(level)) {
         result += m_levelBackgrounds[level];
     }
 
-    // 添加前景色
     if (m_levelColors.contains(level)) {
         result += m_levelColors[level];
     }

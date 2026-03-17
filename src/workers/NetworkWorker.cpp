@@ -325,7 +325,6 @@ QByteArray NetworkWorker::decompressGzip(const QByteArray& compressedData) {
             return QByteArray();
         }
 
-        // 添加解压后的数据
         int have = chunkSize - stream.avail_out;
         if (have > 0) {
             decompressedData.append(buffer, have);

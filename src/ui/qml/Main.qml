@@ -19,7 +19,14 @@ ApplicationWindow {
     // 默认窗口位置居中显示（如果配置中没有保存的值）
     x: configService ? (configService.getWindowX() > 0 ? configService.getWindowX() : (Screen.desktopAvailableWidth - width) / 2) : (Screen.desktopAvailableWidth - width) / 2
     y: configService ? (configService.getWindowY() > 0 ? configService.getWindowY() : (Screen.desktopAvailableHeight - height) / 2) : (Screen.desktopAvailableHeight - height) / 2
-    minimumWidth: 800
+    
+    // 最小窗口宽度计算：
+    // - 导出设置卡片需要的最小宽度 = 760px（选项680px + 间距30px + 内边距48px + 边框2px）
+    // - 卡片的左右外边距（AppStyle.spacing.huge * 2 = 30 * 2 = 60px）
+    // - 滚动条的宽度 = 15px
+    // - 基数 = 20px
+    // - 总计 = 760 + 60 + 15 + 20 = 855px
+    minimumWidth: 855
     minimumHeight: 600
     visible: true
     title: "EasyKiConverter - 元器件转换工具"

@@ -58,22 +58,22 @@
 <context>
     <name>ExportResultsCard</name>
     <message>
-        <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="86"/>
+        <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="87"/>
         <source>全部 (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="113"/>
+        <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="114"/>
         <source>导出中 (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="140"/>
+        <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="141"/>
         <source>成功 (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="167"/>
+        <location filename="../../src/ui/qml/components/ExportResultsCard.qml" line="168"/>
         <source>失败 (%1)</source>
         <translation type="unfinished"></translation>
     </message>

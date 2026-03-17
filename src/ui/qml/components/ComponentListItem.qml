@@ -10,7 +10,7 @@ Rectangle {
     property var itemData
     property string searchText: ""
     signal deleteClicked
-    signal copyClicked // 新增复制信号
+    signal copyClicked
     height: 64 // 增加高度以容纳缩略图和更多信息
     // 悬停效果
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface

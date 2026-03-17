@@ -19,11 +19,11 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
     m_parser.setApplicationDescription(
         QCoreApplication::translate("main", "EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具"));
 
-    // 添加 Qt 内置的帮助和版本选项
+    // Qt 内置的帮助和版本选项
     m_parser.addHelpOption();
     m_parser.addVersionOption();
 
-    // 添加自定义选项
+    // 自定义选项
     setupOptions();
 
     // 设置应用程序参数（用于帮助和版本信息）
@@ -32,7 +32,7 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
 }
 
 void CommandLineParser::setupOptions() {
-    // 添加所有自定义选项（帮助和版本选项已在构造函数中通过 addHelpOption 和 addVersionOption 添加）
+    // 所有自定义选项（帮助和版本选项已在构造函数中通过 addHelpOption 和 addVersionOption 添加）
     m_parser.addOption(m_debugOption);
     m_parser.addOption(m_logLevelOption);
     m_parser.addOption(m_logFileOption);

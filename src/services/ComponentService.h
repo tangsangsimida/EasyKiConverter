@@ -55,6 +55,9 @@ public:
      *
      * @param componentId 元件ID
      * @param fetch3DModel 是否获取3D模型
+     *
+     * 副作用：触发componentInfoReady、cadDataReady、model3DReady信号
+     * 线程安全：可以同时调用多个fetchComponentData
      */
     void fetchComponentData(const QString& componentId, bool fetch3DModel = true);
 

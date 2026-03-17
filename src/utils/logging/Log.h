@@ -17,16 +17,16 @@
  *     
  *     // 设置全局日志级别
  *     Logger::instance()->setGlobalLevel(LogLevel::Debug);
- *     
- *     // 添加控制台输出
+ *
+ *     // 控制台输出
  *     auto console = QSharedPointer<ConsoleAppender>::create(true);
  *     console->setFormatter(QSharedPointer<PatternFormatter>::create());
  *     Logger::instance()->addAppender(console);
- *     
- *     // 添加文件输出
+ *
+ *     // 文件输出
  *     auto file = QSharedPointer<FileAppender>::create("logs/app.log");
  *     Logger::instance()->addAppender(file);
- *     
+ *
  *     // 安装 Qt 日志适配器
  *     QtLogAdapter::install();
  * }
