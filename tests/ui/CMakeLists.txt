@@ -24,6 +24,7 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExportButtonsSection.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowResizeHandles.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/AppStyle.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/ResponsiveHelper.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_BasicComponents.qml
 )
 
