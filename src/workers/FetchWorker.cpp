@@ -94,13 +94,16 @@ void FetchWorker::run() {
     // 使用线程局部存储缓存 QNetworkAccessManager
     // 避免为每个任务重复创建和销毁 QNAM（这是非常昂贵的操作）
     static thread_local QNetworkAccessManager* threadQNAM = nullptr;
-    if (!threadQNAM) {
+    static thread_local bool threadQNAMInitialized = false;
+
+    if (!threadQNAMInitialized) {
         threadQNAM = new QNetworkAccessManager();
-        // 注册线程退出清理回调，确保 QNAM 被正确析构（修复内存泄漏）
-        QObject::connect(QThread::currentThread(), &QThread::finished, [=]() {
-            delete threadQNAM;
-            threadQNAM = nullptr;
-        });
+        threadQNAMInitialized = true;
+
+        // 修复：移除 QThread::finished 清理逻辑
+        // 原因：在低带宽环境下，活跃的 QNetworkReply 可能仍在使用这个 QNAM
+        // 过早删除会导致段错误。让 QNetworkAccessManager 随线程生命周期自然结束。
+
         qDebug() << "Created thread-local QNetworkAccessManager for thread:" << QThread::currentThreadId();
     }
     m_ownNetworkManager = threadQNAM;
@@ -311,12 +314,19 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
 
         QNetworkReply* reply = m_ownNetworkManager->get(request);
 
+        // 使用 QSharedPointer 确保 QNetworkReply 的安全生命周期
+        // 避免超时后的竞态条件和悬垂指针访问
+        QSharedPointer<QNetworkReply> replyPtr(reply, [](QNetworkReply* r) {
+            if (r) {
+                r->abort();
+                r->deleteLater();
+            }
+        });
+
         // 跟踪当前 reply 以便中断
         {
             QMutexLocker locker(&m_replyMutex);
             if (m_isAborted.loadRelaxed()) {
-                reply->abort();
-                reply->deleteLater();
                 return QByteArray();
             }
             m_currentReply = reply;
@@ -326,10 +336,11 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
         QTimer timeoutTimer;
         timeoutTimer.setSingleShot(true);
 
+        // 使用 QSharedPointer 捕获，确保在 lambda 执行时对象仍然有效
         connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        connect(&timeoutTimer, &QTimer::timeout, [&]() {
-            if (reply->isRunning()) {
-                reply->abort();
+        connect(&timeoutTimer, &QTimer::timeout, [replyPtr, &loop]() {
+            if (replyPtr && replyPtr->isRunning()) {
+                replyPtr->abort();
             }
             loop.quit();
         });
@@ -344,10 +355,28 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
         }
 
         bool success = false;
-        if (reply->error() == QNetworkReply::NoError) {
-            int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+        // 检查 reply 是否仍然有效，避免访问已释放的对象
+        if (!replyPtr) {
+            qWarning() << "QNetworkReply was invalidated during timeout handling";
+            if (status) {
+                ComponentExportStatus::NetworkDiagnostics diag;
+                diag.url = url;
+                diag.statusCode = 0;
+                diag.errorString = "Reply invalidated";
+                diag.retryCount = retryCount;
+                diag.latencyMs = requestTimer.elapsed();
+                diag.wasRateLimited = false;
+                status->networkDiagnostics.append(diag);
+            }
+            retryCount++;
+            continue;
+        }
+
+        if (replyPtr->error() == QNetworkReply::NoError) {
+            int statusCode = replyPtr->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             if (statusCode == 200) {
-                result = reply->readAll();
+                result = replyPtr->readAll();
                 success = true;
 
                 // 记录网络诊断信息
@@ -391,7 +420,7 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 qWarning() << "HTTP error" << statusCode << "for URL:" << url << "(No retry for this code)";
                 retryCount = MAX_HTTP_RETRIES + 1;  // Don't retry for other 4xx errors
             }
-        } else if (reply->error() == QNetworkReply::OperationCanceledError) {
+        } else if (replyPtr->error() == QNetworkReply::OperationCanceledError) {
             // 请求被取消（超时），不再重试
             qWarning() << "Request timeout (cancelled) for URL:" << url << "after" << timeoutMs << "ms";
 
@@ -410,14 +439,14 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
             // 超时后进行正常重试（弱网环境下超时是最常见的错误类型）
             // Will retry
         } else {
-            qWarning() << "Network error:" << reply->errorString() << "URL:" << url;
+            qWarning() << "Network error:" << replyPtr->errorString() << "URL:" << url;
 
             // 记录网络诊断信息
             if (status) {
                 ComponentExportStatus::NetworkDiagnostics diag;
                 diag.url = url;
-                diag.statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-                diag.errorString = reply->errorString();
+                diag.statusCode = replyPtr->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                diag.errorString = replyPtr->errorString();
                 diag.retryCount = retryCount;
                 diag.latencyMs = requestTimer.elapsed();
                 diag.wasRateLimited = false;
@@ -427,7 +456,7 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
             // Will retry for other network errors (except timeout/cancelled)
         }
 
-        reply->deleteLater();
+        // 不再需要手动 deleteLater，QSharedPointer 的删除器会处理
 
         if (success) {
             if (!result.isEmpty() && result.size() >= 2 && (unsigned char)result[0] == 0x1f &&

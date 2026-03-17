@@ -10,6 +10,7 @@
 #include <QImage>
 #include <QJsonObject>
 #include <QMap>
+#include <QMutex>
 #include <QObject>
 #include <QPair>
 #include <QQueue>
@@ -327,6 +328,10 @@ private:
     class EasyedaImporter* m_importer;
     QNetworkAccessManager* m_networkManager;
     LcscImageService* m_imageService;
+
+    // 添加互斥锁保护并发访问
+    mutable QMutex m_fetchingComponentsMutex;
+    mutable QMutex m_componentCacheMutex;
 
     // 数据缓存
     QMap<QString, ComponentData> m_componentCache;
