@@ -108,6 +108,9 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     QString normalizedId = componentId.toUpper();
     m_currentComponentId = normalizedId;
 
+    // 加锁保护共享数据的访问
+    QMutexLocker locker(&m_fetchingComponentsMutex);
+
     // 获取或创建 FetchingComponent 条目
     FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
     fetchingComponent.componentId = normalizedId;
@@ -119,6 +122,9 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     fetchingComponent.hasObjData = false;
     fetchingComponent.hasStepData = false;
     fetchingComponent.errorMessage.clear();
+
+    // 在锁保护外执行网络请求，避免长时间持锁
+    locker.unlock();
 
     // 首先获取 CAD 数据（包含符号和封装信息）
     // CAD 数据是后续流程的基础
@@ -142,6 +148,9 @@ void ComponentService::handleImageReady(const QString& componentId, const QByteA
 
         // 发送预览图数据就绪信号（用于导出）
         emit previewImageDataReady(componentId, imageData, imageIndex);
+
+        // 加锁保护共享数据的访问
+        QMutexLocker locker(&m_fetchingComponentsMutex);
 
         // 保存图片数据到 ComponentData（内存），使用索引避免重复
         if (m_fetchingComponents.contains(componentId)) {
@@ -177,6 +186,9 @@ void ComponentService::handleLcscDataReady(const QString& componentId,
     qDebug() << "LCSC data ready for component:" << componentId
              << "Manufacturer Part:" << (manufacturerPart.isEmpty() ? "none" : manufacturerPart)
              << "Datasheet:" << (datasheetUrl.isEmpty() ? "none" : datasheetUrl) << "Images:" << imageUrls.size();
+
+    // 加锁保护共享数据的访问
+    QMutexLocker locker(&m_fetchingComponentsMutex);
 
     // 更新 m_fetchingComponents 中的数据
     if (m_fetchingComponents.contains(componentId)) {

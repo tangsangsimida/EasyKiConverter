@@ -91,14 +91,13 @@ signals:
 
 private slots:
     void processQueue();
-    void handleApiResponse(QNetworkReply* reply, const QString& componentId, int retryCount);
+    void handleApiResponse(QSharedPointer<QNetworkReply> reply, const QString& componentId, int retryCount);
     void handleFallbackResponse(QNetworkReply* reply, const QString& componentId);
-    void handleDownloadResponse(QNetworkReply* reply,
-                                const QString& componentId,
-                                const QString& imageUrl,
-                                int imageIndex,
-                                int retryCount);
-
+    void handleDownloadResponse(QSharedPointer<QNetworkReply> reply,
+                                 const QString& componentId,
+                                 const QString& imageUrl,
+                                 int imageIndex,
+                                 int retryCount);
 private:
     void performApiSearch(const QString& componentId, int retryCount);
     void performFallback(const QString& componentId);
