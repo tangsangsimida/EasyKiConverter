@@ -104,6 +104,11 @@ public:
     bool waitForCompletion(int timeoutMs = 5000) override;
 
     /**
+     * @brief 强制清理所有线程池（用于退出时）
+     */
+    void forceCleanupThreadPools();
+
+    /**
      * @brief 设置预加载的数据
      *
      * @param data 预加载的数据映射 (ComponentId -> ComponentData)
@@ -136,6 +141,12 @@ public slots:
      * @brief 紧急清理（用于取消时的异步清理）
      */
     void emergencyCleanup();
+
+private:
+    /**
+     * @brief 清理指定的线程池
+     */
+    void clearThreadPool(QThreadPool* pool);
 
 private slots:
     /**

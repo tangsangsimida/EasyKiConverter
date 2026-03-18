@@ -105,11 +105,33 @@ void FetchStageHandler::start() {
 
 void FetchStageHandler::stop() {
     QMutexLocker locker(&m_workerMutex);
+
+    qDebug() << "FetchStageHandler stopping, active workers:" << m_activeWorkers.size();
+
+    // 1. 标记所有 worker 为中止
     for (FetchWorker* worker : m_activeWorkers) {
-        if (worker)
+        if (worker) {
             worker->abort();
+        }
+    }
+
+    // 2. 等待所有 worker 完成（最多 200ms）
+    QElapsedTimer timer;
+    timer.start();
+
+    while (!m_activeWorkers.isEmpty() && timer.elapsed() < 200) {
+        QThread::msleep(10);
+        locker.unlock();  // 临时解锁允许 worker 完成
+        locker.relock();
+    }
+
+    // 3. 清空列表
+    if (!m_activeWorkers.isEmpty()) {
+        qWarning() << "FetchStageHandler: Some workers did not finish in 200ms";
     }
     m_activeWorkers.clear();
+
+    qDebug() << "FetchStageHandler stopped in" << timer.elapsed() << "ms";
 }
 
 void FetchStageHandler::onWorkerCompleted(QSharedPointer<ComponentExportStatus> status, FetchWorker* worker) {

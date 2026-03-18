@@ -1,5 +1,6 @@
 #include "FetchWorker.h"
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <QEventLoop>
@@ -101,6 +102,7 @@ void FetchWorker::run() {
     if (!threadQNAM) {
         threadQNAM = std::make_unique<QNetworkAccessManager>();
         qDebug() << "Created thread-local QNetworkAccessManager for thread:" << QThread::currentThreadId();
+        // 注意：线程局部存储的 unique_ptr 会在线程退出时自动清理，不需要手动清理
     }
     m_ownNetworkManager = threadQNAM.get();
 
@@ -695,12 +697,25 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
 }
 
 void FetchWorker::abort() {
-    m_isAborted.storeRelaxed(1);
-    QMutexLocker locker(&m_replyMutex);
-    if (m_currentReply) {
-        qDebug() << "Aborting network request for component:" << m_componentId;
-        // 安全：使用 Qt::QueuedConnection 确保在正确线程执行 abort()
-        QMetaObject::invokeMethod(m_currentReply, "abort", Qt::QueuedConnection);
+    // 使用原子操作确保只执行一次
+    if (m_isAborted.testAndSetRelaxed(0, 1)) {
+        qDebug() << "FetchWorker abort requested for:" << m_componentId;
+
+        // 使用互斥锁保护 m_currentReply 的访问
+        QMutexLocker locker(&m_replyMutex);
+
+        // 直接 abort，不使用跨线程调用
+        // 注意：不调用 deleteLater()，因为 QSharedPointer 的删除器已经处理了清理
+        if (m_currentReply && !m_currentReply->isFinished()) {
+            m_currentReply->abort();
+            // m_currentReply 由 QSharedPointer 管理，不需要手动 deleteLater
+        }
+        m_currentReply = nullptr;
+
+        // 清理网络管理器
+        if (m_ownNetworkManager) {
+            m_ownNetworkManager->clearConnectionCache();
+        }
     }
 }
 
