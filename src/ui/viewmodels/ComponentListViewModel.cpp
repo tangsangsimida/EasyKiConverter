@@ -152,6 +152,9 @@ void ComponentListViewModel::removeComponent(int index) {
         delete item;
         endRemoveRows();
 
+        // 更新 hasInvalidComponents 状态
+        updateHasInvalidComponents();
+
         emit componentCountChanged();
         emit componentRemoved(removedId);
     }
@@ -178,6 +181,9 @@ void ComponentListViewModel::clearComponentList() {
         m_componentList.clear();
         m_componentIdIndex.clear();  // 清空索引
         endResetModel();
+
+        // 更新 hasInvalidComponents 状态
+        updateHasInvalidComponents();
 
         emit componentCountChanged();
         emit listCleared();
@@ -397,6 +403,9 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
         item->setValid(true);
         item->setErrorMessage("");
 
+        // 更新 hasInvalidComponents 状态
+        updateHasInvalidComponents();
+
         // 异步生成缩略图 - 使用 QPointer 防止悬垂指针
         QPointer<ComponentListItemData> safeItem = item;
         QThreadPool::globalInstance()->start(QRunnable::create([safeItem, dataPtr]() {
@@ -426,19 +435,35 @@ void ComponentListViewModel::handleModel3DReady(const QString& uuid, const QStri
 
 void ComponentListViewModel::handleFetchError(const QString& componentId, const QString& error) {
     qWarning() << "Fetch error for:" << componentId << "-" << error;
+
     auto item = findItemData(componentId);
+
     if (item) {
         item->setFetching(false);
-        // 如果是严重错误（如404），标记为无效
-        if (error.contains("404") || error.contains("not found", Qt::CaseInsensitive)) {
+
+        // 如果是验证失败（如"No result"、"404"、"not found"），标记为无效
+
+        if (error.contains("No result", Qt::CaseInsensitive) ||
+
+            error.contains("404") ||
+
+            error.contains("not found", Qt::CaseInsensitive)) {
             item->setValid(false);
-            item->setErrorMessage("Not Found");
+
+            item->setErrorMessage("元件不存在");
+
         } else {
             item->setErrorMessage(error);
         }
 
+        // 更新 hasInvalidComponents 状态
+
+        updateHasInvalidComponents();
+
         // 添加到防抖集合
+
         m_pendingUpdateIndices.insert(componentId);
+
         m_debounceTimer->start();
     }
 }
@@ -566,6 +591,17 @@ void ComponentListViewModel::refreshComponentInfo(int index) {
     }
 }
 
+void ComponentListViewModel::retryAllInvalidComponents() {
+    for (int i = 0; i < m_componentList.count(); ++i) {
+        auto item = m_componentList.at(i);
+        if (item && !item->isValid() && !item->isFetching()) {
+            item->setFetching(true);
+            item->setErrorMessage("");
+            m_service->fetchComponentData(item->componentId(), false);
+        }
+    }
+}
+
 QStringList ComponentListViewModel::getAllComponentIds() const {
     QStringList ids;
     for (const auto& item : m_componentList) {
@@ -586,6 +622,20 @@ void ComponentListViewModel::copyToClipboard(const QString& text) {
     QClipboard* clipboard = QGuiApplication::clipboard();
     clipboard->setText(text);
     qDebug() << "Copied to clipboard:" << text;
+}
+
+void ComponentListViewModel::updateHasInvalidComponents() {
+    bool hasInvalid = false;
+    for (const auto& item : m_componentList) {
+        if (item && !item->isValid() && !item->isFetching()) {
+            hasInvalid = true;
+            break;
+        }
+    }
+    if (hasInvalid != m_hasInvalidComponents) {
+        m_hasInvalidComponents = hasInvalid;
+        emit hasInvalidComponentsChanged();
+    }
 }
 
 }  // namespace EasyKiConverter

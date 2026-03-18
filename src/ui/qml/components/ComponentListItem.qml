@@ -11,6 +11,7 @@ Rectangle {
     property string searchText: ""
     signal deleteClicked
     signal copyClicked
+    signal retryClicked
     height: 64 // 增加高度以容纳缩略图和更多信息
     // 悬停效果
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
@@ -75,14 +76,12 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: AppStyle.spacing.sm
         spacing: AppStyle.spacing.md
-
         // 预览图区域 - 支持悬停放大
         Item {
             id: previewArea
             Layout.preferredWidth: 48
             Layout.preferredHeight: 48
             Layout.alignment: Qt.AlignVCenter
-
             // 默认显示的单张缩略图
             Rectangle {
                 id: defaultThumbnail
@@ -93,7 +92,6 @@ Rectangle {
                 border.color: AppStyle.colors.border
                 border.width: 1
                 clip: true
-
                 Image {
                     anchors.centerIn: parent
                     width: 46
@@ -136,24 +134,19 @@ Rectangle {
                 modal: false
                 focus: false
                 dim: false
-
                 // 智能位置计算：检测是否超出窗口边界
                 onVisibleChanged: {
                     if (visible) {
                         // 获取缩略图在屏幕上的位置
                         var thumbGlobalPos = defaultThumbnail.mapToGlobal(Qt.point(0, 0));
-
                         // 获取窗口在屏幕上的位置
                         var window = item.Window.window;
                         var windowGlobalX = window ? window.x : 0;
                         var windowWidth = window ? window.width : item.width;
-
                         // 计算缩略图相对于窗口的位置
                         var thumbRelativeX = thumbGlobalPos.x - windowGlobalX;
-
                         // 预览图宽度（490）+ 间距（60）= 550
                         var popupWidth = width + 60;
-
                         // 如果右侧空间不足，显示在左侧
                         if (thumbRelativeX + popupWidth > windowWidth) {
                             x = -540; // 显示在缩略图左侧
@@ -189,7 +182,6 @@ Rectangle {
                     border.color: AppStyle.colors.primary
                     border.width: 2
                     radius: AppStyle.radius.md
-
                     // 阴影效果
                     layer.enabled: true
                     layer.effect: MultiEffect {
@@ -205,10 +197,8 @@ Rectangle {
                     anchors.fill: parent
                     anchors.margins: 10
                     spacing: 10
-
                     Repeater {
                         model: itemData ? itemData.previewImageCount : 0
-
                         Rectangle {
                             width: 150
                             height: 150
@@ -217,10 +207,8 @@ Rectangle {
                             border.color: AppStyle.colors.border
                             border.width: 1
                             clip: true
-
                             property bool imageLoaded: false
                             property bool loadTriggered: false
-
                             // 延迟加载触发器
                             Timer {
                                 id: loadDelayTimer
@@ -255,7 +243,6 @@ Rectangle {
                                 cache: true
                                 asynchronous: true
                                 visible: parent.loadTriggered && parent.imageLoaded
-
                                 onStatusChanged: {
                                     if (status === Image.Ready) {
                                         parent.imageLoaded = true;
@@ -280,7 +267,6 @@ Rectangle {
                                 color: AppStyle.colors.background
                                 radius: AppStyle.radius.md
                                 visible: !parent.loadTriggered
-
                                 Text {
                                     anchors.centerIn: parent
                                     text: index + 1
@@ -401,7 +387,38 @@ Rectangle {
                 elide: Text.ElideRight
             }
         }
-
+        // 重试按钮（仅对验证失败的元器件显示）
+        Button {
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            Layout.alignment: Qt.AlignVCenter
+            visible: itemData && !itemData.isValid && !itemData.isFetching
+            background: Rectangle {
+                color: parent.pressed ? AppStyle.colors.primaryHover : parent.hovered ? "#dbeafe" : "transparent"
+                radius: AppStyle.radius.sm
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+            }
+            contentItem: Text {
+                text: "↻"
+                font.pixelSize: AppStyle.fontSizes.xxl
+                font.bold: true
+                color: parent.pressed ? AppStyle.colors.primaryPressed : parent.hovered ? AppStyle.colors.primary : AppStyle.colors.primary
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+            }
+            onClicked: {
+                item.retryClicked();
+            }
+        }
         // 删除按钮
         Button {
             Layout.preferredWidth: 28

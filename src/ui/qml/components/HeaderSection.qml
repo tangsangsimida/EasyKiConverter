@@ -48,7 +48,6 @@ ColumnLayout {
             ]
             textRole: "text"
             valueRole: "value"
-
             // 直接绑定到 LanguageManager.currentLanguage，避免手动设置
             currentIndex: {
                 var lang = LanguageManager.currentLanguage;
@@ -133,7 +132,6 @@ ColumnLayout {
                 width: languageComboBox.width
                 implicitHeight: listview.contentHeight
                 padding: 0
-
                 contentItem: ListView {
                     id: listview
                     clip: true

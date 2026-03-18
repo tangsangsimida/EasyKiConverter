@@ -128,7 +128,6 @@ Card {
         Layout.columnSpan: 10  // 跨越10列
         Layout.preferredHeight: exportOptionsLayout.implicitHeight
         Layout.minimumWidth: ResponsiveHelper.minimumWindowWidth  // 使用计算的最小窗口宽度
-
         RowLayout {
             id: exportOptionsLayout
             anchors.fill: parent
