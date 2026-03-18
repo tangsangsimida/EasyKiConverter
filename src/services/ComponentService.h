@@ -312,6 +312,16 @@ private:
     void handleParallelFetchError(const QString& componentId, const QString& error);
 
     /**
+     * @brief 动态队列管理：处理单个请求完成后的队列调度
+     */
+    void processQueueNext();
+
+    /**
+     * @brief 动态队列管理：启动队列处理
+     */
+    void startQueueProcessing();
+
+    /**
      * @brief 检测数据是否为 PDF 格式
      *
      * @param data 数据
@@ -371,6 +381,11 @@ private:
     int m_parallelTotalCount;                              // 总元件数
     int m_parallelCompletedCount;                          // 已完成数
     bool m_parallelFetching;                               // 是否正在并行获取
+
+    // 动态队列管理
+    QStringList m_requestQueue;   // 请求队列
+    int m_activeRequestCount;     // 当前活跃请求数
+    int m_maxConcurrentRequests;  // 最大并发请求数
 
     // 内部状态处理
 

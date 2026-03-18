@@ -724,12 +724,9 @@ QString ComponentService::getOutputPath() const {
 }
 
 void ComponentService::fetchMultipleComponentsData(const QStringList& componentIds, bool fetch3DModel) {
-    qDebug() << "Fetching data for" << componentIds.size() << "components in parallel";
+    qDebug() << "Fetching data for" << componentIds.size() << "components with dynamic queue";
 
-    // 修复：实现分批次处理，限制最大并发请求数
-    // 防止弱网络环境下因并发过多导致资源耗尽和崩溃
-    const int MAX_CONCURRENT = 5;        // 最大并发请求数
-    const int BATCH_INTERVAL_MS = 2000;  // 批次间隔2秒
+    const int MAX_CONCURRENT = 5;  // 最大并发请求数
 
     // 初始化并行获取状态
     {
@@ -742,36 +739,49 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
         m_parallelFetching = true;
     }
 
-    // 分批次处理请求
-    int processed = 0;
-    while (processed < componentIds.size()) {
-        int batchSize = qMin(MAX_CONCURRENT, componentIds.size() - processed);
-        QStringList batch = componentIds.mid(processed, batchSize);
+    // 动态队列处理：始终保持MAX_CONCURRENT个活跃请求
+    int activeCount = 0;
+    int currentIndex = 0;
 
-        qDebug() << "Processing batch" << (processed / MAX_CONCURRENT + 1) << "with" << batchSize << "components";
+    while (currentIndex < componentIds.size() || activeCount > 0) {
+        // 启动新请求直到达到最大并发数
+        while (activeCount < MAX_CONCURRENT && currentIndex < componentIds.size()) {
+            QString id = componentIds.at(currentIndex);
+            currentIndex++;
 
-        // 发起当前批次的请求
-        {
-            QMutexLocker locker(&m_parallelDataMutex);
-            for (const QString& id : batch) {
+            {
+                QMutexLocker locker(&m_parallelDataMutex);
                 m_parallelFetchingStatus[id] = true;
+            }
+
+            qDebug() << "Starting request for component:" << id << "(Active:" << activeCount + 1 << "/"
+                     << MAX_CONCURRENT << "Remaining:" << componentIds.size() - currentIndex << ")";
+
+            fetchComponentDataInternal(id, fetch3DModel);
+            activeCount++;
+
+            if (activeCount < MAX_CONCURRENT && currentIndex < componentIds.size()) {
+                QThread::msleep(200);  // 请求间隔
             }
         }
 
-        for (const QString& id : batch) {
-            fetchComponentDataInternal(id, fetch3DModel);
+        if (currentIndex >= componentIds.size() && activeCount > 0) {
+            qDebug() << "All requests started, waiting for completion. Active:" << activeCount;
+            QThread::msleep(1000);
         }
 
-        processed += batchSize;
-
-        // 如果还有待处理的，等待一段时间再处理下一批次
-        if (processed < componentIds.size()) {
-            qDebug() << "Waiting" << BATCH_INTERVAL_MS << "ms before next batch";
-            QThread::msleep(BATCH_INTERVAL_MS);
+        {
+            QMutexLocker locker(&m_parallelDataMutex);
+            int completed = m_parallelCompletedCount;
+            if (completed < currentIndex) {
+                activeCount = currentIndex - completed;
+            } else {
+                activeCount = 0;
+            }
         }
     }
 
-    qDebug() << "All batches submitted. Total components:" << componentIds.size();
+    qDebug() << "All components processed. Total:" << componentIds.size();
 }
 
 void ComponentService::handleParallelDataCollected(const QString& componentId, const ComponentData& data) {
