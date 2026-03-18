@@ -764,79 +764,54 @@ void ExportServicePipeline::cancelExport() {
 
 bool ExportServicePipeline::waitForCompletion(int timeoutMs) {
     if (!m_isPipelineRunning)
-
         return true;
 
     // 检查 QApplication 实例是否存在
-
     if (!QCoreApplication::instance()) {
         qWarning() << "QCoreApplication instance not available, skipping graceful wait.";
-
         return false;
     }
 
     qDebug() << "Waiting for pipeline completion (timeout:" << timeoutMs << "ms)...";
 
     // 确保已设置取消标志，加速 Worker 退出
-
     if (!m_isCancelled.loadAcquire()) {
         m_isCancelled.storeRelease(1);
     }
 
     QElapsedTimer timer;
-
     timer.start();
 
-    // 缓存主线程指针
+    // 简化的线程池等待逻辑，避免使用 processEvents()
+    // 这是为了防止 Windows 上的 UI 冻结和死锁问题
 
-    QThread* mainThread = QCoreApplication::instance()->thread();
-
-    // 定义一个辅助 lambda 用于安全等待线程池
-
-    auto safeWaitForPool = [&](QThreadPool* pool, const char* name) -> bool {
+    auto simpleWaitForPool = [&](QThreadPool* pool, const char* name) -> bool {
         if (!pool)
             return true;
 
-        while (pool->activeThreadCount() > 0) {
-            if (timer.elapsed() > timeoutMs) {
-                qWarning() << name << "thread pool wait timed out";
-
-                return false;
-            }
-
-            // 尝试非阻塞等待一小段时间
-
-            if (pool->waitForDone(50)) {
-                break;
-            }
-
-            // 关键：仅在主线程处理事件循环，防止死锁并确保线程安全
-
-            if (QThread::currentThread() == mainThread) {
-                QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-            }
+        // 直接等待线程池完成，使用较短的超时
+        if (!pool->waitForDone(timeoutMs / 3)) {
+            qWarning() << name << "thread pool did not finish within" << (timeoutMs / 3) << "ms";
+            // 超时后不再等待，直接返回
+            return false;
         }
-
+        qDebug() << name << "thread pool finished successfully";
         return true;
     };
 
     // 1. 等待 fetch 线程池
-
-    if (!safeWaitForPool(m_fetchThreadPool, "Fetch"))
+    if (!simpleWaitForPool(m_fetchThreadPool, "Fetch"))
         return false;
 
     // 2. 等待 process 线程池
-
-    if (!safeWaitForPool(m_processThreadPool, "Process"))
+    if (!simpleWaitForPool(m_processThreadPool, "Process"))
         return false;
 
     // 3. 等待 write 线程池
-
-    if (!safeWaitForPool(m_writeThreadPool, "Write"))
+    if (!simpleWaitForPool(m_writeThreadPool, "Write"))
         return false;
 
     qDebug() << "Pipeline wait finished successfully in" << timer.elapsed() << "ms";
-
     return true;
 }
 
@@ -936,6 +911,32 @@ bool ExportServicePipeline::exportDatasheetFromMemory(const QByteArray& datashee
         qWarning() << "Failed to write datasheet to:" << filePath;
         return false;
     }
+}
+
+void ExportServicePipeline::forceCleanupThreadPools() {
+    qDebug() << "Force cleanup all thread pools...";
+
+    clearThreadPool(m_fetchThreadPool);
+    clearThreadPool(m_processThreadPool);
+    clearThreadPool(m_writeThreadPool);
+}
+
+void ExportServicePipeline::clearThreadPool(QThreadPool* pool) {
+    if (!pool)
+        return;
+
+    // 1. 取消所有挂起的任务
+    pool->clear();
+
+    // 2. 等待运行中的任务完成（最多 500ms）
+    if (!pool->waitForDone(500)) {
+        qWarning() << "Thread pool did not finish in 500ms, waiting for graceful shutdown";
+        // QThreadPool 没有强制停止正在运行的任务的方法
+        // 我们只能等待任务自然完成
+        pool->waitForDone(2000);
+    }
+
+    qDebug() << "Thread pool cleared";
 }
 
 }  // namespace EasyKiConverter

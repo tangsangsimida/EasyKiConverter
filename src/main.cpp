@@ -495,30 +495,32 @@ int main(int argc, char* argv[]) {
     int exitCode = app.exec();
 
     // === 重要：显式按顺序销毁对象，防止退出时崩溃 ===
-    // 1. 首先清除 QML 引擎的上下文属性，防止 QML 组件访问已销毁的对象
+
+    // 1. 清除 QML 引擎的上下文属性，防止 QML 组件访问已销毁的对象
+    qDebug() << "Clearing QML context properties...";
     engine.rootContext()->setContextProperty("componentListViewModel", nullptr);
     engine.rootContext()->setContextProperty("exportSettingsViewModel", nullptr);
     engine.rootContext()->setContextProperty("exportProgressViewModel", nullptr);
     engine.rootContext()->setContextProperty("themeSettingsViewModel", nullptr);
 
     // 2. 销毁 QML 引擎（这会销毁所有 QML 组件）
+    qDebug() << "Destroying QML engine...";
     engine.deleteLater();
 
-    // 3. 处理事件队列，确保 QML 引擎销毁完成
-    QCoreApplication::processEvents();
-
-    // 4. 销毁 ViewModel
+    // 3. 销毁 ViewModel
+    qDebug() << "Destroying ViewModels...";
     delete themeSettingsViewModel;
     delete exportProgressViewModel;
     delete exportSettingsViewModel;
     delete componentListViewModel;
 
-    // 5. 销毁单例/核心服务
+    // 4. 销毁服务（析构函数会自动调用 cancelExport 和 cleanup）
+    qDebug() << "Destroying services...";
     delete exportService;
     delete componentService;
 
-    // 3. 最后卸载日志适配器并关闭 Logger
-    // 确保所有 worker 线程已在上述 delete 过程中停止后再关闭日志线程
+    // 5. 最后清理日志
+    qDebug() << "Cleaning up logging...";
     EasyKiConverter::QtLogAdapter::uninstall();
     auto* logger = EasyKiConverter::Logger::instance();
     if (logger) {
@@ -526,5 +528,6 @@ int main(int argc, char* argv[]) {
         logger->close();
     }
 
+    qDebug() << "Cleanup completed, exiting...";
     return exitCode;
 }
