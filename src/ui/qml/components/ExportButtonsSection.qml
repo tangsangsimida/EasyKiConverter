@@ -11,7 +11,6 @@ ColumnLayout {
     property var exportSettingsController
     property var componentListController
     spacing: AppStyle.spacing.md
-
     // 错误提示对话框
     Dialog {
         id: errorDialog
@@ -19,7 +18,6 @@ ColumnLayout {
         modal: true
         title: qsTranslate("MainWindow", "错误")
         anchors.centerIn: parent
-
         contentItem: Text {
             text: qsTranslate("MainWindow", "打开导出目录失败，请检查导出路径是否存在。")
             font.pixelSize: AppStyle.fontSizes.md
@@ -37,7 +35,6 @@ ColumnLayout {
         }
 
         standardButtons: Dialog.Ok
-
         onAccepted: {
             close();
         }

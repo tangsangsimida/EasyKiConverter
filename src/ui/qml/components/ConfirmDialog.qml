@@ -87,7 +87,6 @@ Item {
         scale: 0.9
         opacity: 0
         y: 0
-
         transform: Translate {
             id: dialogBoxTranslate
             y: 0

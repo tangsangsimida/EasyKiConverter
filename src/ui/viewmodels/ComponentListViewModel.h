@@ -24,6 +24,7 @@ class ComponentListViewModel : public QAbstractListModel {
     Q_PROPERTY(int componentCount READ componentCount NOTIFY componentCountChanged)
     Q_PROPERTY(QString bomFilePath READ bomFilePath NOTIFY bomFilePathChanged)
     Q_PROPERTY(QString bomResult READ bomResult NOTIFY bomResultChanged)
+    Q_PROPERTY(bool hasInvalidComponents READ hasInvalidComponents NOTIFY hasInvalidComponentsChanged)
 
 public:
     enum ComponentRoles { ItemDataRole = Qt::UserRole + 1 };
@@ -56,6 +57,10 @@ public:
 
     QString bomResult() const {
         return m_bomResult;
+    }
+
+    bool hasInvalidComponents() const {
+        return m_hasInvalidComponents;
     }
 
     // 获取预加载的数据（用于导出流程）
@@ -142,6 +147,11 @@ public slots:
     Q_INVOKABLE void refreshComponentInfo(int index);
 
     /**
+     * @brief 重试所有验证失败的元器件
+     */
+    Q_INVOKABLE void retryAllInvalidComponents();
+
+    /**
      * @brief 获取所有元件ID列表
      * @return QStringList 元件ID列表
      */
@@ -159,6 +169,7 @@ signals:
     void componentCountChanged();
     void bomFilePathChanged();
     void bomResultChanged();
+    void hasInvalidComponentsChanged();
     void componentAdded(const QString& componentId, bool success, const QString& message);
     void componentRemoved(const QString& componentId);
     void listCleared();
@@ -264,6 +275,9 @@ private:
     // 查找列表项数据
     ComponentListItemData* findItemData(const QString& componentId) const;
 
+    // 更新 hasInvalidComponents 状态
+    void updateHasInvalidComponents();
+
 private:
     ComponentService* m_service;
     QList<ComponentListItemData*> m_componentList;
@@ -271,6 +285,7 @@ private:
     QString m_outputPath;
     QString m_bomFilePath;
     QString m_bomResult;
+    bool m_hasInvalidComponents = false;
 
     // 防抖定时器，用于减少频繁的 UI 更新
     QTimer* m_debounceTimer;

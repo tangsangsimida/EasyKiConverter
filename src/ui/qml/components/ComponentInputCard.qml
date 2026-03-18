@@ -19,7 +19,6 @@ Card {
             font.pixelSize: AppStyle.fontSizes.md
             color: AppStyle.colors.textPrimary
             placeholderTextColor: AppStyle.colors.textSecondary
-
             // 组件加载完成后自动设置焦点
             Component.onCompleted: {
                 Qt.callLater(function () {

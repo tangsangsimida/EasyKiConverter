@@ -50,6 +50,11 @@ Card {
                         componentListCard.componentListController.removeComponentById(itemData.componentId);
                     }
                 }
+                onRetryClicked: {
+                    if (itemData) {
+                        componentListCard.componentListController.refreshComponentInfo(index);
+                    }
+                }
             }
 
             // 过滤函数
@@ -144,6 +149,54 @@ Card {
 
             onTextChanged: {
                 visualModel.updateFilter();
+            }
+        }
+
+        // 重试所有验证失败元器件按钮
+        Item {
+            id: retryAllButton
+            Layout.preferredWidth: retryAllButtonContent.width + AppStyle.spacing.xl * 2
+            Layout.preferredHeight: 44
+            Layout.alignment: Qt.AlignVCenter
+            visible: componentListCard.componentListController ? componentListCard.componentListController.hasInvalidComponents : false
+            // 按钮背景
+            Rectangle {
+                anchors.fill: parent
+                color: retryAllButtonMouseArea.pressed ? AppStyle.colors.primaryHover : retryAllButtonMouseArea.containsMouse ? Qt.darker(AppStyle.colors.primary, 1.1) : AppStyle.colors.primary
+                radius: AppStyle.radius.md
+                opacity: 0.8
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+            }
+
+            // 按钮文本
+            Text {
+                id: retryAllButtonContent
+                anchors.centerIn: parent
+                text: qsTranslate("MainWindow", "重试所有")
+                font.pixelSize: AppStyle.fontSizes.sm
+                color: "white"
+            }
+
+            // 鼠标区域
+            MouseArea {
+                id: retryAllButtonMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (componentListCard.componentListController) {
+                        componentListCard.componentListController.retryAllInvalidComponents();
+                    }
+                }
             }
         }
 
