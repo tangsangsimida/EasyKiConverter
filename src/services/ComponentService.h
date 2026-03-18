@@ -332,6 +332,8 @@ private:
     // 添加互斥锁保护并发访问
     mutable QMutex m_fetchingComponentsMutex;
     mutable QMutex m_componentCacheMutex;
+    mutable QMutex m_currentIdMutex;     // 保护 m_currentComponentId 的并发访问
+    mutable QMutex m_parallelDataMutex;  // 保护并行数据收集状态的并发访问
 
     // 数据缓存
     QMap<QString, ComponentData> m_componentCache;

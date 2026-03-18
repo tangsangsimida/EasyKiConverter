@@ -5,12 +5,14 @@
 #include <QEventLoop>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMetaObject>
 #include <QMutex>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QThread>
 #include <QTimer>
 
+#include <memory>
 #include <zlib.h>
 
 namespace EasyKiConverter {
@@ -93,20 +95,14 @@ void FetchWorker::run() {
 
     // 使用线程局部存储缓存 QNetworkAccessManager
     // 避免为每个任务重复创建和销毁 QNAM（这是非常昂贵的操作）
-    static thread_local QNetworkAccessManager* threadQNAM = nullptr;
-    static thread_local bool threadQNAMInitialized = false;
+    // 修复：使用 std::unique_ptr 管理线程局部 QNetworkAccessManager 生命周期
+    static thread_local std::unique_ptr<QNetworkAccessManager> threadQNAM = nullptr;
 
-    if (!threadQNAMInitialized) {
-        threadQNAM = new QNetworkAccessManager();
-        threadQNAMInitialized = true;
-
-        // 修复：移除 QThread::finished 清理逻辑
-        // 原因：在低带宽环境下，活跃的 QNetworkReply 可能仍在使用这个 QNAM
-        // 过早删除会导致段错误。让 QNetworkAccessManager 随线程生命周期自然结束。
-
+    if (!threadQNAM) {
+        threadQNAM = std::make_unique<QNetworkAccessManager>();
         qDebug() << "Created thread-local QNetworkAccessManager for thread:" << QThread::currentThreadId();
     }
-    m_ownNetworkManager = threadQNAM;
+    m_ownNetworkManager = threadQNAM.get();
 
     bool hasError = false;
     QString errorMessage;
@@ -703,7 +699,8 @@ void FetchWorker::abort() {
     QMutexLocker locker(&m_replyMutex);
     if (m_currentReply) {
         qDebug() << "Aborting network request for component:" << m_componentId;
-        m_currentReply->abort();
+        // 安全：使用 Qt::QueuedConnection 确保在正确线程执行 abort()
+        QMetaObject::invokeMethod(m_currentReply, "abort", Qt::QueuedConnection);
     }
 }
 
