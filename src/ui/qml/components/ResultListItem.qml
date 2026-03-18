@@ -173,37 +173,70 @@ Rectangle {
             }
         }
         // 重试按钮
-        Button {
+        Item {
+            id: retryButton
             visible: status === "failed" || status.indexOf("fail") !== -1
-            Layout.preferredWidth: 30
-            Layout.preferredHeight: 30
-            flat: true
-            contentItem: Text {
-                text: "↺"
-                font.pixelSize: 20
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            Layout.alignment: Qt.AlignVCenter
+            Rectangle {
+                anchors.fill: parent
+                color: retryButtonHovered ? AppStyle.colors.warningLight : "transparent"
+                radius: AppStyle.radius.sm
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+            }
+            Text {
+                anchors.centerIn: parent
+                text: "↻"
+                font.pixelSize: AppStyle.fontSizes.xxl
+                font.bold: true
                 color: AppStyle.colors.warning
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
             }
-
-            background: Rectangle {
-                color: parent.hovered ? (AppStyle.isDarkMode ? "#33f59e0b" : AppStyle.colors.warningLight) : "transparent"
-                radius: 15
-            }
-
-            ToolTip.visible: hovered
+            ToolTip.visible: retryButtonHovered
             ToolTip.text: qsTr("重试")
             ToolTip.delay: 500
-            onClicked: item.retryClicked()
         }
     }
+
+    // 追踪重试按钮悬停状态
+    property bool retryButtonHovered: false
     MouseArea {
         id: itemMouseArea
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.ArrowCursor
-        acceptedButtons: Qt.RightButton | Qt.LeftButton // 同时响应右键和左键
+        acceptedButtons: Qt.RightButton | Qt.LeftButton
+        onMouseXChanged: {
+            // 检查鼠标是否在重试按钮区域
+            if (retryButton.visible) {
+                var retryBtnX = item.width - AppStyle.spacing.lg - retryButton.width;
+                var retryBtnY = (item.height - retryButton.height) / 2;
+                if (mouseX >= retryBtnX && mouseX <= retryBtnX + retryButton.width && mouseY >= retryBtnY && mouseY <= retryBtnY + retryButton.height) {
+                    retryButtonHovered = true;
+                } else {
+                    retryButtonHovered = false;
+                }
+            } else {
+                retryButtonHovered = false;
+            }
+        }
+
         onClicked: mouse => {
+            // 检查是否点击在重试按钮区域
+            if (retryButton.visible) {
+                var retryBtnX = item.width - AppStyle.spacing.lg - retryButton.width;
+                var retryBtnY = (item.height - retryButton.height) / 2;
+                if (mouse.x >= retryBtnX && mouse.x <= retryBtnX + retryButton.width && mouse.y >= retryBtnY && mouse.y <= retryBtnY + retryButton.height) {
+                    // 点击在重试按钮区域，调用重试功能
+                    item.retryClicked();
+                    return;
+                }
+            }
+
             // 右键点击复制 ID
             if (mouse.button === Qt.RightButton) {
                 if (componentId) {
