@@ -10,8 +10,8 @@
   </developer>
   <name>EasyKiConverter</name>
   <name xml:lang="zh_CN">EasyKiConverter</name>
-  <summary>Convert LCSC and EasyEDA components to KiCad libraries</summary>
-  <summary xml:lang="zh_CN">将嘉立创和 EasyEDA 元件转换为 KiCad 库</summary>
+  <summary>Convert components for KiCad</summary>
+  <summary xml:lang="zh_CN">转换元件用于 KiCad</summary>
 
   <translation type="qt">easykiconverter</translation>
 
