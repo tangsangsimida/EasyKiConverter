@@ -55,7 +55,7 @@ AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignOperands: true
-AlignTrailingComments: true
+AlignTrailingComments: false  # 禁用尾随注释对齐，避免不同 clang-format 版本 (18 vs 21.1) 的对齐差异
 
 # 注释处理（保持中文注释原样）
 ReflowComments: false

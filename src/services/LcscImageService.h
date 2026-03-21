@@ -119,10 +119,10 @@ private:
     QMap<QString, QList<QByteArray>> m_downloadedImages;  // componentId -> image data list (memory)
     QMap<QString, int> m_downloadCounts;                  // componentId -> downloaded count
     QMap<QString, int> m_datasheetDownloadStatus;  // 数据手册下载状态：0=pending, 1=success, 2=failed
-    int m_activeRequests;                           // 当前活跃的预览图下载数
+    int m_activeRequests;  // 当前活跃的预览图下载数
     static const int MAX_CONCURRENT_REQUESTS = 5;  // 最大并发下载数（平衡网络资源占用和下载速度）
     static const int MAX_IMAGES_PER_COMPONENT = 3;  // 每个组件最多下载3张预览图
-    static const int MAX_RETRY_COUNT = 3;           // 下载失败时的最大重试次数
+    static const int MAX_RETRY_COUNT = 3;  // 下载失败时的最大重试次数
 };
 
 }  // namespace EasyKiConverter
