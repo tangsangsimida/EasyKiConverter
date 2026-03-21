@@ -130,6 +130,7 @@ private:
     QMap<QString, QString> m_headers;
     bool m_isRequesting;
     bool m_expectBinaryData;  // 是否期望接收二进制数据
+    bool m_replyDeleting;     // 标志：防止重复调用 deleteLater()
 };
 
 }  // namespace EasyKiConverter

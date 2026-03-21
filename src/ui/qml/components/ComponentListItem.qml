@@ -115,10 +115,12 @@ Rectangle {
                 // 占位符/错误状态
                 Text {
                     anchors.centerIn: parent
-                    text: (itemData && !itemData.isValid) ? "✕" : (itemData && !itemData.isFetching && !itemData.hasThumbnail) ? "?" : ""
+                    // 只在验证失败时显示 ✕
+                    // 不在验证成功但没有缩略图时显示 ?，而是显示空白或加载状态
+                    text: (itemData && !itemData.isValid) ? "✕" : ""
                     font.pixelSize: AppStyle.fontSizes.xxl
                     color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
-                    visible: !(itemData && itemData.hasThumbnail && !itemData.isFetching) && !(itemData && itemData.isFetching)
+                    visible: (itemData && !itemData.isValid)
                 }
             }
 

@@ -36,7 +36,11 @@ ComponentService::ComponentService(QObject* parent)
     , m_parallelTotalCount(0)
     , m_parallelCompletedCount(0)
     , m_parallelFetching(false)
-    , m_imageService(nullptr) {
+    , m_imageService(nullptr)
+    , m_activeRequestCount(0)
+    , m_maxConcurrentRequests(5)
+    , m_queueTimer(nullptr)
+    , m_timeoutTimer(nullptr) {
     try {
         m_api = new EasyedaApi();
         if (m_api) {
@@ -45,6 +49,15 @@ ComponentService::ComponentService(QObject* parent)
         m_importer = new EasyedaImporter(this);
         m_networkManager = new QNetworkAccessManager(this);
         m_imageService = new LcscImageService(this);
+
+        // 初始化异步队列管理定时器，避免阻塞主线程
+        m_queueTimer = new QTimer(this);
+        m_queueTimer->setSingleShot(false);
+        connect(m_queueTimer, &QTimer::timeout, this, &ComponentService::checkQueueAndProcessNext);
+
+        m_timeoutTimer = new QTimer(this);
+        m_timeoutTimer->setSingleShot(true);
+        connect(m_timeoutTimer, &QTimer::timeout, this, &ComponentService::handleQueueTimeout);
     } catch (const std::bad_alloc& e) {
         qCritical() << "ComponentService: Memory allocation failed:" << e.what();
         std::terminate();
@@ -67,7 +80,11 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     , m_parallelTotalCount(0)
     , m_parallelCompletedCount(0)
     , m_parallelFetching(false)
-    , m_imageService(nullptr) {
+    , m_imageService(nullptr)
+    , m_activeRequestCount(0)
+    , m_maxConcurrentRequests(5)
+    , m_queueTimer(nullptr)
+    , m_timeoutTimer(nullptr) {
     if (m_api && !m_api->parent()) {
         m_api->setParent(this);
     }
@@ -75,6 +92,15 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     m_importer = new EasyedaImporter(this);
     m_networkManager = new QNetworkAccessManager(this);
     m_imageService = new LcscImageService(this);
+
+    // 初始化异步队列管理定时器，避免阻塞主线程
+    m_queueTimer = new QTimer(this);
+    m_queueTimer->setSingleShot(false);
+    connect(m_queueTimer, &QTimer::timeout, this, &ComponentService::checkQueueAndProcessNext);
+
+    m_timeoutTimer = new QTimer(this);
+    m_timeoutTimer->setSingleShot(true);
+    connect(m_timeoutTimer, &QTimer::timeout, this, &ComponentService::handleQueueTimeout);
 
     initializeApiConnections();
     qDebug() << "ComponentService (Injected API): Initialized successfully.";
@@ -87,6 +113,7 @@ void ComponentService::initializeApiConnections() {
         connect(m_imageService, &LcscImageService::lcscDataReady, this, &ComponentService::handleLcscDataReady);
         connect(m_imageService, &LcscImageService::datasheetReady, this, &ComponentService::handleDatasheetReady);
         connect(m_imageService, &LcscImageService::allImagesReady, this, &ComponentService::handleAllImagesReady);
+        connect(m_imageService, &LcscImageService::error, this, &ComponentService::handlePreviewImageError);
     }
 
     // 连接 API 信号
@@ -272,6 +299,13 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
     } else {
         qWarning() << "Component" << componentId << "not found in m_fetchingComponents, cannot update datasheet data";
     }
+}
+
+void ComponentService::handlePreviewImageError(const QString& componentId, const QString& error) {
+    qWarning() << "Preview image fetch error for component:" << componentId << "error:" << error;
+
+    // 发送预览图失败信号
+    emit previewImageFailed(componentId, error);
 }
 
 void ComponentService::handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList) {
@@ -724,9 +758,14 @@ QString ComponentService::getOutputPath() const {
 }
 
 void ComponentService::fetchMultipleComponentsData(const QStringList& componentIds, bool fetch3DModel) {
-    qDebug() << "Fetching data for" << componentIds.size() << "components with dynamic queue";
+    qDebug() << "Fetching data for" << componentIds.size()
+             << "components with async queue (max concurrent:" << m_maxConcurrentRequests << ")";
 
-    const int MAX_CONCURRENT = 5;  // 最大并发请求数
+    // 防止重复启动批量处理，避免队列状态混乱
+    if (m_parallelFetching) {
+        qWarning() << "Batch processing already in progress, ignoring new request";
+        return;
+    }
 
     // 初始化并行获取状态
     {
@@ -737,51 +776,22 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
         m_parallelTotalCount = componentIds.size();
         m_parallelCompletedCount = 0;
         m_parallelFetching = true;
+
+        // 初始化请求队列
+        m_requestQueue = componentIds;
+        m_activeRequestCount = 0;
     }
 
-    // 动态队列处理：始终保持MAX_CONCURRENT个活跃请求
-    int activeCount = 0;
-    int currentIndex = 0;
+    // 启动总超时保护，防止弱网环境下队列永久阻塞
+    m_timeoutTimer->start(TOTAL_TIMEOUT_MS);
+    qDebug() << "Started total timeout timer:" << TOTAL_TIMEOUT_MS << "ms";
 
-    while (currentIndex < componentIds.size() || activeCount > 0) {
-        // 启动新请求直到达到最大并发数
-        while (activeCount < MAX_CONCURRENT && currentIndex < componentIds.size()) {
-            QString id = componentIds.at(currentIndex);
-            currentIndex++;
+    // 启动异步队列处理，定时检查队列状态并启动新请求
+    m_queueTimer->start(QUEUE_CHECK_INTERVAL_MS);
+    qDebug() << "Started async queue timer:" << QUEUE_CHECK_INTERVAL_MS << "ms";
 
-            {
-                QMutexLocker locker(&m_parallelDataMutex);
-                m_parallelFetchingStatus[id] = true;
-            }
-
-            qDebug() << "Starting request for component:" << id << "(Active:" << activeCount + 1 << "/"
-                     << MAX_CONCURRENT << "Remaining:" << componentIds.size() - currentIndex << ")";
-
-            fetchComponentDataInternal(id, fetch3DModel);
-            activeCount++;
-
-            if (activeCount < MAX_CONCURRENT && currentIndex < componentIds.size()) {
-                QThread::msleep(200);  // 请求间隔
-            }
-        }
-
-        if (currentIndex >= componentIds.size() && activeCount > 0) {
-            qDebug() << "All requests started, waiting for completion. Active:" << activeCount;
-            QThread::msleep(1000);
-        }
-
-        {
-            QMutexLocker locker(&m_parallelDataMutex);
-            int completed = m_parallelCompletedCount;
-            if (completed < currentIndex) {
-                activeCount = currentIndex - completed;
-            } else {
-                activeCount = 0;
-            }
-        }
-    }
-
-    qDebug() << "All components processed. Total:" << componentIds.size();
+    // 立即处理第一批请求
+    checkQueueAndProcessNext();
 }
 
 void ComponentService::handleParallelDataCollected(const QString& componentId, const ComponentData& data) {
@@ -918,6 +928,92 @@ bool ComponentService::isPDF(const QByteArray& data) const {
         return false;
     }
     return data.startsWith("%PDF-");
+}
+
+// 异步队列管理方法实现
+// 使用定时器驱动而非阻塞循环，确保主线程保持响应性
+
+void ComponentService::checkQueueAndProcessNext() {
+    if (!m_parallelFetching) {
+        // 队列处理已完成，停止定时器
+        m_queueTimer->stop();
+        return;
+    }
+
+    QMutexLocker locker(&m_parallelDataMutex);
+
+    // 计算当前活跃请求数
+    int activeCount = m_parallelPendingComponents.size() - m_parallelCompletedCount;
+
+    // 启动新请求直到达到最大并发数
+    while (activeCount < m_maxConcurrentRequests && !m_requestQueue.isEmpty()) {
+        QString componentId = m_requestQueue.takeFirst();
+
+        // 检查是否已经处理过
+        if (m_parallelFetchingStatus.contains(componentId)) {
+            qDebug() << "Component" << componentId << "already processed, skipping";
+            continue;
+        }
+
+        m_parallelFetchingStatus[componentId] = true;
+        m_parallelPendingComponents.append(componentId);
+        activeCount++;
+
+        locker.unlock();  // 解锁以调用 fetchComponentDataInternal
+
+        qDebug() << "Starting async request for component:" << componentId << "(Active:" << activeCount << "/"
+                 << m_maxConcurrentRequests << "Remaining:" << m_requestQueue.size() << ")";
+
+        fetchComponentDataInternal(componentId, true);  // 默认获取3D模型
+
+        locker.relock();  // 重新加锁继续检查
+    }
+
+    // 检查是否所有请求都已完成
+    if (m_requestQueue.isEmpty() && activeCount == 0 && m_parallelCompletedCount >= m_parallelTotalCount) {
+        qDebug() << "All components processed via async queue. Total:" << m_parallelTotalCount;
+        resetQueueState();
+    }
+}
+
+void ComponentService::handleQueueTimeout() {
+    qWarning() << "Queue timeout reached after" << TOTAL_TIMEOUT_MS << "ms";
+
+    QMutexLocker locker(&m_parallelDataMutex);
+
+    if (m_parallelFetching) {
+        // 超时后清理队列状态
+        int pendingCount = m_requestQueue.size();
+        int completedCount = m_parallelCompletedCount;
+
+        qWarning() << "Queue timeout - Pending:" << pendingCount << "Completed:" << completedCount
+                   << "Total:" << m_parallelTotalCount;
+
+        // 发送已完成的数据
+        if (!m_parallelCollectedData.isEmpty()) {
+            QList<ComponentData> allData = m_parallelCollectedData.values();
+            locker.unlock();
+            emit allComponentsDataCollected(allData);
+            locker.relock();
+        }
+
+        resetQueueState();
+    }
+}
+
+void ComponentService::resetQueueState() {
+    QMutexLocker locker(&m_parallelDataMutex);
+
+    // 停止定时器
+    m_queueTimer->stop();
+    m_timeoutTimer->stop();
+
+    // 清理队列状态
+    m_requestQueue.clear();
+    m_activeRequestCount = 0;
+    m_parallelFetching = false;
+
+    qDebug() << "Queue state reset completed";
 }
 
 }  // namespace EasyKiConverter

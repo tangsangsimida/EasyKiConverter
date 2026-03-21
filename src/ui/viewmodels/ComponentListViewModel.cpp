@@ -65,6 +65,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
     connect(m_service, &ComponentService::lcscDataUpdated, this, &ComponentListViewModel::handleLcscDataUpdated);
     connect(m_service, &ComponentService::datasheetReady, this, &ComponentListViewModel::handleDatasheetReady);
     connect(m_service, &ComponentService::fetchError, this, &ComponentListViewModel::handleFetchError);
+    connect(m_service, &ComponentService::previewImageFailed, this, &ComponentListViewModel::handlePreviewImageFailed);
 }
 
 ComponentListViewModel::~ComponentListViewModel() {
@@ -132,6 +133,7 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
     beginInsertRows(QModelIndex(), m_componentList.count(), m_componentList.count());
     auto item = new ComponentListItemData(trimmedId, this);
     item->setFetching(true);
+    item->setValid(false);  // 验证开始时先设置为 false
     m_componentList.append(item);
     m_componentIdIndex.insert(trimmedId);  // 维护索引
     endInsertRows();
@@ -420,6 +422,7 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
         }));
 
         // 尝试获取 LCSC 预览图覆盖生成的缩略图
+        item->setFetching(true);
         m_service->fetchLcscPreviewImage(componentId);
 
         // 添加到待更新集合
@@ -441,23 +444,20 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
     if (item) {
         item->setFetching(false);
 
-        // 如果是验证失败（如"No result"、"404"、"not found"），标记为无效
+        // 标记为无效
+        item->setValid(false);
 
-        if (error.contains("No result", Qt::CaseInsensitive) ||
-
-            error.contains("404") ||
-
-            error.contains("not found", Qt::CaseInsensitive)) {
-            item->setValid(false);
-
+        // 根据错误类型设置不同的错误消息
+        if (error.contains("Request timeout", Qt::CaseInsensitive) || error.contains("timeout", Qt::CaseInsensitive)) {
+            item->setErrorMessage("验证超时（网络不稳定）");
+        } else if (error.contains("No result", Qt::CaseInsensitive) || error.contains("404") ||
+                   error.contains("not found", Qt::CaseInsensitive)) {
             item->setErrorMessage("元件不存在");
-
         } else {
             item->setErrorMessage(error);
         }
 
         // 更新 hasInvalidComponents 状态
-
         updateHasInvalidComponents();
 
         // 添加到防抖集合
@@ -565,11 +565,31 @@ void ComponentListViewModel::handlePreviewImageDataReady(const QString& componen
     }
 }
 
+void ComponentListViewModel::handlePreviewImageFailed(const QString& componentId, const QString& error) {
+    qWarning() << "Preview image fetch failed for component:" << componentId << "error:" << error;
+
+    auto item = findItemData(componentId);
+    if (item) {
+        // 设置 isFetching 为 false
+        item->setFetching(false);
+
+        // 不清除已生成的缩略图，保持显示默认缩略图
+        qWarning() << "Preview image failed for component:" << componentId << "keeping default thumbnail";
+
+        // 添加到待更新集合
+        m_pendingUpdateIndices.insert(componentId);
+        m_debounceTimer->start();
+    }
+}
+
 void ComponentListViewModel::handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList) {
     qDebug() << "All images ready for component:" << componentId << "count:" << imageDataList.size();
 
     auto item = findItemData(componentId);
     if (item && item->componentData()) {
+        // 设置 isFetching 为 false
+        item->setFetching(false);
+
         // 更新所有图片数据到 ComponentListViewModel 的 ComponentData 中
         item->componentData()->setPreviewImageData(imageDataList);
         qDebug() << "All image data updated in ComponentListViewModel for component:" << componentId
@@ -579,6 +599,10 @@ void ComponentListViewModel::handleAllImagesReady(const QString& componentId, co
         for (int i = 0; i < imageDataList.size(); ++i) {
             qDebug() << "  Image" << i << "size:" << imageDataList[i].size() << "bytes";
         }
+
+        // 添加到待更新集合
+        m_pendingUpdateIndices.insert(componentId);
+        m_debounceTimer->start();
     }
 }
 
@@ -586,6 +610,7 @@ void ComponentListViewModel::refreshComponentInfo(int index) {
     if (index >= 0 && index < m_componentList.count()) {
         auto item = m_componentList.at(index);
         item->setFetching(true);
+        item->setValid(false);  // 验证开始时先设置为 false
         item->setErrorMessage("");
         m_service->fetchComponentData(item->componentId(), false);
     }
@@ -596,9 +621,25 @@ void ComponentListViewModel::retryAllInvalidComponents() {
         auto item = m_componentList.at(i);
         if (item && !item->isValid() && !item->isFetching()) {
             item->setFetching(true);
+            item->setValid(false);  // 验证开始时先设置为 false
             item->setErrorMessage("");
             m_service->fetchComponentData(item->componentId(), false);
         }
+    }
+}
+
+void ComponentListViewModel::retryPreviewImage(const QString& componentId) {
+    qDebug() << "Retry preview image for component:" << componentId;
+
+    auto item = findItemData(componentId);
+    if (item) {
+        // 设置 isFetching 为 true
+        item->setFetching(true);
+
+        // 重新获取预览图
+        m_service->fetchLcscPreviewImage(componentId);
+    } else {
+        qWarning() << "Component not found for preview image retry:" << componentId;
     }
 }
 
