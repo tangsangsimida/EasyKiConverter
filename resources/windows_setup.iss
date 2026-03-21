@@ -33,9 +33,9 @@ LicenseFile={#LicensePath}
 LicenseFile=..\LICENSE
 #endif
 #ifdef AppIconPath
-IconFilename={#AppIconPath}
+SetupIconFile={#AppIconPath}
 #else
-IconFilename=..\resources\icons\app_icon.ico
+SetupIconFile=..\resources\icons\app_icon.ico
 #endif
 OutputBaseFilename=EasyKiConverter_{#MyAppVersion}_Setup
 Compression=lzma
