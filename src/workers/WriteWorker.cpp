@@ -195,7 +195,7 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
     if (!m_symbolExporter.exportSymbol(*status.symbolData, tempFilePath)) {
         status.addDebugLog(QString("ERROR: Failed to write symbol file: %1").arg(tempFilePath));
         QFile::remove(tempFilePath);  // 清理临时文件
-        return false;                 // 导出器报告失败
+        return false;  // 导出器报告失败
     }
 
     // 验证临时文件是否真的被写入
@@ -303,7 +303,7 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     if (!exportSuccess) {
         status.addDebugLog(QString("ERROR: Failed to write footprint file (exporter): %1").arg(tempFilePath));
         QFile::remove(tempFilePath);  // 清理临时文件
-        return false;                 // 导出器报告失败
+        return false;  // 导出器报告失败
     }
 
     // 验证临时文件是否真的被写入

@@ -149,7 +149,7 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& c
     qDebug() << "Export started at:" << m_exportStartTimeMs;
 
     m_isPipelineRunning = true;
-    m_isCancelled.storeRelease(0);          // 重置取消标志
+    m_isCancelled.storeRelease(0);  // 重置取消标志
     m_completionScheduled.storeRelease(0);  // 重置完成安排标志
     m_isExporting.storeRelease(1);
     m_isStopping.storeRelease(0);

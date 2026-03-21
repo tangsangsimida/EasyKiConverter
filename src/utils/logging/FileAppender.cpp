@@ -11,8 +11,8 @@ namespace EasyKiConverter {
 // 允许的日志目录列表（相对于用户数据目录或应用目录）
 static const QStringList s_allowedDirs = {
     QString(),  // 应用程序目录
-    "logs",     // logs 子目录
-    "log",      // log 子目录
+    "logs",  // logs 子目录
+    "log",  // log 子目录
 };
 
 FileAppender::FileAppender(const QString& filePath, qint64 maxSize, int maxFiles, bool async)
@@ -371,7 +371,7 @@ void FileAppender::writeDirect(const QString& formatted) {
         // 检查是否需要滚动（避免在锁内调用 rollOver，因为它也使用同一个递归锁）
         if (needsRollover()) {
             locker.unlock();  // 释放锁
-            rollOver();       // rollOver 会重新获取锁
+            rollOver();  // rollOver 会重新获取锁
         }
     }
 }

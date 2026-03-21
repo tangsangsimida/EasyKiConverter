@@ -105,7 +105,7 @@ private:
     QNetworkAccessManager* m_networkAccessManager;
     QNetworkAccessManager* m_ownNetworkManager;
     bool m_need3DModel;
-    bool m_fetch3DOnly;        // 是否只获取3D模型
+    bool m_fetch3DOnly;  // 是否只获取3D模型
     QString m_existing3DUuid;  // 已有的3D模型UUID
 
     QNetworkReply* m_currentReply;
@@ -114,17 +114,17 @@ private:
 
     // 超时配置（静态常量，可配置）
     static const int COMPONENT_INFO_TIMEOUT_MS = 15000;  // 组件信息超时（毫秒）
-    static const int MODEL_3D_TIMEOUT_MS = 30000;        // 3D模型超时（毫秒）
-    static const int MAX_HTTP_RETRIES = 3;               // 最大HTTP重试次数
+    static const int MODEL_3D_TIMEOUT_MS = 30000;  // 3D模型超时（毫秒）
+    static const int MAX_HTTP_RETRIES = 3;  // 最大HTTP重试次数
 
     // 递增重试延迟（毫秒），对应第1/2/3次重试
     static constexpr int RETRY_DELAYS_MS[] = {3000, 5000, 10000};
 
     // 速率限制检测（静态成员，所有 FetchWorker 共享）
-    static QAtomicInt s_activeRequests;    // 活跃请求计数
-    static QMutex s_rateLimitMutex;        // 速率限制互斥锁
+    static QAtomicInt s_activeRequests;  // 活跃请求计数
+    static QMutex s_rateLimitMutex;  // 速率限制互斥锁
     static QDateTime s_lastRateLimitTime;  // 上次触发速率限制的时间
-    static int s_backoffMs;                // 退避延迟（毫秒）
+    static int s_backoffMs;  // 退避延迟（毫秒）
 };
 
 }  // namespace EasyKiConverter

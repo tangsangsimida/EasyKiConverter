@@ -23,19 +23,19 @@ namespace EasyKiConverter {
  * @brief 流水线阶段枚举
  */
 enum class PipelineStage {
-    Fetch,    // 抓取阶段
+    Fetch,  // 抓取阶段
     Process,  // 处理阶段
-    Write     // 写入阶段
+    Write  // 写入阶段
 };
 
 /**
  * @brief 流水线阶段进度
  */
 struct PipelineProgress {
-    int fetchCompleted = 0;    // 抓取完成数
+    int fetchCompleted = 0;  // 抓取完成数
     int processCompleted = 0;  // 处理完成数
-    int writeCompleted = 0;    // 写入完成数
-    int totalTasks = 0;        // 总任务数
+    int writeCompleted = 0;  // 写入完成数
+    int totalTasks = 0;  // 总任务数
 
     // 计算各阶段进度（0-100）
     int fetchProgress() const {
@@ -244,9 +244,9 @@ private:
 
 private:
     // 线程池
-    QThreadPool* m_fetchThreadPool;    // 抓取线程池（I/O密集型，32个线程）
+    QThreadPool* m_fetchThreadPool;  // 抓取线程池（I/O密集型，32个线程）
     QThreadPool* m_processThreadPool;  // 处理线程池（CPU密集型，等于核心数）
-    QThreadPool* m_writeThreadPool;    // 写入线程池（磁盘I/O密集型，8个线程）
+    QThreadPool* m_writeThreadPool;  // 写入线程池（磁盘I/O密集型，8个线程）
 
     // 队列管理器
     PipelineQueueManager m_queueManager;

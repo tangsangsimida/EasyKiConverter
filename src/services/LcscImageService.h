@@ -111,13 +111,13 @@ private:
 
     QNetworkAccessManager* m_networkManager;
     QQueue<QString> m_queue;
-    QSet<QString> m_requestedComponents;                  // 已经请求过的组件（防止重复请求）
-    QMap<QString, QString> m_manufacturerParts;           // componentId -> manufacturerPart
-    QMap<QString, QString> m_pendingDatasheets;           // componentId -> datasheetUrl
-    QMap<QString, QByteArray> m_downloadedDatasheets;     // componentId -> datasheet data (memory)
-    QMap<QString, QStringList> m_pendingImages;           // componentId -> imageUrls
+    QSet<QString> m_requestedComponents;  // 已经请求过的组件（防止重复请求）
+    QMap<QString, QString> m_manufacturerParts;  // componentId -> manufacturerPart
+    QMap<QString, QString> m_pendingDatasheets;  // componentId -> datasheetUrl
+    QMap<QString, QByteArray> m_downloadedDatasheets;  // componentId -> datasheet data (memory)
+    QMap<QString, QStringList> m_pendingImages;  // componentId -> imageUrls
     QMap<QString, QList<QByteArray>> m_downloadedImages;  // componentId -> image data list (memory)
-    QMap<QString, int> m_downloadCounts;                  // componentId -> downloaded count
+    QMap<QString, int> m_downloadCounts;  // componentId -> downloaded count
     QMap<QString, int> m_datasheetDownloadStatus;  // 数据手册下载状态：0=pending, 1=success, 2=failed
     int m_activeRequests;  // 当前活跃的预览图下载数
     static const int MAX_CONCURRENT_REQUESTS = 5;  // 最大并发下载数（平衡网络资源占用和下载速度）

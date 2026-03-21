@@ -132,7 +132,7 @@ public:
 private:
     QString m_filePath;
     QString m_canonicalPath;  // 规范化后的路径
-    QString m_baseDir;        // 基础目录
+    QString m_baseDir;  // 基础目录
     qint64 m_maxSize;
     int m_maxFiles;
     bool m_async;

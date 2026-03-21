@@ -373,7 +373,7 @@ private:
     // 添加互斥锁保护并发访问
     mutable QMutex m_fetchingComponentsMutex;
     mutable QMutex m_componentCacheMutex;
-    mutable QMutex m_currentIdMutex;     // 保护 m_currentComponentId 的并发访问
+    mutable QMutex m_currentIdMutex;  // 保护 m_currentComponentId 的并发访问
     mutable QMutex m_parallelDataMutex;  // 保护并行数据收集状态的并发访问
 
     // 数据缓存
@@ -407,11 +407,11 @@ private:
 
     // 并行数据收集状态
     QMap<QString, ComponentData> m_parallelCollectedData;  // 已收集的数据
-    QMap<QString, bool> m_parallelFetchingStatus;          // 元件ID -> 是否正在获取
-    QStringList m_parallelPendingComponents;               // 待获取的元件列表
-    int m_parallelTotalCount;                              // 总元件数
-    int m_parallelCompletedCount;                          // 已完成数
-    bool m_parallelFetching;                               // 是否正在并行获取
+    QMap<QString, bool> m_parallelFetchingStatus;  // 元件ID -> 是否正在获取
+    QStringList m_parallelPendingComponents;  // 待获取的元件列表
+    int m_parallelTotalCount;  // 总元件数
+    int m_parallelCompletedCount;  // 已完成数
+    bool m_parallelFetching;  // 是否正在并行获取
 
     // 动态队列管理
     QStringList m_requestQueue;  // 待处理的元件ID队列
