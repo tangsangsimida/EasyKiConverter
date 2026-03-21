@@ -422,7 +422,7 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
         }));
 
         // 尝试获取 LCSC 预览图覆盖生成的缩略图
-        item->setFetching(true);
+        // 注意：这里不设置 setFetching(true)，因为预览图获取是后台任务，不应该影响状态显示
         m_service->fetchLcscPreviewImage(componentId);
 
         // 添加到待更新集合

@@ -7,6 +7,26 @@
 
 namespace EasyKiConverter {
 
+QImage ThumbnailGenerator::generatePlaceholderThumbnail(const QString& componentId, int size) {
+    QImage image(size, size, QImage::Format_ARGB32);
+    image.fill(QColor("#f0f0f0"));  // 浅灰色背景
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    // 绘制绿色圆圈（表示验证成功）
+    painter.setPen(QPen(QColor("#22c55e"), 2));  // 绿色
+    painter.setBrush(Qt::NoBrush);
+    painter.drawEllipse(4, 4, size - 8, size - 8);
+
+    // 绘制勾号
+    painter.setPen(QPen(QColor("#22c55e"), 2));
+    painter.drawLine(size / 3, size / 2, size / 2, size * 2 / 3);
+    painter.drawLine(size / 2, size * 2 / 3, size * 2 / 3, size / 3);
+
+    return image;
+}
+
 QImage ThumbnailGenerator::generateThumbnail(const QSharedPointer<ComponentData>& data, int size) {
     if (!data)
         return QImage();
