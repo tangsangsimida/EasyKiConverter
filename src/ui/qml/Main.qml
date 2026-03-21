@@ -18,12 +18,10 @@ ApplicationWindow {
     x: configService ? (configService.getWindowX() > 0 ? configService.getWindowX() : (Screen.desktopAvailableWidth - width) / 2) : (Screen.desktopAvailableWidth - width) / 2
     y: configService ? (configService.getWindowY() > 0 ? configService.getWindowY() : (Screen.desktopAvailableHeight - height) / 2) : (Screen.desktopAvailableHeight - height) / 2
     // 最小窗口宽度计算：
-    // - 导出设置卡片需要的最小宽度 = 760px（选项680px + 间距30px + 内边距48px + 边框2px）
-    // - 卡片的左右外边距（AppStyle.spacing.huge * 2 = 30 * 2 = 60px）
-    // - 滚动条的宽度 = 15px
-    // - 基数 = 20px
-    // - 总计 = 760 + 60 + 15 + 20 = 855px
-    minimumWidth: 855
+    // - 动态计算基于文本宽度和布局
+    // - 由 MainWindow.qml 中的 calculatedMinimumWindowWidth 提供
+    property int dynamicMinimumWidth: 855  // 默认值，会被覆盖
+    minimumWidth: dynamicMinimumWidth
     minimumHeight: 600
     visible: true
     title: "EasyKiConverter - 元器件转换工具"
@@ -365,6 +363,21 @@ ApplicationWindow {
             id: mainWindowLoader
             anchors.fill: parent
             source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/MainWindow.qml"
+            // 动态更新最小窗口宽度
+            onLoaded: {
+                if (item && item.calculatedMinimumWindowWidth) {
+                    appWindow.dynamicMinimumWidth = item.calculatedMinimumWindowWidth;
+                    console.log("动态计算的最小窗口宽度:", appWindow.dynamicMinimumWidth);
+                }
+            }
+        }
+
+        // 绑定最小窗口宽度
+        Binding {
+            target: appWindow
+            property: "dynamicMinimumWidth"
+            value: mainWindowLoader.item ? mainWindowLoader.item.calculatedMinimumWindowWidth : 855
+            when: mainWindowLoader.status === Loader.Ready
         }
     }
 }

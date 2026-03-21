@@ -19,6 +19,62 @@ Item {
     // 窗口状态属性
     readonly property bool isMaximized: Window.window ? (Window.window.visibility === Window.Maximized || Window.window.visibility === Window.FullScreen) : false
     readonly property int windowRadius: isMaximized ? 0 : AppStyle.radius.lg
+    // 用于测量文本宽度的 FontMetrics
+    FontMetrics {
+        id: textMetrics
+        font.pixelSize: ResponsiveHelper.fontSizes.md
+        font.family: "Arial"
+    }
+
+    // 计算最小窗口宽度
+    readonly property int calculatedMinimumWindowWidth: {
+        // 导出选项的文本列表
+        var texts = [qsTranslate("MainWindow", "符号库"), qsTranslate("MainWindow", "封装库"), qsTranslate("MainWindow", "3D模型"), qsTranslate("MainWindow", "预览图"), qsTranslate("MainWindow", "手册"), qsTranslate("MainWindow", "追加"), qsTranslate("MainWindow", "更新"), qsTranslate("MainWindow", "保留已存在的元器件"), qsTranslate("MainWindow", "覆盖已存在的元器件")];
+        // 测量文本宽度
+        var maxOptionTextWidth = 0;
+        for (var i = 0; i < texts.length; i++) {
+            var textWidth = textMetrics.advanceWidth(texts[i]);
+            if (textWidth > maxOptionTextWidth) {
+                maxOptionTextWidth = textWidth;
+            }
+        }
+
+        // 计算普通选项所需宽度
+        // 5个普通选项（每个选项包含复选框 + 文本）
+        var checkboxWidth = 22;  // 复选框宽度
+        var checkboxSpacing = 8;  // 复选框与文本之间的间距
+        var normalOptionWidth = checkboxWidth + checkboxSpacing + maxOptionTextWidth;
+        // 计算导出模式选项所需宽度
+        // 导出模式选项包含：单选按钮 + 文本 + 换行 + 说明文字
+        var radioButtonWidth = 20;  // 单选按钮宽度
+        var radioButtonSpacing = 8;  // 单选按钮与文本之间的间距
+        var lineSpacing = 4;  // 两行文字之间的间距
+        var modeOptionWidth = Math.max(radioButtonWidth + radioButtonSpacing + maxOptionTextWidth, radioButtonWidth + radioButtonSpacing + maxOptionTextWidth);
+        // 考虑到说明文字可能更长，增加额外宽度
+        modeOptionWidth = modeOptionWidth + 40;  // 额外空间给说明文字
+        // 6个选项的总宽度（5个普通选项 + 1个导出模式选项）
+        var optionsTotalWidth = normalOptionWidth * 5 + modeOptionWidth;
+        // 5个间距（使用最小间距 12px）
+        var spacingWidth = 12 * 5;
+        // 卡片的左右内边距（24px * 2）
+        var cardPadding = 24 * 2;
+        // 卡片的边框（1px * 2）
+        var cardBorder = 2;
+        // 窗口的额外边距（30px * 2）
+        var windowMargin = 30 * 2;
+        // 滚动条宽度（15px）
+        var scrollBarWidth = 15;
+        // 安全边距（20px）
+        var safetyMargin = 20;
+        // 总计
+        var minWidth = optionsTotalWidth + spacingWidth + cardPadding + cardBorder + windowMargin + scrollBarWidth + safetyMargin;
+        console.log("计算的最小窗口宽度:", minWidth);
+        console.log("  最大文本宽度:", maxOptionTextWidth);
+        console.log("  普通选项宽度:", normalOptionWidth);
+        console.log("  导出模式选项宽度:", modeOptionWidth);
+        console.log("  选项总宽度:", optionsTotalWidth);
+        return minWidth;
+    }
     // 绑定 AppStyle.isDarkMode 到 themeSettingsViewModel.isDarkMode
     Binding {
         target: AppStyle
