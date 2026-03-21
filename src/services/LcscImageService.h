@@ -105,6 +105,7 @@ private:
     void performDownload(const QString& componentId, const QString& imageUrl, int imageIndex, int retryCount);
     void performDatasheetDownload(const QString& componentId, const QString& datasheetUrl, int retryCount);
     void checkDownloadCompletion(const QString& componentId);
+    void checkComponentCompletion(const QString& componentId);
     void emitAllImagesReady(const QString& componentId);
     void addRandomDelay(std::function<void()> callback = nullptr);
 
