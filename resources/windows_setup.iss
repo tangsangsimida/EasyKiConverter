@@ -8,6 +8,8 @@
 ; 这些变量将通过命令行定义传入
 ;#define MyAppVersion "3.0.0"
 ;#define SourceDir "..\build\bin\Release"
+;#define AppIconPath "..\resources\icons\app_icon.ico"
+;#define LicensePath "..\LICENSE"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -25,8 +27,16 @@ DisableProgramGroupPage=yes
 ; the "ArchitecturesAllowed=x64" directive specifies that this setup is for 64-bit Windows only
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
+#ifdef LicensePath
+LicenseFile={#LicensePath}
+#else
 LicenseFile=..\LICENSE
-;IconFilename=..\resources\icons\app_icon.ico
+#endif
+#ifdef AppIconPath
+SetupIconFile={#AppIconPath}
+#else
+SetupIconFile=..\resources\icons\app_icon.ico
+#endif
 OutputBaseFilename=EasyKiConverter_{#MyAppVersion}_Setup
 Compression=lzma
 SolidCompression=yes
