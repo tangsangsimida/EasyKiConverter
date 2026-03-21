@@ -448,11 +448,9 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
         item->setValid(false);
 
         // 根据错误类型设置不同的错误消息
-        if (error.contains("Request timeout", Qt::CaseInsensitive) ||
-            error.contains("timeout", Qt::CaseInsensitive)) {
+        if (error.contains("Request timeout", Qt::CaseInsensitive) || error.contains("timeout", Qt::CaseInsensitive)) {
             item->setErrorMessage("验证超时（网络不稳定）");
-        } else if (error.contains("No result", Qt::CaseInsensitive) ||
-                   error.contains("404") ||
+        } else if (error.contains("No result", Qt::CaseInsensitive) || error.contains("404") ||
                    error.contains("not found", Qt::CaseInsensitive)) {
             item->setErrorMessage("元件不存在");
         } else {
