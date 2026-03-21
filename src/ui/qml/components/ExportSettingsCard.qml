@@ -183,13 +183,13 @@ Card {
         Layout.fillWidth: true
         Layout.columnSpan: 10  // 跨越10列
         Layout.preferredHeight: exportOptionsLayout.implicitHeight
-        Layout.minimumWidth: ResponsiveHelper.minimumWindowWidth  // 使用计算的最小窗口宽度
         RowLayout {
             id: exportOptionsLayout
             anchors.fill: parent
-            spacing: ResponsiveHelper.spacing.lg
+            spacing: 1
             // 符号库选项
             ColumnLayout {
+                Layout.fillWidth: false  // 不填充宽度
                 spacing: ResponsiveHelper.spacing.sm
                 CheckBox {
                     id: symbolCheckbox
@@ -245,6 +245,7 @@ Card {
             }
             // 封装库选项
             ColumnLayout {
+                Layout.fillWidth: false  // 不填充宽度
                 spacing: ResponsiveHelper.spacing.sm
                 CheckBox {
                     id: footprintCheckbox
@@ -300,6 +301,7 @@ Card {
             }
             // 3D模型选项
             ColumnLayout {
+                Layout.fillWidth: false  // 不填充宽度
                 spacing: ResponsiveHelper.spacing.sm
                 CheckBox {
                     id: model3dCheckbox
@@ -355,6 +357,7 @@ Card {
             }
             // 预览图选项
             ColumnLayout {
+                Layout.fillWidth: false  // 不填充宽度
                 spacing: ResponsiveHelper.spacing.sm
                 CheckBox {
                     id: previewImagesCheckbox
@@ -410,6 +413,7 @@ Card {
             }
             // 手册选项
             ColumnLayout {
+                Layout.fillWidth: false  // 不填充宽度
                 spacing: ResponsiveHelper.spacing.sm
                 CheckBox {
                     id: datasheetCheckbox
@@ -466,7 +470,7 @@ Card {
             // 导出模式选项
             ColumnLayout {
                 Layout.columnSpan: 2  // 跨越两列，分配更多空间
-                Layout.fillWidth: true
+                Layout.fillWidth: false  // 不填充宽度
                 spacing: ResponsiveHelper.spacing.sm
                 Text {
                     Layout.fillWidth: true

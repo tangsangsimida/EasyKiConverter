@@ -19,10 +19,10 @@ Item {
     // 窗口状态属性
     readonly property bool isMaximized: Window.window ? (Window.window.visibility === Window.Maximized || Window.window.visibility === Window.FullScreen) : false
     readonly property int windowRadius: isMaximized ? 0 : AppStyle.radius.lg
-    // 用于测量文本宽度的 FontMetrics
+    // 用于测量文本宽度的 FontMetrics（考虑 DPI 缩放）
     FontMetrics {
         id: textMetrics
-        font.pixelSize: ResponsiveHelper.fontSizes.md
+        font.pixelSize: ResponsiveHelper.fontSizes.md * ResponsiveHelper.scaleFactor  // 应用 DPI 缩放因子
         font.family: "Arial"
     }
 
@@ -47,11 +47,12 @@ Item {
     // 计算最小窗口宽度（依赖 currentLanguage，语言切换时会自动重新计算）
     function calculateMinimumWidth() {
         // 始终测量所有可能显示的文本（不区分语言，确保安全）
-        var texts = [
-            // 选项文本
-            qsTranslate("MainWindow", "符号库"), qsTranslate("MainWindow", "封装库"), qsTranslate("MainWindow", "3D模型"), qsTranslate("MainWindow", "预览图"), qsTranslate("MainWindow", "手册"), qsTranslate("MainWindow", "追加"), qsTranslate("MainWindow", "更新"),
-            // 说明文字（最长的文本）
-            qsTranslate("MainWindow", "保留已存在的元器件"), qsTranslate("MainWindow", "覆盖已存在的元器件")];
+        // 选项文本
+        var optionTexts = [qsTranslate("MainWindow", "符号库"), qsTranslate("MainWindow", "封装库"), qsTranslate("MainWindow", "3D模型"), qsTranslate("MainWindow", "预览图"), qsTranslate("MainWindow", "手册"), qsTranslate("MainWindow", "追加"), qsTranslate("MainWindow", "更新")];
+        // 说明文字（最长的文本）
+        var descriptionTexts = [qsTranslate("MainWindow", "保留已存在的元器件"), qsTranslate("MainWindow", "覆盖已存在的元器件")];
+        // 合并所有文本用于测量
+        var texts = optionTexts.concat(descriptionTexts);
         // 测量文本宽度
         var maxOptionTextWidth = 0;
         var maxDescriptionTextWidth = 0;
@@ -82,28 +83,28 @@ Item {
         // 导出模式选项的宽度需要能容纳说明文字
         // 第一行：单选按钮 + 选项文本
         var firstLineWidth = radioButtonWidth + radioButtonSpacing + maxOptionTextWidth;
-        // 第二行：说明文字（不需要按钮宽度，但可能有缩进）
-        var secondLineWidth = maxDescriptionTextWidth + 20;  // 增加缩进空间
+        // 第二行：说明文字
+        var secondLineWidth = maxDescriptionTextWidth + 10;  // 减少缩进空间
         // 取两行中较大的，并根据语言调整缓冲区
         var modeOptionWidth = Math.max(firstLineWidth, secondLineWidth);
-        // 根据语言调整缓冲区：中文25px，英文35px（英文文本更长，需要更多空间）
-        var bufferSize = (currentLanguage === "zh_CN") ? 25 : 30;
+        // 根据语言调整缓冲区：中文0px，英文5px（最小化缓冲区）
+        var bufferSize = (currentLanguage === "zh_CN") ? 0 : 5;
         modeOptionWidth = modeOptionWidth + bufferSize;
         // 6个选项的总宽度（5个普通选项 + 1个导出模式选项）
         var optionsTotalWidth = normalOptionWidth * 5 + modeOptionWidth;
-        // 5个间距（根据语言调整：中文10px，英文14px）
-        var minSpacing = (currentLanguage === "zh_CN") ? 10 : 10;
+        // 5个间距（选项之间只保留1px的间隔）
+        var minSpacing = 1;
         var spacingWidth = minSpacing * 5;
-        // 卡片的左右内边距（24px * 2）
-        var cardPadding = 24 * 2;
+        // 卡片的左右内边距（12px * 2）
+        var cardPadding = 12 * 2;
         // 卡片的边框（1px * 2）
         var cardBorder = 2;
-        // 窗口的额外边距（30px * 2）
-        var windowMargin = 30 * 2;
-        // 滚动条宽度（15px）
-        var scrollBarWidth = 15;
-        // 安全边距（20px）
-        var safetyMargin = 20;
+        // 窗口的额外边距（10px * 2）
+        var windowMargin = 10 * 2;
+        // 滚动条宽度（0px，最小窗口时隐藏滚动条）
+        var scrollBarWidth = 0;
+        // 安全边距（5px）
+        var safetyMargin = 5;
         // 总计
         var minWidth = optionsTotalWidth + spacingWidth + cardPadding + cardBorder + windowMargin + scrollBarWidth + safetyMargin;
         console.log("计算的最小窗口宽度:", minWidth, "语言:", currentLanguage);
