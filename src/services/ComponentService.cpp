@@ -113,6 +113,7 @@ void ComponentService::initializeApiConnections() {
         connect(m_imageService, &LcscImageService::lcscDataReady, this, &ComponentService::handleLcscDataReady);
         connect(m_imageService, &LcscImageService::datasheetReady, this, &ComponentService::handleDatasheetReady);
         connect(m_imageService, &LcscImageService::allImagesReady, this, &ComponentService::handleAllImagesReady);
+        connect(m_imageService, &LcscImageService::error, this, &ComponentService::handlePreviewImageError);
     }
 
     // 连接 API 信号
@@ -298,6 +299,13 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
     } else {
         qWarning() << "Component" << componentId << "not found in m_fetchingComponents, cannot update datasheet data";
     }
+}
+
+void ComponentService::handlePreviewImageError(const QString& componentId, const QString& error) {
+    qWarning() << "Preview image fetch error for component:" << componentId << "error:" << error;
+
+    // 发送预览图失败信号
+    emit previewImageFailed(componentId, error);
 }
 
 void ComponentService::handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList) {

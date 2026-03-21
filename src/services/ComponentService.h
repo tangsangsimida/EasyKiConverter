@@ -172,6 +172,14 @@ signals:
     void previewImageDataReady(const QString& componentId, const QByteArray& imageData, int imageIndex);
 
     /**
+     * @brief 预览图获取失败信号
+     *
+     * @param componentId 元件ID
+     * @param error 错误信息
+     */
+    void previewImageFailed(const QString& componentId, const QString& error);
+
+    /**
      * @brief 所有预览图片下载完成信号
      *
      * @param componentId 元件ID
@@ -265,6 +273,14 @@ private slots:
      * @brief 处理所有预览图片下载完成
      */
     void handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
+
+    /**
+     * @brief 处理预览图获取失败
+     *
+     * @param componentId 元件ID
+     * @param error 错误信息
+     */
+    void handlePreviewImageError(const QString& componentId, const QString& error);
 
     /**
      * @brief 处理获取错误（带 ID）

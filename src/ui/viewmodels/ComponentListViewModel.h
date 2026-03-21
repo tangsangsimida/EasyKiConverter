@@ -152,6 +152,13 @@ public slots:
     Q_INVOKABLE void retryAllInvalidComponents();
 
     /**
+     * @brief 重试获取组件的预览图
+     *
+     * @param componentId 元件ID
+     */
+    Q_INVOKABLE void retryPreviewImage(const QString& componentId);
+
+    /**
      * @brief 获取所有元件ID列表
      * @return QStringList 元件ID列表
      */
@@ -245,6 +252,8 @@ private slots:
      * @param componentId 元件ID
      * @param imageDataList 图片数据列表
      */
+    void handlePreviewImageFailed(const QString& componentId, const QString& error);
+
     void handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
 
 private:
