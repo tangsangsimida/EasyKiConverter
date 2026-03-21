@@ -26,21 +26,52 @@ Item {
         font.family: "Arial"
     }
 
-    // 计算最小窗口宽度
-    readonly property int calculatedMinimumWindowWidth: {
-        // 导出选项的文本列表
-        var texts = [qsTranslate("MainWindow", "符号库"), qsTranslate("MainWindow", "封装库"), qsTranslate("MainWindow", "3D模型"), qsTranslate("MainWindow", "预览图"), qsTranslate("MainWindow", "手册"), qsTranslate("MainWindow", "追加"), qsTranslate("MainWindow", "更新"), qsTranslate("MainWindow", "保留已存在的元器件"), qsTranslate("MainWindow", "覆盖已存在的元器件")];
+    // 当前语言标识（从 LanguageManager 获取初始值）
+    property string currentLanguage: LanguageManager ? (LanguageManager.instance ? LanguageManager.instance().currentLanguage : "zh_CN") : "zh_CN"
+    // 监听 LanguageManager 的语言切换信号
+    Connections {
+        target: LanguageManager && LanguageManager.instance ? LanguageManager.instance() : null
+        function onLanguageChanged(language) {
+            // 语言切换时重新计算最小窗口宽度
+            currentLanguage = language;
+            console.log("语言切换到:", currentLanguage, "重新计算最小窗口宽度");
+            // 强制触发重新计算
+            Qt.callLater(function () {
+                if (appWindow && mainWindowLoader.item) {
+                    appWindow.dynamicMinimumWidth = mainWindowLoader.item.calculateMinimumWidth();
+                    console.log("更新最小窗口宽度为:", appWindow.dynamicMinimumWidth);
+                }
+            });
+        }
+    }
+    // 计算最小窗口宽度（依赖 currentLanguage，语言切换时会自动重新计算）
+    function calculateMinimumWidth() {
+        // 始终测量所有可能显示的文本（不区分语言，确保安全）
+        var texts = [
+            // 选项文本
+            qsTranslate("MainWindow", "符号库"), qsTranslate("MainWindow", "封装库"), qsTranslate("MainWindow", "3D模型"), qsTranslate("MainWindow", "预览图"), qsTranslate("MainWindow", "手册"), qsTranslate("MainWindow", "追加"), qsTranslate("MainWindow", "更新"),
+            // 说明文字（最长的文本）
+            qsTranslate("MainWindow", "保留已存在的元器件"), qsTranslate("MainWindow", "覆盖已存在的元器件")];
         // 测量文本宽度
         var maxOptionTextWidth = 0;
+        var maxDescriptionTextWidth = 0;
         for (var i = 0; i < texts.length; i++) {
             var textWidth = textMetrics.advanceWidth(texts[i]);
-            if (textWidth > maxOptionTextWidth) {
-                maxOptionTextWidth = textWidth;
+            // 判断是否是说明文字
+            if (i >= 7) {
+                // 说明文字
+                if (textWidth > maxDescriptionTextWidth) {
+                    maxDescriptionTextWidth = textWidth;
+                }
+            } else {
+                // 选项文字
+                if (textWidth > maxOptionTextWidth) {
+                    maxOptionTextWidth = textWidth;
+                }
             }
         }
 
         // 计算普通选项所需宽度
-        // 5个普通选项（每个选项包含复选框 + 文本）
         var checkboxWidth = 22;  // 复选框宽度
         var checkboxSpacing = 8;  // 复选框与文本之间的间距
         var normalOptionWidth = checkboxWidth + checkboxSpacing + maxOptionTextWidth;
@@ -48,14 +79,21 @@ Item {
         // 导出模式选项包含：单选按钮 + 文本 + 换行 + 说明文字
         var radioButtonWidth = 20;  // 单选按钮宽度
         var radioButtonSpacing = 8;  // 单选按钮与文本之间的间距
-        var lineSpacing = 4;  // 两行文字之间的间距
-        var modeOptionWidth = Math.max(radioButtonWidth + radioButtonSpacing + maxOptionTextWidth, radioButtonWidth + radioButtonSpacing + maxOptionTextWidth);
-        // 考虑到说明文字可能更长，增加额外宽度
-        modeOptionWidth = modeOptionWidth + 40;  // 额外空间给说明文字
+        // 导出模式选项的宽度需要能容纳说明文字
+        // 第一行：单选按钮 + 选项文本
+        var firstLineWidth = radioButtonWidth + radioButtonSpacing + maxOptionTextWidth;
+        // 第二行：说明文字（不需要按钮宽度，但可能有缩进）
+        var secondLineWidth = maxDescriptionTextWidth + 20;  // 增加缩进空间
+        // 取两行中较大的，并根据语言调整缓冲区
+        var modeOptionWidth = Math.max(firstLineWidth, secondLineWidth);
+        // 根据语言调整缓冲区：中文25px，英文35px（英文文本更长，需要更多空间）
+        var bufferSize = (currentLanguage === "zh_CN") ? 25 : 30;
+        modeOptionWidth = modeOptionWidth + bufferSize;
         // 6个选项的总宽度（5个普通选项 + 1个导出模式选项）
         var optionsTotalWidth = normalOptionWidth * 5 + modeOptionWidth;
-        // 5个间距（使用最小间距 12px）
-        var spacingWidth = 12 * 5;
+        // 5个间距（根据语言调整：中文10px，英文14px）
+        var minSpacing = (currentLanguage === "zh_CN") ? 10 : 10;
+        var spacingWidth = minSpacing * 5;
         // 卡片的左右内边距（24px * 2）
         var cardPadding = 24 * 2;
         // 卡片的边框（1px * 2）
@@ -68,13 +106,17 @@ Item {
         var safetyMargin = 20;
         // 总计
         var minWidth = optionsTotalWidth + spacingWidth + cardPadding + cardBorder + windowMargin + scrollBarWidth + safetyMargin;
-        console.log("计算的最小窗口宽度:", minWidth);
-        console.log("  最大文本宽度:", maxOptionTextWidth);
+        console.log("计算的最小窗口宽度:", minWidth, "语言:", currentLanguage);
+        console.log("  最大选项文本宽度:", maxOptionTextWidth);
+        console.log("  最大说明文本宽度:", maxDescriptionTextWidth);
         console.log("  普通选项宽度:", normalOptionWidth);
         console.log("  导出模式选项宽度:", modeOptionWidth);
         console.log("  选项总宽度:", optionsTotalWidth);
+        console.log("  间距:", minSpacing);
         return minWidth;
     }
+    // 计算最小窗口宽度（使用 Binding 在语言切换时重新计算）
+    readonly property int calculatedMinimumWindowWidth: calculateMinimumWidth()
     // 绑定 AppStyle.isDarkMode 到 themeSettingsViewModel.isDarkMode
     Binding {
         target: AppStyle

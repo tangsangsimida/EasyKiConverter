@@ -190,7 +190,6 @@ Card {
             spacing: ResponsiveHelper.spacing.lg
             // 符号库选项
             ColumnLayout {
-                Layout.minimumWidth: 80
                 spacing: ResponsiveHelper.spacing.sm
                 CheckBox {
                     id: symbolCheckbox
@@ -246,7 +245,6 @@ Card {
             }
             // 封装库选项
             ColumnLayout {
-                Layout.minimumWidth: 80
                 spacing: ResponsiveHelper.spacing.sm
                 CheckBox {
                     id: footprintCheckbox
@@ -302,7 +300,6 @@ Card {
             }
             // 3D模型选项
             ColumnLayout {
-                Layout.minimumWidth: 80
                 spacing: ResponsiveHelper.spacing.sm
                 CheckBox {
                     id: model3dCheckbox
@@ -358,7 +355,6 @@ Card {
             }
             // 预览图选项
             ColumnLayout {
-                Layout.minimumWidth: 80
                 spacing: ResponsiveHelper.spacing.sm
                 CheckBox {
                     id: previewImagesCheckbox
@@ -414,7 +410,6 @@ Card {
             }
             // 手册选项
             ColumnLayout {
-                Layout.minimumWidth: 80
                 spacing: ResponsiveHelper.spacing.sm
                 CheckBox {
                     id: datasheetCheckbox
@@ -472,7 +467,6 @@ Card {
             ColumnLayout {
                 Layout.columnSpan: 2  // 跨越两列，分配更多空间
                 Layout.fillWidth: true
-                Layout.minimumWidth: 280  // 大幅增加最小宽度
                 spacing: ResponsiveHelper.spacing.sm
                 Text {
                     Layout.fillWidth: true
