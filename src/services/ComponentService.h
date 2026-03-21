@@ -322,6 +322,21 @@ private:
     void startQueueProcessing();
 
     /**
+     * @brief 异步队列管理：检查队列状态并启动下一个请求
+     */
+    void checkQueueAndProcessNext();
+
+    /**
+     * @brief 异步队列管理：处理队列超时
+     */
+    void handleQueueTimeout();
+
+    /**
+     * @brief 异步队列管理：重置队列状态
+     */
+    void resetQueueState();
+
+    /**
      * @brief 检测数据是否为 PDF 格式
      *
      * @param data 数据
@@ -383,9 +398,13 @@ private:
     bool m_parallelFetching;                               // 是否正在并行获取
 
     // 动态队列管理
-    QStringList m_requestQueue;   // 请求队列
-    int m_activeRequestCount;     // 当前活跃请求数
-    int m_maxConcurrentRequests;  // 最大并发请求数
+    QStringList m_requestQueue;   // 待处理的元件ID队列
+    int m_activeRequestCount;     // 当前活跃的网络请求数
+    int m_maxConcurrentRequests;  // 最大并发请求数（基于性能测试，5个请求在弱网环境下提供最佳稳定性）
+    QTimer* m_queueTimer;         // 异步队列处理定时器（每500ms检查队列状态）
+    QTimer* m_timeoutTimer;       // 批量处理总超时保护（防止队列永久阻塞）
+    static const int QUEUE_CHECK_INTERVAL_MS = 500;  // 队列检查间隔，平衡响应性和CPU使用
+    static const int TOTAL_TIMEOUT_MS = 300000;     // 总超时5分钟，防止弱网环境下无限等待
 
     // 内部状态处理
 

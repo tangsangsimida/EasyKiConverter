@@ -264,7 +264,7 @@ void LcscImageService::performFallback(const QString& componentId) {
     connect(reply, &QNetworkReply::finished, this, [this, reply, componentId]() {
         handleFallbackResponse(reply, componentId);
     });
-    // 修复：添加错误处理，确保网络请求失败时也能递减计数器
+    // 添加网络错误处理，确保失败时也能递减计数器，防止队列永久阻塞
     connect(reply, &QNetworkReply::errorOccurred, this, [this, reply, componentId](QNetworkReply::NetworkError) {
         qWarning() << "Fallback request error for component:" << componentId;
         // 递减计数器并处理队列
@@ -332,7 +332,7 @@ void LcscImageService::handleDownloadResponse(QSharedPointer<QNetworkReply> repl
 
     if (!reply) {
         qWarning() << "Invalid reply in handleDownloadResponse";
-        // 修复：增加下载计数并检查完成状态
+        // 确保计数器递减，防止队列永久阻塞
         if (m_pendingImages.contains(componentId)) {
             m_downloadCounts[componentId]++;
             checkDownloadCompletion(componentId);
@@ -412,14 +412,14 @@ void LcscImageService::checkDownloadCompletion(const QString& componentId) {
         qDebug() << "All images downloaded successfully, emitting allImagesReady";
         emitAllImagesReady(componentId);
 
-        // 修复：检查组件是否所有任务都已完成
+        // 检查组件是否所有任务都已完成（图片和数据手册）
         checkComponentCompletion(componentId);
     } else if (attemptedCount == m_downloadedImages[componentId].size()) {
         // 所有位置都已填充（即使有些是空数据），也认为完成
         qDebug() << "All image slots filled (some may be empty), emitting allImagesReady";
         emitAllImagesReady(componentId);
 
-        // 修复：检查组件是否所有任务都已完成
+        // 检查组件是否所有任务都已完成（图片和数据手册）
         checkComponentCompletion(componentId);
     }
 }
@@ -495,7 +495,7 @@ void LcscImageService::performDatasheetDownload(const QString& componentId,
                     m_datasheetDownloadStatus[componentId] = 2;  // failed
                     emit error(componentId, QString("Datasheet download failed: %1").arg(reply->errorString()));
                     
-                    // 修复：检查组件是否所有任务都已完成
+                    // 检查组件是否所有任务都已完成（图片和数据手册）
                     checkComponentCompletion(componentId);
                 }
                 return;
@@ -508,29 +508,29 @@ void LcscImageService::performDatasheetDownload(const QString& componentId,
                 m_datasheetDownloadStatus[componentId] = 1;  // success
 
                 qDebug() << "Datasheet downloaded for" << componentId << "size:" << datasheetData.size() << "bytes";
-                emit datasheetReady(componentId, datasheetData);
-                
-                // 修复：检查组件是否所有任务都已完成
-                checkComponentCompletion(componentId);
-            } else {
-                qDebug() << "Failed to read datasheet data for" << componentId;
-                m_datasheetDownloadStatus[componentId] = 2;  // failed
-                emit error(componentId, "Failed to read datasheet data");
-                
-                // 修复：检查组件是否所有任务都已完成
-                checkComponentCompletion(componentId);
-            }
-        });
-        
-        // 修复：添加网络错误处理
-        connect(reply, &QNetworkReply::errorOccurred, this, [this, reply, componentId](QNetworkReply::NetworkError error) {
-            qWarning() << "Datasheet download network error for component:" << componentId << "error:" << error;
-            reply->deleteLater();
-            // 修复：标记失败并检查完成状态
-            m_datasheetDownloadStatus[componentId] = 2;
-            emit error(componentId, QString("Network error: %1").arg(error));
-            checkComponentCompletion(componentId);
-        });
+                                emit datasheetReady(componentId, datasheetData);
+                                
+                                // 检查组件是否所有任务都已完成（图片和数据手册）
+                                checkComponentCompletion(componentId);
+                            } else {
+                                            qDebug() << "Failed to read datasheet data for" << componentId;
+                                            m_datasheetDownloadStatus[componentId] = 2;  // failed
+                                            emit error(componentId, "Failed to read datasheet data");
+                                            
+                                            // 检查组件是否所有任务都已完成（图片和数据手册）
+                                            checkComponentCompletion(componentId);
+                                        }
+                                    });
+                                    
+                                    // 添加网络错误处理，确保失败时也能递减计数器
+                                    connect(reply, &QNetworkReply::errorOccurred, this, [this, reply, componentId](QNetworkReply::NetworkError netError) {
+                                        qWarning() << "Datasheet download network error for component:" << componentId << "error:" << netError;
+                                        reply->deleteLater();
+                                        // 标记失败并检查完成状态
+                                        m_datasheetDownloadStatus[componentId] = 2;
+                                        emit error(componentId, QString("Network error: %1").arg(netError));
+                                        checkComponentCompletion(componentId);
+                                    });
     });
 }
 
