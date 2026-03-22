@@ -53,7 +53,7 @@ Linux 平台打包脚本，支持 AppImage、DEB、RPM、Arch Linux 和 Flatpak 
 ./tools/linux/build-packages.sh deb
 
 # 指定版本
-VERSION=3.0.8 ./tools/linux/build-packages.sh all
+VERSION=3.0.14 ./tools/linux/build-packages.sh all
 ```
 
 ### [fix-desktop-icon.sh](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/linux/fix-desktop-icon.sh)

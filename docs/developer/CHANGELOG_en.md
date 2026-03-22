@@ -2,6 +2,97 @@
 
 This document records the additions, fixes, and changes in each version of EasyKiConverter.
 
+## [3.0.14] - 2026-03-09
+
+### Added
+
+- **Component List Filtering**
+  - Added component list filtering functionality, supporting ID search and filter
+  - Improved component validation status management
+  - Added batch preview image fetching and optimized fetch timing
+
+### Fixed
+
+- **UI Fixes**
+  - Fixed QML duplicate property issues and unified logging behavior
+  - Fixed thumbnail display delay after component validation success
+  - Fixed export options UI overlap issue in English language mode
+  - Fixed window minimum width calculation
+  - Optimized component list and logging system
+
+### Improved
+
+- **Confirm Dialog Interaction**
+  - Added slider UI interaction effect for confirm dialog
+  - Improved copy feedback tooltip UI and interaction experience
+  - Added background style for copy ID tooltip
+  - Added copy tooltip radius effect
+
+## [3.0.13] - 2026-03-07
+
+### Fixed
+
+- **Weak Network Crash Fix**
+  - Fixed crash when batch adding components in weak network environment
+  - Fixed race condition and memory leak in NetworkUtils
+  - Fixed network request counter management and component completion status check in LcscImageService
+
+### Added
+
+- **Thread Safety Improvements**
+  - Added thread-safe mutex protection for ComponentService
+  - Added thread safety protection and improved network request management
+  - Implemented async queue management mechanism to optimize batch component fetching
+  - Optimized concurrent processing of component data fetching
+
+## [3.0.12] - 2026-03-01
+
+### Added
+
+- **MSIX Packaging Support**
+  - Added MSIX package build support
+  - Optimized MSIX packaging workflow and updated application manifest configuration
+  - Changed MSIX tool installation method in Windows packaging workflow
+  - Added icon and license file validation during installer build
+
+### Improved
+
+- **Translation Management**
+  - Upgraded translation management tool to support auto-complete translation
+  - Updated English translation file format
+  - Updated language manager to use ConfigService for persistence
+
+### Fixed
+
+- **Build System**
+  - Fixed QXlsx subdirectory path configuration
+  - Fixed Flatpak manifest file path
+  - Corrected file paths in all packaging configurations
+
+## [3.0.9] - 2026-02-20
+
+### Added
+
+- **Flatpak Packaging Support**
+  - Added Flatpak packaging support and verification tools
+  - Added Chinese and English privacy policy documents
+  - Added version release information and MSIX packaging support
+  - Added installer return code documentation
+
+### Fixed
+
+- **UI Fixes**
+  - Fixed UI scaling and resolution issues
+  - Fixed export options UI overlap issue
+  - Added text width limit and auto wrap for export button area
+
+### Improved
+
+- **Multi-language Support**
+  - Improved language detection logic to support multi-language mapping
+  - Added international language support for metainfo files
+  - Updated English translation files and added translations for new UI components
+
 ## [3.0.8] - 2026-03-09
 
 ### Added

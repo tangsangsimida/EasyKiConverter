@@ -1,4 +1,4 @@
-﻿# Contributing Guide
+# Contributing Guide
 
 Thank you for your interest in contributing to EasyKiConverter! This document provides guidelines for contributing to the project.
 
@@ -156,9 +156,9 @@ Follow the MVVM architecture pattern:
 
 Use multi-stage pipeline parallelism architecture (ExportServicePipeline):
 
-- **Fetch Stage**: I/O-intensive, 32 threads
+- **Fetch Stage**: I/O-intensive, 5 threads (reduced from 32 to prevent rate limiting)
 - **Process Stage**: CPU-intensive, CPU core count threads
-- **Write Stage**: Disk I/O-intensive, 8 threads
+- **Write Stage**: Disk I/O-intensive, 3 threads
 - Stages communicate via thread-safe bounded queues
 - See: [ADR-002: Pipeline Parallelism](../project/adr/002-pipeline-parallelism-for-export_en.md)
 

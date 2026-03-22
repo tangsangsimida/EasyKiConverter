@@ -1,4 +1,11 @@
-﻿# Performance Optimization Report
+# Performance Optimization Report
+
+## Current Configuration
+
+> **Note**: This report documents the optimization efforts for v3.0.0. Current thread pool configuration:
+> - **Fetch Stage**: 5 threads (I/O-intensive) - Reduced from 32 to prevent server-side rate limiting
+> - **Process Stage**: CPU core count threads (CPU-intensive)
+> - **Write Stage**: 3 threads (disk I/O-intensive)
 
 ## Overview
 

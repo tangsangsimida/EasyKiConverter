@@ -1,4 +1,4 @@
-﻿# ADR-002: Adopt Multi-Stage Pipeline Parallelism Architecture for Export Functionality
+# ADR-002: Adopt Multi-Stage Pipeline Parallelism Architecture for Export Functionality
 
 ## Status
 
@@ -66,9 +66,9 @@ Status feedback is implemented through a well-defined data structure `ComponentE
 
 ### Thread Pool Configuration
 
-- **Fetch Stage**: 32 threads (I/O-intensive, configurable)
+- **Fetch Stage**: 5 threads (I/O-intensive, configurable) - Reduced from 32 to prevent server-side rate limiting
 - **Process Stage**: CPU core count (CPU-intensive, matches CPU count)
-- **Write Stage**: 8 threads (disk I/O-intensive, configurable)
+- **Write Stage**: 3 threads (disk I/O-intensive, configurable)
 
 ### Core Components
 
