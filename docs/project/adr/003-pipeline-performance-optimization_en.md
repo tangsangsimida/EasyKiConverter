@@ -178,9 +178,9 @@ We implemented two rounds of optimizations, P0 and P1, to address these issues.
 
 ### Test Verification
 
-- ✅ Compilation successful, no errors.
-- ✅ Executable generated successfully.
-- ✅ Performance benchmark framework has been created.
+- [OK] Compilation successful, no errors.
+- [OK] Executable generated successfully.
+- [OK] Performance benchmark framework has been created.
 
 ## Performance Metrics
 
