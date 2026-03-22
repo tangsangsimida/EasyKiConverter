@@ -259,8 +259,29 @@ Rectangle {
                     anchors.fill: parent
                     anchors.margins: 10
                     spacing: 10
+                    // 如果没有预览图但有缩略图，显示放大的缩略图
+                    visible: itemData && itemData.hasThumbnail
+                    Rectangle {
+                        width: 470
+                        height: 150
+                        color: AppStyle.colors.background
+                        radius: AppStyle.radius.sm
+                        border.color: AppStyle.colors.border
+                        border.width: 1
+                        clip: true
+                        visible: !itemData || !itemData.previewImageCount || itemData.previewImageCount === 0
+                        Image {
+                            anchors.fill: parent
+                            anchors.margins: 5
+                            source: (itemData && itemData.thumbnailBase64) ? "data:image/png;base64," + itemData.thumbnailBase64 : ""
+                            fillMode: Image.PreserveAspectFit
+                            cache: true
+                            asynchronous: true
+                        }
+                    }
+                    // 如果有预览图，显示预览图列表
                     Repeater {
-                        model: itemData ? itemData.previewImageCount : 0
+                        model: (itemData && itemData.previewImageCount > 0) ? itemData.previewImageCount : 0
                         Rectangle {
                             width: 150
                             height: 150
