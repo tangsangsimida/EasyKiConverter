@@ -36,17 +36,59 @@ Rectangle {
     ToolTip {
         id: copyFeedback
         parent: item
-        x: (parent.width - width) / 2
-        y: (parent.height - height) / 2
-        text: qsTr("已复制 ID")
+        x: parent.width - width - 8
+        y: 4
         delay: 0
         timeout: 1500
+        visible: false
+        text: ""
         background: Rectangle {
             color: AppStyle.isDarkMode ? "#1e293b" : "#ffffff"
             radius: AppStyle.radius.md
             border.width: 1
             border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.1)
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowBlur: 8
+                shadowColor: AppStyle.isDarkMode ? "#00000088" : "#33000000"
+                shadowVerticalOffset: 2
+            }
         }
+        contentItem: Row {
+            spacing: 4
+            Text {
+                text: "✓"
+                color: "#22c55e"
+                font.bold: true
+            }
+            Text {
+                text: qsTr("已复制")
+                color: AppStyle.isDarkMode ? "#ffffff" : "#1e293b"
+            }
+        }
+        enter: Transition {
+            NumberAnimation {
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: 150
+            }
+        }
+        exit: Transition {
+            NumberAnimation {
+                property: "opacity"
+                from: 1
+                to: 0
+                duration: 150
+            }
+        }
+    }
+
+    Timer {
+        id: copyFeedbackTimer
+        interval: 1500
+        onTriggered: copyFeedback.visible = false
     }
 
     // 1. 将全局鼠标区域移到最底层（作为背景交互层）
@@ -66,6 +108,7 @@ Rectangle {
                     copyHelper.copy();
                     item.copyClicked();
                     copyFeedback.visible = true;
+                    copyFeedbackTimer.start();
                 }
             } else
             // Ctrl + 左键点击打开浏览器
