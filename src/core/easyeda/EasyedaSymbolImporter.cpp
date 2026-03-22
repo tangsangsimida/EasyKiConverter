@@ -1,6 +1,7 @@
 #include "EasyedaSymbolImporter.h"
 
 #include "EasyedaUtils.h"
+#include "SvgPathParser.h"
 
 #include <QDebug>
 #include <QJsonArray>
@@ -382,6 +383,17 @@ SymbolArc EasyedaSymbolImporter::importArcData(const QString& arcData) {
         arc.fillColor = EasyedaUtils::stringToBool(fields[5]);
         arc.id = fields[6];
         arc.isLocked = EasyedaUtils::stringToBool(fields[7]);
+
+        // 解析 helperDots 中的 SVG 弧线路径，获取完整路径点
+        // 格式如: "M 401 313 A 3 3 0 0 0 407 313"
+        if (!arc.helperDots.isEmpty()) {
+            QString pathStr = arc.helperDots.trimmed();
+            // 使用 SvgPathParser 解析完整的 SVG 路径（包括弧线的所有点）
+            QList<QPointF> parsedPoints = SvgPathParser::parsePath(pathStr);
+            if (!parsedPoints.isEmpty()) {
+                arc.path = parsedPoints;
+            }
+        }
     }
 
     return arc;
