@@ -192,8 +192,6 @@ Rectangle {
                 padding: 0
                 // visible 由 Timer 控制，悬停1秒后显示
                 visible: false
-                // visible 由 Timer 控制，悬停1秒后显示
-                visible: false
                 closePolicy: Popup.NoAutoClose
                 modal: false
                 focus: false
@@ -392,16 +390,6 @@ Rectangle {
                             var url = "https://so.szlcsc.com/global.html?k=" + itemData.componentId;
                             Qt.openUrlExternally(url);
                         }
-                    }
-                }
-                onContainsMouseChanged: {
-                    if (containsMouse && itemData && itemData.hasThumbnail) {
-                        // 开始计时，1秒后显示预览图
-                        hoverDelayTimer.start();
-                    } else {
-                        // 鼠标离开，立即停止计时并隐藏预览图
-                        hoverDelayTimer.stop();
-                        previewPopup.visible = false;
                     }
                 }
                 onContainsMouseChanged: {

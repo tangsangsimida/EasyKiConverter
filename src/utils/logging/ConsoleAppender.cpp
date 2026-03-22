@@ -27,12 +27,8 @@ const QString ConsoleAppender::s_bgRed = QStringLiteral("\033[41m");
 
 ConsoleAppender::ConsoleAppender(bool useColors, bool async)
     : m_useColors(useColors && supportsColors())
-// Linux 上异步模式会导致颜色不显示，强制使用同步模式
-#if defined(Q_OS_LINUX) || defined(Q_OS_UNIX)
-    , m_async(false)
-#else
+    // 统一所有平台：默认同步模式（保证彩色日志显示），使用 async 参数切换为异步模式
     , m_async(async)
-#endif
     , m_running(0)
     , m_flushRequested(0)
     , m_queueOverflow(0) {
