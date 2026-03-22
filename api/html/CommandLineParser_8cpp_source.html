@@ -1,0 +1,354 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: utils/CommandLineParser.cpp 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('CommandLineParser_8cpp_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">CommandLineParser.cpp</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="CommandLineParser_8cpp.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#include &quot;<a class="code" href="CommandLineParser_8h.html">CommandLineParser.h</a>&quot;</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &lt;QCoreApplication&gt;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;QTextStream&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="foldopen" id="foldopen00008" data-start="{" data-end="}">
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a8308f418bcc5b201085d82bada0cd458">    8</a></span><a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a8308f418bcc5b201085d82bada0cd458">CommandLineParser::CommandLineParser</a>(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span>* argv[])</div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span>    : m_debugOption(QStringList() &lt;&lt; <span class="stringliteral">&quot;d&quot;</span> &lt;&lt; <span class="stringliteral">&quot;debug&quot;</span>, <span class="stringliteral">&quot;启用调试模式（显示详细日志和控制台窗口）&quot;</span>)</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span>    , m_logLevelOption(QStringList() &lt;&lt; <span class="stringliteral">&quot;log-level&quot;</span>,</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span>                       <span class="stringliteral">&quot;设置日志级别 (trace/debug/info/warn/error/fatal)&quot;</span>,</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>                       <span class="stringliteral">&quot;level&quot;</span>,</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>                       <span class="stringliteral">&quot;info&quot;</span>)</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>    , m_logFileOption(QStringList() &lt;&lt; <span class="stringliteral">&quot;log-file&quot;</span>, <span class="stringliteral">&quot;指定日志文件路径&quot;</span>, <span class="stringliteral">&quot;path&quot;</span>)</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    , m_configOption(QStringList() &lt;&lt; <span class="stringliteral">&quot;config&quot;</span>, <span class="stringliteral">&quot;指定配置文件路径&quot;</span>, <span class="stringliteral">&quot;path&quot;</span>)</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    , m_languageOption(QStringList() &lt;&lt; <span class="stringliteral">&quot;language&quot;</span>, <span class="stringliteral">&quot;设置界面语言 (zh_CN/en)&quot;</span>, <span class="stringliteral">&quot;lang&quot;</span>, <span class="stringliteral">&quot;zh_CN&quot;</span>)</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    , m_themeOption(QStringList() &lt;&lt; <span class="stringliteral">&quot;theme&quot;</span>, <span class="stringliteral">&quot;设置界面主题 (dark/light)&quot;</span>, <span class="stringliteral">&quot;theme&quot;</span>, <span class="stringliteral">&quot;dark&quot;</span>)</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>    , m_portableOption(QStringList() &lt;&lt; <span class="stringliteral">&quot;portable&quot;</span>, <span class="stringliteral">&quot;便携模式（配置文件保存在程序目录）&quot;</span>)</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    , m_syncLoggingOption(QStringList() &lt;&lt; <span class="stringliteral">&quot;sync-logging&quot;</span>, <span class="stringliteral">&quot;启用同步控制台日志输出（确保彩色日志显示，方便调试）&quot;</span>) {</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.setApplicationDescription(</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>        QCoreApplication::translate(<span class="stringliteral">&quot;main&quot;</span>, <span class="stringliteral">&quot;EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具&quot;</span>));</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="comment">// Qt 内置的帮助和版本选项</span></div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.addHelpOption();</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.addVersionOption();</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="comment">// 自定义选项</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a4d7e51041ab0e882413001ba7f117172">setupOptions</a>();</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="comment">// 设置应用程序参数（用于帮助和版本信息）</span></div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    Q_UNUSED(argc);</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    Q_UNUSED(argv);</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>}</div>
+</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
+<div class="foldopen" id="foldopen00035" data-start="{" data-end="}">
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a4d7e51041ab0e882413001ba7f117172">   35</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a4d7e51041ab0e882413001ba7f117172">CommandLineParser::setupOptions</a>() {</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="comment">// 所有自定义选项（帮助和版本选项已在构造函数中通过 addHelpOption 和 addVersionOption 添加）</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.addOption(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a2a20e82359102100a3652c897f7ecc91">m_debugOption</a>);</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.addOption(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a35f59ab1a4ecb12e32317cd7241215cf">m_logLevelOption</a>);</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.addOption(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#aeb5402d1babb1949b81556347b52458c">m_logFileOption</a>);</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.addOption(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a7b59c4717723e12d36a3b48b8fa22ee0">m_configOption</a>);</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.addOption(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#ad1860161d10510a6eef16e7be6e81a98">m_languageOption</a>);</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.addOption(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a941ae89c21b3b0c95b8cc3b2127f0389">m_themeOption</a>);</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.addOption(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a15d3be948c4a66b7d5f1126142b480c3">m_portableOption</a>);</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.addOption(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#ac8a3f36e703bc3b39309c69bea747c17">m_syncLoggingOption</a>);</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>}</div>
+</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
+<div class="foldopen" id="foldopen00047" data-start="{" data-end="}">
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a71b2a0b4f10539faa78fc68c7386225b">   47</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a71b2a0b4f10539faa78fc68c7386225b">CommandLineParser::parse</a>() {</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.parse(QCoreApplication::arguments());</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>}</div>
+</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="foldopen" id="foldopen00051" data-start="{" data-end="}">
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a8c32743b0a6c3475bdbd01ca77538672">   51</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a8c32743b0a6c3475bdbd01ca77538672">CommandLineParser::isDebugMode</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a2a20e82359102100a3652c897f7ecc91">m_debugOption</a>);</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>}</div>
+</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="foldopen" id="foldopen00055" data-start="{" data-end="}">
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a5432eef61c0f028ee455fb6fe75ca4eb">   55</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a5432eef61c0f028ee455fb6fe75ca4eb">CommandLineParser::logLevel</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.value(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a35f59ab1a4ecb12e32317cd7241215cf">m_logLevelOption</a>).toLower();</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>}</div>
+</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
+<div class="foldopen" id="foldopen00059" data-start="{" data-end="}">
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a0607fc9e3b356fe8034cfcad17faa340">   59</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a0607fc9e3b356fe8034cfcad17faa340">CommandLineParser::logFile</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.value(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#aeb5402d1babb1949b81556347b52458c">m_logFileOption</a>);</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>}</div>
+</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="foldopen" id="foldopen00063" data-start="{" data-end="}">
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a2ec76542671d11083be985f5d6e81d9c">   63</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a2ec76542671d11083be985f5d6e81d9c">CommandLineParser::configFile</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.value(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a7b59c4717723e12d36a3b48b8fa22ee0">m_configOption</a>);</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>}</div>
+</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="foldopen" id="foldopen00067" data-start="{" data-end="}">
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a2647d59fd1285749a9e78cb669a4297e">   67</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a2647d59fd1285749a9e78cb669a4297e">CommandLineParser::language</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.value(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#ad1860161d10510a6eef16e7be6e81a98">m_languageOption</a>);</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>}</div>
+</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
+<div class="foldopen" id="foldopen00071" data-start="{" data-end="}">
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#ac72211e5b65eced20ab3c6d0fe0364f6">   71</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ac72211e5b65eced20ab3c6d0fe0364f6">CommandLineParser::theme</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.value(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a941ae89c21b3b0c95b8cc3b2127f0389">m_themeOption</a>).toLower();</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>}</div>
+</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
+<div class="foldopen" id="foldopen00075" data-start="{" data-end="}">
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a890d46dc3973258bd3b004b0f377c7ec">   75</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a890d46dc3973258bd3b004b0f377c7ec">CommandLineParser::isThemeSet</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a941ae89c21b3b0c95b8cc3b2127f0389">m_themeOption</a>);</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>}</div>
+</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="foldopen" id="foldopen00079" data-start="{" data-end="}">
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a0af375e1ff507962d206e0c41560d1e6">   79</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a0af375e1ff507962d206e0c41560d1e6">CommandLineParser::isPortableMode</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a15d3be948c4a66b7d5f1126142b480c3">m_portableOption</a>);</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>}</div>
+</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
+<div class="foldopen" id="foldopen00083" data-start="{" data-end="}">
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a343d74961a3d39da69dbf8b68f0364ae">   83</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a343d74961a3d39da69dbf8b68f0364ae">CommandLineParser::isSyncLogging</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#ac8a3f36e703bc3b39309c69bea747c17">m_syncLoggingOption</a>);</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>}</div>
+</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
+<div class="foldopen" id="foldopen00087" data-start="{" data-end="}">
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#aec01d093f7eea242c8bc2ebe34733700">   87</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#aec01d093f7eea242c8bc2ebe34733700">CommandLineParser::helpText</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.helpText();</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>}</div>
+</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
+<div class="foldopen" id="foldopen00091" data-start="{" data-end="}">
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#af2fe0bd53a969c9bdd17570b85fb58d3">   91</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#af2fe0bd53a969c9bdd17570b85fb58d3">CommandLineParser::isHelpRequested</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="comment">// QCommandLineParser 的 addHelpOption() 会添加一个帮助选项</span></div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="comment">// 我们需要检查该选项是否被设置</span></div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<span class="stringliteral">&quot;help&quot;</span>);</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>}</div>
+</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
+<div class="foldopen" id="foldopen00097" data-start="{" data-end="}">
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#aeff413a2beb056245ffeaf3aa011bda9">   97</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#aeff413a2beb056245ffeaf3aa011bda9">CommandLineParser::isVersionRequested</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    <span class="comment">// QCommandLineParser 的 addVersionOption() 会添加一个版本选项</span></div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="comment">// 我们需要检查该选项是否被设置</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<span class="stringliteral">&quot;version&quot;</span>);</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>}</div>
+</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="foldopen" id="foldopen00103" data-start="{" data-end="}">
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a8bb8aa6f8000097c065ae21af0d7b34d">  103</a></span>QStringList <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a8bb8aa6f8000097c065ae21af0d7b34d">CommandLineParser::positionalArguments</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.positionalArguments();</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>}</div>
+</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
+<div class="foldopen" id="foldopen00107" data-start="{" data-end="}">
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#a1a262a36db07d8568b02db9b3b9f4336">  107</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a1a262a36db07d8568b02db9b3b9f4336">CommandLineParser::validate</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="comment">// 验证日志级别</span></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a35f59ab1a4ecb12e32317cd7241215cf">m_logLevelOption</a>)) {</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>        QString level = <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a5432eef61c0f028ee455fb6fe75ca4eb">logLevel</a>();</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>        QStringList validLevels = {<span class="stringliteral">&quot;trace&quot;</span>, <span class="stringliteral">&quot;debug&quot;</span>, <span class="stringliteral">&quot;info&quot;</span>, <span class="stringliteral">&quot;warn&quot;</span>, <span class="stringliteral">&quot;error&quot;</span>, <span class="stringliteral">&quot;fatal&quot;</span>};</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>        <span class="keywordflow">if</span> (!validLevels.contains(level)) {</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        }</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    }</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    <span class="comment">// 验证语言设置</span></div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#ad1860161d10510a6eef16e7be6e81a98">m_languageOption</a>)) {</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        QString lang = <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a2647d59fd1285749a9e78cb669a4297e">language</a>();</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        QStringList validLangs = {<span class="stringliteral">&quot;zh_CN&quot;</span>, <span class="stringliteral">&quot;en&quot;</span>};</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>        <span class="keywordflow">if</span> (!validLangs.contains(lang)) {</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>        }</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    }</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="comment">// 验证主题设置</span></div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a941ae89c21b3b0c95b8cc3b2127f0389">m_themeOption</a>)) {</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>        QString <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ac72211e5b65eced20ab3c6d0fe0364f6">theme</a> = this-&gt;<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ac72211e5b65eced20ab3c6d0fe0364f6">theme</a>();</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        QStringList validThemes = {<span class="stringliteral">&quot;dark&quot;</span>, <span class="stringliteral">&quot;light&quot;</span>};</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>        <span class="keywordflow">if</span> (!validThemes.contains(<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ac72211e5b65eced20ab3c6d0fe0364f6">theme</a>)) {</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>        }</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    }</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>}</div>
+</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
+<div class="foldopen" id="foldopen00138" data-start="{" data-end="}">
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CommandLineParser.html#ac795378e1571440dc9c8eafbe44c494b">  138</a></span>QString <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ac795378e1571440dc9c8eafbe44c494b">CommandLineParser::validationError</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>    QStringList errors;</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span> </div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    <span class="comment">// 检查日志级别</span></div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a35f59ab1a4ecb12e32317cd7241215cf">m_logLevelOption</a>)) {</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>        QString level = <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a5432eef61c0f028ee455fb6fe75ca4eb">logLevel</a>();</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>        QStringList validLevels = {<span class="stringliteral">&quot;trace&quot;</span>, <span class="stringliteral">&quot;debug&quot;</span>, <span class="stringliteral">&quot;info&quot;</span>, <span class="stringliteral">&quot;warn&quot;</span>, <span class="stringliteral">&quot;error&quot;</span>, <span class="stringliteral">&quot;fatal&quot;</span>};</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>        <span class="keywordflow">if</span> (!validLevels.contains(level)) {</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>            errors.append(QString(<span class="stringliteral">&quot;无效的日志级别: %1（有效值: %2）&quot;</span>).arg(level).arg(validLevels.join(<span class="stringliteral">&quot;, &quot;</span>)));</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>        }</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    }</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span> </div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="comment">// 检查语言设置</span></div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#ad1860161d10510a6eef16e7be6e81a98">m_languageOption</a>)) {</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        QString lang = <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a2647d59fd1285749a9e78cb669a4297e">language</a>();</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>        QStringList validLangs = {<span class="stringliteral">&quot;zh_CN&quot;</span>, <span class="stringliteral">&quot;en&quot;</span>};</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        <span class="keywordflow">if</span> (!validLangs.contains(lang)) {</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>            errors.append(QString(<span class="stringliteral">&quot;无效的语言设置: %1（有效值: %2）&quot;</span>).arg(lang).arg(validLangs.join(<span class="stringliteral">&quot;, &quot;</span>)));</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>        }</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    }</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span> </div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    <span class="comment">// 检查主题设置</span></div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">m_parser</a>.isSet(<a class="code hl_variable" href="classEasyKiConverter_1_1CommandLineParser.html#a941ae89c21b3b0c95b8cc3b2127f0389">m_themeOption</a>)) {</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>        QString <a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ac72211e5b65eced20ab3c6d0fe0364f6">theme</a> = this-&gt;<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ac72211e5b65eced20ab3c6d0fe0364f6">theme</a>();</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>        QStringList validThemes = {<span class="stringliteral">&quot;dark&quot;</span>, <span class="stringliteral">&quot;light&quot;</span>};</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        <span class="keywordflow">if</span> (!validThemes.contains(<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ac72211e5b65eced20ab3c6d0fe0364f6">theme</a>)) {</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>            errors.append(QString(<span class="stringliteral">&quot;无效的主题设置: %1（有效值: %2）&quot;</span>).arg(<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ac72211e5b65eced20ab3c6d0fe0364f6">theme</a>).arg(validThemes.join(<span class="stringliteral">&quot;, &quot;</span>)));</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        }</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    }</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span> </div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    <span class="keywordflow">return</span> errors.join(<span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>}</div>
+</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span> </div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="ttc" id="aCommandLineParser_8h_html"><div class="ttname"><a href="CommandLineParser_8h.html">CommandLineParser.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a0607fc9e3b356fe8034cfcad17faa340"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a0607fc9e3b356fe8034cfcad17faa340">EasyKiConverter::CommandLineParser::logFile</a></div><div class="ttdeci">QString logFile() const</div><div class="ttdoc">获取日志文件路径</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00059">CommandLineParser.cpp:59</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a0af375e1ff507962d206e0c41560d1e6"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a0af375e1ff507962d206e0c41560d1e6">EasyKiConverter::CommandLineParser::isPortableMode</a></div><div class="ttdeci">bool isPortableMode() const</div><div class="ttdoc">是否为便携模式</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00079">CommandLineParser.cpp:79</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a15d3be948c4a66b7d5f1126142b480c3"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a15d3be948c4a66b7d5f1126142b480c3">EasyKiConverter::CommandLineParser::m_portableOption</a></div><div class="ttdeci">QCommandLineOption m_portableOption</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8h_source.html#l00141">CommandLineParser.h:141</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a1a262a36db07d8568b02db9b3b9f4336"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a1a262a36db07d8568b02db9b3b9f4336">EasyKiConverter::CommandLineParser::validate</a></div><div class="ttdeci">bool validate() const</div><div class="ttdoc">验证参数值的有效性</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00107">CommandLineParser.cpp:107</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a2647d59fd1285749a9e78cb669a4297e"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a2647d59fd1285749a9e78cb669a4297e">EasyKiConverter::CommandLineParser::language</a></div><div class="ttdeci">QString language() const</div><div class="ttdoc">获取语言设置</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00067">CommandLineParser.cpp:67</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a2a20e82359102100a3652c897f7ecc91"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a2a20e82359102100a3652c897f7ecc91">EasyKiConverter::CommandLineParser::m_debugOption</a></div><div class="ttdeci">QCommandLineOption m_debugOption</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8h_source.html#l00135">CommandLineParser.h:135</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a2ec76542671d11083be985f5d6e81d9c"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a2ec76542671d11083be985f5d6e81d9c">EasyKiConverter::CommandLineParser::configFile</a></div><div class="ttdeci">QString configFile() const</div><div class="ttdoc">获取配置文件路径</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00063">CommandLineParser.cpp:63</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a343d74961a3d39da69dbf8b68f0364ae"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a343d74961a3d39da69dbf8b68f0364ae">EasyKiConverter::CommandLineParser::isSyncLogging</a></div><div class="ttdeci">bool isSyncLogging() const</div><div class="ttdoc">是否启用同步控制台日志输出</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00083">CommandLineParser.cpp:83</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a35f59ab1a4ecb12e32317cd7241215cf"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a35f59ab1a4ecb12e32317cd7241215cf">EasyKiConverter::CommandLineParser::m_logLevelOption</a></div><div class="ttdeci">QCommandLineOption m_logLevelOption</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8h_source.html#l00136">CommandLineParser.h:136</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a4d7e51041ab0e882413001ba7f117172"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a4d7e51041ab0e882413001ba7f117172">EasyKiConverter::CommandLineParser::setupOptions</a></div><div class="ttdeci">void setupOptions()</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00035">CommandLineParser.cpp:35</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a5432eef61c0f028ee455fb6fe75ca4eb"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a5432eef61c0f028ee455fb6fe75ca4eb">EasyKiConverter::CommandLineParser::logLevel</a></div><div class="ttdeci">QString logLevel() const</div><div class="ttdoc">获取日志级别</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00055">CommandLineParser.cpp:55</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a71b2a0b4f10539faa78fc68c7386225b"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a71b2a0b4f10539faa78fc68c7386225b">EasyKiConverter::CommandLineParser::parse</a></div><div class="ttdeci">bool parse()</div><div class="ttdoc">解析命令行参数</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00047">CommandLineParser.cpp:47</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a7b59c4717723e12d36a3b48b8fa22ee0"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a7b59c4717723e12d36a3b48b8fa22ee0">EasyKiConverter::CommandLineParser::m_configOption</a></div><div class="ttdeci">QCommandLineOption m_configOption</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8h_source.html#l00138">CommandLineParser.h:138</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a8308f418bcc5b201085d82bada0cd458"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a8308f418bcc5b201085d82bada0cd458">EasyKiConverter::CommandLineParser::CommandLineParser</a></div><div class="ttdeci">CommandLineParser(int argc, char *argv[])</div><div class="ttdoc">构造函数</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00008">CommandLineParser.cpp:8</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a890d46dc3973258bd3b004b0f377c7ec"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a890d46dc3973258bd3b004b0f377c7ec">EasyKiConverter::CommandLineParser::isThemeSet</a></div><div class="ttdeci">bool isThemeSet() const</div><div class="ttdoc">是否显式指定了主题参数</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00075">CommandLineParser.cpp:75</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a8bb8aa6f8000097c065ae21af0d7b34d"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a8bb8aa6f8000097c065ae21af0d7b34d">EasyKiConverter::CommandLineParser::positionalArguments</a></div><div class="ttdeci">QStringList positionalArguments() const</div><div class="ttdoc">获取剩余的未解析参数</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00103">CommandLineParser.cpp:103</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a8c32743b0a6c3475bdbd01ca77538672"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a8c32743b0a6c3475bdbd01ca77538672">EasyKiConverter::CommandLineParser::isDebugMode</a></div><div class="ttdeci">bool isDebugMode() const</div><div class="ttdoc">是否启用调试模式</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00051">CommandLineParser.cpp:51</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a941ae89c21b3b0c95b8cc3b2127f0389"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a941ae89c21b3b0c95b8cc3b2127f0389">EasyKiConverter::CommandLineParser::m_themeOption</a></div><div class="ttdeci">QCommandLineOption m_themeOption</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8h_source.html#l00140">CommandLineParser.h:140</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_ac72211e5b65eced20ab3c6d0fe0364f6"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#ac72211e5b65eced20ab3c6d0fe0364f6">EasyKiConverter::CommandLineParser::theme</a></div><div class="ttdeci">QString theme() const</div><div class="ttdoc">获取主题设置</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00071">CommandLineParser.cpp:71</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_ac795378e1571440dc9c8eafbe44c494b"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#ac795378e1571440dc9c8eafbe44c494b">EasyKiConverter::CommandLineParser::validationError</a></div><div class="ttdeci">QString validationError() const</div><div class="ttdoc">获取验证错误信息</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00138">CommandLineParser.cpp:138</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_ac8a3f36e703bc3b39309c69bea747c17"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#ac8a3f36e703bc3b39309c69bea747c17">EasyKiConverter::CommandLineParser::m_syncLoggingOption</a></div><div class="ttdeci">QCommandLineOption m_syncLoggingOption</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8h_source.html#l00142">CommandLineParser.h:142</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_acd497048f7ab1d509cf8e52c2511eb15"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#acd497048f7ab1d509cf8e52c2511eb15">EasyKiConverter::CommandLineParser::m_parser</a></div><div class="ttdeci">QCommandLineParser m_parser</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8h_source.html#l00134">CommandLineParser.h:134</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_ad1860161d10510a6eef16e7be6e81a98"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#ad1860161d10510a6eef16e7be6e81a98">EasyKiConverter::CommandLineParser::m_languageOption</a></div><div class="ttdeci">QCommandLineOption m_languageOption</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8h_source.html#l00139">CommandLineParser.h:139</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_aeb5402d1babb1949b81556347b52458c"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#aeb5402d1babb1949b81556347b52458c">EasyKiConverter::CommandLineParser::m_logFileOption</a></div><div class="ttdeci">QCommandLineOption m_logFileOption</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8h_source.html#l00137">CommandLineParser.h:137</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_aec01d093f7eea242c8bc2ebe34733700"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#aec01d093f7eea242c8bc2ebe34733700">EasyKiConverter::CommandLineParser::helpText</a></div><div class="ttdeci">QString helpText() const</div><div class="ttdoc">获取帮助文本</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00087">CommandLineParser.cpp:87</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_aeff413a2beb056245ffeaf3aa011bda9"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#aeff413a2beb056245ffeaf3aa011bda9">EasyKiConverter::CommandLineParser::isVersionRequested</a></div><div class="ttdeci">bool isVersionRequested() const</div><div class="ttdoc">是否显示版本信息</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00097">CommandLineParser.cpp:97</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_af2fe0bd53a969c9bdd17570b85fb58d3"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#af2fe0bd53a969c9bdd17570b85fb58d3">EasyKiConverter::CommandLineParser::isHelpRequested</a></div><div class="ttdeci">bool isHelpRequested() const</div><div class="ttdoc">是否显示帮助信息</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00091">CommandLineParser.cpp:91</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00010">EasyedaApi.cpp:10</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_cbdb8362360e11eafe2fa3bc74cf0ffd.html">utils</a></li><li class="navelem"><a class="el" href="CommandLineParser_8cpp.html">CommandLineParser.cpp</a></li>
+    <li class="footer">生成于 2026年 三月 22日 星期日 15:04:53 , 为 EasyKiConverter使用  <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

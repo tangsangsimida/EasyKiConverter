@@ -1,0 +1,15 @@
+<map id="core/kicad/Exporter3DModel.h" name="core/kicad/Exporter3DModel.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="131,5,350,31"/>
+<area shape="rect" id="Node000002" href="$Model3DData_8h.html" title=" " alt="" coords="91,79,265,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,33,199,70,195,66,228,29"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,152,103,177"/>
+<area shape="poly" id="edge5_Node000001_Node000003" title=" " alt="" coords="170,33,122,51,100,64,81,80,65,109,58,139,53,138,60,107,77,77,97,60,120,46,168,28"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="260,152,331,177"/>
+<area shape="poly" id="edge7_Node000001_Node000005" title=" " alt="" coords="252,29,267,51,280,78,290,108,295,138,290,139,285,110,276,80,262,54,248,32"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="341,79,415,104"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="264,28,345,70,342,75,262,33"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="159,106,87,147,85,143,157,102"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="127,152,229,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="181,104,181,138,175,138,175,104"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="198,102,266,142,263,147,195,106"/>
+</map>

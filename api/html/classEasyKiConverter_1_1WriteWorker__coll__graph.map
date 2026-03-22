@@ -1,0 +1,27 @@
+<map id="EasyKiConverter::WriteWorker" name="EasyKiConverter::WriteWorker">
+<area shape="rect" id="Node000001" title="写入工作线程" alt="" coords="392,1736,603,2161"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="414,113,480,178"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="401,159,322,181,225,219,175,244,127,274,82,309,44,350,21,383,11,413,8,445,8,487,8,1495,11,1533,19,1569,31,1603,48,1636,92,1698,146,1752,208,1800,272,1842,335,1876,393,1904,391,1908,333,1881,269,1846,205,1805,143,1756,88,1701,43,1639,26,1606,14,1570,6,1533,3,1495,3,487,3,445,6,411,17,380,40,346,79,305,124,270,173,239,223,214,321,176,399,154"/>
+<area shape="rect" id="Node000004" href="$classEasyKiConverter_1_1ExporterSymbol.html" title="KiCad 符号导出器类" alt="" coords="176,1383,374,1603"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="419,191,377,263,358,305,343,349,326,438,315,551,309,680,306,816,305,1083,299,1289,290,1383,285,1383,294,1289,299,1083,301,816,304,679,310,551,321,438,338,347,353,303,373,260,415,188"/>
+<area shape="rect" id="Node000007" href="$classEasyKiConverter_1_1ExporterFootprint.html" title="KiCad 封装导出器类" alt="" coords="616,378,822,598"/>
+<area shape="poly" id="edge8_Node000007_Node000002" title=" " alt="" coords="491,186,544,243,600,308,650,376,646,380,596,311,540,246,487,190"/>
+<area shape="rect" id="Node000009" href="$classEasyKiConverter_1_1Exporter3DModel.html" title="3D 模型导出器类" alt="" coords="398,1313,616,1673"/>
+<area shape="poly" id="edge11_Node000009_Node000002" title=" " alt="" coords="480,188,522,260,542,303,556,347,585,485,600,603,602,708,597,807,575,1013,566,1133,563,1275,563,1290,559,1313,554,1313,558,1289,558,1275,561,1133,570,1012,592,806,597,708,594,604,580,486,551,349,537,305,517,263,475,191"/>
+<area shape="rect" id="Node000011" href="$classEasyKiConverter_1_1INetworkAdapter.html" title="网络适配器接口" alt="" coords="352,348,542,628"/>
+<area shape="poly" id="edge14_Node000011_Node000002" title=" " alt="" coords="450,192,450,348,444,348,444,192"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="699,1461,784,1526"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="737,1540,717,1622,702,1669,683,1713,647,1774,606,1831,601,1828,642,1771,678,1711,697,1667,712,1621,732,1539"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="315,1602,361,1711,387,1760,382,1762,357,1713,310,1604"/>
+<area shape="rect" id="Node000005" href="$classEasyKiConverter_1_1SymbolGraphicsGenerator.html" title="符号图形元素生成器" alt="" coords="42,831,278,1111"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="138,1111,136,1200,140,1245,149,1289,165,1329,185,1368,180,1371,160,1331,144,1290,135,1246,130,1200,133,1111"/>
+<area shape="rect" id="Node000006" href="$structEasyKiConverter_1_1SymbolBBox.html" title="边界" alt="" coords="54,425,267,551"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="163,551,163,814,158,814,158,551"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="718,598,690,1221,669,1533,658,1646,645,1713,613,1788,608,1786,640,1711,653,1645,664,1533,685,1221,713,598"/>
+<area shape="rect" id="Node000008" href="$classEasyKiConverter_1_1FootprintGraphicsGenerator.html" title="封装图形生成器" alt="" coords="605,5,833,285"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="722,285,722,361,716,361,716,285"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="502,1674,502,1697,501,1720,496,1719,496,1697,497,1674"/>
+<area shape="rect" id="Node000010" href="$classEasyKiConverter_1_1NetworkUtils.html" title="网络工具" alt="" coords="353,691,538,1251"/>
+<area shape="poly" id="edge12_Node000009_Node000010" title=" " alt="" coords="445,1251,450,1289,451,1297,445,1297,444,1290,440,1251"/>
+<area shape="poly" id="edge13_Node000010_Node000011" title=" " alt="" coords="449,642,449,690,444,690,444,642"/>
+</map>

@@ -1,0 +1,38 @@
+<map id="core/easyeda/EasyedaSymbolImporter.cpp" name="core/easyeda/EasyedaSymbolImporter.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="491,5,708,45"/>
+<area shape="rect" id="Node000002" href="$EasyedaSymbolImporter_8h.html" title=" " alt="" coords="307,93,500,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="553,48,446,91,444,86,551,43"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,240,100,265"/>
+<area shape="poly" id="edge20_Node000001_Node000004" title=" " alt="" coords="491,40,406,56,312,81,216,118,171,141,129,169,96,199,71,230,66,227,92,195,126,165,168,137,214,113,310,76,405,51,490,35"/>
+<area shape="rect" id="Node000012" href="$EasyedaUtils_8h.html" title=" " alt="" coords="589,93,708,119"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="614,44,636,80,632,83,609,47"/>
+<area shape="rect" id="Node000013" href="$SvgPathParser_8h.html" title=" " alt="" coords="489,167,614,192"/>
+<area shape="poly" id="edge15_Node000001_Node000013" title=" " alt="" coords="596,46,581,94,562,154,557,153,575,93,591,45"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="731,93,806,119"/>
+<area shape="poly" id="edge19_Node000001_Node000014" title=" " alt="" coords="641,43,732,85,730,90,639,48"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="831,93,957,119"/>
+<area shape="poly" id="edge21_Node000001_Node000015" title=" " alt="" coords="671,43,838,87,837,92,669,48"/>
+<area shape="rect" id="Node000003" href="$SymbolData_8h.html" title=" " alt="" coords="151,167,317,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="377,121,275,164,273,159,375,116"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="125,240,226,265"/>
+<area shape="poly" id="edge9_Node000002_Node000005" title=" " alt="" coords="307,119,206,137,165,151,140,168,135,182,137,198,156,228,152,231,132,199,129,182,136,165,163,146,204,132,306,114"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="342,167,465,192"/>
+<area shape="poly" id="edge10_Node000002_Node000010" title=" " alt="" coords="406,119,406,153,401,153,401,119"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="638,167,731,192"/>
+<area shape="poly" id="edge11_Node000002_Node000011" title=" " alt="" coords="449,116,627,161,625,166,448,121"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="206,195,96,237,94,232,204,190"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="226,194,195,231,191,228,222,191"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="344,240,399,265"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="257,190,338,231,336,236,255,194"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="423,240,496,265"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="271,189,411,233,409,238,269,195"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="250,240,319,265"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="245,191,271,227,266,230,240,194"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="520,240,591,265"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="289,189,507,237,506,242,287,195"/>
+<area shape="poly" id="edge13_Node000012_Node000009" title=" " alt="" coords="681,116,709,130,735,148,750,169,751,181,745,194,716,221,680,239,641,249,605,254,604,248,640,244,678,234,713,217,741,190,746,180,745,171,731,151,707,135,679,121"/>
+<area shape="poly" id="edge14_Node000012_Node000011" title=" " alt="" coords="657,118,675,153,670,156,652,120"/>
+<area shape="poly" id="edge16_Node000013_Node000006" title=" " alt="" coords="523,195,413,238,411,233,521,190"/>
+<area shape="poly" id="edge17_Node000013_Node000007" title=" " alt="" coords="538,194,487,234,483,229,535,190"/>
+<area shape="poly" id="edge18_Node000013_Node000009" title=" " alt="" coords="555,192,557,226,551,227,549,192"/>
+</map>
