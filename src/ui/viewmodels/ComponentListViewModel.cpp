@@ -147,6 +147,7 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
     m_previewFetchEnabled = false;
 
     emit componentCountChanged();
+    emit filteredCountChanged();
     emit componentAdded(trimmedId, true, "Component added");
 }
 
@@ -177,6 +178,7 @@ void ComponentListViewModel::removeComponent(int index) {
         }
 
         emit componentCountChanged();
+        emit filteredCountChanged();
         emit componentRemoved(removedId);
     }
 }
@@ -212,6 +214,7 @@ void ComponentListViewModel::clearComponentList() {
         updateHasInvalidComponents();
 
         emit componentCountChanged();
+        emit filteredCountChanged();
         emit listCleared();
     }
 }
@@ -263,6 +266,7 @@ void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds)
 
     endInsertRows();
     emit componentCountChanged();
+    emit filteredCountChanged();
 
     // 延迟分散发送网络请求，避免同时回调集中到达卡 UI
     // 增加延迟间隔到 150ms，减少同时触发的网络请求数量
@@ -436,6 +440,7 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
 
         // 更新 hasInvalidComponents 状态
         updateHasInvalidComponents();
+        emit filteredCountChanged();
 
         // 两阶段控制：验证完成后添加到列表
         m_pendingValidationCount--;
@@ -499,6 +504,7 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
 
         // 更新 hasInvalidComponents 状态
         updateHasInvalidComponents();
+        emit filteredCountChanged();
 
         // 两阶段控制：验证失败也要计数
         m_pendingValidationCount--;
@@ -752,6 +758,62 @@ void ComponentListViewModel::fetchAllPreviewImages() {
 
     // 使用批量获取方法获取所有验证通过元器件的预览图
     m_service->fetchBatchPreviewImages(m_validatedComponentIds);
+}
+
+void ComponentListViewModel::setFilterMode(const QString& mode) {
+    if (m_filterMode != mode) {
+        m_filterMode = mode;
+        emit filterModeChanged();
+        emit filteredCountChanged();
+    }
+}
+
+int ComponentListViewModel::filteredCount() const {
+    int count = 0;
+    for (const auto& item : m_componentList) {
+        if (!item)
+            continue;
+        if (m_filterMode == "all") {
+            count++;
+        } else if (m_filterMode == "validating") {
+            if (item->isFetching())
+                count++;
+        } else if (m_filterMode == "valid") {
+            if (!item->isFetching() && item->isValid())
+                count++;
+        } else if (m_filterMode == "invalid") {
+            if (!item->isFetching() && !item->isValid())
+                count++;
+        }
+    }
+    return count;
+}
+
+int ComponentListViewModel::validatingCount() const {
+    int count = 0;
+    for (const auto& item : m_componentList) {
+        if (item && item->isFetching())
+            count++;
+    }
+    return count;
+}
+
+int ComponentListViewModel::validCount() const {
+    int count = 0;
+    for (const auto& item : m_componentList) {
+        if (item && !item->isFetching() && item->isValid())
+            count++;
+    }
+    return count;
+}
+
+int ComponentListViewModel::invalidCount() const {
+    int count = 0;
+    for (const auto& item : m_componentList) {
+        if (item && !item->isFetching() && !item->isValid())
+            count++;
+    }
+    return count;
 }
 
 }  // namespace EasyKiConverter

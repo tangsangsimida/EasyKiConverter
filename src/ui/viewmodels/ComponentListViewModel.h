@@ -25,6 +25,11 @@ class ComponentListViewModel : public QAbstractListModel {
     Q_PROPERTY(QString bomFilePath READ bomFilePath NOTIFY bomFilePathChanged)
     Q_PROPERTY(QString bomResult READ bomResult NOTIFY bomResultChanged)
     Q_PROPERTY(bool hasInvalidComponents READ hasInvalidComponents NOTIFY hasInvalidComponentsChanged)
+    Q_PROPERTY(QString filterMode READ filterMode NOTIFY filterModeChanged)
+    Q_PROPERTY(int filteredCount READ filteredCount NOTIFY filteredCountChanged)
+    Q_PROPERTY(int validatingCount READ validatingCount NOTIFY filteredCountChanged)
+    Q_PROPERTY(int validCount READ validCount NOTIFY filteredCountChanged)
+    Q_PROPERTY(int invalidCount READ invalidCount NOTIFY filteredCountChanged)
 
 public:
     enum ComponentRoles { ItemDataRole = Qt::UserRole + 1 };
@@ -171,12 +176,31 @@ public slots:
      */
     Q_INVOKABLE void copyToClipboard(const QString& text);
 
+    /**
+     * @brief 设置筛选模式
+     *
+     * @param mode 筛选模式: all, validating, valid, invalid
+     */
+    Q_INVOKABLE void setFilterMode(const QString& mode);
+
+    // Getter 方法
+    QString filterMode() const {
+        return m_filterMode;
+    }
+
+    int filteredCount() const;
+    int validatingCount() const;
+    int validCount() const;
+    int invalidCount() const;
+
 signals:
     // componentListChanged 信号不再需要，因为 QAbstractListModel 有自己的信号机制
     void componentCountChanged();
     void bomFilePathChanged();
     void bomResultChanged();
     void hasInvalidComponentsChanged();
+    void filterModeChanged();
+    void filteredCountChanged();
     void componentAdded(const QString& componentId, bool success, const QString& message);
     void componentRemoved(const QString& componentId);
     void listCleared();
@@ -307,6 +331,9 @@ private:
     int m_pendingValidationCount = 0;  // 待验证的元器件数量
     QStringList m_validatedComponentIds;  // 验证通过的元器件ID列表
     bool m_previewFetchEnabled = false;  // 是否允许获取预览图
+
+    // 筛选功能
+    QString m_filterMode = "all";  // 筛选模式: all, validating, valid, invalid
 };
 
 }  // namespace EasyKiConverter
