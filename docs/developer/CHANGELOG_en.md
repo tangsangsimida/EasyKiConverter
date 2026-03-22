@@ -264,11 +264,10 @@ This document records the additions, fixes, and changes in each version of EasyK
 - **Before/After Optimization Comparison**
   | Metric | Before (16 threads) | After (3 threads) | Improvement |
   |--------|-------------------|------------------|-------------|
-  | Total Time | 263.72s | 14.43s | ⬇️ 94.5% |
-  | Throughput | 0.08 components/sec | 1.45 components/sec | ⬆️ 1712% |
-  | Average Fetch Time | 65.8s | 1.76s | ⬇️ 97.3% |
-  | Components Over 3s | 21 | 3 | ⬇️ 85.7% |
-  | Timeout Requests | Unknown | 0 | ✅ Completely Eliminated |
+  | Total Time | 263.72s | 14.43s | [减少] 94.5% |
+  | Throughput | 0.08 components/sec | 1.45 components/sec | [增加] 1712% |
+  | Average Fetch Time | 65.8s | 1.76s | [减少] 97.3% |
+  | Components Over 3s | 21 | 3 | [减少] 85.7% |  | Timeout Requests | Unknown | 0 | [OK] Completely Eliminated |
 
 ## [3.0.0] - 2026-01-18
 

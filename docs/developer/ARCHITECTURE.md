@@ -146,16 +146,23 @@ Service 层负责业务逻辑的处理，提供核心功能。
 
 **主要类：**
 - `ComponentService` - 元件服务
-- `ExportService` - 导出服务
+- `ExportService` - 导出服务（传统）
+- `ExportService_Pipeline` - 流水线并行导出服务
 - `ConfigService` - 配置服务
 - `ComponentDataCollector` - 元件数据收集器（状态机模式）
 - `ComponentExportTask` - 元件导出任务
+- `CommandLineParser` - 命令行参数解析器
+- `LcscImageService` - LCSC 预览图服务
+- `BomParser` - BOM 文件解析器
 
 **职责：**
 - 业务逻辑处理
 - 数据验证
 - 调用底层 API
 - 管理转换流程
+- 命令行参数处理
+- 网络图片获取
+- BOM 文件导入
 
 ### Model 层（模型层）
 
@@ -166,11 +173,13 @@ Model 层负责数据的存储和管理。
 - `SymbolData` - 符号数据模型
 - `FootprintData` - 封装数据模型
 - `Model3DData` - 3D 模型数据模型
+- `ComponentListItemData` - 元件列表项数据模型（UI 数据模型）
 
 **职责：**
 - 数据存储
 - 数据验证
 - 数据序列化
+- UI 状态管理（ComponentListItemData）
 
 ## 核心模块
 
@@ -224,7 +233,7 @@ Model 层负责数据的存储和管理。
 │  └─────────────┘    └───────────────┘    └─────────────┘       │
 │         │                    │                    │               │
 │         ▼                    ▼                    ▼               │
-│   32 threads           N cores             8 threads           │
+│   5 threads            N cores             3 threads            │
 │   (I/O 密集型)        (CPU 密集型)        (磁盘 I/O 密集型)     │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐   │
@@ -245,8 +254,8 @@ Model 层负责数据的存储和管理。
 **职责**：从网络下载所有原始数据
 
 **线程池配置**：
-- 线程数：32（I/O 密集型）
-- 适合：大量网络请求并发
+- 线程数：5（I/O 密集型）
+- 适合：网络请求并发（避免触发服务器限流）
 
 **任务**：
 - 获取组件信息（包含 CAD 数据）
@@ -293,8 +302,8 @@ Model 层负责数据的存储和管理。
 **职责**：将转换后的数据写入文件
 
 **线程池配置**：
-- 线程数：8（磁盘 I/O 密集型）
-- 适合：大量文件写入
+- 线程数：3（磁盘 I/O 密集型）
+- 适合：文件写入并发（避免过度并行导致性能下降）
 
 **任务**：
 - 写入符号库文件（.kicad_sym）
@@ -392,7 +401,7 @@ int overallProgress() {
 ExportServicePipeline.executeExportPipelineWithStages()
     ↓
 ┌─────────────────────────────────────────────┐
-│  Fetch Stage (32 threads)                    │
+│  Fetch Stage (5 threads)                     │
 │  • 下载组件信息                              │
 │  • 下载 CAD 数据                             │
 │  • 下载 3D 模型                              │
@@ -406,7 +415,7 @@ ExportServicePipeline.executeExportPipelineWithStages()
 └─────────────────────────────────────────────┘
     ↓ (QSharedPointer<ComponentExportStatus>)
 ┌─────────────────────────────────────────────┐
-│  Write Stage (8 threads)                     │
+│  Write Stage (3 threads)                     │
 │  • 并行写入符号、封装、3D 模型               │
 │  • 合并符号库                                │
 └─────────────────────────────────────────────┘
@@ -539,8 +548,28 @@ EasyKiConverter_QT/
 │   ├── services/               # 服务层
 │   ├── ui/                     # UI 层
 │   │   ├── qml/                # QML 界面 (包含 Main.qml)
+│   │   │   ├── components/     # 可复用 QML 组件
+│   │   │   │   ├── Card.qml
+│   │   │   │   ├── ModernButton.qml
+│   │   │   │   ├── ComponentInputCard.qml
+│   │   │   │   ├── ComponentListCard.qml
+│   │   │   │   ├── ComponentListItem.qml
+│   │   │   │   ├── ExportSettingsCard.qml
+│   │   │   │   ├── ExportProgressCard.qml
+│   │   │   │   ├── ExportResultsCard.qml
+│   │   │   │   ├── ExportStatisticsCard.qml
+│   │   │   │   ├── ExportButtonsSection.qml
+│   │   │   │   ├── TitleBar.qml
+│   │   │   │   ├── HeaderSection.qml
+│   │   │   │   ├── ResultListItem.qml
+│   │   │   │   ├── ConfirmDialog.qml
+│   │   │   │   ├── ExitDialog.qml
+│   │   │   │   └── WindowResizeHandles.qml
+│   │   │   └── styles/          # 全局样式
 │   │   ├── viewmodels/         # 视图模型
 │   │   └── utils/              # UI 工具
+│   │       ├── ConfigManager.cpp/h      # 配置管理器
+│   │       └── ThumbnailGenerator.cpp/h  # 缩略图生成器
 │   └── workers/                # 工作线程
 ├── deploy/                     # 部署与打包 (Docker, Flatpak, nFPM)
 ├── docs/                       # 文档
