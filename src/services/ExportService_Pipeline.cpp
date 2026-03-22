@@ -23,6 +23,21 @@
 
 #include <algorithm>
 
+#ifdef Q_OS_WIN
+#    if defined(_MSC_VER)
+#        define PSAPI_VERSION 1
+#        include <qt_windows.h>
+
+#        include <psapi.h>
+#        pragma comment(lib, "psapi.lib")
+#    elif defined(__MINGW32__)
+#        define PSAPI_VERSION 1
+#        include <qt_windows.h>
+
+#        include <psapi.h>
+#    endif
+#endif
+
 namespace EasyKiConverter {
 
 ExportServicePipeline::ExportServicePipeline(QObject* parent)
@@ -724,8 +739,11 @@ qint64 ExportServicePipeline::getCurrentProcessMemoryUsage() {
     qWarning() << "VmRSS not found in /proc/self/status, content:" << content.left(500);
     return 0;
 #elif defined(Q_OS_WIN)
-    // Windows 平台暂时返回 0，等待 CI 环境配置好 psapi 后再启用
-    // 可选方案：使用 psapi.h + GetProcessMemoryInfo 或使用 Performance Counters
+    PROCESS_MEMORY_COUNTERS pmc;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
+        return static_cast<qint64>(pmc.WorkingSetSize);
+    }
+    qWarning() << "Failed to get process memory info, error:" << GetLastError();
     return 0;
 #else
     return 0;
