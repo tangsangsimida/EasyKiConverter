@@ -147,6 +147,29 @@ Card {
                 Layout.fillWidth: true
             }
         }
+        // 内存统计信息
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: AppStyle.spacing.lg
+            StatItem {
+                label: qsTranslate("MainWindow", "峰值内存")
+                value: {
+                    if (!exportStatisticsCard.exportProgressController)
+                        return "0 MB";
+                    var memoryBytes = exportStatisticsCard.exportProgressController.statisticsPeakMemoryUsage || 0;
+                    if (memoryBytes === 0) {
+                        return "0 MB";
+                    }
+                    var memoryMB = memoryBytes / (1024 * 1024);
+                    if (memoryMB < 1024) {
+                        return memoryMB.toFixed(2) + " MB";
+                    } else {
+                        return (memoryMB / 1024).toFixed(2) + " GB";
+                    }
+                }
+                Layout.fillWidth: true
+            }
+        }
         // 底部按钮组（居中排列）
         RowLayout {
             Layout.alignment: Qt.AlignHCenter

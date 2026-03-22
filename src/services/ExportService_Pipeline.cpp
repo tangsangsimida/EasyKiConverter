@@ -23,6 +23,11 @@
 
 #include <algorithm>
 
+#ifdef Q_OS_WIN
+#    include <psapi.h>
+#    include <windows.h>
+#endif
+
 namespace EasyKiConverter {
 
 ExportServicePipeline::ExportServicePipeline(QObject* parent)
@@ -690,12 +695,59 @@ bool ExportServicePipeline::mergeSymbolLibrary() {
     return success;
 }
 
+qint64 ExportServicePipeline::getCurrentProcessMemoryUsage() {
+#ifdef Q_OS_LINUX
+    QFile file("/proc/self/status");
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "Failed to open /proc/self/status:" << file.errorString();
+        return 0;
+    }
+    QByteArray content = file.readAll();
+    file.close();
+
+    QList<QByteArray> lines = content.split('\n');
+    for (const QByteArray& line : lines) {
+        if (line.startsWith("VmRSS:")) {
+            QByteArray value = line.mid(6).trimmed();
+            // 移除单位 "kB" 或 "k"
+            if (value.endsWith("kB") || value.endsWith("kb")) {
+                value = value.left(value.length() - 2);
+            } else if (value.endsWith("k")) {
+                value = value.left(value.length() - 1);
+            }
+            value = value.trimmed();
+            bool ok = false;
+            qint64 rssKb = value.toLongLong(&ok);
+            if (ok) {
+                return rssKb * 1024;
+            } else {
+                qWarning() << "Failed to parse VmRSS value:" << value;
+                return 0;
+            }
+        }
+    }
+    qWarning() << "VmRSS not found in /proc/self/status, content:" << content.left(500);
+    return 0;
+#elif defined(Q_OS_WIN)
+    PROCESS_MEMORY_COUNTERS pmc;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
+        return pmc.WorkingSetSize;
+    }
+    return 0;
+#else
+    return 0;
+#endif
+}
+
 void ExportServicePipeline::updateMemoryPeak(const QSharedPointer<ComponentExportStatus>& status) {
-    if (!status)
-        return;
-    MemorySnapshot snapshot = status->getMemorySnapshot();
-    if (snapshot.totalSize > m_originalStatistics.peakMemoryUsage) {
-        m_originalStatistics.peakMemoryUsage = snapshot.totalSize;
+    Q_UNUSED(status);
+    qint64 currentMemory = getCurrentProcessMemoryUsage();
+    if (currentMemory > 0) {
+        if (m_originalStatistics.peakMemoryUsage == 0) {
+            m_originalStatistics.peakMemoryUsage = currentMemory;
+        } else if (currentMemory > m_originalStatistics.peakMemoryUsage) {
+            m_originalStatistics.peakMemoryUsage = currentMemory;
+        }
     }
 }
 
