@@ -125,12 +125,24 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: AppStyle.spacing.sm
         spacing: AppStyle.spacing.md
-        // 预览图区域 - 支持悬停放大
-        Item {
-            id: previewArea
-            Layout.preferredWidth: 48
-            Layout.preferredHeight: 48
-            Layout.alignment: Qt.AlignVCenter
+            // 预览图区域 - 支持悬停放大
+            Item {
+                id: previewArea
+                Layout.preferredWidth: 48
+                Layout.preferredHeight: 48
+                Layout.alignment: Qt.AlignVCenter
+
+                // 悬停延迟定时器：悬停1秒后才显示放大预览图
+                Timer {
+                    id: hoverDelayTimer
+                    interval: 250
+                    repeat: false
+                    onTriggered: {
+                        if (previewMouseArea.containsMouse && itemData && itemData.hasThumbnail) {
+                            previewPopup.visible = true;
+                        }
+                    }
+                }
             // 默认显示的单张缩略图
             Rectangle {
                 id: defaultThumbnail
@@ -179,7 +191,8 @@ Rectangle {
                 width: 490 // 三张图片 150x3 + 间距
                 height: 170
                 padding: 0
-                visible: previewMouseArea.containsMouse && itemData && itemData.hasThumbnail
+                // visible 由 Timer 控制，悬停1秒后显示
+                visible: false
                 closePolicy: Popup.NoAutoClose
                 modal: false
                 focus: false
@@ -378,6 +391,16 @@ Rectangle {
                             var url = "https://so.szlcsc.com/global.html?k=" + itemData.componentId;
                             Qt.openUrlExternally(url);
                         }
+                    }
+                }
+                onContainsMouseChanged: {
+                    if (containsMouse && itemData && itemData.hasThumbnail) {
+                        // 开始计时，1秒后显示预览图
+                        hoverDelayTimer.start();
+                    } else {
+                        // 鼠标离开，立即停止计时并隐藏预览图
+                        hoverDelayTimer.stop();
+                        previewPopup.visible = false;
                     }
                 }
             }

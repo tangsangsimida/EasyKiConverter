@@ -454,6 +454,13 @@ Card {
         // 注意：当 model 是 DelegateModel 时，不需要指定 delegate 属性，
         // 因为 DelegateModel 已经包含了 delegate。
 
+        // 监听滚动状态
+        onMovingChanged: {
+            if (componentListCard.componentListController) {
+                componentListCard.componentListController.setScrolling(moving);
+            }
+        }
+
         ScrollBar.vertical: ScrollBar {
             policy: ScrollBar.AsNeeded
         }

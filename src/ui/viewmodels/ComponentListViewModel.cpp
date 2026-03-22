@@ -52,9 +52,11 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                         item->setThumbnail(image);
                         qDebug() << "First preview image (index 0) set as thumbnail for component:" << componentId;
                     }
-                    // 添加到防抖集合
-                    m_pendingUpdateIndices.insert(componentId);
-                    m_debounceTimer->start();
+                    // 滚动时不触发 UI 更新，避免卡顿
+                    if (!m_isScrolling) {
+                        m_pendingUpdateIndices.insert(componentId);
+                        m_debounceTimer->start();
+                    }
                 }
             });
     connect(m_service,
@@ -766,6 +768,13 @@ void ComponentListViewModel::setFilterMode(const QString& mode) {
         m_filterMode = mode;
         emit filterModeChanged();
         emit filteredCountChanged();
+    }
+}
+
+void ComponentListViewModel::setScrolling(bool scrolling) {
+    if (m_isScrolling != scrolling) {
+        m_isScrolling = scrolling;
+        emit isScrollingChanged();
     }
 }
 

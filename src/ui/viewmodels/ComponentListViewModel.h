@@ -30,6 +30,7 @@ class ComponentListViewModel : public QAbstractListModel {
     Q_PROPERTY(int validatingCount READ validatingCount NOTIFY filteredCountChanged)
     Q_PROPERTY(int validCount READ validCount NOTIFY filteredCountChanged)
     Q_PROPERTY(int invalidCount READ invalidCount NOTIFY filteredCountChanged)
+    Q_PROPERTY(bool isScrolling READ isScrolling NOTIFY isScrollingChanged)
 
 public:
     enum ComponentRoles { ItemDataRole = Qt::UserRole + 1 };
@@ -193,6 +194,17 @@ public slots:
     int validCount() const;
     int invalidCount() const;
 
+    bool isScrolling() const {
+        return m_isScrolling;
+    }
+
+    /**
+     * @brief 设置滚动状态
+     *
+     * @param scrolling 是否正在滚动
+     */
+    Q_INVOKABLE void setScrolling(bool scrolling);
+
 signals:
     // componentListChanged 信号不再需要，因为 QAbstractListModel 有自己的信号机制
     void componentCountChanged();
@@ -201,6 +213,7 @@ signals:
     void hasInvalidComponentsChanged();
     void filterModeChanged();
     void filteredCountChanged();
+    void isScrollingChanged();
     void componentAdded(const QString& componentId, bool success, const QString& message);
     void componentRemoved(const QString& componentId);
     void listCleared();
@@ -334,6 +347,9 @@ private:
 
     // 筛选功能
     QString m_filterMode = "all";  // 筛选模式: all, validating, valid, invalid
+
+    // 滚动状态
+    bool m_isScrolling = false;  // 是否正在滚动
 };
 
 }  // namespace EasyKiConverter
