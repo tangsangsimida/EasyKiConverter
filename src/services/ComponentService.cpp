@@ -175,6 +175,11 @@ void ComponentService::fetchLcscPreviewImage(const QString& componentId) {
     m_imageService->fetchPreviewImages(componentId);
 }
 
+void ComponentService::fetchBatchPreviewImages(const QStringList& componentIds) {
+    qDebug() << "ComponentService: Fetching batch preview images for" << componentIds.count() << "components";
+    m_imageService->fetchBatchPreviewImages(componentIds);
+}
+
 void ComponentService::handleImageReady(const QString& componentId, const QByteArray& imageData, int imageIndex) {
     qDebug() << "ComponentService::handleImageReady - component:" << componentId << "index:" << imageIndex
              << "data size:" << imageData.size() << "bytes";
@@ -578,17 +583,13 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     m_fetchingComponents[m_currentComponentId].data = componentData;
 
     // 先发送完成信号，确保 ComponentListViewModel 获取到完整的 ComponentData
-    // 图片下载是异步的，会在后台继续进行
+    // 预览图获取现在由 ComponentListViewModel 两阶段控制：验证完成后统一获取
     QString currentId;
     {
         QMutexLocker locker(&m_currentIdMutex);
         currentId = m_currentComponentId;
     }
     emit cadDataReady(currentId, componentData);
-
-    // 然后调用 LCSC API 获取数据手册和预览图
-    m_imageService->fetchPreviewImages(currentId);
-    qDebug() << "Called fetchPreviewImages to get LCSC datasheet and preview images for" << currentId;
 
     // 如果在并行模式下，处理并行数据收集
     if (m_parallelFetching) {
@@ -664,9 +665,7 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
             // 处理并行数据收集
             handleParallelDataCollected(componentId, componentDataCopy);
 
-            // 然后调用 LCSC API 获取数据手册和预览图
-            m_imageService->fetchPreviewImages(componentId);
-            qDebug() << "Called fetchPreviewImages after 3D model loaded for" << componentId;
+            // 预览图获取现在由 ComponentListViewModel 两阶段控制：验证完成后统一获取
 
             // 从待处理列表中移除
             {
@@ -694,9 +693,8 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
                 qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
 
                 // 调用 LCSC API 获取数据手册和预览图 URL（异步）
+                // 预览图获取现在由 ComponentListViewModel 两阶段控制：验证完成后统一获取
                 m_fetchingComponents[m_currentComponentId].data = m_pendingComponentData;
-                m_imageService->fetchPreviewImages(m_currentComponentId);
-                qDebug() << "Called fetchPreviewImages after 3D model loaded (serial mode) for" << m_currentComponentId;
 
                 // 发送完成信号
                 emit cadDataReady(m_currentComponentId, m_pendingComponentData);

@@ -287,6 +287,9 @@ private:
     // 更新 hasInvalidComponents 状态
     void updateHasInvalidComponents();
 
+    // 批量获取所有验证通过元器件的预览图
+    void fetchAllPreviewImages();
+
 private:
     ComponentService* m_service;
     QList<ComponentListItemData*> m_componentList;
@@ -299,6 +302,11 @@ private:
     // 防抖定时器，用于减少频繁的 UI 更新
     QTimer* m_debounceTimer;
     QSet<QString> m_pendingUpdateIndices;  // 待更新的索引集合
+
+    // 两阶段控制：先验证，再获取预览图
+    int m_pendingValidationCount = 0;  // 待验证的元器件数量
+    QStringList m_validatedComponentIds;  // 验证通过的元器件ID列表
+    bool m_previewFetchEnabled = false;  // 是否允许获取预览图
 };
 
 }  // namespace EasyKiConverter

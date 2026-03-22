@@ -141,6 +141,11 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
     // 触发获取数据
     m_service->fetchComponentData(trimmedId, false);
 
+    // 两阶段控制：单个添加也使用两阶段
+    m_pendingValidationCount = 1;
+    m_validatedComponentIds.clear();
+    m_previewFetchEnabled = false;
+
     emit componentCountChanged();
     emit componentAdded(trimmedId, true, "Component added");
 }
@@ -219,6 +224,11 @@ void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds)
 
     if (newIds.isEmpty())
         return;
+
+    // 重置两阶段控制变量
+    m_pendingValidationCount = newIds.count();
+    m_validatedComponentIds.clear();
+    m_previewFetchEnabled = false;
 
     // 一次性插入所有新元器件，只触发 1 次 UI 重建
     int first = m_componentList.count();
@@ -408,6 +418,18 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
         // 更新 hasInvalidComponents 状态
         updateHasInvalidComponents();
 
+        // 两阶段控制：验证完成后添加到列表
+        m_pendingValidationCount--;
+        if (!m_validatedComponentIds.contains(componentId)) {
+            m_validatedComponentIds.append(componentId);
+        }
+
+        // 所有验证完成后，统一获取预览图
+        if (m_pendingValidationCount <= 0) {
+            m_previewFetchEnabled = true;
+            fetchAllPreviewImages();
+        }
+
         // 异步生成缩略图 - 使用 QPointer 防止悬垂指针
         QPointer<ComponentListItemData> safeItem = item;
         QThreadPool::globalInstance()->start(QRunnable::create([safeItem, dataPtr]() {
@@ -422,8 +444,7 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
         }));
 
         // 尝试获取 LCSC 预览图覆盖生成的缩略图
-        // 注意：这里不设置 setFetching(true)，因为预览图获取是后台任务，不应该影响状态显示
-        m_service->fetchLcscPreviewImage(componentId);
+        // 注意：现在由 fetchAllPreviewImages() 统一控制获取时机
 
         // 添加到待更新集合
         m_pendingUpdateIndices.insert(componentId);
@@ -459,6 +480,15 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
 
         // 更新 hasInvalidComponents 状态
         updateHasInvalidComponents();
+
+        // 两阶段控制：验证失败也要计数
+        m_pendingValidationCount--;
+
+        // 所有验证（成功+失败）完成后，统一获取预览图
+        if (m_pendingValidationCount <= 0) {
+            m_previewFetchEnabled = true;
+            fetchAllPreviewImages();
+        }
 
         // 添加到防抖集合
 
@@ -613,10 +643,16 @@ void ComponentListViewModel::refreshComponentInfo(int index) {
         item->setValid(false);  // 验证开始时先设置为 false
         item->setErrorMessage("");
         m_service->fetchComponentData(item->componentId(), false);
+
+        // 两阶段控制
+        m_pendingValidationCount = 1;
+        m_validatedComponentIds.clear();
+        m_previewFetchEnabled = false;
     }
 }
 
 void ComponentListViewModel::retryAllInvalidComponents() {
+    int retryCount = 0;
     for (int i = 0; i < m_componentList.count(); ++i) {
         auto item = m_componentList.at(i);
         if (item && !item->isValid() && !item->isFetching()) {
@@ -624,7 +660,15 @@ void ComponentListViewModel::retryAllInvalidComponents() {
             item->setValid(false);  // 验证开始时先设置为 false
             item->setErrorMessage("");
             m_service->fetchComponentData(item->componentId(), false);
+            retryCount++;
         }
+    }
+
+    // 两阶段控制
+    if (retryCount > 0) {
+        m_pendingValidationCount = retryCount;
+        m_validatedComponentIds.clear();
+        m_previewFetchEnabled = false;
     }
 }
 
@@ -677,6 +721,18 @@ void ComponentListViewModel::updateHasInvalidComponents() {
         m_hasInvalidComponents = hasInvalid;
         emit hasInvalidComponentsChanged();
     }
+}
+
+void ComponentListViewModel::fetchAllPreviewImages() {
+    if (m_validatedComponentIds.isEmpty()) {
+        qDebug() << "No validated components to fetch preview images for";
+        return;
+    }
+
+    qDebug() << "Fetching preview images for" << m_validatedComponentIds.count() << "validated components";
+
+    // 使用批量获取方法获取所有验证通过元器件的预览图
+    m_service->fetchBatchPreviewImages(m_validatedComponentIds);
 }
 
 }  // namespace EasyKiConverter

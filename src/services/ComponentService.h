@@ -70,6 +70,13 @@ public:
     void fetchLcscPreviewImage(const QString& componentId);
 
     /**
+     * @brief 批量获取多个元件的 LCSC 预览图
+     *
+     * @param componentIds 元件ID列表
+     */
+    void fetchBatchPreviewImages(const QStringList& componentIds);
+
+    /**
      * @brief 并行获取多个元件的数据
      *
      * @param componentIds 元件ID列表
