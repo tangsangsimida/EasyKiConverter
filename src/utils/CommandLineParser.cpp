@@ -15,7 +15,8 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
     , m_configOption(QStringList() << "config", "指定配置文件路径", "path")
     , m_languageOption(QStringList() << "language", "设置界面语言 (zh_CN/en)", "lang", "zh_CN")
     , m_themeOption(QStringList() << "theme", "设置界面主题 (dark/light)", "theme", "dark")
-    , m_portableOption(QStringList() << "portable", "便携模式（配置文件保存在程序目录）") {
+    , m_portableOption(QStringList() << "portable", "便携模式（配置文件保存在程序目录）")
+    , m_syncLoggingOption(QStringList() << "sync-logging", "启用同步控制台日志输出（确保彩色日志显示，方便调试）") {
     m_parser.setApplicationDescription(
         QCoreApplication::translate("main", "EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具"));
 
@@ -40,6 +41,7 @@ void CommandLineParser::setupOptions() {
     m_parser.addOption(m_languageOption);
     m_parser.addOption(m_themeOption);
     m_parser.addOption(m_portableOption);
+    m_parser.addOption(m_syncLoggingOption);
 }
 
 bool CommandLineParser::parse() {
@@ -76,6 +78,10 @@ bool CommandLineParser::isThemeSet() const {
 
 bool CommandLineParser::isPortableMode() const {
     return m_parser.isSet(m_portableOption);
+}
+
+bool CommandLineParser::isSyncLogging() const {
+    return m_parser.isSet(m_syncLoggingOption);
 }
 
 QString CommandLineParser::helpText() const {

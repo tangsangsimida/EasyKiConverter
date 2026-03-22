@@ -131,6 +131,17 @@ Rectangle {
             Layout.preferredWidth: 48
             Layout.preferredHeight: 48
             Layout.alignment: Qt.AlignVCenter
+            // 悬停延迟定时器：悬停1秒后才显示放大预览图
+            Timer {
+                id: hoverDelayTimer
+                interval: 250
+                repeat: false
+                onTriggered: {
+                    if (previewMouseArea.containsMouse && itemData && itemData.hasThumbnail) {
+                        previewPopup.visible = true;
+                    }
+                }
+            }
             // 默认显示的单张缩略图
             Rectangle {
                 id: defaultThumbnail
@@ -162,14 +173,13 @@ Rectangle {
                 }
 
                 // 占位符/错误状态
+                // 只在验证完成且失败时显示 ✕（不包含验证中状态）
                 Text {
                     anchors.centerIn: parent
-                    // 只在验证失败时显示 ✕
-                    // 不在验证成功但没有缩略图时显示 ?，而是显示空白或加载状态
-                    text: (itemData && !itemData.isValid) ? "✕" : ""
+                    text: (itemData && !itemData.isFetching && !itemData.isValid) ? "✕" : ""
                     font.pixelSize: AppStyle.fontSizes.xxl
-                    color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
-                    visible: (itemData && !itemData.isValid)
+                    color: (itemData && !itemData.isFetching && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
+                    visible: (itemData && !itemData.isFetching && !itemData.isValid)
                 }
             }
 
@@ -180,7 +190,10 @@ Rectangle {
                 width: 490 // 三张图片 150x3 + 间距
                 height: 170
                 padding: 0
-                visible: previewMouseArea.containsMouse && itemData && itemData.hasThumbnail
+                // visible 由 Timer 控制，悬停1秒后显示
+                visible: false
+                // visible 由 Timer 控制，悬停1秒后显示
+                visible: false
                 closePolicy: Popup.NoAutoClose
                 modal: false
                 focus: false
@@ -381,6 +394,26 @@ Rectangle {
                         }
                     }
                 }
+                onContainsMouseChanged: {
+                    if (containsMouse && itemData && itemData.hasThumbnail) {
+                        // 开始计时，1秒后显示预览图
+                        hoverDelayTimer.start();
+                    } else {
+                        // 鼠标离开，立即停止计时并隐藏预览图
+                        hoverDelayTimer.stop();
+                        previewPopup.visible = false;
+                    }
+                }
+                onContainsMouseChanged: {
+                    if (containsMouse && itemData && itemData.hasThumbnail) {
+                        // 开始计时，1秒后显示预览图
+                        hoverDelayTimer.start();
+                    } else {
+                        // 鼠标离开，立即停止计时并隐藏预览图
+                        hoverDelayTimer.stop();
+                        previewPopup.visible = false;
+                    }
+                }
             }
         }
 
@@ -412,7 +445,7 @@ Rectangle {
                 font.pixelSize: AppStyle.fontSizes.md
                 font.family: "Courier New"
                 font.bold: true
-                color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textPrimary
+                color: (itemData && !itemData.isFetching && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textPrimary
                 elide: Text.ElideRight
             }
 
@@ -434,7 +467,7 @@ Rectangle {
                     return info.join(" | ");
                 }
                 font.pixelSize: AppStyle.fontSizes.sm
-                color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
+                color: (itemData && !itemData.isFetching && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
                 elide: Text.ElideRight
             }
         }

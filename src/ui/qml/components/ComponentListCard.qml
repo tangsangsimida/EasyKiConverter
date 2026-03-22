@@ -111,7 +111,6 @@ Card {
     RowLayout {
         width: parent.width
         spacing: 12
-
         // 左边：元器件数量 + 筛选
         Text {
             id: componentCountLabel
@@ -132,7 +131,6 @@ Card {
             radius: AppStyle.radius.lg
             visible: componentListCard.componentListController ? componentListCard.componentListController.componentCount > 0 : false
             clip: true
-
             // 滑块背景指示器
             Rectangle {
                 id: sliderIndicator
@@ -141,7 +139,7 @@ Card {
                 anchors.verticalCenter: parent.verticalCenter
                 radius: AppStyle.radius.md
                 color: {
-                    var mode = componentListCard.componentListController.filterMode;
+                    var mode = componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all";
                     if (mode === "validating")
                         return AppStyle.colors.warning;
                     if (mode === "valid")
@@ -153,11 +151,12 @@ Card {
 
                 x: {
                     var step = (filterSegmentedControl.width - 8) / 4;
-                    if (componentListCard.componentListController.filterMode === "validating")
+                    var mode = componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all";
+                    if (mode === "validating")
                         return 4 + step;
-                    if (componentListCard.componentListController.filterMode === "valid")
+                    if (mode === "valid")
                         return 4 + step * 2;
-                    if (componentListCard.componentListController.filterMode === "invalid")
+                    if (mode === "invalid")
                         return 4 + step * 3;
                     return 4;
                 }
@@ -180,17 +179,18 @@ Card {
             Row {
                 anchors.fill: parent
                 anchors.margins: 4
-
                 // 全部
                 Button {
                     width: (filterSegmentedControl.width - 8) / 4
                     height: filterSegmentedControl.height - 8
                     flat: true
-                    background: Rectangle { color: "transparent" }
+                    background: Rectangle {
+                        color: "transparent"
+                    }
                     contentItem: Text {
                         text: qsTr("全部 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.componentCount : 0)
-                        color: componentListCard.componentListController.filterMode === "all" ? "#ffffff" : AppStyle.colors.textSecondary
-                        font.bold: componentListCard.componentListController.filterMode === "all"
+                        color: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "all" ? "#ffffff" : AppStyle.colors.textSecondary
+                        font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "all"
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         font.pixelSize: 12
@@ -203,11 +203,13 @@ Card {
                     width: (filterSegmentedControl.width - 8) / 4
                     height: filterSegmentedControl.height - 8
                     flat: true
-                    background: Rectangle { color: "transparent" }
+                    background: Rectangle {
+                        color: "transparent"
+                    }
                     contentItem: Text {
                         text: qsTr("验证中 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.validatingCount : 0)
-                        color: componentListCard.componentListController.filterMode === "validating" ? "#ffffff" : AppStyle.colors.textSecondary
-                        font.bold: componentListCard.componentListController.filterMode === "validating"
+                        color: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "validating" ? "#ffffff" : AppStyle.colors.textSecondary
+                        font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "validating"
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         font.pixelSize: 12
@@ -220,11 +222,13 @@ Card {
                     width: (filterSegmentedControl.width - 8) / 4
                     height: filterSegmentedControl.height - 8
                     flat: true
-                    background: Rectangle { color: "transparent" }
+                    background: Rectangle {
+                        color: "transparent"
+                    }
                     contentItem: Text {
                         text: qsTr("有效 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.validCount : 0)
-                        color: componentListCard.componentListController.filterMode === "valid" ? "#ffffff" : AppStyle.colors.textSecondary
-                        font.bold: componentListCard.componentListController.filterMode === "valid"
+                        color: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "valid" ? "#ffffff" : AppStyle.colors.textSecondary
+                        font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "valid"
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         font.pixelSize: 12
@@ -237,11 +241,13 @@ Card {
                     width: (filterSegmentedControl.width - 8) / 4
                     height: filterSegmentedControl.height - 8
                     flat: true
-                    background: Rectangle { color: "transparent" }
+                    background: Rectangle {
+                        color: "transparent"
+                    }
                     contentItem: Text {
                         text: qsTr("无效 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.invalidCount : 0)
-                        color: componentListCard.componentListController.filterMode === "invalid" ? "#ffffff" : AppStyle.colors.textSecondary
-                        font.bold: componentListCard.componentListController.filterMode === "invalid"
+                        color: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "invalid" ? "#ffffff" : AppStyle.colors.textSecondary
+                        font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "invalid"
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         font.pixelSize: 12
@@ -453,6 +459,13 @@ Card {
         // 但是 GridView 需要直接使用 visualModel 作为 model。
         // 注意：当 model 是 DelegateModel 时，不需要指定 delegate 属性，
         // 因为 DelegateModel 已经包含了 delegate。
+
+        // 监听滚动状态
+        onMovingChanged: {
+            if (componentListCard.componentListController) {
+                componentListCard.componentListController.setScrolling(moving);
+            }
+        }
 
         ScrollBar.vertical: ScrollBar {
             policy: ScrollBar.AsNeeded

@@ -51,7 +51,7 @@ bool isDebugMode(const EasyKiConverter::CommandLineParser& parser) {
     return false;
 }
 
-void setupLogging(bool debugMode, const QString& logLevelStr, const QString& logFilePath) {
+void setupLogging(bool debugMode, const QString& logLevelStr, const QString& logFilePath, bool syncLogging) {
     using namespace EasyKiConverter;
 
 #ifdef _WIN32
@@ -112,9 +112,10 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
 
     logger->setGlobalLevel(logLevel);
 
-    // 控制台输出（彩色，异步模式减少性能影响）
-
-    auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
+    // 控制台输出（彩色）
+    // 根据 --sync-logging 参数决定使用同步还是异步模式
+    // 默认使用异步模式（更好的性能），使用 --sync-logging 参数启用同步模式（确保彩色日志显示）
+    auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, !syncLogging);
 
     consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
 
@@ -164,14 +165,19 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
 }  // anonymous namespace
 
 int main(int argc, char* argv[]) {
+    // 设置 stdout 为无缓冲模式，确保日志颜色正常显示
+    setbuf(stdout, nullptr);
+    setbuf(stderr, nullptr);
+
     // 在 QApplication 构造函数之前检查命令行参数
     bool showHelp = false;
     bool showVersion = false;
     for (int i = 1; i < argc; ++i) {
         QString arg = QString::fromLocal8Bit(argv[i]);
-        if (arg == "--help" || arg == "-h") {
+        // 支持 Unix 风格（-h, --help）和 Windows 风格（/h, /help, /?, ?）的参数
+        if (arg == "--help" || arg == "-h" || arg == "/h" || arg == "/help" || arg == "/?" || arg == "?") {
             showHelp = true;
-        } else if (arg == "--version" || arg == "-v") {
+        } else if (arg == "--version" || arg == "-v" || arg == "/v" || arg == "/version") {
             showVersion = true;
         }
     }
@@ -196,16 +202,17 @@ int main(int argc, char* argv[]) {
         QString helpText = cmdParser.helpText();
 
 #ifdef _WIN32
-        // 将帮助信息写入文件
-        QFile helpFile("easykiconverter_help.txt");
-        if (helpFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&helpFile);
-            out.setEncoding(QStringConverter::Utf8);
-            out << helpText;
-            helpFile.close();
+        // 尝试附加到父进程的控制台（如果是从命令行启动的）
+        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+            // 如果附加失败，创建新的控制台窗口
+            AllocConsole();
+            SetConsoleTitleA("EasyKiConverter - Help");
         }
+        // 重定向标准输出
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
 
-        // 在控制台模式下，直接输出到标准输出
+        // 输出帮助信息到控制台
         QTextStream consoleOut(stdout);
         consoleOut << helpText;
 #else
@@ -219,7 +226,16 @@ int main(int argc, char* argv[]) {
         QString versionText = "EasyKiConverter " + app.applicationVersion() + "\n";
 
 #ifdef _WIN32
-        // 在控制台模式下，直接输出到标准输出
+        // 尝试附加到父进程的控制台（如果是从命令行启动的）
+        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+            // 如果附加失败，创建新的控制台窗口
+            AllocConsole();
+            SetConsoleTitleA("EasyKiConverter - Version");
+        }
+        // 重定向标准输出
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+
+        // 输出版本信息到控制台
         QTextStream consoleOut(stdout);
         consoleOut << versionText;
 #else
@@ -272,7 +288,7 @@ int main(int argc, char* argv[]) {
     bool debugMode = isDebugMode(cmdParser);
 
     // 初始化日志系统（在 QApplication 创建后立即初始化）
-    setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile());
+    setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile(), cmdParser.isSyncLogging());
 
     // 尝试设置应用程序图标
     QStringList iconPaths = {":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
