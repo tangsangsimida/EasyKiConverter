@@ -156,11 +156,25 @@ void ComponentListViewModel::removeComponent(int index) {
         auto item = m_componentList.takeAt(index);
         QString removedId = item->componentId();
         m_componentIdIndex.remove(removedId);  // 维护索引
+
+        // 两阶段控制：更新状态
+        m_validatedComponentIds.removeAll(removedId);
+        // 只有当元器件还在验证中（isFetching=true）时才减少计数
+        if (item->isFetching()) {
+            m_pendingValidationCount--;
+        }
+
         delete item;
         endRemoveRows();
 
         // 更新 hasInvalidComponents 状态
         updateHasInvalidComponents();
+
+        // 如果删除后验证队列为空，尝试开始预览图获取
+        if (m_pendingValidationCount <= 0 && !m_validatedComponentIds.isEmpty()) {
+            m_previewFetchEnabled = true;
+            fetchAllPreviewImages();
+        }
 
         emit componentCountChanged();
         emit componentRemoved(removedId);
@@ -188,6 +202,11 @@ void ComponentListViewModel::clearComponentList() {
         m_componentList.clear();
         m_componentIdIndex.clear();  // 清空索引
         endResetModel();
+
+        // 两阶段控制：重置状态
+        m_pendingValidationCount = 0;
+        m_validatedComponentIds.clear();
+        m_previewFetchEnabled = false;
 
         // 更新 hasInvalidComponents 状态
         updateHasInvalidComponents();
