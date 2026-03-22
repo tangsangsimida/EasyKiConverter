@@ -8,7 +8,10 @@
 #include <QWaitCondition>
 
 #include <cstdio>
-#include <unistd.h>
+
+#ifndef Q_OS_WIN
+#    include <unistd.h>
+#endif
 
 #ifdef Q_OS_WIN
 #    include <windows.h>
