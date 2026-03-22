@@ -40,6 +40,12 @@ Rectangle {
         text: qsTr("已复制 ID")
         delay: 0
         timeout: 1500
+        background: Rectangle {
+            color: AppStyle.isDarkMode ? "#1e293b" : "#ffffff"
+            radius: AppStyle.radius.md
+            border.width: 1
+            border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.1)
+        }
     }
     RowLayout {
         anchors.fill: parent
