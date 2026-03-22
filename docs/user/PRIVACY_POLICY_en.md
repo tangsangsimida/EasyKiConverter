@@ -2,7 +2,7 @@
 
 **Last Updated:** March 13, 2026
 
-English Version | [中文版本](../privacy_policy/)
+English Version | [中文版本](privacy_policy/)
 
 ## 1. Introduction
 EasyKiConverter ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we handle information when you use our desktop application.
