@@ -14,7 +14,7 @@ This report documents the performance optimization efforts implemented during th
 
 In the three-stage pipeline parallel architecture of v3.0.0, we identified several performance bottlenecks and architectural issues:
 
-#### Issue 1: ProcessWorker Contains Network Requests 🔴 Critical
+#### Issue 1: ProcessWorker Contains Network Requests [Critical]
 
 **Description**:
 - ProcessWorker was designed to be CPU-intensive (thread pool size = CPU core count).
@@ -32,7 +32,7 @@ In the three-stage pipeline parallel architecture of v3.0.0, we identified sever
 
 ---
 
-#### Issue 2: Synchronous Waiting with QEventLoop 🔴 Critical
+#### Issue 2: Synchronous Waiting with QEventLoop [Critical]
 
 **Description**:
 - 32 FetchWorker threads were simultaneously blocked on network requests.
@@ -49,7 +49,7 @@ In the three-stage pipeline parallel architecture of v3.0.0, we identified sever
 
 ---
 
-#### Issue 3: Frequent Copying of ComponentExportStatus 🔴 Critical
+#### Issue 3: Frequent Copying of ComponentExportStatus [Critical]
 
 **Description**:
 - `ComponentExportStatus` contains large amounts of binary data (JSON, OBJ, STEP).
@@ -67,7 +67,7 @@ In the three-stage pipeline parallel architecture of v3.0.0, we identified sever
 
 ---
 
-#### Issue 4: Fixed Queue Size of 100 🟡 Medium
+#### Issue 4: Fixed Queue Size of 100 [Medium]
 
 **Description**:
 - The queue size was fixed at 100.
@@ -93,7 +93,7 @@ After 100 seconds:
 
 ---
 
-#### Issue 5: Serial Writing in WriteWorker 🟡 Medium
+#### Issue 5: Serial Writing in WriteWorker [Medium]
 
 **Description**:
 - A single component's symbol, footprint, and 3D model were written serially.
@@ -171,7 +171,7 @@ After 100 seconds:
 - Avoid thread blocking.
 - Use Qt's asynchronous APIs.
 
-**Status**: ⚠️ Skipped (requires significant refactoring; P0 improvements already addressed the critical issues).
+**Status**: [Note] Skipped (requires significant refactoring; P0 improvements already addressed the critical issues).
 
 ---
 
@@ -246,9 +246,9 @@ cmake --build build --config Debug --parallel 16
 ```
 
 **Build Result**:
-- ✅ Compilation successful, no errors.
-- ✅ Executable generated successfully.
-- ⚠️ Only minor warnings (unused parameters, signed/unsigned comparison).
+- [OK] Compilation successful, no errors.
+- [OK] Executable generated successfully.
+- [Note] Only minor warnings (unused parameters, signed/unsigned comparison).
 
 ---
 
@@ -361,9 +361,9 @@ cmake --build build --config Debug --parallel 16
 ### Compilation Tests
 
 **Result**:
-- ✅ Compilation successful, no errors.
-- ✅ Executable generated successfully.
-- ⚠️ Only minor warnings (unused parameters, signed/unsigned comparison).
+- [OK] Compilation successful, no errors.
+- [OK] Executable generated successfully.
+- [Note] Only minor warnings (unused parameters, signed/unsigned comparison).
 
 ### Performance Benchmark Tests
 
