@@ -318,7 +318,7 @@ target_include_directories(appEasyKiconverter_Cpp_Version
 
 # 编译选项
 if(MSVC)
-    target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE /W4)
+    target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE /W4 /wd4702)
 else()
     target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE -Wall -Wextra -Wpedantic)
 endif()
