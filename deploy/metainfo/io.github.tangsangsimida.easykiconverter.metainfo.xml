@@ -312,6 +312,78 @@
         </ul>
       </description>
     </release>
+    <release version="3.0.14" date="2026-03-09">
+      <description>
+        <p>Component list filtering, UI improvements, dialog interaction enhancements</p>
+        <p xml:lang="zh_CN">组件列表筛选、UI 改进、对话框交互增强</p>
+        <ul>
+          <li>Added component list filtering functionality</li>
+          <li xml:lang="zh_CN">新增组件列表筛选功能</li>
+          <li>Improved component validation status management</li>
+          <li xml:lang="zh_CN">完善元器件列表的验证状态管理</li>
+          <li>Added batch preview image fetching</li>
+          <li xml:lang="zh_CN">添加批量获取预览图功能</li>
+          <li>Fixed QML duplicate property issues</li>
+          <li xml:lang="zh_CN">修复 QML 重复属性问题</li>
+          <li>Fixed thumbnail display delay after validation</li>
+          <li xml:lang="zh_CN">修复元器件验证成功后缩略图延迟显示问题</li>
+          <li>Added slider UI interaction for confirm dialog</li>
+          <li xml:lang="zh_CN">为确认对话框添加滑块 UI 交互效果</li>
+          <li>Improved copy feedback tooltip UI</li>
+          <li xml:lang="zh_CN">改进复制反馈提示的 UI 和交互体验</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.13" date="2026-03-07">
+      <description>
+        <p>Thread safety improvements, weak network crash fixes</p>
+        <p xml:lang="zh_CN">线程安全改进、弱网络闪退修复</p>
+        <ul>
+          <li>Fixed crash when batch adding components in weak network</li>
+          <li xml:lang="zh_CN">修复弱网络环境下批量添加元器件闪退问题</li>
+          <li>Fixed race condition and memory leak in NetworkUtils</li>
+          <li xml:lang="zh_CN">修复 NetworkUtils 中的竞态条件和内存泄漏问题</li>
+          <li>Added thread-safe mutex protection for ComponentService</li>
+          <li xml:lang="zh_CN">为 ComponentService 添加线程安全的互斥锁保护</li>
+          <li>Implemented async queue management mechanism</li>
+          <li xml:lang="zh_CN">实现异步队列管理机制以优化批量组件获取</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.12" date="2026-03-01">
+      <description>
+        <p>MSIX packaging support, translation management upgrade</p>
+        <p xml:lang="zh_CN">MSIX 打包支持、翻译管理升级</p>
+        <ul>
+          <li>Added MSIX package build support</li>
+          <li xml:lang="zh_CN">添加 MSIX 包构建支持</li>
+          <li>Optimized MSIX packaging workflow</li>
+          <li xml:lang="zh_CN">优化 MSIX 打包流程</li>
+          <li>Upgraded translation management tool</li>
+          <li xml:lang="zh_CN">升级翻译管理工具支持自动完成翻译</li>
+          <li>Fixed QXlsx subdirectory path configuration</li>
+          <li xml:lang="zh_CN">修复 QXlsx 子目录添加路径配置</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.9" date="2026-02-20">
+      <description>
+        <p>Flatpak packaging, privacy policy, UI fixes</p>
+        <p xml:lang="zh_CN">Flatpak 打包、隐私政策、UI 修复</p>
+        <ul>
+          <li>Added Flatpak packaging support and verification tools</li>
+          <li xml:lang="zh_CN">添加 Flatpak 打包支持和验证工具</li>
+          <li>Added Chinese and English privacy policy</li>
+          <li xml:lang="zh_CN">添加中英文隐私政策文档</li>
+          <li>Fixed UI scaling and resolution issues</li>
+          <li xml:lang="zh_CN">修复 UI 缩放和分辨率问题</li>
+          <li>Fixed export options UI overlap in English mode</li>
+          <li xml:lang="zh_CN">修复英文语言模式下的导出选项 UI 重叠问题</li>
+          <li>Improved language detection for multi-language mapping</li>
+          <li xml:lang="zh_CN">改进语言检测逻辑支持多语言映射</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.0.3" date="2026-02-08">
       <description>
         <p>LCSC preview image feature, component list enhancements, responsive layout</p>
