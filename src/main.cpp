@@ -114,6 +114,7 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
 
     // 控制台输出（彩色，异步模式减少性能影响）
 
+    // 参数: useColors=true, async=true
     auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
 
     consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
@@ -164,6 +165,10 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
 }  // anonymous namespace
 
 int main(int argc, char* argv[]) {
+    // 设置 stdout 为无缓冲模式，确保日志颜色正常显示
+    setbuf(stdout, nullptr);
+    setbuf(stderr, nullptr);
+
     // 在 QApplication 构造函数之前检查命令行参数
     bool showHelp = false;
     bool showVersion = false;
