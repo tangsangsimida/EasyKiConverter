@@ -24,8 +24,8 @@
 #include <algorithm>
 
 #ifdef Q_OS_WIN
-#    include <windows.h>
 #    include <psapi.h>
+#    include <windows.h>
 #endif
 
 namespace EasyKiConverter {
