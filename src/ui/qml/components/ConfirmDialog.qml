@@ -13,6 +13,11 @@ import "../styles"
  * **按钮**：
  *   - 确定（强制退出）：停止转换任务，关闭程序
  *   - 取消（继续转换）：关闭对话框，继续执行转换任务
+ * **UI 设计**：使用滑块UI样式，与 ExitDialog 保持一致
+ *   - 悬停时滑块移动到对应按钮位置
+ *   - 弹簧动画效果（果冻拉伸）
+ *   - 动态文本颜色变化
+ *   - 默认聚焦在取消按钮上
  * **动画**：取消按钮点击后向下滑动消失（fade out + slide down + scale down）
  *
  * **注意**：不要与 ExitDialog 混淆
@@ -26,6 +31,8 @@ Item {
     z: 9999 // 确保在最顶层
     clip: false // 允许阴影向外扩散
     focus: visible // 可见时获取焦点以监听键盘
+    // 滑块UI相关属性
+    property Item activeButton: null  // 当前活跃的按钮
     // 监听 Escape 键
     Keys.onEscapePressed: {
         root.rejected();
@@ -41,6 +48,27 @@ Item {
     property int radius: AppStyle.radius.lg
     signal accepted
     signal rejected
+    // 更新滑块位置
+    function updateSlider(targetButton, targetColor) {
+        // 计算按钮在 buttonBox 中的相对位置
+        var buttonY = targetButton.mapToItem(buttonBox, 0, 0).y;
+        // 果冻拉伸效果：向下移动时轻微压缩高度
+        var centerY = buttonBox.height / 2;
+        var stretchFactor = 1.0 + Math.abs(buttonY - centerY) / centerY * 0.02;
+        sliderBackground.y = buttonY;
+        sliderBackground.height = buttonBox.buttonHeight * (2.0 - stretchFactor);
+        sliderBackground.color = targetColor;
+        sliderBackground.opacity = buttonBox.sliderOpacity;
+        // 更新活跃按钮
+        activeButton = targetButton;
+    }
+
+    // 隐藏滑块
+    function hideSlider() {
+        sliderBackground.opacity = 0;
+        // 清除活跃按钮
+        activeButton = null;
+    }
     // 打开/关闭
     function open() {
         visible = true;
@@ -50,6 +78,8 @@ Item {
         showAnim.start();
         // 自动聚焦到取消按钮，确保键盘操作安全性
         cancelButton.forceActiveFocus();
+        // 设置滑块默认聚焦在取消选项上
+        updateSlider(cancelButton, AppStyle.colors.textSecondary);
     }
 
     function close() {
@@ -128,32 +158,174 @@ Item {
                 lineHeight: 1.2
             }
 
-            // 底部按钮
-            RowLayout {
+            // 按钮组容器
+            Rectangle {
+                id: buttonBox
                 Layout.fillWidth: true
-                Layout.topMargin: AppStyle.spacing.lg
-                spacing: AppStyle.spacing.md
-                ModernButton {
-                    id: cancelButton
-                    Layout.fillWidth: true
-                    text: root.cancelText
-                    backgroundColor: "transparent"
-                    textColor: AppStyle.colors.textSecondary
-                    hoverColor: AppStyle.isDarkMode ? "#334155" : "#f1f5f9"
-                    onClicked: {
-                        root.rejected();
-                        root.closeWithAnimation();
+                Layout.topMargin: AppStyle.spacing.md
+                implicitHeight: buttonCol.implicitHeight + AppStyle.spacing.md * 2
+                color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.05) : Qt.rgba(0, 0, 0, 0.03)
+                radius: AppStyle.radius.lg
+                border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.08)
+                border.width: 1
+                // 常量
+                readonly property int buttonHeight: 48
+                readonly property real sliderOpacity: 0.25
+                // 滑块背景（果冻效果）
+                Rectangle {
+                    id: sliderBackground
+                    x: AppStyle.spacing.sm
+                    y: AppStyle.spacing.sm
+                    width: buttonBox.width - AppStyle.spacing.sm * 2
+                    height: buttonBox.buttonHeight
+                    radius: AppStyle.radius.md
+                    color: root.confirmColor
+                    opacity: 0
+                    z: 2
+                    // Q弹动画（弹簧效果 - 垂直移动）
+                    Behavior on y {
+                        enabled: sliderBackground.visible
+                        SpringAnimation {
+                            spring: 5.0
+                            damping: 0.5
+                            mass: 0.8
+                            epsilon: 0.25
+                        }
+                    }
+
+                    // Q弹动画（弹簧效果 - 高度变化，果冻拉伸）
+                    Behavior on height {
+                        enabled: sliderBackground.visible
+                        SpringAnimation {
+                            spring: 6.0
+                            damping: 0.4
+                            mass: 0.7
+                            epsilon: 0.25
+                        }
+                    }
+
+                    // 颜色渐变动画
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 250
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    // 淡入淡出动画
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 200
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    // 发光效果（只在可见时启用以提高性能）
+                    layer.enabled: sliderBackground.opacity > 0
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: sliderBackground.color
+                        shadowBlur: 1.0
+                        shadowVerticalOffset: 0
+                        shadowHorizontalOffset: 0
                     }
                 }
 
-                ModernButton {
-                    id: confirmButton
-                    Layout.fillWidth: true
-                    text: root.confirmText
-                    backgroundColor: root.confirmColor
-                    onClicked: {
-                        root.accepted();
-                        root.close();
+                // 按钮列
+                ColumnLayout {
+                    id: buttonCol
+                    anchors.fill: parent
+                    anchors.topMargin: AppStyle.spacing.sm
+                    anchors.bottomMargin: AppStyle.spacing.sm
+                    spacing: 0
+                    z: 1
+                    // 取消按钮
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: buttonBox.buttonHeight
+                        ModernButton {
+                            id: cancelButton
+                            anchors.fill: parent
+                            text: root.cancelText
+                            backgroundColor: "transparent"
+                            textColor: root.activeButton === cancelButton ? Qt.lighter(AppStyle.colors.textSecondary, 1.5) : AppStyle.colors.textPrimary
+                            hoverColor: "transparent"
+                            Behavior on textColor {
+                                ColorAnimation {
+                                    duration: 150
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+
+                            scale: pressed ? 0.95 : (root.activeButton === cancelButton) ? 1.05 : 1.0
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: 150
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+
+                            onHoveredChanged: {
+                                if (hovered) {
+                                    root.updateSlider(this, AppStyle.colors.textSecondary);
+                                } else if (!confirmButton.hovered && !pressed) {
+                                    root.hideSlider();
+                                }
+                            }
+
+                            onClicked: {
+                                root.rejected();
+                                root.closeWithAnimation();
+                            }
+                        }
+                    }
+
+                    // 分隔线
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.08) : Qt.rgba(0, 0, 0, 0.06)
+                    }
+
+                    // 确定按钮
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: buttonBox.buttonHeight
+                        ModernButton {
+                            id: confirmButton
+                            anchors.fill: parent
+                            text: root.confirmText
+                            backgroundColor: "transparent"
+                            textColor: root.activeButton === confirmButton ? Qt.lighter(root.confirmColor, 1.3) : AppStyle.colors.textPrimary
+                            hoverColor: "transparent"
+                            Behavior on textColor {
+                                ColorAnimation {
+                                    duration: 150
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+
+                            scale: pressed ? 0.95 : (root.activeButton === confirmButton) ? 1.05 : 1.0
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: 150
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+
+                            onHoveredChanged: {
+                                if (hovered) {
+                                    root.updateSlider(this, root.confirmColor);
+                                } else if (!cancelButton.hovered && !pressed) {
+                                    root.hideSlider();
+                                }
+                            }
+
+                            onClicked: {
+                                root.accepted();
+                                root.close();
+                            }
+                        }
                     }
                 }
             }
