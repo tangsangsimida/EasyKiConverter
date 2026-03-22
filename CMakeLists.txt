@@ -301,11 +301,6 @@ target_link_libraries(appEasyKiconverter_Cpp_Version
         Qt6::Widgets
 )
 
-# Windows specific libraries
-if(WIN32)
-    target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE psapi.lib)
-endif()
-
 # 包含目录（用于 main.cpp）
 target_include_directories(appEasyKiconverter_Cpp_Version
     PRIVATE
