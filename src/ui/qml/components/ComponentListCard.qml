@@ -111,7 +111,6 @@ Card {
     RowLayout {
         width: parent.width
         spacing: 12
-
         // 左边：元器件数量 + 筛选
         Text {
             id: componentCountLabel
@@ -132,7 +131,6 @@ Card {
             radius: AppStyle.radius.lg
             visible: componentListCard.componentListController ? componentListCard.componentListController.componentCount > 0 : false
             clip: true
-
             // 滑块背景指示器
             Rectangle {
                 id: sliderIndicator
@@ -180,13 +178,14 @@ Card {
             Row {
                 anchors.fill: parent
                 anchors.margins: 4
-
                 // 全部
                 Button {
                     width: (filterSegmentedControl.width - 8) / 4
                     height: filterSegmentedControl.height - 8
                     flat: true
-                    background: Rectangle { color: "transparent" }
+                    background: Rectangle {
+                        color: "transparent"
+                    }
                     contentItem: Text {
                         text: qsTr("全部 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.componentCount : 0)
                         color: componentListCard.componentListController.filterMode === "all" ? "#ffffff" : AppStyle.colors.textSecondary
@@ -203,7 +202,9 @@ Card {
                     width: (filterSegmentedControl.width - 8) / 4
                     height: filterSegmentedControl.height - 8
                     flat: true
-                    background: Rectangle { color: "transparent" }
+                    background: Rectangle {
+                        color: "transparent"
+                    }
                     contentItem: Text {
                         text: qsTr("验证中 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.validatingCount : 0)
                         color: componentListCard.componentListController.filterMode === "validating" ? "#ffffff" : AppStyle.colors.textSecondary
@@ -220,7 +221,9 @@ Card {
                     width: (filterSegmentedControl.width - 8) / 4
                     height: filterSegmentedControl.height - 8
                     flat: true
-                    background: Rectangle { color: "transparent" }
+                    background: Rectangle {
+                        color: "transparent"
+                    }
                     contentItem: Text {
                         text: qsTr("有效 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.validCount : 0)
                         color: componentListCard.componentListController.filterMode === "valid" ? "#ffffff" : AppStyle.colors.textSecondary
@@ -237,7 +240,9 @@ Card {
                     width: (filterSegmentedControl.width - 8) / 4
                     height: filterSegmentedControl.height - 8
                     flat: true
-                    background: Rectangle { color: "transparent" }
+                    background: Rectangle {
+                        color: "transparent"
+                    }
                     contentItem: Text {
                         text: qsTr("无效 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.invalidCount : 0)
                         color: componentListCard.componentListController.filterMode === "invalid" ? "#ffffff" : AppStyle.colors.textSecondary

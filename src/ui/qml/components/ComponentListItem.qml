@@ -125,24 +125,23 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: AppStyle.spacing.sm
         spacing: AppStyle.spacing.md
-            // 预览图区域 - 支持悬停放大
-            Item {
-                id: previewArea
-                Layout.preferredWidth: 48
-                Layout.preferredHeight: 48
-                Layout.alignment: Qt.AlignVCenter
-
-                // 悬停延迟定时器：悬停1秒后才显示放大预览图
-                Timer {
-                    id: hoverDelayTimer
-                    interval: 250
-                    repeat: false
-                    onTriggered: {
-                        if (previewMouseArea.containsMouse && itemData && itemData.hasThumbnail) {
-                            previewPopup.visible = true;
-                        }
+        // 预览图区域 - 支持悬停放大
+        Item {
+            id: previewArea
+            Layout.preferredWidth: 48
+            Layout.preferredHeight: 48
+            Layout.alignment: Qt.AlignVCenter
+            // 悬停延迟定时器：悬停1秒后才显示放大预览图
+            Timer {
+                id: hoverDelayTimer
+                interval: 250
+                repeat: false
+                onTriggered: {
+                    if (previewMouseArea.containsMouse && itemData && itemData.hasThumbnail) {
+                        previewPopup.visible = true;
                     }
                 }
+            }
             // 默认显示的单张缩略图
             Rectangle {
                 id: defaultThumbnail
