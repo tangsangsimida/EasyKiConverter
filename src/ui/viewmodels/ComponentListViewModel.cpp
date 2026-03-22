@@ -260,6 +260,7 @@ void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds)
     for (const QString& id : newIds) {
         auto item = new ComponentListItemData(id, this);
         item->setFetching(true);
+        item->setValid(false);  // 验证开始时先设置为 false
         m_componentList.append(item);
         m_componentIdIndex.insert(id);
     }

@@ -162,14 +162,13 @@ Rectangle {
                 }
 
                 // 占位符/错误状态
+                // 只在验证完成且失败时显示 ✕（不包含验证中状态）
                 Text {
                     anchors.centerIn: parent
-                    // 只在验证失败时显示 ✕
-                    // 不在验证成功但没有缩略图时显示 ?，而是显示空白或加载状态
-                    text: (itemData && !itemData.isValid) ? "✕" : ""
+                    text: (itemData && !itemData.isFetching && !itemData.isValid) ? "✕" : ""
                     font.pixelSize: AppStyle.fontSizes.xxl
-                    color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
-                    visible: (itemData && !itemData.isValid)
+                    color: (itemData && !itemData.isFetching && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
+                    visible: (itemData && !itemData.isFetching && !itemData.isValid)
                 }
             }
 
@@ -412,7 +411,7 @@ Rectangle {
                 font.pixelSize: AppStyle.fontSizes.md
                 font.family: "Courier New"
                 font.bold: true
-                color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textPrimary
+                color: (itemData && !itemData.isFetching && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textPrimary
                 elide: Text.ElideRight
             }
 
@@ -434,7 +433,7 @@ Rectangle {
                     return info.join(" | ");
                 }
                 font.pixelSize: AppStyle.fontSizes.sm
-                color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
+                color: (itemData && !itemData.isFetching && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
                 elide: Text.ElideRight
             }
         }
