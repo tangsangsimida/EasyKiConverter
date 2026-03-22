@@ -8,10 +8,11 @@
 #include <QWaitCondition>
 
 #include <cstdio>
-#include <unistd.h>
 
 #ifdef Q_OS_WIN
 #    include <windows.h>
+#else
+#    include <unistd.h>
 #endif
 
 namespace EasyKiConverter {
