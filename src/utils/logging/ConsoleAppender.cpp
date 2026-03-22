@@ -9,12 +9,10 @@
 
 #include <cstdio>
 
-#ifndef Q_OS_WIN
-#    include <unistd.h>
-#endif
-
 #ifdef Q_OS_WIN
 #    include <windows.h>
+#else
+#    include <unistd.h>
 #endif
 
 namespace EasyKiConverter {
