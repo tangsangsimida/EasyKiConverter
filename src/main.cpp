@@ -556,7 +556,7 @@ int main(int argc, char* argv[]) {
                 QCoreApplication::processEvents();
 #endif
 
-                qWarning() << "✓ 任务栏图标已设置:" << path;
+                qWarning() << "[OK] 任务栏图标已设置:" << path;
                 qWarning() << "  图标可用尺寸:" << icon.availableSizes();
                 qWarning() << "  图标是否为空:" << icon.isNull();
                 iconSet = true;
@@ -565,7 +565,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (!iconSet) {
-            qWarning() << "✗ 未能设置任务栏图标";
+            qWarning() << "[FAIL] 未能设置任务栏图标";
             qWarning() << "  尝试了" << iconPaths.size() << "个路径，但都失败";
         }
 
@@ -649,7 +649,7 @@ int main(int argc, char* argv[]) {
             }
 
             if (!iconSet) {
-                qWarning() << "✗ 窗口显示后未能重新设置任务栏图标";
+                qWarning() << "[FAIL] 窗口显示后未能重新设置任务栏图标";
             }
 
             int savedX = configService->getWindowX();

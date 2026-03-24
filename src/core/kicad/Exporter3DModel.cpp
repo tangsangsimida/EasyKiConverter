@@ -158,7 +158,7 @@ QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const 
             //          << "points:" << shapePoints.size()
             //          << "coordIndex:" << coordIndex.size();
 
-            // 关键步骤：在倒数第二个位置插入最后一个点的副本（与 Python 版本保持一致）
+            // 在倒数第二个位置插入最后一个点的副本
             if (shapePoints.size() > 0) {
                 shapePoints.insert(shapePoints.size() - 1, shapePoints.last());
                 // qDebug() << "Inserted duplicate of last point, new size:" << shapePoints.size();

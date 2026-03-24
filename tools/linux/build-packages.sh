@@ -404,9 +404,10 @@ install_desktop_file() {
         chmod +x "$USER_DESKTOP_DIR/__APP_ID__.desktop"
         
         # 关键修复：更新 desktop 文件的 Exec 路径为 AppImage 的完整路径
-        # 获取 AppImage 的完整路径（通过读取 /proc/self/exe）
-        if [ -f /proc/self/exe ]; then
-            local APPIMAGE_PATH=$(readlink -f /proc/self/exe)
+        # 获取 AppImage 的完整路径（通过 APPIMAGE 环境变量）
+        if [ -n "$APPIMAGE" ]; then
+            local APPIMAGE_PATH="$APPIMAGE"
+            echo "AppImage path: ${APPIMAGE_PATH}" >&2
             sed -i "s|^Exec=.*|Exec=${APPIMAGE_PATH} %F|" "$USER_DESKTOP_DIR/__APP_ID__.desktop"
         fi
         
