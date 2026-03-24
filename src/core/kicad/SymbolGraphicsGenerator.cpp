@@ -80,8 +80,8 @@ QString SymbolGraphicsGenerator::generatePin(const SymbolPin& pin, const SymbolB
     QString content;
 
     // 使用边界框偏移量计算相对坐标
-    double x = pxToMm(pin.settings.posX - bbox.x);
-    double y = -pxToMm(pin.settings.posY - bbox.y);  // Y 轴翻转
+    double x = snapToGrid(pxToMm(pin.settings.posX - bbox.x));
+    double y = snapToGrid(-pxToMm(pin.settings.posY - bbox.y));  // Y 轴翻转
 
     // 计算引脚长度（Python版本的做法：直接从路径字符串中提h'后面的数字）
     QString path = pin.pinPath.path;
@@ -553,6 +553,16 @@ double SymbolGraphicsGenerator::pxToMil(double px) const {
 
 double SymbolGraphicsGenerator::pxToMm(double px) const {
     return GeometryUtils::convertToMm(px);
+}
+
+double SymbolGraphicsGenerator::snapToGrid(double valueMm) const {
+    constexpr double kGridStepMm = 1.27;
+    double snapped = std::round(valueMm / kGridStepMm) * kGridStepMm;
+    // Avoid negative zero in formatted output.
+    if (std::abs(snapped) < 1e-9) {
+        return 0.0;
+    }
+    return snapped;
 }
 
 QString SymbolGraphicsGenerator::pinTypeToKicad(PinType pinType) const {

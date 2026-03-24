@@ -57,6 +57,8 @@ public:
     SymbolBBox calculatePartBBox(const SymbolPart& part) const;
 
 private:
+    double snapToGrid(double valueMm) const;
+
     SymbolBBox m_currentBBox;
 };
 
