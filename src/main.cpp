@@ -12,6 +12,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QGuiApplication>
 #include <QIcon>
 #include <QImage>
 #include <QPoint>
@@ -290,15 +291,36 @@ int main(int argc, char* argv[]) {
     // 初始化日志系统（在 QApplication 创建后立即初始化）
     setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile(), cmdParser.isSyncLogging());
 
-    // 尝试设置应用程序图标
-    QStringList iconPaths = {":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
-                             ":/resources/icons/app_icon.png",
-                             "resources/icons/app_icon.png",
-                             "../resources/icons/app_icon.png"};
+    // 尝试设置应用程序图标（使用 QGuiApplication::setWindowIcon 确保可靠性）
+    QString appDir;
+
+    // 优先使用 APPIMAGE 环境变量获取 AppImage 实际路径
+    QString appImagePath = qgetenv("APPIMAGE");
+    if (!appImagePath.isEmpty()) {
+        appDir = QFileInfo(appImagePath).absolutePath();
+    } else {
+        appDir = QCoreApplication::applicationDirPath();
+    }
+
+    qDebug() << "应用目录:" << appDir;
+
+    QStringList iconPaths = {
+        ":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
+        ":/resources/icons/app_icon.png",
+        appDir + "/resources/icons/app_icon.png",
+        appDir + "/io.github.tangsangsimida.easykiconverter.png",
+        appDir + "/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+        "resources/icons/app_icon.png",
+        "../resources/icons/app_icon.png",
+        "usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+        "io.github.tangsangsimida.easykiconverter.png",
+    };
 
     for (const QString& iconPath : iconPaths) {
+        qDebug() << "尝试加载图标:" << iconPath << "存在:" << QFile::exists(iconPath);
         QIcon icon(iconPath);
         if (!icon.isNull()) {
+            QGuiApplication::setWindowIcon(icon);
             app.setWindowIcon(icon);
             qDebug() << "应用程序图标已设置：" << iconPath;
             break;
@@ -411,14 +433,64 @@ int main(int argc, char* argv[]) {
     const QUrl url("qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/Main.qml");
     engine.load(url);
 
+    qWarning() << "===== QML 加载完成，开始设置图标 =====";
+
     if (engine.rootObjects().isEmpty()) {
         qCritical() << "严重错误：QML引擎根对象加载后为空！";
         return -1;
     }
 
-    // 获取根窗口对象并设置窗口位置
+    // 获取根窗口对象并设置窗口位置和图标
     auto* rootObject = engine.rootObjects().first();
     if (auto* window = qobject_cast<QQuickWindow*>(rootObject)) {
+        // 调试：显示所有可能的图标路径
+        QString appImagePath = qgetenv("APPIMAGE");
+        qWarning() << "APPIMAGE 环境变量:" << appImagePath;
+        qWarning() << "applicationDirPath:" << QCoreApplication::applicationDirPath();
+
+        // AppImage 挂载点在 /tmp/.mount_XXX/，需要获取父目录
+        QString appDir = QCoreApplication::applicationDirPath();
+        // 如果路径包含 /usr/bin，说明在 AppImage 挂载点内，需要获取根目录
+        if (appDir.endsWith("/usr/bin")) {
+            appDir = appDir.chopped(8);  // 去掉 /usr/bin
+        } else if (appDir.endsWith("/bin")) {
+            appDir = appDir.chopped(4);  // 去掉 /bin
+        }
+        qWarning() << "使用 appDir:" << appDir;
+
+        QStringList iconPaths = {
+            appDir + "/io.github.tangsangsimida.easykiconverter.png",
+            appDir + "/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            appDir + "/usr/share/icons/hicolor/64x64/apps/io.github.tangsangsimida.easykiconverter.png",
+            QCoreApplication::applicationDirPath() + "/io.github.tangsangsimida.easykiconverter.png",
+            "io.github.tangsangsimida.easykiconverter",
+        };
+
+        bool iconSet = false;
+        for (const QString& path : iconPaths) {
+            qWarning() << "尝试图标路径:" << path << "存在:" << QFile::exists(path);
+            QIcon icon(path);
+            if (!icon.isNull()) {
+                QWindow* qwindow = window;
+                qwindow->setIcon(icon);
+                QGuiApplication::setWindowIcon(icon);
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+                qwindow->raise();
+                qwindow->requestActivate();
+                QCoreApplication::processEvents();
+#endif
+
+                qWarning() << "✓ 任务栏图标已设置:" << path;
+                iconSet = true;
+                break;
+            }
+        }
+
+        if (!iconSet) {
+            qWarning() << "✗ 未能设置任务栏图标";
+        }
+
         auto* configService = EasyKiConverter::ConfigService::instance();
 
         // 先隐藏窗口，等待 QML 完全加载后再显示
@@ -426,6 +498,25 @@ int main(int argc, char* argv[]) {
 
         // 使用延迟执行，确保 QML 窗口已经完全初始化并获取到正确的尺寸
         QTimer::singleShot(100, [window, configService]() {
+            // 窗口显示后再次设置任务栏图标
+            QString appDir = QCoreApplication::applicationDirPath();
+            if (appDir.endsWith("/usr/bin")) {
+                appDir.chopped(8);
+            }
+            QString iconPath = appDir + "/io.github.tangsangsimida.easykiconverter.png";
+            if (QFile::exists(iconPath)) {
+                QIcon icon(iconPath);
+                window->setIcon(icon);
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+                // 对于 FramelessWindowHint，强制刷新任务栏图标
+                window->raise();
+                window->requestActivate();
+#endif
+
+                qWarning() << "窗口显示后重新设置任务栏图标:" << iconPath;
+            }
+
             int savedX = configService->getWindowX();
             int savedY = configService->getWindowY();
 
