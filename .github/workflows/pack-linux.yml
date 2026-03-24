@@ -95,6 +95,8 @@ jobs:
           StartupWMClass=easykiconverter
           MimeType=application/vnd.easyeda+json;
           EOF
+
+          # 复制图标到 AppDir 根目录（使用 256x256 尺寸，确保任务栏显示正常）
           cp resources/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png ${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.png
 
           # 安装 hicolor 图标到 AppDir（确保所有尺寸的图标都可用）
@@ -103,6 +105,21 @@ jobs:
             cp resources/icons/hicolor/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png \
                ${APPIMAGE_DST_PATH}/usr/share/icons/hicolor/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png
           done
+
+          # 安装 hicolor-dark 图标到 AppDir（暗色主题）
+          if [ -d "resources/icons/hicolor-dark" ]; then
+            echo "安装暗色主题图标..."
+            for size in 16 24 32 48 64 128 256 512; do
+              if [ -f "resources/icons/hicolor-dark/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png" ]; then
+                mkdir -p ${APPIMAGE_DST_PATH}/usr/share/icons/hicolor-dark/${size}x${size}/apps
+                cp resources/icons/hicolor-dark/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png \
+                   ${APPIMAGE_DST_PATH}/usr/share/icons/hicolor-dark/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png
+              fi
+            done
+            echo "✓ 暗色主题图标已安装"
+          else
+            echo "WARNING: hicolor-dark 目录不存在，跳过暗色主题图标"
+          fi
 
           # 关键步骤：运行 linuxdeploy 填充依赖库 (Qt libs 等) 到 AppDir
           # 注意：这里不生成 AppImage 文件，只处理目录内容
@@ -194,13 +211,91 @@ jobs:
           chmod +x "${APPDIR}/usr/bin/easykiconverter" 2>/dev/null || true
           find "${APPDIR}/usr/bin" -type f -exec chmod +x {} \; 2>/dev/null || true
           
+          # 清除干扰的环境变量
+          unset QT_PLUGIN_PATH
+          unset QT_QPA_PLATFORM_PLUGIN_PATH
+          unset LD_LIBRARY_PATH
+          unset QTDIR
+          unset QT_SELECT
+          
           # 强制使用 xcb 平台插件（避免 wayland 缺失问题）
           export QT_QPA_PLATFORM=xcb
           
           export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"
           export QT_PLUGIN_PATH="${APPDIR}/usr/plugins:${QT_PLUGIN_PATH}"
           export QML2_IMPORT_PATH="${APPDIR}/usr/qml:${QML2_IMPORT_PATH}"
-          export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS}"
+          export XDG_DATA_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}"
+          export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
+          
+          # 关键修复：添加 XDG_DATA_DIRS，让系统能够找到 AppImage 内部的图标
+          # 这样桌面环境才能正确显示任务栏图标
+          export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+          
+          # 自动安装 desktop 文件和图标到用户目录（仅首次运行）
+          install_desktop_file() {
+              local DESKTOP_FILE="${APPDIR}/io.github.tangsangsimida.easykiconverter.desktop"
+              local USER_DESKTOP_DIR="${HOME}/.local/share/applications"
+              local USER_ICON_DIR="${HOME}/.local/share/icons/hicolor"
+              
+              # 检查是否已安装
+              if [ -f "${USER_DESKTOP_DIR}/io.github.tangsangsimida.easykiconverter.desktop" ]; then
+                  return 0
+              fi
+              
+              # 创建用户目录
+              mkdir -p "${USER_DESKTOP_DIR}"
+              
+              # 复制 desktop 文件
+              if [ -f "${DESKTOP_FILE}" ]; then
+                  cp "${DESKTOP_FILE}" "${USER_DESKTOP_DIR}/io.github.tangsangsimida.easykiconverter.desktop"
+                  chmod +x "${USER_DESKTOP_DIR}/io.github.tangsangsimida.easykiconverter.desktop"
+                  
+                  # 关键修复：更新 desktop 文件的 Exec 路径为 AppImage 的完整路径
+                  # 获取 AppImage 的完整路径（通过读取 /proc/self/exe）
+                  if [ -f /proc/self/exe ]; then
+                      local APPIMAGE_PATH=$(readlink -f /proc/self/exe)
+                      sed -i "s|^Exec=.*|Exec=${APPIMAGE_PATH} %F|" "${USER_DESKTOP_DIR}/io.github.tangsangsimida.easykiconverter.desktop"
+                  fi
+                  
+                  # 复制图标到用户目录
+                  for size in 16 24 32 48 64 128 256 512; do
+                      local ICON_DIR="${USER_ICON_DIR}/${size}x${size}/apps"
+                      local ICON_FILE="${APPDIR}/usr/share/icons/hicolor/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png"
+                      
+                      if [ -f "${ICON_FILE}" ]; then
+                          mkdir -p "${ICON_DIR}"
+                          cp "${ICON_FILE}" "${ICON_DIR}/io.github.tangsangsimida.easykiconverter.png"
+                      fi
+                  done
+                  
+                  # 复制暗色主题图标
+                  if [ -d "${APPDIR}/usr/share/icons/hicolor-dark" ]; then
+                      for size in 16 24 32 48 64 128 256 512; do
+                          local ICON_DIR="${HOME}/.local/share/icons/hicolor-dark/${size}x${size}/apps"
+                          local ICON_FILE="${APPDIR}/usr/share/icons/hicolor-dark/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png"
+                          
+                          if [ -f "${ICON_FILE}" ]; then
+                              mkdir -p "${ICON_DIR}"
+                              cp "${ICON_FILE}" "${ICON_DIR}/io.github.tangsangsimida.easykiconverter.png"
+                          fi
+                      done
+                  fi
+                  
+                  # 更新桌面数据库
+                  if command -v update-desktop-database >/dev/null 2>&1; then
+                      update-desktop-database "${USER_DESKTOP_DIR}" >/dev/null 2>&1 &
+                  fi
+                  
+                  # 更新图标缓存
+                  if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+                      gtk-update-icon-cache -q "${USER_ICON_DIR}" >/dev/null 2>&1 &
+                  fi
+              fi
+          }
+          
+          # 后台安装 desktop 文件（不阻塞启动）
+          install_desktop_file &
+          
           exec "${APPDIR}/usr/bin/easykiconverter" "$@"
           EOF
           chmod +x ${APPIMAGE_DST_PATH}/AppRun

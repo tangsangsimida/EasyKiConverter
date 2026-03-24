@@ -304,29 +304,6 @@ int main(int argc, char* argv[]) {
 
     qDebug() << "应用目录:" << appDir;
 
-    QStringList iconPaths = {
-        ":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
-        ":/resources/icons/app_icon.png",
-        appDir + "/resources/icons/app_icon.png",
-        appDir + "/io.github.tangsangsimida.easykiconverter.png",
-        appDir + "/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
-        "resources/icons/app_icon.png",
-        "../resources/icons/app_icon.png",
-        "usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
-        "io.github.tangsangsimida.easykiconverter.png",
-    };
-
-    for (const QString& iconPath : iconPaths) {
-        qDebug() << "尝试加载图标:" << iconPath << "存在:" << QFile::exists(iconPath);
-        QIcon icon(iconPath);
-        if (!icon.isNull()) {
-            QGuiApplication::setWindowIcon(icon);
-            app.setWindowIcon(icon);
-            qDebug() << "应用程序图标已设置：" << iconPath;
-            break;
-        }
-    }
-
     // 处理命令行参数 - 配置文件路径
     QString configFilePath;
     if (!cmdParser.configFile().isEmpty()) {
@@ -339,7 +316,7 @@ int main(int argc, char* argv[]) {
         qDebug() << "便携模式：配置文件保存在程序目录:" << configFilePath;
     }
 
-    // 初始化配置服务
+    // 初始化配置服务（必须在加载图标之前，以便获取主题设置）
     EasyKiConverter::ConfigService::instance()->loadConfig(configFilePath);
 
     // 处理命令行参数 - 调试模式设置（优先于环境变量）
@@ -378,6 +355,53 @@ int main(int argc, char* argv[]) {
             qDebug() << "通过命令行设置主题为: light";
         } else {
             qWarning() << "无效的主题设置:" << theme << "，支持的选项: dark, light";
+        }
+    }
+
+    // 根据主题设置确定图标目录
+    bool isDarkMode = EasyKiConverter::ConfigService::instance()->getDarkMode();
+    QString iconThemeDir = isDarkMode ? "hicolor-dark" : "hicolor";
+    bool isAppImage = !appImagePath.isEmpty();
+    qDebug() << "主题模式:" << (isDarkMode ? "dark" : "light") << ", 图标目录:" << iconThemeDir;
+    qDebug() << "AppImage 模式:" << isAppImage;
+
+    // 加载应用图标（根据主题选择不同的图标目录）
+    QStringList iconPaths;
+
+    if (isAppImage) {
+        // AppImage: 优先使用内部图标路径
+        iconPaths = {
+            appDir + "/io.github.tangsangsimida.easykiconverter.png",
+            appDir + "/usr/share/icons/" + iconThemeDir + "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            appDir + "/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            appDir + "/resources/icons/" + iconThemeDir + "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            ":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/" + iconThemeDir +
+                "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+        };
+    } else {
+        // 非AppImage: 优先使用资源路径和开发路径
+        iconPaths = {
+            ":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/" + iconThemeDir +
+                "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            ":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
+            ":/resources/icons/" + iconThemeDir + "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            ":/resources/icons/app_icon.png",
+            appDir + "/resources/icons/" + iconThemeDir + "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            appDir + "/resources/icons/app_icon.png",
+            appDir + "/io.github.tangsangsimida.easykiconverter.png",
+            appDir + "/usr/share/icons/" + iconThemeDir + "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            appDir + "/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+        };
+    }
+
+    for (const QString& iconPath : iconPaths) {
+        qDebug() << "尝试加载图标:" << iconPath << "存在:" << QFile::exists(iconPath);
+        QIcon icon(iconPath);
+        if (!icon.isNull()) {
+            QGuiApplication::setWindowIcon(icon);
+            app.setWindowIcon(icon);
+            qDebug() << "应用程序图标已设置：" << iconPath;
+            break;
         }
     }
 
@@ -445,8 +469,10 @@ int main(int argc, char* argv[]) {
     if (auto* window = qobject_cast<QQuickWindow*>(rootObject)) {
         // 调试：显示所有可能的图标路径
         QString appImagePath = qgetenv("APPIMAGE");
+        qWarning() << "===== 图标调试信息 =====";
         qWarning() << "APPIMAGE 环境变量:" << appImagePath;
         qWarning() << "applicationDirPath:" << QCoreApplication::applicationDirPath();
+        qWarning() << "XDG_DATA_DIRS:" << qgetenv("XDG_DATA_DIRS");
 
         // AppImage 挂载点在 /tmp/.mount_XXX/，需要获取父目录
         QString appDir = QCoreApplication::applicationDirPath();
@@ -458,13 +484,46 @@ int main(int argc, char* argv[]) {
         }
         qWarning() << "使用 appDir:" << appDir;
 
-        QStringList iconPaths = {
-            appDir + "/io.github.tangsangsimida.easykiconverter.png",
-            appDir + "/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
-            appDir + "/usr/share/icons/hicolor/64x64/apps/io.github.tangsangsimida.easykiconverter.png",
-            QCoreApplication::applicationDirPath() + "/io.github.tangsangsimida.easykiconverter.png",
-            "io.github.tangsangsimida.easykiconverter",
+        bool isDarkModeForIcon = EasyKiConverter::ConfigService::instance()->getDarkMode();
+        QString iconThemeDir = isDarkModeForIcon ? "hicolor-dark" : "hicolor";
+        bool isAppImage = !qgetenv("APPIMAGE").isEmpty();
+
+        // AppImage 内部的图标路径（优先级最高）
+        QStringList appImageIconPaths = {
+            appDir + "/usr/share/icons/" + iconThemeDir +
+                "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",  // 优先使用 256x256
+            appDir +
+                "/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",  // fallback 到 hicolor
+            appDir + "/io.github.tangsangsimida.easykiconverter.png",  // AppDir 根目录（可能是 64x64，作为 fallback）
+            appDir + "/usr/share/icons/" + iconThemeDir +
+                "/128x128/apps/io.github.tangsangsimida.easykiconverter.png",  // 128x128
+            appDir + "/usr/share/icons/hicolor/128x128/apps/io.github.tangsangsimida.easykiconverter.png",  // 128x128
+            appDir + "/usr/share/icons/" + iconThemeDir +
+                "/64x64/apps/io.github.tangsangsimida.easykiconverter.png",  // 64x64
+            appDir + "/usr/share/icons/hicolor/64x64/apps/io.github.tangsangsimida.easykiconverter.png",  // 64x64
         };
+
+        // 开发时的图标路径（优先级较低）
+        QStringList devIconPaths = {
+            appDir + "/resources/icons/" + iconThemeDir + "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            QCoreApplication::applicationDirPath() + "/io.github.tangsangsimida.easykiconverter.png",
+        };
+
+        // 系统图标路径（fallback）
+        QStringList systemIconPaths = {
+            "io.github.tangsangsimida.easykiconverter",  // 让 Qt 在标准路径查找
+            "/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            "/usr/share/icons/" + iconThemeDir + "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+        };
+
+        QStringList iconPaths;
+        if (isAppImage) {
+            // AppImage: 优先使用内部图标
+            iconPaths = appImageIconPaths + devIconPaths + systemIconPaths;
+        } else {
+            // 非AppImage: 优先使用开发路径
+            iconPaths = devIconPaths + appImageIconPaths + systemIconPaths;
+        }
 
         bool iconSet = false;
         for (const QString& path : iconPaths) {
@@ -482,6 +541,8 @@ int main(int argc, char* argv[]) {
 #endif
 
                 qWarning() << "✓ 任务栏图标已设置:" << path;
+                qWarning() << "  图标可用尺寸:" << icon.availableSizes();
+                qWarning() << "  图标是否为空:" << icon.isNull();
                 iconSet = true;
                 break;
             }
@@ -489,7 +550,10 @@ int main(int argc, char* argv[]) {
 
         if (!iconSet) {
             qWarning() << "✗ 未能设置任务栏图标";
+            qWarning() << "  尝试了" << iconPaths.size() << "个路径，但都失败";
         }
+
+        qWarning() << "===== 图标调试信息结束 =====";
 
         auto* configService = EasyKiConverter::ConfigService::instance();
 
@@ -501,20 +565,60 @@ int main(int argc, char* argv[]) {
             // 窗口显示后再次设置任务栏图标
             QString appDir = QCoreApplication::applicationDirPath();
             if (appDir.endsWith("/usr/bin")) {
-                appDir.chopped(8);
+                appDir = appDir.chopped(8);
+            } else if (appDir.endsWith("/bin")) {
+                appDir = appDir.chopped(4);
             }
-            QString iconPath = appDir + "/io.github.tangsangsimida.easykiconverter.png";
-            if (QFile::exists(iconPath)) {
-                QIcon icon(iconPath);
-                window->setIcon(icon);
+
+            bool isDarkModeForIcon = configService->getDarkMode();
+            QString iconThemeDir = isDarkModeForIcon ? "hicolor-dark" : "hicolor";
+            bool isAppImage = !qgetenv("APPIMAGE").isEmpty();
+
+            // 定义图标路径列表（与初始化时相同，优先使用 256x256）
+            QStringList iconPaths;
+            if (isAppImage) {
+                iconPaths = {
+                    appDir + "/usr/share/icons/" + iconThemeDir +
+                        "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+                    appDir + "/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+                    appDir + "/io.github.tangsangsimida.easykiconverter.png",
+                    appDir + "/usr/share/icons/" + iconThemeDir +
+                        "/128x128/apps/io.github.tangsangsimida.easykiconverter.png",
+                    appDir + "/usr/share/icons/hicolor/128x128/apps/io.github.tangsangsimida.easykiconverter.png",
+                    appDir + "/resources/icons/" + iconThemeDir +
+                        "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+                };
+            } else {
+                iconPaths = {
+                    appDir + "/resources/icons/" + iconThemeDir +
+                        "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+                    appDir + "/io.github.tangsangsimida.easykiconverter.png",
+                    appDir + "/usr/share/icons/" + iconThemeDir +
+                        "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+                    appDir + "/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+                };
+            }
+
+            bool iconSet = false;
+            for (const QString& path : iconPaths) {
+                if (QFile::exists(path)) {
+                    QIcon icon(path);
+                    window->setIcon(icon);
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-                // 对于 FramelessWindowHint，强制刷新任务栏图标
-                window->raise();
-                window->requestActivate();
+                    // 对于 FramelessWindowHint，强制刷新任务栏图标
+                    window->raise();
+                    window->requestActivate();
 #endif
 
-                qWarning() << "窗口显示后重新设置任务栏图标:" << iconPath;
+                    qWarning() << "窗口显示后重新设置任务栏图标:" << path;
+                    iconSet = true;
+                    break;
+                }
+            }
+
+            if (!iconSet) {
+                qWarning() << "✗ 窗口显示后未能重新设置任务栏图标";
             }
 
             int savedX = configService->getWindowX();

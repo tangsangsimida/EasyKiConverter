@@ -65,6 +65,24 @@ contents:
   - src: "${APP_DIR}/usr/share/icons/hicolor/512x512/apps/io.github.tangsangsimida.easykiconverter.png"
     dst: "/usr/share/icons/hicolor/512x512/apps/io.github.tangsangsimida.easykiconverter.png"
 
+  # 安装暗色主题图标（hicolor-dark）
+  - src: "${APP_DIR}/usr/share/icons/hicolor-dark/16x16/apps/io.github.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor-dark/16x16/apps/io.github.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor-dark/24x24/apps/io.github.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor-dark/24x24/apps/io.github.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor-dark/32x32/apps/io.github.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor-dark/32x32/apps/io.github.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor-dark/48x48/apps/io.github.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor-dark/48x48/apps/io.github.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor-dark/64x64/apps/io.github.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor-dark/64x64/apps/io.github.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor-dark/128x128/apps/io.github.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor-dark/128x128/apps/io.github.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor-dark/256x256/apps/io.github.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor-dark/256x256/apps/io.github.tangsangsimida.easykiconverter.png"
+  - src: "${APP_DIR}/usr/share/icons/hicolor-dark/512x512/apps/io.github.tangsangsimida.easykiconverter.png"
+    dst: "/usr/share/icons/hicolor-dark/512x512/apps/io.github.tangsangsimida.easykiconverter.png"
+
 overrides:
   deb:
     scripts:

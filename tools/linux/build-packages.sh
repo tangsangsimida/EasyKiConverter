@@ -278,9 +278,13 @@ StartupWMClass=easykiconverter
 MimeType=application/vnd.easyeda+json;
 EOF
 
-    # 复制图标
-    print_info "复制图标..."
-    cp resources/icons/app_icon.png "$APP_DIR/$APP_ID.png"
+    # 复制图标（使用 256x256 尺寸，确保任务栏显示正常）
+    print_info "复制图标到 AppDir 根目录..."
+    cp "resources/icons/hicolor/256x256/apps/${APP_ID}.png" "$APP_DIR/$APP_ID.png"
+    if [ ! -f "$APP_DIR/$APP_ID.png" ]; then
+        print_warn "256x256 图标不存在，尝试使用备用路径..."
+        cp resources/icons/app_icon.png "$APP_DIR/$APP_ID.png"
+    fi
 
     # 运行 linuxdeploy 填充依赖
     print_info "运行 linuxdeploy 填充依赖..."
@@ -290,12 +294,27 @@ EOF
         --icon-file "$APP_DIR/$APP_ID.png"
     
     # 安装 hicolor 图标到 AppDir（确保所有尺寸的图标都可用）
-    print_info "安装 hicolor 图标..."
+    print_info "安装 hicolor 图标（浅色主题）..."
     for size in 16 24 32 48 64 128 256 512; do
         mkdir -p "$APP_DIR/usr/share/icons/hicolor/${size}x${size}/apps"
         cp "resources/icons/hicolor/${size}x${size}/apps/${APP_ID}.png" \
            "$APP_DIR/usr/share/icons/hicolor/${size}x${size}/apps/${APP_ID}.png"
     done
+
+    # 安装 hicolor-dark 图标到 AppDir（暗色主题）
+    print_info "安装 hicolor-dark 图标（暗色主题）..."
+    if [ -d "resources/icons/hicolor-dark" ]; then
+        for size in 16 24 32 48 64 128 256 512; do
+            if [ -f "resources/icons/hicolor-dark/${size}x${size}/apps/${APP_ID}.png" ]; then
+                mkdir -p "$APP_DIR/usr/share/icons/hicolor-dark/${size}x${size}/apps"
+                cp "resources/icons/hicolor-dark/${size}x${size}/apps/${APP_ID}.png" \
+                   "$APP_DIR/usr/share/icons/hicolor-dark/${size}x${size}/apps/${APP_ID}.png"
+            fi
+        done
+        print_info "✓ 暗色主题图标已安装"
+    else
+        print_warn "hicolor-dark 目录不存在，跳过暗色主题图标"
+    fi
     
     # 修复：复制 QML 模块到 AppDir（linuxdeploy-plugin-qt 可能不会自动复制）
     print_info "复制 QML 模块到 AppDir..."
@@ -361,12 +380,82 @@ export QT_QPA_PLATFORM=xcb
 export XDG_DATA_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}"
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 
+# 添加 XDG_DATA_DIRS，让系统能够找到 AppImage 内部的图标
+# 这样桌面环境才能正确显示任务栏图标
+export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+# 自动安装 desktop 文件和图标到用户目录（仅首次运行）
+install_desktop_file() {
+    local DESKTOP_FILE="$APPDIR/__APP_ID__.desktop"
+    local USER_DESKTOP_DIR="$HOME/.local/share/applications"
+    local USER_ICON_DIR="$HOME/.local/share/icons/hicolor"
+    
+    # 检查是否已安装
+    if [ -f "$USER_DESKTOP_DIR/__APP_ID__.desktop" ]; then
+        return 0
+    fi
+    
+    # 创建用户目录
+    mkdir -p "$USER_DESKTOP_DIR"
+    
+    # 复制 desktop 文件
+    if [ -f "$DESKTOP_FILE" ]; then
+        cp "$DESKTOP_FILE" "$USER_DESKTOP_DIR/__APP_ID__.desktop"
+        chmod +x "$USER_DESKTOP_DIR/__APP_ID__.desktop"
+        
+        # 关键修复：更新 desktop 文件的 Exec 路径为 AppImage 的完整路径
+        # 获取 AppImage 的完整路径（通过读取 /proc/self/exe）
+        if [ -f /proc/self/exe ]; then
+            local APPIMAGE_PATH=$(readlink -f /proc/self/exe)
+            sed -i "s|^Exec=.*|Exec=${APPIMAGE_PATH} %F|" "$USER_DESKTOP_DIR/__APP_ID__.desktop"
+        fi
+        
+        # 复制图标到用户目录
+        for size in 16 24 32 48 64 128 256 512; do
+            local ICON_DIR="$USER_ICON_DIR/${size}x${size}/apps"
+            local ICON_FILE="$APPDIR/usr/share/icons/hicolor/${size}x${size}/apps/__APP_ID__.png"
+            
+            if [ -f "$ICON_FILE" ]; then
+                mkdir -p "$ICON_DIR"
+                cp "$ICON_FILE" "$ICON_DIR/__APP_ID__.png"
+            fi
+        done
+        
+        # 复制暗色主题图标
+        if [ -d "$APPDIR/usr/share/icons/hicolor-dark" ]; then
+            for size in 16 24 32 48 64 128 256 512; do
+                local ICON_DIR="$HOME/.local/share/icons/hicolor-dark/${size}x${size}/apps"
+                local ICON_FILE="$APPDIR/usr/share/icons/hicolor-dark/${size}x${size}/apps/__APP_ID__.png"
+                
+                if [ -f "$ICON_FILE" ]; then
+                    mkdir -p "$ICON_DIR"
+                    cp "$ICON_FILE" "$ICON_DIR/__APP_ID__.png"
+                fi
+            done
+        fi
+        
+        # 更新桌面数据库
+        if command -v update-desktop-database >/dev/null 2>&1; then
+            update-desktop-database "$USER_DESKTOP_DIR" >/dev/null 2>&1 &
+        fi
+        
+        # 更新图标缓存
+        if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+            gtk-update-icon-cache -q "$USER_ICON_DIR" >/dev/null 2>&1 &
+        fi
+    fi
+}
+
+# 后台安装 desktop 文件（不阻塞启动）
+install_desktop_file &
+
 # 启动应用
 exec "${APPDIR}/usr/bin/__BINARY_NAME__" "$@"
 EOF
 
     # 替换可执行文件名占位符
     sed -i "s|__BINARY_NAME__|$BINARY_NAME|g" "$APP_DIR/AppRun"
+    sed -i "s|__APP_ID__|$APP_ID|g" "$APP_DIR/AppRun"
 
     chmod +x "$APP_DIR/AppRun"
 

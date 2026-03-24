@@ -135,3 +135,4 @@ flatpak-build-local.log
 flatpak-build.log
 build.log
 temp.md
+squashfs-root/*
