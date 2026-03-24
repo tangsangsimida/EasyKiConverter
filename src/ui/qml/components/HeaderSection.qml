@@ -48,23 +48,21 @@ ColumnLayout {
             ]
             textRole: "text"
             valueRole: "value"
-            property string savedLanguage: ""
-            Component.onCompleted: {
-                // 设置初始语言
-                var currentLang = LanguageManager.currentLanguage;
-                if (currentLang === "auto") {
-                    var systemLang = LanguageManager.detectSystemLanguage();
-                    currentIndex = indexOfValue(systemLang);
-                } else {
-                    currentIndex = indexOfValue(currentLang);
-                }
-                savedLanguage = currentValue;
+            // 直接绑定到 LanguageManager.currentLanguage，避免手动设置
+            currentIndex: {
+                var lang = LanguageManager.currentLanguage;
+                if (lang === "zh_CN")
+                    return 0;
+                if (lang === "en")
+                    return 1;
+                return 0; // 默认
             }
 
             onActivated: function (index) {
-                const langValue = currentValue;
-                savedLanguage = langValue;
-                LanguageManager.setLanguage(langValue);
+                if (index >= 0 && index < count) {
+                    var langValue = model[index].value;
+                    LanguageManager.setLanguage(langValue);
+                }
             }
 
             background: Rectangle {
@@ -134,10 +132,6 @@ ColumnLayout {
                 width: languageComboBox.width
                 implicitHeight: listview.contentHeight
                 padding: 0
-                onClosed: {
-                    languageComboBox.currentIndex = languageComboBox.indexOfValue(languageComboBox.savedLanguage);
-                }
-
                 contentItem: ListView {
                     id: listview
                     clip: true

@@ -40,7 +40,6 @@ void Exporter3DModel::downloadObjModel(const QString& uuid, const QString& saveP
     m_savePath = savePath;
 
     QString url = getModelUrl(uuid, ModelFormat::OBJ);
-    // qDebug() << "Downloading 3D model (OBJ) from:" << url;
 
     m_networkUtils->sendGetRequest(url, 60, 3);
 }
@@ -57,7 +56,6 @@ void Exporter3DModel::downloadStepModel(const QString& uuid, const QString& save
     m_savePath = savePath;
 
     QString url = getModelUrl(uuid, ModelFormat::STEP);
-    // qDebug() << "Downloading 3D model (STEP) from:" << url;
 
     m_networkUtils->sendGetRequest(url, 60, 3);
 }
@@ -75,25 +73,15 @@ bool Exporter3DModel::exportToWrl(const Model3DData& modelData, const QString& s
     // 获取 OBJ 数据
     QByteArray objData = modelData.rawObj().toUtf8();
 
-    // qDebug() << "OBJ data size:" << objData.size();
-    // qDebug() << "OBJ data preview:" << QString::fromUtf8(objData.left(200));
-
     // 生成 WRL 文件内容
     QString content = generateWrlContent(modelData, objData);
-
-    // qDebug() << "Generated WRL content size:" << content.size();
-    // qDebug() << "WRL content preview (first 500 chars):" << content.left(500);
-    // qDebug() << "WRL content preview (last 500 chars):" << content.right(500);
 
     out << content;
     file.flush();  // 确保数据被写
     file.close();
 
-    // qDebug() << "3D model exported to:" << savePath;
-
     // 验证文件大小
     QFileInfo fileInfo(savePath);
-    // qDebug() << "Exported file size:" << fileInfo.size() << "bytes";
 
     return true;
 }
@@ -109,7 +97,6 @@ bool Exporter3DModel::exportToStep(const Model3DData& modelData, const QString& 
     file.write(modelData.step());
     file.close();
 
-    // qDebug() << "3D model STEP exported to:" << savePath;
     return true;
 }
 
@@ -206,9 +193,8 @@ QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const 
             content += "    coord DEF co Coordinate {\n";
             content += "      point [\n";
 
-            // 添加顶点数据
             for (const QJsonValue& pointValue : shapePoints) {
-                // pointValue 现在是字符串格式，直接输
+                // pointValue 现在是字符串格式，直接输出
                 content += "        " + pointValue.toString() + ",\n";
             }
 
@@ -216,7 +202,6 @@ QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const 
             content += "    }\n";
             content += "    coordIndex [\n";
 
-            // 添加面索引数
             for (const QJsonValue& indexValue : coordIndex) {
                 // indexValue 是一QJsonArray，包含面索引
                 QJsonArray faceIndices = indexValue.toArray();
@@ -258,7 +243,6 @@ QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const 
         content += "        coord Coordinate {\n";
         content += "          point [\n";
 
-        // 添加顶点数据
         for (const QJsonValue& vertexValue : vertices) {
             QJsonArray vertex = vertexValue.toArray();
             if (vertex.size() >= 3) {
@@ -273,7 +257,6 @@ QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const 
         content += "        }\n";
         content += "        coordIndex [\n";
 
-        // 添加面索引数
         for (const QJsonValue& faceValue : faces) {
             QJsonArray face = faceValue.toArray();
             QString faceStr;
@@ -456,7 +439,7 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
                 int vertexIndex = vertexIndexStr.toInt() - 1;  // OBJ 索引1 开
 
                 if (!vertexIndexMap.contains(vertexIndex)) {
-                    // 添加顶点到形状（使用字符串格式）
+                    // WRL 格式使用字符串格式的顶点
                     if (vertexIndex >= 0 && vertexIndex < vertexStrings.size()) {
                         currentShapePoints.append(vertexStrings[vertexIndex]);
                     } else {

@@ -94,7 +94,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
 
     // 提取现有符号
     QMap<QString, QString> existingSymbols;  // 符号-> 符号内容
-    QSet<QString> subSymbolNames;            // 属于分体式符号的子符号名称
+    QSet<QString> subSymbolNames;  // 属于分体式符号的子符号名称
 
     // 使用更可靠的方法来提取符号：手动解析括号匹配
     QStringList lines = existingContent.split('\n');
@@ -399,14 +399,14 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
 
     // 生成属性
     double fieldOffset = 5.08;  // FIELD_OFFSET_START
-    double fontSize = 1.27;     // PROPERTY_FONT_SIZE
+    double fontSize = 1.27;  // PROPERTY_FONT_SIZE
 
     // 辅助函数：转义属性值
     auto escapePropertyValue = [](const QString& value) -> QString {
         QString escaped = value;
         escaped.replace("\"", "\\\"");  // 转义引号
-        escaped.replace("\n", " ");     // 移除换行符
-        escaped.replace("\t", " ");     // 移除制表符
+        escaped.replace("\n", " ");  // 移除换行符
+        escaped.replace("\t", " ");  // 移除制表符
         return escaped.trimmed();
     };
 
@@ -439,7 +439,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         fieldOffset += 2.54;  // FIELD_OFFSET_INCREMENT
         content += QString("    (property\n");
         content += QString("      \"Footprint\"\n");
-        // 添加库前缀：libName:package
+        // KiCad 符号需要库前缀格式
         QString footprintPath = QString("%1:%2").arg(libName, symbolData.info().package);
         content += QString("      \"%1\"\n").arg(escapePropertyValue(footprintPath));
         content += "      (id 2)\n";

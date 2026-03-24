@@ -21,6 +21,7 @@ namespace EasyKiConverter {
  * - --help, -h: 显示帮助信息
  * - --version, -v: 显示版本信息
  * - --portable: 便携模式（配置文件保存在程序目录）
+ * - --sync-logging: 启用同步控制台日志输出（确保彩色日志显示，方便调试）
  */
 class CommandLineParser {
 public:
@@ -86,10 +87,22 @@ public:
     QString theme() const;
 
     /**
+     * @brief 是否显式指定了主题参数
+     * @return 用户指定了 --theme 参数返回 true，否则返回 false
+     */
+    bool isThemeSet() const;
+
+    /**
      * @brief 是否为便携模式
      * @return 便携模式返回 true，否则返回 false
      */
     bool isPortableMode() const;
+
+    /**
+     * @brief 是否启用同步控制台日志输出
+     * @return 启用返回 true，否则返回 false
+     */
+    bool isSyncLogging() const;
 
     /**
      * @brief 获取帮助文本
@@ -126,6 +139,7 @@ private:
     QCommandLineOption m_languageOption;
     QCommandLineOption m_themeOption;
     QCommandLineOption m_portableOption;
+    QCommandLineOption m_syncLoggingOption;
 };
 
 }  // namespace EasyKiConverter

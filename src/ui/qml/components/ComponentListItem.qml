@@ -10,7 +10,8 @@ Rectangle {
     property var itemData
     property string searchText: ""
     signal deleteClicked
-    signal copyClicked // 新增复制信号
+    signal copyClicked
+    signal retryClicked
     height: 64 // 增加高度以容纳缩略图和更多信息
     // 悬停效果
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
@@ -35,11 +36,59 @@ Rectangle {
     ToolTip {
         id: copyFeedback
         parent: item
-        x: (parent.width - width) / 2
-        y: (parent.height - height) / 2
-        text: qsTr("已复制 ID")
+        x: parent.width - width - 8
+        y: 4
         delay: 0
         timeout: 1500
+        visible: false
+        text: ""
+        background: Rectangle {
+            color: AppStyle.isDarkMode ? "#1e293b" : "#ffffff"
+            radius: AppStyle.radius.md
+            border.width: 1
+            border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.1)
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowBlur: 8
+                shadowColor: AppStyle.isDarkMode ? "#00000088" : "#33000000"
+                shadowVerticalOffset: 2
+            }
+        }
+        contentItem: Row {
+            spacing: 4
+            Text {
+                text: "✓"
+                color: "#22c55e"
+                font.bold: true
+            }
+            Text {
+                text: qsTr("已复制")
+                color: AppStyle.isDarkMode ? "#ffffff" : "#1e293b"
+            }
+        }
+        enter: Transition {
+            NumberAnimation {
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: 150
+            }
+        }
+        exit: Transition {
+            NumberAnimation {
+                property: "opacity"
+                from: 1
+                to: 0
+                duration: 150
+            }
+        }
+    }
+
+    Timer {
+        id: copyFeedbackTimer
+        interval: 1500
+        onTriggered: copyFeedback.visible = false
     }
 
     // 1. 将全局鼠标区域移到最底层（作为背景交互层）
@@ -59,6 +108,7 @@ Rectangle {
                     copyHelper.copy();
                     item.copyClicked();
                     copyFeedback.visible = true;
+                    copyFeedbackTimer.start();
                 }
             } else
             // Ctrl + 左键点击打开浏览器
@@ -75,14 +125,23 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: AppStyle.spacing.sm
         spacing: AppStyle.spacing.md
-
         // 预览图区域 - 支持悬停放大
         Item {
             id: previewArea
             Layout.preferredWidth: 48
             Layout.preferredHeight: 48
             Layout.alignment: Qt.AlignVCenter
-
+            // 悬停延迟定时器：悬停1秒后才显示放大预览图
+            Timer {
+                id: hoverDelayTimer
+                interval: 250
+                repeat: false
+                onTriggered: {
+                    if (previewMouseArea.containsMouse && itemData && itemData.hasThumbnail) {
+                        previewPopup.visible = true;
+                    }
+                }
+            }
             // 默认显示的单张缩略图
             Rectangle {
                 id: defaultThumbnail
@@ -93,7 +152,6 @@ Rectangle {
                 border.color: AppStyle.colors.border
                 border.width: 1
                 clip: true
-
                 Image {
                     anchors.centerIn: parent
                     width: 46
@@ -115,12 +173,13 @@ Rectangle {
                 }
 
                 // 占位符/错误状态
+                // 只在验证完成且失败时显示 ✕（不包含验证中状态）
                 Text {
                     anchors.centerIn: parent
-                    text: (itemData && !itemData.isValid) ? "✕" : (itemData && !itemData.isFetching && !itemData.hasThumbnail) ? "?" : ""
+                    text: (itemData && !itemData.isFetching && !itemData.isValid) ? "✕" : ""
                     font.pixelSize: AppStyle.fontSizes.xxl
-                    color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
-                    visible: !(itemData && itemData.hasThumbnail && !itemData.isFetching) && !(itemData && itemData.isFetching)
+                    color: (itemData && !itemData.isFetching && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
+                    visible: (itemData && !itemData.isFetching && !itemData.isValid)
                 }
             }
 
@@ -131,29 +190,25 @@ Rectangle {
                 width: 490 // 三张图片 150x3 + 间距
                 height: 170
                 padding: 0
-                visible: previewMouseArea.containsMouse && itemData && itemData.hasThumbnail
+                // visible 由 Timer 控制，悬停1秒后显示
+                visible: false
                 closePolicy: Popup.NoAutoClose
                 modal: false
                 focus: false
                 dim: false
-
                 // 智能位置计算：检测是否超出窗口边界
                 onVisibleChanged: {
                     if (visible) {
                         // 获取缩略图在屏幕上的位置
                         var thumbGlobalPos = defaultThumbnail.mapToGlobal(Qt.point(0, 0));
-
                         // 获取窗口在屏幕上的位置
                         var window = item.Window.window;
                         var windowGlobalX = window ? window.x : 0;
                         var windowWidth = window ? window.width : item.width;
-
                         // 计算缩略图相对于窗口的位置
                         var thumbRelativeX = thumbGlobalPos.x - windowGlobalX;
-
                         // 预览图宽度（490）+ 间距（60）= 550
                         var popupWidth = width + 60;
-
                         // 如果右侧空间不足，显示在左侧
                         if (thumbRelativeX + popupWidth > windowWidth) {
                             x = -540; // 显示在缩略图左侧
@@ -189,7 +244,6 @@ Rectangle {
                     border.color: AppStyle.colors.primary
                     border.width: 2
                     radius: AppStyle.radius.md
-
                     // 阴影效果
                     layer.enabled: true
                     layer.effect: MultiEffect {
@@ -205,10 +259,29 @@ Rectangle {
                     anchors.fill: parent
                     anchors.margins: 10
                     spacing: 10
-
+                    // 如果没有预览图但有缩略图，显示放大的缩略图
+                    visible: itemData && itemData.hasThumbnail
+                    Rectangle {
+                        width: 470
+                        height: 150
+                        color: AppStyle.colors.background
+                        radius: AppStyle.radius.sm
+                        border.color: AppStyle.colors.border
+                        border.width: 1
+                        clip: true
+                        visible: !itemData || !itemData.previewImageCount || itemData.previewImageCount === 0
+                        Image {
+                            anchors.fill: parent
+                            anchors.margins: 5
+                            source: (itemData && itemData.thumbnailBase64) ? "data:image/png;base64," + itemData.thumbnailBase64 : ""
+                            fillMode: Image.PreserveAspectFit
+                            cache: true
+                            asynchronous: true
+                        }
+                    }
+                    // 如果有预览图，显示预览图列表
                     Repeater {
-                        model: itemData ? itemData.previewImageCount : 0
-
+                        model: (itemData && itemData.previewImageCount > 0) ? itemData.previewImageCount : 0
                         Rectangle {
                             width: 150
                             height: 150
@@ -217,10 +290,8 @@ Rectangle {
                             border.color: AppStyle.colors.border
                             border.width: 1
                             clip: true
-
                             property bool imageLoaded: false
                             property bool loadTriggered: false
-
                             // 延迟加载触发器
                             Timer {
                                 id: loadDelayTimer
@@ -255,7 +326,6 @@ Rectangle {
                                 cache: true
                                 asynchronous: true
                                 visible: parent.loadTriggered && parent.imageLoaded
-
                                 onStatusChanged: {
                                     if (status === Image.Ready) {
                                         parent.imageLoaded = true;
@@ -280,7 +350,6 @@ Rectangle {
                                 color: AppStyle.colors.background
                                 radius: AppStyle.radius.md
                                 visible: !parent.loadTriggered
-
                                 Text {
                                     anchors.centerIn: parent
                                     text: index + 1
@@ -344,6 +413,16 @@ Rectangle {
                         }
                     }
                 }
+                onContainsMouseChanged: {
+                    if (containsMouse && itemData && itemData.hasThumbnail) {
+                        // 开始计时，1秒后显示预览图
+                        hoverDelayTimer.start();
+                    } else {
+                        // 鼠标离开，立即停止计时并隐藏预览图
+                        hoverDelayTimer.stop();
+                        previewPopup.visible = false;
+                    }
+                }
             }
         }
 
@@ -375,7 +454,7 @@ Rectangle {
                 font.pixelSize: AppStyle.fontSizes.md
                 font.family: "Courier New"
                 font.bold: true
-                color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textPrimary
+                color: (itemData && !itemData.isFetching && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textPrimary
                 elide: Text.ElideRight
             }
 
@@ -397,11 +476,42 @@ Rectangle {
                     return info.join(" | ");
                 }
                 font.pixelSize: AppStyle.fontSizes.sm
-                color: (itemData && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
+                color: (itemData && !itemData.isFetching && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
                 elide: Text.ElideRight
             }
         }
-
+        // 重试按钮（仅对验证失败的元器件显示）
+        Button {
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            Layout.alignment: Qt.AlignVCenter
+            visible: itemData && !itemData.isValid && !itemData.isFetching
+            background: Rectangle {
+                color: parent.pressed ? AppStyle.colors.primaryHover : parent.hovered ? "#dbeafe" : "transparent"
+                radius: AppStyle.radius.sm
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+            }
+            contentItem: Text {
+                text: "↻"
+                font.pixelSize: AppStyle.fontSizes.xxl
+                font.bold: true
+                color: parent.pressed ? AppStyle.colors.primaryPressed : parent.hovered ? AppStyle.colors.primary : AppStyle.colors.primary
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+            }
+            onClicked: {
+                item.retryClicked();
+            }
+        }
         // 删除按钮
         Button {
             Layout.preferredWidth: 28

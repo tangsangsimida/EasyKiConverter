@@ -5,7 +5,7 @@
 namespace EasyKiConverter {
 
 // 单位转换常量
-const double MIL_TO_MM = 0.0254;   // 1 mil = 0.0254 mm
+const double MIL_TO_MM = 0.0254;  // 1 mil = 0.0254 mm
 const double MM_TO_MIL = 39.3701;  // 1 mm = 39.3701 mil
 
 LayerMapper::LayerMapper() {
@@ -67,20 +67,20 @@ void LayerMapper::initializeLayerMapping() {
 
     // 五、机械与结构
     m_layerIdMapping[10] = Edge_Cuts;  // BoardOutLine -> Edge.Cuts
-    m_layerIdMapping[15] = F_Fab;      // Mechanical -> F.Fab (顶层装配)
-    m_layerIdMapping[99] = F_CrtYd;    // ComponentShapeLayer -> F.CrtYd (元件占位)
-    m_layerIdMapping[100] = F_Fab;     // LeadShapeLayer -> F.Fab (引脚形状)
-    m_layerIdMapping[101] = F_SilkS;   // ComponentPolarityLayer -> F.SilkS (极性标
+    m_layerIdMapping[15] = F_Fab;  // Mechanical -> F.Fab (顶层装配)
+    m_layerIdMapping[99] = F_CrtYd;  // ComponentShapeLayer -> F.CrtYd (元件占位)
+    m_layerIdMapping[100] = F_Fab;  // LeadShapeLayer -> F.Fab (引脚形状)
+    m_layerIdMapping[101] = F_SilkS;  // ComponentPolarityLayer -> F.SilkS (极性标
 
     // 六、装配与文档
-    m_layerIdMapping[13] = F_Fab;      // TopAssembly -> F.Fab
-    m_layerIdMapping[14] = B_Fab;      // BottomAssembly -> B.Fab
+    m_layerIdMapping[13] = F_Fab;  // TopAssembly -> F.Fab
+    m_layerIdMapping[14] = B_Fab;  // BottomAssembly -> B.Fab
     m_layerIdMapping[12] = Dwgs_User;  // Document -> Dwgs.User
 
     // 七、特殊功能层
-    m_layerIdMapping[9] = Dwgs_User;    // Ratlines -> Dwgs.User (飞线)
-    m_layerIdMapping[11] = F_Cu;        // Multi-Layer -> F.Cu (通孔焊盘，实际在所有层)
-    m_layerIdMapping[19] = Dwgs_User;   // 3DModel -> Dwgs.User (3D 模型引用)
+    m_layerIdMapping[9] = Dwgs_User;  // Ratlines -> Dwgs.User (飞线)
+    m_layerIdMapping[11] = F_Cu;  // Multi-Layer -> F.Cu (通孔焊盘，实际在所有层)
+    m_layerIdMapping[19] = Dwgs_User;  // 3DModel -> Dwgs.User (3D 模型引用)
     m_layerIdMapping[102] = Dwgs_User;  // Hole -> Dwgs.User (非金属化
     m_layerIdMapping[103] = Cmts_User;  // DRCError -> Cmts.User (DRC 错误)
 

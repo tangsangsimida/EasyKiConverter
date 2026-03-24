@@ -25,13 +25,13 @@ public:
      * @brief 收集状态枚
      */
     enum State {
-        Idle,                   // 空闲状
+        Idle,  // 空闲状
         FetchingComponentInfo,  // 正在获取组件信息
-        FetchingCadData,        // 正在获取CAD数据
-        FetchingObjData,        // 正在获取OBJ数据
-        FetchingStepData,       // 正在获取STEP数据
-        Completed,              // 完成
-        Failed                  // 失败
+        FetchingCadData,  // 正在获取CAD数据
+        FetchingObjData,  // 正在获取OBJ数据
+        FetchingStepData,  // 正在获取STEP数据
+        Completed,  // 完成
+        Failed  // 失败
     };
     Q_ENUM(State)
 

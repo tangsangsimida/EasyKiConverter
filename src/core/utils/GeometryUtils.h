@@ -163,15 +163,15 @@ public:
      * @brief SVG 弧计算结果结构体
      */
     struct SvgArcResult {
-        double cx;          ///< 圆心 X 坐标
-        double cy;          ///< 圆心 Y 坐标
-        double rx;          ///< X 半径
-        double ry;          ///< Y 半径
+        double cx;  ///< 圆心 X 坐标
+        double cy;  ///< 圆心 Y 坐标
+        double rx;  ///< X 半径
+        double ry;  ///< Y 半径
         double startAngle;  ///< 起始角度（度
         double deltaAngle;  ///< 角度增量（度
-        double xRotate;     ///< X 轴旋转角度（度）
-        SvgPoint startPt;   ///< 起始
-        SvgPoint endPt;     ///< 终点
+        double xRotate;  ///< X 轴旋转角度（度）
+        SvgPoint startPt;  ///< 起始
+        SvgPoint endPt;  ///< 终点
 
         SvgArcResult() : cx(0), cy(0), rx(0), ry(0), startAngle(0), deltaAngle(0), xRotate(0) {}
     };

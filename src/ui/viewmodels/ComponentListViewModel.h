@@ -24,6 +24,13 @@ class ComponentListViewModel : public QAbstractListModel {
     Q_PROPERTY(int componentCount READ componentCount NOTIFY componentCountChanged)
     Q_PROPERTY(QString bomFilePath READ bomFilePath NOTIFY bomFilePathChanged)
     Q_PROPERTY(QString bomResult READ bomResult NOTIFY bomResultChanged)
+    Q_PROPERTY(bool hasInvalidComponents READ hasInvalidComponents NOTIFY hasInvalidComponentsChanged)
+    Q_PROPERTY(QString filterMode READ filterMode NOTIFY filterModeChanged)
+    Q_PROPERTY(int filteredCount READ filteredCount NOTIFY filteredCountChanged)
+    Q_PROPERTY(int validatingCount READ validatingCount NOTIFY filteredCountChanged)
+    Q_PROPERTY(int validCount READ validCount NOTIFY filteredCountChanged)
+    Q_PROPERTY(int invalidCount READ invalidCount NOTIFY filteredCountChanged)
+    Q_PROPERTY(bool isScrolling READ isScrolling NOTIFY isScrollingChanged)
 
 public:
     enum ComponentRoles { ItemDataRole = Qt::UserRole + 1 };
@@ -56,6 +63,10 @@ public:
 
     QString bomResult() const {
         return m_bomResult;
+    }
+
+    bool hasInvalidComponents() const {
+        return m_hasInvalidComponents;
     }
 
     // 获取预加载的数据（用于导出流程）
@@ -142,6 +153,18 @@ public slots:
     Q_INVOKABLE void refreshComponentInfo(int index);
 
     /**
+     * @brief 重试所有验证失败的元器件
+     */
+    Q_INVOKABLE void retryAllInvalidComponents();
+
+    /**
+     * @brief 重试获取组件的预览图
+     *
+     * @param componentId 元件ID
+     */
+    Q_INVOKABLE void retryPreviewImage(const QString& componentId);
+
+    /**
      * @brief 获取所有元件ID列表
      * @return QStringList 元件ID列表
      */
@@ -154,11 +177,43 @@ public slots:
      */
     Q_INVOKABLE void copyToClipboard(const QString& text);
 
+    /**
+     * @brief 设置筛选模式
+     *
+     * @param mode 筛选模式: all, validating, valid, invalid
+     */
+    Q_INVOKABLE void setFilterMode(const QString& mode);
+
+    // Getter 方法
+    QString filterMode() const {
+        return m_filterMode;
+    }
+
+    int filteredCount() const;
+    int validatingCount() const;
+    int validCount() const;
+    int invalidCount() const;
+
+    bool isScrolling() const {
+        return m_isScrolling;
+    }
+
+    /**
+     * @brief 设置滚动状态
+     *
+     * @param scrolling 是否正在滚动
+     */
+    Q_INVOKABLE void setScrolling(bool scrolling);
+
 signals:
     // componentListChanged 信号不再需要，因为 QAbstractListModel 有自己的信号机制
     void componentCountChanged();
     void bomFilePathChanged();
     void bomResultChanged();
+    void hasInvalidComponentsChanged();
+    void filterModeChanged();
+    void filteredCountChanged();
+    void isScrollingChanged();
     void componentAdded(const QString& componentId, bool success, const QString& message);
     void componentRemoved(const QString& componentId);
     void listCleared();
@@ -234,6 +289,8 @@ private slots:
      * @param componentId 元件ID
      * @param imageDataList 图片数据列表
      */
+    void handlePreviewImageFailed(const QString& componentId, const QString& error);
+
     void handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
 
 private:
@@ -264,6 +321,12 @@ private:
     // 查找列表项数据
     ComponentListItemData* findItemData(const QString& componentId) const;
 
+    // 更新 hasInvalidComponents 状态
+    void updateHasInvalidComponents();
+
+    // 批量获取所有验证通过元器件的预览图
+    void fetchAllPreviewImages();
+
 private:
     ComponentService* m_service;
     QList<ComponentListItemData*> m_componentList;
@@ -271,10 +334,22 @@ private:
     QString m_outputPath;
     QString m_bomFilePath;
     QString m_bomResult;
+    bool m_hasInvalidComponents = false;
 
     // 防抖定时器，用于减少频繁的 UI 更新
     QTimer* m_debounceTimer;
     QSet<QString> m_pendingUpdateIndices;  // 待更新的索引集合
+
+    // 两阶段控制：先验证，再获取预览图
+    int m_pendingValidationCount = 0;  // 待验证的元器件数量
+    QStringList m_validatedComponentIds;  // 验证通过的元器件ID列表
+    bool m_previewFetchEnabled = false;  // 是否允许获取预览图
+
+    // 筛选功能
+    QString m_filterMode = "all";  // 筛选模式: all, validating, valid, invalid
+
+    // 滚动状态
+    bool m_isScrolling = false;  // 是否正在滚动
 };
 
 }  // namespace EasyKiConverter

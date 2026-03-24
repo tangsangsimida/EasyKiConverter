@@ -26,36 +26,29 @@ FocusScope {
     visible: false
     z: 9999
     focus: visible  // 当对话框可见时接收焦点
-
     // 常量
     readonly property int buttonHeight: 48
     readonly property real sliderOpacity: 0.25
-
     // 属性
     property bool rememberChoice: false
     property Item activeButton: null  // 当前活跃的按钮
     property Item selectedButton: exitButton  // 当前键盘选中的按钮，默认为退出按钮
     property string focusArea: "button"  // 当前聚焦区域："button" 或 "checkbox"，默认为按钮
-
     // 信号
     signal minimizeToTray(bool remember)
     signal exitApp(bool remember)
     signal canceled
-
     // 更新滑块位置
     function updateSlider(targetButton, targetColor) {
         // 计算按钮在 buttonBox 中的相对位置
         var buttonY = targetButton.mapToItem(buttonBox, 0, 0).y;
-
         // 果冻拉伸效果：向下移动时轻微压缩高度
         var centerY = buttonBox.height / 2;
         var stretchFactor = 1.0 + Math.abs(buttonY - centerY) / centerY * 0.02;
-
         sliderBackground.y = buttonY;
         sliderBackground.height = buttonHeight * (2.0 - stretchFactor);  // 使用常量
         sliderBackground.color = targetColor;
         sliderBackground.opacity = sliderOpacity;  // 使用常量
-
         // 更新活跃按钮
         activeButton = targetButton;
     }
@@ -103,8 +96,7 @@ FocusScope {
         radius: AppStyle.radius.xl
         scale: 1.0
         opacity: 1.0
-        rotation: 0  // 添加旋转属性
-
+        rotation: 0
         transform: Translate {
             id: dialogBoxTranslate
             y: 0
@@ -141,7 +133,6 @@ FocusScope {
             anchors.fill: parent
             anchors.margins: AppStyle.spacing.xxxl
             spacing: AppStyle.spacing.lg
-
             // 标题
             Text {
                 text: qsTr("关闭程序")
@@ -173,7 +164,6 @@ FocusScope {
                 radius: AppStyle.radius.lg
                 border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.08)
                 border.width: 1
-
                 // 滑块背景（果冻效果）
                 Rectangle {
                     id: sliderBackground
@@ -185,7 +175,6 @@ FocusScope {
                     color: AppStyle.colors.primary
                     opacity: 0
                     z: 2
-
                     // Q弹动画（弹簧效果 - 垂直移动）
                     Behavior on y {
                         enabled: sliderBackground.visible
@@ -243,12 +232,10 @@ FocusScope {
                     anchors.bottomMargin: AppStyle.spacing.sm
                     spacing: 0
                     z: 1
-
                     // 最小化到托盘
                     Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: buttonHeight  // 使用常量
-
                         ModernButton {
                             id: minimizeButton
                             anchors.fill: parent
@@ -257,7 +244,6 @@ FocusScope {
                             // 动态文本颜色：当滑块在上方时变亮，键盘选中时使用不同颜色
                             textColor: root.activeButton === minimizeButton ? Qt.lighter(AppStyle.colors.primary, 1.3) : (root.selectedButton === minimizeButton ? AppStyle.colors.primary : AppStyle.colors.textPrimary)
                             hoverColor: "transparent"
-
                             // 文本颜色渐变动画
                             Behavior on textColor {
                                 ColorAnimation {
@@ -301,7 +287,6 @@ FocusScope {
                     Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: buttonHeight  // 使用常量
-
                         ModernButton {
                             id: exitButton
                             anchors.fill: parent
@@ -310,7 +295,6 @@ FocusScope {
                             // 动态文本颜色：当滑块在上方时变亮
                             textColor: root.activeButton === exitButton ? Qt.lighter(AppStyle.colors.danger, 1.3) : (root.selectedButton === exitButton ? AppStyle.colors.danger : AppStyle.colors.textPrimary)
                             hoverColor: "transparent"
-
                             // 文本颜色渐变动画
                             Behavior on textColor {
                                 ColorAnimation {
@@ -354,7 +338,6 @@ FocusScope {
                     Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: buttonHeight  // 使用常量
-
                         ModernButton {
                             id: cancelButton
                             anchors.fill: parent
@@ -363,7 +346,6 @@ FocusScope {
                             // 动态文本颜色：当滑块在上方时变亮
                             textColor: root.activeButton === cancelButton ? Qt.lighter(AppStyle.colors.textSecondary, 1.5) : (root.selectedButton === cancelButton ? AppStyle.colors.textSecondary : AppStyle.colors.textPrimary)
                             hoverColor: "transparent"
-
                             // 文本颜色渐变动画
                             Behavior on textColor {
                                 ColorAnimation {
@@ -404,7 +386,6 @@ FocusScope {
                 Layout.fillWidth: true
                 Layout.topMargin: AppStyle.spacing.md
                 spacing: AppStyle.spacing.sm
-
                 CheckBox {
                     id: rememberCheckBox
                     checked: root.rememberChoice  // 双向绑定
@@ -449,11 +430,8 @@ FocusScope {
                 }
 
                 Text {
-
                     text: qsTr("记住我的选择")
-
                     font.pixelSize: AppStyle.fontSizes.sm
-
                     color: AppStyle.colors.textSecondary
                 }
             }
@@ -545,61 +523,38 @@ FocusScope {
 
     SequentialAnimation {
         id: hideAnim
-
         ParallelAnimation {
-
             NumberAnimation {
-
                 target: dialogBox
-
                 property: "opacity"
-
                 from: 1
-
                 to: 0
-
                 duration: 200
-
                 easing.type: Easing.OutQuad
             }
 
             NumberAnimation {
-
                 target: dialogBoxTranslate
-
                 property: "y"
-
                 from: 0
-
                 to: root.height
-
                 duration: 200
-
                 easing.type: Easing.OutQuad
             }
 
             NumberAnimation {
-
                 target: dialogBox
-
                 property: "scale"
-
                 from: 1.0
-
                 to: 0.9
-
                 duration: 200
-
                 easing.type: Easing.OutQuad
             }
         }
 
         PropertyAction {
-
             target: root
-
             property: "visible"
-
             value: false
         }
     }

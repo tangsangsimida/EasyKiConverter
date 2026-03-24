@@ -1,1 +1,2 @@
 singleton AppStyle 1.0 AppStyle.qml
+singleton ResponsiveHelper 1.0 ResponsiveHelper.qml

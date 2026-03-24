@@ -147,9 +147,9 @@ private:
     QMutex m_mutex;
 
     // 超时配置
-    static const int DEFAULT_TIMEOUT_MS = 30000;                   // 默认超时 30 秒
-    static const int MODEL_TIMEOUT_MS = 45000;                     // 3D 模型超时 45 秒
-    static const int MAX_RETRIES = 3;                              // 最大重试次数
+    static const int DEFAULT_TIMEOUT_MS = 30000;  // 默认超时 30 秒
+    static const int MODEL_TIMEOUT_MS = 45000;  // 3D 模型超时 45 秒
+    static const int MAX_RETRIES = 3;  // 最大重试次数
     static constexpr int RETRY_DELAYS_MS[] = {3000, 5000, 10000};  // 递增重试延迟
 };
 

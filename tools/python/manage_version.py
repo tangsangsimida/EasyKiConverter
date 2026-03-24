@@ -10,21 +10,29 @@ EasyKiConverter 版本管理工具
        - vcpkg.json: 更新 "version-string" 字段。
        - CMakeLists.txt: 更新 VERSION_FROM_CI 及 qt_add_qml_module 的版本。
        - src/main.cpp: 更新 app.setApplicationVersion。
-    3. 校验: 强制要求版本号符合 X.Y.Z (语义化版本) 格式。
+       - deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml: 更新截图 URL 和 release 描述。
+    3. 智能检查: 在更新前检查每个文件中的版本是否已经是目标版本，避免不必要的修改。
+    4. 自动生成 release 描述: 从 Git 提交历史自动提取从上个版本到新版本的所有提交内容。
+    5. 校验: 强制要求版本号符合 X.Y.Z (语义化版本) 格式。
 
 环境要求:
     - Python: 3.6+
-    - 依赖: 标准库 (argparse, json, re, os, sys)
+    - 依赖: 标准库 (argparse, json, re, os, sys, datetime, subprocess)
     - 运行位置: 建议在项目根目录运行，或确保脚本相对于项目的路径结构不发生变化。
 
 用法示例:
     1. 检查当前版本:
        python tools/python/manage_version.py --check
-    2. 更新所有文件到新版本:
+    2. 更新所有文件到新版本（自动生成 release 描述）:
        python tools/python/manage_version.py 3.1.0
+    3. 仅更新 metainfo.xml:
+       python tools/python/manage_version.py 3.1.0 --metainfo-only
+    4. 跳过 release 描述生成:
+       python tools/python/manage_version.py 3.1.0 --no-release-notes
 
 注意事项:
     - 脚本会直接修改文件，建议在 Git 工作区干净的状态下运行以便回滚。
+    - 自动生成 release 描述功能需要 Git 环境。
 ============================================================================
 """
 import argparse
@@ -32,12 +40,18 @@ import json
 import re
 import os
 import sys
+import subprocess
+from datetime import datetime
 
 # 文件路径配置 (相对于项目根目录)
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 VCPKG_JSON_PATH = os.path.join(PROJECT_ROOT, "vcpkg.json")
 CMAKE_LISTS_PATH = os.path.join(PROJECT_ROOT, "CMakeLists.txt")
 MAIN_CPP_PATH = os.path.join(PROJECT_ROOT, "src", "main.cpp")
+METAINFO_XML_PATH = os.path.join(PROJECT_ROOT, "deploy", "metainfo", "io.github.tangsangsimida.easykiconverter.metainfo.xml")
+MKDOCS_YAML_PATH = os.path.join(PROJECT_ROOT, "mkdocs.yml")
+APPX_MANIFEST_PATH = os.path.join(PROJECT_ROOT, "deploy", "windows", "AppxManifest.xml")
+FLATPAK_MANIFEST_PATH = os.path.join(PROJECT_ROOT, "deploy", "flatpak", "io.github.tangsangsimida.easykiconverter.yml")
 
 def get_current_version():
     """
@@ -59,9 +73,89 @@ def get_current_version():
         print(f"读取 vcpkg.json 失败: {e}")
         return None
 
-def update_vcpkg_json(new_version):
+def check_vcpkg_json_version(version):
+    """检查 vcpkg.json 中的版本是否已经是目标版本"""
+    if not os.path.exists(VCPKG_JSON_PATH):
+        return None
+
+    try:
+        with open(VCPKG_JSON_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            current = data.get("version-string")
+            return current == version
+    except Exception as e:
+        print(f"检查 vcpkg.json 失败: {e}")
+        return None
+
+def check_cmake_version(version):
+    """检查 CMakeLists.txt 中的版本是否已经是目标版本"""
+    if not os.path.exists(CMAKE_LISTS_PATH):
+        return None
+
+    try:
+        with open(CMAKE_LISTS_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+            # 检查 VERSION_FROM_CI 默认值
+            pattern = r'set\(VERSION_FROM_CI\s*"([^"]+)"\)'
+            match = re.search(pattern, content)
+            if match:
+                return match.group(1) == version
+    except Exception as e:
+        print(f"检查 CMakeLists.txt 失败: {e}")
+        return None
+    return False
+
+def check_main_cpp_version(version):
+    """检查 src/main.cpp 中的版本是否已经是目标版本"""
+    if not os.path.exists(MAIN_CPP_PATH):
+        return None
+
+    try:
+        with open(MAIN_CPP_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+            # 检查 app.setApplicationVersion
+            pattern = r'app\.setApplicationVersion\("([^"]+)"\)'
+            match = re.search(pattern, content)
+            if match:
+                return match.group(1) == version
+    except Exception as e:
+        print(f"检查 src/main.cpp 失败: {e}")
+        return None
+    return False
+
+def check_metainfo_version(version):
+    """检查 metainfo.xml 中的版本是否已经是目标版本"""
+    if not os.path.exists(METAINFO_XML_PATH):
+        return None
+
+    try:
+        with open(METAINFO_XML_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+            # 检查截图 URL 中的版本
+            pattern = r'https://raw\.githubusercontent\.com/tangsangsimida/EasyKiConverter/v([^/]+)/'
+            matches = re.findall(pattern, content)
+            if matches:
+                # 所有截图 URL 都应该是相同的版本
+                return all(match == version for match in matches)
+    except Exception as e:
+        print(f"检查 metainfo.xml 失败: {e}")
+        return None
+    return False
+
+def update_vcpkg_json(new_version, force=False):
     """更新 vcpkg.json 中的版本号"""
     print(f"正在更新 {VCPKG_JSON_PATH}...")
+
+    # 检查版本是否已经是目标版本（除非是强制模式）
+    if not force:
+        check_result = check_vcpkg_json_version(new_version)
+        if check_result is True:
+            print(f"  ✓ {VCPKG_JSON_PATH} 版本已经是 {new_version}，跳过更新")
+            return True
+        elif check_result is None:
+            print(f"  ✗ 无法检查 {VCPKG_JSON_PATH} 版本")
+            return False
+
     try:
         with open(VCPKG_JSON_PATH, "r", encoding="utf-8") as f:
             content = f.read()
@@ -74,109 +168,89 @@ def update_vcpkg_json(new_version):
         new_content = re.sub(pattern, replacement, content)
 
         if content == new_content:
-            print(f"警告: {VCPKG_JSON_PATH} 未发生变化 (可能版本号未变或格式不匹配)")
+            if force:
+                print(f"  ✓ {VCPKG_JSON_PATH} 版本已经是 {new_version}")
+                return True
+            else:
+                print(f"  ✗ {VCPKG_JSON_PATH} 未发生变化 (可能版本号未变或格式不匹配)")
+                return False
         else:
             with open(VCPKG_JSON_PATH, "w", encoding="utf-8") as f:
                 f.write(new_content)
-            print(f"成功更新 {VCPKG_JSON_PATH}")
+            print(f"  ✓ 成功更新 {VCPKG_JSON_PATH}")
             return True
     except Exception as e:
-        print(f"更新 {VCPKG_JSON_PATH} 失败: {e}")
-    return False
+        print(f"  ✗ 更新 {VCPKG_JSON_PATH} 失败: {e}")
+        return False
 
-def update_cmake_lists(new_version):
+def update_cmake_lists(new_version, force=False):
     """更新 CMakeLists.txt 中的版本号"""
     print(f"正在更新 {CMAKE_LISTS_PATH}...")
+
+    # 检查版本是否已经是目标版本（除非是强制模式）
+    if not force:
+        check_result = check_cmake_version(new_version)
+        if check_result is True:
+            print(f"  ✓ {CMAKE_LISTS_PATH} 版本已经是 {new_version}，跳过更新")
+            return True
+        elif check_result is None:
+            print(f"  ✗ 无法检查 {CMAKE_LISTS_PATH} 版本")
+            return False
+
     try:
         with open(CMAKE_LISTS_PATH, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # 1. 更新 VERSION_FROM_CI默认值
-        # set(VERSION_FROM_CI "0.1")
+        # 1. 更新 VERSION_FROM_CI 默认值
+        # set(VERSION_FROM_CI "3.0.13")
         pattern1 = r'(set\(VERSION_FROM_CI\s+")([^"]+)("\))'
-        replacement1 = f'\\g<1>{new_version}\\g<3>'
-        content = re.sub(pattern1, replacement1, content)
+        content = re.sub(pattern1, f'\\g<1>{new_version}\\g<3>', content)
 
         # 2. 更新 qt_add_qml_module 中的 VERSION (只保留 Major.Minor)
-        # VERSION 1.0
+        # VERSION 3.0
         major_minor = ".".join(new_version.split(".")[:2])
-        pattern2 = r'(qt_add_qml_module\(appEasyKiconverter_Cpp_Version.*?VERSION\s+)(\d+\.\d+)(.*?\))'
-        # 注意：这里需要使用 re.DOTALL 因为 qt_add_qml_module跨越多行
-        # 但简单的逐行正则可能更安全，或者寻找特定上下文
-        # 简单起见，我们假设 VERSION 1.0 是独立的一行或者容易匹配
-        # 实际上 qt_add_qml_module 内部的 VERSION 参数通常是 VERSION X.Y
-        # 我们只替换 VERSION 之后的数字
+        pattern2 = r'(qt_add_qml_module\(appEasyKiconverter_Cpp_Version.*?VERSION\s+)(\d+\.\d+)'
+        content = re.sub(pattern2, f'\\g<1>{major_minor}', content, flags=re.DOTALL)
 
-        # 更精确的匹配：找到 qt_add_qml_module 块，然后替换里面的 VERSION
-        # 鉴于文件结构，我们可以尝试直接替换 `VERSION 1.0` 如果它在 qt_add_qml_module 附近
-        # 但为了避免误伤 project(VERSION ...)，我们需要小心
+        # 3. 更新 project() 中的 VERSION (如果存在显式指定)
+        # project(EasyKiconverter_Cpp_Version VERSION 3.0.13 LANGUAGES CXX)
+        # 注意：这个通常由 PROJECT_VERSION_SANITIZED 动态生成，但如果有硬编码也需要更新
+        pattern3 = r'(project\(EasyKiconverter_Cpp_Version\s+VERSION\s+)(\d+\.\d+\.\d+)(\s+LANGUAGES)'
+        content = re.sub(pattern3, f'\\g<1>{new_version}\\g<3>', content)
 
-        # 策略：直接读取文件行，找到 qt_add_qml_module 开始，然后在其中找 VERSION
-        lines = content.splitlines()
-        in_qml_module = False
-        new_lines = []
-        for line in lines:
-            if "qt_add_qml_module(appEasyKiconverter_Cpp_Version" in line:
-                in_qml_module = True
-
-            if in_qml_module and "VERSION" in line and not "MACOSX_BUNDLE_BUNDLE_VERSION" in line:
-                # 替换 VERSION 1.0 -> VERSION X.Y
-                # 假设格式为 "    VERSION 1.0"
-                line = re.sub(r'(VERSION\s+)(\d+\.\d+)', f'\\g<1>{major_minor}', line)
-                in_qml_module = False # 假设 VERSION 只有一行，或者我们只替换一次
-
-            if ")" in line and in_qml_module:
-                 # 简单的结束判断，可能不准确但对于标准格式足够
-                 pass
-
-            new_lines.append(line)
-
-        new_content = "\n".join(new_lines) + "\n" # 保持末尾换行
-
-        # 上面的循环逻辑有点复杂且可能脆弱，我们用简单的正则替换尝试一下
-        # 针对: set(VERSION_FROM_CI "0.1") 已由 pattern1 处理
-
-        # 针对 QML VERSION，考虑到它通常是 Major.Minor
-        # 我们可以只更新 pattern1，QML VERSION 如果是固定的 1.0 可能不需要每次都动，
-        # 除非我们想让 QML 模块版本也跟进。
-        # 之前的 plan 说 "update VERSION 1.0 in qt_add_qml_module to the new version (major.minor)"
-        # 所以我们必须做。
-
-        # 重新读取 content (因为 splitlines 处理比较复杂，我们用正则再试一次)
-        # 我们已经用 pattern1 替换了一部分
-
-        pattern_qml = r'(VERSION\s+)(\d+\.\d+)(\s+QML_FILES)'
-        # 这要求 VERSION 和 QML_FILES 在同一行或者我们可以匹配多行
-        # 让我们再看一眼原文件:
-        # qt_add_qml_module(appEasyKiconverter_Cpp_Version
-        #     URI EasyKiconverter_Cpp_Version
-        #     VERSION 1.0
-        #     QML_FILES
-
-        # 用 replace 直接替换特定字符串可能更安全，如果上下文允许
-        # 但 "VERSION 1.0" 太通用了。
-
-        # 让我们用 regex 匹配多行
-        pattern_qml_block = r'(qt_add_qml_module\(.*?VERSION\s+)(\d+\.\d+)'
-        new_content = re.sub(pattern_qml_block, f'\\g<1>{major_minor}', content, flags=re.DOTALL)
-
-        if content == new_content and new_version not in content:
-             print(f"警告: {CMAKE_LISTS_PATH} update可能不完整")
-
-        with open(CMAKE_LISTS_PATH, "w", encoding="utf-8") as f:
-            f.write(new_content)
-        print(f"成功更新 {CMAKE_LISTS_PATH}")
-        return True
+        if content == content:
+            if force:
+                print(f"  ✓ {CMAKE_LISTS_PATH} 版本已经是 {new_version}")
+                return True
+            else:
+                print(f"  ✗ {CMAKE_LISTS_PATH} 未发生变化")
+                return False
+        else:
+            with open(CMAKE_LISTS_PATH, "w", encoding="utf-8") as f:
+                f.write(content)
+            print(f"  ✓ 成功更新 {CMake_LISTS_PATH}")
+            return True
 
     except Exception as e:
-        print(f"更新 {CMAKE_LISTS_PATH} 失败: {e}")
+        print(f"  ✗ 更新 {CMake_LISTS_PATH} 失败: {e}")
         import traceback
         traceback.print_exc()
-    return False
+        return False
 
-def update_main_cpp(new_version):
+def update_main_cpp(new_version, force=False):
     """更新 src/main.cpp 中的版本号"""
     print(f"正在更新 {MAIN_CPP_PATH}...")
+
+    # 检查版本是否已经是目标版本（除非是强制模式）
+    if not force:
+        check_result = check_main_cpp_version(new_version)
+        if check_result is True:
+            print(f"  ✓ {MAIN_CPP_PATH} 版本已经是 {new_version}，跳过更新")
+            return True
+        elif check_result is None:
+            print(f"  ✗ 无法检查 {MAIN_CPP_PATH} 版本")
+            return False
+
     try:
         with open(MAIN_CPP_PATH, "r", encoding="utf-8") as f:
             content = f.read()
@@ -188,20 +262,542 @@ def update_main_cpp(new_version):
         new_content = re.sub(pattern, replacement, content)
 
         if content == new_content:
-            print(f"警告: {MAIN_CPP_PATH} 未发生变化")
+            if force:
+                print(f"  ✓ {MAIN_CPP_PATH} 版本已经是 {new_version}")
+                return True
+            else:
+                print(f"  ✗ {MAIN_CPP_PATH} 未发生变化")
+                return False
         else:
             with open(MAIN_CPP_PATH, "w", encoding="utf-8") as f:
                 f.write(new_content)
-            print(f"成功更新 {MAIN_CPP_PATH}")
+            print(f"  ✓ 成功更新 {MAIN_CPP_PATH}")
             return True
     except Exception as e:
-        print(f"更新 {MAIN_CPP_PATH} 失败: {e}")
+        print(f"  ✗ 更新 {MAIN_CPP_PATH} 失败: {e}")
+        return False
+
+def update_metainfo_xml(new_version, generate_release=True, force=False):
+    """
+    更新 metainfo.xml 中的版本号和 release 描述
+
+    Args:
+        new_version: 新版本号
+        generate_release: 是否自动生成 release 描述（默认 True）
+        force: 是否强制更新，跳过版本检查
+    """
+    print(f"正在更新 {METAINFO_XML_PATH}...")
+
+    if not os.path.exists(METAINFO_XML_PATH):
+        print(f"  ✗ 找不到文件 {METAINFO_XML_PATH}")
+        return False
+
+    # 检查版本是否已经是目标版本（除非是强制模式）
+    if not force:
+        check_result = check_metainfo_version(new_version)
+        if check_result is True:
+            print(f"  ✓ {METAINFO_XML_PATH} 版本已经是 {new_version}，跳过更新")
+            return True
+        elif check_result is None:
+            print(f"  ✗ 无法检查 {METAINFO_XML_PATH} 版本")
+            return False
+
+    try:
+        with open(METAINFO_XML_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 获取第一个 release 版本
+        release_pattern = r'<release version="([^"]+)" date="[^"]+">'
+        first_release_match = re.search(release_pattern, content)
+
+        # 获取上个版本号
+        old_version = None
+        if first_release_match:
+            old_version = first_release_match.group(1)
+
+        # 更新截图 URL 中的版本标签
+        # https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.0.11/resources/imgs/screenshot1.png
+        pattern = r'(https://raw\.githubusercontent\.com/tangsangsimida/EasyKiConverter/v)([^/]+)(/resources/imgs/screenshot\d+\.png)'
+        new_content = re.sub(pattern, f'\\g<1>{new_version}\\g<3>', content)
+
+        # 检查是否需要添加新的 release 条目
+        if first_release_match:
+            current_release_version = first_release_match.group(1)
+            if current_release_version != new_version:
+                # 需要添加新的 release 条目
+                if generate_release:
+                    print(f"  ℹ  自动生成 release 描述...")
+                    # 获取提交历史
+                    commits = get_git_commits_since_version(old_version, new_version)
+                    print(f"  ℹ  找到 {len(commits)} 个提交")
+
+                    # 生成 release 描述
+                    release_description = generate_release_description(old_version, new_version, commits)
+
+                    # 在 <releases> 标签后插入新的 release
+                    releases_pattern = r'(<releases>)'
+                    new_content = re.sub(
+                        releases_pattern,
+                        f'\\g<1>\n{release_description}',
+                        new_content,
+                        count=1
+                    )
+                    print(f"  ✓ 已自动添加 release 描述")
+                else:
+                    print(f"  ℹ  跳过 release 描述生成（使用 --no-release-notes 参数）")
+            else:
+                if force:
+                    print(f"  ✓ {METAINFO_XML_PATH} 第一个 release 版本已经是 {new_version}")
+                    # 在强制模式下，需要检查截图 URL 是否也需要更新
+                    # 继续执行后续的截图 URL 更新逻辑
+                else:
+                    print(f"  ✓ 第一个 release 版本已经是 {new_version}")
+                    # 非强制模式下，检查截图 URL 版本
+                    screenshot_pattern = r'https://raw\.githubusercontent\.com/tangsangsimida/EasyKiConverter/v([^/]+)/'
+                    screenshot_matches = re.findall(screenshot_pattern, new_content)
+                    if screenshot_matches and all(match == new_version for match in screenshot_matches):
+                        print(f"  ✓ {METAINFO_XML_PATH} 所有版本都是 {new_version}")
+                        return True
+        else:
+            print(f"  ℹ  注意: 未找到 release 条目，建议手动添加")
+
+        if content == new_content:
+            if force:
+                print(f"  ✓ {METAINFO_XML_PATH} 版本已经是 {new_version}")
+                return True
+            else:
+                print(f"  ✗ {METAINFO_XML_PATH} 未发生变化")
+                return False
+        else:
+            with open(METAINFO_XML_PATH, "w", encoding="utf-8") as f:
+                f.write(new_content)
+            print(f"  ✓ 成功更新 {METAINFO_XML_PATH}")
+            return True
+
+    except Exception as e:
+        print(f"  ✗ 更新 {METAINFO_XML_PATH} 失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def get_git_commits_since_version(old_version, new_version):
+    """
+    获取从上个版本到当前版本的所有提交
+
+    Args:
+        old_version: 上个版本号
+        new_version: 新版本号
+
+    Returns:
+        list: 提交信息列表，每个元素为 (commit_hash, commit_message)
+    """
+    try:
+        # 尝试找到上个版本的标签
+        tag_pattern = f"v{old_version}"
+
+        # 获取从上个版本标签到 HEAD 的所有提交
+        cmd = [
+            "git", "log", "--oneline", "--no-merges",
+            f"{tag_pattern}..HEAD" if old_version else "--all"
+        ]
+
+        result = subprocess.run(
+            cmd,
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        commits = []
+        for line in result.stdout.strip().split('\n'):
+            if line:
+                # 解析提交格式: hash commit_message
+                parts = line.split(' ', 1)
+                if len(parts) >= 2:
+                    commit_hash = parts[0]
+                    commit_message = parts[1]
+                    commits.append((commit_hash, commit_message))
+
+        return commits
+
+    except subprocess.CalledProcessError as e:
+        print(f"  ⚠ 获取 Git 提交历史失败: {e}")
+        print(f"  ⚠ 将使用空提交列表")
+        return []
+    except Exception as e:
+        print(f"  ⚠ 获取 Git 提交历史时出错: {e}")
+        print(f"  ⚠ 将使用空提交列表")
+        return []
+
+def generate_release_description(old_version, new_version, commits):
+    """
+    生成 release 描述
+
+    Args:
+        old_version: 上个版本号
+        new_version: 新版本号
+        commits: 提交信息列表
+
+    Returns:
+        str: 格式化的 release 描述 XML
+    """
+    if not commits:
+        # 如果没有提交，使用默认描述
+        return f"""    <release version="{new_version}" date="{datetime.now().strftime('%Y-%m-%d')}">
+      <description>
+        <p>Version {new_version} release</p>
+        <p xml:lang="zh_CN">{new_version} 版本发布</p>
+      </description>
+    </release>"""
+
+    # 分类提交
+    categories = {
+        "feat": [],
+        "fix": [],
+        "refactor": [],
+        "chore": [],
+        "docs": [],
+        "perf": [],
+        "test": [],
+        "i18n": [],
+        "other": []
+    }
+
+    for commit_hash, commit_message in commits:
+        # 解析提交类型 (遵循约定式提交)
+        commit_type = "other"
+        if commit_message.startswith("feat(") or commit_message.startswith("feat:"):
+            commit_type = "feat"
+        elif commit_message.startswith("fix(") or commit_message.startswith("fix:"):
+            commit_type = "fix"
+        elif commit_message.startswith("refactor(") or commit_message.startswith("refactor:"):
+            commit_type = "refactor"
+        elif commit_message.startswith("chore(") or commit_message.startswith("chore:"):
+            commit_type = "chore"
+        elif commit_message.startswith("docs(") or commit_message.startswith("docs:"):
+            commit_type = "docs"
+        elif commit_message.startswith("perf(") or commit_message.startswith("perf:"):
+            commit_type = "perf"
+        elif commit_message.startswith("test(") or commit_message.startswith("test:"):
+            commit_type = "test"
+        elif commit_message.startswith("i18n(") or commit_message.startswith("i18n:"):
+            commit_type = "i18n"
+
+        # 提取提交主体（移除类型前缀）
+        message_body = commit_message
+        if "(" in commit_message and ")" in commit_message:
+            # 格式: type(scope): message
+            parts = commit_message.split(")", 1)
+            if len(parts) >= 2:
+                message_body = parts[1].strip(": ")
+        elif ":" in commit_message:
+            # 格式: type: message
+            parts = commit_message.split(":", 1)
+            if len(parts) >= 2:
+                message_body = parts[1].strip()
+
+        categories[commit_type].append(message_body)
+
+    # 生成 XML 描述
+    xml_parts = []
+    xml_parts.append(f'    <release version="{new_version}" date="{datetime.now().strftime('%Y-%m-%d')}">')
+    xml_parts.append("      <description>")
+
+    # 添加版本描述
+    if old_version:
+        xml_parts.append(f"        <p>Changes from {old_version} to {new_version}</p>")
+        xml_parts.append(f"        <p xml:lang=\"zh_CN\">从 {old_version} 到 {new_version} 的变更</p>")
+    else:
+        xml_parts.append(f"        <p>Version {new_version} release</p>")
+        xml_parts.append(f"        <p xml:lang=\"zh_CN\">{new_version} 版本发布</p>")
+
+    # 生成分类列表
+    category_order = ["feat", "fix", "perf", "refactor", "test", "docs", "i18n", "chore", "other"]
+    category_names = {
+        "feat": ("New Features", "新功能"),
+        "fix": ("Bug Fixes", "修复"),
+        "perf": ("Performance Improvements", "性能改进"),
+        "refactor": ("Refactoring", "重构"),
+        "test": ("Testing", "测试"),
+        "docs": ("Documentation", "文档"),
+        "i18n": ("Internationalization", "国际化"),
+        "chore": ("Chores", "其他"),
+        "other": ("Other Changes", "其他变更")
+    }
+
+    has_items = False
+    for cat_type in category_order:
+        items = categories[cat_type]
+        if items:
+            has_items = True
+            cat_name_en, cat_name_zh = category_names[cat_type]
+            xml_parts.append(f"        <p>{cat_name_en}:</p>")
+            xml_parts.append(f"        <p xml:lang=\"zh_CN\">{cat_name_zh}:</p>")
+            xml_parts.append("        <ul>")
+            for item in items:
+                # 简单的中文翻译检测（如果包含中文字符）
+                if any('\u4e00' <= char <= '\u9fff' for char in item):
+                    xml_parts.append(f'          <li xml:lang="zh_CN">{item}</li>')
+                else:
+                    xml_parts.append(f'          <li>{item}</li>')
+            xml_parts.append("        </ul>")
+
+    if not has_items:
+        xml_parts.append("        <p>No significant changes</p>")
+        xml_parts.append('        <p xml:lang="zh_CN">无重大变更</p>')
+
+    xml_parts.append("      </description>")
+    xml_parts.append("    </release>")
+
+    return "\n".join(xml_parts)
+
+def update_mkdocs_yaml(new_version, force=False):
+    """更新 mkdocs.yml 中的版本号"""
+    print(f"正在更新 {MKDOCS_YAML_PATH}...")
+
+    # 检查版本是否已经是目标版本（除非是强制模式）
+    if not force:
+        check_result = check_mkdocs_version(new_version)
+        if check_result is True:
+            print(f"  ✓ {MKDOCS_YAML_PATH} 版本已经是 {new_version}，跳过更新")
+            return True
+        elif check_result is None:
+            print(f"  ✗ 无法检查 {MKDOCS_YAML_PATH} 版本")
+            return False
+
+    try:
+        with open(MKDOCS_YAML_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 更新 extra.version
+        # extra:
+        #   version: 3.0.5
+        pattern = r'(extra:\s*\n\s*version:\s*)([^\s\n]+)'
+        replacement = f'\\g<1>{new_version}'
+        new_content = re.sub(pattern, replacement, content)
+
+        if content == new_content:
+            if force:
+                print(f"  ✓ {MKDOCS_YAML_PATH} 版本已经是 {new_version}")
+                return True
+            else:
+                print(f"  ✗ {MKDOCS_YAML_PATH} 未发生变化")
+                return False
+        else:
+            with open(MKDOCS_YAML_PATH, "w", encoding="utf-8") as f:
+                f.write(new_content)
+            print(f"  ✓ 成功更新 {MKDOCS_YAML_PATH}")
+            return True
+    except Exception as e:
+        print(f"  ✗ 更新 {MKDOCS_YAML_PATH} 失败: {e}")
+        return False
+
+def update_appx_manifest(new_version, force=False):
+    """更新 AppxManifest.xml 中的版本号"""
+    print(f"正在更新 {APPX_MANIFEST_PATH}...")
+
+    if not os.path.exists(APPX_MANIFEST_PATH):
+        print(f"  ℹ  文件 {APPX_MANIFEST_PATH} 不存在，跳过更新")
+        return True
+
+    # 转换为 MSIX 版本格式 (X.Y.Z -> X.Y.Z.0)
+    msix_version = convert_to_msix_version(new_version)
+
+    # 检查版本是否已经是目标版本（除非是强制模式）
+    if not force:
+        check_result = check_appx_version(new_version)
+        if check_result is True:
+            print(f"  ✓ {APPX_MANIFEST_PATH} 版本已经是 {msix_version}，跳过更新")
+            return True
+        elif check_result is None:
+            print(f"  ✗ 无法检查 {APPX_MANIFEST_PATH} 版本")
+            return False
+
+    try:
+        with open(APPX_MANIFEST_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 更新 Identity Version（只匹配 Identity 标签内的 Version）
+        # <Identity ... Version="3.0.9.0" ...>
+        pattern = r'(<Identity[^>]*\sVersion=")(\d+\.\d+\.\d+\.\d+)("[^>]*>)'
+        replacement = f'\\g<1>{msix_version}\\g<3>'
+        new_content = re.sub(pattern, replacement, content)
+
+        if content == new_content:
+            if force:
+                print(f"  ✓ {APPX_MANIFEST_PATH} 版本已经是 {msix_version}")
+                return True
+            else:
+                print(f"  ✗ {APPX_MANIFEST_PATH} 未发生变化")
+                return False
+        else:
+            with open(APPX_MANIFEST_PATH, "w", encoding="utf-8") as f:
+                f.write(new_content)
+            print(f"  ✓ 成功更新 {APPX_MANIFEST_PATH}")
+            return True
+    except Exception as e:
+        print(f"  ✗ 更新 {APPX_MANIFEST_PATH} 失败: {e}")
+        return False
+
+def update_flatpak_manifest(new_version, force=False):
+    """更新 Flatpak 清单中的 Git 标签版本"""
+    print(f"正在更新 {FLATPAK_MANIFEST_PATH}...")
+
+    if not os.path.exists(FLATPAK_MANIFEST_PATH):
+        print(f"  ℹ  文件 {FLATPAK_MANIFEST_PATH} 不存在，跳过更新")
+        return True
+
+    # 检查版本是否已经是目标版本（除非是强制模式）
+    if not force:
+        check_result = check_flatpak_version(new_version)
+        if check_result is True:
+            print(f"  ✓ {FLATPAK_MANIFEST_PATH} Git 标签已经是 v{new_version}，跳过更新")
+            return True
+        elif check_result is None:
+            print(f"  ✗ 无法检查 {FLATPAK_MANIFEST_PATH} 版本")
+            return False
+
+    try:
+        with open(FLATPAK_MANIFEST_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 更新 tag
+        # tag: v3.0.13
+        pattern = r'(tag:\s*)v([^\s\n]+)'
+        replacement = f'\\g<1>v{new_version}'
+        new_content = re.sub(pattern, replacement, content)
+
+        if content == new_content:
+            if force:
+                print(f"  ✓ {FLATPAK_MANIFEST_PATH} Git 标签已经是 v{new_version}")
+                return True
+            else:
+                print(f"  ✗ {FLATPAK_MANIFEST_PATH} 未发生变化")
+                return False
+        else:
+            with open(FLATPAK_MANIFEST_PATH, "w", encoding="utf-8") as f:
+                f.write(new_content)
+            print(f"  ✓ 成功更新 {FLATPAK_MANIFEST_PATH}")
+            return True
+    except Exception as e:
+        print(f"  ✗ 更新 {FLATPAK_MANIFEST_PATH} 失败: {e}")
+        return False
+
+def check_all_versions(version):
+    """检查所有文件中的版本是否一致"""
+    print(f"检查所有文件中的版本是否为 {version}...")
+
+    results = {
+        "vcpkg.json": check_vcpkg_json_version(version),
+        "CMakeLists.txt": check_cmake_version(version),
+        "src/main.cpp": check_main_cpp_version(version),
+        "metainfo.xml": check_metainfo_version(version),
+        "mkdocs.yml": check_mkdocs_version(version),
+        "AppxManifest.xml": check_appx_version(version),
+        "Flatpak manifest": check_flatpak_version(version)
+    }
+
+    all_match = True
+    for filename, result in results.items():
+        if result is True:
+            print(f"  ✓ {filename}: 版本是 {version}")
+        elif result is False:
+            print(f"  ✗ {filename}: 版本不是 {version}")
+            all_match = False
+        else:
+            print(f"  ? {filename}: 无法检查版本")
+            all_match = False
+
+    return all_match
+
+def convert_to_msix_version(version):
+    """
+    将 X.Y.Z 格式转换为 MSIX 的 X.Y.Z.R 格式
+    MSIX 要求 4 段版本号，R 通常设为 0
+    """
+    parts = version.split(".")
+    if len(parts) == 3:
+        return f"{version}.0"
+    elif len(parts) == 4:
+        return version
+    else:
+        raise ValueError(f"无效的版本格式: {version}")
+
+def parse_msix_version(msix_version):
+    """
+    将 MSIX 的 X.Y.Z.R 格式转换为 X.Y.Z 格式
+    """
+    parts = msix_version.split(".")
+    if len(parts) == 4:
+        return ".".join(parts[:3])
+    elif len(parts) == 3:
+        return msix_version
+    else:
+        raise ValueError(f"无效的 MSIX 版本格式: {msix_version}")
+
+def check_mkdocs_version(version):
+    """检查 mkdocs.yml 中的版本是否已经是目标版本"""
+    if not os.path.exists(MKDOCS_YAML_PATH):
+        return None
+
+    try:
+        with open(MKDOCS_YAML_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+            # 检查 extra.version
+            pattern = r'extra:\s*\n\s*version:\s*([^\s\n]+)'
+            match = re.search(pattern, content)
+            if match:
+                return match.group(1) == version
+    except Exception as e:
+        print(f"检查 mkdocs.yml 失败: {e}")
+        return None
+    return False
+
+def check_appx_version(version):
+    """检查 AppxManifest.xml 中的版本是否已经是目标版本"""
+    if not os.path.exists(APPX_MANIFEST_PATH):
+        return None
+
+    try:
+        msix_version = convert_to_msix_version(version)
+        with open(APPX_MANIFEST_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+            # 检查 Identity Version（只匹配 Identity 标签内的 Version）
+            pattern = r'<Identity[^>]*\sVersion="(\d+\.\d+\.\d+\.\d+)"'
+            match = re.search(pattern, content)
+            if match:
+                return match.group(1) == msix_version
+    except Exception as e:
+        print(f"检查 AppxManifest.xml 失败: {e}")
+        return None
+    return False
+
+def check_flatpak_version(version):
+    """检查 Flatpak 清单中的 Git 标签是否已经是目标版本"""
+    if not os.path.exists(FLATPAK_MANIFEST_PATH):
+        return None
+
+    try:
+        with open(FLATPAK_MANIFEST_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+            # 检查 tag
+            pattern = r'tag:\s*v([^\s\n]+)'
+            match = re.search(pattern, content)
+            if match:
+                return match.group(1) == version
+    except Exception as e:
+        print(f"检查 Flatpak 清单失败: {e}")
+        return None
     return False
 
 def main():
     parser = argparse.ArgumentParser(description="EasyKiConverter 版本管理工具")
     parser.add_argument("version", nargs="?", help="新的版本号 (例如 3.0.6)")
     parser.add_argument("--check", action="store_true", help="仅检查当前版本")
+    parser.add_argument("--metainfo-only", action="store_true", help="仅更新 metainfo.xml")
+    parser.add_argument("--no-release-notes", action="store_true", help="跳过自动生成 release 描述")
+    parser.add_argument("--force", action="store_true", help="强制更新所有文件，即使版本相同")
 
     args = parser.parse_args()
 
@@ -209,10 +805,17 @@ def main():
     print(f"当前版本 (vcpkg.json): {current_version}")
 
     if args.check:
+        if current_version:
+            check_all_versions(current_version)
         return
 
     if not args.version:
         print("请输入新的版本号，例如: python manage_version.py 3.0.6")
+        print("\n可用选项:")
+        print("  --check              仅检查当前版本")
+        print("  --force              强制更新所有文件，即使版本相同")
+        print("  --metainfo-only      仅更新 metainfo.xml")
+        print("  --no-release-notes   跳过自动生成 release 描述")
         return
 
     new_version = args.version
@@ -220,14 +823,56 @@ def main():
         print("错误: 版本号格式必须为 X.Y.Z (例如 3.0.6)")
         return
 
-    print(f"准备将版本更新为: {new_version}")
+    print(f"\n准备将版本更新为: {new_version}")
 
-    if update_vcpkg_json(new_version):
-        update_cmake_lists(new_version)
-        update_main_cpp(new_version)
-        print("\n所有文件更新完成！")
+    # 检查是否已经是目标版本
+    if current_version == new_version and not args.force:
+        print(f"\n当前版本已经是 {new_version}，检查所有文件...")
+        all_match = check_all_versions(new_version)
+        if all_match:
+            print("\n✓ 所有文件版本都是最新的，无需更新！")
+        else:
+            print("\n✗ 部分文件版本不一致，请使用 --force 参数强制更新所有文件！")
+        return
+
+    # 仅更新 metainfo.xml
+    if args.metainfo_only:
+        print("\n仅更新 metainfo.xml...")
+        if update_metainfo_xml(new_version, generate_release=not args.no_release_notes, force=args.force):
+            print("\nmetainfo.xml 更新完成！")
+        else:
+            print("\n更新失败。")
+        return
+
+    # 强制更新所有文件
+    if args.force:
+        print(f"\n强制更新模式：将所有文件更新到 {new_version}")
+        print(f"  (跳过版本检查，确保所有文件版本一致)\n")
+
+    # 更新所有文件
+    success = True
+    success &= update_vcpkg_json(new_version, force=args.force)
+    success &= update_cmake_lists(new_version, force=args.force)
+    success &= update_main_cpp(new_version, force=args.force)
+    success &= update_metainfo_xml(new_version, generate_release=not args.no_release_notes, force=args.force)
+    success &= update_mkdocs_yaml(new_version, force=args.force)
+    success &= update_appx_manifest(new_version, force=args.force)
+    success &= update_flatpak_manifest(new_version, force=args.force)
+
+    if success:
+        print("\n✓ 所有文件更新完成！")
+        if args.no_release_notes:
+            print(f"\n提示: 请手动编辑 {METAINFO_XML_PATH} 添加新版本的 release 描述")
+
+        # 验证更新结果
+        print("\n正在验证更新结果...")
+        all_match = check_all_versions(new_version)
+        if all_match:
+            print("\n✓ 所有文件版本验证通过！")
+        else:
+            print("\n⚠ 部分文件版本验证失败，请检查上述信息")
     else:
-        print("\n更新中断。")
+        print("\n✗ 更新过程中出现错误，请检查上述信息。")
 
 if __name__ == "__main__":
     main()

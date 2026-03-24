@@ -22,6 +22,20 @@ Card {
                 }
             }
         },
+        // 监听筛选模式变化，自动更新过滤
+        Connections {
+            target: componentListCard.componentListController
+            function onFilterModeChanged() {
+                visualModel.updateFilter();
+            }
+        },
+        // 监听筛选数量变化，自动更新过滤
+        Connections {
+            target: componentListCard.componentListController
+            function onFilteredCountChanged() {
+                visualModel.updateFilter();
+            }
+        },
         // 搜索过滤模型 (作为资源定义，不参与布局)
         DelegateModel {
             id: visualModel
@@ -50,36 +64,46 @@ Card {
                         componentListCard.componentListController.removeComponentById(itemData.componentId);
                     }
                 }
+                onRetryClicked: {
+                    if (itemData) {
+                        componentListCard.componentListController.refreshComponentInfo(index);
+                    }
+                }
             }
 
             // 过滤函数
             function updateFilter() {
                 // 移除所有空格，实现更宽容的搜索 (例如 "C 2040" -> "c2040")
                 var searchTerm = searchInput.text.toLowerCase().replace(/\s+/g, '');
+                var filterMode = componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all";
                 // 遍历所有项进行处理
                 for (var i = 0; i < items.count; i++) {
                     var item = items.get(i);
-                    // 如果搜索词为空，显示所有项
-                    if (searchTerm === "") {
-                        item.inDisplay = true;
-                        continue;
-                    }
-
-                    // 获取内容
-                    // 对于 QAbstractListModel，item.model 包含角色属性
+                    // 获取数据对象
                     var dataObj = item.model.itemData;
-                    // 获取 ID
-                    var idStr = "";
-                    if (dataObj && dataObj.componentId !== undefined) {
-                        idStr = dataObj.componentId;
+                    var idStr = dataObj && dataObj.componentId !== undefined ? dataObj.componentId : "";
+                    var isFetching = dataObj && dataObj.isFetching !== undefined ? dataObj.isFetching : false;
+                    var isValid = dataObj && dataObj.isValid !== undefined ? dataObj.isValid : true;
+                    // 验证状态筛选
+                    var passFilter = false;
+                    if (filterMode === "all") {
+                        passFilter = true;
+                    } else if (filterMode === "validating") {
+                        passFilter = isFetching;
+                    } else if (filterMode === "valid") {
+                        passFilter = !isFetching && isValid;
+                    } else if (filterMode === "invalid") {
+                        passFilter = !isFetching && !isValid;
                     }
 
-                    // 判断是否匹配
-                    if (idStr.toLowerCase().indexOf(searchTerm) !== -1) {
-                        item.inDisplay = true;
-                    } else {
-                        item.inDisplay = false;
+                    // 搜索词筛选
+                    var passSearch = true;
+                    if (searchTerm !== "" && idStr.toLowerCase().indexOf(searchTerm) === -1) {
+                        passSearch = false;
                     }
+
+                    // 同时满足筛选和搜索条件才显示
+                    item.inDisplay = passFilter && passSearch;
                 }
             }
         }
@@ -87,11 +111,150 @@ Card {
     RowLayout {
         width: parent.width
         spacing: 12
+        // 左边：元器件数量 + 筛选
         Text {
             id: componentCountLabel
             text: qsTranslate("MainWindow", "共 %1 个元器件").arg(componentListCard.componentListController ? componentListCard.componentListController.componentCount : 0)
             font.pixelSize: 14
             color: AppStyle.colors.textSecondary
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        // 筛选 Segmented Control (左边)
+        Rectangle {
+            id: filterSegmentedControl
+            Layout.preferredWidth: 400
+            Layout.preferredHeight: 42
+            Layout.alignment: Qt.AlignVCenter
+            Layout.leftMargin: 16
+            color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.05) : Qt.rgba(0, 0, 0, 0.05)
+            radius: AppStyle.radius.lg
+            visible: componentListCard.componentListController ? componentListCard.componentListController.componentCount > 0 : false
+            clip: true
+            // 滑块背景指示器
+            Rectangle {
+                id: sliderIndicator
+                width: (filterSegmentedControl.width - 8) / 4
+                height: filterSegmentedControl.height - 8
+                anchors.verticalCenter: parent.verticalCenter
+                radius: AppStyle.radius.md
+                color: {
+                    var mode = componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all";
+                    if (mode === "validating")
+                        return AppStyle.colors.warning;
+                    if (mode === "valid")
+                        return AppStyle.colors.success;
+                    if (mode === "invalid")
+                        return AppStyle.colors.danger;
+                    return AppStyle.colors.primary;
+                }
+
+                x: {
+                    var step = (filterSegmentedControl.width - 8) / 4;
+                    var mode = componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all";
+                    if (mode === "validating")
+                        return 4 + step;
+                    if (mode === "valid")
+                        return 4 + step * 2;
+                    if (mode === "invalid")
+                        return 4 + step * 3;
+                    return 4;
+                }
+
+                Behavior on x {
+                    NumberAnimation {
+                        duration: 450
+                        easing.type: AppStyle.easings.easeInOut
+                    }
+                }
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 450
+                        easing.type: AppStyle.easings.easeInOut
+                    }
+                }
+            }
+
+            Row {
+                anchors.fill: parent
+                anchors.margins: 4
+                // 全部
+                Button {
+                    width: (filterSegmentedControl.width - 8) / 4
+                    height: filterSegmentedControl.height - 8
+                    flat: true
+                    background: Rectangle {
+                        color: "transparent"
+                    }
+                    contentItem: Text {
+                        text: qsTr("全部 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.componentCount : 0)
+                        color: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "all" ? "#ffffff" : AppStyle.colors.textSecondary
+                        font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "all"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: 12
+                    }
+                    onClicked: componentListCard.componentListController.setFilterMode("all")
+                }
+
+                // 验证中
+                Button {
+                    width: (filterSegmentedControl.width - 8) / 4
+                    height: filterSegmentedControl.height - 8
+                    flat: true
+                    background: Rectangle {
+                        color: "transparent"
+                    }
+                    contentItem: Text {
+                        text: qsTr("验证中 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.validatingCount : 0)
+                        color: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "validating" ? "#ffffff" : AppStyle.colors.textSecondary
+                        font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "validating"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: 12
+                    }
+                    onClicked: componentListCard.componentListController.setFilterMode("validating")
+                }
+
+                // 有效
+                Button {
+                    width: (filterSegmentedControl.width - 8) / 4
+                    height: filterSegmentedControl.height - 8
+                    flat: true
+                    background: Rectangle {
+                        color: "transparent"
+                    }
+                    contentItem: Text {
+                        text: qsTr("有效 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.validCount : 0)
+                        color: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "valid" ? "#ffffff" : AppStyle.colors.textSecondary
+                        font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "valid"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: 12
+                    }
+                    onClicked: componentListCard.componentListController.setFilterMode("valid")
+                }
+
+                // 无效
+                Button {
+                    width: (filterSegmentedControl.width - 8) / 4
+                    height: filterSegmentedControl.height - 8
+                    flat: true
+                    background: Rectangle {
+                        color: "transparent"
+                    }
+                    contentItem: Text {
+                        text: qsTr("无效 (%1)").arg(componentListCard.componentListController ? componentListCard.componentListController.invalidCount : 0)
+                        color: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "invalid" ? "#ffffff" : AppStyle.colors.textSecondary
+                        font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "invalid"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: 12
+                    }
+                    onClicked: componentListCard.componentListController.setFilterMode("invalid")
+                }
+            }
         }
 
         Item {
@@ -144,6 +307,54 @@ Card {
 
             onTextChanged: {
                 visualModel.updateFilter();
+            }
+        }
+
+        // 重试所有验证失败元器件按钮
+        Item {
+            id: retryAllButton
+            Layout.preferredWidth: retryAllButtonContent.width + AppStyle.spacing.xl * 2
+            Layout.preferredHeight: 44
+            Layout.alignment: Qt.AlignVCenter
+            visible: componentListCard.componentListController ? componentListCard.componentListController.hasInvalidComponents : false
+            // 按钮背景
+            Rectangle {
+                anchors.fill: parent
+                color: retryAllButtonMouseArea.pressed ? AppStyle.colors.primaryHover : retryAllButtonMouseArea.containsMouse ? Qt.darker(AppStyle.colors.primary, 1.1) : AppStyle.colors.primary
+                radius: AppStyle.radius.md
+                opacity: 0.8
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+            }
+
+            // 按钮文本
+            Text {
+                id: retryAllButtonContent
+                anchors.centerIn: parent
+                text: qsTranslate("MainWindow", "重试所有")
+                font.pixelSize: AppStyle.fontSizes.sm
+                color: "white"
+            }
+
+            // 鼠标区域
+            MouseArea {
+                id: retryAllButtonMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (componentListCard.componentListController) {
+                        componentListCard.componentListController.retryAllInvalidComponents();
+                    }
+                }
             }
         }
 
@@ -248,6 +459,13 @@ Card {
         // 但是 GridView 需要直接使用 visualModel 作为 model。
         // 注意：当 model 是 DelegateModel 时，不需要指定 delegate 属性，
         // 因为 DelegateModel 已经包含了 delegate。
+
+        // 监听滚动状态
+        onMovingChanged: {
+            if (componentListCard.componentListController) {
+                componentListCard.componentListController.setScrolling(moving);
+            }
+        }
 
         ScrollBar.vertical: ScrollBar {
             policy: ScrollBar.AsNeeded

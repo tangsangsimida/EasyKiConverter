@@ -55,6 +55,7 @@ class ExportProgressViewModel : public QObject {
     Q_PROPERTY(int statisticsTotalRetries READ statisticsTotalRetries NOTIFY statisticsChanged)
     Q_PROPERTY(qint64 statisticsAvgNetworkLatency READ statisticsAvgNetworkLatency NOTIFY statisticsChanged)
     Q_PROPERTY(int statisticsRateLimitHitCount READ statisticsRateLimitHitCount NOTIFY statisticsChanged)
+    Q_PROPERTY(qint64 statisticsPeakMemoryUsage READ statisticsPeakMemoryUsage NOTIFY statisticsChanged)
 
 public:
     explicit ExportProgressViewModel(ExportService* exportService,
@@ -198,6 +199,10 @@ public:
 
     int statisticsRateLimitHitCount() const {
         return m_statistics.rateLimitHitCount;
+    }
+
+    qint64 statisticsPeakMemoryUsage() const {
+        return m_statistics.peakMemoryUsage;
     }
 
     void setUsePipelineMode(bool usePipeline);

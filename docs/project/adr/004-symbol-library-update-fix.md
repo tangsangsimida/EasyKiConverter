@@ -12,7 +12,7 @@
 
 ### 发现的问题
 
-#### 问题 1：更新模式参数未传递 🔴 严重
+#### 问题 1：更新模式参数未传递 [严重]
 
 **问题描述**：
 - `ExportService_Pipeline::mergeSymbolLibrary()` 方法中，`updateMode` 参数没有被正确传递给 `exportSymbolLibrary` 方法
@@ -40,7 +40,7 @@ bool success = exporter.exportSymbolLibrary(m_symbols, m_options.libName, librar
 
 ---
 
-#### 问题 2：子符号识别不准确 🔴 严重
+#### 问题 2：子符号识别不准确 [严重]
 
 **问题描述**：
 - 原代码使用简单的字符串匹配 `startsWith(parentSymbolName + "_")` 来识别子符号
@@ -68,7 +68,7 @@ bool success = exporter.exportSymbolLibrary(m_symbols, m_options.libName, librar
 
 ---
 
-#### 问题 3：孤离子符号未删除 🔴 严重
+#### 问题 3：孤离子符号未删除 [严重]
 
 **问题描述**：
 - 在某些情况下，分体式符号的子符号可能被错误地作为顶层符号导出
@@ -85,12 +85,12 @@ bool success = exporter.exportSymbolLibrary(m_symbols, m_options.libName, librar
 **示例场景**：
 ```
 假设符号库中包含：
-✅ 正确的结构：
+[正确] 正确的结构：
 - 父符号：MCIMX6Y2CVM08AB
   - 子符号：MCIMX6Y2CVM08AB_1_1
   - 子符号：MCIMX6Y2CVM08AB_2_1
 
-❌ 实际存在的错误结构：
+[错误] 实际存在的错误结构：
 - 父符号：MCIMX6Y2CVM08AB
   - 子符号：MCIMX6Y2CVM08AB_1_1
 - 顶层符号：MCIMX6Y2CVM08AB_2_1（错误！）

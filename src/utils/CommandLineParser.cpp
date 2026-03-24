@@ -15,15 +15,16 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
     , m_configOption(QStringList() << "config", "指定配置文件路径", "path")
     , m_languageOption(QStringList() << "language", "设置界面语言 (zh_CN/en)", "lang", "zh_CN")
     , m_themeOption(QStringList() << "theme", "设置界面主题 (dark/light)", "theme", "dark")
-    , m_portableOption(QStringList() << "portable", "便携模式（配置文件保存在程序目录）") {
+    , m_portableOption(QStringList() << "portable", "便携模式（配置文件保存在程序目录）")
+    , m_syncLoggingOption(QStringList() << "sync-logging", "启用同步控制台日志输出（确保彩色日志显示，方便调试）") {
     m_parser.setApplicationDescription(
         QCoreApplication::translate("main", "EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具"));
 
-    // 添加 Qt 内置的帮助和版本选项
+    // Qt 内置的帮助和版本选项
     m_parser.addHelpOption();
     m_parser.addVersionOption();
 
-    // 添加自定义选项
+    // 自定义选项
     setupOptions();
 
     // 设置应用程序参数（用于帮助和版本信息）
@@ -32,7 +33,7 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
 }
 
 void CommandLineParser::setupOptions() {
-    // 添加所有自定义选项（帮助和版本选项已在构造函数中通过 addHelpOption 和 addVersionOption 添加）
+    // 所有自定义选项（帮助和版本选项已在构造函数中通过 addHelpOption 和 addVersionOption 添加）
     m_parser.addOption(m_debugOption);
     m_parser.addOption(m_logLevelOption);
     m_parser.addOption(m_logFileOption);
@@ -40,6 +41,7 @@ void CommandLineParser::setupOptions() {
     m_parser.addOption(m_languageOption);
     m_parser.addOption(m_themeOption);
     m_parser.addOption(m_portableOption);
+    m_parser.addOption(m_syncLoggingOption);
 }
 
 bool CommandLineParser::parse() {
@@ -70,8 +72,16 @@ QString CommandLineParser::theme() const {
     return m_parser.value(m_themeOption).toLower();
 }
 
+bool CommandLineParser::isThemeSet() const {
+    return m_parser.isSet(m_themeOption);
+}
+
 bool CommandLineParser::isPortableMode() const {
     return m_parser.isSet(m_portableOption);
+}
+
+bool CommandLineParser::isSyncLogging() const {
+    return m_parser.isSet(m_syncLoggingOption);
 }
 
 QString CommandLineParser::helpText() const {

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 # 从 CI 环境动态获取版本号，如果没有定义则使用默认版本
 if(NOT DEFINED VERSION_FROM_CI)
-    set(VERSION_FROM_CI "3.0.9")
+    set(VERSION_FROM_CI "3.0.14")
     message(STATUS "VERSION_FROM_CI not defined, using default: ${VERSION_FROM_CI}")
 else()
     message(STATUS "VERSION_FROM_CI defined: ${VERSION_FROM_CI}")
@@ -218,6 +218,7 @@ set(QML_FILES
     src/ui/qml/components/WindowResizeHandles.qml
     src/ui/qml/components/ExitDialog.qml
     src/ui/qml/styles/AppStyle.qml
+    src/ui/qml/styles/ResponsiveHelper.qml
 )
 
 # Windows 资源文件配置
@@ -300,6 +301,15 @@ target_link_libraries(appEasyKiconverter_Cpp_Version
         Qt6::Widgets
 )
 
+# Windows 内存统计需要 psapi 库
+if(WIN32)
+    if(MSVC)
+        target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE psapi)
+    else()
+        target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE -lpsapi)
+    endif()
+endif()
+
 # 包含目录（用于 main.cpp）
 target_include_directories(appEasyKiconverter_Cpp_Version
     PRIVATE
@@ -308,7 +318,7 @@ target_include_directories(appEasyKiconverter_Cpp_Version
 
 # 编译选项
 if(MSVC)
-    target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE /W4)
+    target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE /W4 /wd4702)
 else()
     target_compile_options(appEasyKiconverter_Cpp_Version PRIVATE -Wall -Wextra -Wpedantic)
 endif()
@@ -340,6 +350,12 @@ install(FILES LICENSE
 # 安装 AppStream metainfo 文件
 install(FILES deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml
     DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
+)
+
+# 安装 AppStream appdata 文件（Flathub 要求）
+install(FILES deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/appdata
+    RENAME io.github.tangsangsimida.easykiconverter.appdata.xml
 )
 
 # 打印配置信息

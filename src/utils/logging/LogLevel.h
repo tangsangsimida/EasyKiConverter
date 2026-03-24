@@ -13,11 +13,11 @@ namespace EasyKiConverter {
 enum class LogLevel {
     Trace = 0,  ///< 详细追踪信息（仅开发调试）
     Debug = 1,  ///< 调试信息
-    Info = 2,   ///< 常规运行信息
-    Warn = 3,   ///< 警告信息
+    Info = 2,  ///< 常规运行信息
+    Warn = 3,  ///< 警告信息
     Error = 4,  ///< 错误信息
     Fatal = 5,  ///< 致命错误
-    Off = 6     ///< 关闭日志
+    Off = 6  ///< 关闭日志
 };
 
 /**

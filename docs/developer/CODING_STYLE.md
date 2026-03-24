@@ -1,4 +1,4 @@
-﻿# EasyKiConverter 编码规范
+# EasyKiConverter 编码规范
 
 本文档旨在为 EasyKiConverter 项目的开发者提供一套统一的编码规范和最佳实践，以确保代码的一致性、可读性和可维护性。
 
@@ -55,19 +55,14 @@
 
 ### 2.2. 大括号 `{}`
 
-*   **所有块 (函数、类、命名空间、控制语句)**: 左大括号 `{` **另起一行**（Allman 风格）。
+*   **所有块 (函数、类、命名空间、控制语句)**: 左大括号 `{` **与控制语句同一行**（K&R 风格）。
     ```cpp
-    class MyClass
-    {
+    class MyClass {
     public:
-        void myFunction()
-        {
-            if (condition)
-            {
+        void myFunction() {
+            if (condition) {
                 // ...
-            }
-            else
-            {
+            } else {
                 // ...
             }
         }

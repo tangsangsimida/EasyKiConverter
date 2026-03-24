@@ -128,3 +128,9 @@ tools/python/imgs/*
 repo/*
 logs/*
 flatpak-repo/*
+.flatpak-builder/*
+flatpak-repo-local/*
+flatpak-build-local.log
+.gitignore
+flatpak-build.log
+build.log

@@ -23,19 +23,19 @@ namespace EasyKiConverter {
  * @brief 流水线阶段枚举
  */
 enum class PipelineStage {
-    Fetch,    // 抓取阶段
+    Fetch,  // 抓取阶段
     Process,  // 处理阶段
-    Write     // 写入阶段
+    Write  // 写入阶段
 };
 
 /**
  * @brief 流水线阶段进度
  */
 struct PipelineProgress {
-    int fetchCompleted = 0;    // 抓取完成数
+    int fetchCompleted = 0;  // 抓取完成数
     int processCompleted = 0;  // 处理完成数
-    int writeCompleted = 0;    // 写入完成数
-    int totalTasks = 0;        // 总任务数
+    int writeCompleted = 0;  // 写入完成数
+    int totalTasks = 0;  // 总任务数
 
     // 计算各阶段进度（0-100）
     int fetchProgress() const {
@@ -59,7 +59,12 @@ struct PipelineProgress {
 /**
  * @brief 流水线导出服务类
  *
- * 扩展ExportService，支持多阶段流水线并行架构
+ * 基于三阶段流水线架构，支持高效批量导出：
+ * - Fetch阶段：并行获取元件数据（32线程）
+ * - Process阶段：CPU密集型数据处理（线程池大小）
+ * - Write阶段：并行写入文件（3x3线程）
+ *
+ * 使用有界队列实现反压控制，防止大批量导出时内存膨胀。
  */
 class ExportServicePipeline : public ExportService {
     Q_OBJECT
@@ -99,6 +104,11 @@ public:
     bool waitForCompletion(int timeoutMs = 5000) override;
 
     /**
+     * @brief 强制清理所有线程池（用于退出时）
+     */
+    void forceCleanupThreadPools();
+
+    /**
      * @brief 设置预加载的数据
      *
      * @param data 预加载的数据映射 (ComponentId -> ComponentData)
@@ -131,6 +141,12 @@ public slots:
      * @brief 紧急清理（用于取消时的异步清理）
      */
     void emergencyCleanup();
+
+private:
+    /**
+     * @brief 清理指定的线程池
+     */
+    void clearThreadPool(QThreadPool* pool);
 
 private slots:
     /**
@@ -184,6 +200,12 @@ private:
     bool mergeSymbolLibrary();
 
     /**
+     * @brief 获取当前进程内存使用（字节）
+     * @return qint64 内存使用量
+     */
+    static qint64 getCurrentProcessMemoryUsage();
+
+    /**
      * @brief 更新内存峰值统计
      */
     void updateMemoryPeak(const QSharedPointer<ComponentExportStatus>& status);
@@ -228,9 +250,9 @@ private:
 
 private:
     // 线程池
-    QThreadPool* m_fetchThreadPool;    // 抓取线程池（I/O密集型，32个线程）
+    QThreadPool* m_fetchThreadPool;  // 抓取线程池（I/O密集型，32个线程）
     QThreadPool* m_processThreadPool;  // 处理线程池（CPU密集型，等于核心数）
-    QThreadPool* m_writeThreadPool;    // 写入线程池（磁盘I/O密集型，8个线程）
+    QThreadPool* m_writeThreadPool;  // 写入线程池（磁盘I/O密集型，8个线程）
 
     // 队列管理器
     PipelineQueueManager m_queueManager;

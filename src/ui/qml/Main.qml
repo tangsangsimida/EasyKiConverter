@@ -9,24 +9,25 @@ ApplicationWindow {
     property int defaultWidth: Math.max(800, Screen.desktopAvailableWidth * 0.65)
     property int defaultHeight: Math.max(600, Screen.desktopAvailableHeight * 0.65)
     property int windowRadius: 10
-
     // 状态锁：防止重复触发关闭/最小化动画
     property bool isClosing: false
     property bool isMinimizing: false
-
     width: configService ? (configService.getWindowWidth() > 0 ? configService.getWindowWidth() : defaultWidth) : defaultWidth
     height: configService ? (configService.getWindowHeight() > 0 ? configService.getWindowHeight() : defaultHeight) : defaultHeight
     // 默认窗口位置居中显示（如果配置中没有保存的值）
     x: configService ? (configService.getWindowX() > 0 ? configService.getWindowX() : (Screen.desktopAvailableWidth - width) / 2) : (Screen.desktopAvailableWidth - width) / 2
     y: configService ? (configService.getWindowY() > 0 ? configService.getWindowY() : (Screen.desktopAvailableHeight - height) / 2) : (Screen.desktopAvailableHeight - height) / 2
-    minimumWidth: 800
+    // 最小窗口宽度计算：
+    // - 动态计算基于文本宽度和布局
+    // - 由 MainWindow.qml 中的 calculatedMinimumWindowWidth 提供
+    property int dynamicMinimumWidth: 855  // 默认值，会被覆盖
+    minimumWidth: dynamicMinimumWidth
     minimumHeight: 600
     visible: true
     title: "EasyKiConverter - 元器件转换工具"
     color: "transparent"
     // 使用自定义标题栏，移除无效的系统按钮标志
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.CustomizeWindowHint
-
     // 监听窗口可见性变化
     onVisibleChanged: {
         if (visible) {
@@ -43,7 +44,6 @@ ApplicationWindow {
             console.log("  width:", width, "height:", height);
             console.log("  x:", x, "y:", y);
             console.log("  visibility:", visibility);
-
             configService.setWindowWidth(width);
             configService.setWindowHeight(height);
             // 只在窗口不是最大化、全屏或最小化时保存位置
@@ -82,25 +82,15 @@ ApplicationWindow {
 
     Rectangle {
         id: exitAnimationLayer
-
         width: appWindow.width
-
         height: appWindow.height
-
         anchors.horizontalCenter: parent.horizontalCenter
-
         y: 0
-
         opacity: 0
-
         z: 1000
-
         visible: opacity > 0
-
         color: themeSettingsViewModel && themeSettingsViewModel.isDarkMode ? "#1a1a1a" : "#f5f5f5"
-
         radius: appWindow.windowRadius
-
         // 添加尺寸绑定，确保窗口大小改变时动画层同步更新
         Binding on width {
             when: exitAnimationLayer.opacity > 0
@@ -116,13 +106,9 @@ ApplicationWindow {
 
         transform: Scale {
             id: exitScale
-
             origin.x: (exitAnimationLayer.width || 800) / 2
-
             origin.y: exitAnimationLayer.height || 600
-
             xScale: 1.0
-
             yScale: 1.0
         }
 
@@ -130,45 +116,28 @@ ApplicationWindow {
 
         ParallelAnimation {
             id: exitWindowAnim
-
             running: false
-
             NumberAnimation {
-
                 target: exitAnimationLayer
-
                 property: "y"
-
                 to: appWindow.height
-
                 duration: 400
-
                 easing.type: Easing.InOutQuad
             }
 
             NumberAnimation {
-
                 target: exitScale
-
                 property: "xScale"
-
                 to: 0.1
-
                 duration: 400
-
                 easing.type: Easing.InOutQuad
             }
 
             NumberAnimation {
-
                 target: exitScale
-
                 property: "yScale"
-
                 to: 0.1
-
                 duration: 400
-
                 easing.type: Easing.InOutQuad
             }
         }
@@ -177,30 +146,20 @@ ApplicationWindow {
 
         Timer {
             id: exitAnimTimer
-
             interval: 450
-
             onTriggered: {
-
                 // 清理动画层
 
                 exitAnimationLayer.opacity = 0;
-
                 exitAnimationLayer.y = 0;
-
                 exitScale.xScale = 1.0;
-
                 exitScale.yScale = 1.0;
-
                 // 执行退出
 
                 saveWindowPosition();
-
                 exportProgressViewModel.handleCloseRequest();
-
                 // 重置状态锁
                 isClosing = false;
-
                 Qt.quit();
             }
         }
@@ -210,25 +169,15 @@ ApplicationWindow {
 
     Rectangle {
         id: minimizeAnimationLayer
-
         width: appWindow.width
-
         height: appWindow.height
-
         anchors.horizontalCenter: parent.horizontalCenter
-
         y: 0
-
         opacity: 0
-
         z: 1000
-
         visible: opacity > 0
-
         color: themeSettingsViewModel && themeSettingsViewModel.isDarkMode ? "#1a1a1a" : "#f5f5f5"
-
         radius: appWindow.windowRadius
-
         // 添加尺寸绑定，确保窗口大小改变时动画层同步更新
         Binding on width {
             when: minimizeAnimationLayer.opacity > 0
@@ -244,13 +193,9 @@ ApplicationWindow {
 
         transform: Scale {
             id: minimizeScale
-
             origin.x: (minimizeAnimationLayer.width || 800) / 2
-
             origin.y: minimizeAnimationLayer.height || 600
-
             xScale: 1.0
-
             yScale: 1.0
         }
 
@@ -258,45 +203,28 @@ ApplicationWindow {
 
         ParallelAnimation {
             id: minimizeWindowAnim
-
             running: false
-
             NumberAnimation {
-
                 target: minimizeAnimationLayer
-
                 property: "y"
-
                 to: appWindow.height
-
                 duration: 400
-
                 easing.type: Easing.InOutQuad
             }
 
             NumberAnimation {
-
                 target: minimizeScale
-
                 property: "xScale"
-
                 to: 0.1
-
                 duration: 400
-
                 easing.type: Easing.InOutQuad
             }
 
             NumberAnimation {
-
                 target: minimizeScale
-
                 property: "yScale"
-
                 to: 0.1
-
                 duration: 400
-
                 easing.type: Easing.InOutQuad
             }
         }
@@ -305,27 +233,18 @@ ApplicationWindow {
 
         Timer {
             id: minimizeAnimTimer
-
             interval: 450
-
             onTriggered: {
-
                 // 清理动画层
 
                 minimizeAnimationLayer.opacity = 0;
-
                 minimizeAnimationLayer.y = 0;
-
                 minimizeScale.xScale = 1.0;
-
                 minimizeScale.yScale = 1.0;
-
                 // 执行最小化
 
                 saveWindowPosition();
-
                 appWindow.showMinimized();
-
                 // 重置状态锁
                 isMinimizing = false;
             }
@@ -439,12 +358,26 @@ ApplicationWindow {
     Item {
         id: windowContent
         anchors.fill: parent
-
         // 加载主窗口内容
         Loader {
             id: mainWindowLoader
             anchors.fill: parent
             source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/MainWindow.qml"
+            // 动态更新最小窗口宽度
+            onLoaded: {
+                if (item && item.calculatedMinimumWindowWidth) {
+                    appWindow.dynamicMinimumWidth = item.calculatedMinimumWindowWidth;
+                    console.log("动态计算的最小窗口宽度:", appWindow.dynamicMinimumWidth);
+                }
+            }
+        }
+
+        // 绑定最小窗口宽度
+        Binding {
+            target: appWindow
+            property: "dynamicMinimumWidth"
+            value: mainWindowLoader.item ? mainWindowLoader.item.calculatedMinimumWindowWidth : 855
+            when: mainWindowLoader.status === Loader.Ready
         }
     }
 }

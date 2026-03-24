@@ -137,7 +137,7 @@ void TestLogging::testLogRecordTimestamp() {
 
     QString formatted = record.formattedTimestamp();
     QVERIFY(formatted.contains("20"));  // 年份
-    QVERIFY(formatted.contains(":"));   // 时间分隔符
+    QVERIFY(formatted.contains(":"));  // 时间分隔符
 }
 
 void TestLogging::testLogRecordShortFileName() {

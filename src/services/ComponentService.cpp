@@ -18,8 +18,11 @@
 #include <QQueue>
 #include <QRegularExpression>
 #include <QTextStream>
+#include <QThread>
 #include <QTimer>
 #include <QUuid>
+
+#include <cstdlib>
 
 namespace EasyKiConverter {
 
@@ -33,7 +36,11 @@ ComponentService::ComponentService(QObject* parent)
     , m_parallelTotalCount(0)
     , m_parallelCompletedCount(0)
     , m_parallelFetching(false)
-    , m_imageService(nullptr) {
+    , m_imageService(nullptr)
+    , m_activeRequestCount(0)
+    , m_maxConcurrentRequests(5)
+    , m_queueTimer(nullptr)
+    , m_timeoutTimer(nullptr) {
     try {
         m_api = new EasyedaApi();
         if (m_api) {
@@ -42,8 +49,21 @@ ComponentService::ComponentService(QObject* parent)
         m_importer = new EasyedaImporter(this);
         m_networkManager = new QNetworkAccessManager(this);
         m_imageService = new LcscImageService(this);
+
+        // 初始化异步队列管理定时器，避免阻塞主线程
+        m_queueTimer = new QTimer(this);
+        m_queueTimer->setSingleShot(false);
+        connect(m_queueTimer, &QTimer::timeout, this, &ComponentService::checkQueueAndProcessNext);
+
+        m_timeoutTimer = new QTimer(this);
+        m_timeoutTimer->setSingleShot(true);
+        connect(m_timeoutTimer, &QTimer::timeout, this, &ComponentService::handleQueueTimeout);
+    } catch (const std::bad_alloc& e) {
+        qCritical() << "ComponentService: Memory allocation failed:" << e.what();
+        std::terminate();
     } catch (...) {
         qCritical() << "ComponentService: Failed to initialize sub-services!";
+        std::terminate();
     }
 
     initializeApiConnections();
@@ -60,7 +80,11 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     , m_parallelTotalCount(0)
     , m_parallelCompletedCount(0)
     , m_parallelFetching(false)
-    , m_imageService(nullptr) {
+    , m_imageService(nullptr)
+    , m_activeRequestCount(0)
+    , m_maxConcurrentRequests(5)
+    , m_queueTimer(nullptr)
+    , m_timeoutTimer(nullptr) {
     if (m_api && !m_api->parent()) {
         m_api->setParent(this);
     }
@@ -68,6 +92,15 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     m_importer = new EasyedaImporter(this);
     m_networkManager = new QNetworkAccessManager(this);
     m_imageService = new LcscImageService(this);
+
+    // 初始化异步队列管理定时器，避免阻塞主线程
+    m_queueTimer = new QTimer(this);
+    m_queueTimer->setSingleShot(false);
+    connect(m_queueTimer, &QTimer::timeout, this, &ComponentService::checkQueueAndProcessNext);
+
+    m_timeoutTimer = new QTimer(this);
+    m_timeoutTimer->setSingleShot(true);
+    connect(m_timeoutTimer, &QTimer::timeout, this, &ComponentService::handleQueueTimeout);
 
     initializeApiConnections();
     qDebug() << "ComponentService (Injected API): Initialized successfully.";
@@ -80,6 +113,7 @@ void ComponentService::initializeApiConnections() {
         connect(m_imageService, &LcscImageService::lcscDataReady, this, &ComponentService::handleLcscDataReady);
         connect(m_imageService, &LcscImageService::datasheetReady, this, &ComponentService::handleDatasheetReady);
         connect(m_imageService, &LcscImageService::allImagesReady, this, &ComponentService::handleAllImagesReady);
+        connect(m_imageService, &LcscImageService::error, this, &ComponentService::handlePreviewImageError);
     }
 
     // 连接 API 信号
@@ -106,7 +140,15 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
 
     // 确保 componentId 格式统一（大写）
     QString normalizedId = componentId.toUpper();
-    m_currentComponentId = normalizedId;
+
+    // 使用互斥锁保护 m_currentComponentId 的并发访问
+    {
+        QMutexLocker locker(&m_currentIdMutex);
+        m_currentComponentId = normalizedId;
+    }
+
+    // 加锁保护共享数据的访问
+    QMutexLocker locker(&m_fetchingComponentsMutex);
 
     // 获取或创建 FetchingComponent 条目
     FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
@@ -120,6 +162,9 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     fetchingComponent.hasStepData = false;
     fetchingComponent.errorMessage.clear();
 
+    // 在锁保护外执行网络请求，避免长时间持锁
+    locker.unlock();
+
     // 首先获取 CAD 数据（包含符号和封装信息）
     // CAD 数据是后续流程的基础
     m_api->fetchCadData(normalizedId);
@@ -128,6 +173,11 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
 void ComponentService::fetchLcscPreviewImage(const QString& componentId) {
     qDebug() << "ComponentService: Fetching LCSC preview image for component:" << componentId;
     m_imageService->fetchPreviewImages(componentId);
+}
+
+void ComponentService::fetchBatchPreviewImages(const QStringList& componentIds) {
+    qDebug() << "ComponentService: Fetching batch preview images for" << componentIds.count() << "components";
+    m_imageService->fetchBatchPreviewImages(componentIds);
 }
 
 void ComponentService::handleImageReady(const QString& componentId, const QByteArray& imageData, int imageIndex) {
@@ -142,6 +192,9 @@ void ComponentService::handleImageReady(const QString& componentId, const QByteA
 
         // 发送预览图数据就绪信号（用于导出）
         emit previewImageDataReady(componentId, imageData, imageIndex);
+
+        // 加锁保护共享数据的访问
+        QMutexLocker locker(&m_fetchingComponentsMutex);
 
         // 保存图片数据到 ComponentData（内存），使用索引避免重复
         if (m_fetchingComponents.contains(componentId)) {
@@ -177,6 +230,9 @@ void ComponentService::handleLcscDataReady(const QString& componentId,
     qDebug() << "LCSC data ready for component:" << componentId
              << "Manufacturer Part:" << (manufacturerPart.isEmpty() ? "none" : manufacturerPart)
              << "Datasheet:" << (datasheetUrl.isEmpty() ? "none" : datasheetUrl) << "Images:" << imageUrls.size();
+
+    // 加锁保护共享数据的访问
+    QMutexLocker locker(&m_fetchingComponentsMutex);
 
     // 更新 m_fetchingComponents 中的数据
     if (m_fetchingComponents.contains(componentId)) {
@@ -225,6 +281,9 @@ void ComponentService::handleLcscDataReady(const QString& componentId,
 void ComponentService::handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData) {
     qDebug() << "Datasheet downloaded for component:" << componentId << "size:" << datasheetData.size() << "bytes";
 
+    // 加锁保护共享数据的访问
+    QMutexLocker locker(&m_fetchingComponentsMutex);
+
     // 更新 m_fetchingComponents 中的数据
     if (m_fetchingComponents.contains(componentId)) {
         FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
@@ -247,8 +306,18 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
     }
 }
 
+void ComponentService::handlePreviewImageError(const QString& componentId, const QString& error) {
+    qWarning() << "Preview image fetch error for component:" << componentId << "error:" << error;
+
+    // 发送预览图失败信号
+    emit previewImageFailed(componentId, error);
+}
+
 void ComponentService::handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList) {
     qDebug() << "All images ready for component:" << componentId << "count:" << imageDataList.size();
+
+    // 加锁保护共享数据的访问
+    QMutexLocker locker(&m_fetchingComponentsMutex);
 
     // 更新 m_fetchingComponents 中的数据
     if (m_fetchingComponents.contains(componentId)) {
@@ -315,9 +384,16 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
 
     qDebug() << "CAD data fetched for:" << lcscId;
 
-    // 临时保存当前的组件ID
-    QString savedComponentId = m_currentComponentId;
-    m_currentComponentId = lcscId;
+    // 临时保存当前的组件ID，使用互斥锁保护
+    QString savedComponentId;
+    {
+        QMutexLocker locker(&m_currentIdMutex);
+        savedComponentId = m_currentComponentId;
+        m_currentComponentId = lcscId;
+    }
+
+    // 加锁保护共享数据的访问
+    QMutexLocker locker(&m_fetchingComponentsMutex);
 
     // 获取 fetch3DModel 配置
     bool need3DModel = true;  // 默认值
@@ -417,9 +493,20 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
                      << datasheetUrl;
         }
     } else {
-        qWarning() << "Failed to import symbol data for:" << m_currentComponentId;
+        // 使用互斥锁保护读取 m_currentComponentId
+        QString currentId;
+        {
+            QMutexLocker locker(&m_currentIdMutex);
+            currentId = m_currentComponentId;
+        }
+        qWarning() << "Failed to import symbol data for:" << currentId;
         emit fetchError(lcscId, "Failed to parse Symbol data from EasyEDA JSON");
-        m_currentComponentId = savedComponentId;
+
+        // 恢复组件 ID
+        {
+            QMutexLocker locker(&m_currentIdMutex);
+            m_currentComponentId = savedComponentId;
+        }
         return;
     }
 
@@ -496,20 +583,24 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     m_fetchingComponents[m_currentComponentId].data = componentData;
 
     // 先发送完成信号，确保 ComponentListViewModel 获取到完整的 ComponentData
-    // 图片下载是异步的，会在后台继续进行
-    emit cadDataReady(m_currentComponentId, componentData);
-
-    // 然后调用 LCSC API 获取数据手册和预览图
-    m_imageService->fetchPreviewImages(m_currentComponentId);
-    qDebug() << "Called fetchPreviewImages to get LCSC datasheet and preview images for" << m_currentComponentId;
+    // 预览图获取现在由 ComponentListViewModel 两阶段控制：验证完成后统一获取
+    QString currentId;
+    {
+        QMutexLocker locker(&m_currentIdMutex);
+        currentId = m_currentComponentId;
+    }
+    emit cadDataReady(currentId, componentData);
 
     // 如果在并行模式下，处理并行数据收集
     if (m_parallelFetching) {
-        handleParallelDataCollected(m_currentComponentId, componentData);
+        handleParallelDataCollected(currentId, componentData);
     }
 
-    // 恢复组件 ID
-    m_currentComponentId = savedComponentId;
+    // 恢复组件 ID，使用互斥锁保护
+    {
+        QMutexLocker locker(&m_currentIdMutex);
+        m_currentComponentId = savedComponentId;
+    }
 }
 
 void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArray& data) {
@@ -517,49 +608,71 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
 
     // 在并行模式下，查找对应的组件
     if (m_parallelFetching) {
-        // 在并行模式下，查找对应UUID的组件
-        for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
-            if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == uuid) {
-                QString componentId = it.key();
-                FetchingComponent& fetchingComponent = it.value();
+        QString componentId;
+        bool hasObjData = false;
+        bool fetch3DModel = false;
+        ComponentData componentDataCopy;
 
-                if (!fetchingComponent.hasObjData) {
-                    // 这是 WRL 格式的3D 模型
-                    fetchingComponent.data.model3DData()->setRawObj(QString::fromUtf8(data));
-                    fetchingComponent.hasObjData = true;
-                    qDebug() << "WRL data saved for:" << uuid << "Size:" << data.size();
+        // 加锁保护共享数据的访问，迭代器遍历必须加锁
+        {
+            QMutexLocker locker(&m_fetchingComponentsMutex);
 
-                    // 继续下载 STEP 格式的3D 模型
-                    qDebug() << "Fetching STEP model with UUID:" << uuid;
-                    m_api->fetch3DModelStep(uuid);
-                } else {
-                    // 这是 STEP 格式的3D 模型
-                    fetchingComponent.data.model3DData()->setStep(data);
-                    fetchingComponent.hasStepData = true;
-                    qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
+            // 在并行模式下，查找对应UUID的组件
+            for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
+                if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == uuid) {
+                    componentId = it.key();
+                    FetchingComponent& fetchingComponent = it.value();
 
-                    // 调用 LCSC API 获取数据手册和预览图 URL（异步）
-                    // 注意：这个调用是异步的，handleLcscDataReady 会更新 ComponentData
-                    m_fetchingComponents[componentId].data = fetchingComponent.data;
+                    if (!fetchingComponent.hasObjData) {
+                        // 这是 WRL 格式的3D 模型
+                        fetchingComponent.data.model3DData()->setRawObj(QString::fromUtf8(data));
+                        fetchingComponent.hasObjData = true;
+                        qDebug() << "WRL data saved for:" << uuid << "Size:" << data.size();
 
-                    // 先发送完成信号，确保 ComponentListViewModel 获取到完整的 ComponentData
-                    // 图片下载是异步的，会在后台继续进行
-                    emit cadDataReady(componentId, fetchingComponent.data);
+                        hasObjData = false;
+                    } else {
+                        // 这是 STEP 格式的3D 模型
+                        fetchingComponent.data.model3DData()->setStep(data);
+                        fetchingComponent.hasStepData = true;
+                        qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
 
-                    // 处理并行数据收集
-                    handleParallelDataCollected(componentId, fetchingComponent.data);
-
-                    // 然后调用 LCSC API 获取数据手册和预览图
-                    m_imageService->fetchPreviewImages(componentId);
-                    qDebug() << "Called fetchPreviewImages after 3D model loaded for" << componentId;
-
-                    // 从待处理列表中移除
-                    m_fetchingComponents.remove(componentId);
+                        hasObjData = true;
+                        fetch3DModel = fetchingComponent.fetch3DModel;
+                        componentDataCopy = fetchingComponent.data;
+                    }
                 }
-                return;
             }
         }
-        qWarning() << "Received 3D model data for unexpected UUID:" << uuid;
+        // 锁在这里释放
+
+        // 在锁外执行网络请求，避免死锁
+        if (!hasObjData && !componentId.isEmpty()) {
+            // 继续下载 STEP 格式的3D 模型
+            qDebug() << "Fetching STEP model with UUID:" << uuid;
+            m_api->fetch3DModelStep(uuid);
+        } else if (hasObjData && !componentId.isEmpty()) {
+            // 调用 LCSC API 获取数据手册和预览图 URL（异步）
+            // 注意：这个调用是异步的，handleLcscDataReady 会更新 ComponentData
+            {
+                QMutexLocker locker(&m_fetchingComponentsMutex);
+                m_fetchingComponents[componentId].data = componentDataCopy;
+            }
+
+            // 先发送完成信号，确保 ComponentListViewModel 获取到完整的 ComponentData
+            // 图片下载是异步的，会在后台继续进行
+            emit cadDataReady(componentId, componentDataCopy);
+
+            // 处理并行数据收集
+            handleParallelDataCollected(componentId, componentDataCopy);
+
+            // 预览图获取现在由 ComponentListViewModel 两阶段控制：验证完成后统一获取
+
+            // 从待处理列表中移除
+            {
+                QMutexLocker locker(&m_fetchingComponentsMutex);
+                m_fetchingComponents.remove(componentId);
+            }
+        }
     } else {
         // 串行模式下的处理
         if (m_pendingComponentData.model3DData() && m_pendingComponentData.model3DData()->uuid() == uuid) {
@@ -580,9 +693,8 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
                 qDebug() << "STEP data saved for:" << uuid << "Size:" << data.size();
 
                 // 调用 LCSC API 获取数据手册和预览图 URL（异步）
+                // 预览图获取现在由 ComponentListViewModel 两阶段控制：验证完成后统一获取
                 m_fetchingComponents[m_currentComponentId].data = m_pendingComponentData;
-                m_imageService->fetchPreviewImages(m_currentComponentId);
-                qDebug() << "Called fetchPreviewImages after 3D model loaded (serial mode) for" << m_currentComponentId;
 
                 // 发送完成信号
                 emit cadDataReady(m_currentComponentId, m_pendingComponentData);
@@ -615,6 +727,7 @@ void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QSt
 
     // 如果在并行模式下，尝试解析 UUID 为组件 ID
     if (m_parallelFetching && !m_parallelFetchingStatus.contains(idOrUuid)) {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
         for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
             if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == idOrUuid) {
                 componentId = it.key();
@@ -643,18 +756,47 @@ QString ComponentService::getOutputPath() const {
 }
 
 void ComponentService::fetchMultipleComponentsData(const QStringList& componentIds, bool fetch3DModel) {
-    qDebug() << "Fetching data for" << componentIds.size() << "components in parallel";
+    qDebug() << "Fetching data for" << componentIds.size()
+             << "components with async queue (max concurrent:" << m_maxConcurrentRequests << ")";
 
-    // 初始化请求
-    m_parallelFetchingStatus.clear();
-    for (const QString& id : componentIds) {
-        m_parallelFetchingStatus[id] = true;
-        fetchComponentDataInternal(id, fetch3DModel);
+    // 防止重复启动批量处理，避免队列状态混乱
+    if (m_parallelFetching) {
+        qWarning() << "Batch processing already in progress, ignoring new request";
+        return;
     }
+
+    // 初始化并行获取状态
+    {
+        QMutexLocker locker(&m_parallelDataMutex);
+        m_parallelFetchingStatus.clear();
+        m_parallelCollectedData.clear();
+        m_parallelPendingComponents = componentIds;
+        m_parallelTotalCount = componentIds.size();
+        m_parallelCompletedCount = 0;
+        m_parallelFetching = true;
+
+        // 初始化请求队列
+        m_requestQueue = componentIds;
+        m_activeRequestCount = 0;
+    }
+
+    // 启动总超时保护，防止弱网环境下队列永久阻塞
+    m_timeoutTimer->start(TOTAL_TIMEOUT_MS);
+    qDebug() << "Started total timeout timer:" << TOTAL_TIMEOUT_MS << "ms";
+
+    // 启动异步队列处理，定时检查队列状态并启动新请求
+    m_queueTimer->start(QUEUE_CHECK_INTERVAL_MS);
+    qDebug() << "Started async queue timer:" << QUEUE_CHECK_INTERVAL_MS << "ms";
+
+    // 立即处理第一批请求
+    checkQueueAndProcessNext();
 }
 
 void ComponentService::handleParallelDataCollected(const QString& componentId, const ComponentData& data) {
     qDebug() << "Parallel data collected for:" << componentId;
+
+    // 使用互斥锁保护并行数据收集状态的并发访问
+    QMutexLocker locker(&m_parallelDataMutex);
 
     // 保存收集到的数据
     m_parallelCollectedData[componentId] = data;
@@ -667,11 +809,15 @@ void ComponentService::handleParallelDataCollected(const QString& componentId, c
     if (m_parallelCompletedCount >= m_parallelTotalCount) {
         qDebug() << "All components data collected in parallel:" << m_parallelCollectedData.size();
 
-        // 发送完成信号
+        // 发送完成信号，先复制数据到局部变量
         QList<ComponentData> allData = m_parallelCollectedData.values();
+
+        // 在发送信号前释放锁，避免死锁
+        locker.unlock();
         emit allComponentsDataCollected(allData);
 
-        // 重置状态
+        // 重新加锁进行状态重置
+        QMutexLocker locker2(&m_parallelDataMutex);
         m_parallelFetching = false;
         m_parallelCollectedData.clear();
         m_parallelFetchingStatus.clear();
@@ -682,6 +828,9 @@ void ComponentService::handleParallelDataCollected(const QString& componentId, c
 void ComponentService::handleParallelFetchError(const QString& componentId, const QString& error) {
     qDebug() << "Parallel fetch error for:" << componentId << error;
 
+    // 使用互斥锁保护并行数据收集状态的并发访问
+    QMutexLocker locker(&m_parallelDataMutex);
+
     // 更新状态
     m_parallelFetchingStatus[componentId] = false;
     m_parallelCompletedCount++;
@@ -690,11 +839,15 @@ void ComponentService::handleParallelFetchError(const QString& componentId, cons
     if (m_parallelCompletedCount >= m_parallelTotalCount) {
         qDebug() << "All components data collected (with errors):" << m_parallelCollectedData.size();
 
-        // 发送完成信号
+        // 发送完成信号，先复制数据到局部变量
         QList<ComponentData> allData = m_parallelCollectedData.values();
+
+        // 在发送信号前释放锁，避免死锁
+        locker.unlock();
         emit allComponentsDataCollected(allData);
 
-        // 重置状态
+        // 重新加锁进行状态重置
+        QMutexLocker locker2(&m_parallelDataMutex);
         m_parallelFetching = false;
         m_parallelCollectedData.clear();
         m_parallelFetchingStatus.clear();
@@ -743,6 +896,7 @@ void ComponentService::clearCache() {
 }
 
 void ComponentService::completeComponentData(const QString& componentId) {
+    QMutexLocker locker(&m_fetchingComponentsMutex);
     if (m_fetchingComponents.contains(componentId)) {
         FetchingComponent& fc = m_fetchingComponents[componentId];
         // 判定标准：CAD 数据必须有，如果需要 3D 则 OBJ 和 STEP 也必须有
@@ -772,6 +926,92 @@ bool ComponentService::isPDF(const QByteArray& data) const {
         return false;
     }
     return data.startsWith("%PDF-");
+}
+
+// 异步队列管理方法实现
+// 使用定时器驱动而非阻塞循环，确保主线程保持响应性
+
+void ComponentService::checkQueueAndProcessNext() {
+    if (!m_parallelFetching) {
+        // 队列处理已完成，停止定时器
+        m_queueTimer->stop();
+        return;
+    }
+
+    QMutexLocker locker(&m_parallelDataMutex);
+
+    // 计算当前活跃请求数
+    int activeCount = m_parallelPendingComponents.size() - m_parallelCompletedCount;
+
+    // 启动新请求直到达到最大并发数
+    while (activeCount < m_maxConcurrentRequests && !m_requestQueue.isEmpty()) {
+        QString componentId = m_requestQueue.takeFirst();
+
+        // 检查是否已经处理过
+        if (m_parallelFetchingStatus.contains(componentId)) {
+            qDebug() << "Component" << componentId << "already processed, skipping";
+            continue;
+        }
+
+        m_parallelFetchingStatus[componentId] = true;
+        m_parallelPendingComponents.append(componentId);
+        activeCount++;
+
+        locker.unlock();  // 解锁以调用 fetchComponentDataInternal
+
+        qDebug() << "Starting async request for component:" << componentId << "(Active:" << activeCount << "/"
+                 << m_maxConcurrentRequests << "Remaining:" << m_requestQueue.size() << ")";
+
+        fetchComponentDataInternal(componentId, true);  // 默认获取3D模型
+
+        locker.relock();  // 重新加锁继续检查
+    }
+
+    // 检查是否所有请求都已完成
+    if (m_requestQueue.isEmpty() && activeCount == 0 && m_parallelCompletedCount >= m_parallelTotalCount) {
+        qDebug() << "All components processed via async queue. Total:" << m_parallelTotalCount;
+        resetQueueState();
+    }
+}
+
+void ComponentService::handleQueueTimeout() {
+    qWarning() << "Queue timeout reached after" << TOTAL_TIMEOUT_MS << "ms";
+
+    QMutexLocker locker(&m_parallelDataMutex);
+
+    if (m_parallelFetching) {
+        // 超时后清理队列状态
+        int pendingCount = m_requestQueue.size();
+        int completedCount = m_parallelCompletedCount;
+
+        qWarning() << "Queue timeout - Pending:" << pendingCount << "Completed:" << completedCount
+                   << "Total:" << m_parallelTotalCount;
+
+        // 发送已完成的数据
+        if (!m_parallelCollectedData.isEmpty()) {
+            QList<ComponentData> allData = m_parallelCollectedData.values();
+            locker.unlock();
+            emit allComponentsDataCollected(allData);
+            locker.relock();
+        }
+
+        resetQueueState();
+    }
+}
+
+void ComponentService::resetQueueState() {
+    QMutexLocker locker(&m_parallelDataMutex);
+
+    // 停止定时器
+    m_queueTimer->stop();
+    m_timeoutTimer->stop();
+
+    // 清理队列状态
+    m_requestQueue.clear();
+    m_activeRequestCount = 0;
+    m_parallelFetching = false;
+
+    qDebug() << "Queue state reset completed";
 }
 
 }  // namespace EasyKiConverter

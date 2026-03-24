@@ -3,6 +3,7 @@
 #include <QByteArray>
 #include <QCoreApplication>
 #include <QQueue>
+#include <QTextStream>
 #include <QThread>
 #include <QWaitCondition>
 
@@ -10,6 +11,8 @@
 
 #ifdef Q_OS_WIN
 #    include <windows.h>
+#else
+#    include <unistd.h>
 #endif
 
 namespace EasyKiConverter {
@@ -25,6 +28,7 @@ const QString ConsoleAppender::s_bgRed = QStringLiteral("\033[41m");
 
 ConsoleAppender::ConsoleAppender(bool useColors, bool async)
     : m_useColors(useColors && supportsColors())
+    // 统一所有平台：默认异步模式（更好的性能），使用 async 参数切换为同步模式
     , m_async(async)
     , m_running(0)
     , m_flushRequested(0)
@@ -160,21 +164,20 @@ bool ConsoleAppender::supportsColors() {
 
     return supported;
 #else
-    // Unix/Linux/macOS 默认支持颜色（检测 TERM 环境变量）
-    QByteArray term = qgetenv("TERM");
-    return !term.isEmpty() && term != "dumb";
+    // Unix/Linux/macOS 强制启用颜色支持
+    // 设置 TERM 环境变量以确保终端支持 ANSI 颜色
+    qputenv("TERM", "xterm-256color");
+    return true;
 #endif
 }
 
 QString ConsoleAppender::colorize(const QString& text, LogLevel level) const {
     QString result;
 
-    // 添加背景色（如果有）
     if (m_levelBackgrounds.contains(level)) {
         result += m_levelBackgrounds[level];
     }
 
-    // 添加前景色
     if (m_levelColors.contains(level)) {
         result += m_levelColors[level];
     }
@@ -186,6 +189,10 @@ QString ConsoleAppender::colorize(const QString& text, LogLevel level) const {
 }
 
 void ConsoleAppender::writerThreadFunc() {
+    // 设置线程的 stdout 为无缓冲模式
+    setbuf(stdout, nullptr);
+    setbuf(stderr, nullptr);
+
     while (m_running.loadRelaxed()) {
         QByteArray data;
         bool overflowed = false;
@@ -248,9 +255,15 @@ void ConsoleAppender::writerThreadFunc() {
 }
 
 void ConsoleAppender::writeDirect(const QByteArray& data, bool isError) {
+    // 使用 fdopen 重新打开 stdout，确保在子线程中正确输出
     FILE* out = isError ? stderr : stdout;
-    fprintf(out, "%s", data.constData());
-    // 不每次 flush，减少系统调用
+
+    // 写入数据
+    size_t written = fwrite(data.constData(), 1, data.size(), out);
+    (void)written;  // 忽略返回值
+
+    // 立即刷新
+    fflush(out);
 }
 
 }  // namespace EasyKiConverter

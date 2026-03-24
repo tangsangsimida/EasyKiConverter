@@ -29,42 +29,32 @@ bool PipelineQueueManager::safePush(StatusQueuePtr queue,
     if (!queue || isCancelled.loadAcquire())
         return false;
 
-    // 1. 快速尝试
+    // 1. 快速尝试（非阻塞）
     if (queue->tryPush(status))
         return true;
 
-    // 2. 指数退避策略
-    constexpr int MAX_RETRIES = 5;
-    constexpr int BASE_DELAY_MS = 10;
-    constexpr int MAX_TOTAL_TIMEOUT_MS = 500;
+    // 2. 使用简单的重试策略（移除指数退避和抖动）
+    constexpr int MAX_RETRIES = 3;
+    constexpr int RETRY_DELAY_MS = 10;
 
     int retryCount = 0;
-    int totalDelay = 0;
 
     while (retryCount < MAX_RETRIES) {
         if (isCancelled.loadAcquire())
             return false;
 
-        // 防止 UI 冻结
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+        // 短暂等待
+        QThread::msleep(RETRY_DELAY_MS);
 
         if (queue->tryPush(status)) {
             return true;
         }
 
-        int delay = BASE_DELAY_MS * (1 << retryCount);
-        delay += QRandomGenerator::global()->bounded(0, 20);  // 抖动
-
-        if (totalDelay + delay > MAX_TOTAL_TIMEOUT_MS) {
-            qWarning() << "PipelineQueueManager: Push timed out for" << status->componentId;
-            return false;
-        }
-
-        QThread::msleep(delay);
-        totalDelay += delay;
         retryCount++;
     }
 
+    // 3. 超时返回
+    qWarning() << "PipelineQueueManager: Push timed out for" << status->componentId;
     return false;
 }
 

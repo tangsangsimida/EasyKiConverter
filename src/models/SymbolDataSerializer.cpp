@@ -764,7 +764,6 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolData& data) {
     }
     json["texts"] = textsArray;
 
-    // 添加多部分符号的部分
     QJsonArray partsArray;
     for (const SymbolPart& part : data.parts()) {
         partsArray.append(toJson(part));

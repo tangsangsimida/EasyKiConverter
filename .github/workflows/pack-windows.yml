@@ -160,7 +160,19 @@ jobs:
 
           # ISCC command
           # Note: SourceDir must be absolute
-          iscc "/DMyAppVersion=${{ env.VERSION }}" "/DSourceDir=$stagingDir" "/O$outputDir" "$issFile"
+          $iconPath = "$env:GITHUB_WORKSPACE\resources\icons\app_icon.ico"
+          $licensePath = "$env:GITHUB_WORKSPACE\LICENSE"
+          
+          if (-not (Test-Path $iconPath)) {
+            Write-Error "Icon file not found at: $iconPath"
+            exit 1
+          }
+          if (-not (Test-Path $licensePath)) {
+            Write-Error "License file not found at: $licensePath"
+            exit 1
+          }
+          
+          iscc "/DMyAppVersion=${{ env.VERSION }}" "/DSourceDir=$stagingDir" "/DAppIconPath=$iconPath" "/DLicensePath=$licensePath" "/O$outputDir" "$issFile"
 
           # Rename output to standard format
           $setupExe = Get-ChildItem -Path $outputDir -Filter "EasyKiConverter_*_Setup.exe" | Select-Object -First 1

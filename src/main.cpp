@@ -51,7 +51,7 @@ bool isDebugMode(const EasyKiConverter::CommandLineParser& parser) {
     return false;
 }
 
-void setupLogging(bool debugMode, const QString& logLevelStr, const QString& logFilePath) {
+void setupLogging(bool debugMode, const QString& logLevelStr, const QString& logFilePath, bool syncLogging) {
     using namespace EasyKiConverter;
 
 #ifdef _WIN32
@@ -112,9 +112,10 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
 
     logger->setGlobalLevel(logLevel);
 
-    // 控制台输出（彩色，异步模式减少性能影响）
-
-    auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, true);
+    // 控制台输出（彩色）
+    // 根据 --sync-logging 参数决定使用同步还是异步模式
+    // 默认使用异步模式（更好的性能），使用 --sync-logging 参数启用同步模式（确保彩色日志显示）
+    auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, !syncLogging);
 
     consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
 
@@ -164,14 +165,19 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
 }  // anonymous namespace
 
 int main(int argc, char* argv[]) {
+    // 设置 stdout 为无缓冲模式，确保日志颜色正常显示
+    setbuf(stdout, nullptr);
+    setbuf(stderr, nullptr);
+
     // 在 QApplication 构造函数之前检查命令行参数
     bool showHelp = false;
     bool showVersion = false;
     for (int i = 1; i < argc; ++i) {
         QString arg = QString::fromLocal8Bit(argv[i]);
-        if (arg == "--help" || arg == "-h") {
+        // 支持 Unix 风格（-h, --help）和 Windows 风格（/h, /help, /?, ?）的参数
+        if (arg == "--help" || arg == "-h" || arg == "/h" || arg == "/help" || arg == "/?" || arg == "?") {
             showHelp = true;
-        } else if (arg == "--version" || arg == "-v") {
+        } else if (arg == "--version" || arg == "-v" || arg == "/v" || arg == "/version") {
             showVersion = true;
         }
     }
@@ -184,7 +190,7 @@ int main(int argc, char* argv[]) {
 
     // 设置应用程序信息（必须在解析命令行参数之前）
     app.setApplicationName("EasyKiConverter");
-    app.setApplicationVersion("3.0.9");
+    app.setApplicationVersion("3.1.0");
     app.setOrganizationName("EasyKiConverter");
     app.setOrganizationDomain("easykiconverter.com");
 
@@ -196,16 +202,17 @@ int main(int argc, char* argv[]) {
         QString helpText = cmdParser.helpText();
 
 #ifdef _WIN32
-        // 将帮助信息写入文件
-        QFile helpFile("easykiconverter_help.txt");
-        if (helpFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&helpFile);
-            out.setEncoding(QStringConverter::Utf8);
-            out << helpText;
-            helpFile.close();
+        // 尝试附加到父进程的控制台（如果是从命令行启动的）
+        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+            // 如果附加失败，创建新的控制台窗口
+            AllocConsole();
+            SetConsoleTitleA("EasyKiConverter - Help");
         }
+        // 重定向标准输出
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
 
-        // 在控制台模式下，直接输出到标准输出
+        // 输出帮助信息到控制台
         QTextStream consoleOut(stdout);
         consoleOut << helpText;
 #else
@@ -219,7 +226,16 @@ int main(int argc, char* argv[]) {
         QString versionText = "EasyKiConverter " + app.applicationVersion() + "\n";
 
 #ifdef _WIN32
-        // 在控制台模式下，直接输出到标准输出
+        // 尝试附加到父进程的控制台（如果是从命令行启动的）
+        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+            // 如果附加失败，创建新的控制台窗口
+            AllocConsole();
+            SetConsoleTitleA("EasyKiConverter - Version");
+        }
+        // 重定向标准输出
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+
+        // 输出版本信息到控制台
         QTextStream consoleOut(stdout);
         consoleOut << versionText;
 #else
@@ -272,7 +288,7 @@ int main(int argc, char* argv[]) {
     bool debugMode = isDebugMode(cmdParser);
 
     // 初始化日志系统（在 QApplication 创建后立即初始化）
-    setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile());
+    setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile(), cmdParser.isSyncLogging());
 
     // 尝试设置应用程序图标
     QStringList iconPaths = {":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
@@ -288,144 +304,6 @@ int main(int argc, char* argv[]) {
             break;
         }
     }
-
-    // 在 Linux 系统上，自动创建桌面集成配置（如果不存在）
-#ifdef __linux__
-    // 设置桌面文件名称（使用小写，与安装的 desktop 文件保持一致）
-    app.setDesktopFileName("com.tangsangsimida.easykiconverter");
-
-    // 检查并创建桌面集成配置
-    QString localAppsDir = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
-    QString iconsBaseDir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/icons/hicolor";
-    QString desktopFilePath = localAppsDir + "/com.tangsangsimida.easykiconverter.desktop";
-
-    // 检查桌面文件是否存在
-    if (!QFile::exists(desktopFilePath)) {
-        qDebug() << "桌面文件不存在，自动创建：" << desktopFilePath;
-
-        // 创建必要的目录
-        QDir().mkpath(localAppsDir);
-
-        // 获取可执行文件路径
-        QString executablePath = QCoreApplication::applicationFilePath();
-
-        // 创建桌面文件
-        QFile desktopFile(desktopFilePath);
-        if (desktopFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&desktopFile);
-            out << "[Desktop Entry]\n";
-            out << "Type=Application\n";
-            out << "Name=EasyKiConverter\n";
-            out << "Name[zh_CN]=EasyKiConverter\n";
-            out << "Comment=Convert LCSC and EasyEDA components to KiCad libraries\n";
-            out << "Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库\n";
-            out << "Exec=" << executablePath << " %F\n";
-            out << "Icon=com.tangsangsimida.easykiconverter\n";
-            out << "Terminal=false\n";
-            out << "Categories=Development;Electronics;Engineering;\n";
-            out << "Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;\n";
-            out << "StartupNotify=true\n";
-            out << "StartupWMClass=easykiconverter\n";
-            out << "MimeType=application/vnd.easyeda+json;\n";
-            desktopFile.close();
-
-            // 设置执行权限
-            QFile::setPermissions(
-                desktopFilePath,
-                QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner | QFile::ReadGroup | QFile::ReadOther);
-
-            qDebug() << "桌面文件已创建：" << desktopFilePath;
-        } else {
-            qWarning() << "无法创建桌面文件：" << desktopFilePath;
-        }
-
-        // 创建多个尺寸的图标（支持高DPI显示）
-        QList<int> iconSizes = {16, 32, 48, 64, 128, 256, 512, 1024};
-        int iconsCreated = 0;
-
-        // 查找 SVG 图标（可以生成任意尺寸）
-        QString svgIconPath;
-        for (const QString& iconPath : iconPaths) {
-            if (iconPath.endsWith(".svg") && QFile::exists(iconPath)) {
-                svgIconPath = iconPath;
-                break;
-            }
-        }
-
-        if (!svgIconPath.isEmpty()) {
-            // 从 SVG 生成多个尺寸的图标
-            QImage svgImage(svgIconPath);
-            if (!svgImage.isNull()) {
-                for (int size : iconSizes) {
-                    QString sizeDir = QString("%1/%2x%3/apps").arg(iconsBaseDir).arg(size).arg(size);
-                    QDir().mkpath(sizeDir);
-                    QString iconFilePath = sizeDir + "/com.tangsangsimida.easykiconverter.png";
-
-                    // 渲染 SVG 到指定尺寸
-                    QImage scaledImage = svgImage.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                    if (scaledImage.save(iconFilePath, "PNG")) {
-                        iconsCreated++;
-                        qDebug() << "图标已创建：" << iconFilePath << size << "x" << size;
-                    }
-                }
-            } else {
-                qWarning() << "无法加载 SVG 图标：" << svgIconPath;
-            }
-        }
-
-        // 如果没有 SVG，使用 PNG 图标（复制到所有尺寸）
-        if (iconsCreated == 0) {
-            for (int size : iconSizes) {
-                QString sizeDir = QString("%1/%2x%3/apps").arg(iconsBaseDir).arg(size).arg(size);
-                QDir().mkpath(sizeDir);
-                QString iconFilePath = sizeDir + "/com.tangsangsimida.easykiconverter.png";
-
-                bool iconCopied = false;
-                for (const QString& iconPath : iconPaths) {
-                    if (iconPath.endsWith(".png") && QFile::exists(iconPath)) {
-                        QImage sourceImage(iconPath);
-                        if (!sourceImage.isNull()) {
-                            QImage scaledImage =
-                                sourceImage.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                            if (scaledImage.save(iconFilePath, "PNG")) {
-                                iconCopied = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (iconCopied) {
-                    iconsCreated++;
-                    qDebug() << "图标已创建：" << iconFilePath << size << "x" << size;
-                }
-            }
-        }
-
-        if (iconsCreated == 0) {
-            qWarning() << "无法创建任何图标文件";
-        } else {
-            qDebug() << "已创建" << iconsCreated << "个尺寸的图标";
-        }
-
-        // 更新桌面数据库
-        QProcess updateDesktopDb;
-        updateDesktopDb.start("update-desktop-database", QStringList() << localAppsDir);
-        updateDesktopDb.waitForFinished(5000);
-
-        // 更新图标缓存
-        QProcess updateIconCache;
-        updateIconCache.start(
-            "gtk-update-icon-cache",
-            QStringList() << "-q" << "-t" << "-f"
-                          << QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/icons/hicolor");
-        updateIconCache.waitForFinished(5000);
-
-        qDebug() << "桌面集成配置已自动创建";
-    } else {
-        qDebug() << "桌面文件已存在：" << desktopFilePath;
-    }
-#endif
 
     // 处理命令行参数 - 配置文件路径
     QString configFilePath;
@@ -466,8 +344,8 @@ int main(int argc, char* argv[]) {
         EasyKiConverter::LanguageManager::instance();
     }
 
-    // 处理命令行参数 - 主题设置
-    if (!cmdParser.theme().isEmpty()) {
+    // 处理命令行参数 - 主题设置（仅在用户显式指定时应用）
+    if (cmdParser.isThemeSet()) {
         QString theme = cmdParser.theme();
         auto* configService = EasyKiConverter::ConfigService::instance();
         if (theme == "dark") {
@@ -633,30 +511,32 @@ int main(int argc, char* argv[]) {
     int exitCode = app.exec();
 
     // === 重要：显式按顺序销毁对象，防止退出时崩溃 ===
-    // 1. 首先清除 QML 引擎的上下文属性，防止 QML 组件访问已销毁的对象
+
+    // 1. 清除 QML 引擎的上下文属性，防止 QML 组件访问已销毁的对象
+    qDebug() << "Clearing QML context properties...";
     engine.rootContext()->setContextProperty("componentListViewModel", nullptr);
     engine.rootContext()->setContextProperty("exportSettingsViewModel", nullptr);
     engine.rootContext()->setContextProperty("exportProgressViewModel", nullptr);
     engine.rootContext()->setContextProperty("themeSettingsViewModel", nullptr);
 
     // 2. 销毁 QML 引擎（这会销毁所有 QML 组件）
+    qDebug() << "Destroying QML engine...";
     engine.deleteLater();
 
-    // 3. 处理事件队列，确保 QML 引擎销毁完成
-    QCoreApplication::processEvents();
-
-    // 4. 销毁 ViewModel
+    // 3. 销毁 ViewModel
+    qDebug() << "Destroying ViewModels...";
     delete themeSettingsViewModel;
     delete exportProgressViewModel;
     delete exportSettingsViewModel;
     delete componentListViewModel;
 
-    // 5. 销毁单例/核心服务
+    // 4. 销毁服务（析构函数会自动调用 cancelExport 和 cleanup）
+    qDebug() << "Destroying services...";
     delete exportService;
     delete componentService;
 
-    // 3. 最后卸载日志适配器并关闭 Logger
-    // 确保所有 worker 线程已在上述 delete 过程中停止后再关闭日志线程
+    // 5. 最后清理日志
+    qDebug() << "Cleaning up logging...";
     EasyKiConverter::QtLogAdapter::uninstall();
     auto* logger = EasyKiConverter::Logger::instance();
     if (logger) {
@@ -664,5 +544,6 @@ int main(int argc, char* argv[]) {
         logger->close();
     }
 
+    qDebug() << "Cleanup completed, exiting...";
     return exitCode;
 }
