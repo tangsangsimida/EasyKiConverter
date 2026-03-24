@@ -9,11 +9,11 @@ LABEL description="Build environment for EasyKiConverter with Qt 6 and LinuxDepl
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 构建参数
-ARG QT_VERSION=6.8.0
+ARG QT_VERSION=6.6.0
 ARG QT_MODULES="qtimageformats qtshadertools"
 ARG QT_HOST=linux
 ARG QT_TARGET=desktop
-ARG QT_ARCH=linux_gcc_64
+ARG QT_ARCH=gcc_64
 
 # 1. 安装系统依赖 & 工具 (合并层以减小体积)
 # - build-essential, cmake, ninja: 构建工具
@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     wget \
+    rsync \
     python3 \
     python3-pip \
     python3-dev \
@@ -84,7 +85,7 @@ RUN pip3 install --no-cache-dir aqtinstall \
 # 设置 Qt 环境变量
 ENV Qt6_DIR=/opt/qt/${QT_VERSION}/gcc_64
 ENV PATH=$Qt6_DIR/bin:$PATH
-ENV LD_LIBRARY_PATH=${Qt6_DIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=${Qt6_DIR}/lib:${LD_LIBRARY_PATH}
 
 # 3. 预下载 QXlsx 源码（用于 Excel BOM 解析）
 RUN git clone https://github.com/QtExcel/QXlsx.git /opt/QXlsx

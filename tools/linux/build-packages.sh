@@ -8,7 +8,7 @@ set -e
 # 可执行文件名（小写，保持与 desktop 文件一致）
 BINARY_NAME="easykiconverter"
 # 应用标识符（反向域名格式，全小写）
-APP_ID="com.tangsangsimida.easykiconverter"
+APP_ID="io.github.tangsangsimida.easykiconverter"
 # =================================================
 
 # 获取脚本所在目录的绝对路径
@@ -289,6 +289,14 @@ EOF
         --desktop-file "$APP_DIR/$APP_ID.desktop" \
         --icon-file "$APP_DIR/$APP_ID.png"
     
+    # 安装 hicolor 图标到 AppDir（确保所有尺寸的图标都可用）
+    print_info "安装 hicolor 图标..."
+    for size in 16 24 32 48 64 128 256 512; do
+        mkdir -p "$APP_DIR/usr/share/icons/hicolor/${size}x${size}/apps"
+        cp "resources/icons/hicolor/${size}x${size}/apps/${APP_ID}.png" \
+           "$APP_DIR/usr/share/icons/hicolor/${size}x${size}/apps/${APP_ID}.png"
+    done
+    
     # 修复：复制 QML 模块到 AppDir（linuxdeploy-plugin-qt 可能不会自动复制）
     print_info "复制 QML 模块到 AppDir..."
     local QT_INSTALL_QML=$(qmake -query QT_INSTALL_QML 2>/dev/null || echo "")
@@ -423,7 +431,7 @@ build_deb() {
         -e "s|deploy/scripts/easykiconverter-register.sh|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.sh|g" \
         -e "s|deploy/scripts/easykiconverter-register.desktop|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.desktop|g" \
         -e "s|deploy/scripts/trigger-gnome-refresh.sh|$PROJECT_ROOT/deploy/scripts/trigger-gnome-refresh.sh|g" \
-        -e "s|deploy/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml|$PROJECT_ROOT/deploy/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml|g" \
+        -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$PROJECT_ROOT/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
         "$PROJECT_ROOT/deploy/nfpm.yaml" > "$temp_nfpm_config"
     
     # 运行 nfpm 构建（必须指定 --packager）
