@@ -334,7 +334,7 @@ install(TARGETS appEasyKiconverter_Cpp_Version
                 WORLD_READ WORLD_EXECUTE
 )
 
-# 安装图标
+# 安装图标（浅色主题）
 install(DIRECTORY resources/icons/hicolor/
     DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor
     FILES_MATCHING PATTERN "*.png"

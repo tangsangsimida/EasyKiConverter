@@ -503,10 +503,26 @@ int main(int argc, char* argv[]) {
             appDir + "/usr/share/icons/hicolor/64x64/apps/io.github.tangsangsimida.easykiconverter.png",  // 64x64
         };
 
+        // 计算项目根目录（用于开发模式）
+        QString projectRoot = appDir;
+        if (appDir.endsWith("/build")) {
+            projectRoot = appDir.chopped(6);  // 去掉 /build
+        } else if (appDir.endsWith("/bin")) {
+            projectRoot = appDir.chopped(4);  // 去掉 /bin
+        }
+
         // 开发时的图标路径（优先级较低）
         QStringList devIconPaths = {
-            appDir + "/resources/icons/" + iconThemeDir + "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            projectRoot + "/resources/icons/" + iconThemeDir +
+                "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+            projectRoot + "/resources/icons/" + iconThemeDir +
+                "/64x64/apps/io.github.tangsangsimida.easykiconverter.png",
+            projectRoot + "/resources/icons/" + iconThemeDir +
+                "/128x128/apps/io.github.tangsangsimida.easykiconverter.png",
+            projectRoot + "/resources/icons/" + iconThemeDir +
+                "/32x32/apps/io.github.tangsangsimida.easykiconverter.png",
             QCoreApplication::applicationDirPath() + "/io.github.tangsangsimida.easykiconverter.png",
+            projectRoot + "/io.github.tangsangsimida.easykiconverter.png",
         };
 
         // 系统图标路径（fallback）
@@ -570,6 +586,14 @@ int main(int argc, char* argv[]) {
                 appDir = appDir.chopped(4);
             }
 
+            // 计算项目根目录（用于开发模式）
+            QString projectRoot = appDir;
+            if (appDir.endsWith("/build")) {
+                projectRoot = appDir.chopped(6);
+            } else if (appDir.endsWith("/build/bin")) {
+                projectRoot = appDir.chopped(9);
+            }
+
             bool isDarkModeForIcon = configService->getDarkMode();
             QString iconThemeDir = isDarkModeForIcon ? "hicolor-dark" : "hicolor";
             bool isAppImage = !qgetenv("APPIMAGE").isEmpty();
@@ -590,9 +614,16 @@ int main(int argc, char* argv[]) {
                 };
             } else {
                 iconPaths = {
-                    appDir + "/resources/icons/" + iconThemeDir +
+                    projectRoot + "/resources/icons/" + iconThemeDir +
                         "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
+                    projectRoot + "/resources/icons/" + iconThemeDir +
+                        "/128x128/apps/io.github.tangsangsimida.easykiconverter.png",
+                    projectRoot + "/resources/icons/" + iconThemeDir +
+                        "/64x64/apps/io.github.tangsangsimida.easykiconverter.png",
+                    projectRoot + "/resources/icons/" + iconThemeDir +
+                        "/32x32/apps/io.github.tangsangsimida.easykiconverter.png",
                     appDir + "/io.github.tangsangsimida.easykiconverter.png",
+                    projectRoot + "/io.github.tangsangsimida.easykiconverter.png",
                     appDir + "/usr/share/icons/" + iconThemeDir +
                         "/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
                     appDir + "/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png",
