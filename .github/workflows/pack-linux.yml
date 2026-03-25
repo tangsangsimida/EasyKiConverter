@@ -615,6 +615,16 @@ jobs:
             --desktop-file ${{ env.PRODUCT }}.AppDir/io.github.tangsangsimida.easykiconverter.desktop \
             --output appimage
 
+          # 删除 PostgreSQL 等 SQL 驱动（避免依赖问题）
+          echo "删除不需要的 SQL 驱动..."
+          for driver in libqsqlpsql.so libqsqlmysql.so libqsqldb2.so libqsqlodbc.so; do
+            if [ -f "${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/$driver" ]; then
+              rm -f "${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/$driver"*
+              echo "[-] 已删除 SQL 驱动: $driver"
+            fi
+          done
+          echo "✓ SQL 驱动清理完成"
+
           # linuxdeploy 会覆盖 desktop 文件的 Exec 字段，需要手动修复
           echo "修复 desktop 文件的 Exec 字段..."
           sed -i "s|^Exec=.*easykiconverter|Exec=AppRun|" ${{ env.PRODUCT }}.AppDir/io.github.tangsangsimida.easykiconverter.desktop
