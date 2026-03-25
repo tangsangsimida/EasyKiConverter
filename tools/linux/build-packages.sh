@@ -8,7 +8,7 @@ set -e
 # 可执行文件名（小写，保持与 desktop 文件一致）
 BINARY_NAME="easykiconverter"
 # 应用标识符（反向域名格式，全小写）
-APP_ID="com.tangsangsimida.easykiconverter"
+APP_ID="io.github.tangsangsimida.easykiconverter"
 # =================================================
 
 # 获取脚本所在目录的绝对路径
@@ -268,7 +268,7 @@ Name=EasyKiConverter
 Name[zh_CN]=EasyKiConverter
 Comment=Convert LCSC and EasyEDA components to KiCad libraries
 Comment[zh_CN]=将嘉立创和 EasyEDA 元件转换为 KiCad 库
-Exec=$BINARY_NAME %F
+Exec=AppRun %F
 Icon=$APP_ID
 Terminal=false
 Categories=Development;Electronics;Engineering;
@@ -278,9 +278,13 @@ StartupWMClass=easykiconverter
 MimeType=application/vnd.easyeda+json;
 EOF
 
-    # 复制图标
-    print_info "复制图标..."
-    cp resources/icons/app_icon.png "$APP_DIR/$APP_ID.png"
+    # 复制图标（使用 256x256 尺寸，确保任务栏显示正常）
+    print_info "复制图标到 AppDir 根目录..."
+    cp "resources/icons/hicolor/256x256/apps/${APP_ID}.png" "$APP_DIR/$APP_ID.png"
+    if [ ! -f "$APP_DIR/$APP_ID.png" ]; then
+        print_warn "256x256 图标不存在，尝试使用备用路径..."
+        cp resources/icons/app_icon.png "$APP_DIR/$APP_ID.png"
+    fi
 
     # 运行 linuxdeploy 填充依赖
     print_info "运行 linuxdeploy 填充依赖..."
@@ -288,6 +292,33 @@ EOF
         --executable "$APP_DIR/usr/bin/$BINARY_NAME" \
         --desktop-file "$APP_DIR/$APP_ID.desktop" \
         --icon-file "$APP_DIR/$APP_ID.png"
+
+    # 修复：linuxdeploy 会覆盖 Exec 字段，需要手动改回 AppRun
+    print_info "修复 desktop 文件的 Exec 字段..."
+    sed -i "s|^Exec=.*$BINARY_NAME|Exec=AppRun|" "$APP_DIR/$APP_ID.desktop"
+
+    # 安装 hicolor 图标到 AppDir（确保所有尺寸的图标都可用）
+    print_info "安装 hicolor 图标（浅色主题）..."
+    for size in 16 24 32 48 64 128 256 512; do
+        mkdir -p "$APP_DIR/usr/share/icons/hicolor/${size}x${size}/apps"
+        cp "resources/icons/hicolor/${size}x${size}/apps/${APP_ID}.png" \
+           "$APP_DIR/usr/share/icons/hicolor/${size}x${size}/apps/${APP_ID}.png"
+    done
+
+    # 安装 hicolor-dark 图标到 AppDir（暗色主题）
+    print_info "安装 hicolor-dark 图标（暗色主题）..."
+    if [ -d "resources/icons/hicolor-dark" ]; then
+        for size in 16 24 32 48 64 128 256 512; do
+            if [ -f "resources/icons/hicolor-dark/${size}x${size}/apps/${APP_ID}.png" ]; then
+                mkdir -p "$APP_DIR/usr/share/icons/hicolor-dark/${size}x${size}/apps"
+                cp "resources/icons/hicolor-dark/${size}x${size}/apps/${APP_ID}.png" \
+                   "$APP_DIR/usr/share/icons/hicolor-dark/${size}x${size}/apps/${APP_ID}.png"
+            fi
+        done
+        print_info "✓ 暗色主题图标已安装"
+    else
+        print_warn "hicolor-dark 目录不存在，跳过暗色主题图标"
+    fi
     
     # 修复：复制 QML 模块到 AppDir（linuxdeploy-plugin-qt 可能不会自动复制）
     print_info "复制 QML 模块到 AppDir..."
@@ -353,12 +384,169 @@ export QT_QPA_PLATFORM=xcb
 export XDG_DATA_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}"
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 
+# 添加 XDG_DATA_DIRS，让系统能够找到 AppImage 内部的图标
+# 这样桌面环境才能正确显示任务栏图标
+export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+# 全局变量定义（用于 desktop 文件和图标管理）
+export DESKTOP_FILE="$APPDIR/__APP_ID__.desktop"
+export USER_DESKTOP_DIR="$HOME/.local/share/applications"
+export USER_ICON_DIR="$HOME/.local/share/icons/hicolor"
+export USER_DESKTOP_PATH="$USER_DESKTOP_DIR/__APP_ID__.desktop"
+export APPIMAGE_PATH="$APPIMAGE"
+
+# 自动安装 desktop 文件和图标到用户目录（支持路径检测和更新）
+install_desktop_file() {
+    # 创建用户目录
+    mkdir -p "$USER_DESKTOP_DIR"
+    
+    # 如果 desktop 文件不存在，创建它
+    if [ ! -f "$USER_DESKTOP_PATH" ]; then
+        if [ -f "$DESKTOP_FILE" ]; then
+            cp "$DESKTOP_FILE" "$USER_DESKTOP_PATH"
+            chmod +x "$USER_DESKTOP_PATH"
+            
+            # 添加 AppImage 路径标记
+            if [ -n "$APPIMAGE_PATH" ]; then
+                echo "X-AppImage-Path=${APPIMAGE_PATH}" >> "$USER_DESKTOP_PATH"
+            fi
+        fi
+    fi
+    
+    # 检查并更新 AppImage 路径（支持 AppImage 移动）
+    if [ -f "$USER_DESKTOP_PATH" ] && [ -n "$APPIMAGE_PATH" ]; then
+        # 检查 desktop 文件中的 Exec 路径是否需要更新
+        local CURRENT_EXEC=$(grep "^Exec=" "$USER_DESKTOP_PATH" | cut -d= -f2 | cut -d' ' -f1)
+        
+        if [ "$CURRENT_EXEC" != "$APPIMAGE_PATH" ]; then
+            echo "AppImage 路径已更新: $CURRENT_EXEC -> $APPIMAGE_PATH" >&2
+            sed -i "s|^Exec=.*|Exec=${APPIMAGE_PATH} %F|" "$USER_DESKTOP_PATH"
+            
+            # 更新 AppImage 路径标记
+            if grep -q "^X-AppImage-Path=" "$USER_DESKTOP_PATH"; then
+                sed -i "s|^X-AppImage-Path=.*|X-AppImage-Path=${APPIMAGE_PATH}|" "$USER_DESKTOP_PATH"
+            else
+                echo "X-AppImage-Path=${APPIMAGE_PATH}" >> "$USER_DESKTOP_PATH"
+            fi
+        fi
+    fi
+    
+    # 复制图标到用户目录（如果缺失）
+    for size in 16 24 32 48 64 128 256 512; do
+        local ICON_DIR="$USER_ICON_DIR/${size}x${size}/apps"
+        local ICON_FILE="$APPDIR/usr/share/icons/hicolor/${size}x${size}/apps/__APP_ID__.png"
+        
+        if [ -f "$ICON_FILE" ] && [ ! -f "$ICON_DIR/__APP_ID__.png" ]; then
+            mkdir -p "$ICON_DIR"
+            cp "$ICON_FILE" "$ICON_DIR/__APP_ID__.png"
+        fi
+    done
+    
+    # 复制暗色主题图标（如果缺失）
+    if [ -d "$APPDIR/usr/share/icons/hicolor-dark" ]; then
+        for size in 16 24 32 48 64 128 256 512; do
+            local ICON_DIR="$HOME/.local/share/icons/hicolor-dark/${size}x${size}/apps"
+            local ICON_FILE="$APPDIR/usr/share/icons/hicolor-dark/${size}x${size}/apps/__APP_ID__.png"
+            
+            if [ -f "$ICON_FILE" ] && [ ! -f "$ICON_DIR/__APP_ID__.png" ]; then
+                mkdir -p "$ICON_DIR"
+                cp "$ICON_FILE" "$ICON_DIR/__APP_ID__.png"
+            fi
+        done
+    fi
+    
+    # 更新桌面数据库
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database "$USER_DESKTOP_DIR" >/dev/null 2>&1 &
+    fi
+    
+    # 更新图标缓存
+    if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+        gtk-update-icon-cache -q "$USER_ICON_DIR" >/dev/null 2>&1 &
+    fi
+}
+
+# 卸载 desktop 文件和图标
+uninstall_desktop_file() {
+    # 等待 desktop 文件安装完成
+    wait
+
+    echo "正在卸载 EasyKiConverter AppImage..."
+    echo ""
+
+    # 删除 desktop 文件
+    USER_DESKTOP_PATH="$USER_DESKTOP_DIR/__APP_ID__.desktop"
+    if [ -f "$USER_DESKTOP_PATH" ]; then
+        rm -f "$USER_DESKTOP_PATH"
+        echo "已删除 desktop 文件: $USER_DESKTOP_PATH"
+    fi
+
+    # 删除所有尺寸的图标（浅色和暗色主题）
+    removed_count=0
+    for size in 16 24 32 48 64 128 256 512; do
+        icon_file="$USER_ICON_DIR/${size}x${size}/apps/__APP_ID__.png"
+        if [ -f "$icon_file" ]; then
+            rm -f "$icon_file"
+            echo "已删除图标 ($size x $size): $icon_file"
+            removed_count=$((removed_count + 1))
+        fi
+    done
+
+    # 删除暗色主题图标
+    if [ -d "$HOME/.local/share/icons/hicolor-dark" ]; then
+        for size in 16 24 32 48 64 128 256 512; do
+            icon_file="$HOME/.local/share/icons/hicolor-dark/${size}x${size}/apps/__APP_ID__.png"
+            if [ -f "$icon_file" ]; then
+                rm -f "$icon_file"
+                echo "已删除暗色图标 ($size x $size): $icon_file"
+                removed_count=$((removed_count + 1))
+            fi
+        done
+    fi
+
+    # 更新桌面数据库
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database "$USER_DESKTOP_DIR" 2>/dev/null
+        echo "桌面数据库已更新"
+    fi
+
+    # 更新图标缓存
+    if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+        for theme in hicolor hicolor-dark; do
+            if [ -d "$USER_ICON_DIR/$theme" ]; then
+                gtk-update-icon-cache -q "$USER_ICON_DIR/$theme" 2>/dev/null
+                echo "图标缓存已更新: $theme"
+            fi
+        done
+    fi
+
+    echo ""
+    echo "卸载完成！"
+    echo "已删除 $removed_count 个图标文件"
+    echo ""
+    echo "提示："
+    echo "  1. 您可以手动删除 AppImage 文件"
+    echo "  2. 如果任务栏图标仍然显示，请注销并重新登录"
+    echo "  3. 或者重启桌面环境以刷新图标缓存"
+    echo ""
+    exit 0
+}
+
+# 后台安装 desktop 文件（不阻塞启动）
+install_desktop_file &
+
+# 检查是否需要卸载
+if [ "$1" = "--uninstall" ]; then
+    uninstall_desktop_file
+fi
+
 # 启动应用
 exec "${APPDIR}/usr/bin/__BINARY_NAME__" "$@"
 EOF
 
     # 替换可执行文件名占位符
     sed -i "s|__BINARY_NAME__|$BINARY_NAME|g" "$APP_DIR/AppRun"
+    sed -i "s|__APP_ID__|$APP_ID|g" "$APP_DIR/AppRun"
 
     chmod +x "$APP_DIR/AppRun"
 
@@ -380,6 +568,16 @@ build_appimage() {
     
     # 生成 AppImage（使用已配置的 AppDir）
     print_info "生成 AppImage..."
+    linuxdeploy --appdir "$APP_DIR" --output appimage
+    
+    # 修复：linuxdeploy 会覆盖 Exec 字段，需要再次修复
+    # 注意：修复必须在 linuxdeploy 运行后进行
+    print_info "修复 AppDir 中 desktop 文件的 Exec 字段..."
+    sed -i "s|^Exec=.*$BINARY_NAME|Exec=AppRun|" "$APP_DIR/$APP_ID.desktop"
+    sed -i "s|^Exec=.*$BINARY_NAME|Exec=AppRun|" "$APP_DIR/usr/share/applications/$APP_ID.desktop"
+    
+    # 重新打包（使用修复后的 AppDir）
+    print_info "使用修复后的 AppDir 重新生成 AppImage..."
     linuxdeploy --appdir "$APP_DIR" --output appimage
     
     # 重命名
@@ -423,7 +621,7 @@ build_deb() {
         -e "s|deploy/scripts/easykiconverter-register.sh|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.sh|g" \
         -e "s|deploy/scripts/easykiconverter-register.desktop|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.desktop|g" \
         -e "s|deploy/scripts/trigger-gnome-refresh.sh|$PROJECT_ROOT/deploy/scripts/trigger-gnome-refresh.sh|g" \
-        -e "s|deploy/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml|$PROJECT_ROOT/deploy/metainfo/com.tangsangsimida.easykiconverter.metainfo.xml|g" \
+        -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$PROJECT_ROOT/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
         "$PROJECT_ROOT/deploy/nfpm.yaml" > "$temp_nfpm_config"
     
     # 运行 nfpm 构建（必须指定 --packager）

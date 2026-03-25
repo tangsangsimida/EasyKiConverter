@@ -26,49 +26,86 @@ permissions:
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  QT_VERSION: '6.10.1'
+  QT_VERSION: '6.10.2'
   CMAKE_VERSION: '3.22'
 
 jobs:
   linux-build:
-    name: 'Build Linux (Docker)'
+    name: 'Build Linux'
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    # 使用统一构建环境
-    container:
-      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
-      options: --user root
 
     steps:
       - name: 'Checkout Source code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: 'Fix Git Safe Directory'
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
-      - name: 'Configure CMake with CCache'
-        run: |
-          # 设置 QXlsx 环境变量（Docker 镜像中预下载的源码）
-          export QXLSX_ROOT=/opt/QXlsx/QXlsx
+      - name: 'Get Version'
+        id: version
+        uses: ./.github/actions/get-version
 
-          cmake -B build \
-            -G "Ninja" \
-            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+      - name: 'Export Version'
+        run: |
+          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
+
+      - name: 'Install System Dependencies'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libxkbcommon-dev \
+            libxkbcommon-x11-0 \
+            libxcb-cursor0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-shape0 \
+            libxcb-xfixes0 \
+            libxcb-xinerama0 \
+            libtiff-dev \
+            ccache \
+            ninja-build
+
+      - name: 'Install Qt 6.10.2'
+        run: |
+          pip3 install --no-cache-dir --break-system-packages aqtinstall
+          aqt install-qt linux desktop 6.10.2 linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats
+          echo "/opt/qt/6.10.2/gcc_64/bin" >> $GITHUB_PATH
+          echo "Qt6_DIR=/opt/qt/6.10.2/gcc_64/lib/cmake/Qt6" >> $GITHUB_ENV
+
+      - name: 'Clone QXlsx'
+        run: |
+          git clone --depth 1 https://github.com/QtExcel/QXlsx.git /opt/QXlsx
+          echo "QXLSX_ROOT=/opt/QXlsx/QXlsx" >> $GITHUB_ENV
+
+      - name: 'Configure CMake'
+        run: |
+          export QT_QML_DISABLE_AOT_COMPILE=1
+          export QML_DISABLE_DISK_CACHE=1
+          cmake -B build -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
             -DEASYKICONVERTER_BUILD_TESTS=ON \
-            -DCI=ON
+            -DVERSION_FROM_CI=${{ env.VERSION }}
 
       - name: 'Build'
         run: |
-          cmake --build build --config $BUILD_TYPE --parallel 16
+          export QT_QML_DISABLE_AOT_COMPILE=1
+          cmake --build build --config RelWithDebInfo --parallel 4
 
       - name: 'Run Tests'
         run: |
-          ctest --test-dir build -C $BUILD_TYPE --output-on-failure --no-tests=error
+          export QT_QPA_PLATFORM=offscreen
+          ctest --test-dir build -C RelWithDebInfo --output-on-failure --no-tests=error
 
 
   windows-build:
@@ -85,7 +122,7 @@ jobs:
             arch: 'x64'
     steps:
       - name: 'Checkout Source code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -130,6 +167,7 @@ jobs:
 
       - name: 'Run Tests'
         run: |
+          $env:QT_QPA_PLATFORM = "offscreen"
           ctest --test-dir build -C $env:BUILD_TYPE --output-on-failure --no-tests=error
 
   macos-build:
@@ -145,7 +183,7 @@ jobs:
             os: macos-15
     steps:
       - name: 'Checkout Source code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -176,5 +214,6 @@ jobs:
 
       - name: 'Run Tests'
         run: |
+          export QT_QPA_PLATFORM=offscreen
           ctest --test-dir build -C $BUILD_TYPE --output-on-failure --no-tests=error
 

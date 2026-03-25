@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
-# 使用 Ubuntu 20.04 作为基础镜像
-FROM ubuntu:20.04 AS builder
+# 基础镜像：包含构建工具和 Qt 6.9.0 (通过 aqtinstall 安装)
+FROM ubuntu:24.04 AS builder
 
 LABEL maintainer="EasyKiConverter Team"
 LABEL description="Build environment for EasyKiConverter with Qt 6 and LinuxDeploy"
@@ -8,18 +8,7 @@ LABEL description="Build environment for EasyKiConverter with Qt 6 and LinuxDepl
 # 避免交互式前端
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 构建参数
-ARG QT_VERSION=6.8.0
-ARG QT_MODULES="qtimageformats qtshadertools"
-ARG QT_HOST=linux
-ARG QT_TARGET=desktop
-ARG QT_ARCH=linux_gcc_64
-
 # 1. 安装系统依赖 & 工具 (合并层以减小体积)
-# - build-essential, cmake, ninja: 构建工具
-# - ccache: 编译加速
-# - runtime libs: libgl1... (Qt 依赖)
-# - fuse: AppImage 依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
@@ -28,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     wget \
+    rsync \
     python3 \
     python3-pip \
     python3-dev \
@@ -63,6 +53,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rpm \
     ca-certificates \
     locales \
+    sudo \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && locale-gen en_US.UTF-8
@@ -73,18 +64,16 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 ENV PATH="/usr/lib/ccache:${PATH}"
 
-# 2. 安装 Qt 6
-# 使用 pip 缓存挂载点 (如果使用 BuildKit) 或者手动清理
-RUN pip3 install --no-cache-dir aqtinstall \
-    && aqt install-qt ${QT_HOST} ${QT_TARGET} ${QT_VERSION} ${QT_ARCH} \
-       --outputdir /opt/qt \
-       --modules ${QT_MODULES} \
-    && pip3 uninstall -y aqtinstall
+# 2. 安装 Qt 6.10.2 (使用 aqtinstall)
+RUN pip3 install --no-cache-dir --break-system-packages aqtinstall \
+    && aqt install-qt linux desktop 6.10.2 linux_gcc_64 \
+        --outputdir /opt/qt \
+        --modules qtshadertools qtimageformats
 
 # 设置 Qt 环境变量
-ENV Qt6_DIR=/opt/qt/${QT_VERSION}/gcc_64
+ENV Qt6_DIR=/opt/qt/6.10.2/gcc_64
 ENV PATH=$Qt6_DIR/bin:$PATH
-ENV LD_LIBRARY_PATH=${Qt6_DIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=$Qt6_DIR/lib:${LD_LIBRARY_PATH:-}
 
 # 3. 预下载 QXlsx 源码（用于 Excel BOM 解析）
 RUN git clone https://github.com/QtExcel/QXlsx.git /opt/QXlsx
@@ -113,7 +102,7 @@ RUN echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | tee /etc/apt/s
     && apt-get install -y nfpm
 
 # 验证环境
-RUN cmake --version && ninja --version && qmake --version && ccache --version && nfpm --version
+RUN cmake --version && ninja --version && ccache --version && nfpm --version
 
 WORKDIR /build
 CMD ["/bin/bash"]

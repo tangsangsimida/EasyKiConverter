@@ -159,7 +159,7 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& c
         m_completedStatuses.clear();
     }
 
-    // 确保 m_exportStartTimeMs 被正确初始化 (v3.0.5+ 修复)
+    // 初始化导出开始时间戳
     m_exportStartTimeMs = QDateTime::currentMSecsSinceEpoch();
     qDebug() << "Export started at:" << m_exportStartTimeMs;
 

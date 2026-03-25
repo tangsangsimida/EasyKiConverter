@@ -3,29 +3,41 @@ import QtQuick
 Item {
     id: root
     property string iconName: ""
+    property string iconNameDark: ""
     property int size: 24
-    property color iconColor: "#000000"
+    property color iconColor: AppStyle.iconColors.primary
     width: size
     height: size
     implicitWidth: size
     implicitHeight: size
-    // 尝试加载图标
+
+    function getIconSource() {
+        if (iconName.length === 0)
+            return "";
+        var basePath = "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/";
+        if (AppStyle.isDarkMode && iconNameDark.length > 0) {
+            return basePath + iconNameDark + ".svg";
+        }
+        return basePath + iconName + ".svg";
+    }
+
     Image {
         id: iconImage
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
-        source: iconName.length > 0 ? "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/" + iconName + ".svg" : ""
+        source: getIconSource()
         cache: true
         smooth: true
         antialiasing: true
         visible: status === Image.Ready && iconName.length > 0
         onStatusChanged: {
             if (status === Image.Error && iconName.length > 0) {
-                console.warn("Icon not found:", iconName);
+                var basePath = "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/";
+                iconImage.source = basePath + iconName + ".svg";
             }
         }
     }
-    // 占位符（当图标不存在时显示）
+
     Text {
         anchors.centerIn: parent
         text: getIconSymbol(iconName)
@@ -34,6 +46,7 @@ Item {
         visible: !iconImage.visible
         font.bold: true
     }
+
     function getIconSymbol(name) {
         switch (name) {
         case "play":

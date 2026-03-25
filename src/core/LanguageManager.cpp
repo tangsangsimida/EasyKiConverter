@@ -144,7 +144,7 @@ void LanguageManager::installTranslator(const QString& languageCode) {
     // 尝试加载翻译文件（.qm 格式）
     if (m_translator->load(translationPath)) {
         app->installTranslator(m_translator);
-        qInfo() << "[LanguageManager] ✓ Successfully installed translator from resources:" << translationPath;
+        qInfo() << "[LanguageManager] [OK] 已从资源加载翻译器:" << translationPath;
         return;
     }
 
@@ -152,11 +152,11 @@ void LanguageManager::installTranslator(const QString& languageCode) {
     QString localPath = QString("resources/translations/translations_easykiconverter_%1.qm").arg(languageCode);
     if (m_translator->load(localPath)) {
         app->installTranslator(m_translator);
-        qInfo() << "[LanguageManager] ✓ Successfully installed translator from file system:" << localPath;
+        qInfo() << "[LanguageManager] [OK] 已从文件系统加载翻译器:" << localPath;
         return;
     }
 
-    qWarning() << "[LanguageManager] ✗ Failed to load translation file for language:" << languageCode;
+    qWarning() << "[LanguageManager] [FAIL] 无法加载翻译文件，语言:" << languageCode;
     qWarning() << "[LanguageManager] Tried paths:";
     qWarning() << "  1. Resource path:" << translationPath;
     qWarning() << "  2. File system path:" << localPath;
