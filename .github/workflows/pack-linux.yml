@@ -612,7 +612,7 @@ jobs:
           echo "--- QML Modules ---"
           ls -la ${{ env.PRODUCT }}.AppDir/usr/qml/ 2>/dev/null | head -20
           echo ""
-          echo "=== End of Inventory ===
+          echo "=== End of Inventory ==="
 
       - name: Generate AppImage
         run: |
