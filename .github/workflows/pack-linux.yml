@@ -626,17 +626,27 @@ jobs:
 
       - name: Install LinuxDeploy
         run: |
+          # 安装 linuxdeploy
           wget -q -O /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           chmod +x /tmp/linuxdeploy
           /tmp/linuxdeploy --appimage-extract
           sudo cp -r squashfs-root/* /opt/linuxdeploy/
-          sudo ln -s /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy
+          sudo ln -sf /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy
           
+          # 安装 linuxdeploy Qt 插件
           wget -q -O /tmp/linuxdeploy-plugin-qt https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
           chmod +x /tmp/linuxdeploy-plugin-qt
           /tmp/linuxdeploy-plugin-qt --appimage-extract
           sudo cp -r squashfs-root/* /opt/linuxdeploy-plugin-qt/
-          sudo ln -s /opt/linuxdeploy-plugin-qt/AppRun /usr/local/bin/linuxdeploy-plugin-qt
+          sudo ln -sf /opt/linuxdeploy-plugin-qt/AppRun /usr/local/bin/linuxdeploy-plugin-qt
+          
+          # 验证安装
+          which linuxdeploy || echo "ERROR: linuxdeploy not found"
+          /opt/linuxdeploy/AppRun --version || echo "ERROR: linuxdeploy not executable"
+          
+          # 刷新 PATH
+          echo "/opt/linuxdeploy" >> $GITHUB_PATH
+          echo "/opt/linuxdeploy-plugin-qt" >> $GITHUB_PATH
 
       - name: Download AppDir
         uses: actions/download-artifact@v4
