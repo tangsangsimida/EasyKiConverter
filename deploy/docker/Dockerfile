@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
-# 使用 Ubuntu 20.04 作为基础镜像
-FROM ubuntu:20.04 AS builder
+# 使用 Ubuntu 24.04 作为基础镜像
+FROM ubuntu:24.04 AS builder
 
 LABEL maintainer="EasyKiConverter Team"
 LABEL description="Build environment for EasyKiConverter with Qt 6 and LinuxDeploy"
@@ -85,7 +85,7 @@ RUN pip3 install --no-cache-dir aqtinstall \
 # 设置 Qt 环境变量
 ENV Qt6_DIR=/opt/qt/${QT_VERSION}/gcc_64
 ENV PATH=$Qt6_DIR/bin:$PATH
-ENV LD_LIBRARY_PATH=${Qt6_DIR}/lib:${LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=${Qt6_DIR}/lib:${LD_LIBRARY_PATH:-}
 
 # 3. 预下载 QXlsx 源码（用于 Excel BOM 解析）
 RUN git clone https://github.com/QtExcel/QXlsx.git /opt/QXlsx
