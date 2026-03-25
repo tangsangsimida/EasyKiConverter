@@ -67,7 +67,8 @@ jobs:
             libxcb-render-util0 \
             libxcb-shape0 \
             libxcb-xfixes0 \
-            libxcb-xinerama0
+            libxcb-xinerama0 \
+            ccache
 
       - name: Install Qt 6.10.2
         run: |
