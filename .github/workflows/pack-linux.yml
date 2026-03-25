@@ -110,6 +110,16 @@ jobs:
           echo "  Cleanup complete!"
           echo "=============================================="
 
+      - name: Configure CMake
+        run: |
+          cmake -B build -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
+            -DVERSION_FROM_CI=${{ env.VERSION }}
+
       - name: Compile & Install
         run: |
           set -x
