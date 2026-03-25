@@ -75,6 +75,11 @@ jobs:
           echo "/opt/qt/6.9.0/gcc_64/bin" >> $GITHUB_PATH
           echo "Qt6_DIR=/opt/qt/6.9.0/gcc_64/lib/cmake/Qt6" >> $GITHUB_ENV
 
+      - name: Install QXlsx
+        run: |
+          git clone https://github.com/QtExcel/QXlsx.git /opt/QXlsx
+          echo "QXLSX_ROOT=/opt/QXlsx/QXlsx" >> $GITHUB_ENV
+
       - name: Remove Unused Qt Plugins
         run: |
           echo ""
@@ -134,8 +139,7 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
-            -DVERSION_FROM_CI=${{ env.VERSION }} \
-            -DQT_QML_DISABLE_AOT_COMPILE=ON
+            -DVERSION_FROM_CI=${{ env.VERSION }}
 
       - name: Compile & Install
         run: |
