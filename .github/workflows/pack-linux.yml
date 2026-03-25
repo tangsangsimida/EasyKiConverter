@@ -624,11 +624,12 @@ jobs:
           echo "✓ Permissions set before linuxdeploy"
 
           # 预先删除 PostgreSQL 等 SQL 驱动（避免 linuxdeploy 尝试部署时失败）
-          echo "预先删除 SQL 驱动避免依赖问题..."
-          rm -f ${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/libqsqlpsql.so* 2>/dev/null || true
-          rm -f ${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/libqsqlmysql.so* 2>/dev/null || true
-          rm -f ${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/libqsqldb2.so* 2>/dev/null || true
-          rm -f ${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/libqsqlodbc.so* 2>/dev/null || true
+          # 注意：linuxdeploy 是从原始 Qt 目录扫描部署，所以需要删除原始目录的驱动
+          echo "预先删除 Qt 原始目录中的 SQL 驱动避免依赖问题..."
+          rm -f /opt/qt/6.6.0/gcc_64/plugins/sqldrivers/libqsqlpsql.so* 2>/dev/null || true
+          rm -f /opt/qt/6.6.0/gcc_64/plugins/sqldrivers/libqsqlmysql.so* 2>/dev/null || true
+          rm -f /opt/qt/6.6.0/gcc_64/plugins/sqldrivers/libqsqldb2.so* 2>/dev/null || true
+          rm -f /opt/qt/6.6.0/gcc_64/plugins/sqldrivers/libqsqlodbc.so* 2>/dev/null || true
           echo "✓ SQL 驱动已预删除"
 
           # 重新运行 linuxdeploy 以生成 AppImage
