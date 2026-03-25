@@ -54,6 +54,60 @@ jobs:
       - name: Fix Git Safe Directory
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
+      - name: Remove Unused Qt Plugins
+        run: |
+          echo ""
+          echo "=============================================="
+          echo "  Qt Plugins Inventory (before cleanup)"
+          echo "=============================================="
+          QT_PLUGINS_DIR="/opt/qt/6.6.0/gcc_64/plugins"
+          if [ -d "$QT_PLUGINS_DIR" ]; then
+            for plugin_type in "$QT_PLUGINS_DIR"/*/; do
+              plugin_name=$(basename "$plugin_type")
+              echo ""
+              echo ">>> [$plugin_name]"
+              ls -la "$plugin_type" 2>/dev/null | grep -v "^total" | head -20 || echo "(empty)"
+            done
+          fi
+          echo ""
+          echo "=============================================="
+          echo "  Cleaning up unused plugins..."
+          echo "=============================================="
+          
+          # 删除不需要的 Qt SQL 驱动（避免 PostgreSQL 依赖问题）
+          for qt_lib_dir in /opt/qt/*/gcc_64/plugins/sqldrivers; do
+            if [ -d "$qt_lib_dir" ]; then
+              removed=0
+              for driver in libqsqlpsql.so libqsqlmysql.so libqsqldb2.so libqsqlodbc.so; do
+                if [ -f "$qt_lib_dir/$driver" ]; then
+                  rm -f "$qt_lib_dir"/$driver*
+                  echo "[-] Removed SQL driver: $driver"
+                  removed=$((removed + 1))
+                fi
+              done
+              if [ $removed -eq 0 ]; then
+                echo "[ ] No SQL drivers to remove"
+              fi
+            fi
+          done
+          
+          echo ""
+          echo "=============================================="
+          echo "  Qt Plugins Inventory (after cleanup)"
+          echo "=============================================="
+          if [ -d "$QT_PLUGINS_DIR" ]; then
+            for plugin_type in "$QT_PLUGINS_DIR"/*/; do
+              plugin_name=$(basename "$plugin_type")
+              echo ""
+              echo ">>> [$plugin_name]"
+              ls -la "$plugin_type" 2>/dev/null | grep -v "^total" | head -20 || echo "(empty)"
+            done
+          fi
+          echo ""
+          echo "=============================================="
+          echo "  Cleanup complete!"
+          echo "=============================================="
+
       - name: Compile & Install
         run: |
           set -x
