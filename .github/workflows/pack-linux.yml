@@ -68,8 +68,7 @@ jobs:
             libxcb-shape0 \
             libxcb-xfixes0 \
             libxcb-xinerama0 \
-            libtiff5 \
-            libtiff5-dev \
+            libtiff-dev \
             ccache
 
       - name: Install Qt 6.10.2
