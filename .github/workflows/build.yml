@@ -31,28 +31,56 @@ env:
 
 jobs:
   linux-build:
-    name: 'Build Linux (Docker)'
+    name: 'Build Linux'
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    # 使用统一构建环境
-    container:
-      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
-      options: --user root
 
     steps:
       - name: 'Checkout Source code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: 'Fix Git Safe Directory'
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
+      - name: 'Install Qt'
+        uses: jurplel/install-qt-action@v6
+        with:
+          version: '6.10.2'
+          host: 'linux'
+          target: 'desktop'
+          arch: 'gcc_64'
+
+      - name: 'Install System Dependencies'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libxkbcommon-dev \
+            libxkbcommon-x11-0 \
+            libxcb-cursor0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-shape0 \
+            libxcb-xfixes0 \
+            libxcb-xinerama0 \
+            libtiff-dev \
+            ccache \
+            ninja-build
+
+      - name: 'Clone QXlsx'
+        run: |
+          sudo mkdir -p /opt/QXlsx
+          sudo git clone --depth 1 https://github.com/QtExcel/QXlsx.git /opt/QXlsx/QXlsx
+
       - name: 'Configure CMake with CCache'
         run: |
-          # 设置 QXlsx 环境变量（Docker 镜像中预下载的源码）
           export QXLSX_ROOT=/opt/QXlsx/QXlsx
-
           cmake -B build \
             -G "Ninja" \
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
@@ -85,7 +113,7 @@ jobs:
             arch: 'x64'
     steps:
       - name: 'Checkout Source code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -145,7 +173,7 @@ jobs:
             os: macos-15
     steps:
       - name: 'Checkout Source code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
