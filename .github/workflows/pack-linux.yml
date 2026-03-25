@@ -661,6 +661,9 @@ jobs:
 
       - name: Install LinuxDeploy
         run: |
+          # 创建目标目录
+          sudo mkdir -p /opt/linuxdeploy /opt/linuxdeploy-plugin-qt
+          
           # 安装 linuxdeploy
           wget -q -O /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           chmod +x /tmp/linuxdeploy
