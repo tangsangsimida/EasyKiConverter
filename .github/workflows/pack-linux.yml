@@ -68,12 +68,19 @@ jobs:
             libxcb-xfixes0 \
             libxcb-xinerama0
 
-      - name: Install Qt 6.10.1
+      - name: Check Available Qt Versions
         run: |
           pip3 install --no-cache-dir --break-system-packages aqtinstall
-          aqt install-qt linux desktop 6.10.1 linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats qttools
-          echo "/opt/qt/6.10.1/gcc_64/bin" >> $GITHUB_PATH
-          echo "Qt6_DIR=/opt/qt/6.10.1/gcc_64/lib/cmake/Qt6" >> $GITHUB_ENV
+          aqt list-qt linux desktop
+
+      - name: Install Qt
+        run: |
+          # 根据上面列出的版本选择合适的版本安装
+          QT_VERSION="6.9.0"
+          aqt install-qt linux desktop $QT_VERSION linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats qttools || \
+          aqt install-qt linux desktop 6.8.2 linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats qttools
+          echo "/opt/qt/$QT_VERSION/gcc_64/bin" >> $GITHUB_PATH
+          echo "Qt6_DIR=/opt/qt/$QT_VERSION/gcc_64/lib/cmake/Qt6" >> $GITHUB_ENV
 
       - name: Install QXlsx
         run: |
@@ -86,7 +93,7 @@ jobs:
           echo "=============================================="
           echo "  Qt Plugins Inventory (before cleanup)"
           echo "=============================================="
-          QT_PLUGINS_DIR="/opt/qt/6.9.0/gcc_64/plugins"
+          QT_PLUGINS_DIR="/opt/qt/6.10.1/gcc_64/plugins"
           if [ -d "$QT_PLUGINS_DIR" ]; then
             for plugin_type in "$QT_PLUGINS_DIR"/*/; do
               plugin_name=$(basename "$plugin_type")
