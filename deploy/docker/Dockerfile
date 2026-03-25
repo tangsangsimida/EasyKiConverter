@@ -90,7 +90,7 @@ RUN echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | tee /etc/apt/s
     && apt-get install -y nfpm
 
 # 验证环境
-RUN cmake --version && ninja --version && qmake --version && ccache --version && nfpm --version
+RUN cmake --version && ninja --version && ccache --version && nfpm --version
 
 WORKDIR /build
 CMD ["/bin/bash"]
