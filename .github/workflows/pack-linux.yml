@@ -54,6 +54,15 @@ jobs:
       - name: Fix Git Safe Directory
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
+      - name: Add Swap Space
+        run: |
+          # 添加 swap 以增加可用内存
+          sudo fallocate -l 4G /swapfile || true
+          sudo chmod 600 /swapfile || true
+          sudo mkswap /swapfile || true
+          sudo swapon /swapfile || true
+          free -h
+
       - name: Remove Unused Qt Plugins
         run: |
           echo ""
@@ -108,18 +117,11 @@ jobs:
           mkdir -p ${APPIMAGE_DST_PATH}
 
           # 禁用 QML AOT 编译以减少内存使用
-          export QT_QML_CACHE_STRATEGY=preferRuntime
+          export QT_QML_DISABLE_AOT_COMPILE=1
+          export QML_DISABLE_DISK_CACHE=1
 
-          # 编译
-          cmake -B build -G "Ninja" \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_INSTALL_PREFIX=/usr \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
-            -DVERSION_FROM_CI=${{ env.VERSION }}
-
-          cmake --build build --config RelWithDebInfo --parallel 1
+          # 使用单核编译以减少内存使用
+          cmake --build build --config RelWithDebInfo -j 1
           cmake --install build --prefix ${APPIMAGE_DST_PATH}/usr
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
 
