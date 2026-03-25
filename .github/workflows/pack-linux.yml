@@ -83,13 +83,38 @@ jobs:
           git clone https://github.com/QtExcel/QXlsx.git /opt/QXlsx
           echo "QXLSX_ROOT=/opt/QXlsx/QXlsx" >> $GITHUB_ENV
 
+      - name: Install LinuxDeploy
+        run: |
+          # 安装 linuxdeploy
+          wget -q -O /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x /tmp/linuxdeploy
+          /tmp/linuxdeploy --appimage-extract
+          sudo cp -r squashfs-root/* /opt/linuxdeploy/
+          sudo ln -sf /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy
+          
+          # 安装 linuxdeploy Qt 插件
+          wget -q -O /tmp/linuxdeploy-plugin-qt https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x /tmp/linuxdeploy-plugin-qt
+          /tmp/linuxdeploy-plugin-qt --appimage-extract
+          sudo cp -r squashfs-root/* /opt/linuxdeploy-plugin-qt/
+          sudo ln -sf /opt/linuxdeploy-plugin-qt/AppRun /usr/local/bin/linuxdeploy-plugin-qt
+          
+          # 验证安装
+          which linuxdeploy || echo "ERROR: linuxdeploy not found"
+          /opt/linuxdeploy/AppRun --version || echo "ERROR: linuxdeploy not executable"
+          
+          # 设置环境变量
+          echo "/opt/linuxdeploy" >> $GITHUB_PATH
+          echo "/opt/linuxdeploy-plugin-qt" >> $GITHUB_PATH
+          echo "DEPLOY_MODE=unpackaged" >> $GITHUB_ENV
+
       - name: Remove Unused Qt Plugins
         run: |
           echo ""
           echo "=============================================="
           echo "  Qt Plugins Inventory (before cleanup)"
           echo "=============================================="
-          QT_PLUGINS_DIR="/opt/qt/6.10.1/gcc_64/plugins"
+          QT_PLUGINS_DIR="/opt/qt/6.10.2/gcc_64/plugins"
           if [ -d "$QT_PLUGINS_DIR" ]; then
             for plugin_type in "$QT_PLUGINS_DIR"/*/; do
               plugin_name=$(basename "$plugin_type")
