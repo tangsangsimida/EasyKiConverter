@@ -107,6 +107,9 @@ jobs:
           APPIMAGE_DST_PATH=$GITHUB_WORKSPACE/${PRODUCT}.AppDir
           mkdir -p ${APPIMAGE_DST_PATH}
 
+          # 禁用 QML AOT 编译以减少内存使用
+          export QT_QML_CACHE_STRATEGY=preferRuntime
+
           # 编译
           cmake -B build -G "Ninja" \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -116,7 +119,7 @@ jobs:
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
             -DVERSION_FROM_CI=${{ env.VERSION }}
 
-          cmake --build build --config RelWithDebInfo --parallel 2
+          cmake --build build --config RelWithDebInfo --parallel 1
           cmake --install build --prefix ${APPIMAGE_DST_PATH}/usr
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
 
