@@ -11,7 +11,8 @@ Rectangle {
     width: parent.width
     height: 38
     color: AppStyle.colors.surface
-    radius: windowRadius
+    topLeftRadius: windowRadius
+    topRightRadius: windowRadius
     z: 1000
     // Bottom separator line
     Rectangle {
