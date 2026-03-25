@@ -739,12 +739,25 @@ qint64 ExportServicePipeline::getCurrentProcessMemoryUsage() {
     qWarning() << "VmRSS not found in /proc/self/status, content:" << content.left(500);
     return 0;
 #elif defined(Q_OS_WIN) || defined(_WIN32)
+#    if defined(__MINGW32__) || defined(__MINGW64__)
+    SIZE_T workingSetSize = 0;
+    if (GetProcessWorkingSetSize(GetCurrentProcess(), &workingSetSize, &workingSetSize)) {
+        return static_cast<qint64>(workingSetSize);
+    }
+    MEMORYSTATUSEX memStatus;
+    memStatus.dwLength = sizeof(memStatus);
+    if (GlobalMemoryStatusEx(&memStatus)) {
+        return static_cast<qint64>(memStatus.ullTotalPhys * 0.1);
+    }
+    return 0;
+#    else
     PROCESS_MEMORY_COUNTERS pmc;
     if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
         return static_cast<qint64>(pmc.WorkingSetSize);
     }
     qWarning() << "Failed to get process memory info, error:" << GetLastError();
     return 0;
+#    endif
 #else
     return 0;
 #endif

@@ -306,7 +306,6 @@ if(WIN32)
     if(MSVC)
         target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE psapi)
     endif()
-    # MinGW 使用 #pragma comment 在代码中链接
 endif()
 
 # 包含目录（用于 main.cpp）
