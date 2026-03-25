@@ -75,7 +75,7 @@ jobs:
       - name: 'Clone QXlsx'
         run: |
           sudo mkdir -p /opt/QXlsx
-          sudo git clone --depth 1 https://github.com/QtExcel/QXlsx.git /opt/QXlsx/QXlsx
+          sudo git clone --depth 1 https://github.com/QtExcel/QXlsx.git /opt/QXlsx
 
       - name: 'Configure CMake with CCache'
         run: |
