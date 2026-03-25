@@ -616,14 +616,9 @@ jobs:
           chmod +x ${{ env.PRODUCT }}.AppDir/AppRun 2>/dev/null || true
           echo "✓ Permissions set before linuxdeploy"
 
-          # 预先删除所有 Qt SQL 驱动
-          # 包括: PostgreSQL, MySQL, DB2, ODBC, Mimer, SQLite
-          echo "预先删除所有 SQL 驱动（应用不需要数据库）..."
-          rm -f /opt/qt/6.6.0/gcc_64/plugins/sqldrivers/libqsql*.so* 2>/dev/null || true
-          echo "已删除所有 SQL 驱动"
-
           # 重新运行 linuxdeploy 以生成 AppImage
           # 必须再次指定 executable 和 desktop-file 否则 AppRun 可能不会正确链接
+          # 注意：SQL 驱动已在 build-core 阶段删除
           linuxdeploy --appdir ${{ env.PRODUCT }}.AppDir --plugin qt \
             --executable ${{ env.PRODUCT }}.AppDir/usr/bin/easykiconverter \
             --desktop-file ${{ env.PRODUCT }}.AppDir/io.github.tangsangsimida.easykiconverter.desktop \
