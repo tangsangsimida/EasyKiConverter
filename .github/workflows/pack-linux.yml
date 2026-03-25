@@ -116,7 +116,7 @@ jobs:
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
             -DVERSION_FROM_CI=${{ env.VERSION }}
 
-          cmake --build build --config RelWithDebInfo --parallel
+          cmake --build build --config RelWithDebInfo --parallel 2
           cmake --install build --prefix ${APPIMAGE_DST_PATH}/usr
           rm -rf ${APPIMAGE_DST_PATH}/usr/include
 
