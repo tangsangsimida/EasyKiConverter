@@ -45,9 +45,9 @@ jobs:
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
       - name: 'Install Qt'
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.10.2'
+        run: |
+          pip3 install --no-cache-dir --break-system-packages aqtinstall
+          aqt install-qt linux desktop 6.10.2 gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats
           host: 'linux'
           target: 'desktop'
           arch: 'gcc_64'
