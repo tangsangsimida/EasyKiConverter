@@ -212,27 +212,26 @@ jobs:
           fi
           
           # 严格验证关键 QML 模块
-              QML_CONTROLS_FOUND=false
-              QML_QUICK_FOUND=false
+          QML_CONTROLS_FOUND=false
+          QML_QUICK_FOUND=false
 
-              if [ -f "${APPIMAGE_DST_PATH}/usr/qml/QtQuick/Controls/qmldir" ]; then
-                QML_CONTROLS_FOUND=true
-              elif [ -f "${APPIMAGE_DST_PATH}/usr/qml/QtQuick/Controls2/qmldir" ]; then
-                QML_CONTROLS_FOUND=true
-              fi
+          if [ -f "${APPIMAGE_DST_PATH}/usr/qml/QtQuick/Controls/qmldir" ]; then
+            QML_CONTROLS_FOUND=true
+          elif [ -f "${APPIMAGE_DST_PATH}/usr/qml/QtQuick/Controls2/qmldir" ]; then
+            QML_CONTROLS_FOUND=true
+          fi
 
-              if [ -d "${APPIMAGE_DST_PATH}/usr/qml/QtQuick" ]; then
-                QML_QUICK_FOUND=true
-              fi
+          if [ -d "${APPIMAGE_DST_PATH}/usr/qml/QtQuick" ]; then
+            QML_QUICK_FOUND=true
+          fi
 
-              if [ "$QML_CONTROLS_FOUND" = true ] && [ "$QML_QUICK_FOUND" = true ]; then
-                echo "✓ QML modules copied successfully (Controls+Quick)"
-              else
-                echo "ERROR: Required QML modules not found!"
-                echo "  QtQuick Controls: $QML_CONTROLS_FOUND"
-                echo "  QtQuick: $QML_QUICK_FOUND"
-                exit 1
-              fi
+          if [ "$QML_CONTROLS_FOUND" = true ] && [ "$QML_QUICK_FOUND" = true ]; then
+            echo "✓ QML modules copied successfully (Controls+Quick)"
+          else
+            echo "ERROR: Required QML modules not found!"
+            echo "  QtQuick Controls: $QML_CONTROLS_FOUND"
+            echo "  QtQuick: $QML_QUICK_FOUND"
+            exit 1
           fi
           
           # 修复 AppRun：linuxdeploy 可能生成符号链接或二进制文件，需要替换为 shell 脚本
