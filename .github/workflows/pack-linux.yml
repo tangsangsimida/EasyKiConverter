@@ -68,17 +68,11 @@ jobs:
             libxcb-xfixes0 \
             libxcb-xinerama0
 
-      - name: Check Available Qt Versions
+      - name: Install Qt 6.10.2
         run: |
+          QT_VERSION="6.10.2"
           pip3 install --no-cache-dir --break-system-packages aqtinstall
-          aqt list-qt linux desktop
-
-      - name: Install Qt
-        run: |
-          # 根据上面列出的版本选择合适的版本安装
-          QT_VERSION="6.9.0"
-          aqt install-qt linux desktop $QT_VERSION linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats qttools || \
-          aqt install-qt linux desktop 6.8.2 linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats qttools
+          aqt install-qt linux desktop $QT_VERSION linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats
           echo "/opt/qt/$QT_VERSION/gcc_64/bin" >> $GITHUB_PATH
           echo "Qt6_DIR=/opt/qt/$QT_VERSION/gcc_64/lib/cmake/Qt6" >> $GITHUB_ENV
 
@@ -618,13 +612,29 @@ jobs:
     name: 'Package: AppImage'
     needs: build-core
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
-      options: --user root
     steps:
-      - uses: actions/checkout@v4 # 需要 checkout 以便 linuxdeploy 某些插件工作正常
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/get-version
         id: version
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fuse libfuse2 rsync wget
+
+      - name: Install LinuxDeploy
+        run: |
+          wget -q -O /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x /tmp/linuxdeploy
+          /tmp/linuxdeploy --appimage-extract
+          sudo cp -r squashfs-root/* /opt/linuxdeploy/
+          sudo ln -s /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy
+          
+          wget -q -O /tmp/linuxdeploy-plugin-qt https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x /tmp/linuxdeploy-plugin-qt
+          /tmp/linuxdeploy-plugin-qt --appimage-extract
+          sudo cp -r squashfs-root/* /opt/linuxdeploy-plugin-qt/
+          sudo ln -s /opt/linuxdeploy-plugin-qt/AppRun /usr/local/bin/linuxdeploy-plugin-qt
 
       - name: Download AppDir
         uses: actions/download-artifact@v4
@@ -713,13 +723,21 @@ jobs:
     name: 'Package: DEB (Debian/Ubuntu)'
     needs: build-core
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
-      options: --user root
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/get-version
         id: version
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg curl wget
+
+      - name: Install nfpm
+        run: |
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt-get update
+          sudo apt-get install -y nfpm
 
       - name: Download AppDir
         uses: actions/download-artifact@v4
@@ -800,13 +818,21 @@ jobs:
     name: 'Package: RPM (RedHat/Fedora)'
     needs: build-core
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
-      options: --user root
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/get-version
         id: version
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg curl wget
+
+      - name: Install nfpm
+        run: |
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt-get update
+          sudo apt-get install -y nfpm
 
       - name: Download AppDir
         uses: actions/download-artifact@v4
@@ -870,13 +896,21 @@ jobs:
     name: 'Package: Arch Linux'
     needs: build-core
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/tangsangsimida/easykiconverter/build-env:latest
-      options: --user root
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/get-version
         id: version
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg curl wget
+
+      - name: Install nfpm
+        run: |
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt-get update
+          sudo apt-get install -y nfpm
 
       - name: Download AppDir
         uses: actions/download-artifact@v4

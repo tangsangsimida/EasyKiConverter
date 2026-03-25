@@ -64,14 +64,14 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 ENV PATH="/usr/lib/ccache:${PATH}"
 
-# 2. 安装 Qt 6.9.0 (使用 aqtinstall)
+# 2. 安装 Qt 6.10.2 (使用 aqtinstall)
 RUN pip3 install --no-cache-dir --break-system-packages aqtinstall \
-    && aqt install-qt linux desktop 6.9.0 linux_gcc_64 \
+    && aqt install-qt linux desktop 6.10.2 linux_gcc_64 \
         --outputdir /opt/qt \
         --modules qtshadertools qtimageformats
 
 # 设置 Qt 环境变量
-ENV Qt6_DIR=/opt/qt/6.9.0/gcc_64
+ENV Qt6_DIR=/opt/qt/6.10.2/gcc_64
 ENV PATH=$Qt6_DIR/bin:$PATH
 ENV LD_LIBRARY_PATH=$Qt6_DIR/lib:${LD_LIBRARY_PATH:-}
 
