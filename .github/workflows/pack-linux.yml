@@ -135,58 +135,83 @@ jobs:
             cp ${APPIMAGE_DST_PATH}/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png \
                ${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.png
           fi
-
-          # 复制 QML 模块到 AppDir（Qt Quick 需要）
+          
+          # 修复：设置库文件权限（确保动态链接器能够正确加载）
+          echo "设置库文件权限..."
+          find ${APPIMAGE_DST_PATH}/usr/lib -name "*.so*" -type f -exec chmod +x {} \; 2>/dev/null || true
+          echo "✓ 库文件权限设置完成"
+          
+          # 复制 QML 模块到 AppDir（使用 qmake 动态获取路径）
           QML_FOUND=false
-          for qml_dir in /usr/lib/qt6/qml /usr/lib/*/qt6/qml /usr/lib/x86_64-linux-gnu/qt6/qml /opt/qt/*/gcc_64/qml; do
-            if [ -d "$qml_dir" ]; then
-              echo "Found QML directory: $qml_dir"
-              rm -rf ${APPIMAGE_DST_PATH}/usr/qml
-              mkdir -p ${APPIMAGE_DST_PATH}/usr/qml
+          QT_INSTALL_QML=$(qmake -query QT_INSTALL_QML 2>/dev/null || echo "")
+          if [ -n "$QT_INSTALL_QML" ] && [ -d "$QT_INSTALL_QML" ]; then
+            echo "Found QML directory via qmake: $QT_INSTALL_QML"
+            rm -rf ${APPIMAGE_DST_PATH}/usr/qml
+            mkdir -p ${APPIMAGE_DST_PATH}/usr/qml
+            
+            # 使用 rsync 保留符号链接和权限
+            rsync -a --copy-links "$QT_INSTALL_QML"/ ${APPIMAGE_DST_PATH}/usr/qml/
+            
+            # 修复：创建插件符号链接（Qt 6 使用 lib 前缀，但 qmldir 引用无前缀名称）
+            echo "Creating QML plugin symlinks..."
+            find ${APPIMAGE_DST_PATH}/usr/qml -name "lib*.so" -type f | while read libfile; do
+              plugin_name=$(basename "$libfile" | sed 's/^lib//')
+              plugin_dir=$(dirname "$libfile")
               
-              # 使用 rsync 保留符号链接和权限
-              rsync -a --copy-links "$qml_dir"/ ${APPIMAGE_DST_PATH}/usr/qml/
+              # 删除已存在的实际文件（保留符号链接）
+              if [ -f "$plugin_dir/$plugin_name" ] && [ ! -L "$plugin_dir/$plugin_name" ]; then
+                rm -f "$plugin_dir/$plugin_name"
+              fi
               
-              # 修复：创建插件符号链接（Qt 6 使用 lib 前缀，但 qmldir 引用无前缀名称）
-              echo "Creating QML plugin symlinks..."
-              find ${APPIMAGE_DST_PATH}/usr/qml -name "lib*.so" -type f | while read libfile; do
-                plugin_name=$(basename "$libfile" | sed 's/^lib//')
-                plugin_dir=$(dirname "$libfile")
-                
-                # 删除已存在的实际文件（保留符号链接）
-                if [ -f "$plugin_dir/$plugin_name" ] && [ ! -L "$plugin_dir/$plugin_name" ]; then
-                  rm -f "$plugin_dir/$plugin_name"
-                fi
-                
-                # 创建符号链接（覆盖已存在的符号链接）
-                ln -sf "$(basename "$libfile")" "$plugin_dir/$plugin_name"
-              done
-              echo "✓ QML plugin symlinks created"
+              # 创建符号链接（覆盖已存在的符号链接）
+              ln -sf "$(basename "$libfile")" "$plugin_dir/$plugin_name"
+            done
+            echo "✓ QML plugin symlinks created"
+            
+            # 使用 qmake 获取 Qt 库目录
+            QT_LIBS=$(qmake -query QT_INSTALL_LIBS 2>/dev/null || echo "")
+            if [ -n "$QT_LIBS" ] && [ -d "$QT_LIBS" ]; then
+              echo "Found Qt libs directory via qmake: $QT_LIBS"
               
               # 修复：复制所有缺失的 Qt 库
               echo "复制缺失的 Qt 库..."
-              if [ -d "${APPIMAGE_DST_PATH}/usr/qml" ]; then
-                for qt_lib_dir in /usr/lib/x86_64-linux-gnu /usr/lib /opt/qt/*/gcc_64/lib; do
-                  if [ -d "$qt_lib_dir" ]; then
-                    echo "查找 Qt 库目录: $qt_lib_dir"
-                    
-                    find "${APPIMAGE_DST_PATH}/usr/qml" -name "lib*.so" -type f 2>/dev/null | while read plugin; do
-                      ldd "$plugin" 2>/dev/null | grep "$qt_lib_dir" | awk '{print $3}' | sort -u | while read lib; do
-                        if [ -f "$lib" ]; then
-                          libname=$(basename "$lib")
-                          if [ ! -f "${APPIMAGE_DST_PATH}/usr/lib/$libname" ]; then
-                            cp "$lib" "${APPIMAGE_DST_PATH}/usr/lib/" 2>/dev/null && echo "  复制: $libname" || true
-                          fi
-                        fi
-                      done
-                    done
-                    break
+              find "${APPIMAGE_DST_PATH}/usr/qml" -name "lib*.so" -type f 2>/dev/null | while read plugin; do
+                ldd "$plugin" 2>/dev/null | grep "$QT_LIBS" | awk '{print $3}' | sort -u | while read lib; do
+                  if [ -f "$lib" ]; then
+                    libname=$(basename "$lib")
+                    if [ ! -f "${APPIMAGE_DST_PATH}/usr/lib/$libname" ]; then
+                      cp "$lib" "${APPIMAGE_DST_PATH}/usr/lib/" 2>/dev/null && echo "  复制: $libname" || true
+                    fi
                   fi
                 done
-                echo "✓ Qt 库复制完成"
+              done
+              echo "✓ Qt 库复制完成"
+            fi
+            
+            QML_FOUND=true
+          fi
+          
+          if [ "$QML_FOUND" = false ]; then
+            echo "ERROR: QML directory not found via qmake!"
+            # 尝试备用路径
+            for qml_dir in /usr/lib/qt6/qml /usr/lib/*/qt6/qml /usr/lib/x86_64-linux-gnu/qt6/qml /opt/qt/*/gcc_64/qml; do
+              if [ -d "$qml_dir" ]; then
+                echo "Trying fallback QML directory: $qml_dir"
+                rm -rf ${APPIMAGE_DST_PATH}/usr/qml
+                mkdir -p ${APPIMAGE_DST_PATH}/usr/qml
+                rsync -a --copy-links "$qml_dir"/ ${APPIMAGE_DST_PATH}/usr/qml/
+                QML_FOUND=true
+                break
               fi
-              
-              # 严格验证关键 QML 模块
+            done
+          fi
+          
+          if [ "$QML_FOUND" = false ]; then
+            echo "ERROR: QML directory not found in any location!"
+            exit 1
+          fi
+          
+          # 严格验证关键 QML 模块
               QML_CONTROLS_FOUND=false
               QML_QUICK_FOUND=false
 
@@ -202,22 +227,14 @@ jobs:
 
               if [ "$QML_CONTROLS_FOUND" = true ] && [ "$QML_QUICK_FOUND" = true ]; then
                 echo "✓ QML modules copied successfully (Controls+Quick)"
-                QML_FOUND=true
               else
                 echo "ERROR: Required QML modules not found!"
                 echo "  QtQuick Controls: $QML_CONTROLS_FOUND"
                 echo "  QtQuick: $QML_QUICK_FOUND"
                 exit 1
               fi
-              break
-            fi
-          done
-          
-          if [ "$QML_FOUND" = false ]; then
-            echo "ERROR: QML directory not found in any standard location!"
-            exit 1
           fi
-
+          
           # 修复 AppRun：linuxdeploy 可能生成符号链接或二进制文件，需要替换为 shell 脚本
           if [ -L "${APPIMAGE_DST_PATH}/AppRun" ]; then
             # AppRun 是符号链接，删除后重新创建
