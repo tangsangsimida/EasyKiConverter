@@ -152,9 +152,14 @@ jobs:
               find ${APPIMAGE_DST_PATH}/usr/qml -name "lib*.so" -type f | while read libfile; do
                 plugin_name=$(basename "$libfile" | sed 's/^lib//')
                 plugin_dir=$(dirname "$libfile")
-                if [ ! -e "$plugin_dir/$plugin_name" ]; then
-                  ln -sf "$(basename "$libfile")" "$plugin_dir/$plugin_name"
+                
+                # 删除已存在的实际文件（保留符号链接）
+                if [ -f "$plugin_dir/$plugin_name" ] && [ ! -L "$plugin_dir/$plugin_name" ]; then
+                  rm -f "$plugin_dir/$plugin_name"
                 fi
+                
+                # 创建符号链接（覆盖已存在的符号链接）
+                ln -sf "$(basename "$libfile")" "$plugin_dir/$plugin_name"
               done
               echo "✓ QML plugin symlinks created"
               
