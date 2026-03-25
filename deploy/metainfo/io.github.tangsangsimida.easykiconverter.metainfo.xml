@@ -54,7 +54,7 @@
     </ul>
   </description>
 
-  <launchable type="desktop-id">io.github.tangsangsimida.easykiconverter.desktop</launchable>
+  <launchable type="desktop-id">io.github.tangsangsimida.easykiconverter</launchable>
 
   <screenshots>
     <screenshot type="default">
@@ -85,7 +85,6 @@
 
   <provides>
     <binary>easykiconverter</binary>
-    <id>io.github.tangsangsimida.easykiconverter.desktop</id>
   </provides>
 
   <categories>
@@ -331,162 +330,6 @@
           <li xml:lang="zh_CN">引入 QtTest 测试框架，支持单元测试、集成测试、基准测试</li>
           <li>Added development tools (version management, code line analysis, encoding conversion, QML translation fix)</li>
           <li xml:lang="zh_CN">新增开发工具（版本管理、代码行数分析、编码转换、QML 翻译修复）</li>
-        </ul>
-      </description>
-    </release>
-    <release version="3.0.14" date="2026-03-09">
-      <description>
-        <p>Component list filtering, UI improvements, dialog interaction enhancements</p>
-        <p xml:lang="zh_CN">组件列表筛选、UI 改进、对话框交互增强</p>
-        <ul>
-          <li>Added component list filtering functionality</li>
-          <li xml:lang="zh_CN">新增组件列表筛选功能</li>
-          <li>Improved component validation status management</li>
-          <li xml:lang="zh_CN">完善元器件列表的验证状态管理</li>
-          <li>Added batch preview image fetching</li>
-          <li xml:lang="zh_CN">添加批量获取预览图功能</li>
-          <li>Fixed QML duplicate property issues</li>
-          <li xml:lang="zh_CN">修复 QML 重复属性问题</li>
-          <li>Fixed thumbnail display delay after validation</li>
-          <li xml:lang="zh_CN">修复元器件验证成功后缩略图延迟显示问题</li>
-          <li>Added slider UI interaction for confirm dialog</li>
-          <li xml:lang="zh_CN">为确认对话框添加滑块 UI 交互效果</li>
-          <li>Improved copy feedback tooltip UI</li>
-          <li xml:lang="zh_CN">改进复制反馈提示的 UI 和交互体验</li>
-        </ul>
-      </description>
-    </release>
-    <release version="3.0.13" date="2026-03-07">
-      <description>
-        <p>Thread safety improvements, weak network crash fixes</p>
-        <p xml:lang="zh_CN">线程安全改进、弱网络闪退修复</p>
-        <ul>
-          <li>Fixed crash when batch adding components in weak network</li>
-          <li xml:lang="zh_CN">修复弱网络环境下批量添加元器件闪退问题</li>
-          <li>Fixed race condition and memory leak in NetworkUtils</li>
-          <li xml:lang="zh_CN">修复 NetworkUtils 中的竞态条件和内存泄漏问题</li>
-          <li>Added thread-safe mutex protection for ComponentService</li>
-          <li xml:lang="zh_CN">为 ComponentService 添加线程安全的互斥锁保护</li>
-          <li>Implemented async queue management mechanism</li>
-          <li xml:lang="zh_CN">实现异步队列管理机制以优化批量组件获取</li>
-        </ul>
-      </description>
-    </release>
-    <release version="3.0.12" date="2026-03-01">
-      <description>
-        <p>MSIX packaging support, translation management upgrade</p>
-        <p xml:lang="zh_CN">MSIX 打包支持、翻译管理升级</p>
-        <ul>
-          <li>Added MSIX package build support</li>
-          <li xml:lang="zh_CN">添加 MSIX 包构建支持</li>
-          <li>Optimized MSIX packaging workflow</li>
-          <li xml:lang="zh_CN">优化 MSIX 打包流程</li>
-          <li>Upgraded translation management tool</li>
-          <li xml:lang="zh_CN">升级翻译管理工具支持自动完成翻译</li>
-          <li>Fixed QXlsx subdirectory path configuration</li>
-          <li xml:lang="zh_CN">修复 QXlsx 子目录添加路径配置</li>
-        </ul>
-      </description>
-    </release>
-    <release version="3.0.9" date="2026-02-20">
-      <description>
-        <p>Flatpak packaging, privacy policy, UI fixes</p>
-        <p xml:lang="zh_CN">Flatpak 打包、隐私政策、UI 修复</p>
-        <ul>
-          <li>Added Flatpak packaging support and verification tools</li>
-          <li xml:lang="zh_CN">添加 Flatpak 打包支持和验证工具</li>
-          <li>Added Chinese and English privacy policy</li>
-          <li xml:lang="zh_CN">添加中英文隐私政策文档</li>
-          <li>Fixed UI scaling and resolution issues</li>
-          <li xml:lang="zh_CN">修复 UI 缩放和分辨率问题</li>
-          <li>Fixed export options UI overlap in English mode</li>
-          <li xml:lang="zh_CN">修复英文语言模式下的导出选项 UI 重叠问题</li>
-          <li>Improved language detection for multi-language mapping</li>
-          <li xml:lang="zh_CN">改进语言检测逻辑支持多语言映射</li>
-        </ul>
-      </description>
-    </release>
-    <release version="3.0.3" date="2026-02-08">
-      <description>
-        <p>LCSC preview image feature, component list enhancements, responsive layout</p>
-        <p xml:lang="zh_CN">LCSC 预览图功能、组件列表功能增强、响应式布局</p>
-        <ul>
-          <li>Added LCSC component preview image fetch feature (supports retry mechanism and Fallback crawler mode)</li>
-          <li xml:lang="zh_CN">新增 LCSC 元件预览图获取功能（支持重试机制和 Fallback 爬虫模式）</li>
-          <li>Added thumbnail generation tool (ThumbnailGenerator)</li>
-          <li xml:lang="zh_CN">新增缩略图生成工具（ThumbnailGenerator）</li>
-          <li>Component list supports right-click to copy component ID to clipboard</li>
-          <li xml:lang="zh_CN">组件列表支持右键复制组件 ID 到剪贴板</li>
-          <li>Component list changed from fixed 5 columns to adaptive grid layout</li>
-          <li xml:lang="zh_CN">组件列表从固定 5 列改为自适应网格布局</li>
-          <li>Added 8-direction window drag resize handles</li>
-          <li xml:lang="zh_CN">添加 8 个方向的窗口拖拽调整手柄</li>
-          <li>ComponentListViewModel migrated from QQmlListProperty to QAbstractListModel</li>
-          <li xml:lang="zh_CN">ComponentListViewModel 从 QQmlListProperty 迁移至 QAbstractListModel</li>
-          <li>Fixed export service statistics missing issue</li>
-          <li xml:lang="zh_CN">修复导出服务统计缺失问题</li>
-          <li>Optimized preload data usage and data flow</li>
-          <li xml:lang="zh_CN">优化预加载数据使用和数据流</li>
-        </ul>
-      </description>
-    </release>
-    <release version="3.0.2" date="2026-01-27">
-      <description>
-        <p>Fixed batch export lag issue</p>
-        <p xml:lang="zh_CN">修复批量导出卡顿问题</p>
-        <ul>
-          <li>Reduced FetchWorker thread pool from 32 to 5 to prevent server-side rate limiting</li>
-          <li xml:lang="zh_CN">将 FetchWorker 线程池从 32 降低至 5，防止服务器端限流</li>
-          <li>Added automatic retry logic for network requests (3s/5s/10s incremental delay, max 3 retries)</li>
-          <li xml:lang="zh_CN">为网络请求添加自动重试逻辑（3s/5s/10s 递增延迟，最多重试 3 次）</li>
-        </ul>
-      </description>
-    </release>
-    <release version="3.0.1" date="2026-01-27">
-      <description>
-        <p>Significant network performance improvement (94.5% time reduction, 1712% throughput increase)</p>
-        <p xml:lang="zh_CN">网络性能大幅提升（总耗时降低 94.5%，吞吐量提升 1712%）</p>
-        <ul>
-          <li>Optimized thread pool configuration to 3 threads, total time reduced from 263.72s to 14.43s</li>
-          <li xml:lang="zh_CN">优化线程池配置至 3 线程，总耗时从 263.72秒降至 14.43秒</li>
-          <li>Reduced timeout duration (component info 15s, 3D model 30s)</li>
-          <li xml:lang="zh_CN">降低超时时间（组件信息 15s，3D 模型 30s）</li>
-          <li>Implemented rate limit detection mechanism (HTTP 429 exponential backoff)</li>
-          <li xml:lang="zh_CN">实现速率限制检测机制（HTTP 429 指数退避）</li>
-          <li>Enabled network diagnostics, recording diagnostic information for each network request</li>
-          <li xml:lang="zh_CN">启用网络诊断功能，记录每个网络请求的诊断信息</li>
-          <li>WriteWorker optimization: removed local thread pool, changed to serial writing</li>
-          <li xml:lang="zh_CN">WriteWorker 优化：移除局部线程池，改为串行写入</li>
-          <li>FetchWorker optimization: implemented QNetworkAccessManager thread_local cache</li>
-          <li xml:lang="zh_CN">FetchWorker 优化：实现 QNetworkAccessManager 的 thread_local 缓存</li>
-        </ul>
-      </description>
-    </release>
-    <release version="3.0.0" date="2026-01-18">
-      <description>
-        <p>Performance optimization and architecture improvements (54% time reduction, 117% throughput increase)</p>
-        <p xml:lang="zh_CN">性能优化和架构改进（总耗时减少 54%，吞吐量提升 117%）</p>
-        <ul>
-          <li>Implemented multi-stage pipeline parallel architecture (Fetch 32 threads, Process CPU cores, Write 8 threads)</li>
-          <li xml:lang="zh_CN">实现多阶段流水线并行架构（Fetch 32 线程、Process CPU 核心数、Write 8 线程）</li>
-          <li>ProcessWorker removed network requests, changed to pure CPU-intensive tasks</li>
-          <li xml:lang="zh_CN">ProcessWorker 移除网络请求，改为纯 CPU 密集型任务</li>
-          <li>Used QSharedPtr for data passing, memory usage reduced by 50%</li>
-          <li xml:lang="zh_CN">使用 QSharedPtr 传递数据，内存占用减少 50%</li>
-          <li>Dynamic queue size, throughput increased by 15-25%</li>
-          <li xml:lang="zh_CN">动态队列大小，吞吐量提升 15-25%</li>
-          <li>Parallel file writing (symbols, footprints, 3D models written simultaneously)</li>
-          <li xml:lang="zh_CN">并行写入文件（符号、封装、3D 模型同时写入）</li>
-          <li>Complete symbol conversion, footprint generation, 3D model support</li>
-          <li xml:lang="zh_CN">完整的符号转换、封装生成、3D 模型支持</li>
-          <li>Complete layer mapping system (50+ layers)</li>
-          <li xml:lang="zh_CN">完整的图层映射系统（50+ 图层）</li>
-          <li>Polygon pads, elliptical arc calculation, text layer processing</li>
-          <li xml:lang="zh_CN">多边形焊盘、椭圆弧计算、文本层处理</li>
-          <li>Modern Qt Quick interface with dark/light theme switching</li>
-          <li xml:lang="zh_CN">现代化 Qt Quick 界面，支持深色/浅色主题切换</li>
-          <li>Complete testing framework (unit tests, integration tests, performance tests)</li>
-          <li xml:lang="zh_CN">完整的测试框架（单元测试、集成测试、性能测试）</li>
         </ul>
       </description>
     </release>
