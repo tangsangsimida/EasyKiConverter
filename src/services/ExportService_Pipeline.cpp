@@ -24,15 +24,16 @@
 #include <algorithm>
 
 #if defined(Q_OS_WIN) || defined(_WIN32)
+#    define PSAPI_VERSION 1
 #    if defined(_MSC_VER)
-#        define PSAPI_VERSION 1
 #        include <qt_windows.h>
 
 #        include <psapi.h>
 #        pragma comment(lib, "psapi.lib")
 #    elif defined(__MINGW32__) || defined(__MINGW64__)
-// MinGW: 使用静态链接方式
 #        include <qt_windows.h>
+
+#        include <psapi.h>
 #        pragma comment(lib, "psapi")
 #    endif
 #endif
