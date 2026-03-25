@@ -6,22 +6,22 @@
     <message>
         <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="191"/>
         <source>全部 (%1)</source>
-        <translation type="unfinished">All (%1)</translation>
+        <translation>All (%1)</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="210"/>
         <source>验证中 (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Validating (%1)</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="229"/>
         <source>有效 (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Valid (%1)</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="248"/>
         <source>无效 (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Invalid (%1)</translation>
     </message>
 </context>
 <context>
@@ -33,7 +33,7 @@
     <message>
         <location filename="../../src/ui/qml/components/ComponentListItem.qml" line="66"/>
         <source>已复制</source>
-        <translation type="unfinished"></translation>
+        <translation>Copied</translation>
     </message>
 </context>
 <context>
@@ -211,7 +211,7 @@
     <message>
         <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="342"/>
         <source>重试所有</source>
-        <translation type="unfinished"></translation>
+        <translation>Retry All</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="391"/>
@@ -347,7 +347,7 @@
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="155"/>
         <source>峰值内存</source>
-        <translation type="unfinished"></translation>
+        <translation>Peak Memory</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="180"/>
@@ -630,7 +630,7 @@ Output: Symbols %1 · Footprints %2 · 3D %3</translation>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="67"/>
         <source>已复制</source>
-        <translation type="unfinished"></translation>
+        <translation>Copied</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="167"/>
@@ -650,9 +650,9 @@ Output: Symbols %1 · Footprints %2 · 3D %3</translation>
         <translation>Retry</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="283"/>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="285"/>
         <source>删除</source>
-        <translation type="unfinished"></translation>
+        <translation>Delete</translation>
     </message>
 </context>
 <context>
