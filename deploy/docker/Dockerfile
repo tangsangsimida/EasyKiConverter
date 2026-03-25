@@ -68,8 +68,7 @@ ENV PATH="/usr/lib/ccache:${PATH}"
 RUN pip3 install --no-cache-dir --break-system-packages aqtinstall \
     && aqt install-qt linux desktop 6.9.0 linux_gcc_64 \
         --outputdir /opt/qt \
-        --modules qtshadertools qtimageformats \
-    && pip3 uninstall -y aqtinstall
+        --modules qtshadertools qtimageformats
 
 # 设置 Qt 环境变量
 ENV Qt6_DIR=/opt/qt/6.9.0/gcc_64
