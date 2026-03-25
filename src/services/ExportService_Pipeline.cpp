@@ -31,10 +31,9 @@
 #        include <psapi.h>
 #        pragma comment(lib, "psapi.lib")
 #    elif defined(__MINGW32__) || defined(__MINGW64__)
-#        define PSAPI_VERSION 1
+// MinGW: 使用静态链接方式
 #        include <qt_windows.h>
-
-#        include <psapi.h>
+#        pragma comment(lib, "psapi")
 #    endif
 #endif
 
