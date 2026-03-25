@@ -300,7 +300,6 @@ Rectangle {
         onMouseXChanged: {
             var inRetryArea = false;
             var inDeleteArea = false;
-
             // 检查鼠标是否在重试按钮区域
             if (retryButton.visible) {
                 var retryBtnX = item.width - AppStyle.spacing.lg - retryButton.width - AppStyle.spacing.md - deleteButton.width;
