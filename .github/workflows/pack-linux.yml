@@ -235,6 +235,9 @@ jobs:
             echo "WARNING: hicolor-dark 目录不存在，跳过暗色主题图标"
           fi
 
+          # 设置 LD_LIBRARY_PATH 让 linuxdeploy 能够找到 Qt 库
+          export LD_LIBRARY_PATH="/opt/qt/6.10.2/gcc_64/lib:$LD_LIBRARY_PATH"
+
           # 关键步骤：运行 linuxdeploy 填充依赖库 (Qt libs 等) 到 AppDir
           # 注意：这里不生成 AppImage 文件，只处理目录内容
           # --icon-file 参数必须指向 AppDir 中的图标文件，而不是源路径
