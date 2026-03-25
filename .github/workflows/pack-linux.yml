@@ -657,7 +657,7 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y fuse libfuse2 rsync wget
+          sudo apt-get install -y fuse libfuse2 rsync wget libgl1-mesa-dev libtiff-dev
 
       - name: Install LinuxDeploy
         run: |
