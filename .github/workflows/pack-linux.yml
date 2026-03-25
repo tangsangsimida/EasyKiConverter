@@ -158,6 +158,29 @@ jobs:
               done
               echo "✓ QML plugin symlinks created"
               
+              # 修复：复制所有缺失的 Qt 库
+              echo "复制缺失的 Qt 库..."
+              if [ -d "${APPIMAGE_DST_PATH}/usr/qml" ]; then
+                for qt_lib_dir in /usr/lib/x86_64-linux-gnu /usr/lib /opt/qt/*/gcc_64/lib; do
+                  if [ -d "$qt_lib_dir" ]; then
+                    echo "查找 Qt 库目录: $qt_lib_dir"
+                    
+                    find "${APPIMAGE_DST_PATH}/usr/qml" -name "lib*.so" -type f 2>/dev/null | while read plugin; do
+                      ldd "$plugin" 2>/dev/null | grep "$qt_lib_dir" | awk '{print $3}' | sort -u | while read lib; do
+                        if [ -f "$lib" ]; then
+                          libname=$(basename "$lib")
+                          if [ ! -f "${APPIMAGE_DST_PATH}/usr/lib/$libname" ]; then
+                            cp "$lib" "${APPIMAGE_DST_PATH}/usr/lib/" 2>/dev/null && echo "  复制: $libname" || true
+                          fi
+                        fi
+                      done
+                    done
+                    break
+                  fi
+                done
+                echo "✓ Qt 库复制完成"
+              fi
+              
               # 严格验证关键 QML 模块
               QML_CONTROLS_FOUND=false
               QML_QUICK_FOUND=false
