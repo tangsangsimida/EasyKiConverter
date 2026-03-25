@@ -301,12 +301,10 @@ target_link_libraries(appEasyKiconverter_Cpp_Version
         Qt6::Widgets
 )
 
-# Windows 内存统计需要 psapi 库
+# Windows 内存统计需要 psapi 库 (MSVC)
 if(WIN32)
     if(MSVC)
         target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE psapi)
-    else()
-        target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE -lpsapi)
     endif()
 endif()
 

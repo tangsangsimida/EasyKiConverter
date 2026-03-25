@@ -26,8 +26,8 @@ ApplicationWindow {
     visible: true
     title: "EasyKiConverter - 元器件转换工具"
     color: "transparent"
-    // 使用自定义标题栏，移除无效的系统按钮标志
-    flags: Qt.Window | Qt.FramelessWindowHint | Qt.CustomizeWindowHint
+    // 使用自定义标题栏，添加任务栏按钮支持
+    flags: Qt.Window | Qt.FramelessWindowHint | Qt.CustomizeWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint
     // 监听窗口可见性变化
     onVisibleChanged: {
         if (visible) {

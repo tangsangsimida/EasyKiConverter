@@ -10,7 +10,6 @@ Item {
     height: size
     implicitWidth: size
     implicitHeight: size
-
     function getIconSource() {
         if (iconName.length === 0)
             return "";

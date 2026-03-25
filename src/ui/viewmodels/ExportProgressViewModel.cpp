@@ -618,6 +618,18 @@ void ExportProgressViewModel::retryComponent(const QString& componentId) {
     startExportInternal(QStringList() << componentId, true);
 }
 
+void ExportProgressViewModel::removeResult(const QString& componentId) {
+    for (int i = 0; i < m_resultsList.size(); ++i) {
+        QVariantMap item = m_resultsList[i].toMap();
+        if (item["componentId"].toString() == componentId) {
+            m_resultsList.removeAt(i);
+            emit resultsListChanged();
+            emit filteredResultsListChanged();
+            return;
+        }
+    }
+}
+
 void ExportProgressViewModel::startExportInternal(const QStringList& componentIds, bool isRetry) {
     if (!m_exportService || !m_componentService)
         return;
