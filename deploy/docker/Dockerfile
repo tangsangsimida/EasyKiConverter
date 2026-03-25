@@ -76,7 +76,7 @@ ENV PATH="/usr/lib/ccache:${PATH}"
 
 # 2. 安装 Qt 6
 # 使用 pip 缓存挂载点 (如果使用 BuildKit) 或者手动清理
-RUN pip3 install --no-cache-dir aqtinstall \
+RUN pip3 install --no-cache-dir --break-system-packages aqtinstall \
     && aqt install-qt ${QT_HOST} ${QT_TARGET} ${QT_VERSION} ${QT_ARCH} \
        --outputdir /opt/qt \
        --modules ${QT_MODULES} \
