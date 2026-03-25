@@ -597,7 +597,22 @@ jobs:
           path: ${{ env.PRODUCT }}.AppDir
 
       - name: Debug - List AppDir
-        run: ls -R ${{ env.PRODUCT }}.AppDir
+        run: |
+          echo "=== AppDir Library Inventory ==="
+          echo ""
+          echo "--- Qt Libraries ---"
+          find ${{ env.PRODUCT }}.AppDir/usr/lib -name "libQt6*.so*" -type f 2>/dev/null | head -30
+          echo ""
+          echo "--- Qt Plugins (sqldrivers) ---"
+          ls -la ${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/ 2>/dev/null || echo "(empty)"
+          echo ""
+          echo "--- Qt Plugins (platforms) ---"
+          ls -la ${{ env.PRODUCT }}.AppDir/usr/plugins/platforms/ 2>/dev/null || echo "(empty)"
+          echo ""
+          echo "--- QML Modules ---"
+          ls -la ${{ env.PRODUCT }}.AppDir/usr/qml/ 2>/dev/null | head -20
+          echo ""
+          echo "=== End of Inventory ===
 
       - name: Generate AppImage
         run: |
