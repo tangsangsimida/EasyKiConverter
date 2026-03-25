@@ -104,6 +104,7 @@ jobs:
 
       - name: 'Run Tests'
         run: |
+          export QT_QPA_PLATFORM=offscreen
           ctest --test-dir build -C RelWithDebInfo --output-on-failure --no-tests=error
 
 
@@ -166,6 +167,7 @@ jobs:
 
       - name: 'Run Tests'
         run: |
+          $env:QT_QPA_PLATFORM = "offscreen"
           ctest --test-dir build -C $env:BUILD_TYPE --output-on-failure --no-tests=error
 
   macos-build:
@@ -212,5 +214,6 @@ jobs:
 
       - name: 'Run Tests'
         run: |
+          export QT_QPA_PLATFORM=offscreen
           ctest --test-dir build -C $BUILD_TYPE --output-on-failure --no-tests=error
 
