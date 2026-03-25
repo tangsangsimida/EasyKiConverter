@@ -623,22 +623,20 @@ jobs:
           chmod +x ${{ env.PRODUCT }}.AppDir/AppRun 2>/dev/null || true
           echo "✓ Permissions set before linuxdeploy"
 
+          # 预先删除 PostgreSQL 等 SQL 驱动（避免 linuxdeploy 尝试部署时失败）
+          echo "预先删除 SQL 驱动避免依赖问题..."
+          rm -f ${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/libqsqlpsql.so* 2>/dev/null || true
+          rm -f ${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/libqsqlmysql.so* 2>/dev/null || true
+          rm -f ${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/libqsqldb2.so* 2>/dev/null || true
+          rm -f ${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/libqsqlodbc.so* 2>/dev/null || true
+          echo "✓ SQL 驱动已预删除"
+
           # 重新运行 linuxdeploy 以生成 AppImage
           # 必须再次指定 executable 和 desktop-file 否则 AppRun 可能不会正确链接
           linuxdeploy --appdir ${{ env.PRODUCT }}.AppDir --plugin qt \
             --executable ${{ env.PRODUCT }}.AppDir/usr/bin/easykiconverter \
             --desktop-file ${{ env.PRODUCT }}.AppDir/io.github.tangsangsimida.easykiconverter.desktop \
             --output appimage
-
-          # 删除 PostgreSQL 等 SQL 驱动（避免依赖问题）
-          echo "删除不需要的 SQL 驱动..."
-          for driver in libqsqlpsql.so libqsqlmysql.so libqsqldb2.so libqsqlodbc.so; do
-            if [ -f "${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/$driver" ]; then
-              rm -f "${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/$driver"*
-              echo "[-] 已删除 SQL 驱动: $driver"
-            fi
-          done
-          echo "✓ SQL 驱动清理完成"
 
           # linuxdeploy 会覆盖 desktop 文件的 Exec 字段，需要手动修复
           echo "修复 desktop 文件的 Exec 字段..."
