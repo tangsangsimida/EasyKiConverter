@@ -53,6 +53,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rpm \
     ca-certificates \
     locales \
+    sudo \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && locale-gen en_US.UTF-8
