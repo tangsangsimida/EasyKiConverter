@@ -609,6 +609,20 @@ jobs:
 
       - name: Generate AppImage
         run: |
+          # 删除宿主机上的 Qt SQL 驱动，避免 linuxdeploy 扫描到它们
+          # 注意：pack-appimage 运行在不同的容器，需要单独删除
+          echo "=== 删除宿主机 Qt SQL 驱动 ==="
+          for qt_lib_dir in /opt/qt/*/gcc_64/plugins/sqldrivers; do
+            if [ -d "$qt_lib_dir" ]; then
+              echo "检查并删除: $qt_lib_dir"
+              ls -la "$qt_lib_dir" 2>/dev/null || true
+              rm -f "$qt_lib_dir"/libqsql*.so* 2>/dev/null || true
+              echo "[-] 已删除 SQL 驱动"
+            fi
+          done
+          echo "=== SQL 驱动清理完成 ==="
+          echo ""
+
           # 确保可执行文件有执行权限（在 linuxdeploy 重新打包前）
           chmod +x ${{ env.PRODUCT }}.AppDir/usr/bin/easykiconverter
           find ${{ env.PRODUCT }}.AppDir/usr/bin -type f -exec chmod +x {} \; 2>/dev/null || true
@@ -618,7 +632,7 @@ jobs:
 
           # 重新运行 linuxdeploy 以生成 AppImage
           # 必须再次指定 executable 和 desktop-file 否则 AppRun 可能不会正确链接
-          # 注意：SQL 驱动已在 build-core 阶段删除
+          # 注意：SQL 驱动已在前面步骤中删除（build-core + 本步骤开始时）
           linuxdeploy --appdir ${{ env.PRODUCT }}.AppDir --plugin qt \
             --executable ${{ env.PRODUCT }}.AppDir/usr/bin/easykiconverter \
             --desktop-file ${{ env.PRODUCT }}.AppDir/io.github.tangsangsimida.easykiconverter.desktop \
