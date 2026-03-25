@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # 基础镜像：只需要构建工具，Qt 由 GitHub Actions 安装
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:24.04 AS builder
 
 LABEL maintainer="EasyKiConverter Team"
 LABEL description="Build environment for EasyKiConverter with Qt 6 and LinuxDeploy"
