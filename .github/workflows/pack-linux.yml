@@ -238,6 +238,9 @@ jobs:
 
           # 设置 LD_LIBRARY_PATH 让 linuxdeploy 能够找到 Qt 库
           export LD_LIBRARY_PATH="/opt/qt/6.10.2/gcc_64/lib:$LD_LIBRARY_PATH"
+          
+          # 创建 libtiff 兼容性符号链接 (Qt 6.10.2 需 libtiff.so.5，Ubuntu 24.04 提供 libtiff.so.6)
+          sudo ln -sf /usr/lib/x86_64-linux-gnu/libtiff.so.6 /usr/lib/x86_64-linux-gnu/libtiff.so.5
 
           # 关键步骤：运行 linuxdeploy 填充依赖库 (Qt libs 等) 到 AppDir
           # 注意：这里不生成 AppImage 文件，只处理目录内容
