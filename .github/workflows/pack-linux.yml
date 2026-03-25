@@ -735,9 +735,9 @@ jobs:
           echo "✓ Permissions set before linuxdeploy"
 
           # 重新运行 linuxdeploy 以生成 AppImage
-          # 必须再次指定 executable 和 desktop-file 否则 AppRun 可能不会正确链接
+          # Qt 已在 build-core 中部署，不需要再次运行 qt 插件
           # 注意：SQL 驱动已在前面步骤中删除（build-core + 本步骤开始时）
-          /opt/linuxdeploy/AppRun --appdir ${{ env.PRODUCT }}.AppDir --plugin qt \
+          /opt/linuxdeploy/AppRun --appdir ${{ env.PRODUCT }}.AppDir \
             --executable ${{ env.PRODUCT }}.AppDir/usr/bin/easykiconverter \
             --desktop-file ${{ env.PRODUCT }}.AppDir/io.github.tangsangsimida.easykiconverter.desktop \
             --output appimage
