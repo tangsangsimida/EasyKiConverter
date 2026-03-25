@@ -54,16 +54,6 @@ jobs:
       - name: Fix Git Safe Directory
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
-      - name: Install Qt 6.10.2
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.10.2'
-          host: 'linux'
-          target: 'desktop'
-          arch: 'gcc_64'
-          modules: 'qtshadertools qtimageformats'
-          cache: true
-
       - name: Remove Unused Qt Plugins
         run: |
           echo ""
@@ -592,16 +582,6 @@ jobs:
       - uses: actions/checkout@v4 # 需要 checkout 以便 linuxdeploy 某些插件工作正常
       - uses: ./.github/actions/get-version
         id: version
-
-      - name: Install Qt 6.10.2
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.10.2'
-          host: 'linux'
-          target: 'desktop'
-          arch: 'gcc_64'
-          modules: 'qtshadertools qtimageformats'
-          cache: true
 
       - name: Download AppDir
         uses: actions/download-artifact@v4

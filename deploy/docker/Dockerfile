@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# 基础镜像：只需要构建工具，Qt 由 GitHub Actions 安装
+# 基础镜像：只需要构建工具，Qt 由 GitHub Actions 安装 (使用 Qt 官方在线安装器安装 6.10.2)
 FROM ubuntu:24.04 AS builder
 
 LABEL maintainer="EasyKiConverter Team"
@@ -63,6 +63,26 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 ENV PATH="/usr/lib/ccache:${PATH}"
+
+# 2. 安装 Qt 6.10.2 (使用官方在线安装器)
+RUN wget -q https://d13lb3tujbc8s0.cloudfront.net/onlineinstallers/qt-online-installer-linux-x64-4.10.0.run -O /tmp/qt-installer.run \
+    && chmod +x /tmp/qt-installer.run \
+    && mkdir -p /opt/qt \
+    && /tmp/qt-installer.run \
+        --accept-licenses \
+        --accept-obligations \
+        --confirm-command \
+        install \
+        qt.qt6.6102.gcc_64 \
+        qt.qt6.6102.gcc_64.qtshadertools \
+        qt.qt6.6102.gcc_64.qtimageformats \
+    && mv /root/Qt/6.10.2 /opt/qt/6.10.2 \
+    && rm -f /tmp/qt-installer.run
+
+# 设置 Qt 环境变量
+ENV Qt6_DIR=/opt/qt/6.10.2/gcc_64
+ENV PATH=$Qt6_DIR/bin:$PATH
+ENV LD_LIBRARY_PATH=$Qt6_DIR/lib:${LD_LIBRARY_PATH:-}
 
 # 3. 预下载 QXlsx 源码（用于 Excel BOM 解析）
 RUN git clone https://github.com/QtExcel/QXlsx.git /opt/QXlsx
