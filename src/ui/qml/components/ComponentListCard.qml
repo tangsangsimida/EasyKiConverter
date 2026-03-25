@@ -108,9 +108,54 @@ Card {
             }
         }
     ]
-    RowLayout {
+    Item {
+        id: toolbarContainer
         width: parent.width
-        spacing: 12
+        height: 50
+        MouseArea {
+            anchors.fill: parent
+            onWheel: function(wheel) {
+                var currentX = toolbarFlickable.contentX;
+                var maxScroll = Math.max(0, toolbarRowLayout.width - parent.width);
+                var newX;
+
+                if (wheel.angleDelta.y > 0) {
+                    newX = Math.max(0, currentX - 50);
+                } else {
+                    newX = Math.min(maxScroll, currentX + 50);
+                }
+
+                if (newX !== currentX) {
+                    if (newX === 0 || newX === maxScroll) {
+                        bounceAnimation.to = newX;
+                        bounceAnimation.start();
+                    } else {
+                        toolbarFlickable.contentX = newX;
+                    }
+                }
+            }
+            PropertyAnimation {
+                id: bounceAnimation
+                target: toolbarFlickable
+                property: "contentX"
+                duration: 150
+                easing.type: Easing.OutCubic
+            }
+        }
+        Flickable {
+            id: toolbarFlickable
+            width: parent.width
+            height: parent.height
+            contentWidth: toolbarRowLayout.width
+            contentHeight: height
+            clip: true
+            interactive: true
+            boundsBehavior: Flickable.StopOnBounds
+            RowLayout {
+                id: toolbarRowLayout
+                width: implicitWidth
+                height: parent.height
+                spacing: 12
         // 左边：元器件数量 + 筛选
         Text {
             id: componentCountLabel
@@ -436,6 +481,8 @@ Card {
                 }
             }
         }
+    }
+    }
     }
     ColumnLayout {
         width: parent.width
