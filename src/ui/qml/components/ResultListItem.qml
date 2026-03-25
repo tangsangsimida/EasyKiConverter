@@ -11,6 +11,7 @@ Rectangle {
     property string message
     signal retryClicked
     signal copyClicked
+    signal deleteClicked
     height: message.length > 0 ? 72 : 48
     // 悬停效果
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
@@ -249,10 +250,47 @@ Rectangle {
             ToolTip.text: qsTr("重试")
             ToolTip.delay: 500
         }
+        // 删除按钮
+        Item {
+            id: deleteButton
+            visible: status === "failed" || status.indexOf("fail") !== -1
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            Layout.alignment: Qt.AlignVCenter
+            Rectangle {
+                anchors.fill: parent
+                color: deleteButtonHovered ? AppStyle.colors.dangerLight : "transparent"
+                radius: AppStyle.radius.sm
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+            }
+            Text {
+                anchors.centerIn: parent
+                text: "×"
+                font.pixelSize: AppStyle.fontSizes.xxl
+                font.bold: true
+                color: deleteButtonHovered ? AppStyle.colors.danger : AppStyle.colors.danger
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+            }
+            ToolTip.visible: deleteButtonHovered
+            ToolTip.text: qsTr("删除")
+            ToolTip.delay: 500
+        }
     }
 
     // 追踪重试按钮悬停状态
     property bool retryButtonHovered: false
+    // 追踪删除按钮悬停状态
+    property bool deleteButtonHovered: false
     MouseArea {
         id: itemMouseArea
         anchors.fill: parent
@@ -260,27 +298,47 @@ Rectangle {
         cursorShape: Qt.ArrowCursor
         acceptedButtons: Qt.RightButton | Qt.LeftButton
         onMouseXChanged: {
+            var inRetryArea = false;
+            var inDeleteArea = false;
+
             // 检查鼠标是否在重试按钮区域
             if (retryButton.visible) {
-                var retryBtnX = item.width - AppStyle.spacing.lg - retryButton.width;
+                var retryBtnX = item.width - AppStyle.spacing.lg - retryButton.width - AppStyle.spacing.md - deleteButton.width;
                 var retryBtnY = (item.height - retryButton.height) / 2;
                 if (mouseX >= retryBtnX && mouseX <= retryBtnX + retryButton.width && mouseY >= retryBtnY && mouseY <= retryBtnY + retryButton.height) {
-                    retryButtonHovered = true;
-                } else {
-                    retryButtonHovered = false;
+                    inRetryArea = true;
                 }
-            } else {
-                retryButtonHovered = false;
             }
+
+            // 检查鼠标是否在删除按钮区域
+            if (deleteButton.visible) {
+                var deleteBtnX = item.width - AppStyle.spacing.lg - deleteButton.width;
+                var deleteBtnY = (item.height - deleteButton.height) / 2;
+                if (mouseX >= deleteBtnX && mouseX <= deleteBtnX + deleteButton.width && mouseY >= deleteBtnY && mouseY <= deleteBtnY + deleteButton.height) {
+                    inDeleteArea = true;
+                }
+            }
+
+            retryButtonHovered = inRetryArea;
+            deleteButtonHovered = inDeleteArea;
         }
 
         onClicked: mouse => {
+            // 检查是否点击在删除按钮区域（优先检查，因为删除按钮在最右边）
+            if (deleteButton.visible) {
+                var deleteBtnX = item.width - AppStyle.spacing.lg - deleteButton.width;
+                var deleteBtnY = (item.height - deleteButton.height) / 2;
+                if (mouse.x >= deleteBtnX && mouse.x <= deleteBtnX + deleteButton.width && mouse.y >= deleteBtnY && mouse.y <= deleteBtnY + deleteButton.height) {
+                    item.deleteClicked();
+                    return;
+                }
+            }
+
             // 检查是否点击在重试按钮区域
             if (retryButton.visible) {
-                var retryBtnX = item.width - AppStyle.spacing.lg - retryButton.width;
+                var retryBtnX = item.width - AppStyle.spacing.lg - retryButton.width - AppStyle.spacing.md - deleteButton.width;
                 var retryBtnY = (item.height - retryButton.height) / 2;
                 if (mouse.x >= retryBtnX && mouse.x <= retryBtnX + retryButton.width && mouse.y >= retryBtnY && mouse.y <= retryBtnY + retryButton.height) {
-                    // 点击在重试按钮区域，调用重试功能
                     item.retryClicked();
                     return;
                 }

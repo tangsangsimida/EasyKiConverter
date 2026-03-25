@@ -437,40 +437,36 @@ Card {
             }
         }
     }
-    // 元件列表视图（自适应网格）
-    GridView {
-        id: componentList
-        Layout.fillWidth: true
-        Layout.preferredHeight: 300
-        Layout.topMargin: AppStyle.spacing.md
-        clip: true
-        // 动态计算列宽，实现响应式布局
-        property int minCellWidth: 230
-        property int availableWidth: width - AppStyle.spacing.md // 减去右侧滚动条/边距空间
-        property int columns: Math.max(1, Math.floor(availableWidth / minCellWidth))
-        cellWidth: Math.floor(availableWidth / columns)
-        // 卡片高度 64 + 垂直间距 12 = 76
-        cellHeight: 76
-        flow: GridView.FlowLeftToRight
-        layoutDirection: Qt.LeftToRight
-        // 使用 DelegateModel
-        model: visualModel
-        // delegate 已经在 DelegateModel 中定义了，这里不需要再定义，
-        // 但是 GridView 需要直接使用 visualModel 作为 model。
-        // 注意：当 model 是 DelegateModel 时，不需要指定 delegate 属性，
-        // 因为 DelegateModel 已经包含了 delegate。
+    ColumnLayout {
+        width: parent.width
+        // 元件列表视图（自适应网格）
+        GridView {
+            id: componentList
+            Layout.fillWidth: true
+            Layout.preferredHeight: 300
+            Layout.topMargin: AppStyle.spacing.md
+            clip: true
+            cellWidth: {
+                var w = width - AppStyle.spacing.md;
+                var c = Math.max(1, Math.floor(w / 230));
+                return w / c;
+            }
+            cellHeight: 76
+            flow: GridView.FlowLeftToRight
+            layoutDirection: Qt.LeftToRight
+            // 使用 DelegateModel
+            model: visualModel
 
-        // 监听滚动状态
-        onMovingChanged: {
-            if (componentListCard.componentListController) {
-                componentListCard.componentListController.setScrolling(moving);
+            // 监听滚动状态
+            onMovingChanged: {
+                if (componentListCard.componentListController) {
+                    componentListCard.componentListController.setScrolling(moving);
+                }
+            }
+
+            ScrollBar.vertical: ScrollBar {
+                policy: ScrollBar.AsNeeded
             }
         }
-
-        ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AsNeeded
-        }
-        // 添加列表项进入动画 (DelegateModel 管理时可能需要调整)
-        // 简单的 add/remove 动画在使用 DelegateModel 时可能不生效或表现不同
     }
 }

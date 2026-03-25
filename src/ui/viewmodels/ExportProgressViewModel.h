@@ -221,6 +221,7 @@ public slots:
                                  bool debugMode);
     Q_INVOKABLE void retryFailedComponents();
     Q_INVOKABLE void retryComponent(const QString& componentId);
+    Q_INVOKABLE void removeResult(const QString& componentId);
     Q_INVOKABLE void cancelExport();
     Q_INVOKABLE void resetExport();
     Q_INVOKABLE void setFilterMode(const QString& mode);
