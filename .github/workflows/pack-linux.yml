@@ -60,7 +60,7 @@ jobs:
           echo "=============================================="
           echo "  Qt Plugins Inventory (before cleanup)"
           echo "=============================================="
-          QT_PLUGINS_DIR="/opt/qt/6.6.0/gcc_64/plugins"
+          QT_PLUGINS_DIR="/opt/qt/6.10.2/gcc_64/plugins"
           if [ -d "$QT_PLUGINS_DIR" ]; then
             for plugin_type in "$QT_PLUGINS_DIR"/*/; do
               plugin_name=$(basename "$plugin_type")
