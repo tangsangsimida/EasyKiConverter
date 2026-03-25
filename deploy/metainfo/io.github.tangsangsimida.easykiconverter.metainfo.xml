@@ -54,7 +54,7 @@
     </ul>
   </description>
 
-  <launchable type="desktop-id">io.github.tangsangsimida.easykiconverter.desktop</launchable>
+  <launchable type="desktop-id">io.github.tangsangsimida.easykiconverter</launchable>
 
   <screenshots>
     <screenshot type="default">
