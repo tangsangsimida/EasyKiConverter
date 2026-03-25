@@ -23,14 +23,14 @@
 
 #include <algorithm>
 
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN) || defined(_WIN32)
 #    if defined(_MSC_VER)
 #        define PSAPI_VERSION 1
 #        include <qt_windows.h>
 
 #        include <psapi.h>
 #        pragma comment(lib, "psapi.lib")
-#    elif defined(__MINGW32__)
+#    elif defined(__MINGW32__) || defined(__MINGW64__)
 #        define PSAPI_VERSION 1
 #        include <qt_windows.h>
 
@@ -738,7 +738,7 @@ qint64 ExportServicePipeline::getCurrentProcessMemoryUsage() {
     }
     qWarning() << "VmRSS not found in /proc/self/status, content:" << content.left(500);
     return 0;
-#elif defined(Q_OS_WIN)
+#elif defined(Q_OS_WIN) || defined(_WIN32)
     PROCESS_MEMORY_COUNTERS pmc;
     if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
         return static_cast<qint64>(pmc.WorkingSetSize);
