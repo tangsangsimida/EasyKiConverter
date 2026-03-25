@@ -108,77 +108,23 @@
   <releases>
     <release version="3.1.0" date="2026-03-22">
       <description>
-        <p>Changes from 3.0.14 to 3.1.0</p>
-        <p xml:lang="zh_CN">从 3.0.14 到 3.1.0 的变更</p>
-        <p>New Features:</p>
-        <p xml:lang="zh_CN">新功能:</p>
+        <p>UI/UX optimization and performance improvements</p>
+        <p xml:lang="zh_CN">UI/UX 优化与性能改进</p>
         <ul>
-          <li>Importer now supports parsing SVG arc paths</li>
-          <li xml:lang="zh_CN">导入器支持解析SVG弧线路径</li>
-          <li>Implemented memory statistics on Windows platform</li>
-          <li xml:lang="zh_CN">在 Windows 平台实现内存统计功能</li>
-          <li>Added peak memory display in export statistics</li>
-          <li xml:lang="zh_CN">添加导出统计的内存峰值显示</li>
-          <li>Optimized thumbnail preview display logic (#118)</li>
-          <li xml:lang="zh_CN">优化缩略图预览显示逻辑 (#118)</li>
-          <li>Optimized component list and logging system</li>
-          <li xml:lang="zh_CN">优化元器件列表和日志系统</li>
           <li>Added component list filtering feature</li>
-          <li xml:lang="zh_CN">添加组件列表筛选功能</li>
-          <li>Improved validation status management for component list</li>
-          <li xml:lang="zh_CN">完善元器件列表的验证状态管理</li>
-          <li>Added batch preview image fetching with optimized timing</li>
-          <li xml:lang="zh_CN">添加批量获取预览图功能并优化获取时机</li>
-          <li>Added slider UI interaction for confirmation dialogs (#111)</li>
-          <li xml:lang="zh_CN">为确认对话框添加滑块UI交互效果 (#111)</li>
-          <li>Improved copy feedback UI and interaction experience</li>
-          <li xml:lang="zh_CN">改进复制反馈提示的UI和交互体验</li>
-          <li>Updated English translation files and fixed location references</li>
-          <li xml:lang="zh_CN">更新英文翻译文件并修复位置引用</li>
-          <li>Added icon and license file validation during installer build</li>
-          <li xml:lang="zh_CN">添加安装包构建时的图标和许可证文件验证</li>
-          <li>Added preview image fetch failure handling mechanism</li>
-          <li xml:lang="zh_CN">添加预览图获取失败处理机制</li>
-          <li>Implemented async queue management for optimized batch component fetching</li>
-          <li xml:lang="zh_CN">实现异步队列管理机制以优化批量组件获取</li>
-          <li>Improved resource cleanup mechanism on application exit</li>
-          <li xml:lang="zh_CN">改进应用退出时的资源清理机制</li>
-          <li>Refactored retry button style with hover interaction effects</li>
-          <li xml:lang="zh_CN">重构重试按钮样式并添加悬停交互效果</li>
-          <li>Added retry functionality and optimized UI component structure</li>
-          <li xml:lang="zh_CN">添加重试功能和优化UI组件结构</li>
-          <li>Optimized concurrent processing for component data fetching</li>
-          <li xml:lang="zh_CN">优化组件数据获取的并发处理机制</li>
-          <li>Optimized ComponentService multi-thread safety and concurrency control</li>
-          <li xml:lang="zh_CN">优化ComponentService多线程安全性和并发控制</li>
-        </ul>
-        <p>Bug Fixes:</p>
-        <p xml:lang="zh_CN">修复:</p>
-        <ul>
-          <li>Suppressed MSVC C4702 warnings from Qt headers</li>
-          <li xml:lang="zh_CN">抑制 MSVC 中 Qt 头文件导致的 C4702 警告</li>
-          <li>Temporarily disabled Windows memory statistics</li>
-          <li xml:lang="zh_CN">临时禁用 Windows 内存统计</li>
-          <li>Fixed psapi.h include order for Windows</li>
-          <li xml:lang="zh_CN">修复 Windows 下 psapi.h 包含顺序</li>
-          <li>Fixed duplicate QML properties and unified logging behavior</li>
-          <li xml:lang="zh_CN">修复 QML 重复属性并统一日志行为</li>
-          <li>Fixed English language mode UI overlap issues and optimized window minimum width</li>
-          <li xml:lang="zh_CN">修复英文语言模式下的导出选项UI重叠问题并优化窗口最小宽度</li>
-          <li>Fixed Windows installer icon configuration</li>
-          <li xml:lang="zh_CN">修复Windows安装程序图标配置</li>
-          <li>Fixed race conditions and memory leaks in NetworkUtils</li>
-          <li xml:lang="zh_CN">修复NetworkUtils中的竞态条件和内存泄漏问题</li>
-          <li>Fixed network request counter management and component completion state checks</li>
-          <li xml:lang="zh_CN">修复网络请求计数器管理和组件完成状态检查</li>
-        </ul>
-        <p>Other Changes:</p>
-        <p xml:lang="zh_CN">其他变更:</p>
-        <ul>
-          <li>Enhanced version management tool with comprehensive file coverage</li>
-          <li xml:lang="zh_CN">增强版本管理工具，覆盖更多文件</li>
-          <li>Added background style for copy ID tooltip</li>
-          <li xml:lang="zh_CN">为复制ID提示添加背景样式</li>
+          <li xml:lang="zh_CN">新增组件列表筛选功能</li>
+          <li>Optimized thumbnail preview display</li>
+          <li xml:lang="zh_CN">优化缩略图预览显示</li>
+          <li>Added batch preview image fetching</li>
+          <li xml:lang="zh_CN">新增批量预览图获取</li>
+          <li>Improved dark/light theme support</li>
+          <li xml:lang="zh_CN">改进深色/浅色主题支持</li>
+          <li>Enhanced network retry mechanism</li>
+          <li xml:lang="zh_CN">增强网络重试机制</li>
+          <li>Fixed UI overlap issues in English mode</li>
+          <li xml:lang="zh_CN">修复英文模式下 UI 重叠问题</li>
+          <li>Fixed thread safety issues in network requests</li>
+          <li xml:lang="zh_CN">修复网络请求线程安全问题</li>
         </ul>
       </description>
     </release>
