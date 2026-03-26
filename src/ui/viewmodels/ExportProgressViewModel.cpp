@@ -622,6 +622,14 @@ void ExportProgressViewModel::removeResult(const QString& componentId) {
     for (int i = 0; i < m_resultsList.size(); ++i) {
         QVariantMap item = m_resultsList[i].toMap();
         if (item["componentId"].toString() == componentId) {
+            QString status = item["status"].toString();
+            if (status == "failed") {
+                m_failureCount--;
+                emit failureCountChanged();
+            } else if (status == "success") {
+                m_successCount--;
+                emit successCountChanged();
+            }
             m_resultsList.removeAt(i);
             emit resultsListChanged();
             emit filteredResultsListChanged();
