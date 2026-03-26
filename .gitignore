@@ -136,3 +136,4 @@ flatpak-build.log
 build.log
 temp.md
 squashfs-root/*
+deploy/flatpak/.flatpak-builder/*

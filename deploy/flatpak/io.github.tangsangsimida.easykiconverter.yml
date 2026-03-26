@@ -29,15 +29,15 @@ modules:
       - -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF
     build-options:
       env:
-        QXLSX_ROOT: qlsx-root/QXlsx
+        QXLSX_ROOT: /run/build/easykiconverter/qlsx-root/QXlsx
     post-install:
       - mkdir -p $FLATPAK_DEST/share/licenses/$FLATPAK_ID
-      - install -Dm0644 qlsx-root/QXlsx/LICENSE -t $FLATPAK_DEST/share/licenses/$FLATPAK_ID/QXlsx
+      - install -Dm0644 qlsx-root/LICENSE $FLATPAK_DEST/share/licenses/$FLATPAK_ID/QXlsx
     sources:
       - type: git
         url: https://github.com/tangsangsimida/EasyKiConverter.git
         tag: v3.1.0
-        commit:
+        commit: ad4fd3c2a9261164bc2ddd48d57f46d1d2625ac9
       - type: archive
         url: https://github.com/QtExcel/QXlsx/archive/9f545935a1effa0144ba76598e95a7597210553a.tar.gz
         sha256: 4629430e80a4a9f9917526b2b02ad0f3d347551560e1f94a8a58434f457e27a6
