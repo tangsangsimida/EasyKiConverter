@@ -6,41 +6,19 @@
 
 
 <p align="center">
-  <a href="https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/build.yml">
+    <a href="https://flathub.org/apps/details/io.github.tangsangsimida.easykiconverter"><img width="200" alt="Download on Flathub" src="https://flathub.org/assets/badges/flathub-badge-i-en.svg"/></a>
+    <br/>
     <img src="https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Build/badge.svg" alt="Build Status" />
-  </a>
-  <a href="https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/security.yml">
     <img src="https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Security/badge.svg" alt="Security Scan" />
-  </a>
-  <a href="https://github.com/tangsangsimida/EasyKiConverter_QT/actions/workflows/clang-format.yml">
     <img src="https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Code%20Format%20Check/badge.svg" alt="Code Format" />
-  </a>
-  <img src="https://img.shields.io/badge/dynamic/json?url=https://api.github.com/repos/tangsangsimida/EasyKiConverter_QT&query=$.created_at&label=Active%20Days&color=blue" alt="Active Days" />
-</p>
-<p align="center">
-  <a href="https://github.com/tangsangsimida/EasyKiConverter_QT/releases/latest">
     <img src="https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter_QT" alt="GitHub release" />
-  </a>
-  <a href="https://github.com/tangsangsimida/EasyKiConverter_QT/releases/latest">
-    <img src="https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/latest/total" alt="GitHub downloads (latest)" />
-  </a>
-  <a href="https://github.com/tangsangsimida/EasyKiConverter_QT/releases/latest">
     <img src="https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/total" alt="GitHub downloads (total)" />
-  </a>
-  <img src="https://img.shields.io/github/license/tangsangsimida/EasyKiConverter_QT" alt="License" />
-  <img src="https://img.shields.io/github/stars/tangsangsimida/EasyKiConverter_QT" alt="Stars" />
-  <img src="https://img.shields.io/github/forks/tangsangsimida/EasyKiConverter_QT" alt="Forks" />
-  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PR Welcome" />
-  <img src="https://img.shields.io/github/contributors/tangsangsimida/EasyKiConverter_QT" alt="Contributors" />
+    <img src="https://img.shields.io/github/license/tangsangsimida/EasyKiConverter_QT" alt="License" />
+    <img src="https://img.shields.io/github/stars/tangsangsimida/EasyKiConverter_QT" alt="Stars" />
+    <img src="https://img.shields.io/github/issues/tangsangsimida/EasyKiConverter_QT" alt="Issues" />
 </p>
-<p align="center">
-  <img src="https://img.shields.io/github/created-at/tangsangsimida/EasyKiConverter_QT" alt="Created at" />
-  <img src="https://img.shields.io/github/issues/tangsangsimida/EasyKiConverter_QT" alt="Issues" />
-  <img src="https://img.shields.io/github/issues-pr/tangsangsimida/EasyKiConverter_QT" alt="Pull requests" />
-  <img src="https://img.shields.io/github/repo-size/tangsangsimida/EasyKiConverter_QT" alt="Repo size" />
-  <img src="https://img.shields.io/badge/made%20with-C%2B%2B17-blue" alt="Made with C++17" />
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey" alt="Platform" />
-</p>
+
+
 
 **EasyKiConverter** 是一个基于 Qt 6 和 MVVM 架构的现代化 C++ 桌面工具，专为电子工程师设计，旨在将嘉立创 (LCSC) 和 EasyEDA 的元件数据高效转换为 KiCad 库文件。
 
