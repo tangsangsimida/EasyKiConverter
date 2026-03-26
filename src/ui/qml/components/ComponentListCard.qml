@@ -117,20 +117,34 @@ Card {
             onWheel: function (wheel) {
                 var currentX = toolbarFlickable.contentX;
                 var maxScroll = Math.max(0, toolbarRowLayout.width - parent.width);
-                var newX;
-                if (wheel.angleDelta.y > 0) {
-                    newX = Math.max(0, currentX - 50);
-                } else {
-                    newX = Math.min(maxScroll, currentX + 50);
-                }
+                var canScrollToolbar = maxScroll > 0;
+                var atStart = currentX <= 0;
+                var atEnd = currentX >= maxScroll;
+                var canScrollUp = !atStart;
+                var canScrollDown = !atEnd;
 
-                if (newX !== currentX) {
-                    if (newX === 0 || newX === maxScroll) {
-                        bounceAnimation.to = newX;
-                        bounceAnimation.start();
-                    } else {
-                        toolbarFlickable.contentX = newX;
+                if (wheel.angleDelta.y > 0 && canScrollToolbar && canScrollUp) {
+                    var newX = Math.max(0, currentX - 50);
+                    if (newX !== currentX) {
+                        if (newX === 0) {
+                            bounceAnimation.to = newX;
+                            bounceAnimation.start();
+                        } else {
+                            toolbarFlickable.contentX = newX;
+                        }
                     }
+                } else if (wheel.angleDelta.y < 0 && canScrollToolbar && canScrollDown) {
+                    var newX = Math.min(maxScroll, currentX + 50);
+                    if (newX !== currentX) {
+                        if (newX === maxScroll) {
+                            bounceAnimation.to = newX;
+                            bounceAnimation.start();
+                        } else {
+                            toolbarFlickable.contentX = newX;
+                        }
+                    }
+                } else {
+                    wheel.accepted = false;
                 }
             }
             PropertyAnimation {
