@@ -12,6 +12,7 @@ add_library(EasyKiConverterServices STATIC
     ComponentExportTask.cpp
     MemoryMonitor.cpp
     ComponentQueueManager.cpp
+    ParallelFetchContext.cpp
 )
 
 # 然后添加子目录，子目录会填充 PIPELINE_SOURCES 和 PIPELINE_HEADERS 变量

@@ -1,6 +1,7 @@
 #include "ComponentService.h"
 
 #include "BomParser.h"
+#include "ComponentQueueManager.h"
 #include "core/easyeda/EasyedaApi.h"
 #include "core/easyeda/EasyedaImporter.h"
 
@@ -33,14 +34,11 @@ ComponentService::ComponentService(QObject* parent)
     , m_networkManager(nullptr)
     , m_currentComponentId()
     , m_hasDownloadedWrl(false)
-    , m_parallelTotalCount(0)
-    , m_parallelCompletedCount(0)
-    , m_parallelFetching(false)
+    , m_parallelContext(nullptr)
     , m_imageService(nullptr)
     , m_activeRequestCount(0)
     , m_maxConcurrentRequests(5)
-    , m_queueTimer(nullptr)
-    , m_timeoutTimer(nullptr) {
+    , m_queueManager(nullptr) {
     try {
         m_api = new EasyedaApi();
         if (m_api) {
@@ -50,14 +48,14 @@ ComponentService::ComponentService(QObject* parent)
         m_networkManager = new QNetworkAccessManager(this);
         m_imageService = new LcscImageService(this);
 
-        // 初始化异步队列管理定时器，避免阻塞主线程
-        m_queueTimer = new QTimer(this);
-        m_queueTimer->setSingleShot(false);
-        connect(m_queueTimer, &QTimer::timeout, this, &ComponentService::checkQueueAndProcessNext);
-
-        m_timeoutTimer = new QTimer(this);
-        m_timeoutTimer->setSingleShot(true);
-        connect(m_timeoutTimer, &QTimer::timeout, this, &ComponentService::handleQueueTimeout);
+        m_queueManager = new ComponentQueueManager(m_maxConcurrentRequests, this);
+        connect(m_queueManager, &ComponentQueueManager::requestReady, this, [this](const QString& componentId) {
+            fetchComponentDataInternal(componentId, true);
+        });
+        connect(m_queueManager, &ComponentQueueManager::queueEmpty, this, [this]() {
+            qDebug() << "ComponentService: Queue empty signal received";
+        });
+        connect(m_queueManager, &ComponentQueueManager::timeout, this, [this]() { handleQueueTimeout(); });
     } catch (const std::bad_alloc& e) {
         qCritical() << "ComponentService: Memory allocation failed:" << e.what();
         std::terminate();
@@ -77,14 +75,11 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     , m_networkManager(nullptr)
     , m_currentComponentId()
     , m_hasDownloadedWrl(false)
-    , m_parallelTotalCount(0)
-    , m_parallelCompletedCount(0)
-    , m_parallelFetching(false)
+    , m_parallelContext(nullptr)
     , m_imageService(nullptr)
     , m_activeRequestCount(0)
     , m_maxConcurrentRequests(5)
-    , m_queueTimer(nullptr)
-    , m_timeoutTimer(nullptr) {
+    , m_queueManager(nullptr) {
     if (m_api && !m_api->parent()) {
         m_api->setParent(this);
     }
@@ -93,14 +88,14 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     m_networkManager = new QNetworkAccessManager(this);
     m_imageService = new LcscImageService(this);
 
-    // 初始化异步队列管理定时器，避免阻塞主线程
-    m_queueTimer = new QTimer(this);
-    m_queueTimer->setSingleShot(false);
-    connect(m_queueTimer, &QTimer::timeout, this, &ComponentService::checkQueueAndProcessNext);
-
-    m_timeoutTimer = new QTimer(this);
-    m_timeoutTimer->setSingleShot(true);
-    connect(m_timeoutTimer, &QTimer::timeout, this, &ComponentService::handleQueueTimeout);
+    m_queueManager = new ComponentQueueManager(m_maxConcurrentRequests, this);
+    connect(m_queueManager, &ComponentQueueManager::requestReady, this, [this](const QString& componentId) {
+        fetchComponentDataInternal(componentId, true);
+    });
+    connect(m_queueManager, &ComponentQueueManager::queueEmpty, this, [this]() {
+        qDebug() << "ComponentService: Queue empty signal received";
+    });
+    connect(m_queueManager, &ComponentQueueManager::timeout, this, [this]() { handleQueueTimeout(); });
 
     initializeApiConnections();
     qDebug() << "ComponentService (Injected API): Initialized successfully.";
@@ -553,7 +548,7 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
             componentData.setModel3DData(model3DData);
 
             // 在并行模式下，使用 m_fetchingComponents 存储待处理的组件数据
-            if (m_parallelFetching) {
+            if (m_parallelContext != nullptr) {
                 // 更新已有的 entry
                 FetchingComponent& fetchingComponent = m_fetchingComponents[m_currentComponentId];
                 fetchingComponent.data = componentData;
@@ -592,7 +587,7 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     emit cadDataReady(currentId, componentData);
 
     // 如果在并行模式下，处理并行数据收集
-    if (m_parallelFetching) {
+    if (m_parallelContext != nullptr) {
         handleParallelDataCollected(currentId, componentData);
     }
 
@@ -607,7 +602,7 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
     qDebug() << "3D model data fetched for UUID:" << uuid << "Size:" << data.size();
 
     // 在并行模式下，查找对应的组件
-    if (m_parallelFetching) {
+    if (m_parallelContext != nullptr) {
         QString componentId;
         bool hasObjData = false;
         bool fetch3DModel = false;
@@ -714,7 +709,7 @@ void ComponentService::handleFetchError(const QString& errorMessage) {
     qDebug() << "Fetch error:" << errorMessage;
 
     // 如果在并行模式下，处理并行错误
-    if (m_parallelFetching) {
+    if (m_parallelContext != nullptr) {
         handleParallelFetchError(m_currentComponentId, errorMessage);
     }
 
@@ -726,13 +721,15 @@ void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QSt
     QString componentId = idOrUuid;
 
     // 如果在并行模式下，尝试解析 UUID 为组件 ID
-    if (m_parallelFetching && !m_parallelFetchingStatus.contains(idOrUuid)) {
+    if (m_parallelContext != nullptr) {
         QMutexLocker locker(&m_fetchingComponentsMutex);
-        for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
-            if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == idOrUuid) {
-                componentId = it.key();
-                qDebug() << "Resolved UUID" << idOrUuid << "to component ID" << componentId;
-                break;
+        if (!m_fetchingComponents.contains(idOrUuid)) {
+            for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
+                if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == idOrUuid) {
+                    componentId = it.key();
+                    qDebug() << "Resolved UUID" << idOrUuid << "to component ID" << componentId;
+                    break;
+                }
             }
         }
     }
@@ -740,7 +737,7 @@ void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QSt
     qDebug() << "Fetch error for component:" << componentId << "Error:" << error;
 
     // 如果在并行模式下，处理并行错误
-    if (m_parallelFetching) {
+    if (m_parallelContext != nullptr) {
         handleParallelFetchError(componentId, error);
     }
 
@@ -760,98 +757,38 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
              << "components with async queue (max concurrent:" << m_maxConcurrentRequests << ")";
 
     // 防止重复启动批量处理，避免队列状态混乱
-    if (m_parallelFetching) {
+    if (m_parallelContext != nullptr) {
         qWarning() << "Batch processing already in progress, ignoring new request";
         return;
     }
 
     // 初始化并行获取状态
-    {
-        QMutexLocker locker(&m_parallelDataMutex);
-        m_parallelFetchingStatus.clear();
-        m_parallelCollectedData.clear();
-        m_parallelPendingComponents = componentIds;
-        m_parallelTotalCount = componentIds.size();
-        m_parallelCompletedCount = 0;
-        m_parallelFetching = true;
-
-        // 初始化请求队列
-        m_requestQueue = componentIds;
+    m_parallelContext = new ParallelFetchContext(this);
+    connect(m_parallelContext, &ParallelFetchContext::allCompleted, this, [this](const QList<ComponentData>& data) {
+        emit allComponentsDataCollected(data);
         m_activeRequestCount = 0;
-    }
+    });
+    m_parallelContext->start(componentIds.size());
+    m_activeRequestCount = 0;
 
-    // 启动总超时保护，防止弱网环境下队列永久阻塞
-    m_timeoutTimer->start(TOTAL_TIMEOUT_MS);
-    qDebug() << "Started total timeout timer:" << TOTAL_TIMEOUT_MS << "ms";
-
-    // 启动异步队列处理，定时检查队列状态并启动新请求
-    m_queueTimer->start(QUEUE_CHECK_INTERVAL_MS);
-    qDebug() << "Started async queue timer:" << QUEUE_CHECK_INTERVAL_MS << "ms";
-
-    // 立即处理第一批请求
-    checkQueueAndProcessNext();
+    // 使用 ComponentQueueManager 管理队列
+    m_queueManager->start(componentIds);
 }
 
 void ComponentService::handleParallelDataCollected(const QString& componentId, const ComponentData& data) {
     qDebug() << "Parallel data collected for:" << componentId;
 
-    // 使用互斥锁保护并行数据收集状态的并发访问
-    QMutexLocker locker(&m_parallelDataMutex);
-
-    // 保存收集到的数据
-    m_parallelCollectedData[componentId] = data;
-    m_parallelCompletedCount++;
-
-    // 更新状态
-    m_parallelFetchingStatus[componentId] = false;
-
-    // 检查是否所有元件都已收集完毕
-    if (m_parallelCompletedCount >= m_parallelTotalCount) {
-        qDebug() << "All components data collected in parallel:" << m_parallelCollectedData.size();
-
-        // 发送完成信号，先复制数据到局部变量
-        QList<ComponentData> allData = m_parallelCollectedData.values();
-
-        // 在发送信号前释放锁，避免死锁
-        locker.unlock();
-        emit allComponentsDataCollected(allData);
-
-        // 重新加锁进行状态重置
-        QMutexLocker locker2(&m_parallelDataMutex);
-        m_parallelFetching = false;
-        m_parallelCollectedData.clear();
-        m_parallelFetchingStatus.clear();
-        m_parallelPendingComponents.clear();
+    if (m_parallelContext != nullptr) {
+        m_parallelContext->markCompleted(componentId, data);
     }
 }
 
 void ComponentService::handleParallelFetchError(const QString& componentId, const QString& error) {
     qDebug() << "Parallel fetch error for:" << componentId << error;
 
-    // 使用互斥锁保护并行数据收集状态的并发访问
-    QMutexLocker locker(&m_parallelDataMutex);
-
-    // 更新状态
-    m_parallelFetchingStatus[componentId] = false;
-    m_parallelCompletedCount++;
-
-    // 检查是否所有元件都已处理完毕
-    if (m_parallelCompletedCount >= m_parallelTotalCount) {
-        qDebug() << "All components data collected (with errors):" << m_parallelCollectedData.size();
-
-        // 发送完成信号，先复制数据到局部变量
-        QList<ComponentData> allData = m_parallelCollectedData.values();
-
-        // 在发送信号前释放锁，避免死锁
-        locker.unlock();
-        emit allComponentsDataCollected(allData);
-
-        // 重新加锁进行状态重置
-        QMutexLocker locker2(&m_parallelDataMutex);
-        m_parallelFetching = false;
-        m_parallelCollectedData.clear();
-        m_parallelFetchingStatus.clear();
-        m_parallelPendingComponents.clear();
+    Q_UNUSED(error);
+    if (m_parallelContext != nullptr) {
+        m_parallelContext->markFailed(componentId);
     }
 }
 
@@ -904,7 +841,7 @@ void ComponentService::completeComponentData(const QString& componentId) {
 
         if (isComplete) {
             emit cadDataReady(componentId, fc.data);
-            if (m_parallelFetching) {
+            if (m_parallelContext != nullptr) {
                 handleParallelDataCollected(componentId, fc.data);
             }
             m_fetchingComponents.remove(componentId);
@@ -914,7 +851,7 @@ void ComponentService::completeComponentData(const QString& componentId) {
 
 void ComponentService::handleFetchErrorForComponent(const QString& componentId, const QString& error) {
     qWarning() << "Fetch error for component" << componentId << ":" << error;
-    if (m_parallelFetching) {
+    if (m_parallelContext != nullptr) {
         handleParallelFetchError(componentId, error);
     }
     emit fetchError(componentId, error);
@@ -929,70 +866,19 @@ bool ComponentService::isPDF(const QByteArray& data) const {
 }
 
 // 异步队列管理方法实现
-// 使用定时器驱动而非阻塞循环，确保主线程保持响应性
-
-void ComponentService::checkQueueAndProcessNext() {
-    if (!m_parallelFetching) {
-        // 队列处理已完成，停止定时器
-        m_queueTimer->stop();
-        return;
-    }
-
-    QMutexLocker locker(&m_parallelDataMutex);
-
-    // 计算当前活跃请求数
-    int activeCount = m_parallelPendingComponents.size() - m_parallelCompletedCount;
-
-    // 启动新请求直到达到最大并发数
-    while (activeCount < m_maxConcurrentRequests && !m_requestQueue.isEmpty()) {
-        QString componentId = m_requestQueue.takeFirst();
-
-        // 检查是否已经处理过
-        if (m_parallelFetchingStatus.contains(componentId)) {
-            qDebug() << "Component" << componentId << "already processed, skipping";
-            continue;
-        }
-
-        m_parallelFetchingStatus[componentId] = true;
-        m_parallelPendingComponents.append(componentId);
-        activeCount++;
-
-        locker.unlock();  // 解锁以调用 fetchComponentDataInternal
-
-        qDebug() << "Starting async request for component:" << componentId << "(Active:" << activeCount << "/"
-                 << m_maxConcurrentRequests << "Remaining:" << m_requestQueue.size() << ")";
-
-        fetchComponentDataInternal(componentId, true);  // 默认获取3D模型
-
-        locker.relock();  // 重新加锁继续检查
-    }
-
-    // 检查是否所有请求都已完成
-    if (m_requestQueue.isEmpty() && activeCount == 0 && m_parallelCompletedCount >= m_parallelTotalCount) {
-        qDebug() << "All components processed via async queue. Total:" << m_parallelTotalCount;
-        resetQueueState();
-    }
-}
+// 使用 ComponentQueueManager 管理队列
 
 void ComponentService::handleQueueTimeout() {
-    qWarning() << "Queue timeout reached after" << TOTAL_TIMEOUT_MS << "ms";
+    qWarning() << "Queue timeout reached";
 
-    QMutexLocker locker(&m_parallelDataMutex);
+    if (m_parallelContext != nullptr) {
+        int completedCount = m_parallelContext->completedCount();
+        int totalCount = m_parallelContext->totalCount();
+        qWarning() << "Queue timeout - Completed:" << completedCount << "Total:" << totalCount;
 
-    if (m_parallelFetching) {
-        // 超时后清理队列状态
-        int pendingCount = m_requestQueue.size();
-        int completedCount = m_parallelCompletedCount;
-
-        qWarning() << "Queue timeout - Pending:" << pendingCount << "Completed:" << completedCount
-                   << "Total:" << m_parallelTotalCount;
-
-        // 发送已完成的数据
-        if (!m_parallelCollectedData.isEmpty()) {
-            QList<ComponentData> allData = m_parallelCollectedData.values();
-            locker.unlock();
+        if (completedCount > 0) {
+            QList<ComponentData> allData = m_parallelContext->collectedData();
             emit allComponentsDataCollected(allData);
-            locker.relock();
         }
 
         resetQueueState();
@@ -1000,16 +886,13 @@ void ComponentService::handleQueueTimeout() {
 }
 
 void ComponentService::resetQueueState() {
-    QMutexLocker locker(&m_parallelDataMutex);
-
-    // 停止定时器
-    m_queueTimer->stop();
-    m_timeoutTimer->stop();
-
-    // 清理队列状态
-    m_requestQueue.clear();
+    m_queueManager->stop();
     m_activeRequestCount = 0;
-    m_parallelFetching = false;
+
+    if (m_parallelContext != nullptr) {
+        m_parallelContext->deleteLater();
+        m_parallelContext = nullptr;
+    }
 
     qDebug() << "Queue state reset completed";
 }
