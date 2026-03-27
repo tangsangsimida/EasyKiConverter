@@ -126,8 +126,8 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                     braceCount = 1;
                     parentSymbolDepth = 0;
 
-                    // Count any additional ( on the same line after the symbol name
-                    // The symbol line may contain additional ( like (in_bom yes) (on_board yes)
+                    // 计算同一行中额外的左括号
+                    // 符号定义行可能包含额外的括号，如 (in_bom yes) (on_board yes)
                     for (int j = nameEnd + 1; j < line.length(); ++j) {
                         if (line[j] == '(') {
                             braceCount++;
