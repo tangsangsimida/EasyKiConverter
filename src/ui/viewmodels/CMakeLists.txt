@@ -5,6 +5,9 @@ add_library(EasyKiConverterViewModels STATIC
     ExportSettingsViewModel.cpp
     ExportProgressViewModel.cpp
     ThemeSettingsViewModel.cpp
+    SystemTrayManager.cpp
+    ThumbnailUpdateManager.cpp
+    ValidationStateManager.cpp
 )
 
 target_include_directories(EasyKiConverterViewModels

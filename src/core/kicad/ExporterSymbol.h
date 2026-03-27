@@ -5,7 +5,6 @@
 #include "models/SymbolData.h"
 
 #include <QJsonObject>
-#include <QObject>
 #include <QString>
 #include <QTextStream>
 
@@ -16,21 +15,14 @@ namespace EasyKiConverter {
  *
  * 用于EasyEDA 符号数据导出KiCad 符号库格
      */
-class ExporterSymbol : public QObject {
-    Q_OBJECT
-
+class ExporterSymbol {
 public:
-    /**
-     * @brief 构造函数
-         *
-     * @param parent 父对象
-         */
-    explicit ExporterSymbol(QObject* parent = nullptr);
+    ExporterSymbol();
 
     /**
      * @brief 析构函数
      */
-    ~ExporterSymbol() override;
+    ~ExporterSymbol();
 
     /**
      * @brief 导出符号库KiCad 格式

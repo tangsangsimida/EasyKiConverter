@@ -112,6 +112,8 @@ jobs:
     name: 'Build Windows'
     runs-on: windows-2022
     timeout-minutes: 90
+    env:
+      WindowsSDKVersion: '10.0.22621.0'
     strategy:
       fail-fast: false
       matrix:
