@@ -7,6 +7,8 @@
 #if defined(Q_OS_LINUX)
 #    include <unistd.h>
 #elif defined(Q_OS_WIN) || defined(_WIN32)
+// clang-format off
+// Order matters: windows.h must be included before other Windows API headers
 #    if defined(__MINGW32__) || defined(__MINGW64__)
 #        include <qt_windows.h>
 
@@ -17,6 +19,7 @@
 #        include <windows.h>
 #        pragma comment(lib, "psapi")
 #    endif
+// clang-format on
 #elif defined(Q_OS_MAC)
 #    include <mach/mach.h>
 #    include <mach/task_info.h>
