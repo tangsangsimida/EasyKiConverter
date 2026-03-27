@@ -3,6 +3,7 @@
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
+#include "core/utils/AtomicFileWriter.h"
 #include "models/FootprintDataSerializer.h"
 #include "models/SymbolDataSerializer.h"
 #include "utils/PathSecurity.h"
@@ -20,9 +21,6 @@
 #include <QWaitCondition>
 
 namespace EasyKiConverter {
-
-// 初始化静态互斥锁
-QMutex WriteWorker::s_fileWriteMutex;
 
 WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
                          const QString& outputPath,
@@ -169,84 +167,44 @@ cleanup:
 
 bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
     if (!status.symbolData) {
-        return true;  // 没有数据可写，不应视为失败
+        return true;
     }
 
-    // 1. 检查临时目录是否存在
     if (!QDir(m_tempDir).exists()) {
         status.addDebugLog(QString("ERROR: Temp directory does not exist: %1").arg(m_tempDir));
         return false;
     }
-    // 2. 检查路径安全性
     if (!PathSecurity::isSafePath(m_tempDir, m_outputPath)) {
         status.addDebugLog(QString("SECURITY ERROR: Temp dir outside output path: %1").arg(m_tempDir));
         return false;
     }
 
-    // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
-    qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
-    qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
-    // 使用统一的临时文件夹
-    QString tempFilePath =
-        QString("%1/%2_%3_%4.kicad_sym.tmp").arg(m_tempDir, status.componentId).arg(threadId).arg(timestamp);
     QString finalFilePath = QString("%1/%2.kicad_sym").arg(m_tempDir, status.componentId);
 
-    // 先写入临时文件
-    if (!m_symbolExporter.exportSymbol(*status.symbolData, tempFilePath)) {
-        status.addDebugLog(QString("ERROR: Failed to write symbol file: %1").arg(tempFilePath));
-        QFile::remove(tempFilePath);  // 清理临时文件
-        return false;  // 导出器报告失败
-    }
+    bool success = AtomicFileWriter::writeAtomically(
+        m_tempDir, finalFilePath, ".kicad_sym.tmp", [this, &status](const QString& tempPath) -> bool {
+            return m_symbolExporter.exportSymbol(*status.symbolData, tempPath);
+        });
 
-    // 验证临时文件是否真的被写入
-    if (!QFile::exists(tempFilePath)) {
-        status.addDebugLog(QString("ERROR: Symbol file not found after export: %1").arg(tempFilePath));
-        return false;  // 文件未找到，视为失败
-    }
-
-    // 使用互斥锁保护文件删除和重命名操作，防止并发竞态条件
-    {
-        QMutexLocker locker(&s_fileWriteMutex);
-
-        // 删除旧文件（如果存在）
-        if (QFile::exists(finalFilePath)) {
-            if (!QFile::remove(finalFilePath)) {
-                status.addDebugLog(QString("WARNING: Failed to remove old symbol file: %1").arg(finalFilePath));
-                // 继续尝试重命名，可能操作系统会处理
-            }
-        }
-
-        // 原子性地重命名临时文件到最终文件
-        if (!QFile::rename(tempFilePath, finalFilePath)) {
-            status.addDebugLog(
-                QString("ERROR: Failed to rename symbol file: %1 -> %2").arg(tempFilePath, finalFilePath));
-            QFile::remove(tempFilePath);  // 清理临时文件
-            return false;
-        }
-    }
-
-    // 验证最终文件是否存在
-    if (QFile::exists(finalFilePath)) {
+    if (success) {
         status.addDebugLog(QString("Symbol file written atomically: %1").arg(finalFilePath));
         status.symbolWritten = true;
         return true;
     } else {
-        status.addDebugLog(QString("ERROR: Final symbol file not found after rename: %1").arg(finalFilePath));
+        status.addDebugLog(QString("ERROR: Failed to write symbol file"));
         return false;
     }
 }
 
 bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     if (!status.footprintData) {
-        return true;  // 没有数据可写，不应视为失败
+        return true;
     }
 
-    // 1. 检查临时目录是否存在
     if (!QDir(m_tempDir).exists()) {
         status.addDebugLog(QString("ERROR: Temp directory does not exist: %1").arg(m_tempDir));
         return false;
     }
-    // 2. 检查路径安全性
     if (!PathSecurity::isSafePath(m_tempDir, m_outputPath)) {
         status.addDebugLog(QString("SECURITY ERROR: Temp dir outside output path: %1").arg(m_tempDir));
         return false;
@@ -260,7 +218,6 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
 
     QString modelsDirPath = QString("%1/%2.3dmodels").arg(m_outputPath, m_libName);
     if (m_exportModel3D) {
-        // 确保3D模型目录存在，但它的创建失败不直接导致封装写入失败
         if (!createOutputDirectory(modelsDirPath)) {
             status.addDebugLog(QString("WARNING: Failed to create 3D models directory: %1").arg(modelsDirPath));
         }
@@ -269,93 +226,49 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     QString footprintName = PathSecurity::sanitizeFilename(status.footprintData->info().name);
     QString filePath = QString("%1/%2.kicad_mod").arg(footprintLibPath, footprintName);
 
-    // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
-    qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
-    qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
-    // 使用统一的临时文件夹
-    QString tempFilePath =
-        QString("%1/%2_%3_%4.kicad_mod.tmp").arg(m_tempDir, footprintName).arg(threadId).arg(timestamp);
-
     QString model3DWrlPath;
     QString model3DStepPath;
     if (m_exportModel3D && status.model3DData && !status.model3DData->uuid().isEmpty()) {
-        // 始终使用封装名作为 3D 模型的文件名和引用路径，以确保与 write3DModelFile 写入磁盘的命名一致
         model3DWrlPath = QString("../%1.3dmodels/%2.wrl").arg(m_libName, footprintName);
         if (!status.model3DStepRaw.isEmpty()) {
             model3DStepPath = QString("../%1.3dmodels/%2.step").arg(m_libName, footprintName);
         }
     }
 
-    // 先写入临时文件
-    bool exportSuccess = false;
-    if (!model3DStepPath.isEmpty()) {
-        // 有 WRL 和 STEP 两个模型，调用双参数版本
-        exportSuccess =
-            m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath, model3DStepPath);
-    } else if (!model3DWrlPath.isEmpty()) {
-        // 只有 WRL 模型，调用单参数版本
-        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath, model3DWrlPath);
-    } else {
-        // 没有 3D 模型，调用无参数版本
-        exportSuccess = m_footprintExporter.exportFootprint(*status.footprintData, tempFilePath);
-    }
-
-    if (!exportSuccess) {
-        status.addDebugLog(QString("ERROR: Failed to write footprint file (exporter): %1").arg(tempFilePath));
-        QFile::remove(tempFilePath);  // 清理临时文件
-        return false;  // 导出器报告失败
-    }
-
-    // 验证临时文件是否真的被写入
-    if (!QFile::exists(tempFilePath)) {
-        status.addDebugLog(QString("ERROR: Footprint file not found after export: %1").arg(tempFilePath));
-        return false;  // 文件未找到，视为失败
-    }
-
-    // 使用互斥锁保护文件删除和重命名操作，防止并发竞态条件
-    {
-        QMutexLocker locker(&s_fileWriteMutex);
-
-        // 删除旧文件（如果存在）
-        if (QFile::exists(filePath)) {
-            if (!QFile::remove(filePath)) {
-                status.addDebugLog(QString("WARNING: Failed to remove old footprint file: %1").arg(filePath));
-                // 继续尝试重命名
+    bool success = AtomicFileWriter::writeAtomically(
+        m_tempDir,
+        filePath,
+        ".kicad_mod.tmp",
+        [this, &status, &model3DWrlPath, &model3DStepPath](const QString& tempPath) -> bool {
+            if (!model3DStepPath.isEmpty()) {
+                return m_footprintExporter.exportFootprint(
+                    *status.footprintData, tempPath, model3DWrlPath, model3DStepPath);
+            } else if (!model3DWrlPath.isEmpty()) {
+                return m_footprintExporter.exportFootprint(*status.footprintData, tempPath, model3DWrlPath);
+            } else {
+                return m_footprintExporter.exportFootprint(*status.footprintData, tempPath);
             }
-        }
+        });
 
-        // 原子性地重命名临时文件到最终文件
-        if (!QFile::rename(tempFilePath, filePath)) {
-            status.addDebugLog(QString("ERROR: Failed to rename footprint file: %1 -> %2").arg(tempFilePath, filePath));
-            QFile::remove(tempFilePath);  // 清理临时文件
-            return false;
-        }
-    }
-
-    // 验证最终文件是否存在
-    if (QFile::exists(filePath)) {
+    if (success) {
         status.addDebugLog(QString("Footprint file written atomically: %1").arg(filePath));
         status.footprintWritten = true;
         return true;
     } else {
-        status.addDebugLog(QString("ERROR: Final footprint file not found after rename: %1").arg(filePath));
+        status.addDebugLog(QString("ERROR: Failed to write footprint file"));
         return false;
     }
 }
 
 bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
-    // 注意：model3DObjRaw 可能在 Process 阶段被 clearIntermediateData 清理
-    // 所以必须检查 model3DData 对象中的 rawObj 字符串
     if (!status.model3DData || status.model3DData->rawObj().isEmpty()) {
-        return true;  // 没有 WRL 数据可写，不应视为失败 (如果只请求 STEP，则应在ProcessWorker中处理)
+        return true;
     }
 
-    // 1. 检查临时目录是否存在
     if (!QDir(m_tempDir).exists()) {
         status.addDebugLog(QString("ERROR: Temp directory does not exist: %1").arg(m_tempDir));
         return false;
     }
-    // 2. 检查路径安全性（仅对临时目录路径检查）
     if (!PathSecurity::isSafePath(m_tempDir, m_outputPath)) {
         status.addDebugLog(
             QString("SECURITY ERROR: Temp dir %1 is outside output path %2").arg(m_tempDir, m_outputPath));
@@ -372,90 +285,37 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     footprintName = PathSecurity::sanitizeFilename(footprintName);
 
     bool wrlSuccess = false;
-    bool stepSuccess = false;
 
-    // 导出 WRL 文件（使用 Write-Temp-Move 模式）
     QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
+    wrlSuccess = AtomicFileWriter::writeAtomically(
+        m_tempDir, wrlFilePath, ".wrl.tmp", [this, &status](const QString& tempPath) -> bool {
+            return m_model3DExporter.exportToWrl(*status.model3DData, tempPath);
+        });
 
-    // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
-    qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
-    qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
-    // 使用统一的临时文件夹
-    QString wrlTempFilePath = QString("%1/%2_%3_%4.wrl.tmp").arg(m_tempDir, footprintName).arg(threadId).arg(timestamp);
-
-    wrlSuccess = m_model3DExporter.exportToWrl(*status.model3DData, wrlTempFilePath);
-
-    if (wrlSuccess && QFile::exists(wrlTempFilePath)) {
-        // 使用互斥锁保护文件删除和重命名操作
-        QMutexLocker locker(&s_fileWriteMutex);
-
-        // 删除旧文件（如果存在）
-        if (QFile::exists(wrlFilePath) && !QFile::remove(wrlFilePath)) {
-            status.addDebugLog(QString("WARNING: Failed to remove old WRL file: %1").arg(wrlFilePath));
-        }
-        // 原子性地重命名
-        if (QFile::rename(wrlTempFilePath, wrlFilePath)) {
-            status.addDebugLog(QString("3D model WRL file written atomically: %1").arg(wrlFilePath));
-        } else {
-            status.addDebugLog(QString("ERROR: Failed to rename WRL file: %1 -> %2").arg(wrlTempFilePath, wrlFilePath));
-            QFile::remove(wrlTempFilePath);
-            wrlSuccess = false;
-        }
-    } else if (wrlSuccess) {
-        status.addDebugLog(QString("ERROR: WRL file not found after export: %1").arg(wrlTempFilePath));
-        wrlSuccess = false;
+    if (wrlSuccess) {
+        status.addDebugLog(QString("3D model WRL file written atomically: %1").arg(wrlFilePath));
     } else {
-        status.addDebugLog(QString("ERROR: Failed to write WRL file: %1").arg(wrlTempFilePath));
-        QFile::remove(wrlTempFilePath);
+        status.addDebugLog(QString("ERROR: Failed to write WRL file"));
     }
 
-    // 导出 STEP 文件（如果有，使用 Write-Temp-Move 模式）
     if (!status.model3DStepRaw.isEmpty()) {
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
-
-        // 使用线程ID和当前时间生成唯一的临时文件名，避免并发冲突
-        qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
-        qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
-        // 使用统一的临时文件夹
-        QString stepTempFilePath =
-            QString("%1/%2_%3_%4.step.tmp").arg(m_tempDir, footprintName).arg(threadId).arg(timestamp);
-
-        QFile stepFile(stepTempFilePath);
-        if (stepFile.open(QIODevice::WriteOnly)) {
-            stepFile.write(status.model3DStepRaw);
-            stepFile.close();
-
-            if (QFile::exists(stepTempFilePath)) {
-                // 使用互斥锁保护文件删除和重命名操作
-                QMutexLocker locker(&s_fileWriteMutex);
-
-                // 删除旧文件（如果存在）
-                if (QFile::exists(stepFilePath) && !QFile::remove(stepFilePath)) {
-                    status.addDebugLog(QString("WARNING: Failed to remove old STEP file: %1").arg(stepFilePath));
+        AtomicFileWriter::writeAtomically(
+            m_tempDir, stepFilePath, ".step.tmp", [&status](const QString& tempPath) -> bool {
+                QFile file(tempPath);
+                if (!file.open(QIODevice::WriteOnly)) {
+                    return false;
                 }
-                // 原子性地重命名
-                if (QFile::rename(stepTempFilePath, stepFilePath)) {
-                    status.addDebugLog(QString("3D model STEP file written atomically: %1").arg(stepFilePath));
-                    stepSuccess = true;
-                } else {
-                    status.addDebugLog(
-                        QString("ERROR: Failed to rename STEP file: %1 -> %2").arg(stepTempFilePath, stepFilePath));
-                    QFile::remove(stepTempFilePath);
-                }
-            }
-        } else {
-            status.addDebugLog(QString("ERROR: Failed to write STEP file: %1").arg(stepTempFilePath));
-            // STEP 文件失败不影响整体 3D 模型成功
-        }
+                qint64 written = file.write(status.model3DStepRaw);
+                file.close();
+                return written == status.model3DStepRaw.size();
+            });
 
-        // 内存优化：写入完成后立即清理 STEP 数据
+        status.addDebugLog(QString("3D model STEP file written"));
         status.clearStepData();
     }
 
-    // 只有在 WRL 文件成功导出且存在时才设置 model3DWritten 标志
     status.model3DWritten = wrlSuccess;
-
-    // 整个3D模型导出成功，取决于 WRL 是否成功。STEP 失败不影响此结果。
     return wrlSuccess;
 }
 
