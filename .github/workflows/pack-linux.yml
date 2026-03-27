@@ -841,6 +841,7 @@ jobs:
               -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
               -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
               -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$(pwd)/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
+              -e "s|deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|$(pwd)/deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|g" \
               deploy/nfpm.yaml > nfpm_temp.yaml
 
           # 确保 AppDir 中所有二进制文件有执行权限（解决 root 用户创建文件的问题）
@@ -926,6 +927,7 @@ jobs:
               -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
               -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
               -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$(pwd)/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
+              -e "s|deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|$(pwd)/deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|g" \
               deploy/nfpm.yaml > nfpm_temp.yaml
 
           # 确保 AppDir 中所有二进制文件有执行权限
@@ -1006,6 +1008,7 @@ jobs:
               -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
               -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
               -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$(pwd)/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
+              -e "s|deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|$(pwd)/deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|g" \
               deploy/nfpm.yaml > nfpm_temp.yaml
 
           # 确保 AppDir 中所有二进制文件有执行权限

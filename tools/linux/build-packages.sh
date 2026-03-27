@@ -397,6 +397,12 @@ export APPIMAGE_PATH="$APPIMAGE"
 
 # 自动安装 desktop 文件和图标到用户目录（支持路径检测和更新）
 install_desktop_file() {
+    # 只有在 AppImage 模式下才安装 desktop 文件到用户目录
+    # DEB/RPM 包使用系统目录 /usr/share/applications/ 中的 desktop 文件
+    if [ -z "$APPIMAGE" ]; then
+        return 0
+    fi
+    
     # 创建用户目录
     mkdir -p "$USER_DESKTOP_DIR"
     
@@ -622,6 +628,7 @@ build_deb() {
         -e "s|deploy/scripts/easykiconverter-register.desktop|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.desktop|g" \
         -e "s|deploy/scripts/trigger-gnome-refresh.sh|$PROJECT_ROOT/deploy/scripts/trigger-gnome-refresh.sh|g" \
         -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$PROJECT_ROOT/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
+        -e "s|deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|$PROJECT_ROOT/deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|g" \
         "$PROJECT_ROOT/deploy/nfpm.yaml" > "$temp_nfpm_config"
     
     # 运行 nfpm 构建（必须指定 --packager）

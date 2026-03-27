@@ -82,24 +82,34 @@ refresh_gnome_cache() {
 
 remove_user_data() {
     log_info "删除用户数据..."
-    safe_remove_dir "$USER_DATA_DIR"
+    getent passwd | awk -F: '$3 >= 1000 {print $1, $6}' | while read -r user home; do
+        [ -z "$user" ] || [ -z "$home" ] || [ ! -d "$home" ] && continue
+        safe_remove_dir "$home/.local/share/EasyKiConverter"
+    done
 }
 
 remove_user_config() {
     log_info "删除用户配置..."
-    safe_remove_dir "$USER_CONFIG_DIR"
+    getent passwd | awk -F: '$3 >= 1000 {print $1, $6}' | while read -r user home; do
+        [ -z "$user" ] || [ -z "$home" ] || [ ! -d "$home" ] && continue
+        safe_remove_dir "$home/.config/EasyKiConverter"
+        safe_remove_dir "$home/.config/easykiconverter-registered"
+    done
 }
 
 remove_flatpak_user_data() {
     log_info "删除 Flatpak 用户数据..."
-    safe_remove_dir "$FLATPAK_USER_DATA_DIR"
-    safe_remove_dir "${HOME}/.local/share/flatpak/repo/refs/heads/deploy/app/${APP_ID}"
-    safe_remove_dir "${HOME}/.local/share/flatpak/repo/refs/heads/deploy/runtime/${APP_ID}.Debug"
-    safe_remove_dir "${HOME}/.local/share/flatpak/repo/refs/remotes/easykiconverter-origin"
-    safe_remove_dir "${HOME}/.local/share/flatpak/repo/refs/remotes/easykiconverter1-origin"
-    safe_remove_dir "${HOME}/.local/share/flatpak/repo/refs/remotes/debug-origin"
-    safe_remove_dir "${HOME}/.local/share/flatpak/repo/refs/remotes/local-repo"
-    safe_remove_dir "${HOME}/.local/share/flatpak/repo/refs/remotes/local-repo-local"
+    getent passwd | awk -F: '$3 >= 1000 {print $1, $6}' | while read -r user home; do
+        [ -z "$user" ] || [ -z "$home" ] || [ ! -d "$home" ] && continue
+        safe_remove_dir "$home/.var/app/${APP_ID}"
+        safe_remove_dir "$home/.local/share/flatpak/repo/refs/heads/deploy/app/${APP_ID}"
+        safe_remove_dir "$home/.local/share/flatpak/repo/refs/heads/deploy/runtime/${APP_ID}.Debug"
+        safe_remove_dir "$home/.local/share/flatpak/repo/refs/remotes/easykiconverter-origin"
+        safe_remove_dir "$home/.local/share/flatpak/repo/refs/remotes/easykiconverter1-origin"
+        safe_remove_dir "$home/.local/share/flatpak/repo/refs/remotes/debug-origin"
+        safe_remove_dir "$home/.local/share/flatpak/repo/refs/remotes/local-repo"
+        safe_remove_dir "$home/.local/share/flatpak/repo/refs/remotes/local-repo-local"
+    done
 }
 
 purge_dpkg_metadata() {
