@@ -29,6 +29,8 @@ project(EasyKiconverter_Cpp_Version VERSION ${PROJECT_VERSION_SANITIZED} LANGUAG
 # 生成 compile_commands.json 用于 VS Code IntelliSense
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# 抑制 Qt 私有头文件警告（QXlsx 使用 QtGuiPrivate，需要此设置）
+set(QT_NO_PRIVATE_MODULE_WARNING ON CACHE BOOL "" FORCE)
 
 # 显式设置版本号变量，确保 configure_file 能正确替换
 # 如果补丁号未定义或为空，默认设置为 0
