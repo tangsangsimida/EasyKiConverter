@@ -5,6 +5,7 @@
 
 #include <QDebug>
 #include <QFile>
+#include <QRegularExpression>
 #include <QTextStream>
 
 namespace EasyKiConverter {
@@ -124,6 +125,14 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                     symbolStart = i;
                     braceCount = 1;
                     parentSymbolDepth = 0;
+
+                    // Count any additional ( on the same line after the symbol name
+                    // The symbol line may contain additional ( like (in_bom yes) (on_board yes)
+                    for (int j = nameEnd + 1; j < line.length(); ++j) {
+                        if (line[j] == '(') {
+                            braceCount++;
+                        }
+                    }
                 }
             }
         } else if (symbolStart >= 0) {
@@ -141,17 +150,46 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                 }
             }
 
-            // 当括号数量归零时，符号定义结
+            // 当括号数量归零时，符号定义可能结束
             if (braceCount == 0) {
-                // 只保存顶层符号，不保存子符号
+                // KiCad 重写格式会在同一行包含多个子符号，如: `    )    (symbol "xxx_2_1"`
+                // 检查当前行是否以 `)  (symbol "` 模式结束（括号后跟着新符号定义）
+                // 如果是，说明这不是符号的真正结束，需要继续处理
+                QString trimmedLine = line.trimmed();
+                QRegularExpression symbolRestartPattern(R"(^\)\s*\(symbol\s+"[^"]+")");
+                QRegularExpressionMatch match = symbolRestartPattern.match(trimmedLine);
+
+                if (match.hasMatch()) {
+                    // 当前行以 `) (symbol "` 结尾，说明还有更多子符号，不要结束
+                    qDebug() << "Symbol continues on same line, not ending yet:" << currentSymbolName;
+                    continue;
+                }
+
+                // 验证保存的内容括号是否平衡
                 QString symbolContent;
                 for (int k = symbolStart; k <= i; ++k) {
                     symbolContent += lines[k] + "\n";
                 }
+
+                int leftCount = 0;
+                int rightCount = 0;
+                for (const QChar& ch : symbolContent) {
+                    if (ch == '(')
+                        leftCount++;
+                    else if (ch == ')')
+                        rightCount++;
+                }
+
+                if (leftCount != rightCount) {
+                    qWarning() << "Unbalanced parentheses in symbol content:" << currentSymbolName
+                               << "left:" << leftCount << "right:" << rightCount << "at lines" << symbolStart << "-"
+                               << i;
+                }
+
                 existingSymbols[currentSymbolName] = symbolContent;
                 qDebug() << "Found existing symbol:" << currentSymbolName << "at lines" << symbolStart << "-" << i;
 
-                // 重置状
+                // 重置状态
                 symbolStart = -1;
                 currentSymbolName.clear();
                 parentSymbolDepth = 0;
@@ -251,11 +289,17 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                          << "(parent:" << parentSymbolName << ")";
             }
         } else {
-            // 这是一个单体符号，查找其子符号（格式：{parentName}_0_1）
-            QString expectedSubSymbolName = parentSymbolName + "_0_1";
-            if (subSymbolNames.contains(expectedSubSymbolName)) {
-                subSymbolsToDelete.insert(expectedSubSymbolName);
-                qDebug() << "Marking sub-symbol for deletion (single part):" << expectedSubSymbolName
+            // 这是一个单体符号，查找其子符号
+            // KiCad 使用 _1_1 格式，旧版本 exporter 使用 _0_1 格式
+            QString expectedSubSymbolName_v1 = parentSymbolName + "_0_1";
+            QString expectedSubSymbolName_v2 = parentSymbolName + "_1_1";
+            if (subSymbolNames.contains(expectedSubSymbolName_v1)) {
+                subSymbolsToDelete.insert(expectedSubSymbolName_v1);
+                qDebug() << "Marking sub-symbol for deletion (single part v1):" << expectedSubSymbolName_v1
+                         << "(parent:" << parentSymbolName << ")";
+            } else if (subSymbolNames.contains(expectedSubSymbolName_v2)) {
+                subSymbolsToDelete.insert(expectedSubSymbolName_v2);
+                qDebug() << "Marking sub-symbol for deletion (single part v2):" << expectedSubSymbolName_v2
                          << "(parent:" << parentSymbolName << ")";
             }
         }
