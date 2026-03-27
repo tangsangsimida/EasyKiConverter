@@ -9,7 +9,7 @@
 
 namespace EasyKiConverter {
 
-ExporterSymbol::ExporterSymbol(QObject* parent) : QObject(parent) {}
+ExporterSymbol::ExporterSymbol() {}
 
 ExporterSymbol::~ExporterSymbol() {}
 

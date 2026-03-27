@@ -6,7 +6,6 @@
 #include "models/Model3DData.h"
 
 #include <QJsonObject>
-#include <QObject>
 #include <QString>
 #include <QTextStream>
 
@@ -17,21 +16,11 @@ namespace EasyKiConverter {
  *
  * 用于EasyEDA 封装数据导出KiCad 封装格式
  */
-class ExporterFootprint : public QObject {
-    Q_OBJECT
-
+class ExporterFootprint {
 public:
-    /**
-     * @brief 构造函数
-         *
-     * @param parent 父对象
-         */
-    explicit ExporterFootprint(QObject* parent = nullptr);
+    ExporterFootprint();
 
-    /**
-     * @brief 析构函数
-     */
-    ~ExporterFootprint() override;
+    ~ExporterFootprint();
 
     /**
      * @brief 导出封装库KiCad 格式（单D模型

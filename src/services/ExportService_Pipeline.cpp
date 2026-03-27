@@ -55,7 +55,7 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     m_writeThreadPool->setMaxThreadCount(3);  // 磁盘 I/O 密集型
 
     // 初始化处理器
-    m_fetchHandler = new FetchStageHandler(m_isCancelled, m_networkAccessManager, m_fetchThreadPool, this);
+    m_fetchHandler = new FetchStageHandler(m_isCancelled, m_fetchThreadPool, this);
     m_processHandler = new ProcessStageHandler(m_isCancelled, m_processThreadPool, nullptr, this);
     m_writeHandler = new WriteStageHandler(m_isCancelled, m_writeThreadPool, nullptr, m_options, QString(), this);
 

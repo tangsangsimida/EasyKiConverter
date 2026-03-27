@@ -10,7 +10,7 @@
 
 namespace EasyKiConverter {
 
-ExporterFootprint::ExporterFootprint(QObject* parent) : QObject(parent) {}
+ExporterFootprint::ExporterFootprint() {}
 
 ExporterFootprint::~ExporterFootprint() {}
 
