@@ -1,5 +1,5 @@
-#ifndef ATOMICFILEWRITER_H
-#define ATOMICFILEWRITER_H
+#ifndef ATOMIC_FILE_WRITER_H
+#define ATOMIC_FILE_WRITER_H
 
 #include <QDir>
 #include <QFile>
@@ -37,4 +37,4 @@ private:
 
 }  // namespace EasyKiConverter
 
-#endif  // ATOMICFILEWRITER_H
+#endif  // ATOMIC_FILE_WRITER_H

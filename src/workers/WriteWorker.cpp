@@ -300,7 +300,7 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
 
     if (!status.model3DStepRaw.isEmpty()) {
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
-        AtomicFileWriter::writeAtomically(
+        bool stepWriteSuccess = AtomicFileWriter::writeAtomically(
             m_tempDir, stepFilePath, ".step.tmp", [&status](const QString& tempPath) -> bool {
                 QFile file(tempPath);
                 if (!file.open(QIODevice::WriteOnly)) {
@@ -311,7 +311,11 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
                 return written == status.model3DStepRaw.size();
             });
 
-        status.addDebugLog(QString("3D model STEP file written"));
+        if (stepWriteSuccess) {
+            status.addDebugLog(QString("3D model STEP file written"));
+        } else {
+            status.addDebugLog(QString("WARNING: Failed to write STEP file: %1").arg(stepFilePath));
+        }
         status.clearStepData();
     }
 
