@@ -723,13 +723,12 @@ void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QSt
     // 如果在并行模式下，尝试解析 UUID 为组件 ID
     if (m_parallelContext != nullptr) {
         QMutexLocker locker(&m_fetchingComponentsMutex);
-        if (!m_fetchingComponents.contains(idOrUuid)) {
-            for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
-                if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == idOrUuid) {
-                    componentId = it.key();
-                    qDebug() << "Resolved UUID" << idOrUuid << "to component ID" << componentId;
-                    break;
-                }
+        // 遍历查找匹配的 UUID
+        for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
+            if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == idOrUuid) {
+                componentId = it.key();
+                qDebug() << "Resolved UUID" << idOrUuid << "to component ID" << componentId;
+                break;
             }
         }
     }

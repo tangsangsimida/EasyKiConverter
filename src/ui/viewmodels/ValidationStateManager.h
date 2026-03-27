@@ -34,6 +34,7 @@ private:
 private:
     int m_pendingValidationCount;
     QStringList m_validatedComponentIds;
+    QStringList m_failedComponentIds;
     bool m_previewFetchEnabled;
 };
 

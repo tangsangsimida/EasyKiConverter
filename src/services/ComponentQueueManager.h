@@ -40,7 +40,6 @@ private slots:
 private:
     QStringList m_requestQueue;
     QSet<QString> m_pendingComponents;
-    int m_activeRequestCount;
     int m_maxConcurrentRequests;
     QTimer* m_checkTimer;
     QTimer* m_totalTimer;

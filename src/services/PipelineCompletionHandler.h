@@ -4,6 +4,7 @@
 #include "ExportService.h"
 
 #include <QObject>
+#include <QRegularExpression>
 #include <QString>
 
 namespace EasyKiConverter {
@@ -34,6 +35,7 @@ private:
                                    const QString& outputPath,
                                    const QString& componentName,
                                    const QString& format);
+    static const QRegularExpression INVALID_FILENAME_CHARS;
 };
 
 }  // namespace EasyKiConverter

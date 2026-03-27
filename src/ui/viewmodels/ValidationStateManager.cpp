@@ -18,7 +18,9 @@ void ValidationStateManager::startValidation(int count) {
 }
 
 void ValidationStateManager::onComponentValidated(const QString& componentId) {
-    m_pendingValidationCount--;
+    if (m_pendingValidationCount > 0) {
+        m_pendingValidationCount--;
+    }
     if (!m_validatedComponentIds.contains(componentId)) {
         m_validatedComponentIds.append(componentId);
     }
@@ -27,8 +29,12 @@ void ValidationStateManager::onComponentValidated(const QString& componentId) {
 }
 
 void ValidationStateManager::onComponentFailed(const QString& componentId) {
-    Q_UNUSED(componentId);
-    m_pendingValidationCount--;
+    if (m_pendingValidationCount > 0) {
+        m_pendingValidationCount--;
+    }
+    if (!m_failedComponentIds.contains(componentId)) {
+        m_failedComponentIds.append(componentId);
+    }
     emit validationStateChanged(m_pendingValidationCount);
     checkAndNotifyCompletion();
 }
@@ -36,6 +42,7 @@ void ValidationStateManager::onComponentFailed(const QString& componentId) {
 void ValidationStateManager::reset() {
     m_pendingValidationCount = 0;
     m_validatedComponentIds.clear();
+    m_failedComponentIds.clear();
     m_previewFetchEnabled = false;
     emit validationStateChanged(m_pendingValidationCount);
 }

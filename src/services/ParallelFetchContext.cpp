@@ -56,6 +56,7 @@ QList<ComponentData> ParallelFetchContext::collectedData() const {
 }
 
 void ParallelFetchContext::checkCompletion() {
+    QMutexLocker locker(&m_mutex);
     if (m_completedCount >= m_totalCount && !m_isAllDone) {
         m_isAllDone = true;
         QList<ComponentData> data;

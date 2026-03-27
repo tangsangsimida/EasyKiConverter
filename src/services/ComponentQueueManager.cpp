@@ -6,7 +6,6 @@ namespace EasyKiConverter {
 
 ComponentQueueManager::ComponentQueueManager(int maxConcurrent, QObject* parent)
     : QObject(parent)
-    , m_activeRequestCount(0)
     , m_maxConcurrentRequests(maxConcurrent)
     , m_checkTimer(new QTimer(this))
     , m_totalTimer(new QTimer(this))
@@ -35,7 +34,6 @@ void ComponentQueueManager::start(const QStringList& componentIds) {
 
     m_requestQueue = componentIds;
     m_pendingComponents.clear();
-    m_activeRequestCount = 0;
     m_isRunning = true;
 
     m_totalTimer->start();
@@ -56,7 +54,6 @@ void ComponentQueueManager::stop() {
 
     m_requestQueue.clear();
     m_pendingComponents.clear();
-    m_activeRequestCount = 0;
     m_isRunning = false;
 }
 
@@ -97,7 +94,7 @@ void ComponentQueueManager::reset() {
 }
 
 int ComponentQueueManager::activeRequestCount() const {
-    return m_activeRequestCount;
+    return m_pendingComponents.size();
 }
 
 bool ComponentQueueManager::isRunning() const {

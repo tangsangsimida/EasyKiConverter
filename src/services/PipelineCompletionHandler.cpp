@@ -9,6 +9,8 @@
 
 namespace EasyKiConverter {
 
+const QRegularExpression PipelineCompletionHandler::INVALID_FILENAME_CHARS("[<>:\"/\\\\|?*]");
+
 PipelineCompletionHandler::PipelineCompletionHandler(QObject* parent) : QObject(parent) {}
 
 PipelineCompletionHandler::~PipelineCompletionHandler() = default;
@@ -67,18 +69,17 @@ void PipelineCompletionHandler::exportDatasheets(const QMap<QString, QSharedPoin
 bool PipelineCompletionHandler::exportPreviewImagesFromMemory(const QList<QByteArray>& imageDataList,
                                                               const QString& outputPath,
                                                               const QString& componentName) {
-    QString imagesDir = outputPath + "/images";
-    QDir dir;
-    if (!dir.exists(imagesDir)) {
-        if (!dir.mkpath(imagesDir)) {
+    QDir outputDir(outputPath);
+    QString imagesDir = outputDir.filePath("images");
+    if (!outputDir.exists(imagesDir)) {
+        if (!outputDir.mkpath(imagesDir)) {
             qWarning() << "Failed to create images directory:" << imagesDir;
             return false;
         }
     }
 
     QString safeName = componentName;
-    QRegularExpression invalidChars("[<>:\"/\\\\|?*]");
-    safeName.replace(invalidChars, "_");
+    safeName.replace(INVALID_FILENAME_CHARS, "_");
 
     bool allSuccess = true;
     int exportedCount = 0;
@@ -89,7 +90,7 @@ bool PipelineCompletionHandler::exportPreviewImagesFromMemory(const QList<QByteA
         }
 
         QString filename = QString("%1_%2.jpg").arg(safeName).arg(i);
-        QString filePath = imagesDir + "/" + filename;
+        QString filePath = QDir(imagesDir).filePath(filename);
 
         QFile file(filePath);
         if (file.open(QIODevice::WriteOnly)) {
@@ -108,18 +109,17 @@ bool PipelineCompletionHandler::exportDatasheetFromMemory(const QByteArray& data
                                                           const QString& outputPath,
                                                           const QString& componentName,
                                                           const QString& format) {
-    QString datasheetsDir = outputPath + "/datasheets";
-    QDir dir;
-    if (!dir.exists(datasheetsDir)) {
-        if (!dir.mkpath(datasheetsDir)) {
+    QDir outputDir(outputPath);
+    QString datasheetsDir = outputDir.filePath("datasheets");
+    if (!outputDir.exists(datasheetsDir)) {
+        if (!outputDir.mkpath(datasheetsDir)) {
             qWarning() << "Failed to create datasheets directory:" << datasheetsDir;
             return false;
         }
     }
 
     QString safeName = componentName;
-    QRegularExpression invalidChars("[<>:\"/\\\\|?*]");
-    safeName.replace(invalidChars, "_");
+    safeName.replace(INVALID_FILENAME_CHARS, "_");
 
     QString extension = format.toLower();
     if (extension != "html") {
@@ -127,7 +127,7 @@ bool PipelineCompletionHandler::exportDatasheetFromMemory(const QByteArray& data
     }
 
     QString filename = QString("%1.%2").arg(safeName).arg(extension);
-    QString filePath = datasheetsDir + "/" + filename;
+    QString filePath = QDir(datasheetsDir).filePath(filename);
 
     QFile file(filePath);
     if (file.open(QIODevice::WriteOnly)) {
