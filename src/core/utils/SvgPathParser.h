@@ -89,6 +89,16 @@ private:
      * @return double 角度（弧度）
      */
     static double getAngle(double x1, double y1, double x2, double y2);
+
+    static QList<QPointF> bezierToPolyline(double startX,
+                                           double startY,
+                                           double cp1X,
+                                           double cp1Y,
+                                           double cp2X,
+                                           double cp2Y,
+                                           double endX,
+                                           double endY,
+                                           int segments = 16);
 };
 
 }  // namespace EasyKiConverter
