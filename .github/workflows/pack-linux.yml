@@ -827,6 +827,7 @@ jobs:
           cp deploy/scripts/postinstall.sh scripts/postinstall.sh
           cp deploy/scripts/prerm.sh scripts/preremove.sh
           cp deploy/scripts/postrm.sh scripts/postrm.sh
+          cp deploy/scripts/uninstall-common.sh scripts/uninstall-common.sh
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
@@ -834,6 +835,7 @@ jobs:
               -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
               -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
               -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
+              -e "s|deploy/scripts/uninstall-common.sh|$(pwd)/deploy/scripts/uninstall-common.sh|g" \
               -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
               -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
               -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
@@ -910,6 +912,7 @@ jobs:
           cp deploy/scripts/postinstall.sh scripts/postinstall.sh
           cp deploy/scripts/prerm.sh scripts/preremove.sh
           cp deploy/scripts/postrm.sh scripts/postrm.sh
+          cp deploy/scripts/uninstall-common.sh scripts/uninstall-common.sh
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
@@ -917,6 +920,7 @@ jobs:
               -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
               -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
               -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
+              -e "s|deploy/scripts/uninstall-common.sh|$(pwd)/deploy/scripts/uninstall-common.sh|g" \
               -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
               -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
               -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
@@ -988,6 +992,7 @@ jobs:
           cp deploy/scripts/postinstall.sh scripts/postinstall.sh
           cp deploy/scripts/prerm.sh scripts/preremove.sh
           cp deploy/scripts/postrm.sh scripts/postrm.sh
+          cp deploy/scripts/uninstall-common.sh scripts/uninstall-common.sh
           chmod +x scripts/*.sh
 
           # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
@@ -995,6 +1000,7 @@ jobs:
               -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
               -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
               -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
+              -e "s|deploy/scripts/uninstall-common.sh|$(pwd)/deploy/scripts/uninstall-common.sh|g" \
               -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
               -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
               -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
