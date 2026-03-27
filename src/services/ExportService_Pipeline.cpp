@@ -1,5 +1,6 @@
 #include "ExportService_Pipeline.h"
 
+#include "MemoryMonitor.h"
 #include "pipeline/cleanup/PipelineCleanup.h"
 #include "pipeline/stats/PipelineStatistics.h"
 #include "ui/viewmodels/ComponentListViewModel.h"
@@ -22,21 +23,6 @@
 #include <QTimer>
 
 #include <algorithm>
-
-#if defined(Q_OS_WIN) || defined(_WIN32)
-#    define PSAPI_VERSION 1
-#    if defined(_MSC_VER)
-#        include <qt_windows.h>
-
-#        include <psapi.h>
-#        pragma comment(lib, "psapi.lib")
-#    elif defined(__MINGW32__) || defined(__MINGW64__)
-#        include <qt_windows.h>
-
-#        include <psapi.h>
-#        pragma comment(lib, "psapi")
-#    endif
-#endif
 
 namespace EasyKiConverter {
 
@@ -705,67 +691,10 @@ bool ExportServicePipeline::mergeSymbolLibrary() {
     return success;
 }
 
-qint64 ExportServicePipeline::getCurrentProcessMemoryUsage() {
-#ifdef Q_OS_LINUX
-    QFile file("/proc/self/status");
-    if (!file.open(QIODevice::ReadOnly)) {
-        qWarning() << "Failed to open /proc/self/status:" << file.errorString();
-        return 0;
-    }
-    QByteArray content = file.readAll();
-    file.close();
-
-    QList<QByteArray> lines = content.split('\n');
-    for (const QByteArray& line : lines) {
-        if (line.startsWith("VmRSS:")) {
-            QByteArray value = line.mid(6).trimmed();
-            // 移除单位 "kB" 或 "k"
-            if (value.endsWith("kB") || value.endsWith("kb")) {
-                value = value.left(value.length() - 2);
-            } else if (value.endsWith("k")) {
-                value = value.left(value.length() - 1);
-            }
-            value = value.trimmed();
-            bool ok = false;
-            qint64 rssKb = value.toLongLong(&ok);
-            if (ok) {
-                return rssKb * 1024;
-            } else {
-                qWarning() << "Failed to parse VmRSS value:" << value;
-                return 0;
-            }
-        }
-    }
-    qWarning() << "VmRSS not found in /proc/self/status, content:" << content.left(500);
-    return 0;
-#elif defined(Q_OS_WIN) || defined(_WIN32)
-#    if defined(__MINGW32__) || defined(__MINGW64__)
-    SIZE_T workingSetSize = 0;
-    if (GetProcessWorkingSetSize(GetCurrentProcess(), &workingSetSize, &workingSetSize)) {
-        return static_cast<qint64>(workingSetSize);
-    }
-    MEMORYSTATUSEX memStatus;
-    memStatus.dwLength = sizeof(memStatus);
-    if (GlobalMemoryStatusEx(&memStatus)) {
-        return static_cast<qint64>(memStatus.ullTotalPhys * 0.1);
-    }
-    return 0;
-#    else
-    PROCESS_MEMORY_COUNTERS pmc;
-    if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
-        return static_cast<qint64>(pmc.WorkingSetSize);
-    }
-    qWarning() << "Failed to get process memory info, error:" << GetLastError();
-    return 0;
-#    endif
-#else
-    return 0;
-#endif
-}
-
 void ExportServicePipeline::updateMemoryPeak(const QSharedPointer<ComponentExportStatus>& status) {
     Q_UNUSED(status);
-    qint64 currentMemory = getCurrentProcessMemoryUsage();
+    MemoryMonitor::updatePeak();
+    qint64 currentMemory = MemoryMonitor::getCurrentUsage();
     if (currentMemory > 0) {
         if (m_originalStatistics.peakMemoryUsage == 0) {
             m_originalStatistics.peakMemoryUsage = currentMemory;

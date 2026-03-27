@@ -200,12 +200,6 @@ private:
     bool mergeSymbolLibrary();
 
     /**
-     * @brief 获取当前进程内存使用（字节）
-     * @return qint64 内存使用量
-     */
-    static qint64 getCurrentProcessMemoryUsage();
-
-    /**
      * @brief 更新内存峰值统计
      */
     void updateMemoryPeak(const QSharedPointer<ComponentExportStatus>& status);
