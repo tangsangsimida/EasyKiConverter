@@ -15,8 +15,8 @@
 #        include <psapi.h>
 #        pragma comment(lib, "psapi")
 #    else
-#        include <psapi.h>
 #        include <windows.h>
+#        include <psapi.h>
 #        pragma comment(lib, "psapi")
 #    endif
 // clang-format on
