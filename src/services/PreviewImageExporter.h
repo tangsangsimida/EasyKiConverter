@@ -23,6 +23,8 @@ public:
     bool exportFromCache(const QStringList& imagePaths, const QString& outputPath, const QString& componentName);
 
 signals:
+    // 预留接口：当前为同步导出，暂时不使用这些信号
+    // 将来如需改为非阻塞异步导出，可启用这些信号进行进度/完成通知
     void exportCompleted(int successCount);
     void exportFailed(const QString& error);
 

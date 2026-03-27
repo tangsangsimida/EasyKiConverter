@@ -94,6 +94,7 @@ bool PreviewImageExporter::exportFromCache(const QStringList& imagePaths,
         return true;
     }
 
+    // exportFromCache 只进行文件复制操作，不需要网络管理器
     QString imagesDirPath = QString("%1/%2.preview").arg(outputPath, m_options.libName);
     if (!createPreviewDirectory(imagesDirPath)) {
         qWarning() << "Failed to create preview images directory:" << imagesDirPath;
