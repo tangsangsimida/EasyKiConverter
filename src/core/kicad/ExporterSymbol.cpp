@@ -160,7 +160,6 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                 QRegularExpressionMatch match = symbolRestartPattern.match(trimmedLine);
 
                 if (match.hasMatch()) {
-                    // 当前行以 `) (symbol "` 结尾，说明还有更多子符号，不要结束
                     qDebug() << "Symbol continues on same line, not ending yet:" << currentSymbolName;
                     continue;
                 }
