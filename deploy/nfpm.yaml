@@ -24,8 +24,8 @@ contents:
     file_info:
       mode: 0755
 
-  # 安装 desktop 文件到系统目录（使用实际文件路径，不是符号链接）
-  - src: "${APP_DIR}/usr/share/applications/io.github.tangsangsimida.easykiconverter.desktop"
+  # 安装 desktop 文件到系统目录（使用 deploy/linux 中的正确版本，Exec=easykiconverter）
+  - src: "deploy/linux/io.github.tangsangsimida.easykiconverter.desktop"
     dst: "/usr/share/applications/io.github.tangsangsimida.easykiconverter.desktop"
     file_info:
       mode: 0644

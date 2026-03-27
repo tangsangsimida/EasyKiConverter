@@ -9,6 +9,6 @@ Icon=io.github.tangsangsimida.easykiconverter
 Categories=Development;Electronics;Engineering;
 Terminal=false
 Keywords=KiCad;LCSC;EasyEDA;Component;Converter;Electronics;
-StartupNotify=true
+StartupNotify=false
 StartupWMClass=easykiconverter
 MimeType=application/vnd.easyeda+json;
