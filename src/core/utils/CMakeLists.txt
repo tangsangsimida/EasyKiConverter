@@ -6,6 +6,7 @@ add_library(EasyKiConverterUtils STATIC
     INetworkAdapter.cpp
     LayerMapper.cpp
     SvgPathParser.cpp
+    AtomicFileWriter.cpp
 )
 
 target_include_directories(EasyKiConverterUtils

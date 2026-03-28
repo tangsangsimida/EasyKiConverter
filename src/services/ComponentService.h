@@ -2,6 +2,7 @@
 #define COMPONENTSERVICE_H
 
 #include "LcscImageService.h"
+#include "ParallelFetchContext.h"
 #include "models/ComponentData.h"
 #include "models/FootprintData.h"
 #include "models/Model3DData.h"
@@ -381,7 +382,6 @@ private:
     mutable QMutex m_fetchingComponentsMutex;
     mutable QMutex m_componentCacheMutex;
     mutable QMutex m_currentIdMutex;  // 保护 m_currentComponentId 的并发访问
-    mutable QMutex m_parallelDataMutex;  // 保护并行数据收集状态的并发访问
 
     // 数据缓存
     QMap<QString, ComponentData> m_componentCache;
@@ -413,21 +413,12 @@ private:
     bool m_hasDownloadedWrl;
 
     // 并行数据收集状态
-    QMap<QString, ComponentData> m_parallelCollectedData;  // 已收集的数据
-    QMap<QString, bool> m_parallelFetchingStatus;  // 元件ID -> 是否正在获取
-    QStringList m_parallelPendingComponents;  // 待获取的元件列表
-    int m_parallelTotalCount;  // 总元件数
-    int m_parallelCompletedCount;  // 已完成数
-    bool m_parallelFetching;  // 是否正在并行获取
+    ParallelFetchContext* m_parallelContext;
 
     // 动态队列管理
-    QStringList m_requestQueue;  // 待处理的元件ID队列
-    int m_activeRequestCount;  // 当前活跃的网络请求数
-    int m_maxConcurrentRequests;  // 最大并发请求数（基于性能测试，5个请求在弱网环境下提供最佳稳定性）
-    QTimer* m_queueTimer;  // 异步队列处理定时器（每500ms检查队列状态）
-    QTimer* m_timeoutTimer;  // 批量处理总超时保护（防止队列永久阻塞）
-    static const int QUEUE_CHECK_INTERVAL_MS = 500;  // 队列检查间隔，平衡响应性和CPU使用
-    static const int TOTAL_TIMEOUT_MS = 300000;  // 总超时5分钟，防止弱网环境下无限等待
+    class ComponentQueueManager* m_queueManager;
+    int m_activeRequestCount;
+    int m_maxConcurrentRequests;
 
     // 内部状态处理
 

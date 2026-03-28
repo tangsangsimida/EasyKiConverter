@@ -2,6 +2,7 @@
 #define EXPORTSERVICE_PIPELINE_H
 
 #include "ExportService.h"
+#include "PipelineCompletionHandler.h"
 #include "models/ComponentExportStatus.h"
 #include "models/SymbolData.h"
 #include "pipeline/queue/PipelineQueueManager.h"
@@ -200,12 +201,6 @@ private:
     bool mergeSymbolLibrary();
 
     /**
-     * @brief 获取当前进程内存使用（字节）
-     * @return qint64 内存使用量
-     */
-    static qint64 getCurrentProcessMemoryUsage();
-
-    /**
      * @brief 更新内存峰值统计
      */
     void updateMemoryPeak(const QSharedPointer<ComponentExportStatus>& status);
@@ -223,30 +218,6 @@ private:
      * @return bool 是否成功
      */
     bool saveStatisticsReport(const ExportStatistics& statistics, const QString& reportPath);
-
-    /**
-     * @brief 从内存数据导出预览图
-     * @param imageDataList 图片数据列表
-     * @param outputPath 输出路径
-     * @param componentName 组件名称
-     * @return bool 是否成功
-     */
-    bool exportPreviewImagesFromMemory(const QList<QByteArray>& imageDataList,
-                                       const QString& outputPath,
-                                       const QString& componentName);
-
-    /**
-     * @brief 从内存数据导出数据手册
-     * @param datasheetData 数据手册数据
-     * @param outputPath 输出路径
-     * @param componentName 组件名称
-     * @param format 数据手册格式（pdf/html）
-     * @return bool 是否成功
-     */
-    bool exportDatasheetFromMemory(const QByteArray& datasheetData,
-                                   const QString& outputPath,
-                                   const QString& componentName,
-                                   const QString& format = "pdf");
 
 private:
     // 线程池
@@ -309,6 +280,9 @@ private:
 
     // 是否处于重试模式（用于区分新的导出流程和重试）
     bool m_isRetryMode;
+
+    // 流水线完成处理器（用于导出预览图和手册）
+    PipelineCompletionHandler* m_completionHandler;
 };
 
 }  // namespace EasyKiConverter

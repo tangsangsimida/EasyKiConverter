@@ -25,14 +25,12 @@ QDateTime FetchWorker::s_lastRateLimitTime;
 int FetchWorker::s_backoffMs = 0;
 
 FetchWorker::FetchWorker(const QString& componentId,
-                         QNetworkAccessManager* networkAccessManager,
                          bool need3DModel,
                          bool fetch3DOnly,
                          const QString& existing3DUuid,
                          QObject* parent)
     : QObject(parent)
     , m_componentId(componentId)
-    , m_networkAccessManager(networkAccessManager)
     , m_ownNetworkManager(nullptr)
     , m_need3DModel(need3DModel)
     , m_fetch3DOnly(fetch3DOnly)

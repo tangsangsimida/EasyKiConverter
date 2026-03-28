@@ -5,11 +5,12 @@
 
 #include <QDebug>
 #include <QFile>
+#include <QRegularExpression>
 #include <QTextStream>
 
 namespace EasyKiConverter {
 
-ExporterSymbol::ExporterSymbol(QObject* parent) : QObject(parent) {}
+ExporterSymbol::ExporterSymbol() {}
 
 ExporterSymbol::~ExporterSymbol() {}
 
@@ -45,6 +46,9 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     qDebug() << "KiCad version: V6";
     qDebug() << "Append mode:" << appendMode;
     qDebug() << "Update mode:" << updateMode;
+
+    // 重置检测到的版本，避免影响后续调用
+    m_detectedVersion.clear();
 
     QFile file(filePath);
     bool fileExists = file.exists();
@@ -92,69 +96,81 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         return false;
     }
 
+    // 检测现有文件的版本
+    QRegularExpression versionRegex(R"(^\s*\(version\s+(\d+)\))", QRegularExpression::MultilineOption);
+    QRegularExpressionMatch versionMatch = versionRegex.match(existingContent);
+    if (versionMatch.hasMatch()) {
+        m_detectedVersion = versionMatch.captured(1);
+        qDebug() << "Detected existing library version:" << m_detectedVersion;
+    } else {
+        m_detectedVersion = "20211014";
+        qDebug() << "Could not detect version, using default:" << m_detectedVersion;
+    }
+
     // 提取现有符号
     QMap<QString, QString> existingSymbols;  // 符号-> 符号内容
     QSet<QString> subSymbolNames;  // 属于分体式符号的子符号名称
 
-    // 使用更可靠的方法来提取符号：手动解析括号匹配
+    // 使用栈来正确追踪符号的嵌套关系
     QStringList lines = existingContent.split('\n');
-    int symbolStart = -1;
-    QString currentSymbolName;
     int braceCount = 0;
-    int parentSymbolDepth = 0;  // 父符号的深度（用于识别子符号
+
+    // 栈元素: (symbolName, startLine, braceCountAfterStart)
+    struct SymbolInfo {
+        QString name;
+        int startLine;
+        int braceAfterStart;
+    };
+
+    QList<SymbolInfo> symbolStack;
 
     for (int i = 0; i < lines.size(); ++i) {
-        QString line = lines[i].trimmed();
+        QString line = lines[i];
 
-        // 检查是否是符号定义的开始
-        if (line.startsWith("(symbol \"")) {
-            // 提取符号
-            int nameStart = line.indexOf("\"") + 1;
+        // 逐字符计算括号变化
+        for (int j = 0; j < line.length(); ++j) {
+            if (line[j] == '(') {
+                braceCount++;
+            } else if (line[j] == ')') {
+                braceCount--;
+            }
+        }
+
+        // 检查是否有符号开始
+        int symbolPosInLine = line.indexOf("(symbol \"");
+        if (symbolPosInLine >= 0) {
+            int nameStart = line.indexOf("\"", symbolPosInLine) + 1;
             int nameEnd = line.indexOf("\"", nameStart);
             if (nameEnd > nameStart) {
                 QString symbolName = line.mid(nameStart, nameEnd - nameStart);
-
-                if (symbolStart >= 0) {
-                    // 这是一个嵌套的符号定义（子符号
-                    subSymbolNames.insert(symbolName);
-                    qDebug() << "Found sub-symbol:" << symbolName << "inside parent symbol";
-                } else {
-                    // 这是一个顶层符号定位
-                    currentSymbolName = symbolName;
-                    symbolStart = i;
-                    braceCount = 1;
-                    parentSymbolDepth = 0;
-                }
+                SymbolInfo info;
+                info.name = symbolName;
+                info.startLine = i;
+                info.braceAfterStart = braceCount;
+                symbolStack.append(info);
+                qDebug() << "Found symbol start:" << symbolName << "at line" << i << "with braceCount" << braceCount;
             }
-        } else if (symbolStart >= 0) {
-            // 计算括号数量
-            for (int j = 0; j < line.length(); ++j) {
-                if (line[j] == '(') {
-                    braceCount++;
-                    // 如果括号深度大于 1，说明我们在父符号内
-                    if (braceCount > 1)
-                        parentSymbolDepth++;
-                } else if (line[j] == ')') {
-                    braceCount--;
-                    if (parentSymbolDepth > 0)
-                        parentSymbolDepth--;
-                }
-            }
+        }
 
-            // 当括号数量归零时，符号定义结
-            if (braceCount == 0) {
-                // 只保存顶层符号，不保存子符号
+        // 检查是否有符号结束 - 当 braceCount 回到符号开始后的值时
+        // 注意：可能有多个符号同时结束
+        while (!symbolStack.isEmpty() && braceCount < symbolStack.last().braceAfterStart) {
+            SymbolInfo info = symbolStack.last();
+            symbolStack.removeLast();
+
+            // 检查是否是子符号 - 如果栈不为空，说明有父符号
+            if (!symbolStack.isEmpty()) {
+                // 这是一个子符号，不应该被单独提取
+                subSymbolNames.insert(info.name);
+                qDebug() << "Found sub-symbol (skipping):" << info.name << "inside parent" << symbolStack.last().name;
+            } else {
+                // 这是一个顶层符号，提取它
                 QString symbolContent;
-                for (int k = symbolStart; k <= i; ++k) {
+                for (int k = info.startLine; k <= i; ++k) {
                     symbolContent += lines[k] + "\n";
                 }
-                existingSymbols[currentSymbolName] = symbolContent;
-                qDebug() << "Found existing symbol:" << currentSymbolName << "at lines" << symbolStart << "-" << i;
-
-                // 重置状
-                symbolStart = -1;
-                currentSymbolName.clear();
-                parentSymbolDepth = 0;
+                existingSymbols[info.name] = symbolContent;
+                qDebug() << "Extracted top-level symbol:" << info.name << "from lines" << info.startLine << "-" << i;
             }
         }
     }
@@ -251,11 +267,17 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                          << "(parent:" << parentSymbolName << ")";
             }
         } else {
-            // 这是一个单体符号，查找其子符号（格式：{parentName}_0_1）
-            QString expectedSubSymbolName = parentSymbolName + "_0_1";
-            if (subSymbolNames.contains(expectedSubSymbolName)) {
-                subSymbolsToDelete.insert(expectedSubSymbolName);
-                qDebug() << "Marking sub-symbol for deletion (single part):" << expectedSubSymbolName
+            // 这是一个单体符号，查找其子符号
+            // KiCad 使用 _1_1 格式，旧版本 exporter 使用 _0_1 格式
+            QString expectedSubSymbolName_v1 = parentSymbolName + "_0_1";
+            QString expectedSubSymbolName_v2 = parentSymbolName + "_1_1";
+            if (subSymbolNames.contains(expectedSubSymbolName_v1)) {
+                subSymbolsToDelete.insert(expectedSubSymbolName_v1);
+                qDebug() << "Marking sub-symbol for deletion (single part v1):" << expectedSubSymbolName_v1
+                         << "(parent:" << parentSymbolName << ")";
+            } else if (subSymbolNames.contains(expectedSubSymbolName_v2)) {
+                subSymbolsToDelete.insert(expectedSubSymbolName_v2);
+                qDebug() << "Marking sub-symbol for deletion (single part v2):" << expectedSubSymbolName_v2
                          << "(parent:" << parentSymbolName << ")";
             }
         }
@@ -344,10 +366,12 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
 
 QString ExporterSymbol::generateHeader(const QString& libName) const {
     Q_UNUSED(libName);
+    QString version = m_detectedVersion.isEmpty() ? "20211014" : m_detectedVersion;
     return QString(
-        "(kicad_symbol_lib\n"
-        "  (version 20211014)\n"
-        "  (generator https://github.com/tangsangsimida/EasyKiConverter)\n");
+               "(kicad_symbol_lib\n"
+               "  (version %1)\n"
+               "  (generator https://github.com/tangsangsimida/EasyKiConverter)\n")
+        .arg(version);
 }
 
 QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, const QString& libName) const {

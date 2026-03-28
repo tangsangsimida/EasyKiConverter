@@ -1,5 +1,6 @@
 #include "ExportService_Pipeline.h"
 
+#include "MemoryMonitor.h"
 #include "pipeline/cleanup/PipelineCleanup.h"
 #include "pipeline/stats/PipelineStatistics.h"
 #include "ui/viewmodels/ComponentListViewModel.h"
@@ -23,21 +24,6 @@
 
 #include <algorithm>
 
-#if defined(Q_OS_WIN) || defined(_WIN32)
-#    define PSAPI_VERSION 1
-#    if defined(_MSC_VER)
-#        include <qt_windows.h>
-
-#        include <psapi.h>
-#        pragma comment(lib, "psapi.lib")
-#    elif defined(__MINGW32__) || defined(__MINGW64__)
-#        include <qt_windows.h>
-
-#        include <psapi.h>
-#        pragma comment(lib, "psapi")
-#    endif
-#endif
-
 namespace EasyKiConverter {
 
 ExportServicePipeline::ExportServicePipeline(QObject* parent)
@@ -54,7 +40,8 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     , m_exportStartTimeMs(0)
     , m_originalExportStartTimeMs(0)
     , m_originalTotalTasks(0)
-    , m_isRetryMode(false) {
+    , m_isRetryMode(false)
+    , m_completionHandler(nullptr) {
     qDebug() << "ExportServicePipeline: Initializing thread pools...";
     // 线程池初始化
     m_fetchThreadPool = new QThreadPool(this);
@@ -68,7 +55,7 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     m_writeThreadPool->setMaxThreadCount(3);  // 磁盘 I/O 密集型
 
     // 初始化处理器
-    m_fetchHandler = new FetchStageHandler(m_isCancelled, m_networkAccessManager, m_fetchThreadPool, this);
+    m_fetchHandler = new FetchStageHandler(m_isCancelled, m_fetchThreadPool, this);
     m_processHandler = new ProcessStageHandler(m_isCancelled, m_processThreadPool, nullptr, this);
     m_writeHandler = new WriteStageHandler(m_isCancelled, m_writeThreadPool, nullptr, m_options, QString(), this);
 
@@ -101,6 +88,7 @@ ExportServicePipeline::~ExportServicePipeline() {
     cancelExport();  // 确保退出时停止所有请求
     cleanupPipeline();
     delete m_mutex;
+    delete m_completionHandler;
 }
 
 void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& componentIds,
@@ -536,77 +524,23 @@ void ExportServicePipeline::checkPipelineCompletion() {
     qDebug() << "Components with preview images:" << componentsWithPreviewImages;
     qDebug() << "Components with datasheets:" << componentsWithDatasheets;
 
-    // 3. 导出预览图
+    // 3. 使用 PipelineCompletionHandler 导出预览图和手册
+    delete m_completionHandler;
+    m_completionHandler = new PipelineCompletionHandler(this);
+
+    // 3.1 导出预览图
     qDebug() << "ExportPreviewImages option:" << m_options.exportPreviewImages;
     if (m_options.exportPreviewImages) {
-        int previewImageSuccessCount = 0;
-        for (auto it = m_preloadedData.constBegin(); it != m_preloadedData.constEnd(); ++it) {
-            const QSharedPointer<ComponentData>& componentData = it.value();
-            QString componentId = componentData->lcscId();
-
-            // 使用内存中的图片数据
-            QList<QByteArray> previewImageDataList = componentData->previewImageData();
-
-            qDebug() << "Preview image data check for component:" << componentId
-                     << "Image count:" << previewImageDataList.size()
-                     << "Expected: 3, Actual:" << previewImageDataList.size();
-
-            if (!previewImageDataList.isEmpty()) {
-                // 打印每张图片的大小
-                for (int i = 0; i < previewImageDataList.size(); ++i) {
-                    qDebug() << "  Image" << i << "size:" << previewImageDataList[i].size() << "bytes";
-                }
-
-                qDebug() << "Exporting preview images for:" << componentId
-                         << "Image count:" << previewImageDataList.size() << "From memory";
-
-                // 使用组件名称或ID作为文件名
-                QString componentName = componentData->name().isEmpty() ? componentId : componentData->name();
-
-                // 从内存数据导出图片
-                if (exportPreviewImagesFromMemory(previewImageDataList, m_options.outputPath, componentName)) {
-                    previewImageSuccessCount++;
-                } else {
-                    qWarning() << "Failed to export preview images for component:" << componentId;
-                }
-            } else {
-                qDebug() << "No preview image data found for component:" << componentId;
-            }
-        }
-        qDebug() << "Preview images export completed:" << previewImageSuccessCount << "components";
+        m_completionHandler->exportPreviewImages(m_preloadedData, m_options);
     }
 
-    // 4. 导出手册
+    // 3.2 导出手册
     qDebug() << "ExportDatasheet option:" << m_options.exportDatasheet;
     if (m_options.exportDatasheet) {
-        int datasheetSuccessCount = 0;
-        for (auto it = m_preloadedData.constBegin(); it != m_preloadedData.constEnd(); ++it) {
-            const QSharedPointer<ComponentData>& componentData = it.value();
-            // 使用内存中的数据手册数据
-            if (!componentData->datasheetData().isEmpty()) {
-                qDebug() << "Exporting datasheet for:" << componentData->lcscId()
-                         << "Datasheet size:" << componentData->datasheetData().size() << "bytes"
-                         << "format:" << componentData->datasheetFormat();
-
-                // 使用组件名称或ID作为文件名
-                QString componentName =
-                    componentData->name().isEmpty() ? componentData->lcscId() : componentData->name();
-
-                // 从内存数据导出数据手册（传递格式）
-                if (exportDatasheetFromMemory(componentData->datasheetData(),
-                                              m_options.outputPath,
-                                              componentName,
-                                              componentData->datasheetFormat())) {
-                    datasheetSuccessCount++;
-                }
-            } else {
-                qDebug() << "No datasheet data found for component:" << componentData->lcscId();
-            }
-        }
-        qDebug() << "Datasheets export completed:" << datasheetSuccessCount << "components";
+        m_completionHandler->exportDatasheets(m_preloadedData, m_options);
     }
 
-    // 5. 清理临时文件夹（无论导出是否成功都要清理）
+    // 4. 清理临时文件夹（无论导出是否成功都要清理）
     if (!m_tempDir.isEmpty()) {
         PipelineCleanup::removeTempDir(m_tempDir);
         m_tempDir.clear();
@@ -705,67 +639,10 @@ bool ExportServicePipeline::mergeSymbolLibrary() {
     return success;
 }
 
-qint64 ExportServicePipeline::getCurrentProcessMemoryUsage() {
-#ifdef Q_OS_LINUX
-    QFile file("/proc/self/status");
-    if (!file.open(QIODevice::ReadOnly)) {
-        qWarning() << "Failed to open /proc/self/status:" << file.errorString();
-        return 0;
-    }
-    QByteArray content = file.readAll();
-    file.close();
-
-    QList<QByteArray> lines = content.split('\n');
-    for (const QByteArray& line : lines) {
-        if (line.startsWith("VmRSS:")) {
-            QByteArray value = line.mid(6).trimmed();
-            // 移除单位 "kB" 或 "k"
-            if (value.endsWith("kB") || value.endsWith("kb")) {
-                value = value.left(value.length() - 2);
-            } else if (value.endsWith("k")) {
-                value = value.left(value.length() - 1);
-            }
-            value = value.trimmed();
-            bool ok = false;
-            qint64 rssKb = value.toLongLong(&ok);
-            if (ok) {
-                return rssKb * 1024;
-            } else {
-                qWarning() << "Failed to parse VmRSS value:" << value;
-                return 0;
-            }
-        }
-    }
-    qWarning() << "VmRSS not found in /proc/self/status, content:" << content.left(500);
-    return 0;
-#elif defined(Q_OS_WIN) || defined(_WIN32)
-#    if defined(__MINGW32__) || defined(__MINGW64__)
-    SIZE_T workingSetSize = 0;
-    if (GetProcessWorkingSetSize(GetCurrentProcess(), &workingSetSize, &workingSetSize)) {
-        return static_cast<qint64>(workingSetSize);
-    }
-    MEMORYSTATUSEX memStatus;
-    memStatus.dwLength = sizeof(memStatus);
-    if (GlobalMemoryStatusEx(&memStatus)) {
-        return static_cast<qint64>(memStatus.ullTotalPhys * 0.1);
-    }
-    return 0;
-#    else
-    PROCESS_MEMORY_COUNTERS pmc;
-    if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
-        return static_cast<qint64>(pmc.WorkingSetSize);
-    }
-    qWarning() << "Failed to get process memory info, error:" << GetLastError();
-    return 0;
-#    endif
-#else
-    return 0;
-#endif
-}
-
 void ExportServicePipeline::updateMemoryPeak(const QSharedPointer<ComponentExportStatus>& status) {
     Q_UNUSED(status);
-    qint64 currentMemory = getCurrentProcessMemoryUsage();
+    MemoryMonitor::updatePeak();
+    qint64 currentMemory = MemoryMonitor::getCurrentUsage();
     if (currentMemory > 0) {
         if (m_originalStatistics.peakMemoryUsage == 0) {
             m_originalStatistics.peakMemoryUsage = currentMemory;
@@ -889,104 +766,6 @@ bool ExportServicePipeline::waitForCompletion(int timeoutMs) {
 
     qDebug() << "Pipeline wait finished successfully in" << timer.elapsed() << "ms";
     return true;
-}
-
-bool ExportServicePipeline::exportPreviewImagesFromMemory(const QList<QByteArray>& imageDataList,
-                                                          const QString& outputPath,
-                                                          const QString& componentName) {
-    // 创建 images 子目录
-    QString imagesDir = outputPath + "/images";
-    QDir dir;
-    if (!dir.exists(imagesDir)) {
-        if (!dir.mkpath(imagesDir)) {
-            qWarning() << "Failed to create images directory:" << imagesDir;
-            return false;
-        }
-    }
-
-    // 清理组件名称中的非法字符
-    QString safeName = componentName;
-    QRegularExpression invalidChars("[<>:\"/\\\\|?*]");
-    safeName.replace(invalidChars, "_");
-
-    // 导出所有图片
-    bool allSuccess = true;
-    int exportedCount = 0;
-    int skippedCount = 0;
-
-    qDebug() << "Starting preview image export for component:" << componentName;
-    qDebug() << "  Image data list size:" << imageDataList.size();
-
-    for (int i = 0; i < imageDataList.size(); ++i) {
-        qDebug() << "  Processing image" << i << "size:" << imageDataList[i].size() << "bytes";
-
-        // 跳过空图片数据
-        if (imageDataList[i].isEmpty()) {
-            qWarning() << "  Skipping empty preview image at index:" << i << "for component:" << componentName;
-            skippedCount++;
-            continue;
-        }
-
-        QString filename = QString("%1_%2.jpg").arg(safeName).arg(i);
-        QString filePath = imagesDir + "/" + filename;
-
-        QFile file(filePath);
-        if (file.open(QIODevice::WriteOnly)) {
-            file.write(imageDataList[i]);
-            file.close();
-            qDebug() << "  Exported preview image to:" << filePath << "size:" << imageDataList[i].size() << "bytes";
-            exportedCount++;
-        } else {
-            qWarning() << "  Failed to write preview image to:" << filePath;
-            allSuccess = false;
-        }
-    }
-
-    qDebug() << "Preview image export completed for" << componentName << "- Total:" << imageDataList.size()
-             << ", Exported:" << exportedCount << ", Skipped:" << skippedCount;
-
-    return allSuccess;
-}
-
-bool ExportServicePipeline::exportDatasheetFromMemory(const QByteArray& datasheetData,
-                                                      const QString& outputPath,
-                                                      const QString& componentName,
-                                                      const QString& format) {
-    // 创建 datasheets 子目录
-    QString datasheetsDir = outputPath + "/datasheets";
-    QDir dir;
-    if (!dir.exists(datasheetsDir)) {
-        if (!dir.mkpath(datasheetsDir)) {
-            qWarning() << "Failed to create datasheets directory:" << datasheetsDir;
-            return false;
-        }
-    }
-
-    // 清理组件名称中的非法字符
-    QString safeName = componentName;
-    QRegularExpression invalidChars("[<>:\"/\\\\|?*]");
-    safeName.replace(invalidChars, "_");
-
-    // 根据格式确定文件扩展名
-    QString extension = format.toLower();
-    if (extension != "html") {
-        extension = "pdf";  // 默认使用 PDF
-    }
-
-    // 导出数据手册
-    QString filename = QString("%1.%2").arg(safeName).arg(extension);
-    QString filePath = datasheetsDir + "/" + filename;
-
-    QFile file(filePath);
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(datasheetData);
-        file.close();
-        qDebug() << "Exported datasheet to:" << filePath << "format:" << format;
-        return true;
-    } else {
-        qWarning() << "Failed to write datasheet to:" << filePath;
-        return false;
-    }
 }
 
 void ExportServicePipeline::forceCleanupThreadPools() {

@@ -1,4 +1,3 @@
-#line 1 "c:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/src/core/utils/INetworkAdapter.h"
 #pragma once
 
 #include <QByteArray>

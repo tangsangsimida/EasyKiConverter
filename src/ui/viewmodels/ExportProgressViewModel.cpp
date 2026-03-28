@@ -1,21 +1,14 @@
 #include "ExportProgressViewModel.h"
 
+#include "SystemTrayManager.h"
 #include "services/ExportService_Pipeline.h"
 #include "utils/FileUtils.h"
 #include "utils/logging/LogMacros.h"
 
-#include <QAction>
-#include <QApplication>
 #include <QDebug>
 #include <QDir>
-#include <QGuiApplication>
-#include <QIcon>
-#include <QMenu>
 #include <QStandardPaths>
-#include <QStyle>
-#include <QSystemTrayIcon>
 #include <QTimer>
-#include <QWindow>
 
 namespace EasyKiConverter {
 
@@ -27,6 +20,7 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
     , m_exportService(exportService)
     , m_componentService(componentService)
     , m_componentListViewModel(componentListViewModel)
+    , m_systemTrayManager(nullptr)
     , m_status("Ready")
     , m_progress(0)
     , m_isExporting(false)
@@ -43,16 +37,12 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
     , m_usePipelineMode(false)
     , m_filterMode("all")
     , m_pendingUpdate(false)
-    , m_hasStatistics(false)
-    , m_systemTrayIcon(nullptr)
-    , m_trayMenu(nullptr) {
-    // 初始化节流定时器
+    , m_hasStatistics(false) {
     m_throttleTimer = new QTimer(this);
     m_throttleTimer->setInterval(100);
     m_throttleTimer->setSingleShot(true);
     connect(m_throttleTimer, &QTimer::timeout, this, &ExportProgressViewModel::flushPendingUpdates);
 
-    // 连接 ExportService 信号
     if (m_exportService) {
         connect(m_exportService, &ExportService::exportProgress, this, &ExportProgressViewModel::handleExportProgress);
         connect(m_exportService,
@@ -87,8 +77,8 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
                 &ExportProgressViewModel::handleAllComponentsDataCollected);
     }
 
-    // 初始化系统托盘图标
-    initializeSystemTrayIcon();
+    m_systemTrayManager = new SystemTrayManager(this);
+    m_systemTrayManager->initialize();
 }
 
 void ExportProgressViewModel::setUsePipelineMode(bool usePipeline) {
@@ -96,23 +86,10 @@ void ExportProgressViewModel::setUsePipelineMode(bool usePipeline) {
 }
 
 ExportProgressViewModel::~ExportProgressViewModel() {
-    // 停止并删除定时器
     if (m_throttleTimer) {
         m_throttleTimer->stop();
         m_throttleTimer->deleteLater();
         m_throttleTimer = nullptr;
-    }
-
-    // 清理系统托盘图标和菜单
-    if (m_systemTrayIcon) {
-        m_systemTrayIcon->hide();
-        if (m_trayMenu) {
-            m_systemTrayIcon->setContextMenu(nullptr);
-            m_trayMenu->deleteLater();
-            m_trayMenu = nullptr;
-        }
-        m_systemTrayIcon->deleteLater();
-        m_systemTrayIcon = nullptr;
     }
 }
 
@@ -714,191 +691,26 @@ void ExportProgressViewModel::startExportInternal(const QStringList& componentId
 }
 
 void ExportProgressViewModel::showExportCompleteNotification() {
-    if (!m_systemTrayIcon) {
-        qDebug() << "System tray icon not initialized";
+    if (!m_systemTrayManager) {
+        qDebug() << "System tray manager not initialized";
         return;
     }
 
-    // 检查是否支持消息
-    if (!QSystemTrayIcon::supportsMessages()) {
-        qDebug() << "System tray does not support messages on this platform";
-        return;
+    QString duration;
+    if (m_statistics.totalDurationMs > 0) {
+        double durationSec = m_statistics.totalDurationMs / 1000.0;
+        if (durationSec < 60.0) {
+            duration = QString::number(durationSec, 'f', 1) + QStringLiteral(" 秒");
+        } else {
+            int minutes = static_cast<int>(durationSec / 60.0);
+            double seconds = durationSec - (minutes * 60.0);
+            duration = QString::number(minutes) + QStringLiteral(" 分 ") + QString::number(seconds, 'f', 0) +
+                       QStringLiteral(" 秒");
+        }
     }
 
-    // 准备通知内容
-    QString title;
-    QString message;
-    QSystemTrayIcon::MessageIcon iconType = QSystemTrayIcon::Information;
-
-    if (m_failureCount > 0) {
-        // 有失败的情况
-        title = QObject::tr("导出完成");
-
-        // 计算成功率
-        double successRate = m_resultsList.size() > 0 ? (m_successCount * 100.0 / m_resultsList.size()) : 0.0;
-
-        if (m_successCount == 0) {
-            // 全部失败
-            iconType = QSystemTrayIcon::Critical;
-            message = QObject::tr("导出失败：%1 个元器件全部失败").arg(m_resultsList.size());
-        } else if (successRate < 50.0) {
-            // 失败较多
-            iconType = QSystemTrayIcon::Warning;
-            message = QObject::tr("成功 %1 个，失败 %2 个").arg(m_successCount).arg(m_failureCount);
-        } else {
-            // 部分失败
-            message = QObject::tr("成功 %1 个，失败 %2 个").arg(m_successCount).arg(m_failureCount);
-        }
-
-        // 详细输出统计
-        if (m_successCount > 0) {
-            message += QObject::tr("\n输出：符号 %1 · 封装 %2 · 3D %3")
-                           .arg(m_successSymbolCount)
-                           .arg(m_successFootprintCount)
-                           .arg(m_successModel3DCount);
-        }
-    } else {
-        // 全部成功
-        iconType = QSystemTrayIcon::Information;
-        title = QObject::tr("导出完成");
-
-        // 根据成功数量显示不同的成功消息
-        if (m_successCount == 1) {
-            message = QObject::tr("成功导出 1 个元器件");
-        } else {
-            message = QObject::tr("成功导出 %1 个元器件").arg(m_successCount);
-        }
-
-        // 输出统计和耗时信息
-        QStringList stats;
-        stats << QObject::tr("输出：符号 %1 · 封装 %2 · 3D %3")
-                     .arg(m_successSymbolCount)
-                     .arg(m_successFootprintCount)
-                     .arg(m_successModel3DCount);
-
-        // 耗时信息
-        if (m_statistics.totalDurationMs > 0) {
-            double durationSec = m_statistics.totalDurationMs / 1000.0;
-            QString timeStr;
-            if (durationSec < 60.0) {
-                timeStr = QObject::tr("%1 秒").arg(QString::number(durationSec, 'f', 1));
-            } else {
-                int minutes = static_cast<int>(durationSec / 60.0);
-                double seconds = durationSec - (minutes * 60.0);
-                timeStr = QObject::tr("%1 分 %2 秒").arg(minutes).arg(QString::number(seconds, 'f', 0));
-            }
-            stats << QObject::tr("耗时：%1").arg(timeStr);
-        }
-
-        message += "\n" + stats.join("\n");
-    }
-
-    qDebug() << "Attempting to show notification:" << title << message;
-
-    // 显示通知（延长显示时间到 12 秒，让用户有足够时间阅读）
-    m_systemTrayIcon->showMessage(title, message, iconType, 12000);
-
-    qDebug() << "Notification shown successfully";
+    m_systemTrayManager->showExportNotification(
+        m_successCount, m_failureCount, m_successSymbolCount, m_successFootprintCount, m_successModel3DCount, duration);
 }
 
-void ExportProgressViewModel::initializeSystemTrayIcon() {
-    // 检查是否支持系统托盘
-    if (!QSystemTrayIcon::isSystemTrayAvailable()) {
-        qDebug() << "System tray is not available on this platform";
-        return;
-    }
-
-    qDebug() << "Initializing system tray icon...";
-
-    // 创建系统托盘图标
-    m_systemTrayIcon = new QSystemTrayIcon(this);
-
-    // 设置图标 - 尝试多个路径
-    QIcon appIcon;
-
-    // 尝试资源文件路径（使用 qt_add_qml_module 的路径格式）
-    QStringList iconPaths = {":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.ico",
-                             ":/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png",
-                             ":/resources/icons/app_icon.ico",
-                             ":/resources/icons/app_icon.png",
-                             "resources/icons/app_icon.ico",
-                             "resources/icons/app_icon.png"};
-
-    for (const QString& path : iconPaths) {
-        appIcon = QIcon(path);
-        if (!appIcon.isNull()) {
-            qDebug() << "System tray icon loaded successfully from:" << path;
-            break;
-        }
-    }
-
-    // 如果所有路径都失败，使用 Qt 内置图标
-    if (appIcon.isNull()) {
-        qWarning() << "Failed to load icon from all paths, using default icon";
-        // 使用 Qt 样式标准图标
-        appIcon = QApplication::style()->standardIcon(QStyle::SP_ComputerIcon);
-        if (appIcon.isNull()) {
-            qCritical() << "Failed to load even default icon";
-            return;
-        }
-    }
-
-    m_systemTrayIcon->setIcon(appIcon);
-    qDebug() << "System tray icon set successfully";
-
-    // 设置工具提示
-    m_systemTrayIcon->setToolTip(QObject::tr("EasyKiConverter - LCSC 转换工具"));
-
-    // 创建托盘菜单并保存指针
-    m_trayMenu = new QMenu();
-
-    QAction* showAction = m_trayMenu->addAction(QObject::tr("显示窗口"));
-    connect(showAction, &QAction::triggered, this, []() {
-        qDebug() << "Show window action triggered";
-        // 显示主窗口（如果最小化或隐藏）
-        auto windows = QGuiApplication::topLevelWindows();
-        for (auto* window : windows) {
-            if (window) {
-                window->show();
-                window->raise();
-                window->requestActivate();
-            }
-        }
-    });
-
-    QAction* quitAction = m_trayMenu->addAction(QObject::tr("退出"));
-    connect(quitAction, &QAction::triggered, this, []() {
-        qDebug() << "Quit action triggered";
-        QGuiApplication::quit();
-    });
-
-    m_systemTrayIcon->setContextMenu(m_trayMenu);
-
-    // 连接点击事件：左键点击显示窗口
-    connect(m_systemTrayIcon, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason reason) {
-        if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::DoubleClick) {
-            qDebug() << "System tray icon triggered (left click/double click)";
-            auto windows = QGuiApplication::topLevelWindows();
-            for (auto* window : windows) {
-                if (window) {
-                    window->show();
-                    window->raise();
-                    window->requestActivate();
-                }
-            }
-        }
-    });
-
-    // 显示托盘图标
-    m_systemTrayIcon->show();
-
-    // 验证图标是否真的显示
-    if (m_systemTrayIcon->isVisible()) {
-        qDebug() << "System tray icon is visible";
-    } else {
-        qWarning() << "System tray icon is not visible after show()";
-    }
-
-    qDebug() << "System tray icon initialized and shown";
-}
 }  // namespace EasyKiConverter
