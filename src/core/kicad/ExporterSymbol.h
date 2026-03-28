@@ -104,6 +104,7 @@ private:
 
 private:
     mutable SymbolGraphicsGenerator m_graphicsGenerator;  // 图形元素生成器
+    QString m_detectedVersion;  // 检测到的文件版本
 };
 
 }  // namespace EasyKiConverter

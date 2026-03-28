@@ -47,6 +47,9 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     qDebug() << "Append mode:" << appendMode;
     qDebug() << "Update mode:" << updateMode;
 
+    // 重置检测到的版本，避免影响后续调用
+    m_detectedVersion.clear();
+
     QFile file(filePath);
     bool fileExists = file.exists();
 
@@ -91,6 +94,17 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     } else {
         qWarning() << "Failed to open existing library for reading:" << filePath;
         return false;
+    }
+
+    // 检测现有文件的版本
+    QRegularExpression versionRegex(R"(^\s*\(version\s+(\d+)\))", QRegularExpression::MultilineOption);
+    QRegularExpressionMatch versionMatch = versionRegex.match(existingContent);
+    if (versionMatch.hasMatch()) {
+        m_detectedVersion = versionMatch.captured(1);
+        qDebug() << "Detected existing library version:" << m_detectedVersion;
+    } else {
+        m_detectedVersion = "20211014";
+        qDebug() << "Could not detect version, using default:" << m_detectedVersion;
     }
 
     // 提取现有符号
@@ -168,6 +182,23 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                 QString symbolContent;
                 for (int k = symbolStart; k <= i; ++k) {
                     symbolContent += lines[k] + "\n";
+                }
+
+                // 检查最后一行是否只是关闭 kicad_symbol_lib 的 ')'
+                // 如果是，说明这个 ')' 不属于符号内容，需要排除
+                QString lastLine = lines[i].trimmed();
+                if (lastLine == ")" && i > symbolStart) {
+                    // 找到最后一个非空行
+                    int lastContentLine = i - 1;
+                    while (lastContentLine >= symbolStart && lines[lastContentLine].trimmed().isEmpty()) {
+                        lastContentLine--;
+                    }
+                    // 重新构建内容，排除最后的 ')'
+                    symbolContent.clear();
+                    for (int k = symbolStart; k <= lastContentLine; ++k) {
+                        symbolContent += lines[k] + "\n";
+                    }
+                    qDebug() << "Excluded trailing ')' of kicad_symbol_lib from symbol content";
                 }
 
                 int leftCount = 0;
@@ -387,10 +418,12 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
 
 QString ExporterSymbol::generateHeader(const QString& libName) const {
     Q_UNUSED(libName);
+    QString version = m_detectedVersion.isEmpty() ? "20211014" : m_detectedVersion;
     return QString(
-        "(kicad_symbol_lib\n"
-        "  (version 20211014)\n"
-        "  (generator https://github.com/tangsangsimida/EasyKiConverter)\n");
+               "(kicad_symbol_lib\n"
+               "  (version %1)\n"
+               "  (generator https://github.com/tangsangsimida/EasyKiConverter)\n")
+        .arg(version);
 }
 
 QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, const QString& libName) const {
