@@ -1,21 +1,100 @@
 """
 EasyKiConverter 代码格式化工具
-============================================================================
-说明:
-    统一的代码格式化工具，支持 C++ 和 QML 文件
+=========================================================================
+
+工具简介:
+    本工具是 EasyKiConverter 项目的统一代码格式化脚本，支持 C++ 和
+    QML 文件的格式化检查和修复，支持 CI/CD 集成，提供并行处理和
+    哈希缓存加速。
 
 主要功能:
-    1. 格式化 C++ 文件
-    2. 格式化 QML 文件
+    1. 格式化 C++ 文件 (使用 clang-format)
+    2. 格式化 QML 文件 (使用 qmlformat)
     3. --check 模式：仅检查不修改，用于 CI
     4. 统计修改文件列表
     5. 生成格式化报告
+    6. 并行处理：多线程并行格式化多个文件
+    7. 哈希缓存：跳过未变更文件，加速重复格式化
 
 环境要求:
     - Python: 3.6+
     - clang-format: 13+ (推荐 18+)
-    - qmlformat: Qt 6.6+ (推荐 6.10.1)
-============================================================================
+    - qmlformat: Qt 6.6+ (推荐 6.10.2)
+
+=========================================================================
+使用方法:
+=========================================================================
+
+基础用法:
+    python tools/python/format_code.py --all           # 格式化所有文件
+    python tools/python/format_code.py --cpp           # 仅格式化 C++ 文件
+    python tools/python/format_code.py --qml           # 仅格式化 QML 文件
+    python tools/python/format_code.py --check --all   # CI 检查模式（仅检查）
+
+格式化目标（互斥选项）:
+    --cpp              仅格式化 C++ 文件 (.h, .cpp)
+    --qml              仅格式化 QML 文件 (.qml)
+    --all              格式化所有文件 (C++ 和 QML)
+    -s, --fix-empty-lines  修复 QML 文件中的多余空行
+
+运行模式:
+    --check            检查模式：仅检查不修改，返回退出码
+    -v, --verbose      详细输出模式
+    --report PATH      生成报告文件
+
+目录配置:
+    --dirs DIR [DIR]   指定格式化目录（默认: src, tests, src/ui/qml）
+
+=========================================================================
+使用示例:
+=========================================================================
+
+示例 1: 格式化所有代码
+    $ python tools/python/format_code.py --all
+
+示例 2: 仅检查代码格式（CI 模式）
+    $ python tools/python/format_code.py --check --all
+
+示例 3: 详细输出查看变化
+    $ python tools/python/format_code.py --all -v
+
+示例 4: 仅格式化 C++ 或 QML
+    $ python tools/python/format_code.py --cpp
+    $ python tools/python/format_code.py --qml
+
+示例 5: 修复 QML 空行
+    $ python tools/python/format_code.py --qml -s
+
+示例 6: 指定目录格式化
+    $ python tools/python/format_code.py --all --dirs src tests
+
+示例 7: 生成格式化报告
+    $ python tools/python/format_code.py --all --report logs/format.log
+
+=========================================================================
+缓存机制:
+=========================================================================
+
+哈希缓存:
+    本工具使用 MD5 哈希缓存避免重复格式化未变更的文件。
+    缓存文件位于: build/.cache/format_cache.json
+
+    首次运行后会生成缓存，之后运行时会自动跳过未变更的文件。
+    如果需要强制重新格式化，可以删除缓存文件。
+
+CI/CD 集成:
+    在 CI 环境中使用 --check 模式：
+    - 格式正确：退出码 0
+    - 需要格式化：退出码 1（显示需要格式化的文件列表）
+
+=========================================================================
+返回值:
+=========================================================================
+
+    0   格式化成功或格式检查通过
+    1   检查到格式问题或发生错误
+
+=========================================================================
 """
 
 import os
@@ -25,38 +104,45 @@ import argparse
 import logging
 import time
 import shutil
+import hashlib
+import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ============================================================================
 # ANSI 颜色支持
 # ============================================================================
 
+
 class Colors:
     """ANSI 颜色代码"""
-    RESET = '\033[0m'
-    RED = '\033[91m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    BOLD = '\033[1m'
+
+    RESET = "\033[0m"
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    BOLD = "\033[1m"
 
     @classmethod
     def supports_color(cls) -> bool:
         """检测终端是否支持颜色"""
         # Windows 10+ 支持 ANSI 颜色
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             try:
                 import ctypes
+
                 kernel32 = ctypes.windll.kernel32
                 # 启用 ANSI 转义序列
                 kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
                 return True
             except:
                 return False
-        return hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+        return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+
 
 def colorize(text: str, color: str) -> str:
     """添加颜色"""
@@ -64,12 +150,15 @@ def colorize(text: str, color: str) -> str:
         return f"{color}{text}{Colors.RESET}"
     return text
 
+
 # ============================================================================
 # 统计信息
 # ============================================================================
 
+
 class FormatStatistics:
     """格式化统计信息"""
+
     def __init__(self):
         self.start_time: float = time.time()
         self.total_files: int = 0
@@ -92,11 +181,17 @@ class FormatStatistics:
         logger.info("格式化统计报告")
         logger.info("=" * 60)
         logger.info(f"  总文件数:   {self.total_files}")
-        logger.info(f"  已修改:     {colorize(str(len(self.modified_files)), Colors.YELLOW)} 个文件")
-        logger.info(f"  无变化:     {colorize(str(len(self.unchanged_files)), Colors.GREEN)} 个文件")
+        logger.info(
+            f"  已修改:     {colorize(str(len(self.modified_files)), Colors.YELLOW)} 个文件"
+        )
+        logger.info(
+            f"  无变化:     {colorize(str(len(self.unchanged_files)), Colors.GREEN)} 个文件"
+        )
 
         if self.failed_files:
-            logger.info(f"  失败:       {colorize(str(len(self.failed_files)), Colors.RED)} 个文件")
+            logger.info(
+                f"  失败:       {colorize(str(len(self.failed_files)), Colors.RED)} 个文件"
+            )
 
         logger.info(f"  耗时:       {self.elapsed_time:.2f}s")
         logger.info("=" * 60)
@@ -122,21 +217,32 @@ class FormatStatistics:
             for f in self.unchanged_files:
                 logger.debug(f"  {f}")
 
+
 # ============================================================================
 # 代码格式化器
 # ============================================================================
 
+
 class CodeFormatter:
     def __init__(self, check_mode: bool = False, verbose: bool = False):
         self.project_root = Path(__file__).parent.parent.parent.absolute()
+        self.build_dir = self.project_root / "build"
+        self.build_cache_dir = self.build_dir / ".cache"
         self.check_mode = check_mode
         self.verbose = verbose
         self.stats = FormatStatistics()
         self.logger = self._setup_logging()
 
-        # 工具版本
+        self._ensure_build_dirs()
         self.clang_format_version = self._get_tool_version("clang-format")
         self.qmlformat_version = self._get_tool_version("qmlformat")
+        self.hash_cache = self._load_cache()
+        self.cache_updated = False
+
+    def _ensure_build_dirs(self) -> None:
+        """确保构建相关目录存在"""
+        self.build_dir.mkdir(parents=True, exist_ok=True)
+        self.build_cache_dir.mkdir(parents=True, exist_ok=True)
 
     def _setup_logging(self) -> logging.Logger:
         """配置日志系统"""
@@ -149,7 +255,7 @@ class CodeFormatter:
         console_handler.setLevel(level)
 
         # 简洁格式
-        formatter = logging.Formatter('%(message)s')
+        formatter = logging.Formatter("%(message)s")
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
@@ -159,10 +265,7 @@ class CodeFormatter:
         """获取工具版本"""
         try:
             result = subprocess.run(
-                [tool, "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                [tool, "--version"], capture_output=True, text=True, timeout=10
             )
             if result.returncode == 0:
                 # 提取版本号
@@ -170,17 +273,53 @@ class CodeFormatter:
                 if tool == "clang-format":
                     # clang-format version 21.1.0
                     import re
-                    match = re.search(r'version\s+(\d+\.\d+\.\d+)', output)
-                    return match.group(1) if match else output.split('\n')[0]
+
+                    match = re.search(r"version\s+(\d+\.\d+\.\d+)", output)
+                    return match.group(1) if match else output.split("\n")[0]
                 elif tool == "qmlformat":
                     # qmlformat 6.10.1
                     import re
-                    match = re.search(r'(\d+\.\d+\.\d+)', output)
-                    return match.group(1) if match else output.split('\n')[0]
-                return output.split('\n')[0]
+
+                    match = re.search(r"(\d+\.\d+\.\d+)", output)
+                    return match.group(1) if match else output.split("\n")[0]
+                return output.split("\n")[0]
         except Exception:
             pass
         return None
+
+    def _get_file_hash(self, file_path: Path) -> str:
+        """计算文件 MD5 哈希"""
+        try:
+            with open(file_path, "rb") as f:
+                return hashlib.md5(f.read()).hexdigest()
+        except Exception:
+            return ""
+
+    def _load_cache(self) -> Dict[str, str]:
+        """加载哈希缓存"""
+        cache_file = self.build_cache_dir / "format_cache.json"
+        if cache_file.exists():
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {}
+
+    def _save_cache(self, cache: Dict[str, str]) -> None:
+        """保存哈希缓存"""
+        cache_file = self.build_cache_dir / "format_cache.json"
+        try:
+            self.build_cache_dir.mkdir(parents=True, exist_ok=True)
+            with open(cache_file, "w", encoding="utf-8") as f:
+                json.dump(cache, f, indent=2)
+        except Exception as e:
+            self.logger.warning(f"缓存保存失败: {e}")
+
+    def _is_file_changed(self, file_path: Path, cached_hash: str) -> bool:
+        """检查文件是否已变更"""
+        current_hash = self._get_file_hash(file_path)
+        return current_hash != cached_hash
 
     def _find_files(self, directories: List[str], extensions: List[str]) -> List[Path]:
         """查找文件"""
@@ -196,14 +335,16 @@ class CodeFormatter:
 
         return sorted(set(files))
 
-    def _check_file_needs_formatting(self, file_path: Path, tool: str) -> Tuple[bool, Optional[str]]:
+    def _check_file_needs_formatting(
+        self, file_path: Path, tool: str
+    ) -> Tuple[bool, Optional[str]]:
         """检查文件是否需要格式化"""
         try:
             result = subprocess.run(
                 [tool, "--dry-run", "--Werror", str(file_path)],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
             # 退出码非 0 表示需要格式化
             return result.returncode != 0, None
@@ -212,7 +353,9 @@ class CodeFormatter:
         except Exception as e:
             return False, str(e)
 
-    def _format_file(self, file_path: Path, tool: str) -> Tuple[bool, bool, Optional[str]]:
+    def _format_file(
+        self, file_path: Path, tool: str
+    ) -> Tuple[bool, bool, Optional[str]]:
         """
         格式化单个文件
         返回: (success, was_modified, error_message)
@@ -220,27 +363,29 @@ class CodeFormatter:
         try:
             if self.check_mode:
                 # 检查模式：仅检查是否需要格式化
-                needs_formatting, error = self._check_file_needs_formatting(file_path, tool)
+                needs_formatting, error = self._check_file_needs_formatting(
+                    file_path, tool
+                )
                 if error:
                     return False, False, error
                 return True, needs_formatting, None
             else:
                 # 格式化模式：先读取原内容用于比较
-                original_content = file_path.read_text(encoding='utf-8')
+                original_content = file_path.read_text(encoding="utf-8")
 
                 # 执行格式化
                 result = subprocess.run(
                     [tool, "-i", str(file_path)],
                     capture_output=True,
                     text=True,
-                    timeout=30
+                    timeout=30,
                 )
 
                 if result.returncode != 0:
                     return False, False, result.stderr
 
                 # 比较是否有变化
-                new_content = file_path.read_text(encoding='utf-8')
+                new_content = file_path.read_text(encoding="utf-8")
                 was_modified = original_content != new_content
 
                 return True, was_modified, None
@@ -252,6 +397,172 @@ class CodeFormatter:
         except Exception as e:
             return False, False, str(e)
 
+    def _format_qml_file(
+        self, file_path: Path, config_file: Path
+    ) -> Tuple[bool, bool, Optional[str]]:
+        """格式化 QML 文件（支持并行）"""
+        try:
+            config_arg = ["-s", str(config_file)] if config_file.exists() else []
+
+            if self.check_mode:
+                import tempfile
+
+                original = file_path.read_text(encoding="utf-8")
+
+                with tempfile.NamedTemporaryFile(
+                    mode="w", suffix=".qml", delete=False, encoding="utf-8"
+                ) as tmp:
+                    tmp.write(original)
+                    tmp_path = tmp.name
+
+                try:
+                    result = subprocess.run(
+                        ["qmlformat", "-i"] + config_arg + [tmp_path],
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
+                    )
+
+                    if result.returncode != 0:
+                        return False, False, result.stderr.strip() or "格式化失败"
+
+                    formatted = Path(tmp_path).read_text(encoding="utf-8")
+                    was_modified = formatted != original
+                    return True, was_modified, None
+                finally:
+                    Path(tmp_path).unlink(missing_ok=True)
+            else:
+                original = file_path.read_text(encoding="utf-8")
+                result = subprocess.run(
+                    ["qmlformat", "-i"] + config_arg + [str(file_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+
+                if result.returncode != 0:
+                    return False, False, result.stderr
+
+                new_content = file_path.read_text(encoding="utf-8")
+                was_modified = original != new_content
+                return True, was_modified, None
+
+        except subprocess.TimeoutExpired:
+            return False, False, "超时"
+        except UnicodeDecodeError:
+            return False, False, "编码错误"
+        except Exception as e:
+            return False, False, str(e)
+
+    def _process_qml_files_parallel(
+        self, files: List[Path], config_file: Path, max_workers: int = 4
+    ) -> None:
+        """并行处理 QML 文件列表"""
+        cache_key_prefix = "qmlformat_"
+
+        files_to_process = []
+        for file_path in files:
+            relative_path = str(file_path.relative_to(self.project_root))
+            cache_key = f"{cache_key_prefix}{relative_path}"
+            cached_hash = self.hash_cache.get(cache_key, "")
+
+            if cached_hash and not self._is_file_changed(file_path, cached_hash):
+                self.stats.unchanged_files.append(relative_path)
+                if self.verbose:
+                    self.logger.debug(f"    ✓ {relative_path} - 无变化 (缓存命中)")
+                continue
+            files_to_process.append((file_path, relative_path, cache_key))
+
+        if not files_to_process:
+            return
+
+        def format_with_config(file_path: Path) -> Tuple[bool, bool, Optional[str]]:
+            return self._format_qml_file(file_path, config_file)
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_info = {
+                executor.submit(format_with_config, f): (f, rel, ck)
+                for f, rel, ck in files_to_process
+            }
+            for future in as_completed(future_to_info):
+                file_path, relative_path, cache_key = future_to_info[future]
+                self.stats.total_files += 1
+                try:
+                    success, was_modified, error = future.result()
+                    if not success:
+                        self.stats.failed_files.append((relative_path, error))
+                        self.logger.error(f"    ✗ {relative_path} - {error}")
+                    elif was_modified:
+                        self.stats.modified_files.append(relative_path)
+                        self.hash_cache[cache_key] = self._get_file_hash(file_path)
+                        self.cache_updated = True
+                        if self.check_mode:
+                            self.logger.warning(f"    ⚡ {relative_path} - 需要格式化")
+                        else:
+                            self.logger.info(f"    ⚡ {relative_path} - 已修改")
+                    else:
+                        self.stats.unchanged_files.append(relative_path)
+                        self.hash_cache[cache_key] = self._get_file_hash(file_path)
+                        self.cache_updated = True
+                        if self.verbose:
+                            self.logger.debug(f"    ✓ {relative_path} - 无变化")
+                except Exception as e:
+                    self.stats.failed_files.append((relative_path, str(e)))
+                    self.logger.error(f"    ✗ {relative_path} - {e}")
+
+    def _process_files_parallel(
+        self, files: List[Path], tool: str, max_workers: int = 4
+    ) -> None:
+        """并行处理文件列表"""
+        cache_key_prefix = f"{tool}_"
+        files_to_process = []
+
+        for file_path in files:
+            relative_path = str(file_path.relative_to(self.project_root))
+            cache_key = f"{cache_key_prefix}{relative_path}"
+            cached_hash = self.hash_cache.get(cache_key, "")
+
+            if cached_hash and not self._is_file_changed(file_path, cached_hash):
+                self.stats.unchanged_files.append(relative_path)
+                if self.verbose:
+                    self.logger.debug(f"    ✓ {relative_path} - 无变化 (缓存命中)")
+                continue
+            files_to_process.append((file_path, relative_path, cache_key))
+
+        if not files_to_process:
+            return
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_info = {
+                executor.submit(self._format_file, f, tool): (f, rel, ck)
+                for f, rel, ck in files_to_process
+            }
+            for future in as_completed(future_to_info):
+                file_path, relative_path, cache_key = future_to_info[future]
+                self.stats.total_files += 1
+                try:
+                    success, was_modified, error = future.result()
+                    if not success:
+                        self.stats.failed_files.append((relative_path, error))
+                        self.logger.error(f"    ✗ {relative_path} - {error}")
+                    elif was_modified:
+                        self.stats.modified_files.append(relative_path)
+                        self.hash_cache[cache_key] = self._get_file_hash(file_path)
+                        self.cache_updated = True
+                        if self.check_mode:
+                            self.logger.warning(f"    ⚡ {relative_path} - 需要格式化")
+                        else:
+                            self.logger.info(f"    ⚡ {relative_path} - 已修改")
+                    else:
+                        self.stats.unchanged_files.append(relative_path)
+                        self.hash_cache[cache_key] = self._get_file_hash(file_path)
+                        self.cache_updated = True
+                        if self.verbose:
+                            self.logger.debug(f"    ✓ {relative_path} - 无变化")
+                except Exception as e:
+                    self.stats.failed_files.append((relative_path, str(e)))
+                    self.logger.error(f"    ✗ {relative_path} - {e}")
+
     def format_cpp(self, directories: List[str] = None) -> bool:
         """格式化 C++ 文件"""
         if directories is None:
@@ -259,7 +570,9 @@ class CodeFormatter:
 
         self.logger.info("")
         self.logger.info(colorize("[C++ 格式化]", Colors.CYAN))
-        self.logger.info(f"  工具: clang-format {self.clang_format_version or '未找到'}")
+        self.logger.info(
+            f"  工具: clang-format {self.clang_format_version or '未找到'}"
+        )
         self.logger.info(f"  模式: {'检查' if self.check_mode else '格式化'}")
         self.logger.info(f"  目录: {', '.join(directories)}")
 
@@ -281,27 +594,9 @@ class CodeFormatter:
             self.logger.info("  没有找到 C++ 文件")
             return True
 
-        # 处理文件
-        for file_path in files:
-            relative_path = file_path.relative_to(self.project_root)
-            self.stats.total_files += 1
-
-            success, was_modified, error = self._format_file(file_path, "clang-format")
-
-            if not success:
-                self.stats.failed_files.append((str(relative_path), error))
-                self.logger.error(f"    ✗ {relative_path} - {error}")
-            elif was_modified:
-                self.stats.modified_files.append(str(relative_path))
-                if self.check_mode:
-                    self.logger.warning(f"    ⚡ {relative_path} - 需要格式化")
-                else:
-                    self.logger.info(f"    ⚡ {relative_path} - 已修改")
-            else:
-                self.stats.unchanged_files.append(str(relative_path))
-                if self.verbose:
-                    self.logger.debug(f"    ✓ {relative_path} - 无变化")
-
+        self._process_files_parallel(files, "clang-format")
+        if self.cache_updated and not self.check_mode:
+            self._save_cache(self.hash_cache)
         return len(self.stats.failed_files) == 0
 
     def format_qml(self, directories: List[str] = None) -> bool:
@@ -333,85 +628,9 @@ class CodeFormatter:
             self.logger.info("  没有找到 QML 文件")
             return True
 
-        # 处理文件
-        for file_path in files:
-            relative_path = file_path.relative_to(self.project_root)
-            self.stats.total_files += 1
-
-            # qmlformat 没有 --dry-run，需要手动比较
-            try:
-                # 查找配置文件
-                config_arg = []
-                if config_file.exists():
-                    config_arg = ["-s", str(config_file)]
-
-                if self.check_mode:
-                    # 检查模式：创建临时文件进行比较
-                    import tempfile
-                    original = file_path.read_text(encoding='utf-8')
-
-                    with tempfile.NamedTemporaryFile(mode='w', suffix='.qml', delete=False, encoding='utf-8') as tmp:
-                        tmp.write(original)
-                        tmp_path = tmp.name
-
-                    try:
-                        result = subprocess.run(
-                            ["qmlformat", "-i"] + config_arg + [tmp_path],
-                            capture_output=True,
-                            text=True,
-                            timeout=30
-                        )
-
-                        if result.returncode != 0:
-                            self.stats.failed_files.append((str(relative_path), result.stderr.strip() or "格式化失败"))
-                            self.logger.error(f"    ✗ {relative_path} - {result.stderr.strip() or '格式化失败'}")
-                        else:
-                            formatted = Path(tmp_path).read_text(encoding='utf-8')
-                            if formatted != original:
-                                self.stats.modified_files.append(str(relative_path))
-                                self.logger.warning(f"    ⚡ {relative_path} - 需要格式化")
-                            else:
-                                self.stats.unchanged_files.append(str(relative_path))
-                                if self.verbose:
-                                    self.logger.debug(f"    ✓ {relative_path} - 无变化")
-                    finally:
-                        Path(tmp_path).unlink(missing_ok=True)
-                else:
-                    # 格式化模式
-                    original = file_path.read_text(encoding='utf-8')
-
-                    # 确保使用配置文件
-                    config_arg = ["-s", str(config_file)] if config_file.exists() else []
-
-                    result = subprocess.run(
-                        ["qmlformat", "-i"] + config_arg + [str(file_path)],
-                        capture_output=True,
-                        text=True,
-                        timeout=30
-                    )
-
-                    if result.returncode != 0:
-                        self.stats.failed_files.append((str(relative_path), result.stderr))
-                        self.logger.error(f"    ✗ {relative_path} - {result.stderr}")
-                    else:
-                        new_content = file_path.read_text(encoding='utf-8')
-                        was_modified = original != new_content
-
-                        if was_modified:
-                            self.stats.modified_files.append(str(relative_path))
-                            self.logger.info(f"    ⚡ {relative_path} - 已修改")
-                        else:
-                            self.stats.unchanged_files.append(str(relative_path))
-                            if self.verbose:
-                                self.logger.debug(f"    ✓ {relative_path} - 无变化")
-
-            except subprocess.TimeoutExpired:
-                self.stats.failed_files.append((str(relative_path), "超时"))
-                self.logger.error(f"    ✗ {relative_path} - 超时")
-            except Exception as e:
-                self.stats.failed_files.append((str(relative_path), str(e)))
-                self.logger.error(f"    ✗ {relative_path} - {e}")
-
+        self._process_qml_files_parallel(files, config_file)
+        if self.cache_updated and not self.check_mode:
+            self._save_cache(self.hash_cache)
         return len(self.stats.failed_files) == 0
 
     def fix_qml_empty_lines(self, directories: List[str] = None) -> bool:
@@ -434,7 +653,7 @@ class CodeFormatter:
 
         def remove_extra_empty_lines(content: str) -> str:
             """删除多余的空行"""
-            lines = content.split('\n')
+            lines = content.split("\n")
             result = []
 
             i = 0
@@ -442,26 +661,30 @@ class CodeFormatter:
                 line = lines[i]
                 stripped = line.strip()
 
-                if stripped == '':
+                if stripped == "":
                     # 空行：检查是否需要保留
                     should_keep = False
 
                     # 检查上一行
                     if i > 0:
                         prev_line = lines[i - 1].strip()
-                        if prev_line.endswith('}'):
+                        if prev_line.endswith("}"):
                             should_keep = True
-                        if prev_line.startswith('//') or prev_line.startswith('/*') or prev_line.endswith('*/'):
+                        if (
+                            prev_line.startswith("//")
+                            or prev_line.startswith("/*")
+                            or prev_line.endswith("*/")
+                        ):
                             should_keep = True
-                        if prev_line.startswith('import '):
+                        if prev_line.startswith("import "):
                             should_keep = True
 
                     # 检查下一行
                     if i + 1 < len(lines):
                         next_line = lines[i + 1].strip()
-                        if next_line == '':
+                        if next_line == "":
                             should_keep = False
-                        if next_line == '}':
+                        if next_line == "}":
                             should_keep = False
 
                     if should_keep:
@@ -471,14 +694,14 @@ class CodeFormatter:
                 i += 1
 
             # 删除文件末尾的空行
-            while result and result[-1].strip() == '':
+            while result and result[-1].strip() == "":
                 result.pop()
 
             # 确保文件以换行符结尾
             if result:
-                result.append('')
+                result.append("")
 
-            return '\n'.join(result)
+            return "\n".join(result)
 
         # 处理文件
         for file_path in files:
@@ -486,17 +709,19 @@ class CodeFormatter:
             self.stats.total_files += 1
 
             try:
-                content = file_path.read_text(encoding='utf-8')
-                original_lines = len(content.split('\n'))
+                content = file_path.read_text(encoding="utf-8")
+                original_lines = len(content.split("\n"))
 
                 fixed_content = remove_extra_empty_lines(content)
-                fixed_lines = len(fixed_content.split('\n'))
+                fixed_lines = len(fixed_content.split("\n"))
 
                 if fixed_content != content:
                     if not self.check_mode:
-                        file_path.write_text(fixed_content, encoding='utf-8')
+                        file_path.write_text(fixed_content, encoding="utf-8")
                     self.stats.modified_files.append(str(relative_path))
-                    self.logger.info(f"    ⚡ {relative_path} ({original_lines} → {fixed_lines} 行)")
+                    self.logger.info(
+                        f"    ⚡ {relative_path} ({original_lines} → {fixed_lines} 行)"
+                    )
                 else:
                     self.stats.unchanged_files.append(str(relative_path))
                     if self.verbose:
@@ -519,7 +744,7 @@ class CodeFormatter:
             output_path = Path(output_path)
 
         try:
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write("=" * 60 + "\n")
                 f.write("EasyKiConverter 代码格式化报告\n")
                 f.write("=" * 60 + "\n")
@@ -548,9 +773,11 @@ class CodeFormatter:
         except Exception as e:
             self.logger.error(f"保存报告失败: {e}")
 
+
 # ============================================================================
 # 主函数
 # ============================================================================
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -563,32 +790,36 @@ def main():
   python tools/python/format_code.py --check --all   # CI 检查模式
   python tools/python/format_code.py --all -v        # 详细模式
   python tools/python/format_code.py --all --report logs/format.log  # 生成报告
-  python tools/python/format_code.py --qml --fix-empty-lines  # 修复 QML 空行
+  python tools/python/format_code.py --qml -s  # 修复 QML 空行
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     # 格式化目标
     target_group = parser.add_mutually_exclusive_group()
     target_group.add_argument("--cpp", action="store_true", help="格式化 C++ 文件")
     target_group.add_argument("--qml", action="store_true", help="格式化 QML 文件")
-    target_group.add_argument("--all", action="store_true", help="格式化所有文件 (C++ + QML)")
+    target_group.add_argument(
+        "--all", action="store_true", help="格式化所有文件 (C++ + QML)"
+    )
 
     # 运行模式
-    parser.add_argument("--check", action="store_true",
-                        help="检查模式：仅检查不修改，用于 CI")
-    parser.add_argument("-v", "--verbose", action="store_true",
-                        help="显示详细输出")
-    parser.add_argument("--fix-empty-lines", action="store_true",
-                        help="修复 QML 文件中的多余空行（每行代码后的空行）")
+    parser.add_argument(
+        "--check", action="store_true", help="检查模式：仅检查不修改，用于 CI"
+    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="显示详细输出")
+    parser.add_argument(
+        "-s",
+        "--fix-empty-lines",
+        action="store_true",
+        help="修复 QML 文件中的多余空行（每行代码后的空行）",
+    )
 
     # 目录配置
-    parser.add_argument("--dirs", nargs="+",
-                        help="指定格式化目录 (默认: src, tests)")
+    parser.add_argument("--dirs", nargs="+", help="指定格式化目录 (默认: src, tests)")
 
     # 报告生成
-    parser.add_argument("--report", type=str,
-                        help="生成报告文件路径")
+    parser.add_argument("--report", type=str, help="生成报告文件路径")
 
     args = parser.parse_args()
 
@@ -611,7 +842,9 @@ def main():
 
     if args.fix_empty_lines:
         # 仅修复空行
-        if not formatter.fix_qml_empty_lines(args.dirs if args.dirs else ["src/ui/qml"]):
+        if not formatter.fix_qml_empty_lines(
+            args.dirs if args.dirs else ["src/ui/qml"]
+        ):
             success = False
     else:
         # 正常格式化
@@ -637,7 +870,9 @@ def main():
             formatter.logger.error(colorize("✗ 代码格式检查失败！", Colors.RED))
             formatter.logger.info("")
             formatter.logger.info("请运行以下命令格式化代码:")
-            formatter.logger.info(colorize("  python tools/python/format_code.py --all", Colors.CYAN))
+            formatter.logger.info(
+                colorize("  python tools/python/format_code.py --all", Colors.CYAN)
+            )
             sys.exit(1)
         else:
             formatter.logger.info(colorize("✓ 代码格式检查通过！", Colors.GREEN))
@@ -649,6 +884,7 @@ def main():
         else:
             formatter.logger.error(colorize("✗ 格式化过程中出现错误！", Colors.RED))
             sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

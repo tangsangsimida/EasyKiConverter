@@ -137,3 +137,4 @@ build.log
 temp.md
 squashfs-root/*
 deploy/flatpak/.flatpak-builder/*
+.format_cache.json

@@ -122,7 +122,6 @@ Card {
                 var atEnd = currentX >= maxScroll;
                 var canScrollUp = !atStart;
                 var canScrollDown = !atEnd;
-
                 if (wheel.angleDelta.y > 0 && canScrollToolbar && canScrollUp) {
                     var newX = Math.max(0, currentX - 50);
                     if (newX !== currentX) {
