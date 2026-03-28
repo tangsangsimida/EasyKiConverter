@@ -111,118 +111,66 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     QMap<QString, QString> existingSymbols;  // 符号-> 符号内容
     QSet<QString> subSymbolNames;  // 属于分体式符号的子符号名称
 
-    // 使用更可靠的方法来提取符号：手动解析括号匹配
+    // 使用栈来正确追踪符号的嵌套关系
     QStringList lines = existingContent.split('\n');
-    int symbolStart = -1;
-    QString currentSymbolName;
     int braceCount = 0;
-    int parentSymbolDepth = 0;  // 父符号的深度（用于识别子符号
+
+    // 栈元素: (symbolName, startLine, braceCountAfterStart)
+    struct SymbolInfo {
+        QString name;
+        int startLine;
+        int braceAfterStart;
+    };
+
+    QList<SymbolInfo> symbolStack;
 
     for (int i = 0; i < lines.size(); ++i) {
-        QString line = lines[i].trimmed();
+        QString line = lines[i];
 
-        // 检查是否是符号定义的开始
-        if (line.startsWith("(symbol \"")) {
-            // 提取符号
-            int nameStart = line.indexOf("\"") + 1;
+        // 逐字符计算括号变化
+        for (int j = 0; j < line.length(); ++j) {
+            if (line[j] == '(') {
+                braceCount++;
+            } else if (line[j] == ')') {
+                braceCount--;
+            }
+        }
+
+        // 检查是否有符号开始
+        int symbolPosInLine = line.indexOf("(symbol \"");
+        if (symbolPosInLine >= 0) {
+            int nameStart = line.indexOf("\"", symbolPosInLine) + 1;
             int nameEnd = line.indexOf("\"", nameStart);
             if (nameEnd > nameStart) {
                 QString symbolName = line.mid(nameStart, nameEnd - nameStart);
-
-                if (symbolStart >= 0) {
-                    // 这是一个嵌套的符号定义（子符号
-                    subSymbolNames.insert(symbolName);
-                    qDebug() << "Found sub-symbol:" << symbolName << "inside parent symbol";
-                } else {
-                    // 这是一个顶层符号定位
-                    currentSymbolName = symbolName;
-                    symbolStart = i;
-                    braceCount = 1;
-                    parentSymbolDepth = 0;
-
-                    // 计算同一行中额外的左括号
-                    // 符号定义行可能包含额外的括号，如 (in_bom yes) (on_board yes)
-                    for (int j = nameEnd + 1; j < line.length(); ++j) {
-                        if (line[j] == '(') {
-                            braceCount++;
-                        }
-                    }
-                }
+                SymbolInfo info;
+                info.name = symbolName;
+                info.startLine = i;
+                info.braceAfterStart = braceCount;
+                symbolStack.append(info);
+                qDebug() << "Found symbol start:" << symbolName << "at line" << i << "with braceCount" << braceCount;
             }
-        } else if (symbolStart >= 0) {
-            // 计算括号数量
-            for (int j = 0; j < line.length(); ++j) {
-                if (line[j] == '(') {
-                    braceCount++;
-                    // 如果括号深度大于 1，说明我们在父符号内
-                    if (braceCount > 1)
-                        parentSymbolDepth++;
-                } else if (line[j] == ')') {
-                    braceCount--;
-                    if (parentSymbolDepth > 0)
-                        parentSymbolDepth--;
-                }
-            }
+        }
 
-            // 当括号数量归零时，符号定义可能结束
-            if (braceCount == 0) {
-                // KiCad 重写格式会在同一行包含多个子符号，如: `    )    (symbol "xxx_2_1"`
-                // 检查当前行是否以 `)  (symbol "` 模式结束（括号后跟着新符号定义）
-                // 如果是，说明这不是符号的真正结束，需要继续处理
-                QString trimmedLine = line.trimmed();
-                QRegularExpression symbolRestartPattern(R"(^\)\s*\(symbol\s+"[^"]+")");
-                QRegularExpressionMatch match = symbolRestartPattern.match(trimmedLine);
+        // 检查是否有符号结束 - 当 braceCount 回到符号开始后的值时
+        // 注意：可能有多个符号同时结束
+        while (!symbolStack.isEmpty() && braceCount < symbolStack.last().braceAfterStart) {
+            SymbolInfo info = symbolStack.last();
+            symbolStack.removeLast();
 
-                if (match.hasMatch()) {
-                    qDebug() << "Symbol continues on same line, not ending yet:" << currentSymbolName;
-                    continue;
-                }
-
-                // 验证保存的内容括号是否平衡
+            // 检查是否是子符号 - 如果栈不为空，说明有父符号
+            if (!symbolStack.isEmpty()) {
+                // 这是一个子符号，不应该被单独提取
+                subSymbolNames.insert(info.name);
+                qDebug() << "Found sub-symbol (skipping):" << info.name << "inside parent" << symbolStack.last().name;
+            } else {
+                // 这是一个顶层符号，提取它
                 QString symbolContent;
-                for (int k = symbolStart; k <= i; ++k) {
+                for (int k = info.startLine; k <= i; ++k) {
                     symbolContent += lines[k] + "\n";
                 }
-
-                // 检查最后一行是否只是关闭 kicad_symbol_lib 的 ')'
-                // 如果是，说明这个 ')' 不属于符号内容，需要排除
-                QString lastLine = lines[i].trimmed();
-                if (lastLine == ")" && i > symbolStart) {
-                    // 找到最后一个非空行
-                    int lastContentLine = i - 1;
-                    while (lastContentLine >= symbolStart && lines[lastContentLine].trimmed().isEmpty()) {
-                        lastContentLine--;
-                    }
-                    // 重新构建内容，排除最后的 ')'
-                    symbolContent.clear();
-                    for (int k = symbolStart; k <= lastContentLine; ++k) {
-                        symbolContent += lines[k] + "\n";
-                    }
-                    qDebug() << "Excluded trailing ')' of kicad_symbol_lib from symbol content";
-                }
-
-                int leftCount = 0;
-                int rightCount = 0;
-                for (const QChar& ch : symbolContent) {
-                    if (ch == '(')
-                        leftCount++;
-                    else if (ch == ')')
-                        rightCount++;
-                }
-
-                if (leftCount != rightCount) {
-                    qWarning() << "Unbalanced parentheses in symbol content:" << currentSymbolName
-                               << "left:" << leftCount << "right:" << rightCount << "at lines" << symbolStart << "-"
-                               << i;
-                }
-
-                existingSymbols[currentSymbolName] = symbolContent;
-                qDebug() << "Found existing symbol:" << currentSymbolName << "at lines" << symbolStart << "-" << i;
-
-                // 重置状态
-                symbolStart = -1;
-                currentSymbolName.clear();
-                parentSymbolDepth = 0;
+                existingSymbols[info.name] = symbolContent;
+                qDebug() << "Extracted top-level symbol:" << info.name << "from lines" << info.startLine << "-" << i;
             }
         }
     }
