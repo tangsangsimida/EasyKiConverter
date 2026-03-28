@@ -70,16 +70,19 @@ EasyKiConverter 项目构建管理工具
 示例 6: 构建并安装
     $ python tools/python/build_project.py -t Release -i
 
-示例 7: 仅检查环境
+示例 7: 仅检查构建环境
     $ python tools/python/build_project.py --check
 
-示例 8: 仅配置不构建（查看 CMake 配置是否正确）
+示例 8: 完整开发环境检查（包含翻译工具、代码格式化工具）
+    $ python tools/python/build_project.py --env-check
+
+示例 9: 仅配置不构建（查看 CMake 配置是否正确）
     $ python tools/python/build_project.py --config-only
 
-示例 9: 完整构建流程（清理 + 构建 + 测试 + 安装）
+示例 10: 完整构建流程（清理 + 构建 + 测试 + 安装）
     $ python tools/python/build_project.py -c -t Release --test -i -y
 
-示例 10: 详细输出模式
+示例 11: 详细输出模式
     $ python tools/python/build_project.py -t Release -v
 
 =========================================================================
@@ -522,27 +525,51 @@ class BuildManager:
 
         return True, "源码未变更，可跳过构建"
 
-    def check_environment(self) -> bool:
-        """检查构建环境"""
+    def check_environment(self, full_check: bool = False) -> bool:
+        """
+        检查构建环境
+
+        Args:
+            full_check: 是否执行完整检查（包括翻译工具、代码格式化工具）
+        """
         self.logger.info("=" * 60)
         self.logger.info("正在检查构建环境...")
         checks = []
 
+        self.logger.info("")
+        self.logger.info("[基础构建工具]")
         # 1. CMake
         cmake_path = shutil.which("cmake")
         if cmake_path:
             res = subprocess.run(["cmake", "--version"], capture_output=True, text=True)
-            self.logger.debug(f"CMake: {res.stdout.splitlines()[0]}")
+            version = res.stdout.splitlines()[0]
+            self.logger.info(f"  ✓ CMake: {version}")
             checks.append(("CMake", True))
         else:
+            self.logger.error("  ✗ CMake: 未找到 (建议安装 CMake 3.16+)")
             checks.append(("CMake", False))
 
-        # 2. 编译器检查 - 放宽限制，支持 MSVC 和 MinGW
-        if platform.system() == "Windows":
-            # 尝试查找 MSVC 编译器
-            gen = self._get_msvc_generator()
+        # 2. Git
+        git_path = shutil.which("git")
+        if git_path:
+            res = subprocess.run(["git", "--version"], capture_output=True, text=True)
+            version = res.stdout.strip()
+            self.logger.info(f"  ✓ Git: {version}")
+        else:
+            self.logger.warning("  ⚠ Git: 未找到 (可选，用于版本管理)")
 
-            # 如果找不到 MSVC，检查 MinGW/GCC
+        # 3. Ninja (可选)
+        ninja_path = shutil.which("ninja")
+        if ninja_path:
+            self.logger.info(f"  ✓ Ninja: 已安装")
+        else:
+            self.logger.warning("  ⚠ Ninja: 未找到 (可选，使用 Makefiles)")
+
+        self.logger.info("")
+        self.logger.info("[编译器]")
+        # 4. 编译器检查
+        if platform.system() == "Windows":
+            gen = self._get_msvc_generator()
             if not gen:
                 gcc_path = shutil.which("gcc")
                 if gcc_path:
@@ -550,14 +577,14 @@ class BuildManager:
                         res = subprocess.run(
                             ["gcc", "--version"], capture_output=True, text=True
                         )
-                        self.logger.debug(f"编译器: {res.stdout.splitlines()[0]}")
+                        version = res.stdout.splitlines()[0]
+                        self.logger.info(f"  ✓ GCC: {version}")
                         gen = "MinGW Makefiles"
                     except:
                         pass
-
             checks.append(("编译器", bool(gen)))
             if gen:
-                self.logger.debug(f"检测到生成器: {gen}")
+                self.logger.info(f"  ✓ 编译器生成器: {gen}")
         else:
             compiler = shutil.which("gcc") or shutil.which("clang")
             if compiler:
@@ -565,17 +592,20 @@ class BuildManager:
                     res = subprocess.run(
                         [compiler, "--version"], capture_output=True, text=True
                     )
-                    self.logger.debug(f"编译器: {res.stdout.splitlines()[0]}")
+                    version = res.stdout.splitlines()[0]
+                    compiler_name = "GCC" if "gcc" in compiler else "Clang"
+                    self.logger.info(f"  ✓ {compiler_name}: {version}")
                 except:
                     pass
-            checks.append(("C++编译器", bool(compiler)))
+            else:
+                self.logger.error("  ✗ C++ 编译器: 未找到")
+                checks.append(("C++编译器", False))
 
-        # 3. Qt6 检查 - 放宽版本要求，只要找到 6.x 版本即可
+        self.logger.info("")
+        self.logger.info("[Qt6 环境]")
+        # 5. Qt6 检查
         is_matched, qt_path = self._get_qt_prefix_path()
-
-        # 如果精确匹配失败，尝试更宽松的检查
         if not qt_path:
-            # 检查 PATH 中的 qmake
             qmake_path = shutil.which("qmake")
             if qmake_path:
                 try:
@@ -592,13 +622,64 @@ class BuildManager:
         checks.append(("Qt6", bool(qt_path)))
         if qt_path:
             if is_matched:
-                self.logger.info(f"  找到 Qt6: {qt_path}")
+                self.logger.info(f"  ✓ Qt6: {qt_path}")
             else:
-                self.logger.info(f"  找到 Qt6: {qt_path}")
+                self.logger.info(f"  ✓ Qt6: {qt_path} (版本可能不匹配)")
+        else:
+            self.logger.error("  ✗ Qt6: 未找到")
+
+        if full_check:
+            self.logger.info("")
+            self.logger.info("[翻译工具]")
+            # 6. lupdate
+            lupdate_path = shutil.which("lupdate")
+            if lupdate_path:
+                self.logger.info(f"  ✓ lupdate: {lupdate_path}")
+            else:
+                self.logger.warning("  ⚠ lupdate: 未找到 (翻译提取需要)")
+
+            # 7. lrelease
+            lrelease_path = shutil.which("lrelease")
+            if lrelease_path:
+                self.logger.info(f"  ✓ lrelease: {lrelease_path}")
+            else:
+                self.logger.warning("  ⚠ lrelease: 未找到 (翻译编译需要)")
+
+            self.logger.info("")
+            self.logger.info("[代码格式化工具]")
+            # 8. clang-format
+            clang_format_path = shutil.which("clang-format")
+            if clang_format_path:
+                try:
+                    res = subprocess.run(
+                        ["clang-format", "--version"], capture_output=True, text=True
+                    )
+                    version = res.stdout.splitlines()[0] if res.stdout else "已安装"
+                    self.logger.info(f"  ✓ clang-format: {version}")
+                except:
+                    self.logger.info("  ✓ clang-format: 已安装")
+            else:
+                self.logger.warning("  ⚠ clang-format: 未找到 (代码格式化需要)")
+
+            # 9. qmlformat
+            qmlformat_path = shutil.which("qmlformat")
+            if qmlformat_path:
+                try:
+                    res = subprocess.run(
+                        ["qmlformat", "--version"], capture_output=True, text=True
+                    )
+                    version = res.stdout.splitlines()[0] if res.stdout else "已安装"
+                    self.logger.info(f"  ✓ qmlformat: {version}")
+                except:
+                    self.logger.info("  ✓ qmlformat: 已安装")
+            else:
+                self.logger.warning("  ⚠ qmlformat: 未找到 (QML 格式化需要)")
 
         failed_checks = [name for name, success in checks if not success]
+        self.logger.info("")
         if failed_checks:
             self.logger.error(f"环境检查失败: {', '.join(failed_checks)}")
+            self.logger.info("=" * 60)
             return False
 
         self.logger.info("环境检查通过")
@@ -852,7 +933,14 @@ def main():
     )
     parser.add_argument("-i", "--install", action="store_true", help="构建后执行安装")
     parser.add_argument("--test", action="store_true", help="构建后运行测试")
-    parser.add_argument("--check", action="store_true", help="仅执行环境检查")
+    parser.add_argument(
+        "--check", action="store_true", help="仅执行构建环境检查 (CMake/编译器/Qt6)"
+    )
+    parser.add_argument(
+        "--env-check",
+        action="store_true",
+        help="执行完整开发环境检查 (包含翻译工具和代码格式化工具)",
+    )
     parser.add_argument(
         "--config-only", action="store_true", help="仅执行配置，不执行构建"
     )
@@ -863,8 +951,12 @@ def main():
     manager = BuildManager(verbose=args.verbose)
 
     try:
+        if args.env_check:
+            success = manager.check_environment(full_check=True)
+            sys.exit(0 if success else 1)
+
         if args.check:
-            success = manager.check_environment()
+            success = manager.check_environment(full_check=False)
             sys.exit(0 if success else 1)
 
         if not manager.check_environment():
