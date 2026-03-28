@@ -77,6 +77,23 @@ from typing import Dict, List, Tuple, Optional
 
 
 # ============================================================================
+# ANSI 颜色支持
+# ============================================================================
+
+
+class Colors:
+    """ANSI 颜色代码"""
+
+    RESET = "\033[0m"
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    BOLD = "\033[1m"
+
+
+# ============================================================================
 # 超链接支持检测
 # ============================================================================
 
@@ -236,9 +253,17 @@ class ProjectAnalyzer:
         print("=" * 60)
 
         risk_info = [
-            ("high", "🔴 高风险 (>500行)", risk_files["high"]),
-            ("medium", "🟡 中风险 (300-500行)", risk_files["medium"]),
-            ("low", "🟢 低风险 (200-300行)", risk_files["low"]),
+            ("high", f"{Colors.RED}高风险 (>500行){Colors.RESET}", risk_files["high"]),
+            (
+                "medium",
+                f"{Colors.YELLOW}中风险 (300-500行){Colors.RESET}",
+                risk_files["medium"],
+            ),
+            (
+                "low",
+                f"{Colors.GREEN}低风险 (200-300行){Colors.RESET}",
+                risk_files["low"],
+            ),
         ]
 
         total_risk = 0
@@ -248,7 +273,9 @@ class ProjectAnalyzer:
             print(f"\n{label}: {count} 个文件")
 
         if total_risk == 0:
-            print("\n✅ 没有发现高风险文件，代码规模控制良好！")
+            print(
+                f"\n{Colors.GREEN}✅ 没有发现高风险文件，代码规模控制良好！{Colors.RESET}"
+            )
             return
 
         all_sorted = sorted(self.all_files, key=lambda x: -x[0])
@@ -259,28 +286,36 @@ class ProjectAnalyzer:
         print("-" * 80)
 
         for lines, path in all_sorted:
-            if lines > 200:
-                if lines > 500:
-                    marker = " 🔴"
-                elif lines > 300:
-                    marker = " 🟡"
-                else:
-                    marker = " 🟢"
+            if lines > 500:
+                color = Colors.RED
+            elif lines > 300:
+                color = Colors.YELLOW
+            elif lines > 200:
+                color = Colors.GREEN
             else:
-                marker = ""
+                color = ""
 
             if use_hyperlink:
                 path_display = make_hyperlink(path, path, str(self.project_root))
             else:
                 path_display = path
 
-            print(f"{lines:>6}  {path_display}{marker}")
+            if color:
+                print(f"{color}{lines:>6}  {path_display}{Colors.RESET}")
+            else:
+                print(f"{lines:>6}  {path_display}")
 
         print(f"\n{'=' * 80}")
         print(f"文件总数: {len(self.all_files)}")
-        print(f"高风险 (>500行): {len(risk_files['high'])} 个")
-        print(f"中风险 (300-500行): {len(risk_files['medium'])} 个")
-        print(f"低风险 (200-300行): {len(risk_files['low'])} 个")
+        print(
+            f"{Colors.RED}高风险 (>500行): {len(risk_files['high'])} 个{Colors.RESET}"
+        )
+        print(
+            f"{Colors.YELLOW}中风险 (300-500行): {len(risk_files['medium'])} 个{Colors.RESET}"
+        )
+        print(
+            f"{Colors.GREEN}低风险 (200-300行): {len(risk_files['low'])} 个{Colors.RESET}"
+        )
         print(f"总行数: {sum(l for l, _ in self.all_files)}")
 
     def output_json(self) -> str:
