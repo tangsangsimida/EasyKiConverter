@@ -112,19 +112,23 @@
         <p>New Features:</p>
         <p xml:lang="zh_CN">新功能:</p>
         <ul>
+          <li>Optimized export pipeline and fixed symbol library format issues</li>
+          <li xml:lang="zh_CN">优化导出流水线并修复符号库格式问题</li>
+          <li>Fixed counter synchronization when removing results</li>
           <li xml:lang="zh_CN">修复移除结果时计数器同步问题</li>
+          <li>Optimized scroll wheel interaction for component list cards</li>
           <li xml:lang="zh_CN">优化组件列表卡片的滚动条滚轮交互逻辑</li>
         </ul>
         <p>Bug Fixes:</p>
         <p xml:lang="zh_CN">修复:</p>
         <ul>
-          <li xml:lang="zh_CN">修复应用启动器ID配置</li>
-          <li xml:lang="zh_CN">修复应用启动器ID配置 (#125)</li>
+          <li>Fixed symbol library format issues</li>
+          <li xml:lang="zh_CN">修复符号库格式问题</li>
         </ul>
         <p>Chores:</p>
         <p xml:lang="zh_CN">其他:</p>
         <ul>
-          <li xml:lang="zh_CN">更新应用版本到v3.1.1</li>
+          <li xml:lang="zh_CN">更新应用版本到v3.1.2</li>
         </ul>
       </description>
     </release>
