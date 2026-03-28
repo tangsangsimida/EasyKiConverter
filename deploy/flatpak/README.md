@@ -9,53 +9,56 @@
 
 ## 快速验证
 
-### 1. 快速检查清单文件配置
+### 1. 使用统一的 Flatpak 工具
 
 ```bash
 # Linux/macOS
-python3 tools/python/quick_flatpak_check.py
+python3 tools/python/flatpak_tool.py --check
 
 # Windows
-python tools\python\quick_flatpak_check.py
+python tools\python\flatpak_tool.py --check
 ```
 
-这个脚本会检查：
+这个工具会检查：
+- Flatpak 构建工具是否已安装（flatpak, flatpak-builder）
 - YAML 语法
 - 关键配置（App ID、Runtime、Command 等）
 - 源码 URL 和版本标签
-- 运行时是否已安装
 - 依赖配置（QXlsx）
 - 权限配置
+- 运行时是否已安装
 
-### 2. 完整构建测试
+### 2. 完整构建和测试
 
 ```bash
-# Linux/macOS
-python3 tools/python/test_flatpak_build.py
+# 检查环境
+python tools/python/flatpak_tool.py --check
 
-# Windows
-python tools\python\test_flatpak_build.py
+# 构建 Flatpak
+python tools/python/flatpak_tool.py --build
+
+# 完整流程（检查+构建+安装+运行）
+python tools/python/flatpak_tool.py --all --force
+
+# 查看应用信息
+python tools/python/flatpak_tool.py --info
+
+# 清理构建目录
+python tools/python/flatpak_tool.py --clean
 ```
 
-这个脚本会：
-1. 验证清单文件语法
-2. 检查运行时和 SDK
-3. 执行完整构建（10-30 分钟）
-4. 询问是否安装应用
-5. 询问是否运行应用测试
-
-**注意**：所有验证和构建脚本均使用 Python 实现，确保跨平台兼容性（Linux、macOS、Windows）。
+**注意**：统一工具支持跨平台（Linux、macOS、Windows），所有产物统一放在 `flatpak_build/` 目录下。
 
 ## 手动构建
 
 ### 使用远程仓库（正式版）
 
 ```bash
-# 构建应用
-flatpak-builder --force-clean --repo=flatpak-repo build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.yml
+# 构建应用（产物放在 flatpak_build/ 目录）
+flatpak-builder --force-clean --repo=flatpak_build/repo flatpak_build/build deploy/flatpak/io.github.tangsangsimida.easykiconverter.yml
 
 # 添加本地仓库
-flatpak --user remote-add --no-gpg-verify local-repo flatpak-repo
+flatpak --user remote-add --no-gpg-verify local-repo flatpak_build/repo
 
 # 安装应用
 flatpak --user install local-repo io.github.tangsangsimida.easykiconverter
@@ -68,10 +71,10 @@ flatpak run io.github.tangsangsimida.easykiconverter
 
 ```bash
 # 构建应用（使用当前工作目录的源码）
-flatpak-builder --force-clean --repo=flatpak-repo-local build-flatpak-local deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
+flatpak-builder --force-clean --repo=flatpak_build/repo-local flatpak_build/build-local deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
 
 # 添加本地仓库
-flatpak --user remote-add --no-gpg-verify local-repo-local flatpak-repo-local
+flatpak --user remote-add --no-gpg-verify local-repo-local flatpak_build/repo-local
 
 # 安装应用
 flatpak --user install local-repo-local io.github.tangsangsimida.easykiconverter
@@ -103,18 +106,17 @@ flatpak install flathub org.kde.Sdk//6.10
 ## 清理构建产物
 
 ```bash
-# 删除构建目录
-rm -rf build-flatpak build-flatpak-local
+# 使用工具清理（推荐）
+python tools/python/flatpak_tool.py --clean
 
-# 删除仓库目录
-rm -rf flatpak-repo flatpak-repo-local
+# 或者手动删除
+rm -rf flatpak_build/
 
 # 卸载应用
 flatpak remove io.github.tangsangsimida.easykiconverter
 
 # 删除本地仓库
 flatpak remote-delete local-repo
-flatpak remote-delete local-repo-local
 ```
 
 ## 构建选项
@@ -126,7 +128,7 @@ flatpak remote-delete local-repo-local
 --force-clean
 
 # 指定仓库目录
---repo=flatpak-repo
+--repo=flatpak_build/repo
 
 # 停留在构建目录（用于调试）
 --keep-build-dirs
@@ -142,10 +144,10 @@ flatpak remote-delete local-repo-local
 
 ```bash
 # 停留在构建目录
-flatpak-builder --keep-build-dirs --repo=flatpak-repo build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.yml
+flatpak-builder --keep-build-dirs --repo=flatpak_build/repo flatpak_build/build deploy/flatpak/io.github.tangsangsimida.easykiconverter.yml
 
 # 进入构建目录
-cd build-flatpak
+cd flatpak_build/build
 
 # 查看构建日志
 cat .flatpak-builder/logs/*.log
@@ -189,13 +191,13 @@ Flatpak 应用使用沙盒运行，需要以下权限：
 
 ```bash
 # 构建应用
-flatpak-builder --repo=flatpak-repo build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.yml
+flatpak-builder --repo=flatpak_build/repo flatpak_build/build deploy/flatpak/io.github.tangsangsimida.easykiconverter.yml
 
 # 导出单文件包
-flatpak build-bundle flatpak-repo easykiconverter.flatpak io.github.tangsangsimida.easykiconverter
+flatpak build-bundle flatpak_build/repo easykiconverter.flatpak io.github.tangsangsimida.easykiconverter
 
 # 导出运行时包（可选）
-flatpak build-bundle --runtime flatpak-repo org.kde.Platform.flatpak org.kde.Platform//6.10
+flatpak build-bundle --runtime flatpak_build/repo org.kde.Platform.flatpak org.kde.Platform//6.10
 ```
 
 ## 相关链接

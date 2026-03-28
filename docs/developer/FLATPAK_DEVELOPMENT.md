@@ -69,20 +69,26 @@ flatpak run io.github.tangsangsimida.easykiconverter
 
 ```bash
 # 检查 Flatpak 构建环境
-python tools/python/quick_flatpak_check.py
+python tools/python/flatpak_tool.py --check
 
-# 测试 Flatpak 构建
-python tools/python/test_flatpak_build.py
+# 构建 Flatpak
+python tools/python/flatpak_tool.py --build
+
+# 执行完整流程（检查+构建+安装+运行）
+python tools/python/flatpak_tool.py --all --force
+
+# 清理构建目录
+python tools/python/flatpak_tool.py --clean
+
+# 查看应用信息
+python tools/python/flatpak_tool.py --info
 ```
 
 ### 清理构建缓存
 
 ```bash
 # 清理 Flatpak 构建缓存
-flatpak-builder --force-clean --repo=flatpak-repo build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.yml
-
-# 或者删除整个构建目录
-rm -rf build-flatpak flatpak-repo
+rm -rf flatpak_build/
 ```
 
 ## 运行和测试
