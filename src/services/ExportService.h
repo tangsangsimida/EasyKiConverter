@@ -128,6 +128,8 @@ private:
     class ExporterSymbol* m_symbolExporter;
     class ExporterFootprint* m_footprintExporter;
     class Exporter3DModel* m_modelExporter;
+    class PreviewImageExporter* m_previewImageExporter;
+    class DatasheetExporter* m_datasheetExporter;
 
     struct ExportData {
         QString componentId;

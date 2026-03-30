@@ -158,8 +158,52 @@ QList<QPointF> SvgPathParser::parsePath(const QString& path) {
         }
         // 处理C/c（Bezier Curve）命
         else if (command == 'C') {
-            qWarning() << "Bezier curve not fully supported, skipping";
-            i += 7;  // 跳过6个控制点参数 + 1个终点参
+            bool relative = (cmd[0] == 'c');
+            if (points.isEmpty()) {
+                qWarning() << "Bezier without origin point";
+                i += 7;
+                continue;
+            }
+
+            QPointF startPoint = points.last();
+            i++;
+
+            if (i + 6 >= tokens.size()) {
+                qWarning() << "Bezier param length error";
+                continue;
+            }
+
+            bool okCp1x, okCp1y, okCp2x, okCp2y, okX, okY;
+            double cp1x = tokens[i].toDouble(&okCp1x);
+            i++;
+            double cp1y = tokens[i].toDouble(&okCp1y);
+            i++;
+            double cp2x = tokens[i].toDouble(&okCp2x);
+            i++;
+            double cp2y = tokens[i].toDouble(&okCp2y);
+            i++;
+            double endX = tokens[i].toDouble(&okX);
+            i++;
+            double endY = tokens[i].toDouble(&okY);
+            i++;
+
+            if (!okCp1x || !okCp1y || !okCp2x || !okCp2y || !okX || !okY) {
+                qWarning() << "Bezier param parse error";
+                continue;
+            }
+
+            if (relative) {
+                cp1x += startPoint.x();
+                cp1y += startPoint.y();
+                cp2x += startPoint.x();
+                cp2y += startPoint.y();
+                endX += startPoint.x();
+                endY += startPoint.y();
+            }
+
+            QList<QPointF> bezierPoints =
+                bezierToPolyline(startPoint.x(), startPoint.y(), cp1x, cp1y, cp2x, cp2y, endX, endY);
+            points.append(bezierPoints);
         }
         // 处理Z/z（ClosePath）命
         else if (command == 'Z') {
@@ -309,6 +353,37 @@ double SvgPathParser::getAngle(double x1, double y1, double x2, double y2) {
     // 计算角度
     double angle = atan2(cross, dot);
     return angle;
+}
+
+QList<QPointF> SvgPathParser::bezierToPolyline(double startX,
+                                               double startY,
+                                               double cp1X,
+                                               double cp1Y,
+                                               double cp2X,
+                                               double cp2Y,
+                                               double endX,
+                                               double endY,
+                                               int segments) {
+    QList<QPointF> res;
+
+    // 三次贝塞尔曲线公式
+    // B(t) = (1-t)^3 * P0 + 3*(1-t)^2*t * P1 + 3*(1-t)*t^2 * P2 + t^3 * P3
+
+    for (int i = 0; i <= segments; ++i) {
+        double t = static_cast<double>(i) / segments;
+        double t2 = t * t;
+        double t3 = t2 * t;
+        double mt = 1.0 - t;
+        double mt2 = mt * mt;
+        double mt3 = mt2 * mt;
+
+        double x = mt3 * startX + 3.0 * mt2 * t * cp1X + 3.0 * mt * t2 * cp2X + t3 * endX;
+        double y = mt3 * startY + 3.0 * mt2 * t * cp1Y + 3.0 * mt * t2 * cp2Y + t3 * endY;
+
+        res.append(QPointF(x, y));
+    }
+
+    return res;
 }
 
 }  // namespace EasyKiConverter

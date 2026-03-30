@@ -1,6 +1,8 @@
 #include "ExportService.h"
 
 #include "ComponentExportTask.h"
+#include "DatasheetExporter.h"
+#include "PreviewImageExporter.h"
 #include "core/easyeda/JLCDatasheet.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
@@ -23,6 +25,8 @@ ExportService::ExportService(QObject* parent)
     , m_symbolExporter(new ExporterSymbol())
     , m_footprintExporter(new ExporterFootprint())
     , m_modelExporter(new Exporter3DModel())
+    , m_previewImageExporter(new PreviewImageExporter())
+    , m_datasheetExporter(new DatasheetExporter())
     , m_threadPool(new QThreadPool(this))
     , m_mutex(new QMutex())
     , m_isExporting(0)
@@ -36,6 +40,8 @@ ExportService::ExportService(QObject* parent)
     , m_parallelTotalCount(0)
     , m_networkManager(new QNetworkAccessManager(this)) {
     m_threadPool->setMaxThreadCount(QThread::idealThreadCount());
+    m_previewImageExporter->setNetworkManager(m_networkManager);
+    m_datasheetExporter->setNetworkManager(m_networkManager);
 }
 
 ExportService::~ExportService() {
@@ -44,6 +50,8 @@ ExportService::~ExportService() {
     delete m_symbolExporter;
     delete m_footprintExporter;
     delete m_modelExporter;
+    delete m_previewImageExporter;
+    delete m_datasheetExporter;
     delete m_mutex;
 }
 
@@ -789,186 +797,22 @@ void ExportService::handleParallelExportTaskFinished(const QString& componentId,
 bool ExportService::exportPreviewImages(const QStringList& imageUrls,
                                         const QString& outputPath,
                                         const QString& componentName) {
-    if (imageUrls.isEmpty()) {
-        return true;
-    }
-
-    // 创建预览图目录（类似3D模型的处理方式）
-    QString imagesDirPath = QString("%1/%2.preview").arg(outputPath, m_options.libName);
-    if (!createOutputDirectory(imagesDirPath)) {
-        qWarning() << "Failed to create preview images directory:" << imagesDirPath;
-        return false;
-    }
-
-    bool allSuccess = true;
-    for (int i = 0; i < imageUrls.size(); ++i) {
-        QString imageUrl = imageUrls[i];
-        QString fileExtension = QFileInfo(imageUrl).suffix();
-        if (fileExtension.isEmpty()) {
-            fileExtension = "jpg";  // 默认扩展名
-        }
-
-        QString fileName;
-        if (imageUrls.size() == 1) {
-            fileName = QString("%1.%2").arg(componentName, fileExtension);
-        } else {
-            fileName = QString("%1_%2.%3").arg(componentName).arg(i + 1).arg(fileExtension);
-        }
-
-        QString imagePath = QString("%1/%2").arg(imagesDirPath, fileName);
-
-        // 检查文件是否已存在
-        if (!m_options.overwriteExistingFiles && QFile::exists(imagePath)) {
-            qWarning() << "Preview image already exists:" << imagePath;
-            continue;
-        }
-
-        // 下载图片
-        QNetworkRequest request(imageUrl);
-        request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
-        QNetworkReply* reply = m_networkManager->get(request);
-
-        QEventLoop loop;
-        connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        loop.exec();
-
-        if (reply->error() == QNetworkReply::NoError) {
-            QByteArray imageData = reply->readAll();
-            QFile file(imagePath);
-            if (file.open(QIODevice::WriteOnly)) {
-                file.write(imageData);
-                file.close();
-                qDebug() << "Preview image exported successfully:" << imagePath;
-            } else {
-                qWarning() << "Failed to open file for writing:" << imagePath;
-                allSuccess = false;
-            }
-        } else {
-            qWarning() << "Failed to download preview image:" << imageUrl << reply->errorString();
-            allSuccess = false;
-        }
-
-        reply->deleteLater();
-    }
-
-    return allSuccess;
+    m_previewImageExporter->setOptions(m_options);
+    return m_previewImageExporter->exportFromUrls(imageUrls, outputPath, componentName);
 }
 
 bool ExportService::exportPreviewImagesFromCache(const QStringList& imagePaths,
                                                  const QString& outputPath,
                                                  const QString& componentName) {
-    if (imagePaths.isEmpty()) {
-        return true;
-    }
-
-    // 创建预览图目录（类似3D模型的处理方式）
-    QString imagesDirPath = QString("%1/%2.preview").arg(outputPath, m_options.libName);
-    if (!createOutputDirectory(imagesDirPath)) {
-        qWarning() << "Failed to create preview images directory:" << imagesDirPath;
-        return false;
-    }
-
-    bool allSuccess = true;
-    for (int i = 0; i < imagePaths.size(); ++i) {
-        QString sourcePath = imagePaths[i];
-
-        // 检查源文件是否存在
-        if (!QFile::exists(sourcePath)) {
-            qWarning() << "Source preview image file not found:" << sourcePath;
-            allSuccess = false;
-            continue;
-        }
-
-        QString fileExtension = QFileInfo(sourcePath).suffix();
-        if (fileExtension.isEmpty()) {
-            fileExtension = "jpg";  // 默认扩展名
-        }
-
-        QString fileName;
-        if (imagePaths.size() == 1) {
-            fileName = QString("%1.%2").arg(componentName, fileExtension);
-        } else {
-            fileName = QString("%1_%2.%3").arg(componentName).arg(i + 1).arg(fileExtension);
-        }
-
-        QString destPath = QString("%1/%2").arg(imagesDirPath, fileName);
-
-        // 检查文件是否已存在
-        if (!m_options.overwriteExistingFiles && QFile::exists(destPath)) {
-            qWarning() << "Preview image already exists:" << destPath;
-            continue;
-        }
-
-        // 复制文件
-        if (QFile::copy(sourcePath, destPath)) {
-            qDebug() << "Preview image copied from cache:" << destPath;
-        } else {
-            qWarning() << "Failed to copy preview image from cache:" << sourcePath << "to" << destPath;
-            allSuccess = false;
-        }
-    }
-
-    return allSuccess;
+    m_previewImageExporter->setOptions(m_options);
+    return m_previewImageExporter->exportFromCache(imagePaths, outputPath, componentName);
 }
 
 bool ExportService::exportDatasheet(const QString& datasheetUrl,
                                     const QString& outputPath,
                                     const QString& componentName) {
-    if (datasheetUrl.isEmpty()) {
-        return true;
-    }
-
-    // 创建手册目录
-    QString datasheetDirPath = QString("%1/%2.datasheet").arg(outputPath, m_options.libName);
-    if (!createOutputDirectory(datasheetDirPath)) {
-        qWarning() << "Failed to create datasheet directory:" << datasheetDirPath;
-        return false;
-    }
-
-    // 确定文件扩展名
-    QString fileExtension = "pdf";  // 默认扩展名
-    QFileInfo urlInfo(datasheetUrl);
-    if (!urlInfo.suffix().isEmpty()) {
-        fileExtension = urlInfo.suffix();
-    }
-
-    QString fileName = QString("%1.%2").arg(componentName, fileExtension);
-    QString datasheetPath = QString("%1/%2").arg(datasheetDirPath, fileName);
-
-    // 检查文件是否已存在
-    if (!m_options.overwriteExistingFiles && QFile::exists(datasheetPath)) {
-        qWarning() << "Datasheet already exists:" << datasheetPath;
-        return true;
-    }
-
-    // 下载手册
-    QNetworkRequest request(datasheetUrl);
-    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
-    QNetworkReply* reply = m_networkManager->get(request);
-
-    QEventLoop loop;
-    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    loop.exec();
-
-    if (reply->error() == QNetworkReply::NoError) {
-        QByteArray datasheetData = reply->readAll();
-        QFile file(datasheetPath);
-        if (file.open(QIODevice::WriteOnly)) {
-            file.write(datasheetData);
-            file.close();
-            qDebug() << "Datasheet exported successfully:" << datasheetPath;
-            reply->deleteLater();
-            return true;
-        } else {
-            qWarning() << "Failed to open file for writing:" << datasheetPath;
-            reply->deleteLater();
-            return false;
-        }
-    } else {
-        qWarning() << "Failed to download datasheet:" << datasheetUrl << reply->errorString();
-        reply->deleteLater();
-        return false;
-    }
+    m_datasheetExporter->setOptions(m_options);
+    return m_datasheetExporter->exportDatasheet(datasheetUrl, outputPath, componentName);
 }
 
 }  // namespace EasyKiConverter

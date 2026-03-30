@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 # 从 CI 环境动态获取版本号，如果没有定义则使用默认版本
 if(NOT DEFINED VERSION_FROM_CI)
-    set(VERSION_FROM_CI "3.0.14")
+    set(VERSION_FROM_CI "3.1.2")
     message(STATUS "VERSION_FROM_CI not defined, using default: ${VERSION_FROM_CI}")
 else()
     message(STATUS "VERSION_FROM_CI defined: ${VERSION_FROM_CI}")
@@ -29,6 +29,8 @@ project(EasyKiconverter_Cpp_Version VERSION ${PROJECT_VERSION_SANITIZED} LANGUAG
 # 生成 compile_commands.json 用于 VS Code IntelliSense
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# 抑制 Qt 私有头文件警告（QXlsx 使用 QtGuiPrivate，需要此设置）
+set(QT_NO_PRIVATE_MODULE_WARNING ON CACHE BOOL "" FORCE)
 
 # 显式设置版本号变量，确保 configure_file 能正确替换
 # 如果补丁号未定义或为空，默认设置为 0
@@ -301,12 +303,10 @@ target_link_libraries(appEasyKiconverter_Cpp_Version
         Qt6::Widgets
 )
 
-# Windows 内存统计需要 psapi 库
+# Windows 内存统计需要 psapi 库 (MSVC)
 if(WIN32)
     if(MSVC)
         target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE psapi)
-    else()
-        target_link_libraries(appEasyKiconverter_Cpp_Version PRIVATE -lpsapi)
     endif()
 endif()
 
@@ -329,9 +329,12 @@ install(TARGETS appEasyKiconverter_Cpp_Version
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                GROUP_READ GROUP_EXECUTE
+                WORLD_READ WORLD_EXECUTE
 )
 
-# 安装图标
+# 安装图标（浅色主题）
 install(DIRECTORY resources/icons/hicolor/
     DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor
     FILES_MATCHING PATTERN "*.png"

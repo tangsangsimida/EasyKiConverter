@@ -32,7 +32,6 @@ public:
      * @param parent 父对象
      */
     explicit FetchWorker(const QString& componentId,
-                         QNetworkAccessManager* networkAccessManager,
                          bool need3DModel,
                          bool fetch3DOnly = false,
                          const QString& existing3DUuid = QString(),
@@ -102,7 +101,6 @@ private:
 
 private:
     QString m_componentId;
-    QNetworkAccessManager* m_networkAccessManager;
     QNetworkAccessManager* m_ownNetworkManager;
     bool m_need3DModel;
     bool m_fetch3DOnly;  // 是否只获取3D模型

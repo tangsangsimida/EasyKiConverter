@@ -25,11 +25,14 @@
 
 - [构建指南](developer/BUILD.md) - 从源代码构建
 - [构建指南 (英文)](developer/BUILD_en.md) - Build Guide
+- [编码规范](developer/CODING_STYLE.md) - C++ 和 QML 编码规范
+- [编码规范 (英文)](developer/CODING_STYLE_en.md) - Coding Style
 - [贡献指南](developer/CONTRIBUTING.md) - 如何贡献代码
 - [贡献指南 (英文)](developer/CONTRIBUTING_en.md) - Contributing Guide
 - [架构文档](developer/ARCHITECTURE.md) - 项目架构设计
 - [架构文档 (英文)](developer/ARCHITECTURE_en.md) - Architecture
 - [测试开发指南](developer/TESTING_GUIDE.md) - 测试架构与 Mock 策略
+- [国际化实现](developer/I18N_IMPLEMENTATION_SUMMARY.md) - 国际化支持说明
 
 ### 面向项目决策 (project/)
 
@@ -38,6 +41,10 @@
 - [项目路线图](project/ROADMAP.md) - 未来发展方向
 - [项目路线图 (英文)](project/ROADMAP_en.md) - Roadmap
 - [架构决策记录](project/adr/README.md) - 技术决策记录
+
+### 重构规划
+
+- [代码重构计划](../../REFACTORING_PLAN.md) - 大型源文件重构优化方案
 
 ### 分析报告
 

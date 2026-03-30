@@ -8,7 +8,6 @@
 #include "StageHandler.h"
 
 #include <QMap>
-#include <QNetworkAccessManager>
 #include <QSet>
 #include <QThreadPool>
 
@@ -20,10 +19,7 @@ namespace EasyKiConverter {
 class FetchStageHandler : public StageHandler {
     Q_OBJECT
 public:
-    FetchStageHandler(QAtomicInt& isCancelled,
-                      QNetworkAccessManager* networkManager,
-                      QThreadPool* threadPool,
-                      QObject* parent = nullptr);
+    FetchStageHandler(QAtomicInt& isCancelled, QThreadPool* threadPool, QObject* parent = nullptr);
 
     /**
      * @brief 启动抓取阶段
@@ -56,7 +52,6 @@ private slots:
     void onWorkerCompleted(QSharedPointer<ComponentExportStatus> status, FetchWorker* worker);
 
 private:
-    QNetworkAccessManager* m_networkManager;
     QThreadPool* m_threadPool;
     QStringList m_componentIds;
     ExportOptions m_options;

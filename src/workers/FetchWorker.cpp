@@ -25,14 +25,12 @@ QDateTime FetchWorker::s_lastRateLimitTime;
 int FetchWorker::s_backoffMs = 0;
 
 FetchWorker::FetchWorker(const QString& componentId,
-                         QNetworkAccessManager* networkAccessManager,
                          bool need3DModel,
                          bool fetch3DOnly,
                          const QString& existing3DUuid,
                          QObject* parent)
     : QObject(parent)
     , m_componentId(componentId)
-    , m_networkAccessManager(networkAccessManager)
     , m_ownNetworkManager(nullptr)
     , m_need3DModel(need3DModel)
     , m_fetch3DOnly(fetch3DOnly)
@@ -96,7 +94,7 @@ void FetchWorker::run() {
 
     // 使用线程局部存储缓存 QNetworkAccessManager
     // 避免为每个任务重复创建和销毁 QNAM（这是非常昂贵的操作）
-    // 修复：使用 std::unique_ptr 管理线程局部 QNetworkAccessManager 生命周期
+    // 使用 std::unique_ptr 管理线程局部 QNetworkAccessManager 生命周期
     static thread_local std::unique_ptr<QNetworkAccessManager> threadQNAM = nullptr;
 
     if (!threadQNAM) {

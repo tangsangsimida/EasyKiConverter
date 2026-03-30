@@ -4,11 +4,8 @@
 
 namespace EasyKiConverter {
 
-FetchStageHandler::FetchStageHandler(QAtomicInt& isCancelled,
-                                     QNetworkAccessManager* networkManager,
-                                     QThreadPool* threadPool,
-                                     QObject* parent)
-    : StageHandler(isCancelled, parent), m_networkManager(networkManager), m_threadPool(threadPool) {}
+FetchStageHandler::FetchStageHandler(QAtomicInt& isCancelled, QThreadPool* threadPool, QObject* parent)
+    : StageHandler(isCancelled, parent), m_threadPool(threadPool) {}
 
 void FetchStageHandler::start() {
     for (const QString& componentId : m_componentIds) {
@@ -79,8 +76,7 @@ void FetchStageHandler::start() {
 
         // 2. 启动 Worker
 
-        FetchWorker* worker =
-            new FetchWorker(componentId, m_networkManager, m_options.exportModel3D, false, QString(), nullptr);
+        FetchWorker* worker = new FetchWorker(componentId, m_options.exportModel3D, false, QString(), nullptr);
 
         worker->moveToThread(this->thread());
 

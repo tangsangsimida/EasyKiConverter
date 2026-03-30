@@ -58,6 +58,7 @@ LRELEASE_EXE = "lrelease.exe" if sys.platform == "win32" else "lrelease"
 
 # ==============================================================================
 
+
 def find_tool(tool_name, custom_path=None):
     """
     寻找工具路径：
@@ -78,15 +79,19 @@ def find_tool(tool_name, custom_path=None):
 
     return None
 
+
 def get_project_root():
     """获取项目根目录"""
     return Path(__file__).parent.parent.parent.absolute()
+
 
 def run_command(cmd, cwd):
     """执行命令并打印输出"""
     print(f"执行命令: {' '.join(cmd)}")
     try:
-        result = subprocess.run(cmd, cwd=cwd, check=True, capture_output=True, text=True)
+        result = subprocess.run(
+            cmd, cwd=cwd, check=True, capture_output=True, text=True
+        )
         if result.stdout:
             print(result.stdout)
         return True
@@ -98,6 +103,7 @@ def run_command(cmd, cwd):
     except Exception as e:
         print(f"发生异常: {str(e)}")
         return False
+
 
 def check_tools(lupdate_path, lrelease_path):
     """检查工具链是否可用"""
@@ -119,10 +125,13 @@ def check_tools(lupdate_path, lrelease_path):
 
     if not all_ok:
         print("\n提示: 请确保 Qt 工具链已安装并将 bin 目录添加到系统环境变量 PATH 中。")
-        print("或者在脚本 tools/python/manage_translations.py 的 QT_BIN_PATH 变量中手动指定路径。")
+        print(
+            "或者在脚本 tools/python/manage_translations.py 的 QT_BIN_PATH 变量中手动指定路径。"
+        )
 
     print("-" * 60)
     return all_ok
+
 
 # 翻译字典：中文到英文的映射
 TRANSLATION_DICT = {
@@ -133,30 +142,23 @@ TRANSLATION_DICT = {
     "确定": "OK",
     "最小化到托盘": "Minimize to Tray",
     "记住我的选择": "Remember my choice",
-    "您可以选择最小化到系统托盘以保持后台运行，或者完全退出程序。": 
-        "You can choose to minimize to the system tray to keep running in the background, or completely exit the program.",
-    
+    "您可以选择最小化到系统托盘以保持后台运行，或者完全退出程序。": "You can choose to minimize to the system tray to keep running in the background, or completely exit the program.",
     # 导出确认相关
     "确认退出": "Confirm Exit",
-    "转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？": 
-        "Conversion is in progress. Exiting will cancel the current conversion, but exported files will be preserved. Are you sure you want to exit?",
+    "转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？": "Conversion is in progress. Exiting will cancel the current conversion, but exported files will be preserved. Are you sure you want to exit?",
     "强制退出": "Force Exit",
     "继续转换": "Continue",
-    
     # 组件列表相关
     "已复制 ID": "ID Copied",
     "全部 (%1)": "All (%1)",
     "导出中 (%1)": "Exporting (%1)",
     "成功 (%1)": "Success (%1)",
     "失败 (%1)": "Failed (%1)",
-    
     # 导出结果相关
     "3D模型: %1": "3D Model: %1",
-    
     # 系统托盘相关
     "显示窗口": "Show Window",
     "退出": "Exit",
-    
     # 导出完成相关
     "导出完成": "Export Complete",
     "导出失败：%1 个元器件全部失败": "Export failed: All %1 components failed",
@@ -168,12 +170,11 @@ TRANSLATION_DICT = {
     "%1 秒": "%1 seconds",
     "%1 分 %2 秒": "%1 min %2 sec",
     "耗时：%1": "Time: %1",
-    
     # 应用相关
-    "EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具": 
-        "EasyKiConverter - LCSC/EasyEDA to KiCad Library Converter",
+    "EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具": "EasyKiConverter - LCSC/EasyEDA to KiCad Library Converter",
     "EasyKiConverter - LCSC 转换工具": "EasyKiConverter - LCSC Conversion Tool",
 }
+
 
 def auto_complete_translations(ts_files, project_root, force=False):
     """自动完成未完成的翻译项"""
@@ -182,10 +183,6 @@ def auto_complete_translations(ts_files, project_root, force=False):
     manual_needed_count = 0
 
     for ts_file in ts_files:
-        # 只处理英文翻译文件
-        if 'en.ts' not in ts_file:
-            continue
-
         ts_path = os.path.join(project_root, ts_file)
         if not os.path.exists(ts_path):
             print(f"[警告] 文件不存在: {ts_file}")
@@ -195,22 +192,36 @@ def auto_complete_translations(ts_files, project_root, force=False):
             tree = ET.parse(ts_path)
             root = tree.getroot()
 
+            is_chinese = "zh_CN" in ts_file
             modified = False
-            for context in root.findall('context'):
-                context_name = context.find('name').text
-                for message in context.findall('message'):
-                    translation = message.find('translation')
-                    if translation is not None and translation.get('type') == 'unfinished':
-                        source = message.find('source').text
-                        
-                        # 尝试从字典中查找翻译
+            for context in root.findall("context"):
+                context_name = context.find("name").text
+                for message in context.findall("message"):
+                    translation = message.find("translation")
+                    if (
+                        translation is not None
+                        and translation.get("type") == "unfinished"
+                    ):
+                        source = message.find("source").text
+
+                        # 中文翻译文件：直接使用 source 作为 translation
+                        if is_chinese:
+                            translation.set("type", "finished")
+                            translation.text = source
+                            modified = True
+                            auto_completed_count += 1
+                            continue
+
+                        # 英文翻译文件：从字典查找翻译
                         if source in TRANSLATION_DICT:
                             # 移除 type="unfinished" 属性并设置翻译文本
-                            translation.set('type', 'finished')
+                            translation.set("type", "finished")
                             translation.text = TRANSLATION_DICT[source]
                             modified = True
                             auto_completed_count += 1
-                            print(f"  [自动翻译] {source[:40]}... -> {TRANSLATION_DICT[source][:40]}...")
+                            print(
+                                f"  [自动翻译] {source[:40]}... -> {TRANSLATION_DICT[source][:40]}..."
+                            )
                         else:
                             # 无法自动翻译的项
                             if not force:
@@ -219,7 +230,7 @@ def auto_complete_translations(ts_files, project_root, force=False):
 
             if modified:
                 # 保存修改后的文件
-                tree.write(ts_path, encoding='utf-8', xml_declaration=True)
+                tree.write(ts_path, encoding="utf-8", xml_declaration=True)
                 print(f"[保存] {ts_file} 已更新")
 
         except Exception as e:
@@ -230,6 +241,7 @@ def auto_complete_translations(ts_files, project_root, force=False):
         print(f"需要手动翻译: {manual_needed_count} 项")
         return False
     return True
+
 
 def check_unfinished_translations(ts_files, project_root):
     """检查未完成的翻译项"""
@@ -248,28 +260,37 @@ def check_unfinished_translations(ts_files, project_root):
             root = tree.getroot()
 
             unfinished = []
-            for context in root.findall('context'):
-                context_name = context.find('name').text
-                for message in context.findall('message'):
-                    translation = message.find('translation')
-                    if translation is not None and translation.get('type') == 'unfinished':
-                        source = message.find('source').text
-                        location = message.find('location')
+            for context in root.findall("context"):
+                context_name = context.find("name").text
+                for message in context.findall("message"):
+                    translation = message.find("translation")
+                    if (
+                        translation is not None
+                        and translation.get("type") == "unfinished"
+                    ):
+                        source = message.find("source").text
+                        location = message.find("location")
                         location_info = ""
                         if location is not None:
-                            location_info = f" ({location.get('filename')}:{location.get('line')})"
-                        unfinished.append({
-                            'context': context_name,
-                            'source': source,
-                            'location': location_info
-                        })
+                            location_info = (
+                                f" ({location.get('filename')}:{location.get('line')})"
+                            )
+                        unfinished.append(
+                            {
+                                "context": context_name,
+                                "source": source,
+                                "location": location_info,
+                            }
+                        )
 
             if unfinished:
                 has_unfinished = True
                 unfinished_counts[ts_file] = len(unfinished)
                 print(f"\n[发现未完成翻译] {ts_file} ({len(unfinished)} 项):")
                 for item in unfinished[:10]:  # 只显示前10项
-                    print(f"  - [{item['context']}] {item['source'][:50]}...{item['location']}")
+                    print(
+                        f"  - [{item['context']}] {item['source'][:50]}...{item['location']}"
+                    )
                 if len(unfinished) > 10:
                     print(f"  ... 还有 {len(unfinished) - 10} 项未完成")
 
@@ -289,15 +310,26 @@ def check_unfinished_translations(ts_files, project_root):
         print("[OK] 所有翻译已完成！")
         return True
 
+
 def main():
     parser = argparse.ArgumentParser(description="EasyKiConverter 翻译管理工具")
-    parser.add_argument("--update", action="store_true", help="提取翻译字符串到 .ts 文件")
-    parser.add_argument("--release", action="store_true", help="编译 .ts 文件为 .qm 文件")
+    parser.add_argument(
+        "--update", action="store_true", help="提取翻译字符串到 .ts 文件"
+    )
+    parser.add_argument(
+        "--release", action="store_true", help="编译 .ts 文件为 .qm 文件"
+    )
     parser.add_argument("--all", action="store_true", help="执行提取和编译全流程")
     parser.add_argument("--check", action="store_true", help="检查工具链状态")
-    parser.add_argument("--check-unfinished", action="store_true", help="检查未完成的翻译项")
-    parser.add_argument("--auto-complete", action="store_true", help="自动完成可识别的未完成翻译")
-    parser.add_argument("--strict", action="store_true", help="严格模式：编译时如果发现未完成翻译则终止")
+    parser.add_argument(
+        "--check-unfinished", action="store_true", help="检查未完成的翻译项"
+    )
+    parser.add_argument(
+        "--auto-complete", action="store_true", help="自动完成可识别的未完成翻译"
+    )
+    parser.add_argument(
+        "--strict", action="store_true", help="严格模式：编译时如果发现未完成翻译则终止"
+    )
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -321,7 +353,7 @@ def main():
     # 定义翻译资源路径
     ts_files = [
         "resources/translations/translations_easykiconverter_zh_CN.ts",
-        "resources/translations/translations_easykiconverter_en.ts"
+        "resources/translations/translations_easykiconverter_en.ts",
     ]
 
     # 获取 QML 文件列表 (参考 CMakeLists.txt)
@@ -331,7 +363,7 @@ def main():
     success = True
 
     # 3. 自动完成翻译
-    if args.auto_complete:
+    if args.auto_complete or args.all:
         auto_complete_translations(ts_files, project_root)
 
     # 4. 检查未完成的翻译
@@ -355,7 +387,9 @@ def main():
         if args.strict:
             print("\n>>> 严格模式：检查未完成的翻译...")
             if not check_unfinished_translations(ts_files, project_root):
-                print("\n[错误] 发现未完成的翻译，编译终止。请先完成翻译或使用 --release (不带 --strict) 继续。")
+                print(
+                    "\n[错误] 发现未完成的翻译，编译终止。请先完成翻译或使用 --release (不带 --strict) 继续。"
+                )
                 sys.exit(1)
 
         print("\n>>> 开始编译翻译文件 (lrelease)...")
@@ -372,6 +406,7 @@ def main():
     else:
         print("\n操作过程中出现错误，请检查输出。")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

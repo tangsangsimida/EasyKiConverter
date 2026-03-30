@@ -12,7 +12,7 @@ if [ -f "/usr/bin/easykiconverter" ]; then
 fi
 
 # 验证桌面文件存在且可读
-DESKTOP_FILE="/usr/share/applications/com.tangsangsimida.easykiconverter.desktop"
+DESKTOP_FILE="/usr/share/applications/io.github.tangsangsimida.easykiconverter.desktop"
 DESKTOP_FILE_OLD="/usr/share/applications/com.tangsangsimida.easykiconverter.desktop"
 if [ -f "$DESKTOP_FILE" ]; then
     chmod 644 "$DESKTOP_FILE"
@@ -54,9 +54,9 @@ fi
 # 为所有已登录用户触发 GNOME 应用列表刷新
 # 使用 trigger-gnome-refresh.sh 脚本来触发刷新
 if [ -x "/usr/share/easykiconverter/trigger-gnome-refresh.sh" ]; then
-    # 获取所有已登录用户
-    loginctl list-users 2>/dev/null | awk '{print $2}' | while read -r user; do
-        if [ -n "$user" ] && [ "$user" != "USER" ]; then
+    # 获取所有已登录用户（跳过标题行和空行）
+    loginctl list-users 2>/dev/null | awk 'NR>1 && $2 != "" {print $2}' | while read -r user; do
+        if [ -n "$user" ]; then
             # 为每个用户触发 GNOME 刷新
             /usr/share/easykiconverter/trigger-gnome-refresh.sh "$user" 2>/dev/null || true
         fi

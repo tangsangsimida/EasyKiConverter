@@ -325,7 +325,15 @@ ColumnLayout {
                 }
             }
             onClicked: {
-                headerSection.themeController.setDarkMode(!AppStyle.isDarkMode);
+                console.log("Theme button clicked!");
+                console.log("themeController:", headerSection.themeController);
+                console.log("themeController.isDarkMode:", headerSection.themeController ? headerSection.themeController.isDarkMode : "null");
+                if (headerSection.themeController) {
+                    console.log("Calling setDarkMode...");
+                    headerSection.themeController.setDarkMode(!headerSection.themeController.isDarkMode);
+                } else {
+                    console.error("themeController is null!");
+                }
             }
         }
     }

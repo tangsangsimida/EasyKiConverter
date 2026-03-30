@@ -12,6 +12,9 @@
 
 namespace EasyKiConverter {
 
+class ThumbnailUpdateManager;
+class ValidationStateManager;
+
 /**
  * @brief 元件列表视图模型
  *
@@ -330,26 +333,25 @@ private:
 private:
     ComponentService* m_service;
     QList<ComponentListItemData*> m_componentList;
-    QSet<QString> m_componentIdIndex;  // 快速查重集合，O(1) 查找
+    QSet<QString> m_componentIdIndex;
     QString m_outputPath;
     QString m_bomFilePath;
     QString m_bomResult;
     bool m_hasInvalidComponents = false;
 
-    // 防抖定时器，用于减少频繁的 UI 更新
-    QTimer* m_debounceTimer;
-    QSet<QString> m_pendingUpdateIndices;  // 待更新的索引集合
+    ThumbnailUpdateManager* m_thumbnailUpdateManager;
+    ValidationStateManager* m_validationStateManager;
 
-    // 两阶段控制：先验证，再获取预览图
-    int m_pendingValidationCount = 0;  // 待验证的元器件数量
-    QStringList m_validatedComponentIds;  // 验证通过的元器件ID列表
-    bool m_previewFetchEnabled = false;  // 是否允许获取预览图
+    // 两阶段控制：先验证，再获取预览图（用于removeComponent等复杂场景）
+    int m_pendingValidationCount = 0;
+    QStringList m_validatedComponentIds;
+    bool m_previewFetchEnabled = false;
 
     // 筛选功能
-    QString m_filterMode = "all";  // 筛选模式: all, validating, valid, invalid
+    QString m_filterMode = "all";
 
     // 滚动状态
-    bool m_isScrolling = false;  // 是否正在滚动
+    bool m_isScrolling = false;
 };
 
 }  // namespace EasyKiConverter

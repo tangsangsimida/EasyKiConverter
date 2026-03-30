@@ -9,7 +9,6 @@
 #include <QHash>
 #include <QObject>
 #include <QString>
-#include <QSystemTrayIcon>
 #include <QTimer>
 #include <QVariantList>
 
@@ -17,6 +16,7 @@ namespace EasyKiConverter {
 
 class ExportService;
 class ExportServicePipeline;
+class SystemTrayManager;
 struct PipelineProgress;
 struct ExportStatistics;
 
@@ -221,6 +221,7 @@ public slots:
                                  bool debugMode);
     Q_INVOKABLE void retryFailedComponents();
     Q_INVOKABLE void retryComponent(const QString& componentId);
+    Q_INVOKABLE void removeResult(const QString& componentId);
     Q_INVOKABLE void cancelExport();
     Q_INVOKABLE void resetExport();
     Q_INVOKABLE void setFilterMode(const QString& mode);
@@ -279,12 +280,12 @@ private:
     void startExportInternal(const QStringList& componentIds, bool isRetry);
     void updateStatistics();
     void showExportCompleteNotification();
-    void initializeSystemTrayIcon();
 
 private:
     ExportService* m_exportService;
     ComponentService* m_componentService;
     ComponentListViewModel* m_componentListViewModel;
+    SystemTrayManager* m_systemTrayManager;
     QString m_status;
     int m_progress;
     bool m_isExporting;
@@ -311,8 +312,6 @@ private:
     int m_successFootprintCount;
     int m_successModel3DCount;
     int m_failureCount;
-    QSystemTrayIcon* m_systemTrayIcon;
-    QMenu* m_trayMenu;
 };
 }  // namespace EasyKiConverter
 

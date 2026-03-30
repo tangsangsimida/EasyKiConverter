@@ -19,7 +19,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 应用标识符
-APP_ID="com.tangsangsimida.easykiconverter"
+APP_ID="io.github.tangsangsimida.easykiconverter"
 OLD_APP_ID="com.tangsangsimida.easykiconverter"
 
 # 辅助函数

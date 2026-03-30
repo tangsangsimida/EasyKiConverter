@@ -93,4 +93,10 @@ QtObject {
         readonly property int easeIn: Easing.InCubic
         readonly property int easeInOut: Easing.InOutCubic
     }
+    // 图标颜色
+    readonly property var iconColors: QtObject {
+        readonly property color primary: isDarkMode ? "#f1f5f9" : "#1e293b"
+        readonly property color secondary: isDarkMode ? "#94a3b8" : "#64748b"
+        readonly property color disabled: isDarkMode ? "#64748b" : "#cbd5e1"
+    }
 }

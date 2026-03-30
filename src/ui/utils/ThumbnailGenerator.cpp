@@ -155,9 +155,7 @@ void ThumbnailGenerator::drawSymbol(QPainter& painter,
 void ThumbnailGenerator::drawFootprint(QPainter& painter,
                                        const QSharedPointer<FootprintData>& footprintData,
                                        const QRect& targetRect) {
-    // TODO(tangsangsimida): 实现封装绘制
-    //
-    // 当前状态：
+    // 当前实现：
     // - generateThumbnail 优先使用符号数据生成缩略图
     // - 只有当没有符号数据时才会调用 generateFootprintThumbnail
     // - generateFootprintThumbnail 目前返回黑色背景占位图

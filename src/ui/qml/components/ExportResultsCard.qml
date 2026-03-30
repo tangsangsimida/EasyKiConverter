@@ -210,6 +210,7 @@ Loader {
                     status: modelData.status || "pending"
                     message: modelData.message || ""
                     onRetryClicked: resultsLoader.exportProgressController.retryComponent(componentId)
+                    onDeleteClicked: resultsLoader.exportProgressController.removeResult(componentId)
                 }
                 ScrollBar.vertical: ScrollBar {
                     policy: ScrollBar.AsNeeded

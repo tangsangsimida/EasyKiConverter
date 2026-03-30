@@ -7,11 +7,6 @@
 
 namespace EasyKiConverter {
 
-/**
- * @brief 主题设置视图模型类
-     *
- * 负责管理主题设置相关UI 状
-     */
 class ThemeSettingsViewModel : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool isDarkMode READ isDarkMode WRITE setDarkMode NOTIFY darkModeChanged)
@@ -20,12 +15,10 @@ public:
     explicit ThemeSettingsViewModel(QObject* parent = nullptr);
     ~ThemeSettingsViewModel() override;
 
-    // Getter 方法
     bool isDarkMode() const {
         return m_isDarkMode;
     }
 
-    // Setter 方法（标记为 Q_INVOKABLE 以便QML 中调用）
     Q_INVOKABLE void setDarkMode(bool darkMode);
 
 signals:

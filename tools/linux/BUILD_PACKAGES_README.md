@@ -202,7 +202,7 @@ ls squashfs-root/usr/lib/
 
 ```bash
 # 查看桌面文件
-cat squashfs-root/com.tangsangsimida.easykiconverter.desktop
+cat squashfs-root/io.github.tangsangsimida.easykiconverter.desktop
 
 # 查看图标文件
 ls squashfs-root/usr/share/icons/hicolor/*/apps/

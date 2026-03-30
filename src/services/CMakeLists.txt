@@ -10,6 +10,12 @@ add_library(EasyKiConverterServices STATIC
     ConfigService.cpp
     ComponentDataCollector.cpp
     ComponentExportTask.cpp
+    MemoryMonitor.cpp
+    ComponentQueueManager.cpp
+    ParallelFetchContext.cpp
+    PipelineCompletionHandler.cpp
+    PreviewImageExporter.cpp
+    DatasheetExporter.cpp
 )
 
 # 然后添加子目录，子目录会填充 PIPELINE_SOURCES 和 PIPELINE_HEADERS 变量
