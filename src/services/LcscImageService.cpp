@@ -257,13 +257,8 @@ void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
                     }
                 }
 
-                // 下载数据手册
-                if (!datasheetUrl.isEmpty()) {
-                    m_pendingDatasheets[componentId] = datasheetUrl;
-                    m_datasheetDownloadStatus[componentId] = 0;  // pending
-                    qDebug() << "Starting datasheet download for component:" << componentId << "from:" << datasheetUrl;
-                    performDatasheetDownload(componentId, datasheetUrl, 0);
-                }
+                // 注意：数据手册不再在此处下载，只保存 URL
+                // 导出时会通过 DatasheetExporter 按需下载
 
                 return;
             }
