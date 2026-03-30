@@ -777,9 +777,11 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
 void ComponentService::handleParallelDataCollected(const QString& componentId, const ComponentData& data) {
     qDebug() << "Parallel data collected for:" << componentId;
 
+    QMutexLocker locker(&m_parallelContextMutex);
     if (m_parallelContext != nullptr) {
         m_parallelContext->markCompleted(componentId, data);
     }
+    locker.unlock();
 
     if (m_queueManager != nullptr) {
         m_queueManager->requestCompleted(componentId);
@@ -790,9 +792,11 @@ void ComponentService::handleParallelFetchError(const QString& componentId, cons
     qDebug() << "Parallel fetch error for:" << componentId << error;
 
     Q_UNUSED(error);
+    QMutexLocker locker(&m_parallelContextMutex);
     if (m_parallelContext != nullptr) {
         m_parallelContext->markFailed(componentId);
     }
+    locker.unlock();
 
     if (m_queueManager != nullptr) {
         m_queueManager->requestCompleted(componentId);
@@ -896,9 +900,12 @@ void ComponentService::resetQueueState() {
     m_queueManager->stop();
     m_activeRequestCount = 0;
 
-    if (m_parallelContext != nullptr) {
-        m_parallelContext->deleteLater();
-        m_parallelContext = nullptr;
+    {
+        QMutexLocker locker(&m_parallelContextMutex);
+        if (m_parallelContext != nullptr) {
+            m_parallelContext->deleteLater();
+            m_parallelContext = nullptr;
+        }
     }
 
     qDebug() << "Queue state reset completed";

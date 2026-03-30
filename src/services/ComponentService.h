@@ -414,6 +414,7 @@ private:
 
     // 并行数据收集状态
     ParallelFetchContext* m_parallelContext;
+    QMutex m_parallelContextMutex;  // 保护 m_parallelContext 的访问
 
     // 动态队列管理
     class ComponentQueueManager* m_queueManager;

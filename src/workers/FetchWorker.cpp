@@ -417,7 +417,12 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 retryCount = MAX_HTTP_RETRIES + 1;  // Don't retry for other 4xx errors
             }
         } else if (replyPtr->error() == QNetworkReply::OperationCanceledError) {
-            // 请求被取消（超时），不再重试
+            // 检查是 abort 还是 timeout导致的取消
+            if (m_isAborted.loadRelaxed()) {
+                qDebug() << "Request cancelled by abort for URL:" << url;
+                return QByteArray();
+            }
+            // 请求超时，不再重试
             qWarning() << "Request timeout (cancelled) for URL:" << url << "after" << timeoutMs << "ms";
 
             // 记录网络诊断信息
@@ -432,8 +437,8 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 status->networkDiagnostics.append(diag);
             }
 
-            // 超时后进行正常重试（弱网环境下超时是最常见的错误类型）
-            // Will retry
+            // 超时后不再重试
+            return QByteArray();
         } else {
             qWarning() << "Network error:" << replyPtr->errorString() << "URL:" << url;
 
