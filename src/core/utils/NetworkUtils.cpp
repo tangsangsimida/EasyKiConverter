@@ -244,6 +244,13 @@ void NetworkUtils::handleError(QNetworkReply::NetworkError error) {
     }
 
     if (error == QNetworkReply::OperationCanceledError) {
+        qDebug() << "Connection closed by remote, retrying immediately if attempts remain";
+        if (m_retryCount < m_maxRetries) {
+            retryRequestImmediately();
+            return;
+        }
+        emit requestError(errorMsg);
+        m_isRequesting = false;
         return;
     }
 
@@ -309,6 +316,12 @@ void NetworkUtils::retryRequest() {
     m_retryCount++;
     int delay = calculateRetryDelay(m_retryCount);
     QTimer::singleShot(delay, this, &NetworkUtils::executeRequest);
+}
+
+void NetworkUtils::retryRequestImmediately() {
+    m_retryCount++;
+    qDebug() << "Retrying request immediately (attempt" << m_retryCount << "/" << m_maxRetries << ")";
+    executeRequest();
 }
 
 bool NetworkUtils::shouldRetry(int statusCode) {

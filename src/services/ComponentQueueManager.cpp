@@ -93,6 +93,18 @@ void ComponentQueueManager::reset() {
     stop();
 }
 
+void ComponentQueueManager::requestCompleted(const QString& componentId) {
+    if (!m_isRunning) {
+        return;
+    }
+
+    m_pendingComponents.remove(componentId);
+    qDebug() << "ComponentQueueManager: Request completed for:" << componentId
+             << "(Remaining active:" << m_pendingComponents.size() << ")";
+
+    checkAndProcessNext();
+}
+
 int ComponentQueueManager::activeRequestCount() const {
     return m_pendingComponents.size();
 }

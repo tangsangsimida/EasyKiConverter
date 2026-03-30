@@ -37,7 +37,7 @@ ComponentService::ComponentService(QObject* parent)
     , m_parallelContext(nullptr)
     , m_imageService(nullptr)
     , m_activeRequestCount(0)
-    , m_maxConcurrentRequests(5)
+    , m_maxConcurrentRequests(10)
     , m_queueManager(nullptr) {
     try {
         m_api = new EasyedaApi();
@@ -78,7 +78,7 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     , m_parallelContext(nullptr)
     , m_imageService(nullptr)
     , m_activeRequestCount(0)
-    , m_maxConcurrentRequests(5)
+    , m_maxConcurrentRequests(10)
     , m_queueManager(nullptr) {
     if (m_api && !m_api->parent()) {
         m_api->setParent(this);
@@ -780,6 +780,10 @@ void ComponentService::handleParallelDataCollected(const QString& componentId, c
     if (m_parallelContext != nullptr) {
         m_parallelContext->markCompleted(componentId, data);
     }
+
+    if (m_queueManager != nullptr) {
+        m_queueManager->requestCompleted(componentId);
+    }
 }
 
 void ComponentService::handleParallelFetchError(const QString& componentId, const QString& error) {
@@ -788,6 +792,10 @@ void ComponentService::handleParallelFetchError(const QString& componentId, cons
     Q_UNUSED(error);
     if (m_parallelContext != nullptr) {
         m_parallelContext->markFailed(componentId);
+    }
+
+    if (m_queueManager != nullptr) {
+        m_queueManager->requestCompleted(componentId);
     }
 }
 
