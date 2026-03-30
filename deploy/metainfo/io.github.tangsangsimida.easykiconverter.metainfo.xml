@@ -58,22 +58,22 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.2/resources/imgs/screenshot1.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.3/resources/imgs/screenshot1.png</image>
       <caption>Main application window with component conversion interface</caption>
       <caption xml:lang="zh_CN">主应用窗口 - 元件转换界面</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.2/resources/imgs/screenshot2.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.3/resources/imgs/screenshot2.png</image>
       <caption>Component input and list management</caption>
       <caption xml:lang="zh_CN">元件输入和列表管理</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.2/resources/imgs/screenshot3.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.3/resources/imgs/screenshot3.png</image>
       <caption>Export settings and progress tracking</caption>
       <caption xml:lang="zh_CN">导出设置和进度跟踪</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.2/resources/imgs/screenshot4.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.3/resources/imgs/screenshot4.png</image>
       <caption>Dark mode theme support</caption>
       <caption xml:lang="zh_CN">深色主题支持</caption>
     </screenshot>
@@ -105,6 +105,25 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="3.1.3" date="2026-03-30">
+      <description>
+        <p>Changes from 3.1.2 to 3.1.3</p>
+        <p xml:lang="zh_CN">从 3.1.2 到 3.1.3 的变更</p>
+        <p>New Features:</p>
+        <p xml:lang="zh_CN">新功能:</p>
+        <ul>
+          <li xml:lang="zh_CN">添加ANSI颜色支持以增强输出可读性</li>
+          <li xml:lang="zh_CN">合并代码分析工具并增强构建环境检查功能</li>
+          <li xml:lang="zh_CN">添加Flatpak构建管理工具并移除翻译修复脚本</li>
+          <li xml:lang="zh_CN">重构构建脚本并添加增量构建和进度条功能</li>
+        </ul>
+        <p>Other Changes:</p>
+        <p xml:lang="zh_CN">其他变更:</p>
+        <ul>
+          <li xml:lang="zh_CN">统一文档和Flatpak构建输出路径并改进工具</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.1.2" date="2026-03-26">
       <description>
         <p>Changes from 3.1.1 to 3.1.2</p>
@@ -132,66 +151,9 @@
         </ul>
       </description>
     </release>
-    <release version="3.1.1" date="2026-03-25">
-      <description>
-        <p>Changes from 3.1.0 to 3.1.1</p>
-        <p xml:lang="zh_CN">从 3.1.0 到 3.1.1 的变更</p>
-        <p>Bug Fixes:</p>
-        <p xml:lang="zh_CN">修复:</p>
-        <ul>
-          <li>Fixed application launcher ID configuration</li>
-          <li xml:lang="zh_CN">修复应用启动器ID配置</li>
-        </ul>
-      </description>
-    </release>
-    <release version="3.1.0" date="2026-03-22">
-      <description>
-        <p>UI/UX optimization and performance improvements</p>
-        <p xml:lang="zh_CN">UI/UX 优化与性能改进</p>
-        <ul>
-          <li>Added component list filtering feature</li>
-          <li xml:lang="zh_CN">新增组件列表筛选功能</li>
-          <li>Optimized thumbnail preview display</li>
-          <li xml:lang="zh_CN">优化缩略图预览显示</li>
-          <li>Added batch preview image fetching</li>
-          <li xml:lang="zh_CN">新增批量预览图获取</li>
-          <li>Improved dark/light theme support</li>
-          <li xml:lang="zh_CN">改进深色/浅色主题支持</li>
-          <li>Enhanced network retry mechanism</li>
-          <li xml:lang="zh_CN">增强网络重试机制</li>
-          <li>Fixed UI overlap issues in English mode</li>
-          <li xml:lang="zh_CN">修复英文模式下 UI 重叠问题</li>
-          <li>Fixed thread safety issues in network requests</li>
-          <li xml:lang="zh_CN">修复网络请求线程安全问题</li>
-        </ul>
-      </description>
-    </release>
-    <release version="3.0.14" date="2026-03-18">
-      <description>
-        <p>Changes from 3.0.13 to 3.0.14</p>
-        <p xml:lang="zh_CN">从 3.0.13 到 3.0.14 的变更</p>
-        <p>New Features:</p>
-        <p xml:lang="zh_CN">新功能:</p>
-        <ul>
-          <li>Improved resource cleanup mechanism on application exit</li>
-          <li xml:lang="zh_CN">改进应用退出时的资源清理机制</li>
-          <li>Refactored retry button style and added hover interaction effects</li>
-          <li xml:lang="zh_CN">重构重试按钮样式并添加悬停交互效果</li>
-          <li>Added retry functionality and optimized UI component structure</li>
-          <li xml:lang="zh_CN">添加重试功能和优化UI组件结构</li>
-          <li>Optimized concurrent processing mechanism for component data fetching</li>
-          <li xml:lang="zh_CN">优化组件数据获取的并发处理机制</li>
-          <li>Optimized ComponentService multi-thread safety and concurrency control</li>
-          <li xml:lang="zh_CN">优化ComponentService多线程安全性和并发控制</li>
-        </ul>
-        <p>Other Changes:</p>
-        <p xml:lang="zh_CN">其他变更:</p>
-        <ul>
-          <li>Enhanced version management tool with comprehensive file coverage</li>
-          <li xml:lang="zh_CN">增强版本管理工具，覆盖更多文件</li>
-        </ul>
-      </description>
-    </release>
+    <release version="3.1.1" date="2026-03-25"/>
+    <release version="3.1.0" date="2026-03-22"/>
+    <release version="3.0.14" date="2026-03-18"/>
     <release version="3.0.13" date="2026-03-17"/>
     <release version="3.0.12" date="2026-03-16"/>
     <release version="3.0.11" date="2026-03-14"/>
