@@ -629,6 +629,9 @@ void ExportProgressViewModel::startExportInternal(const QStringList& componentId
     m_collectedData.clear();
     m_status = isRetry ? "Retrying..." : "Starting export...";
 
+    // 取消所有未完成的预览图获取工作
+    m_componentService->cancelAllPreviewImageFetches();
+
     if (!isRetry) {
         m_successCount = 0;
         m_failureCount = 0;

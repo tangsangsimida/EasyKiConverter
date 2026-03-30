@@ -843,6 +843,13 @@ void ComponentService::clearCache() {
     qDebug() << "Component cache cleared (including LCSC image service)";
 }
 
+void ComponentService::cancelAllPreviewImageFetches() {
+    qDebug() << "ComponentService: Cancelling all preview image fetches";
+    if (m_imageService) {
+        m_imageService->cancelAll();
+    }
+}
+
 void ComponentService::completeComponentData(const QString& componentId) {
     QMutexLocker locker(&m_fetchingComponentsMutex);
     if (m_fetchingComponents.contains(componentId)) {
