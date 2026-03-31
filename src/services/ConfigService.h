@@ -246,6 +246,20 @@ public:
     Q_INVOKABLE void setWindowY(int y);
 
     /**
+     * @brief 获取窗口最大化状态
+     *
+     * @return bool 是否最大化
+     */
+    Q_INVOKABLE bool getWindowMaximized() const;
+
+    /**
+     * @brief 设置窗口最大化状态
+     *
+     * @param maximized 是否最大化
+     */
+    Q_INVOKABLE void setWindowMaximized(bool maximized);
+
+    /**
      * @brief 获取退出偏好
      *
      * @return QString 退出偏好（"minimize" 或 "exit"，空字符串表示未记住）
