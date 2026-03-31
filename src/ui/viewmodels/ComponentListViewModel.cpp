@@ -663,6 +663,9 @@ void ComponentListViewModel::retryAllInvalidComponents() {
     if (retryCount > 0) {
         m_validationStateManager->startValidation(retryCount);
     }
+
+    // 通知 QML 列表需要更新过滤状态
+    emit filteredCountChanged();
 }
 
 void ComponentListViewModel::retryPreviewImage(const QString& componentId) {
