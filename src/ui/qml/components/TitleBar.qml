@@ -28,12 +28,6 @@ Rectangle {
         property point clickPos: "0,0"
         onPressed: mouse => {
             clickPos = Qt.point(mouse.x, mouse.y);
-            if (Window.window.visibility === Window.Maximized) {
-                var ratio = mouse.x / width;
-                Window.window.showNormal();
-                Window.window.x = mouse.screenX - (Window.window.width * ratio);
-                Window.window.y = mouse.screenY - (mouse.y);
-            }
             Window.window.startSystemMove();
         }
         onDoubleClicked: {
