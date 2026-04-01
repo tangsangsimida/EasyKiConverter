@@ -424,6 +424,63 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     m_graphicsGenerator.setCurrentBBox(currentBBox);
     qDebug() << "Adjusted BBox to nearest pin origin - x:" << currentBBox.x << "y:" << currentBBox.y;
 
+    // 计算所有图形元素的实际边界，用于文本左右居中对齐
+    double minX = std::numeric_limits<double>::max();
+    double maxX = -std::numeric_limits<double>::max();
+    auto updateBounds = [&](double x, double w) {
+        minX = qMin(minX, x);
+        maxX = qMax(maxX, x + w);
+    };
+    auto parseAndUpdatePoints = [&](const QString& pointsStr) {
+        QStringList points = pointsStr.split(" ");
+        points.removeAll("");
+        for (int i = 0; i + 1 < points.size(); i += 2) {
+            double px = points[i].toDouble();
+            minX = qMin(minX, px);
+            maxX = qMax(maxX, px);
+        }
+    };
+    for (const auto& rect : symbolData.rectangles()) {
+        updateBounds(rect.posX, rect.width);
+    }
+    for (const auto& circle : symbolData.circles()) {
+        double r = circle.radius;
+        minX = qMin(minX, circle.centerX - r);
+        maxX = qMax(maxX, circle.centerX + r);
+    }
+    for (const auto& ellipse : symbolData.ellipses()) {
+        minX = qMin(minX, ellipse.centerX - ellipse.radiusX);
+        maxX = qMax(maxX, ellipse.centerX + ellipse.radiusX);
+    }
+    for (const auto& arc : symbolData.arcs()) {
+        for (const auto& pt : arc.path) {
+            minX = qMin(minX, pt.x());
+            maxX = qMax(maxX, pt.x());
+        }
+    }
+    for (const auto& polyline : symbolData.polylines()) {
+        parseAndUpdatePoints(polyline.points);
+    }
+    for (const auto& polygon : symbolData.polygons()) {
+        parseAndUpdatePoints(polygon.points);
+    }
+    for (const auto& text : symbolData.texts()) {
+        minX = qMin(minX, text.posX);
+        maxX = qMax(maxX, text.posX);
+    }
+    for (const auto& pin : pins) {
+        minX = qMin(minX, pin.settings.posX);
+        maxX = qMax(maxX, pin.settings.posX);
+    }
+    // 如果没有任何图形元素，使用默认宽度
+    double graphWidth = (minX <= maxX) ? (maxX - minX) : 0.0;
+    double graphCenterOffsetX = 0.0;
+    if (minX <= maxX) {
+        graphCenterOffsetX = m_graphicsGenerator.pxToMm(minX + graphWidth / 2.0 - originX);
+    }
+    qDebug() << "Graph bounds - minX:" << minX << "maxX:" << maxX << "width:" << graphWidth
+             << "centerOffsetX(mm):" << graphCenterOffsetX;
+
     // 计算 y_high 和 y_low（使用引脚坐标，与 Python 版本保持一致）
     // 如果没有引脚，使用默认值以确保属性位置正确
     double yHigh = 2.54;  // 默认值：100mil
@@ -462,7 +519,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     content += QString("      \"Reference\"\n");
     content += QString("      \"%1\"\n").arg(escapePropertyValue(refPrefix));
     content += "      (id 0)\n";
-    content += QString("      (at 0 %1 0)\n").arg(yHigh + fieldOffset, 0, 'f', 2);
+    content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yHigh + fieldOffset, 0, 'f', 2);
     content += QString("      (effects (font (size %1 %2) (thickness 0) ) )\n")
                    .arg(fontSize, 0, 'f', 2)
                    .arg(fontSize, 0, 'f', 2);
@@ -473,7 +530,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     content += QString("      \"Value\"\n");
     content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().name));
     content += "      (id 1)\n";
-    content += QString("      (at 0 %1 0)\n").arg(yLow - fieldOffset, 0, 'f', 2);
+    content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
     content += QString("      (effects (font (size %1 %2) (thickness 0) ) )\n")
                    .arg(fontSize, 0, 'f', 2)
                    .arg(fontSize, 0, 'f', 2);
@@ -488,7 +545,8 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         QString footprintPath = QString("%1:%2").arg(libName, symbolData.info().package);
         content += QString("      \"%1\"\n").arg(escapePropertyValue(footprintPath));
         content += "      (id 2)\n";
-        content += QString("      (at 0 %1 0)\n").arg(yLow - fieldOffset, 0, 'f', 2);
+        content +=
+            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
@@ -502,7 +560,8 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += QString("      \"Datasheet\"\n");
         content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().datasheet));
         content += "      (id 3)\n";
-        content += QString("      (at 0 %1 0)\n").arg(yLow - fieldOffset, 0, 'f', 2);
+        content +=
+            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
@@ -516,7 +575,8 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += QString("      \"Manufacturer\"\n");
         content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().manufacturer));
         content += "      (id 4)\n";
-        content += QString("      (at 0 %1 0)\n").arg(yLow - fieldOffset, 0, 'f', 2);
+        content +=
+            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
@@ -530,7 +590,8 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += QString("      \"LCSC Part\"\n");
         content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().lcscId));
         content += "      (id 5)\n";
-        content += QString("      (at 0 %1 0)\n").arg(yLow - fieldOffset, 0, 'f', 2);
+        content +=
+            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
