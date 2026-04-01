@@ -394,23 +394,27 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     m_graphicsGenerator.setCurrentBBox(originalBBox);
     qDebug() << "BBox - x:" << originalBBox.x << "y:" << originalBBox.y;
 
-    // 找到距离坐标原点最近的引脚，将其位置作为新的坐标原点
+    // 找到最左上角的引脚（x最小且y最小），将其位置作为新的坐标原点
     double originX = originalBBox.x;
     double originY = originalBBox.y;
     QList<SymbolPin> pins = symbolData.pins();
     if (!pins.isEmpty()) {
-        double minDistance = std::numeric_limits<double>::max();
+        bool firstPin = true;
         for (const SymbolPin& pin : pins) {
-            double dx = pin.settings.posX;
-            double dy = pin.settings.posY;
-            double distance = std::sqrt(dx * dx + dy * dy);
-            if (distance < minDistance) {
-                minDistance = distance;
+            // 最左上角：x最小（最左），y最小（KiCad中y小=上方）
+            if (firstPin) {
                 originX = pin.settings.posX;
                 originY = pin.settings.posY;
+                firstPin = false;
+            } else {
+                // x更小，或者x相同但y更小（更上方）
+                if (pin.settings.posX < originX || (pin.settings.posX == originX && pin.settings.posY < originY)) {
+                    originX = pin.settings.posX;
+                    originY = pin.settings.posY;
+                }
             }
         }
-        qDebug() << "Nearest pin to origin at:" << originX << originY << "distance:" << minDistance;
+        qDebug() << "Top-left pin at:" << originX << originY;
     }
 
     // 修改边界框原点为最近引脚位置，使所有图形元素相对于该点定位
