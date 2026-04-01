@@ -8,6 +8,9 @@
 #include <QRegularExpression>
 #include <QTextStream>
 
+#include <cmath>
+#include <limits>
+
 namespace EasyKiConverter {
 
 ExporterSymbol::ExporterSymbol() {}
@@ -388,28 +391,43 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
 
     // 设置当前边界框，用于图形元素的相对坐标计算
     SymbolBBox originalBBox = symbolData.bbox();
+    m_graphicsGenerator.setCurrentBBox(originalBBox);
+    qDebug() << "BBox - x:" << originalBBox.x << "y:" << originalBBox.y;
+
+    // 找到距离坐标原点最近的引脚，将其位置作为新的坐标原点
+    double originX = originalBBox.x;
+    double originY = originalBBox.y;
+    QList<SymbolPin> pins = symbolData.pins();
+    if (!pins.isEmpty()) {
+        double minDistance = std::numeric_limits<double>::max();
+        for (const SymbolPin& pin : pins) {
+            double dx = pin.settings.posX;
+            double dy = pin.settings.posY;
+            double distance = std::sqrt(dx * dx + dy * dy);
+            if (distance < minDistance) {
+                minDistance = distance;
+                originX = pin.settings.posX;
+                originY = pin.settings.posY;
+            }
+        }
+        qDebug() << "Nearest pin to origin at:" << originX << originY << "distance:" << minDistance;
+    }
+
+    // 修改边界框原点为最近引脚位置，使所有图形元素相对于该点定位
     SymbolBBox currentBBox = originalBBox;
+    currentBBox.x = originX;
+    currentBBox.y = originY;
     m_graphicsGenerator.setCurrentBBox(currentBBox);
-    qDebug() << "BBox - x:" << currentBBox.x << "y:" << currentBBox.y << "width:" << currentBBox.width
-             << "height:" << currentBBox.height;
-    // 计算符号中心点（用于将符号居中显示）
-    double centerX = currentBBox.x + currentBBox.width / 2.0;
-    double centerY = currentBBox.y + currentBBox.height / 2.0;
-    qDebug() << "Symbol center - centerX:" << centerX << "centerY:" << centerY;
-    // 修改边界框，使其指向中心点，这样所有图形元素都会相对于中心点定位
-    currentBBox.x = centerX;
-    currentBBox.y = centerY;
-    m_graphicsGenerator.setCurrentBBox(currentBBox);
-    qDebug() << "Adjusted BBox for centering - x:" << currentBBox.x << "y:" << currentBBox.y;
+    qDebug() << "Adjusted BBox to nearest pin origin - x:" << currentBBox.x << "y:" << currentBBox.y;
+
     // 计算 y_high 和 y_low（使用引脚坐标，与 Python 版本保持一致）
-    // 如果没有引脚，使用默认值以确保属性位置正
+    // 如果没有引脚，使用默认值以确保属性位置正确
     double yHigh = 2.54;  // 默认值：100mil
     double yLow = -2.54;  // 默认值：-100mil
-    QList<SymbolPin> pins = symbolData.pins();
     if (!pins.isEmpty()) {
         qDebug() << "Pin coordinates calculation:";
         for (const SymbolPin& pin : pins) {
-            double pinY = -m_graphicsGenerator.pxToMm(pin.settings.posY - centerY);
+            double pinY = -m_graphicsGenerator.pxToMm(pin.settings.posY - originY);
             qDebug() << "  Pin" << pin.settings.spicePinNumber << "- raw Y:" << pin.settings.posY
                      << "converted Y:" << pinY;
             yHigh = qMax(yHigh, pinY);
@@ -528,7 +546,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         // 为每个部分生成子符号
         for (const SymbolPart& part : symbolData.parts()) {
             qDebug() << "Generating sub-symbol" << part.unitNumber << "with" << part.pins.size() << "pins";
-            content += generateSubSymbol(symbolData, part, cleanSymbolName, libName, centerX, centerY);
+            content += generateSubSymbol(symbolData, part, cleanSymbolName, libName);
         }
     } else {
         // 单部分符号：直接在主符号中包含图形元素，不使用子符号
@@ -555,22 +573,14 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
 
 QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
                                           const QString& symbolName,
-                                          const QString& libName,
-                                          double centerX,
-                                          double centerY) const {
+                                          const QString& libName) const {
     QString content;
     // 单部分符号：使用 _0_1 作为子符号名称
     content += QString("    (symbol \"%1_0_1\"\n").arg(symbolName);
     // 生成图形元素（直接生成，不添加任何属性）
     content += m_graphicsGenerator.generateDrawings(symbolData);
-
-    // 生成引脚（使用中心点计算坐标，让引脚也跟着图形一起移动）
-    SymbolBBox centeredBBox;
-    centeredBBox.x = centerX;
-    centeredBBox.y = centerY;
-    centeredBBox.width = symbolData.bbox().width;
-    centeredBBox.height = symbolData.bbox().height;
-    content += m_graphicsGenerator.generatePins(symbolData.pins(), centeredBBox);
+    // 生成引脚
+    content += m_graphicsGenerator.generatePins(symbolData.pins(), symbolData.bbox());
     content += "    )\n";  // 结束子符号
     return content;
 }
@@ -578,50 +588,21 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
 QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
                                           const SymbolPart& part,
                                           const QString& symbolName,
-                                          const QString& libName,
-                                          double centerX,
-                                          double centerY) const {
+                                          const QString& libName) const {
     QString content;
 
     // 多部分符号：使用 _{unitNumber}_1 作为子符号名称
     // 注意：Unit 编号必须从1 开始，而不是从 0 开始
     content += QString("    (symbol \"%1_%2_1\"\n").arg(symbolName).arg(part.unitNumber + 1);
 
-    // 计算子部分的边界框和中心点
+    // 计算子部分的边界框
     SymbolBBox partBBox = m_graphicsGenerator.calculatePartBBox(part);
-    double partCenterX = partBBox.x + partBBox.width / 2.0;
-    double partCenterY = partBBox.y + partBBox.height / 2.0;
-
-    qDebug() << "Sub-symbol" << part.unitNumber << "- partCenterX:" << partCenterX << "partCenterY:" << partCenterY;
-
-    // 临时保存当前的边界框
-    SymbolBBox originalBBox = m_graphicsGenerator.currentBBox();
-
-    // 设置边界框为子部分的中心点，以便图形元素使用正确的偏移
-    SymbolBBox subBBox;
-    subBBox.x = partCenterX;
-    subBBox.y = partCenterY;
-    subBBox.width = partBBox.width;
-    subBBox.height = partBBox.height;
-    m_graphicsGenerator.setCurrentBBox(subBBox);
-
-    qDebug() << "Setting m_currentBBox for sub-symbol - x:" << subBBox.x << "y:" << subBBox.y;
-
-    // 创建以子部分中心为基准的边界框（用于引脚）
-    SymbolBBox centeredPartBBox;
-    centeredPartBBox.x = partCenterX;
-    centeredPartBBox.y = partCenterY;
-    centeredPartBBox.width = partBBox.width;
-    centeredPartBBox.height = partBBox.height;
 
     // 生成图形元素（直接生成，不添加任何属性）
     content += m_graphicsGenerator.generateDrawings(part);
 
-    // 生成引脚（使用子部分的中心点进行偏移）
-    content += m_graphicsGenerator.generatePins(part.pins, centeredPartBBox);
-
-    // 恢复原始边界框
-    m_graphicsGenerator.setCurrentBBox(originalBBox);
+    // 生成引脚
+    content += m_graphicsGenerator.generatePins(part.pins, partBBox);
 
     content += "    )\n";  // 结束子符号
 
