@@ -96,6 +96,11 @@ private:
     void retryRequest();
 
     /**
+     * @brief 立即重试请求（无延迟）
+     */
+    void retryRequestImmediately();
+
+    /**
      * @brief 检查是否需要重试
      *
      * @param statusCode HTTP 状态码

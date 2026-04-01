@@ -107,6 +107,47 @@ check_tools() {
     print_info "所有必要的工具已安装"
 }
 
+# 计算源码文件哈希（用于增量构建检测）
+calculate_source_hash() {
+    local hash_file="${PROJECT_ROOT}/build/.cache/source_hash"
+    local new_hash=""
+    
+    # 计算源码哈希
+    new_hash=$(find src tests CMakeLists.txt -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.qml" -o -name "*.cmake" \) 2>/dev/null | \
+        xargs md5sum 2>/dev/null | \
+        sort | \
+        md5sum | \
+        awk '{print $1}')
+    
+    echo "$new_hash"
+}
+
+# 检查源码是否变更，返回 0 表示有变更，1 表示无变更
+check_source_changed() {
+    local hash_file="${PROJECT_ROOT}/build/.cache/source_hash"
+    local current_hash=$(calculate_source_hash)
+    
+    # 如果缓存文件不存在，认为有变更
+    if [ ! -f "$hash_file" ]; then
+        return 0
+    fi
+    
+    local saved_hash=$(cat "$hash_file" 2>/dev/null)
+    
+    if [ "$current_hash" != "$saved_hash" ]; then
+        return 0  # 有变更
+    else
+        return 1  # 无变更
+    fi
+}
+
+# 保存源码哈希
+save_source_hash() {
+    local hash_file="${PROJECT_ROOT}/build/.cache/source_hash"
+    mkdir -p "${PROJECT_ROOT}/build/.cache"
+    calculate_source_hash > "$hash_file"
+}
+
 # 自动安装缺失的工具
 install_tools() {
     print_info "开始安装缺失的工具..."
@@ -226,14 +267,23 @@ get_version() {
 
 # 构建 AppDir
 build_appdir() {
-    print_info "构建 AppDir..."
-    
     local VERSION=$(get_version)
     local APP_DIR="${PROJECT_ROOT}/build/EasyKiConverter.AppDir"
     local BUILD_DIR="${PROJECT_ROOT}/build/appimage-build"
     
-    # 清理旧的构建
-    rm -rf "$APP_DIR" "$BUILD_DIR"
+    # 检查源码是否变更
+    if [ -d "$APP_DIR" ]; then
+        if check_source_changed; then
+            print_warn "源码已变更，需要重新构建..."
+            rm -rf "$APP_DIR" "$BUILD_DIR"
+            print_info "构建 AppDir..."
+        else
+            print_info "源码未变更，跳过构建，使用现有 AppDir..."
+            return 0
+        fi
+    else
+        print_info "构建 AppDir..."
+    fi
     
     # 创建 AppDir 结构
     mkdir -p "$APP_DIR/usr/bin"
@@ -256,6 +306,9 @@ build_appdir() {
     print_info "安装到 AppDir..."
     cmake --install . --prefix "$APP_DIR/usr"
     rm -rf "$APP_DIR/usr/include"
+    
+    # 保存源码哈希，用于增量构建检测
+    save_source_hash
     
     cd "$PROJECT_ROOT"
     

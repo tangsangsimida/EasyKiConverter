@@ -266,12 +266,8 @@ void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds)
     emit componentCountChanged();
     emit filteredCountChanged();
 
-    // 延迟分散发送网络请求，避免同时回调集中到达卡 UI
-    // 增加延迟间隔到 150ms，减少同时触发的网络请求数量
-    for (int i = 0; i < newIds.count(); ++i) {
-        const QString& id = newIds[i];
-        // 每个请求间隔 150ms，避免回调集中在同一帧
-        QTimer::singleShot(i * 150, this, [this, id]() { m_service->fetchComponentData(id, false); });
+    for (const QString& id : newIds) {
+        m_service->fetchComponentData(id, false);
         emit componentAdded(id, true, "Component added");
     }
 }
@@ -667,6 +663,9 @@ void ComponentListViewModel::retryAllInvalidComponents() {
     if (retryCount > 0) {
         m_validationStateManager->startValidation(retryCount);
     }
+
+    // 通知 QML 列表需要更新过滤状态
+    emit filteredCountChanged();
 }
 
 void ComponentListViewModel::retryPreviewImage(const QString& componentId) {

@@ -1,35 +1,34 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
-工具名称：编码转换工具 (EasyKiConverter Encoding Fixer)
-功能描述：
-    此工具用于递归扫描项目目录，将指定类型的文件（如 .cpp, .h, .cmake 等）从各种编码（如 GBK, GB18030 等）
-    转换为标准的 UTF-8 编码（不带 BOM）。
+EasyKiConverter 编码转换工具
+=============================
 
-使用示例：
-    1. 转换当前目录及子目录下所有支持的文件：
-       python tools/python/convert_to_utf8.py
-    2. 转换特定目录：
-       python tools/python/convert_to_utf8.py ./src
-    3. 仅转换特定类型的文件：
-       python tools/python/convert_to_utf8.py --ext .cpp .h
-    4. 执行预览（不实际修改文件）：
-       python tools/python/convert_to_utf8.py --dry-run
-    5. 指定需要排除的目录：
-       python tools/python/convert_to_utf8.py --exclude .git build .qt
+将项目文件转换为 UTF-8 (无 BOM) 编码，支持并行处理和缓存。
 
-主要特点：
-    - 自动识别多种常见编码（GBK, GB18030, UTF-8, Latin-1 等）。
-    - 统一输出为无 BOM 的 UTF-8 编码，避免跨平台乱码。
-    - 包含目录过滤功能（默认跳过 .git, build 等）。
+使用方法:
+    python tools/python/convert_to_utf8.py                    # 转换所有文件
+    python tools/python/convert_to_utf8.py ./src             # 转换指定目录
+    python tools/python/convert_to_utf8.py --ext .cpp .h    # 指定文件类型
+    python tools/python/convert_to_utf8.py --check            # 仅检查编码
+    python tools/python/convert_to_utf8.py --clean           # 清除缓存
+
+示例:
+    $ python tools/python/convert_to_utf8.py --dry-run       # 预览模式
+    $ python tools/python/convert_to_utf8.py --verbose        # 详细输出
+    $ python tools/python/convert_to_utf8.py --ext .py        # 仅 Python 文件
 """
 
 import os
 import sys
 import argparse
+import hashlib
+import json
+import time
+import threading
+from pathlib import Path
+from typing import Optional, Tuple, Dict, List
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# 尝试导入 charset_normalizer 或 chardet 以获得更好的编码检测能力
 try:
     import charset_normalizer as chardet
 except ImportError:
@@ -38,148 +37,341 @@ except ImportError:
     except ImportError:
         chardet = None
 
-def detect_encoding(file_path):
-    """
-    检测文件编码。
-    返回检测到的编码字符串，如果失败则返回 None。
-    """
-    try:
-        with open(file_path, 'rb') as f:
-            raw_data = f.read()
-    except Exception as e:
-        print(f"[错误] 无法读取文件进行检测: {file_path} - {e}")
-        return None
 
-    if chardet:
-        # charset_normalizer 返回结果对象，chardet 返回字典
-        result = chardet.detect(raw_data)
-        if isinstance(result, dict):
-            return result['encoding']
-        else:
-            if hasattr(result, 'encoding'):
-                return result.encoding
-            if hasattr(result, 'best'):
-                return result.best().encoding
+class Colors:
+    RESET = "\033[0m"
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    BOLD = "\033[1m"
 
-    # 如果没有第三方库或检测失败，尝试手动匹配常见编码
-    # 优先尝试 GBK 族，因为 UTF-8 文件通常能被识别
-    encodings = ['utf-8', 'gb18030', 'gbk', 'utf-16', 'latin-1']
-    for enc in encodings:
+    @classmethod
+    def supports_color(cls) -> bool:
+        if sys.platform == "win32":
+            try:
+                import ctypes
+
+                kernel32 = ctypes.windll.kernel32
+                kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+                return True
+            except:
+                return False
+        return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+
+
+def colorize(text: str, color: str) -> str:
+    if Colors.supports_color():
+        return f"{color}{text}{Colors.RESET}"
+    return text
+
+
+class EncodingConverter:
+    def __init__(
+        self, dry_run: bool = False, verbose: bool = False, check: bool = False
+    ):
+        self.project_root = Path(__file__).parent.parent.parent
+        self.cache_dir = self.project_root / "build" / ".cache"
+        self.cache_file = self.cache_dir / "encoding_cache.json"
+        self.dry_run = dry_run
+        self.verbose = verbose
+        self.check = check
+        self.stats = {
+            "total": 0,
+            "converted": 0,
+            "skipped": 0,
+            "errors": 0,
+            "utf8_already": 0,
+        }
+        self.lock = threading.Lock()
+        self.cache = self._load_cache()
+        self.progress_lock = threading.Lock()
+        self.processed = 0
+
+    def _load_cache(self) -> Dict[str, str]:
+        if self.cache_file.exists():
+            try:
+                with open(self.cache_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {}
+
+    def _save_cache(self) -> None:
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
         try:
-            raw_data.decode(enc)
-            return enc
-        except UnicodeDecodeError:
-            continue
-
-    return None
-
-def convert_file_to_utf8(file_path, dry_run=False):
-    """
-    将单个文件转换为不带 BOM 的 UTF-8 编码。
-    """
-    encoding = detect_encoding(file_path)
-
-    if not encoding:
-        # 手动二次尝试，增强对中文编码的兼容性
-        try:
-            with open(file_path, 'rb') as f:
-                raw_data = f.read()
-            for enc in ['gbk', 'gb18030', 'utf-8', 'latin-1']:
-                try:
-                    raw_data.decode(enc)
-                    encoding = enc
-                    break
-                except UnicodeDecodeError:
-                    continue
+            with open(self.cache_file, "w", encoding="utf-8") as f:
+                json.dump(self.cache, f, indent=2)
         except Exception:
             pass
 
-    if not encoding:
-        print(f"[错误] 无法检测到文件编码: {file_path}")
+    def _get_file_hash(self, file_path: Path) -> str:
+        try:
+            with open(file_path, "rb") as f:
+                return hashlib.md5(f.read()).hexdigest()
+        except Exception:
+            return ""
+
+    def _is_cached(self, file_path: Path) -> bool:
+        relative_path = str(file_path.relative_to(self.project_root))
+        cache_key = f"enc_{relative_path}"
+        if cache_key in self.cache:
+            return self.cache[cache_key] == self._get_file_hash(file_path)
         return False
 
-    # 检测是否已经是 UTF-8 且无 BOM（此处简化逻辑，总是重新写入以确保一致性）
-    # 但如果是预览模式，我们只显示待转换的非 UTF-8 文件或根据需求显示
+    def _update_cache(self, file_path: Path) -> None:
+        relative_path = str(file_path.relative_to(self.project_root))
+        cache_key = f"enc_{relative_path}"
+        self.cache[cache_key] = self._get_file_hash(file_path)
 
-    print(f"[转换] {file_path} ({encoding} -> utf-8)")
+    def detect_encoding(self, file_path: Path) -> Optional[str]:
+        try:
+            with open(file_path, "rb") as f:
+                raw_data = f.read()
+        except Exception:
+            return None
 
-    if dry_run:
+        if chardet:
+            result = chardet.detect(raw_data)
+            if isinstance(result, dict):
+                return result.get("encoding")
+            elif hasattr(result, "encoding"):
+                return result.encoding
+            elif hasattr(result, "best"):
+                return result.best().encoding
+
+        encodings = ["utf-8", "gb18030", "gbk", "utf-16", "latin-1"]
+        for enc in encodings:
+            try:
+                raw_data.decode(enc)
+                return enc
+            except UnicodeDecodeError:
+                continue
+        return None
+
+    def _print_progress(self, total: int) -> None:
+        bar_width = 40
+        percent = self.processed / total if total > 0 else 0
+        filled = int(bar_width * percent)
+        bar = "█" * filled + "░" * (bar_width - filled)
+        prefix = "[检查]" if self.check else "[转换]"
+        sys.stdout.write(
+            f"\r{prefix} {bar} {self.processed}/{total} ({percent * 100:.1f}%) "
+        )
+        sys.stdout.flush()
+
+    def convert_file(self, file_path: Path) -> Tuple[bool, str, str, int]:
+        relative_path = str(file_path.relative_to(self.project_root))
+
+        with self.progress_lock:
+            self.processed += 1
+            self._print_progress(self.stats["total"])
+
+        if self._is_cached(file_path):
+            with self.lock:
+                self.stats["skipped"] += 1
+            return True, "skipped", "UTF-8", 0
+
+        encoding = self.detect_encoding(file_path)
+        if not encoding:
+            with self.lock:
+                self.stats["errors"] += 1
+            return False, "error", "unknown", 0
+
+        if encoding.lower() in ("utf-8", "ascii") and not self._has_bom(file_path):
+            with self.lock:
+                self.stats["skipped"] += 1
+                self.stats["utf8_already"] += 1
+            self._update_cache(file_path)
+            return True, "skipped", "UTF-8", 0
+
+        file_size = file_path.stat().st_size
+        original_encoding = encoding
+
+        if self.check:
+            with self.lock:
+                self.stats["converted"] += 1
+            return True, "needs_convert", original_encoding, file_size
+
+        if self.dry_run:
+            with self.lock:
+                self.stats["converted"] += 1
+            return True, "dry_run", original_encoding, file_size
+
+        try:
+            with open(file_path, "r", encoding=encoding) as f:
+                content = f.read()
+
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+            self._update_cache(file_path)
+
+            with self.lock:
+                self.stats["converted"] += 1
+
+            if self.verbose:
+                status = colorize("[转换]", Colors.YELLOW)
+                print(f"\n{status} {relative_path} ({original_encoding} -> UTF-8)")
+
+            return True, "converted", original_encoding, file_size
+
+        except Exception as e:
+            with self.lock:
+                self.stats["errors"] += 1
+            return False, f"error: {e}", original_encoding, 0
+
+    def _has_bom(self, file_path: Path) -> bool:
+        try:
+            with open(file_path, "rb") as f:
+                first_bytes = f.read(3)
+                return first_bytes in (b"\xef\xbb\xbf", b"\xff\xfe", b"\xfe\xff")
+        except Exception:
+            return False
+
+    def find_files(self, root_path: Path, extensions: tuple) -> List[Path]:
+        files = []
+        exclude_dirs = {
+            ".git",
+            "build",
+            ".qt",
+            "bin",
+            "lib",
+            "node_modules",
+            ".vscode",
+            "flatpak_build",
+        }
+
+        if root_path.is_file():
+            return [root_path]
+
+        for root, dirs, filenames in os.walk(root_path):
+            dirs[:] = [d for d in dirs if d not in exclude_dirs]
+
+            for filename in filenames:
+                if filename.endswith(extensions) or filename == "CMakeLists.txt":
+                    files.append(Path(root) / filename)
+
+        return files
+
+    def run(self, root_path: Path, extensions: tuple) -> bool:
+        print(colorize("=" * 60, Colors.CYAN))
+        print(colorize("  EasyKiConverter 编码转换工具", Colors.BOLD + Colors.CYAN))
+        print(colorize("=" * 60, Colors.CYAN))
+        print()
+
+        files = self.find_files(root_path, extensions)
+        self.stats["total"] = len(files)
+
+        if not files:
+            print("没有找到需要处理的文件")
+            return True
+
+        print(f"扫描目录: {root_path}")
+        print(f"文件总数: {len(files)}")
+        print(f"模式: {'检查' if self.check else ('预览' if self.dry_run else '转换')}")
+        print()
+
+        if self.check:
+            print(colorize("[检查] 开始检查文件编码...", Colors.BLUE))
+        else:
+            print(colorize("[转换] 开始转换文件编码...", Colors.YELLOW))
+
+        start_time = time.time()
+
+        with ThreadPoolExecutor(max_workers=min(8, os.cpu_count() or 4)) as executor:
+            futures = {executor.submit(self.convert_file, f): f for f in files}
+            for future in as_completed(futures):
+                future.result()
+
+        elapsed = time.time() - start_time
+
+        print()
+        print()
+        print(colorize("=" * 60, Colors.CYAN))
+        print(colorize("  处理结果", Colors.BOLD))
+        print(colorize("=" * 60, Colors.CYAN))
+        print(f"  总文件数:   {self.stats['total']}")
+        print(
+            f"  已处理:     {self.stats['converted']} {'(需转换)' if self.check else '(已转换)'}"
+        )
+        print(f"  缓存跳过:   {self.stats['skipped']}")
+        print(f"  已是 UTF-8: {self.stats['utf8_already']}")
+        print(f"  错误:       {self.stats['errors']}")
+        print(f"  耗时:       {elapsed:.2f}s")
+        print(colorize("=" * 60, Colors.CYAN))
+
+        if not self.dry_run and not self.check:
+            self._save_cache()
+
+        if self.stats["errors"] > 0:
+            return False
         return True
 
-    try:
-        # 以检测到的编码读取
-        with open(file_path, 'r', encoding=encoding) as f:
-            content = f.read()
-
-        # 以不带 BOM 的 UTF-8 写入
-        # 注意：不要使用 'utf-8-sig'，因为我们要的是无 BOM 的 UTF-8
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(content)
+    def clean_cache(self) -> bool:
+        if self.cache_file.exists():
+            self.cache_file.unlink()
+            print(colorize("[OK] 缓存已清除", Colors.GREEN))
+        else:
+            print("没有缓存文件")
         return True
-    except Exception as e:
-        print(f"[错误] 转换失败 {file_path}: {e}")
-        return False
+
 
 def main():
-    # 获取脚本所在项目根目录脚本在 tools/python/ 目录下
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
+    script_dir = Path(__file__).parent.parent.parent
 
-    parser = argparse.ArgumentParser(description="将代码文件转换为 UTF-8 (无 BOM) 编码工具")
-    parser.add_argument("path", nargs="?", default=project_root, help=f"开始扫描的根路径 (默认为项目根目录)")
-    parser.add_argument("--ext", nargs="+", default=[".cpp", ".h", ".c", ".hpp", ".qml", ".py", ".txt", ".cmake"],
-                        help="包含的文件后缀名")
-    parser.add_argument("--dry-run", action="store_true", help="预览待转换文件，不执行实际修改")
-    parser.add_argument("--exclude", nargs="+", default=[".git", "build", ".qt", "bin", "lib", "node_modules", ".vscode"],
-                        help="要排除的目录名称")
+    parser = argparse.ArgumentParser(
+        description="EasyKiConverter 编码转换工具",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  python tools/python/convert_to_utf8.py                    # 转换所有文件
+  python tools/python/convert_to_utf8.py ./src             # 转换指定目录
+  python tools/python/convert_to_utf8.py --ext .cpp .h     # 指定文件类型
+  python tools/python/convert_to_utf8.py --check            # 仅检查编码
+  python tools/python/convert_to_utf8.py --clean           # 清除缓存
+        """,
+    )
+
+    parser.add_argument("path", nargs="?", default=str(script_dir), help="扫描根路径")
+    parser.add_argument(
+        "--ext",
+        nargs="+",
+        default=[".cpp", ".h", ".c", ".hpp", ".qml", ".py", ".txt", ".cmake"],
+        help="文件扩展名",
+    )
+    parser.add_argument("--dry-run", action="store_true", help="预览模式（不实际修改）")
+    parser.add_argument("--check", action="store_true", help="仅检查编码，不修改")
+    parser.add_argument("--verbose", action="store_true", help="详细输出")
+    parser.add_argument("--clean", action="store_true", help="清除缓存并退出")
+    parser.add_argument("--exclude", nargs="+", help="排除的目录")
 
     args = parser.parse_args()
 
-    # 将输入路径转换为绝对路径
-    root_path = os.path.abspath(args.path)
-    extensions = tuple(args.ext)
-    exclude_dirs = set(args.exclude)
+    if args.clean:
+        converter = EncodingConverter()
+        sys.exit(0 if converter.clean_cache() else 1)
 
-    if not os.path.exists(root_path):
-        print(f"路径不存在: {root_path}")
+    root_path = Path(args.path).resolve()
+    if not root_path.exists():
+        print(colorize(f"[错误] 路径不存在: {root_path}", Colors.RED))
         sys.exit(1)
 
-    convert_count = 0
-    error_count = 0
+    extensions = tuple(args.ext)
 
-    print(f"--- 正在扫描: {os.path.relpath(root_path, project_root)} ---")
+    converter = EncodingConverter(
+        dry_run=args.dry_run, verbose=args.verbose, check=args.check
+    )
 
-    if os.path.isfile(root_path):
-        # 处理单文件情况
-        if root_path.lower().endswith(extensions) or os.path.basename(root_path) == "CMakeLists.txt":
-            # 显示相对于当前工作目录或项目根目录的路径
-            display_path = os.path.relpath(root_path, os.getcwd())
-            if convert_file_to_utf8(root_path, args.dry_run):
-                convert_count += 1
-            else:
-                error_count += 1
-    else:
-        # 递归扫描目录
-        for root, dirs, files in os.walk(root_path):
-            # 过滤排除目录
-            dirs[:] = [d for d in dirs if d not in exclude_dirs]
+    success = converter.run(root_path, extensions)
 
-            for file in files:
-                # 匹配后缀或 CMakeLists.txt
-                if file.lower().endswith(extensions) or file == "CMakeLists.txt":
-                    file_path = os.path.join(root, file)
-                    # 显示相对于当前工作目录的相对路径
-                    display_path = os.path.relpath(file_path, os.getcwd())
-                    if convert_file_to_utf8(file_path, args.dry_run):
-                        convert_count += 1
-                    else:
-                        error_count += 1
-
-    print("\n--- 处理汇总 ---")
-    print(f"成功处理/校验文件数: {convert_count}")
-    print(f"发生错误文件数: {error_count}")
     if args.dry_run:
-        print("注意：当前处于预览模式 (Dry Run)，未对文件进行实际修改。")
+        print()
+        print(colorize("[提示] 当前为预览模式，未实际修改文件", Colors.YELLOW))
+
+    sys.exit(0 if success else 1)
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

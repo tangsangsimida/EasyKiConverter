@@ -72,6 +72,28 @@ void LcscImageService::clearCache() {
     qDebug() << "LcscImageService: Cache cleared, ready for new requests";
 }
 
+void LcscImageService::cancelAll() {
+    qDebug() << "LcscImageService: Cancelling all pending preview image fetches";
+
+    // 清空队列，不再处理排队的请求
+    m_queue.clear();
+
+    // 清空所有待处理的图片下载
+    m_pendingImages.clear();
+    m_downloadedImages.clear();
+    m_downloadCounts.clear();
+
+    // 清空待处理的数据手册下载
+    m_pendingDatasheets.clear();
+    m_datasheetDownloadStatus.clear();
+    m_downloadedDatasheets.clear();
+
+    // 重置活跃请求计数
+    m_activeRequests = 0;
+
+    qDebug() << "LcscImageService: All pending preview image fetches cancelled";
+}
+
 void LcscImageService::processQueue() {
     while (m_activeRequests < MAX_CONCURRENT_REQUESTS && !m_queue.isEmpty()) {
         QString componentId = m_queue.dequeue();
@@ -235,13 +257,8 @@ void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
                     }
                 }
 
-                // 下载数据手册
-                if (!datasheetUrl.isEmpty()) {
-                    m_pendingDatasheets[componentId] = datasheetUrl;
-                    m_datasheetDownloadStatus[componentId] = 0;  // pending
-                    qDebug() << "Starting datasheet download for component:" << componentId << "from:" << datasheetUrl;
-                    performDatasheetDownload(componentId, datasheetUrl, 0);
-                }
+                // 注意：数据手册不再在此处下载，只保存 URL
+                // 导出时会通过 DatasheetExporter 按需下载
 
                 return;
             }

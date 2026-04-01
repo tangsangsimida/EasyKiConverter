@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 :: EasyKiConverter C++ 代码格式化工具
-:: 使用 clang-format 格式化项目中的 C++ 源代码
+:: 使用 Python 工具调用 clang-format 格式化项目中的 C++ 源代码
 
 :: 检查帮助请求
 if "%~1"=="-h" goto help
@@ -10,46 +10,39 @@ if "%~1"=="--help" goto help
 if "%~1"=="/h" goto help
 if "%~1"=="help" goto help
 
+:: 检查 Python
+where python >nul 2>nul
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] Python interpreter not found
+    echo Please install Python 3.6+ and add to PATH
+    pause
+    exit /b 1
+)
+
+:: 获取项目根目录
+set "PROJECT_ROOT=%~dp0..\.."
+cd /d "%PROJECT_ROOT%\"
+
 echo ========================================
 echo EasyKiConverter Code Formatter
 echo ========================================
 echo.
 
-:: clang-format 可执行文件路径
-set CLANG_FORMAT=clang-format
+:: 调用 Python 格式化工具
+python tools\python\format_code.py --cpp %*
 
-:: 检查 clang-format 是否可用
-where %CLANG_FORMAT% >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] clang-format not found
-    echo Please install clang-format and add to PATH
+:: 检查执行结果
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo [ERROR] Formatting failed
     pause
     exit /b 1
-)
-
-echo [INFO] Using clang-format: %CLANG_FORMAT%
-echo.
-
-:: 格式化代码
-set TOTAL_FILES=0
-set FORMATTED_FILES=0
-
-echo Formatting src directory...
-for /r "..\..\src" %%f in (*.h *.cpp) do (
-    set /a TOTAL_FILES+=1
-    echo Formatting: %%~nxf
-    "%CLANG_FORMAT%" -i "%%f"
-    if !errorlevel! equ 0 (
-        set /a FORMATTED_FILES+=1
-    )
 )
 
 echo.
 echo ========================================
 echo Formatting Complete
 echo ========================================
-echo Total files: %TOTAL_FILES%
-echo Formatted successfully: %FORMATTED_FILES%
 echo NOTE: This tool only handles C++ files
 echo       Use format_qml.bat for QML files
 echo.
@@ -64,13 +57,19 @@ echo 用法: format_code.bat [选项]
 echo.
 echo 选项:
 echo   -h, --help, /h, help    显示此帮助信息
+echo   -v, --verbose          详细输出模式
+echo   --check                仅检查不修改
+echo   --dirs DIR [DIR]       指定格式化目录
 echo.
 echo 功能说明:
 echo   使用 clang-format 格式化 C++ 源代码
-echo 环境要求:
-echo   - clang-format 已安装并添加到 PATH
+echo   通过 Python 工具调用，支持缓存加速
+echo.
 echo 示例:
-echo   format_code.bat
+echo   format_code.bat                 # 格式化 C++ 文件
+echo   format_code.bat --check         # 检查格式
+echo   format_code.bat -v              # 详细输出
+echo.
 echo 注意:
 echo   - 执行前请确保工作区已提交或备份
 echo   - 本工具仅处理 C++ 文件

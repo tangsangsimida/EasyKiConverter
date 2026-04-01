@@ -12,6 +12,11 @@ ApplicationWindow {
     // 状态锁：防止重复触发关闭/最小化动画
     property bool isClosing: false
     property bool isMinimizing: false
+    // 跟踪窗口正常大小（最大化前的大小）
+    property real normalWidth: width
+    property real normalHeight: height
+    // 跟踪窗口是否之前处于最大化状态
+    property bool wasMaximized: false
     width: configService ? (configService.getWindowWidth() > 0 ? configService.getWindowWidth() : defaultWidth) : defaultWidth
     height: configService ? (configService.getWindowHeight() > 0 ? configService.getWindowHeight() : defaultHeight) : defaultHeight
     // 默认窗口位置居中显示（如果配置中没有保存的值）
@@ -37,6 +42,32 @@ ApplicationWindow {
         }
     }
 
+    // 监听窗口状态变化
+    onVisibilityChanged: {
+        if (visibility === Window.Maximized) {
+            // 进入最大化时，wasMaximized 标记为 true
+            wasMaximized = true;
+            console.log("Window maximized");
+        } else if (wasMaximized && visibility === Window.Windowed) {
+            // 从最大化恢复到窗口状态时，重置标记
+            wasMaximized = false;
+            console.log("Window restored from maximized");
+        }
+    }
+
+    // 监听窗口尺寸变化，只在窗口状态（非最大化/最小化）时跟踪正常尺寸
+    onWidthChanged: {
+        if (visibility === Window.Windowed && !isMinimizing) {
+            normalWidth = width;
+        }
+    }
+
+    onHeightChanged: {
+        if (visibility === Window.Windowed && !isMinimizing) {
+            normalHeight = height;
+        }
+    }
+
     // 保存窗口大小和位置的函数
     function saveWindowPosition() {
         if (configService) {
@@ -44,8 +75,19 @@ ApplicationWindow {
             console.log("  width:", width, "height:", height);
             console.log("  x:", x, "y:", y);
             console.log("  visibility:", visibility);
-            configService.setWindowWidth(width);
-            configService.setWindowHeight(height);
+            console.log("  normalWidth:", normalWidth, "normalHeight:", normalHeight);
+            console.log("  wasMaximized:", wasMaximized);
+
+            // 最大化时保存正常大小，否则保存当前大小
+            if (visibility === Window.Maximized) {
+                configService.setWindowWidth(normalWidth);
+                configService.setWindowHeight(normalHeight);
+                console.log("最大化状态，保存正常大小:", normalWidth, "x", normalHeight);
+            } else {
+                configService.setWindowWidth(width);
+                configService.setWindowHeight(height);
+            }
+
             // 只在窗口不是最大化、全屏或最小化时保存位置
             if (visibility !== Window.Maximized && visibility !== Window.FullScreen && visibility !== Window.Minimized) {
                 configService.setWindowX(x);
@@ -59,6 +101,10 @@ ApplicationWindow {
             console.log("  保存的 windowY:", configService.getWindowY());
             console.log("  保存的 windowWidth:", configService.getWindowWidth());
             console.log("  保存的 windowHeight:", configService.getWindowHeight());
+
+            // 保存最大化状态
+            configService.setWindowMaximized(visibility === Window.Maximized);
+            console.log("保存最大化状态:", visibility === Window.Maximized);
         }
     }
 
@@ -352,6 +398,13 @@ ApplicationWindow {
     // 在启动时设置窗口位置
     Component.onCompleted: {
         // 窗口位置由 QML 属性直接控制
+        // 恢复最大化状态（需要在窗口完全加载后执行）
+        if (configService && configService.getWindowMaximized()) {
+            Qt.callLater(function () {
+                appWindow.showMaximized();
+                console.log("恢复窗口最大化状态");
+            });
+        }
     }
 
     // 加载主窗口内容

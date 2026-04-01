@@ -254,6 +254,8 @@ signals:
     void statisticsChanged();
 
 private slots:
+    void handleShowWindowRequested();
+    void handleQuitRequested();
     void handleExportProgress(int current, int total);
     void handleExportCompleted(int totalCount, int successCount);
     void handleExportFailed(const QString& error);

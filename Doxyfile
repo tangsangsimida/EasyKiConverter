@@ -18,8 +18,8 @@ PROJECT_NUMBER         = 3.0.5
 # 项目 logo（可选）
 # PROJECT_LOGO           = resources/icons/app_icon.png
 
-# 输出目录
-OUTPUT_DIRECTORY       = docs/api
+# 输出目录（统一到 build/docs/api/）
+OUTPUT_DIRECTORY       = build/docs/api
 
 # 创建子目录结构
 CREATE_SUBDIRS         = NO

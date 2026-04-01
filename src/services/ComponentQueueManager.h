@@ -18,13 +18,14 @@ public:
     void start(const QStringList& componentIds);
     void stop();
     void checkAndProcessNext();
+    void requestCompleted(const QString& componentId);
     void reset();
 
     int activeRequestCount() const;
     bool isRunning() const;
     int maxConcurrentRequests() const;
 
-    static const int QUEUE_CHECK_INTERVAL_MS = 500;
+    static const int QUEUE_CHECK_INTERVAL_MS = 200;
     static const int TOTAL_TIMEOUT_MS = 300000;
 
 signals:

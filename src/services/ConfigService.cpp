@@ -324,6 +324,21 @@ void ConfigService::setWindowY(int y) {
     saveConfig();
 }
 
+bool ConfigService::getWindowMaximized() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["windowMaximized"].toBool(false);
+}
+
+void ConfigService::setWindowMaximized(bool maximized) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["windowMaximized"] = maximized;
+    emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
+}
+
 QString ConfigService::getExitPreference() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exitPreference"].toString("");
@@ -357,6 +372,7 @@ void ConfigService::initializeDefaultConfig() {
     m_config["windowHeight"] = -1;
     m_config["windowX"] = -9999;
     m_config["windowY"] = -9999;
+    m_config["windowMaximized"] = false;
     // 退出偏好默认值（空字符串表示未记住）
     m_config["exitPreference"] = "";
     // 语言设置默认值（英文）
