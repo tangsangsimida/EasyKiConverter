@@ -112,15 +112,46 @@
         <p>New Features:</p>
         <p xml:lang="zh_CN">新功能:</p>
         <ul>
+          <li>Added system tray window display and quit request handling logic</li>
+          <li xml:lang="zh_CN">添加系统托盘窗口显示和退出请求的处理逻辑</li>
+          <li>Calculated graphic element bounds for text horizontal centering alignment</li>
+          <li xml:lang="zh_CN">计算图形元素边界以实现文本左右居中对齐</li>
+          <li>Optimized symbol content generation using top-leftmost pin as coordinate origin</li>
+          <li xml:lang="zh_CN">优化符号内容生成，使用最左上角引脚作为坐标原点</li>
+          <li>Fixed symbol pin grid alignment issues during export</li>
+          <li xml:lang="zh_CN">修复导出符号引脚网格对齐未对齐问题</li>
+          <li>Added window maximized state configuration management</li>
+          <li xml:lang="zh_CN">添加窗口最大化状态的配置管理功能</li>
+          <li>Removed datasheet download feature and changed to on-demand export</li>
+          <li xml:lang="zh_CN">移除数据手册下载功能并改为按需导出</li>
+          <li>Added cancel preview image fetch functionality</li>
+          <li xml:lang="zh_CN">添加取消预览图获取功能</li>
+          <li>Added thread safety protection for ComponentService</li>
+          <li xml:lang="zh_CN">为ComponentService添加线程安全保护</li>
+          <li>Optimized network retry logic to support immediate retry mechanism</li>
+          <li xml:lang="zh_CN">优化网络重试逻辑支持立即重试机制</li>
+          <li>Added ANSI color support to enhance output readability</li>
           <li xml:lang="zh_CN">添加ANSI颜色支持以增强输出可读性</li>
+          <li>Merged code analysis tools and enhanced build environment checks</li>
           <li xml:lang="zh_CN">合并代码分析工具并增强构建环境检查功能</li>
+          <li>Added Flatpak build management tool and removed translation fix scripts</li>
           <li xml:lang="zh_CN">添加Flatpak构建管理工具并移除翻译修复脚本</li>
+          <li>Refactored build scripts with incremental build and progress bar support</li>
           <li xml:lang="zh_CN">重构构建脚本并添加增量构建和进度条功能</li>
         </ul>
-        <p>Other Changes:</p>
-        <p xml:lang="zh_CN">其他变更:</p>
+        <p>Bug Fixes:</p>
+        <p xml:lang="zh_CN">修复:</p>
         <ul>
+          <li>Removed custom drag logic when maximizing window</li>
+          <li xml:lang="zh_CN">移除最大化窗口时的自定义拖拽逻辑</li>
+        </ul>
+        <p>Chores:</p>
+        <p xml:lang="zh_CN">其他:</p>
+        <ul>
+          <li>Unified documentation and Flatpak build output paths and improved tools</li>
           <li xml:lang="zh_CN">统一文档和Flatpak构建输出路径并改进工具</li>
+          <li>Updated application version to v3.1.3</li>
+          <li xml:lang="zh_CN">更新应用版本到v3.1.3</li>
         </ul>
       </description>
     </release>

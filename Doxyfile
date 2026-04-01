@@ -25,7 +25,7 @@ OUTPUT_DIRECTORY       = build/docs/api
 CREATE_SUBDIRS         = NO
 
 # 输出语言
-OUTPUT_LANGUAGE        = Chinese
+OUTPUT_LANGUAGE        = Chinese_Simplified
 
 #---------------------------------------------------------------------------
 # 构建相关配置
@@ -182,9 +182,6 @@ HTML_FOOTER            =
 # HTML 样式表
 HTML_STYLESHEET        =
 
-# HTML 时间戳
-HTML_TIMESTAMP         = YES
-
 # 动态章节
 HTML_DYNAMIC_SECTIONS  = YES
 
@@ -217,9 +214,6 @@ GENERATE_DOCBOOK       = NO
 #---------------------------------------------------------------------------
 # 图表配置
 #---------------------------------------------------------------------------
-
-# 类图
-CLASS_DIAGRAMS         = YES
 
 # 使用 dot 工具
 HAVE_DOT               = YES
@@ -292,9 +286,6 @@ BRIEF_MEMBER_DESC      = YES
 
 # 重复简要描述
 REPEAT_BRIEF           = YES
-
-# 缩进内联标签
-INDENT_INLINES         = YES
 
 # 内联信息
 INLINE_INFO            = YES
