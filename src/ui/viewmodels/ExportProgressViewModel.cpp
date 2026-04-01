@@ -5,10 +5,13 @@
 #include "utils/FileUtils.h"
 #include "utils/logging/LogMacros.h"
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
+#include <QGuiApplication>
 #include <QStandardPaths>
 #include <QTimer>
+#include <QWindow>
 
 namespace EasyKiConverter {
 
@@ -79,10 +82,34 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
 
     m_systemTrayManager = new SystemTrayManager(this);
     m_systemTrayManager->initialize();
+
+    connect(m_systemTrayManager,
+            &SystemTrayManager::showWindowRequested,
+            this,
+            &ExportProgressViewModel::handleShowWindowRequested);
+    connect(
+        m_systemTrayManager, &SystemTrayManager::quitRequested, this, &ExportProgressViewModel::handleQuitRequested);
 }
 
 void ExportProgressViewModel::setUsePipelineMode(bool usePipeline) {
     m_usePipelineMode = usePipeline;
+}
+
+void ExportProgressViewModel::handleShowWindowRequested() {
+    qDebug() << "Show window requested from system tray";
+    auto windows = QGuiApplication::topLevelWindows();
+    for (auto* window : windows) {
+        if (window) {
+            window->show();
+            window->raise();
+            window->requestActivate();
+        }
+    }
+}
+
+void ExportProgressViewModel::handleQuitRequested() {
+    qDebug() << "Quit requested from system tray";
+    QCoreApplication::quit();
 }
 
 ExportProgressViewModel::~ExportProgressViewModel() {

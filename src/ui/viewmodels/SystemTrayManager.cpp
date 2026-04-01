@@ -7,6 +7,7 @@
 #include <QIcon>
 #include <QStandardPaths>
 #include <QStyle>
+#include <QTimer>
 #include <QWindow>
 
 namespace EasyKiConverter {
@@ -88,23 +89,19 @@ void SystemTrayManager::initialize() {
 
 void SystemTrayManager::setupContextMenu() {
     m_contextMenu = new QMenu();
+    m_contextMenu->setWindowFlags(m_contextMenu->windowFlags() | Qt::Popup);
 
     QAction* showAction = m_contextMenu->addAction(QStringLiteral("显示窗口"));
     connect(showAction, &QAction::triggered, this, [this]() {
         qDebug() << "Show window action triggered";
-        auto windows = QGuiApplication::topLevelWindows();
-        for (auto* window : windows) {
-            if (window) {
-                window->show();
-                window->raise();
-                window->requestActivate();
-            }
-        }
+        QTimer::singleShot(0, m_contextMenu, &QMenu::close);
+        emit showWindowRequested();
     });
 
     QAction* quitAction = m_contextMenu->addAction(QStringLiteral("退出"));
     connect(quitAction, &QAction::triggered, this, [this]() {
         qDebug() << "Quit action triggered";
+        QTimer::singleShot(0, m_contextMenu, &QMenu::close);
         emit quitRequested();
     });
 
