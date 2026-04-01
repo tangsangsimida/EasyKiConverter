@@ -38,7 +38,9 @@ jobs:
         run: sudo apt-get install -y doxygen graphviz
 
       - name: Generate Doxygen API Documentation
-        run: doxygen Doxyfile
+        run: |
+          mkdir -p build/docs/api
+          doxygen Doxyfile
 
       - name: Build and Deploy
         run: mkdocs gh-deploy --force --no-strict

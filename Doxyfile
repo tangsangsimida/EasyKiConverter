@@ -297,11 +297,11 @@ FILE_VERSION_FILTER    =
 LAYOUT_FILE            =
 
 # 引用标签
-GENERATE_TAGFILE       = docs/api/easykiconverter.tag
+GENERATE_TAGFILE       = build/docs/api/easykiconverter.tag
 
 # 警告配置
 WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
 WARN_NO_PARAMDOC       = YES
 WARN_FORMAT            = "$file:$line: $text"
-WARN_LOGFILE           = docs/api/doxygen_warnings.log
+WARN_LOGFILE           = build/docs/api/doxygen_warnings.log
