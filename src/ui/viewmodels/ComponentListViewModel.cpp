@@ -6,6 +6,7 @@
 
 #include <QClipboard>
 #include <QDebug>
+#include <QFile>
 #include <QGuiApplication>
 #include <QPointer>
 #include <QRunnable>
@@ -45,8 +46,10 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
             &ComponentService::previewImageReady,
             this,
             [this](const QString& componentId, const QImage& image, int imageIndex) {
+                qDebug() << "[ViewModel] previewImageReady received for" << componentId << "index" << imageIndex;
                 auto item = findItemData(componentId);
                 if (item) {
+                    qDebug() << "[ViewModel] Item found, inserting preview image...";
                     // 按索引顺序插入预览图，确保显示顺序正确
                     item->insertPreviewImage(image, imageIndex);
                     // 第一张预览图始终覆盖缩略图显示
@@ -58,6 +61,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                     if (!m_isScrolling) {
                         m_thumbnailUpdateManager->scheduleUpdate(componentId);
                     }
+                    qDebug() << "[ViewModel] previewImageReady processed successfully";
                 }
             });
     connect(m_service,
@@ -502,15 +506,16 @@ void ComponentListViewModel::handleLcscDataUpdated(const QString& componentId,
                                                    const QString& manufacturerPart,
                                                    const QString& datasheetUrl,
                                                    const QStringList& imageUrls) {
-    qDebug() << "LCSC data updated for component:" << componentId
-             << "Manufacturer Part:" << (manufacturerPart.isEmpty() ? "none" : manufacturerPart)
-             << "Datasheet:" << (datasheetUrl.isEmpty() ? "none" : datasheetUrl) << "Images:" << imageUrls.size();
+    qDebug() << "[ViewModel] handleLcscDataUpdated START - componentId:" << componentId;
 
     auto item = findItemData(componentId);
+    qDebug() << "[ViewModel] findItemData done, item:" << (void*)item;
     if (item) {
+        qDebug() << "[ViewModel] Item found, updating ComponentData...";
         // 更新 ComponentData
         if (item->componentData()) {
             auto data = item->componentData();
+            qDebug() << "[ViewModel] componentData isNull:" << data.isNull();
             if (!manufacturerPart.isEmpty()) {
                 data->setManufacturerPart(manufacturerPart);
                 qDebug() << "Manufacturer part updated in ComponentData:" << manufacturerPart;
@@ -534,16 +539,20 @@ void ComponentListViewModel::handleLcscDataUpdated(const QString& componentId,
         }
 
         // 更新显示名称（使用制造商部件号）
+        qDebug() << "[ViewModel] About to set name...";
         if (!manufacturerPart.isEmpty()) {
             item->setName(manufacturerPart);
             qDebug() << "Display name updated to manufacturer part:" << manufacturerPart;
         }
 
         // 添加到防抖集合
+        qDebug() << "[ViewModel] About to call scheduleUpdate...";
         m_thumbnailUpdateManager->scheduleUpdate(componentId);
+        qDebug() << "[ViewModel] scheduleUpdate done";
     } else {
         qWarning() << "Component" << componentId << "not found in list, cannot update LCSC data";
     }
+    qDebug() << "[ViewModel] handleLcscDataUpdated END";
 }
 
 void ComponentListViewModel::handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData) {
@@ -610,22 +619,39 @@ void ComponentListViewModel::handlePreviewImageFailed(const QString& componentId
     }
 }
 
-void ComponentListViewModel::handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList) {
-    qDebug() << "All images ready for component:" << componentId << "count:" << imageDataList.size();
+void ComponentListViewModel::handleAllImagesReady(const QString& componentId, const QStringList& imagePaths) {
+    qDebug() << "All images ready for component:" << componentId << "paths:" << imagePaths.size();
 
     auto item = findItemData(componentId);
     if (item && item->componentData()) {
         // 设置 isFetching 为 false
         item->setFetching(false);
 
-        // 更新所有图片数据到 ComponentListViewModel 的 ComponentData 中
-        item->componentData()->setPreviewImageData(imageDataList);
-        qDebug() << "All image data updated in ComponentListViewModel for component:" << componentId
-                 << "count:" << imageDataList.size();
+        // 只有当有有效图片时才更新图片数据
+        if (!imagePaths.isEmpty()) {
+            // 从路径加载所有图片数据到 ComponentListViewModel 的 ComponentData 中
+            QList<QByteArray> imageDataList;
+            for (const QString& path : imagePaths) {
+                QFile file(path);
+                if (file.open(QIODevice::ReadOnly)) {
+                    imageDataList.append(file.readAll());
+                    file.close();
+                }
+            }
+            if (!imageDataList.isEmpty()) {
+                item->componentData()->setPreviewImageData(imageDataList);
+                qDebug() << "All image data updated in ComponentListViewModel for component:" << componentId
+                         << "count:" << imageDataList.size();
 
-        // 打印每张图片的大小
-        for (int i = 0; i < imageDataList.size(); ++i) {
-            qDebug() << "  Image" << i << "size:" << imageDataList[i].size() << "bytes";
+                // 打印每张图片的大小
+                for (int i = 0; i < imageDataList.size(); ++i) {
+                    qDebug() << "  Image" << i << "size:" << imageDataList[i].size() << "bytes";
+                }
+            } else {
+                qDebug() << "No valid images loaded from paths, keeping existing preview";
+            }
+        } else {
+            qDebug() << "No image paths available, keeping existing preview";
         }
 
         // 添加到待更新集合

@@ -29,7 +29,7 @@ QImage ThumbnailGenerator::generatePlaceholderThumbnail(const QString& component
 
 QImage ThumbnailGenerator::generateThumbnail(const QSharedPointer<ComponentData>& data, int size) {
     if (!data)
-        return QImage();
+        return generatePlaceholderThumbnail("?", size);
 
     // 优先展示符号，如果没有符号则展示封装
     if (data->symbolData() && !data->symbolData()->pins().isEmpty()) {
@@ -38,7 +38,8 @@ QImage ThumbnailGenerator::generateThumbnail(const QSharedPointer<ComponentData>
         return generateFootprintThumbnail(data->footprintData(), size);
     }
 
-    return QImage();
+    // 没有符号和封装数据时，返回占位缩略图而不是空白
+    return generatePlaceholderThumbnail("?", size);
 }
 
 QImage ThumbnailGenerator::generateSymbolThumbnail(const QSharedPointer<SymbolData>& symbolData, int size) {

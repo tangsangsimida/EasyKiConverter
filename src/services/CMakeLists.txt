@@ -5,6 +5,7 @@ add_library(EasyKiConverterServices STATIC
     BomParser.cpp
     LcscImageService.cpp
     ComponentService.cpp
+    ComponentCacheService.cpp
     ExportService.cpp
     ExportService_Pipeline.cpp
     ConfigService.cpp

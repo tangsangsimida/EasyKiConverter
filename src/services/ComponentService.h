@@ -1,6 +1,7 @@
 #ifndef COMPONENTSERVICE_H
 #define COMPONENTSERVICE_H
 
+#include "ComponentCacheService.h"
 #include "LcscImageService.h"
 #include "ParallelFetchContext.h"
 #include "models/ComponentData.h"
@@ -198,9 +199,9 @@ signals:
      * @brief 所有预览图片下载完成信号
      *
      * @param componentId 元件ID
-     * @param imageDataList 图片数据列表（内存）
+     * @param imagePaths 图片路径列表
      */
-    void allImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
+    void allImagesReady(const QString& componentId, const QStringList& imagePaths);
 
     /**
      * @brief 获取错误信号
@@ -287,7 +288,7 @@ private slots:
     /**
      * @brief 处理所有预览图片下载完成
      */
-    void handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
+    void handleAllImagesReady(const QString& componentId, const QStringList& imagePaths);
 
     /**
      * @brief 处理预览图获取失败

@@ -294,7 +294,7 @@ private slots:
      */
     void handlePreviewImageFailed(const QString& componentId, const QString& error);
 
-    void handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
+    void handleAllImagesReady(const QString& componentId, const QStringList& imagePaths);
 
 private:
     /**
