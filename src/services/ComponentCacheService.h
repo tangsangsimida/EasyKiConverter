@@ -228,6 +228,13 @@ public:
     QByteArray loadDatasheet(const QString& lcscId) const;
 
     /**
+     * @brief 从L2磁盘缓存加载元器件元数据JSON
+     * @param lcscId 元器件ID
+     * @return QJsonObject 元数据对象，如果不存在返回空
+     */
+    QJsonObject loadMetadata(const QString& lcscId) const;
+
+    /**
      * @brief 保存数据手册（直接写磁盘）
      * @param lcscId 元器件ID
      * @param datasheetData 数据手册数据
@@ -372,11 +379,6 @@ private:
      * @brief 3D模型文件路径
      */
     QString model3DPath(const QString& uuid, const QString& extension) const;
-
-    /**
-     * @brief 从L2加载元数据JSON
-     */
-    QJsonObject loadMetadata(const QString& lcscId) const;
 
     /**
      * @brief 保存元数据JSON到L2

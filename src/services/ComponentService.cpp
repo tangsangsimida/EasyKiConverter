@@ -168,6 +168,18 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
                 }
             }
 
+            // 从 metadata.json 恢复 model3DData（如果 cad_data.json 重新导入后丢失了的话）
+            // 这样可以确保从缓存加载时，3D 模型 UUID 始终可用
+            if (!cachedData->model3DData() || cachedData->model3DData()->uuid().isEmpty()) {
+                QJsonObject metadata = cache->loadMetadata(normalizedId);
+                if (metadata.contains("model3duuid")) {
+                    auto model3DData = QSharedPointer<Model3DData>::create();
+                    model3DData->setUuid(metadata.value("model3duuid").toString());
+                    cachedData->setModel3DData(model3DData);
+                    qDebug() << "Restored model3DData from metadata, UUID:" << model3DData->uuid();
+                }
+            }
+
             // 从缓存加载数据，更新到 m_fetchingComponents 以保持一致性
             QMutexLocker locker(&m_fetchingComponentsMutex);
             FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];

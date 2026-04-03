@@ -35,6 +35,9 @@ void FetchStageHandler::start() {
 
         if (m_preloadedData.contains(componentId)) {
             auto data = m_preloadedData.value(componentId);
+            qDebug() << "FetchStage: Found preloaded data for" << componentId
+                     << "isValid:" << (data && data->isValid())
+                     << "exportModel3D:" << m_options.exportModel3D;
 
             if (data && data->isValid()) {
                 if (m_options.exportModel3D) {
@@ -43,17 +46,18 @@ void FetchStageHandler::start() {
                         // 有UUID，检查缓存中是否有3D模型数据
                         ComponentCacheService* cache = ComponentCacheService::instance();
                         QString uuid = data->model3DData()->uuid();
-                        bool has3DCached = cache->hasModel3DCached(uuid, "step") ||
-                                           cache->hasModel3DCached(uuid, "wrl") ||
-                                           cache->loadModel3D(uuid, "wrl").size() > 0;
-                        if (has3DCached) {
+                        bool hasStepCached = cache->hasModel3DCached(uuid, "step");
+                        bool hasWrlCached = cache->hasModel3DCached(uuid, "wrl");
+                        // 只有当至少一个格式缺失时，才需要下载
+                        if (hasStepCached && hasWrlCached) {
                             // 3D模型已在缓存中，完全使用预加载数据
                             canUsePreloaded = true;
                         } else {
-                            // 有UUID但没有3D数据，需要下载3D模型
+                            // 有UUID但3D数据不完整，需要下载缺失的格式
                             canUsePreloaded = true;
                             needFetch3DOnly = true;
                             existing3DUuid = uuid;
+                            qDebug() << "FetchStage: 3D cache miss, need to fetch step:" << !hasStepCached << "wrl:" << !hasWrlCached;
                         }
                     }
                 } else {
@@ -65,6 +69,11 @@ void FetchStageHandler::start() {
 
         if (canUsePreloaded) {
             auto preData = m_preloadedData.value(componentId);
+
+            qDebug() << "FetchStage: Using preloaded data for" << componentId
+                     << "model3DData valid:" << (preData && preData->model3DData() != nullptr)
+                     << "uuid:" << (preData && preData->model3DData() ? preData->model3DData()->uuid() : "null")
+                     << "needFetch3DOnly:" << needFetch3DOnly;
 
             // 如果需要3D模型但缓存中没有，先下载3D模型再合并
             if (needFetch3DOnly && !existing3DUuid.isEmpty()) {
@@ -145,6 +154,17 @@ void FetchStageHandler::start() {
             status->symbolData = preData->symbolData();
             status->footprintData = preData->footprintData();
             status->model3DData = preData->model3DData();
+
+            // 如果需要导出3D模型，从缓存加载3D文件数据
+            if (m_options.exportModel3D && preData->model3DData() && !preData->model3DData()->uuid().isEmpty()) {
+                ComponentCacheService* cache = ComponentCacheService::instance();
+                QString uuid = preData->model3DData()->uuid();
+                status->model3DObjRaw = cache->loadModel3D(uuid, "wrl");
+                status->model3DStepRaw = cache->loadModel3D(uuid, "step");
+                qDebug() << "FetchStage: Loaded 3D from cache, wrl size:" << status->model3DObjRaw.size()
+                         << "step size:" << status->model3DStepRaw.size();
+            }
+
             status->fetchSuccess = true;
             status->fetchMessage = "Used preloaded data";
             status->processSuccess = true;
