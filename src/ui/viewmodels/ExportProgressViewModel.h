@@ -314,7 +314,9 @@ private:
                             bool success,
                             bool symbolSuccess,
                             bool footprintSuccess,
-                            bool model3DSuccess) const;
+                            bool model3DSuccess,
+                            bool previewImagesSuccess = false,
+                            bool datasheetSuccess = false) const;
     void prepopulateResultsList(const QStringList& componentIds, const ExportOptions& options);
     void startExportInternal(const QStringList& componentIds, bool isRetry);
     void updateStatistics();

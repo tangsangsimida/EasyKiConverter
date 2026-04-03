@@ -52,7 +52,7 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());  // CPU 密集型
 
     m_writeThreadPool = new QThreadPool(this);
-    m_writeThreadPool->setMaxThreadCount(3);  // 磁盘 I/O 密集型
+    m_writeThreadPool->setMaxThreadCount(10);  // 磁盘 I/O 密集型（缓存写入）
 
     // 初始化处理器
     m_fetchHandler = new FetchStageHandler(m_isCancelled, m_fetchThreadPool, this);
@@ -118,6 +118,13 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& c
     m_pipelineProgress.fetchCompleted = 0;
     m_pipelineProgress.processCompleted = 0;
     m_pipelineProgress.writeCompleted = 0;
+
+    // 初始化预览图和手册的计数（用于加权计算进度）
+    // 预估每个组件平均 3 个预览图和 1 个手册
+    m_pipelineProgress.totalPreviewImages = options.exportPreviewImages ? componentIds.size() * 3 : 0;
+    m_pipelineProgress.totalDatasheets = options.exportDatasheet ? componentIds.size() : 0;
+    m_pipelineProgress.fetchedPreviewImages = 0;
+    m_pipelineProgress.fetchedDatasheets = 0;
 
     // 设置重试模式标志（使用明确的 isRetry 参数，而不是 options.updateMode）
     m_isRetryMode = isRetry;
@@ -242,6 +249,21 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
     qDebug() << "Fetch completed for component:" << status->componentId << "Success:" << status->fetchSuccess
              << "fetch3DOnly:" << status->fetch3DOnly;
     m_pipelineProgress.fetchCompleted++;
+
+    // 更新预览图和手册的获取计数
+    m_pipelineProgress.fetchedPreviewImages += status->previewImageDataList.size();
+    if (!status->datasheetData.isEmpty()) {
+        m_pipelineProgress.fetchedDatasheets++;
+    }
+
+    qDebug() << "Fetch progress - totalTasks:" << m_pipelineProgress.totalTasks
+             << "fetchCompleted:" << m_pipelineProgress.fetchCompleted
+             << "totalPreviewImages:" << m_pipelineProgress.totalPreviewImages
+             << "fetchedPreviewImages:" << m_pipelineProgress.fetchedPreviewImages
+             << "totalDatasheets:" << m_pipelineProgress.totalDatasheets
+             << "fetchedDatasheets:" << m_pipelineProgress.fetchedDatasheets
+             << "fetchProgress:" << m_pipelineProgress.fetchProgress();
+
     m_completedStatuses.append(status);
 
     // 安全检查队列

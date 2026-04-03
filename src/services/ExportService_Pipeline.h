@@ -37,9 +37,17 @@ struct PipelineProgress {
     int writeCompleted = 0;  // 写入完成数
     int totalTasks = 0;  // 总任务数
 
+    // 预览图和手册计数（用于加权计算）
+    int totalPreviewImages = 0;  // 总预览图数量
+    int fetchedPreviewImages = 0;  // 已获取预览图数量
+    int totalDatasheets = 0;  // 总手册数量
+    int fetchedDatasheets = 0;  // 已获取手册数量
+
     // 计算各阶段进度（0-100）
     int fetchProgress() const {
-        return totalTasks > 0 ? (fetchCompleted * 100 / totalTasks) : 0;
+        if (totalTasks <= 0)
+            return 0;
+        return fetchCompleted * 100 / totalTasks;
     }
 
     int processProgress() const {
@@ -47,12 +55,30 @@ struct PipelineProgress {
     }
 
     int writeProgress() const {
-        return totalTasks > 0 ? (writeCompleted * 100 / totalTasks) : 0;
+        if (totalTasks <= 0)
+            return 0;
+        return writeCompleted * 100 / totalTasks;
     }
 
     // 计算加权总进度（抓取30%，处理50%，写入20%）
     int overallProgress() const {
-        return (fetchProgress() * 30 + processProgress() * 50 + writeProgress() * 20) / 100;
+        int fetch = fetchProgress();
+        int process = processProgress();
+        int write = writeProgress();
+
+        // 如果有预览图或手册需要获取，增加它们的权重
+        int mediaWeight = totalPreviewImages + totalDatasheets;
+        if (mediaWeight > 0) {
+            // 预览图和手册的进度
+            int totalMedia = totalPreviewImages + totalDatasheets;
+            int fetchedMedia = fetchedPreviewImages + fetchedDatasheets;
+            int mediaProgress = totalMedia > 0 ? (fetchedMedia * 100 / totalMedia) : 0;
+
+            // 加权融合：基础进度占 70%，媒体进度占 30%
+            fetch = (fetch * 70 + mediaProgress * 30) / 100;
+        }
+
+        return (fetch * 30 + process * 50 + write * 20) / 100;
     }
 };
 
@@ -229,7 +255,7 @@ private:
     // 线程池
     QThreadPool* m_fetchThreadPool;  // 抓取线程池（I/O密集型，32个线程）
     QThreadPool* m_processThreadPool;  // 处理线程池（CPU密集型，等于核心数）
-    QThreadPool* m_writeThreadPool;  // 写入线程池（磁盘I/O密集型，8个线程）
+    QThreadPool* m_writeThreadPool;  // 写入线程池（磁盘I/O密集型，10个线程）
 
     // 队列管理器
     PipelineQueueManager m_queueManager;

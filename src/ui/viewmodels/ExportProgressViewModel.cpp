@@ -375,7 +375,9 @@ QString ExportProgressViewModel::getStatusString(int stage,
                                                  bool success,
                                                  bool symbolSuccess,
                                                  bool footprintSuccess,
-                                                 bool model3DSuccess) const {
+                                                 bool model3DSuccess,
+                                                 bool previewImagesSuccess,
+                                                 bool datasheetSuccess) const {
     if (!success) {
         return "failed";
     }
@@ -393,6 +395,10 @@ QString ExportProgressViewModel::getStatusString(int stage,
             if (m_exportOptions.exportFootprint && !footprintSuccess)
                 allRequestedItemsDone = false;
             if (m_exportOptions.exportModel3D && !model3DSuccess)
+                allRequestedItemsDone = false;
+            if (m_exportOptions.exportPreviewImages && !previewImagesSuccess)
+                allRequestedItemsDone = false;
+            if (m_exportOptions.exportDatasheet && !datasheetSuccess)
                 allRequestedItemsDone = false;
 
             return allRequestedItemsDone ? "success" : "failed";
@@ -413,20 +419,57 @@ void ExportProgressViewModel::handleComponentExported(const QString& componentId
                                                       bool datasheetSuccess) {
     int index = m_idToIndexMap.value(componentId, -1);
     // 使用增强后的判定逻辑
-    QString statusStr = getStatusString(stage, success, symbolSuccess, footprintSuccess, model3DSuccess);
+    QString statusStr = getStatusString(
+        stage, success, symbolSuccess, footprintSuccess, model3DSuccess, previewImagesSuccess, datasheetSuccess);
+
+    // 确保索引有效
+    if (index < 0) {
+        // ID 不在 map 中，可能是新添加的，尝试在列表中查找
+        for (int i = 0; i < m_resultsList.size(); ++i) {
+            QVariantMap item = m_resultsList[i].toMap();
+            if (item["componentId"].toString() == componentId) {
+                index = i;
+                m_idToIndexMap[componentId] = index;
+                break;
+            }
+        }
+    }
 
     if (index >= 0 && index < m_resultsList.size()) {
         QVariantMap result = m_resultsList[index].toMap();
         result["status"] = statusStr;
         result["message"] = statusStr == "failed" && success ? "Partial export failed (missing parts)" : message;
-        // 保存分项状态
-        result["symbolSuccess"] = symbolSuccess;
-        result["footprintSuccess"] = footprintSuccess;
-        result["model3DSuccess"] = model3DSuccess;
-        result["previewImageExported"] = previewImagesSuccess;
-        result["datasheetExported"] = datasheetSuccess;
+
+        // Fetch 阶段完成后，标记符号和封装为"处理中"状态
+        if (stage == static_cast<int>(PipelineStage::Fetch)) {
+            if (m_exportOptions.exportSymbol) {
+                result["symbolSuccess"] = false;  // 标记为"处理中"
+            }
+            if (m_exportOptions.exportFootprint) {
+                result["footprintSuccess"] = false;
+            }
+            if (m_exportOptions.exportModel3D) {
+                result["model3DSuccess"] = false;
+            }
+            if (m_exportOptions.exportPreviewImages) {
+                result["previewImageExported"] = false;
+            }
+            if (m_exportOptions.exportDatasheet) {
+                result["datasheetExported"] = false;
+            }
+        }
+        // Write 阶段完成后，使用传入的值（这是最终状态）
+        else if (stage == static_cast<int>(PipelineStage::Write)) {
+            result["symbolSuccess"] = symbolSuccess;
+            result["footprintSuccess"] = footprintSuccess;
+            result["model3DSuccess"] = model3DSuccess;
+            result["previewImageExported"] = previewImagesSuccess;
+            result["datasheetExported"] = datasheetSuccess;
+        }
         m_resultsList[index] = result;
     } else {
+        // 未找到，创建新条目（作为后备）
+        qWarning() << "handleComponentExported: Component not found in list, creating new entry:" << componentId;
         QVariantMap result;
         result["componentId"] = componentId;
         result["status"] = statusStr;
@@ -440,9 +483,20 @@ void ExportProgressViewModel::handleComponentExported(const QString& componentId
         m_idToIndexMap[componentId] = m_resultsList.size() - 1;
     }
 
-    if (!m_pendingUpdate) {
+    // Write 阶段完成时立即刷新，阶段转换时使用节流
+    if (stage == static_cast<int>(PipelineStage::Write)) {
+        // Write 阶段完成后立即刷新，确保最终状态立即显示
+        if (m_throttleTimer->isActive()) {
+            m_throttleTimer->stop();
+        }
         m_pendingUpdate = true;
-        m_throttleTimer->start();
+        flushPendingUpdates();
+    } else {
+        // Fetch/Process 阶段使用节流，避免频繁刷新
+        if (!m_pendingUpdate) {
+            m_pendingUpdate = true;
+            m_throttleTimer->start();
+        }
     }
 
     updateStatistics();
@@ -498,6 +552,10 @@ void ExportProgressViewModel::updateStatistics() {
 void ExportProgressViewModel::flushPendingUpdates() {
     if (m_pendingUpdate) {
         m_pendingUpdate = false;
+        // 强制创建新列表引用，确保 QML 检测到变化
+        QVariantList newList = m_resultsList;
+        m_resultsList.clear();
+        m_resultsList = newList;
         emit resultsListChanged();
         emit filteredResultsListChanged();
     }
@@ -544,6 +602,13 @@ void ExportProgressViewModel::prepopulateResultsList(const QStringList& componen
         result["exportModel3D"] = options.exportModel3D;
         result["exportPreviewImages"] = options.exportPreviewImages;
         result["exportDatasheet"] = options.exportDatasheet;
+        // 初始化分项状态（false = 未完成，true = 成功）
+        // 注意：在导出过程中，这些字段会被更新以反映实时状态
+        result["symbolSuccess"] = false;
+        result["footprintSuccess"] = false;
+        result["model3DSuccess"] = false;
+        result["previewImageExported"] = false;
+        result["datasheetExported"] = false;
         m_resultsList.append(result);
         m_idToIndexMap[componentIds[i]] = i;
     }
