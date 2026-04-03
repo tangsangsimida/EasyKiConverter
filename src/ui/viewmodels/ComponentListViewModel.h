@@ -75,6 +75,9 @@ public:
     // 获取预加载的数据（用于导出流程）
     QSharedPointer<ComponentData> getPreloadedData(const QString& componentId) const;
 
+    // 获取所有组件的最新数据（用于流水线导出后的预览图/手册导出）
+    QMap<QString, QSharedPointer<ComponentData>> getAllPreloadedData() const;
+
 public slots:
     /**
      * @brief 添加元件到列表

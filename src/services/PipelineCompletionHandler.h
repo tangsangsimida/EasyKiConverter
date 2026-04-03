@@ -10,6 +10,7 @@
 namespace EasyKiConverter {
 
 class ComponentData;
+class ComponentListViewModel;
 
 class PipelineCompletionHandler : public QObject {
     Q_OBJECT
@@ -22,6 +23,10 @@ public:
 
     void exportDatasheets(const QMap<QString, QSharedPointer<ComponentData>>& preloadedData,
                           const ExportOptions& options);
+
+    void exportPreviewImagesFromViewModel(ComponentListViewModel* viewModel, const ExportOptions& options);
+
+    void exportDatasheetsFromViewModel(ComponentListViewModel* viewModel, const ExportOptions& options);
 
 signals:
     void previewImagesExported(int successCount);

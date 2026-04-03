@@ -90,6 +90,15 @@ public:
     QString previewImagePath(const QString& lcscId, int index) const;
 
     /**
+     * @brief 下载预览图（同步网络请求）
+     * @param lcscId 元器件ID
+     * @param imageUrl 图片URL
+     * @param imageIndex 图片索引
+     * @return QByteArray 下载的图片数据，下载失败返回空
+     */
+    QByteArray downloadPreviewImage(const QString& lcscId, const QString& imageUrl, int imageIndex);
+
+    /**
      * @brief 检查元器件是否有有效缓存
      * @param lcscId 元器件ID
      * @return bool 是否有有效缓存
@@ -241,6 +250,15 @@ public:
      * @param format 数据格式（pdf/html）
      */
     void saveDatasheet(const QString& lcscId, const QByteArray& datasheetData, const QString& format);
+
+    /**
+     * @brief 下载数据手册（同步网络请求）
+     * @param lcscId 元器件ID
+     * @param datasheetUrl 数据手册URL
+     * @param format 数据格式输出参数（pdf/html）
+     * @return QByteArray 下载的数据，下载失败返回空
+     */
+    QByteArray downloadDatasheet(const QString& lcscId, const QString& datasheetUrl, QString* format);
 
     /**
      * @brief 加载3D模型（STEP/WRL）

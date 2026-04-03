@@ -36,9 +36,7 @@ public:
      * @param tempDir 临时目录
      * @return bool 是否拷贝成功
      */
-    static bool copyAtomically(const QString& sourcePath,
-                               const QString& finalPath,
-                               const QString& tempDir);
+    static bool copyAtomically(const QString& sourcePath, const QString& finalPath, const QString& tempDir);
 
 private:
     static QString generateTempPath(const QString& tempDir, const QString& prefix, const QString& suffix);

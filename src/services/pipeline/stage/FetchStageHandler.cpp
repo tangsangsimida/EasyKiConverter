@@ -35,8 +35,7 @@ void FetchStageHandler::start() {
 
         if (m_preloadedData.contains(componentId)) {
             auto data = m_preloadedData.value(componentId);
-            qDebug() << "FetchStage: Found preloaded data for" << componentId
-                     << "isValid:" << (data && data->isValid())
+            qDebug() << "FetchStage: Found preloaded data for" << componentId << "isValid:" << (data && data->isValid())
                      << "exportModel3D:" << m_options.exportModel3D;
 
             if (data && data->isValid()) {

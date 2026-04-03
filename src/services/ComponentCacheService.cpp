@@ -9,7 +9,11 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QStandardPaths>
+#include <QUrl>
 
 namespace EasyKiConverter {
 
@@ -497,6 +501,56 @@ void ComponentCacheService::savePreviewImage(const QString& lcscId, const QByteA
     // 注意：预览图不存入L1内存缓存，因为数据量大
 }
 
+QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId, const QString& imageUrl, int imageIndex) {
+    if (imageUrl.isEmpty() || imageIndex < 0) {
+        return QByteArray();
+    }
+
+    // 检查磁盘缓存
+    {
+        QMutexLocker locker(&m_mutex);
+        QString previewFilePath = previewImagePath(lcscId, imageIndex);
+        if (QFileInfo::exists(previewFilePath)) {
+            QFile file(previewFilePath);
+            if (file.open(QIODevice::ReadOnly)) {
+                LOG_DEBUG(LogModule::Core, "Preview image loaded from disk cache: {}", previewFilePath);
+                return file.readAll();
+            }
+        }
+    }
+
+    // 同步下载
+    QNetworkAccessManager manager;
+    QNetworkRequest request{QUrl(imageUrl)};
+    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
+    request.setTransferTimeout(45000);
+
+    QNetworkReply* reply = manager.get(request);
+    if (!reply) {
+        return QByteArray();
+    }
+
+    // 等待下载完成
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    QByteArray data;
+    if (reply->error() == QNetworkReply::NoError) {
+        data = reply->readAll();
+    } else {
+        LOG_WARN(LogModule::Core, "Preview image download failed for {}: {}", lcscId, reply->errorString());
+    }
+    reply->deleteLater();
+
+    // 保存到磁盘缓存
+    if (!data.isEmpty()) {
+        savePreviewImage(lcscId, data, imageIndex);
+    }
+
+    return data;
+}
+
 QByteArray ComponentCacheService::loadDatasheet(const QString& lcscId) const {
     QMutexLocker locker(&m_mutex);
 
@@ -547,6 +601,75 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
     // 注意：数据手册不存入L1内存缓存，因为数据量大
 }
 
+QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
+                                                    const QString& datasheetUrl,
+                                                    QString* format) {
+    if (datasheetUrl.isEmpty()) {
+        return QByteArray();
+    }
+
+    // 确定格式
+    QString ext = datasheetUrl.toLower().contains(".html") ? "html" : "pdf";
+    if (format) {
+        *format = ext;
+    }
+
+    // 检查磁盘缓存是否已存在
+    {
+        QMutexLocker locker(&m_mutex);
+        QString datasheetFilePath = datasheetPath(lcscId);
+        QString fullPath = datasheetFilePath;
+        if (!fullPath.endsWith(".pdf") && !fullPath.endsWith(".html")) {
+            fullPath += "." + ext;
+        }
+        if (QFileInfo::exists(fullPath)) {
+            QFile file(fullPath);
+            if (file.open(QIODevice::ReadOnly)) {
+                LOG_DEBUG(LogModule::Core, "Datasheet loaded from disk cache: {}", fullPath);
+                return file.readAll();
+            }
+        }
+    }
+
+    // 同步下载
+    QNetworkAccessManager manager;
+    QNetworkRequest request{QUrl(datasheetUrl)};
+    request.setHeader(QNetworkRequest::UserAgentHeader,
+                      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/145.0.0.0 Safari/537.36");
+    request.setTransferTimeout(45000);
+
+    QNetworkReply* reply = manager.get(request);
+    if (!reply) {
+        return QByteArray();
+    }
+
+    // 等待下载完成
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    QByteArray data;
+    if (reply->error() == QNetworkReply::NoError) {
+        data = reply->readAll();
+        // 检测实际格式（通过内容）
+        if (format && ext == "pdf" && data.size() >= 5 && !data.startsWith("%PDF-")) {
+            ext = "html";
+            *format = ext;
+        }
+    } else {
+        LOG_WARN(LogModule::Core, "Datasheet download failed for {}: {}", lcscId, reply->errorString());
+    }
+    reply->deleteLater();
+
+    // 保存到磁盘缓存
+    if (!data.isEmpty()) {
+        saveDatasheet(lcscId, data, ext);
+    }
+
+    return data;
+}
+
 bool ComponentCacheService::hasModel3DCached(const QString& uuid, const QString& extension) const {
     QMutexLocker locker(&m_mutex);
     QString path = model3DPath(uuid, extension);
@@ -595,8 +718,8 @@ void ComponentCacheService::saveModel3D(const QString& uuid, const QByteArray& d
 }
 
 bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
-                                               const QString& extension,
-                                               const QString& destinationPath) const {
+                                              const QString& extension,
+                                              const QString& destinationPath) const {
     if (uuid.isEmpty() || extension.isEmpty() || destinationPath.isEmpty()) {
         return false;
     }

@@ -264,8 +264,7 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
 
 bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     // 如果既没有原始数据也没有缓存路径，则跳过
-    if (!status.model3DData || (status.model3DData->rawObj().isEmpty() &&
-                                 status.cachedModel3DWrlPath.isEmpty())) {
+    if (!status.model3DData || (status.model3DData->rawObj().isEmpty() && status.cachedModel3DWrlPath.isEmpty())) {
         return true;
     }
 
@@ -317,8 +316,7 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     if (!status.cachedModel3DStepPath.isEmpty()) {
         // 使用直接拷贝模式（不经过内存）
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
-        bool stepWriteSuccess = AtomicFileWriter::copyAtomically(
-            status.cachedModel3DStepPath, stepFilePath, m_tempDir);
+        bool stepWriteSuccess = AtomicFileWriter::copyAtomically(status.cachedModel3DStepPath, stepFilePath, m_tempDir);
 
         if (stepWriteSuccess) {
             status.addDebugLog(QString("3D model STEP file copied from cache: %1").arg(status.cachedModel3DStepPath));

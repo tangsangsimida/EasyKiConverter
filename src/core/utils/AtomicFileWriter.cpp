@@ -90,9 +90,7 @@ bool AtomicFileWriter::createDirectory(const QString& path) {
     return dir.mkpath(path);
 }
 
-bool AtomicFileWriter::copyAtomically(const QString& sourcePath,
-                                      const QString& finalPath,
-                                      const QString& tempDir) {
+bool AtomicFileWriter::copyAtomically(const QString& sourcePath, const QString& finalPath, const QString& tempDir) {
     if (sourcePath.isEmpty() || finalPath.isEmpty() || tempDir.isEmpty()) {
         qWarning() << "AtomicFileWriter::copyAtomically: Invalid parameters";
         return false;

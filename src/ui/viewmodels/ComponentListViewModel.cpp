@@ -718,6 +718,16 @@ QSharedPointer<ComponentData> ComponentListViewModel::getPreloadedData(const QSt
     return nullptr;
 }
 
+QMap<QString, QSharedPointer<ComponentData>> ComponentListViewModel::getAllPreloadedData() const {
+    QMap<QString, QSharedPointer<ComponentData>> result;
+    for (auto item : m_componentList) {
+        if (item && item->isValid() && item->componentData()) {
+            result.insert(item->componentId(), item->componentData());
+        }
+    }
+    return result;
+}
+
 void ComponentListViewModel::copyToClipboard(const QString& text) {
     QClipboard* clipboard = QGuiApplication::clipboard();
     clipboard->setText(text);

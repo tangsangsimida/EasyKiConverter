@@ -146,7 +146,8 @@ void FetchWorker::run() {
                 status->addDebugLog(QString("3D model OBJ data ready: %1 bytes").arg(actualObjData.size()));
 
                 // 下载 STEP 格式
-                QString stepUrl = QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(m_existing3DUuid);
+                QString stepUrl =
+                    QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(m_existing3DUuid);
                 status->addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));
 
                 QByteArray stepData = httpGet(stepUrl, MODEL_3D_TIMEOUT_MS, status);

@@ -525,19 +525,21 @@ void ExportServicePipeline::checkPipelineCompletion() {
     qDebug() << "Components with datasheets:" << componentsWithDatasheets;
 
     // 3. 使用 PipelineCompletionHandler 导出预览图和手册
+    // 注意：预览图和手册数据是在流水线执行过程中下载的，
+    // 所以需要从 ComponentListViewModel 获取最新数据，而不是 m_preloadedData
     delete m_completionHandler;
     m_completionHandler = new PipelineCompletionHandler(this);
 
-    // 3.1 导出预览图
+    // 3.1 导出预览图（从 ViewModel 获取最新数据）
     qDebug() << "ExportPreviewImages option:" << m_options.exportPreviewImages;
-    if (m_options.exportPreviewImages) {
-        m_completionHandler->exportPreviewImages(m_preloadedData, m_options);
+    if (m_options.exportPreviewImages && m_componentListViewModel) {
+        m_completionHandler->exportPreviewImagesFromViewModel(m_componentListViewModel, m_options);
     }
 
-    // 3.2 导出手册
+    // 3.2 导出手册（从 ViewModel 获取最新数据）
     qDebug() << "ExportDatasheet option:" << m_options.exportDatasheet;
-    if (m_options.exportDatasheet) {
-        m_completionHandler->exportDatasheets(m_preloadedData, m_options);
+    if (m_options.exportDatasheet && m_componentListViewModel) {
+        m_completionHandler->exportDatasheetsFromViewModel(m_componentListViewModel, m_options);
     }
 
     // 4. 清理临时文件夹（无论导出是否成功都要清理）
