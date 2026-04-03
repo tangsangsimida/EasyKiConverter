@@ -150,47 +150,49 @@ cleanup:
     }
 
     // 根据用户请求的导出项和实际完成情况，决定最终的成功状态
-    // 注意：3D模型/预览图/手册导出失败不影响符号和封装的导出成功状态
-    // 符号和封装是捆绑的核心输出，其他是可选附加输出
-    bool coreSuccess = true;
-    bool model3DFailed = false;
-    bool previewImageFailed = false;
-    bool datasheetFailed = false;
-    if (m_exportSymbol && !m_status->symbolWritten) {
-        coreSuccess = false;
+    // 每种导出类型都独立判断成功/失败，互不影响
+    bool symbolSuccess = (!m_exportSymbol) || m_status->symbolWritten;
+    bool footprintSuccess = (!m_exportFootprint) || m_status->footprintWritten;
+    bool model3DSuccess = (!m_exportModel3D) || m_status->model3DWritten;
+    bool previewImageSuccess = (!m_exportPreviewImages) || m_status->previewImageWritten;
+    bool datasheetSuccess = (!m_exportDatasheet) || m_status->datasheetWritten;
+
+    // 整体成功：所有被选择的导出项都成功了
+    bool overallSuccess =
+        symbolSuccess && footprintSuccess && model3DSuccess && previewImageSuccess && datasheetSuccess;
+
+    // 生成详细的成功/失败消息
+    QStringList successItems;
+    QStringList failedItems;
+    if (m_exportSymbol) {
+        symbolSuccess ? successItems.append("S") : failedItems.append("S");
     }
-    if (m_exportFootprint && !m_status->footprintWritten) {
-        coreSuccess = false;
+    if (m_exportFootprint) {
+        footprintSuccess ? successItems.append("F") : failedItems.append("F");
     }
-    if (m_exportModel3D && !m_status->model3DWritten) {
-        model3DFailed = true;  // 仅记录，不影响核心成功状态
-        m_status->addDebugLog("WARNING: 3D model export failed, but symbol/footprint export is not affected.");
+    if (m_exportModel3D) {
+        model3DSuccess ? successItems.append("3D") : failedItems.append("3D");
     }
-    if (m_exportPreviewImages && !m_status->previewImageWritten) {
-        previewImageFailed = true;
-        m_status->addDebugLog("WARNING: Preview image export failed.");
+    if (m_exportPreviewImages) {
+        previewImageSuccess ? successItems.append("P") : failedItems.append("P");
     }
-    if (m_exportDatasheet && !m_status->datasheetWritten) {
-        datasheetFailed = true;
-        m_status->addDebugLog("WARNING: Datasheet export failed.");
+    if (m_exportDatasheet) {
+        datasheetSuccess ? successItems.append("D") : failedItems.append("D");
     }
 
-    m_status->writeSuccess = coreSuccess;
-    if (coreSuccess && (model3DFailed || previewImageFailed || datasheetFailed)) {
-        QStringList failedItems;
-        if (model3DFailed)
-            failedItems.append("3D");
-        if (previewImageFailed)
-            failedItems.append("preview");
-        if (datasheetFailed)
-            failedItems.append("datasheet");
-        m_status->writeMessage =
-            QString("Write completed (%1 export failed, symbol/footprint OK)").arg(failedItems.join(", "));
-    } else if (coreSuccess) {
+    m_status->writeSuccess = overallSuccess;
+    if (overallSuccess) {
         m_status->writeMessage = "Write completed successfully";
     } else {
-        m_status->writeMessage = "Failed to write one or more core files (symbol/footprint)";
+        m_status->writeMessage = QString("Export completed with failures: %1").arg(failedItems.join(", "));
     }
+
+    m_status->addDebugLog(QString("WriteWorker completed - Symbol:%1 Footprint:%2 3D:%3 Preview:%4 Datasheet:%5")
+                              .arg(symbolSuccess ? "OK" : "FAIL")
+                              .arg(footprintSuccess ? "OK" : "FAIL")
+                              .arg(model3DSuccess ? "OK" : "FAIL")
+                              .arg(previewImageSuccess ? "OK" : "FAIL")
+                              .arg(datasheetSuccess ? "OK" : "FAIL"));
 
     if (m_debugMode) {
         exportDebugData(*m_status);

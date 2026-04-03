@@ -88,7 +88,11 @@ void FetchStageHandler::start() {
                 baseStatus->footprintData = preData->footprintData();
                 baseStatus->model3DData = preData->model3DData();
 
-                // 复制预览图和手册数据
+                // 初始化预览图/手册下载标志
+                baseStatus->needPreviewImages = false;
+                baseStatus->needDatasheet = false;
+
+                // 复制预览图和手册数据（如果内存中有的话）
                 if (!preData->previewImageData().isEmpty()) {
                     baseStatus->previewImageDataList = preData->previewImageData();
                 }
@@ -107,7 +111,8 @@ void FetchStageHandler::start() {
                     worker,
                     &FetchWorker::fetchCompleted,
                     this,
-                    [this, worker, baseStatus, existing3DUuid, preData, componentId](QSharedPointer<ComponentExportStatus> downloadedStatus) {
+                    [this, worker, baseStatus, existing3DUuid, preData, componentId](
+                        QSharedPointer<ComponentExportStatus> downloadedStatus) {
                         // 合并3D数据到baseStatus
                         baseStatus->model3DObjRaw = downloadedStatus->model3DObjRaw;
                         baseStatus->model3DStepRaw = downloadedStatus->model3DStepRaw;
@@ -143,8 +148,9 @@ void FetchStageHandler::start() {
                         }
                         worker->deleteLater();
 
-                        // 检查并获取预览图/手册（如果还没下载的话）
-                        // fetchMediaIfNeeded 会处理异步下载或直接发送完成信号
+                        // 检查并获取预览图/手册
+                        // fetchMediaIfNeeded 会检查是否需要下载（通过检查 preData 中的 URL 和数据）
+                        // 如果预览图/手册数据已经在 baseStatus 中（从 preData 复制），则不会重复下载
                         fetchMediaIfNeeded(componentId, preData, baseStatus);
                     },
                     Qt::QueuedConnection);
@@ -166,6 +172,10 @@ void FetchStageHandler::start() {
             status->symbolData = preData->symbolData();
             status->footprintData = preData->footprintData();
             status->model3DData = preData->model3DData();
+
+            // 初始化预览图/手册下载标志
+            status->needPreviewImages = false;
+            status->needDatasheet = false;
 
             // 转移预览图和手册数据（如果内存中有的话）
             if (!preData->previewImageData().isEmpty()) {
@@ -263,9 +273,15 @@ void FetchStageHandler::onWorkerCompleted(QSharedPointer<ComponentExportStatus> 
         m_activeWorkers.remove(worker);
     }
 
-    // 即使取消了也要发出信号，让流水线能够正确完成
-    // 外部通过检查 status 中的状态来判断是否真的成功
-    emit componentFetchCompleted(status, false);
+    // FetchWorker完成后，检查是否需要获取预览图/手册
+    // 使用status中的componentData作为preData
+    QSharedPointer<ComponentData> preData = status->componentData;
+    if (preData) {
+        fetchMediaIfNeeded(status->componentId, preData, status);
+    } else {
+        // 如果没有componentData，直接发送完成信号
+        emit componentFetchCompleted(status, false);
+    }
 }
 
 void FetchStageHandler::onMediaFetchCompleted(const QString& componentId,
@@ -309,20 +325,96 @@ void FetchStageHandler::fetchMediaIfNeeded(const QString& componentId,
     QStringList previewUrls;
     QString datasheetUrl;
 
-    // 检查是否需要获取预览图
-    if (m_options.exportPreviewImages && preData) {
-        previewUrls = preData->previewImages();
-        if (!previewUrls.isEmpty() && preData->previewImageData().isEmpty()) {
-            status->needPreviewImages = true;
+    // 如果用户选择了导出预览图
+    if (m_options.exportPreviewImages) {
+        // 优先使用已经加载到内存的数据
+        if (!status->previewImageDataList.isEmpty()) {
+            // 数据已在 status 中，不需要获取
+            qDebug() << "FetchStageHandler: Preview image data already in status for" << componentId;
+        }
+        // 检查 preData 中是否有数据
+        else if (preData && !preData->previewImageData().isEmpty()) {
+            status->previewImageDataList = preData->previewImageData();
+            qDebug() << "FetchStageHandler: Preview image data copied from preData for" << componentId;
+        }
+        // 数据不在内存中，尝试从缓存获取或下载
+        else {
+            if (preData) {
+                previewUrls = preData->previewImages();
+            }
+            // 如果有URL或缓存中有数据，需要获取
+            if (!previewUrls.isEmpty()) {
+                status->needPreviewImages = true;
+            } else {
+                // 没有URL但需要导出，尝试从缓存加载
+                ComponentCacheService* cache = ComponentCacheService::instance();
+                QList<QByteArray> cachedImages;
+                for (int i = 0; i < 3; i++) {
+                    QByteArray imgData = cache->loadPreviewImage(componentId, i);
+                    if (!imgData.isEmpty()) {
+                        cachedImages.append(imgData);
+                    }
+                }
+                if (!cachedImages.isEmpty()) {
+                    status->previewImageDataList = cachedImages;
+                    qDebug() << "FetchStageHandler: Preview images loaded from cache for" << componentId
+                             << "count:" << cachedImages.size();
+                } else {
+                    // 缓存也没有，需要下载
+                    status->needPreviewImages = true;
+                }
+            }
         }
     }
 
-    // 检查是否需要获取手册
-    if (m_options.exportDatasheet && preData) {
-        datasheetUrl = preData->datasheet();
-        if (!datasheetUrl.isEmpty() && preData->datasheetData().isEmpty()) {
-            status->needDatasheet = true;
+    // 如果用户选择了导出手册
+    if (m_options.exportDatasheet) {
+        // 优先使用已经加载到内存的数据
+        if (!status->datasheetData.isEmpty()) {
+            // 数据已在 status 中，不需要获取
+            qDebug() << "FetchStageHandler: Datasheet data already in status for" << componentId;
         }
+        // 检查 preData 中是否有数据
+        else if (preData && !preData->datasheetData().isEmpty()) {
+            status->datasheetData = preData->datasheetData();
+            qDebug() << "FetchStageHandler: Datasheet data copied from preData for" << componentId;
+        }
+        // 数据不在内存中，尝试从缓存获取或下载
+        else {
+            datasheetUrl = preData ? preData->datasheet() : QString();
+            if (!datasheetUrl.isEmpty()) {
+                status->needDatasheet = true;
+            } else {
+                // 没有URL但需要导出，尝试从缓存加载
+                ComponentCacheService* cache = ComponentCacheService::instance();
+                QByteArray cachedDatasheet = cache->loadDatasheet(componentId);
+                if (!cachedDatasheet.isEmpty()) {
+                    status->datasheetData = cachedDatasheet;
+                    qDebug() << "FetchStageHandler: Datasheet loaded from cache for" << componentId;
+                } else {
+                    // 缓存也没有，需要下载
+                    status->needDatasheet = true;
+                }
+            }
+        }
+    }
+
+    // 如果数据已经在内存中，不需要获取媒体
+    if (!status->needPreviewImages && !status->needDatasheet) {
+        // 数据已在内存中或有缓存，直接发送完成信号
+        // 标记导出为成功
+        if (m_options.exportPreviewImages && status->previewImageDataList.isEmpty()) {
+            status->previewImageWritten = false;
+        } else if (m_options.exportPreviewImages) {
+            status->previewImageWritten = true;
+        }
+        if (m_options.exportDatasheet && status->datasheetData.isEmpty()) {
+            status->datasheetWritten = false;
+        } else if (m_options.exportDatasheet) {
+            status->datasheetWritten = true;
+        }
+        emit componentFetchCompleted(status, true);
+        return;
     }
 
     // 如果需要获取媒体，启动 MediaFetchWorker
@@ -332,6 +424,14 @@ void FetchStageHandler::fetchMediaIfNeeded(const QString& componentId,
 
         // 保存 status 等待媒体下载完成
         m_pendingMediaStatuses[componentId] = status;
+
+        // 如果没有URL但需要获取预览图，从 preData 获取
+        if (status->needPreviewImages && previewUrls.isEmpty() && preData) {
+            previewUrls = preData->previewImages();
+        }
+        if (status->needDatasheet && datasheetUrl.isEmpty() && preData) {
+            datasheetUrl = preData->datasheet();
+        }
 
         MediaFetchWorker* worker = new MediaFetchWorker(componentId, previewUrls, datasheetUrl, this);
 
@@ -346,6 +446,13 @@ void FetchStageHandler::fetchMediaIfNeeded(const QString& componentId,
         m_threadPool->start(worker);
     } else {
         // 不需要获取媒体，直接发送完成信号
+        // 如果用户没有选择导出预览图/手册，不算失败
+        if (!m_options.exportPreviewImages) {
+            status->previewImageWritten = true;  // 没选择导出，视为成功
+        }
+        if (!m_options.exportDatasheet) {
+            status->datasheetWritten = true;  // 没选择导出，视为成功
+        }
         emit componentFetchCompleted(status, true);
     }
 }
