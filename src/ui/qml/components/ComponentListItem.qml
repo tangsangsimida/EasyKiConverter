@@ -137,7 +137,7 @@ Rectangle {
                 interval: 250
                 repeat: false
                 onTriggered: {
-                    if (previewMouseArea.containsMouse && itemData && itemData.hasThumbnail) {
+                    if (previewMouseArea.containsMouse && itemData && itemData.hasThumbnail && itemData.isValid) {
                         previewPopup.visible = true;
                     }
                 }
@@ -160,7 +160,7 @@ Rectangle {
                     fillMode: Image.PreserveAspectFit
                     cache: true
                     asynchronous: true
-                    visible: itemData && itemData.hasThumbnail && !itemData.isFetching
+                    visible: itemData && itemData.hasThumbnail && itemData.isValid && !itemData.isFetching
                 }
 
                 // 加载状态
@@ -260,7 +260,7 @@ Rectangle {
                     anchors.margins: 10
                     spacing: 10
                     // 如果没有预览图但有缩略图，显示放大的缩略图
-                    visible: itemData && itemData.hasThumbnail
+                    visible: itemData && itemData.hasThumbnail && itemData.isValid
                     Rectangle {
                         width: 470
                         height: 150
@@ -411,7 +411,7 @@ Rectangle {
                 width: defaultThumbnail.width
                 height: defaultThumbnail.height
                 hoverEnabled: true
-                cursorShape: (itemData && itemData.hasThumbnail) ? Qt.PointingHandCursor : Qt.ArrowCursor
+                cursorShape: (itemData && itemData.hasThumbnail && itemData.isValid) ? Qt.PointingHandCursor : Qt.ArrowCursor
                 acceptedButtons: Qt.LeftButton
                 onClicked: function (mouse) {
                     // Ctrl + 左键点击打开浏览器
@@ -423,7 +423,7 @@ Rectangle {
                     }
                 }
                 onContainsMouseChanged: {
-                    if (containsMouse && itemData && itemData.hasThumbnail) {
+                    if (containsMouse && itemData && itemData.hasThumbnail && itemData.isValid) {
                         // 开始计时，1秒后显示预览图
                         hoverDelayTimer.start();
                     } else {

@@ -191,6 +191,20 @@ public:
     QByteArray loadFootprintData(const QString& lcscId) const;
 
     /**
+     * @brief 保存完整的CAD数据JSON到缓存（包含符号和封装）
+     * @param lcscId 元器件ID
+     * @param cadData CAD数据JSON
+     */
+    void saveCadDataJson(const QString& lcscId, const QByteArray& cadData);
+
+    /**
+     * @brief 从缓存加载完整的CAD数据JSON
+     * @param lcscId 元器件ID
+     * @return QByteArray CAD数据JSON，如果不存在返回空
+     */
+    QByteArray loadCadDataJson(const QString& lcscId) const;
+
+    /**
      * @brief 加载预览图
      * @param lcscId 元器件ID
      * @param imageIndex 图片索引（0-2）

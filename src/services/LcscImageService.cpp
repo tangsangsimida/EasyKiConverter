@@ -328,8 +328,8 @@ void LcscImageService::handleDownloadResponse(QSharedPointer<QNetworkReply> repl
 
     // 读取数据
     QByteArray imageData = reply->readAll();
-    qDebug() << "[LcscImage] Download complete for" << componentId << "index" << imageIndex
-             << "size" << imageData.size() << "bytes";
+    qDebug() << "[LcscImage] Download complete for" << componentId << "index" << imageIndex << "size"
+             << imageData.size() << "bytes";
 
     if (!imageData.isEmpty()) {
         qDebug() << "[LcscImage] Step 1: Saving to disk...";

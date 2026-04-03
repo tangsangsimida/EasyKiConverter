@@ -107,6 +107,7 @@ bool ComponentCacheService::hasCache(const QString& lcscId) const {
 }
 
 bool ComponentCacheService::hasInMemoryCache(const QString& lcscId) const {
+    QMutexLocker locker(&m_mutex);
     QString key = makeMemoryKey(lcscId, "metadata");
     return m_memoryCache.contains(key);
 }
@@ -114,6 +115,7 @@ bool ComponentCacheService::hasInMemoryCache(const QString& lcscId) const {
 // ==================== L1 内存缓存操作 ====================
 
 QJsonObject ComponentCacheService::loadMetadataFromMemory(const QString& lcscId) const {
+    QMutexLocker locker(&m_mutex);
     QString key = makeMemoryKey(lcscId, "metadata");
     QByteArray* data = m_memoryCache.object(key);
     if (!data) {
@@ -138,13 +140,7 @@ void ComponentCacheService::saveMetadataToMemory(const QString& lcscId, const QJ
         QJsonDocument doc(metadata);
         QByteArray* data = new QByteArray(doc.toJson(QJsonDocument::Compact));
 
-        // 从旧缓存中获取大小并减去
-        QByteArray* oldData = m_memoryCache.object(key);
-        if (oldData) {
-            delete oldData;
-        }
-
-        // 添加新数据，使用 totalCost() 同步
+        // 直接插入即可，QCache 会自动处理相同 key 的旧数据的删除
         m_memoryCache.insert(key, data, data->size());
         sizeAfterUpdate = m_memoryCache.totalCost();
     }
@@ -171,13 +167,7 @@ void ComponentCacheService::saveSymbolDataToMemory(const QString& lcscId, const 
         QMutexLocker locker(&m_mutex);
         QString key = makeMemoryKey(lcscId, "symbol");
 
-        // 从旧缓存中获取大小并减去
-        QByteArray* oldData = m_memoryCache.object(key);
-        if (oldData) {
-            delete oldData;
-        }
-
-        // 添加新数据，使用 totalCost() 同步
+        // 直接插入即可，QCache 会自动处理相同 key 的旧数据的删除
         QByteArray* newData = new QByteArray(data);
         m_memoryCache.insert(key, newData, newData->size());
         sizeAfterUpdate = m_memoryCache.totalCost();
@@ -205,13 +195,7 @@ void ComponentCacheService::saveFootprintDataToMemory(const QString& lcscId, con
         QMutexLocker locker(&m_mutex);
         QString key = makeMemoryKey(lcscId, "footprint");
 
-        // 从旧缓存中获取大小并减去
-        QByteArray* oldData = m_memoryCache.object(key);
-        if (oldData) {
-            delete oldData;
-        }
-
-        // 添加新数据，使用 totalCost() 同步
+        // 直接插入即可，QCache 会自动处理相同 key 的旧数据的删除
         QByteArray* newData = new QByteArray(data);
         m_memoryCache.insert(key, newData, newData->size());
         sizeAfterUpdate = m_memoryCache.totalCost();
@@ -305,11 +289,7 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId, co
     {
         QMutexLocker locker(&m_mutex);
 
-        QByteArray* oldData = m_memoryCache.object(key);
-        if (oldData) {
-            delete oldData;
-        }
-
+        // 直接插入即可，QCache 会自动处理相同 key 的旧数据的删除
         m_memoryCache.insert(key, newData, newData->size());
         sizeAfterUpdate = m_memoryCache.totalCost();
     }
@@ -420,6 +400,44 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
     return QByteArray();
 }
 
+void ComponentCacheService::saveCadDataJson(const QString& lcscId, const QByteArray& cadData) {
+    if (cadData.isEmpty()) {
+        return;
+    }
+
+    QString cadDataPath;
+    {
+        QMutexLocker locker(&m_mutex);
+        ensureComponentDir(lcscId);
+        cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
+    }
+
+    QFile file(cadDataPath);
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(cadData);
+        file.close();
+        LOG_DEBUG(LogModule::Core, "Saved CAD data JSON to disk: {}", cadDataPath);
+    } else {
+        LOG_WARN(LogModule::Core, "Failed to write CAD data JSON: {}", cadDataPath);
+    }
+}
+
+QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
+    QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
+    if (!QFileInfo::exists(cadDataPath)) {
+        return QByteArray();
+    }
+
+    QFile file(cadDataPath);
+    if (file.open(QIODevice::ReadOnly)) {
+        QByteArray data = file.readAll();
+        file.close();
+        return data;
+    }
+
+    return QByteArray();
+}
+
 QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int imageIndex) const {
     QMutexLocker locker(&m_mutex);
 
@@ -443,7 +461,8 @@ QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int im
 }
 
 void ComponentCacheService::savePreviewImage(const QString& lcscId, const QByteArray& imageData, int imageIndex) {
-    qDebug() << "[Cache] savePreviewImage START - lcscId:" << lcscId << "index:" << imageIndex << "dataSize:" << imageData.size();
+    qDebug() << "[Cache] savePreviewImage START - lcscId:" << lcscId << "index:" << imageIndex
+             << "dataSize:" << imageData.size();
 
     if (imageIndex < 0 || imageIndex >= 3 || imageData.isEmpty()) {
         qDebug() << "[Cache] savePreviewImage: Early return due to invalid params";

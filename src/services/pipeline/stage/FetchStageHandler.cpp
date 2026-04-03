@@ -1,5 +1,7 @@
 #include "FetchStageHandler.h"
 
+#include "services/ComponentCacheService.h"
+
 #include <QDebug>
 
 namespace EasyKiConverter {
@@ -28,17 +30,34 @@ void FetchStageHandler::start() {
         // 1. 检查预加载数据
 
         bool canUsePreloaded = false;
+        bool needFetch3DOnly = false;
+        QString existing3DUuid;
 
         if (m_preloadedData.contains(componentId)) {
             auto data = m_preloadedData.value(componentId);
 
             if (data && data->isValid()) {
                 if (m_options.exportModel3D) {
+                    // 需要导出3D模型：检查是否有UUID
                     if (data->model3DData() && !data->model3DData()->uuid().isEmpty()) {
-                        canUsePreloaded = true;
+                        // 有UUID，检查缓存中是否有3D模型数据
+                        ComponentCacheService* cache = ComponentCacheService::instance();
+                        QString uuid = data->model3DData()->uuid();
+                        bool has3DCached = cache->hasModel3DCached(uuid, "step") ||
+                                           cache->hasModel3DCached(uuid, "wrl") ||
+                                           cache->loadModel3D(uuid, "wrl").size() > 0;
+                        if (has3DCached) {
+                            // 3D模型已在缓存中，完全使用预加载数据
+                            canUsePreloaded = true;
+                        } else {
+                            // 有UUID但没有3D数据，需要下载3D模型
+                            canUsePreloaded = true;
+                            needFetch3DOnly = true;
+                            existing3DUuid = uuid;
+                        }
                     }
-
                 } else {
+                    // 不需要导出3D模型，使用预加载数据
                     canUsePreloaded = true;
                 }
             }
@@ -47,30 +66,75 @@ void FetchStageHandler::start() {
         if (canUsePreloaded) {
             auto preData = m_preloadedData.value(componentId);
 
+            // 如果需要3D模型但缓存中没有，先下载3D模型再合并
+            if (needFetch3DOnly && !existing3DUuid.isEmpty()) {
+                // 创建基础status（包含symbol和footprint）
+                auto baseStatus = QSharedPointer<ComponentExportStatus>::create();
+                baseStatus->componentId = componentId;
+                baseStatus->componentData = preData;
+                baseStatus->need3DModel = m_options.exportModel3D;
+                baseStatus->symbolData = preData->symbolData();
+                baseStatus->footprintData = preData->footprintData();
+                baseStatus->model3DData = preData->model3DData();
+                baseStatus->fetchSuccess = false;  // 等待3D下载完成
+                baseStatus->fetchMessage = "Downloading 3D model from UUID";
+
+                // 启动3D下载worker
+                FetchWorker* worker = new FetchWorker(componentId, false, true, existing3DUuid, nullptr);
+
+                // 使用lambda捕获baseStatus，在3D下载完成后合并数据并发送
+                connect(
+                    worker,
+                    &FetchWorker::fetchCompleted,
+                    this,
+                    [this, worker, baseStatus](QSharedPointer<ComponentExportStatus> downloadedStatus) {
+                        // 合并3D数据到baseStatus
+                        baseStatus->model3DObjRaw = downloadedStatus->model3DObjRaw;
+                        baseStatus->model3DStepRaw = downloadedStatus->model3DStepRaw;
+                        baseStatus->fetchSuccess = downloadedStatus->fetchSuccess;
+                        baseStatus->fetchMessage = downloadedStatus->fetchSuccess ? "Preloaded + 3D downloaded"
+                                                                                  : "Preloaded + 3D download failed";
+                        baseStatus->processSuccess = true;
+                        baseStatus->processMessage = "Preloaded data used";
+
+                        qDebug() << "FetchStageHandler: Merged 3D data for" << baseStatus->componentId
+                                 << "success:" << baseStatus->fetchSuccess;
+
+                        // 清理worker
+                        {
+                            QMutexLocker locker(&m_workerMutex);
+                            m_activeWorkers.remove(worker);
+                        }
+                        worker->deleteLater();
+
+                        // 发送合并后的status
+                        emit componentFetchCompleted(baseStatus, true);
+                    },
+                    Qt::QueuedConnection);
+
+                {
+                    QMutexLocker locker(&m_workerMutex);
+                    m_activeWorkers.insert(worker);
+                }
+
+                m_threadPool->start(worker);
+                continue;
+            }
+
+            // 不需要下载3D模型，直接使用预加载数据
             auto status = QSharedPointer<ComponentExportStatus>::create();
-
             status->componentId = componentId;
-
-            status->componentData = preData;  // 设置完整的 ComponentData，包括预览图和手册
-
+            status->componentData = preData;
             status->need3DModel = m_options.exportModel3D;
-
             status->symbolData = preData->symbolData();
-
             status->footprintData = preData->footprintData();
-
             status->model3DData = preData->model3DData();
-
             status->fetchSuccess = true;
-
             status->fetchMessage = "Used preloaded data";
-
             status->processSuccess = true;
-
             status->processMessage = "Preloaded data used";
 
             emit componentFetchCompleted(status, true);
-
             continue;
         }
 

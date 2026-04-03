@@ -695,11 +695,6 @@ void ExportProgressViewModel::startExportInternal(const QStringList& componentId
                 for (const QString& id : componentIds) {
                     auto data = m_componentListViewModel->getPreloadedData(id);
                     if (data) {
-                        qDebug() << "Preloaded component:" << id
-                                 << "PreviewImages (URLs):" << data->previewImages().size()
-                                 << "PreviewImageData (bytes):" << data->previewImageData().size() << "Datasheet (URL):"
-                                 << (data->datasheet().isEmpty() ? "empty" : data->datasheet().left(50))
-                                 << "DatasheetData (bytes):" << data->datasheetData().size();
                         preloadedData.insert(id, data);
                     }
                 }
