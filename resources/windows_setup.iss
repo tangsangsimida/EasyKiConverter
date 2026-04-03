@@ -62,3 +62,36 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+var
+  DeleteUserDataCheckBox: TNewCheckBox;
+
+procedure InitializeWizard();
+begin
+  DeleteUserDataCheckBox := TNewCheckBox.Create(WizardForm);
+  DeleteUserDataCheckBox.Caption := '删除用户配置和数据 (Delete user data)';
+  DeleteUserDataCheckBox.Left := ScaleX(20);
+  DeleteUserDataCheckBox.Top := ScaleY(150);
+  DeleteUserDataCheckBox.Width := ScaleX(350);
+  DeleteUserDataCheckBox.Checked := False;
+  DeleteUserDataCheckBox.Parent := WizardForm.SelectTasksPage;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  UserDataDir: String;
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    if DeleteUserDataCheckBox.Checked then
+    begin
+      UserDataDir := ExpandConstant('{localappdata}\EasyKiConverter_Cpp_Version');
+      if DirExists(UserDataDir) then
+        DelTree(UserDataDir, True, True, True);
+    end;
+  end;
+end;
+
+[UninstallDelete]
+Type: filesandordirectories; Name: "{localappdata}\EasyKiConverter_Cpp_Version"
