@@ -2,7 +2,6 @@
 #define EXPORTSERVICE_PIPELINE_H
 
 #include "ExportService.h"
-#include "PipelineCompletionHandler.h"
 #include "models/ComponentExportStatus.h"
 #include "models/SymbolData.h"
 #include "pipeline/queue/PipelineQueueManager.h"
@@ -290,9 +289,6 @@ private:
 
     // 是否处于重试模式（用于区分新的导出流程和重试）
     bool m_isRetryMode;
-
-    // 流水线完成处理器（用于导出预览图和手册）
-    PipelineCompletionHandler* m_completionHandler;
 };
 
 }  // namespace EasyKiConverter

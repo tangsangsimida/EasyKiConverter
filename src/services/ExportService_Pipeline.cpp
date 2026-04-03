@@ -41,8 +41,7 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     , m_exportStartTimeMs(0)
     , m_originalExportStartTimeMs(0)
     , m_originalTotalTasks(0)
-    , m_isRetryMode(false)
-    , m_completionHandler(nullptr) {
+    , m_isRetryMode(false) {
     qDebug() << "ExportServicePipeline: Initializing thread pools...";
     // 线程池初始化
     m_fetchThreadPool = new QThreadPool(this);
@@ -89,7 +88,6 @@ ExportServicePipeline::~ExportServicePipeline() {
     cancelExport();  // 确保退出时停止所有请求
     cleanupPipeline();
     delete m_mutex;
-    delete m_completionHandler;
 }
 
 void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& componentIds,
@@ -552,25 +550,8 @@ void ExportServicePipeline::checkPipelineCompletion() {
     qDebug() << "Components with preview images:" << componentsWithPreviewImages;
     qDebug() << "Components with datasheets:" << componentsWithDatasheets;
 
-    // 3. 使用 PipelineCompletionHandler 导出预览图和手册
-    // 注意：预览图和手册数据是在流水线执行过程中下载的，
-    // 所以需要从 ComponentListViewModel 获取最新数据，而不是 m_preloadedData
-    delete m_completionHandler;
-    m_completionHandler = new PipelineCompletionHandler(this);
-
-    // 3.1 导出预览图（从 ViewModel 获取最新数据）
-    qDebug() << "ExportPreviewImages option:" << m_options.exportPreviewImages;
-    if (m_options.exportPreviewImages && m_componentListViewModel) {
-        m_completionHandler->exportPreviewImagesFromViewModel(
-            m_componentListViewModel, m_exportProgressViewModel, m_options);
-    }
-
-    // 3.2 导出手册（从 ViewModel 获取最新数据）
-    qDebug() << "ExportDatasheet option:" << m_options.exportDatasheet;
-    if (m_options.exportDatasheet && m_componentListViewModel) {
-        m_completionHandler->exportDatasheetsFromViewModel(
-            m_componentListViewModel, m_exportProgressViewModel, m_options);
-    }
+    // 3. 预览图和手册已在 WriteStage 中通过 WriteWorker 导出
+    //    无需再次调用 PipelineCompletionHandler 进行重复导出
 
     // 4. 清理临时文件夹（无论导出是否成功都要清理）
     if (!m_tempDir.isEmpty()) {

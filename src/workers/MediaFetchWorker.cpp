@@ -1,10 +1,8 @@
 #include "MediaFetchWorker.h"
 
+#include "services/ComponentCacheService.h"
+
 #include <QDebug>
-#include <QEventLoop>
-#include <QNetworkRequest>
-#include <QThread>
-#include <QTimer>
 
 namespace EasyKiConverter {
 
@@ -16,8 +14,6 @@ MediaFetchWorker::MediaFetchWorker(const QString& componentId,
     , m_componentId(componentId)
     , m_previewImageUrls(previewImageUrls)
     , m_datasheetUrl(datasheetUrl)
-    , m_networkManager(new QNetworkAccessManager(this))
-    , m_currentReply(nullptr)
     , m_isAborted(false) {}
 
 MediaFetchWorker::~MediaFetchWorker() = default;
@@ -30,20 +26,29 @@ void MediaFetchWorker::run() {
     QList<QByteArray> previewImageDataList;
     QByteArray datasheetData;
 
-    // 下载预览图
-    for (const QString& url : m_previewImageUrls) {
+    ComponentCacheService* cache = ComponentCacheService::instance();
+
+    // 下载预览图（优先从缓存加载，缓存没有则下载并缓存）
+    for (int i = 0; i < m_previewImageUrls.size(); ++i) {
         if (m_isAborted) {
             break;
         }
-        QByteArray imageData = httpGet(url, PREVIEW_IMAGE_TIMEOUT_MS);
+        const QString& url = m_previewImageUrls[i];
+        if (url.isEmpty()) {
+            continue;
+        }
+
+        // 使用 downloadPreviewImage，它会检查缓存，缓存没有则下载并自动保存
+        QByteArray imageData = cache->downloadPreviewImage(m_componentId, url, i);
         if (!imageData.isEmpty()) {
             previewImageDataList.append(imageData);
         }
     }
 
-    // 下载手册
+    // 下载手册（优先从缓存加载，缓存没有则下载并缓存）
     if (!m_isAborted && !m_datasheetUrl.isEmpty()) {
-        datasheetData = httpGet(m_datasheetUrl, DATASHEET_TIMEOUT_MS);
+        // 使用 downloadDatasheet，它会检查缓存，缓存没有则下载并自动保存
+        datasheetData = cache->downloadDatasheet(m_componentId, m_datasheetUrl, nullptr);
     }
 
     // 发送完成信号
@@ -52,58 +57,8 @@ void MediaFetchWorker::run() {
 
 void MediaFetchWorker::abort() {
     m_isAborted = true;
-    QMutexLocker locker(&m_replyMutex);
-    if (m_currentReply) {
-        m_currentReply->abort();
-    }
-}
-
-QByteArray MediaFetchWorker::httpGet(const QString& url, int timeoutMs) {
-    if (url.isEmpty() || m_isAborted) {
-        return QByteArray();
-    }
-
-    QNetworkRequest request{QUrl(url)};
-    request.setHeader(QNetworkRequest::UserAgentHeader,
-                      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/145.0.0.0 Safari/537.36");
-    request.setTransferTimeout(timeoutMs);
-
-    QNetworkReply* reply = m_networkManager->get(request);
-    {
-        QMutexLocker locker(&m_replyMutex);
-        m_currentReply = reply;
-    }
-
-    // 等待响应
-    QEventLoop loop;
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-
-    // 设置超时
-    QTimer timer;
-    timer.setSingleShot(true);
-    timer.setInterval(timeoutMs);
-    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    timer.start();
-
-    loop.exec();
-
-    timer.stop();
-
-    QByteArray data;
-    if (reply->error() == QNetworkReply::NoError && !m_isAborted) {
-        data = reply->readAll();
-    } else {
-        qDebug() << "MediaFetchWorker: HTTP GET failed for" << url << "error:" << reply->errorString();
-    }
-
-    {
-        QMutexLocker locker(&m_replyMutex);
-        m_currentReply = nullptr;
-    }
-    reply->deleteLater();
-
-    return data;
+    // 注意：ComponentCacheService 的下载方法是同步的，
+    // abort 标志会在下次 run() 开始时检查
 }
 
 }  // namespace EasyKiConverter

@@ -87,6 +87,15 @@ void FetchStageHandler::start() {
                 baseStatus->symbolData = preData->symbolData();
                 baseStatus->footprintData = preData->footprintData();
                 baseStatus->model3DData = preData->model3DData();
+
+                // 复制预览图和手册数据
+                if (!preData->previewImageData().isEmpty()) {
+                    baseStatus->previewImageDataList = preData->previewImageData();
+                }
+                if (!preData->datasheetData().isEmpty()) {
+                    baseStatus->datasheetData = preData->datasheetData();
+                }
+
                 baseStatus->fetchSuccess = false;  // 等待3D下载完成
                 baseStatus->fetchMessage = "Downloading 3D model from UUID";
 
@@ -98,7 +107,7 @@ void FetchStageHandler::start() {
                     worker,
                     &FetchWorker::fetchCompleted,
                     this,
-                    [this, worker, baseStatus, existing3DUuid](QSharedPointer<ComponentExportStatus> downloadedStatus) {
+                    [this, worker, baseStatus, existing3DUuid, preData, componentId](QSharedPointer<ComponentExportStatus> downloadedStatus) {
                         // 合并3D数据到baseStatus
                         baseStatus->model3DObjRaw = downloadedStatus->model3DObjRaw;
                         baseStatus->model3DStepRaw = downloadedStatus->model3DStepRaw;
@@ -134,8 +143,9 @@ void FetchStageHandler::start() {
                         }
                         worker->deleteLater();
 
-                        // 发送合并后的status
-                        emit componentFetchCompleted(baseStatus, true);
+                        // 检查并获取预览图/手册（如果还没下载的话）
+                        // fetchMediaIfNeeded 会处理异步下载或直接发送完成信号
+                        fetchMediaIfNeeded(componentId, preData, baseStatus);
                     },
                     Qt::QueuedConnection);
 
