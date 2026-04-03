@@ -111,7 +111,8 @@ void WriteWorker::run() {
             goto cleanup;
     }
 
-    if (m_exportModel3D && m_status->model3DData && !m_status->model3DData->rawObj().isEmpty()) {
+    if (m_exportModel3D && m_status->model3DData &&
+        (!m_status->model3DData->rawObj().isEmpty() || !m_status->cachedModel3DWrlPath.isEmpty())) {
         write3DModelFile(*m_status);
     }
 
@@ -261,7 +262,9 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
 }
 
 bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
-    if (!status.model3DData || status.model3DData->rawObj().isEmpty()) {
+    // 如果既没有原始数据也没有缓存路径，则跳过
+    if (!status.model3DData || (status.model3DData->rawObj().isEmpty() &&
+                                 status.cachedModel3DWrlPath.isEmpty())) {
         return true;
     }
 
@@ -286,19 +289,43 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
 
     bool wrlSuccess = false;
 
-    QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
-    wrlSuccess = AtomicFileWriter::writeAtomically(
-        m_tempDir, wrlFilePath, ".wrl.tmp", [this, &status](const QString& tempPath) -> bool {
-            return m_model3DExporter.exportToWrl(*status.model3DData, tempPath);
-        });
-
-    if (wrlSuccess) {
-        status.addDebugLog(QString("3D model WRL file written atomically: %1").arg(wrlFilePath));
+    // WRL文件写入：优先使用缓存直接拷贝（避免大文件经过内存）
+    if (!status.cachedModel3DWrlPath.isEmpty()) {
+        QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
+        wrlSuccess = AtomicFileWriter::copyAtomically(status.cachedModel3DWrlPath, wrlFilePath, m_tempDir);
+        if (wrlSuccess) {
+            status.addDebugLog(QString("3D model WRL file copied from cache: %1").arg(status.cachedModel3DWrlPath));
+        } else {
+            status.addDebugLog(QString("ERROR: Failed to copy WRL file from cache"));
+        }
     } else {
-        status.addDebugLog(QString("ERROR: Failed to write WRL file"));
+        // 使用导出器生成WRL文件
+        QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
+        wrlSuccess = AtomicFileWriter::writeAtomically(
+            m_tempDir, wrlFilePath, ".wrl.tmp", [this, &status](const QString& tempPath) -> bool {
+                return m_model3DExporter.exportToWrl(*status.model3DData, tempPath);
+            });
+        if (wrlSuccess) {
+            status.addDebugLog(QString("3D model WRL file written atomically: %1").arg(wrlFilePath));
+        } else {
+            status.addDebugLog(QString("ERROR: Failed to write WRL file"));
+        }
     }
 
-    if (!status.model3DStepRaw.isEmpty()) {
+    // STEP文件写入：优先使用缓存直接拷贝（避免大文件经过内存）
+    if (!status.cachedModel3DStepPath.isEmpty()) {
+        // 使用直接拷贝模式（不经过内存）
+        QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
+        bool stepWriteSuccess = AtomicFileWriter::copyAtomically(
+            status.cachedModel3DStepPath, stepFilePath, m_tempDir);
+
+        if (stepWriteSuccess) {
+            status.addDebugLog(QString("3D model STEP file copied from cache: %1").arg(status.cachedModel3DStepPath));
+        } else {
+            status.addDebugLog(QString("WARNING: Failed to copy STEP file from cache: %1").arg(stepFilePath));
+        }
+    } else if (!status.model3DStepRaw.isEmpty()) {
+        // 使用内存模式（原有逻辑）
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
         bool stepWriteSuccess = AtomicFileWriter::writeAtomically(
             m_tempDir, stepFilePath, ".step.tmp", [&status](const QString& tempPath) -> bool {

@@ -29,6 +29,17 @@ public:
 
     static bool createDirectory(const QString& path);
 
+    /**
+     * @brief 原子拷贝文件（通过临时文件实现）
+     * @param sourcePath 源文件路径
+     * @param finalPath 目标文件路径
+     * @param tempDir 临时目录
+     * @return bool 是否拷贝成功
+     */
+    static bool copyAtomically(const QString& sourcePath,
+                               const QString& finalPath,
+                               const QString& tempDir);
+
 private:
     static QString generateTempPath(const QString& tempDir, const QString& prefix, const QString& suffix);
 

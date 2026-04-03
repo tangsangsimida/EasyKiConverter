@@ -207,12 +207,21 @@ bool ProcessWorker::parse3DModelData(ComponentExportStatus& status) {
         return true;
     }
 
+    // 保存已有 model3DData 的 UUID（如果有的话）
+    QString existingUuid;
+    if (status.model3DData && !status.model3DData->uuid().isEmpty()) {
+        existingUuid = status.model3DData->uuid();
+    }
+
     // 创建3D模型数据
     status.model3DData = QSharedPointer<Model3DData>::create();
     status.model3DData->setRawObj(QString::fromUtf8(status.model3DObjRaw));
 
-    // 从 footprintData 的 model3D 中获取 UUID
-    if (status.footprintData && !status.footprintData->model3D().uuid().isEmpty()) {
+    // 恢复 UUID：优先使用已存在的 UUID（来自预加载数据），其次从 footprintData 获取
+    if (!existingUuid.isEmpty()) {
+        status.model3DData->setUuid(existingUuid);
+        status.addDebugLog(QString("Preserved 3D model UUID from preloaded data: %1").arg(existingUuid));
+    } else if (status.footprintData && !status.footprintData->model3D().uuid().isEmpty()) {
         status.model3DData->setUuid(status.footprintData->model3D().uuid());
         status.addDebugLog(QString("Using 3D model UUID from footprintData: %1").arg(status.model3DData->uuid()));
     }

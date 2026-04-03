@@ -67,6 +67,11 @@ struct ComponentExportStatus {
     bool need3DModel = false;
     bool fetch3DOnly = false;  // 是否是仅获取 3D 模式（符号和封装已从预加载数据复用）
 
+    // 缓存文件路径（用于直接拷贝，避免大文件经过内存）
+    // 当使用缓存导出3D模型时，这些路径指向缓存中的文件
+    QString cachedModel3DWrlPath;    // 缓存的 WRL 文件路径（可直接拷贝）
+    QString cachedModel3DStepPath;  // 缓存的 STEP 文件路径（可直接拷贝）
+
     struct NetworkDiagnostics {
         QString url;
         int statusCode = 0;

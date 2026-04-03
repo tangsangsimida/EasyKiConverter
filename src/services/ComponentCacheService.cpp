@@ -594,6 +594,39 @@ void ComponentCacheService::saveModel3D(const QString& uuid, const QByteArray& d
     // 注意：3D模型数据量大，不存入L1内存缓存
 }
 
+bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
+                                               const QString& extension,
+                                               const QString& destinationPath) const {
+    if (uuid.isEmpty() || extension.isEmpty() || destinationPath.isEmpty()) {
+        return false;
+    }
+
+    QString sourcePath = model3DPath(uuid, extension);
+    if (!QFileInfo::exists(sourcePath)) {
+        LOG_WARN(LogModule::Core, "copyModel3DToFile: Source file does not exist: {}", sourcePath);
+        return false;
+    }
+
+    // 确保目标目录存在
+    QFileInfo destInfo(destinationPath);
+    QDir destDir = destInfo.dir();
+    if (!destDir.exists()) {
+        if (!destDir.mkpath(destDir.path())) {
+            LOG_WARN(LogModule::Core, "copyModel3DToFile: Failed to create destination directory: {}", destDir.path());
+            return false;
+        }
+    }
+
+    // 直接拷贝文件，不经过内存
+    if (QFile::copy(sourcePath, destinationPath)) {
+        LOG_DEBUG(LogModule::Core, "Copied 3D model from cache to: {}", destinationPath);
+        return true;
+    } else {
+        LOG_WARN(LogModule::Core, "copyModel3DToFile: Failed to copy {} -> {}", sourcePath, destinationPath);
+        return false;
+    }
+}
+
 // ==================== 缓存管理 ====================
 
 void ComponentCacheService::removeCache(const QString& lcscId) {

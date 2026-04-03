@@ -265,6 +265,22 @@ public:
      */
     bool hasModel3DCached(const QString& uuid, const QString& extension) const;
 
+    /**
+     * @brief 获取3D模型文件路径
+     * @param uuid 3D模型UUID
+     * @param extension 文件扩展名（step/wrl）
+     */
+    QString model3DPath(const QString& uuid, const QString& extension) const;
+
+    /**
+     * @brief 直接拷贝3D模型文件到目标路径（不经过内存）
+     * @param uuid 3D模型UUID
+     * @param extension 文件扩展名（step/wrl）
+     * @param destinationPath 目标文件路径
+     * @return bool 是否拷贝成功
+     */
+    bool copyModel3DToFile(const QString& uuid, const QString& extension, const QString& destinationPath) const;
+
     // ==================== 缓存管理 ====================
 
     /**
@@ -374,11 +390,6 @@ private:
      * @brief 数据手册文件路径
      */
     QString datasheetPath(const QString& lcscId) const;
-
-    /**
-     * @brief 3D模型文件路径
-     */
-    QString model3DPath(const QString& uuid, const QString& extension) const;
 
     /**
      * @brief 保存元数据JSON到L2

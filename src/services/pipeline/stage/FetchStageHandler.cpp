@@ -155,14 +155,20 @@ void FetchStageHandler::start() {
             status->footprintData = preData->footprintData();
             status->model3DData = preData->model3DData();
 
-            // 如果需要导出3D模型，从缓存加载3D文件数据
+            // 如果需要导出3D模型，设置缓存文件路径（WriteWorker将直接拷贝，避免大文件经过内存）
             if (m_options.exportModel3D && preData->model3DData() && !preData->model3DData()->uuid().isEmpty()) {
                 ComponentCacheService* cache = ComponentCacheService::instance();
                 QString uuid = preData->model3DData()->uuid();
-                status->model3DObjRaw = cache->loadModel3D(uuid, "wrl");
-                status->model3DStepRaw = cache->loadModel3D(uuid, "step");
-                qDebug() << "FetchStage: Loaded 3D from cache, wrl size:" << status->model3DObjRaw.size()
-                         << "step size:" << status->model3DStepRaw.size();
+
+                // WRL文件：直接从缓存拷贝到目标位置（缓存的WRL已经是处理好的可用文件）
+                if (cache->hasModel3DCached(uuid, "wrl")) {
+                    status->cachedModel3DWrlPath = cache->model3DPath(uuid, "wrl");
+                }
+
+                // STEP文件：WriteWorker会直接从缓存拷贝，不需要加载到内存
+                if (cache->hasModel3DCached(uuid, "step")) {
+                    status->cachedModel3DStepPath = cache->model3DPath(uuid, "step");
+                }
             }
 
             status->fetchSuccess = true;
