@@ -123,6 +123,13 @@ public:
      */
     void setComponentListViewModel(class ComponentListViewModel* componentListViewModel);
 
+    /**
+     * @brief 设置 ExportProgressViewModel（用于更新预览图/手册导出状态）
+     *
+     * @param progressViewModel ExportProgressViewModel 指针
+     */
+    void setExportProgressViewModel(class ExportProgressViewModel* progressViewModel);
+
 signals:
     /**
      * @brief 流水线进度更新信号
@@ -252,6 +259,9 @@ private:
 
     // ComponentListViewModel（用于获取预览图缓存文件路径）
     class ComponentListViewModel* m_componentListViewModel;
+
+    // ExportProgressViewModel（用于更新导出状态）
+    class ExportProgressViewModel* m_exportProgressViewModel;
 
     // 临时文件夹路径
     QString m_tempDir;

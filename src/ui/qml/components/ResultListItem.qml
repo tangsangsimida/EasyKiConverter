@@ -9,6 +9,12 @@ Rectangle {
     property string componentId
     property string status // "fetching", "fetch_completed", "processing", "process_completed", "writing", "write_completed", "success", "failed"
     property string message
+    // 导出选项标志
+    property bool exportSymbol: true
+    property bool exportFootprint: true
+    property bool exportModel3D: true
+    property bool exportPreviewImages: false
+    property bool exportDatasheet: false
     signal retryClicked
     signal copyClicked
     signal deleteClicked
@@ -147,7 +153,7 @@ Rectangle {
                     font.family: "Courier New"
                     color: AppStyle.colors.textPrimary
                 }
-                // 分项状态指示灯 (S: Symbol, F: Footprint, 3: 3D)
+                // 分项状态指示灯 (S: Symbol, F: Footprint, 3: 3D, P: Preview, D: Datasheet)
                 Row {
                     spacing: 4
                     visible: status !== "pending" && status !== "fetching"
@@ -155,6 +161,7 @@ Rectangle {
                         width: 14
                         height: 14
                         radius: 7
+                        visible: exportSymbol
                         color: modelData.symbolSuccess ? AppStyle.colors.success : AppStyle.colors.border
                         Text {
                             anchors.centerIn: parent
@@ -175,6 +182,7 @@ Rectangle {
                         width: 14
                         height: 14
                         radius: 7
+                        visible: exportFootprint
                         color: modelData.footprintSuccess ? AppStyle.colors.success : AppStyle.colors.border
                         Text {
                             anchors.centerIn: parent
@@ -195,6 +203,7 @@ Rectangle {
                         width: 14
                         height: 14
                         radius: 7
+                        visible: exportModel3D
                         color: modelData.model3DSuccess ? AppStyle.colors.success : AppStyle.colors.border
                         Text {
                             anchors.centerIn: parent
@@ -207,6 +216,48 @@ Rectangle {
                         ToolTip.text: qsTr("3D模型: %1").arg(modelData.model3DSuccess ? qsTr("已导出") : qsTr("未完成"))
                         MouseArea {
                             id: m3Ma
+                            anchors.fill: parent
+                            hoverEnabled: true
+                        }
+                    }
+                    Rectangle {
+                        width: 14
+                        height: 14
+                        radius: 7
+                        visible: exportPreviewImages
+                        color: modelData.previewImageExported ? AppStyle.colors.success : AppStyle.colors.border
+                        Text {
+                            anchors.centerIn: parent
+                            text: "P"
+                            font.pixelSize: 9
+                            color: "white"
+                            font.bold: true
+                        }
+                        ToolTip.visible: prevMa.containsMouse
+                        ToolTip.text: qsTr("预览图: %1").arg(modelData.previewImageExported ? qsTr("已导出") : qsTr("未完成"))
+                        MouseArea {
+                            id: prevMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                        }
+                    }
+                    Rectangle {
+                        width: 14
+                        height: 14
+                        radius: 7
+                        visible: exportDatasheet
+                        color: modelData.datasheetExported ? AppStyle.colors.success : AppStyle.colors.border
+                        Text {
+                            anchors.centerIn: parent
+                            text: "D"
+                            font.pixelSize: 9
+                            color: "white"
+                            font.bold: true
+                        }
+                        ToolTip.visible: datasheetMa.containsMouse
+                        ToolTip.text: qsTr("手册: %1").arg(modelData.datasheetExported ? qsTr("已导出") : qsTr("未完成"))
+                        MouseArea {
+                            id: datasheetMa
                             anchors.fill: parent
                             hoverEnabled: true
                         }

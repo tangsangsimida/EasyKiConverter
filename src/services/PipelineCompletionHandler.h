@@ -24,9 +24,13 @@ public:
     void exportDatasheets(const QMap<QString, QSharedPointer<ComponentData>>& preloadedData,
                           const ExportOptions& options);
 
-    void exportPreviewImagesFromViewModel(ComponentListViewModel* viewModel, const ExportOptions& options);
+    void exportPreviewImagesFromViewModel(ComponentListViewModel* componentListViewModel,
+                                          class ExportProgressViewModel* progressViewModel,
+                                          const ExportOptions& options);
 
-    void exportDatasheetsFromViewModel(ComponentListViewModel* viewModel, const ExportOptions& options);
+    void exportDatasheetsFromViewModel(ComponentListViewModel* componentListViewModel,
+                                       class ExportProgressViewModel* progressViewModel,
+                                       const ExportOptions& options);
 
 signals:
     void previewImagesExported(int successCount);

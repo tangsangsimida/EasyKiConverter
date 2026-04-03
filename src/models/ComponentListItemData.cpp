@@ -80,6 +80,20 @@ void ComponentListItemData::setErrorMessage(const QString& error) {
     }
 }
 
+void ComponentListItemData::setPreviewImageExported(bool exported) {
+    if (m_previewImageExported != exported) {
+        m_previewImageExported = exported;
+        emit exportStatusChanged();
+    }
+}
+
+void ComponentListItemData::setDatasheetExported(bool exported) {
+    if (m_datasheetExported != exported) {
+        m_datasheetExported = exported;
+        emit exportStatusChanged();
+    }
+}
+
 QVariantList ComponentListItemData::previewImages() const {
     QVariantList result;
     for (const QImage& image : m_previewImages) {

@@ -408,7 +408,9 @@ void ExportProgressViewModel::handleComponentExported(const QString& componentId
                                                       int stage,
                                                       bool symbolSuccess,
                                                       bool footprintSuccess,
-                                                      bool model3DSuccess) {
+                                                      bool model3DSuccess,
+                                                      bool previewImagesSuccess,
+                                                      bool datasheetSuccess) {
     int index = m_idToIndexMap.value(componentId, -1);
     // 使用增强后的判定逻辑
     QString statusStr = getStatusString(stage, success, symbolSuccess, footprintSuccess, model3DSuccess);
@@ -421,6 +423,8 @@ void ExportProgressViewModel::handleComponentExported(const QString& componentId
         result["symbolSuccess"] = symbolSuccess;
         result["footprintSuccess"] = footprintSuccess;
         result["model3DSuccess"] = model3DSuccess;
+        result["previewImageExported"] = previewImagesSuccess;
+        result["datasheetExported"] = datasheetSuccess;
         m_resultsList[index] = result;
     } else {
         QVariantMap result;
@@ -430,6 +434,8 @@ void ExportProgressViewModel::handleComponentExported(const QString& componentId
         result["symbolSuccess"] = symbolSuccess;
         result["footprintSuccess"] = footprintSuccess;
         result["model3DSuccess"] = model3DSuccess;
+        result["previewImageExported"] = previewImagesSuccess;
+        result["datasheetExported"] = datasheetSuccess;
         m_resultsList.append(result);
         m_idToIndexMap[componentId] = m_resultsList.size() - 1;
     }
@@ -497,7 +503,33 @@ void ExportProgressViewModel::flushPendingUpdates() {
     }
 }
 
-void ExportProgressViewModel::prepopulateResultsList(const QStringList& componentIds) {
+void ExportProgressViewModel::updateComponentExportStatus(const QString& componentId,
+                                                          int previewImageSuccess,
+                                                          int datasheetSuccess) {
+    int index = m_idToIndexMap.value(componentId, -1);
+    if (index < 0 || index >= m_resultsList.size()) {
+        return;
+    }
+
+    QVariantMap item = m_resultsList[index].toMap();
+    if (previewImageSuccess >= 0) {
+        item["previewImageExported"] = previewImageSuccess > 0;
+    }
+    if (datasheetSuccess >= 0) {
+        item["datasheetExported"] = datasheetSuccess > 0;
+    }
+    m_resultsList[index] = item;
+
+    // 触发 UI 更新
+    emit resultsListChanged();
+    emit filteredResultsListChanged();
+
+    qDebug() << "Updated export status in resultsList for" << componentId
+             << "previewImageExported:" << (previewImageSuccess >= 0 ? (previewImageSuccess > 0) : -1)
+             << "datasheetExported:" << (datasheetSuccess >= 0 ? (datasheetSuccess > 0) : -1);
+}
+
+void ExportProgressViewModel::prepopulateResultsList(const QStringList& componentIds, const ExportOptions& options) {
     m_resultsList.clear();
     m_idToIndexMap.clear();
 
@@ -506,6 +538,12 @@ void ExportProgressViewModel::prepopulateResultsList(const QStringList& componen
         result["componentId"] = componentIds[i];
         result["status"] = "pending";
         result["message"] = "Waiting to start...";
+        // 添加导出选项标志，用于 UI 显示
+        result["exportSymbol"] = options.exportSymbol;
+        result["exportFootprint"] = options.exportFootprint;
+        result["exportModel3D"] = options.exportModel3D;
+        result["exportPreviewImages"] = options.exportPreviewImages;
+        result["exportDatasheet"] = options.exportDatasheet;
         m_resultsList.append(result);
         m_idToIndexMap[componentIds[i]] = i;
     }
@@ -663,7 +701,7 @@ void ExportProgressViewModel::startExportInternal(const QStringList& componentId
     if (!isRetry) {
         m_successCount = 0;
         m_failureCount = 0;
-        prepopulateResultsList(componentIds);
+        prepopulateResultsList(componentIds, m_exportOptions);
     } else {
         // 重试模式：仅更新被重试项的状态
         for (const QString& id : componentIds) {
@@ -703,6 +741,7 @@ void ExportProgressViewModel::startExportInternal(const QStringList& componentId
                     qDebug() << "Passing" << preloadedData.size() << "preloaded components to pipeline";
                     pipelineService->setPreloadedData(preloadedData);
                     pipelineService->setComponentListViewModel(m_componentListViewModel);
+                    pipelineService->setExportProgressViewModel(this);
                 } else {
                     qDebug() << "No preloaded data available";
                 }

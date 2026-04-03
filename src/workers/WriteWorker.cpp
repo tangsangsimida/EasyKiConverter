@@ -16,11 +16,14 @@
 #include <QJsonObject>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QRegularExpression>
 #include <QThread>
 #include <QThreadPool>
 #include <QWaitCondition>
 
 namespace EasyKiConverter {
+
+const QRegularExpression INVALID_FILENAME_CHARS("[<>:\"/\\|?*]");
 
 WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
                          const QString& outputPath,
@@ -28,6 +31,8 @@ WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
                          bool exportSymbol,
                          bool exportFootprint,
                          bool exportModel3D,
+                         bool exportPreviewImages,
+                         bool exportDatasheet,
                          bool debugMode,
                          const QString& tempDir,
                          QObject* parent)
@@ -38,6 +43,8 @@ WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
     , m_exportSymbol(exportSymbol)
     , m_exportFootprint(exportFootprint)
     , m_exportModel3D(exportModel3D)
+    , m_exportPreviewImages(exportPreviewImages)
+    , m_exportDatasheet(exportDatasheet)
     , m_debugMode(debugMode)
     , m_tempDir(tempDir)
     , m_symbolExporter()
@@ -68,6 +75,8 @@ void WriteWorker::run() {
     m_status->symbolWritten = false;
     m_status->footprintWritten = false;
     m_status->model3DWritten = false;
+    m_status->previewImageWritten = false;
+    m_status->datasheetWritten = false;
 
     if (!m_status->fetchSuccess || !m_status->processSuccess) {
         m_status->writeDurationMs = 0;
@@ -116,6 +125,18 @@ void WriteWorker::run() {
         write3DModelFile(*m_status);
     }
 
+    if (m_exportPreviewImages && !m_status->previewImageDataList.isEmpty()) {
+        writePreviewImageFile(*m_status);
+        if (m_isAborted.loadRelaxed())
+            goto cleanup;
+    }
+
+    if (m_exportDatasheet && !m_status->datasheetData.isEmpty()) {
+        writeDatasheetFile(*m_status);
+        if (m_isAborted.loadRelaxed())
+            goto cleanup;
+    }
+
 cleanup:
     if (m_isAborted.loadRelaxed()) {
         m_status->writeDurationMs = writeTimer.elapsed();
@@ -129,10 +150,12 @@ cleanup:
     }
 
     // 根据用户请求的导出项和实际完成情况，决定最终的成功状态
-    // 注意：3D模型导出失败不影响符号和封装的导出成功状态
-    // 符号和封装是捆绑的核心输出，3D模型是可选附加输出
+    // 注意：3D模型/预览图/手册导出失败不影响符号和封装的导出成功状态
+    // 符号和封装是捆绑的核心输出，其他是可选附加输出
     bool coreSuccess = true;
     bool model3DFailed = false;
+    bool previewImageFailed = false;
+    bool datasheetFailed = false;
     if (m_exportSymbol && !m_status->symbolWritten) {
         coreSuccess = false;
     }
@@ -143,10 +166,26 @@ cleanup:
         model3DFailed = true;  // 仅记录，不影响核心成功状态
         m_status->addDebugLog("WARNING: 3D model export failed, but symbol/footprint export is not affected.");
     }
+    if (m_exportPreviewImages && !m_status->previewImageWritten) {
+        previewImageFailed = true;
+        m_status->addDebugLog("WARNING: Preview image export failed.");
+    }
+    if (m_exportDatasheet && !m_status->datasheetWritten) {
+        datasheetFailed = true;
+        m_status->addDebugLog("WARNING: Datasheet export failed.");
+    }
 
     m_status->writeSuccess = coreSuccess;
-    if (coreSuccess && model3DFailed) {
-        m_status->writeMessage = "Write completed (3D model export failed, symbol/footprint OK)";
+    if (coreSuccess && (model3DFailed || previewImageFailed || datasheetFailed)) {
+        QStringList failedItems;
+        if (model3DFailed)
+            failedItems.append("3D");
+        if (previewImageFailed)
+            failedItems.append("preview");
+        if (datasheetFailed)
+            failedItems.append("datasheet");
+        m_status->writeMessage =
+            QString("Write completed (%1 export failed, symbol/footprint OK)").arg(failedItems.join(", "));
     } else if (coreSuccess) {
         m_status->writeMessage = "Write completed successfully";
     } else {
@@ -606,6 +645,83 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
     status.addDebugLog(QString("Debug data export completed for component: %1").arg(status.componentId));
     return true;
+}
+
+bool WriteWorker::writePreviewImageFile(ComponentExportStatus& status) {
+    QDir outputDir(m_outputPath);
+    QString imagesDir = outputDir.filePath("images");
+    if (!createOutputDirectory(imagesDir)) {
+        status.addDebugLog(QString("ERROR: Failed to create images directory: %1").arg(imagesDir));
+        return false;
+    }
+
+    QString safeName = status.componentId;
+    safeName.replace(INVALID_FILENAME_CHARS, "_");
+
+    bool allSuccess = true;
+    int exportedCount = 0;
+
+    for (int i = 0; i < status.previewImageDataList.size(); ++i) {
+        if (status.previewImageDataList[i].isEmpty()) {
+            continue;
+        }
+
+        QString filename = QString("%1_%2.jpg").arg(safeName).arg(i);
+        QString filePath = QDir(imagesDir).filePath(filename);
+
+        QFile file(filePath);
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write(status.previewImageDataList[i]);
+            file.close();
+            exportedCount++;
+        } else {
+            allSuccess = false;
+            status.addDebugLog(QString("ERROR: Failed to write preview image: %1").arg(filePath));
+        }
+    }
+
+    if (exportedCount > 0) {
+        status.addDebugLog(QString("Preview images written: %1 files to %2").arg(exportedCount).arg(imagesDir));
+    }
+    status.previewImageWritten = allSuccess;
+    return allSuccess;
+}
+
+bool WriteWorker::writeDatasheetFile(ComponentExportStatus& status) {
+    if (status.datasheetData.isEmpty()) {
+        return true;
+    }
+
+    QDir outputDir(m_outputPath);
+    QString datasheetsDir = outputDir.filePath("datasheets");
+    if (!createOutputDirectory(datasheetsDir)) {
+        status.addDebugLog(QString("ERROR: Failed to create datasheets directory: %1").arg(datasheetsDir));
+        return false;
+    }
+
+    QString safeName = status.componentId;
+    safeName.replace(INVALID_FILENAME_CHARS, "_");
+
+    // 根据数据内容判断格式
+    QString extension = "pdf";
+    if (status.datasheetData.startsWith("<!DOCTYPE html") || status.datasheetData.startsWith("<html")) {
+        extension = "html";
+    }
+
+    QString filename = QString("%1.%2").arg(safeName).arg(extension);
+    QString filePath = QDir(datasheetsDir).filePath(filename);
+
+    QFile file(filePath);
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(status.datasheetData);
+        file.close();
+        status.addDebugLog(QString("Datasheet written: %1").arg(filePath));
+        status.datasheetWritten = true;
+        return true;
+    }
+
+    status.addDebugLog(QString("ERROR: Failed to write datasheet: %1").arg(filePath));
+    return false;
 }
 
 void WriteWorker::abort() {

@@ -39,6 +39,8 @@ public:
                          bool exportSymbol,
                          bool exportFootprint,
                          bool exportModel3D,
+                         bool exportPreviewImages,
+                         bool exportDatasheet,
                          bool debugMode,
                          const QString& tempDir,
                          QObject* parent = nullptr);
@@ -95,9 +97,23 @@ private:
     bool createOutputDirectory(const QString& path);
 
     /**
+     * @brief 写入预览图文件
+     * @param status 导出状态
+     * @return bool 是否成功
+     */
+    bool writePreviewImageFile(ComponentExportStatus& status);
+
+    /**
+     * @brief 写入手册文件
+     * @param status 导出状态
+     * @return bool 是否成功
+     */
+    bool writeDatasheetFile(ComponentExportStatus& status);
+
+    /**
      * @brief 导出调试数据
      * @param status 导出状态
-         * @return bool 是否成功
+     * @return bool 是否成功
      */
     bool exportDebugData(ComponentExportStatus& status);
 
@@ -108,6 +124,8 @@ private:
     bool m_exportSymbol;
     bool m_exportFootprint;
     bool m_exportModel3D;
+    bool m_exportPreviewImages;
+    bool m_exportDatasheet;
     bool m_debugMode;
     QString m_tempDir;
 

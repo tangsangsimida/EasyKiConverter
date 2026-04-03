@@ -211,6 +211,14 @@ public slots:
      */
     Q_INVOKABLE void setScrolling(bool scrolling);
 
+    /**
+     * @brief 更新元器件的导出状态
+     * @param componentId 元器件ID
+     * @param previewImageExported 预览图是否导出成功（-1表示不更新）
+     * @param datasheetExported 手册是否导出成功（-1表示不更新）
+     */
+    Q_INVOKABLE void updateExportStatus(const QString& componentId, int previewImageExported, int datasheetExported);
+
 signals:
     // componentListChanged 信号不再需要，因为 QAbstractListModel 有自己的信号机制
     void componentCountChanged();

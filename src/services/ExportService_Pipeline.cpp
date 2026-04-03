@@ -4,6 +4,7 @@
 #include "pipeline/cleanup/PipelineCleanup.h"
 #include "pipeline/stats/PipelineStatistics.h"
 #include "ui/viewmodels/ComponentListViewModel.h"
+#include "ui/viewmodels/ExportProgressViewModel.h"
 #include "utils/PathSecurity.h"
 #include "workers/FetchWorker.h"
 #include "workers/ProcessWorker.h"
@@ -230,6 +231,11 @@ void ExportServicePipeline::setComponentListViewModel(ComponentListViewModel* co
     m_componentListViewModel = componentListViewModel;
 }
 
+void ExportServicePipeline::setExportProgressViewModel(ExportProgressViewModel* progressViewModel) {
+    QMutexLocker locker(m_mutex);
+    m_exportProgressViewModel = progressViewModel;
+}
+
 void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportStatus> status) {
     QMutexLocker locker(m_mutex);
     if (!m_isPipelineRunning)
@@ -256,7 +262,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                    static_cast<int>(PipelineStage::Fetch),
                                    status->symbolWritten,
                                    status->footprintWritten,
-                                   status->model3DWritten);
+                                   status->model3DWritten,
+                                   status->previewImageWritten,
+                                   status->datasheetWritten);
         } else {
             m_failureCount++;
             status->processSuccess = false;
@@ -267,7 +275,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                    static_cast<int>(PipelineStage::Fetch),
                                    status->symbolWritten,
                                    status->footprintWritten,
-                                   status->model3DWritten);
+                                   status->model3DWritten,
+                                   status->previewImageWritten,
+                                   status->datasheetWritten);
         }
     } else {
         // 特殊处理 fetch3DOnly 模式：如果 3D 获取失败但符号和封装数据完整，仍然继续处理
@@ -292,7 +302,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                            static_cast<int>(PipelineStage::Fetch),
                                            status->symbolWritten,
                                            status->footprintWritten,
-                                           false);
+                                           false,
+                                           status->previewImageWritten,
+                                           status->datasheetWritten);
                 } else {
                     m_failureCount++;
                     status->processSuccess = false;
@@ -303,7 +315,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                            static_cast<int>(PipelineStage::Fetch),
                                            status->symbolWritten,
                                            status->footprintWritten,
-                                           false);
+                                           false,
+                                           status->previewImageWritten,
+                                           status->datasheetWritten);
                 }
             } else {
                 // 符号或封装数据不完整，完全失败
@@ -316,7 +330,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                        static_cast<int>(PipelineStage::Fetch),
                                        status->symbolWritten,
                                        status->footprintWritten,
-                                       status->model3DWritten);
+                                       status->model3DWritten,
+                                       status->previewImageWritten,
+                                       status->datasheetWritten);
             }
         } else {
             // 非 fetch3DOnly 模式或数据不完整，完全失败
@@ -329,7 +345,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                    static_cast<int>(PipelineStage::Fetch),
                                    status->symbolWritten,
                                    status->footprintWritten,
-                                   status->model3DWritten);
+                                   status->model3DWritten,
+                                   status->previewImageWritten,
+                                   status->datasheetWritten);
         }
     }
 
@@ -360,7 +378,9 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
                                    static_cast<int>(PipelineStage::Process),
                                    status->symbolWritten,
                                    status->footprintWritten,
-                                   status->model3DWritten);
+                                   status->model3DWritten,
+                                   status->previewImageWritten,
+                                   status->datasheetWritten);
         } else {
             m_failureCount++;
             m_pipelineProgress.writeCompleted++;
@@ -372,7 +392,9 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
                                    static_cast<int>(PipelineStage::Process),
                                    status->symbolWritten,
                                    status->footprintWritten,
-                                   status->model3DWritten);
+                                   status->model3DWritten,
+                                   status->previewImageWritten,
+                                   status->datasheetWritten);
         }
     } else {
         m_failureCount++;
@@ -383,7 +405,9 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
                                static_cast<int>(PipelineStage::Process),
                                status->symbolWritten,
                                status->footprintWritten,
-                               status->model3DWritten);
+                               status->model3DWritten,
+                               status->previewImageWritten,
+                               status->datasheetWritten);
     }
 
     emit pipelineProgressUpdated(m_pipelineProgress);
@@ -409,7 +433,9 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
                                static_cast<int>(PipelineStage::Write),
                                status->symbolWritten,
                                status->footprintWritten,
-                               status->model3DWritten);
+                               status->model3DWritten,
+                               status->previewImageWritten,
+                               status->datasheetWritten);
     } else {
         m_failureCount++;
         emit componentExported(status->componentId,
@@ -418,7 +444,9 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
                                static_cast<int>(PipelineStage::Write),
                                status->symbolWritten,
                                status->footprintWritten,
-                               status->model3DWritten);
+                               status->model3DWritten,
+                               status->previewImageWritten,
+                               status->datasheetWritten);
     }
 
     emit pipelineProgressUpdated(m_pipelineProgress);
@@ -533,13 +561,15 @@ void ExportServicePipeline::checkPipelineCompletion() {
     // 3.1 导出预览图（从 ViewModel 获取最新数据）
     qDebug() << "ExportPreviewImages option:" << m_options.exportPreviewImages;
     if (m_options.exportPreviewImages && m_componentListViewModel) {
-        m_completionHandler->exportPreviewImagesFromViewModel(m_componentListViewModel, m_options);
+        m_completionHandler->exportPreviewImagesFromViewModel(
+            m_componentListViewModel, m_exportProgressViewModel, m_options);
     }
 
     // 3.2 导出手册（从 ViewModel 获取最新数据）
     qDebug() << "ExportDatasheet option:" << m_options.exportDatasheet;
     if (m_options.exportDatasheet && m_componentListViewModel) {
-        m_completionHandler->exportDatasheetsFromViewModel(m_componentListViewModel, m_options);
+        m_completionHandler->exportDatasheetsFromViewModel(
+            m_componentListViewModel, m_exportProgressViewModel, m_options);
     }
 
     // 4. 清理临时文件夹（无论导出是否成功都要清理）

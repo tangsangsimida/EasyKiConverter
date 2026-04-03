@@ -36,6 +36,10 @@ struct ComponentExportStatus {
     QByteArray model3DObjRaw;
     QByteArray model3DStepRaw;
 
+    // 预览图和手册数据
+    QList<QByteArray> previewImageDataList;  // 预览图数据列表
+    QByteArray datasheetData;  // 手册数据
+
     // 解析后的数据
     QSharedPointer<ComponentData> componentData;
     QSharedPointer<SymbolData> symbolData;
@@ -62,10 +66,14 @@ struct ComponentExportStatus {
     bool symbolWritten = false;
     bool footprintWritten = false;
     bool model3DWritten = false;
+    bool previewImageWritten = false;  // 预览图导出成功
+    bool datasheetWritten = false;  // 手册导出成功
 
     QStringList debugLog;
     bool need3DModel = false;
     bool fetch3DOnly = false;  // 是否是仅获取 3D 模式（符号和封装已从预加载数据复用）
+    bool needPreviewImages = false;  // 是否需要获取预览图
+    bool needDatasheet = false;  // 是否需要获取手册
 
     // 缓存文件路径（用于直接拷贝，避免大文件经过内存）
     // 当使用缓存导出3D模型时，这些路径指向缓存中的文件

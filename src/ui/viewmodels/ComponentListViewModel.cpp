@@ -776,6 +776,20 @@ void ComponentListViewModel::setScrolling(bool scrolling) {
     }
 }
 
+void ComponentListViewModel::updateExportStatus(const QString& componentId,
+                                                int previewImageExported,
+                                                int datasheetExported) {
+    ComponentListItemData* item = findItemData(componentId);
+    if (item) {
+        if (previewImageExported >= 0) {
+            item->setPreviewImageExported(previewImageExported > 0);
+        }
+        if (datasheetExported >= 0) {
+            item->setDatasheetExported(datasheetExported > 0);
+        }
+    }
+}
+
 int ComponentListViewModel::filteredCount() const {
     int count = 0;
     for (const auto& item : m_componentList) {

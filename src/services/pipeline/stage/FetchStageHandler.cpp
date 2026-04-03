@@ -157,6 +157,14 @@ void FetchStageHandler::start() {
             status->footprintData = preData->footprintData();
             status->model3DData = preData->model3DData();
 
+            // 转移预览图和手册数据（如果内存中有的话）
+            if (!preData->previewImageData().isEmpty()) {
+                status->previewImageDataList = preData->previewImageData();
+            }
+            if (!preData->datasheetData().isEmpty()) {
+                status->datasheetData = preData->datasheetData();
+            }
+
             // 如果需要导出3D模型，设置缓存文件路径（WriteWorker将直接拷贝，避免大文件经过内存）
             if (m_options.exportModel3D && preData->model3DData() && !preData->model3DData()->uuid().isEmpty()) {
                 ComponentCacheService* cache = ComponentCacheService::instance();
@@ -178,7 +186,8 @@ void FetchStageHandler::start() {
             status->processSuccess = true;
             status->processMessage = "Preloaded data used";
 
-            emit componentFetchCompleted(status, true);
+            // 检查并获取预览图/手册
+            fetchMediaIfNeeded(componentId, preData, status);
             continue;
         }
 
@@ -247,6 +256,88 @@ void FetchStageHandler::onWorkerCompleted(QSharedPointer<ComponentExportStatus> 
     // 即使取消了也要发出信号，让流水线能够正确完成
     // 外部通过检查 status 中的状态来判断是否真的成功
     emit componentFetchCompleted(status, false);
+}
+
+void FetchStageHandler::onMediaFetchCompleted(const QString& componentId,
+                                              const QList<QByteArray>& previewImageDataList,
+                                              const QByteArray& datasheetData) {
+    QMutexLocker locker(&m_workerMutex);
+
+    MediaFetchWorker* worker = qobject_cast<MediaFetchWorker*>(sender());
+    if (worker) {
+        m_activeMediaWorkers.remove(worker);
+        worker->deleteLater();
+    }
+
+    auto statusIt = m_pendingMediaStatuses.find(componentId);
+    if (statusIt == m_pendingMediaStatuses.end()) {
+        return;
+    }
+
+    auto status = statusIt.value();
+
+    // 更新媒体数据
+    if (!previewImageDataList.isEmpty()) {
+        status->previewImageDataList = previewImageDataList;
+    }
+    if (!datasheetData.isEmpty()) {
+        status->datasheetData = datasheetData;
+    }
+
+    m_pendingMediaStatuses.erase(statusIt);
+
+    qDebug() << "FetchStageHandler: Media fetch completed for" << componentId
+             << "previewImages:" << previewImageDataList.size() << "datasheetSize:" << datasheetData.size();
+
+    // 发送完成信号
+    emit componentFetchCompleted(status, true);
+}
+
+void FetchStageHandler::fetchMediaIfNeeded(const QString& componentId,
+                                           const QSharedPointer<ComponentData>& preData,
+                                           QSharedPointer<ComponentExportStatus> status) {
+    QStringList previewUrls;
+    QString datasheetUrl;
+
+    // 检查是否需要获取预览图
+    if (m_options.exportPreviewImages && preData) {
+        previewUrls = preData->previewImages();
+        if (!previewUrls.isEmpty() && preData->previewImageData().isEmpty()) {
+            status->needPreviewImages = true;
+        }
+    }
+
+    // 检查是否需要获取手册
+    if (m_options.exportDatasheet && preData) {
+        datasheetUrl = preData->datasheet();
+        if (!datasheetUrl.isEmpty() && preData->datasheetData().isEmpty()) {
+            status->needDatasheet = true;
+        }
+    }
+
+    // 如果需要获取媒体，启动 MediaFetchWorker
+    if (status->needPreviewImages || status->needDatasheet) {
+        qDebug() << "FetchStageHandler: Starting media fetch for" << componentId
+                 << "needPreviewImages:" << status->needPreviewImages << "needDatasheet:" << status->needDatasheet;
+
+        // 保存 status 等待媒体下载完成
+        m_pendingMediaStatuses[componentId] = status;
+
+        MediaFetchWorker* worker = new MediaFetchWorker(componentId, previewUrls, datasheetUrl, this);
+
+        connect(worker,
+                &MediaFetchWorker::fetchCompleted,
+                this,
+                &FetchStageHandler::onMediaFetchCompleted,
+                Qt::QueuedConnection);
+        connect(worker, &MediaFetchWorker::fetchCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
+
+        m_activeMediaWorkers.insert(worker);
+        m_threadPool->start(worker);
+    } else {
+        // 不需要获取媒体，直接发送完成信号
+        emit componentFetchCompleted(status, true);
+    }
 }
 
 }  // namespace EasyKiConverter

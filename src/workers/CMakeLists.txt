@@ -6,6 +6,7 @@ add_library(EasyKiConverterWorkers STATIC
     FetchWorker.cpp
     ProcessWorker.cpp
     WriteWorker.cpp
+    MediaFetchWorker.cpp
 )
 
 target_include_directories(EasyKiConverterWorkers

@@ -260,6 +260,17 @@ public slots:
         }
     }
 
+public:
+    /**
+     * @brief 更新单个元器件的预览图和手册导出状态
+     * @param componentId 元器件ID
+     * @param previewImageSuccess 预览图是否导出成功（-1表示不更新）
+     * @param datasheetSuccess 手册是否导出成功（-1表示不更新）
+     */
+    Q_INVOKABLE void updateComponentExportStatus(const QString& componentId,
+                                                 int previewImageSuccess,
+                                                 int datasheetSuccess);
+
 signals:
     void progressChanged();
     void statusChanged();
@@ -289,7 +300,9 @@ private slots:
                                  int stage = -1,
                                  bool symbolSuccess = false,
                                  bool footprintSuccess = false,
-                                 bool model3DSuccess = false);
+                                 bool model3DSuccess = false,
+                                 bool previewImagesSuccess = false,
+                                 bool datasheetSuccess = false);
     void handleComponentDataFetched(const QString& componentId, const ComponentData& data);
     void handleAllComponentsDataCollected(const QList<ComponentData>& componentDataList);
     void handlePipelineProgressUpdated(const PipelineProgress& progress);
@@ -302,7 +315,7 @@ private:
                             bool symbolSuccess,
                             bool footprintSuccess,
                             bool model3DSuccess) const;
-    void prepopulateResultsList(const QStringList& componentIds);
+    void prepopulateResultsList(const QStringList& componentIds, const ExportOptions& options);
     void startExportInternal(const QStringList& componentIds, bool isRetry);
     void updateStatistics();
     void showExportCompleteNotification();

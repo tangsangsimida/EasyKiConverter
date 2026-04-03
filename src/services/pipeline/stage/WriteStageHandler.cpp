@@ -41,6 +41,8 @@ void WriteStageHandler::start() {
                                                       m_options.exportSymbol,
                                                       m_options.exportFootprint,
                                                       m_options.exportModel3D,
+                                                      m_options.exportPreviewImages,
+                                                      m_options.exportDatasheet,
                                                       m_options.debugMode,
                                                       m_tempDir,
                                                       nullptr);

@@ -3,6 +3,7 @@
 #include "models/ComponentData.h"
 #include "services/ComponentCacheService.h"
 #include "ui/viewmodels/ComponentListViewModel.h"
+#include "ui/viewmodels/ExportProgressViewModel.h"
 
 #include <QDebug>
 #include <QDir>
@@ -140,14 +141,15 @@ bool PipelineCompletionHandler::exportDatasheetFromMemory(const QByteArray& data
     return false;
 }
 
-void PipelineCompletionHandler::exportPreviewImagesFromViewModel(ComponentListViewModel* viewModel,
+void PipelineCompletionHandler::exportPreviewImagesFromViewModel(ComponentListViewModel* componentListViewModel,
+                                                                 ExportProgressViewModel* progressViewModel,
                                                                  const ExportOptions& options) {
-    if (!options.exportPreviewImages || !viewModel) {
+    if (!options.exportPreviewImages || !componentListViewModel) {
         return;
     }
 
     // 从 ViewModel 获取最新的数据
-    QMap<QString, QSharedPointer<ComponentData>> allData = viewModel->getAllPreloadedData();
+    QMap<QString, QSharedPointer<ComponentData>> allData = componentListViewModel->getAllPreloadedData();
     if (allData.isEmpty()) {
         qDebug() << "No preloaded data available from ViewModel for preview images export";
         emit previewImagesExported(0);
@@ -182,28 +184,42 @@ void PipelineCompletionHandler::exportPreviewImagesFromViewModel(ComponentListVi
             }
         }
 
+        bool exportSuccess = false;
         if (!previewImageDataList.isEmpty()) {
             QString componentName = componentData->name().isEmpty() ? componentId : componentData->name();
 
             if (exportPreviewImagesFromMemory(previewImageDataList, options.outputPath, componentName)) {
                 successCount++;
+                exportSuccess = true;
             } else {
                 qWarning() << "Failed to export preview images for component:" << componentId;
             }
+        } else {
+            // 没有预览图数据但不需要导出时，也标记为成功（没有预览图不代表失败）
+            if (!options.exportPreviewImages || componentData->previewImages().isEmpty()) {
+                exportSuccess = true;
+            }
+        }
+
+        // 更新预览图导出状态
+        componentListViewModel->updateExportStatus(componentId, exportSuccess ? 1 : 0, -1);
+        if (progressViewModel) {
+            progressViewModel->updateComponentExportStatus(componentId, exportSuccess ? 1 : 0, -1);
         }
     }
     qDebug() << "Preview images export from ViewModel completed:" << successCount << "components";
     emit previewImagesExported(successCount);
 }
 
-void PipelineCompletionHandler::exportDatasheetsFromViewModel(ComponentListViewModel* viewModel,
+void PipelineCompletionHandler::exportDatasheetsFromViewModel(ComponentListViewModel* componentListViewModel,
+                                                              ExportProgressViewModel* progressViewModel,
                                                               const ExportOptions& options) {
-    if (!options.exportDatasheet || !viewModel) {
+    if (!options.exportDatasheet || !componentListViewModel) {
         return;
     }
 
     // 从 ViewModel 获取最新的数据
-    QMap<QString, QSharedPointer<ComponentData>> allData = viewModel->getAllPreloadedData();
+    QMap<QString, QSharedPointer<ComponentData>> allData = componentListViewModel->getAllPreloadedData();
     if (allData.isEmpty()) {
         qDebug() << "No preloaded data available from ViewModel for datasheet export";
         emit datasheetsExported(0);
@@ -232,12 +248,25 @@ void PipelineCompletionHandler::exportDatasheetsFromViewModel(ComponentListViewM
             }
         }
 
+        bool exportSuccess = false;
         if (!datasheetData.isEmpty()) {
             QString componentName = componentData->name().isEmpty() ? componentId : componentData->name();
 
             if (exportDatasheetFromMemory(datasheetData, options.outputPath, componentName, datasheetFormat)) {
                 successCount++;
+                exportSuccess = true;
             }
+        } else {
+            // 没有手册数据但不需要导出时，也标记为成功（没有手册不代表失败）
+            if (!options.exportDatasheet || componentData->datasheet().isEmpty()) {
+                exportSuccess = true;
+            }
+        }
+
+        // 更新手册导出状态
+        componentListViewModel->updateExportStatus(componentId, -1, exportSuccess ? 1 : 0);
+        if (progressViewModel) {
+            progressViewModel->updateComponentExportStatus(componentId, -1, exportSuccess ? 1 : 0);
         }
     }
     qDebug() << "Datasheets export from ViewModel completed:" << successCount << "components";

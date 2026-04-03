@@ -30,6 +30,8 @@ class ComponentListItemData : public QObject {
     Q_PROPERTY(bool hasThumbnail READ hasThumbnail NOTIFY thumbnailChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY validationStatusChanged)
     Q_PROPERTY(QString datasheetUrl READ datasheetUrl NOTIFY datasheetChanged)
+    Q_PROPERTY(bool previewImageExported READ previewImageExported NOTIFY exportStatusChanged)
+    Q_PROPERTY(bool datasheetExported READ datasheetExported NOTIFY exportStatusChanged)
 
 public:
     explicit ComponentListItemData(const QString& componentId, QObject* parent = nullptr);
@@ -81,6 +83,14 @@ public:
 
     QString datasheetUrl() const;
 
+    bool previewImageExported() const {
+        return m_previewImageExported;
+    }
+
+    bool datasheetExported() const {
+        return m_datasheetExported;
+    }
+
     QSharedPointer<ComponentData> componentData() const {
         return m_componentData;
     }
@@ -99,6 +109,8 @@ public:
     void setValid(bool valid);
     void setFetching(bool fetching);
     void setErrorMessage(const QString& error);
+    void setPreviewImageExported(bool exported);
+    void setDatasheetExported(bool exported);
 
 signals:
     void dataChanged();
@@ -108,6 +120,7 @@ signals:
     void validationStatusChanged();
     void fetchingStatusChanged();
     void datasheetChanged();
+    void exportStatusChanged();
 
 private:
     QString m_componentId;
@@ -121,6 +134,8 @@ private:
     bool m_isFetching;
     QString m_errorMessage;
     QSharedPointer<ComponentData> m_componentData;
+    bool m_previewImageExported = false;
+    bool m_datasheetExported = false;
 };
 
 }  // namespace EasyKiConverter
