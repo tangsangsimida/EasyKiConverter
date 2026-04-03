@@ -27,6 +27,12 @@ DisableProgramGroupPage=yes
 ; the "ArchitecturesAllowed=x64" directive specifies that this setup is for 64-bit Windows only
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
+; 要求管理员权限
+PrivilegesRequired=admin
+; 最低 Windows 10 版本 (Windows 10 1809+)
+MinimumVersion=10.0.17763
+; 卸载时显示程序图标
+UninstallDisplayIcon={app}\{#MyAppExeName}
 #ifdef LicensePath
 LicenseFile={#LicensePath}
 #else
@@ -66,16 +72,63 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 [Code]
 var
   DeleteUserDataCheckBox: TNewCheckBox;
+  UninstallPage: TWizardPage;
+  AppMutex: String;
+
+// 创建卸载选项页面
+procedure CreateUninstallPage();
+begin
+  UninstallPage := CreateCustomPage(wpWelcome, '卸载选项 (Uninstall Options)', '选择是否删除用户数据');
+  DeleteUserDataCheckBox := TNewCheckBox.Create(UninstallPage);
+  DeleteUserDataCheckBox.Parent := UninstallPage.Surface;
+  DeleteUserDataCheckBox.Caption := '删除用户配置和数据 (Delete user data)';
+  DeleteUserDataCheckBox.Left := ScaleX(20);
+  DeleteUserDataCheckBox.Top := ScaleY(10);
+  DeleteUserDataCheckBox.Width := ScaleX(350);
+  DeleteUserDataCheckBox.Checked := False;
+end;
 
 procedure InitializeWizard();
 begin
-  DeleteUserDataCheckBox := TNewCheckBox.Create(WizardForm);
-  DeleteUserDataCheckBox.Caption := '删除用户配置和数据 (Delete user data)';
-  DeleteUserDataCheckBox.Left := ScaleX(20);
-  DeleteUserDataCheckBox.Top := ScaleY(150);
-  DeleteUserDataCheckBox.Width := ScaleX(350);
-  DeleteUserDataCheckBox.Checked := False;
-  DeleteUserDataCheckBox.Parent := WizardForm.SelectTasksPage;
+  AppMutex := 'EasyKiConverter_SingleInstance';
+  // 仅在卸载时创建自定义页面
+  if Uninstall then
+    CreateUninstallPage();
+end;
+
+// 安装前检查程序是否在运行（静默和非静默都支持）
+function InitializeSetup(): Boolean;
+begin
+  Result := True;
+  if CheckForMutexes(AppMutex, 0) then
+  begin
+    if WizardSilent() then
+    begin
+      // 静默安装时直接退出，不弹框
+      Result := False;
+    end
+    else
+    begin
+      MsgBox('请先关闭 EasyKiConverter，然后再继续安装。'#13#10#13#10'Please close EasyKiConverter before continuing.',
+            mbError, MB_OK);
+      Result := False;
+    end;
+  end;
+end;
+
+// 安装页面点击"下一步"前检查程序是否在运行
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+  if CurPageID = wpWelcome then
+  begin
+    if CheckForMutexes(AppMutex, 0) then
+    begin
+      MsgBox('请先关闭 EasyKiConverter，然后再继续安装。'#13#10#13#10'Please close EasyKiConverter before continuing.',
+            mbError, MB_OK);
+      Result := False;
+    end;
+  end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
@@ -92,6 +145,18 @@ begin
     end;
   end;
 end;
+
+// 支持静默安装/卸载参数
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  // 静默模式下自动勾选删除用户数据选项
+  if CurPageID = UninstallPage.ID then
+  begin
+    if WizardSilent() then
+      DeleteUserDataCheckBox.Checked := True;
+  end;
+end;
+
 
 [UninstallDelete]
 Type: filesandordirectories; Name: "{localappdata}\EasyKiConverter_Cpp_Version"
