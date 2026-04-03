@@ -48,7 +48,7 @@ void FetchStageHandler::start() {
                         QString uuid = data->model3DData()->uuid();
                         bool hasStepCached = cache->hasModel3DCached(uuid, "step");
                         bool hasWrlCached = cache->hasModel3DCached(uuid, "wrl");
-                        // 只有当至少一个格式缺失时，才需要下载
+                        // 只有当两个格式都缓存了，才完全使用预加载数据
                         if (hasStepCached && hasWrlCached) {
                             // 3D模型已在缓存中，完全使用预加载数据
                             canUsePreloaded = true;
@@ -57,8 +57,11 @@ void FetchStageHandler::start() {
                             canUsePreloaded = true;
                             needFetch3DOnly = true;
                             existing3DUuid = uuid;
-                            qDebug() << "FetchStage: 3D cache miss, need to fetch step:" << !hasStepCached << "wrl:" << !hasWrlCached;
                         }
+                    } else {
+                        // 元器件没有3D模型数据，但有符号和封装，使用预加载数据
+                        // 3D导出将失败，但不影响符号和封装导出
+                        canUsePreloaded = true;
                     }
                 } else {
                     // 不需要导出3D模型，使用预加载数据

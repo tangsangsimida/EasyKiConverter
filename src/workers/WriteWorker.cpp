@@ -231,7 +231,8 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     QString model3DStepPath;
     if (m_exportModel3D && status.model3DData && !status.model3DData->uuid().isEmpty()) {
         model3DWrlPath = QString("../%1.3dmodels/%2.wrl").arg(m_libName, footprintName);
-        if (!status.model3DStepRaw.isEmpty()) {
+        // 检查是否有STEP数据（无论是原始数据还是缓存路径）
+        if (!status.model3DStepRaw.isEmpty() || !status.cachedModel3DStepPath.isEmpty()) {
             model3DStepPath = QString("../%1.3dmodels/%2.step").arg(m_libName, footprintName);
         }
     }
