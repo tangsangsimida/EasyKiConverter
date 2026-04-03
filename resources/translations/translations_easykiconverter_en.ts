@@ -355,6 +355,11 @@
         <translation>Open Detailed Report</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="193"/>
+        <source>打开缓存目录</source>
+        <translation>Open Cache Directory</translation>
+    </message>
+    <message>
         <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="46"/>
         <source>打开导出目录</source>
         <translation>Open Export Directory</translation>

@@ -699,6 +699,32 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
         } else {
             qDebug() << "No 3D model UUID found for:" << m_currentComponentId;
         }
+    } else {
+        // 即使不需要3D模型，也要提取UUID保存到缓存，以便后续导出时使用
+        // 这样可以避免导出时重新请求CAD数据
+        QString modelUuid;
+        if (footprintData) {
+            modelUuid = footprintData->model3D().uuid();
+        }
+        if (modelUuid.isEmpty() && resultData.contains("head")) {
+            QJsonObject head = resultData["head"].toObject();
+            if (head.contains("uuid_3d")) {
+                modelUuid = head["uuid_3d"].toString();
+            }
+        }
+
+        if (!modelUuid.isEmpty()) {
+            qDebug() << "Extracted 3D model UUID for caching:" << modelUuid;
+            QSharedPointer<Model3DData> model3DData(new Model3DData());
+            model3DData->setUuid(modelUuid);
+            // 如果封装数据中有 3D 模型信息，复制平移和旋转
+            if (footprintData && !footprintData->model3D().uuid().isEmpty()) {
+                model3DData->setName(footprintData->model3D().name());
+                model3DData->setTranslation(footprintData->model3D().translation());
+                model3DData->setRotation(footprintData->model3D().rotation());
+            }
+            componentData.setModel3DData(model3DData);
+        }
     }
 
     // 调用 LCSC API 获取数据手册和预览图 URL（异步）

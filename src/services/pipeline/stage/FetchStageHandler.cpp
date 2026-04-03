@@ -87,7 +87,7 @@ void FetchStageHandler::start() {
                     worker,
                     &FetchWorker::fetchCompleted,
                     this,
-                    [this, worker, baseStatus](QSharedPointer<ComponentExportStatus> downloadedStatus) {
+                    [this, worker, baseStatus, existing3DUuid](QSharedPointer<ComponentExportStatus> downloadedStatus) {
                         // 合并3D数据到baseStatus
                         baseStatus->model3DObjRaw = downloadedStatus->model3DObjRaw;
                         baseStatus->model3DStepRaw = downloadedStatus->model3DStepRaw;
@@ -96,6 +96,22 @@ void FetchStageHandler::start() {
                                                                                   : "Preloaded + 3D download failed";
                         baseStatus->processSuccess = true;
                         baseStatus->processMessage = "Preloaded data used";
+
+                        // 合并网络诊断信息（用于统计）
+                        baseStatus->networkDiagnostics = downloadedStatus->networkDiagnostics;
+
+                        // 保存3D模型到缓存
+                        if (downloadedStatus->fetchSuccess && !existing3DUuid.isEmpty()) {
+                            ComponentCacheService* cache = ComponentCacheService::instance();
+                            if (!downloadedStatus->model3DObjRaw.isEmpty()) {
+                                cache->saveModel3D(existing3DUuid, downloadedStatus->model3DObjRaw, "wrl");
+                                qDebug() << "Saved 3D model (WRL) to cache for UUID:" << existing3DUuid;
+                            }
+                            if (!downloadedStatus->model3DStepRaw.isEmpty()) {
+                                cache->saveModel3D(existing3DUuid, downloadedStatus->model3DStepRaw, "step");
+                                qDebug() << "Saved 3D model (STEP) to cache for UUID:" << existing3DUuid;
+                            }
+                        }
 
                         qDebug() << "FetchStageHandler: Merged 3D data for" << baseStatus->componentId
                                  << "success:" << baseStatus->fetchSuccess;

@@ -41,6 +41,7 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
     , m_filterMode("all")
     , m_pendingUpdate(false)
     , m_hasStatistics(false) {
+    m_cacheDirPath = ComponentCacheService::instance()->cacheDir();
     m_throttleTimer = new QTimer(this);
     m_throttleTimer->setInterval(100);
     m_throttleTimer->setSingleShot(true);

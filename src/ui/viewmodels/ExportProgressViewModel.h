@@ -1,6 +1,7 @@
 #ifndef EXPORTPROGRESSVIEWMODEL_H
 #define EXPORTPROGRESSVIEWMODEL_H
 
+#include "services/ComponentCacheService.h"
 #include "services/ComponentService.h"
 #include "services/ExportService.h"
 #include "services/ExportService_Pipeline.h"
@@ -8,6 +9,7 @@
 
 #include <QHash>
 #include <QObject>
+#include <QUrl>
 #include <QString>
 #include <QTimer>
 #include <QVariantList>
@@ -42,6 +44,9 @@ class ExportProgressViewModel : public QObject {
     Q_PROPERTY(int filteredPendingCount READ filteredPendingCount NOTIFY filteredResultsListChanged)
     Q_PROPERTY(bool hasStatistics READ hasStatistics NOTIFY statisticsChanged)
     Q_PROPERTY(QString statisticsReportPath READ statisticsReportPath NOTIFY statisticsChanged)
+    Q_PROPERTY(QString statisticsReportUrl READ statisticsReportUrl CONSTANT)
+    Q_PROPERTY(QString cacheDirPath READ cacheDirPath CONSTANT)
+    Q_PROPERTY(QString cacheDirUrl READ cacheDirUrl CONSTANT)
     Q_PROPERTY(QString statisticsSummary READ statisticsSummary NOTIFY statisticsChanged)
     Q_PROPERTY(int statisticsTotal READ statisticsTotal NOTIFY statisticsChanged)
     Q_PROPERTY(int statisticsSuccess READ statisticsSuccess NOTIFY statisticsChanged)
@@ -147,6 +152,25 @@ public:
 
     QString statisticsReportPath() const {
         return m_statisticsReportPath;
+    }
+
+    QString cacheDirPath() const {
+        return ComponentCacheService::instance()->cacheDir();
+    }
+
+    QString cacheDirUrl() const {
+        auto cacheDir = ComponentCacheService::instance()->cacheDir();
+        if (cacheDir.isEmpty()) {
+            return QString();
+        }
+        return QUrl::fromLocalFile(cacheDir).toString();
+    }
+
+    QString statisticsReportUrl() const {
+        if (m_statisticsReportPath.isEmpty()) {
+            return QString();
+        }
+        return QUrl::fromLocalFile(m_statisticsReportPath).toString();
     }
 
     QString statisticsSummary() const {
@@ -307,6 +331,7 @@ private:
     bool m_pendingUpdate;
     bool m_hasStatistics;
     QString m_statisticsReportPath;
+    QString m_cacheDirPath;
     QString m_statisticsSummary;
     ExportStatistics m_statistics;
     int m_successCount;

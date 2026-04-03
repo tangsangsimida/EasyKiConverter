@@ -605,6 +605,11 @@
         <translation>打开详细统计报告</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="193"/>
+        <source>打开缓存目录</source>
+        <translation>打开缓存目录</translation>
+    </message>
+    <message>
         <location filename="../../src/ui/qml/components/ExportButtonsSection.qml" line="46"/>
         <source>打开导出目录</source>
         <translation>打开导出目录</translation>

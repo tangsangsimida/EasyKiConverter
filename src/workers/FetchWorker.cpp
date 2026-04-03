@@ -56,6 +56,7 @@ void FetchWorker::run() {
     QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
     status->componentId = m_componentId;
     status->need3DModel = m_need3DModel;
+    status->fetch3DOnly = m_fetch3DOnly;
 
     // 早期取消检查
     if (m_isAborted.loadRelaxed()) {
@@ -145,7 +146,7 @@ void FetchWorker::run() {
                 status->addDebugLog(QString("3D model OBJ data ready: %1 bytes").arg(actualObjData.size()));
 
                 // 下载 STEP 格式
-                QString stepUrl = QString("https://modules.easyeda.com/3dmodel/%1.step").arg(m_existing3DUuid);
+                QString stepUrl = QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(m_existing3DUuid);
                 status->addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));
 
                 QByteArray stepData = httpGet(stepUrl, MODEL_3D_TIMEOUT_MS, status);
