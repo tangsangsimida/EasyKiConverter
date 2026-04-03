@@ -443,21 +443,8 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
         // 两阶段控制：验证完成后通知管理器
         m_validationStateManager->onComponentValidated(componentId);
 
-        // 异步生成缩略图 - 使用 QPointer 防止悬垂指针
-        QPointer<ComponentListItemData> safeItem = item;
-        QThreadPool::globalInstance()->start(QRunnable::create([safeItem, dataPtr]() {
-            QImage thumbnail = ThumbnailGenerator::generateThumbnail(dataPtr);
-            if (safeItem) {  // 检查对象是否仍然有效
-                QMetaObject::invokeMethod(safeItem, [safeItem, thumbnail]() {
-                    if (safeItem) {  // 再次检查，确保在 invokeMethod 执行时仍然有效
-                        safeItem->setThumbnail(thumbnail);
-                    }
-                });
-            }
-        }));
-
-        // 尝试获取 LCSC 预览图覆盖生成的缩略图
-        // 注意：现在由 fetchAllPreviewImages() 统一控制获取时机
+        // 验证通过后立即显示成功占位符，等预览图到达后覆盖
+        item->setThumbnail(ThumbnailGenerator::generatePlaceholderThumbnail(componentId));
 
         // 添加到待更新集合
         m_thumbnailUpdateManager->scheduleUpdate(componentId);
@@ -480,14 +467,19 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
         // 标记为无效
         item->setValid(false);
 
-        // 根据错误类型设置不同的错误消息
+        // 根据错误类型设置不同的错误消息和缩略图
         if (error.contains("Request timeout", Qt::CaseInsensitive) || error.contains("timeout", Qt::CaseInsensitive)) {
             item->setErrorMessage("验证超时（网络不稳定）");
+            // 超时时保持原缩略图，让用户可以重试
         } else if (error.contains("No result", Qt::CaseInsensitive) || error.contains("404") ||
                    error.contains("not found", Qt::CaseInsensitive)) {
             item->setErrorMessage("元件不存在");
+            // 设置错误占位缩略图（红色圆圈 X）
+            item->setThumbnail(ThumbnailGenerator::generateErrorPlaceholderThumbnail(componentId));
         } else {
             item->setErrorMessage(error);
+            // 设置错误占位缩略图
+            item->setThumbnail(ThumbnailGenerator::generateErrorPlaceholderThumbnail(componentId));
         }
 
         // 更新 hasInvalidComponents 状态
@@ -611,8 +603,9 @@ void ComponentListViewModel::handlePreviewImageFailed(const QString& componentId
         // 设置 isFetching 为 false
         item->setFetching(false);
 
-        // 不清除已生成的缩略图，保持显示默认缩略图
-        qWarning() << "Preview image failed for component:" << componentId << "keeping default thumbnail";
+        // 预览图加载失败但元器件验证成功，显示成功占位符
+        // 元器件存在，只是没有LCSC预览图
+        item->setThumbnail(ThumbnailGenerator::generatePlaceholderThumbnail(componentId));
 
         // 添加到待更新集合
         m_thumbnailUpdateManager->scheduleUpdate(componentId);

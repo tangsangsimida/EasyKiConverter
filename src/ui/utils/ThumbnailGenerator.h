@@ -12,6 +12,7 @@ class ThumbnailGenerator {
 public:
     static QImage generateThumbnail(const QSharedPointer<ComponentData>& data, int size = 128);
     static QImage generatePlaceholderThumbnail(const QString& componentId, int size = 48);
+    static QImage generateErrorPlaceholderThumbnail(const QString& componentId, int size = 48);
     static QImage generateSymbolThumbnail(const QSharedPointer<SymbolData>& symbolData, int size);
     static QImage generateFootprintThumbnail(const QSharedPointer<FootprintData>& footprintData, int size);
 

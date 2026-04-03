@@ -278,6 +278,15 @@ Rectangle {
                             cache: true
                             asynchronous: true
                         }
+                        // 无预览图提示文字
+                        Text {
+                            anchors.centerIn: parent
+                            text: "无预览图"
+                            font.pixelSize: AppStyle.fontSizes.xl
+                            font.bold: true
+                            color: AppStyle.colors.textSecondary
+                            visible: !itemData || !itemData.previewImageCount || itemData.previewImageCount === 0
+                        }
                     }
                     // 如果有预览图，显示预览图列表
                     Repeater {

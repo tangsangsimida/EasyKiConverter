@@ -246,14 +246,8 @@ void LcscImageService::performFallback(const QString& componentId) {
     connect(reply, &QNetworkReply::finished, this, [this, reply, componentId]() {
         handleFallbackResponse(reply, componentId);
     });
-    // 添加网络错误处理，确保失败时也能递减计数器，防止队列永久阻塞
-    connect(reply, &QNetworkReply::errorOccurred, this, [this, reply, componentId](QNetworkReply::NetworkError) {
-        qWarning() << "Fallback request error for component:" << componentId;
-        // 递减计数器并处理队列
-        m_activeRequests--;
-        processQueue();
-        reply->deleteLater();
-    });
+    // 注意：不要单独连接 errorOccurred，因为 finished 信号在错误时也会触发
+    // error 处理统一在 handleFallbackResponse 中进行
 }
 
 void LcscImageService::handleFallbackResponse(QNetworkReply* reply, const QString& componentId) {

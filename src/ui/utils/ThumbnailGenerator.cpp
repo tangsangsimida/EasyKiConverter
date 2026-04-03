@@ -27,6 +27,26 @@ QImage ThumbnailGenerator::generatePlaceholderThumbnail(const QString& component
     return image;
 }
 
+QImage ThumbnailGenerator::generateErrorPlaceholderThumbnail(const QString& componentId, int size) {
+    QImage image(size, size, QImage::Format_ARGB32);
+    image.fill(QColor("#f0f0f0"));  // 浅灰色背景
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    // 绘制红色圆圈（表示验证失败）
+    painter.setPen(QPen(QColor("#ef4444"), 2));  // 红色
+    painter.setBrush(Qt::NoBrush);
+    painter.drawEllipse(4, 4, size - 8, size - 8);
+
+    // 绘制 X 号
+    painter.setPen(QPen(QColor("#ef4444"), 2));
+    painter.drawLine(size / 3, size / 3, size * 2 / 3, size * 2 / 3);
+    painter.drawLine(size * 2 / 3, size / 3, size / 3, size * 2 / 3);
+
+    return image;
+}
+
 QImage ThumbnailGenerator::generateThumbnail(const QSharedPointer<ComponentData>& data, int size) {
     if (!data)
         return generatePlaceholderThumbnail("?", size);
