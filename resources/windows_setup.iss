@@ -4,6 +4,8 @@
 #define MyAppPublisher "tangsangsimida"
 #define MyAppURL "https://github.com/tangsangsimida/EasyKiConverter"
 #define MyAppExeName "easykiconverter.exe"
+; 用户数据目录名称（需与 ConfigService 中一致）
+#define UserDataDirName "EasyKiConverter_Cpp_Version"
 
 ; 这些变量将通过命令行定义传入
 ;#define MyAppVersion "3.0.0"
@@ -139,7 +141,7 @@ begin
   begin
     if DeleteUserDataCheckBox.Checked then
     begin
-      UserDataDir := ExpandConstant('{localappdata}\EasyKiConverter_Cpp_Version');
+      UserDataDir := ExpandConstant('{localappdata}') + '\' + '{#UserDataDirName}';
       if DirExists(UserDataDir) then
         DelTree(UserDataDir, True, True, True);
     end;
@@ -149,8 +151,8 @@ end;
 // 支持静默安装/卸载参数
 procedure CurPageChanged(CurPageID: Integer);
 begin
-  // 静默模式下自动勾选删除用户数据选项
-  if CurPageID = UninstallPage.ID then
+  // 静默卸载模式下自动勾选删除用户数据选项
+  if Uninstall and (CurPageID = UninstallPage.ID) then
   begin
     if WizardSilent() then
       DeleteUserDataCheckBox.Checked := True;
@@ -159,4 +161,4 @@ end;
 
 
 [UninstallDelete]
-Type: filesandordirectories; Name: "{localappdata}\EasyKiConverter_Cpp_Version"
+Type: filesandordirectories; Name: "{localappdata}\{#UserDataDirName}"
