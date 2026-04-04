@@ -2,6 +2,7 @@
 #define COMPONENTCACHESERVICE_H
 
 #include "models/ComponentData.h"
+#include "models/ComponentExportStatus.h"
 
 #include <QCache>
 #include <QDir>
@@ -96,7 +97,10 @@ public:
      * @param imageIndex 图片索引
      * @return QByteArray 下载的图片数据，下载失败返回空
      */
-    QByteArray downloadPreviewImage(const QString& lcscId, const QString& imageUrl, int imageIndex);
+    QByteArray downloadPreviewImage(const QString& lcscId,
+                                    const QString& imageUrl,
+                                    int imageIndex,
+                                    ComponentExportStatus::NetworkDiagnostics* diag = nullptr);
 
     /**
      * @brief 检查元器件是否有有效缓存
@@ -258,7 +262,10 @@ public:
      * @param format 数据格式输出参数（pdf/html）
      * @return QByteArray 下载的数据，下载失败返回空
      */
-    QByteArray downloadDatasheet(const QString& lcscId, const QString& datasheetUrl, QString* format);
+    QByteArray downloadDatasheet(const QString& lcscId,
+                                 const QString& datasheetUrl,
+                                 QString* format,
+                                 ComponentExportStatus::NetworkDiagnostics* diag = nullptr);
 
     /**
      * @brief 加载3D模型（STEP/WRL）

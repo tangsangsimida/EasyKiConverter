@@ -501,10 +501,16 @@ void ComponentCacheService::savePreviewImage(const QString& lcscId, const QByteA
     // 注意：预览图不存入L1内存缓存，因为数据量大
 }
 
-QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId, const QString& imageUrl, int imageIndex) {
+QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
+                                                       const QString& imageUrl,
+                                                       int imageIndex,
+                                                       ComponentExportStatus::NetworkDiagnostics* diag) {
     if (imageUrl.isEmpty() || imageIndex < 0) {
         return QByteArray();
     }
+
+    QElapsedTimer timer;
+    timer.start();
 
     // 检查磁盘缓存
     {
@@ -514,6 +520,14 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId, co
             QFile file(previewFilePath);
             if (file.open(QIODevice::ReadOnly)) {
                 LOG_DEBUG(LogModule::Core, "Preview image loaded from disk cache: {}", previewFilePath);
+                if (diag) {
+                    diag->url = imageUrl;
+                    diag->statusCode = 200;
+                    diag->errorString = "";
+                    diag->retryCount = 0;
+                    diag->latencyMs = timer.elapsed();
+                    diag->wasRateLimited = false;
+                }
                 return file.readAll();
             }
         }
@@ -527,6 +541,14 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId, co
 
     QNetworkReply* reply = manager.get(request);
     if (!reply) {
+        if (diag) {
+            diag->url = imageUrl;
+            diag->statusCode = 0;
+            diag->errorString = "Failed to create reply";
+            diag->retryCount = 0;
+            diag->latencyMs = timer.elapsed();
+            diag->wasRateLimited = false;
+        }
         return QByteArray();
     }
 
@@ -538,8 +560,24 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId, co
     QByteArray data;
     if (reply->error() == QNetworkReply::NoError) {
         data = reply->readAll();
+        if (diag) {
+            diag->url = imageUrl;
+            diag->statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            diag->errorString = "";
+            diag->retryCount = 0;
+            diag->latencyMs = timer.elapsed();
+            diag->wasRateLimited = false;
+        }
     } else {
         LOG_WARN(LogModule::Core, "Preview image download failed for {}: {}", lcscId, reply->errorString());
+        if (diag) {
+            diag->url = imageUrl;
+            diag->statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            diag->errorString = reply->errorString();
+            diag->retryCount = 0;
+            diag->latencyMs = timer.elapsed();
+            diag->wasRateLimited = false;
+        }
     }
     reply->deleteLater();
 
@@ -603,10 +641,14 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
 
 QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
                                                     const QString& datasheetUrl,
-                                                    QString* format) {
+                                                    QString* format,
+                                                    ComponentExportStatus::NetworkDiagnostics* diag) {
     if (datasheetUrl.isEmpty()) {
         return QByteArray();
     }
+
+    QElapsedTimer timer;
+    timer.start();
 
     // 确定格式
     QString ext = datasheetUrl.toLower().contains(".html") ? "html" : "pdf";
@@ -626,6 +668,14 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
             QFile file(fullPath);
             if (file.open(QIODevice::ReadOnly)) {
                 LOG_DEBUG(LogModule::Core, "Datasheet loaded from disk cache: {}", fullPath);
+                if (diag) {
+                    diag->url = datasheetUrl;
+                    diag->statusCode = 200;
+                    diag->errorString = "";
+                    diag->retryCount = 0;
+                    diag->latencyMs = timer.elapsed();
+                    diag->wasRateLimited = false;
+                }
                 return file.readAll();
             }
         }
@@ -641,6 +691,14 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
 
     QNetworkReply* reply = manager.get(request);
     if (!reply) {
+        if (diag) {
+            diag->url = datasheetUrl;
+            diag->statusCode = 0;
+            diag->errorString = "Failed to create reply";
+            diag->retryCount = 0;
+            diag->latencyMs = timer.elapsed();
+            diag->wasRateLimited = false;
+        }
         return QByteArray();
     }
 
@@ -657,8 +715,24 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
             ext = "html";
             *format = ext;
         }
+        if (diag) {
+            diag->url = datasheetUrl;
+            diag->statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            diag->errorString = "";
+            diag->retryCount = 0;
+            diag->latencyMs = timer.elapsed();
+            diag->wasRateLimited = false;
+        }
     } else {
         LOG_WARN(LogModule::Core, "Datasheet download failed for {}: {}", lcscId, reply->errorString());
+        if (diag) {
+            diag->url = datasheetUrl;
+            diag->statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            diag->errorString = reply->errorString();
+            diag->retryCount = 0;
+            diag->latencyMs = timer.elapsed();
+            diag->wasRateLimited = false;
+        }
     }
     reply->deleteLater();
 

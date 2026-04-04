@@ -53,7 +53,8 @@ private slots:
     void onWorkerCompleted(QSharedPointer<ComponentExportStatus> status, FetchWorker* worker);
     void onMediaFetchCompleted(const QString& componentId,
                                const QList<QByteArray>& previewImageDataList,
-                               const QByteArray& datasheetData);
+                               const QByteArray& datasheetData,
+                               const QList<ComponentExportStatus::NetworkDiagnostics>& diagnostics);
 
 private:
     void fetchMediaIfNeeded(const QString& componentId,

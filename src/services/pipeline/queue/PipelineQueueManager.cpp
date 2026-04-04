@@ -14,6 +14,7 @@ PipelineQueueManager::PipelineQueueManager(size_t queueSize) : m_queueSize(queue
 void PipelineQueueManager::reset() {
     m_fetchProcessQueue = StatusQueuePtr::create(m_queueSize);
     m_processWriteQueue = StatusQueuePtr::create(m_queueSize);
+    m_mediaFetchQueue = StatusQueuePtr::create(m_queueSize);
 }
 
 void PipelineQueueManager::closeAll() {
@@ -21,6 +22,8 @@ void PipelineQueueManager::closeAll() {
         m_fetchProcessQueue->close();
     if (m_processWriteQueue)
         m_processWriteQueue->close();
+    if (m_mediaFetchQueue)
+        m_mediaFetchQueue->close();
 }
 
 bool PipelineQueueManager::safePush(StatusQueuePtr queue,

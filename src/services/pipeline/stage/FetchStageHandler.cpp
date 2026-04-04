@@ -286,7 +286,8 @@ void FetchStageHandler::onWorkerCompleted(QSharedPointer<ComponentExportStatus> 
 
 void FetchStageHandler::onMediaFetchCompleted(const QString& componentId,
                                               const QList<QByteArray>& previewImageDataList,
-                                              const QByteArray& datasheetData) {
+                                              const QByteArray& datasheetData,
+                                              const QList<ComponentExportStatus::NetworkDiagnostics>& diagnostics) {
     QMutexLocker locker(&m_workerMutex);
 
     MediaFetchWorker* worker = qobject_cast<MediaFetchWorker*>(sender());
@@ -310,10 +311,14 @@ void FetchStageHandler::onMediaFetchCompleted(const QString& componentId,
         status->datasheetData = datasheetData;
     }
 
+    // 合并网络诊断信息
+    status->networkDiagnostics.append(diagnostics);
+
     m_pendingMediaStatuses.erase(statusIt);
 
     qDebug() << "FetchStageHandler: Media fetch completed for" << componentId
-             << "previewImages:" << previewImageDataList.size() << "datasheetSize:" << datasheetData.size();
+             << "previewImages:" << previewImageDataList.size() << "datasheetSize:" << datasheetData.size()
+             << "diagnostics:" << diagnostics.size();
 
     // 发送完成信号
     emit componentFetchCompleted(status, true);
@@ -342,28 +347,8 @@ void FetchStageHandler::fetchMediaIfNeeded(const QString& componentId,
             if (preData) {
                 previewUrls = preData->previewImages();
             }
-            // 如果有URL或缓存中有数据，需要获取
-            if (!previewUrls.isEmpty()) {
-                status->needPreviewImages = true;
-            } else {
-                // 没有URL但需要导出，尝试从缓存加载
-                ComponentCacheService* cache = ComponentCacheService::instance();
-                QList<QByteArray> cachedImages;
-                for (int i = 0; i < 3; i++) {
-                    QByteArray imgData = cache->loadPreviewImage(componentId, i);
-                    if (!imgData.isEmpty()) {
-                        cachedImages.append(imgData);
-                    }
-                }
-                if (!cachedImages.isEmpty()) {
-                    status->previewImageDataList = cachedImages;
-                    qDebug() << "FetchStageHandler: Preview images loaded from cache for" << componentId
-                             << "count:" << cachedImages.size();
-                } else {
-                    // 缓存也没有，需要下载
-                    status->needPreviewImages = true;
-                }
-            }
+            // 设置 needPreviewImages 为 true，由 MediaFetchWorker 统一处理（支持URL下载和空URL缓存加载）
+            status->needPreviewImages = true;
         }
     }
 
@@ -382,20 +367,8 @@ void FetchStageHandler::fetchMediaIfNeeded(const QString& componentId,
         // 数据不在内存中，尝试从缓存获取或下载
         else {
             datasheetUrl = preData ? preData->datasheet() : QString();
-            if (!datasheetUrl.isEmpty()) {
-                status->needDatasheet = true;
-            } else {
-                // 没有URL但需要导出，尝试从缓存加载
-                ComponentCacheService* cache = ComponentCacheService::instance();
-                QByteArray cachedDatasheet = cache->loadDatasheet(componentId);
-                if (!cachedDatasheet.isEmpty()) {
-                    status->datasheetData = cachedDatasheet;
-                    qDebug() << "FetchStageHandler: Datasheet loaded from cache for" << componentId;
-                } else {
-                    // 缓存也没有，需要下载
-                    status->needDatasheet = true;
-                }
-            }
+            // 设置 needDatasheet 为 true，由 MediaFetchWorker 统一处理
+            status->needDatasheet = true;
         }
     }
 

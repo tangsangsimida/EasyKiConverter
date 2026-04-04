@@ -54,16 +54,19 @@ signals:
      * @param componentId 元件ID
      * @param previewImageDataList 预览图数据列表
      * @param datasheetData 手册数据
+     * @param diagnostics 网络诊断信息列表
      */
     void fetchCompleted(const QString& componentId,
                         const QList<QByteArray>& previewImageDataList,
-                        const QByteArray& datasheetData);
+                        const QByteArray& datasheetData,
+                        const QList<ComponentExportStatus::NetworkDiagnostics>& diagnostics);
 
 private:
     QString m_componentId;
     QStringList m_previewImageUrls;
     QString m_datasheetUrl;
     bool m_isAborted;
+    QList<ComponentExportStatus::NetworkDiagnostics> m_diagnostics;
 };
 
 }  // namespace EasyKiConverter

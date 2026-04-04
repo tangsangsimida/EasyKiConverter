@@ -233,6 +233,8 @@ struct ExportStatistics {
     int successSymbol = 0;
     int successFootprint = 0;
     int successModel3D = 0;
+    int successPreviewImage = 0;  // 预览图导出成功数
+    int successDatasheet = 0;  // 手册导出成功数
 
     QMap<QString, int> failureReasons;
     QMap<QString, int> stageFailures;
@@ -256,13 +258,16 @@ struct ExportStatistics {
     }
 
     QString getSummary() const {
-        return QString("Total: %1, Success: %2, Failed: %3, Symbol: %4, Footprint: %5, 3D: %6")
+        return QString(
+                   "Total: %1, Success: %2, Failed: %3, Symbol: %4, Footprint: %5, 3D: %6, Preview: %7, Datasheet: %8")
             .arg(total)
             .arg(success)
             .arg(failed)
             .arg(successSymbol)
             .arg(successFootprint)
-            .arg(successModel3D);
+            .arg(successModel3D)
+            .arg(successPreviewImage)
+            .arg(successDatasheet);
     }
 };
 
