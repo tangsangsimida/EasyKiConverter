@@ -6,7 +6,10 @@
 #include "core/kicad/ExporterSymbol.h"
 #include "models/ComponentExportStatus.h"
 
+#include <QAtomicInt>
+#include <QFutureWatcher>
 #include <QMutex>
+#include <QMutexLocker>
 #include <QObject>
 #include <QRunnable>
 
@@ -66,6 +69,14 @@ signals:
      * @param status 导出状态（使用 QSharedPointer 避免拷贝）
      */
     void writeCompleted(QSharedPointer<ComponentExportStatus> status);
+
+    /**
+     * @brief 单项导出完成信号（用于实时进度更新）
+     * @param componentId 元器件ID
+     * @param itemType 导出项类型 (ExportItemType)
+     * @param success 是否成功
+     */
+    void itemWriteCompleted(const QString& componentId, int itemType, bool success);
 
 private:
     /**
@@ -133,6 +144,11 @@ private:
     ExporterFootprint m_footprintExporter;
     Exporter3DModel m_model3DExporter;
     QAtomicInt m_isAborted;  // 取消标志 (v3.0.5+)
+
+    // 导出器互斥锁（确保线程安全）
+    QMutex m_symbolMutex;
+    QMutex m_footprintMutex;
+    QMutex m_model3DMutex;
 };
 
 }  // namespace EasyKiConverter

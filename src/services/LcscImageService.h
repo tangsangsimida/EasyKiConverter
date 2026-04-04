@@ -111,6 +111,8 @@ private slots:
                                 int retryCount);
 
 private:
+    bool tryLoadCachedPreviewImages(const QString& componentId);
+    void loadCachedPreviewImagesAsync(const QString& componentId, ComponentCacheService* cache);
     void performApiSearch(const QString& componentId, int retryCount);
     void performFallback(const QString& componentId);
     void performDownload(const QString& componentId, const QString& imageUrl, int imageIndex, int retryCount);

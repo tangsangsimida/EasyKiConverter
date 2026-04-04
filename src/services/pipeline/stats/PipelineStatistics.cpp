@@ -139,7 +139,8 @@ bool PipelineStatistics::saveReport(const ExportStatistics& statistics,
     network["avgNetworkLatencyMs"] = statistics.avgNetworkLatencyMs;
     network["rateLimitHitCount"] = statistics.rateLimitHitCount;
     QJsonObject statusCodeDist;
-    for (auto it = statistics.statusCodeDistribution.constBegin(); it != statistics.statusCodeDistribution.constEnd(); ++it)
+    for (auto it = statistics.statusCodeDistribution.constBegin(); it != statistics.statusCodeDistribution.constEnd();
+         ++it)
         statusCodeDist[QString::number(it.key())] = it.value();
     network["statusCodeDistribution"] = statusCodeDist;
     reportObj["network"] = network;

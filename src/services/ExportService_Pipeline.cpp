@@ -75,6 +75,7 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
             &WriteStageHandler::componentWriteCompleted,
             this,
             [this](QSharedPointer<ComponentExportStatus> s) { handleWriteCompleted(s); });
+    connect(m_writeHandler, &WriteStageHandler::itemWriteCompleted, this, &ExportServicePipeline::exportItemCompleted);
 
     // 状态统计初始化
     m_pipelineProgress = PipelineProgress();

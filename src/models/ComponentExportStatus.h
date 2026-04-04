@@ -20,6 +20,11 @@ struct MemorySnapshot {
 };
 
 /**
+ * @brief 导出项类型枚举
+ */
+enum class ExportItemType { Symbol = 0, Footprint = 1, Model3D = 2, PreviewImage = 3, Datasheet = 4 };
+
+/**
  * @brief 元件导出状态
  *
  * 跟踪元件在流水线各阶段的状态

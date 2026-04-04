@@ -1,6 +1,7 @@
 #include "ExportProgressViewModel.h"
 
 #include "SystemTrayManager.h"
+#include "models/ComponentExportStatus.h"
 #include "services/ExportService_Pipeline.h"
 #include "utils/FileUtils.h"
 #include "utils/logging/LogMacros.h"
@@ -66,6 +67,10 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
                     &ExportServicePipeline::statisticsReportGenerated,
                     this,
                     &ExportProgressViewModel::handleStatisticsReportGenerated);
+            connect(pipelineService,
+                    &ExportServicePipeline::exportItemCompleted,
+                    this,
+                    &ExportProgressViewModel::handleExportItemCompleted);
             m_usePipelineMode = true;
         }
     }
@@ -702,6 +707,38 @@ void ExportProgressViewModel::handleStatisticsReportGenerated(const QString& rep
     m_statistics = statistics;
     m_statisticsSummary = statistics.getSummary();
     emit statisticsChanged();
+}
+
+void ExportProgressViewModel::handleExportItemCompleted(const QString& componentId, int itemType, bool success) {
+    int index = m_idToIndexMap.value(componentId, -1);
+    if (index < 0 || index >= m_resultsList.size()) {
+        return;
+    }
+
+    QVariantMap result = m_resultsList[index].toMap();
+
+    switch (itemType) {
+        case static_cast<int>(ExportItemType::Symbol):
+            result["symbolSuccess"] = success;
+            break;
+        case static_cast<int>(ExportItemType::Footprint):
+            result["footprintSuccess"] = success;
+            break;
+        case static_cast<int>(ExportItemType::Model3D):
+            result["model3DSuccess"] = success;
+            break;
+        case static_cast<int>(ExportItemType::PreviewImage):
+            result["previewImageExported"] = success;
+            break;
+        case static_cast<int>(ExportItemType::Datasheet):
+            result["datasheetExported"] = success;
+            break;
+    }
+
+    m_resultsList[index] = result;
+
+    // 立即刷新UI，不节流（因为每项完成后应该立即更新）
+    emit resultsListChanged();
 }
 
 void ExportProgressViewModel::retryFailedComponents() {

@@ -350,36 +350,49 @@ void ComponentListViewModel::selectBomFile(const QString& filePath) {
         qDebug() << "Converted URL to local path:" << localPath;
     }
 
-    // 使用 ComponentService 解析 BOM 文件
-    QStringList componentIds = m_service->parseBomFile(localPath);
-
-    if (componentIds.isEmpty()) {
-        m_bomResult = "No valid component IDs found in BOM file";
-        qWarning() << "No component IDs found in BOM file:" << localPath;
-        emit bomResultChanged();
-        return;
-    }
-
-    // 使用批量添加方法
-    QStringList newIds;
-    int skipped = 0;
-
-    for (const QString& id : componentIds) {
-        if (!componentExists(id)) {
-            newIds.append(id);
-        } else {
-            skipped++;
-        }
-    }
-
-    if (!newIds.isEmpty()) {
-        addComponentsBatch(newIds);
-    }
-
-    QString resultMsg = QString("BOM file imported: %1 components added, %2 skipped").arg(newIds.count()).arg(skipped);
-    m_bomResult = resultMsg;
-    qDebug() << resultMsg;
+    // 显示正在解析的状态，避免阻塞 UI
+    m_bomResult = "Parsing BOM file...";
     emit bomResultChanged();
+
+    // 使用 QtConcurrent 在后台线程解析 BOM 文件，避免阻塞 UI
+    QFuture<QStringList> future = QtConcurrent::run([this, localPath]() { return m_service->parseBomFile(localPath); });
+
+    // 监视未来结果，完成后回到主线程处理
+    QFutureWatcher<QStringList>* watcher = new QFutureWatcher<QStringList>(this);
+    connect(watcher, &QFutureWatcher<QStringList>::finished, this, [this, watcher, localPath]() {
+        QStringList componentIds = watcher->result();
+        watcher->deleteLater();
+
+        if (componentIds.isEmpty()) {
+            m_bomResult = "No valid component IDs found in BOM file";
+            qWarning() << "No component IDs found in BOM file:" << localPath;
+            emit bomResultChanged();
+            return;
+        }
+
+        // 使用批量添加方法
+        QStringList newIds;
+        int skipped = 0;
+
+        for (const QString& id : componentIds) {
+            if (!componentExists(id)) {
+                newIds.append(id);
+            } else {
+                skipped++;
+            }
+        }
+
+        if (!newIds.isEmpty()) {
+            addComponentsBatch(newIds);
+        }
+
+        QString resultMsg =
+            QString("BOM file imported: %1 components added, %2 skipped").arg(newIds.count()).arg(skipped);
+        m_bomResult = resultMsg;
+        qDebug() << resultMsg;
+        emit bomResultChanged();
+    });
+    watcher->setFuture(future);
 }
 
 void ComponentListViewModel::fetchComponentData(const QString& componentId, bool fetch3DModel) {

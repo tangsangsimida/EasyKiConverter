@@ -169,6 +169,14 @@ signals:
      */
     void statisticsReportGenerated(const QString& reportPath, const ExportStatistics& statistics);
 
+    /**
+     * @brief 单项导出完成信号（用于实时进度更新）
+     * @param componentId 元器件ID
+     * @param itemType 导出项类型 (ExportItemType)
+     * @param success 是否成功
+     */
+    void exportItemCompleted(const QString& componentId, int itemType, bool success);
+
 public slots:
     /**
      * @brief 紧急清理（用于取消时的异步清理）

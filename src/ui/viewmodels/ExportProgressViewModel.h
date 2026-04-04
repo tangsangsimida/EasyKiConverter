@@ -307,6 +307,7 @@ private slots:
     void handleAllComponentsDataCollected(const QList<ComponentData>& componentDataList);
     void handlePipelineProgressUpdated(const PipelineProgress& progress);
     void handleStatisticsReportGenerated(const QString& reportPath, const ExportStatistics& statistics);
+    void handleExportItemCompleted(const QString& componentId, int itemType, bool success);
     void flushPendingUpdates();
 
 private:

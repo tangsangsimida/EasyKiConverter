@@ -67,9 +67,18 @@ void WriteStageHandler::start() {
                     },
                     Qt::QueuedConnection);
 
+                // 连接单项导出完成信号，用于实时进度更新
+                connect(worker,
+                        &WriteWorker::itemWriteCompleted,
+                        this,
+                        &WriteStageHandler::itemWriteCompleted,
+                        Qt::QueuedConnection);
+
                 connect(worker, &WriteWorker::writeCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
 
-                worker->run();
+                // 使用线程池调度 WriteWorker，而不是直接调用 run()
+                // 这样 WriteWorker::run() 会在线程池线程中执行
+                m_threadPool->start(worker);
             }
         }));
     }

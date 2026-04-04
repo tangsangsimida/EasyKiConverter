@@ -20,6 +20,7 @@
 #include <QThread>
 #include <QThreadPool>
 #include <QWaitCondition>
+#include <QtConcurrent>
 
 namespace EasyKiConverter {
 
@@ -71,7 +72,6 @@ void WriteWorker::run() {
     m_status->addDebugLog(QString("WriteWorker started for component: %1").arg(m_status->componentId));
 
     // 初始化所有写入状态
-
     m_status->symbolWritten = false;
     m_status->footprintWritten = false;
     m_status->model3DWritten = false;
@@ -107,61 +107,166 @@ void WriteWorker::run() {
         return;
     }
 
-    // 串行写入文件，每个函数独立更新自己的状态
+    // 并行写入文件
+    // 使用 QtConcurrent::run() + QFutureWatcher 实现并行执行
+    // 每项写完后立即发出 itemWriteCompleted 信号，实现实时进度更新
+    // 注意：QtConcurrent 不支持工作线程抛出异常，所有 lambda 必须捕获异常
+    QList<QFutureWatcher<bool>*> watchers;
+
+    // 符号写入任务
     if (m_exportSymbol && m_status->symbolData) {
-        writeSymbolFile(*m_status);
-        if (m_isAborted.loadRelaxed())
-            goto cleanup;
+        QFuture<bool> future = QtConcurrent::run([this]() {
+            try {
+                QMutexLocker locker(&m_symbolMutex);
+                return writeSymbolFile(*m_status);
+            } catch (const std::bad_alloc& e) {
+                qCritical() << "Memory allocation failed in symbol write:" << e.what();
+                return false;
+            } catch (const std::exception& e) {
+                qCritical() << "Exception in symbol write:" << e.what();
+                return false;
+            }
+        });
+        QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>();
+        connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
+            bool result = watcher->result();
+            m_status->symbolWritten = result;
+            emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Symbol), result);
+            watcher->deleteLater();
+        });
+        watcher->setFuture(future);
+        watchers.append(watcher);
     }
 
+    // 封装写入任务
     if (m_exportFootprint && m_status->footprintData) {
-        writeFootprintFile(*m_status);
-        if (m_isAborted.loadRelaxed())
-            goto cleanup;
+        QFuture<bool> future = QtConcurrent::run([this]() {
+            try {
+                QMutexLocker locker(&m_footprintMutex);
+                return writeFootprintFile(*m_status);
+            } catch (const std::bad_alloc& e) {
+                qCritical() << "Memory allocation failed in footprint write:" << e.what();
+                return false;
+            } catch (const std::exception& e) {
+                qCritical() << "Exception in footprint write:" << e.what();
+                return false;
+            }
+        });
+        QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>();
+        connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
+            bool result = watcher->result();
+            m_status->footprintWritten = result;
+            emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Footprint), result);
+            watcher->deleteLater();
+        });
+        watcher->setFuture(future);
+        watchers.append(watcher);
     }
 
+    // 3D模型写入任务
     if (m_exportModel3D && m_status->model3DData &&
         (!m_status->model3DData->rawObj().isEmpty() || !m_status->cachedModel3DWrlPath.isEmpty())) {
-        write3DModelFile(*m_status);
+        QFuture<bool> future = QtConcurrent::run([this]() {
+            try {
+                QMutexLocker locker(&m_model3DMutex);
+                return write3DModelFile(*m_status);
+            } catch (const std::bad_alloc& e) {
+                qCritical() << "Memory allocation failed in 3D model write:" << e.what();
+                return false;
+            } catch (const std::exception& e) {
+                qCritical() << "Exception in 3D model write:" << e.what();
+                return false;
+            }
+        });
+        QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>();
+        connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
+            bool result = watcher->result();
+            m_status->model3DWritten = result;
+            emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Model3D), result);
+            watcher->deleteLater();
+        });
+        watcher->setFuture(future);
+        watchers.append(watcher);
     }
 
+    // 预览图写入任务
     if (m_exportPreviewImages && !m_status->previewImageDataList.isEmpty()) {
-        writePreviewImageFile(*m_status);
-        if (m_isAborted.loadRelaxed())
-            goto cleanup;
+        QFuture<bool> future = QtConcurrent::run([this]() {
+            try {
+                return writePreviewImageFile(*m_status);
+            } catch (const std::bad_alloc& e) {
+                qCritical() << "Memory allocation failed in preview image write:" << e.what();
+                return false;
+            } catch (const std::exception& e) {
+                qCritical() << "Exception in preview image write:" << e.what();
+                return false;
+            }
+        });
+        QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>();
+        connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
+            bool result = watcher->result();
+            m_status->previewImageWritten = result;
+            emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::PreviewImage), result);
+            watcher->deleteLater();
+        });
+        watcher->setFuture(future);
+        watchers.append(watcher);
     }
 
+    // 手册写入任务
     if (m_exportDatasheet && !m_status->datasheetData.isEmpty()) {
-        writeDatasheetFile(*m_status);
-        if (m_isAborted.loadRelaxed())
-            goto cleanup;
+        QFuture<bool> future = QtConcurrent::run([this]() {
+            try {
+                return writeDatasheetFile(*m_status);
+            } catch (const std::bad_alloc& e) {
+                qCritical() << "Memory allocation failed in datasheet write:" << e.what();
+                return false;
+            } catch (const std::exception& e) {
+                qCritical() << "Exception in datasheet write:" << e.what();
+                return false;
+            }
+        });
+        QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>();
+        connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
+            bool result = watcher->result();
+            m_status->datasheetWritten = result;
+            emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Datasheet), result);
+            watcher->deleteLater();
+        });
+        watcher->setFuture(future);
+        watchers.append(watcher);
     }
 
-cleanup:
+    // 等待所有写入任务完成
+    for (QFutureWatcher<bool>* watcher : watchers) {
+        watcher->waitForFinished();
+    }
+
+    // 清理 watchers
+    qDeleteAll(watchers);
+    watchers.clear();
+
+    // 检查是否被取消
     if (m_isAborted.loadRelaxed()) {
         m_status->writeDurationMs = writeTimer.elapsed();
         m_status->writeSuccess = false;
         m_status->writeMessage = "Export cancelled";
         m_status->isCancelled = true;
-        // 状态已在开头初始化为 false，无需再次设置
         m_status->addDebugLog(QString("WriteWorker cancelled for component: %1").arg(m_status->componentId));
         emit writeCompleted(m_status);
         return;
     }
 
     // 根据用户请求的导出项和实际完成情况，决定最终的成功状态
-    // 每种导出类型都独立判断成功/失败，互不影响
     bool symbolSuccess = (!m_exportSymbol) || m_status->symbolWritten;
     bool footprintSuccess = (!m_exportFootprint) || m_status->footprintWritten;
     bool model3DSuccess = (!m_exportModel3D) || m_status->model3DWritten;
     bool previewImageSuccess = (!m_exportPreviewImages) || m_status->previewImageWritten;
     bool datasheetSuccess = (!m_exportDatasheet) || m_status->datasheetWritten;
 
-    // 整体成功：所有被选择的导出项都成功了
     bool overallSuccess =
         symbolSuccess && footprintSuccess && model3DSuccess && previewImageSuccess && datasheetSuccess;
 
-    // 生成详细的成功/失败消息
     QStringList successItems;
     QStringList failedItems;
     if (m_exportSymbol) {

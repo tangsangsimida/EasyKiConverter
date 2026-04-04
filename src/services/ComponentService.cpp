@@ -1014,7 +1014,10 @@ void ComponentService::clearCache() {
         m_imageService->clearCache();
     }
 
-    qDebug() << "Component cache cleared (including LCSC image service)";
+    // 清空 ComponentCacheService 的内存缓存，防止内存累积
+    ComponentCacheService::instance()->clearMemoryCache();
+
+    qDebug() << "Component cache cleared (including LCSC image service and memory cache)";
 }
 
 void ComponentService::cancelAllPreviewImageFetches() {

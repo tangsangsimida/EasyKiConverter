@@ -19,6 +19,14 @@ void LcscImageService::fetchPreviewImages(const QString& componentId) {
     if (componentId.isEmpty())
         return;
 
+    // 先检查缓存中是否已有所有预览图，如果有则直接加载缓存，不发起网络请求
+    // 注意：即使组件已在 m_requestedComponents 中，也需要检查缓存（支持第二次导出时从缓存加载）
+    if (tryLoadCachedPreviewImages(componentId)) {
+        // 缓存加载成功，标记为已请求并直接返回
+        m_requestedComponents.insert(componentId);
+        return;
+    }
+
     // 检查是否已经请求过该组件（防止重复请求）
     if (m_requestedComponents.contains(componentId)) {
         qDebug() << "Component" << componentId << "already requested, skipping duplicate request";
@@ -40,7 +48,16 @@ void LcscImageService::fetchPreviewImages(const QString& componentId) {
 void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) {
     for (const QString& componentId : componentIds) {
         if (!componentId.isEmpty()) {
-            m_queue.enqueue(componentId);
+            // 先检查缓存，缓存中有则直接加载，不加入队列
+            // 注意：即使组件已在 m_requestedComponents 中，也需要检查缓存（支持第二次导出时从缓存加载）
+            if (tryLoadCachedPreviewImages(componentId)) {
+                m_requestedComponents.insert(componentId);
+                continue;
+            }
+            // 缓存没有且未请求过，加入队列等待网络请求
+            if (!m_requestedComponents.contains(componentId)) {
+                m_queue.enqueue(componentId);
+            }
         }
     }
     processQueue();
@@ -76,6 +93,61 @@ void LcscImageService::cancelAll() {
     m_activeRequests = 0;
 
     qDebug() << "LcscImageService: All pending preview image fetches cancelled";
+}
+
+bool LcscImageService::tryLoadCachedPreviewImages(const QString& componentId) {
+    ComponentCacheService* cache = ComponentCacheService::instance();
+    if (!cache) {
+        return false;
+    }
+
+    // 检查是否有任何缓存的预览图
+    int cachedCount = 0;
+
+    for (int i = 0; i < MAX_IMAGES_PER_COMPONENT; ++i) {
+        QString path = cache->previewImagePath(componentId, i);
+        if (QFileInfo::exists(path)) {
+            cachedCount++;
+        }
+    }
+
+    if (cachedCount == 0) {
+        qDebug() << "LcscImageService: No cached preview images for" << componentId;
+        return false;
+    }
+
+    qDebug() << "LcscImageService: Found" << cachedCount << "cached preview images for" << componentId
+             << ", scheduling async cache load...";
+
+    // 设置计数状态（与网络下载保持一致）
+    m_expectedCounts[componentId] = cachedCount;
+    m_downloadCounts[componentId] = 0;
+
+    // 使用 QTimer 将缓存加载调度到下一个事件循环，避免阻塞主线程
+    // 这样可以确保 UI 不会冻结
+    QTimer::singleShot(0, this, [this, componentId, cache]() { loadCachedPreviewImagesAsync(componentId, cache); });
+
+    return true;
+}
+
+void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, ComponentCacheService* cache) {
+    // 在事件循环中异步加载缓存图片
+    for (int i = 0; i < MAX_IMAGES_PER_COMPONENT; ++i) {
+        QString path = cache->previewImagePath(componentId, i);
+        if (QFileInfo::exists(path)) {
+            QByteArray imageData = cache->loadPreviewImage(componentId, i);
+            if (!imageData.isEmpty()) {
+                emit imageReady(componentId, imageData, i);
+                m_downloadCounts[componentId]++;
+            }
+        }
+    }
+
+    qDebug() << "LcscImageService: Async loaded" << m_downloadCounts[componentId] << "preview images from cache for"
+             << componentId;
+
+    // 使用检查完成逻辑发送 allImagesReady 信号
+    checkDownloadCompletion(componentId);
 }
 
 void LcscImageService::processQueue() {

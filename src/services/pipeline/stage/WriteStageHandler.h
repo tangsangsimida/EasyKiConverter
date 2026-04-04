@@ -38,6 +38,7 @@ public:
 
 signals:
     void componentWriteCompleted(QSharedPointer<ComponentExportStatus> status);
+    void itemWriteCompleted(const QString& componentId, int itemType, bool success);
 
 private:
     QThreadPool* m_threadPool;
