@@ -113,6 +113,12 @@ void FetchStageHandler::start() {
                     this,
                     [this, worker, baseStatus, existing3DUuid, preData, componentId](
                         QSharedPointer<ComponentExportStatus> downloadedStatus) {
+                        // 空指针检查
+                        if (!downloadedStatus) {
+                            qWarning() << "FetchStageHandler: downloadedStatus is null, skipping";
+                            return;
+                        }
+
                         // 合并3D数据到baseStatus
                         baseStatus->model3DObjRaw = downloadedStatus->model3DObjRaw;
                         baseStatus->model3DStepRaw = downloadedStatus->model3DStepRaw;

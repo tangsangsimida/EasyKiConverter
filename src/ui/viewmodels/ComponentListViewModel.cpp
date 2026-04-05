@@ -258,42 +258,96 @@ void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds)
     if (newIds.isEmpty())
         return;
 
-    // 重置两阶段控制变量
-    m_validationStateManager->startValidation(newIds.count());
+    // 使用更小的批次避免 UI 阻塞
+    // 分批添加元器件，每批之间让 UI 有机会更新
+    // 这样可以避免一次性插入大量元器件导致的 UI 卡顿
+    const int INSERT_BATCH_SIZE = 5;  // 每批插入 5 个
+    const int INSERT_DELAY_MS = 20;  // 每批间隔 20ms
 
-    // 一次性插入所有新元器件，只触发 1 次 UI 重建
+    int pendingCount = newIds.count();
+
+    // 重置验证状态管理器
+    m_validationStateManager->startValidation(pendingCount);
+
+    // 保存 newIds 到成员变量以便在 timer 回调中访问
+    m_batchProcessingIds = newIds;
+    m_batchProcessingIndex = 0;
+    m_batchProcessingBatchSize = INSERT_BATCH_SIZE;
+
+    // 处理第一批
+    int start = 0;
+    int end = qMin(INSERT_BATCH_SIZE, newIds.count());
+
     int first = m_componentList.count();
-    int last = first + newIds.count() - 1;
-    beginInsertRows(QModelIndex(), first, last);
+    int last = first + (end - start) - 1;
 
-    for (const QString& id : newIds) {
+    beginInsertRows(QModelIndex(), first, last);
+    for (int j = start; j < end; ++j) {
+        const QString& id = newIds[j];
         auto item = new ComponentListItemData(id, this);
         item->setFetching(true);
-        item->setValid(false);  // 验证开始时先设置为 false
+        item->setValid(false);
         m_componentList.append(item);
-        m_componentIdIndex.insert(id, m_componentList.count() - 1);  // 维护索引（O(1)查找）
+        m_componentIdIndex.insert(id, first + (j - start));
     }
-
     endInsertRows();
+
     emit componentCountChanged();
     emit filteredCountChanged();
 
-    // 使用分批处理避免阻塞 UI
-    // 每批处理 N 个元器件，间隔一定时间让 UI 有机会更新
-    const int BATCH_SIZE = 10;
-    const int BATCH_DELAY_MS = 50;
+    for (int j = start; j < end; ++j) {
+        m_service->fetchComponentData(newIds[j], false);
+        emit componentAdded(newIds[j], true, "Component added");
+    }
 
-    for (int i = 0; i < newIds.count(); i += BATCH_SIZE) {
-        int end = qMin(i + BATCH_SIZE, newIds.count());
-        QStringList batch = newIds.mid(i, end);
+    // 调度后续批次
+    if (end < newIds.count()) {
+        QTimer::singleShot(INSERT_DELAY_MS, this, [this]() { processNextBatch(); });
+    }
+}
 
-        // 使用 QTimer 延迟调度每个批次，让 UI 有机会更新
-        QTimer::singleShot((i / BATCH_SIZE) * BATCH_DELAY_MS, this, [this, batch]() {
-            for (const QString& id : batch) {
-                m_service->fetchComponentData(id, false);
-                emit componentAdded(id, true, "Component added");
-            }
-        });
+void ComponentListViewModel::processNextBatch() {
+    const int INSERT_BATCH_SIZE = m_batchProcessingBatchSize;
+    const QStringList& newIds = m_batchProcessingIds;
+
+    int batchIndex = m_batchProcessingIndex;
+    int start = (batchIndex + 1) * INSERT_BATCH_SIZE;
+
+    if (start >= newIds.count()) {
+        m_batchProcessingIds.clear();
+        return;
+    }
+
+    m_batchProcessingIndex = batchIndex + 1;
+    int end = qMin(start + INSERT_BATCH_SIZE, newIds.count());
+
+    int first = m_componentList.count();
+    int last = first + (end - start) - 1;
+
+    beginInsertRows(QModelIndex(), first, last);
+    for (int j = start; j < end; ++j) {
+        const QString& id = newIds[j];
+        auto item = new ComponentListItemData(id, this);
+        item->setFetching(true);
+        item->setValid(false);
+        m_componentList.append(item);
+        m_componentIdIndex.insert(id, first + (j - start));
+    }
+    endInsertRows();
+
+    emit componentCountChanged();
+    emit filteredCountChanged();
+
+    for (int j = start; j < end; ++j) {
+        m_service->fetchComponentData(newIds[j], false);
+        emit componentAdded(newIds[j], true, "Component added");
+    }
+
+    // 调度下一批
+    if (end < newIds.count()) {
+        QTimer::singleShot(20, this, [this]() { processNextBatch(); });
+    } else {
+        m_batchProcessingIds.clear();
     }
 }
 
@@ -470,7 +524,11 @@ void ComponentListViewModel::handleComponentInfoReady(const QString& componentId
 void ComponentListViewModel::handleCadDataReady(const QString& componentId, const ComponentData& data) {
     qDebug() << "CAD data ready for:" << componentId;
     auto item = findItemData(componentId);
-    if (item) {
+    if (!item) {
+        qWarning() << "handleCadDataReady: item not found for componentId:" << componentId
+                   << ", m_componentIdIndex size:" << m_componentIdIndex.size();
+        return;
+    } else {
         QSharedPointer<ComponentData> dataPtr = QSharedPointer<ComponentData>::create(data);
         item->setComponentData(dataPtr);
         item->setFetching(false);

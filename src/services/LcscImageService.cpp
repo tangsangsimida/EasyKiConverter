@@ -153,8 +153,8 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
 
     qDebug() << "LcscImageService: Found" << pathsToLoad.size() << "cached images for" << componentId;
 
-    // 并行加载所有预览图
-    QList<QFuture<QByteArray>> futures;
+    // 使用 QFutureWatcher 实现真正的异步非阻塞加载
+    // 每个图片创建一个 watcher，图片加载完成时自动触发处理
     for (const auto& [imageIndex, path] : pathsToLoad) {
         QFuture<QByteArray> future = QtConcurrent::run([path]() {
             QFile file(path);
@@ -163,25 +163,37 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
             }
             return QByteArray();
         });
-        futures.append(future);
+
+        QFutureWatcher<QByteArray>* watcher = new QFutureWatcher<QByteArray>(this);
+        watcher->setProperty("componentId", componentId);
+        watcher->setProperty("imageIndex", imageIndex);
+
+        connect(watcher, &QFutureWatcher<QByteArray>::finished, this, [this, watcher]() {
+            // 获取当前完成的 watcher 的组件信息
+            QString compId = watcher->property("componentId").toString();
+            int imgIndex = watcher->property("imageIndex").toInt();
+            QByteArray imageData = watcher->result();
+
+            if (!imageData.isEmpty()) {
+                emit imageReady(compId, imageData, imgIndex);
+                m_downloadCounts[compId]++;
+            }
+
+            // 检查该组件是否所有图片都已加载完成
+            if (m_downloadCounts.contains(compId) && m_expectedCounts.contains(compId) &&
+                m_downloadCounts[compId] >= m_expectedCounts[compId]) {
+                qDebug() << "LcscImageService: All cached images loaded for" << compId;
+                checkDownloadCompletion(compId);
+            }
+
+            // 清理 watcher
+            m_pendingImageWatchers.removeOne(watcher);
+            watcher->deleteLater();
+        });
+
+        m_pendingImageWatchers.append(watcher);
+        watcher->setFuture(future);
     }
-
-    // 等待所有加载完成并发送信号
-    for (int i = 0; i < futures.size(); ++i) {
-        futures[i].waitForFinished();
-        QByteArray imageData = futures[i].result();
-        int imageIndex = pathsToLoad[i].first;
-        if (!imageData.isEmpty()) {
-            emit imageReady(componentId, imageData, imageIndex);
-            m_downloadCounts[componentId]++;
-        }
-    }
-
-    qDebug() << "LcscImageService: Parallel loaded" << m_downloadCounts[componentId] << "preview images from cache for"
-             << componentId;
-
-    // 使用检查完成逻辑发送 allImagesReady 信号
-    checkDownloadCompletion(componentId);
 }
 
 void LcscImageService::processQueue() {

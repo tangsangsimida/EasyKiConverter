@@ -3,6 +3,7 @@
 
 #include "ComponentCacheService.h"
 
+#include <QFutureWatcher>
 #include <QMap>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -129,6 +130,9 @@ private:
     // 跟踪下载状态（只存计数，不存实际数据）
     QMap<QString, int> m_downloadCounts;  // componentId -> downloaded count
     QMap<QString, int> m_expectedCounts;  // componentId -> expected count
+
+    // 跟踪异步加载的 watcher，用于非阻塞预览图加载
+    QList<QFutureWatcher<QByteArray>*> m_pendingImageWatchers;
 
     int m_activeRequests;  // 当前活跃的下载数
     static const int MAX_CONCURRENT_REQUESTS = 10;  // 最大并发下载数

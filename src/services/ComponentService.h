@@ -9,6 +9,7 @@
 #include "models/Model3DData.h"
 #include "models/SymbolData.h"
 
+#include <QByteArray>
 #include <QImage>
 #include <QJsonObject>
 #include <QMap>
@@ -379,6 +380,27 @@ private:
     // BOM 解析已移至独立的 BomParser 类
 
     // 图片抓取已移至独立的 LcscImageService 类
+
+    /**
+     * @brief 缓存加载结果结构体（用于异步缓存加载）
+     */
+    struct CacheLoadResult {
+        QString componentId;
+        bool success;
+        QSharedPointer<ComponentData> cachedData;
+        QByteArray cadDataJson;  // 原始 CAD JSON 数据
+        QList<QPair<int, QByteArray>> previewImageData;  // index, data
+        QByteArray datasheetData;
+    };
+
+    /**
+     * @brief 异步从缓存加载元件数据（后台线程执行）
+     *
+     * @param normalizedId 元件 ID
+     * @param fetch3DModel 是否获取 3D 模型
+     * @param cache 缓存服务指针
+     */
+    void loadComponentDataFromCacheAsync(const QString& normalizedId, bool fetch3DModel, ComponentCacheService* cache);
 
 private:
     class EasyedaApi* m_api;

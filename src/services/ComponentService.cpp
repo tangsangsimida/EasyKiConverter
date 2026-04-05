@@ -9,6 +9,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QFutureWatcher>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -22,6 +23,7 @@
 #include <QThread>
 #include <QTimer>
 #include <QUuid>
+#include <QtConcurrent>
 
 #include <cstdlib>
 
@@ -131,7 +133,8 @@ void ComponentService::fetchComponentData(const QString& componentId, bool fetch
 }
 
 void ComponentService::fetchComponentDataInternal(const QString& componentId, bool fetch3DModel) {
-    qDebug() << "Fetching component data (internal) for:" << componentId << "Fetch 3D:" << fetch3DModel;
+    qDebug() << "Fetching component data (internal) for:" << componentId << "Fetch 3D:" << fetch3DModel
+             << "at:" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
 
     // 确保 componentId 格式统一（大写）
     QString normalizedId = componentId.toUpper();
@@ -142,82 +145,31 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
         m_currentComponentId = normalizedId;
     }
 
-    // 先检查缓存是否存在
+    // 先检查缓存是否存在（快速检查，不阻塞）
     ComponentCacheService* cache = ComponentCacheService::instance();
     if (cache->hasCache(normalizedId)) {
-        qDebug() << "ComponentService: Cache hit for" << normalizedId << ", loading from disk cache";
-        QSharedPointer<ComponentData> cachedData = cache->loadComponentData(normalizedId);
-        if (cachedData) {
-            // 从缓存加载CAD数据并重新导入符号和封装
-            QByteArray cadJsonData = cache->loadCadDataJson(normalizedId);
-            if (!cadJsonData.isEmpty()) {
-                QJsonParseError parseError;
-                QJsonDocument cadDoc = QJsonDocument::fromJson(cadJsonData, &parseError);
-                if (parseError.error == QJsonParseError::NoError && cadDoc.isObject()) {
-                    QJsonObject cadDataObj = cadDoc.object();
-                    // 重新导入符号数据
-                    QSharedPointer<SymbolData> symbolData = m_importer->importSymbolData(cadDataObj);
-                    if (symbolData) {
-                        cachedData->setSymbolData(symbolData);
-                    }
-                    // 重新导入封装数据
-                    QSharedPointer<FootprintData> footprintData = m_importer->importFootprintData(cadDataObj);
-                    if (footprintData) {
-                        cachedData->setFootprintData(footprintData);
-                    }
-                }
-            }
-
-            // 从 metadata.json 恢复 model3DData（如果 cad_data.json 重新导入后丢失了的话）
-            // 这样可以确保从缓存加载时，3D 模型 UUID 始终可用
-            if (!cachedData->model3DData() || cachedData->model3DData()->uuid().isEmpty()) {
-                QJsonObject metadata = cache->loadMetadata(normalizedId);
-                if (metadata.contains("model3duuid")) {
-                    auto model3DData = QSharedPointer<Model3DData>::create();
-                    model3DData->setUuid(metadata.value("model3duuid").toString());
-                    cachedData->setModel3DData(model3DData);
-                    qDebug() << "Restored model3DData from metadata, UUID:" << model3DData->uuid();
-                }
-            }
-
-            // 从缓存加载数据，更新到 m_fetchingComponents 以保持一致性
+        // 先添加到 m_fetchingComponents（防止重复调度）
+        {
             QMutexLocker locker(&m_fetchingComponentsMutex);
-            FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
-            fetchingComponent.data = *cachedData;
-            fetchingComponent.fetch3DModel = fetch3DModel;
-            fetchingComponent.hasCadData =
-                (cachedData->symbolData() != nullptr && cachedData->footprintData() != nullptr);
-
-            // 发送缓存加载的信号
-            emit cadDataReady(normalizedId, *cachedData);
-
-            // 如果在并行模式，处理并行数据收集
-            if (m_parallelContext != nullptr) {
-                handleParallelDataCollected(normalizedId, *cachedData);
+            if (m_fetchingComponents.contains(normalizedId)) {
+                qDebug() << "ComponentService: Cache hit but already fetching for" << normalizedId << ", skipping";
+                return;
             }
-
-            // 从缓存加载预览图数据
-            for (int i = 0; i < 3; ++i) {
-                QByteArray imageData = cache->loadPreviewImage(normalizedId, i);
-                if (!imageData.isEmpty()) {
-                    // 创建 QImage 并发送 UI 更新信号（与网络下载保持一致）
-                    QImage image = QImage::fromData(imageData);
-                    if (!image.isNull()) {
-                        emit previewImageReady(normalizedId, image, i);
-                    }
-                    emit previewImageDataReady(normalizedId, imageData, i);
-                }
-            }
-
-            // 加载数据手册
-            QByteArray datasheetData = cache->loadDatasheet(normalizedId);
-            if (!datasheetData.isEmpty()) {
-                emit datasheetReady(normalizedId, datasheetData);
-            }
-
-            qDebug() << "ComponentService: Cache loaded successfully for" << normalizedId;
-            return;
+            // 创建占位条目，防止重复调度
+            FetchingComponent& fc = m_fetchingComponents[normalizedId];
+            fc.componentId = normalizedId;
+            fc.fetch3DModel = fetch3DModel;
+            fc.hasComponentInfo = false;
+            fc.hasCadData = false;
+            fc.hasObjData = false;
+            fc.hasStepData = false;
         }
+        qDebug() << "ComponentService: Cache hit for" << normalizedId << ", scheduling async load from disk cache";
+        // 缓存加载是 I/O 密集型操作，移到后台线程执行避免阻塞 UI
+        QTimer::singleShot(0, this, [this, normalizedId, fetch3DModel, cache]() {
+            loadComponentDataFromCacheAsync(normalizedId, fetch3DModel, cache);
+        });
+        return;
     }
 
     // 缓存不存在，从网络获取
@@ -244,6 +196,147 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     // 首先获取 CAD 数据（包含符号和封装信息）
     // CAD 数据是后续流程的基础
     m_api->fetchCadData(normalizedId);
+}
+
+void ComponentService::loadComponentDataFromCacheAsync(const QString& normalizedId,
+                                                       bool fetch3DModel,
+                                                       ComponentCacheService* cache) {
+    // 在后台线程执行缓存加载（I/O 密集型）
+    QFuture<CacheLoadResult> future = QtConcurrent::run([normalizedId, fetch3DModel, cache]() -> CacheLoadResult {
+        CacheLoadResult result;
+        result.componentId = normalizedId;
+        result.success = false;
+
+        QSharedPointer<ComponentData> cachedData = cache->loadComponentData(normalizedId);
+        if (!cachedData) {
+            return result;
+        }
+
+        // 从缓存加载CAD数据并重新导入符号和封装
+        QByteArray cadJsonData = cache->loadCadDataJson(normalizedId);
+        if (!cadJsonData.isEmpty()) {
+            QJsonParseError parseError;
+            QJsonDocument cadDoc = QJsonDocument::fromJson(cadJsonData, &parseError);
+            if (parseError.error == QJsonParseError::NoError && cadDoc.isObject()) {
+                QJsonObject cadDataObj = cadDoc.object();
+                // 注意：这里不能直接访问 m_importer，因为我们在后台线程
+                // 所以我们只加载原始数据，让主线程处理符号/封装导入
+                result.cadDataJson = cadJsonData;
+            }
+        }
+
+        // 从 metadata.json 恢复 model3DData
+        QJsonObject metadata = cache->loadMetadata(normalizedId);
+        if (metadata.contains("model3duuid")) {
+            auto model3DData = QSharedPointer<Model3DData>::create();
+            model3DData->setUuid(metadata.value("model3duuid").toString());
+            cachedData->setModel3DData(model3DData);
+        }
+
+        result.cachedData = cachedData;
+        result.success = true;
+
+        // 加载预览图数据（返回字节数据，在主线程创建 QImage）
+        for (int i = 0; i < 3; ++i) {
+            QByteArray imageData = cache->loadPreviewImage(normalizedId, i);
+            if (!imageData.isEmpty()) {
+                result.previewImageData.append({i, imageData});
+            }
+        }
+
+        // 加载数据手册
+        QByteArray datasheetData = cache->loadDatasheet(normalizedId);
+        if (!datasheetData.isEmpty()) {
+            result.datasheetData = datasheetData;
+        }
+
+        return result;
+    });
+
+    // 等待后台任务完成并在主线程处理结果
+    QFutureWatcher<CacheLoadResult>* watcher = new QFutureWatcher<CacheLoadResult>(this);
+    connect(watcher, &QFutureWatcher<CacheLoadResult>::finished, this, [this, watcher, normalizedId, fetch3DModel]() {
+        CacheLoadResult result = watcher->result();
+        watcher->deleteLater();
+
+        if (!result.success || !result.cachedData) {
+            qWarning() << "ComponentService: Failed to load cache for" << normalizedId
+                       << ", falling back to network fetch";
+            // 缓存加载失败时，回退到网络获取
+            {
+                QMutexLocker locker(&m_fetchingComponentsMutex);
+                FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
+                fetchingComponent.componentId = normalizedId;
+                fetchingComponent.fetch3DModel = fetch3DModel;
+                fetchingComponent.hasComponentInfo = false;
+                fetchingComponent.hasCadData = false;
+                fetchingComponent.hasObjData = false;
+                fetchingComponent.hasStepData = false;
+                fetchingComponent.errorMessage.clear();
+            }
+            m_api->fetchCadData(normalizedId);
+            return;
+        }
+
+        // 在主线程重新导入符号和封装数据
+        if (!result.cadDataJson.isEmpty()) {
+            QJsonParseError parseError;
+            QJsonDocument cadDoc = QJsonDocument::fromJson(result.cadDataJson, &parseError);
+            if (parseError.error == QJsonParseError::NoError && cadDoc.isObject()) {
+                QJsonObject cadDataObj = cadDoc.object();
+                // 重新导入符号数据
+                QSharedPointer<SymbolData> symbolData = m_importer->importSymbolData(cadDataObj);
+                if (symbolData) {
+                    result.cachedData->setSymbolData(symbolData);
+                }
+                // 重新导入封装数据
+                QSharedPointer<FootprintData> footprintData = m_importer->importFootprintData(cadDataObj);
+                if (footprintData) {
+                    result.cachedData->setFootprintData(footprintData);
+                }
+            }
+        }
+
+        // 更新 m_fetchingComponents
+        {
+            QMutexLocker locker(&m_fetchingComponentsMutex);
+            FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
+            fetchingComponent.componentId = normalizedId;
+            fetchingComponent.data = *result.cachedData;
+            fetchingComponent.fetch3DModel = fetch3DModel;
+            fetchingComponent.hasCadData =
+                (result.cachedData->symbolData() != nullptr && result.cachedData->footprintData() != nullptr);
+        }
+
+        // 发送缓存加载的信号
+        qDebug() << "ComponentService: Emitting cadDataReady for" << normalizedId
+                 << "with symbolData:" << (result.cachedData->symbolData() != nullptr)
+                 << "footprintData:" << (result.cachedData->footprintData() != nullptr);
+        emit cadDataReady(normalizedId, *result.cachedData);
+
+        // 如果在并行模式，处理并行数据收集
+        if (m_parallelContext != nullptr) {
+            handleParallelDataCollected(normalizedId, *result.cachedData);
+        }
+
+        // 从缓存加载预览图数据（发送信号）
+        for (const auto& [imageIndex, imageData] : result.previewImageData) {
+            // 创建 QImage 并发送 UI 更新信号
+            QImage image = QImage::fromData(imageData);
+            if (!image.isNull()) {
+                emit previewImageReady(normalizedId, image, imageIndex);
+            }
+            emit previewImageDataReady(normalizedId, imageData, imageIndex);
+        }
+
+        // 加载数据手册
+        if (!result.datasheetData.isEmpty()) {
+            emit datasheetReady(normalizedId, result.datasheetData);
+        }
+
+        qDebug() << "ComponentService: Cache loaded successfully for" << normalizedId;
+    });
+    watcher->setFuture(future);
 }
 
 void ComponentService::fetchLcscPreviewImage(const QString& componentId) {
@@ -710,6 +803,7 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
 
             // 立即发送 cadDataReady 信号，让 ComponentListViewModel 可以立即使用 symbol/footprint 数据
             // 3D 模型下载完成后会在 handleModel3DFetched 中再次发送信号更新
+            qDebug() << "ComponentService: Emitting cadDataReady (from network) for" << m_currentComponentId;
             emit cadDataReady(m_currentComponentId, componentData);
 
             return;  // 等待 3D 模型数据
@@ -871,6 +965,7 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
                 m_fetchingComponents[m_currentComponentId].data = m_pendingComponentData;
 
                 // 发送完成信号
+                qDebug() << "ComponentService: Emitting cadDataReady (pending complete) for" << m_currentComponentId;
                 emit cadDataReady(m_currentComponentId, m_pendingComponentData);
 
                 // 清空待处理数据

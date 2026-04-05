@@ -344,6 +344,9 @@ private:
     // 重建 ID 到索引的映射（删除操作后调用）
     void rebuildComponentIdIndex();
 
+    // 批次处理下一批（用于分批添加元器件避免 UI 阻塞）
+    void processNextBatch();
+
 private:
     ComponentService* m_service;
     QList<ComponentListItemData*> m_componentList;
@@ -366,6 +369,11 @@ private:
 
     // 滚动状态
     bool m_isScrolling = false;
+
+    // 批次处理状态（用于分批添加元器件避免 UI 阻塞）
+    QStringList m_batchProcessingIds;
+    int m_batchProcessingIndex = 0;
+    int m_batchProcessingBatchSize = 5;
 };
 
 }  // namespace EasyKiConverter
