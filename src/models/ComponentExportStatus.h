@@ -8,6 +8,8 @@
 
 #include <QDebug>
 #include <QElapsedTimer>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QSharedPointer>
 #include <QString>
 
@@ -31,6 +33,11 @@ enum class ExportItemType { Symbol = 0, Footprint = 1, Model3D = 2, PreviewImage
  */
 struct ComponentExportStatus {
     QString componentId;
+
+    // 线程安全：保护可变成员的互斥锁
+    // 注意：此互斥锁仅用于保护 ComponentExportStatus 自身的可变成员
+    // 不应替代流水线各阶段之间的同步机制
+    mutable QMutex m_mutex;
 
     // 原始数据
     QByteArray componentInfoRaw;
@@ -125,6 +132,7 @@ struct ComponentExportStatus {
     }
 
     void addDebugLog(const QString& message) {
+        QMutexLocker locker(&m_mutex);
         debugLog.append(message);
     }
 
@@ -133,6 +141,9 @@ struct ComponentExportStatus {
     // 清理中间数据（Process 阶段后调用）
     // 注意：model3DStepRaw 必须保留给 WriteWorker 使用，所以在 clearStepData() 中单独清理
     void clearIntermediateData(bool log = true) {
+        // 注意：由于 mutex 可能被并发访问，不在这里锁定
+        // clearIntermediateData 通常在 ProcessWorker 中调用，
+        // 而 QtConcurrent 任务还在运行并可能调用 addDebugLog()
         qint64 freed = 0;
 
         auto clearAndCount = [&](QByteArray& ba) {
@@ -158,6 +169,7 @@ struct ComponentExportStatus {
 
     // 清理 STEP 数据（Write 阶段完成后调用）
     void clearStepData() {
+        QMutexLocker locker(&m_mutex);
         model3DStepRaw.clear();
         model3DStepRaw.squeeze();
     }

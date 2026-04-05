@@ -201,6 +201,18 @@ Card {
                     Qt.openUrlExternally(exportStatisticsCard.exportProgressController.cacheDirUrl);
                 }
             }
+            // 清空缓存按钮（只在调试模式下显示）
+            ModernButton {
+                text: qsTranslate("MainWindow", "清空缓存")
+                iconName: "trash"
+                backgroundColor: AppStyle.colors.danger
+                hoverColor: AppStyle.colors.dangerDark
+                pressedColor: AppStyle.colors.danger
+                visible: exportStatisticsCard.exportSettingsController && exportStatisticsCard.exportSettingsController.debugMode // 只在调试模式下显示
+                onClicked: {
+                    exportStatisticsCard.exportProgressController.clearCache();
+                }
+            }
         }
     }
 }

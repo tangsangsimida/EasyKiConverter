@@ -66,18 +66,6 @@ struct PipelineProgress {
         int process = processProgress();
         int write = writeProgress();
 
-        // 如果有预览图或手册需要获取，增加它们的权重
-        int mediaWeight = totalPreviewImages + totalDatasheets;
-        if (mediaWeight > 0) {
-            // 预览图和手册的进度
-            int totalMedia = totalPreviewImages + totalDatasheets;
-            int fetchedMedia = fetchedPreviewImages + fetchedDatasheets;
-            int mediaProgress = totalMedia > 0 ? (fetchedMedia * 100 / totalMedia) : 0;
-
-            // 加权融合：基础进度占 70%，媒体进度占 30%
-            fetch = (fetch * 70 + mediaProgress * 30) / 100;
-        }
-
         return (fetch * 30 + process * 50 + write * 20) / 100;
     }
 };

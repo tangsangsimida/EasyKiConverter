@@ -851,7 +851,8 @@ void ComponentCacheService::clearAllCache() {
             // 删除所有元器件缓存目录
             for (const QString& subDir : dir.entryList(QDir::Dirs)) {
                 if (subDir != "." && subDir != "..") {
-                    QDir subDirToRemove(m_cacheDir + "/" + subDir);
+                    // 使用 QDir::filePath 确保跨平台路径正确
+                    QDir subDirToRemove(dir.filePath(subDir));
                     subDirToRemove.removeRecursively();
                 }
             }

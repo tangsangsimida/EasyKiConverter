@@ -74,7 +74,8 @@ void WriteStageHandler::start() {
                         &WriteStageHandler::itemWriteCompleted,
                         Qt::QueuedConnection);
 
-                connect(worker, &WriteWorker::writeCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
+                // 注意：不能使用 deleteLater()，因为 QThreadPool 已经拥有 worker 的所有权
+                // QThreadPool::start() 会自动在 run() 完成后删除 worker
 
                 // 使用线程池调度 WriteWorker，而不是直接调用 run()
                 // 这样 WriteWorker::run() 会在线程池线程中执行

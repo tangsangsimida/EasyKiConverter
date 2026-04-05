@@ -149,6 +149,15 @@ bool ExportProgressViewModel::openLastExportedFolder() {
     return true;
 }
 
+void ExportProgressViewModel::clearCache() {
+    LOG_DEBUG(LogModule::UI, "Clearing component cache...");
+
+    // 清空 L1 内存缓存和 L2 磁盘缓存
+    ComponentCacheService::instance()->clearAllCache();
+
+    LOG_INFO(LogModule::UI, "Component cache cleared successfully");
+}
+
 void ExportProgressViewModel::startExport(const QStringList& componentIds,
                                           const QString& outputPath,
                                           const QString& libName,
@@ -488,20 +497,11 @@ void ExportProgressViewModel::handleComponentExported(const QString& componentId
         m_idToIndexMap[componentId] = m_resultsList.size() - 1;
     }
 
-    // Write 阶段完成时立即刷新，阶段转换时使用节流
-    if (stage == static_cast<int>(PipelineStage::Write)) {
-        // Write 阶段完成后立即刷新，确保最终状态立即显示
-        if (m_throttleTimer->isActive()) {
-            m_throttleTimer->stop();
-        }
+    // Write 阶段完成时也使用节流，避免频繁刷新导致UI阻塞
+    // Fetch/Process/Write 阶段统一使用节流机制
+    if (!m_pendingUpdate) {
         m_pendingUpdate = true;
-        flushPendingUpdates();
-    } else {
-        // Fetch/Process 阶段使用节流，避免频繁刷新
-        if (!m_pendingUpdate) {
-            m_pendingUpdate = true;
-            m_throttleTimer->start();
-        }
+        m_throttleTimer->start();
     }
 
     updateStatistics();
@@ -563,6 +563,8 @@ void ExportProgressViewModel::flushPendingUpdates() {
         m_resultsList = newList;
         emit resultsListChanged();
         emit filteredResultsListChanged();
+        // 只在 flush 时更新统计数据，避免频繁计算
+        updateStatistics();
     }
 }
 
@@ -737,8 +739,12 @@ void ExportProgressViewModel::handleExportItemCompleted(const QString& component
 
     m_resultsList[index] = result;
 
-    // 立即刷新UI，不节流（因为每项完成后应该立即更新）
-    emit resultsListChanged();
+    // 使用节流机制，避免频繁的UI更新阻塞主线程
+    // 100ms 的间隔足够及时更新，又不会过度频繁
+    if (!m_pendingUpdate) {
+        m_pendingUpdate = true;
+        m_throttleTimer->start();
+    }
 }
 
 void ExportProgressViewModel::retryFailedComponents() {

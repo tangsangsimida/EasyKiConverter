@@ -132,7 +132,7 @@ void WriteWorker::run() {
             bool result = watcher->result();
             m_status->symbolWritten = result;
             emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Symbol), result);
-            watcher->deleteLater();
+            // deleteLater removed - watchers are cleaned up by qDeleteAll below
         });
         watcher->setFuture(future);
         watchers.append(watcher);
@@ -157,7 +157,7 @@ void WriteWorker::run() {
             bool result = watcher->result();
             m_status->footprintWritten = result;
             emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Footprint), result);
-            watcher->deleteLater();
+            // deleteLater removed - watchers are cleaned up by qDeleteAll below
         });
         watcher->setFuture(future);
         watchers.append(watcher);
@@ -183,7 +183,7 @@ void WriteWorker::run() {
             bool result = watcher->result();
             m_status->model3DWritten = result;
             emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Model3D), result);
-            watcher->deleteLater();
+            // deleteLater removed - watchers are cleaned up by qDeleteAll below
         });
         watcher->setFuture(future);
         watchers.append(watcher);
@@ -207,7 +207,7 @@ void WriteWorker::run() {
             bool result = watcher->result();
             m_status->previewImageWritten = result;
             emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::PreviewImage), result);
-            watcher->deleteLater();
+            // deleteLater removed - watchers are cleaned up by qDeleteAll below
         });
         watcher->setFuture(future);
         watchers.append(watcher);
@@ -231,7 +231,7 @@ void WriteWorker::run() {
             bool result = watcher->result();
             m_status->datasheetWritten = result;
             emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Datasheet), result);
-            watcher->deleteLater();
+            // deleteLater removed - watchers are cleaned up by qDeleteAll below
         });
         watcher->setFuture(future);
         watchers.append(watcher);

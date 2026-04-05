@@ -112,6 +112,9 @@ public:
     // 打开最后导出的文件夹
     Q_INVOKABLE bool openLastExportedFolder();
 
+    // 清空组件缓存（跨平台）
+    Q_INVOKABLE void clearCache();
+
     int fetchProgress() const {
         return m_fetchProgress;
     }

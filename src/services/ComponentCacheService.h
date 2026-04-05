@@ -319,7 +319,7 @@ public:
     /**
      * @brief 清空所有缓存（L1内存 + L2磁盘）
      */
-    void clearAllCache();
+    Q_INVOKABLE void clearAllCache();
 
     /**
      * @brief 清空L1内存缓存
