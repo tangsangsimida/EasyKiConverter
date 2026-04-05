@@ -51,7 +51,8 @@ signals:
 
 private slots:
     void onWorkerCompleted(QSharedPointer<ComponentExportStatus> status, FetchWorker* worker);
-    void onMediaFetchCompleted(const QString& componentId,
+    void onMediaFetchCompleted(MediaFetchWorker* worker,
+                               const QString& componentId,
                                const QList<QByteArray>& previewImageDataList,
                                const QByteArray& datasheetData,
                                const QList<ComponentExportStatus::NetworkDiagnostics>& diagnostics);

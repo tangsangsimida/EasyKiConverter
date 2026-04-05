@@ -284,16 +284,15 @@ void FetchStageHandler::onWorkerCompleted(QSharedPointer<ComponentExportStatus> 
     }
 }
 
-void FetchStageHandler::onMediaFetchCompleted(const QString& componentId,
+void FetchStageHandler::onMediaFetchCompleted(MediaFetchWorker* worker,
+                                              const QString& componentId,
                                               const QList<QByteArray>& previewImageDataList,
                                               const QByteArray& datasheetData,
                                               const QList<ComponentExportStatus::NetworkDiagnostics>& diagnostics) {
     QMutexLocker locker(&m_workerMutex);
 
-    MediaFetchWorker* worker = qobject_cast<MediaFetchWorker*>(sender());
     if (worker) {
         m_activeMediaWorkers.remove(worker);
-        worker->deleteLater();
     }
 
     auto statusIt = m_pendingMediaStatuses.find(componentId);
@@ -408,11 +407,18 @@ void FetchStageHandler::fetchMediaIfNeeded(const QString& componentId,
 
         MediaFetchWorker* worker = new MediaFetchWorker(componentId, previewUrls, datasheetUrl, this);
 
-        connect(worker,
-                &MediaFetchWorker::fetchCompleted,
-                this,
-                &FetchStageHandler::onMediaFetchCompleted,
-                Qt::QueuedConnection);
+        // 使用 lambda 捕获 worker 指针，避免使用 sender()（在 QueuedConnection 中不安全）
+        connect(
+            worker,
+            &MediaFetchWorker::fetchCompleted,
+            this,
+            [this, worker](const QString& compId,
+                           const QList<QByteArray>& previewImageDataList,
+                           const QByteArray& datasheetData,
+                           const QList<ComponentExportStatus::NetworkDiagnostics>& diagnostics) {
+                onMediaFetchCompleted(worker, compId, previewImageDataList, datasheetData, diagnostics);
+            },
+            Qt::QueuedConnection);
         connect(worker, &MediaFetchWorker::fetchCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
 
         m_activeMediaWorkers.insert(worker);

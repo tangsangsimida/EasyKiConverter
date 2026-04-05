@@ -341,10 +341,13 @@ private:
     // 批量获取所有验证通过元器件的预览图
     void fetchAllPreviewImages();
 
+    // 重建 ID 到索引的映射（删除操作后调用）
+    void rebuildComponentIdIndex();
+
 private:
     ComponentService* m_service;
     QList<ComponentListItemData*> m_componentList;
-    QSet<QString> m_componentIdIndex;
+    QHash<QString, int> m_componentIdIndex;  // 使用 QHash 存储 ID 到索引的映射，实现 O(1) 查找
     QString m_outputPath;
     QString m_bomFilePath;
     QString m_bomResult;

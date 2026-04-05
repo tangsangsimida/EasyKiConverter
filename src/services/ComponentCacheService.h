@@ -12,6 +12,8 @@
 #include <QSharedPointer>
 #include <QString>
 
+#include <memory>
+
 namespace EasyKiConverter {
 
 /**
@@ -426,7 +428,7 @@ private:
      */
     QString makeMemoryKey(const QString& lcscId, const QString& type) const;
 
-    static ComponentCacheService* s_instance;
+    static std::unique_ptr<ComponentCacheService> s_instance;
     mutable QMutex m_mutex;
     QString m_cacheDir;
     int m_memoryCacheLimitMB;

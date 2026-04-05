@@ -200,6 +200,11 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
             for (int i = 0; i < 3; ++i) {
                 QByteArray imageData = cache->loadPreviewImage(normalizedId, i);
                 if (!imageData.isEmpty()) {
+                    // 创建 QImage 并发送 UI 更新信号（与网络下载保持一致）
+                    QImage image = QImage::fromData(imageData);
+                    if (!image.isNull()) {
+                        emit previewImageReady(normalizedId, image, i);
+                    }
                     emit previewImageDataReady(normalizedId, imageData, i);
                 }
             }

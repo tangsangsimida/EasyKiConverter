@@ -9,6 +9,7 @@
 #include <QThread>
 #include <QTimer>
 #include <QUrlQuery>
+#include <QtConcurrent>
 
 namespace EasyKiConverter {
 
@@ -46,17 +47,20 @@ void LcscImageService::fetchPreviewImages(const QString& componentId) {
 }
 
 void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) {
+    qDebug() << "LcscImageService: fetchBatchPreviewImages called for" << componentIds.size() << "components";
     for (const QString& componentId : componentIds) {
         if (!componentId.isEmpty()) {
             // 先检查缓存，缓存中有则直接加载，不加入队列
             // 注意：即使组件已在 m_requestedComponents 中，也需要检查缓存（支持第二次导出时从缓存加载）
             if (tryLoadCachedPreviewImages(componentId)) {
                 m_requestedComponents.insert(componentId);
+                qDebug() << "LcscImageService: Cached images loaded for" << componentId;
                 continue;
             }
             // 缓存没有且未请求过，加入队列等待网络请求
             if (!m_requestedComponents.contains(componentId)) {
                 m_queue.enqueue(componentId);
+                qDebug() << "LcscImageService: Queued for network fetch:" << componentId;
             }
         }
     }
@@ -131,19 +135,49 @@ bool LcscImageService::tryLoadCachedPreviewImages(const QString& componentId) {
 }
 
 void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, ComponentCacheService* cache) {
-    // 在事件循环中异步加载缓存图片
+    // 收集所有需要加载的预览图路径
+    QList<QPair<int, QString>> pathsToLoad;
     for (int i = 0; i < MAX_IMAGES_PER_COMPONENT; ++i) {
         QString path = cache->previewImagePath(componentId, i);
+        qDebug() << "LcscImageService: Checking cache path:" << path << "exists:" << QFileInfo::exists(path);
         if (QFileInfo::exists(path)) {
-            QByteArray imageData = cache->loadPreviewImage(componentId, i);
-            if (!imageData.isEmpty()) {
-                emit imageReady(componentId, imageData, i);
-                m_downloadCounts[componentId]++;
-            }
+            pathsToLoad.append({i, path});
         }
     }
 
-    qDebug() << "LcscImageService: Async loaded" << m_downloadCounts[componentId] << "preview images from cache for"
+    if (pathsToLoad.isEmpty()) {
+        qDebug() << "LcscImageService: No cached images found for" << componentId;
+        checkDownloadCompletion(componentId);
+        return;
+    }
+
+    qDebug() << "LcscImageService: Found" << pathsToLoad.size() << "cached images for" << componentId;
+
+    // 并行加载所有预览图
+    QList<QFuture<QByteArray>> futures;
+    for (const auto& [imageIndex, path] : pathsToLoad) {
+        QFuture<QByteArray> future = QtConcurrent::run([path]() {
+            QFile file(path);
+            if (file.open(QIODevice::ReadOnly)) {
+                return file.readAll();
+            }
+            return QByteArray();
+        });
+        futures.append(future);
+    }
+
+    // 等待所有加载完成并发送信号
+    for (int i = 0; i < futures.size(); ++i) {
+        futures[i].waitForFinished();
+        QByteArray imageData = futures[i].result();
+        int imageIndex = pathsToLoad[i].first;
+        if (!imageData.isEmpty()) {
+            emit imageReady(componentId, imageData, imageIndex);
+            m_downloadCounts[componentId]++;
+        }
+    }
+
+    qDebug() << "LcscImageService: Parallel loaded" << m_downloadCounts[componentId] << "preview images from cache for"
              << componentId;
 
     // 使用检查完成逻辑发送 allImagesReady 信号

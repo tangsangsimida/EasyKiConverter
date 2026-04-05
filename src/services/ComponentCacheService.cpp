@@ -17,7 +17,7 @@
 
 namespace EasyKiConverter {
 
-ComponentCacheService* ComponentCacheService::s_instance = nullptr;
+std::unique_ptr<ComponentCacheService> ComponentCacheService::s_instance;
 
 ComponentCacheService::ComponentCacheService(QObject* parent)
     : QObject(parent), m_memoryCacheLimitMB(50), m_memoryCacheSize(0) {
@@ -35,9 +35,9 @@ ComponentCacheService::~ComponentCacheService() = default;
 
 ComponentCacheService* ComponentCacheService::instance() {
     if (!s_instance) {
-        s_instance = new ComponentCacheService();
+        s_instance = std::unique_ptr<ComponentCacheService>(new ComponentCacheService());
     }
-    return s_instance;
+    return s_instance.get();
 }
 
 void ComponentCacheService::setCacheDir(const QString& cacheDir) {
@@ -465,39 +465,25 @@ QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int im
 }
 
 void ComponentCacheService::savePreviewImage(const QString& lcscId, const QByteArray& imageData, int imageIndex) {
-    qDebug() << "[Cache] savePreviewImage START - lcscId:" << lcscId << "index:" << imageIndex
-             << "dataSize:" << imageData.size();
-
     if (imageIndex < 0 || imageIndex >= 3 || imageData.isEmpty()) {
-        qDebug() << "[Cache] savePreviewImage: Early return due to invalid params";
         return;
     }
 
-    qDebug() << "[Cache] Step 1: About to acquire mutex...";
     QString previewPath;
     {
         QMutexLocker locker(&m_mutex);
-        qDebug() << "[Cache] Step 2: Mutex acquired, calling ensureComponentDir...";
         ensureComponentDir(lcscId);
-        qDebug() << "[Cache] Step 3: ensureComponentDir done, getting previewPath...";
         previewPath = previewImagePath(lcscId, imageIndex);
-        qDebug() << "[Cache] Step 4: previewPath:" << previewPath;
     }
-    qDebug() << "[Cache] Step 5: Mutex released, previewPath:" << previewPath;
 
-    qDebug() << "[Cache] Step 6: About to open file for writing...";
     QFile file(previewPath);
     if (file.open(QIODevice::WriteOnly)) {
-        qDebug() << "[Cache] Step 7: File opened, writing data...";
         file.write(imageData);
         file.close();
-        qDebug() << "[Cache] Step 8: File written successfully";
         LOG_DEBUG(LogModule::Core, "Saved preview image to disk: {}", previewPath);
     } else {
-        qDebug() << "[Cache] Step 7 ERROR: Failed to open file for writing";
         LOG_WARN(LogModule::Core, "Failed to write preview image: {}", previewPath);
     }
-    qDebug() << "[Cache] savePreviewImage END";
     // 注意：预览图不存入L1内存缓存，因为数据量大
 }
 
