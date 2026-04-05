@@ -391,6 +391,9 @@ private:
         QByteArray cadDataJson;  // 原始 CAD JSON 数据
         QList<QPair<int, QByteArray>> previewImageData;  // index, data
         QByteArray datasheetData;
+        // 预解析的符号和封装数据（在后台线程解析）
+        QSharedPointer<SymbolData> symbolData;
+        QSharedPointer<FootprintData> footprintData;
     };
 
     /**

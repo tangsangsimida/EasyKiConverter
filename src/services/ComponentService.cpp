@@ -3,7 +3,9 @@
 #include "BomParser.h"
 #include "ComponentQueueManager.h"
 #include "core/easyeda/EasyedaApi.h"
+#include "core/easyeda/EasyedaFootprintImporter.h"
 #include "core/easyeda/EasyedaImporter.h"
+#include "core/easyeda/EasyedaSymbolImporter.h"
 
 #include <QDebug>
 #include <QDir>
@@ -219,9 +221,11 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
             QJsonDocument cadDoc = QJsonDocument::fromJson(cadJsonData, &parseError);
             if (parseError.error == QJsonParseError::NoError && cadDoc.isObject()) {
                 QJsonObject cadDataObj = cadDoc.object();
-                // 注意：这里不能直接访问 m_importer，因为我们在后台线程
-                // 所以我们只加载原始数据，让主线程处理符号/封装导入
-                result.cadDataJson = cadJsonData;
+                // 在后台线程创建 importer 并解析符号和封装数据
+                EasyedaSymbolImporter symbolImporter;
+                result.symbolData = symbolImporter.importSymbolData(cadDataObj);
+                EasyedaFootprintImporter footprintImporter;
+                result.footprintData = footprintImporter.importFootprintData(cadDataObj);
             }
         }
 
@@ -278,23 +282,12 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
             return;
         }
 
-        // 在主线程重新导入符号和封装数据
-        if (!result.cadDataJson.isEmpty()) {
-            QJsonParseError parseError;
-            QJsonDocument cadDoc = QJsonDocument::fromJson(result.cadDataJson, &parseError);
-            if (parseError.error == QJsonParseError::NoError && cadDoc.isObject()) {
-                QJsonObject cadDataObj = cadDoc.object();
-                // 重新导入符号数据
-                QSharedPointer<SymbolData> symbolData = m_importer->importSymbolData(cadDataObj);
-                if (symbolData) {
-                    result.cachedData->setSymbolData(symbolData);
-                }
-                // 重新导入封装数据
-                QSharedPointer<FootprintData> footprintData = m_importer->importFootprintData(cadDataObj);
-                if (footprintData) {
-                    result.cachedData->setFootprintData(footprintData);
-                }
-            }
+        // 使用后台线程预解析的符号和封装数据
+        if (result.symbolData) {
+            result.cachedData->setSymbolData(result.symbolData);
+        }
+        if (result.footprintData) {
+            result.cachedData->setFootprintData(result.footprintData);
         }
 
         // 更新 m_fetchingComponents

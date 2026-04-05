@@ -339,7 +339,8 @@ void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
                         performDownload(componentId, imageUrls[i], i, 0);
                     }
                 } else {
-                    // 没有图片，直接完成
+                    // 没有图片，发出错误信号以设置占位符
+                    emit error(componentId, "No images available");
                     checkComponentCompletion(componentId);
                 }
 

@@ -344,8 +344,15 @@ private:
     // 重建 ID 到索引的映射（删除操作后调用）
     void rebuildComponentIdIndex();
 
-    // 批次处理下一批（用于分批添加元器件避免 UI 阻塞）
-    void processNextBatch();
+    // 验证队列处理
+    void startValidationQueue();
+    void processNextValidation();
+    void onValidationComplete(const QString& componentId);
+
+    // 预览图队列处理
+    void startPreviewImageQueue();
+    void processNextPreviewImage();
+    void onPreviewImageComplete(const QString& componentId);
 
 private:
     ComponentService* m_service;
@@ -370,10 +377,17 @@ private:
     // 滚动状态
     bool m_isScrolling = false;
 
-    // 批次处理状态（用于分批添加元器件避免 UI 阻塞）
-    QStringList m_batchProcessingIds;
-    int m_batchProcessingIndex = 0;
-    int m_batchProcessingBatchSize = 5;
+    // 验证队列状态
+    QStringList m_validationQueue;
+    int m_validationPendingCount = 0;
+    int m_validationCompletedCount = 0;
+    int m_validationTotalCount = 0;
+
+    // 预览图队列状态
+    QStringList m_previewQueue;
+    int m_previewPendingCount = 0;
+    int m_previewCompletedCount = 0;
+    int m_previewTotalCount = 0;
 };
 
 }  // namespace EasyKiConverter

@@ -64,7 +64,7 @@ QImage ThumbnailGenerator::generateThumbnail(const QSharedPointer<ComponentData>
 
 QImage ThumbnailGenerator::generateSymbolThumbnail(const QSharedPointer<SymbolData>& symbolData, int size) {
     if (!symbolData)
-        return QImage();
+        return generatePlaceholderThumbnail("?", size);
 
     QImage image(size, size, QImage::Format_ARGB32);
     image.fill(Qt::white);
@@ -75,9 +75,9 @@ QImage ThumbnailGenerator::generateSymbolThumbnail(const QSharedPointer<SymbolDa
     // 计算边框
     QRectF bbox = calculateSymbolBoundingBox(symbolData);
 
-    // 如果没有有效内容，返回空图片
+    // 如果没有有效内容，返回验证成功占位符
     if (bbox.isNull() || bbox.width() <= 0 || bbox.height() <= 0) {
-        return image;
+        return generatePlaceholderThumbnail("?", size);
     }
 
     // 计算缩放比例，保留 10% 边距
@@ -101,7 +101,7 @@ QImage ThumbnailGenerator::generateSymbolThumbnail(const QSharedPointer<SymbolDa
 QImage ThumbnailGenerator::generateFootprintThumbnail(const QSharedPointer<FootprintData>& footprintData, int size) {
     // 暂时简单实现，如果有需求可以进一步完善
     if (!footprintData)
-        return QImage();
+        return generatePlaceholderThumbnail("?", size);
 
     QImage image(size, size, QImage::Format_ARGB32);
     image.fill(Qt::black);  // PCB 背景色通常是深色
