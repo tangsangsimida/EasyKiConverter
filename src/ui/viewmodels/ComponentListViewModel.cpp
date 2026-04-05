@@ -351,6 +351,8 @@ void ComponentListViewModel::onValidationComplete(const QString& componentId) {
     qDebug() << "onValidationComplete:" << componentId << "pending:" << m_validationPendingCount
              << "completed:" << m_validationCompletedCount << "queue size:" << m_validationQueue.size();
 
+    emit filteredCountChanged();
+
     if (!m_validationQueue.isEmpty()) {
         processNextValidation();
     } else if (m_validationPendingCount <= 0) {
@@ -713,6 +715,7 @@ void ComponentListViewModel::refreshComponentInfo(int index) {
         m_service->fetchComponentData(item->componentId(), false);
 
         m_validationStateManager->startValidation(1);
+        emit filteredCountChanged();
     }
 }
 
