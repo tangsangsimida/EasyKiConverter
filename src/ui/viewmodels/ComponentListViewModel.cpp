@@ -1,74 +1,134 @@
 #include "ComponentListViewModel.h"
 
-#include "ui/utils/ThumbnailGenerator.h"
-#include "ui/viewmodels/ThumbnailUpdateManager.h"
 #include "ui/viewmodels/ValidationStateManager.h"
 
+#include <QBuffer>
 #include <QClipboard>
 #include <QDebug>
 #include <QGuiApplication>
 #include <QPointer>
-#include <QRunnable>
-#include <QSet>
-#include <QThreadPool>
-#include <QTimer>
+#include <QStringList>
 #include <QUrl>
 #include <QtConcurrent>
 
 namespace EasyKiConverter {
 
+PreviewImageEncodeRunnable::PreviewImageEncodeRunnable(ComponentListItemData* item,
+                                                       const QList<QImage>& images,
+                                                       std::function<void(const QString&, const QStringList&)> callback)
+    : m_item(item), m_images(images), m_callback(callback) {}
+
+void PreviewImageEncodeRunnable::run() {
+    QStringList encodedList;
+    for (const QImage& img : m_images) {
+        if (img.isNull()) {
+            encodedList.append(QString());
+            continue;
+        }
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        buffer.open(QIODevice::WriteOnly);
+        img.save(&buffer, "PNG");
+        encodedList.append(QString::fromLatin1(byteArray.toBase64().data()));
+    }
+
+    QString componentId = m_item ? m_item->componentId() : QString();
+    if (m_callback) {
+        m_callback(componentId, encodedList);
+    }
+}
+
 ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObject* parent)
     : QAbstractListModel(parent), m_service(service), m_componentList(), m_bomFilePath(), m_bomResult() {
-    m_thumbnailUpdateManager = new ThumbnailUpdateManager(this);
-    m_thumbnailUpdateManager->setFlushCallback([this](const QSet<QString>& componentIds) {
-        for (const QString& componentId : componentIds) {
-            auto item = findItemData(componentId);
+    m_validationStateManager = new ValidationStateManager(this);
+
+    m_previewImageUpdateTimer = new QTimer(this);
+    m_previewImageUpdateTimer->setSingleShot(true);
+    m_previewImageUpdateTimer->setInterval(100);
+    connect(m_previewImageUpdateTimer, &QTimer::timeout, this, &ComponentListViewModel::batchUpdatePreviewImages);
+
+    // 缓存预览图批量更新定时器（300ms 防抖）
+    m_cachePreviewImageTimer = new QTimer(this);
+    m_cachePreviewImageTimer->setSingleShot(true);
+    m_cachePreviewImageTimer->setInterval(300);
+    connect(m_cachePreviewImageTimer, &QTimer::timeout, this, &ComponentListViewModel::processCachePreviewImages);
+
+    m_encodingThreadPool = new QThreadPool(this);
+    m_encodingThreadPool->setMaxThreadCount(10);
+
+    m_batchAddTimer = new QTimer(this);
+    m_batchAddTimer->setSingleShot(false);
+    m_batchAddTimer->setInterval(50);
+    connect(m_batchAddTimer, &QTimer::timeout, this, &ComponentListViewModel::processNextBatchAdd);
+
+    m_batchUpdateTimer = new QTimer(this);
+    m_batchUpdateTimer->setSingleShot(true);
+    m_batchUpdateTimer->setInterval(100);
+    connect(m_batchUpdateTimer, &QTimer::timeout, this, [this]() {
+        m_batchUpdateMode = false;
+        for (const QPointer<ComponentListItemData>& item : m_batchUpdateItems) {
             if (item) {
-                int index = m_componentList.indexOf(item);
-                if (index >= 0) {
-                    emit dataChanged(createIndex(index, 0), createIndex(index, 0));
-                }
+                emit item->dataChanged();
             }
         }
+        m_batchUpdateItems.clear();
     });
 
-    m_validationStateManager = new ValidationStateManager(this);
-    connect(m_validationStateManager, &ValidationStateManager::validationCompleted, this, [this]() {
-        fetchAllPreviewImages();
+    // 列表更新批处理定时器（更短的间隔，减少批量操作时的延迟）
+    m_batchListUpdateTimer = new QTimer(this);
+    m_batchListUpdateTimer->setSingleShot(true);
+    m_batchListUpdateTimer->setInterval(20);
+    connect(m_batchListUpdateTimer, &QTimer::timeout, this, [this]() {
+        m_batchListUpdateMode = false;
+        emit componentCountChanged();
+        emit filteredCountChanged();
     });
 
-    // 连接 Service 信号
+    // 延迟获取预览图定时器（给验证留出时间完成）
+    m_delayedFetchPreviewTimer = new QTimer(this);
+    m_delayedFetchPreviewTimer->setSingleShot(true);
+    m_delayedFetchPreviewTimer->setInterval(100);  // 100ms 延迟
+    connect(m_delayedFetchPreviewTimer, &QTimer::timeout, this, &ComponentListViewModel::delayedFetchPreviewImages);
+
     connect(m_service, &ComponentService::componentInfoReady, this, &ComponentListViewModel::handleComponentInfoReady);
     connect(m_service, &ComponentService::cadDataReady, this, &ComponentListViewModel::handleCadDataReady);
     connect(m_service, &ComponentService::model3DReady, this, &ComponentListViewModel::handleModel3DReady);
+    connect(m_service, &ComponentService::lcscDataUpdated, this, &ComponentListViewModel::handleLcscDataUpdated);
+    connect(m_service, &ComponentService::datasheetReady, this, &ComponentListViewModel::handleDatasheetReady);
+    connect(m_service, &ComponentService::fetchError, this, &ComponentListViewModel::handleFetchError);
     connect(m_service,
             &ComponentService::previewImageReady,
             this,
             [this](const QString& componentId, const QImage& image, int imageIndex) {
                 auto item = findItemData(componentId);
                 if (item) {
-                    // 按索引顺序插入预览图，确保显示顺序正确
-                    item->insertPreviewImage(image, imageIndex);
-                    // 第一张预览图始终覆盖缩略图显示
-                    if (imageIndex == 0) {
-                        item->setThumbnail(image);
-                        qDebug() << "First preview image (index 0) set as thumbnail for component:" << componentId;
+                    item->insertPreviewImageSilent(image, imageIndex);
+                    qDebug() << "[ViewModel] previewImageReady - component:" << componentId << "index:" << imageIndex
+                             << "image valid:" << !image.isNull();
+                    // 添加防抖：收到图片后将其加入待更新列表，并重启防抖定时器
+                    if (!m_pendingPreviewImageItems.contains(item)) {
+                        m_pendingPreviewImageItems.append(item);
                     }
-                    // 滚动时不触发 UI 更新，避免卡顿
-                    if (!m_isScrolling) {
-                        m_thumbnailUpdateManager->scheduleUpdate(componentId);
-                    }
+                    m_previewImageUpdateTimer->start();
                 }
             });
     connect(m_service,
-            &ComponentService::previewImageDataReady,
+            &ComponentService::previewImageFailed,
             this,
-            &ComponentListViewModel::handlePreviewImageDataReady);
+            [this](const QString& componentId, const QString& error) {
+                qDebug() << "Preview image fetch failed for component:" << componentId << "error:" << error;
+            });
     connect(m_service, &ComponentService::allImagesReady, this, &ComponentListViewModel::handleAllImagesReady);
-    connect(m_service, &ComponentService::lcscDataUpdated, this, &ComponentListViewModel::handleLcscDataUpdated);
-    connect(m_service, &ComponentService::datasheetReady, this, &ComponentListViewModel::handleDatasheetReady);
-    connect(m_service, &ComponentService::fetchError, this, &ComponentListViewModel::handleFetchError);
-    connect(m_service, &ComponentService::previewImageFailed, this, &ComponentListViewModel::handlePreviewImageFailed);
+    connect(m_service,
+            &ComponentService::previewImagesReady,
+            this,
+            [this](const QString& componentId, const QStringList& encodedImages) {
+                qDebug() << "[ViewModel] previewImagesReady (batch from cache) - component:" << componentId
+                         << "image count:" << encodedImages.size();
+                // 收集到待处理列表，使用防抖避免频繁 UI 更新
+                m_pendingCachePreviewImages.insert(componentId, encodedImages);
+                m_cachePreviewImageTimer->start();
+            });
 }
 
 ComponentListViewModel::~ComponentListViewModel() {
@@ -136,19 +196,16 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
     beginInsertRows(QModelIndex(), m_componentList.count(), m_componentList.count());
     auto item = new ComponentListItemData(trimmedId, this);
     item->setFetching(true);
-    item->setValid(false);  // 验证开始时先设置为 false
+    item->setValid(false);
     m_componentList.append(item);
-    m_componentIdIndex.insert(trimmedId);  // 维护索引
+    m_componentIdIndex.insert(trimmedId, m_componentList.count() - 1);
     endInsertRows();
 
-    // 触发获取数据
     m_service->fetchComponentData(trimmedId, false);
 
-    // 两阶段控制：单个添加也使用两阶段
     m_validationStateManager->startValidation(1);
 
-    emit componentCountChanged();
-    emit filteredCountChanged();
+    scheduleListUpdate();
     emit componentAdded(trimmedId, true, "Component added");
 }
 
@@ -157,11 +214,8 @@ void ComponentListViewModel::removeComponent(int index) {
         beginRemoveRows(QModelIndex(), index, index);
         auto item = m_componentList.takeAt(index);
         QString removedId = item->componentId();
-        m_componentIdIndex.remove(removedId);  // 维护索引
-
-        // 两阶段控制：更新状态
+        m_componentIdIndex.remove(removedId);
         m_validatedComponentIds.removeAll(removedId);
-        // 只有当元器件还在验证中（isFetching=true）时才减少计数
         if (item->isFetching()) {
             m_pendingValidationCount--;
         }
@@ -169,17 +223,10 @@ void ComponentListViewModel::removeComponent(int index) {
         delete item;
         endRemoveRows();
 
-        // 更新 hasInvalidComponents 状态
+        rebuildComponentIdIndex();
         updateHasInvalidComponents();
 
-        // 如果删除后验证队列为空，尝试开始预览图获取
-        if (m_pendingValidationCount <= 0 && !m_validatedComponentIds.isEmpty()) {
-            m_previewFetchEnabled = true;
-            fetchAllPreviewImages();
-        }
-
-        emit componentCountChanged();
-        emit filteredCountChanged();
+        scheduleListUpdate();
         emit componentRemoved(removedId);
     }
 }
@@ -195,7 +242,6 @@ void ComponentListViewModel::removeComponentById(const QString& componentId) {
 
 void ComponentListViewModel::clearComponentList() {
     if (!m_componentList.isEmpty()) {
-        // 清空服务层的缓存，包括 LCSC 图片服务的缓存
         if (m_service) {
             m_service->clearCache();
         }
@@ -203,32 +249,33 @@ void ComponentListViewModel::clearComponentList() {
         beginResetModel();
         qDeleteAll(m_componentList);
         m_componentList.clear();
-        m_componentIdIndex.clear();  // 清空索引
+        m_componentIdIndex.clear();
         endResetModel();
 
-        // 两阶段控制：重置状态
         m_validationStateManager->reset();
-
-        // 更新 hasInvalidComponents 状态
         updateHasInvalidComponents();
 
-        emit componentCountChanged();
-        emit filteredCountChanged();
+        scheduleListUpdate();
         emit listCleared();
     }
 }
 
+void ComponentListViewModel::rebuildComponentIdIndex() {
+    m_componentIdIndex.clear();
+    for (int i = 0; i < m_componentList.count(); ++i) {
+        QString id = m_componentList.at(i)->componentId();
+        m_componentIdIndex.insert(id, i);
+    }
+}
+
 void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds) {
-    // 收集需要添加的新 ID（去重 + 验证）
     QStringList newIds;
     for (const QString& rawId : componentIds) {
         QString id = rawId.trimmed().toUpper();
         if (id.isEmpty())
             continue;
 
-        // 验证格式
         if (!validateComponentId(id)) {
-            // 尝试提取
             QStringList extracted = extractComponentIdFromText(id);
             for (const QString& extractedId : extracted) {
                 if (!componentExists(extractedId) && !newIds.contains(extractedId)) {
@@ -246,29 +293,128 @@ void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds)
     if (newIds.isEmpty())
         return;
 
-    // 重置两阶段控制变量
-    m_validationStateManager->startValidation(newIds.count());
+    m_pendingComponentIds.append(newIds);
 
-    // 一次性插入所有新元器件，只触发 1 次 UI 重建
-    int first = m_componentList.count();
-    int last = first + newIds.count() - 1;
-    beginInsertRows(QModelIndex(), first, last);
+    if (!m_batchAddTimer->isActive()) {
+        m_batchAddTimer->start();
+    }
+}
 
-    for (const QString& id : newIds) {
-        auto item = new ComponentListItemData(id, this);
-        item->setFetching(true);
-        item->setValid(false);  // 验证开始时先设置为 false
-        m_componentList.append(item);
-        m_componentIdIndex.insert(id);
+void ComponentListViewModel::processNextBatchAdd() {
+    if (m_pendingComponentIds.isEmpty()) {
+        m_batchAddTimer->stop();
+        return;
     }
 
+    QStringList batch;
+    int count = qMin(BATCH_ADD_SIZE, m_pendingComponentIds.size());
+    for (int i = 0; i < count; ++i) {
+        batch.append(m_pendingComponentIds.takeFirst());
+    }
+
+    int pendingCount = batch.count();
+    int startIndex = m_componentList.count();
+    bool isFirstBatch = (startIndex == 0);
+    bool isLastBatch = m_pendingComponentIds.isEmpty();
+
+    beginInsertRows(QModelIndex(), startIndex, startIndex + pendingCount - 1);
+    for (const QString& id : batch) {
+        auto item = new ComponentListItemData(id, this);
+        item->setFetching(true);
+        item->setValid(false);
+        m_componentList.append(item);
+        m_componentIdIndex.insert(id, m_componentList.count() - 1);
+    }
     endInsertRows();
-    emit componentCountChanged();
+
+    // 启动验证（每一批都需要检查是否有新的组件需要验证）
+    if (isFirstBatch) {
+        m_validationStateManager->startValidation(pendingCount);
+    }
+    // 继续处理队列中的验证（如果队列已空且有待验证的组件，会自动添加）
+    startValidationQueue();
+
+    // 只有在最后一批时才发射完整信号
+    if (isLastBatch) {
+        emit componentCountChanged();
+        emit filteredCountChanged();
+    } else if (isFirstBatch) {
+        // 第一批但不是最后一批，发射计数信号让GridView更新
+        emit componentCountChanged();
+    }
+}
+
+void ComponentListViewModel::startValidationQueue() {
+    const int CONCURRENT_WORKERS = 5;
+
+    // 检查需要添加到队列的新组件
+    for (auto item : m_componentList) {
+        // 只添加正在验证的组件，排除已验证完成或已验证失败的组件
+        // 注意：isFetching() 在 handleCadDataReady 时立即设为 false，
+        // 但 onValidationComplete 通过 singleShot(0) 延迟调用，
+        // 所以需要额外检查 isValid() 来排除已完成的组件
+        if (item->isFetching() && !item->isValid()) {
+            QString componentId = item->componentId();
+            // 检查是否已经在队列中，避免重复添加
+            if (!m_validationQueue.contains(componentId)) {
+                m_validationQueue.append(componentId);
+            }
+        }
+    }
+
+    // 如果没有待验证的组件，直接返回
+    if (m_validationQueue.isEmpty()) {
+        return;
+    }
+
+    // 如果 m_validationTotalCount 为 0，说明是首次启动，设置总数
+    // 否则说明是延续之前的处理，不需要额外设置（已在 pending 中）
+    if (m_validationTotalCount == 0) {
+        m_validationTotalCount = m_validationQueue.count();
+    }
+
+    // 启动并发验证 worker（如果当前没有活跃的 worker）
+    int initialCount = qMin(CONCURRENT_WORKERS, m_validationQueue.count());
+    for (int i = 0; i < initialCount; ++i) {
+        QString componentId = m_validationQueue.takeFirst();
+        m_service->fetchComponentData(componentId, false);
+        m_validationPendingCount++;
+    }
+}
+
+void ComponentListViewModel::processNextValidation() {
+    if (m_validationQueue.isEmpty()) {
+        return;
+    }
+
+    QString componentId = m_validationQueue.takeFirst();
+    m_service->fetchComponentData(componentId, false);
+}
+
+void ComponentListViewModel::onValidationComplete(const QString& componentId) {
+    Q_UNUSED(componentId);
+    m_validationCompletedCount++;
+
+    if (m_validationPendingCount > 0) {
+        m_validationPendingCount--;
+    }
+
+    qDebug() << "onValidationComplete:" << componentId << "pending:" << m_validationPendingCount
+             << "completed:" << m_validationCompletedCount << "total:" << m_validationTotalCount
+             << "queue size:" << m_validationQueue.size();
+
     emit filteredCountChanged();
 
-    for (const QString& id : newIds) {
-        m_service->fetchComponentData(id, false);
-        emit componentAdded(id, true, "Component added");
+    if (!m_validationQueue.isEmpty()) {
+        processNextValidation();
+    } else {
+        // 队列为空，尝试补充新组件（可能在验证期间新添加的）
+        startValidationQueue();
+        if (m_validationQueue.isEmpty() && m_validationCompletedCount >= m_validationTotalCount) {
+            // 队列仍为空且所有已知组件都完成了，获取预览图
+            qDebug() << "All validations complete, fetching preview images";
+            fetchAllPreviewImages();
+        }
     }
 }
 
@@ -288,7 +434,6 @@ void ComponentListViewModel::pasteFromClipboard() {
         return;
     }
 
-    // 统计新增和跳过数量
     int skipped = 0;
     QStringList newIds;
     for (const QString& id : extractedIds) {
@@ -299,7 +444,6 @@ void ComponentListViewModel::pasteFromClipboard() {
         }
     }
 
-    // 使用批量添加
     if (!newIds.isEmpty()) {
         addComponentsBatch(newIds);
     }
@@ -313,7 +457,6 @@ void ComponentListViewModel::copyAllComponentIds() {
         return;
     }
 
-    // 收集所有元器件编号
     QStringList componentIds;
     for (const auto* item : m_componentList) {
         if (item) {
@@ -321,10 +464,8 @@ void ComponentListViewModel::copyAllComponentIds() {
         }
     }
 
-    // 用换行符连接所有编号
     QString textToCopy = componentIds.join("\n");
 
-    // 复制到剪贴板
     QClipboard* clipboard = QGuiApplication::clipboard();
     clipboard->setText(textToCopy);
 
@@ -339,43 +480,55 @@ void ComponentListViewModel::selectBomFile(const QString& filePath) {
         emit bomFilePathChanged();
     }
 
-    // 将 URL 转换为本地文件路径
     QString localPath = filePath;
     if (filePath.startsWith("file:///")) {
         localPath = QUrl(filePath).toLocalFile();
         qDebug() << "Converted URL to local path:" << localPath;
     }
 
-    // 使用 ComponentService 解析 BOM 文件
-    QStringList componentIds = m_service->parseBomFile(localPath);
-
-    if (componentIds.isEmpty()) {
-        m_bomResult = "No valid component IDs found in BOM file";
-        qWarning() << "No component IDs found in BOM file:" << localPath;
-        emit bomResultChanged();
-        return;
-    }
-
-    // 使用批量添加方法
-    QStringList newIds;
-    int skipped = 0;
-
-    for (const QString& id : componentIds) {
-        if (!componentExists(id)) {
-            newIds.append(id);
-        } else {
-            skipped++;
-        }
-    }
-
-    if (!newIds.isEmpty()) {
-        addComponentsBatch(newIds);
-    }
-
-    QString resultMsg = QString("BOM file imported: %1 components added, %2 skipped").arg(newIds.count()).arg(skipped);
-    m_bomResult = resultMsg;
-    qDebug() << resultMsg;
+    m_bomResult = "Parsing BOM file...";
     emit bomResultChanged();
+
+    QFuture<QStringList> future = QtConcurrent::run([this, localPath]() { return m_service->parseBomFile(localPath); });
+
+    QFutureWatcher<QStringList>* watcher = new QFutureWatcher<QStringList>(this);
+    QPointer<ComponentListViewModel> self(this);
+    connect(watcher, &QFutureWatcher<QStringList>::finished, this, [self, watcher, localPath]() {
+        if (!self) {
+            return;
+        }
+        QStringList componentIds = watcher->result();
+        watcher->deleteLater();
+
+        if (componentIds.isEmpty()) {
+            self->m_bomResult = "No valid component IDs found in BOM file";
+            qWarning() << "No component IDs found in BOM file:" << localPath;
+            emit self->bomResultChanged();
+            return;
+        }
+
+        QStringList newIds;
+        int skipped = 0;
+
+        for (const QString& id : componentIds) {
+            if (!self->componentExists(id)) {
+                newIds.append(id);
+            } else {
+                skipped++;
+            }
+        }
+
+        if (!newIds.isEmpty()) {
+            self->addComponentsBatch(newIds);
+        }
+
+        QString resultMsg =
+            QString("BOM file imported: %1 components added, %2 skipped").arg(newIds.count()).arg(skipped);
+        self->m_bomResult = resultMsg;
+        qDebug() << resultMsg;
+        emit self->bomResultChanged();
+    });
+    watcher->setFuture(future);
 }
 
 void ComponentListViewModel::fetchComponentData(const QString& componentId, bool fetch3DModel) {
@@ -392,12 +545,10 @@ void ComponentListViewModel::setOutputPath(const QString& path) {
 }
 
 bool ComponentListViewModel::validateComponentId(const QString& componentId) const {
-    // 委托给 Service 层处理业务逻辑
     return m_service->validateComponentId(componentId);
 }
 
 QStringList ComponentListViewModel::extractComponentIdFromText(const QString& text) const {
-    // 委托给 Service 层处理业务逻辑
     return m_service->extractComponentIdFromText(text);
 }
 
@@ -406,9 +557,11 @@ bool ComponentListViewModel::componentExists(const QString& componentId) const {
 }
 
 ComponentListItemData* ComponentListViewModel::findItemData(const QString& componentId) const {
-    for (const auto& item : m_componentList) {
-        if (item->componentId() == componentId) {
-            return item;
+    auto it = m_componentIdIndex.find(componentId);
+    if (it != m_componentIdIndex.end()) {
+        int index = it.value();
+        if (index >= 0 && index < m_componentList.count()) {
+            return m_componentList.at(index);
         }
     }
     return nullptr;
@@ -417,52 +570,38 @@ ComponentListItemData* ComponentListViewModel::findItemData(const QString& compo
 void ComponentListViewModel::handleComponentInfoReady(const QString& componentId, const ComponentData& data) {
     auto item = findItemData(componentId);
     if (item) {
-        item->setName(data.name());
-        item->setPackage(data.package());
+        item->setNameSilent(data.name());
+        item->setPackageSilent(data.package());
+        if (!m_batchUpdateItems.contains(item)) {
+            m_batchUpdateItems.append(item);
+        }
+        if (!m_batchUpdateTimer->isActive()) {
+            m_batchUpdateTimer->start();
+        }
     }
 }
 
 void ComponentListViewModel::handleCadDataReady(const QString& componentId, const ComponentData& data) {
     qDebug() << "CAD data ready for:" << componentId;
     auto item = findItemData(componentId);
-    if (item) {
+    if (!item) {
+        qWarning() << "handleCadDataReady: item not found for componentId:" << componentId
+                   << ", m_componentIdIndex size:" << m_componentIdIndex.size();
+        return;
+    } else {
         QSharedPointer<ComponentData> dataPtr = QSharedPointer<ComponentData>::create(data);
         item->setComponentData(dataPtr);
         item->setFetching(false);
         item->setValid(true);
         item->setErrorMessage("");
 
-        // 更新 hasInvalidComponents 状态
-        updateHasInvalidComponents();
-        emit filteredCountChanged();
-
-        // 两阶段控制：验证完成后通知管理器
         m_validationStateManager->onComponentValidated(componentId);
-
-        // 异步生成缩略图 - 使用 QPointer 防止悬垂指针
-        QPointer<ComponentListItemData> safeItem = item;
-        QThreadPool::globalInstance()->start(QRunnable::create([safeItem, dataPtr]() {
-            QImage thumbnail = ThumbnailGenerator::generateThumbnail(dataPtr);
-            if (safeItem) {  // 检查对象是否仍然有效
-                QMetaObject::invokeMethod(safeItem, [safeItem, thumbnail]() {
-                    if (safeItem) {  // 再次检查，确保在 invokeMethod 执行时仍然有效
-                        safeItem->setThumbnail(thumbnail);
-                    }
-                });
-            }
-        }));
-
-        // 尝试获取 LCSC 预览图覆盖生成的缩略图
-        // 注意：现在由 fetchAllPreviewImages() 统一控制获取时机
-
-        // 添加到待更新集合
-        m_thumbnailUpdateManager->scheduleUpdate(componentId);
+        QTimer::singleShot(0, this, [this, componentId]() { onValidationComplete(componentId); });
     }
 }
 
 void ComponentListViewModel::handleModel3DReady(const QString& uuid, const QString& filePath) {
     qDebug() << "3D model ready for UUID:" << uuid << "at:" << filePath;
-    // 3D 模型下载通常比较慢，验证阶段不强制要求显示，但如果来了也可以更新
 }
 
 void ComponentListViewModel::handleFetchError(const QString& componentId, const QString& error) {
@@ -472,11 +611,8 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
 
     if (item) {
         item->setFetching(false);
-
-        // 标记为无效
         item->setValid(false);
 
-        // 根据错误类型设置不同的错误消息
         if (error.contains("Request timeout", Qt::CaseInsensitive) || error.contains("timeout", Qt::CaseInsensitive)) {
             item->setErrorMessage("验证超时（网络不稳定）");
         } else if (error.contains("No result", Qt::CaseInsensitive) || error.contains("404") ||
@@ -486,15 +622,11 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
             item->setErrorMessage(error);
         }
 
-        // 更新 hasInvalidComponents 状态
         updateHasInvalidComponents();
         emit filteredCountChanged();
 
-        // 两阶段控制：验证失败也要计数
         m_validationStateManager->onComponentFailed(componentId);
-
-        // 添加到防抖集合
-        m_thumbnailUpdateManager->scheduleUpdate(componentId);
+        QTimer::singleShot(0, this, [this, componentId]() { onValidationComplete(componentId); });
     }
 }
 
@@ -502,65 +634,50 @@ void ComponentListViewModel::handleLcscDataUpdated(const QString& componentId,
                                                    const QString& manufacturerPart,
                                                    const QString& datasheetUrl,
                                                    const QStringList& imageUrls) {
-    qDebug() << "LCSC data updated for component:" << componentId
-             << "Manufacturer Part:" << (manufacturerPart.isEmpty() ? "none" : manufacturerPart)
-             << "Datasheet:" << (datasheetUrl.isEmpty() ? "none" : datasheetUrl) << "Images:" << imageUrls.size();
-
     auto item = findItemData(componentId);
     if (item) {
-        // 更新 ComponentData
         if (item->componentData()) {
             auto data = item->componentData();
             if (!manufacturerPart.isEmpty()) {
                 data->setManufacturerPart(manufacturerPart);
-                qDebug() << "Manufacturer part updated in ComponentData:" << manufacturerPart;
             }
             if (!datasheetUrl.isEmpty()) {
                 data->setDatasheet(datasheetUrl);
 
-                // 检测并同步数据手册格式
                 QString format = "pdf";
                 if (datasheetUrl.toLower().contains(".html")) {
                     format = "html";
                 }
                 data->setDatasheetFormat(format);
-
-                qDebug() << "Datasheet URL updated in ComponentData:" << datasheetUrl << "format:" << format;
             }
             if (!imageUrls.isEmpty()) {
                 data->setPreviewImages(imageUrls);
-                qDebug() << "Preview images updated in ComponentData:" << imageUrls.size() << "images";
             }
         }
 
-        // 更新显示名称（使用制造商部件号）
         if (!manufacturerPart.isEmpty()) {
-            item->setName(manufacturerPart);
-            qDebug() << "Display name updated to manufacturer part:" << manufacturerPart;
+            item->setNameSilent(manufacturerPart);
+            if (!m_batchUpdateItems.contains(item)) {
+                m_batchUpdateItems.append(item);
+            }
+            if (!m_batchUpdateTimer->isActive()) {
+                m_batchUpdateTimer->start();
+            }
         }
-
-        // 添加到防抖集合
-        m_thumbnailUpdateManager->scheduleUpdate(componentId);
     } else {
         qWarning() << "Component" << componentId << "not found in list, cannot update LCSC data";
     }
 }
 
 void ComponentListViewModel::handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData) {
-    qDebug() << "Datasheet ready for component:" << componentId << "size:" << datasheetData.size() << "bytes";
-
     auto item = findItemData(componentId);
     if (item) {
-        // 更新 ComponentData
         if (item->componentData()) {
             auto data = item->componentData();
             data->setDatasheetData(datasheetData);
 
-            // 确保格式信息正确（从 ComponentService 的 ComponentData 同步）
-            // 如果 ComponentService 的 ComponentData 有格式信息，优先使用它
             QString format = data->datasheetFormat();
             if (format.isEmpty()) {
-                // 如果没有格式信息，基于内容检测
                 if (datasheetData.startsWith("%PDF-")) {
                     format = "pdf";
                 } else {
@@ -568,68 +685,118 @@ void ComponentListViewModel::handleDatasheetReady(const QString& componentId, co
                 }
                 data->setDatasheetFormat(format);
             }
-
-            qDebug() << "Datasheet data updated in ComponentData, size:" << datasheetData.size() << "bytes"
-                     << "format:" << format;
         }
     } else {
         qWarning() << "Component" << componentId << "not found in list, cannot update datasheet data";
     }
 }
 
-void ComponentListViewModel::handlePreviewImageDataReady(const QString& componentId,
-                                                         const QByteArray& imageData,
-                                                         int imageIndex) {
-    qDebug() << "Preview image data ready for component:" << componentId << "index:" << imageIndex
-             << "size:" << imageData.size() << "bytes";
-
+void ComponentListViewModel::handleAllImagesReady(const QString& componentId, const QStringList& imagePaths) {
+    qDebug() << "All images ready for component:" << componentId << "paths:" << imagePaths.size();
     auto item = findItemData(componentId);
+    if (item) {
+        qDebug() << "[ViewModel] handleAllImagesReady - component:" << componentId
+                 << "current raw images count:" << item->previewImagesRaw().size();
+        if (!m_pendingPreviewImageItems.contains(item)) {
+            m_pendingPreviewImageItems.append(item);
+        }
+        if (!m_previewImageUpdateTimer->isActive()) {
+            m_previewImageUpdateTimer->start();
+        }
+    }
     if (item && item->componentData()) {
-        // 保存数据到 ComponentListViewModel 的 ComponentData 中（用于导出）
-        int currentCount = item->componentData()->previewImageData().size();
-        item->componentData()->addPreviewImageData(imageData, imageIndex);
-        int newCount = item->componentData()->previewImageData().size();
-        qDebug() << "Preview image data saved to ComponentData, index:" << imageIndex << "count:" << currentCount
-                 << "->" << newCount;
+        QFutureWatcher<QList<QByteArray>>* watcher = new QFutureWatcher<QList<QByteArray>>(this);
+        connect(watcher, &QFutureWatcher<QList<QByteArray>>::finished, this, [this, watcher, item, componentId]() {
+            QList<QByteArray> imageDataList = watcher->result();
+            watcher->deleteLater();
+            if (!imageDataList.isEmpty()) {
+                item->componentData()->setPreviewImageData(imageDataList);
+            }
+        });
+
+        QFuture<QList<QByteArray>> future = QtConcurrent::run([imagePaths]() -> QList<QByteArray> {
+            QList<QByteArray> imageDataList;
+            for (const QString& path : imagePaths) {
+                QFile file(path);
+                if (file.open(QIODevice::ReadOnly)) {
+                    imageDataList.append(file.readAll());
+                }
+            }
+            return imageDataList;
+        });
+        watcher->setFuture(future);
     }
 }
 
-void ComponentListViewModel::handlePreviewImageFailed(const QString& componentId, const QString& error) {
-    qWarning() << "Preview image fetch failed for component:" << componentId << "error:" << error;
+void ComponentListViewModel::batchUpdatePreviewImages() {
+    qDebug() << "Batch updating preview images for" << m_pendingPreviewImageItems.size() << "items";
+
+    if (m_pendingPreviewImageItems.isEmpty()) {
+        return;
+    }
+
+    for (const QPointer<ComponentListItemData>& item : m_pendingPreviewImageItems) {
+        if (item) {
+            QList<QImage> images;
+            for (const QImage& img : item->previewImagesRaw()) {
+                images.append(img);
+            }
+
+            auto callback = [this](const QString& cid, const QStringList& encoded) {
+                onPreviewImageEncodingDone(cid, encoded);
+            };
+            PreviewImageEncodeRunnable* runnable = new PreviewImageEncodeRunnable(item, images, callback);
+
+            m_encodingThreadPool->start(runnable);
+        }
+    }
+
+    m_pendingPreviewImageItems.clear();
+}
+
+void ComponentListViewModel::processCachePreviewImages() {
+    qDebug() << "[ViewModel] Processing cache preview images for" << m_pendingCachePreviewImages.size() << "components";
+
+    if (m_pendingCachePreviewImages.isEmpty()) {
+        return;
+    }
+
+    // 使用 QMap 拷贝一份
+    QMap<QString, QStringList> pending = m_pendingCachePreviewImages;
+    m_pendingCachePreviewImages.clear();
+
+    // 使用 QTimer::singleShot(0) 批量调度到下一个事件循环，避免阻塞 UI
+    // 每批 2 个组件，分批处理让 UI 有时间响应
+    const int BATCH_SIZE = 1;
+    QList<QString> keys;
+    QList<QStringList> values;
+
+    for (auto it = pending.begin(); it != pending.end(); ++it) {
+        keys.append(it.key());
+        values.append(it.value());
+    }
+
+    int totalCount = keys.size();
+    for (int i = 0; i < totalCount; i += BATCH_SIZE) {
+        int batchEnd = qMin(i + BATCH_SIZE, totalCount);
+        int batchIndex = i / BATCH_SIZE;
+        QTimer::singleShot(0, this, [this, keys, values, i, batchEnd, batchIndex, totalCount]() {
+            for (int j = i; j < batchEnd; ++j) {
+                auto item = findItemData(keys[j]);
+                if (item) {
+                    item->setEncodedPreviewImages(values[j]);
+                }
+            }
+        });
+    }
+}
+
+void ComponentListViewModel::onPreviewImageEncodingDone(const QString& componentId, const QStringList& encodedImages) {
+    qDebug() << "[ViewModel] Encoding completed for:" << componentId << "count:" << encodedImages.size();
 
     auto item = findItemData(componentId);
     if (item) {
-        // 设置 isFetching 为 false
-        item->setFetching(false);
-
-        // 不清除已生成的缩略图，保持显示默认缩略图
-        qWarning() << "Preview image failed for component:" << componentId << "keeping default thumbnail";
-
-        // 添加到待更新集合
-        m_thumbnailUpdateManager->scheduleUpdate(componentId);
-    }
-}
-
-void ComponentListViewModel::handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList) {
-    qDebug() << "All images ready for component:" << componentId << "count:" << imageDataList.size();
-
-    auto item = findItemData(componentId);
-    if (item && item->componentData()) {
-        // 设置 isFetching 为 false
-        item->setFetching(false);
-
-        // 更新所有图片数据到 ComponentListViewModel 的 ComponentData 中
-        item->componentData()->setPreviewImageData(imageDataList);
-        qDebug() << "All image data updated in ComponentListViewModel for component:" << componentId
-                 << "count:" << imageDataList.size();
-
-        // 打印每张图片的大小
-        for (int i = 0; i < imageDataList.size(); ++i) {
-            qDebug() << "  Image" << i << "size:" << imageDataList[i].size() << "bytes";
-        }
-
-        // 添加到待更新集合
-        m_thumbnailUpdateManager->scheduleUpdate(componentId);
+        item->setEncodedPreviewImages(encodedImages);
     }
 }
 
@@ -637,12 +804,12 @@ void ComponentListViewModel::refreshComponentInfo(int index) {
     if (index >= 0 && index < m_componentList.count()) {
         auto item = m_componentList.at(index);
         item->setFetching(true);
-        item->setValid(false);  // 验证开始时先设置为 false
+        item->setValid(false);
         item->setErrorMessage("");
         m_service->fetchComponentData(item->componentId(), false);
 
-        // 两阶段控制
         m_validationStateManager->startValidation(1);
+        emit filteredCountChanged();
     }
 }
 
@@ -652,35 +819,18 @@ void ComponentListViewModel::retryAllInvalidComponents() {
         auto item = m_componentList.at(i);
         if (item && !item->isValid() && !item->isFetching()) {
             item->setFetching(true);
-            item->setValid(false);  // 验证开始时先设置为 false
+            item->setValid(false);
             item->setErrorMessage("");
             m_service->fetchComponentData(item->componentId(), false);
             retryCount++;
         }
     }
 
-    // 两阶段控制
     if (retryCount > 0) {
         m_validationStateManager->startValidation(retryCount);
     }
 
-    // 通知 QML 列表需要更新过滤状态
     emit filteredCountChanged();
-}
-
-void ComponentListViewModel::retryPreviewImage(const QString& componentId) {
-    qDebug() << "Retry preview image for component:" << componentId;
-
-    auto item = findItemData(componentId);
-    if (item) {
-        // 设置 isFetching 为 true
-        item->setFetching(true);
-
-        // 重新获取预览图
-        m_service->fetchLcscPreviewImage(componentId);
-    } else {
-        qWarning() << "Component not found for preview image retry:" << componentId;
-    }
 }
 
 QStringList ComponentListViewModel::getAllComponentIds() const {
@@ -699,10 +849,57 @@ QSharedPointer<ComponentData> ComponentListViewModel::getPreloadedData(const QSt
     return nullptr;
 }
 
+QMap<QString, QSharedPointer<ComponentData>> ComponentListViewModel::getAllPreloadedData() const {
+    QMap<QString, QSharedPointer<ComponentData>> result;
+    for (auto item : m_componentList) {
+        if (item && item->isValid() && item->componentData()) {
+            result.insert(item->componentId(), item->componentData());
+        }
+    }
+    return result;
+}
+
 void ComponentListViewModel::copyToClipboard(const QString& text) {
     QClipboard* clipboard = QGuiApplication::clipboard();
     clipboard->setText(text);
     qDebug() << "Copied to clipboard:" << text;
+}
+
+void ComponentListViewModel::fetchAllPreviewImages() {
+    QStringList validIds;
+    for (auto item : m_componentList) {
+        if (item && item->isValid()) {
+            validIds.append(item->componentId());
+        }
+    }
+
+    if (validIds.isEmpty()) {
+        qDebug() << "No valid components to fetch preview images for";
+        return;
+    }
+
+    qDebug() << "Fetching preview images for" << validIds.count() << "valid components";
+
+    // 分批加载预览图,间隔 50ms UI 卡顿
+    const int BATCH_DELAY_MS = 20;
+    for (int i = 0; i < validIds.size(); ++i) {
+        QString componentId = validIds[i];
+        QTimer::singleShot(
+            i * BATCH_DELAY_MS, this, [this, componentId]() { m_service->fetchLcscPreviewImage(componentId); });
+    }
+}
+
+void ComponentListViewModel::delayedFetchPreviewImages() {
+    // 使用计数器判断是否所有验证都完成
+    if (m_validationCompletedCount >= m_validationTotalCount && m_validationPendingCount <= 0 &&
+        m_validationQueue.isEmpty()) {
+        qDebug() << "All validation complete (delayed check), fetching preview images";
+        fetchAllPreviewImages();
+    } else {
+        // 还有验证在进行，继续等待
+        qDebug() << "Still have pending validations, delaying preview fetch";
+        m_delayedFetchPreviewTimer->start();
+    }
 }
 
 void ComponentListViewModel::updateHasInvalidComponents() {
@@ -719,19 +916,6 @@ void ComponentListViewModel::updateHasInvalidComponents() {
     }
 }
 
-void ComponentListViewModel::fetchAllPreviewImages() {
-    QStringList validatedIds = m_validationStateManager->validatedComponentIds();
-    if (validatedIds.isEmpty()) {
-        qDebug() << "No validated components to fetch preview images for";
-        return;
-    }
-
-    qDebug() << "Fetching preview images for" << validatedIds.count() << "validated components";
-
-    // 使用批量获取方法获取所有验证通过元器件的预览图
-    m_service->fetchBatchPreviewImages(validatedIds);
-}
-
 void ComponentListViewModel::setFilterMode(const QString& mode) {
     if (m_filterMode != mode) {
         m_filterMode = mode;
@@ -744,6 +928,20 @@ void ComponentListViewModel::setScrolling(bool scrolling) {
     if (m_isScrolling != scrolling) {
         m_isScrolling = scrolling;
         emit isScrollingChanged();
+    }
+}
+
+void ComponentListViewModel::updateExportStatus(const QString& componentId,
+                                                int previewImageExported,
+                                                int datasheetExported) {
+    ComponentListItemData* item = findItemData(componentId);
+    if (item) {
+        if (previewImageExported >= 0) {
+            item->setPreviewImageExported(previewImageExported > 0);
+        }
+        if (datasheetExported >= 0) {
+            item->setDatasheetExported(datasheetExported > 0);
+        }
     }
 }
 
@@ -795,4 +993,21 @@ int ComponentListViewModel::invalidCount() const {
     return count;
 }
 
+void ComponentListViewModel::scheduleListUpdate() {
+    if (!m_batchListUpdateMode) {
+        m_batchListUpdateMode = true;
+    }
+    // start() 重启已运行的单次定时器
+    m_batchListUpdateTimer->start();
+}
+
 }  // namespace EasyKiConverter
+
+// 你告诉我孩子还是胚胎的时候在哪里？
+// 1.胃袋，因为人类的胃袋柔韧性很好，装在胃袋里面不用怕孩子乱动导致流产
+// 2.膀胱，这里面的柔韧性虽然没有胃袋那么大，但是够用了
+// 3.颅内，因为脑机的原理就是靠放电来控制行为，婴儿可以提前体验开高达的体验
+// 4.口腔，因为口腔里面有许多食物残渣，婴儿生出来都是大胖小子，不会营养不良
+// 4.肝脏，因为如果你玩游戏太需要肝的话可以让婴儿代肝
+// 5.鼻腔，因为人类的鼻毛非常多，婴儿就想裹着棉被一样温暖
+// 6.脚底，因为人类每天都要大量的直立行走，提前训练婴儿的抗压能力，生出来之后不用怕抑郁，高考都是小儿科

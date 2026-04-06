@@ -13,6 +13,12 @@ Card {
     // 默认折叠，只有在有元器件时才展开
     isCollapsed: componentListController ? componentListController.componentCount === 0 : true
     resources: [
+        // 防抖定时器，避免频繁调用 updateFilter()
+        Timer {
+            id: filterUpdateDebounceTimer
+            interval: 50
+            onTriggered: visualModel.updateFilter()
+        },
         // 监听组件数量变化，自动展开
         Connections {
             target: componentListCard.componentListController
@@ -26,14 +32,14 @@ Card {
         Connections {
             target: componentListCard.componentListController
             function onFilterModeChanged() {
-                visualModel.updateFilter();
+                filterUpdateDebounceTimer.restart();
             }
         },
         // 监听筛选数量变化，自动更新过滤
         Connections {
             target: componentListCard.componentListController
             function onFilteredCountChanged() {
-                visualModel.updateFilter();
+                filterUpdateDebounceTimer.restart();
             }
         },
         // 搜索过滤模型 (作为资源定义，不参与布局)
@@ -363,7 +369,7 @@ Card {
                     }
 
                     onTextChanged: {
-                        visualModel.updateFilter();
+                        filterUpdateDebounceTimer.restart();
                     }
                 }
 
@@ -505,6 +511,10 @@ Card {
             Layout.preferredHeight: 300
             Layout.topMargin: AppStyle.spacing.md
             clip: true
+            // 启用虚拟化，缓存上下各一屏的项
+            cacheBuffer: 500
+            // 启用 Item 回收，减少创建/销毁开销
+            reuseItems: true
             cellWidth: {
                 var w = width - AppStyle.spacing.md;
                 var c = Math.max(1, Math.floor(w / 230));

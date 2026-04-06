@@ -34,6 +34,10 @@ public:
         return m_processWriteQueue;
     }
 
+    StatusQueuePtr mediaFetchQueue() const {
+        return m_mediaFetchQueue;
+    }
+
     /**
      * @brief 安全地将状态推送到队列，包含指数退避和 UI 事件处理
      */
@@ -43,6 +47,7 @@ private:
     size_t m_queueSize;
     StatusQueuePtr m_fetchProcessQueue;
     StatusQueuePtr m_processWriteQueue;
+    StatusQueuePtr m_mediaFetchQueue;
 };
 
 }  // namespace EasyKiConverter

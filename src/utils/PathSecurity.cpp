@@ -26,14 +26,30 @@ bool PathSecurity::isSafePath(const QString& fullPath, const QString& baseDir) {
     }
 
     // 1. 获取绝对路径并规范化
+    // 注意：canonicalFilePath() 在应用程序退出时可能会崩溃，因为 Qt 内部对象可能已被销毁
+    // 使用 QFile::exists() 先检查，避免调用 canonicalFilePath() 在不存在的路径上
     QFileInfo baseInfo(baseDir);
     QFileInfo targetInfo(fullPath);
 
-    // 优先使用 canonicalFilePath (要求路径存在)，它能解析符号链接和短文件名，这是最准确的比较方式
-    // 如果路径不存在，回退到 cleanPath(absoluteFilePath)
-    QString absBase = baseInfo.exists() ? baseInfo.canonicalFilePath() : QDir::cleanPath(baseInfo.absoluteFilePath());
-    QString absTarget =
-        targetInfo.exists() ? targetInfo.canonicalFilePath() : QDir::cleanPath(targetInfo.absoluteFilePath());
+    // 安全获取绝对路径 - 避免在退出时调用 canonicalFilePath()
+    QString absBase;
+    QString absTarget;
+
+    // 检查路径是否存在且可访问
+    if (!baseInfo.exists() || !baseInfo.isReadable()) {
+        // 路径不存在时使用 cleanPath，这是安全的
+        absBase = QDir::cleanPath(baseInfo.absoluteFilePath());
+    } else {
+        // 路径存在但避免使用 canonicalFilePath，改用 absoluteFilePath + cleanPath
+        // canonicalFilePath() 会调用 Qt 内部文件引擎，在退出时可能崩溃
+        absBase = QDir::cleanPath(baseInfo.absoluteFilePath());
+    }
+
+    if (!targetInfo.exists() || !targetInfo.isReadable()) {
+        absTarget = QDir::cleanPath(targetInfo.absoluteFilePath());
+    } else {
+        absTarget = QDir::cleanPath(targetInfo.absoluteFilePath());
+    }
 
     // 2. 统一分隔符为 '/' (Qt 默认)
     absBase = QDir::fromNativeSeparators(absBase);
@@ -86,8 +102,11 @@ QString PathSecurity::sanitizeFilename(const QString& name) {
     safeName.replace(controlChars, "");
 
     // 替换 Unicode 零宽字符 (可能导致显示欺骗)
-    static const QRegularExpression zeroWidth(QStringLiteral("[\\u200B-\\u200D\\uFEFF]"));
-    safeName.replace(zeroWidth, "");
+    // 使用 QChar 移除这些特殊字符
+    safeName.remove(QChar(0x200B));  // ZERO WIDTH SPACE
+    safeName.remove(QChar(0x200C));  // ZERO WIDTH NON-JOINDER
+    safeName.remove(QChar(0x200D));  // ZERO WIDTH JOINER
+    safeName.remove(QChar(0xFEFF));  // ZERO WIDTH NO-BREAK SPACE
 
     safeName = safeName.trimmed();
 

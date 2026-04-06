@@ -185,7 +185,32 @@ Card {
                 pressedColor: AppStyle.colors.borderFocus
                 visible: exportStatisticsCard.exportSettingsController && exportStatisticsCard.exportSettingsController.debugMode // 只在调试模式下显示
                 onClicked: {
-                    Qt.openUrlExternally("file:///" + exportStatisticsCard.exportProgressController.statisticsReportPath);
+                    Qt.openUrlExternally(exportStatisticsCard.exportProgressController.statisticsReportUrl);
+                }
+            }
+            // 打开缓存目录按钮（只在调试模式下显示）
+            ModernButton {
+                text: qsTranslate("MainWindow", "打开缓存目录")
+                iconName: "folder"
+                backgroundColor: AppStyle.colors.surface
+                textColor: AppStyle.colors.textPrimary
+                hoverColor: AppStyle.colors.border
+                pressedColor: AppStyle.colors.borderFocus
+                visible: exportStatisticsCard.exportSettingsController && exportStatisticsCard.exportSettingsController.debugMode // 只在调试模式下显示
+                onClicked: {
+                    Qt.openUrlExternally(exportStatisticsCard.exportProgressController.cacheDirUrl);
+                }
+            }
+            // 清空缓存按钮（只在调试模式下显示）
+            ModernButton {
+                text: qsTranslate("MainWindow", "清空缓存")
+                iconName: "trash"
+                backgroundColor: AppStyle.colors.danger
+                hoverColor: AppStyle.colors.dangerDark
+                pressedColor: AppStyle.colors.danger
+                visible: exportStatisticsCard.exportSettingsController && exportStatisticsCard.exportSettingsController.debugMode // 只在调试模式下显示
+                onClicked: {
+                    exportStatisticsCard.exportProgressController.clearCache();
                 }
             }
         }

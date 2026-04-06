@@ -2,7 +2,6 @@
 #define EXPORTSERVICE_PIPELINE_H
 
 #include "ExportService.h"
-#include "PipelineCompletionHandler.h"
 #include "models/ComponentExportStatus.h"
 #include "models/SymbolData.h"
 #include "pipeline/queue/PipelineQueueManager.h"
@@ -38,9 +37,17 @@ struct PipelineProgress {
     int writeCompleted = 0;  // 写入完成数
     int totalTasks = 0;  // 总任务数
 
+    // 预览图和手册计数（用于加权计算）
+    int totalPreviewImages = 0;  // 总预览图数量
+    int fetchedPreviewImages = 0;  // 已获取预览图数量
+    int totalDatasheets = 0;  // 总手册数量
+    int fetchedDatasheets = 0;  // 已获取手册数量
+
     // 计算各阶段进度（0-100）
     int fetchProgress() const {
-        return totalTasks > 0 ? (fetchCompleted * 100 / totalTasks) : 0;
+        if (totalTasks <= 0)
+            return 0;
+        return fetchCompleted * 100 / totalTasks;
     }
 
     int processProgress() const {
@@ -48,12 +55,18 @@ struct PipelineProgress {
     }
 
     int writeProgress() const {
-        return totalTasks > 0 ? (writeCompleted * 100 / totalTasks) : 0;
+        if (totalTasks <= 0)
+            return 0;
+        return writeCompleted * 100 / totalTasks;
     }
 
     // 计算加权总进度（抓取30%，处理50%，写入20%）
     int overallProgress() const {
-        return (fetchProgress() * 30 + processProgress() * 50 + writeProgress() * 20) / 100;
+        int fetch = fetchProgress();
+        int process = processProgress();
+        int write = writeProgress();
+
+        return (fetch * 30 + process * 50 + write * 20) / 100;
     }
 };
 
@@ -123,6 +136,13 @@ public:
      */
     void setComponentListViewModel(class ComponentListViewModel* componentListViewModel);
 
+    /**
+     * @brief 设置 ExportProgressViewModel（用于更新预览图/手册导出状态）
+     *
+     * @param progressViewModel ExportProgressViewModel 指针
+     */
+    void setExportProgressViewModel(class ExportProgressViewModel* progressViewModel);
+
 signals:
     /**
      * @brief 流水线进度更新信号
@@ -136,6 +156,14 @@ signals:
      * @param statistics 统计数据
      */
     void statisticsReportGenerated(const QString& reportPath, const ExportStatistics& statistics);
+
+    /**
+     * @brief 单项导出完成信号（用于实时进度更新）
+     * @param componentId 元器件ID
+     * @param itemType 导出项类型 (ExportItemType)
+     * @param success 是否成功
+     */
+    void exportItemCompleted(const QString& componentId, int itemType, bool success);
 
 public slots:
     /**
@@ -223,7 +251,7 @@ private:
     // 线程池
     QThreadPool* m_fetchThreadPool;  // 抓取线程池（I/O密集型，32个线程）
     QThreadPool* m_processThreadPool;  // 处理线程池（CPU密集型，等于核心数）
-    QThreadPool* m_writeThreadPool;  // 写入线程池（磁盘I/O密集型，8个线程）
+    QThreadPool* m_writeThreadPool;  // 写入线程池（磁盘I/O密集型，10个线程）
 
     // 队列管理器
     PipelineQueueManager m_queueManager;
@@ -253,6 +281,9 @@ private:
     // ComponentListViewModel（用于获取预览图缓存文件路径）
     class ComponentListViewModel* m_componentListViewModel;
 
+    // ExportProgressViewModel（用于更新导出状态）
+    class ExportProgressViewModel* m_exportProgressViewModel;
+
     // 临时文件夹路径
     QString m_tempDir;
 
@@ -280,9 +311,6 @@ private:
 
     // 是否处于重试模式（用于区分新的导出流程和重试）
     bool m_isRetryMode;
-
-    // 流水线完成处理器（用于导出预览图和手册）
-    PipelineCompletionHandler* m_completionHandler;
 };
 
 }  // namespace EasyKiConverter

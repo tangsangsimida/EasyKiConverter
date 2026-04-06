@@ -6,7 +6,6 @@ add_library(EasyKiConverterViewModels STATIC
     ExportProgressViewModel.cpp
     ThemeSettingsViewModel.cpp
     SystemTrayManager.cpp
-    ThumbnailUpdateManager.cpp
     ValidationStateManager.cpp
 )
 

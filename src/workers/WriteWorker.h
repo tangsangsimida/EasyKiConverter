@@ -6,7 +6,10 @@
 #include "core/kicad/ExporterSymbol.h"
 #include "models/ComponentExportStatus.h"
 
+#include <QAtomicInt>
+#include <QFutureWatcher>
 #include <QMutex>
+#include <QMutexLocker>
 #include <QObject>
 #include <QRunnable>
 
@@ -39,6 +42,8 @@ public:
                          bool exportSymbol,
                          bool exportFootprint,
                          bool exportModel3D,
+                         bool exportPreviewImages,
+                         bool exportDatasheet,
                          bool debugMode,
                          const QString& tempDir,
                          QObject* parent = nullptr);
@@ -64,6 +69,14 @@ signals:
      * @param status 导出状态（使用 QSharedPointer 避免拷贝）
      */
     void writeCompleted(QSharedPointer<ComponentExportStatus> status);
+
+    /**
+     * @brief 单项导出完成信号（用于实时进度更新）
+     * @param componentId 元器件ID
+     * @param itemType 导出项类型 (ExportItemType)
+     * @param success 是否成功
+     */
+    void itemWriteCompleted(const QString& componentId, int itemType, bool success);
 
 private:
     /**
@@ -95,9 +108,23 @@ private:
     bool createOutputDirectory(const QString& path);
 
     /**
+     * @brief 写入预览图文件
+     * @param status 导出状态
+     * @return bool 是否成功
+     */
+    bool writePreviewImageFile(ComponentExportStatus& status);
+
+    /**
+     * @brief 写入手册文件
+     * @param status 导出状态
+     * @return bool 是否成功
+     */
+    bool writeDatasheetFile(ComponentExportStatus& status);
+
+    /**
      * @brief 导出调试数据
      * @param status 导出状态
-         * @return bool 是否成功
+     * @return bool 是否成功
      */
     bool exportDebugData(ComponentExportStatus& status);
 
@@ -108,6 +135,8 @@ private:
     bool m_exportSymbol;
     bool m_exportFootprint;
     bool m_exportModel3D;
+    bool m_exportPreviewImages;
+    bool m_exportDatasheet;
     bool m_debugMode;
     QString m_tempDir;
 
@@ -115,6 +144,11 @@ private:
     ExporterFootprint m_footprintExporter;
     Exporter3DModel m_model3DExporter;
     QAtomicInt m_isAborted;  // 取消标志 (v3.0.5+)
+
+    // 导出器互斥锁（确保线程安全）
+    QMutex m_symbolMutex;
+    QMutex m_footprintMutex;
+    QMutex m_model3DMutex;
 };
 
 }  // namespace EasyKiConverter

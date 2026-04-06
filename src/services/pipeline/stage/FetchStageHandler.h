@@ -4,6 +4,7 @@
 #include "../../../models/ComponentData.h"
 #include "../../../models/ComponentExportStatus.h"
 #include "../../../workers/FetchWorker.h"
+#include "../../../workers/MediaFetchWorker.h"
 #include "../../ExportService.h"  // ExportOptions 定义在此文件中
 #include "StageHandler.h"
 
@@ -50,6 +51,16 @@ signals:
 
 private slots:
     void onWorkerCompleted(QSharedPointer<ComponentExportStatus> status, FetchWorker* worker);
+    void onMediaFetchCompleted(MediaFetchWorker* worker,
+                               const QString& componentId,
+                               const QList<QByteArray>& previewImageDataList,
+                               const QByteArray& datasheetData,
+                               const QList<ComponentExportStatus::NetworkDiagnostics>& diagnostics);
+
+private:
+    void fetchMediaIfNeeded(const QString& componentId,
+                            const QSharedPointer<ComponentData>& preData,
+                            QSharedPointer<ComponentExportStatus> status);
 
 private:
     QThreadPool* m_threadPool;
@@ -57,7 +68,10 @@ private:
     ExportOptions m_options;
     QMap<QString, QSharedPointer<ComponentData>> m_preloadedData;
     QSet<FetchWorker*> m_activeWorkers;
+    QSet<MediaFetchWorker*> m_activeMediaWorkers;
     QMutex m_workerMutex;
+    // 保存待更新的 status，等待媒体下载完成
+    QMap<QString, QSharedPointer<ComponentExportStatus>> m_pendingMediaStatuses;
 };
 
 }  // namespace EasyKiConverter

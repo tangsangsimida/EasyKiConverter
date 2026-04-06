@@ -1,6 +1,7 @@
 #ifndef EXPORTPROGRESSVIEWMODEL_H
 #define EXPORTPROGRESSVIEWMODEL_H
 
+#include "services/ComponentCacheService.h"
 #include "services/ComponentService.h"
 #include "services/ExportService.h"
 #include "services/ExportService_Pipeline.h"
@@ -10,6 +11,7 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QUrl>
 #include <QVariantList>
 
 namespace EasyKiConverter {
@@ -42,6 +44,9 @@ class ExportProgressViewModel : public QObject {
     Q_PROPERTY(int filteredPendingCount READ filteredPendingCount NOTIFY filteredResultsListChanged)
     Q_PROPERTY(bool hasStatistics READ hasStatistics NOTIFY statisticsChanged)
     Q_PROPERTY(QString statisticsReportPath READ statisticsReportPath NOTIFY statisticsChanged)
+    Q_PROPERTY(QString statisticsReportUrl READ statisticsReportUrl CONSTANT)
+    Q_PROPERTY(QString cacheDirPath READ cacheDirPath CONSTANT)
+    Q_PROPERTY(QString cacheDirUrl READ cacheDirUrl CONSTANT)
     Q_PROPERTY(QString statisticsSummary READ statisticsSummary NOTIFY statisticsChanged)
     Q_PROPERTY(int statisticsTotal READ statisticsTotal NOTIFY statisticsChanged)
     Q_PROPERTY(int statisticsSuccess READ statisticsSuccess NOTIFY statisticsChanged)
@@ -107,6 +112,9 @@ public:
     // 打开最后导出的文件夹
     Q_INVOKABLE bool openLastExportedFolder();
 
+    // 清空组件缓存（跨平台）
+    Q_INVOKABLE void clearCache();
+
     int fetchProgress() const {
         return m_fetchProgress;
     }
@@ -147,6 +155,25 @@ public:
 
     QString statisticsReportPath() const {
         return m_statisticsReportPath;
+    }
+
+    QString cacheDirPath() const {
+        return ComponentCacheService::instance()->cacheDir();
+    }
+
+    QString cacheDirUrl() const {
+        auto cacheDir = ComponentCacheService::instance()->cacheDir();
+        if (cacheDir.isEmpty()) {
+            return QString();
+        }
+        return QUrl::fromLocalFile(cacheDir).toString();
+    }
+
+    QString statisticsReportUrl() const {
+        if (m_statisticsReportPath.isEmpty()) {
+            return QString();
+        }
+        return QUrl::fromLocalFile(m_statisticsReportPath).toString();
     }
 
     QString statisticsSummary() const {
@@ -236,6 +263,17 @@ public slots:
         }
     }
 
+public:
+    /**
+     * @brief 更新单个元器件的预览图和手册导出状态
+     * @param componentId 元器件ID
+     * @param previewImageSuccess 预览图是否导出成功（-1表示不更新）
+     * @param datasheetSuccess 手册是否导出成功（-1表示不更新）
+     */
+    Q_INVOKABLE void updateComponentExportStatus(const QString& componentId,
+                                                 int previewImageSuccess,
+                                                 int datasheetSuccess);
+
 signals:
     void progressChanged();
     void statusChanged();
@@ -265,11 +303,14 @@ private slots:
                                  int stage = -1,
                                  bool symbolSuccess = false,
                                  bool footprintSuccess = false,
-                                 bool model3DSuccess = false);
+                                 bool model3DSuccess = false,
+                                 bool previewImagesSuccess = false,
+                                 bool datasheetSuccess = false);
     void handleComponentDataFetched(const QString& componentId, const ComponentData& data);
     void handleAllComponentsDataCollected(const QList<ComponentData>& componentDataList);
     void handlePipelineProgressUpdated(const PipelineProgress& progress);
     void handleStatisticsReportGenerated(const QString& reportPath, const ExportStatistics& statistics);
+    void handleExportItemCompleted(const QString& componentId, int itemType, bool success);
     void flushPendingUpdates();
 
 private:
@@ -277,8 +318,10 @@ private:
                             bool success,
                             bool symbolSuccess,
                             bool footprintSuccess,
-                            bool model3DSuccess) const;
-    void prepopulateResultsList(const QStringList& componentIds);
+                            bool model3DSuccess,
+                            bool previewImagesSuccess = false,
+                            bool datasheetSuccess = false) const;
+    void prepopulateResultsList(const QStringList& componentIds, const ExportOptions& options);
     void startExportInternal(const QStringList& componentIds, bool isRetry);
     void updateStatistics();
     void showExportCompleteNotification();
@@ -307,6 +350,7 @@ private:
     bool m_pendingUpdate;
     bool m_hasStatistics;
     QString m_statisticsReportPath;
+    QString m_cacheDirPath;
     QString m_statisticsSummary;
     ExportStatistics m_statistics;
     int m_successCount;

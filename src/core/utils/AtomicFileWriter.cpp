@@ -90,4 +90,61 @@ bool AtomicFileWriter::createDirectory(const QString& path) {
     return dir.mkpath(path);
 }
 
+bool AtomicFileWriter::copyAtomically(const QString& sourcePath, const QString& finalPath, const QString& tempDir) {
+    if (sourcePath.isEmpty() || finalPath.isEmpty() || tempDir.isEmpty()) {
+        qWarning() << "AtomicFileWriter::copyAtomically: Invalid parameters";
+        return false;
+    }
+
+    if (!QFileInfo::exists(sourcePath)) {
+        qWarning() << "AtomicFileWriter::copyAtomically: Source file does not exist:" << sourcePath;
+        return false;
+    }
+
+    if (!createDirectory(tempDir)) {
+        qWarning() << "AtomicFileWriter::copyAtomically: Failed to create temp directory:" << tempDir;
+        return false;
+    }
+
+    QString suffix = QFileInfo(finalPath).completeSuffix();
+    if (!suffix.isEmpty()) {
+        suffix = "." + suffix;
+    }
+    QString tempPath = generateTempPath(tempDir, "copy", suffix);
+
+    // 拷贝到临时文件
+    if (!QFile::copy(sourcePath, tempPath)) {
+        qWarning() << "AtomicFileWriter::copyAtomically: Failed to copy" << sourcePath << "to" << tempPath;
+        QFile::remove(tempPath);
+        return false;
+    }
+
+    // 原子替换目标文件
+    {
+        QMutexLocker locker(&s_fileWriteMutex);
+
+        if (QFile::exists(finalPath)) {
+            if (!QFile::remove(finalPath)) {
+                qWarning() << "AtomicFileWriter::copyAtomically: Failed to remove old file:" << finalPath;
+                QFile::remove(tempPath);
+                return false;
+            }
+        }
+
+        if (!QFile::rename(tempPath, finalPath)) {
+            qWarning() << "AtomicFileWriter::copyAtomically: Failed to rename:" << tempPath << "to" << finalPath;
+            QFile::remove(tempPath);
+            return false;
+        }
+    }
+
+    if (QFile::exists(finalPath)) {
+        qDebug() << "AtomicFileWriter: File copied atomically:" << sourcePath << "->" << finalPath;
+        return true;
+    }
+
+    qWarning() << "AtomicFileWriter::copyAtomically: Final file not found after copy:" << finalPath;
+    return false;
+}
+
 }  // namespace EasyKiConverter

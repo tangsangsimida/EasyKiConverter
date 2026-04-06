@@ -2,7 +2,6 @@
 
 add_library(EasyKiConverterUIUtils STATIC
     ConfigManager.cpp
-    ThumbnailGenerator.cpp
 )
 
 target_include_directories(EasyKiConverterUIUtils

@@ -41,6 +41,8 @@ void WriteStageHandler::start() {
                                                       m_options.exportSymbol,
                                                       m_options.exportFootprint,
                                                       m_options.exportModel3D,
+                                                      m_options.exportPreviewImages,
+                                                      m_options.exportDatasheet,
                                                       m_options.debugMode,
                                                       m_tempDir,
                                                       nullptr);
@@ -65,9 +67,19 @@ void WriteStageHandler::start() {
                     },
                     Qt::QueuedConnection);
 
-                connect(worker, &WriteWorker::writeCompleted, worker, &QObject::deleteLater, Qt::QueuedConnection);
+                // 连接单项导出完成信号，用于实时进度更新
+                connect(worker,
+                        &WriteWorker::itemWriteCompleted,
+                        this,
+                        &WriteStageHandler::itemWriteCompleted,
+                        Qt::QueuedConnection);
 
-                worker->run();
+                // 注意：不能使用 deleteLater()，因为 QThreadPool 已经拥有 worker 的所有权
+                // QThreadPool::start() 会自动在 run() 完成后删除 worker
+
+                // 使用线程池调度 WriteWorker，而不是直接调用 run()
+                // 这样 WriteWorker::run() 会在线程池线程中执行
+                m_threadPool->start(worker);
             }
         }));
     }

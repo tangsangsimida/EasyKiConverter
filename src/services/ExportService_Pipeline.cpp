@@ -4,6 +4,7 @@
 #include "pipeline/cleanup/PipelineCleanup.h"
 #include "pipeline/stats/PipelineStatistics.h"
 #include "ui/viewmodels/ComponentListViewModel.h"
+#include "ui/viewmodels/ExportProgressViewModel.h"
 #include "utils/PathSecurity.h"
 #include "workers/FetchWorker.h"
 #include "workers/ProcessWorker.h"
@@ -40,19 +41,18 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
     , m_exportStartTimeMs(0)
     , m_originalExportStartTimeMs(0)
     , m_originalTotalTasks(0)
-    , m_isRetryMode(false)
-    , m_completionHandler(nullptr) {
+    , m_isRetryMode(false) {
     qDebug() << "ExportServicePipeline: Initializing thread pools...";
     // 线程池初始化
     m_fetchThreadPool = new QThreadPool(this);
-    m_fetchThreadPool->setMaxThreadCount(5);  // I/O 密集型
+    m_fetchThreadPool->setMaxThreadCount(10);  // I/O 密集型
     m_fetchThreadPool->setExpiryTimeout(60000);
 
     m_processThreadPool = new QThreadPool(this);
     m_processThreadPool->setMaxThreadCount(QThread::idealThreadCount());  // CPU 密集型
 
     m_writeThreadPool = new QThreadPool(this);
-    m_writeThreadPool->setMaxThreadCount(3);  // 磁盘 I/O 密集型
+    m_writeThreadPool->setMaxThreadCount(10);  // 磁盘 I/O 密集型（缓存写入）
 
     // 初始化处理器
     m_fetchHandler = new FetchStageHandler(m_isCancelled, m_fetchThreadPool, this);
@@ -75,6 +75,7 @@ ExportServicePipeline::ExportServicePipeline(QObject* parent)
             &WriteStageHandler::componentWriteCompleted,
             this,
             [this](QSharedPointer<ComponentExportStatus> s) { handleWriteCompleted(s); });
+    connect(m_writeHandler, &WriteStageHandler::itemWriteCompleted, this, &ExportServicePipeline::exportItemCompleted);
 
     // 状态统计初始化
     m_pipelineProgress = PipelineProgress();
@@ -88,7 +89,6 @@ ExportServicePipeline::~ExportServicePipeline() {
     cancelExport();  // 确保退出时停止所有请求
     cleanupPipeline();
     delete m_mutex;
-    delete m_completionHandler;
 }
 
 void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& componentIds,
@@ -119,6 +119,13 @@ void ExportServicePipeline::executeExportPipelineWithStages(const QStringList& c
     m_pipelineProgress.fetchCompleted = 0;
     m_pipelineProgress.processCompleted = 0;
     m_pipelineProgress.writeCompleted = 0;
+
+    // 初始化预览图和手册的计数（用于加权计算进度）
+    // 预估每个组件平均 3 个预览图和 1 个手册
+    m_pipelineProgress.totalPreviewImages = options.exportPreviewImages ? componentIds.size() * 3 : 0;
+    m_pipelineProgress.totalDatasheets = options.exportDatasheet ? componentIds.size() : 0;
+    m_pipelineProgress.fetchedPreviewImages = 0;
+    m_pipelineProgress.fetchedDatasheets = 0;
 
     // 设置重试模式标志（使用明确的 isRetry 参数，而不是 options.updateMode）
     m_isRetryMode = isRetry;
@@ -230,6 +237,11 @@ void ExportServicePipeline::setComponentListViewModel(ComponentListViewModel* co
     m_componentListViewModel = componentListViewModel;
 }
 
+void ExportServicePipeline::setExportProgressViewModel(ExportProgressViewModel* progressViewModel) {
+    QMutexLocker locker(m_mutex);
+    m_exportProgressViewModel = progressViewModel;
+}
+
 void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportStatus> status) {
     QMutexLocker locker(m_mutex);
     if (!m_isPipelineRunning)
@@ -238,6 +250,21 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
     qDebug() << "Fetch completed for component:" << status->componentId << "Success:" << status->fetchSuccess
              << "fetch3DOnly:" << status->fetch3DOnly;
     m_pipelineProgress.fetchCompleted++;
+
+    // 更新预览图和手册的获取计数
+    m_pipelineProgress.fetchedPreviewImages += status->previewImageDataList.size();
+    if (!status->datasheetData.isEmpty()) {
+        m_pipelineProgress.fetchedDatasheets++;
+    }
+
+    qDebug() << "Fetch progress - totalTasks:" << m_pipelineProgress.totalTasks
+             << "fetchCompleted:" << m_pipelineProgress.fetchCompleted
+             << "totalPreviewImages:" << m_pipelineProgress.totalPreviewImages
+             << "fetchedPreviewImages:" << m_pipelineProgress.fetchedPreviewImages
+             << "totalDatasheets:" << m_pipelineProgress.totalDatasheets
+             << "fetchedDatasheets:" << m_pipelineProgress.fetchedDatasheets
+             << "fetchProgress:" << m_pipelineProgress.fetchProgress();
+
     m_completedStatuses.append(status);
 
     // 安全检查队列
@@ -256,7 +283,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                    static_cast<int>(PipelineStage::Fetch),
                                    status->symbolWritten,
                                    status->footprintWritten,
-                                   status->model3DWritten);
+                                   status->model3DWritten,
+                                   status->previewImageWritten,
+                                   status->datasheetWritten);
         } else {
             m_failureCount++;
             status->processSuccess = false;
@@ -267,7 +296,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                    static_cast<int>(PipelineStage::Fetch),
                                    status->symbolWritten,
                                    status->footprintWritten,
-                                   status->model3DWritten);
+                                   status->model3DWritten,
+                                   status->previewImageWritten,
+                                   status->datasheetWritten);
         }
     } else {
         // 特殊处理 fetch3DOnly 模式：如果 3D 获取失败但符号和封装数据完整，仍然继续处理
@@ -292,7 +323,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                            static_cast<int>(PipelineStage::Fetch),
                                            status->symbolWritten,
                                            status->footprintWritten,
-                                           false);
+                                           false,
+                                           status->previewImageWritten,
+                                           status->datasheetWritten);
                 } else {
                     m_failureCount++;
                     status->processSuccess = false;
@@ -303,7 +336,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                            static_cast<int>(PipelineStage::Fetch),
                                            status->symbolWritten,
                                            status->footprintWritten,
-                                           false);
+                                           false,
+                                           status->previewImageWritten,
+                                           status->datasheetWritten);
                 }
             } else {
                 // 符号或封装数据不完整，完全失败
@@ -316,7 +351,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                        static_cast<int>(PipelineStage::Fetch),
                                        status->symbolWritten,
                                        status->footprintWritten,
-                                       status->model3DWritten);
+                                       status->model3DWritten,
+                                       status->previewImageWritten,
+                                       status->datasheetWritten);
             }
         } else {
             // 非 fetch3DOnly 模式或数据不完整，完全失败
@@ -329,7 +366,9 @@ void ExportServicePipeline::handleFetchCompleted(QSharedPointer<ComponentExportS
                                    static_cast<int>(PipelineStage::Fetch),
                                    status->symbolWritten,
                                    status->footprintWritten,
-                                   status->model3DWritten);
+                                   status->model3DWritten,
+                                   status->previewImageWritten,
+                                   status->datasheetWritten);
         }
     }
 
@@ -360,7 +399,9 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
                                    static_cast<int>(PipelineStage::Process),
                                    status->symbolWritten,
                                    status->footprintWritten,
-                                   status->model3DWritten);
+                                   status->model3DWritten,
+                                   status->previewImageWritten,
+                                   status->datasheetWritten);
         } else {
             m_failureCount++;
             m_pipelineProgress.writeCompleted++;
@@ -372,7 +413,9 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
                                    static_cast<int>(PipelineStage::Process),
                                    status->symbolWritten,
                                    status->footprintWritten,
-                                   status->model3DWritten);
+                                   status->model3DWritten,
+                                   status->previewImageWritten,
+                                   status->datasheetWritten);
         }
     } else {
         m_failureCount++;
@@ -383,7 +426,9 @@ void ExportServicePipeline::handleProcessCompleted(QSharedPointer<ComponentExpor
                                static_cast<int>(PipelineStage::Process),
                                status->symbolWritten,
                                status->footprintWritten,
-                               status->model3DWritten);
+                               status->model3DWritten,
+                               status->previewImageWritten,
+                               status->datasheetWritten);
     }
 
     emit pipelineProgressUpdated(m_pipelineProgress);
@@ -409,7 +454,9 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
                                static_cast<int>(PipelineStage::Write),
                                status->symbolWritten,
                                status->footprintWritten,
-                               status->model3DWritten);
+                               status->model3DWritten,
+                               status->previewImageWritten,
+                               status->datasheetWritten);
     } else {
         m_failureCount++;
         emit componentExported(status->componentId,
@@ -418,7 +465,9 @@ void ExportServicePipeline::handleWriteCompleted(QSharedPointer<ComponentExportS
                                static_cast<int>(PipelineStage::Write),
                                status->symbolWritten,
                                status->footprintWritten,
-                               status->model3DWritten);
+                               status->model3DWritten,
+                               status->previewImageWritten,
+                               status->datasheetWritten);
     }
 
     emit pipelineProgressUpdated(m_pipelineProgress);
@@ -524,21 +573,8 @@ void ExportServicePipeline::checkPipelineCompletion() {
     qDebug() << "Components with preview images:" << componentsWithPreviewImages;
     qDebug() << "Components with datasheets:" << componentsWithDatasheets;
 
-    // 3. 使用 PipelineCompletionHandler 导出预览图和手册
-    delete m_completionHandler;
-    m_completionHandler = new PipelineCompletionHandler(this);
-
-    // 3.1 导出预览图
-    qDebug() << "ExportPreviewImages option:" << m_options.exportPreviewImages;
-    if (m_options.exportPreviewImages) {
-        m_completionHandler->exportPreviewImages(m_preloadedData, m_options);
-    }
-
-    // 3.2 导出手册
-    qDebug() << "ExportDatasheet option:" << m_options.exportDatasheet;
-    if (m_options.exportDatasheet) {
-        m_completionHandler->exportDatasheets(m_preloadedData, m_options);
-    }
+    // 3. 预览图和手册已在 WriteStage 中通过 WriteWorker 导出
+    //    无需再次调用 PipelineCompletionHandler 进行重复导出
 
     // 4. 清理临时文件夹（无论导出是否成功都要清理）
     if (!m_tempDir.isEmpty()) {

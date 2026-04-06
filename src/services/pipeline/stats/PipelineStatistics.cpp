@@ -39,6 +39,10 @@ ExportStatistics PipelineStatistics::generate(const QList<QSharedPointer<Compone
             statistics.successFootprint++;
         if (options.exportModel3D && status->model3DWritten)
             statistics.successModel3D++;
+        if (options.exportPreviewImages && status->previewImageWritten)
+            statistics.successPreviewImage++;
+        if (options.exportDatasheet && status->datasheetWritten)
+            statistics.successDatasheet++;
 
         if (status->isCompleteSuccess()) {
             actualSuccessCount++;
@@ -110,7 +114,7 @@ bool PipelineStatistics::saveReport(const ExportStatistics& statistics,
                                     const QString& outputPath,
                                     const QString& libName,
                                     const QString& reportPath) {
-    QJsonObject reportObj, overview, timing, failures, stageFailures, failureReasons, options;
+    QJsonObject reportObj, overview, timing, network, failures, stageFailures, failureReasons, options;
 
     overview["total"] = statistics.total;
     overview["success"] = statistics.success;
@@ -118,6 +122,8 @@ bool PipelineStatistics::saveReport(const ExportStatistics& statistics,
     overview["successSymbol"] = statistics.successSymbol;
     overview["successFootprint"] = statistics.successFootprint;
     overview["successModel3D"] = statistics.successModel3D;
+    overview["successPreviewImage"] = statistics.successPreviewImage;
+    overview["successDatasheet"] = statistics.successDatasheet;
     overview["successRate"] = QString::number(statistics.getSuccessRate(), 'f', 2) + "%";
     overview["totalDurationMs"] = statistics.totalDurationMs;
     overview["peakMemoryUsageMB"] = QString::number(statistics.peakMemoryUsage / (1024.0 * 1024.0), 'f', 2) + " MB";
@@ -127,6 +133,17 @@ bool PipelineStatistics::saveReport(const ExportStatistics& statistics,
     timing["avgProcessTimeMs"] = statistics.avgProcessTimeMs;
     timing["avgWriteTimeMs"] = statistics.avgWriteTimeMs;
     reportObj["timing"] = timing;
+
+    network["totalNetworkRequests"] = statistics.totalNetworkRequests;
+    network["totalRetries"] = statistics.totalRetries;
+    network["avgNetworkLatencyMs"] = statistics.avgNetworkLatencyMs;
+    network["rateLimitHitCount"] = statistics.rateLimitHitCount;
+    QJsonObject statusCodeDist;
+    for (auto it = statistics.statusCodeDistribution.constBegin(); it != statistics.statusCodeDistribution.constEnd();
+         ++it)
+        statusCodeDist[QString::number(it.key())] = it.value();
+    network["statusCodeDistribution"] = statusCodeDist;
+    reportObj["network"] = network;
 
     for (auto it = statistics.stageFailures.constBegin(); it != statistics.stageFailures.constEnd(); ++it)
         stageFailures[it.key()] = it.value();

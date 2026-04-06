@@ -9,6 +9,12 @@ Rectangle {
     property string componentId
     property string status // "fetching", "fetch_completed", "processing", "process_completed", "writing", "write_completed", "success", "failed"
     property string message
+    // 导出选项标志
+    property bool exportSymbol: true
+    property bool exportFootprint: true
+    property bool exportModel3D: true
+    property bool exportPreviewImages: false
+    property bool exportDatasheet: false
     signal retryClicked
     signal copyClicked
     signal deleteClicked
@@ -147,7 +153,7 @@ Rectangle {
                     font.family: "Courier New"
                     color: AppStyle.colors.textPrimary
                 }
-                // 分项状态指示灯 (S: Symbol, F: Footprint, 3: 3D)
+                // 分项状态指示灯 (S: Symbol, F: Footprint, 3: 3D, P: Preview, D: Datasheet)
                 Row {
                     spacing: 4
                     visible: status !== "pending" && status !== "fetching"
@@ -155,7 +161,16 @@ Rectangle {
                         width: 14
                         height: 14
                         radius: 7
-                        color: modelData.symbolSuccess ? AppStyle.colors.success : AppStyle.colors.border
+                        visible: exportSymbol
+                        color: {
+                            // 根据每个选项的实际状态来判断颜色，而不是根据整体status
+                            if (status === "success" || status === "failed") {
+                                return modelData.symbolSuccess ? AppStyle.colors.success : AppStyle.colors.danger;
+                            }
+                            if (status === "fetch_completed" || status === "processing" || status === "writing")
+                                return AppStyle.colors.warning;  // 黄色 - 处理中
+                            return AppStyle.colors.border;  // 灰色 - 等待中
+                        }
                         Text {
                             anchors.centerIn: parent
                             text: "S"
@@ -164,7 +179,7 @@ Rectangle {
                             font.bold: true
                         }
                         ToolTip.visible: symMa.containsMouse
-                        ToolTip.text: qsTr("符号: %1").arg(modelData.symbolSuccess ? qsTr("已导出") : qsTr("未完成"))
+                        ToolTip.text: qsTr("符号: %1").arg((status === "success" || status === "failed") && modelData.symbolSuccess ? qsTr("已导出") : (status === "success" || status === "failed") ? qsTr("失败") : (status === "fetch_completed" || status === "processing" || status === "writing") ? qsTr("处理中") : qsTr("等待中"))
                         MouseArea {
                             id: symMa
                             anchors.fill: parent
@@ -175,7 +190,15 @@ Rectangle {
                         width: 14
                         height: 14
                         radius: 7
-                        color: modelData.footprintSuccess ? AppStyle.colors.success : AppStyle.colors.border
+                        visible: exportFootprint
+                        color: {
+                            if (status === "success" || status === "failed") {
+                                return modelData.footprintSuccess ? AppStyle.colors.success : AppStyle.colors.danger;
+                            }
+                            if (status === "fetch_completed" || status === "processing" || status === "writing")
+                                return AppStyle.colors.warning;
+                            return AppStyle.colors.border;
+                        }
                         Text {
                             anchors.centerIn: parent
                             text: "F"
@@ -184,7 +207,7 @@ Rectangle {
                             font.bold: true
                         }
                         ToolTip.visible: ftMa.containsMouse
-                        ToolTip.text: qsTr("封装: %1").arg(modelData.footprintSuccess ? qsTr("已导出") : qsTr("未完成"))
+                        ToolTip.text: qsTr("封装: %1").arg((status === "success" || status === "failed") && modelData.footprintSuccess ? qsTr("已导出") : (status === "success" || status === "failed") ? qsTr("失败") : (status === "fetch_completed" || status === "processing" || status === "writing") ? qsTr("处理中") : qsTr("等待中"))
                         MouseArea {
                             id: ftMa
                             anchors.fill: parent
@@ -195,7 +218,15 @@ Rectangle {
                         width: 14
                         height: 14
                         radius: 7
-                        color: modelData.model3DSuccess ? AppStyle.colors.success : AppStyle.colors.border
+                        visible: exportModel3D
+                        color: {
+                            if (status === "success" || status === "failed") {
+                                return modelData.model3DSuccess ? AppStyle.colors.success : AppStyle.colors.danger;
+                            }
+                            if (status === "fetch_completed" || status === "processing" || status === "writing")
+                                return AppStyle.colors.warning;
+                            return AppStyle.colors.border;
+                        }
                         Text {
                             anchors.centerIn: parent
                             text: "3"
@@ -204,9 +235,65 @@ Rectangle {
                             font.bold: true
                         }
                         ToolTip.visible: m3Ma.containsMouse
-                        ToolTip.text: qsTr("3D模型: %1").arg(modelData.model3DSuccess ? qsTr("已导出") : qsTr("未完成"))
+                        ToolTip.text: qsTr("3D模型: %1").arg((status === "success" || status === "failed") && modelData.model3DSuccess ? qsTr("已导出") : (status === "success" || status === "failed") ? qsTr("失败") : (status === "fetch_completed" || status === "processing" || status === "writing") ? qsTr("处理中") : qsTr("等待中"))
                         MouseArea {
                             id: m3Ma
+                            anchors.fill: parent
+                            hoverEnabled: true
+                        }
+                    }
+                    Rectangle {
+                        width: 14
+                        height: 14
+                        radius: 7
+                        visible: exportPreviewImages
+                        color: {
+                            if (status === "success" || status === "failed") {
+                                return modelData.previewImageExported ? AppStyle.colors.success : AppStyle.colors.danger;
+                            }
+                            if (status === "fetch_completed" || status === "processing" || status === "writing")
+                                return AppStyle.colors.warning;
+                            return AppStyle.colors.border;
+                        }
+                        Text {
+                            anchors.centerIn: parent
+                            text: "P"
+                            font.pixelSize: 9
+                            color: "white"
+                            font.bold: true
+                        }
+                        ToolTip.visible: prevMa.containsMouse
+                        ToolTip.text: qsTr("预览图: %1").arg((status === "success" || status === "failed") && modelData.previewImageExported ? qsTr("已导出") : (status === "success" || status === "failed") ? qsTr("失败") : (status === "fetch_completed" || status === "processing" || status === "writing") ? qsTr("处理中") : qsTr("等待中"))
+                        MouseArea {
+                            id: prevMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                        }
+                    }
+                    Rectangle {
+                        width: 14
+                        height: 14
+                        radius: 7
+                        visible: exportDatasheet
+                        color: {
+                            if (status === "success" || status === "failed") {
+                                return modelData.datasheetExported ? AppStyle.colors.success : AppStyle.colors.danger;
+                            }
+                            if (status === "fetch_completed" || status === "processing" || status === "writing")
+                                return AppStyle.colors.warning;
+                            return AppStyle.colors.border;
+                        }
+                        Text {
+                            anchors.centerIn: parent
+                            text: "D"
+                            font.pixelSize: 9
+                            color: "white"
+                            font.bold: true
+                        }
+                        ToolTip.visible: datasheetMa.containsMouse
+                        ToolTip.text: qsTr("手册: %1").arg((status === "success" || status === "failed") && modelData.datasheetExported ? qsTr("已导出") : (status === "success" || status === "failed") ? qsTr("失败") : (status === "fetch_completed" || status === "processing" || status === "writing") ? qsTr("处理中") : qsTr("等待中"))
+                        MouseArea {
+                            id: datasheetMa
                             anchors.fill: parent
                             hoverEnabled: true
                         }

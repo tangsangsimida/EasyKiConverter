@@ -8,6 +8,8 @@
 
 #include <QDebug>
 #include <QElapsedTimer>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QSharedPointer>
 #include <QString>
 
@@ -20,12 +22,22 @@ struct MemorySnapshot {
 };
 
 /**
+ * @brief 导出项类型枚举
+ */
+enum class ExportItemType { Symbol = 0, Footprint = 1, Model3D = 2, PreviewImage = 3, Datasheet = 4 };
+
+/**
  * @brief 元件导出状态
  *
  * 跟踪元件在流水线各阶段的状态
  */
 struct ComponentExportStatus {
     QString componentId;
+
+    // 线程安全：保护可变成员的互斥锁
+    // 注意：此互斥锁仅用于保护 ComponentExportStatus 自身的可变成员
+    // 不应替代流水线各阶段之间的同步机制
+    mutable QMutex m_mutex;
 
     // 原始数据
     QByteArray componentInfoRaw;
@@ -35,6 +47,10 @@ struct ComponentExportStatus {
     QByteArray advJsonRaw;
     QByteArray model3DObjRaw;
     QByteArray model3DStepRaw;
+
+    // 预览图和手册数据
+    QList<QByteArray> previewImageDataList;  // 预览图数据列表
+    QByteArray datasheetData;  // 手册数据
 
     // 解析后的数据
     QSharedPointer<ComponentData> componentData;
@@ -62,10 +78,19 @@ struct ComponentExportStatus {
     bool symbolWritten = false;
     bool footprintWritten = false;
     bool model3DWritten = false;
+    bool previewImageWritten = false;  // 预览图导出成功
+    bool datasheetWritten = false;  // 手册导出成功
 
     QStringList debugLog;
     bool need3DModel = false;
     bool fetch3DOnly = false;  // 是否是仅获取 3D 模式（符号和封装已从预加载数据复用）
+    bool needPreviewImages = false;  // 是否需要获取预览图
+    bool needDatasheet = false;  // 是否需要获取手册
+
+    // 缓存文件路径（用于直接拷贝，避免大文件经过内存）
+    // 当使用缓存导出3D模型时，这些路径指向缓存中的文件
+    QString cachedModel3DWrlPath;  // 缓存的 WRL 文件路径（可直接拷贝）
+    QString cachedModel3DStepPath;  // 缓存的 STEP 文件路径（可直接拷贝）
 
     struct NetworkDiagnostics {
         QString url;
@@ -107,6 +132,7 @@ struct ComponentExportStatus {
     }
 
     void addDebugLog(const QString& message) {
+        QMutexLocker locker(&m_mutex);
         debugLog.append(message);
     }
 
@@ -115,6 +141,9 @@ struct ComponentExportStatus {
     // 清理中间数据（Process 阶段后调用）
     // 注意：model3DStepRaw 必须保留给 WriteWorker 使用，所以在 clearStepData() 中单独清理
     void clearIntermediateData(bool log = true) {
+        // 注意：由于 mutex 可能被并发访问，不在这里锁定
+        // clearIntermediateData 通常在 ProcessWorker 中调用，
+        // 而 QtConcurrent 任务还在运行并可能调用 addDebugLog()
         qint64 freed = 0;
 
         auto clearAndCount = [&](QByteArray& ba) {
@@ -140,6 +169,7 @@ struct ComponentExportStatus {
 
     // 清理 STEP 数据（Write 阶段完成后调用）
     void clearStepData() {
+        QMutexLocker locker(&m_mutex);
         model3DStepRaw.clear();
         model3DStepRaw.squeeze();
     }
@@ -220,6 +250,8 @@ struct ExportStatistics {
     int successSymbol = 0;
     int successFootprint = 0;
     int successModel3D = 0;
+    int successPreviewImage = 0;  // 预览图导出成功数
+    int successDatasheet = 0;  // 手册导出成功数
 
     QMap<QString, int> failureReasons;
     QMap<QString, int> stageFailures;
@@ -243,13 +275,16 @@ struct ExportStatistics {
     }
 
     QString getSummary() const {
-        return QString("Total: %1, Success: %2, Failed: %3, Symbol: %4, Footprint: %5, 3D: %6")
+        return QString(
+                   "Total: %1, Success: %2, Failed: %3, Symbol: %4, Footprint: %5, 3D: %6, Preview: %7, Datasheet: %8")
             .arg(total)
             .arg(success)
             .arg(failed)
             .arg(successSymbol)
             .arg(successFootprint)
-            .arg(successModel3D);
+            .arg(successModel3D)
+            .arg(successPreviewImage)
+            .arg(successDatasheet);
     }
 };
 

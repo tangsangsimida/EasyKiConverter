@@ -1,6 +1,7 @@
 #ifndef COMPONENTSERVICE_H
 #define COMPONENTSERVICE_H
 
+#include "ComponentCacheService.h"
 #include "LcscImageService.h"
 #include "ParallelFetchContext.h"
 #include "models/ComponentData.h"
@@ -8,6 +9,7 @@
 #include "models/Model3DData.h"
 #include "models/SymbolData.h"
 
+#include <QByteArray>
 #include <QImage>
 #include <QJsonObject>
 #include <QMap>
@@ -198,9 +200,17 @@ signals:
      * @brief 所有预览图片下载完成信号
      *
      * @param componentId 元件ID
-     * @param imageDataList 图片数据列表（内存）
+     * @param imagePaths 图片路径列表
      */
-    void allImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
+    void allImagesReady(const QString& componentId, const QStringList& imagePaths);
+
+    /**
+     * @brief 批量预览图数据获取成功信号（用于缓存加载，避免频繁UI更新）
+     *
+     * @param componentId 元件ID
+     * @param encodedImages Base64编码的预览图数据列表（按索引排序）
+     */
+    void previewImagesReady(const QString& componentId, const QStringList& encodedImages);
 
     /**
      * @brief 获取错误信号
@@ -287,7 +297,7 @@ private slots:
     /**
      * @brief 处理所有预览图片下载完成
      */
-    void handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
+    void handleAllImagesReady(const QString& componentId, const QStringList& imagePaths);
 
     /**
      * @brief 处理预览图获取失败
@@ -378,6 +388,30 @@ private:
     // BOM 解析已移至独立的 BomParser 类
 
     // 图片抓取已移至独立的 LcscImageService 类
+
+    /**
+     * @brief 缓存加载结果结构体（用于异步缓存加载）
+     */
+    struct CacheLoadResult {
+        QString componentId;
+        bool success;
+        QSharedPointer<ComponentData> cachedData;
+        QByteArray cadDataJson;  // 原始 CAD JSON 数据
+        QList<QPair<int, QByteArray>> previewImageData;  // index, data
+        QByteArray datasheetData;
+        // 预解析的符号和封装数据（在后台线程解析）
+        QSharedPointer<SymbolData> symbolData;
+        QSharedPointer<FootprintData> footprintData;
+    };
+
+    /**
+     * @brief 异步从缓存加载元件数据（后台线程执行）
+     *
+     * @param normalizedId 元件 ID
+     * @param fetch3DModel 是否获取 3D 模型
+     * @param cache 缓存服务指针
+     */
+    void loadComponentDataFromCacheAsync(const QString& normalizedId, bool fetch3DModel, ComponentCacheService* cache);
 
 private:
     class EasyedaApi* m_api;

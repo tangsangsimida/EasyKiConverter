@@ -1,6 +1,7 @@
 #include "LcscImageService.h"
 
 #include <QDebug>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -8,17 +9,24 @@
 #include <QThread>
 #include <QTimer>
 #include <QUrlQuery>
+#include <QtConcurrent>
 
 namespace EasyKiConverter {
 
 LcscImageService::LcscImageService(QObject* parent)
-    : QObject(parent), m_networkManager(new QNetworkAccessManager(this)), m_activeRequests(0) {
-    // 不再使用缓存目录，所有数据保存在内存中
-}
+    : QObject(parent), m_networkManager(new QNetworkAccessManager(this)), m_activeRequests(0) {}
 
 void LcscImageService::fetchPreviewImages(const QString& componentId) {
     if (componentId.isEmpty())
         return;
+
+    // 先检查缓存中是否已有所有预览图，如果有则直接加载缓存，不发起网络请求
+    // 注意：即使组件已在 m_requestedComponents 中，也需要检查缓存（支持第二次导出时从缓存加载）
+    if (tryLoadCachedPreviewImages(componentId)) {
+        // 缓存加载成功，标记为已请求并直接返回
+        m_requestedComponents.insert(componentId);
+        return;
+    }
 
     // 检查是否已经请求过该组件（防止重复请求）
     if (m_requestedComponents.contains(componentId)) {
@@ -32,12 +40,6 @@ void LcscImageService::fetchPreviewImages(const QString& componentId) {
         return;
     }
 
-    // 检查是否正在处理该组件
-    if (m_activeRequests > 0 && m_pendingImages.contains(componentId)) {
-        qDebug() << "Component" << componentId << "already being processed, skipping duplicate request";
-        return;
-    }
-
     qDebug() << "Adding component" << componentId << "to fetch queue (first time)";
     m_requestedComponents.insert(componentId);
     m_queue.enqueue(componentId);
@@ -45,11 +47,27 @@ void LcscImageService::fetchPreviewImages(const QString& componentId) {
 }
 
 void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) {
+    qDebug() << "LcscImageService: fetchBatchPreviewImages called for" << componentIds.size() << "components";
+    qDebug() << "LcscImageService: Current queue size:" << m_queue.size() << "active requests:" << m_activeRequests;
     for (const QString& componentId : componentIds) {
         if (!componentId.isEmpty()) {
+            // 先检查缓存，缓存中有则直接加载，不加入队列
+            if (tryLoadCachedPreviewImages(componentId)) {
+                m_requestedComponents.insert(componentId);
+                qDebug() << "LcscImageService: Cached images loaded for" << componentId;
+                continue;
+            }
+            // 缓存没有或加载失败，检查是否已在队列中（防止重复请求）
+            if (m_queue.contains(componentId)) {
+                qDebug() << "LcscImageService: Component" << componentId << "already in queue, skipping";
+                continue;
+            }
+            // 缓存没有且不在队列中，将组件加入队列等待网络请求
             m_queue.enqueue(componentId);
+            qDebug() << "LcscImageService: Queued for network fetch:" << componentId;
         }
     }
+    qDebug() << "LcscImageService: Queue size after adding:" << m_queue.size();
     processQueue();
 }
 
@@ -58,16 +76,13 @@ void LcscImageService::clearCache() {
 
     // 清空所有缓存数据
     m_requestedComponents.clear();
-    m_manufacturerParts.clear();
-    m_pendingDatasheets.clear();
-    m_downloadedDatasheets.clear();
-    m_pendingImages.clear();
-    m_downloadedImages.clear();
-    m_downloadCounts.clear();
-    m_datasheetDownloadStatus.clear();
 
     // 清空队列
     m_queue.clear();
+
+    // 清空下载计数
+    m_downloadCounts.clear();
+    m_expectedCounts.clear();
 
     qDebug() << "LcscImageService: Cache cleared, ready for new requests";
 }
@@ -78,20 +93,110 @@ void LcscImageService::cancelAll() {
     // 清空队列，不再处理排队的请求
     m_queue.clear();
 
-    // 清空所有待处理的图片下载
-    m_pendingImages.clear();
-    m_downloadedImages.clear();
+    // 清空下载计数
     m_downloadCounts.clear();
-
-    // 清空待处理的数据手册下载
-    m_pendingDatasheets.clear();
-    m_datasheetDownloadStatus.clear();
-    m_downloadedDatasheets.clear();
+    m_expectedCounts.clear();
 
     // 重置活跃请求计数
     m_activeRequests = 0;
 
     qDebug() << "LcscImageService: All pending preview image fetches cancelled";
+}
+
+bool LcscImageService::tryLoadCachedPreviewImages(const QString& componentId) {
+    ComponentCacheService* cache = ComponentCacheService::instance();
+    if (!cache) {
+        return false;
+    }
+
+    // 检查是否有任何缓存的预览图
+    int cachedCount = 0;
+
+    for (int i = 0; i < MAX_IMAGES_PER_COMPONENT; ++i) {
+        QString path = cache->previewImagePath(componentId, i);
+        if (QFileInfo::exists(path)) {
+            cachedCount++;
+        }
+    }
+
+    if (cachedCount == 0) {
+        qDebug() << "LcscImageService: No cached preview images for" << componentId;
+        return false;
+    }
+
+    qDebug() << "LcscImageService: Found" << cachedCount << "cached preview images for" << componentId
+             << ", scheduling async cache load...";
+
+    // 注意：缓存加载不需要设置 m_expectedCounts，因为缓存加载不会增加 m_activeRequests
+    // m_expectedCounts 只用于追踪网络请求的并发数
+
+    // 使用 QTimer 将缓存加载调度到下一个事件循环，避免阻塞主线程
+    // 这样可以确保 UI 不会冻结
+    QTimer::singleShot(0, this, [this, componentId, cache]() { loadCachedPreviewImagesAsync(componentId, cache); });
+
+    return true;
+}
+
+void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, ComponentCacheService* cache) {
+    // 收集所有需要加载的预览图路径
+    QList<QPair<int, QString>> pathsToLoad;
+    for (int i = 0; i < MAX_IMAGES_PER_COMPONENT; ++i) {
+        QString path = cache->previewImagePath(componentId, i);
+        qDebug() << "LcscImageService: Checking cache path:" << path << "exists:" << QFileInfo::exists(path);
+        if (QFileInfo::exists(path)) {
+            pathsToLoad.append({i, path});
+        }
+    }
+
+    if (pathsToLoad.isEmpty()) {
+        qDebug() << "LcscImageService: No cached images found for" << componentId;
+        checkDownloadCompletion(componentId);
+        return;
+    }
+
+    qDebug() << "LcscImageService: Found" << pathsToLoad.size() << "cached images for" << componentId;
+
+    // 使用 QFutureWatcher 实现真正的异步非阻塞加载
+    // 每个图片创建一个 watcher，图片加载完成时自动触发处理
+    for (const auto& [imageIndex, path] : pathsToLoad) {
+        QFuture<QByteArray> future = QtConcurrent::run([path]() {
+            QFile file(path);
+            if (file.open(QIODevice::ReadOnly)) {
+                return file.readAll();
+            }
+            return QByteArray();
+        });
+
+        QFutureWatcher<QByteArray>* watcher = new QFutureWatcher<QByteArray>(this);
+        watcher->setProperty("componentId", componentId);
+        watcher->setProperty("imageIndex", imageIndex);
+
+        connect(watcher, &QFutureWatcher<QByteArray>::finished, this, [this, watcher]() {
+            // 获取当前完成的 watcher 的组件信息
+            QString compId = watcher->property("componentId").toString();
+            int imgIndex = watcher->property("imageIndex").toInt();
+            QByteArray imageData = watcher->result();
+
+            if (!imageData.isEmpty()) {
+                emit imageReady(compId, imageData, imgIndex);
+                m_downloadCounts[compId]++;
+            }
+
+            // 检查该组件是否所有图片都已加载完成
+            if (m_downloadCounts.contains(compId) && m_expectedCounts.contains(compId) &&
+                m_downloadCounts[compId] >= m_expectedCounts[compId]) {
+                qDebug() << "LcscImageService: All cached images loaded for" << compId;
+                checkDownloadCompletion(compId);
+            }
+
+            // 清理 watcher
+            m_pendingImageWatchers.removeOne(watcher);
+            watcher->deleteLater();
+        });
+
+        m_pendingImageWatchers.append(watcher);
+        watcher->setFuture(future);
+    }
 }
 
 void LcscImageService::processQueue() {
@@ -130,7 +235,6 @@ void LcscImageService::performApiSearch(const QString& componentId, int retryCou
     QNetworkReply* reply = m_networkManager->post(request, postData);
 
     // 使用 QSharedPointer 确保 QNetworkReply 的安全生命周期
-    // 避免在回调中访问可能已被删除的对象
     QSharedPointer<QNetworkReply> replyPtr(reply, [](QNetworkReply* r) {
         if (r) {
             r->deleteLater();
@@ -145,17 +249,15 @@ void LcscImageService::performApiSearch(const QString& componentId, int retryCou
 void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
                                          const QString& componentId,
                                          int retryCount) {
-    // 不再需要手动 deleteLater，QSharedPointer 的删除器会处理
-
     if (!reply) {
         qWarning() << "Invalid reply pointer in handleApiResponse for component:" << componentId;
-        m_activeRequests--;
+        m_activeRequests = qMax(0, m_activeRequests - 1);
         processQueue();
         return;
     }
 
     if (reply->error() != QNetworkReply::NoError) {
-        if (retryCount < MAX_RETRY_COUNT) {  // 从 2 改为 MAX_RETRY_COUNT (3)
+        if (retryCount < MAX_RETRY_COUNT) {
             QTimer::singleShot(1000 * (retryCount + 1), this, [this, componentId, retryCount]() {
                 performApiSearch(componentId, retryCount + 1);
             });
@@ -187,7 +289,6 @@ void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
                         QJsonObject attributes = deviceInfo["attributes"].toObject();
                         if (attributes.contains("Manufacturer Part")) {
                             manufacturerPart = attributes["Manufacturer Part"].toString();
-                            m_manufacturerParts[componentId] = manufacturerPart;
                             qDebug() << "Extracted manufacturer part from LCSC API for" << componentId << ":"
                                      << manufacturerPart;
                         }
@@ -205,19 +306,13 @@ void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
                 }
 
                 qDebug() << "Extracted" << imageUrls.size() << "image URLs for component:" << componentId;
-                for (int i = 0; i < imageUrls.size(); ++i) {
-                    qDebug() << "  Image" << i << "URL:" << imageUrls[i];
-                }
 
                 // 限制最多 3 张图片
                 while (imageUrls.size() > MAX_IMAGES_PER_COMPONENT) {
                     imageUrls.removeLast();
                 }
 
-                qDebug() << "After limiting to" << MAX_IMAGES_PER_COMPONENT
-                         << "images, final count:" << imageUrls.size();
-
-                // 提取数据手册 URL（按照 Python 代码的方式）
+                // 提取数据手册 URL
                 QString datasheetUrl;
                 if (product.contains("device_info")) {
                     QJsonObject deviceInfo = product["device_info"].toObject();
@@ -233,32 +328,24 @@ void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
 
                 // 发送 LCSC 数据就绪信号（包含制造商部件号、数据手册 URL 和预览图 URL 列表）
                 emit lcscDataReady(componentId, manufacturerPart, datasheetUrl, imageUrls);
-                qDebug() << "Emitted lcscDataReady for" << componentId << "with manufacturer part:" << manufacturerPart
-                         << "images:" << imageUrls.size()
-                         << "and datasheet:" << (datasheetUrl.isEmpty() ? "none" : datasheetUrl);
+                qDebug() << "Emitted lcscDataReady for" << componentId;
 
                 // 下载图片
                 if (!imageUrls.isEmpty()) {
-                    m_pendingImages[componentId] = imageUrls;
-                    m_downloadedImages[componentId].clear();
+                    m_expectedCounts[componentId] = imageUrls.size();
                     m_downloadCounts[componentId] = 0;
 
-                    // 预先创建指定数量的空元素，确保索引能够正确对应
-                    // 这样当图片按乱序下载时，能够填充到正确的索引位置
-                    m_downloadedImages[componentId].resize(imageUrls.size());
-
                     qDebug() << "Starting download of" << imageUrls.size() << "images for component:" << componentId;
-                    qDebug() << "  Pre-allocated container size:" << m_downloadedImages[componentId].size();
 
                     // 开始下载所有图片
                     for (int i = 0; i < imageUrls.size(); ++i) {
-                        qDebug() << "  Scheduling image download" << i << "from:" << imageUrls[i];
                         performDownload(componentId, imageUrls[i], i, 0);
                     }
+                } else {
+                    // 没有图片，发出错误信号以设置占位符
+                    emit error(componentId, "No images available");
+                    checkComponentCompletion(componentId);
                 }
-
-                // 注意：数据手册不再在此处下载，只保存 URL
-                // 导出时会通过 DatasheetExporter 按需下载
 
                 return;
             }
@@ -281,14 +368,8 @@ void LcscImageService::performFallback(const QString& componentId) {
     connect(reply, &QNetworkReply::finished, this, [this, reply, componentId]() {
         handleFallbackResponse(reply, componentId);
     });
-    // 添加网络错误处理，确保失败时也能递减计数器，防止队列永久阻塞
-    connect(reply, &QNetworkReply::errorOccurred, this, [this, reply, componentId](QNetworkReply::NetworkError) {
-        qWarning() << "Fallback request error for component:" << componentId;
-        // 递减计数器并处理队列
-        m_activeRequests--;
-        processQueue();
-        reply->deleteLater();
-    });
+    // 注意：不要单独连接 errorOccurred，因为 finished 信号在错误时也会触发
+    // error 处理统一在 handleFallbackResponse 中进行
 }
 
 void LcscImageService::handleFallbackResponse(QNetworkReply* reply, const QString& componentId) {
@@ -302,8 +383,7 @@ void LcscImageService::handleFallbackResponse(QNetworkReply* reply, const QStrin
 
         if (match.hasMatch()) {
             QStringList imageUrls = {match.captured(1)};
-            m_pendingImages[componentId] = imageUrls;
-            m_downloadedImages[componentId].clear();
+            m_expectedCounts[componentId] = imageUrls.size();
             m_downloadCounts[componentId] = 0;
 
             performDownload(componentId, imageUrls[0], 0, 0);
@@ -311,7 +391,7 @@ void LcscImageService::handleFallbackResponse(QNetworkReply* reply, const QStrin
         }
     }
 
-    m_activeRequests--;
+    m_activeRequests = qMax(0, m_activeRequests - 1);
     emit error(componentId, "Image not found");
     processQueue();
 }
@@ -321,13 +401,13 @@ void LcscImageService::performDownload(const QString& componentId,
                                        int imageIndex,
                                        int retryCount) {
     qDebug() << "Performing download for component:" << componentId << "image index:" << imageIndex
-             << "retry:" << retryCount << "from:" << imageUrl;
+             << "retry:" << retryCount;
 
     // 随机延迟（0.05-0.15 秒），异步执行避免阻塞主线程
     addRandomDelay([this, componentId, imageUrl, imageIndex, retryCount]() {
         QNetworkRequest request{QUrl(imageUrl)};
         request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
-        request.setTransferTimeout(45000);  // 从 20 秒增加到 45 秒
+        request.setTransferTimeout(45000);
 
         QNetworkReply* reply = m_networkManager->get(request);
         connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, imageUrl, imageIndex, retryCount]() {
@@ -345,12 +425,9 @@ void LcscImageService::handleDownloadResponse(QSharedPointer<QNetworkReply> repl
                                               const QString& imageUrl,
                                               int imageIndex,
                                               int retryCount) {
-    // 不再需要手动 deleteLater，QSharedPointer 的删除器会处理
-
     if (!reply) {
         qWarning() << "Invalid reply in handleDownloadResponse";
-        // 确保计数器递减，防止队列永久阻塞
-        if (m_pendingImages.contains(componentId)) {
+        if (m_expectedCounts.contains(componentId)) {
             m_downloadCounts[componentId]++;
             checkDownloadCompletion(componentId);
         }
@@ -358,70 +435,58 @@ void LcscImageService::handleDownloadResponse(QSharedPointer<QNetworkReply> repl
     }
 
     if (reply->error() != QNetworkReply::NoError) {
-        if (retryCount < MAX_RETRY_COUNT) {  // 从 2 改为 MAX_RETRY_COUNT (3)
+        if (retryCount < MAX_RETRY_COUNT) {
             qDebug() << "Image download failed for component:" << componentId << "index:" << imageIndex
-                     << "error:" << reply->errorString() << "retry:" << retryCount;
+                     << "retry:" << retryCount;
             performDownload(componentId, imageUrl, imageIndex, retryCount + 1);
         } else {
             // 下载失败，记录但继续处理其他图片
-            qDebug() << "Image download failed after all retries for" << componentId << "index:" << imageIndex
-                     << "error:" << reply->errorString();
-
-            // 增加下载计数，确保 checkDownloadCompletion 能正确判断是否所有图片都已尝试下载
+            qDebug() << "Image download failed after all retries for" << componentId << "index:" << imageIndex;
             m_downloadCounts[componentId]++;
-
-            // 检查下载完成状态
             checkDownloadCompletion(componentId);
         }
         return;
     }
 
-    // 直接保存到内存中，不写文件
+    // 读取数据
     QByteArray imageData = reply->readAll();
-    qDebug() << "Image download response for component:" << componentId << "index:" << imageIndex
-             << "size:" << imageData.size() << "bytes" << "URL:" << imageUrl.left(80);
+    qDebug() << "[LcscImage] Download complete for" << componentId << "index" << imageIndex << "size"
+             << imageData.size() << "bytes";
 
     if (!imageData.isEmpty()) {
-        // 使用索引直接赋值，确保图片数据被保存到正确的索引位置
-        if (imageIndex >= 0 && imageIndex < m_downloadedImages[componentId].size()) {
-            m_downloadedImages[componentId][imageIndex] = imageData;
-            qDebug() << "  Saved image data at index:" << imageIndex;
-        } else {
-            // 如果索引超出范围（异常情况），使用 append
-            m_downloadedImages[componentId].append(imageData);
-            qDebug() << "  Appended image data (index out of range):" << imageIndex;
-        }
+        qDebug() << "[LcscImage] Step 1: Saving to disk...";
+        // 直接保存到磁盘（用于持久化）
+        ComponentCacheService::instance()->savePreviewImage(componentId, imageData, imageIndex);
+
+        qDebug() << "[LcscImage] Step 2: Incrementing download count...";
+        // 增加下载计数
         m_downloadCounts[componentId]++;
 
-        // 发送信号，传递图片数据（内存）
+        qDebug() << "[LcscImage] Step 3: Emitting imageReady signal...";
+        // 直接发送信号（使用原始数据，不需要再从磁盘读取）
         emit imageReady(componentId, imageData, imageIndex);
 
-        // 检查是否所有图片都下载完成
+        qDebug() << "[LcscImage] Step 4: Checking download completion...";
+        // 检查下载完成状态
         checkDownloadCompletion(componentId);
+        qDebug() << "[LcscImage] Step 5: Done for this image";
     } else {
         qDebug() << "Failed to read image data for" << componentId << "index:" << imageIndex;
+        m_downloadCounts[componentId]++;
         checkDownloadCompletion(componentId);
     }
 }
 
 void LcscImageService::checkDownloadCompletion(const QString& componentId) {
-    if (!m_pendingImages.contains(componentId)) {
+    if (!m_expectedCounts.contains(componentId)) {
         return;
     }
 
-    int expectedCount = m_pendingImages[componentId].size();
+    int expectedCount = m_expectedCounts[componentId];
     int downloadedCount = m_downloadCounts.value(componentId, 0);
 
     qDebug() << "checkDownloadCompletion for component:" << componentId << "expected:" << expectedCount
              << "downloaded:" << downloadedCount;
-
-    // 统计已尝试下载的图片数量（包括成功的和失败的）
-    int attemptedCount = 0;
-    for (int i = 0; i < m_downloadedImages[componentId].size(); ++i) {
-        if (!m_downloadedImages[componentId][i].isEmpty()) {
-            attemptedCount++;
-        }
-    }
 
     // 只要下载的图片数量达到预期，就认为完成
     if (downloadedCount >= expectedCount) {
@@ -429,60 +494,40 @@ void LcscImageService::checkDownloadCompletion(const QString& componentId) {
         qDebug() << "All images downloaded successfully, emitting allImagesReady";
         emitAllImagesReady(componentId);
 
-        // 检查组件是否所有任务都已完成（图片和数据手册）
-        checkComponentCompletion(componentId);
-    } else if (attemptedCount == m_downloadedImages[componentId].size()) {
-        // 所有位置都已填充（即使有些是空数据），也认为完成
-        qDebug() << "All image slots filled (some may be empty), emitting allImagesReady";
-        emitAllImagesReady(componentId);
-
-        // 检查组件是否所有任务都已完成（图片和数据手册）
+        // 检查组件是否所有任务都已完成
         checkComponentCompletion(componentId);
     }
 }
 
 void LcscImageService::emitAllImagesReady(const QString& componentId) {
-    QList<QByteArray> imageDataList = m_downloadedImages.value(componentId, QList<QByteArray>());
+    // 只收集路径，不加载数据到内存
+    QStringList imagePaths;
+    for (int i = 0; i < MAX_IMAGES_PER_COMPONENT; ++i) {
+        QString path = ComponentCacheService::instance()->previewImagePath(componentId, i);
+        if (QFileInfo::exists(path)) {
+            imagePaths.append(path);
+        }
+    }
 
-    qDebug() << "All images ready for component:" << componentId << "count:" << imageDataList.size();
+    qDebug() << "All images ready for component:" << componentId << "paths:" << imagePaths.size();
 
-    if (imageDataList.isEmpty()) {
+    if (imagePaths.isEmpty()) {
         emit error(componentId, "No images downloaded");
     } else {
-        int nonEmptyCount = 0;
-        for (int i = 0; i < imageDataList.size(); ++i) {
-            qDebug() << "  Image" << i << "size:" << imageDataList[i].size() << "bytes"
-                     << (imageDataList[i].isEmpty() ? "(EMPTY)" : "(VALID)");
-            if (!imageDataList[i].isEmpty()) {
-                nonEmptyCount++;
-            }
-        }
-        qDebug() << "  Total images:" << imageDataList.size() << "Non-empty images:" << nonEmptyCount;
-        emit allImagesReady(componentId, imageDataList);
+        emit allImagesReady(componentId, imagePaths);
     }
 
     // 清理临时数据
-    m_pendingImages.remove(componentId);
-    m_downloadedImages.remove(componentId);
     m_downloadCounts.remove(componentId);
+    m_expectedCounts.remove(componentId);
 }
 
 void LcscImageService::checkComponentCompletion(const QString& componentId) {
-    // 检查组件是否所有任务都已完成
-    bool imagesCompleted = !m_pendingImages.contains(componentId);
-    bool datasheetCompleted = !m_pendingDatasheets.contains(componentId) ||
-                              m_datasheetDownloadStatus.value(componentId, 0) != 0;  // 0=pending, 1=success, 2=failed
-
-    qDebug() << "checkComponentCompletion for component:" << componentId << "images_completed:" << imagesCompleted
-             << "datasheet_completed:" << datasheetCompleted;
-
-    if (imagesCompleted && datasheetCompleted) {
-        // 所有任务都完成，递减计数器
-        qDebug() << "All tasks completed for component:" << componentId << "decrementing active_requests from"
-                 << m_activeRequests;
-        m_activeRequests--;
-        processQueue();
-    }
+    // 图片下载已经完成检查，这里只需递减计数器
+    // 使用 qMax 确保计数器不会变成负数
+    qDebug() << "checkComponentCompletion for component:" << componentId << "before decrement:" << m_activeRequests;
+    m_activeRequests = qMax(0, m_activeRequests - 1);
+    processQueue();
 }
 
 void LcscImageService::performDatasheetDownload(const QString& componentId,
@@ -494,7 +539,7 @@ void LcscImageService::performDatasheetDownload(const QString& componentId,
         request.setHeader(QNetworkRequest::UserAgentHeader,
                           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                           "Chrome/145.0.0.0 Safari/537.36");
-        request.setTransferTimeout(45000);  // 45 秒超时
+        request.setTransferTimeout(45000);
 
         QNetworkReply* reply = m_networkManager->get(request);
         connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, datasheetUrl, retryCount]() {
@@ -502,44 +547,41 @@ void LcscImageService::performDatasheetDownload(const QString& componentId,
 
             if (reply->error() != QNetworkReply::NoError) {
                 if (retryCount < MAX_RETRY_COUNT) {
-                    qDebug() << "Datasheet download failed for" << componentId << "retry:" << retryCount
-                             << "error:" << reply->errorString();
+                    qDebug() << "Datasheet download failed for" << componentId << "retry:" << retryCount;
                     QTimer::singleShot(1000 * (retryCount + 1), this, [this, componentId, datasheetUrl, retryCount]() {
                         performDatasheetDownload(componentId, datasheetUrl, retryCount + 1);
                     });
                 } else {
                     qDebug() << "Datasheet download failed after all retries for" << componentId;
-                    m_datasheetDownloadStatus[componentId] = 2;  // failed
                     emit error(componentId, QString("Datasheet download failed: %1").arg(reply->errorString()));
-
-                    // 检查组件是否所有任务都已完成（图片和数据手册）
-                    checkComponentCompletion(componentId);
+                    m_activeRequests--;
+                    processQueue();
                 }
                 return;
             }
 
-            // 直接保存到内存中，不写文件
+            // 读取数据
             QByteArray datasheetData = reply->readAll();
             if (!datasheetData.isEmpty()) {
-                m_downloadedDatasheets[componentId] = datasheetData;
-                m_datasheetDownloadStatus[componentId] = 1;  // success
+                // 直接保存到磁盘
+                QString format = datasheetUrl.toLower().contains(".html") ? "html" : "pdf";
+                ComponentCacheService::instance()->saveDatasheet(componentId, datasheetData, format);
 
                 qDebug() << "Datasheet downloaded for" << componentId << "size:" << datasheetData.size() << "bytes";
-                emit datasheetReady(componentId, datasheetData);
 
-                // 检查组件是否所有任务都已完成（图片和数据手册）
-                checkComponentCompletion(componentId);
+                // 从磁盘读取并发送信号
+                QByteArray savedData = ComponentCacheService::instance()->loadDatasheet(componentId);
+                emit datasheetReady(componentId, savedData);
             } else {
                 qDebug() << "Failed to read datasheet data for" << componentId;
-                m_datasheetDownloadStatus[componentId] = 2;  // failed
                 emit error(componentId, "Failed to read datasheet data");
-
-                // 检查组件是否所有任务都已完成（图片和数据手册）
-                checkComponentCompletion(componentId);
             }
+
+            m_activeRequests--;
+            processQueue();
         });
 
-        // 添加网络错误处理，确保失败时也能递减计数器
+        // 添加网络错误处理
         connect(reply,
                 &QNetworkReply::errorOccurred,
                 this,
@@ -547,10 +589,9 @@ void LcscImageService::performDatasheetDownload(const QString& componentId,
                     qWarning() << "Datasheet download network error for component:" << componentId
                                << "error:" << netError;
                     reply->deleteLater();
-                    // 标记失败并检查完成状态
-                    m_datasheetDownloadStatus[componentId] = 2;
                     emit error(componentId, QString("Network error: %1").arg(netError));
-                    checkComponentCompletion(componentId);
+                    m_activeRequests--;
+                    processQueue();
                 });
     });
 }
