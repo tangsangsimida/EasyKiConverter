@@ -94,7 +94,7 @@ jobs:
         if: matrix.type == 'installer'
         shell: pwsh
         run: |
-          # 安装 Inno Setup
+          # 安装 Inno Setup (最新版本)
           choco install innosetup --no-progress
           # 下载并安装简体中文语言文件
           $langDir = "${env:ProgramFiles(x86)}\Inno Setup 6\Languages"
@@ -172,7 +172,12 @@ jobs:
             exit 1
           }
           
-          iscc "/DMyAppVersion=${{ env.VERSION }}" "/DSourceDir=$stagingDir" "/DAppIconPath=$iconPath" "/DLicensePath=$licensePath" "/O$outputDir" "$issFile"
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ env.VERSION }}" "/DSourceDir=$stagingDir" "/DAppIconPath=$iconPath" "/DLicensePath=$licensePath" "/O$outputDir" "$issFile"
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Inno Setup Compiler failed with exit code: $LASTEXITCODE"
+            exit 1
+          }
 
           # Rename output to standard format
           $setupExe = Get-ChildItem -Path $outputDir -Filter "EasyKiConverter_*_Setup.exe" | Select-Object -First 1
