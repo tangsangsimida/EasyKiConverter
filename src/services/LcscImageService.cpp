@@ -14,7 +14,14 @@
 namespace EasyKiConverter {
 
 LcscImageService::LcscImageService(QObject* parent)
-    : QObject(parent), m_networkManager(new QNetworkAccessManager(this)), m_activeRequests(0) {}
+    : QObject(parent)
+    , m_networkManager(new QNetworkAccessManager(this))
+    , m_cacheThreadPool(new QThreadPool(this))
+    , m_activeRequests(0) {
+    // 设置缓存加载线程池的最大线程数
+    // 使用较高的并发数以充分利用磁盘 I/O 和缓存加载速度
+    m_cacheThreadPool->setMaxThreadCount(MAX_CONCURRENT_REQUESTS);
+}
 
 void LcscImageService::fetchPreviewImages(const QString& componentId) {
     if (componentId.isEmpty())
@@ -156,10 +163,19 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
 
     qDebug() << "LcscImageService: Found" << pathsToLoad.size() << "cached images for" << componentId;
 
-    // 使用 QFutureWatcher 实现真正的异步非阻塞加载
-    // 每个图片创建一个 watcher，图片加载完成时自动触发处理
+    // 设置预期的缓存图片数量，用于完成检查
+    m_expectedCounts[componentId] = pathsToLoad.size();
+    m_downloadCounts[componentId] = 0;
+
+    // 使用专用的缓存线程池实现真正的异步非阻塞加载
+    // 改进：收集所有图片数据，一次性发射批量信号，减少 UI 更新次数
+    // 为每个组件创建一个临时的图片数据容器
+    QMap<int, QByteArray>* componentImageData = new QMap<int, QByteArray>();
+    int* loadedCount = new int(0);
+    int totalImages = pathsToLoad.size();
+
     for (const auto& [imageIndex, path] : pathsToLoad) {
-        QFuture<QByteArray> future = QtConcurrent::run([path]() {
+        QFuture<QByteArray> future = QtConcurrent::run(m_cacheThreadPool, [path]() {
             QFile file(path);
             if (file.open(QIODevice::ReadOnly)) {
                 return file.readAll();
@@ -170,6 +186,9 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
         QFutureWatcher<QByteArray>* watcher = new QFutureWatcher<QByteArray>(this);
         watcher->setProperty("componentId", componentId);
         watcher->setProperty("imageIndex", imageIndex);
+        watcher->setProperty("componentImageData", QVariant::fromValue(componentImageData));
+        watcher->setProperty("loadedCount", QVariant::fromValue(loadedCount));
+        watcher->setProperty("totalImages", totalImages);
 
         connect(watcher, &QFutureWatcher<QByteArray>::finished, this, [this, watcher]() {
             // 获取当前完成的 watcher 的组件信息
@@ -177,15 +196,39 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
             int imgIndex = watcher->property("imageIndex").toInt();
             QByteArray imageData = watcher->result();
 
-            if (!imageData.isEmpty()) {
-                emit imageReady(compId, imageData, imgIndex);
-                m_downloadCounts[compId]++;
+            QMap<int, QByteArray>* compImageData =
+                watcher->property("componentImageData").value<QMap<int, QByteArray>*>();
+            int* loadedCountPtr = watcher->property("loadedCount").value<int*>();
+            int totalImagesValue = watcher->property("totalImages").toInt();
+
+            if (!imageData.isEmpty() && compImageData) {
+                (*compImageData)[imgIndex] = imageData;
             }
 
+            (*loadedCountPtr)++;
+
             // 检查该组件是否所有图片都已加载完成
-            if (m_downloadCounts.contains(compId) && m_expectedCounts.contains(compId) &&
-                m_downloadCounts[compId] >= m_expectedCounts[compId]) {
-                qDebug() << "LcscImageService: All cached images loaded for" << compId;
+            if (*loadedCountPtr >= totalImagesValue) {
+                qDebug() << "LcscImageService: All cached images loaded for" << compId
+                         << ", emitting batch imageReady signals";
+
+                // 批量发射所有图片的 imageReady 信号
+                if (compImageData) {
+                    for (auto it = compImageData->constBegin(); it != compImageData->constEnd(); ++it) {
+                        if (!it.value().isEmpty()) {
+                            emit imageReady(compId, it.value(), it.key());
+                        }
+                    }
+                }
+
+                // 更新计数
+                m_downloadCounts[compId] = totalImagesValue;
+
+                // 清理临时对象
+                delete compImageData;
+                delete loadedCountPtr;
+
+                // 检查下载完成
                 checkDownloadCompletion(compId);
             }
 
@@ -200,7 +243,9 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
 }
 
 void LcscImageService::processQueue() {
-    while (m_activeRequests < MAX_CONCURRENT_REQUESTS && !m_queue.isEmpty()) {
+    // 使用更保守的网络并发策略（5个）来照顾弱网用户
+    // 缓存加载不受此限制，可以高并发进行
+    while (m_activeRequests < MAX_NETWORK_CONCURRENT_REQUESTS && !m_queue.isEmpty()) {
         QString componentId = m_queue.dequeue();
         m_activeRequests++;
         performApiSearch(componentId, 0);
@@ -230,7 +275,13 @@ void LcscImageService::performApiSearch(const QString& componentId, int retryCou
                       "Chrome/145.0.0.0 Safari/537.36");
     request.setRawHeader("Accept", "application/json, text/javascript, */*; q=0.01");
     request.setRawHeader("X-Requested-With", "XMLHttpRequest");
-    request.setTransferTimeout(30000);  // 从 15 秒增加到 30 秒
+
+    // 使用 QTimer 精确控制超时，而不是使用 setTransferTimeout
+    // 这样可以确保计时从请求发出时才开始
+    QTimer* timeoutTimer = new QTimer(this);
+    timeoutTimer->setSingleShot(true);
+    timeoutTimer->setProperty("componentId", componentId);
+    timeoutTimer->setProperty("retryCount", retryCount);
 
     QNetworkReply* reply = m_networkManager->post(request, postData);
 
@@ -241,9 +292,39 @@ void LcscImageService::performApiSearch(const QString& componentId, int retryCou
         }
     });
 
-    connect(reply, &QNetworkReply::finished, this, [this, replyPtr, componentId, retryCount]() {
+    // 在 reply 和 timeoutTimer 之间建立互相清理的关系
+    reply->setProperty("timeoutTimer", QVariant::fromValue(timeoutTimer));
+    timeoutTimer->setProperty("reply", QVariant::fromValue(reply));
+
+    // 超时处理
+    connect(timeoutTimer, &QTimer::timeout, this, [this, componentId, retryCount, reply, timeoutTimer]() {
+        qWarning() << "LcscImageService: API search timeout for component:" << componentId;
+        reply->abort();
+        reply->deleteLater();
+        timeoutTimer->deleteLater();
+
+        // 减少活跃请求数并处理重试
+        m_activeRequests--;
+        if (retryCount < MAX_RETRY_COUNT) {
+            qDebug() << "LcscImageService: Retrying API search for component:" << componentId
+                     << "retry:" << (retryCount + 1);
+            m_queue.enqueue(componentId);
+            processQueue();
+        } else {
+            qWarning() << "LcscImageService: API search failed after max retries for component:" << componentId;
+            emit error(componentId, "Timeout after " + QString::number(MAX_RETRY_COUNT) + " retries");
+        }
+    });
+
+    // 请求完成时取消超时定时器
+    connect(reply, &QNetworkReply::finished, this, [this, replyPtr, componentId, retryCount, timeoutTimer]() {
+        timeoutTimer->stop();
+        timeoutTimer->deleteLater();
         handleApiResponse(replyPtr, componentId, retryCount);
     });
+
+    // 在请求发出后才开始超时计时
+    timeoutTimer->start(30000);  // 30 秒超时
 }
 
 void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
@@ -258,9 +339,8 @@ void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
 
     if (reply->error() != QNetworkReply::NoError) {
         if (retryCount < MAX_RETRY_COUNT) {
-            QTimer::singleShot(1000 * (retryCount + 1), this, [this, componentId, retryCount]() {
-                performApiSearch(componentId, retryCount + 1);
-            });
+            QTimer::singleShot(
+                0, this, [this, componentId, retryCount]() { performApiSearch(componentId, retryCount + 1); });
         } else {
             // API 失败，尝试回退到爬虫方式
             performFallback(componentId);
@@ -332,6 +412,11 @@ void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
 
                 // 下载图片
                 if (!imageUrls.isEmpty()) {
+                    // API 搜索成功，减少活跃请求计数，允许队列继续处理
+                    m_activeRequests--;
+                    qDebug() << "LcscImageService: API search success for" << componentId
+                             << ", active requests decreased to:" << m_activeRequests;
+
                     m_expectedCounts[componentId] = imageUrls.size();
                     m_downloadCounts[componentId] = 0;
 
@@ -341,10 +426,17 @@ void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
                     for (int i = 0; i < imageUrls.size(); ++i) {
                         performDownload(componentId, imageUrls[i], i, 0);
                     }
+
+                    // 继续处理队列
+                    processQueue();
                 } else {
-                    // 没有图片，发出错误信号以设置占位符
+                    // 没有图片，减少活跃请求计数并发出错误信号
+                    m_activeRequests--;
+                    qDebug() << "LcscImageService: API search success but no images for" << componentId
+                             << ", active requests decreased to:" << m_activeRequests;
                     emit error(componentId, "No images available");
                     checkComponentCompletion(componentId);
+                    processQueue();
                 }
 
                 return;
@@ -362,14 +454,39 @@ void LcscImageService::performFallback(const QString& componentId) {
     request.setHeader(QNetworkRequest::UserAgentHeader,
                       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/114.0.0.0 Safari/537.36");
-    request.setTransferTimeout(15000);
+
+    // 使用 QTimer 精确控制超时
+    QTimer* timeoutTimer = new QTimer(this);
+    timeoutTimer->setSingleShot(true);
+    timeoutTimer->setProperty("componentId", componentId);
 
     QNetworkReply* reply = m_networkManager->get(request);
-    connect(reply, &QNetworkReply::finished, this, [this, reply, componentId]() {
+
+    // 在 reply 和 timeoutTimer 之间建立互相清理的关系
+    reply->setProperty("timeoutTimer", QVariant::fromValue(timeoutTimer));
+    timeoutTimer->setProperty("reply", QVariant::fromValue(reply));
+
+    // 超时处理
+    connect(timeoutTimer, &QTimer::timeout, this, [this, componentId, reply, timeoutTimer]() {
+        qWarning() << "LcscImageService: Fallback search timeout for component:" << componentId;
+        reply->abort();
+        reply->deleteLater();
+        timeoutTimer->deleteLater();
+
+        m_activeRequests = qMax(0, m_activeRequests - 1);
+        emit error(componentId, "Fallback search timeout");
+        processQueue();
+    });
+
+    // 请求完成时取消超时定时器
+    connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, timeoutTimer]() {
+        timeoutTimer->stop();
+        timeoutTimer->deleteLater();
         handleFallbackResponse(reply, componentId);
     });
-    // 注意：不要单独连接 errorOccurred，因为 finished 信号在错误时也会触发
-    // error 处理统一在 handleFallbackResponse 中进行
+
+    // 在请求发出后才开始超时计时
+    timeoutTimer->start(15000);  // 15 秒超时
 }
 
 void LcscImageService::handleFallbackResponse(QNetworkReply* reply, const QString& componentId) {
@@ -383,10 +500,16 @@ void LcscImageService::handleFallbackResponse(QNetworkReply* reply, const QStrin
 
         if (match.hasMatch()) {
             QStringList imageUrls = {match.captured(1)};
+            // 回退搜索成功，减少活跃请求计数，允许队列继续处理
+            m_activeRequests--;
+            qDebug() << "LcscImageService: Fallback search success for" << componentId
+                     << ", active requests decreased to:" << m_activeRequests;
+
             m_expectedCounts[componentId] = imageUrls.size();
             m_downloadCounts[componentId] = 0;
 
             performDownload(componentId, imageUrls[0], 0, 0);
+            processQueue();
             return;
         }
     }
@@ -407,16 +530,57 @@ void LcscImageService::performDownload(const QString& componentId,
     addRandomDelay([this, componentId, imageUrl, imageIndex, retryCount]() {
         QNetworkRequest request{QUrl(imageUrl)};
         request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
-        request.setTransferTimeout(45000);
+
+        // 使用 QTimer 精确控制超时，而不是使用 setTransferTimeout
+        QTimer* timeoutTimer = new QTimer(this);
+        timeoutTimer->setSingleShot(true);
+        timeoutTimer->setProperty("componentId", componentId);
+        timeoutTimer->setProperty("imageIndex", imageIndex);
+        timeoutTimer->setProperty("retryCount", retryCount);
 
         QNetworkReply* reply = m_networkManager->get(request);
-        connect(reply, &QNetworkReply::finished, this, [this, reply, componentId, imageUrl, imageIndex, retryCount]() {
-            handleDownloadResponse(QSharedPointer<QNetworkReply>(reply, [](QNetworkReply* r) { r->deleteLater(); }),
-                                   componentId,
-                                   imageUrl,
-                                   imageIndex,
-                                   retryCount);
-        });
+
+        // 在 reply 和 timeoutTimer 之间建立互相清理的关系
+        reply->setProperty("timeoutTimer", QVariant::fromValue(timeoutTimer));
+        timeoutTimer->setProperty("reply", QVariant::fromValue(reply));
+
+        // 超时处理
+        connect(timeoutTimer,
+                &QTimer::timeout,
+                this,
+                [this, componentId, imageUrl, imageIndex, retryCount, reply, timeoutTimer]() {
+                    qWarning() << "LcscImageService: Download timeout for component:" << componentId
+                               << "image:" << imageIndex;
+                    reply->abort();
+                    reply->deleteLater();
+                    timeoutTimer->deleteLater();
+
+                    // 重试逻辑
+                    if (retryCount < MAX_RETRY_COUNT) {
+                        qDebug() << "LcscImageService: Retrying download for component:" << componentId
+                                 << "image:" << imageIndex << "retry:" << (retryCount + 1);
+                        performDownload(componentId, imageUrl, imageIndex, retryCount + 1);
+                    } else {
+                        qWarning() << "LcscImageService: Download failed after max retries for component:"
+                                   << componentId << "image:" << imageIndex;
+                        checkDownloadCompletion(componentId);
+                    }
+                });
+
+        // 请求完成时取消超时定时器
+        connect(reply,
+                &QNetworkReply::finished,
+                this,
+                [this, reply, componentId, imageUrl, imageIndex, retryCount, timeoutTimer]() {
+                    timeoutTimer->stop();
+                    timeoutTimer->deleteLater();
+                    handleDownloadResponse(
+                        QSharedPointer<QNetworkReply>(reply, [](QNetworkReply* r) { r->deleteLater(); }),
+                        componentId,
+                        imageUrl,
+                        imageIndex,
+                        retryCount);
+                });
     });
 }
 
@@ -548,7 +712,7 @@ void LcscImageService::performDatasheetDownload(const QString& componentId,
             if (reply->error() != QNetworkReply::NoError) {
                 if (retryCount < MAX_RETRY_COUNT) {
                     qDebug() << "Datasheet download failed for" << componentId << "retry:" << retryCount;
-                    QTimer::singleShot(1000 * (retryCount + 1), this, [this, componentId, datasheetUrl, retryCount]() {
+                    QTimer::singleShot(0, this, [this, componentId, datasheetUrl, retryCount]() {
                         performDatasheetDownload(componentId, datasheetUrl, retryCount + 1);
                     });
                 } else {

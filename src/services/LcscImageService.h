@@ -124,6 +124,7 @@ private:
     void addRandomDelay(std::function<void()> callback = nullptr);
 
     QNetworkAccessManager* m_networkManager;
+    QThreadPool* m_cacheThreadPool;  // 缓存加载专用线程池
     QQueue<QString> m_queue;
     QSet<QString> m_requestedComponents;  // 已经请求过的组件（防止重复请求）
 
@@ -135,7 +136,8 @@ private:
     QList<QFutureWatcher<QByteArray>*> m_pendingImageWatchers;
 
     int m_activeRequests;  // 当前活跃的下载数
-    static const int MAX_CONCURRENT_REQUESTS = 10;  // 最大并发下载数
+    static const int MAX_CONCURRENT_REQUESTS = 10;  // 最大并发下载数（缓存加载）
+    static const int MAX_NETWORK_CONCURRENT_REQUESTS = 5;  // 最大网络并发请求数（网络加载）
     static const int MAX_IMAGES_PER_COMPONENT = 3;  // 每个组件最多下载3张预览图
     static const int MAX_RETRY_COUNT = 3;  // 下载失败时的最大重试次数
 };

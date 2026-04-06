@@ -90,6 +90,15 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
     m_delayedFetchPreviewTimer->setInterval(100);  // 100ms 延迟
     connect(m_delayedFetchPreviewTimer, &QTimer::timeout, this, &ComponentListViewModel::delayedFetchPreviewImages);
 
+    // 监听验证完成信号，等待所有元器件验证完成后才开始获取预览图
+    connect(m_validationStateManager,
+            &ValidationStateManager::validationCompleted,
+            this,
+            [this](const QStringList& validatedIds) {
+                qDebug() << "All validations completed, validated component count:" << validatedIds.size();
+                fetchAllPreviewImages();
+            });
+
     connect(m_service, &ComponentService::componentInfoReady, this, &ComponentListViewModel::handleComponentInfoReady);
     connect(m_service, &ComponentService::cadDataReady, this, &ComponentListViewModel::handleCadDataReady);
     connect(m_service, &ComponentService::model3DReady, this, &ComponentListViewModel::handleModel3DReady);
@@ -117,6 +126,13 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
             this,
             [this](const QString& componentId, const QString& error) {
                 qDebug() << "Preview image fetch failed for component:" << componentId << "error:" << error;
+                // 预览图获取失败不影响验证状态，只记录日志
+                // 元件仍然保持验证成功状态，避免误导用户
+                auto item = findItemData(componentId);
+                if (item && item->isValid()) {
+                    qDebug() << "Component" << componentId
+                             << "is valid but preview image fetch failed, keeping valid status";
+                }
             });
     connect(m_service, &ComponentService::allImagesReady, this, &ComponentListViewModel::handleAllImagesReady);
     connect(m_service,
@@ -203,7 +219,7 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
 
     m_service->fetchComponentData(trimmedId, false);
 
-    m_validationStateManager->startValidation(1);
+    m_validationStateManager->addValidation(1);
 
     scheduleListUpdate();
     emit componentAdded(trimmedId, true, "Component added");
@@ -330,6 +346,9 @@ void ComponentListViewModel::processNextBatchAdd() {
     // 启动验证（每一批都需要检查是否有新的组件需要验证）
     if (isFirstBatch) {
         m_validationStateManager->startValidation(pendingCount);
+    } else {
+        // 非首批批次，追加到验证计数
+        m_validationStateManager->addValidation(pendingCount);
     }
     // 继续处理队列中的验证（如果队列已空且有待验证的组件，会自动添加）
     startValidationQueue();
@@ -345,7 +364,7 @@ void ComponentListViewModel::processNextBatchAdd() {
 }
 
 void ComponentListViewModel::startValidationQueue() {
-    const int CONCURRENT_WORKERS = 5;
+    const int CONCURRENT_WORKERS = 10;
 
     // 检查需要添加到队列的新组件
     for (auto item : m_componentList) {
@@ -410,11 +429,8 @@ void ComponentListViewModel::onValidationComplete(const QString& componentId) {
     } else {
         // 队列为空，尝试补充新组件（可能在验证期间新添加的）
         startValidationQueue();
-        if (m_validationQueue.isEmpty() && m_validationCompletedCount >= m_validationTotalCount) {
-            // 队列仍为空且所有已知组件都完成了，获取预览图
-            qDebug() << "All validations complete, fetching preview images";
-            fetchAllPreviewImages();
-        }
+        // 预览图获取现在由 ValidationStateManager::validationCompleted 信号触发
+        // 不再使用计数器判断，因为计数器存在溢出问题
     }
 }
 
@@ -588,16 +604,25 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
         qWarning() << "handleCadDataReady: item not found for componentId:" << componentId
                    << ", m_componentIdIndex size:" << m_componentIdIndex.size();
         return;
-    } else {
+    }
+
+    // 如果组件已经验证通过，说明 CAD 数据之前已经处理过了，
+    // 只需要更新 componentData，不要重复触发验证完成逻辑
+    if (item->isValid()) {
+        qDebug() << "handleCadDataReady: component" << componentId << "already validated, updating data only";
         QSharedPointer<ComponentData> dataPtr = QSharedPointer<ComponentData>::create(data);
         item->setComponentData(dataPtr);
-        item->setFetching(false);
-        item->setValid(true);
-        item->setErrorMessage("");
-
-        m_validationStateManager->onComponentValidated(componentId);
-        QTimer::singleShot(0, this, [this, componentId]() { onValidationComplete(componentId); });
+        return;
     }
+
+    QSharedPointer<ComponentData> dataPtr = QSharedPointer<ComponentData>::create(data);
+    item->setComponentData(dataPtr);
+    item->setFetching(false);
+    item->setValid(true);
+    item->setErrorMessage("");
+
+    m_validationStateManager->onComponentValidated(componentId);
+    QTimer::singleShot(0, this, [this, componentId]() { onValidationComplete(componentId); });
 }
 
 void ComponentListViewModel::handleModel3DReady(const QString& uuid, const QString& filePath) {
@@ -610,23 +635,52 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
     auto item = findItemData(componentId);
 
     if (item) {
-        item->setFetching(false);
-        item->setValid(false);
+        // 重要：预览图获取失败不应该改变元器件的验证状态
+        // 元器件的验证状态只由 CAD 数据获取结果决定
+        // 如果组件已经验证通过（isValid 为 true），保持验证状态不变
+        bool wasAlreadyValid = item->isValid();
 
-        if (error.contains("Request timeout", Qt::CaseInsensitive) || error.contains("timeout", Qt::CaseInsensitive)) {
-            item->setErrorMessage("验证超时（网络不稳定）");
-        } else if (error.contains("No result", Qt::CaseInsensitive) || error.contains("404") ||
-                   error.contains("not found", Qt::CaseInsensitive)) {
-            item->setErrorMessage("元件不存在");
+        item->setFetching(false);
+
+        if (!wasAlreadyValid) {
+            // 组件尚未验证通过，说明 CAD 数据获取失败或还未完成
+            // 判断是否是 CAD 数据获取失败
+            bool isCadDataFailure = error.contains("CAD data") || error.contains("Symbol data") ||
+                                    error.contains("Footprint data") || error.contains("Empty CAD") ||
+                                    error.contains("parse.*EasyEDA");
+
+            if (isCadDataFailure) {
+                // CAD 数据获取失败，标记为验证失败
+                qDebug() << "handleFetchError: component" << componentId << "CAD data fetch failed, marking as invalid";
+                item->setValid(false);
+                item->setErrorMessage(error);
+                m_validationStateManager->onComponentFailed(componentId);
+                emit filteredCountChanged();
+            } else {
+                // 预览图获取失败，保持验证状态（可能还未验证完成）
+                qDebug() << "handleFetchError: component" << componentId
+                         << "not yet validated, keeping in fetching state (preview image fetch may have failed)";
+
+                // 只更新错误消息，不改变验证状态
+                if (error.contains("Request timeout", Qt::CaseInsensitive) ||
+                    error.contains("timeout", Qt::CaseInsensitive)) {
+                    item->setErrorMessage("预览图获取超时（网络不稳定）");
+                } else if (error.contains("No result", Qt::CaseInsensitive) || error.contains("404") ||
+                           error.contains("not found", Qt::CaseInsensitive)) {
+                    item->setErrorMessage("预览图不存在");
+                } else if (error.contains("403")) {
+                    item->setErrorMessage("预览图获取被拒绝");
+                } else {
+                    item->setErrorMessage("预览图获取失败");
+                }
+            }
         } else {
-            item->setErrorMessage(error);
+            // 组件已经验证通过，只是预览图获取失败，保持验证状态不变
+            qDebug() << "Preview image fetch failed for already validated component:" << componentId
+                     << ", keeping component valid";
         }
 
-        updateHasInvalidComponents();
         emit filteredCountChanged();
-
-        m_validationStateManager->onComponentFailed(componentId);
-        QTimer::singleShot(0, this, [this, componentId]() { onValidationComplete(componentId); });
     }
 }
 
@@ -880,26 +934,15 @@ void ComponentListViewModel::fetchAllPreviewImages() {
 
     qDebug() << "Fetching preview images for" << validIds.count() << "valid components";
 
-    // 分批加载预览图,间隔 50ms UI 卡顿
-    const int BATCH_DELAY_MS = 20;
-    for (int i = 0; i < validIds.size(); ++i) {
-        QString componentId = validIds[i];
-        QTimer::singleShot(
-            i * BATCH_DELAY_MS, this, [this, componentId]() { m_service->fetchLcscPreviewImage(componentId); });
-    }
+    // 使用批量获取预览图接口，避免为每个组件创建单独的定时器
+    // LcscImageService 会自动处理缓存加载和队列管理
+    m_service->fetchBatchPreviewImages(validIds);
 }
 
 void ComponentListViewModel::delayedFetchPreviewImages() {
-    // 使用计数器判断是否所有验证都完成
-    if (m_validationCompletedCount >= m_validationTotalCount && m_validationPendingCount <= 0 &&
-        m_validationQueue.isEmpty()) {
-        qDebug() << "All validation complete (delayed check), fetching preview images";
-        fetchAllPreviewImages();
-    } else {
-        // 还有验证在进行，继续等待
-        qDebug() << "Still have pending validations, delaying preview fetch";
-        m_delayedFetchPreviewTimer->start();
-    }
+    // 预览图获取现在由 ValidationStateManager::validationCompleted 信号触发
+    // 此函数不再需要，使用信号机制避免了计数器溢出的问题
+    qDebug() << "delayedFetchPreviewImages called but ignored - using signal-based trigger instead";
 }
 
 void ComponentListViewModel::updateHasInvalidComponents() {

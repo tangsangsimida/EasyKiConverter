@@ -18,8 +18,8 @@ NetworkUtils::NetworkUtils(QObject* parent)
     , m_networkManager(new QNetworkAccessManager(this))
     , m_currentReply(nullptr)
     , m_timeoutTimer(new QTimer(this))
-    , m_timeout(30)
-    , m_maxRetries(3)
+    , m_timeout(60)  // 弱网环境下超时时间从30秒增加到60秒
+    , m_maxRetries(5)  // 弱网环境下重试次数从3次增加到5次
     , m_retryCount(0)
     , m_isRequesting(false)
     , m_expectBinaryData(false)
@@ -231,6 +231,24 @@ void NetworkUtils::handleError(QNetworkReply::NetworkError error) {
         return;
     }
 
+    // 检查 HTTP 状态码，403 禁止访问不允许重试
+    int statusCode = m_currentReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode == 403) {
+        qWarning() << "HTTP 403 Forbidden - server access denied, not retrying";
+        QString errorMsg = QString("HTTP 403: Access denied by server (no retry)");
+        emit requestError(errorMsg);
+        m_isRequesting = false;
+        // 安全地删除 reply
+        QPointer<QNetworkReply> replyPtr(m_currentReply);
+        m_currentReply = nullptr;
+        m_replyDeleting = true;
+        if (replyPtr) {
+            replyPtr->disconnect();
+            replyPtr->deleteLater();
+        }
+        return;
+    }
+
     QString errorMsg = m_currentReply->errorString();
 
     // 安全地删除 reply
@@ -329,11 +347,9 @@ bool NetworkUtils::shouldRetry(int statusCode) {
 }
 
 int NetworkUtils::calculateRetryDelay(int retryCount) {
-    if (retryCount == 1)
-        return 3000;
-    if (retryCount == 2)
-        return 5000;
-    return 10000;
+    // 弱网环境下无延迟立即重试，服务器不会限流
+    Q_UNUSED(retryCount);
+    return 0;
 }
 
 QByteArray NetworkUtils::decompressGzip(const QByteArray& compressedData) {

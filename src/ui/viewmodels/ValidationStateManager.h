@@ -14,12 +14,14 @@ public:
     ~ValidationStateManager() override;
 
     void startValidation(int count);
+    void addValidation(int count);
     void onComponentValidated(const QString& componentId);
     void onComponentFailed(const QString& componentId);
     void reset();
 
     bool isAllDone() const;
     bool isPreviewFetchEnabled() const;
+
     int pendingCount() const;
     int validatedCount() const;
     QStringList validatedComponentIds() const;
