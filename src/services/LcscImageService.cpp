@@ -48,6 +48,7 @@ void LcscImageService::fetchPreviewImages(const QString& componentId) {
 
 void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) {
     qDebug() << "LcscImageService: fetchBatchPreviewImages called for" << componentIds.size() << "components";
+    qDebug() << "LcscImageService: Current queue size:" << m_queue.size() << "active requests:" << m_activeRequests;
     for (const QString& componentId : componentIds) {
         if (!componentId.isEmpty()) {
             // 先检查缓存，缓存中有则直接加载，不加入队列
@@ -62,12 +63,11 @@ void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) 
                 continue;
             }
             // 缓存没有且不在队列中，将组件加入队列等待网络请求
-            // 注意：不管组件是否已在 m_requestedComponents 中，都要重新尝试网络请求
-            // 因为之前的请求可能因为超时或网络错误失败了
             m_queue.enqueue(componentId);
             qDebug() << "LcscImageService: Queued for network fetch:" << componentId;
         }
     }
+    qDebug() << "LcscImageService: Queue size after adding:" << m_queue.size();
     processQueue();
 }
 
@@ -127,9 +127,8 @@ bool LcscImageService::tryLoadCachedPreviewImages(const QString& componentId) {
     qDebug() << "LcscImageService: Found" << cachedCount << "cached preview images for" << componentId
              << ", scheduling async cache load...";
 
-    // 设置计数状态（与网络下载保持一致）
-    m_expectedCounts[componentId] = cachedCount;
-    m_downloadCounts[componentId] = 0;
+    // 注意：缓存加载不需要设置 m_expectedCounts，因为缓存加载不会增加 m_activeRequests
+    // m_expectedCounts 只用于追踪网络请求的并发数
 
     // 使用 QTimer 将缓存加载调度到下一个事件循环，避免阻塞主线程
     // 这样可以确保 UI 不会冻结
@@ -252,7 +251,7 @@ void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
                                          int retryCount) {
     if (!reply) {
         qWarning() << "Invalid reply pointer in handleApiResponse for component:" << componentId;
-        m_activeRequests--;
+        m_activeRequests = qMax(0, m_activeRequests - 1);
         processQueue();
         return;
     }
@@ -392,7 +391,7 @@ void LcscImageService::handleFallbackResponse(QNetworkReply* reply, const QStrin
         }
     }
 
-    m_activeRequests--;
+    m_activeRequests = qMax(0, m_activeRequests - 1);
     emit error(componentId, "Image not found");
     processQueue();
 }
@@ -525,8 +524,9 @@ void LcscImageService::emitAllImagesReady(const QString& componentId) {
 
 void LcscImageService::checkComponentCompletion(const QString& componentId) {
     // 图片下载已经完成检查，这里只需递减计数器
-    qDebug() << "checkComponentCompletion for component:" << componentId;
-    m_activeRequests--;
+    // 使用 qMax 确保计数器不会变成负数
+    qDebug() << "checkComponentCompletion for component:" << componentId << "before decrement:" << m_activeRequests;
+    m_activeRequests = qMax(0, m_activeRequests - 1);
     processQueue();
 }
 

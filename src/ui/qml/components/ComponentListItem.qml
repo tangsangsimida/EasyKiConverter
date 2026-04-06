@@ -434,6 +434,24 @@ Rectangle {
                 }
             }
 
+            // 预览图弹窗显示函数
+            function showPreviewPopup() {
+                if (!previewPopupLoader.active) {
+                    previewPopupLoader.pendingShow = true;
+                    previewPopupLoader.active = true;
+                } else if (previewPopupLoader.item) {
+                    previewPopupLoader.item.visible = true;
+                }
+            }
+
+            // 预览图弹窗隐藏函数
+            function hidePreviewPopup() {
+                previewPopupLoader.pendingShow = false;
+                if (previewPopupLoader.item) {
+                    previewPopupLoader.item.visible = false;
+                }
+            }
+
             // 预览区域交互
             MouseArea {
                 id: previewMouseArea
@@ -459,24 +477,6 @@ Rectangle {
                         hidePreviewPopup();
                     }
                 }
-            }
-        }
-
-        // 预览图弹窗显示函数（定义在根 Item 上供外部调用）
-        function showPreviewPopup() {
-            if (!previewArea.previewPopupLoader.active) {
-                previewArea.previewPopupLoader.pendingShow = true;
-                previewArea.previewPopupLoader.active = true;
-            } else if (previewArea.previewPopupLoader.item) {
-                previewArea.previewPopupLoader.item.visible = true;
-            }
-        }
-
-        // 预览图弹窗隐藏函数（定义在根 Item 上供外部调用）
-        function hidePreviewPopup() {
-            previewArea.previewPopupLoader.pendingShow = false;
-            if (previewArea.previewPopupLoader.item) {
-                previewArea.previewPopupLoader.item.visible = false;
             }
         }
 

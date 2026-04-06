@@ -331,16 +331,17 @@ void ComponentListViewModel::processNextBatchAdd() {
 void ComponentListViewModel::startValidationQueue() {
     const int CONCURRENT_WORKERS = 5;
 
-    // 检查队列是否为空，如果为空则重建
-    bool queueWasEmpty = m_validationQueue.isEmpty();
-    if (queueWasEmpty) {
-        for (auto item : m_componentList) {
-            // 只添加正在验证的组件，排除已验证完成或已验证失败的组件
-            // 注意：isFetching() 在 handleCadDataReady 时立即设为 false，
-            // 但 onValidationComplete 通过 singleShot(0) 延迟调用，
-            // 所以需要额外检查 isValid() 来排除已完成的组件
-            if (item->isFetching() && !item->isValid()) {
-                m_validationQueue.append(item->componentId());
+    // 检查需要添加到队列的新组件
+    for (auto item : m_componentList) {
+        // 只添加正在验证的组件，排除已验证完成或已验证失败的组件
+        // 注意：isFetching() 在 handleCadDataReady 时立即设为 false，
+        // 但 onValidationComplete 通过 singleShot(0) 延迟调用，
+        // 所以需要额外检查 isValid() 来排除已完成的组件
+        if (item->isFetching() && !item->isValid()) {
+            QString componentId = item->componentId();
+            // 检查是否已经在队列中，避免重复添加
+            if (!m_validationQueue.contains(componentId)) {
+                m_validationQueue.append(componentId);
             }
         }
     }
@@ -350,14 +351,13 @@ void ComponentListViewModel::startValidationQueue() {
         return;
     }
 
-    // 设置总数：
-    // - 如果队列之前是空的并被重建了，说明有新项目加入，累加到总数
-    // - 如果队列不是空的，说明是延续之前的处理，不需要额外累加（已在pending中）
-    if (queueWasEmpty) {
-        m_validationTotalCount += m_validationQueue.count();
+    // 如果 m_validationTotalCount 为 0，说明是首次启动，设置总数
+    // 否则说明是延续之前的处理，不需要额外设置（已在 pending 中）
+    if (m_validationTotalCount == 0) {
+        m_validationTotalCount = m_validationQueue.count();
     }
 
-    // 启动并发验证 worker
+    // 启动并发验证 worker（如果当前没有活跃的 worker）
     int initialCount = qMin(CONCURRENT_WORKERS, m_validationQueue.count());
     for (int i = 0; i < initialCount; ++i) {
         QString componentId = m_validationQueue.takeFirst();
