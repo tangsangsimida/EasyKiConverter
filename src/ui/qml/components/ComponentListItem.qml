@@ -54,7 +54,7 @@ Rectangle {
     // 复制成功提示
     ToolTip {
         id: copyFeedback
-        parent: item
+        parent: rootItem
         x: parent.width - width - 8
         y: 4
         delay: 0
@@ -124,7 +124,7 @@ Rectangle {
                     copyHelper.text = itemData.componentId;
                     copyHelper.selectAll();
                     copyHelper.copy();
-                    item.copyClicked();
+                    rootItem.copyClicked();
                     copyFeedback.visible = true;
                     copyFeedbackTimer.start();
                 }
@@ -155,8 +155,9 @@ Rectangle {
                 interval: 250
                 repeat: false
                 onTriggered: {
+                    console.log("hoverDelayTimer: triggered, containsMouse=", previewMouseArea.containsMouse);
                     if (previewMouseArea.containsMouse) {
-                        rootItem.showPreviewPopup();
+                        previewArea.showPreviewPopup();
                     }
                 }
             }
@@ -273,8 +274,10 @@ Rectangle {
                 // 跟踪是否应该在加载完成后显示
                 property bool pendingShow: false
                 onLoaded: {
+                    console.log("PreviewPopupLoader: loaded, pendingShow:", pendingShow, "item:", item);
                     if (pendingShow && item) {
                         item.visible = true;
+                        console.log("PreviewPopupLoader: set visible true");
                     }
                 }
                 sourceComponent: Popup {
@@ -295,9 +298,9 @@ Rectangle {
                             // 获取缩略图在屏幕上的位置
                             var thumbGlobalPos = previewBackground.mapToGlobal(Qt.point(0, 0));
                             // 获取窗口在屏幕上的位置
-                            var window = item.Window.window;
+                            var window = rootItem.Window ? rootItem.Window.window : null;
                             var windowGlobalX = window ? window.x : 0;
-                            var windowWidth = window ? window.width : item.width;
+                            var windowWidth = window ? window.width : rootItem.width;
                             // 计算缩略图相对于窗口的位置
                             var thumbRelativeX = thumbGlobalPos.x - windowGlobalX;
                             // 预览图宽度（490）+ 间距（60）= 550
@@ -436,6 +439,7 @@ Rectangle {
 
             // 预览图弹窗显示函数
             function showPreviewPopup() {
+                console.log("showPreviewPopup: active=", previewPopupLoader.active, "pendingShow=", previewPopupLoader.pendingShow);
                 if (!previewPopupLoader.active) {
                     previewPopupLoader.pendingShow = true;
                     previewPopupLoader.active = true;
@@ -446,6 +450,7 @@ Rectangle {
 
             // 预览图弹窗隐藏函数
             function hidePreviewPopup() {
+                console.log("hidePreviewPopup: pendingShow set to false");
                 previewPopupLoader.pendingShow = false;
                 if (previewPopupLoader.item) {
                     previewPopupLoader.item.visible = false;
@@ -470,11 +475,12 @@ Rectangle {
                     }
                 }
                 onContainsMouseChanged: {
+                    console.log("previewMouseArea: containsMouse=", containsMouse);
                     if (containsMouse) {
                         hoverDelayTimer.start();
                     } else {
                         hoverDelayTimer.stop();
-                        hidePreviewPopup();
+                        previewArea.hidePreviewPopup();
                     }
                 }
             }
@@ -567,7 +573,7 @@ Rectangle {
                 }
             }
             onClicked: {
-                item.retryClicked();
+                rootItem.retryClicked();
             }
         }
         // 删除按钮
@@ -598,7 +604,7 @@ Rectangle {
                 }
             }
             onClicked: {
-                item.deleteClicked();
+                rootItem.deleteClicked();
             }
         }
     }
