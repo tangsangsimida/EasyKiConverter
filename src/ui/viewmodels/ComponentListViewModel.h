@@ -155,6 +155,7 @@ private:
     void onValidationComplete(const QString& componentId);
     void fetchAllPreviewImages();
     void batchUpdatePreviewImages();
+    void processCachePreviewImages();  // 批量处理缓存预览图（防抖）
     void onPreviewImageEncodingDone(const QString& componentId, const QStringList& encodedImages);
     void scheduleListUpdate();  // 批量模式下的列表更新调度
     void delayedFetchPreviewImages();  // 延迟获取预览图，等待所有验证完成
@@ -183,6 +184,10 @@ private:
 
     QTimer* m_previewImageUpdateTimer;
     QList<QPointer<ComponentListItemData>> m_pendingPreviewImageItems;
+
+    // 缓存预览图批量更新（防抖）
+    QMap<QString, QStringList> m_pendingCachePreviewImages;
+    QTimer* m_cachePreviewImageTimer;
 
     QThreadPool* m_encodingThreadPool;
 

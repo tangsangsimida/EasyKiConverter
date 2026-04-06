@@ -47,6 +47,12 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
     m_previewImageUpdateTimer->setInterval(100);
     connect(m_previewImageUpdateTimer, &QTimer::timeout, this, &ComponentListViewModel::batchUpdatePreviewImages);
 
+    // 缓存预览图批量更新定时器（300ms 防抖）
+    m_cachePreviewImageTimer = new QTimer(this);
+    m_cachePreviewImageTimer->setSingleShot(true);
+    m_cachePreviewImageTimer->setInterval(300);
+    connect(m_cachePreviewImageTimer, &QTimer::timeout, this, &ComponentListViewModel::processCachePreviewImages);
+
     m_encodingThreadPool = new QThreadPool(this);
     m_encodingThreadPool->setMaxThreadCount(10);
 
@@ -113,6 +119,16 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                 qDebug() << "Preview image fetch failed for component:" << componentId << "error:" << error;
             });
     connect(m_service, &ComponentService::allImagesReady, this, &ComponentListViewModel::handleAllImagesReady);
+    connect(m_service,
+            &ComponentService::previewImagesReady,
+            this,
+            [this](const QString& componentId, const QStringList& encodedImages) {
+                qDebug() << "[ViewModel] previewImagesReady (batch from cache) - component:" << componentId
+                         << "image count:" << encodedImages.size();
+                // 收集到待处理列表，使用防抖避免频繁 UI 更新
+                m_pendingCachePreviewImages.insert(componentId, encodedImages);
+                m_cachePreviewImageTimer->start();
+            });
 }
 
 ComponentListViewModel::~ComponentListViewModel() {
@@ -736,6 +752,21 @@ void ComponentListViewModel::batchUpdatePreviewImages() {
     }
 
     m_pendingPreviewImageItems.clear();
+}
+
+void ComponentListViewModel::processCachePreviewImages() {
+    qDebug() << "[ViewModel] Processing cache preview images for" << m_pendingCachePreviewImages.size() << "components";
+
+    for (auto it = m_pendingCachePreviewImages.begin(); it != m_pendingCachePreviewImages.end(); ++it) {
+        const QString& componentId = it.key();
+        const QStringList& encodedImages = it.value();
+        auto item = findItemData(componentId);
+        if (item) {
+            item->setEncodedPreviewImages(encodedImages);
+        }
+    }
+
+    m_pendingCachePreviewImages.clear();
 }
 
 void ComponentListViewModel::onPreviewImageEncodingDone(const QString& componentId, const QStringList& encodedImages) {

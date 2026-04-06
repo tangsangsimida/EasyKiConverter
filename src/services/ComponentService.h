@@ -205,6 +205,14 @@ signals:
     void allImagesReady(const QString& componentId, const QStringList& imagePaths);
 
     /**
+     * @brief 批量预览图数据获取成功信号（用于缓存加载，避免频繁UI更新）
+     *
+     * @param componentId 元件ID
+     * @param encodedImages Base64编码的预览图数据列表（按索引排序）
+     */
+    void previewImagesReady(const QString& componentId, const QStringList& encodedImages);
+
+    /**
      * @brief 获取错误信号
      *
      * @param componentId 元件ID

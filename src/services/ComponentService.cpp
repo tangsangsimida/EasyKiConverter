@@ -312,14 +312,19 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
             handleParallelDataCollected(normalizedId, *result.cachedData);
         }
 
-        // 从缓存加载预览图数据（发送信号）
-        for (const auto& [imageIndex, imageData] : result.previewImageData) {
-            // 创建 QImage 并发送 UI 更新信号
-            QImage image = QImage::fromData(imageData);
-            if (!image.isNull()) {
-                emit previewImageReady(normalizedId, image, imageIndex);
+        // 从缓存加载预览图数据（批量发送，避免频繁 UI 更新）
+        // 预览图数据已经是 PNG 编码的字节，直接编码为 base64 字符串
+        if (!result.previewImageData.isEmpty()) {
+            QStringList encodedImages(3);  // 预分配3个位置
+            for (const auto& [imageIndex, imageData] : result.previewImageData) {
+                if (imageIndex >= 0 && imageIndex < 3) {
+                    encodedImages[imageIndex] = QString::fromLatin1(imageData.toBase64().data());
+                }
             }
-            emit previewImageDataReady(normalizedId, imageData, imageIndex);
+            // 使用 QTimer::singleShot(0) 将信号发射调度到下一个事件循环
+            QTimer::singleShot(0, this, [this, normalizedId, encodedImages]() {
+                emit previewImagesReady(normalizedId, encodedImages);
+            });
         }
 
         // 加载数据手册
