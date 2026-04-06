@@ -32,6 +32,12 @@ class ComponentListItemData : public QObject {
 public:
     explicit ComponentListItemData(const QString& componentId, QObject* parent = nullptr);
 
+    // 批量更新预览图（暂停通知，更新完后统一通知）
+    void setEncodedPreviewImagesHoldNotify(const QStringList& encodedImages);
+    void setEncodedPreviewImagesSilent(const QStringList& encodedImages);
+    static void holdPreviewImageNotifications();
+    static void flushPreviewImageNotifications();
+
     // Getter 方法
     QString componentId() const {
         return m_componentId;
@@ -126,6 +132,9 @@ private:
     QSharedPointer<ComponentData> m_componentData;
     bool m_previewImageExported = false;
     bool m_datasheetExported = false;
+
+    // 静态标志：暂停预览图更新通知（用于批量更新）
+    static bool s_holdPreviewImageNotifications;
 };
 
 }  // namespace EasyKiConverter

@@ -757,16 +757,38 @@ void ComponentListViewModel::batchUpdatePreviewImages() {
 void ComponentListViewModel::processCachePreviewImages() {
     qDebug() << "[ViewModel] Processing cache preview images for" << m_pendingCachePreviewImages.size() << "components";
 
-    for (auto it = m_pendingCachePreviewImages.begin(); it != m_pendingCachePreviewImages.end(); ++it) {
-        const QString& componentId = it.key();
-        const QStringList& encodedImages = it.value();
-        auto item = findItemData(componentId);
-        if (item) {
-            item->setEncodedPreviewImages(encodedImages);
-        }
+    if (m_pendingCachePreviewImages.isEmpty()) {
+        return;
     }
 
+    // 使用 QMap 拷贝一份
+    QMap<QString, QStringList> pending = m_pendingCachePreviewImages;
     m_pendingCachePreviewImages.clear();
+
+    // 使用 QTimer::singleShot(0) 批量调度到下一个事件循环，避免阻塞 UI
+    // 每批 2 个组件，分批处理让 UI 有时间响应
+    const int BATCH_SIZE = 1;
+    QList<QString> keys;
+    QList<QStringList> values;
+
+    for (auto it = pending.begin(); it != pending.end(); ++it) {
+        keys.append(it.key());
+        values.append(it.value());
+    }
+
+    int totalCount = keys.size();
+    for (int i = 0; i < totalCount; i += BATCH_SIZE) {
+        int batchEnd = qMin(i + BATCH_SIZE, totalCount);
+        int batchIndex = i / BATCH_SIZE;
+        QTimer::singleShot(0, this, [this, keys, values, i, batchEnd, batchIndex, totalCount]() {
+            for (int j = i; j < batchEnd; ++j) {
+                auto item = findItemData(keys[j]);
+                if (item) {
+                    item->setEncodedPreviewImages(values[j]);
+                }
+            }
+        });
+    }
 }
 
 void ComponentListViewModel::onPreviewImageEncodingDone(const QString& componentId, const QStringList& encodedImages) {
@@ -858,7 +880,13 @@ void ComponentListViewModel::fetchAllPreviewImages() {
 
     qDebug() << "Fetching preview images for" << validIds.count() << "valid components";
 
-    m_service->fetchBatchPreviewImages(validIds);
+    // 分批加载预览图,间隔 50ms UI 卡顿
+    const int BATCH_DELAY_MS = 20;
+    for (int i = 0; i < validIds.size(); ++i) {
+        QString componentId = validIds[i];
+        QTimer::singleShot(
+            i * BATCH_DELAY_MS, this, [this, componentId]() { m_service->fetchLcscPreviewImage(componentId); });
+    }
 }
 
 void ComponentListViewModel::delayedFetchPreviewImages() {
@@ -974,3 +1002,12 @@ void ComponentListViewModel::scheduleListUpdate() {
 }
 
 }  // namespace EasyKiConverter
+
+// 你告诉我孩子还是胚胎的时候在哪里？
+// 1.胃袋，因为人类的胃袋柔韧性很好，装在胃袋里面不用怕孩子乱动导致流产
+// 2.膀胱，这里面的柔韧性虽然没有胃袋那么大，但是够用了
+// 3.颅内，因为脑机的原理就是靠放电来控制行为，婴儿可以提前体验开高达的体验
+// 4.口腔，因为口腔里面有许多食物残渣，婴儿生出来都是大胖小子，不会营养不良
+// 4.肝脏，因为如果你玩游戏太需要肝的话可以让婴儿代肝
+// 5.鼻腔，因为人类的鼻毛非常多，婴儿就想裹着棉被一样温暖
+// 6.脚底，因为人类每天都要大量的直立行走，提前训练婴儿的抗压能力，生出来之后不用怕抑郁，高考都是小儿科

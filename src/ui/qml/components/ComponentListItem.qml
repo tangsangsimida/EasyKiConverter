@@ -155,7 +155,6 @@ Rectangle {
                 interval: 250
                 repeat: false
                 onTriggered: {
-                    console.log("hoverDelayTimer: triggered, containsMouse=", previewMouseArea.containsMouse);
                     if (previewMouseArea.containsMouse) {
                         previewArea.showPreviewPopup();
                     }
@@ -175,6 +174,7 @@ Rectangle {
                     anchors.centerIn: parent
                     width: 46
                     height: 46
+                    sourceSize: Qt.size(46, 46)  // 提示按实际显示大小解码
                     source: {
                         if (!itemData || itemData.isFetching || !itemData.previewImageCount || itemData.previewImageCount === 0) {
                             return "";
@@ -182,7 +182,7 @@ Rectangle {
                         if (!itemData.previewImages || itemData.previewImages.length === 0) {
                             return "";
                         }
-                        return "data:image/png;base64," + itemData.previewImages[0];
+                        return "data:image/jpeg;base64," + itemData.previewImages[0];
                     }
                     fillMode: Image.PreserveAspectFit
                     cache: true
@@ -274,10 +274,8 @@ Rectangle {
                 // 跟踪是否应该在加载完成后显示
                 property bool pendingShow: false
                 onLoaded: {
-                    console.log("PreviewPopupLoader: loaded, pendingShow:", pendingShow, "item:", item);
                     if (pendingShow && item) {
                         item.visible = true;
-                        console.log("PreviewPopupLoader: set visible true");
                     }
                 }
                 sourceComponent: Popup {
@@ -373,6 +371,7 @@ Rectangle {
                                     Image {
                                         anchors.fill: parent
                                         anchors.margins: 5
+                                        sourceSize: Qt.size(150, 150)  // 提示按实际显示大小解码
                                         source: {
                                             if (!itemData || !itemData.previewImages) {
                                                 return "";
@@ -381,7 +380,7 @@ Rectangle {
                                             if (!imageData) {
                                                 return "";
                                             }
-                                            return "data:image/png;base64," + imageData;
+                                            return "data:image/jpeg;base64," + imageData;
                                         }
                                         fillMode: Image.PreserveAspectFit
                                         cache: true
@@ -439,7 +438,6 @@ Rectangle {
 
             // 预览图弹窗显示函数
             function showPreviewPopup() {
-                console.log("showPreviewPopup: active=", previewPopupLoader.active, "pendingShow=", previewPopupLoader.pendingShow);
                 if (!previewPopupLoader.active) {
                     previewPopupLoader.pendingShow = true;
                     previewPopupLoader.active = true;
@@ -450,7 +448,6 @@ Rectangle {
 
             // 预览图弹窗隐藏函数
             function hidePreviewPopup() {
-                console.log("hidePreviewPopup: pendingShow set to false");
                 previewPopupLoader.pendingShow = false;
                 if (previewPopupLoader.item) {
                     previewPopupLoader.item.visible = false;
@@ -475,7 +472,6 @@ Rectangle {
                     }
                 }
                 onContainsMouseChanged: {
-                    console.log("previewMouseArea: containsMouse=", containsMouse);
                     if (containsMouse) {
                         hoverDelayTimer.start();
                     } else {

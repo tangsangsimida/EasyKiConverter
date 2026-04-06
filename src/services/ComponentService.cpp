@@ -313,7 +313,7 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
         }
 
         // 从缓存加载预览图数据（批量发送，避免频繁 UI 更新）
-        // 预览图数据已经是 PNG 编码的字节，直接编码为 base64 字符串
+        // 预览图数据是 JPG 字节，直接编码为 base64 字符串
         if (!result.previewImageData.isEmpty()) {
             QStringList encodedImages(3);  // 预分配3个位置
             for (const auto& [imageIndex, imageData] : result.previewImageData) {

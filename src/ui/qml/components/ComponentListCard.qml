@@ -513,6 +513,8 @@ Card {
             clip: true
             // 启用虚拟化，缓存上下各一屏的项
             cacheBuffer: 500
+            // 启用 Item 回收，减少创建/销毁开销
+            reuseItems: true
             cellWidth: {
                 var w = width - AppStyle.spacing.md;
                 var c = Math.max(1, Math.floor(w / 230));

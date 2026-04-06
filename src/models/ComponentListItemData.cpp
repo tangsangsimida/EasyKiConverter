@@ -4,6 +4,9 @@
 
 namespace EasyKiConverter {
 
+// 静态成员初始化
+bool ComponentListItemData::s_holdPreviewImageNotifications = false;
+
 ComponentListItemData::ComponentListItemData(const QString& componentId, QObject* parent)
     : QObject(parent)
     , m_componentId(componentId)
@@ -196,6 +199,43 @@ QString ComponentListItemData::datasheetUrl() const {
         return m_componentData->datasheet();
     }
     return QString();
+}
+
+void ComponentListItemData::setEncodedPreviewImagesHoldNotify(const QStringList& encodedImages) {
+    m_previewImagesCache.clear();
+    for (const QString& encoded : encodedImages) {
+        if (encoded.isEmpty()) {
+            m_previewImagesCache.append(QVariant());
+        } else {
+            m_previewImagesCache.append(encoded);
+        }
+    }
+    // 如果没有暂停通知，则发射信号
+    if (!s_holdPreviewImageNotifications) {
+        emit previewImagesChanged();
+    }
+}
+
+void ComponentListItemData::setEncodedPreviewImagesSilent(const QStringList& encodedImages) {
+    m_previewImagesCache.clear();
+    for (const QString& encoded : encodedImages) {
+        if (encoded.isEmpty()) {
+            m_previewImagesCache.append(QVariant());
+        } else {
+            m_previewImagesCache.append(encoded);
+        }
+    }
+    // 不发射信号，由其他更新触发 UI 刷新
+}
+
+void ComponentListItemData::holdPreviewImageNotifications() {
+    s_holdPreviewImageNotifications = true;
+}
+
+void ComponentListItemData::flushPreviewImageNotifications() {
+    // 静态方法无法发射实例信号，改为发射所有待更新项的信号
+    // 这个方法应该在持有锁的情况下调用，确保线程安全
+    s_holdPreviewImageNotifications = false;
 }
 
 }  // namespace EasyKiConverter
