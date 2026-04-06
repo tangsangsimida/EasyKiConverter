@@ -5,7 +5,7 @@ import QtQuick.Effects
 import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Rectangle {
-    id: item
+    id: rootItem
     // 接收 ComponentListItemData 对象
     property var itemData
     property string searchText: ""
@@ -18,6 +18,25 @@ Rectangle {
     radius: AppStyle.radius.md
     border.color: AppStyle.colors.border
     border.width: 1
+    // 缓存搜索正则以优化性能
+    property string cachedSearchText: ""
+    property var cachedRegex: null
+    Timer {
+        id: regexUpdateTimer
+        interval: 100
+        onTriggered: updateCachedRegex()
+    }
+    function updateCachedRegex() {
+        if (searchText !== cachedSearchText) {
+            cachedSearchText = searchText;
+            if (!searchText || searchText.trim() === "") {
+                cachedRegex = null;
+            } else {
+                var escaped = searchText.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                cachedRegex = new RegExp("(" + escaped + ")", "gi");
+            }
+        }
+    }
     Behavior on color {
         ColorAnimation {
             duration: AppStyle.durations.fast
@@ -137,7 +156,7 @@ Rectangle {
                 repeat: false
                 onTriggered: {
                     if (previewMouseArea.containsMouse) {
-                        previewPopup.visible = true;
+                        rootItem.showPreviewPopup();
                     }
                 }
             }
@@ -246,159 +265,171 @@ Rectangle {
                 }
             }
 
-            // 放大预览图
-            Popup {
-                id: previewPopup
-                parent: previewBackground
-                width: 490 // 三张图片 150x3 + 间距
-                height: 170
-                padding: 0
-                // visible 由 Timer 控制，悬停1秒后显示
-                visible: false
-                closePolicy: Popup.NoAutoClose
-                modal: false
-                focus: false
-                dim: false
-                // 位置计算
-                onVisibleChanged: {
-                    if (visible) {
-                        // 获取缩略图在屏幕上的位置
-                        var thumbGlobalPos = previewBackground.mapToGlobal(Qt.point(0, 0));
-                        // 获取窗口在屏幕上的位置
-                        var window = item.Window.window;
-                        var windowGlobalX = window ? window.x : 0;
-                        var windowWidth = window ? window.width : item.width;
-                        // 计算缩略图相对于窗口的位置
-                        var thumbRelativeX = thumbGlobalPos.x - windowGlobalX;
-                        // 预览图宽度（490）+ 间距（60）= 550
-                        var popupWidth = width + 60;
-                        // 如果右侧空间不足，显示在左侧
-                        if (thumbRelativeX + popupWidth > windowWidth) {
-                            x = -540; // 显示在缩略图左侧
-                        } else {
-                            x = 60; // 显示在缩略图右侧
+            // 放大预览图 - 延迟加载的 Popup
+            Loader {
+                id: previewPopupLoader
+                active: false
+                asynchronous: true
+                // 跟踪是否应该在加载完成后显示
+                property bool pendingShow: false
+                onLoaded: {
+                    if (pendingShow && item) {
+                        item.visible = true;
+                    }
+                }
+                sourceComponent: Popup {
+                    id: previewPopup
+                    parent: previewBackground
+                    width: 490 // 三张图片 150x3 + 间距
+                    height: 170
+                    padding: 0
+                    // visible 由 Timer 控制，悬停1秒后显示
+                    visible: false
+                    closePolicy: Popup.NoAutoClose
+                    modal: false
+                    focus: false
+                    dim: false
+                    // 位置计算
+                    onVisibleChanged: {
+                        if (visible) {
+                            // 获取缩略图在屏幕上的位置
+                            var thumbGlobalPos = previewBackground.mapToGlobal(Qt.point(0, 0));
+                            // 获取窗口在屏幕上的位置
+                            var window = item.Window.window;
+                            var windowGlobalX = window ? window.x : 0;
+                            var windowWidth = window ? window.width : item.width;
+                            // 计算缩略图相对于窗口的位置
+                            var thumbRelativeX = thumbGlobalPos.x - windowGlobalX;
+                            // 预览图宽度（490）+ 间距（60）= 550
+                            var popupWidth = width + 60;
+                            // 如果右侧空间不足，显示在左侧
+                            if (thumbRelativeX + popupWidth > windowWidth) {
+                                x = -540; // 显示在缩略图左侧
+                            } else {
+                                x = 60; // 显示在缩略图右侧
+                            }
+
+                            // 垂直居中显示
+                            y = (previewBackground.height - height) / 2;
                         }
-
-                        // 垂直居中显示
-                        y = (previewBackground.height - height) / 2;
                     }
-                }
 
-                enter: Transition {
-                    NumberAnimation {
-                        property: "opacity"
-                        from: 0
-                        to: 1
-                        duration: 150
+                    enter: Transition {
+                        NumberAnimation {
+                            property: "opacity"
+                            from: 0
+                            to: 1
+                            duration: 150
+                        }
                     }
-                }
 
-                exit: Transition {
-                    NumberAnimation {
-                        property: "opacity"
-                        from: 1
-                        to: 0
-                        duration: 150
+                    exit: Transition {
+                        NumberAnimation {
+                            property: "opacity"
+                            from: 1
+                            to: 0
+                            duration: 150
+                        }
                     }
-                }
 
-                background: Rectangle {
-                    color: AppStyle.colors.surface
-                    border.color: AppStyle.colors.primary
-                    border.width: 2
-                    radius: AppStyle.radius.md
-                    // 阴影效果
-                    layer.enabled: true
-                    layer.effect: MultiEffect {
-                        shadowEnabled: true
-                        shadowBlur: 1.0
-                        shadowColor: AppStyle.isDarkMode ? "#00000000" : "#33000000"
-                        shadowVerticalOffset: 2
-                        shadowHorizontalOffset: 2
+                    background: Rectangle {
+                        color: AppStyle.colors.surface
+                        border.color: AppStyle.colors.primary
+                        border.width: 2
+                        radius: AppStyle.radius.md
+                        // 阴影效果
+                        layer.enabled: true
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowBlur: 1.0
+                            shadowColor: AppStyle.isDarkMode ? "#00000000" : "#33000000"
+                            shadowVerticalOffset: 2
+                            shadowHorizontalOffset: 2
+                        }
                     }
-                }
 
-                contentItem: Item {
-                    anchors.fill: parent
-                    anchors.margins: 10
-                    visible: itemData && itemData.isValid
-                    // 有预览图时显示所有图片（最多3张）
-                    Row {
+                    contentItem: Item {
                         anchors.fill: parent
-                        spacing: 10
-                        visible: itemData && itemData.previewImageCount > 0
-                        Repeater {
-                            model: itemData ? Math.min(itemData.previewImageCount, 3) : 0
-                            Rectangle {
-                                width: 150
-                                height: 150
-                                color: AppStyle.colors.background
-                                radius: AppStyle.radius.sm
-                                border.color: AppStyle.colors.border
-                                border.width: 1
-                                clip: true
-                                Image {
-                                    anchors.fill: parent
-                                    anchors.margins: 5
-                                    source: {
-                                        if (!itemData || !itemData.previewImages) {
-                                            return "";
-                                        }
-                                        var imageData = itemData.previewImages[index];
-                                        if (!imageData) {
-                                            return "";
-                                        }
-                                        return "data:image/png;base64," + imageData;
-                                    }
-                                    fillMode: Image.PreserveAspectFit
-                                    cache: true
-                                    asynchronous: true
-                                }
-
-                                // 图片序号标记
+                        anchors.margins: 10
+                        visible: itemData && itemData.isValid
+                        // 有预览图时显示所有图片（最多3张）
+                        Row {
+                            anchors.fill: parent
+                            spacing: 10
+                            visible: itemData && itemData.previewImageCount > 0
+                            Repeater {
+                                model: itemData ? Math.min(itemData.previewImageCount, 3) : 0
                                 Rectangle {
-                                    anchors.top: parent.top
-                                    anchors.right: parent.right
-                                    width: 20
-                                    height: 20
-                                    color: AppStyle.colors.primary
-                                    radius: 10
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: index + 1
-                                        font.pixelSize: 11
-                                        font.bold: true
-                                        color: "white"
+                                    width: 150
+                                    height: 150
+                                    color: AppStyle.colors.background
+                                    radius: AppStyle.radius.sm
+                                    border.color: AppStyle.colors.border
+                                    border.width: 1
+                                    clip: true
+                                    Image {
+                                        anchors.fill: parent
+                                        anchors.margins: 5
+                                        source: {
+                                            if (!itemData || !itemData.previewImages) {
+                                                return "";
+                                            }
+                                            var imageData = itemData.previewImages[index];
+                                            if (!imageData) {
+                                                return "";
+                                            }
+                                            return "data:image/png;base64," + imageData;
+                                        }
+                                        fillMode: Image.PreserveAspectFit
+                                        cache: true
+                                        asynchronous: true
                                     }
-                                }
 
-                                // 底部元器件编号遮罩
-                                Rectangle {
-                                    anchors.bottom: parent.bottom
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    width: parent.width
-                                    height: 25
-                                    color: "#CC000000"
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: itemData ? itemData.componentId : ""
-                                        color: "white"
-                                        font.bold: true
-                                        font.pixelSize: 9
+                                    // 图片序号标记
+                                    Rectangle {
+                                        anchors.top: parent.top
+                                        anchors.right: parent.right
+                                        width: 20
+                                        height: 20
+                                        color: AppStyle.colors.primary
+                                        radius: 10
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: index + 1
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                            color: "white"
+                                        }
+                                    }
+
+                                    // 底部元器件编号遮罩
+                                    Rectangle {
+                                        anchors.bottom: parent.bottom
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        width: parent.width
+                                        height: 25
+                                        color: "#CC000000"
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: itemData ? itemData.componentId : ""
+                                            color: "white"
+                                            font.bold: true
+                                            font.pixelSize: 9
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    // 无预览图时显示提示
-                    Text {
-                        anchors.centerIn: parent
-                        text: "无预览图"
-                        font.pixelSize: AppStyle.fontSizes.lg
-                        font.bold: true
-                        color: AppStyle.colors.textSecondary
-                        visible: !itemData || !itemData.previewImageCount || itemData.previewImageCount === 0
+                        // 无预览图时显示提示
+                        Text {
+                            anchors.centerIn: parent
+                            text: "无预览图"
+                            font.pixelSize: AppStyle.fontSizes.lg
+                            font.bold: true
+                            color: AppStyle.colors.textSecondary
+                            visible: !itemData || !itemData.previewImageCount || itemData.previewImageCount === 0
+                        }
                     }
                 }
             }
@@ -425,9 +456,27 @@ Rectangle {
                         hoverDelayTimer.start();
                     } else {
                         hoverDelayTimer.stop();
-                        previewPopup.visible = false;
+                        hidePreviewPopup();
                     }
                 }
+            }
+        }
+
+        // 预览图弹窗显示函数（定义在根 Item 上供外部调用）
+        function showPreviewPopup() {
+            if (!previewArea.previewPopupLoader.active) {
+                previewArea.previewPopupLoader.pendingShow = true;
+                previewArea.previewPopupLoader.active = true;
+            } else if (previewArea.previewPopupLoader.item) {
+                previewArea.previewPopupLoader.item.visible = true;
+            }
+        }
+
+        // 预览图弹窗隐藏函数（定义在根 Item 上供外部调用）
+        function hidePreviewPopup() {
+            previewArea.previewPopupLoader.pendingShow = false;
+            if (previewArea.previewPopupLoader.item) {
+                previewArea.previewPopupLoader.item.visible = false;
             }
         }
 
@@ -449,11 +498,15 @@ Rectangle {
                     var cid = itemData.componentId;
                     if (!searchText || searchText.trim() === "")
                         return cid;
-                    // 转义特殊字符防止正则错误或HTML注入
-                    var escapedSearch = searchText.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    var regex = new RegExp("(" + escapedSearch + ")", "gi"); // 全局 + 忽略大小写
+                    // 使用缓存的正则，避免重复创建
+                    regexUpdateTimer.restart();
+                    if (!cachedRegex) {
+                        return cid;
+                    }
+                    // 重置正则状态（全局匹配需要重置 lastIndex）
+                    cachedRegex.lastIndex = 0;
                     // 高亮颜色使用 Primary 颜色 (#3b82f6)
-                    return cid.replace(regex, "<font color='#3b82f6'><b>$1</b></font>");
+                    return cid.replace(cachedRegex, "<font color='#3b82f6'><b>$1</b></font>");
                 }
 
                 font.pixelSize: AppStyle.fontSizes.md

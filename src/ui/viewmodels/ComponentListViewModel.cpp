@@ -68,6 +68,22 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
         m_batchUpdateItems.clear();
     });
 
+    // 列表更新批处理定时器（更短的间隔，减少批量操作时的延迟）
+    m_batchListUpdateTimer = new QTimer(this);
+    m_batchListUpdateTimer->setSingleShot(true);
+    m_batchListUpdateTimer->setInterval(20);
+    connect(m_batchListUpdateTimer, &QTimer::timeout, this, [this]() {
+        m_batchListUpdateMode = false;
+        emit componentCountChanged();
+        emit filteredCountChanged();
+    });
+
+    // 延迟获取预览图定时器（给验证留出时间完成）
+    m_delayedFetchPreviewTimer = new QTimer(this);
+    m_delayedFetchPreviewTimer->setSingleShot(true);
+    m_delayedFetchPreviewTimer->setInterval(100);  // 100ms 延迟
+    connect(m_delayedFetchPreviewTimer, &QTimer::timeout, this, &ComponentListViewModel::delayedFetchPreviewImages);
+
     connect(m_service, &ComponentService::componentInfoReady, this, &ComponentListViewModel::handleComponentInfoReady);
     connect(m_service, &ComponentService::cadDataReady, this, &ComponentListViewModel::handleCadDataReady);
     connect(m_service, &ComponentService::model3DReady, this, &ComponentListViewModel::handleModel3DReady);
@@ -83,6 +99,11 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                     item->insertPreviewImageSilent(image, imageIndex);
                     qDebug() << "[ViewModel] previewImageReady - component:" << componentId << "index:" << imageIndex
                              << "image valid:" << !image.isNull();
+                    // 添加防抖：收到图片后将其加入待更新列表，并重启防抖定时器
+                    if (!m_pendingPreviewImageItems.contains(item)) {
+                        m_pendingPreviewImageItems.append(item);
+                    }
+                    m_previewImageUpdateTimer->start();
                 }
             });
     connect(m_service,
@@ -168,8 +189,7 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
 
     m_validationStateManager->startValidation(1);
 
-    emit componentCountChanged();
-    emit filteredCountChanged();
+    scheduleListUpdate();
     emit componentAdded(trimmedId, true, "Component added");
 }
 
@@ -190,8 +210,7 @@ void ComponentListViewModel::removeComponent(int index) {
         rebuildComponentIdIndex();
         updateHasInvalidComponents();
 
-        emit componentCountChanged();
-        emit filteredCountChanged();
+        scheduleListUpdate();
         emit componentRemoved(removedId);
     }
 }
@@ -220,8 +239,7 @@ void ComponentListViewModel::clearComponentList() {
         m_validationStateManager->reset();
         updateHasInvalidComponents();
 
-        emit componentCountChanged();
-        emit filteredCountChanged();
+        scheduleListUpdate();
         emit listCleared();
     }
 }
@@ -280,6 +298,8 @@ void ComponentListViewModel::processNextBatchAdd() {
 
     int pendingCount = batch.count();
     int startIndex = m_componentList.count();
+    bool isFirstBatch = (startIndex == 0);
+    bool isLastBatch = m_pendingComponentIds.isEmpty();
 
     beginInsertRows(QModelIndex(), startIndex, startIndex + pendingCount - 1);
     for (const QString& id : batch) {
@@ -291,38 +311,53 @@ void ComponentListViewModel::processNextBatchAdd() {
     }
     endInsertRows();
 
-    emit componentCountChanged();
-    emit filteredCountChanged();
-
-    if (m_validationPendingCount == 0 && !m_batchAddTimer->isActive()) {
+    // 启动验证（每一批都需要检查是否有新的组件需要验证）
+    if (isFirstBatch) {
         m_validationStateManager->startValidation(pendingCount);
-        startValidationQueue();
     }
+    // 继续处理队列中的验证（如果队列已空且有待验证的组件，会自动添加）
+    startValidationQueue();
 
-    if (m_pendingComponentIds.isEmpty()) {
-        m_batchAddTimer->stop();
-        m_validationStateManager->startValidation(pendingCount);
-        startValidationQueue();
+    // 只有在最后一批时才发射完整信号
+    if (isLastBatch) {
+        emit componentCountChanged();
+        emit filteredCountChanged();
+    } else if (isFirstBatch) {
+        // 第一批但不是最后一批，发射计数信号让GridView更新
+        emit componentCountChanged();
     }
 }
 
 void ComponentListViewModel::startValidationQueue() {
     const int CONCURRENT_WORKERS = 5;
 
-    m_validationQueue.clear();
-    for (auto item : m_componentList) {
-        if (item->isFetching()) {
-            m_validationQueue.append(item->componentId());
+    // 检查队列是否为空，如果为空则重建
+    bool queueWasEmpty = m_validationQueue.isEmpty();
+    if (queueWasEmpty) {
+        for (auto item : m_componentList) {
+            // 只添加正在验证的组件，排除已验证完成或已验证失败的组件
+            // 注意：isFetching() 在 handleCadDataReady 时立即设为 false，
+            // 但 onValidationComplete 通过 singleShot(0) 延迟调用，
+            // 所以需要额外检查 isValid() 来排除已完成的组件
+            if (item->isFetching() && !item->isValid()) {
+                m_validationQueue.append(item->componentId());
+            }
         }
     }
-    m_validationPendingCount = 0;
-    m_validationCompletedCount = 0;
-    m_validationTotalCount = m_validationQueue.count();
 
+    // 如果没有待验证的组件，直接返回
     if (m_validationQueue.isEmpty()) {
         return;
     }
 
+    // 设置总数：
+    // - 如果队列之前是空的并被重建了，说明有新项目加入，累加到总数
+    // - 如果队列不是空的，说明是延续之前的处理，不需要额外累加（已在pending中）
+    if (queueWasEmpty) {
+        m_validationTotalCount += m_validationQueue.count();
+    }
+
+    // 启动并发验证 worker
     int initialCount = qMin(CONCURRENT_WORKERS, m_validationQueue.count());
     for (int i = 0; i < initialCount; ++i) {
         QString componentId = m_validationQueue.takeFirst();
@@ -349,15 +384,21 @@ void ComponentListViewModel::onValidationComplete(const QString& componentId) {
     }
 
     qDebug() << "onValidationComplete:" << componentId << "pending:" << m_validationPendingCount
-             << "completed:" << m_validationCompletedCount << "queue size:" << m_validationQueue.size();
+             << "completed:" << m_validationCompletedCount << "total:" << m_validationTotalCount
+             << "queue size:" << m_validationQueue.size();
 
     emit filteredCountChanged();
 
     if (!m_validationQueue.isEmpty()) {
         processNextValidation();
-    } else if (m_validationPendingCount <= 0) {
-        qDebug() << "All validation complete, fetching preview images";
-        fetchAllPreviewImages();
+    } else {
+        // 队列为空，尝试补充新组件（可能在验证期间新添加的）
+        startValidationQueue();
+        if (m_validationQueue.isEmpty() && m_validationCompletedCount >= m_validationTotalCount) {
+            // 队列仍为空且所有已知组件都完成了，获取预览图
+            qDebug() << "All validations complete, fetching preview images";
+            fetchAllPreviewImages();
+        }
     }
 }
 
@@ -789,6 +830,19 @@ void ComponentListViewModel::fetchAllPreviewImages() {
     m_service->fetchBatchPreviewImages(validIds);
 }
 
+void ComponentListViewModel::delayedFetchPreviewImages() {
+    // 使用计数器判断是否所有验证都完成
+    if (m_validationCompletedCount >= m_validationTotalCount && m_validationPendingCount <= 0 &&
+        m_validationQueue.isEmpty()) {
+        qDebug() << "All validation complete (delayed check), fetching preview images";
+        fetchAllPreviewImages();
+    } else {
+        // 还有验证在进行，继续等待
+        qDebug() << "Still have pending validations, delaying preview fetch";
+        m_delayedFetchPreviewTimer->start();
+    }
+}
+
 void ComponentListViewModel::updateHasInvalidComponents() {
     bool hasInvalid = false;
     for (const auto& item : m_componentList) {
@@ -878,6 +932,14 @@ int ComponentListViewModel::invalidCount() const {
             count++;
     }
     return count;
+}
+
+void ComponentListViewModel::scheduleListUpdate() {
+    if (!m_batchListUpdateMode) {
+        m_batchListUpdateMode = true;
+    }
+    // start() 重启已运行的单次定时器
+    m_batchListUpdateTimer->start();
 }
 
 }  // namespace EasyKiConverter

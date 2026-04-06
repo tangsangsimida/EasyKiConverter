@@ -139,6 +139,10 @@ void ComponentListItemData::insertPreviewImageSilent(const QImage& image, int in
     }
 
     m_previewImages[index] = image;
+
+    // 注意：不在这里更新缓存和发射信号
+    // 缓存更新和信号发射由 ComponentListViewModel 的 batchUpdatePreviewImages 统一处理
+    // 这样可以避免在主线程中进行耗时的图片编码操作
 }
 
 // 编码单张图片

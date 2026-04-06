@@ -51,17 +51,21 @@ void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) 
     for (const QString& componentId : componentIds) {
         if (!componentId.isEmpty()) {
             // 先检查缓存，缓存中有则直接加载，不加入队列
-            // 注意：即使组件已在 m_requestedComponents 中，也需要检查缓存（支持第二次导出时从缓存加载）
             if (tryLoadCachedPreviewImages(componentId)) {
                 m_requestedComponents.insert(componentId);
                 qDebug() << "LcscImageService: Cached images loaded for" << componentId;
                 continue;
             }
-            // 缓存没有且未请求过，加入队列等待网络请求
-            if (!m_requestedComponents.contains(componentId)) {
-                m_queue.enqueue(componentId);
-                qDebug() << "LcscImageService: Queued for network fetch:" << componentId;
+            // 缓存没有或加载失败，检查是否已在队列中（防止重复请求）
+            if (m_queue.contains(componentId)) {
+                qDebug() << "LcscImageService: Component" << componentId << "already in queue, skipping";
+                continue;
             }
+            // 缓存没有且不在队列中，将组件加入队列等待网络请求
+            // 注意：不管组件是否已在 m_requestedComponents 中，都要重新尝试网络请求
+            // 因为之前的请求可能因为超时或网络错误失败了
+            m_queue.enqueue(componentId);
+            qDebug() << "LcscImageService: Queued for network fetch:" << componentId;
         }
     }
     processQueue();

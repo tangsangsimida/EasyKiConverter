@@ -156,6 +156,8 @@ private:
     void fetchAllPreviewImages();
     void batchUpdatePreviewImages();
     void onPreviewImageEncodingDone(const QString& componentId, const QStringList& encodedImages);
+    void scheduleListUpdate();  // 批量模式下的列表更新调度
+    void delayedFetchPreviewImages();  // 延迟获取预览图，等待所有验证完成
 
 private:
     ComponentService* m_service;
@@ -192,6 +194,13 @@ private:
     bool m_batchUpdateMode = false;
     QList<QPointer<ComponentListItemData>> m_batchUpdateItems;
     QTimer* m_batchUpdateTimer;
+
+    // 列表更新批处理（合并 componentCountChanged 和 filteredCountChanged）
+    bool m_batchListUpdateMode = false;
+    QTimer* m_batchListUpdateTimer;
+
+    // 延迟获取预览图定时器（等待验证全部完成）
+    QTimer* m_delayedFetchPreviewTimer;
 };
 
 }  // namespace EasyKiConverter
