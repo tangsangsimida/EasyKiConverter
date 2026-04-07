@@ -24,6 +24,7 @@ class ComponentListItemData : public QObject {
     Q_PROPERTY(int previewImageCount READ previewImageCount NOTIFY previewImagesChanged)
     Q_PROPERTY(bool isValid READ isValid NOTIFY validationStatusChanged)
     Q_PROPERTY(bool isFetching READ isFetching NOTIFY fetchingStatusChanged)
+    Q_PROPERTY(QString validationPhase READ validationPhase NOTIFY validationPhaseChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY validationStatusChanged)
     Q_PROPERTY(QString datasheetUrl READ datasheetUrl NOTIFY datasheetChanged)
     Q_PROPERTY(bool previewImageExported READ previewImageExported NOTIFY exportStatusChanged)
@@ -65,6 +66,10 @@ public:
         return m_isFetching;
     }
 
+    QString validationPhase() const {
+        return m_validationPhase;
+    }
+
     QString errorMessage() const {
         return m_errorMessage;
     }
@@ -94,6 +99,7 @@ public:
     void setComponentData(const QSharedPointer<ComponentData>& data);
     void setValid(bool valid);
     void setFetching(bool fetching);
+    void setValidationPhase(const QString& phase);
     void setErrorMessage(const QString& error);
     void setPreviewImageExported(bool exported);
     void setDatasheetExported(bool exported);
@@ -115,6 +121,7 @@ signals:
     void previewImagesChanged();
     void validationStatusChanged();
     void fetchingStatusChanged();
+    void validationPhaseChanged();
     void datasheetChanged();
     void exportStatusChanged();
 
@@ -128,6 +135,7 @@ private:
     mutable QVariantList m_previewImagesCache;
     bool m_isValid;
     bool m_isFetching;
+    QString m_validationPhase;  // "idle" | "validating" | "fetching_preview" | "completed" | "failed"
     QString m_errorMessage;
     QSharedPointer<ComponentData> m_componentData;
     bool m_previewImageExported = false;

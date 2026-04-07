@@ -56,9 +56,7 @@ protected:
     ~NetworkClient() override;
 
 private:
-    NetworkResult executeRequest(const QUrl& url,
-                                const QByteArray& body,
-                                const RetryPolicy& policy);
+    NetworkResult executeRequest(const QUrl& url, const QByteArray& body, const RetryPolicy& policy);
     int calculateRetryDelay(int retryCount, const RetryPolicy& policy);
     bool shouldRetry(int statusCode, int retryCount, const RetryPolicy& policy);
 

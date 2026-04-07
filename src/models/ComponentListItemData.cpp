@@ -11,7 +11,8 @@ ComponentListItemData::ComponentListItemData(const QString& componentId, QObject
     : QObject(parent)
     , m_componentId(componentId)
     , m_isValid(true)  // 默认为 true，直到验证失败
-    , m_isFetching(false) {}
+    , m_isFetching(false)
+    , m_validationPhase("idle") {}
 
 void ComponentListItemData::setName(const QString& name) {
     if (m_name != name) {
@@ -57,6 +58,13 @@ void ComponentListItemData::setFetching(bool fetching) {
     if (m_isFetching != fetching) {
         m_isFetching = fetching;
         emit fetchingStatusChanged();
+    }
+}
+
+void ComponentListItemData::setValidationPhase(const QString& phase) {
+    if (m_validationPhase != phase) {
+        m_validationPhase = phase;
+        emit validationPhaseChanged();
     }
 }
 

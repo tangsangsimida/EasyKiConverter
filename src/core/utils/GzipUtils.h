@@ -17,9 +17,10 @@ namespace GzipUtils {
  */
 struct DecompressResult {
     QByteArray data;  ///< Decompressed data
-    bool success;     ///< true if decompression succeeded (even if data is empty)
+    bool success;  ///< true if decompression succeeded (even if data is empty)
 
     DecompressResult() : success(false) {}
+
     DecompressResult(const QByteArray& d, bool s) : data(d), success(s) {}
 };
 

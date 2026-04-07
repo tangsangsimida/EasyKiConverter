@@ -22,7 +22,7 @@ namespace EasyKiConverter {
  *   // run tests
  *   MyService::destroyInstance();
  */
-template<typename T>
+template <typename T>
 class TestableSingleton {
 public:
     static T& instance() {
@@ -74,13 +74,13 @@ private:
     static T* s_mockInstance;
 };
 
-template<typename T>
+template <typename T>
 QMutex TestableSingleton<T>::s_mutex;
 
-template<typename T>
+template <typename T>
 T* TestableSingleton<T>::s_instance = nullptr;
 
-template<typename T>
+template <typename T>
 T* TestableSingleton<T>::s_mockInstance = nullptr;
 
 }  // namespace EasyKiConverter

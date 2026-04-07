@@ -2,6 +2,7 @@
 
 #include <QByteArray>
 #include <QDebug>
+
 #include <zlib.h>
 
 // Gzip magic number: 0x1f 0x8b

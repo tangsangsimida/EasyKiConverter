@@ -176,27 +176,30 @@ Rectangle {
                     height: 46
                     sourceSize: Qt.size(46, 46)  // 提示按实际显示大小解码
                     source: {
-                        if (!itemData || itemData.isFetching || !itemData.previewImageCount || itemData.previewImageCount === 0) {
+                        if (!itemData)
                             return "";
-                        }
-                        if (!itemData.previewImages || itemData.previewImages.length === 0) {
+                        var phase = itemData.validationPhase || "idle";
+                        if (phase === "idle" || phase === "validating" || phase === "failed")
                             return "";
-                        }
+                        if (!itemData.previewImageCount || itemData.previewImageCount === 0)
+                            return "";
+                        if (!itemData.previewImages || itemData.previewImages.length === 0)
+                            return "";
                         return "data:image/jpeg;base64," + itemData.previewImages[0];
                     }
                     fillMode: Image.PreserveAspectFit
                     cache: true
                     asynchronous: true
-                    visible: itemData && !itemData.isFetching && itemData.previewImageCount > 0
+                    visible: itemData && (itemData.validationPhase === "completed" || itemData.validationPhase === "fetching_preview") && itemData.previewImageCount > 0
                 }
 
-                // 加载状态
+                // 加载状态（验证中或获取预览图中）
                 BusyIndicator {
                     anchors.centerIn: parent
                     width: 24
                     height: 24
-                    running: (itemData && itemData.isFetching) ? true : false
-                    visible: (itemData && itemData.isFetching) ? true : false
+                    running: (itemData && (itemData.validationPhase === "validating" || itemData.validationPhase === "fetching_preview")) ? true : false
+                    visible: (itemData && (itemData.validationPhase === "validating" || itemData.validationPhase === "fetching_preview")) ? true : false
                 }
 
                 // 验证成功但无预览图 - 显示绿色圆圈+勾号
@@ -208,7 +211,7 @@ Rectangle {
                     color: "transparent"
                     border.color: "#22c55e"
                     border.width: 2
-                    visible: (itemData && !itemData.isFetching && itemData.isValid && (!itemData.previewImageCount || itemData.previewImageCount === 0))
+                    visible: (itemData && itemData.validationPhase === "completed" && (!itemData.previewImageCount || itemData.previewImageCount === 0))
                     Canvas {
                         id: checkCanvas
                         anchors.fill: parent
@@ -240,7 +243,7 @@ Rectangle {
                     color: "transparent"
                     border.color: AppStyle.colors.danger
                     border.width: 2
-                    visible: (itemData && !itemData.isFetching && !itemData.isValid)
+                    visible: (itemData && itemData.validationPhase === "failed")
                     Canvas {
                         id: crossCanvas
                         anchors.fill: parent
@@ -514,7 +517,7 @@ Rectangle {
                 font.pixelSize: AppStyle.fontSizes.md
                 font.family: "Courier New"
                 font.bold: true
-                color: (itemData && !itemData.isFetching && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textPrimary
+                color: (itemData && itemData.validationPhase === "failed") ? AppStyle.colors.danger : AppStyle.colors.textPrimary
                 elide: Text.ElideRight
             }
 
@@ -524,19 +527,26 @@ Rectangle {
                 text: {
                     if (!itemData)
                         return "";
-                    if (itemData.isFetching)
-                        return "正在验证...";
-                    if (!itemData.isValid)
-                        return itemData.errorMessage || "无效的元器件";
-                    var info = [];
-                    if (itemData.name)
-                        info.push(itemData.name);
-                    if (itemData.package)
-                        info.push(itemData.package);
-                    return info.join(" | ");
+                    // 使用 validationPhase 显示精确状态
+                    var phase = itemData.validationPhase || "idle";
+                    if (phase === "validating")
+                        return "正在验证 CAD 数据...";
+                    if (phase === "fetching_preview")
+                        return "正在获取预览图...";
+                    if (phase === "failed")
+                        return itemData.errorMessage || "验证失败";
+                    if (phase === "completed" || itemData.isValid) {
+                        var info = [];
+                        if (itemData.name)
+                            info.push(itemData.name);
+                        if (itemData.package)
+                            info.push(itemData.package);
+                        return info.join(" | ");
+                    }
+                    return "";
                 }
                 font.pixelSize: AppStyle.fontSizes.sm
-                color: (itemData && !itemData.isFetching && !itemData.isValid) ? AppStyle.colors.danger : AppStyle.colors.textSecondary
+                color: (itemData && itemData.validationPhase === "failed") ? AppStyle.colors.danger : AppStyle.colors.textSecondary
                 elide: Text.ElideRight
             }
         }
@@ -545,7 +555,7 @@ Rectangle {
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
-            visible: itemData && !itemData.isValid && !itemData.isFetching
+            visible: itemData && itemData.validationPhase === "failed"
             background: Rectangle {
                 color: parent.pressed ? AppStyle.colors.primaryHover : parent.hovered ? "#dbeafe" : "transparent"
                 radius: AppStyle.radius.sm

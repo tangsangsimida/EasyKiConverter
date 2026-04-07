@@ -4,7 +4,8 @@
 
 namespace EasyKiConverter {
 
-ValidationStateManager::ValidationStateManager(QObject* parent) : QObject(parent), m_pendingValidationCount(0), m_totalValidationCount(0) {}
+ValidationStateManager::ValidationStateManager(QObject* parent)
+    : QObject(parent), m_pendingValidationCount(0), m_totalValidationCount(0) {}
 
 ValidationStateManager::~ValidationStateManager() {}
 
@@ -86,9 +87,8 @@ void ValidationStateManager::checkAndNotifyCompletion() {
     // 1. m_pendingValidationCount <= 0（没有待验证的组件）
     // 2. m_validatedComponentIds.size() == m_totalValidationCount（验证的组件数等于总数）
     if (m_pendingValidationCount <= 0 && m_validatedComponentIds.size() == m_totalValidationCount) {
-        qDebug() << "All validations completed," << m_validatedComponentIds.size()
-                 << "components validated (total was" << m_totalValidationCount
-                 << "), triggering preview fetch";
+        qDebug() << "All validations completed," << m_validatedComponentIds.size() << "components validated (total was"
+                 << m_totalValidationCount << "), triggering preview fetch";
         emit validationCompleted(m_validatedComponentIds);
     }
 }

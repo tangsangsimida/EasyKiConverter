@@ -88,18 +88,17 @@ Card {
                     // 获取数据对象
                     var dataObj = item.model.itemData;
                     var idStr = dataObj && dataObj.componentId !== undefined ? dataObj.componentId : "";
-                    var isFetching = dataObj && dataObj.isFetching !== undefined ? dataObj.isFetching : false;
-                    var isValid = dataObj && dataObj.isValid !== undefined ? dataObj.isValid : true;
-                    // 验证状态筛选
+                    var validationPhase = dataObj && dataObj.validationPhase !== undefined ? dataObj.validationPhase : "idle";
+                    // 验证状态筛选（使用 validationPhase）
                     var passFilter = false;
                     if (filterMode === "all") {
                         passFilter = true;
                     } else if (filterMode === "validating") {
-                        passFilter = isFetching;
+                        passFilter = (validationPhase === "validating" || validationPhase === "fetching_preview");
                     } else if (filterMode === "valid") {
-                        passFilter = !isFetching && isValid;
+                        passFilter = (validationPhase === "completed");
                     } else if (filterMode === "invalid") {
-                        passFilter = !isFetching && !isValid;
+                        passFilter = (validationPhase === "failed");
                     }
 
                     // 搜索词筛选

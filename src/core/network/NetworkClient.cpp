@@ -11,12 +11,9 @@
 
 namespace EasyKiConverter {
 
-NetworkClient::NetworkClient()
-    : m_networkManager(new QNetworkAccessManager(this)) {
-}
+NetworkClient::NetworkClient() : m_networkManager(new QNetworkAccessManager(this)) {}
 
 NetworkClient::~NetworkClient() = default;
-
 
 // static
 bool NetworkClient::isGzipCompressed(const QByteArray& data) {
@@ -41,9 +38,7 @@ NetworkResult NetworkClient::post(const QUrl& url, const QByteArray& body, const
     return executeRequest(url, body, policy);
 }
 
-NetworkResult NetworkClient::executeRequest(const QUrl& url,
-                                           const QByteArray& body,
-                                           const RetryPolicy& policy) {
+NetworkResult NetworkClient::executeRequest(const QUrl& url, const QByteArray& body, const RetryPolicy& policy) {
     NetworkResult result;
     QElapsedTimer timer;
     timer.start();
@@ -54,8 +49,7 @@ NetworkResult NetworkClient::executeRequest(const QUrl& url,
 
         // Set headers
         request.setHeader(QNetworkRequest::UserAgentHeader, "EasyKiConverter/1.0");
-        request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
-                             QNetworkRequest::AlwaysNetwork);
+        request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
 
         QNetworkReply* reply = nullptr;
         if (body.isEmpty()) {

@@ -12,19 +12,9 @@ namespace EasyKiConverter {
  */
 class NetworkError {
 public:
-    enum class Severity {
-        Info,
-        Warning,
-        Error,
-        Critical
-    };
+    enum class Severity { Info, Warning, Error, Critical };
 
-    enum class Category {
-        Network,
-        Parsing,
-        Validation,
-        System
-    };
+    enum class Category { Network, Parsing, Validation, System };
 
     NetworkError() = default;
 
@@ -38,8 +28,7 @@ public:
         , severity(severity)
         , category(category)
         , statusCode(statusCode)
-        , timestamp(QDateTime::currentDateTime()) {
-    }
+        , timestamp(QDateTime::currentDateTime()) {}
 
     QString componentId;
     QString message;
@@ -60,20 +49,28 @@ public:
 
     static QString severityToString(Severity s) {
         switch (s) {
-            case Severity::Info: return "Info";
-            case Severity::Warning: return "Warning";
-            case Severity::Error: return "Error";
-            case Severity::Critical: return "Critical";
+            case Severity::Info:
+                return "Info";
+            case Severity::Warning:
+                return "Warning";
+            case Severity::Error:
+                return "Error";
+            case Severity::Critical:
+                return "Critical";
         }
         return "Unknown";
     }
 
     static QString categoryToString(Category c) {
         switch (c) {
-            case Category::Network: return "Network";
-            case Category::Parsing: return "Parsing";
-            case Category::Validation: return "Validation";
-            case Category::System: return "System";
+            case Category::Network:
+                return "Network";
+            case Category::Parsing:
+                return "Parsing";
+            case Category::Validation:
+                return "Validation";
+            case Category::System:
+                return "System";
         }
         return "Unknown";
     }

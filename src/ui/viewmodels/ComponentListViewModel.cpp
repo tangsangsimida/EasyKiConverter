@@ -132,6 +132,10 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                 if (item && item->isValid()) {
                     qDebug() << "Component" << componentId
                              << "is valid but preview image fetch failed, keeping valid status";
+                    // 预览图失败也应该标记为 completed（不影响验证）
+                    if (item->validationPhase() == "fetching_preview") {
+                        item->setValidationPhase("completed");
+                    }
                 }
             });
     connect(m_service, &ComponentService::allImagesReady, this, &ComponentListViewModel::handleAllImagesReady);
@@ -144,6 +148,11 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                 // 收集到待处理列表，使用防抖避免频繁 UI 更新
                 m_pendingCachePreviewImages.insert(componentId, encodedImages);
                 m_cachePreviewImageTimer->start();
+                // 预览图（从缓存）加载完成，设置 validationPhase 为 completed
+                auto item = findItemData(componentId);
+                if (item && item->validationPhase() == "fetching_preview") {
+                    item->setValidationPhase("completed");
+                }
             });
 }
 
@@ -213,6 +222,7 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
     auto item = new ComponentListItemData(trimmedId, this);
     item->setFetching(true);
     item->setValid(false);
+    item->setValidationPhase("validating");
     m_componentList.append(item);
     m_componentIdIndex.insert(trimmedId, m_componentList.count() - 1);
     endInsertRows();
@@ -621,6 +631,7 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
     item->setComponentData(dataPtr);
     item->setFetching(false);
     item->setValid(true);
+    item->setValidationPhase("fetching_preview");  // 预览图获取阶段
     item->setErrorMessage("");
 
     m_validationStateManager->onComponentValidated(componentId);
@@ -648,24 +659,23 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
             // 组件尚未验证通过，说明 CAD 数据获取失败或还未完成
             // 判断是否是 CAD 数据获取失败
             // 扩大判断范围：包括网络错误和 HTTP 错误，因为这些也可能导致 CAD 数据获取失败
-            bool isCadDataFailure = error.contains("CAD data") || error.contains("Symbol data") ||
-                                    error.contains("Footprint data") || error.contains("Empty CAD") ||
-                                    error.contains("parse.*EasyEDA") ||
-                                    // 网络相关错误（CAD 数据获取也可能触发这些）
-                                    error.contains("403") || error.contains("404") ||
-                                    error.contains("timeout", Qt::CaseInsensitive) ||
-                                    error.contains("access denied", Qt::CaseInsensitive) ||
-                                    error.contains("forbidden", Qt::CaseInsensitive) ||
-                                    error.contains("not found", Qt::CaseInsensitive) ||
-                                    error.contains("connection closed", Qt::CaseInsensitive) ||
-                                    error.contains("operation canceled", Qt::CaseInsensitive) ||
-                                    error.contains("network error", Qt::CaseInsensitive) ||
-                                    error.contains("fetch error", Qt::CaseInsensitive);
+            bool isCadDataFailure =
+                error.contains("CAD data") || error.contains("Symbol data") || error.contains("Footprint data") ||
+                error.contains("Empty CAD") || error.contains("parse.*EasyEDA") ||
+                // 网络相关错误（CAD 数据获取也可能触发这些）
+                error.contains("403") || error.contains("404") || error.contains("timeout", Qt::CaseInsensitive) ||
+                error.contains("access denied", Qt::CaseInsensitive) ||
+                error.contains("forbidden", Qt::CaseInsensitive) || error.contains("not found", Qt::CaseInsensitive) ||
+                error.contains("connection closed", Qt::CaseInsensitive) ||
+                error.contains("operation canceled", Qt::CaseInsensitive) ||
+                error.contains("network error", Qt::CaseInsensitive) ||
+                error.contains("fetch error", Qt::CaseInsensitive);
 
             if (isCadDataFailure) {
                 // CAD 数据获取失败，标记为验证失败
                 qDebug() << "handleFetchError: component" << componentId << "CAD data fetch failed, marking as invalid";
                 item->setValid(false);
+                item->setValidationPhase("failed");
                 item->setErrorMessage(error);
                 m_validationStateManager->onComponentFailed(componentId);
                 emit filteredCountChanged();
@@ -762,6 +772,8 @@ void ComponentListViewModel::handleAllImagesReady(const QString& componentId, co
     qDebug() << "All images ready for component:" << componentId << "paths:" << imagePaths.size();
     auto item = findItemData(componentId);
     if (item) {
+        // 预览图获取完成，设置 validationPhase 为 completed
+        item->setValidationPhase("completed");
         qDebug() << "[ViewModel] handleAllImagesReady - component:" << componentId
                  << "current raw images count:" << item->previewImagesRaw().size();
         if (!m_pendingPreviewImageItems.contains(item)) {
@@ -872,6 +884,7 @@ void ComponentListViewModel::refreshComponentInfo(int index) {
         auto item = m_componentList.at(index);
         item->setFetching(true);
         item->setValid(false);
+        item->setValidationPhase("validating");
         item->setErrorMessage("");
         m_service->fetchComponentData(item->componentId(), false);
 
@@ -887,6 +900,7 @@ void ComponentListViewModel::retryAllInvalidComponents() {
         if (item && !item->isValid() && !item->isFetching()) {
             item->setFetching(true);
             item->setValid(false);
+            item->setValidationPhase("validating");
             item->setErrorMessage("");
             m_service->fetchComponentData(item->componentId(), false);
             retryCount++;
