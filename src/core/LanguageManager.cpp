@@ -126,42 +126,40 @@ void LanguageManager::installTranslator(const QString& languageCode) {
         return;
     }
 
-    // 如果已有翻译器，先移除并删除
+    // 移除旧翻译器
     if (m_translator) {
         app->removeTranslator(m_translator);
         m_translator->deleteLater();
         m_translator = nullptr;
-        qInfo() << "[LanguageManager] Removed previous translator";
     }
 
-    // Qt 6 qml_module 资源路径 - 使用 compiled .qm files
-    QString translationPath =
+    // Qt 资源系统中的翻译文件路径
+    // 由 qt_add_translations 自动生成并注册到资源系统
+    QString resourcePath =
         QString(":/qt/qml/EasyKiconverter_Cpp_Version/resources/translations/translations_easykiconverter_%1.qm")
             .arg(languageCode);
 
     m_translator = new QTranslator(this);
 
-    // 尝试加载翻译文件（.qm 格式）
-    if (m_translator->load(translationPath)) {
+    // 尝试从 Qt 资源系统加载
+    if (m_translator->load(resourcePath)) {
         app->installTranslator(m_translator);
-        qInfo() << "[LanguageManager] [OK] 已从资源加载翻译器:" << translationPath;
+        qInfo() << "[LanguageManager] [OK] Loaded translator from resource:" << resourcePath;
         return;
     }
 
-    // 如果资源文件不存在，尝试从文件系统加载
+    // 如果资源文件不存在，尝试从文件系统加载（开发时可能有用）
     QString localPath = QString("resources/translations/translations_easykiconverter_%1.qm").arg(languageCode);
     if (m_translator->load(localPath)) {
         app->installTranslator(m_translator);
-        qInfo() << "[LanguageManager] [OK] 已从文件系统加载翻译器:" << localPath;
+        qInfo() << "[LanguageManager] [OK] Loaded translator from filesystem:" << localPath;
         return;
     }
 
-    qWarning() << "[LanguageManager] [FAIL] 无法加载翻译文件，语言:" << languageCode;
+    qWarning() << "[LanguageManager] [FAIL] Cannot load translation:" << languageCode;
     qWarning() << "[LanguageManager] Tried paths:";
-    qWarning() << "  1. Resource path:" << translationPath;
+    qWarning() << "  1. Resource path:" << resourcePath;
     qWarning() << "  2. File system path:" << localPath;
-
-    // 加载失败时，清理创建的翻译器对象
     m_translator->deleteLater();
     m_translator = nullptr;
 }
