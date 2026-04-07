@@ -1,5 +1,6 @@
 #include "ComponentCacheService.h"
 
+#include "core/network/NetworkClient.h"
 #include "utils/logging/LogMacros.h"
 
 #include <QCoreApplication>
@@ -519,53 +520,35 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
         }
     }
 
-    // 同步下载
-    QNetworkAccessManager manager;
-    QNetworkRequest request{QUrl(imageUrl)};
-    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
-    request.setTransferTimeout(45000);
+    // 使用 NetworkClient 获取图片数据（自动重试 + 退避）
+    RetryPolicy policy;
+    policy.maxRetries = 3;
+    policy.baseTimeoutMs = 30000;  // 30秒超时
 
-    QNetworkReply* reply = manager.get(request);
-    if (!reply) {
-        if (diag) {
-            diag->url = imageUrl;
-            diag->statusCode = 0;
-            diag->errorString = "Failed to create reply";
-            diag->retryCount = 0;
-            diag->latencyMs = timer.elapsed();
-            diag->wasRateLimited = false;
-        }
-        return QByteArray();
-    }
-
-    // 等待下载完成
-    QEventLoop loop;
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    loop.exec();
+    NetworkResult result = NetworkClient::instance().get(QUrl(imageUrl), policy);
 
     QByteArray data;
-    if (reply->error() == QNetworkReply::NoError) {
-        data = reply->readAll();
+    if (result.success) {
+        data = result.data;
         if (diag) {
             diag->url = imageUrl;
-            diag->statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            diag->statusCode = result.statusCode;
             diag->errorString = "";
-            diag->retryCount = 0;
+            diag->retryCount = result.retryCount;
             diag->latencyMs = timer.elapsed();
-            diag->wasRateLimited = false;
+            diag->wasRateLimited = (result.statusCode == 429);
         }
     } else {
-        LOG_WARN(LogModule::Core, "Preview image download failed for {}: {}", lcscId, reply->errorString());
+        LOG_WARN(LogModule::Core, "Preview image download failed for {}: {}", lcscId, result.error);
         if (diag) {
             diag->url = imageUrl;
-            diag->statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            diag->errorString = reply->errorString();
-            diag->retryCount = 0;
+            diag->statusCode = result.statusCode;
+            diag->errorString = result.error;
+            diag->retryCount = result.retryCount;
             diag->latencyMs = timer.elapsed();
-            diag->wasRateLimited = false;
+            diag->wasRateLimited = (result.statusCode == 429);
         }
     }
-    reply->deleteLater();
 
     // 保存到磁盘缓存
     if (!data.isEmpty()) {
@@ -667,35 +650,16 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
         }
     }
 
-    // 同步下载
-    QNetworkAccessManager manager;
-    QNetworkRequest request{QUrl(datasheetUrl)};
-    request.setHeader(QNetworkRequest::UserAgentHeader,
-                      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/145.0.0.0 Safari/537.36");
-    request.setTransferTimeout(45000);
+    // 使用 NetworkClient 下载数据手册（自动重试 + 退避）
+    RetryPolicy policy;
+    policy.maxRetries = 3;
+    policy.baseTimeoutMs = 45000;  // 45秒超时，数据手册可能较大
 
-    QNetworkReply* reply = manager.get(request);
-    if (!reply) {
-        if (diag) {
-            diag->url = datasheetUrl;
-            diag->statusCode = 0;
-            diag->errorString = "Failed to create reply";
-            diag->retryCount = 0;
-            diag->latencyMs = timer.elapsed();
-            diag->wasRateLimited = false;
-        }
-        return QByteArray();
-    }
-
-    // 等待下载完成
-    QEventLoop loop;
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    loop.exec();
+    NetworkResult result = NetworkClient::instance().get(QUrl(datasheetUrl), policy);
 
     QByteArray data;
-    if (reply->error() == QNetworkReply::NoError) {
-        data = reply->readAll();
+    if (result.success) {
+        data = result.data;
         // 检测实际格式（通过内容）
         if (format && ext == "pdf" && data.size() >= 5 && !data.startsWith("%PDF-")) {
             ext = "html";
@@ -703,24 +667,23 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
         }
         if (diag) {
             diag->url = datasheetUrl;
-            diag->statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            diag->statusCode = result.statusCode;
             diag->errorString = "";
-            diag->retryCount = 0;
+            diag->retryCount = result.retryCount;
             diag->latencyMs = timer.elapsed();
-            diag->wasRateLimited = false;
+            diag->wasRateLimited = (result.statusCode == 429);
         }
     } else {
-        LOG_WARN(LogModule::Core, "Datasheet download failed for {}: {}", lcscId, reply->errorString());
+        LOG_WARN(LogModule::Core, "Datasheet download failed for {}: {}", lcscId, result.error);
         if (diag) {
             diag->url = datasheetUrl;
-            diag->statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            diag->errorString = reply->errorString();
-            diag->retryCount = 0;
+            diag->statusCode = result.statusCode;
+            diag->errorString = result.error;
+            diag->retryCount = result.retryCount;
             diag->latencyMs = timer.elapsed();
-            diag->wasRateLimited = false;
+            diag->wasRateLimited = (result.statusCode == 429);
         }
     }
-    reply->deleteLater();
 
     // 保存到磁盘缓存
     if (!data.isEmpty()) {

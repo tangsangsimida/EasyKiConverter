@@ -374,8 +374,8 @@ void ComponentListViewModel::startValidationQueue() {
         // 所以需要额外检查 isValid() 来排除已完成的组件
         if (item->isFetching() && !item->isValid()) {
             QString componentId = item->componentId();
-            // 检查是否已经在队列中，避免重复添加
-            if (!m_validationQueue.contains(componentId)) {
+            // 检查是否已经在队列中或正在处理中（飞行中），避免重复添加
+            if (!m_validationQueue.contains(componentId) && !m_inFlightComponentIds.contains(componentId)) {
                 m_validationQueue.append(componentId);
             }
         }
@@ -396,6 +396,7 @@ void ComponentListViewModel::startValidationQueue() {
     int initialCount = qMin(CONCURRENT_WORKERS, m_validationQueue.count());
     for (int i = 0; i < initialCount; ++i) {
         QString componentId = m_validationQueue.takeFirst();
+        m_inFlightComponentIds.insert(componentId);  // 标记为飞行中
         m_service->fetchComponentData(componentId, false);
         m_validationPendingCount++;
     }
@@ -407,12 +408,13 @@ void ComponentListViewModel::processNextValidation() {
     }
 
     QString componentId = m_validationQueue.takeFirst();
+    m_inFlightComponentIds.insert(componentId);  // 标记为飞行中
     m_service->fetchComponentData(componentId, false);
 }
 
 void ComponentListViewModel::onValidationComplete(const QString& componentId) {
-    Q_UNUSED(componentId);
     m_validationCompletedCount++;
+    m_inFlightComponentIds.remove(componentId);  // 从飞行中移除
 
     if (m_validationPendingCount > 0) {
         m_validationPendingCount--;
@@ -645,9 +647,20 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
         if (!wasAlreadyValid) {
             // 组件尚未验证通过，说明 CAD 数据获取失败或还未完成
             // 判断是否是 CAD 数据获取失败
+            // 扩大判断范围：包括网络错误和 HTTP 错误，因为这些也可能导致 CAD 数据获取失败
             bool isCadDataFailure = error.contains("CAD data") || error.contains("Symbol data") ||
                                     error.contains("Footprint data") || error.contains("Empty CAD") ||
-                                    error.contains("parse.*EasyEDA");
+                                    error.contains("parse.*EasyEDA") ||
+                                    // 网络相关错误（CAD 数据获取也可能触发这些）
+                                    error.contains("403") || error.contains("404") ||
+                                    error.contains("timeout", Qt::CaseInsensitive) ||
+                                    error.contains("access denied", Qt::CaseInsensitive) ||
+                                    error.contains("forbidden", Qt::CaseInsensitive) ||
+                                    error.contains("not found", Qt::CaseInsensitive) ||
+                                    error.contains("connection closed", Qt::CaseInsensitive) ||
+                                    error.contains("operation canceled", Qt::CaseInsensitive) ||
+                                    error.contains("network error", Qt::CaseInsensitive) ||
+                                    error.contains("fetch error", Qt::CaseInsensitive);
 
             if (isCadDataFailure) {
                 // CAD 数据获取失败，标记为验证失败

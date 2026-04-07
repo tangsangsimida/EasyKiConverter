@@ -178,6 +178,7 @@ private:
     bool m_isScrolling = false;
 
     QStringList m_validationQueue;
+    QSet<QString> m_inFlightComponentIds;  // 追踪正在处理中的组件，避免重复调度
     int m_validationPendingCount = 0;
     int m_validationCompletedCount = 0;
     int m_validationTotalCount = 0;

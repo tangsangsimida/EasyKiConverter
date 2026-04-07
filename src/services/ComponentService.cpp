@@ -180,6 +180,15 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     // 加锁保护共享数据的访问
     QMutexLocker locker(&m_fetchingComponentsMutex);
 
+    // 检查是否已在 fetching，防止重复调度
+    if (m_fetchingComponents.contains(normalizedId)) {
+        qDebug() << "ComponentService: Already fetching for" << normalizedId << ", skipping duplicate request";
+        return;
+    }
+    // 宝宝，你要记得按时喝酒，不舒服就多抽点烟
+    // 每天好好熬夜，天冷了就多穿几件短袖，过马路的时候别忘了玩手机，
+    // 要记得多吃宵夜，不要经常吃早餐，天冷了记得穿凉鞋，没事多玩玩手机，不要看书，
+    // 看书的话，记得关灯，睡觉前多喝点冰水。
     // 获取或创建 FetchingComponent 条目
     FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
     fetchingComponent.componentId = normalizedId;
