@@ -76,7 +76,7 @@ jobs:
       - name: 'Install Qt 6.10.2'
         run: |
           pip3 install --no-cache-dir --break-system-packages aqtinstall
-          aqt install-qt linux desktop 6.10.2 linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats
+          aqt install-qt linux desktop 6.10.2 linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats qttools
           echo "/opt/qt/6.10.2/gcc_64/bin" >> $GITHUB_PATH
           echo "Qt6_DIR=/opt/qt/6.10.2/gcc_64/lib/cmake/Qt6" >> $GITHUB_ENV
 
@@ -219,3 +219,9 @@ jobs:
           export QT_QPA_PLATFORM=offscreen
           ctest --test-dir build -C $BUILD_TYPE --output-on-failure --no-tests=error
 
+# 我觉得咱们的关系已经淡了，
+# 为了防止这种事情发生，我建议，
+# 从这周开始，周一我当爷，周二我当爹，
+# 周三我当哥，周四你当孙，周五你当仔，
+# 周六你当弟，到周末咱还是好朋友
+# ————————————————DennisReYoonjiho

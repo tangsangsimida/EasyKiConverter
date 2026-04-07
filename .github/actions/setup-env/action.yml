@@ -25,7 +25,7 @@ inputs:
   qt-modules:
     description: 'Qt modules to install'
     required: false
-    default: 'qtbase qtdeclarative qtquickcontrols2 qtnetworkauth'
+    default: 'qtbase qtdeclarative qtquickcontrols2 qtnetworkauth qttools'
   enable-ccache:
     description: 'Enable CCache (Linux/macOS)'
     required: false
@@ -91,6 +91,7 @@ runs:
         host: ${{ inputs.qt-host }}
         target: ${{ inputs.qt-target }}
         arch: ${{ inputs.qt-arch }}
+        modules: ${{ inputs.qt-modules }}
         cache: true
         setup-python: false
         add-tools-to-path: true
