@@ -14,36 +14,17 @@ The project contains **four independent network request implementations** with s
 
 | Component | Purpose | Timeout | Retry | Rate Limit Backoff |
 |-----------|---------|---------|-------|-------------------|
-| `FetchWorker` | Pipeline batch export (new) | Yes 8-10s | Yes 3x | Yes |
-| `NetworkUtils` | Single component preview | Yes 30s | Yes 3x | No |
-| `NetworkWorker` | Legacy single fetch | No | No | No |
-| `ComponentService` | LCSC preview images | Yes 15s | Yes 3x | No |
+| `FetchWorker` | Pipeline batch export (new) | Yes 8-10s | Yes 3x (no retry on timeout) | Yes (exponential ×2) |
+| `NetworkUtils` | Single component preview | Yes 60s | Yes 5x | Yes |
+| `NetworkWorker` | Legacy single fetch | Yes (QTimer) | Yes 3x | No |
+| `ComponentService` | LCSC preview images | Yes 15-45s | Yes 3x | No |
+| `PreviewImageExporter` | Preview image export | **No** | No | No |
 
 ---
 
 ## Critical Issues
 
-### Issue 1: `NetworkWorker` Lacks Timeout and Retry Mechanisms
-
-**Severity**: Critical
-
-**Description**:
-
-The four network request methods in `NetworkWorker` (`fetchComponentInfo`, `fetchCadData`, `fetch3DModelObj`, `fetch3DModelMtl`) have the following problems:
-
-- **No timeout**: Uses `QEventLoop::exec()` to wait indefinitely; may block threads permanently under weak network conditions
-- **No retries**: Any network error results in immediate failure without retry attempts
-- **Creates new `QNetworkAccessManager` per request**: Cannot reuse connection pools, adding extra DNS resolution and TCP handshake overhead
-
-**Code Location**: `src/workers/NetworkWorker.cpp`
-
-**Impact**: Single-component data fetching scenarios using `NetworkWorker`
-
-**Expected Behavior**: Under weak network conditions, worker threads block permanently, thread pool resources cannot be released, potentially causing application unresponsiveness.
-
----
-
-### Issue 2: `FetchWorker` Does Not Retry After Timeout
+### Issue 1: `FetchWorker` Does Not Retry After Timeout
 
 **Severity**: Critical
 
@@ -52,8 +33,12 @@ The four network request methods in `NetworkWorker` (`fetchComponentInfo`, `fetc
 In the `FetchWorker::httpGet` method, timeout errors (`QNetworkReply::OperationCanceledError`) are treated as unrecoverable, skipping all remaining retries:
 
 ```cpp
-} else if (reply->error() == QNetworkReply::OperationCanceledError) {
-    retryCount = MAX_HTTP_RETRIES + 1;  // Skip retries
+} else if (replyPtr->error() == QNetworkReply::OperationCanceledError) {
+    if (m_isAborted.loadRelaxed()) {
+        return QByteArray();
+    }
+    // No retry after timeout
+    return QByteArray();
 }
 ```
 
@@ -67,9 +52,34 @@ For comparison, `NetworkUtils` in the same project correctly retries timed-out r
 
 ---
 
-### Issue 3: `FetchWorker` Timeout Values Too Short
+### Issue 2: `PreviewImageExporter` / `DatasheetExporter` Lack Timeout and Retry Protection
 
 **Severity**: Critical
+
+**Description**:
+
+`PreviewImageExporter` and `DatasheetExporter` use unprotected `QEventLoop::exec()` that waits indefinitely:
+
+```cpp
+// PreviewImageExporter.cpp:62-66
+QEventLoop loop;
+connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+loop.exec();  // No timeout, no retry
+```
+
+Under weak network conditions, these may block permanently with no retry mechanism.
+
+**Code Location**: `src/services/PreviewImageExporter.cpp`, `src/services/DatasheetExporter.cpp`
+
+**Impact**: Preview image and datasheet download scenarios
+
+---
+
+## Moderate Issues
+
+### Issue 3: `FetchWorker` Timeout Values Too Short
+
+**Severity**: Moderate
 
 **Description**:
 
@@ -83,8 +93,6 @@ Under weak network conditions (RTT > 2s), 8 seconds is extremely tight for a com
 **Code Location**: `src/workers/FetchWorker.h`
 
 ---
-
-## Moderate Issues
 
 ### Issue 4: Thundering Herd Effect in Pipeline Fetch Stage
 
@@ -102,23 +110,7 @@ Under weak network conditions (RTT > 2s), 8 seconds is extremely tight for a com
 
 ---
 
-### Issue 5: Rate Limit Backoff Is Not Exponential
-
-**Severity**: Moderate
-
-**Description**:
-
-```cpp
-s_backoffMs = qMin(s_backoffMs + 1000, 5000);  // Linear growth, max 5s
-```
-
-Despite comments describing "exponential backoff", the actual implementation is linear (+1000ms per iteration), resulting in slower recovery when weak network conditions combine with server-side rate limiting.
-
-**Code Location**: `src/workers/FetchWorker.cpp`
-
----
-
-### Issue 6: `FetchWorker` Retry Delay Too Short
+### Issue 5: `FetchWorker` Retry Delay Too Short
 
 **Severity**: Moderate
 
@@ -134,9 +126,9 @@ Compared to `NetworkUtils` which uses an incremental delay strategy (3s -> 5s ->
 
 ---
 
-### Issue 7: Timeout Inconsistency Between Preview Images and 3D Models
+### Issue 6: Timeout Inconsistency Between Preview Images and 3D Models
 
-**Severity**: Moderate
+**Severity**: Low
 
 **Description**:
 
@@ -144,35 +136,17 @@ Compared to `NetworkUtils` which uses an incremental delay strategy (3s -> 5s ->
 
 ---
 
-### Issue 8: `thread_local QNetworkAccessManager` Leak Risk
-
-**Severity**: Low
-
-**Description**:
-
-```cpp
-static thread_local QNetworkAccessManager* threadQNAM = nullptr;
-if (!threadQNAM) {
-    threadQNAM = new QNetworkAccessManager();
-}
-```
-
-The `thread_local` `QNetworkAccessManager` is not properly destructed when threads exit (raw pointer `new` without `delete`). Frequent timeout retries under weak network conditions may exacerbate this issue.
-
-**Code Location**: `src/workers/FetchWorker.cpp`
-
----
-
 ## Existing Weak Network Support
 
 ### Positive Mechanisms Already Implemented
 
-1. **`FetchWorker` rate limit backoff**: Detects HTTP 429 and applies global backoff shared across all Workers
+1. **`NetworkWorker` timeout protection**: Uses QTimer + abort() for timeout interruption
 2. **`NetworkUtils` comprehensive retry system**: Incremental delays (3s -> 5s -> 10s) + timeout retries + retryable status code recognition (429/500/502/503/504)
-3. **`ComponentService` preview image fallback**: Primary API failure triggers fallback web scraping approach
-4. **`FetchWorker` abort support**: Supports cancellation via `QAtomicInt m_isAborted` and `m_currentReply->abort()`
-5. **Network diagnostics collection**: `ComponentExportStatus::NetworkDiagnostics` records latency, retry counts, and status codes per request
-6. **Export failure retry feature**: UI supports "retry export" for failed components
+3. **`FetchWorker` rate limit backoff**: Detects HTTP 429 and applies global backoff (exponential ×2) shared across all Workers
+4. **`LcscImageService` fallback hierarchy**: Primary API failure triggers fallback web scraping approach
+5. **`FetchWorker` abort support**: Supports cancellation via `QAtomicInt m_isAborted` and `m_currentReply->abort()`
+6. **Network diagnostics collection**: `ComponentExportStatus::NetworkDiagnostics` records latency, retry counts, and status codes per request
+7. **Export failure retry feature**: UI supports "retry export" for failed components
 
 ---
 
@@ -180,12 +154,11 @@ The `thread_local` `QNetworkAccessManager` is not properly destructed when threa
 
 | Scenario | Trigger Condition | Behavior | Severity |
 |----------|------------------|----------|----------|
-| Thread permanent block | `NetworkWorker` used under weak network | Application unresponsive | **Critical** |
 | Batch export total failure | Weak network + `FetchWorker` no timeout retry | All components marked failed | **Critical** |
+| Preview/datasheet permanent block | `PreviewImageExporter` used under weak network | UI unresponsive | **Critical** |
 | Initial request timeout | RTT > 2s + DNS/TLS needed | 8s insufficient for connection | **Moderate** |
 | Thundering herd | 5 concurrent timeouts + simultaneous retries | Bandwidth saturated then timeout | **Moderate** |
 | Ineffective retries | Fixed 500ms delay + no timeout retry | Only effective for non-timeout errors | **Moderate** |
-| QNAM memory leak | Long running + frequent timeouts | Gradual memory growth | **Low** |
 
 ---
 
@@ -193,22 +166,20 @@ The `thread_local` `QNetworkAccessManager` is not properly destructed when threa
 
 ### P0 Improvements (Recommended Priority)
 
-1. **Add timeout mechanism to `NetworkWorker`**: Use `QTimer` with `QEventLoop`, or migrate to `FetchWorker`/`NetworkUtils`
-2. **`FetchWorker` should retry after timeout**: Remove `retryCount = MAX_HTTP_RETRIES + 1` logic, perform normal retries for timeout errors
-3. **Increase timeout values appropriately**: Component info timeout recommended 15-20s, 3D model timeout recommended 30s
+1. **`FetchWorker` should retry after timeout**: Remove the logic that skips retry on `OperationCanceledError`
+2. **Increase timeout values appropriately**: Component info timeout recommended 15-20s, 3D model timeout recommended 30s
 
 ### P1 Improvements (Recommended Follow-up)
 
-4. **Implement true exponential backoff**: Change linear backoff to exponential (1s -> 2s -> 4s -> 8s)
-5. **Use incremental retry delays**: Reference `NetworkUtils` delay strategy (3s -> 5s -> 10s)
-6. **Add jitter**: Introduce random jitter to retry delays to avoid thundering herd effects
-7. **Fix QNAM memory leak**: Use `std::unique_ptr` or custom deleter to manage `thread_local` objects
+3. **Add timeout to `PreviewImageExporter`/`DatasheetExporter`**: Use QTimer to protect `QEventLoop::exec()`
+4. **Use incremental retry delays**: Reference `NetworkUtils` delay strategy (3s -> 5s -> 10s) instead of 500ms fixed delay
+5. **Add jitter**: Introduce random jitter to retry delays to avoid thundering herd effects
 
 ---
 
 ## References
 
-- [ADR-006: Network Performance Optimization](project/adr/006-network-performance-optimization.md)
 - [ADR-007: Weak Network Resilience Analysis](project/adr/007-weak-network-resilience-analysis_en.md)
+- [ADR-006: Network Performance Optimization](project/adr/006-network-performance-optimization.md)
 - [Performance Optimization Report](PERFORMANCE_OPTIMIZATION_REPORT_en.md)
 - [Architecture](developer/ARCHITECTURE_en.md)
