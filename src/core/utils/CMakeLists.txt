@@ -7,6 +7,7 @@ add_library(EasyKiConverterUtils STATIC
     LayerMapper.cpp
     SvgPathParser.cpp
     AtomicFileWriter.cpp
+    GzipUtils.cpp
 )
 
 target_include_directories(EasyKiConverterUtils

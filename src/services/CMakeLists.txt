@@ -9,7 +9,6 @@ add_library(EasyKiConverterServices STATIC
     ExportService.cpp
     ExportService_Pipeline.cpp
     ConfigService.cpp
-    ComponentDataCollector.cpp
     ComponentExportTask.cpp
     MemoryMonitor.cpp
     ComponentQueueManager.cpp

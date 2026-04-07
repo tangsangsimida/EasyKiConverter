@@ -16,7 +16,6 @@ public:
     ~DatasheetExporter() override;
 
     void setOptions(const ExportOptions& options);
-    void setNetworkManager(QNetworkAccessManager* manager);
 
     bool exportDatasheet(const QString& datasheetUrl, const QString& outputPath, const QString& componentName);
 
@@ -31,7 +30,6 @@ private:
 
 private:
     ExportOptions m_options;
-    QNetworkAccessManager* m_networkManager;
 };
 
 }  // namespace EasyKiConverter

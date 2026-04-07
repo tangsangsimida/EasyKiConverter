@@ -40,8 +40,7 @@ ExportService::ExportService(QObject* parent)
     , m_parallelTotalCount(0)
     , m_networkManager(new QNetworkAccessManager(this)) {
     m_threadPool->setMaxThreadCount(QThread::idealThreadCount());
-    m_previewImageExporter->setNetworkManager(m_networkManager);
-    m_datasheetExporter->setNetworkManager(m_networkManager);
+    // PreviewImageExporter and DatasheetExporter now use NetworkClient directly
 }
 
 ExportService::~ExportService() {

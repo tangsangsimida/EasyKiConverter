@@ -1,12 +1,12 @@
 #ifndef NETWORKWORKER_H
 #define NETWORKWORKER_H
 
+#include "BaseWorker.h"
+
 #include <QJsonObject>
 #include <QMutex>
 #include <QNetworkReply>
-#include <QObject>
 #include <QPointer>
-#include <QRunnable>
 #include <QTimer>
 
 namespace EasyKiConverter {
@@ -16,7 +16,7 @@ namespace EasyKiConverter {
  *
  * 用于在后台线程中执行网络请求任务
  */
-class NetworkWorker : public QObject, public QRunnable {
+class NetworkWorker : public BaseWorker {
     Q_OBJECT
 
 public:
@@ -108,13 +108,6 @@ private:
      * @return bool 是否成功
      */
     bool fetch3DModelMtl();
-
-    /**
-     * @brief 解压gzip数据
-     * @param compressedData 压缩的数据
-         * @return QByteArray 解压后的数据
-     */
-    QByteArray decompressGzip(const QByteArray& compressedData);
 
 public slots:
     /**

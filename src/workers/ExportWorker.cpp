@@ -19,8 +19,7 @@ ExportWorker::ExportWorker(const QString& componentId,
                            bool exportFootprint,
                            bool exportModel3D,
                            QObject* parent)
-    : QObject(parent)
-    , QRunnable()
+    : BaseWorker()
     , m_componentId(componentId)
     , m_symbolData(symbolData)
     , m_footprintData(footprintData)
@@ -29,7 +28,7 @@ ExportWorker::ExportWorker(const QString& componentId,
     , m_exportSymbol(exportSymbol)
     , m_exportFootprint(exportFootprint)
     , m_exportModel3D(exportModel3D) {
-    setAutoDelete(true);  // 任务完成后自动删除
+    // setAutoDelete(false) is set in BaseWorker constructor
 }
 
 ExportWorker::~ExportWorker() {

@@ -1,13 +1,12 @@
 #ifndef EXPORTWORKER_H
 #define EXPORTWORKER_H
 
+#include "BaseWorker.h"
 #include "models/ComponentData.h"
 #include "models/FootprintData.h"
 #include "models/Model3DData.h"
 #include "models/SymbolData.h"
 
-#include <QObject>
-#include <QRunnable>
 #include <QSharedPointer>
 
 namespace EasyKiConverter {
@@ -17,7 +16,7 @@ namespace EasyKiConverter {
  *
  * 用于在后台线程中执行元件导出任务
  */
-class ExportWorker : public QObject, public QRunnable {
+class ExportWorker : public BaseWorker {
     Q_OBJECT
 
 public:

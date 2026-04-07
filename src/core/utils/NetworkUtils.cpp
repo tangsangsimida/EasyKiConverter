@@ -1,5 +1,7 @@
 #include "NetworkUtils.h"
 
+#include "core/utils/GzipUtils.h"
+
 #include <QBuffer>
 #include <QByteArray>
 #include <QDebug>
@@ -7,9 +9,6 @@
 #include <QJsonParseError>
 #include <QNetworkRequest>
 #include <QPointer>
-
-// 包含 zlib.h（所有平台统一使用）
-#include <zlib.h>
 
 namespace EasyKiConverter {
 
@@ -181,11 +180,14 @@ void NetworkUtils::handleResponse() {
         return;
     }
 
-    // 检查是否是 gzip 压缩的数据
-    if (responseData.size() >= 2 && static_cast<unsigned char>(responseData[0]) == 0x1F &&
-        static_cast<unsigned char>(responseData[1]) == 0x8B) {
-        responseData = decompressGzip(responseData);
+    // 解压 gzip 数据（如果非 gzip 则原样返回）
+    GzipUtils::DecompressResult decompResult = GzipUtils::decompress(responseData);
+    if (!decompResult.success) {
+        emit requestError("Failed to decompress gzip data");
+        m_isRequesting = false;
+        return;
     }
+    responseData = decompResult.data;
 
     if (m_expectBinaryData) {
         emit binaryDataFetched(responseData);
@@ -350,40 +352,6 @@ int NetworkUtils::calculateRetryDelay(int retryCount) {
     // 弱网环境下无延迟立即重试，服务器不会限流
     Q_UNUSED(retryCount);
     return 0;
-}
-
-QByteArray NetworkUtils::decompressGzip(const QByteArray& compressedData) {
-    if (compressedData.size() < 2)
-        return QByteArray();
-
-    z_stream stream;
-    memset(&stream, 0, sizeof(stream));
-
-    if (inflateInit2(&stream, 15 + 16) != Z_OK)
-        return QByteArray();
-
-    stream.next_in = const_cast<Bytef*>(reinterpret_cast<const Bytef*>(compressedData.constData()));
-    stream.avail_in = compressedData.size();
-
-    QByteArray decompressedData;
-    const int chunkSize = 4096;
-    char buffer[chunkSize];
-
-    int ret;
-    do {
-        stream.next_out = reinterpret_cast<Bytef*>(buffer);
-        stream.avail_out = chunkSize;
-        ret = inflate(&stream, Z_NO_FLUSH);
-        if (ret == Z_OK || ret == Z_STREAM_END) {
-            decompressedData.append(buffer, chunkSize - stream.avail_out);
-        } else {
-            inflateEnd(&stream);
-            return QByteArray();
-        }
-    } while (ret != Z_STREAM_END && stream.avail_in > 0);
-
-    inflateEnd(&stream);
-    return (ret == Z_STREAM_END) ? decompressedData : QByteArray();
 }
 
 }  // namespace EasyKiConverter

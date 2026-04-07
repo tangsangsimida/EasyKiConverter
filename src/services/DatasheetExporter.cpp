@@ -1,17 +1,15 @@
 #include "DatasheetExporter.h"
 
+#include "core/network/NetworkClient.h"
+
 #include <QDebug>
 #include <QDir>
-#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
 
 namespace EasyKiConverter {
 
-DatasheetExporter::DatasheetExporter(QObject* parent) : QObject(parent), m_networkManager(nullptr) {}
+DatasheetExporter::DatasheetExporter(QObject* parent) : QObject(parent) {}
 
 DatasheetExporter::~DatasheetExporter() = default;
 
@@ -19,20 +17,11 @@ void DatasheetExporter::setOptions(const ExportOptions& options) {
     m_options = options;
 }
 
-void DatasheetExporter::setNetworkManager(QNetworkAccessManager* manager) {
-    m_networkManager = manager;
-}
-
 bool DatasheetExporter::exportDatasheet(const QString& datasheetUrl,
                                         const QString& outputPath,
                                         const QString& componentName) {
     if (datasheetUrl.isEmpty()) {
         return true;
-    }
-
-    if (!m_networkManager) {
-        qWarning() << "DatasheetExporter: No network manager set";
-        return false;
     }
 
     QString datasheetDirPath = QString("%1/%2.datasheet").arg(outputPath, m_options.libName);
@@ -55,31 +44,22 @@ bool DatasheetExporter::exportDatasheet(const QString& datasheetUrl,
         return true;
     }
 
-    QNetworkRequest request(datasheetUrl);
-    request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
-    QNetworkReply* reply = m_networkManager->get(request);
+    // Use NetworkClient with default retry policy (3 retries, 30s timeout)
+    NetworkResult result = NetworkClient::instance().get(QUrl(datasheetUrl));
 
-    QEventLoop loop;
-    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    loop.exec();
-
-    if (reply->error() == QNetworkReply::NoError) {
-        QByteArray datasheetData = reply->readAll();
+    if (result.success) {
         QFile file(datasheetPath);
         if (file.open(QIODevice::WriteOnly)) {
-            file.write(datasheetData);
+            file.write(result.data);
             file.close();
             qDebug() << "Datasheet exported successfully:" << datasheetPath;
-            reply->deleteLater();
             return true;
         } else {
             qWarning() << "Failed to open file for writing:" << datasheetPath;
-            reply->deleteLater();
             return false;
         }
     } else {
-        qWarning() << "Failed to download datasheet:" << datasheetUrl << reply->errorString();
-        reply->deleteLater();
+        qWarning() << "Failed to download datasheet:" << datasheetUrl << result.error;
         return false;
     }
 }
