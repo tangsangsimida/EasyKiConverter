@@ -36,6 +36,10 @@ class ExportProgressViewModel : public QObject {
     Q_PROPERTY(QVariantList filteredResultsList READ filteredResultsList NOTIFY filteredResultsListChanged)
     Q_PROPERTY(int filteredSuccessCount READ filteredSuccessCount NOTIFY filteredResultsListChanged)
     Q_PROPERTY(int filteredFailedCount READ filteredFailedCount NOTIFY filteredResultsListChanged)
+    Q_PROPERTY(int filteredPendingCount READ filteredPendingCount NOTIFY filteredResultsListChanged)
+    Q_PROPERTY(int fetchProgress READ fetchProgress NOTIFY stageProgressChanged)
+    Q_PROPERTY(int processProgress READ processProgress NOTIFY stageProgressChanged)
+    Q_PROPERTY(int writeProgress READ writeProgress NOTIFY stageProgressChanged)
 
 public:
     explicit ExportProgressViewModel(ParallelExportService* exportService,
@@ -79,12 +83,28 @@ public:
     QVariantList filteredResultsList() const;
     int filteredSuccessCount() const;
     int filteredFailedCount() const;
+    int filteredPendingCount() const;
+
+    int fetchProgress() const {
+        return m_fetchProgress;
+    }
+
+    int processProgress() const {
+        return m_processProgress;
+    }
+
+    int writeProgress() const {
+        return m_writeProgress;
+    }
 
     Q_INVOKABLE QString getLastExportedPath() const;
     Q_INVOKABLE bool openLastExportedFolder();
     Q_INVOKABLE void clearCache();
     Q_INVOKABLE void resetExport();
     Q_INVOKABLE void setFilterMode(const QString& mode);
+    Q_INVOKABLE void retryComponent(const QString& componentId);
+    Q_INVOKABLE void retryFailedComponents();
+    Q_INVOKABLE void removeResult(const QString& componentId);
 
 public slots:
     void startExport(const QStringList& componentIds,
@@ -111,6 +131,7 @@ signals:
     void resultsListChanged();
     void filterModeChanged();
     void filteredResultsListChanged();
+    void stageProgressChanged();
 
 private slots:
     void handlePreloadProgressChanged(const PreloadProgress& progress);
@@ -147,6 +168,9 @@ private:
     QHash<QString, int> m_idToIndexMap;
     QTimer* m_throttleTimer;
     bool m_pendingUpdate;
+    int m_fetchProgress;
+    int m_processProgress;
+    int m_writeProgress;
 };
 
 }  // namespace EasyKiConverter

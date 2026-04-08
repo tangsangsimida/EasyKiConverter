@@ -11,6 +11,7 @@
 
 namespace EasyKiConverter {
 
+class ComponentService;
 class ExportTypeStage;
 
 /**
@@ -78,6 +79,14 @@ public:
      * @param path 输出目录路径
      */
     void setOutputPath(const QString& path);
+
+    /**
+     * @brief 设置元器件服务引用
+     * @param componentService 元器件服务指针
+     *
+     * 用于在预加载阶段从ComponentService获取已验证的元器件数据
+     */
+    void setComponentService(ComponentService* componentService);
 
     /**
      * @brief 获取输出目录
@@ -236,6 +245,7 @@ private:
     QMap<QString, QSharedPointer<ComponentData>> m_cachedData;  ///< 缓存的元器件数据
     QMap<QString, ExportTypeStage*> m_exportStages;  ///< 各导出类型的Stage实例
     ComponentDataCache m_cache;  ///< 数据缓存
+    ComponentService* m_componentService{nullptr};  ///< 元器件服务引用（用于获取已验证的数据）
 
     ExportOverallProgress m_progress;  ///< 整体进度
     mutable QMutex m_progressMutex;  ///< 保护m_progress的互斥量

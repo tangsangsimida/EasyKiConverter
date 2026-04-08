@@ -314,6 +314,10 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
         qDebug() << "ComponentService: Emitting cadDataReady for" << normalizedId
                  << "with symbolData:" << (result.cachedData->symbolData() != nullptr)
                  << "footprintData:" << (result.cachedData->footprintData() != nullptr);
+        
+        // 更新缓存
+        updateComponentCache(normalizedId, *result.cachedData);
+        
         emit cadDataReady(normalizedId, *result.cachedData);
 
         // 如果在并行模式，处理并行数据收集
@@ -402,6 +406,15 @@ void ComponentService::handleImageReady(const QString& componentId, const QByteA
                 qDebug() << "    Image" << i << "size:" << allImageData[i].size() << "bytes"
                          << (allImageData[i].isEmpty() ? "(EMPTY)" : "(VALID)");
             }
+            
+            // 更新缓存中的预览图数据
+            {
+                QMutexLocker cacheLocker(&m_componentCacheMutex);
+                if (m_componentCache.contains(componentId)) {
+                    m_componentCache[componentId] = fetchingComponent.data;
+                    qDebug() << "ComponentService: Updated cache with preview images for" << componentId;
+                }
+            }
         }
         qDebug() << "[CompService] handleImageReady END";
     } else {
@@ -478,6 +491,11 @@ void ComponentService::handleLcscDataReady(const QString& componentId,
 
         // 保存到磁盘缓存
         ComponentCacheService::instance()->saveComponentMetadata(componentId, updatedData);
+
+        // 触发数据手册下载（如果 URL 不为空且尚未下载）
+        if (!datasheetUrl.isEmpty() && m_imageService) {
+            m_imageService->fetchDatasheet(componentId, datasheetUrl);
+        }
     }
 }
 
@@ -513,6 +531,19 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
                        << "not found in m_fetchingComponents, cannot update datasheet data";
         }
     }  // 锁在这里释放
+
+    // 更新缓存中的数据手册数据
+    if (hasValidUpdate) {
+        QMutexLocker cacheLocker(&m_componentCacheMutex);
+        if (m_componentCache.contains(componentId)) {
+            // 从fetchingComponents获取最新的数据
+            QMutexLocker fetchLocker(&m_fetchingComponentsMutex);
+            if (m_fetchingComponents.contains(componentId)) {
+                m_componentCache[componentId] = m_fetchingComponents[componentId].data;
+                qDebug() << "ComponentService: Updated cache with datasheet data for" << componentId;
+            }
+        }
+    }
 
     // 锁外发送信号（避免信号槽死锁）
     if (hasValidUpdate) {
@@ -811,6 +842,10 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
             // 立即发送 cadDataReady 信号，让 ComponentListViewModel 可以立即使用 symbol/footprint 数据
             // 3D 模型下载完成后会在 handleModel3DFetched 中再次发送信号更新
             qDebug() << "ComponentService: Emitting cadDataReady (from network) for" << m_currentComponentId;
+            
+            // 更新缓存
+            updateComponentCache(m_currentComponentId, componentData);
+            
             emit cadDataReady(m_currentComponentId, componentData);
 
             return;  // 等待 3D 模型数据
@@ -857,6 +892,10 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
         QMutexLocker locker(&m_currentIdMutex);
         currentId = m_currentComponentId;
     }
+    
+    // 更新缓存
+    updateComponentCache(currentId, componentData);
+    
     emit cadDataReady(currentId, componentData);
 
     // 保存到磁盘缓存
@@ -935,6 +974,10 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
 
             // 先发送完成信号，确保 ComponentListViewModel 获取到完整的 ComponentData
             // 图片下载是异步的，会在后台继续进行
+            
+            // 更新缓存
+            updateComponentCache(componentId, componentDataCopy);
+            
             emit cadDataReady(componentId, componentDataCopy);
 
             // 处理并行数据收集
@@ -973,6 +1016,10 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
 
                 // 发送完成信号
                 qDebug() << "ComponentService: Emitting cadDataReady (pending complete) for" << m_currentComponentId;
+                
+                // 更新缓存
+                updateComponentCache(m_currentComponentId, m_pendingComponentData);
+                
                 emit cadDataReady(m_currentComponentId, m_pendingComponentData);
 
                 // 清空待处理数据
@@ -1113,6 +1160,12 @@ ComponentData ComponentService::getComponentData(const QString& componentId) con
     return m_componentCache.value(componentId, ComponentData());
 }
 
+void ComponentService::updateComponentCache(const QString& componentId, const ComponentData& data) {
+    QMutexLocker locker(&m_componentCacheMutex);
+    m_componentCache[componentId] = data;
+    qDebug() << "ComponentService: Updated cache for" << componentId;
+}
+
 void ComponentService::clearCache() {
     m_componentCache.clear();
 
@@ -1159,6 +1212,9 @@ void ComponentService::completeComponentData(const QString& componentId) {
         bool isComplete = fc.hasCadData && (!fc.fetch3DModel || (fc.hasObjData && fc.hasStepData));
 
         if (isComplete) {
+            // 更新缓存
+            updateComponentCache(componentId, fc.data);
+            
             emit cadDataReady(componentId, fc.data);
             if (m_parallelContext != nullptr) {
                 handleParallelDataCollected(componentId, fc.data);

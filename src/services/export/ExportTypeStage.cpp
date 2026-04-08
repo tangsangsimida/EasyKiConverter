@@ -15,8 +15,14 @@ ExportTypeStage::ExportTypeStage(const QString& typeName, int maxConcurrent, QOb
 }
 
 ExportTypeStage::~ExportTypeStage() {
-    cancel();
-    m_threadPool.waitForDone(5000);
+    // Don't call cancel() or waitForDone() in destructor
+    // as it can cause crashes during application shutdown
+    
+    // Clear the active workers list to prevent accessing deleted objects
+    {
+        QMutexLocker locker(&m_workerMutex);
+        m_activeWorkers.clear();
+    }
 }
 
 void ExportTypeStage::start(const QStringList& componentIds,
@@ -83,7 +89,8 @@ void ExportTypeStage::cancel() {
     }
     locker.unlock();
 
-    m_threadPool.waitForDone(3000);
+    // 移除waitForDone()调用，避免阻塞导致的段错误
+    // Worker现在使用QEventLoop来等待完成，会自己处理取消逻辑
     m_isRunning.store(false);
     qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
 }

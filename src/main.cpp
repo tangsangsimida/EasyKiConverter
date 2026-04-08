@@ -420,6 +420,7 @@ int main(int argc, char* argv[]) {
     (void)EasyKiConverter::NetworkClient::instance();
     EasyKiConverter::ComponentService* componentService = new EasyKiConverter::ComponentService();
     EasyKiConverter::ParallelExportService* exportService = new EasyKiConverter::ParallelExportService();
+    exportService->setComponentService(componentService);
 
     // 创建 ViewModel 实例（不设置 parent，手动管理生命周期）
     EasyKiConverter::ComponentListViewModel* componentListViewModel =

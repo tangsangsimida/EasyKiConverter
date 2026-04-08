@@ -120,6 +120,19 @@ void LcscImageService::cancelAll() {
     qDebug() << "LcscImageService: All pending preview image fetches cancelled";
 }
 
+void LcscImageService::fetchDatasheet(const QString& componentId, const QString& datasheetUrl) {
+    if (componentId.isEmpty() || datasheetUrl.isEmpty()) {
+        qWarning() << "LcscImageService::fetchDatasheet called with empty componentId or datasheetUrl";
+        return;
+    }
+
+    // 重置取消标志，允许新请求
+    m_isCancelled = 0;
+
+    qDebug() << "LcscImageService: fetchDatasheet called for" << componentId;
+    performDatasheetDownload(componentId, datasheetUrl, 0);
+}
+
 bool LcscImageService::tryLoadCachedPreviewImages(const QString& componentId) {
     ComponentCacheService* cache = ComponentCacheService::instance();
     if (!cache) {

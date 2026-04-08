@@ -141,7 +141,6 @@ private:
     QString getModelUrl(const QString& uuid, ModelFormat format) const;
 
 private:
-    NetworkUtils* m_networkUtils;
     QString m_currentUuid;
     QString m_savePath;
 };

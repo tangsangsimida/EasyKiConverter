@@ -209,11 +209,11 @@ Loader {
                     componentId: modelData.componentId || ""
                     status: modelData.status || "pending"
                     message: modelData.message || ""
-                    exportSymbol: modelData.exportSymbol || false
-                    exportFootprint: modelData.exportFootprint || false
-                    exportModel3D: modelData.exportModel3D || false
-                    exportPreviewImages: modelData.exportPreviewImages || false
-                    exportDatasheet: modelData.exportDatasheet || false
+                    exportSymbol: true
+                    exportFootprint: true
+                    exportModel3D: true
+                    exportPreviewImages: true
+                    exportDatasheet: true
                     onRetryClicked: resultsLoader.exportProgressController.retryComponent(componentId)
                     onDeleteClicked: resultsLoader.exportProgressController.removeResult(componentId)
                 }

@@ -9,7 +9,7 @@ Card {
     property var exportProgressController
     property var exportSettingsController
     title: qsTranslate("MainWindow", "导出统计")
-    visible: exportStatisticsCard.exportProgressController && exportStatisticsCard.exportProgressController.hasStatistics
+    visible: exportStatisticsCard.exportProgressController && exportStatisticsCard.exportProgressController.totalCount > 0
     ColumnLayout {
         width: parent.width
         spacing: AppStyle.spacing.md
@@ -25,148 +25,76 @@ Card {
             spacing: AppStyle.spacing.lg
             StatItem {
                 label: qsTranslate("MainWindow", "总数")
-                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.statisticsTotal : 0
+                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.totalCount : 0
                 Layout.fillWidth: true
             }
             StatItem {
                 label: qsTranslate("MainWindow", "成功")
-                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.statisticsSuccess : 0
+                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.successCount : 0
                 valueColor: AppStyle.colors.success
                 Layout.fillWidth: true
             }
             StatItem {
                 label: qsTranslate("MainWindow", "失败")
-                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.statisticsFailed : 0
+                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.failureCount : 0
                 valueColor: AppStyle.colors.danger
                 Layout.fillWidth: true
             }
             StatItem {
                 label: qsTranslate("MainWindow", "成功率")
-                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.statisticsSuccessRate || 0).toFixed(2) + "%" : "0%"
+                value: {
+                    var total = exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.totalCount : 0;
+                    var success = exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.successCount : 0;
+                    if (total === 0) return "0%";
+                    return ((success / total) * 100).toFixed(1) + "%";
+                }
                 Layout.fillWidth: true
             }
         }
-        // 时间统计信息
+        // 导出进度
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: AppStyle.spacing.lg
+            StatItem {
+                label: qsTranslate("MainWindow", "抓取进度")
+                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.fetchProgress + "%" : "0%"
+                Layout.fillWidth: true
+            }
+            StatItem {
+                label: qsTranslate("MainWindow", "处理进度")
+                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.processProgress + "%" : "0%"
+                Layout.fillWidth: true
+            }
+            StatItem {
+                label: qsTranslate("MainWindow", "写入进度")
+                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.writeProgress + "%" : "0%"
+                Layout.fillWidth: true
+            }
+        }
+        // 导出成果统计
         Text {
-            text: qsTranslate("MainWindow", "时间统计")
+            text: qsTranslate("MainWindow", "导出详情")
             font.pixelSize: AppStyle.fontSizes.md
             font.bold: true
             color: AppStyle.colors.textPrimary
             Layout.topMargin: AppStyle.spacing.sm
         }
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: AppStyle.spacing.lg
-            StatItem {
-                label: qsTranslate("MainWindow", "总耗时")
-                value: {
-                    if (!exportStatisticsCard.exportProgressController)
-                        return "0s";
-                    var totalDurationMs = exportStatisticsCard.exportProgressController.statisticsTotalDuration;
-                    if (totalDurationMs < 1000) {
-                        // 小于1秒，显示毫秒
-                        return totalDurationMs.toFixed(0) + "ms";
-                    } else if (totalDurationMs < 60000) {
-                        // 1-60秒，显示秒
-                        return (totalDurationMs / 1000).toFixed(2) + "s";
-                    } else {
-                        // 大于60秒，显示分:秒
-                        var totalSeconds = totalDurationMs / 1000;
-                        var minutes = Math.floor(totalSeconds / 60);
-                        var seconds = (totalSeconds % 60).toFixed(0);
-                        return minutes + "m" + seconds + "s";
-                    }
-                }
-                Layout.fillWidth: true
-            }
-            StatItem {
-                label: qsTranslate("MainWindow", "平均抓取")
-                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.statisticsAvgFetchTime || 0) + "ms" : "0ms"
-                Layout.fillWidth: true
-            }
-            StatItem {
-                label: qsTranslate("MainWindow", "平均处理")
-                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.statisticsAvgProcessTime || 0) + "ms" : "0ms"
-                Layout.fillWidth: true
-            }
-            StatItem {
-                label: qsTranslate("MainWindow", "平均写入")
-                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.statisticsAvgWriteTime || 0) + "ms" : "0ms"
-                Layout.fillWidth: true
-            }
-        }
-        // 导出成果统计
         RowLayout {
             Layout.fillWidth: true
             spacing: AppStyle.spacing.lg
             StatItem {
                 label: qsTranslate("MainWindow", "符号")
-                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.successSymbolCount : 0
+                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.filteredSuccessCount || 0) : 0
                 Layout.fillWidth: true
             }
             StatItem {
                 label: qsTranslate("MainWindow", "封装")
-                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.successFootprintCount : 0
+                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.filteredSuccessCount || 0) : 0
                 Layout.fillWidth: true
             }
             StatItem {
                 label: qsTranslate("MainWindow", "3D模型")
-                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.successModel3DCount : 0
-                Layout.fillWidth: true
-            }
-        }
-        // 网络统计信息
-        Text {
-            text: qsTranslate("MainWindow", "网络统计")
-            font.pixelSize: AppStyle.fontSizes.md
-            font.bold: true
-            color: AppStyle.colors.textPrimary
-            Layout.topMargin: AppStyle.spacing.sm
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: AppStyle.spacing.lg
-            StatItem {
-                label: qsTranslate("MainWindow", "总请求数")
-                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.statisticsTotalNetworkRequests : 0
-                Layout.fillWidth: true
-            }
-            StatItem {
-                label: qsTranslate("MainWindow", "重试次数")
-                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.statisticsTotalRetries : 0
-                Layout.fillWidth: true
-            }
-            StatItem {
-                label: qsTranslate("MainWindow", "平均延迟")
-                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.statisticsAvgNetworkLatency || 0) + "ms" : "0ms"
-                Layout.fillWidth: true
-            }
-            StatItem {
-                label: qsTranslate("MainWindow", "速率限制")
-                value: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.statisticsRateLimitHitCount : 0
-                Layout.fillWidth: true
-            }
-        }
-        // 内存统计信息
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: AppStyle.spacing.lg
-            StatItem {
-                label: qsTranslate("MainWindow", "峰值内存")
-                value: {
-                    if (!exportStatisticsCard.exportProgressController)
-                        return "0 MB";
-                    var memoryBytes = exportStatisticsCard.exportProgressController.statisticsPeakMemoryUsage || 0;
-                    if (memoryBytes === 0) {
-                        return "0 MB";
-                    }
-                    var memoryMB = memoryBytes / (1024 * 1024);
-                    if (memoryMB < 1024) {
-                        return memoryMB.toFixed(2) + " MB";
-                    } else {
-                        return (memoryMB / 1024).toFixed(2) + " GB";
-                    }
-                }
+                value: "0"
                 Layout.fillWidth: true
             }
         }
@@ -175,42 +103,31 @@ Card {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: AppStyle.spacing.sm
             spacing: AppStyle.spacing.lg
-            // 打开详细报告按钮（只在调试模式下显示）
+            // 打开输出目录按钮
             ModernButton {
-                text: qsTranslate("MainWindow", "打开详细统计报告")
+                text: qsTranslate("MainWindow", "打开输出目录")
                 iconName: "folder"
                 backgroundColor: AppStyle.colors.surface
                 textColor: AppStyle.colors.textPrimary
                 hoverColor: AppStyle.colors.border
                 pressedColor: AppStyle.colors.borderFocus
-                visible: exportStatisticsCard.exportSettingsController && exportStatisticsCard.exportSettingsController.debugMode // 只在调试模式下显示
                 onClicked: {
-                    Qt.openUrlExternally(exportStatisticsCard.exportProgressController.statisticsReportUrl);
+                    if (exportStatisticsCard.exportProgressController) {
+                        exportStatisticsCard.exportProgressController.openLastExportedFolder();
+                    }
                 }
             }
-            // 打开缓存目录按钮（只在调试模式下显示）
-            ModernButton {
-                text: qsTranslate("MainWindow", "打开缓存目录")
-                iconName: "folder"
-                backgroundColor: AppStyle.colors.surface
-                textColor: AppStyle.colors.textPrimary
-                hoverColor: AppStyle.colors.border
-                pressedColor: AppStyle.colors.borderFocus
-                visible: exportStatisticsCard.exportSettingsController && exportStatisticsCard.exportSettingsController.debugMode // 只在调试模式下显示
-                onClicked: {
-                    Qt.openUrlExternally(exportStatisticsCard.exportProgressController.cacheDirUrl);
-                }
-            }
-            // 清空缓存按钮（只在调试模式下显示）
+            // 清空缓存按钮
             ModernButton {
                 text: qsTranslate("MainWindow", "清空缓存")
                 iconName: "trash"
                 backgroundColor: AppStyle.colors.danger
                 hoverColor: AppStyle.colors.dangerDark
                 pressedColor: AppStyle.colors.danger
-                visible: exportStatisticsCard.exportSettingsController && exportStatisticsCard.exportSettingsController.debugMode // 只在调试模式下显示
                 onClicked: {
-                    exportStatisticsCard.exportProgressController.clearCache();
+                    if (exportStatisticsCard.exportProgressController) {
+                        exportStatisticsCard.exportProgressController.clearCache();
+                    }
                 }
             }
         }

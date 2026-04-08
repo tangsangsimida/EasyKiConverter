@@ -23,6 +23,14 @@ public:
      */
     explicit Model3DExportStage(QObject* parent = nullptr);
 
+    /**
+     * @brief 设置导出选项
+     * @param options 导出选项配置
+     */
+    void setOptions(const ExportOptions& options) {
+        m_options = options;
+    }
+
 protected:
     /**
      * @brief 创建Model3DExportWorker实例

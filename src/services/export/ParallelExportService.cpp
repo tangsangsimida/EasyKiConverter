@@ -1,5 +1,6 @@
 #include "ParallelExportService.h"
 
+#include "ComponentService.h"
 #include "DatasheetExportStage.h"
 #include "FootprintExportStage.h"
 #include "Model3DExportStage.h"
@@ -16,7 +17,12 @@ ParallelExportService::ParallelExportService(QObject* parent) : QObject(parent),
 }
 
 ParallelExportService::~ParallelExportService() {
-    cancelExport();
+    // Don't call cancelExport() in destructor
+    // as it can cause crashes during application shutdown
+    // Stages will be automatically deleted by QObject parent-child mechanism
+    
+    // Clear the stages map to avoid accessing deleted objects
+    m_exportStages.clear();
 }
 
 void ParallelExportService::setOptions(const ExportOptions& options) {
@@ -25,6 +31,10 @@ void ParallelExportService::setOptions(const ExportOptions& options) {
 
 void ParallelExportService::setOutputPath(const QString& path) {
     m_options.outputPath = path;
+}
+
+void ParallelExportService::setComponentService(ComponentService* componentService) {
+    m_componentService = componentService;
 }
 
 void ParallelExportService::startPreload(const QStringList& componentIds) {
@@ -41,17 +51,35 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
     m_progress.startTime = QDateTime::currentDateTime();
     m_progress.preloadProgress = PreloadProgress();
     m_progress.preloadProgress.totalCount = componentIds.size();
+    m_cachedData.clear();
 
-    // TODO: 实现预加载逻辑
-    // 1. 使用网络客户端获取元器件信息
-    // 2. 缓存符号JSON、封装JSON、3D模型UUID、预览图URL、数据手册URL
-    // 3. 对于大文件（3D模型、数据手册），只缓存URL/UUID，实际下载在导出时进行
-
-    // 临时：模拟预加载完成
-    for (const QString& componentId : componentIds) {
-        m_progress.preloadProgress.completedCount++;
-        m_progress.preloadProgress.successCount++;
+    // 从ComponentService获取已验证的元器件数据
+    if (m_componentService) {
+        for (const QString& componentId : componentIds) {
+            ComponentData data = m_componentService->getComponentData(componentId);
+            if (!data.lcscId().isEmpty()) {
+                // 将数据复制到缓存
+                auto sharedData = QSharedPointer<ComponentData>::create(data);
+                m_cachedData[componentId] = sharedData;
+                m_progress.preloadProgress.successCount++;
+                qDebug() << "ParallelExportService: Loaded data for" << componentId;
+            } else {
+                m_progress.preloadProgress.failedCount++;
+                qWarning() << "ParallelExportService: No data found for component:" << componentId;
+            }
+            m_progress.preloadProgress.completedCount++;
+        }
+    } else {
+        qWarning() << "ParallelExportService: ComponentService not set, cannot load data";
+        // 模拟完成但所有都失败
+        for (const QString& componentId : componentIds) {
+            m_progress.preloadProgress.completedCount++;
+            m_progress.preloadProgress.failedCount++;
+        }
     }
+
+    qDebug() << "ParallelExportService: Preload completed. Success:" << m_progress.preloadProgress.successCount
+             << "Failed:" << m_progress.preloadProgress.failedCount;
 
     m_preloadCompleted = true;
     m_progress.currentStage = ExportOverallProgress::Stage::Idle;
@@ -86,6 +114,7 @@ void ParallelExportService::startExport() {
     // 创建并启动各导出类型的Stage
     if (m_options.exportSymbol) {
         auto* stage = new SymbolExportStage(this);
+        stage->setOptions(m_options);
         m_exportStages[QStringLiteral("Symbol")] = stage;
 
         connect(stage,
@@ -104,6 +133,7 @@ void ParallelExportService::startExport() {
 
     if (m_options.exportFootprint) {
         auto* stage = new FootprintExportStage(this);
+        stage->setOptions(m_options);
         m_exportStages[QStringLiteral("Footprint")] = stage;
 
         connect(stage,
@@ -122,6 +152,7 @@ void ParallelExportService::startExport() {
 
     if (m_options.exportModel3D) {
         auto* stage = new Model3DExportStage(this);
+        stage->setOptions(m_options);
         m_exportStages[QStringLiteral("Model3D")] = stage;
 
         connect(stage,
@@ -140,6 +171,7 @@ void ParallelExportService::startExport() {
 
     if (m_options.exportPreviewImages) {
         auto* stage = new PreviewImagesExportStage(this);
+        stage->setOptions(m_options);
         m_exportStages[QStringLiteral("PreviewImages")] = stage;
 
         connect(stage,
@@ -158,6 +190,7 @@ void ParallelExportService::startExport() {
 
     if (m_options.exportDatasheet) {
         auto* stage = new DatasheetExportStage(this);
+        stage->setOptions(m_options);
         m_exportStages[QStringLiteral("Datasheet")] = stage;
 
         connect(stage,

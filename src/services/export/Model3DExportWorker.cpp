@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QEventLoop>
 
 namespace EasyKiConverter {
 
@@ -73,31 +74,49 @@ void Model3DExportWorker::run() {
     // 使用缓存的UUID通过Exporter3DModel下载3D模型
     QString uuid = m_data->model3DData()->uuid();
 
+    // 创建事件循环来等待异步下载完成
+    QEventLoop loop;
+    QString error;
+
     // 连接Exporter3DModel的下载完成信号
     connect(
         m_exporter,
         &Exporter3DModel::downloadSuccess,
-        this,
-        [this](const QString& downloadedFilePath) {
+        &loop,
+        [this, &loop, &error](const QString& downloadedFilePath) {
             Q_UNUSED(downloadedFilePath);
             if (m_cancelled.load()) {
-                emit completed(m_componentId, false, QStringLiteral("Cancelled"));
-                return;
+                error = QStringLiteral("Cancelled");
+            } else {
+                qDebug() << "Model3DExportWorker: Successfully downloaded 3D model for" << m_componentId;
             }
-            qDebug() << "Model3DExportWorker: Successfully downloaded 3D model for" << m_componentId;
-            emit completed(m_componentId, true, QString());
+            loop.quit();
         },
         Qt::SingleShotConnection);
 
     connect(
         m_exporter,
         &Exporter3DModel::downloadError,
-        this,
-        [this](const QString& errorMessage) { onDownloadError(errorMessage); },
+        &loop,
+        [this, &loop, &error](const QString& errorMessage) {
+            error = errorMessage;
+            qCritical() << "Model3DExportWorker: Download error:" << error;
+            loop.quit();
+        },
         Qt::SingleShotConnection);
 
     // 启动下载
     m_exporter->downloadObjModel(uuid, filePath);
+
+    // 等待下载完成或取消
+    loop.exec();
+
+    // 发送完成信号
+    if (error.isEmpty()) {
+        emit completed(m_componentId, true, QString());
+    } else {
+        emit completed(m_componentId, false, error);
+    }
 }
 
 void Model3DExportWorker::onDownloadError(const QString& error) {

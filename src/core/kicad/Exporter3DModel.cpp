@@ -1,6 +1,6 @@
 #include "Exporter3DModel.h"
 
-#include "core/utils/NetworkUtils.h"
+#include "core/network/NetworkClient.h"
 
 #include <QDebug>
 #include <QFile>
@@ -14,14 +14,7 @@ namespace EasyKiConverter {
 static const QString ENDPOINT_3D_MODEL = "https://modules.easyeda.com/3dmodel/%1";
 static const QString ENDPOINT_3D_MODEL_STEP = "https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1";
 
-Exporter3DModel::Exporter3DModel(QObject* parent) : QObject(parent), m_networkUtils(new NetworkUtils(this)) {
-    connect(m_networkUtils, &NetworkUtils::requestSuccess, this, [this](const QJsonObject& data) {
-        Q_UNUSED(data);
-        emit downloadSuccess(m_savePath);
-    });
-    connect(m_networkUtils, &NetworkUtils::requestError, this, [this](const QString& errorMessage) {
-        emit downloadError(errorMessage);
-    });
+Exporter3DModel::Exporter3DModel(QObject* parent) : QObject(parent) {
 }
 
 Exporter3DModel::~Exporter3DModel() {
@@ -41,7 +34,33 @@ void Exporter3DModel::downloadObjModel(const QString& uuid, const QString& saveP
 
     QString url = getModelUrl(uuid, ModelFormat::OBJ);
 
-    m_networkUtils->sendGetRequest(url, 60, 3);
+    // 使用 NetworkClient 同步下载，避免跨线程问题
+    RetryPolicy policy;
+    policy.maxRetries = 3;
+    policy.baseTimeoutMs = 60000;  // 60 秒超时
+
+    NetworkResult result = NetworkClient::instance().get(QUrl(url), policy);
+
+    if (result.success) {
+        // 保存下载的数据到文件
+        QFile file(savePath);
+        if (!file.open(QIODevice::WriteOnly)) {
+            QString errorMsg = QString("Failed to open file for writing: %1").arg(savePath);
+            qWarning() << errorMsg;
+            emit downloadError(errorMsg);
+            return;
+        }
+
+        file.write(result.data);
+        file.close();
+
+        qDebug() << "Exporter3DModel: Successfully downloaded 3D model to" << savePath;
+        emit downloadSuccess(savePath);
+    } else {
+        QString errorMsg = QString("Download failed: %1").arg(result.error);
+        qWarning() << errorMsg;
+        emit downloadError(errorMsg);
+    }
 }
 
 void Exporter3DModel::downloadStepModel(const QString& uuid, const QString& savePath) {
@@ -57,7 +76,33 @@ void Exporter3DModel::downloadStepModel(const QString& uuid, const QString& save
 
     QString url = getModelUrl(uuid, ModelFormat::STEP);
 
-    m_networkUtils->sendGetRequest(url, 60, 3);
+    // 使用 NetworkClient 同步下载，避免跨线程问题
+    RetryPolicy policy;
+    policy.maxRetries = 3;
+    policy.baseTimeoutMs = 60000;  // 60 秒超时
+
+    NetworkResult result = NetworkClient::instance().get(QUrl(url), policy);
+
+    if (result.success) {
+        // 保存下载的数据到文件
+        QFile file(savePath);
+        if (!file.open(QIODevice::WriteOnly)) {
+            QString errorMsg = QString("Failed to open file for writing: %1").arg(savePath);
+            qWarning() << errorMsg;
+            emit downloadError(errorMsg);
+            return;
+        }
+
+        file.write(result.data);
+        file.close();
+
+        qDebug() << "Exporter3DModel: Successfully downloaded 3D model to" << savePath;
+        emit downloadSuccess(savePath);
+    } else {
+        QString errorMsg = QString("Download failed: %1").arg(result.error);
+        qWarning() << errorMsg;
+        emit downloadError(errorMsg);
+    }
 }
 
 bool Exporter3DModel::exportToWrl(const Model3DData& modelData, const QString& savePath) {
@@ -123,7 +168,8 @@ void Exporter3DModel::convertToKiCadCoordinates(Model3DData& modelData) {
 }
 
 void Exporter3DModel::cancel() {
-    m_networkUtils->cancelRequest();
+    // 使用同步的 NetworkClient，不需要取消请求
+    // 如果需要支持取消，可以使用 wasCancelled 标志
 }
 
 QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const QByteArray& objData) {

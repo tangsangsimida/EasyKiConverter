@@ -58,6 +58,16 @@ public:
      */
     void cancelAll();
 
+    /**
+     * @brief 下载数据手册
+     *
+     * 当 ComponentService 接收到 LCSC API 返回的数据手册 URL 后调用此方法触发下载
+     *
+     * @param componentId 元件 ID
+     * @param datasheetUrl 数据手册 URL
+     */
+    void fetchDatasheet(const QString& componentId, const QString& datasheetUrl);
+
 signals:
     /**
      * @brief 单张图片下载成功信号
