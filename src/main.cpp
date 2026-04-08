@@ -1,4 +1,5 @@
 #include "src/core/LanguageManager.h"
+#include "src/core/network/NetworkClient.h"
 #include "src/services/ConfigService.h"
 #include "src/services/ExportService_Pipeline.h"
 #include "src/ui/viewmodels/ComponentListViewModel.h"
@@ -408,6 +409,8 @@ int main(int argc, char* argv[]) {
     // 创建 Service 实例（使用流水线架构，不设置 parent，手动管理生命周期）
     // 预先初始化缓存服务，避免首次添加组件时阻塞UI
     (void)EasyKiConverter::ComponentCacheService::instance();
+    // 预先初始化网络客户端，确保在主线程创建 QNetworkAccessManager
+    (void)EasyKiConverter::NetworkClient::instance();
     EasyKiConverter::ComponentService* componentService = new EasyKiConverter::ComponentService();
     EasyKiConverter::ExportServicePipeline* exportService = new EasyKiConverter::ExportServicePipeline();
 

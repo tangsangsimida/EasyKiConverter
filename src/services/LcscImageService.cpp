@@ -17,7 +17,8 @@ LcscImageService::LcscImageService(QObject* parent)
     : QObject(parent)
     , m_networkManager(new QNetworkAccessManager(this))
     , m_cacheThreadPool(new QThreadPool(this))
-    , m_activeRequests(0) {
+    , m_activeRequests(0)
+    , m_isCancelled(0) {
     // 设置缓存加载线程池的最大线程数
     // 使用较高的并发数以充分利用磁盘 I/O 和缓存加载速度
     m_cacheThreadPool->setMaxThreadCount(MAX_CONCURRENT_REQUESTS);
@@ -54,6 +55,9 @@ void LcscImageService::fetchPreviewImages(const QString& componentId) {
 }
 
 void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) {
+    // 重置取消标志，允许新请求
+    m_isCancelled = 0;
+
     qDebug() << "LcscImageService: fetchBatchPreviewImages called for" << componentIds.size() << "components";
     qDebug() << "LcscImageService: Current queue size:" << m_queue.size() << "active requests:" << m_activeRequests;
     for (const QString& componentId : componentIds) {
@@ -96,6 +100,9 @@ void LcscImageService::clearCache() {
 
 void LcscImageService::cancelAll() {
     qDebug() << "LcscImageService: Cancelling all pending preview image fetches";
+
+    // 设置取消标志，阻止 pending 的回调继续执行
+    m_isCancelled = 1;
 
     // 清空已请求组件记录，防止重复请求跳过
     m_requestedComponents.clear();
@@ -148,6 +155,10 @@ bool LcscImageService::tryLoadCachedPreviewImages(const QString& componentId) {
 }
 
 void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, ComponentCacheService* cache) {
+    if (m_isCancelled) {
+        return;
+    }
+
     // 收集所有需要加载的预览图路径
     QList<QPair<int, QString>> pathsToLoad;
     for (int i = 0; i < MAX_IMAGES_PER_COMPONENT; ++i) {
@@ -256,6 +267,10 @@ void LcscImageService::processQueue() {
 }
 
 void LcscImageService::performApiSearch(const QString& componentId, int retryCount) {
+    if (m_isCancelled) {
+        return;
+    }
+
     qDebug() << "LcscImageService: Starting API search for component:" << componentId << "retry:" << retryCount
              << "active_requests:" << m_activeRequests;
 
@@ -333,6 +348,10 @@ void LcscImageService::performApiSearch(const QString& componentId, int retryCou
 void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
                                          const QString& componentId,
                                          int retryCount) {
+    if (m_isCancelled) {
+        return;
+    }
+
     if (!reply) {
         qWarning() << "Invalid reply pointer in handleApiResponse for component:" << componentId;
         m_activeRequests = qMax(0, m_activeRequests - 1);
@@ -452,6 +471,10 @@ void LcscImageService::handleApiResponse(QSharedPointer<QNetworkReply> reply,
 }
 
 void LcscImageService::performFallback(const QString& componentId) {
+    if (m_isCancelled) {
+        return;
+    }
+
     QString url = QString("https://www.lcsc.com/search?q=%1").arg(componentId);
     QNetworkRequest request{QUrl(url)};
     request.setHeader(QNetworkRequest::UserAgentHeader,
@@ -471,6 +494,13 @@ void LcscImageService::performFallback(const QString& componentId) {
 
     // 超时处理
     connect(timeoutTimer, &QTimer::timeout, this, [this, componentId, reply, timeoutTimer]() {
+        if (m_isCancelled) {
+            reply->abort();
+            reply->deleteLater();
+            timeoutTimer->deleteLater();
+            return;
+        }
+
         qWarning() << "LcscImageService: Fallback search timeout for component:" << componentId;
         reply->abort();
         reply->deleteLater();
@@ -493,6 +523,11 @@ void LcscImageService::performFallback(const QString& componentId) {
 }
 
 void LcscImageService::handleFallbackResponse(QNetworkReply* reply, const QString& componentId) {
+    if (m_isCancelled) {
+        reply->deleteLater();
+        return;
+    }
+
     reply->deleteLater();
 
     if (reply->error() == QNetworkReply::NoError) {
@@ -531,6 +566,10 @@ void LcscImageService::performDownload(const QString& componentId,
 
     // 随机延迟（0.05-0.15 秒），异步执行避免阻塞主线程
     addRandomDelay([this, componentId, imageUrl, imageIndex, retryCount]() {
+        if (m_isCancelled) {
+            return;
+        }
+
         QNetworkRequest request{QUrl(imageUrl)};
         request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
 
@@ -552,6 +591,13 @@ void LcscImageService::performDownload(const QString& componentId,
                 &QTimer::timeout,
                 this,
                 [this, componentId, imageUrl, imageIndex, retryCount, reply, timeoutTimer]() {
+                    if (m_isCancelled) {
+                        reply->abort();
+                        reply->deleteLater();
+                        timeoutTimer->deleteLater();
+                        return;
+                    }
+
                     qWarning() << "LcscImageService: Download timeout for component:" << componentId
                                << "image:" << imageIndex;
                     reply->abort();
@@ -592,6 +638,10 @@ void LcscImageService::handleDownloadResponse(QSharedPointer<QNetworkReply> repl
                                               const QString& imageUrl,
                                               int imageIndex,
                                               int retryCount) {
+    if (m_isCancelled) {
+        return;
+    }
+
     if (!reply) {
         qWarning() << "Invalid reply in handleDownloadResponse";
         if (m_expectedCounts.contains(componentId)) {
@@ -702,6 +752,10 @@ void LcscImageService::performDatasheetDownload(const QString& componentId,
                                                 int retryCount) {
     // 随机延迟（0.05-0.15 秒），异步执行避免阻塞主线程
     addRandomDelay([this, componentId, datasheetUrl, retryCount]() {
+        if (m_isCancelled) {
+            return;
+        }
+
         QNetworkRequest request{QUrl(datasheetUrl)};
         request.setHeader(QNetworkRequest::UserAgentHeader,
                           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
