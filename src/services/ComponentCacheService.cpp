@@ -457,13 +457,18 @@ QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
 }
 
 QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int imageIndex) const {
-    QMutexLocker locker(&m_mutex);
-
     if (imageIndex < 0 || imageIndex >= 3) {
         return QByteArray();
     }
 
-    QString previewPath = previewImagePath(lcscId, imageIndex);
+    // 获取路径在锁外进行
+    QString previewPath;
+    {
+        QMutexLocker locker(&m_mutex);
+        previewPath = previewImagePath(lcscId, imageIndex);
+    }
+
+    // I/O 操作在锁外进行，避免长时间持锁导致其他线程阻塞
     if (!QFileInfo::exists(previewPath)) {
         return QByteArray();
     }

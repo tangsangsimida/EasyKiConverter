@@ -471,6 +471,11 @@ private:
     ParallelFetchContext* m_parallelContext;
     QMutex m_parallelContextMutex;  // 保护 m_parallelContext 的访问
 
+    // 3D 模型下载共享：防止相同 UUID 的 3D 模型被重复下载
+    // Key: UUID, Value: 等待该 UUID 的组件 ID 列表
+    QMap<QString, QStringList> m_uuidToWaitingComponents;
+    QSet<QString> m_downloadingUuids;  // 正在下载中的 UUID 集合
+
     // 动态队列管理
     class ComponentQueueManager* m_queueManager;
     int m_activeRequestCount;
