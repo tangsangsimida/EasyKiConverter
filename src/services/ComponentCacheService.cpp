@@ -106,9 +106,22 @@ bool ComponentCacheService::hasCache(const QString& lcscId) const {
     if (!QFileInfo::exists(metaPath)) {
         return false;
     }
-    // 文件存在时，再用锁保护读取操作
-    QMutexLocker locker(&m_mutex);
-    return QFileInfo::exists(metaPath);
+    // 文件存在时，验证缓存完整性
+    return isCacheValid(lcscId);
+}
+
+bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
+    QString metaPath = metadataPath(lcscId);
+    QFile file(metaPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+
+    QByteArray jsonData = file.readAll();
+    QJsonParseError parseError;
+    QJsonDocument::fromJson(jsonData, &parseError);
+
+    return parseError.error == QJsonParseError::NoError;
 }
 
 bool ComponentCacheService::hasInMemoryCache(const QString& lcscId) const {

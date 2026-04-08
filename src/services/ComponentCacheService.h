@@ -111,6 +111,13 @@ public:
      */
     bool hasCache(const QString& lcscId) const;
 
+    /**
+     * @brief 验证缓存完整性（JSON是否可解析）
+     * @param lcscId 元器件ID
+     * @return bool 缓存是否有效
+     */
+    bool isCacheValid(const QString& lcscId) const;
+
     // ==================== L1 内存缓存操作 ====================
 
     /**

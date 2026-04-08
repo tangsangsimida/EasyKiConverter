@@ -269,6 +269,8 @@ void ComponentListViewModel::removeComponentById(const QString& componentId) {
 void ComponentListViewModel::clearComponentList() {
     if (!m_componentList.isEmpty()) {
         if (m_service) {
+            // 先取消所有正在进行的请求，防止悬空响应
+            m_service->cancelAllPendingRequests();
             m_service->clearCache();
         }
 

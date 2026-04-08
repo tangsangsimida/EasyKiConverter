@@ -211,7 +211,7 @@ Rectangle {
                     color: "transparent"
                     border.color: "#22c55e"
                     border.width: 2
-                    visible: (itemData && itemData.validationPhase === "completed" && (!itemData.previewImageCount || itemData.previewImageCount === 0))
+                    visible: (itemData && (itemData.validationPhase === "completed" || itemData.validationPhase === "fetching_preview") && (!itemData.previewImageCount || itemData.previewImageCount === 0))
                     Canvas {
                         id: checkCanvas
                         anchors.fill: parent

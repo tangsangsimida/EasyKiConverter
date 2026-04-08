@@ -5,8 +5,6 @@ import QtQuick.Window
 QtObject {
     // DPI 缩放因子（基于设备像素比，使用保守的缩放策略）
     readonly property real scaleFactor: Math.min(Screen.devicePixelRatio > 0 ? Screen.devicePixelRatio : 1.0, 1.5)
-    // 当前窗口宽度
-    readonly property int currentWindowWidth: Window.window ? Window.window.width : 1200
     // 基准窗口宽度（用于计算间距比例）
     readonly property int baseWindowWidth: 1200
     // 最小和最大间距
@@ -18,14 +16,8 @@ QtObject {
     // 计算动态间距（基于窗口宽度，不换行）
     readonly property var spacing: QtObject {
         // 动态间距因子（0.0 - 1.0），根据窗口宽度计算
-        readonly property real widthRatio: {
-            if (currentWindowWidth <= minWidthForMinSpacing)
-                return 0.0;
-            if (currentWindowWidth >= maxWidthForMaxSpacing)
-                return 1.0;
-            return (currentWindowWidth - minWidthForMinSpacing) / (maxWidthForMaxSpacing - minWidthForMinSpacing);
-        }
-
+        // 注意：由于 singleton 限制，使用固定比例作为后备值
+        readonly property real widthRatio: 0.5
         // xs 间距（极小间距，用于紧凑布局）
         readonly property int xs: Math.round(minSpacing + widthRatio * (minSpacing * 0.5))
         // sm 间距（小间距，用于一般间距）
@@ -51,34 +43,12 @@ QtObject {
     readonly property int exportOptionColumns: 6
     // 导出选项的最小宽度（紧凑模式）
     readonly property int exportOptionMinWidth: 100
-    // 导出模式选项的最小宽度（需要包含说明文字，但在窄窗口下允许压缩）
-    readonly property int exportModeOptionMinWidth: {
-        if (currentWindowWidth <= 0)
-            return 140;
-        // 在窄窗口下，允许压缩到更小的宽度
-        if (currentWindowWidth < 1000)
-            return 120;
-        return 140;
-    }
-
-    // 导出选项的推荐宽度（根据窗口宽度动态调整）
-    readonly property int exportOptionPreferredWidth: {
-        if (currentWindowWidth <= 0)
-            return 120;
-        var availableWidth = currentWindowWidth - spacing.xl * 2 - spacing.lg * (exportOptionColumns - 1);
-        var preferredWidth = Math.floor(availableWidth / exportOptionColumns);
-        return Math.max(exportOptionMinWidth, Math.min(preferredWidth, 180));
-    }
-
-    // 导出模式选项的推荐宽度（根据窗口宽度动态调整）
-    readonly property int exportModeOptionPreferredWidth: {
-        if (currentWindowWidth <= 0)
-            return 140;
-        var availableWidth = currentWindowWidth - spacing.xl * 2 - spacing.lg * (exportOptionColumns - 1);
-        var preferredWidth = Math.floor(availableWidth / exportOptionColumns);
-        return Math.max(exportModeOptionMinWidth, Math.min(preferredWidth, 220));
-    }
-
+    // 导出模式选项的最小宽度
+    readonly property int exportModeOptionMinWidth: 140
+    // 导出选项的推荐宽度
+    readonly property int exportOptionPreferredWidth: 120
+    // 导出模式选项的推荐宽度
+    readonly property int exportModeOptionPreferredWidth: 140
     // 计算最小窗口宽度（基于间距达到最小值时）
     readonly property int minimumWindowWidth: {
         // 6个选项的最小宽度总和
@@ -95,20 +65,16 @@ QtObject {
 
     // 检查是否为窄窗口（可能需要压缩间距）
     function isNarrowWindow() {
-        return currentWindowWidth < 1000;
+        return baseWindowWidth < 1000;
     }
 
     // 检查是否为宽窗口（可以增加间距）
     function isWideWindow() {
-        return currentWindowWidth > 1600;
+        return baseWindowWidth > 1600;
     }
 
     // 获取适合当前窗口的间距系数
     function getSpacingMultiplier() {
-        if (currentWindowWidth <= 0)
-            return 1.0;
-        var ratio = currentWindowWidth / baseWindowWidth;
-        // 限制在 0.5 - 1.5 之间
-        return Math.max(0.5, Math.min(ratio, 1.5));
+        return 1.0;
     }
 }

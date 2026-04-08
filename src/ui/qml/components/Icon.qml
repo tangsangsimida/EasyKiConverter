@@ -1,4 +1,5 @@
 import QtQuick
+import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Item {
     id: root

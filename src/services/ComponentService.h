@@ -132,6 +132,13 @@ public:
     void cancelAllPreviewImageFetches();
 
     /**
+     * @brief 取消所有正在进行的元件数据获取请求
+     *
+     * 当清空元器件列表时调用，以中断所有悬空请求
+     */
+    void cancelAllPendingRequests();
+
+    /**
      * @brief 设置输出路径
      *
      * @param path 输出路径

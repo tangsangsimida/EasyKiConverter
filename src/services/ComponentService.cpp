@@ -1134,6 +1134,23 @@ void ComponentService::cancelAllPreviewImageFetches() {
     }
 }
 
+void ComponentService::cancelAllPendingRequests() {
+    qDebug() << "ComponentService: Cancelling all pending component data requests";
+
+    // 清空正在获取的组件记录，防止响应到达时更新已清除的数据
+    {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        m_fetchingComponents.clear();
+    }
+
+    // 取消预览图获取
+    if (m_imageService) {
+        m_imageService->cancelAll();
+    }
+
+    qDebug() << "ComponentService: All pending requests cancelled";
+}
+
 void ComponentService::completeComponentData(const QString& componentId) {
     QMutexLocker locker(&m_fetchingComponentsMutex);
     if (m_fetchingComponents.contains(componentId)) {

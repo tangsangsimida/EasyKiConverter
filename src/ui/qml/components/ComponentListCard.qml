@@ -167,7 +167,7 @@ Card {
             contentHeight: height
             clip: true
             interactive: true
-            boundsBehavior: Flickable.StopOnBounds
+            boundsBehavior: Flickable.StopAtBounds
             RowLayout {
                 id: toolbarRowLayout
                 width: implicitWidth

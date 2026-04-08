@@ -14,17 +14,17 @@ ColumnLayout {
     // 错误提示对话框
     Dialog {
         id: errorDialog
-        parent: exportButtonsSection.Window.contentItem
+        parent: Overlay.overlay
         modal: true
         title: qsTranslate("MainWindow", "错误")
-        anchors.centerIn: parent
+        implicitWidth: 400
         contentItem: Text {
             text: qsTranslate("MainWindow", "打开导出目录失败，请检查导出路径是否存在。")
             font.pixelSize: AppStyle.fontSizes.md
             color: AppStyle.colors.textPrimary
             horizontalAlignment: Text.AlignHCenter
-            width: Math.min(400, parent.width - 40)
             wrapMode: Text.WordWrap
+            padding: 20
         }
 
         background: Rectangle {

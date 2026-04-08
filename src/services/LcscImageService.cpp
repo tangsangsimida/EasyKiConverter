@@ -97,6 +97,9 @@ void LcscImageService::clearCache() {
 void LcscImageService::cancelAll() {
     qDebug() << "LcscImageService: Cancelling all pending preview image fetches";
 
+    // 清空已请求组件记录，防止重复请求跳过
+    m_requestedComponents.clear();
+
     // 清空队列，不再处理排队的请求
     m_queue.clear();
 
