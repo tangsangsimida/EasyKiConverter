@@ -1,15 +1,12 @@
-#ifndef EXPORTSETTINGSVIEWMODEL_H
-#define EXPORTSETTINGSVIEWMODEL_H
+#pragma once
 
 #include "services/ConfigService.h"
+#include "services/export/ParallelExportService.h"
 
 #include <QObject>
 #include <QString>
 
 namespace EasyKiConverter {
-
-// 前向声明
-class ExportService;
 
 /**
  * @brief 导出设置视图模型
@@ -30,9 +27,11 @@ class ExportSettingsViewModel : public QObject {
                    overwriteExistingFilesChanged)
     Q_PROPERTY(int exportMode READ exportMode WRITE setExportMode NOTIFY exportModeChanged)
     Q_PROPERTY(bool debugMode READ debugMode WRITE setDebugMode NOTIFY debugModeChanged)
+    Q_PROPERTY(bool isExporting READ isExporting NOTIFY isExportingChanged)
+    Q_PROPERTY(QString status READ status NOTIFY statusChanged)
 
 public:
-    explicit ExportSettingsViewModel(ExportService* exportService, QObject* parent = nullptr);
+    explicit ExportSettingsViewModel(ParallelExportService* exportService, QObject* parent = nullptr);
     ~ExportSettingsViewModel() override;
 
     // Getter 方法
@@ -80,10 +79,6 @@ public:
         return m_isExporting;
     }
 
-    int progress() const {
-        return m_progress;
-    }
-
     QString status() const {
         return m_status;
     }
@@ -119,24 +114,27 @@ signals:
     void exportModeChanged();
     void debugModeChanged();
     void isExportingChanged();
-    void progressChanged();
     void statusChanged();
-
-private:
-    void loadFromConfig();
+    void preloadStarted();
+    void exportStarted();
 
 private slots:
-    void handleExportProgress(int current, int total);
-    void handleComponentExported(const QString& componentId, bool success, const QString& message);
-    void handleExportCompleted(bool success);
-    void handleExportFailed(const QString& error);
+    void handlePreloadProgressChanged(const PreloadProgress& progress);
+    void handlePreloadCompleted(int successCount, int failedCount);
+    void handleProgressChanged(const ExportOverallProgress& progress);
+    void handleTypeCompleted(const QString& typeName, int successCount, int failedCount, int skippedCount);
+    void handleCompleted(int successCount, int failedCount);
+    void handleCancelled();
+    void handleFailed(const QString& error);
 
 private:
+    void buildExportOptions();
+    void loadFromConfig();
     void setIsExporting(bool exporting);
-    void setProgress(int progress);
     void setStatus(const QString& status);
 
-    ExportService* m_exportService;
+private:
+    ParallelExportService* m_exportService;
     ConfigService* m_configService;
     QString m_outputPath;
     QString m_libName;
@@ -149,10 +147,8 @@ private:
     int m_exportMode;  // 0 = 追加模式, 1 = 更新模式
     bool m_debugMode;
     bool m_isExporting;
-    int m_progress;
     QString m_status;
+    QStringList m_pendingComponentIds;
 };
 
 }  // namespace EasyKiConverter
-
-#endif  // EXPORTSETTINGSVIEWMODEL_H

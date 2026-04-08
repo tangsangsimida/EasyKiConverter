@@ -6,26 +6,21 @@ add_library(EasyKiConverterServices STATIC
     LcscImageService.cpp
     ComponentService.cpp
     ComponentCacheService.cpp
-    ExportService.cpp
-    ExportService_Pipeline.cpp
     ConfigService.cpp
-    ComponentExportTask.cpp
     MemoryMonitor.cpp
     ComponentQueueManager.cpp
     ParallelFetchContext.cpp
-    PipelineCompletionHandler.cpp
     PreviewImageExporter.cpp
     DatasheetExporter.cpp
 )
 
-# 然后添加子目录，子目录会填充 PIPELINE_SOURCES 和 PIPELINE_HEADERS 变量
-# 并且子目录里的 target_include_directories 也能正常工作了
-add_subdirectory(pipeline)
+# 新架构导出模块
+add_subdirectory(export)
 
 # 将子目录定义的源码加入目标
 target_sources(EasyKiConverterServices PRIVATE
-    ${PIPELINE_SOURCES}
-    ${PIPELINE_HEADERS}
+    ${EXPORT_SOURCES}
+    ${EXPORT_HEADERS}
 )
 
 target_include_directories(EasyKiConverterServices
@@ -50,6 +45,7 @@ target_link_libraries(EasyKiConverterServices
 )
 
 # 条件链接 QXlsx
+# 注意：QXlsx 库的 CMake 配置会触发 GuiPrivate 警告，这是 QXlsx 库的问题，不是我们项目的问题
 if(TARGET QXlsx::QXlsx)
     target_link_libraries(EasyKiConverterServices PUBLIC QXlsx::QXlsx)
 endif()

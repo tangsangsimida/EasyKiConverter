@@ -504,7 +504,8 @@ void ComponentCacheService::savePreviewImage(const QString& lcscId, const QByteA
 QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
                                                        const QString& imageUrl,
                                                        int imageIndex,
-                                                       ComponentExportStatus::NetworkDiagnostics* diag) {
+                                                       ComponentExportStatus::NetworkDiagnostics* diag,
+                                                       QAtomicInt* cancelled) {
     if (imageUrl.isEmpty() || imageIndex < 0) {
         return QByteArray();
     }
@@ -533,41 +534,79 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
         }
     }
 
-    // 使用 NetworkClient 获取图片数据（自动重试 + 退避）
+    // 检查取消标志
+    if (cancelled && cancelled->loadRelaxed()) {
+        LOG_DEBUG(LogModule::Core, "Preview image download cancelled for {} before start", lcscId);
+        return QByteArray();
+    }
+
+    // 使用 AsyncNetworkRequest 支持取消
     RetryPolicy policy;
     policy.maxRetries = 3;
     policy.baseTimeoutMs = 30000;  // 30秒超时
 
-    NetworkResult result = NetworkClient::instance().get(QUrl(imageUrl), policy);
-
+    QEventLoop loop;
     QByteArray data;
-    if (result.success) {
-        data = result.data;
-        if (diag) {
-            diag->url = imageUrl;
-            diag->statusCode = result.statusCode;
-            diag->errorString = "";
-            diag->retryCount = result.retryCount;
-            diag->latencyMs = timer.elapsed();
-            diag->wasRateLimited = (result.statusCode == 429);
+    int statusCode = 0;
+    QString errorString;
+    int retryCount = 0;
+    bool wasRateLimited = false;
+
+    AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(imageUrl), policy);
+
+    // 连接完成信号
+    QObject::connect(request, &AsyncNetworkRequest::finished, &loop, [&](const NetworkResult& result) {
+        if (cancelled && cancelled->loadRelaxed()) {
+            // 被取消，保持空数据
+        } else if (result.wasCancelled) {
+            errorString = "Cancelled";
+        } else if (result.success) {
+            data = result.data;
+            statusCode = result.statusCode;
+            retryCount = result.retryCount;
+            wasRateLimited = (result.statusCode == 429);
+        } else {
+            errorString = result.error;
+            statusCode = result.statusCode;
+            retryCount = result.retryCount;
         }
-    } else {
-        LOG_WARN(LogModule::Core, "Preview image download failed for {}: {}", lcscId, result.error);
-        if (diag) {
-            diag->url = imageUrl;
-            diag->statusCode = result.statusCode;
-            diag->errorString = result.error;
-            diag->retryCount = result.retryCount;
-            diag->latencyMs = timer.elapsed();
-            diag->wasRateLimited = (result.statusCode == 429);
+        loop.quit();
+    });
+
+    // 连接进度信号，定期检查取消标志
+    QTimer progressTimer;
+    progressTimer.setSingleShot(false);
+    progressTimer.setInterval(100);  // 每100ms检查一次取消标志
+    QObject::connect(&progressTimer, &QTimer::timeout, &loop, [&]() {
+        if (cancelled && cancelled->loadRelaxed()) {
+            request->cancel();
+            loop.quit();
         }
+    });
+
+    // 开始事件循环
+    progressTimer.start();
+    loop.exec();
+    progressTimer.stop();
+
+    // 更新诊断信息
+    if (diag) {
+        diag->url = imageUrl;
+        diag->statusCode = statusCode;
+        diag->errorString = errorString;
+        diag->retryCount = retryCount;
+        diag->latencyMs = timer.elapsed();
+        diag->wasRateLimited = wasRateLimited;
     }
 
-    // 保存到磁盘缓存
-    if (!data.isEmpty()) {
+    if (errorString.isEmpty() && !data.isEmpty()) {
+        // 保存到磁盘缓存
         savePreviewImage(lcscId, data, imageIndex);
+    } else if (!errorString.isEmpty() && errorString != "Cancelled") {
+        LOG_WARN(LogModule::Core, "Preview image download failed for {}: {}", lcscId, errorString);
     }
 
+    // 清理 - request 会自动管理自己的生命周期
     return data;
 }
 
@@ -624,7 +663,8 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
 QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
                                                     const QString& datasheetUrl,
                                                     QString* format,
-                                                    ComponentExportStatus::NetworkDiagnostics* diag) {
+                                                    ComponentExportStatus::NetworkDiagnostics* diag,
+                                                    QAtomicInt* cancelled) {
     if (datasheetUrl.isEmpty()) {
         return QByteArray();
     }
@@ -663,44 +703,81 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
         }
     }
 
-    // 使用 NetworkClient 下载数据手册（自动重试 + 退避）
+    // 检查取消标志
+    if (cancelled && cancelled->loadRelaxed()) {
+        LOG_DEBUG(LogModule::Core, "Datasheet download cancelled for {} before start", lcscId);
+        return QByteArray();
+    }
+
+    // 使用 AsyncNetworkRequest 支持取消
     RetryPolicy policy;
     policy.maxRetries = 3;
     policy.baseTimeoutMs = 45000;  // 45秒超时，数据手册可能较大
 
-    NetworkResult result = NetworkClient::instance().get(QUrl(datasheetUrl), policy);
-
+    QEventLoop loop;
     QByteArray data;
-    if (result.success) {
-        data = result.data;
-        // 检测实际格式（通过内容）
-        if (format && ext == "pdf" && data.size() >= 5 && !data.startsWith("%PDF-")) {
-            ext = "html";
-            *format = ext;
+    int statusCode = 0;
+    QString errorString;
+    int retryCount = 0;
+    bool wasRateLimited = false;
+
+    AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(datasheetUrl), policy);
+
+    // 连接完成信号
+    QObject::connect(request, &AsyncNetworkRequest::finished, &loop, [&](const NetworkResult& result) {
+        if (cancelled && cancelled->loadRelaxed()) {
+            // 被取消，保持空数据
+        } else if (result.wasCancelled) {
+            errorString = "Cancelled";
+        } else if (result.success) {
+            data = result.data;
+            statusCode = result.statusCode;
+            retryCount = result.retryCount;
+            wasRateLimited = (result.statusCode == 429);
+            // 检测实际格式（通过内容）
+            if (format && ext == "pdf" && data.size() >= 5 && !data.startsWith("%PDF-")) {
+                ext = "html";
+                *format = ext;
+            }
+        } else {
+            errorString = result.error;
+            statusCode = result.statusCode;
+            retryCount = result.retryCount;
         }
-        if (diag) {
-            diag->url = datasheetUrl;
-            diag->statusCode = result.statusCode;
-            diag->errorString = "";
-            diag->retryCount = result.retryCount;
-            diag->latencyMs = timer.elapsed();
-            diag->wasRateLimited = (result.statusCode == 429);
+        loop.quit();
+    });
+
+    // 连接进度信号，定期检查取消标志
+    QTimer progressTimer;
+    progressTimer.setSingleShot(false);
+    progressTimer.setInterval(100);  // 每100ms检查一次取消标志
+    QObject::connect(&progressTimer, &QTimer::timeout, &loop, [&]() {
+        if (cancelled && cancelled->loadRelaxed()) {
+            request->cancel();
+            loop.quit();
         }
-    } else {
-        LOG_WARN(LogModule::Core, "Datasheet download failed for {}: {}", lcscId, result.error);
-        if (diag) {
-            diag->url = datasheetUrl;
-            diag->statusCode = result.statusCode;
-            diag->errorString = result.error;
-            diag->retryCount = result.retryCount;
-            diag->latencyMs = timer.elapsed();
-            diag->wasRateLimited = (result.statusCode == 429);
-        }
+    });
+
+    // 开始事件循环
+    progressTimer.start();
+    loop.exec();
+    progressTimer.stop();
+
+    // 更新诊断信息
+    if (diag) {
+        diag->url = datasheetUrl;
+        diag->statusCode = statusCode;
+        diag->errorString = errorString;
+        diag->retryCount = retryCount;
+        diag->latencyMs = timer.elapsed();
+        diag->wasRateLimited = wasRateLimited;
     }
 
-    // 保存到磁盘缓存
-    if (!data.isEmpty()) {
+    if (errorString.isEmpty() && !data.isEmpty()) {
+        // 保存到磁盘缓存
         saveDatasheet(lcscId, data, ext);
+    } else if (!errorString.isEmpty() && errorString != "Cancelled") {
+        LOG_WARN(LogModule::Core, "Datasheet download failed for {}: {}", lcscId, errorString);
     }
 
     return data;

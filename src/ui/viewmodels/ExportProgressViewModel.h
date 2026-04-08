@@ -1,69 +1,44 @@
-#ifndef EXPORTPROGRESSVIEWMODEL_H
-#define EXPORTPROGRESSVIEWMODEL_H
+#pragma once
 
 #include "services/ComponentCacheService.h"
 #include "services/ComponentService.h"
-#include "services/ExportService.h"
-#include "services/ExportService_Pipeline.h"
+#include "services/export/ParallelExportService.h"
 #include "ui/viewmodels/ComponentListViewModel.h"
 
 #include <QHash>
 #include <QObject>
 #include <QString>
 #include <QTimer>
-#include <QUrl>
 #include <QVariantList>
 
 namespace EasyKiConverter {
 
-class ExportService;
-class ExportServicePipeline;
-class SystemTrayManager;
-struct PipelineProgress;
+struct ExportOverallProgress;
+struct ExportTypeProgress;
+struct ExportItemStatus;
 struct ExportStatistics;
 
+/**
+ * @brief 导出进度视图模型
+ *
+ * 负责显示和管理导出进度的 UI 状态和操作
+ */
 class ExportProgressViewModel : public QObject {
     Q_OBJECT
     Q_PROPERTY(int progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
     Q_PROPERTY(bool isExporting READ isExporting NOTIFY isExportingChanged)
-    Q_PROPERTY(bool isStopping READ isStopping NOTIFY isStoppingChanged)
     Q_PROPERTY(int successCount READ successCount NOTIFY successCountChanged)
-    Q_PROPERTY(int successSymbolCount READ successSymbolCount NOTIFY successCountChanged)
-    Q_PROPERTY(int successFootprintCount READ successFootprintCount NOTIFY successCountChanged)
-    Q_PROPERTY(int successModel3DCount READ successModel3DCount NOTIFY successCountChanged)
     Q_PROPERTY(int failureCount READ failureCount NOTIFY failureCountChanged)
-    Q_PROPERTY(int fetchProgress READ fetchProgress NOTIFY fetchProgressChanged)
-    Q_PROPERTY(int processProgress READ processProgress NOTIFY processProgressChanged)
-    Q_PROPERTY(int writeProgress READ writeProgress NOTIFY writeProgressChanged)
+    Q_PROPERTY(int totalCount READ totalCount NOTIFY totalCountChanged)
+    Q_PROPERTY(QString filterMode READ filterMode WRITE setFilterMode NOTIFY filterModeChanged)
     Q_PROPERTY(QVariantList resultsList READ resultsList NOTIFY resultsListChanged)
-    Q_PROPERTY(QString filterMode READ filterMode NOTIFY filterModeChanged)
     Q_PROPERTY(QVariantList filteredResultsList READ filteredResultsList NOTIFY filteredResultsListChanged)
     Q_PROPERTY(int filteredSuccessCount READ filteredSuccessCount NOTIFY filteredResultsListChanged)
     Q_PROPERTY(int filteredFailedCount READ filteredFailedCount NOTIFY filteredResultsListChanged)
-    Q_PROPERTY(int filteredPendingCount READ filteredPendingCount NOTIFY filteredResultsListChanged)
-    Q_PROPERTY(bool hasStatistics READ hasStatistics NOTIFY statisticsChanged)
-    Q_PROPERTY(QString statisticsReportPath READ statisticsReportPath NOTIFY statisticsChanged)
-    Q_PROPERTY(QString statisticsReportUrl READ statisticsReportUrl CONSTANT)
-    Q_PROPERTY(QString cacheDirPath READ cacheDirPath CONSTANT)
-    Q_PROPERTY(QString cacheDirUrl READ cacheDirUrl CONSTANT)
-    Q_PROPERTY(QString statisticsSummary READ statisticsSummary NOTIFY statisticsChanged)
-    Q_PROPERTY(int statisticsTotal READ statisticsTotal NOTIFY statisticsChanged)
-    Q_PROPERTY(int statisticsSuccess READ statisticsSuccess NOTIFY statisticsChanged)
-    Q_PROPERTY(int statisticsFailed READ statisticsFailed NOTIFY statisticsChanged)
-    Q_PROPERTY(double statisticsSuccessRate READ statisticsSuccessRate NOTIFY statisticsChanged)
-    Q_PROPERTY(qint64 statisticsTotalDuration READ statisticsTotalDuration NOTIFY statisticsChanged)
-    Q_PROPERTY(qint64 statisticsAvgFetchTime READ statisticsAvgFetchTime NOTIFY statisticsChanged)
-    Q_PROPERTY(qint64 statisticsAvgProcessTime READ statisticsAvgProcessTime NOTIFY statisticsChanged)
-    Q_PROPERTY(qint64 statisticsAvgWriteTime READ statisticsAvgWriteTime NOTIFY statisticsChanged)
-    Q_PROPERTY(int statisticsTotalNetworkRequests READ statisticsTotalNetworkRequests NOTIFY statisticsChanged)
-    Q_PROPERTY(int statisticsTotalRetries READ statisticsTotalRetries NOTIFY statisticsChanged)
-    Q_PROPERTY(qint64 statisticsAvgNetworkLatency READ statisticsAvgNetworkLatency NOTIFY statisticsChanged)
-    Q_PROPERTY(int statisticsRateLimitHitCount READ statisticsRateLimitHitCount NOTIFY statisticsChanged)
-    Q_PROPERTY(qint64 statisticsPeakMemoryUsage READ statisticsPeakMemoryUsage NOTIFY statisticsChanged)
 
 public:
-    explicit ExportProgressViewModel(ExportService* exportService,
+    explicit ExportProgressViewModel(ParallelExportService* exportService,
                                      ComponentService* componentService,
                                      ComponentListViewModel* componentListViewModel,
                                      QObject* parent = nullptr);
@@ -81,284 +56,97 @@ public:
         return m_isExporting;
     }
 
-    bool isStopping() const {
-        return m_isStopping;
-    }
-
     int successCount() const {
         return m_successCount;
-    }
-
-    int successSymbolCount() const {
-        return m_successSymbolCount;
-    }
-
-    int successFootprintCount() const {
-        return m_successFootprintCount;
-    }
-
-    int successModel3DCount() const {
-        return m_successModel3DCount;
     }
 
     int failureCount() const {
         return m_failureCount;
     }
 
-    Q_INVOKABLE QString getLastExportedPath() const {
-        return m_exportOptions.outputPath;
-    }
-
-    // 打开最后导出的文件夹
-    Q_INVOKABLE bool openLastExportedFolder();
-
-    // 清空组件缓存（跨平台）
-    Q_INVOKABLE void clearCache();
-
-    int fetchProgress() const {
-        return m_fetchProgress;
-    }
-
-    int processProgress() const {
-        return m_processProgress;
-    }
-
-    int writeProgress() const {
-        return m_writeProgress;
-    }
-
-    QVariantList resultsList() const {
-        return m_resultsList;
+    int totalCount() const {
+        return m_totalCount;
     }
 
     QString filterMode() const {
         return m_filterMode;
     }
 
+    QVariantList resultsList() const {
+        return m_resultsList;
+    }
+
     QVariantList filteredResultsList() const;
+    int filteredSuccessCount() const;
+    int filteredFailedCount() const;
 
-    int filteredSuccessCount() const {
-        return m_successCount;
-    }
-
-    int filteredFailedCount() const {
-        return m_failureCount;
-    }
-
-    int filteredPendingCount() const {
-        return m_resultsList.size() - m_successCount - m_failureCount;
-    }
-
-    bool hasStatistics() const {
-        return m_hasStatistics;
-    }
-
-    QString statisticsReportPath() const {
-        return m_statisticsReportPath;
-    }
-
-    QString cacheDirPath() const {
-        return ComponentCacheService::instance()->cacheDir();
-    }
-
-    QString cacheDirUrl() const {
-        auto cacheDir = ComponentCacheService::instance()->cacheDir();
-        if (cacheDir.isEmpty()) {
-            return QString();
-        }
-        return QUrl::fromLocalFile(cacheDir).toString();
-    }
-
-    QString statisticsReportUrl() const {
-        if (m_statisticsReportPath.isEmpty()) {
-            return QString();
-        }
-        return QUrl::fromLocalFile(m_statisticsReportPath).toString();
-    }
-
-    QString statisticsSummary() const {
-        return m_statisticsSummary;
-    }
-
-    int statisticsTotal() const {
-        return m_resultsList.size();
-    }
-
-    int statisticsSuccess() const {
-        return m_successCount;
-    }
-
-    int statisticsFailed() const {
-        return m_failureCount;
-    }
-
-    double statisticsSuccessRate() const {
-        return m_resultsList.isEmpty() ? 0.0 : (m_successCount * 100.0 / m_resultsList.size());
-    }
-
-    qint64 statisticsTotalDuration() const {
-        return m_statistics.totalDurationMs;
-    }
-
-    qint64 statisticsAvgFetchTime() const {
-        return m_statistics.avgFetchTimeMs;
-    }
-
-    qint64 statisticsAvgProcessTime() const {
-        return m_statistics.avgProcessTimeMs;
-    }
-
-    qint64 statisticsAvgWriteTime() const {
-        return m_statistics.avgWriteTimeMs;
-    }
-
-    int statisticsTotalNetworkRequests() const {
-        return m_statistics.totalNetworkRequests;
-    }
-
-    int statisticsTotalRetries() const {
-        return m_statistics.totalRetries;
-    }
-
-    qint64 statisticsAvgNetworkLatency() const {
-        return m_statistics.avgNetworkLatencyMs;
-    }
-
-    int statisticsRateLimitHitCount() const {
-        return m_statistics.rateLimitHitCount;
-    }
-
-    qint64 statisticsPeakMemoryUsage() const {
-        return m_statistics.peakMemoryUsage;
-    }
-
-    void setUsePipelineMode(bool usePipeline);
-
-public slots:
-    Q_INVOKABLE void startExport(const QStringList& componentIds,
-                                 const QString& outputPath,
-                                 const QString& libName,
-                                 bool exportSymbol,
-                                 bool exportFootprint,
-                                 bool exportModel3D,
-                                 bool exportPreviewImages,
-                                 bool exportDatasheet,
-                                 bool overwriteExistingFiles,
-                                 bool updateMode,
-                                 bool debugMode);
-    Q_INVOKABLE void retryFailedComponents();
-    Q_INVOKABLE void retryComponent(const QString& componentId);
-    Q_INVOKABLE void removeResult(const QString& componentId);
-    Q_INVOKABLE void cancelExport();
+    Q_INVOKABLE QString getLastExportedPath() const;
+    Q_INVOKABLE bool openLastExportedFolder();
+    Q_INVOKABLE void clearCache();
     Q_INVOKABLE void resetExport();
     Q_INVOKABLE void setFilterMode(const QString& mode);
 
-    // 窗口关闭处理
-    Q_INVOKABLE bool handleCloseRequest();
-
-    void setExportService(ExportService* service) {
-        m_exportService = service;
-        if (qobject_cast<ExportServicePipeline*>(service)) {
-            m_usePipelineMode = true;
-        }
-    }
-
-public:
-    /**
-     * @brief 更新单个元器件的预览图和手册导出状态
-     * @param componentId 元器件ID
-     * @param previewImageSuccess 预览图是否导出成功（-1表示不更新）
-     * @param datasheetSuccess 手册是否导出成功（-1表示不更新）
-     */
-    Q_INVOKABLE void updateComponentExportStatus(const QString& componentId,
-                                                 int previewImageSuccess,
-                                                 int datasheetSuccess);
+public slots:
+    void startExport(const QStringList& componentIds,
+                     const QString& outputPath,
+                     const QString& libName,
+                     bool exportSymbol,
+                     bool exportFootprint,
+                     bool exportModel3D,
+                     bool exportPreviewImages,
+                     bool exportDatasheet,
+                     bool overwriteExistingFiles,
+                     bool updateMode,
+                     bool debugMode);
+    void cancelExport();
+    void handleCloseRequest();
 
 signals:
     void progressChanged();
     void statusChanged();
     void isExportingChanged();
-    void isStoppingChanged();
     void successCountChanged();
     void failureCountChanged();
-    void exportCompleted(int totalCount, int successCount);
-    void componentExported(const QString& componentId, bool success, const QString& message);
-    void fetchProgressChanged();
-    void processProgressChanged();
-    void writeProgressChanged();
+    void totalCountChanged();
     void resultsListChanged();
     void filterModeChanged();
     void filteredResultsListChanged();
-    void statisticsChanged();
 
 private slots:
-    void handleShowWindowRequested();
-    void handleQuitRequested();
-    void handleExportProgress(int current, int total);
-    void handleExportCompleted(int totalCount, int successCount);
-    void handleExportFailed(const QString& error);
-    void handleComponentExported(const QString& componentId,
-                                 bool success,
-                                 const QString& message,
-                                 int stage = -1,
-                                 bool symbolSuccess = false,
-                                 bool footprintSuccess = false,
-                                 bool model3DSuccess = false,
-                                 bool previewImagesSuccess = false,
-                                 bool datasheetSuccess = false);
-    void handleComponentDataFetched(const QString& componentId, const ComponentData& data);
-    void handleAllComponentsDataCollected(const QList<ComponentData>& componentDataList);
-    void handlePipelineProgressUpdated(const PipelineProgress& progress);
-    void handleStatisticsReportGenerated(const QString& reportPath, const ExportStatistics& statistics);
-    void handleExportItemCompleted(const QString& componentId, int itemType, bool success);
+    void handlePreloadProgressChanged(const PreloadProgress& progress);
+    void handlePreloadCompleted(int successCount, int failedCount);
+    void handleProgressChanged(const ExportOverallProgress& progress);
+    void handleItemStatusChanged(const QString& componentId, const QString& typeName, const ExportItemStatus& status);
+    void handleTypeCompleted(const QString& typeName, int successCount, int failedCount, int skippedCount);
+    void handleCompleted(int successCount, int failedCount);
+    void handleCancelled();
+    void handleFailed(const QString& error);
     void flushPendingUpdates();
 
 private:
-    QString getStatusString(int stage,
-                            bool success,
-                            bool symbolSuccess,
-                            bool footprintSuccess,
-                            bool model3DSuccess,
-                            bool previewImagesSuccess = false,
-                            bool datasheetSuccess = false) const;
-    void prepopulateResultsList(const QStringList& componentIds, const ExportOptions& options);
-    void startExportInternal(const QStringList& componentIds, bool isRetry);
-    void updateStatistics();
-    void showExportCompleteNotification();
+    void updateProgress();
+    void updateResultsList();
+    void updateFilteredResults();
+    void setStatus(const QString& status);
+    void setIsExporting(bool exporting);
+    void setProgress(int progress);
 
 private:
-    ExportService* m_exportService;
+    ParallelExportService* m_exportService;
     ComponentService* m_componentService;
     ComponentListViewModel* m_componentListViewModel;
-    SystemTrayManager* m_systemTrayManager;
     QString m_status;
     int m_progress;
     bool m_isExporting;
-    bool m_isStopping;
     QStringList m_componentIds;
-    int m_fetchedCount;
-    QList<ComponentData> m_collectedData;
-    ExportOptions m_exportOptions;
-    int m_fetchProgress;
-    int m_processProgress;
-    int m_writeProgress;
-    bool m_usePipelineMode;
+    int m_totalCount;
+    int m_successCount;
+    int m_failureCount;
     QString m_filterMode;
     QVariantList m_resultsList;
     QHash<QString, int> m_idToIndexMap;
     QTimer* m_throttleTimer;
     bool m_pendingUpdate;
-    bool m_hasStatistics;
-    QString m_statisticsReportPath;
-    QString m_cacheDirPath;
-    QString m_statisticsSummary;
-    ExportStatistics m_statistics;
-    int m_successCount;
-    int m_successSymbolCount;
-    int m_successFootprintCount;
-    int m_successModel3DCount;
-    int m_failureCount;
 };
-}  // namespace EasyKiConverter
 
-#endif  // EXPORTPROGRESSVIEWMODEL_H
+}  // namespace EasyKiConverter

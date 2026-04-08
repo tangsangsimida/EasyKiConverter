@@ -1,7 +1,14 @@
+// 我发现我在学校，不谈恋爱也不学习，不打游戏也不逃课，
+// 每天就是处于认真听课，然后因为听不懂走神了，
+// 反应过来以后再继续认真听课的循环，进入这种状态的时候，
+// 我一般就是左脑和右脑已经聊美了，完全就是一个放飞自我，
+// 意淫我有多少多少家产，然后怕班里有人会读心术紧急撤回一条意淫，
+// 那这在恋爱小说里我不就是那种…背景板吗，
+// 就每天在学校挂机任务就完成的npc
 #include "src/core/LanguageManager.h"
 #include "src/core/network/NetworkClient.h"
 #include "src/services/ConfigService.h"
-#include "src/services/ExportService_Pipeline.h"
+#include "src/services/export/ParallelExportService.h"
 #include "src/ui/viewmodels/ComponentListViewModel.h"
 #include "src/ui/viewmodels/ExportProgressViewModel.h"
 #include "src/ui/viewmodels/ExportSettingsViewModel.h"
@@ -412,7 +419,7 @@ int main(int argc, char* argv[]) {
     // 预先初始化网络客户端，确保在主线程创建 QNetworkAccessManager
     (void)EasyKiConverter::NetworkClient::instance();
     EasyKiConverter::ComponentService* componentService = new EasyKiConverter::ComponentService();
-    EasyKiConverter::ExportServicePipeline* exportService = new EasyKiConverter::ExportServicePipeline();
+    EasyKiConverter::ParallelExportService* exportService = new EasyKiConverter::ParallelExportService();
 
     // 创建 ViewModel 实例（不设置 parent，手动管理生命周期）
     EasyKiConverter::ComponentListViewModel* componentListViewModel =
@@ -739,6 +746,25 @@ int main(int argc, char* argv[]) {
 
     // 点击关闭按钮时直接退出应用程序
     app.setQuitOnLastWindowClosed(true);
+
+    // 连接应用程序的 aboutToQuit 信号，确保退出前清理所有资源
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {
+        qDebug() << "Application is about to quit, performing cleanup...";
+
+        // 1. 取消导出服务（如果正在导出）
+        if (exportService) {
+            qDebug() << "Cancelling export service...";
+            exportService->cancelExport();
+        }
+
+        // 2. 取消所有挂起的组件请求
+        if (componentService) {
+            qDebug() << "Cancelling all pending component requests...";
+            componentService->cancelAllPendingRequests();
+        }
+
+        qDebug() << "Cleanup completed, application can now exit.";
+    });
 
     // 运行事件循环
     int exitCode = app.exec();

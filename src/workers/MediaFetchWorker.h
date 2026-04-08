@@ -3,7 +3,9 @@
 
 #include "models/ComponentExportStatus.h"
 
+#include <QAtomicInt>
 #include <QByteArray>
+#include <QElapsedTimer>
 #include <QList>
 #include <QObject>
 #include <QRunnable>
@@ -11,11 +13,17 @@
 
 namespace EasyKiConverter {
 
+class ComponentCacheService;
+
 /**
  * @brief 媒体数据获取工作线程
  *
  * 负责从缓存或网络下载预览图和手册数据（I/O密集型任务）
  * 优先使用缓存，缓存没有则下载并自动缓存
+ *
+ * 使用完全异步架构，支持：
+ * - 异步下载，可随时取消
+ * - 链式回调，不阻塞线程
  */
 class MediaFetchWorker : public QObject, public QRunnable {
     Q_OBJECT
@@ -62,10 +70,30 @@ signals:
                         const QList<ComponentExportStatus::NetworkDiagnostics>& diagnostics);
 
 private:
+    /**
+     * @brief 开始下载下一个预览图
+     */
+    void startPreviewDownload(int index, ComponentCacheService* cache);
+
+    /**
+     * @brief 开始下载数据手册
+     */
+    void startDatasheetDownload(ComponentCacheService* cache);
+
+    /**
+     * @brief 完成所有下载
+     */
+    void finishAllDownloads();
+
     QString m_componentId;
     QStringList m_previewImageUrls;
     QString m_datasheetUrl;
-    bool m_isAborted;
+    QAtomicInt m_isAborted;
+    QAtomicInt m_pendingOperations;  // 待完成的异步操作计数
+
+    // 累积结果
+    QList<QByteArray> m_previewImageDataList;
+    QByteArray m_datasheetData;
     QList<ComponentExportStatus::NetworkDiagnostics> m_diagnostics;
 };
 

@@ -1,6 +1,7 @@
 #ifndef NETWORKCLIENT_H
 #define NETWORKCLIENT_H
 
+#include "AsyncNetworkRequest.h"
 #include "INetworkClient.h"
 #include "utils/TestableSingleton.h"
 
@@ -27,14 +28,37 @@ public:
     using TestableSingleton<NetworkClient>::instance;
 
     /**
-     * @brief Send HTTP GET request with retry
+     * @brief Send HTTP GET request with retry (synchronous, blocks until complete)
      */
     NetworkResult get(const QUrl& url, const RetryPolicy& policy = {}) override;
 
     /**
-     * @brief Send HTTP POST request with retry
+     * @brief Send HTTP POST request with retry (synchronous, blocks until complete)
      */
     NetworkResult post(const QUrl& url, const QByteArray& body, const RetryPolicy& policy = {}) override;
+
+    /**
+     * @brief Send HTTP GET request asynchronously (non-blocking)
+     *
+     * The returned AsyncNetworkRequest must be managed by the caller.
+     * The caller should connect to finished() signal and delete the request when done.
+     * The request can be cancelled at any time via AsyncNetworkRequest::cancel().
+     *
+     * @param url Request URL
+     * @param policy Retry policy
+     * @return AsyncNetworkRequest* - caller takes ownership
+     */
+    Q_INVOKABLE AsyncNetworkRequest* getAsync(const QUrl& url, const RetryPolicy& policy = {});
+
+    /**
+     * @brief Send HTTP POST request asynchronously (non-blocking)
+     *
+     * @param url Request URL
+     * @param body Request body
+     * @param policy Retry policy
+     * @return AsyncNetworkRequest* - caller takes ownership
+     */
+    Q_INVOKABLE AsyncNetworkRequest* postAsync(const QUrl& url, const QByteArray& body, const RetryPolicy& policy = {});
 
     /**
      * @brief Check if data is gzip compressed

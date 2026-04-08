@@ -1,7 +1,7 @@
 #ifndef PREVIEWIMAGEEXPORTER_H
 #define PREVIEWIMAGEEXPORTER_H
 
-#include "ExportService.h"
+#include "export/ExportProgress.h"
 
 #include <QDir>
 #include <QObject>

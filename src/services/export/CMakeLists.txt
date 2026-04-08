@@ -1,0 +1,37 @@
+# 导出模块
+
+set(EXPORT_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/ExportProgress.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ExportTypeStage.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/IExportWorker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SymbolExportStage.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/FootprintExportStage.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Model3DExportStage.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PreviewImagesExportStage.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/DatasheetExportStage.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SymbolExportWorker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/FootprintExportWorker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Model3DExportWorker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PreviewImagesExportWorker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/DatasheetExportWorker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ParallelExportService.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ComponentDataCache.h
+    PARENT_SCOPE
+)
+
+set(EXPORT_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/ExportTypeStage.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SymbolExportStage.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FootprintExportStage.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Model3DExportStage.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PreviewImagesExportStage.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/DatasheetExportStage.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SymbolExportWorker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FootprintExportWorker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Model3DExportWorker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PreviewImagesExportWorker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/DatasheetExportWorker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ParallelExportService.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ComponentDataCache.cpp
+    PARENT_SCOPE
+)

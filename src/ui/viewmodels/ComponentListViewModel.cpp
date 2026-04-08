@@ -1025,13 +1025,19 @@ int ComponentListViewModel::filteredCount() const {
         if (m_filterMode == "all") {
             count++;
         } else if (m_filterMode == "validating") {
-            if (item->isFetching())
+            // 验证中：仅 CAD 数据验证阶段（不包括预览图获取）
+            QString phase = item->validationPhase();
+            if (phase == "validating")
                 count++;
         } else if (m_filterMode == "valid") {
-            if (!item->isFetching() && item->isValid())
+            // 有效：CAD 数据验证通过（不管预览图状态）
+            QString phase = item->validationPhase();
+            if (phase == "completed" || phase == "fetching_preview")
                 count++;
         } else if (m_filterMode == "invalid") {
-            if (!item->isFetching() && !item->isValid())
+            // 无效：CAD 数据验证失败
+            QString phase = item->validationPhase();
+            if (phase == "failed")
                 count++;
         }
     }
@@ -1041,7 +1047,7 @@ int ComponentListViewModel::filteredCount() const {
 int ComponentListViewModel::validatingCount() const {
     int count = 0;
     for (const auto& item : m_componentList) {
-        if (item && item->isFetching())
+        if (item && item->validationPhase() == "validating")
             count++;
     }
     return count;
@@ -1050,8 +1056,11 @@ int ComponentListViewModel::validatingCount() const {
 int ComponentListViewModel::validCount() const {
     int count = 0;
     for (const auto& item : m_componentList) {
-        if (item && !item->isFetching() && item->isValid())
-            count++;
+        if (item) {
+            QString phase = item->validationPhase();
+            if (phase == "completed" || phase == "fetching_preview")
+                count++;
+        }
     }
     return count;
 }
@@ -1059,7 +1068,7 @@ int ComponentListViewModel::validCount() const {
 int ComponentListViewModel::invalidCount() const {
     int count = 0;
     for (const auto& item : m_componentList) {
-        if (item && !item->isFetching() && !item->isValid())
+        if (item && item->validationPhase() == "failed")
             count++;
     }
     return count;

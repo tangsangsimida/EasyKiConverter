@@ -14,115 +14,178 @@ MediaFetchWorker::MediaFetchWorker(const QString& componentId,
     , m_componentId(componentId)
     , m_previewImageUrls(previewImageUrls)
     , m_datasheetUrl(datasheetUrl)
-    , m_isAborted(false) {}
+    , m_isAborted(0) {}
 
 MediaFetchWorker::~MediaFetchWorker() = default;
 
 void MediaFetchWorker::run() {
-    if (m_isAborted) {
+    if (m_isAborted.loadAcquire()) {
         return;
     }
 
-    QList<QByteArray> previewImageDataList;
-    QByteArray datasheetData;
+    m_previewImageDataList.clear();
+    m_datasheetData.clear();
     m_diagnostics.clear();
+    m_pendingOperations = 0;
 
     ComponentCacheService* cache = ComponentCacheService::instance();
     if (!cache) {
         qWarning() << "MediaFetchWorker: ComponentCacheService is null";
-        emit fetchCompleted(m_componentId, previewImageDataList, datasheetData, m_diagnostics);
+        emit fetchCompleted(m_componentId, m_previewImageDataList, m_datasheetData, m_diagnostics);
         return;
     }
 
-    // 下载预览图（优先从缓存加载，缓存没有则下载并缓存）
-    for (int i = 0; i < m_previewImageUrls.size(); ++i) {
-        if (m_isAborted) {
-            break;
-        }
-        const QString& url = m_previewImageUrls[i];
-
-        // 跟踪网络诊断信息
-        ComponentExportStatus::NetworkDiagnostics diag;
-        QByteArray imageData;
-
-        if (url.isEmpty()) {
-            // URL为空，尝试直接从缓存加载（不经过网络）
-            QElapsedTimer timer;
-            timer.start();
-            imageData = cache->loadPreviewImage(m_componentId, i);
-            diag.url = QString();
-            diag.latencyMs = timer.elapsed();
-            if (!imageData.isEmpty()) {
-                diag.statusCode = 200;
-                diag.errorString = "";
-                diag.wasRateLimited = false;
-            } else {
-                diag.statusCode = 0;
-                diag.errorString = "Not found in cache";
-                diag.wasRateLimited = false;
-            }
-            diag.retryCount = 0;
-        } else {
-            // 使用 downloadPreviewImage，它会检查缓存，缓存没有则下载并自动保存
-            imageData = cache->downloadPreviewImage(m_componentId, url, i, &diag);
-        }
-
-        if (!imageData.isEmpty()) {
-            previewImageDataList.append(imageData);
-        }
-        m_diagnostics.append(diag);
+    // 如果预览图为空，直接开始下载手册
+    if (m_previewImageUrls.isEmpty()) {
+        startDatasheetDownload(cache);
+        return;
     }
 
-    // 下载手册（优先从缓存加载，缓存没有则下载并缓存）
-    if (!m_isAborted) {
-        // 跟踪网络诊断信息
-        ComponentExportStatus::NetworkDiagnostics diag;
+    // 开始第一个预览图下载
+    startPreviewDownload(0, cache);
+}
+
+void MediaFetchWorker::startPreviewDownload(int index, ComponentCacheService* cache) {
+    if (m_isAborted.loadAcquire()) {
+        finishAllDownloads();
+        return;
+    }
+
+    if (index >= m_previewImageUrls.size()) {
+        // 所有预览图下载完成，开始下载手册
+        startDatasheetDownload(cache);
+        return;
+    }
+
+    m_pendingOperations++;
+    const QString& url = m_previewImageUrls[index];
+
+    if (url.isEmpty()) {
+        // URL为空，尝试直接从缓存加载
         QElapsedTimer timer;
         timer.start();
+        QByteArray imageData = cache->loadPreviewImage(m_componentId, index);
 
-        if (m_datasheetUrl.isEmpty()) {
-            // URL为空，尝试直接从缓存加载
-            datasheetData = cache->loadDatasheet(m_componentId);
-            diag.url = QString();
-            diag.latencyMs = timer.elapsed();
-            if (!datasheetData.isEmpty()) {
-                diag.statusCode = 200;
-                diag.errorString = "";
-                diag.wasRateLimited = false;
-            } else {
-                diag.statusCode = 0;
-                diag.errorString = "Not found in cache";
-                diag.wasRateLimited = false;
-            }
+        ComponentExportStatus::NetworkDiagnostics diag;
+        diag.url = QString();
+        diag.latencyMs = timer.elapsed();
+        if (!imageData.isEmpty()) {
+            diag.statusCode = 200;
+            diag.errorString = "";
+            diag.wasRateLimited = false;
+            m_previewImageDataList.append(imageData);
         } else {
-            // 使用 downloadDatasheet，它会检查缓存，缓存没有则下载并自动保存
-            datasheetData = cache->downloadDatasheet(m_componentId, m_datasheetUrl, nullptr, &diag);
-            diag.url = m_datasheetUrl;
-            diag.latencyMs = timer.elapsed();
-            if (datasheetData.isEmpty()) {
-                diag.statusCode = 0;
-                if (diag.errorString.isEmpty()) {
-                    diag.errorString = "Download failed";
-                }
-                diag.wasRateLimited = false;
-            } else {
-                diag.statusCode = 200;
-                diag.errorString = "";
-                diag.wasRateLimited = false;
-            }
+            diag.statusCode = 0;
+            diag.errorString = "Not found in cache";
+            diag.wasRateLimited = false;
         }
         diag.retryCount = 0;
         m_diagnostics.append(diag);
+
+        m_pendingOperations--;
+        // 继续下一个预览图
+        startPreviewDownload(index + 1, cache);
+        return;
+    }
+
+    // 使用异步下载
+    cache->downloadPreviewImageAsync(
+        m_componentId,
+        url,
+        index,
+        &m_isAborted,
+        [this, index, cache](const QByteArray& imageData, const ComponentExportStatus::NetworkDiagnostics& diag) {
+            if (m_isAborted.loadRelaxed()) {
+                m_pendingOperations--;
+                if (m_pendingOperations <= 0) {
+                    finishAllDownloads();
+                }
+                return;
+            }
+
+            if (!imageData.isEmpty()) {
+                m_previewImageDataList.append(imageData);
+            }
+            // 创建诊断信息的副本
+            ComponentExportStatus::NetworkDiagnostics diagCopy = diag;
+            diagCopy.latencyMs = diag.latencyMs;
+            m_diagnostics.append(diagCopy);
+
+            m_pendingOperations--;
+            // 继续下一个预览图
+            startPreviewDownload(index + 1, cache);
+        });
+}
+
+void MediaFetchWorker::startDatasheetDownload(ComponentCacheService* cache) {
+    if (m_isAborted.loadAcquire()) {
+        finishAllDownloads();
+        return;
+    }
+
+    if (m_datasheetUrl.isEmpty()) {
+        // URL为空，尝试直接从缓存加载
+        QElapsedTimer timer;
+        timer.start();
+        m_datasheetData = cache->loadDatasheet(m_componentId);
+
+        ComponentExportStatus::NetworkDiagnostics diag;
+        diag.url = QString();
+        diag.latencyMs = timer.elapsed();
+        if (!m_datasheetData.isEmpty()) {
+            diag.statusCode = 200;
+            diag.errorString = "";
+            diag.wasRateLimited = false;
+        } else {
+            diag.statusCode = 0;
+            diag.errorString = "Not found in cache";
+            diag.wasRateLimited = false;
+        }
+        diag.retryCount = 0;
+        m_diagnostics.append(diag);
+
+        finishAllDownloads();
+        return;
+    }
+
+    // 使用异步下载
+    m_pendingOperations++;
+    cache->downloadDatasheetAsync(
+        m_componentId,
+        m_datasheetUrl,
+        &m_isAborted,
+        [this](const QByteArray& data, const ComponentExportStatus::NetworkDiagnostics& diag) {
+            if (m_isAborted.loadRelaxed()) {
+                m_pendingOperations--;
+                if (m_pendingOperations <= 0) {
+                    finishAllDownloads();
+                }
+                return;
+            }
+
+            m_datasheetData = data;
+            ComponentExportStatus::NetworkDiagnostics diagCopy = diag;
+            diagCopy.latencyMs = diag.latencyMs;
+            m_diagnostics.append(diagCopy);
+
+            m_pendingOperations--;
+            finishAllDownloads();
+        });
+}
+
+void MediaFetchWorker::finishAllDownloads() {
+    // 检查是否所有操作都已完成
+    if (m_pendingOperations > 0) {
+        return;
     }
 
     // 发送完成信号（包含诊断信息）
-    emit fetchCompleted(m_componentId, previewImageDataList, datasheetData, m_diagnostics);
+    emit fetchCompleted(m_componentId, m_previewImageDataList, m_datasheetData, m_diagnostics);
 }
 
 void MediaFetchWorker::abort() {
-    m_isAborted = true;
-    // 注意：ComponentCacheService 的下载方法是同步的，
-    // abort 标志会在下次 run() 开始时检查
+    // 使用原子操作确保线程安全
+    m_isAborted.storeRelease(1);
 }
 
 }  // namespace EasyKiConverter

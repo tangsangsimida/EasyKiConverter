@@ -7,7 +7,7 @@
 
 #include "ExportSettingsViewModel.h"
 
-#include "services/ExportService_Pipeline.h"
+#include "services/export/ParallelExportService.h"
 #include "utils/FileUtils.h"
 
 #include <QCoreApplication>
@@ -17,7 +17,7 @@
 
 namespace EasyKiConverter {
 
-ExportSettingsViewModel::ExportSettingsViewModel(ExportService* exportService, QObject* parent)
+ExportSettingsViewModel::ExportSettingsViewModel(ParallelExportService* exportService, QObject* parent)
     : QObject(parent)
     , m_exportService(exportService)
     , m_configService(ConfigService::instance())
@@ -29,21 +29,33 @@ ExportSettingsViewModel::ExportSettingsViewModel(ExportService* exportService, Q
     , m_exportPreviewImages(false)
     , m_exportDatasheet(false)
     , m_overwriteExistingFiles(false)
-    , m_exportMode(0)  // 默认为追加模式
-    , m_debugMode(false) {
+    , m_exportMode(0)
+    , m_debugMode(false)
+    , m_isExporting(false)
+    , m_status("Ready") {
     loadFromConfig();
 
-    // 连接 ExportService 信号
     if (m_exportService) {
-        connect(m_exportService, &ExportService::exportProgress, this, &ExportSettingsViewModel::handleExportProgress);
         connect(m_exportService,
-                &ExportService::componentExported,
+                &ParallelExportService::preloadProgressChanged,
                 this,
-                &ExportSettingsViewModel::handleComponentExported);
-        connect(
-            m_exportService, &ExportService::exportCompleted, this, &ExportSettingsViewModel::handleExportCompleted);
-        connect(m_exportService, &ExportService::exportFailed, this, &ExportSettingsViewModel::handleExportFailed);
-        qDebug() << "ExportSettingsViewModel: Connected to ExportService signals";
+                &ExportSettingsViewModel::handlePreloadProgressChanged);
+        connect(m_exportService,
+                &ParallelExportService::preloadCompleted,
+                this,
+                &ExportSettingsViewModel::handlePreloadCompleted);
+        connect(m_exportService,
+                &ParallelExportService::progressChanged,
+                this,
+                &ExportSettingsViewModel::handleProgressChanged);
+        connect(m_exportService,
+                &ParallelExportService::typeCompleted,
+                this,
+                &ExportSettingsViewModel::handleTypeCompleted);
+        connect(m_exportService, &ParallelExportService::completed, this, &ExportSettingsViewModel::handleCompleted);
+        connect(m_exportService, &ParallelExportService::cancelled, this, &ExportSettingsViewModel::handleCancelled);
+        connect(m_exportService, &ParallelExportService::failed, this, &ExportSettingsViewModel::handleFailed);
+        qDebug() << "ExportSettingsViewModel: Connected to ParallelExportService signals";
     }
 }
 
@@ -118,27 +130,13 @@ void ExportSettingsViewModel::setExportMode(int mode) {
         m_exportMode = mode;
         emit exportModeChanged();
         qDebug() << "Export mode changed to:" << mode << "(0=append, 1=update)";
-
-        // 同步更新 overwriteExistingFiles
-        // 0 = 追加模式（保留已存在的元器件，跳过重复的）-> overwriteExistingFiles = false
-        // 1 = 更新模式（替换相同的元器件，保留不同的元器件，添加新的元器件）-> overwriteExistingFiles = false
-        // 注意：更新模式不删除整个文件，而是智能合并
-        bool newOverwrite = false;  // 两种模式都不删除整个文件
-        if (m_overwriteExistingFiles != newOverwrite) {
-            m_overwriteExistingFiles = newOverwrite;
-            m_configService->setOverwriteExistingFiles(newOverwrite);
-            emit overwriteExistingFilesChanged();
-            qDebug() << "overwriteExistingFiles changed to:" << newOverwrite;
-        }
     }
 }
 
 void ExportSettingsViewModel::setDebugMode(bool enabled) {
-    // 检查是否通过环境变量设置
     bool envDebugMode = qEnvironmentVariableIsSet("EASYKICONVERTER_DEBUG_MODE");
 
     if (envDebugMode) {
-        // 如果设置了环境变量，禁用手动设置
         qDebug()
             << "Debug mode is controlled by environment variable EASYKICONVERTER_DEBUG_MODE, ignoring manual setting";
         return;
@@ -147,9 +145,6 @@ void ExportSettingsViewModel::setDebugMode(bool enabled) {
     if (m_debugMode != enabled) {
         m_debugMode = enabled;
         emit debugModeChanged();
-        qDebug() << "Debug mode changed to:" << enabled;
-
-        // 同步更新配置服务
         m_configService->setDebugMode(enabled);
     }
 }
@@ -163,7 +158,7 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
     }
 
     if (!m_exportService) {
-        qWarning() << "ExportService is not available";
+        qWarning() << "ParallelExportService is not available";
         setStatus("Export service not available");
         return;
     }
@@ -174,56 +169,49 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
         return;
     }
 
-    // 设置导出选项
+    // Save component IDs for after preload
+    m_pendingComponentIds = componentIds;
+
+    // Build and set export options
+    buildExportOptions();
+
+    setIsExporting(true);
+    setStatus("Preloading component data...");
+
+    // Start preload first
+    m_exportService->startPreload(componentIds);
+}
+
+void ExportSettingsViewModel::buildExportOptions() {
     ExportOptions options;
 
-    // 调试：打印原始输入值
-    qDebug() << "Original input values - outputPath:" << m_outputPath << "libName:" << m_libName;
-
-    // 处理输出路径
+    // Handle output path
     QString absoluteOutputPath = m_outputPath;
     if (absoluteOutputPath.isEmpty()) {
-        // 如果导出路径为空，使用默认路径：~/Documents/EasyKiConverter/库名称
         QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
         QDir exportDir(documentsPath);
 
-        // 创建 EasyKiConverter 目录
         if (!exportDir.exists("EasyKiConverter")) {
             exportDir.mkdir("EasyKiConverter");
         }
         exportDir.cd("EasyKiConverter");
-
-        // 使用库名称作为导出路径
         absoluteOutputPath = exportDir.absoluteFilePath(m_libName);
-        qDebug() << "Using default export path (empty input):" << absoluteOutputPath;
     } else {
         QDir dir(absoluteOutputPath);
-
         if (dir.isAbsolute()) {
-            // 如果是绝对路径，规范化路径（处理 .. 和 . 等）
             absoluteOutputPath = dir.cleanPath(absoluteOutputPath);
-            qDebug() << "Normalized absolute path:" << m_outputPath << "->" << absoluteOutputPath;
         } else {
-            // 如果是相对路径，相对于 ~/Documents/EasyKiConverter/ 转换为绝对路径
             QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
             QDir exportDir(documentsPath);
-
-            // 创建 EasyKiConverter 目录
             if (!exportDir.exists("EasyKiConverter")) {
                 exportDir.mkdir("EasyKiConverter");
             }
             exportDir.cd("EasyKiConverter");
-
-            // 直接拼接相对路径，不添加库名称
             absoluteOutputPath = exportDir.absoluteFilePath(absoluteOutputPath);
-            qDebug() << "Converted relative path to absolute path (Documents/EasyKiConverter/userPath):" << m_outputPath
-                     << "->" << absoluteOutputPath;
         }
     }
 
-    // 最终验证路径
     if (absoluteOutputPath.isEmpty()) {
-        qWarning() << "Final output path is still empty! Using fallback to Desktop.";
         absoluteOutputPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
         absoluteOutputPath = QDir(absoluteOutputPath).absoluteFilePath(m_libName);
     }
@@ -236,7 +224,7 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
     options.exportPreviewImages = m_exportPreviewImages;
     options.exportDatasheet = m_exportDatasheet;
     options.overwriteExistingFiles = m_overwriteExistingFiles;
-    options.updateMode = (m_exportMode == 1);  // 1 = 更新模式
+    options.updateMode = (m_exportMode == 1);
     options.debugMode = m_debugMode;
 
     qDebug() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
@@ -245,77 +233,94 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
              << "Datasheet:" << options.exportDatasheet << "Update Mode:" << options.updateMode
              << "Debug Mode:" << options.debugMode;
 
-    // 设置导出状态
-    setIsExporting(true);
-    setStatus("Export started");
-    setProgress(0);
-
-    // 调用 ExportService 执行导出
-    m_exportService->executeExportPipeline(componentIds, options);
+    m_exportService->setOptions(options);
+    m_exportService->setOutputPath(absoluteOutputPath);
 }
 
 void ExportSettingsViewModel::cancelExport() {
-    qDebug() << "Canceling export";
+    qDebug() << "Cancelling export";
 
     if (!m_exportService) {
-        qWarning() << "ExportService is not available";
         return;
     }
 
-    // 调用 ExportService 取消导出
     m_exportService->cancelExport();
-
     setIsExporting(false);
     setStatus("Export cancelled");
 }
 
 bool ExportSettingsViewModel::openOutputFolder() {
-    qDebug() << "openOutputFolder called (ExportSettingsViewModel - deprecated, use ExportProgressViewModel instead)";
+    if (m_outputPath.isEmpty()) {
+        return false;
+    }
 
-    // 此方法已弃用，现在使用 ExportProgressViewModel::openLastExportedFolder()
-    // 为了向后兼容，保留此方法但不执行任何操作
-    qWarning() << "ExportSettingsViewModel::openOutputFolder() is deprecated. Use "
-                  "ExportProgressViewModel::openLastExportedFolder() instead.";
-    return false;
+    QString pathToOpen = m_outputPath;
+    if (!QDir(pathToOpen).exists()) {
+        QDir().mkpath(pathToOpen);
+    }
+
+    FileUtils utils;
+    return utils.openFolder(pathToOpen);
 }
 
-void ExportSettingsViewModel::handleExportProgress(int current, int total) {
-    int newProgress = total > 0 ? (current * 100 / total) : 0;
-    if (m_progress != newProgress) {
-        m_progress = newProgress;
-        emit progressChanged();
+void ExportSettingsViewModel::handlePreloadProgressChanged(const PreloadProgress& progress) {
+    Q_UNUSED(progress);
+    setStatus(QString("Preloading... %1/%2").arg(progress.completedCount).arg(progress.totalCount));
+}
+
+void ExportSettingsViewModel::handlePreloadCompleted(int successCount, int failedCount) {
+    qDebug() << "Preload completed: success=" << successCount << "failed=" << failedCount;
+
+    if (failedCount > 0) {
+        setStatus(QString("Preload completed with errors: %1 failed").arg(failedCount));
+    }
+
+    // Now start the actual export
+    setStatus("Starting export...");
+    emit exportStarted();
+    m_exportService->startExport();
+}
+
+void ExportSettingsViewModel::handleProgressChanged(const ExportOverallProgress& progress) {
+    Q_UNUSED(progress);
+    setStatus("Exporting...");
+}
+
+void ExportSettingsViewModel::handleTypeCompleted(const QString& typeName,
+                                                  int successCount,
+                                                  int failedCount,
+                                                  int skippedCount) {
+    Q_UNUSED(skippedCount);
+    qDebug() << "Type completed:" << typeName << "success=" << successCount << "failed=" << failedCount;
+}
+
+void ExportSettingsViewModel::handleCompleted(int successCount, int failedCount) {
+    qDebug() << "Export completed: success=" << successCount << "failed=" << failedCount;
+    setIsExporting(false);
+
+    if (failedCount > 0) {
+        setStatus(QString("Export completed with errors: %1 failed").arg(failedCount));
+    } else {
+        setStatus("Export completed successfully");
     }
 }
 
-void ExportSettingsViewModel::handleComponentExported(const QString& componentId,
-                                                      bool success,
-                                                      const QString& message) {
-    Q_UNUSED(message);
-    Q_UNUSED(componentId);
-    Q_UNUSED(success);
-    // 注意：单个组件导出的通知功能已由 ExportProgressViewModel 完整实现
-    // ExportSettingsViewModel 职责仅限于导出设置管理，不需要重复处理组件导出事件
+void ExportSettingsViewModel::handleCancelled() {
+    qDebug() << "Export cancelled";
+    setIsExporting(false);
+    setStatus("Export cancelled");
 }
 
-void ExportSettingsViewModel::handleExportCompleted(bool success) {
-    qDebug() << "Export completed:" << success;
-
+void ExportSettingsViewModel::handleFailed(const QString& error) {
+    qWarning() << "Export failed:" << error;
     setIsExporting(false);
-    setProgress(100);
-    setStatus(success ? "Export completed successfully" : "Export completed with errors");
+    setStatus(QString("Export failed: %1").arg(error));
 }
 
 void ExportSettingsViewModel::setIsExporting(bool exporting) {
     if (m_isExporting != exporting) {
         m_isExporting = exporting;
         emit isExportingChanged();
-    }
-}
-
-void ExportSettingsViewModel::setProgress(int progress) {
-    if (m_progress != progress) {
-        m_progress = progress;
-        emit progressChanged();
     }
 }
 
@@ -326,15 +331,7 @@ void ExportSettingsViewModel::setStatus(const QString& status) {
     }
 }
 
-void ExportSettingsViewModel::handleExportFailed(const QString& error) {
-    qWarning() << "Export failed:" << error;
-
-    setIsExporting(false);
-    setStatus("Export failed: " + error);
-}
-
 void ExportSettingsViewModel::loadFromConfig() {
-    // 从配置服务加载设置
     m_outputPath = m_configService->getOutputPath();
     m_libName = m_configService->getLibName();
     m_exportSymbol = m_configService->getExportSymbol();
@@ -344,17 +341,14 @@ void ExportSettingsViewModel::loadFromConfig() {
     m_exportDatasheet = m_configService->getExportDatasheet();
     m_overwriteExistingFiles = m_configService->getOverwriteExistingFiles();
 
-    // 从环境变量读取调试模式（优先级高于配置文件）
     bool envDebugMode = qEnvironmentVariableIsSet("EASYKICONVERTER_DEBUG_MODE");
     if (envDebugMode) {
         QString debugValue = qEnvironmentVariable("EASYKICONVERTER_DEBUG_MODE", "false").toLower();
         m_debugMode = (debugValue == "true" || debugValue == "1" || debugValue == "yes");
-        qDebug() << "Debug mode enabled via environment variable EASYKICONVERTER_DEBUG_MODE:" << m_debugMode;
     } else {
         m_debugMode = m_configService->getDebugMode();
     }
 
-    // 发送变更信号以更新 UI
     emit outputPathChanged();
     emit libNameChanged();
     emit exportSymbolChanged();
@@ -364,33 +358,31 @@ void ExportSettingsViewModel::loadFromConfig() {
     emit exportDatasheetChanged();
     emit overwriteExistingFilesChanged();
     emit debugModeChanged();
-
-    qDebug() << "Loading configuration from ConfigService";
 }
 
 void ExportSettingsViewModel::saveConfig() {
-    // 保存配置到配置服务
     m_configService->saveConfig();
-    qDebug() << "Saving configuration to ConfigService";
 }
 
 void ExportSettingsViewModel::resetConfig() {
-    // 重置为默认值
     m_outputPath = "";
     m_libName = "MyLibrary";
     m_exportSymbol = true;
     m_exportFootprint = true;
     m_exportModel3D = true;
+    m_exportPreviewImages = false;
+    m_exportDatasheet = false;
     m_overwriteExistingFiles = false;
-    m_exportMode = 0;  // 重置为追加模式
+    m_exportMode = 0;
     m_debugMode = false;
 
-    // 同步到 ConfigService
     m_configService->setOutputPath(m_outputPath);
     m_configService->setLibName(m_libName);
     m_configService->setExportSymbol(m_exportSymbol);
     m_configService->setExportFootprint(m_exportFootprint);
     m_configService->setExportModel3D(m_exportModel3D);
+    m_configService->setExportPreviewImages(m_exportPreviewImages);
+    m_configService->setExportDatasheet(m_exportDatasheet);
     m_configService->setOverwriteExistingFiles(m_overwriteExistingFiles);
     m_configService->setDebugMode(m_debugMode);
 
@@ -399,11 +391,11 @@ void ExportSettingsViewModel::resetConfig() {
     emit exportSymbolChanged();
     emit exportFootprintChanged();
     emit exportModel3DChanged();
+    emit exportPreviewImagesChanged();
+    emit exportDatasheetChanged();
     emit overwriteExistingFilesChanged();
     emit exportModeChanged();
     emit debugModeChanged();
-
-    qDebug() << "Configuration reset to defaults";
 }
 
 }  // namespace EasyKiConverter

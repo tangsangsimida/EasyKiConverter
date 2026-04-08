@@ -135,9 +135,8 @@ void LanguageManager::installTranslator(const QString& languageCode) {
 
     // Qt 资源系统中的翻译文件路径
     // 由 qt_add_translations 自动生成并注册到资源系统
-    QString resourcePath =
-        QString(":/qt/qml/EasyKiconverter_Cpp_Version/resources/translations/translations_easykiconverter_%1.qm")
-            .arg(languageCode);
+    // qt_add_translations 默认使用 /i18n 前缀
+    QString resourcePath = QString(":/i18n/translations_easykiconverter_%1.qm").arg(languageCode);
 
     m_translator = new QTranslator(this);
 

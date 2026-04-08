@@ -1,0 +1,125 @@
+#include "PreviewImagesExportWorker.h"
+
+#include "../../models/ComponentData.h"
+
+#include <QDebug>
+#include <QDir>
+#include <QImage>
+#include <QSaveFile>
+
+namespace EasyKiConverter {
+
+PreviewImagesExportWorker::PreviewImagesExportWorker() : QObject(nullptr) {}
+
+void PreviewImagesExportWorker::setData(const QString& componentId,
+                                        const QSharedPointer<ComponentData>& data,
+                                        const struct ExportOptions& options) {
+    m_componentId = componentId;
+    m_data = data;
+    m_options = options;
+}
+
+void PreviewImagesExportWorker::setOptions(const struct ExportOptions& options) {
+    m_options = options;
+}
+
+void PreviewImagesExportWorker::run() {
+    if (m_cancelled.load()) {
+        emit completed(m_componentId, false, QStringLiteral("Cancelled"));
+        return;
+    }
+
+    if (!m_data) {
+        emit completed(m_componentId, false, QStringLiteral("No data available"));
+        return;
+    }
+
+    qDebug() << "PreviewImagesExportWorker: Exporting" << m_componentId;
+
+    // 检查预览图数据是否可用
+    if (m_data->previewImageData().isEmpty()) {
+        emit completed(m_componentId, false, QStringLiteral("Preview image data not available"));
+        return;
+    }
+
+    // 构建输出路径
+    QString outputDir = m_options.outputPath;
+    if (outputDir.isEmpty()) {
+        outputDir = QDir::currentPath() + QStringLiteral("/export/previews");
+    }
+
+    QDir dir;
+    if (!dir.mkpath(outputDir)) {
+        emit completed(m_componentId, false, QStringLiteral("Failed to create output directory"));
+        return;
+    }
+
+    // 遍历导出所有预览图
+    int successCount = 0;
+    QList<QByteArray> previewDataList = m_data->previewImageData();
+    int totalCount = previewDataList.size();
+
+    for (int i = 0; i < totalCount; ++i) {
+        if (m_cancelled.load()) {
+            emit completed(m_componentId, false, QStringLiteral("Cancelled"));
+            return;
+        }
+
+        const auto& previewData = previewDataList[i];
+        QString fileName = QStringLiteral("%1_preview_%2.png").arg(m_componentId).arg(i + 1);
+        QString filePath = outputDir + QStringLiteral("/") + fileName;
+
+        // 检查文件是否已存在
+        if (QFile::exists(filePath) && !m_options.overwriteExistingFiles) {
+            qDebug() << "PreviewImagesExportWorker: File already exists, skipping" << filePath;
+            successCount++;
+            continue;
+        }
+
+        try {
+            // 解码并保存预览图
+            QImage image = QImage::fromData(previewData);
+            if (image.isNull()) {
+                qWarning() << "PreviewImagesExportWorker: Failed to decode preview image" << i;
+                continue;
+            }
+
+            QSaveFile file(filePath);
+            if (!file.open(QIODevice::WriteOnly)) {
+                qWarning() << "PreviewImagesExportWorker: Failed to open file" << filePath;
+                continue;
+            }
+
+            if (!image.save(&file, "PNG")) {
+                qWarning() << "PreviewImagesExportWorker: Failed to save image" << filePath;
+                continue;
+            }
+
+            if (!file.commit()) {
+                qWarning() << "PreviewImagesExportWorker: Failed to commit file" << filePath;
+                continue;
+            }
+
+            successCount++;
+
+        } catch (const std::exception& e) {
+            qWarning() << "PreviewImagesExportWorker: Exception during export:" << e.what();
+        }
+    }
+
+    if (successCount == totalCount) {
+        qDebug() << "PreviewImagesExportWorker: Successfully exported all previews for" << m_componentId;
+        emit completed(m_componentId, true, QString());
+    } else if (successCount > 0) {
+        qWarning() << "PreviewImagesExportWorker: Partially exported" << successCount << "/" << totalCount;
+        emit completed(m_componentId, true, QString());
+    } else {
+        emit completed(m_componentId, false, QStringLiteral("Failed to export any preview images"));
+    }
+}
+
+void PreviewImagesExportWorker::cancel() {
+    m_cancelled.store(true);
+}
+
+}  // namespace EasyKiConverter

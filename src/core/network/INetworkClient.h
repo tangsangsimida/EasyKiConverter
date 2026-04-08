@@ -29,6 +29,7 @@ struct NetworkResult {
     int retryCount = 0;
     qint64 elapsedMs = 0;
     bool success = false;
+    bool wasCancelled = false;  // true if request was cancelled via abort()
 };
 
 /**

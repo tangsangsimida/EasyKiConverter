@@ -9,6 +9,8 @@
 #include <QNetworkRequest>
 #include <QThread>
 
+#include <memory>
+
 namespace EasyKiConverter {
 
 NetworkClient::NetworkClient() : m_networkManager(new QNetworkAccessManager(this)) {}
@@ -36,6 +38,43 @@ NetworkResult NetworkClient::get(const QUrl& url, const RetryPolicy& policy) {
 
 NetworkResult NetworkClient::post(const QUrl& url, const QByteArray& body, const RetryPolicy& policy) {
     return executeRequest(url, body, policy);
+}
+
+AsyncNetworkRequest* NetworkClient::getAsync(const QUrl& url, const RetryPolicy& policy) {
+    // Use thread-local QNetworkAccessManager to avoid cross-thread issues
+    // This approach is the same as FetchWorker - each thread has its own QNAM
+    static thread_local std::unique_ptr<QNetworkAccessManager> threadQNAM = nullptr;
+    if (!threadQNAM) {
+        threadQNAM = std::make_unique<QNetworkAccessManager>();
+    }
+
+    // Create request with thread-local QNAM - no parent, caller manages lifetime
+    auto* request = new AsyncNetworkRequest(url, threadQNAM.get(), policy, nullptr);
+
+    // Start request synchronously in current thread (same thread as threadQNAM)
+    // This avoids the crash issues with moveToThread
+    request->start();
+
+    return request;
+}
+
+AsyncNetworkRequest* NetworkClient::postAsync(const QUrl& url, const QByteArray& body, const RetryPolicy& policy) {
+    // Note: For POST, we'd need to extend AsyncNetworkRequest to support body
+    // For now, fall back to sync implementation
+    Q_UNUSED(body);
+
+    // Use thread-local QNetworkAccessManager (same approach as getAsync)
+    static thread_local std::unique_ptr<QNetworkAccessManager> threadQNAM = nullptr;
+    if (!threadQNAM) {
+        threadQNAM = std::make_unique<QNetworkAccessManager>();
+    }
+
+    auto* request = new AsyncNetworkRequest(url, threadQNAM.get(), policy, nullptr);
+
+    // Start request synchronously in current thread
+    request->start();
+
+    return request;
 }
 
 NetworkResult NetworkClient::executeRequest(const QUrl& url, const QByteArray& body, const RetryPolicy& policy) {

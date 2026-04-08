@@ -1,6 +1,7 @@
 # Network module
 
 add_library(EasyKiConverterNetwork STATIC
+    AsyncNetworkRequest.cpp
     NetworkClient.cpp
 )
 

@@ -1,7 +1,7 @@
 #ifndef PIPELINECOMPLETIONHANDLER_H
 #define PIPELINECOMPLETIONHANDLER_H
 
-#include "ExportService.h"
+#include "export/ExportProgress.h"
 
 #include <QObject>
 #include <QRegularExpression>

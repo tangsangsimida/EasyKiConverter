@@ -1,7 +1,7 @@
 #ifndef DATASHEETEXPORTER_H
 #define DATASHEETEXPORTER_H
 
-#include "ExportService.h"
+#include "export/ExportProgress.h"
 
 #include <QDir>
 #include <QObject>
