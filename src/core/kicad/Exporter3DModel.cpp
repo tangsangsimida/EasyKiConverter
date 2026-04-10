@@ -14,8 +14,7 @@ namespace EasyKiConverter {
 static const QString ENDPOINT_3D_MODEL = "https://modules.easyeda.com/3dmodel/%1";
 static const QString ENDPOINT_3D_MODEL_STEP = "https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1";
 
-Exporter3DModel::Exporter3DModel(QObject* parent) : QObject(parent) {
-}
+Exporter3DModel::Exporter3DModel(QObject* parent) : QObject(parent) {}
 
 Exporter3DModel::~Exporter3DModel() {
     cancel();

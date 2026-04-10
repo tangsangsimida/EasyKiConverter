@@ -5,8 +5,8 @@
 
 #include <QDebug>
 #include <QDir>
-#include <QFile>
 #include <QEventLoop>
+#include <QFile>
 
 namespace EasyKiConverter {
 
@@ -62,11 +62,14 @@ void Model3DExportWorker::run() {
     }
 
     QString fileName = m_componentId + QStringLiteral(".wrl");
-    QString filePath = outputDir + QStringLiteral("/") + fileName;
+    QString finalPath = outputDir + QStringLiteral("/") + fileName;
 
-    // 检查文件是否已存在
-    if (QFile::exists(filePath) && !m_options.overwriteExistingFiles) {
-        qDebug() << "Model3DExportWorker: File already exists, skipping" << filePath;
+    // 使用tempPath if available, otherwise use finalPath
+    QString writePath = m_tempPath.isEmpty() ? finalPath : m_tempPath;
+
+    // 检查文件是否已存在（仅对最终路径检查）
+    if (QFile::exists(finalPath) && !m_options.overwriteExistingFiles && m_tempPath.isEmpty()) {
+        qDebug() << "Model3DExportWorker: File already exists, skipping" << finalPath;
         emit completed(m_componentId, true, QString());
         return;
     }
@@ -105,8 +108,8 @@ void Model3DExportWorker::run() {
         },
         Qt::SingleShotConnection);
 
-    // 启动下载
-    m_exporter->downloadObjModel(uuid, filePath);
+    // 启动下载到临时路径
+    m_exporter->downloadObjModel(uuid, writePath);
 
     // 等待下载完成或取消
     loop.exec();

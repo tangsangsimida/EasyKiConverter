@@ -17,7 +17,7 @@ ExportTypeStage::ExportTypeStage(const QString& typeName, int maxConcurrent, QOb
 ExportTypeStage::~ExportTypeStage() {
     // Don't call cancel() or waitForDone() in destructor
     // as it can cause crashes during application shutdown
-    
+
     // Clear the active workers list to prevent accessing deleted objects
     {
         QMutexLocker locker(&m_workerMutex);
@@ -49,28 +49,69 @@ void ExportTypeStage::start(const QStringList& componentIds,
         m_progress.inProgressCount = 0;
     }
 
-    qDebug() << "ExportTypeStage:" << m_typeName << "starting for" << componentIds.size() << "components";
-
-    for (const QString& componentId : componentIds) {
-        if (m_cancelled.load()) {
-            qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
-            break;
-        }
-
-        initItemProgress(componentId);
-
-        QSharedPointer<ComponentData> data = m_cachedData.value(componentId);
-
-        QObject* worker = createWorker();
-        {
-            QMutexLocker locker(&m_workerMutex);
-            m_activeWorkers.append(worker);
-        }
-
-        startWorker(worker, componentId, data);
+    // 清空待处理队列和追踪集合
+    {
+        QMutexLocker locker(&m_workerMutex);
+        m_pendingComponents.clear();
+        m_activeWorkers.clear();
     }
 
-    qDebug() << "ExportTypeStage:" << m_typeName << "all workers started";
+    qDebug() << "ExportTypeStage:" << m_typeName << "starting for" << componentIds.size() << "components";
+
+    // 如果没有组件需要处理，立即发送完成信号
+    if (componentIds.isEmpty()) {
+        qDebug() << "ExportTypeStage:" << m_typeName << "no components to process, completing immediately";
+        m_isRunning.store(false);
+        emit completed(0, 0, 0);
+        return;
+    }
+
+    // 将所有组件加入待处理队列
+    for (const QString& componentId : componentIds) {
+        initItemProgress(componentId);
+        m_pendingComponents.enqueue(componentId);
+    }
+
+    // 启动初始批次：不超过 maxConcurrent 个 worker
+    int initialBatch = qMin(componentIds.size(), static_cast<int>(m_threadPool.maxThreadCount()));
+    for (int i = 0; i < initialBatch; ++i) {
+        if (m_cancelled.load()) {
+            break;
+        }
+        startNextWorker();
+    }
+
+    qDebug() << "ExportTypeStage:" << m_typeName << "initial batch started, pending:" << m_pendingComponents.size();
+}
+
+void ExportTypeStage::startNextWorker() {
+    if (m_cancelled.load()) {
+        return;
+    }
+
+    QString componentId;
+    {
+        QMutexLocker locker(&m_workerMutex);
+        if (m_pendingComponents.isEmpty()) {
+            return;
+        }
+        componentId = m_pendingComponents.dequeue();
+    }
+
+    QSharedPointer<ComponentData> data = m_cachedData.value(componentId);
+    QObject* worker = createWorker();
+
+    {
+        QMutexLocker locker(&m_workerMutex);
+        m_activeWorkers.insert(worker);  // 使用 QSet 而非 QList，O(1) 插入和删除
+    }
+
+    {
+        QMutexLocker locker(&m_progressMutex);
+        m_progress.inProgressCount++;
+    }
+
+    startWorker(worker, componentId, data);
 }
 
 void ExportTypeStage::cancel() {
@@ -81,17 +122,23 @@ void ExportTypeStage::cancel() {
     qDebug() << "ExportTypeStage:" << m_typeName << "cancelling...";
     m_cancelled.store(true);
 
-    QMutexLocker locker(&m_workerMutex);
-    for (QObject* worker : m_activeWorkers) {
-        if (auto* exportWorker = dynamic_cast<IExportWorker*>(worker)) {
-            exportWorker->cancel();
+    // 取消所有活跃worker（在锁内完成以避免与 completeItemProgress 竞争）
+    {
+        QMutexLocker locker(&m_workerMutex);
+        for (QObject* worker : m_activeWorkers) {
+            if (auto* exportWorker = dynamic_cast<IExportWorker*>(worker)) {
+                exportWorker->cancel();
+            }
         }
-    }
-    locker.unlock();
+        // 清空待处理队列
+        m_pendingComponents.clear();
 
-    // 移除waitForDone()调用，避免阻塞导致的段错误
-    // Worker现在使用QEventLoop来等待完成，会自己处理取消逻辑
-    m_isRunning.store(false);
+        // 在锁内设置 m_isRunning = false，避免与 completeItemProgress 竞争
+        // 注意：completeItemProgress 也可能在所有 worker 被取消后到达 completedCount >= totalCount
+        // 的状态并设置 m_isRunning = false，这是安全的（原子变量的重复写入是无害的）
+        m_isRunning.store(false);
+    }
+
     qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
 }
 
@@ -111,39 +158,62 @@ void ExportTypeStage::initItemProgress(const QString& componentId) {
     m_progress.itemStatus[componentId] = status;
 }
 
-void ExportTypeStage::completeItemProgress(const QString& componentId, bool success, const QString& error) {
-    QMutexLocker locker(&m_progressMutex);
-
-    auto it = m_progress.itemStatus.find(componentId);
-    if (it == m_progress.itemStatus.end()) {
-        return;
+void ExportTypeStage::completeItemProgress(QObject* worker,
+                                           const QString& componentId,
+                                           bool success,
+                                           const QString& error) {
+    // 1. 从活跃worker集合移除
+    bool shouldStartNext = false;
+    {
+        QMutexLocker workerLocker(&m_workerMutex);
+        if (worker) {
+            m_activeWorkers.remove(worker);
+        }
+        // 检查是否还有待处理的worker
+        shouldStartNext = !m_pendingComponents.isEmpty();
     }
 
-    ExportItemStatus& status = it.value();
-    status.status = success ? ExportItemStatus::Status::Success : ExportItemStatus::Status::Failed;
-    status.endTime = QDateTime::currentDateTime();
-    if (!success) {
-        status.errorMessage = error;
+    // 2. 更新进度
+    {
+        QMutexLocker locker(&m_progressMutex);
+
+        auto it = m_progress.itemStatus.find(componentId);
+        if (it == m_progress.itemStatus.end()) {
+            return;
+        }
+
+        ExportItemStatus& status = it.value();
+        status.status = success ? ExportItemStatus::Status::Success : ExportItemStatus::Status::Failed;
+        status.endTime = QDateTime::currentDateTime();
+        if (!success) {
+            status.errorMessage = error;
+        }
+
+        m_progress.completedCount++;
+        if (success) {
+            m_progress.successCount++;
+        } else {
+            m_progress.failedCount++;
+        }
+        m_progress.inProgressCount--;
+
+        if (m_progress.completedCount >= m_progress.totalCount) {
+            locker.unlock();
+            qDebug() << "ExportTypeStage:" << m_typeName << "completed. Success:" << m_progress.successCount
+                     << "Failed:" << m_progress.failedCount << "Skipped:" << m_progress.skippedCount;
+            emit completed(m_progress.successCount, m_progress.failedCount, m_progress.skippedCount);
+            m_isRunning.store(false);
+            return;
+        } else {
+            locker.unlock();
+            emit itemStatusChanged(componentId, status);
+            emit progressChanged(m_progress);
+        }
     }
 
-    m_progress.completedCount++;
-    if (success) {
-        m_progress.successCount++;
-    } else {
-        m_progress.failedCount++;
-    }
-    m_progress.inProgressCount--;
-
-    if (m_progress.completedCount >= m_progress.totalCount) {
-        locker.unlock();
-        qDebug() << "ExportTypeStage:" << m_typeName << "completed. Success:" << m_progress.successCount
-                 << "Failed:" << m_progress.failedCount << "Skipped:" << m_progress.skippedCount;
-        emit completed(m_progress.successCount, m_progress.failedCount, m_progress.skippedCount);
-        m_isRunning.store(false);
-    } else {
-        locker.unlock();
-        emit itemStatusChanged(componentId, status);
-        emit progressChanged(m_progress);
+    // 3. 启动下一个待处理的worker（按需创建）
+    if (shouldStartNext && !m_cancelled.load()) {
+        startNextWorker();
     }
 }
 

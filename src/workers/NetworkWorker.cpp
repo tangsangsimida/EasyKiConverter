@@ -56,8 +56,6 @@ void NetworkWorker::run() {
 }
 
 bool NetworkWorker::fetchComponentInfo() {
-    QNetworkAccessManager manager;
-
     QString url = QString("https://easyeda.com/api/components/%1").arg(m_componentId);
     QNetworkRequest request{QUrl(url)};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -66,7 +64,7 @@ bool NetworkWorker::fetchComponentInfo() {
     QByteArray responseData;
     QString errorMsg;
 
-    if (!executeRequest(manager, request, DEFAULT_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
+    if (!executeRequest(request, DEFAULT_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
         emit fetchError(m_componentId, errorMsg);
         return false;
     }
@@ -88,8 +86,6 @@ bool NetworkWorker::fetchComponentInfo() {
 }
 
 bool NetworkWorker::fetchCadData() {
-    QNetworkAccessManager manager;
-
     QString url = QString("https://easyeda.com/api/components/%1/cad").arg(m_componentId);
     QNetworkRequest request{QUrl(url)};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -98,7 +94,7 @@ bool NetworkWorker::fetchCadData() {
     QByteArray responseData;
     QString errorMsg;
 
-    if (!executeRequest(manager, request, DEFAULT_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
+    if (!executeRequest(request, DEFAULT_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
         emit fetchError(m_componentId, errorMsg);
         return false;
     }
@@ -130,8 +126,6 @@ bool NetworkWorker::fetchCadData() {
 }
 
 bool NetworkWorker::fetch3DModelObj() {
-    QNetworkAccessManager manager;
-
     QString url = QString("https://easyeda.com/api/models/%1/obj").arg(m_uuid);
     QNetworkRequest request{QUrl(url)};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
@@ -140,7 +134,7 @@ bool NetworkWorker::fetch3DModelObj() {
     QByteArray responseData;
     QString errorMsg;
 
-    if (!executeRequest(manager, request, MODEL_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
+    if (!executeRequest(request, MODEL_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
         emit fetchError(m_componentId, errorMsg);
         return false;
     }
@@ -152,8 +146,6 @@ bool NetworkWorker::fetch3DModelObj() {
 }
 
 bool NetworkWorker::fetch3DModelMtl() {
-    QNetworkAccessManager manager;
-
     QString url = QString("https://easyeda.com/api/models/%1/mtl").arg(m_uuid);
     QNetworkRequest request{QUrl(url)};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
@@ -162,7 +154,7 @@ bool NetworkWorker::fetch3DModelMtl() {
     QByteArray responseData;
     QString errorMsg;
 
-    if (!executeRequest(manager, request, MODEL_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
+    if (!executeRequest(request, MODEL_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
         emit fetchError(m_componentId, errorMsg);
         return false;
     }
@@ -173,8 +165,7 @@ bool NetworkWorker::fetch3DModelMtl() {
     return true;
 }
 
-bool NetworkWorker::executeRequest(QNetworkAccessManager& manager,
-                                   const QNetworkRequest& request,
+bool NetworkWorker::executeRequest(const QNetworkRequest& request,
                                    int timeoutMs,
                                    int maxRetries,
                                    QByteArray& outData,
@@ -197,7 +188,7 @@ bool NetworkWorker::executeRequest(QNetworkAccessManager& manager,
         QPointer<QNetworkReply> reply;
         {
             QMutexLocker locker(&m_mutex);
-            m_currentReply = manager.get(request);
+            m_currentReply = m_networkManager.get(request);
             reply = m_currentReply;
         }
 

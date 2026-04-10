@@ -122,8 +122,7 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
     logger->setGlobalLevel(logLevel);
 
     // 控制台输出（彩色）
-    // 根据 --sync-logging 参数决定使用同步还是异步模式
-    // 默认使用异步模式（更好的性能），使用 --sync-logging 参数启用同步模式（确保彩色日志显示）
+    // 默认使用异步模式（更好的性能），--sync-logging 参数可启用同步模式
     auto consoleAppender = QSharedPointer<ConsoleAppender>::create(true, !syncLogging);
 
     consoleAppender->setFormatter(QSharedPointer<PatternFormatter>::create(PatternFormatter::simplePattern()));
@@ -787,14 +786,20 @@ int main(int argc, char* argv[]) {
     // 3. 销毁 ViewModel
     qDebug() << "Destroying ViewModels...";
     delete themeSettingsViewModel;
+    themeSettingsViewModel = nullptr;
     delete exportProgressViewModel;
+    exportProgressViewModel = nullptr;
     delete exportSettingsViewModel;
+    exportSettingsViewModel = nullptr;
     delete componentListViewModel;
+    componentListViewModel = nullptr;
 
     // 4. 销毁服务（析构函数会自动调用 cancelExport 和 cleanup）
     qDebug() << "Destroying services...";
     delete exportService;
+    exportService = nullptr;
     delete componentService;
+    componentService = nullptr;
 
     // 5. 最后清理日志
     qDebug() << "Cleaning up logging...";

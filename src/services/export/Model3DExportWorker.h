@@ -54,6 +54,14 @@ public:
                  const ExportOptions& options) override;
 
     /**
+     * @brief 设置临时文件路径
+     * @param tempPath 临时文件路径（写入位置）
+     */
+    void setTempPath(const QString& tempPath) {
+        m_tempPath = tempPath;
+    }
+
+    /**
      * @brief 执行3D模型导出任务
      *
      * 在线程池中被调用，执行实际的导出逻辑:
@@ -97,6 +105,7 @@ private slots:
 
 private:
     QString m_componentId;  ///< 元器件ID
+    QString m_tempPath;  ///< 临时文件路径
     QSharedPointer<ComponentData> m_data;  ///< 预加载的元器件数据
     ExportOptions m_options;  ///< 导出选项
     std::atomic<bool> m_cancelled{false};  ///< 取消标志

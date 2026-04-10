@@ -3,7 +3,7 @@
 
 #include <QDir>
 #include <QFile>
-#include <QMutex>
+#include <QFileInfo>
 #include <QString>
 
 #include <functional>
@@ -40,8 +40,6 @@ public:
 
 private:
     static QString generateTempPath(const QString& tempDir, const QString& prefix, const QString& suffix);
-
-    static QMutex s_fileWriteMutex;
 };
 
 }  // namespace EasyKiConverter

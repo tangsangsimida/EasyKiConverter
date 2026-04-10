@@ -6,6 +6,7 @@
 
 #include <QAbstractListModel>
 #include <QImage>
+#include <QMutex>
 #include <QPointer>
 #include <QRunnable>
 #include <QSet>
@@ -59,6 +60,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     int componentCount() const {
+        QMutexLocker locker(&m_listMutex);
         return m_componentList.count();
     }
 
@@ -164,6 +166,7 @@ private:
     ComponentService* m_service;
     QList<ComponentListItemData*> m_componentList;
     QHash<QString, int> m_componentIdIndex;
+    mutable QMutex m_listMutex;  // Protects m_componentList and m_componentIdIndex
     QString m_outputPath;
     QString m_bomFilePath;
     QString m_bomResult;
@@ -185,9 +188,11 @@ private:
 
     QTimer* m_previewImageUpdateTimer;
     QList<QPointer<ComponentListItemData>> m_pendingPreviewImageItems;
+    mutable QMutex m_previewImageMutex;  // Protects m_pendingPreviewImageItems
 
     // 缓存预览图批量更新（防抖）
     QMap<QString, QStringList> m_pendingCachePreviewImages;
+    mutable QMutex m_cachePreviewMutex;  // Protects m_pendingCachePreviewImages
     QTimer* m_cachePreviewImageTimer;
 
     QThreadPool* m_encodingThreadPool;

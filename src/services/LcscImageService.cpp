@@ -832,8 +832,10 @@ void LcscImageService::performDatasheetDownload(const QString& componentId,
 
 void LcscImageService::addRandomDelay(std::function<void()> callback) {
     // 随机延迟 0.05-0.15 秒（异步，不阻塞主线程）
+    // 注意：此回调会在 LcscImageService 所在线程执行（通常是主线程）
+    // 确保所有网络操作在正确的线程执行
     int delay = QRandomGenerator::global()->bounded(50, 150);
-    QTimer::singleShot(delay, this, [callback]() {
+    QTimer::singleShot(delay, this, [this, callback]() {
         if (callback) {
             callback();
         }

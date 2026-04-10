@@ -6,6 +6,7 @@ namespace EasyKiConverter {
 
 // 静态成员初始化
 bool ComponentListItemData::s_holdPreviewImageNotifications = false;
+QMutex ComponentListItemData::s_previewImageMutex;
 
 ComponentListItemData::ComponentListItemData(const QString& componentId, QObject* parent)
     : QObject(parent)
@@ -219,7 +220,12 @@ void ComponentListItemData::setEncodedPreviewImagesHoldNotify(const QStringList&
         }
     }
     // 如果没有暂停通知，则发射信号
-    if (!s_holdPreviewImageNotifications) {
+    bool shouldNotify;
+    {
+        QMutexLocker locker(&s_previewImageMutex);
+        shouldNotify = !s_holdPreviewImageNotifications;
+    }
+    if (shouldNotify) {
         emit previewImagesChanged();
     }
 }
@@ -237,12 +243,14 @@ void ComponentListItemData::setEncodedPreviewImagesSilent(const QStringList& enc
 }
 
 void ComponentListItemData::holdPreviewImageNotifications() {
+    QMutexLocker locker(&s_previewImageMutex);
     s_holdPreviewImageNotifications = true;
 }
 
 void ComponentListItemData::flushPreviewImageNotifications() {
     // 静态方法无法发射实例信号，改为发射所有待更新项的信号
-    // 这个方法应该在持有锁的情况下调用，确保线程安全
+    // 使用锁保护确保线程安全
+    QMutexLocker locker(&s_previewImageMutex);
     s_holdPreviewImageNotifications = false;
 }
 

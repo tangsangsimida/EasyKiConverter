@@ -268,16 +268,15 @@ void ExportProgressViewModel::handleItemStatusChanged(const QString& componentId
 
         // Use individual type statuses for display (in_progress, failed, etc.)
         // Only update overall status for terminal states (success/failed/skipped)
-        if (status.status == ExportItemStatus::Status::Success ||
-            status.status == ExportItemStatus::Status::Failed ||
+        if (status.status == ExportItemStatus::Status::Success || status.status == ExportItemStatus::Status::Failed ||
             status.status == ExportItemStatus::Status::Skipped) {
             QString overallStatus;
             // Check all types that were attempted - if any failed, component failed
             bool anyFailed = (result.contains("symbolSuccess") && !result["symbolSuccess"].toBool()) ||
-                            (result.contains("footprintSuccess") && !result["footprintSuccess"].toBool()) ||
-                            (result.contains("model3DSuccess") && !result["model3DSuccess"].toBool()) ||
-                            (result.contains("previewSuccess") && !result["previewSuccess"].toBool()) ||
-                            (result.contains("datasheetSuccess") && !result["datasheetSuccess"].toBool());
+                             (result.contains("footprintSuccess") && !result["footprintSuccess"].toBool()) ||
+                             (result.contains("model3DSuccess") && !result["model3DSuccess"].toBool()) ||
+                             (result.contains("previewSuccess") && !result["previewSuccess"].toBool()) ||
+                             (result.contains("datasheetSuccess") && !result["datasheetSuccess"].toBool());
 
             if (anyFailed) {
                 overallStatus = "failed";

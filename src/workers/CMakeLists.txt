@@ -1,7 +1,6 @@
 ﻿# Workers 模块
 
 add_library(EasyKiConverterWorkers STATIC
-    ExportWorker.cpp
     NetworkWorker.cpp
     FetchWorker.cpp
     ProcessWorker.cpp

@@ -2,10 +2,11 @@
 
 #include "ExportProgress.h"
 
-#include <QList>
 #include <QMap>
 #include <QMutex>
 #include <QObject>
+#include <QQueue>
+#include <QSet>
 #include <QSharedPointer>
 #include <QString>
 #include <QStringList>
@@ -141,6 +142,15 @@ protected:
                              const QSharedPointer<ComponentData>& data) = 0;
 
     /**
+     * @brief 启动下一个待处理的worker（按需创建）
+     *
+     * 当一个worker完成后自动调用，启动队列中的下一个worker。
+     * 这实现了 worker 的按需创建，避免一次创建所有 worker。
+     * 线程安全：由m_workerMutex保护。
+     */
+    void startNextWorker();
+
+    /**
      * @brief 初始化单个元器件的进度状态
      * @param componentId 元器件ID
      *
@@ -149,17 +159,24 @@ protected:
      */
     void initItemProgress(const QString& componentId);
 
+public:
     /**
      * @brief 完成单个元器件的进度更新
+     * @param worker 完成时触发此方法的worker对象指针（用于从活跃列表移除）
      * @param componentId 元器件ID
      * @param success 导出是否成功
      * @param error 错误信息（当success为false时有效）
      *
      * 更新元器件状态、增加成功/失败计数、递减inProgressCount。
      * 当所有元器件都完成时发射completed()信号。
-     * 线程安全：由m_progressMutex保护。
+     * 线程安全：由m_progressMutex和m_workerMutex保护。
+     *
+     * 注意：显式传递worker指针而非使用sender()，因为跨线程信号sender()不可靠。
      */
-    void completeItemProgress(const QString& componentId, bool success, const QString& error = QString());
+    void completeItemProgress(QObject* worker,
+                              const QString& componentId,
+                              bool success,
+                              const QString& error = QString());
 
     QString m_typeName;  ///< 导出类型名称
     QThreadPool m_threadPool;  ///< 线程池，用于管理并行导出任务
@@ -169,8 +186,9 @@ protected:
     QMap<QString, QSharedPointer<ComponentData>> m_cachedData;  ///< 预加载的元器件数据缓存
     mutable QMutex m_progressMutex;  ///< 保护m_progress的互斥量
     ExportTypeProgress m_progress;  ///< 当前进度信息
-    mutable QMutex m_workerMutex;  ///< 保护m_activeWorkers的互斥量
-    QList<QObject*> m_activeWorkers;  ///< 当前活跃的worker列表
+    mutable QMutex m_workerMutex;  ///< 保护m_activeWorkers和m_pendingComponents的互斥量
+    QSet<QObject*> m_activeWorkers;  ///< 当前活跃的worker集合（O(1)插入/删除）
+    QQueue<QString> m_pendingComponents;  ///< 待处理的组件ID队列（按需创建worker）
 };
 
 }  // namespace EasyKiConverter

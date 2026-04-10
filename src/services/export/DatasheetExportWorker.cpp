@@ -63,11 +63,14 @@ void DatasheetExportWorker::run() {
     }
 
     QString fileName = m_componentId + QStringLiteral(".") + format;
-    QString filePath = outputDir + QStringLiteral("/") + fileName;
+    QString finalPath = outputDir + QStringLiteral("/") + fileName;
 
-    // 检查文件是否已存在
-    if (QFile::exists(filePath) && !m_options.overwriteExistingFiles) {
-        qDebug() << "DatasheetExportWorker: File already exists, skipping" << filePath;
+    // 使用temp路径如果可用
+    QString filePath = m_tempPath.isEmpty() ? finalPath : m_tempPath;
+
+    // 检查文件是否已存在（仅对最终路径且非temp模式）
+    if (filePath == finalPath && QFile::exists(finalPath) && !m_options.overwriteExistingFiles) {
+        qDebug() << "DatasheetExportWorker: File already exists, skipping" << finalPath;
         emit completed(m_componentId, true, QString());
         return;
     }
@@ -98,12 +101,12 @@ void DatasheetExportWorker::run() {
                 emit completed(m_componentId, false, QStringLiteral("Failed to write datasheet data"));
             }
         } else if (!datasheetUrl.isEmpty()) {
-            // URL下载场景：数据手册导出需要从URL下载
-            // 由于是QRunnable在子线程执行，不适合直接使用异步网络
-            // 这里应该已经在预加载阶段完成了下载
-            Q_UNUSED(datasheetUrl);
+            // URL存在但数据为空：说明预加载阶段的数据手册下载未完成或失败
+            // 这种情况不应该发生，因为预加载应该等待所有异步下载完成
+            qWarning() << "DatasheetExportWorker: URL exists but data is empty for" << m_componentId
+                       << "- preload phase did not complete datasheet download";
             emit completed(
-                m_componentId, false, QStringLiteral("Datasheet URL download not implemented in export worker"));
+                m_componentId, false, QStringLiteral("Datasheet download incomplete (preload phase did not complete)"));
         } else {
             emit completed(m_componentId, false, QStringLiteral("No datasheet data available"));
         }

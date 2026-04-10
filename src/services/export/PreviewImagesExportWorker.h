@@ -37,6 +37,14 @@ public:
                  const ExportOptions& options) override;
 
     /**
+     * @brief 设置临时文件路径映射
+     * @param tempPaths 文件名到临时路径的映射
+     */
+    void setTempPaths(const QMap<QString, QString>& tempPaths) {
+        m_tempPaths = tempPaths;
+    }
+
+    /**
      * @brief 执行预览图导出任务
      *
      * 在线程池中被调用，执行实际的导出逻辑:
@@ -71,6 +79,7 @@ signals:
 
 private:
     QString m_componentId;  ///< 元器件ID
+    QMap<QString, QString> m_tempPaths;  ///< 文件名到临时路径的映射
     QSharedPointer<ComponentData> m_data;  ///< 预加载的元器件数据
     ExportOptions m_options;  ///< 导出选项
     std::atomic<bool> m_cancelled{false};  ///< 取消标志

@@ -450,7 +450,9 @@ private:
         bool hasObjData;
         bool hasStepData;
         bool fetch3DModel;  // 是否需要获取 3D 模型
+        bool hasTriggeredLcscFetch;  // 是否已触发 LCSC 数据获取（防止重复触发）
         QString errorMessage;
+        int pendingAsyncDownloads;  // 等待的异步下载数量（数据手册、预览图等）
     };
 
     QMap<QString, FetchingComponent> m_fetchingComponents;

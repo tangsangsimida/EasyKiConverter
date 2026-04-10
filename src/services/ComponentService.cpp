@@ -165,6 +165,8 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
             fc.hasCadData = false;
             fc.hasObjData = false;
             fc.hasStepData = false;
+            fc.hasTriggeredLcscFetch = false;
+            fc.pendingAsyncDownloads = 0;
         }
         qDebug() << "ComponentService: Cache hit for" << normalizedId << ", scheduling async load from disk cache";
         // 缓存加载是 I/O 密集型操作，移到后台线程执行避免阻塞 UI
@@ -200,6 +202,8 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     fetchingComponent.hasObjData = false;
     fetchingComponent.hasStepData = false;
     fetchingComponent.errorMessage.clear();
+    fetchingComponent.hasTriggeredLcscFetch = false;
+    fetchingComponent.pendingAsyncDownloads = 0;
 
     // 在锁保护外执行网络请求，避免长时间持锁
     locker.unlock();
@@ -314,10 +318,10 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
         qDebug() << "ComponentService: Emitting cadDataReady for" << normalizedId
                  << "with symbolData:" << (result.cachedData->symbolData() != nullptr)
                  << "footprintData:" << (result.cachedData->footprintData() != nullptr);
-        
+
         // 更新缓存
         updateComponentCache(normalizedId, *result.cachedData);
-        
+
         emit cadDataReady(normalizedId, *result.cachedData);
 
         // 如果在并行模式，处理并行数据收集
@@ -406,7 +410,7 @@ void ComponentService::handleImageReady(const QString& componentId, const QByteA
                 qDebug() << "    Image" << i << "size:" << allImageData[i].size() << "bytes"
                          << (allImageData[i].isEmpty() ? "(EMPTY)" : "(VALID)");
             }
-            
+
             // 更新缓存中的预览图数据
             {
                 QMutexLocker cacheLocker(&m_componentCacheMutex);
@@ -491,6 +495,9 @@ void ComponentService::handleLcscDataReady(const QString& componentId,
 
         // 保存到磁盘缓存
         ComponentCacheService::instance()->saveComponentMetadata(componentId, updatedData);
+
+        // 更新内存缓存，确保 startPreload 时能获取到最新数据
+        updateComponentCache(componentId, updatedData);
     }
 
     // 触发数据手册下载（如果 URL 不为空且尚未下载）
@@ -507,6 +514,8 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
     // 准备数据用于锁外处理
     QString format;
     bool hasValidUpdate = false;
+    bool shouldMarkCompleted = false;
+    ComponentData completedData;
 
     // 加锁保护共享数据的访问
     {
@@ -527,6 +536,17 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
             qDebug() << "Datasheet data saved to ComponentData, size:" << datasheetData.size() << "bytes"
                      << "format:" << format;
 
+            // 递减待处理的异步下载计数
+            if (fetchingComponent.pendingAsyncDownloads > 0) {
+                fetchingComponent.pendingAsyncDownloads--;
+                qDebug() << "Datasheet download complete, pending async downloads:"
+                         << fetchingComponent.pendingAsyncDownloads;
+                if (fetchingComponent.pendingAsyncDownloads == 0) {
+                    shouldMarkCompleted = true;
+                    completedData = fetchingComponent.data;
+                }
+            }
+
             hasValidUpdate = true;
         } else {
             qWarning() << "Component" << componentId
@@ -534,14 +554,36 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
         }
     }  // 锁在这里释放
 
+    // 如果所有异步下载都完成了，标记组件完成
+    if (shouldMarkCompleted) {
+        QMutexLocker locker(&m_parallelContextMutex);
+        if (m_parallelContext != nullptr) {
+            m_parallelContext->markCompleted(componentId, completedData);
+        }
+        locker.unlock();
+
+        if (m_queueManager != nullptr) {
+            m_queueManager->requestCompleted(componentId);
+        }
+    }
+
     // 更新缓存中的数据手册数据
     if (hasValidUpdate) {
-        QMutexLocker cacheLocker(&m_componentCacheMutex);
-        if (m_componentCache.contains(componentId)) {
-            // 从fetchingComponents获取最新的数据
+        // 避免嵌套锁：先从 fetchingComponents 获取数据副本，再更新缓存
+        ComponentData dataCopy;
+        bool hasDataCopy = false;
+        {
             QMutexLocker fetchLocker(&m_fetchingComponentsMutex);
             if (m_fetchingComponents.contains(componentId)) {
-                m_componentCache[componentId] = m_fetchingComponents[componentId].data;
+                dataCopy = m_fetchingComponents[componentId].data;
+                hasDataCopy = true;
+            }
+        }
+
+        if (hasDataCopy) {
+            QMutexLocker cacheLocker(&m_componentCacheMutex);
+            if (m_componentCache.contains(componentId)) {
+                m_componentCache[componentId] = dataCopy;
                 qDebug() << "ComponentService: Updated cache with datasheet data for" << componentId;
             }
         }
@@ -856,8 +898,9 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
                     // UUID 已在下载中，加入等待列表
                     m_uuidToWaitingComponents[modelUuid].append(m_currentComponentId);
                     qDebug() << "ComponentService: UUID" << modelUuid << "already downloading, added"
-                             << m_currentComponentId << "to waiting list. Waiting for:"
-                             << m_uuidToWaitingComponents[modelUuid].size() << "components";
+                             << m_currentComponentId
+                             << "to waiting list. Waiting for:" << m_uuidToWaitingComponents[modelUuid].size()
+                             << "components";
                 } else {
                     // 开始新的下载
                     m_downloadingUuids.insert(modelUuid);
@@ -876,10 +919,10 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
             // 立即发送 cadDataReady 信号，让 ComponentListViewModel 可以立即使用 symbol/footprint 数据
             // 3D 模型下载完成后会在 handleModel3DFetched 中再次发送信号更新
             qDebug() << "ComponentService: Emitting cadDataReady (from network) for" << m_currentComponentId;
-            
+
             // 更新缓存
             updateComponentCache(m_currentComponentId, componentData);
-            
+
             emit cadDataReady(m_currentComponentId, componentData);
 
             return;  // 等待 3D 模型数据
@@ -926,10 +969,10 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
         QMutexLocker locker(&m_currentIdMutex);
         currentId = m_currentComponentId;
     }
-    
+
     // 更新缓存
     updateComponentCache(currentId, componentData);
-    
+
     emit cadDataReady(currentId, componentData);
 
     // 保存到磁盘缓存
@@ -1051,8 +1094,7 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
                     {
                         QMutexLocker locker(&m_fetchingComponentsMutex);
                         if (!m_fetchingComponents.contains(waitingId)) {
-                            qDebug() << "ComponentService: Skipping" << waitingId
-                                     << "- no longer in fetching list";
+                            qDebug() << "ComponentService: Skipping" << waitingId << "- no longer in fetching list";
                             continue;
                         }
 
@@ -1109,10 +1151,10 @@ void ComponentService::handleModel3DFetched(const QString& uuid, const QByteArra
 
                 // 发送完成信号
                 qDebug() << "ComponentService: Emitting cadDataReady (pending complete) for" << m_currentComponentId;
-                
+
                 // 更新缓存
                 updateComponentCache(m_currentComponentId, m_pendingComponentData);
-                
+
                 emit cadDataReady(m_currentComponentId, m_pendingComponentData);
 
                 // 清空待处理数据
@@ -1199,29 +1241,43 @@ void ComponentService::handleParallelDataCollected(const QString& componentId, c
     Q_UNUSED(data);
     qDebug() << "Parallel data collected for:" << componentId;
 
+    bool hasPendingAsync = false;
+    ComponentData completedData;
+
     // 在移除组件之前，检查是否需要触发数据手册下载
     // 注意：在批处理模式下，lcscDataReady 可能在组件被移除后才触发，
     // 导致 handleLcscDataReady 无法找到组件并触发下载
+    // 使用 hasTriggeredLcscFetch 防止重复触发
     {
         QMutexLocker locker(&m_fetchingComponentsMutex);
         if (m_fetchingComponents.contains(componentId)) {
-            QString datasheetUrl = m_fetchingComponents[componentId].data.datasheet();
-            QByteArray datasheetData = m_fetchingComponents[componentId].data.datasheetData();
-            if (!datasheetUrl.isEmpty() && datasheetData.isEmpty() && m_imageService) {
+            FetchingComponent& fc = m_fetchingComponents[componentId];
+            QString datasheetUrl = fc.data.datasheet();
+            QByteArray datasheetData = fc.data.datasheetData();
+            // 只有当 URL 存在、数据为空、未触发过获取、且 imageService 可用时才触发
+            if (!datasheetUrl.isEmpty() && datasheetData.isEmpty() && !fc.hasTriggeredLcscFetch && m_imageService) {
+                fc.hasTriggeredLcscFetch = true;
+                fc.pendingAsyncDownloads++;
+                hasPendingAsync = true;
                 qDebug() << "Triggering datasheet fetch in handleParallelDataCollected for:" << componentId;
                 m_imageService->fetchDatasheet(componentId, datasheetUrl);
             }
+            completedData = fc.data;
         }
     }
 
-    QMutexLocker locker(&m_parallelContextMutex);
-    if (m_parallelContext != nullptr) {
-        m_parallelContext->markCompleted(componentId, data);
-    }
-    locker.unlock();
+    // 只有在没有待处理的异步下载时才标记为完成
+    // 否则会在异步下载完成时通过 handleDatasheetReady 等渠道标记完成
+    if (!hasPendingAsync) {
+        QMutexLocker locker(&m_parallelContextMutex);
+        if (m_parallelContext != nullptr) {
+            m_parallelContext->markCompleted(componentId, completedData);
+        }
+        locker.unlock();
 
-    if (m_queueManager != nullptr) {
-        m_queueManager->requestCompleted(componentId);
+        if (m_queueManager != nullptr) {
+            m_queueManager->requestCompleted(componentId);
+        }
     }
 }
 
@@ -1323,7 +1379,7 @@ void ComponentService::completeComponentData(const QString& componentId) {
         if (isComplete) {
             // 更新缓存
             updateComponentCache(componentId, fc.data);
-            
+
             emit cadDataReady(componentId, fc.data);
             if (m_parallelContext != nullptr) {
                 handleParallelDataCollected(componentId, fc.data);

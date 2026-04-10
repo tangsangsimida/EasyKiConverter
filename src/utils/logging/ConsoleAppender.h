@@ -32,9 +32,9 @@ public:
     /**
      * @brief 构造函数
      * @param useColors 是否启用彩色输出
-     * @param async 是否启用异步输出（默认 false）
+     * @param async 是否启用异步输出（默认 true，更好的性能）
      */
-    explicit ConsoleAppender(bool useColors = true, bool async = false);
+    explicit ConsoleAppender(bool useColors = true, bool async = true);
 
     /**
      * @brief 析构函数

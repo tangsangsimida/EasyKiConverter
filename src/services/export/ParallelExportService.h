@@ -20,7 +20,7 @@ class ExportTypeStage;
  * 协调管理所有导出类型的并行任务执行。
  *
  * 工作流程:
- * 1. 预加载阶段(Preloading): 从网络获取元器件数据并缓存
+ * 1. 预加载阶段(Preloading): 从内存缓存加载已验证的元器件数据（网络获取在元器件验证时已完成）
  * 2. 导出阶段(Exporting): 根据用户选项并行导出各类型文件
  *
  * 使用示例:
@@ -84,7 +84,7 @@ public:
      * @brief 设置元器件服务引用
      * @param componentService 元器件服务指针
      *
-     * 用于在预加载阶段从ComponentService获取已验证的元器件数据
+     * 用于在预加载阶段从ComponentService的内存缓存获取已验证的元器件数据
      */
     void setComponentService(ComponentService* componentService);
 
@@ -100,12 +100,9 @@ public:
      * @brief 开始预加载元器件数据
      * @param componentIds 需要预加载的元器件ID列表
      *
-     * 预加载阶段从网络获取元器件的基本信息:
-     * - 符号数据(JSON)
-     * - 封装数据(JSON)
-     * - 3D模型URL
-     * - 预览图URL
-     * - 数据手册URL
+     * 从ComponentService的内存缓存中加载已验证的元器件数据。
+     * 注意：实际的网络获取已在元器件验证阶段完成（用户添加元器件时），
+     * 此处仅做数据拷贝，不涉及网络请求。
      *
      * 预加载完成后发射preloadCompleted()信号。
      */
@@ -120,7 +117,7 @@ public:
      * @brief 开始导出
      *
      * 根据已设置的选项，开始并行导出各类型文件。
-     * 调用前应确保预加载已完成或数据已缓存。
+     * 调用前应确保 startPreload() 已完成（即使它是同步的）。
      *
      * @see startPreload()
      * @see setOptions()

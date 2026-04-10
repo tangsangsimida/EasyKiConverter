@@ -2,12 +2,11 @@
 
 #include <QDateTime>
 #include <QDebug>
-#include <QMutexLocker>
+#include <QDir>
+#include <QLockFile>
 #include <QThread>
 
 namespace EasyKiConverter {
-
-QMutex AtomicFileWriter::s_fileWriteMutex;
 
 QString AtomicFileWriter::generateTempPath(const QString& tempDir, const QString& prefix, const QString& suffix) {
     qint64 threadId = reinterpret_cast<qint64>(QThread::currentThreadId());
@@ -42,21 +41,33 @@ bool AtomicFileWriter::writeAtomically(const QString& tempDir,
         return false;
     }
 
-    {
-        QMutexLocker locker(&s_fileWriteMutex);
+    // 使用QLockFile实现per-file锁，避免全局串行化
+    // 锁文件放在目标目录，文件名基于目标文件名的hash
+    QString lockFileName = QString(".%1.lock").arg(qHash(finalPath), 0, 16);
+    QString lockFilePath = QFileInfo(finalPath).absoluteDir().absoluteFilePath(lockFileName);
+    QLockFile lockFile(lockFilePath);
+    lockFile.setStaleLockTime(0);  // 禁用陈旧锁检测，避免异常退出后无法获取锁
 
-        if (QFile::exists(finalPath)) {
-            if (!QFile::remove(finalPath)) {
-                qWarning() << "AtomicFileWriter: Failed to remove old file:" << finalPath;
-            }
-        }
+    if (!lockFile.lock()) {
+        qWarning() << "AtomicFileWriter: Failed to acquire lock for:" << finalPath;
+        QFile::remove(tempPath);
+        return false;
+    }
 
-        if (!QFile::rename(tempPath, finalPath)) {
-            qWarning() << "AtomicFileWriter: Failed to rename:" << tempPath << "to" << finalPath;
-            QFile::remove(tempPath);
-            return false;
+    if (QFile::exists(finalPath)) {
+        if (!QFile::remove(finalPath)) {
+            qWarning() << "AtomicFileWriter: Failed to remove old file:" << finalPath;
         }
     }
+
+    if (!QFile::rename(tempPath, finalPath)) {
+        qWarning() << "AtomicFileWriter: Failed to rename:" << tempPath << "to" << finalPath;
+        QFile::remove(tempPath);
+        lockFile.unlock();
+        return false;
+    }
+
+    lockFile.unlock();
 
     if (QFile::exists(finalPath)) {
         qDebug() << "AtomicFileWriter: File written atomically:" << finalPath;
@@ -119,24 +130,36 @@ bool AtomicFileWriter::copyAtomically(const QString& sourcePath, const QString& 
         return false;
     }
 
-    // 原子替换目标文件
-    {
-        QMutexLocker locker(&s_fileWriteMutex);
+    // 原子替换目标文件（使用per-file锁）
+    // 使用QLockFile实现per-file锁，避免全局串行化
+    QString lockFileName = QString(".%1.lock").arg(qHash(finalPath), 0, 16);
+    QString lockFilePath = QFileInfo(finalPath).absoluteDir().absoluteFilePath(lockFileName);
+    QLockFile lockFile(lockFilePath);
+    lockFile.setStaleLockTime(0);  // 禁用陈旧锁检测
 
-        if (QFile::exists(finalPath)) {
-            if (!QFile::remove(finalPath)) {
-                qWarning() << "AtomicFileWriter::copyAtomically: Failed to remove old file:" << finalPath;
-                QFile::remove(tempPath);
-                return false;
-            }
-        }
+    if (!lockFile.lock()) {
+        qWarning() << "AtomicFileWriter::copyAtomically: Failed to acquire lock for:" << finalPath;
+        QFile::remove(tempPath);
+        return false;
+    }
 
-        if (!QFile::rename(tempPath, finalPath)) {
-            qWarning() << "AtomicFileWriter::copyAtomically: Failed to rename:" << tempPath << "to" << finalPath;
+    if (QFile::exists(finalPath)) {
+        if (!QFile::remove(finalPath)) {
+            qWarning() << "AtomicFileWriter::copyAtomically: Failed to remove old file:" << finalPath;
             QFile::remove(tempPath);
+            lockFile.unlock();
             return false;
         }
     }
+
+    if (!QFile::rename(tempPath, finalPath)) {
+        qWarning() << "AtomicFileWriter::copyAtomically: Failed to rename:" << tempPath << "to" << finalPath;
+        QFile::remove(tempPath);
+        lockFile.unlock();
+        return false;
+    }
+
+    lockFile.unlock();
 
     if (QFile::exists(finalPath)) {
         qDebug() << "AtomicFileWriter: File copied atomically:" << sourcePath << "->" << finalPath;

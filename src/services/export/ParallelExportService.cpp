@@ -17,11 +17,14 @@ ParallelExportService::ParallelExportService(QObject* parent) : QObject(parent),
 }
 
 ParallelExportService::~ParallelExportService() {
-    // Don't call cancelExport() in destructor
-    // as it can cause crashes during application shutdown
-    // Stages will be automatically deleted by QObject parent-child mechanism
-    
-    // Clear the stages map to avoid accessing deleted objects
+    // 取消所有导出阶段，防止worker在stage销毁后访问已释放对象
+    // cancel()设置原子标志后立即返回，不会等待worker完成（waitForDone会导致崩溃）
+    for (auto* stage : m_exportStages) {
+        stage->cancel();
+        delete stage;  // 释放内存
+    }
+
+    // 清理阶段列表
     m_exportStages.clear();
 }
 

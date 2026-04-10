@@ -67,11 +67,14 @@ void PreviewImagesExportWorker::run() {
 
         const auto& previewData = previewDataList[i];
         QString fileName = QStringLiteral("%1_preview_%2.png").arg(m_componentId).arg(i + 1);
-        QString filePath = outputDir + QStringLiteral("/") + fileName;
+        QString finalPath = outputDir + QStringLiteral("/") + fileName;
 
-        // 检查文件是否已存在
-        if (QFile::exists(filePath) && !m_options.overwriteExistingFiles) {
-            qDebug() << "PreviewImagesExportWorker: File already exists, skipping" << filePath;
+        // 使用temp路径如果可用
+        QString filePath = m_tempPaths.contains(fileName) ? m_tempPaths[fileName] : finalPath;
+
+        // 检查文件是否已存在（仅对最终路径且非temp模式）
+        if (filePath == finalPath && QFile::exists(finalPath) && !m_options.overwriteExistingFiles) {
+            qDebug() << "PreviewImagesExportWorker: File already exists, skipping" << finalPath;
             successCount++;
             continue;
         }
@@ -111,8 +114,14 @@ void PreviewImagesExportWorker::run() {
         qDebug() << "PreviewImagesExportWorker: Successfully exported all previews for" << m_componentId;
         emit completed(m_componentId, true, QString());
     } else if (successCount > 0) {
-        qWarning() << "PreviewImagesExportWorker: Partially exported" << successCount << "/" << totalCount;
-        emit completed(m_componentId, true, QString());
+        // 部分成功也视为失败，避免提交不完整的临时文件
+        qWarning() << "PreviewImagesExportWorker: Partially exported" << successCount << "/" << totalCount
+                   << "- treating as failure";
+        emit completed(m_componentId,
+                      false,
+                      QStringLiteral("Partial export failure: %1 of %2 images exported")
+                          .arg(successCount)
+                          .arg(totalCount));
     } else {
         emit completed(m_componentId, false, QStringLiteral("Failed to export any preview images"));
     }

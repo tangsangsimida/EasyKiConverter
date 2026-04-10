@@ -45,7 +45,8 @@ Card {
                 value: {
                     var total = exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.totalCount : 0;
                     var success = exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.successCount : 0;
-                    if (total === 0) return "0%";
+                    if (total === 0)
+                        return "0%";
                     return ((success / total) * 100).toFixed(1) + "%";
                 }
                 Layout.fillWidth: true

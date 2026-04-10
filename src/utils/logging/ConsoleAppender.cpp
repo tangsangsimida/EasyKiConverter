@@ -28,7 +28,7 @@ const QString ConsoleAppender::s_bgRed = QStringLiteral("\033[41m");
 
 ConsoleAppender::ConsoleAppender(bool useColors, bool async)
     : m_useColors(useColors && supportsColors())
-    // 统一所有平台：默认异步模式（更好的性能），使用 async 参数切换为同步模式
+    // 默认异步模式（更好的性能），使用 async 参数切换为同步模式
     , m_async(async)
     , m_running(0)
     , m_flushRequested(0)

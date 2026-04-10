@@ -4,6 +4,7 @@
 #include "ComponentData.h"
 
 #include <QImage>
+#include <QMutex>
 #include <QObject>
 #include <QSharedPointer>
 #include <QString>
@@ -142,7 +143,9 @@ private:
     bool m_datasheetExported = false;
 
     // 静态标志：暂停预览图更新通知（用于批量更新）
+    // 保护：s_holdPreviewImageNotifications 和 s_previewImageMutex 共同保护此标志
     static bool s_holdPreviewImageNotifications;
+    static QMutex s_previewImageMutex;
 };
 
 }  // namespace EasyKiConverter

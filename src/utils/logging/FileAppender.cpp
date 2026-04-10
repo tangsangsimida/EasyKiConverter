@@ -189,12 +189,14 @@ void FileAppender::close() {
         m_queueCondition.wakeAll();
 
         // 等待线程结束（带超时保护）
-        if (!m_writerThread->wait(3000)) {
-            m_writerThread->terminate();
-            m_writerThread->wait();
+        if (m_writerThread) {
+            if (!m_writerThread->wait(3000)) {
+                m_writerThread->terminate();
+                m_writerThread->wait();
+            }
+            delete m_writerThread;
+            m_writerThread = nullptr;
         }
-        delete m_writerThread;
-        m_writerThread = nullptr;
     }
 
     // 关闭文件
