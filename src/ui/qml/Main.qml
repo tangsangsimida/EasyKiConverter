@@ -115,10 +115,9 @@ ApplicationWindow {
         cancelText: qsTr("继续转换")
         confirmColor: AppStyle.colors.danger
         onAccepted: {
-            if (exportProgressViewModel.handleCloseRequest()) {
-                saveWindowPosition();
-                Qt.quit();
-            }
+            exportProgressViewModel.handleCloseRequest();
+            saveWindowPosition();
+            Qt.quit();
         }
     }
 

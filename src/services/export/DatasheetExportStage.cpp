@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QPointer>
 
 namespace EasyKiConverter {
@@ -100,7 +101,18 @@ void DatasheetExportStage::commitTempFile(const QString& tempPath, const QString
         return;
     }
 
-    if (m_tempManager.commit(finalPath)) {
+    QFileInfo finalInfo(finalPath);
+    if (!finalInfo.absoluteDir().exists() && !QDir().mkpath(finalInfo.absolutePath())) {
+        qWarning() << "DatasheetExportStage: Failed to create output dir for:" << finalPath;
+        return;
+    }
+
+    if (QFile::exists(finalPath) && !QFile::remove(finalPath)) {
+        qWarning() << "DatasheetExportStage: Failed to remove existing file:" << finalPath;
+        return;
+    }
+
+    if (QFile::rename(tempPath, finalPath)) {
         qDebug() << "DatasheetExportStage: Committed temp file:" << finalPath;
     } else {
         qWarning() << "DatasheetExportStage: Failed to commit temp file:" << tempPath;

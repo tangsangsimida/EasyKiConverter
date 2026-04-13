@@ -4,6 +4,7 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QFileInfo>
 #include <QImage>
 #include <QSaveFile>
 
@@ -38,7 +39,8 @@ void PreviewImagesExportWorker::run() {
 
     // 检查预览图数据是否可用
     if (m_data->previewImageData().isEmpty()) {
-        emit completed(m_componentId, false, QStringLiteral("Preview image data not available"));
+        // 无预览图数据时按跳过处理，不阻塞整体导出
+        emit completed(m_componentId, true, QStringLiteral("Preview image data not available, skipped"));
         return;
     }
 
@@ -72,6 +74,13 @@ void PreviewImagesExportWorker::run() {
         // 使用temp路径如果可用
         QString filePath = m_tempPaths.contains(fileName) ? m_tempPaths[fileName] : finalPath;
 
+        // 确保目标目录存在（temp目录按组件拆分，可能尚未创建）
+        const QString targetDir = QFileInfo(filePath).absolutePath();
+        if (!QDir().mkpath(targetDir)) {
+            qWarning() << "PreviewImagesExportWorker: Failed to create target dir" << targetDir;
+            continue;
+        }
+
         // 检查文件是否已存在（仅对最终路径且非temp模式）
         if (filePath == finalPath && QFile::exists(finalPath) && !m_options.overwriteExistingFiles) {
             qDebug() << "PreviewImagesExportWorker: File already exists, skipping" << finalPath;
@@ -89,7 +98,7 @@ void PreviewImagesExportWorker::run() {
 
             QSaveFile file(filePath);
             if (!file.open(QIODevice::WriteOnly)) {
-                qWarning() << "PreviewImagesExportWorker: Failed to open file" << filePath;
+                qWarning() << "PreviewImagesExportWorker: Failed to open file" << filePath << file.errorString();
                 continue;
             }
 

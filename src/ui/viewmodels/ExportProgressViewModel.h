@@ -40,6 +40,9 @@ class ExportProgressViewModel : public QObject {
     Q_PROPERTY(int fetchProgress READ fetchProgress NOTIFY stageProgressChanged)
     Q_PROPERTY(int processProgress READ processProgress NOTIFY stageProgressChanged)
     Q_PROPERTY(int writeProgress READ writeProgress NOTIFY stageProgressChanged)
+    Q_PROPERTY(bool isStopping READ isStopping NOTIFY isStoppingChanged)
+    Q_PROPERTY(int statisticsTotal READ statisticsTotal NOTIFY totalCountChanged)
+    Q_PROPERTY(bool hasCompletedExport READ hasCompletedExport NOTIFY hasCompletedExportChanged)
 
 public:
     explicit ExportProgressViewModel(ParallelExportService* exportService,
@@ -97,6 +100,18 @@ public:
         return m_writeProgress;
     }
 
+    bool isStopping() const {
+        return m_isStopping;
+    }
+
+    int statisticsTotal() const {
+        return m_totalCount;
+    }
+
+    bool hasCompletedExport() const {
+        return m_hasCompletedExport;
+    }
+
     Q_INVOKABLE QString getLastExportedPath() const;
     Q_INVOKABLE bool openLastExportedFolder();
     Q_INVOKABLE void clearCache();
@@ -120,11 +135,14 @@ public slots:
                      bool debugMode);
     void cancelExport();
     void handleCloseRequest();
+    void updateComponentExportStatus(const QString& componentId, int previewImageExported, int datasheetExported);
 
 signals:
     void progressChanged();
     void statusChanged();
     void isExportingChanged();
+    void isStoppingChanged();
+    void hasCompletedExportChanged();
     void successCountChanged();
     void failureCountChanged();
     void totalCountChanged();
@@ -145,12 +163,20 @@ private slots:
     void flushPendingUpdates();
 
 private:
+    QString typeStatusKey(const QString& typeName) const;
+    void updateOverallItemStatus(QVariantMap& result) const;
+    void resetItemForRetry(QVariantMap& result) const;
+    int averageTypeProgress(const ExportOverallProgress& progress, const QStringList& typeNames) const;
+    void markResultsDirty();
+
+private:
     void updateProgress();
     void updateResultsList();
     void updateFilteredResults();
     void setStatus(const QString& status);
     void setIsExporting(bool exporting);
     void setProgress(int progress);
+    void setHasCompletedExport(bool completed);
 
 private:
     ParallelExportService* m_exportService;
@@ -171,6 +197,13 @@ private:
     int m_fetchProgress;
     int m_processProgress;
     int m_writeProgress;
+    bool m_isStopping;
+    bool m_hasCompletedExport;
+    bool m_exportSymbolEnabled;
+    bool m_exportFootprintEnabled;
+    bool m_exportModel3DEnabled;
+    bool m_exportPreviewEnabled;
+    bool m_exportDatasheetEnabled;
 };
 
 }  // namespace EasyKiConverter

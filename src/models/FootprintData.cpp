@@ -4,7 +4,7 @@
 
 namespace EasyKiConverter {
 
-FootprintData::FootprintData() {}
+FootprintData::FootprintData() : m_info(), m_bbox() {}
 
 QJsonObject FootprintData::toJson() const {
     return FootprintDataSerializer::toJson(*this);

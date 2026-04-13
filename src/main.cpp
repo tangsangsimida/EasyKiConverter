@@ -60,6 +60,18 @@ bool isDebugMode(const EasyKiConverter::CommandLineParser& parser) {
     return false;
 }
 
+#ifdef _WIN32
+bool reopenConsoleStream(FILE* stream, const char* device, const char* mode, const char* streamName) {
+    FILE* reopened = nullptr;
+    errno_t err = freopen_s(&reopened, device, mode, stream);
+    if (err != 0 || reopened == nullptr) {
+        qCritical() << "Failed to reopen stream" << streamName << "to" << device << "error:" << err;
+        return false;
+    }
+    return true;
+}
+#endif
+
 void setupLogging(bool debugMode, const QString& logLevelStr, const QString& logFilePath, bool syncLogging) {
     using namespace EasyKiConverter;
 
@@ -69,9 +81,9 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
         // 尝试分配控制台
         if (AllocConsole()) {
             // 重定向标准输出
-            freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-            freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
-            freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
+            (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
+            (void)reopenConsoleStream(stderr, "CONOUT$", "w", "stderr");
+            (void)reopenConsoleStream(stdin, "CONIN$", "r", "stdin");
 
             // 设置控制台标题
             SetConsoleTitleA("EasyKiConverter - Debug Console");
@@ -170,6 +182,37 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
     QtLogAdapter::install();
 }
 
+QString normalizeMountedAppDir(QString appDir) {
+    if (appDir.endsWith("/usr/bin")) {
+        return appDir.chopped(8);  // 去掉 /usr/bin
+    }
+    if (appDir.endsWith("/bin")) {
+        return appDir.chopped(4);  // 去掉 /bin
+    }
+    return appDir;
+}
+
+QString resolveRuntimeAppDir(const QString& appImagePath) {
+    if (!appImagePath.isEmpty()) {
+        return QFileInfo(appImagePath).absolutePath();
+    }
+    return QCoreApplication::applicationDirPath();
+}
+
+QString resolveProjectRootFromAppDir(QString appDir) {
+    appDir = normalizeMountedAppDir(std::move(appDir));
+    if (appDir.endsWith("/build/bin")) {
+        return appDir.chopped(10);  // 去掉 /build/bin
+    }
+    if (appDir.endsWith("/build")) {
+        return appDir.chopped(6);  // 去掉 /build
+    }
+    if (appDir.endsWith("/bin")) {
+        return appDir.chopped(4);  // 去掉 /bin
+    }
+    return appDir;
+}
+
 }  // anonymous namespace
 
 int main(int argc, char* argv[]) {
@@ -217,8 +260,8 @@ int main(int argc, char* argv[]) {
             SetConsoleTitleA("EasyKiConverter - Help");
         }
         // 重定向标准输出
-        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+        (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
+        (void)reopenConsoleStream(stderr, "CONOUT$", "w", "stderr");
 
         // 输出帮助信息到控制台
         QTextStream consoleOut(stdout);
@@ -241,7 +284,7 @@ int main(int argc, char* argv[]) {
             SetConsoleTitleA("EasyKiConverter - Version");
         }
         // 重定向标准输出
-        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+        (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
 
         // 输出版本信息到控制台
         QTextStream consoleOut(stdout);
@@ -263,8 +306,8 @@ int main(int argc, char* argv[]) {
             SetConsoleTitleA("EasyKiConverter - Error");
         }
         // 重新打开标准输出
-        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+        (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
+        (void)reopenConsoleStream(stderr, "CONOUT$", "w", "stderr");
 #endif
         QTextStream err(stderr);
         err << "错误: 无效的命令行参数\n";
@@ -282,8 +325,8 @@ int main(int argc, char* argv[]) {
             SetConsoleTitleA("EasyKiConverter - Error");
         }
         // 重新打开标准输出
-        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+        (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
+        (void)reopenConsoleStream(stderr, "CONOUT$", "w", "stderr");
 #endif
         QTextStream err(stderr);
         err << "错误: 参数值无效\n";
@@ -299,15 +342,8 @@ int main(int argc, char* argv[]) {
     setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile(), cmdParser.isSyncLogging());
 
     // 尝试设置应用程序图标（使用 QGuiApplication::setWindowIcon 确保可靠性）
-    QString appDir;
-
-    // 优先使用 APPIMAGE 环境变量获取 AppImage 实际路径
     QString appImagePath = qgetenv("APPIMAGE");
-    if (!appImagePath.isEmpty()) {
-        appDir = QFileInfo(appImagePath).absolutePath();
-    } else {
-        appDir = QCoreApplication::applicationDirPath();
-    }
+    QString appDir = resolveRuntimeAppDir(appImagePath);
 
     qDebug() << "应用目录:" << appDir;
 
@@ -431,7 +467,7 @@ int main(int argc, char* argv[]) {
     EasyKiConverter::ThemeSettingsViewModel* themeSettingsViewModel = new EasyKiConverter::ThemeSettingsViewModel();
 
     // 创建 QML 引擎
-    QQmlApplicationEngine engine;
+    auto* engine = new QQmlApplicationEngine();
 
     // 注册 LanguageManager 到 QML
     qmlRegisterSingletonType<QObject>(
@@ -443,22 +479,22 @@ int main(int argc, char* argv[]) {
     QObject::connect(
         EasyKiConverter::LanguageManager::instance(),
         &EasyKiConverter::LanguageManager::refreshRequired,
-        &engine,
-        [&engine]() { engine.retranslate(); },
+        engine,
+        [engine]() { engine->retranslate(); },
         Qt::QueuedConnection);
 
     // 将 ViewModel 和 Service 注册到 QML 上下文
-    engine.rootContext()->setContextProperty("componentListViewModel", componentListViewModel);
-    engine.rootContext()->setContextProperty("exportSettingsViewModel", exportSettingsViewModel);
-    engine.rootContext()->setContextProperty("exportProgressViewModel", exportProgressViewModel);
-    engine.rootContext()->setContextProperty("themeSettingsViewModel", themeSettingsViewModel);
-    engine.rootContext()->setContextProperty("configService", EasyKiConverter::ConfigService::instance());
-    engine.rootContext()->setContextProperty("componentCacheService",
-                                             EasyKiConverter::ComponentCacheService::instance());
+    engine->rootContext()->setContextProperty("componentListViewModel", componentListViewModel);
+    engine->rootContext()->setContextProperty("exportSettingsViewModel", exportSettingsViewModel);
+    engine->rootContext()->setContextProperty("exportProgressViewModel", exportProgressViewModel);
+    engine->rootContext()->setContextProperty("themeSettingsViewModel", themeSettingsViewModel);
+    engine->rootContext()->setContextProperty("configService", EasyKiConverter::ConfigService::instance());
+    engine->rootContext()->setContextProperty("componentCacheService",
+                                              EasyKiConverter::ComponentCacheService::instance());
 
     // 连接对象创建失败信号
     QObject::connect(
-        &engine,
+        engine,
         &QQmlApplicationEngine::objectCreationFailed,
         &app,
         [](const QUrl& url) {
@@ -469,17 +505,18 @@ int main(int argc, char* argv[]) {
 
     // 加载 QML 文件
     const QUrl url("qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/Main.qml");
-    engine.load(url);
+    engine->load(url);
 
     qWarning() << "===== QML 加载完成，开始设置图标 =====";
 
-    if (engine.rootObjects().isEmpty()) {
+    if (engine->rootObjects().isEmpty()) {
         qCritical() << "严重错误：QML引擎根对象加载后为空！";
+        delete engine;
         return -1;
     }
 
     // 获取根窗口对象并设置窗口位置和图标
-    auto* rootObject = engine.rootObjects().first();
+    auto* rootObject = engine->rootObjects().first();
     if (auto* window = qobject_cast<QQuickWindow*>(rootObject)) {
         // 调试：显示所有可能的图标路径
         QString appImagePath = qgetenv("APPIMAGE");
@@ -489,13 +526,7 @@ int main(int argc, char* argv[]) {
         qWarning() << "XDG_DATA_DIRS:" << qgetenv("XDG_DATA_DIRS");
 
         // AppImage 挂载点在 /tmp/.mount_XXX/，需要获取父目录
-        QString appDir = QCoreApplication::applicationDirPath();
-        // 如果路径包含 /usr/bin，说明在 AppImage 挂载点内，需要获取根目录
-        if (appDir.endsWith("/usr/bin")) {
-            appDir = appDir.chopped(8);  // 去掉 /usr/bin
-        } else if (appDir.endsWith("/bin")) {
-            appDir = appDir.chopped(4);  // 去掉 /bin
-        }
+        QString appDir = normalizeMountedAppDir(QCoreApplication::applicationDirPath());
         qWarning() << "使用 appDir:" << appDir;
 
         bool isDarkModeForIcon = EasyKiConverter::ConfigService::instance()->getDarkMode();
@@ -518,12 +549,7 @@ int main(int argc, char* argv[]) {
         };
 
         // 计算项目根目录（用于开发模式）
-        QString projectRoot = appDir;
-        if (appDir.endsWith("/build")) {
-            projectRoot = appDir.chopped(6);  // 去掉 /build
-        } else if (appDir.endsWith("/bin")) {
-            projectRoot = appDir.chopped(4);  // 去掉 /bin
-        }
+        QString projectRoot = resolveProjectRootFromAppDir(appDir);
 
         // 开发时的图标路径（优先级较低）
         QStringList devIconPaths = {
@@ -593,20 +619,8 @@ int main(int argc, char* argv[]) {
         // 使用延迟执行，确保 QML 窗口已经完全初始化并获取到正确的尺寸
         QTimer::singleShot(100, [window, configService]() {
             // 窗口显示后再次设置任务栏图标
-            QString appDir = QCoreApplication::applicationDirPath();
-            if (appDir.endsWith("/usr/bin")) {
-                appDir = appDir.chopped(8);
-            } else if (appDir.endsWith("/bin")) {
-                appDir = appDir.chopped(4);
-            }
-
-            // 计算项目根目录（用于开发模式）
-            QString projectRoot = appDir;
-            if (appDir.endsWith("/build")) {
-                projectRoot = appDir.chopped(6);
-            } else if (appDir.endsWith("/build/bin")) {
-                projectRoot = appDir.chopped(9);
-            }
+            QString appDir = normalizeMountedAppDir(QCoreApplication::applicationDirPath());
+            QString projectRoot = resolveProjectRootFromAppDir(appDir);
 
             bool isDarkModeForIcon = configService->getDarkMode();
             QString iconThemeDir = isDarkModeForIcon ? "hicolor-dark" : "hicolor";
@@ -773,17 +787,22 @@ int main(int argc, char* argv[]) {
 
     // 1. 清除 QML 引擎的上下文属性，防止 QML 组件访问已销毁的对象
     qDebug() << "Clearing QML context properties...";
-    engine.rootContext()->setContextProperty("componentListViewModel", nullptr);
-    engine.rootContext()->setContextProperty("exportSettingsViewModel", nullptr);
-    engine.rootContext()->setContextProperty("exportProgressViewModel", nullptr);
-    engine.rootContext()->setContextProperty("themeSettingsViewModel", nullptr);
-    engine.rootContext()->setContextProperty("componentCacheService", nullptr);
+    engine->rootContext()->setContextProperty("componentListViewModel", nullptr);
+    engine->rootContext()->setContextProperty("exportSettingsViewModel", nullptr);
+    engine->rootContext()->setContextProperty("exportProgressViewModel", nullptr);
+    engine->rootContext()->setContextProperty("themeSettingsViewModel", nullptr);
+    engine->rootContext()->setContextProperty("componentCacheService", nullptr);
 
-    // 2. 销毁 QML 引擎（这会销毁所有 QML 组件）
+    // 2. 先销毁 QML 引擎，阻止事件继续投递到 QML/QObject 图树
     qDebug() << "Destroying QML engine...";
-    engine.deleteLater();
+    delete engine;
+    engine = nullptr;
 
-    // 3. 销毁 ViewModel
+    // 3. 在销毁 C++ 对象前清空挂起事件
+    qDebug() << "Draining pending events before object teardown...";
+    QCoreApplication::processEvents();
+
+    // 4. 销毁 ViewModel
     qDebug() << "Destroying ViewModels...";
     delete themeSettingsViewModel;
     themeSettingsViewModel = nullptr;
@@ -794,14 +813,14 @@ int main(int argc, char* argv[]) {
     delete componentListViewModel;
     componentListViewModel = nullptr;
 
-    // 4. 销毁服务（析构函数会自动调用 cancelExport 和 cleanup）
+    // 5. 销毁服务（析构函数会自动调用 cancelExport 和 cleanup）
     qDebug() << "Destroying services...";
     delete exportService;
     exportService = nullptr;
     delete componentService;
     componentService = nullptr;
 
-    // 5. 最后清理日志
+    // 6. 最后清理日志
     qDebug() << "Cleaning up logging...";
     EasyKiConverter::QtLogAdapter::uninstall();
     auto* logger = EasyKiConverter::Logger::instance();

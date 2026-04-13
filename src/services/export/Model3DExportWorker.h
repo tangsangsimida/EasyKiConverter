@@ -32,6 +32,11 @@ class Model3DExportWorker : public QObject, public QRunnable, public IExportWork
     Q_OBJECT
 
 public:
+    struct OutputPaths {
+        QString wrlTempPath;
+        QString stepTempPath;
+    };
+
     /**
      * @brief 构造函数
      * @param parent 父对象
@@ -57,8 +62,8 @@ public:
      * @brief 设置临时文件路径
      * @param tempPath 临时文件路径（写入位置）
      */
-    void setTempPath(const QString& tempPath) {
-        m_tempPath = tempPath;
+    void setOutputPaths(const OutputPaths& paths) {
+        m_outputPaths = paths;
     }
 
     /**
@@ -105,7 +110,7 @@ private slots:
 
 private:
     QString m_componentId;  ///< 元器件ID
-    QString m_tempPath;  ///< 临时文件路径
+    OutputPaths m_outputPaths;  ///< 导出文件路径
     QSharedPointer<ComponentData> m_data;  ///< 预加载的元器件数据
     ExportOptions m_options;  ///< 导出选项
     std::atomic<bool> m_cancelled{false};  ///< 取消标志

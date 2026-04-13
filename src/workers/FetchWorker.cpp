@@ -32,14 +32,14 @@ FetchWorker::FetchWorker(const QString& componentId,
                          bool fetch3DOnly,
                          const QString& existing3DUuid,
                          QObject* parent)
-    : BaseWorker()
-    , m_componentId(componentId)
+    : m_componentId(componentId)
     , m_ownNetworkManager(nullptr)
     , m_need3DModel(need3DModel)
     , m_fetch3DOnly(fetch3DOnly)
     , m_existing3DUuid(existing3DUuid)
     , m_currentReply(nullptr)
     , m_isAborted(0) {
+    Q_UNUSED(parent);
     // setAutoDelete(false) is set in BaseWorker constructor
 }
 

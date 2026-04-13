@@ -79,17 +79,23 @@ protected:
     void startWorker(QObject* worker, const QString& componentId, const QSharedPointer<ComponentData>& data) override;
 
 private:
+    struct TempFilePaths {
+        QString wrlTempPath;
+        QString wrlFinalPath;
+        QString stepTempPath;
+        QString stepFinalPath;
+    };
+
     /**
      * @brief 提交单个临时文件到最终位置
      * @param tempPath 临时文件路径
      * @param finalPath 最终文件路径
      */
-    void commitTempFile(const QString& tempPath, const QString& finalPath);
+    bool commitTempFile(const QString& tempPath, const QString& finalPath);
 
     struct ExportOptions m_options;  ///< 导出选项
     TempFileManager m_tempManager;  ///< 临时文件管理器
-    QMap<QString, QString> m_tempPaths;  ///< componentId -> tempPath 映射
-    QMap<QString, QString> m_finalPaths;  ///< componentId -> finalPath 映射
+    QMap<QString, TempFilePaths> m_componentPaths;  ///< componentId -> temp/final paths
     std::atomic<bool> m_isExporting{false};  ///< 是否正在导出
 };
 

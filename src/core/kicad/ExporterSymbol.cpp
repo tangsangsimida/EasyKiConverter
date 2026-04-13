@@ -626,6 +626,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
 QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
                                           const QString& symbolName,
                                           const QString& libName) const {
+    Q_UNUSED(libName);
     QString content;
     // 单部分符号：使用 _0_1 作为子符号名称
     content += QString("    (symbol \"%1_0_1\"\n").arg(symbolName);
@@ -641,6 +642,7 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
                                           const SymbolPart& part,
                                           const QString& symbolName,
                                           const QString& libName) const {
+    Q_UNUSED(libName);
     QString content;
 
     // 多部分符号：使用 _{unitNumber}_1 作为子符号名称

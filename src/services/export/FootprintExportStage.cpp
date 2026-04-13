@@ -4,6 +4,7 @@
 #include "models/ComponentData.h"
 
 #include <QDebug>
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QMutexLocker>
@@ -32,8 +33,28 @@ void FootprintExportStage::start(const QStringList& componentIds,
         return;
     }
 
-    // 调用基类的初始化方法（设置状态）
-    ExportTypeStage::start(componentIds, cachedData);
+    m_componentIds = componentIds;
+    m_cachedData = cachedData;
+    m_cancelled.store(false);
+    m_isRunning.store(true);
+
+    {
+        QMutexLocker locker(&m_progressMutex);
+        m_progress = ExportTypeProgress();
+        m_progress.typeName = QStringLiteral("Footprint");
+        m_progress.totalCount = componentIds.size();
+        m_progress.completedCount = 0;
+        m_progress.successCount = 0;
+        m_progress.failedCount = 0;
+        m_progress.skippedCount = 0;
+        m_progress.inProgressCount = componentIds.size();
+        for (const QString& componentId : componentIds) {
+            ExportItemStatus itemStatus;
+            itemStatus.status = ExportItemStatus::Status::InProgress;
+            itemStatus.startTime = QDateTime::currentDateTime();
+            m_progress.itemStatus[componentId] = itemStatus;
+        }
+    }
 
     // 设置临时文件管理器
     m_tempManager.setOutputPath(m_options.outputPath);

@@ -71,10 +71,10 @@ The project uses the MVVM architecture pattern, dividing the application into fo
 │  │ - Calls ConfigManager             │   │
 │  └──────────────────────────────────┘   │
 │  ┌──────────────────────────────────┐   │
-│  │ ComponentDataCollector           │   │
-│  │ - State machine pattern          │   │
-│  │ - Async data collection          │   │
-│  │ - Two-stage export               │   │
+│  │ ParallelExportService            │   │
+│  │ - Preload and export orchestration│  │
+│  │ - Multi-type parallel export      │  │
+│  │ - Unified progress aggregation    │  │
 │  └──────────────────────────────────┘   │
 └──────────────┬──────────────────────────┘
                │
@@ -147,9 +147,9 @@ The Service layer is responsible for business logic processing, providing core f
 **Main Classes:**
 - `ComponentService` - Component service
 - `ExportService` - Export service
+- `ParallelExportService` - Pipeline parallel export service
 - `ConfigService` - Configuration service
-- `ComponentDataCollector` - Component data collector (state machine pattern)
-- `ComponentExportTask` - Component export task
+- `PipelineCompletionHandler` - Export completion handler
 
 **Responsibilities:**
 - Business logic processing
@@ -202,13 +202,13 @@ Workers are responsible for background task processing, located in the `src/work
 
 ## Design Patterns
 
-### State Machine Pattern
+### Export State Machine Pattern
 
-`ComponentDataCollector` uses the state machine pattern to manage the data collection process.
+The export pipeline uses `ExportItemStatus` and `ExportTypeProgress` to model state transitions.
 
 **States:**
 - Idle - Idle state
-- Collecting - Collecting state
+- Pending/InProgress - Running state
 - Completed - Completed state
 - Error - Error state
 
@@ -250,12 +250,12 @@ Use Qt signal-slot mechanism to implement the observer pattern, achieving loose 
 
 1. **Data Collection Stage**
    - ComponentService calls EasyedaApi to get component data
-   - ComponentDataCollector uses state machine to manage collection process
-   - Multi-threaded parallel data collection
+   - ParallelExportService preloads cached component data
+   - Parallel data preparation for export inputs
 
 2. **Data Export Stage**
-   - ExportService calls Exporter* for export
-   - Serial export to avoid file conflicts
+   - ParallelExportService drives export stages in parallel
+   - Symbol/Footprint/Model3D/Preview/Datasheet run by type
    - Real-time progress status updates
 
 ## Tech Stack

@@ -280,14 +280,6 @@ private slots:
      */
     void handleCadDataFetched(const QJsonObject& data);
 
-    /**
-     * @brief 处理3D模型数据获取成功
-     *
-     * @param uuid 模型UUID
-     * @param data 模型数据
-     */
-    void handleModel3DFetched(const QString& uuid, const QByteArray& data);
-
     void handleFetchError(const QString& errorMessage);
 
     /**
@@ -334,13 +326,6 @@ private:
      * @brief 初始化API连接
      */
     void initializeApiConnections();
-
-    /**
-     * @brief 完成元件数据收集
-     *
-     * @param componentId 元件ID
-     */
-    void completeComponentData(const QString& componentId);
 
     /**
      * @brief 处理获取错误
@@ -447,8 +432,6 @@ private:
         ComponentData data;
         bool hasComponentInfo;
         bool hasCadData;
-        bool hasObjData;
-        bool hasStepData;
         bool fetch3DModel;  // 是否需要获取 3D 模型
         bool hasTriggeredLcscFetch;  // 是否已触发 LCSC 数据获取（防止重复触发）
         QString errorMessage;
@@ -460,28 +443,15 @@ private:
     // 当前处理的元件ID
     QString m_currentComponentId;
 
-    // 待处理的组件数据（用于等待3D 模型数据）
-    ComponentData m_pendingComponentData;
-
-    // 待处理的 3D 模型 UUID
-    QString m_pendingModelUuid;
-
-    // 是否已经下载了WRL 格式
-    bool m_hasDownloadedWrl;
-
     // 并行数据收集状态
     ParallelFetchContext* m_parallelContext;
     QMutex m_parallelContextMutex;  // 保护 m_parallelContext 的访问
-
-    // 3D 模型下载共享：防止相同 UUID 的 3D 模型被重复下载
-    // Key: UUID, Value: 等待该 UUID 的组件 ID 列表
-    QMap<QString, QStringList> m_uuidToWaitingComponents;
-    QSet<QString> m_downloadingUuids;  // 正在下载中的 UUID 集合
 
     // 动态队列管理
     class ComponentQueueManager* m_queueManager;
     int m_activeRequestCount;
     int m_maxConcurrentRequests;
+    bool m_batchFetch3DModel;
 
     // 内部状态处理
 
@@ -492,6 +462,9 @@ private:
      * @param fetch3DModel 是否获取3D模型
      */
     void fetchComponentDataInternal(const QString& componentId, bool fetch3DModel);
+    void initializeFetchingComponent(FetchingComponent& fetchingComponent,
+                                     const QString& componentId,
+                                     bool fetch3DModel);
 
     // 输出路径
     QString m_outputPath;

@@ -78,6 +78,13 @@ AsyncNetworkRequest* NetworkClient::postAsync(const QUrl& url, const QByteArray&
 }
 
 NetworkResult NetworkClient::executeRequest(const QUrl& url, const QByteArray& body, const RetryPolicy& policy) {
+    // Synchronous requests are used from worker threads during export.
+    // Use a thread-local QNAM so reply objects are created in the calling thread.
+    static thread_local std::unique_ptr<QNetworkAccessManager> threadQNAM = nullptr;
+    if (!threadQNAM) {
+        threadQNAM = std::make_unique<QNetworkAccessManager>();
+    }
+
     NetworkResult result;
     QElapsedTimer timer;
     timer.start();
@@ -92,10 +99,10 @@ NetworkResult NetworkClient::executeRequest(const QUrl& url, const QByteArray& b
 
         QNetworkReply* reply = nullptr;
         if (body.isEmpty()) {
-            reply = m_networkManager->get(request);
+            reply = threadQNAM->get(request);
         } else {
             request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-            reply = m_networkManager->post(request, body);
+            reply = threadQNAM->post(request, body);
         }
 
         QTimer timeoutTimer;

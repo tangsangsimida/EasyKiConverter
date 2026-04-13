@@ -472,8 +472,8 @@ public:
     void clear();
 
 private:
-    SymbolInfo m_info;
-    SymbolBBox m_bbox;
+    SymbolInfo m_info{};
+    SymbolBBox m_bbox{};
     QList<SymbolPin> m_pins;  // 单部分符号的引脚（向后兼容）
     QList<SymbolRectangle> m_rectangles;
     QList<SymbolCircle> m_circles;

@@ -94,6 +94,11 @@ QMap<QString, QString> PreviewImagesExportStage::createTempPathsForComponent(con
 
     // 构造临时目录路径
     QString tempDir = outputDir + QDir::separator() + QStringLiteral(".tmp.") + componentId;
+    QDir dir;
+    if (!dir.mkpath(tempDir)) {
+        qWarning() << "PreviewImagesExportStage: Failed to create temp dir for" << componentId << ":" << tempDir;
+        return paths;
+    }
 
     for (int i = 1; i <= previewCount; ++i) {
         QString fileName = QStringLiteral("%1_preview_%2.png").arg(componentId).arg(i);

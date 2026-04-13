@@ -5,6 +5,8 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QPointer>
 
 namespace EasyKiConverter {
@@ -30,9 +32,6 @@ void Model3DExportStage::start(const QStringList& componentIds,
         return;
     }
 
-    // 调用基类的初始化方法（设置状态）
-    ExportTypeStage::start(componentIds, cachedData);
-
     // 构建输出目录：outputPath/libName.3dmodels/
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
     QString baseOutputDir = m_options.outputPath;
@@ -54,16 +53,22 @@ void Model3DExportStage::start(const QStringList& componentIds,
     m_tempManager.setOutputPath(outputDir);
 
     // 预创建所有组件的临时文件路径
-    m_tempPaths.clear();
-    m_finalPaths.clear();
+    m_componentPaths.clear();
     for (const QString& componentId : componentIds) {
-        QString finalPath = outputDir + QDir::separator() + componentId + QStringLiteral(".wrl");
-        QString tempPath = m_tempManager.createTempFilePath(componentId, QStringLiteral(".wrl"));
-        if (!tempPath.isEmpty()) {
-            m_tempPaths[componentId] = tempPath;
-            m_finalPaths[componentId] = finalPath;
+        TempFilePaths paths;
+        paths.wrlFinalPath = outputDir + QDir::separator() + componentId + QStringLiteral(".wrl");
+        paths.stepFinalPath = outputDir + QDir::separator() + componentId + QStringLiteral(".step");
+        paths.wrlTempPath = m_tempManager.createTempFilePath(componentId + QStringLiteral("_wrl"), QStringLiteral(".wrl"));
+        paths.stepTempPath =
+            m_tempManager.createTempFilePath(componentId + QStringLiteral("_step"), QStringLiteral(".step"));
+
+        if (!paths.wrlTempPath.isEmpty() && !paths.stepTempPath.isEmpty()) {
+            m_componentPaths[componentId] = paths;
         }
     }
+
+    // 调用基类的初始化方法（在路径准备完毕后再启动 worker，避免竞态）
+    ExportTypeStage::start(componentIds, cachedData);
 
     m_isExporting.store(true);
 }
@@ -87,16 +92,29 @@ void Model3DExportStage::cancel() {
     qDebug() << "Model3DExportStage: Cancelled";
 }
 
-void Model3DExportStage::commitTempFile(const QString& tempPath, const QString& finalPath) {
+bool Model3DExportStage::commitTempFile(const QString& tempPath, const QString& finalPath) {
     if (tempPath.isEmpty() || finalPath.isEmpty()) {
-        return;
+        return false;
     }
 
-    if (m_tempManager.commit(finalPath)) {
-        qDebug() << "Model3DExportStage: Committed temp file:" << finalPath;
-    } else {
-        qWarning() << "Model3DExportStage: Failed to commit temp file:" << tempPath;
+    QFileInfo finalInfo(finalPath);
+    if (!finalInfo.absoluteDir().exists() && !QDir().mkpath(finalInfo.absolutePath())) {
+        qWarning() << "Model3DExportStage: Failed to create output dir for:" << finalPath;
+        return false;
     }
+
+    if (QFile::exists(finalPath) && !QFile::remove(finalPath)) {
+        qWarning() << "Model3DExportStage: Failed to remove existing file:" << finalPath;
+        return false;
+    }
+
+    if (QFile::rename(tempPath, finalPath)) {
+        qDebug() << "Model3DExportStage: Committed temp file:" << finalPath;
+        return true;
+    }
+
+    qWarning() << "Model3DExportStage: Failed to commit temp file:" << tempPath;
+    return false;
 }
 
 QObject* Model3DExportStage::createWorker() {
@@ -116,8 +134,9 @@ void Model3DExportStage::startWorker(QObject* worker,
     exportWorker->setData(componentId, data, m_options);
 
     // 设置临时文件路径
-    if (m_tempPaths.contains(componentId)) {
-        exportWorker->setTempPath(m_tempPaths[componentId]);
+    if (m_componentPaths.contains(componentId)) {
+        const TempFilePaths& paths = m_componentPaths[componentId];
+        exportWorker->setOutputPaths({paths.wrlTempPath, paths.stepTempPath});
     }
 
     // 使用QPointer防止stage已销毁时lambda访问悬空指针
@@ -131,10 +150,13 @@ void Model3DExportStage::startWorker(QObject* worker,
                 }
 
                 // 如果成功，提交临时文件
-                if (success && stagePtr->m_finalPaths.contains(componentId)) {
-                    QString tempPath = stagePtr->m_tempPaths.value(componentId);
-                    QString finalPath = stagePtr->m_finalPaths.value(componentId);
-                    stagePtr->commitTempFile(tempPath, finalPath);
+                if (success && stagePtr->m_componentPaths.contains(componentId)) {
+                    const TempFilePaths paths = stagePtr->m_componentPaths.value(componentId);
+                    const bool wrlCommitted = stagePtr->commitTempFile(paths.wrlTempPath, paths.wrlFinalPath);
+                    const bool stepCommitted = stagePtr->commitTempFile(paths.stepTempPath, paths.stepFinalPath);
+                    if (!wrlCommitted || !stepCommitted) {
+                        success = false;
+                    }
                 }
 
                 stagePtr->completeItemProgress(exportWorker, componentId, success, error);

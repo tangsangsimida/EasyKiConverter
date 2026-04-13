@@ -5,7 +5,7 @@
 namespace EasyKiConverter {
 
 ValidationStateManager::ValidationStateManager(QObject* parent)
-    : QObject(parent), m_pendingValidationCount(0), m_totalValidationCount(0) {}
+    : QObject(parent), m_pendingValidationCount(0), m_totalValidationCount(0), m_previewFetchEnabled(false) {}
 
 ValidationStateManager::~ValidationStateManager() {}
 

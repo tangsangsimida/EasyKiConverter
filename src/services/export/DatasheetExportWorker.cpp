@@ -1,5 +1,6 @@
 #include "DatasheetExportWorker.h"
 
+#include "../ComponentCacheService.h"
 #include "../../models/ComponentData.h"
 
 #include <QDebug>
@@ -82,7 +83,6 @@ void DatasheetExportWorker::run() {
             return;
         }
 
-        // 优先使用缓存的数据，否则使用URL下载
         if (!datasheetData.isEmpty()) {
             // 使用内存中的数据写入文件
             QFile file(filePath);
@@ -101,14 +101,34 @@ void DatasheetExportWorker::run() {
                 emit completed(m_componentId, false, QStringLiteral("Failed to write datasheet data"));
             }
         } else if (!datasheetUrl.isEmpty()) {
-            // URL存在但数据为空：说明预加载阶段的数据手册下载未完成或失败
-            // 这种情况不应该发生，因为预加载应该等待所有异步下载完成
-            qWarning() << "DatasheetExportWorker: URL exists but data is empty for" << m_componentId
-                       << "- preload phase did not complete datasheet download";
-            emit completed(
-                m_componentId, false, QStringLiteral("Datasheet download incomplete (preload phase did not complete)"));
+            QString format = m_data->datasheetFormat();
+            QByteArray downloadedData =
+                ComponentCacheService::instance()->downloadDatasheet(m_componentId, datasheetUrl, &format);
+
+            if (downloadedData.isEmpty()) {
+                emit completed(m_componentId, false, QStringLiteral("Failed to download datasheet from cached URL"));
+                return;
+            }
+
+            QFile file(filePath);
+            if (!file.open(QIODevice::WriteOnly)) {
+                emit completed(m_componentId, false, QStringLiteral("Failed to open file for writing"));
+                return;
+            }
+
+            qint64 written = file.write(downloadedData);
+            file.close();
+
+            if (written == downloadedData.size()) {
+                qDebug() << "DatasheetExportWorker: Successfully downloaded and exported" << filePath;
+                emit completed(m_componentId, true, QString());
+            } else {
+                emit completed(m_componentId, false, QStringLiteral("Failed to write downloaded datasheet data"));
+            }
         } else {
-            emit completed(m_componentId, false, QStringLiteral("No datasheet data available"));
+            qWarning() << "DatasheetExportWorker: URL exists but data is empty for" << m_componentId
+                       << "- no datasheet URL or cached data available";
+            emit completed(m_componentId, false, QStringLiteral("No datasheet data or URL available"));
         }
 
     } catch (const std::exception& e) {

@@ -6,6 +6,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QRandomGenerator>
+#include <QSharedPointer>
 #include <QThread>
 #include <QTimer>
 #include <QUrlQuery>
@@ -197,9 +198,9 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
     // 使用专用的缓存线程池实现真正的异步非阻塞加载
     // 改进：收集所有图片数据，一次性发射批量信号，减少 UI 更新次数
     // 为每个组件创建一个临时的图片数据容器
-    QMap<int, QByteArray>* componentImageData = new QMap<int, QByteArray>();
-    int* loadedCount = new int(0);
-    int totalImages = pathsToLoad.size();
+    QSharedPointer<QMap<int, QByteArray>> componentImageData = QSharedPointer<QMap<int, QByteArray>>::create();
+    QSharedPointer<int> loadedCount = QSharedPointer<int>::create(0);
+    const int totalImages = pathsToLoad.size();
 
     for (const auto& [imageIndex, path] : pathsToLoad) {
         QFuture<QByteArray> future = QtConcurrent::run(m_cacheThreadPool, [path]() {
@@ -211,52 +212,35 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
         });
 
         QFutureWatcher<QByteArray>* watcher = new QFutureWatcher<QByteArray>(this);
-        watcher->setProperty("componentId", componentId);
-        watcher->setProperty("imageIndex", imageIndex);
-        watcher->setProperty("componentImageData", QVariant::fromValue(componentImageData));
-        watcher->setProperty("loadedCount", QVariant::fromValue(loadedCount));
-        watcher->setProperty("totalImages", totalImages);
-
-        connect(watcher, &QFutureWatcher<QByteArray>::finished, this, [this, watcher]() {
-            // 获取当前完成的 watcher 的组件信息
-            QString compId = watcher->property("componentId").toString();
-            int imgIndex = watcher->property("imageIndex").toInt();
+        connect(watcher,
+                &QFutureWatcher<QByteArray>::finished,
+                this,
+                [this, watcher, componentId, imageIndex, componentImageData, loadedCount, totalImages]() {
             QByteArray imageData = watcher->result();
 
-            QMap<int, QByteArray>* compImageData =
-                watcher->property("componentImageData").value<QMap<int, QByteArray>*>();
-            int* loadedCountPtr = watcher->property("loadedCount").value<int*>();
-            int totalImagesValue = watcher->property("totalImages").toInt();
-
-            if (!imageData.isEmpty() && compImageData) {
-                (*compImageData)[imgIndex] = imageData;
+            if (!imageData.isEmpty()) {
+                (*componentImageData)[imageIndex] = imageData;
             }
 
-            (*loadedCountPtr)++;
+            ++(*loadedCount);
 
             // 检查该组件是否所有图片都已加载完成
-            if (*loadedCountPtr >= totalImagesValue) {
-                qDebug() << "LcscImageService: All cached images loaded for" << compId
+            if (*loadedCount >= totalImages) {
+                qDebug() << "LcscImageService: All cached images loaded for" << componentId
                          << ", emitting batch imageReady signals";
 
                 // 批量发射所有图片的 imageReady 信号
-                if (compImageData) {
-                    for (auto it = compImageData->constBegin(); it != compImageData->constEnd(); ++it) {
-                        if (!it.value().isEmpty()) {
-                            emit imageReady(compId, it.value(), it.key());
-                        }
+                for (auto it = componentImageData->constBegin(); it != componentImageData->constEnd(); ++it) {
+                    if (!it.value().isEmpty()) {
+                        emit imageReady(componentId, it.value(), it.key());
                     }
                 }
 
                 // 更新计数
-                m_downloadCounts[compId] = totalImagesValue;
-
-                // 清理临时对象
-                delete compImageData;
-                delete loadedCountPtr;
+                m_downloadCounts[componentId] = totalImages;
 
                 // 检查下载完成
-                checkDownloadCompletion(compId);
+                checkDownloadCompletion(componentId);
             }
 
             // 清理 watcher

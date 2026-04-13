@@ -39,7 +39,7 @@ void PreviewImageEncodeRunnable::run() {
 }
 
 ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObject* parent)
-    : QAbstractListModel(parent), m_service(service), m_componentList(), m_bomFilePath(), m_bomResult() {
+    : QAbstractListModel(parent), m_service(service) {
     m_validationStateManager = new ValidationStateManager(this);
 
     m_previewImageUpdateTimer = new QTimer(this);
@@ -870,11 +870,15 @@ void ComponentListViewModel::handleAllImagesReady(const QString& componentId, co
     }
     if (item && item->componentData()) {
         QFutureWatcher<QList<QByteArray>>* watcher = new QFutureWatcher<QList<QByteArray>>(this);
-        connect(watcher, &QFutureWatcher<QList<QByteArray>>::finished, this, [this, watcher, item, componentId]() {
+        QPointer<ComponentListItemData> safeItem(item);
+        connect(watcher, &QFutureWatcher<QList<QByteArray>>::finished, this, [watcher, safeItem]() {
             QList<QByteArray> imageDataList = watcher->result();
             watcher->deleteLater();
-            if (!imageDataList.isEmpty()) {
-                item->componentData()->setPreviewImageData(imageDataList);
+            if (!safeItem || imageDataList.isEmpty()) {
+                return;
+            }
+            if (safeItem->componentData()) {
+                safeItem->componentData()->setPreviewImageData(imageDataList);
             }
         });
 

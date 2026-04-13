@@ -39,7 +39,9 @@ AsyncNetworkRequest::~AsyncNetworkRequest() {
         if (reply && !reply->isFinished()) {
             reply->abort();
         }
-        reply->deleteLater();
+        if (reply) {
+            reply->deleteLater();
+        }
     }
     m_pendingReplies.clear();
 
@@ -120,6 +122,16 @@ void AsyncNetworkRequest::start() {
 
 void AsyncNetworkRequest::startAttempt(int attemptNumber) {
     if (isCancelled() || isFinished()) {
+        return;
+    }
+
+    if (!m_networkManager) {
+        QMutexLocker locker(&m_resultMutex);
+        m_result.error = "Network manager is null";
+        m_result.success = false;
+        m_result.wasCancelled = false;
+        m_finished.storeRelease(1);
+        emit finished(m_result);
         return;
     }
 
@@ -217,7 +229,6 @@ void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
 
     // Check for error
     if (reply->error() != QNetworkReply::NoError) {
-        QNetworkReply::NetworkError error = reply->error();
         QString errorString = reply->errorString();
 
         // Check if cancelled

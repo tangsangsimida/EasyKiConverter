@@ -5,8 +5,8 @@
 
 #include <QDebug>
 #include <QDir>
-#include <QEventLoop>
 #include <QFile>
+#include <QFileInfo>
 
 namespace EasyKiConverter {
 
@@ -61,65 +61,86 @@ void Model3DExportWorker::run() {
         return;
     }
 
-    QString fileName = m_componentId + QStringLiteral(".wrl");
-    QString finalPath = outputDir + QStringLiteral("/") + fileName;
+    const QString wrlFinalPath = outputDir + QStringLiteral("/") + m_componentId + QStringLiteral(".wrl");
+    const QString stepFinalPath = outputDir + QStringLiteral("/") + m_componentId + QStringLiteral(".step");
+    const QString wrlWritePath = m_outputPaths.wrlTempPath.isEmpty() ? wrlFinalPath : m_outputPaths.wrlTempPath;
+    const QString stepWritePath = m_outputPaths.stepTempPath.isEmpty() ? stepFinalPath : m_outputPaths.stepTempPath;
 
-    // 使用tempPath if available, otherwise use finalPath
-    QString writePath = m_tempPath.isEmpty() ? finalPath : m_tempPath;
+    const auto ensureParentDir = [](const QString& filePath) {
+        QFileInfo fileInfo(filePath);
+        return fileInfo.absoluteDir().exists() || QDir().mkpath(fileInfo.absolutePath());
+    };
 
-    // 检查文件是否已存在（仅对最终路径检查）
-    if (QFile::exists(finalPath) && !m_options.overwriteExistingFiles && m_tempPath.isEmpty()) {
-        qDebug() << "Model3DExportWorker: File already exists, skipping" << finalPath;
+    if (!ensureParentDir(wrlWritePath) || !ensureParentDir(stepWritePath)) {
+        emit completed(m_componentId, false, QStringLiteral("Failed to create 3D model output directory"));
+        return;
+    }
+
+    if (!m_options.overwriteExistingFiles && m_outputPaths.wrlTempPath.isEmpty() && m_outputPaths.stepTempPath.isEmpty() &&
+        QFile::exists(wrlFinalPath) && QFile::exists(stepFinalPath)) {
+        qDebug() << "Model3DExportWorker: Files already exist, skipping" << wrlFinalPath << stepFinalPath;
         emit completed(m_componentId, true, QString());
         return;
     }
 
-    // 使用缓存的UUID通过Exporter3DModel下载3D模型
     QString uuid = m_data->model3DData()->uuid();
 
-    // 创建事件循环来等待异步下载完成
-    QEventLoop loop;
-    QString error;
+    auto downloadModel = [this, &uuid](auto downloadMethod, const QString& targetPath, const QString& formatName) {
+        QString error;
+        bool downloadCompleted = false;
 
-    // 连接Exporter3DModel的下载完成信号
-    connect(
-        m_exporter,
-        &Exporter3DModel::downloadSuccess,
-        &loop,
-        [this, &loop, &error](const QString& downloadedFilePath) {
-            Q_UNUSED(downloadedFilePath);
-            if (m_cancelled.load()) {
-                error = QStringLiteral("Cancelled");
-            } else {
-                qDebug() << "Model3DExportWorker: Successfully downloaded 3D model for" << m_componentId;
-            }
-            loop.quit();
-        },
-        Qt::SingleShotConnection);
+        QMetaObject::Connection successConnection;
+        QMetaObject::Connection errorConnection;
 
-    connect(
-        m_exporter,
-        &Exporter3DModel::downloadError,
-        &loop,
-        [this, &loop, &error](const QString& errorMessage) {
-            error = errorMessage;
-            qCritical() << "Model3DExportWorker: Download error:" << error;
-            loop.quit();
-        },
-        Qt::SingleShotConnection);
+        successConnection = connect(
+            m_exporter,
+            &Exporter3DModel::downloadSuccess,
+            this,
+            [this, &downloadCompleted, &error, targetPath](const QString& downloadedFilePath) {
+                if (downloadedFilePath != targetPath) {
+                    return;
+                }
+                if (m_cancelled.load()) {
+                    error = QStringLiteral("Cancelled");
+                    return;
+                }
+                downloadCompleted = true;
+            });
 
-    // 启动下载到临时路径
-    m_exporter->downloadObjModel(uuid, writePath);
+        errorConnection = connect(
+            m_exporter,
+            &Exporter3DModel::downloadError,
+            this,
+            [&error](const QString& errorMessage) { error = errorMessage; });
 
-    // 等待下载完成或取消
-    loop.exec();
+        (m_exporter->*downloadMethod)(uuid, targetPath);
 
-    // 发送完成信号
-    if (error.isEmpty()) {
-        emit completed(m_componentId, true, QString());
-    } else {
-        emit completed(m_componentId, false, error);
+        disconnect(successConnection);
+        disconnect(errorConnection);
+
+        if (!downloadCompleted && error.isEmpty()) {
+            error = QStringLiteral("%1 export did not complete").arg(formatName);
+        }
+        return error;
+    };
+
+    QString error = downloadModel(&Exporter3DModel::downloadObjModel, wrlWritePath, QStringLiteral("WRL"));
+    if (error.isEmpty() && !m_cancelled.load()) {
+        error = downloadModel(&Exporter3DModel::downloadStepModel, stepWritePath, QStringLiteral("STEP"));
     }
+
+    if (m_cancelled.load() && error.isEmpty()) {
+        error = QStringLiteral("Cancelled");
+    }
+
+    if (error.isEmpty()) {
+        qDebug() << "Model3DExportWorker: Successfully exported WRL and STEP for" << m_componentId;
+        emit completed(m_componentId, true, QString());
+        return;
+    }
+
+    qCritical() << "Model3DExportWorker: Download error:" << error;
+    emit completed(m_componentId, false, error);
 }
 
 void Model3DExportWorker::onDownloadError(const QString& error) {

@@ -73,7 +73,7 @@ void ExportTypeStage::start(const QStringList& componentIds,
     }
 
     // 启动初始批次：不超过 maxConcurrent 个 worker
-    int initialBatch = qMin(componentIds.size(), static_cast<int>(m_threadPool.maxThreadCount()));
+    int initialBatch = qMin(componentIds.size(), m_threadPool.maxThreadCount());
     for (int i = 0; i < initialBatch; ++i) {
         if (m_cancelled.load()) {
             break;
@@ -106,10 +106,22 @@ void ExportTypeStage::startNextWorker() {
         m_activeWorkers.insert(worker);  // 使用 QSet 而非 QList，O(1) 插入和删除
     }
 
+    ExportItemStatus statusSnapshot;
+    ExportTypeProgress progressSnapshot;
     {
         QMutexLocker locker(&m_progressMutex);
+        auto it = m_progress.itemStatus.find(componentId);
+        if (it != m_progress.itemStatus.end()) {
+            it->status = ExportItemStatus::Status::InProgress;
+            it->startTime = QDateTime::currentDateTime();
+            statusSnapshot = it.value();
+        }
         m_progress.inProgressCount++;
+        progressSnapshot = m_progress;
     }
+
+    emit itemStatusChanged(componentId, statusSnapshot);
+    emit progressChanged(progressSnapshot);
 
     startWorker(worker, componentId, data);
 }
@@ -188,6 +200,7 @@ void ExportTypeStage::completeItemProgress(QObject* worker,
         if (!success) {
             status.errorMessage = error;
         }
+        const ExportItemStatus statusSnapshot = status;
 
         m_progress.completedCount++;
         if (success) {
@@ -196,18 +209,21 @@ void ExportTypeStage::completeItemProgress(QObject* worker,
             m_progress.failedCount++;
         }
         m_progress.inProgressCount--;
+        const ExportTypeProgress progressSnapshot = m_progress;
 
         if (m_progress.completedCount >= m_progress.totalCount) {
             locker.unlock();
-            qDebug() << "ExportTypeStage:" << m_typeName << "completed. Success:" << m_progress.successCount
-                     << "Failed:" << m_progress.failedCount << "Skipped:" << m_progress.skippedCount;
-            emit completed(m_progress.successCount, m_progress.failedCount, m_progress.skippedCount);
+            emit itemStatusChanged(componentId, statusSnapshot);
+            emit progressChanged(progressSnapshot);
+            qDebug() << "ExportTypeStage:" << m_typeName << "completed. Success:" << progressSnapshot.successCount
+                     << "Failed:" << progressSnapshot.failedCount << "Skipped:" << progressSnapshot.skippedCount;
+            emit completed(progressSnapshot.successCount, progressSnapshot.failedCount, progressSnapshot.skippedCount);
             m_isRunning.store(false);
             return;
         } else {
             locker.unlock();
-            emit itemStatusChanged(componentId, status);
-            emit progressChanged(m_progress);
+            emit itemStatusChanged(componentId, statusSnapshot);
+            emit progressChanged(progressSnapshot);
         }
     }
 

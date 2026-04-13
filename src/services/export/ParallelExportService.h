@@ -216,6 +216,7 @@ signals:
 
 private slots:
     void onPreloadItemCompleted(const QString& componentId, bool success, const QString& error);
+    void onExportTypeProgressChanged(const QString& typeName, const ExportTypeProgress& progress);
     void onExportTypeCompleted(const QString& typeName, int successCount, int failedCount, int skippedCount);
     void onExportItemStatusChanged(const QString& componentId, const QString& typeName, const ExportItemStatus& status);
 
@@ -237,6 +238,11 @@ private:
      */
     void checkAllExportCompleted();
 
+    /**
+     * @brief 清理已结束的Stage对象
+     */
+    void cleanupExportStages();
+
     ExportOptions m_options;  ///< 导出选项
     QStringList m_componentIds;  ///< 待处理的元器件ID列表
     QMap<QString, QSharedPointer<ComponentData>> m_cachedData;  ///< 缓存的元器件数据
@@ -248,6 +254,7 @@ private:
     mutable QMutex m_progressMutex;  ///< 保护m_progress的互斥量
     bool m_preloadCompleted{false};  ///< 预加载是否已完成
     int m_runningExportStages{0};  ///< 正在运行的导出Stage数量
+    bool m_cancelRequested{false};  ///< 当前导出是否已请求取消
 };
 
 }  // namespace EasyKiConverter

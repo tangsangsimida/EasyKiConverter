@@ -48,14 +48,16 @@ WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
     , m_exportDatasheet(exportDatasheet)
     , m_debugMode(debugMode)
     , m_tempDir(tempDir)
-    , m_symbolExporter()
-    , m_footprintExporter()
-    , m_model3DExporter()
     , m_isAborted(0) {}
 
 WriteWorker::~WriteWorker() {}
 
 void WriteWorker::run() {
+    if (!m_status) {
+        qWarning() << "WriteWorker: null export status, skip run";
+        return;
+    }
+
     // 检查是否已被取消 (v3.0.5+)
     if (m_isAborted.loadRelaxed()) {
         m_status->writeSuccess = false;

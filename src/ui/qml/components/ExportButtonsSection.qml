@@ -48,7 +48,7 @@ ColumnLayout {
         backgroundColor: AppStyle.colors.primary
         hoverColor: AppStyle.colors.primaryHover
         pressedColor: AppStyle.colors.primaryPressed
-        visible: exportButtonsSection.exportProgressController && exportButtonsSection.exportProgressController.statisticsTotal > 0 // 只要有导出过就显示
+        visible: exportButtonsSection.exportProgressController && exportButtonsSection.exportProgressController.hasCompletedExport
         onClicked: {
             if (exportButtonsSection.exportProgressController) {
                 var success = exportButtonsSection.exportProgressController.openLastExportedFolder();

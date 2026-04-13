@@ -17,7 +17,8 @@
 namespace EasyKiConverter {
 
 NetworkWorker::NetworkWorker(const QString& componentId, TaskType taskType, const QString& uuid, QObject* parent)
-    : BaseWorker(), m_componentId(componentId), m_taskType(taskType), m_uuid(uuid) {
+    : m_componentId(componentId), m_taskType(taskType), m_uuid(uuid) {
+    Q_UNUSED(parent);
     // setAutoDelete(false) is set in BaseWorker constructor
 }
 

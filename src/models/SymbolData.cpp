@@ -4,7 +4,7 @@
 
 namespace EasyKiConverter {
 
-SymbolData::SymbolData() {}
+SymbolData::SymbolData() : m_info(), m_bbox() {}
 
 QJsonObject SymbolData::toJson() const {
     return SymbolDataSerializer::toJson(*this);

@@ -38,7 +38,7 @@ private:
     int m_totalValidationCount;  // 记录需要验证的总数
     QStringList m_validatedComponentIds;
     QStringList m_failedComponentIds;
-    bool m_previewFetchEnabled;
+    bool m_previewFetchEnabled{false};
 };
 
 }  // namespace EasyKiConverter

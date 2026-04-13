@@ -57,7 +57,7 @@ public:
     SymbolBBox calculatePartBBox(const SymbolPart& part) const;
 
 private:
-    SymbolBBox m_currentBBox;
+    SymbolBBox m_currentBBox{};
 };
 
 }  // namespace EasyKiConverter

@@ -9,7 +9,7 @@ Card {
     property var exportProgressController
     property var exportSettingsController
     title: qsTranslate("MainWindow", "导出统计")
-    visible: exportStatisticsCard.exportProgressController && exportStatisticsCard.exportProgressController.totalCount > 0
+    visible: exportStatisticsCard.exportProgressController && exportStatisticsCard.exportProgressController.hasCompletedExport
     ColumnLayout {
         width: parent.width
         spacing: AppStyle.spacing.md
