@@ -1,6 +1,7 @@
 #include "PreviewImagesExportWorker.h"
 
 #include "../../models/ComponentData.h"
+#include "../../services/ComponentCacheService.h"
 
 #include <QDebug>
 #include <QDir>
@@ -38,7 +39,39 @@ void PreviewImagesExportWorker::run() {
     qDebug() << "PreviewImagesExportWorker: Exporting" << m_componentId;
 
     // 检查预览图数据是否可用
-    if (m_data->previewImageData().isEmpty()) {
+    QList<QByteArray> previewDataList = m_data->previewImageData();
+
+    // 如果内存中没有预览图数据，尝试从磁盘缓存加载
+    if (previewDataList.isEmpty()) {
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        for (int i = 0; i < 3; ++i) {  // 最多尝试加载3张预览图
+            QByteArray imageData = cache->loadPreviewImage(m_componentId, i);
+            if (imageData.isEmpty()) {
+                break;
+            }
+            previewDataList.append(imageData);
+        }
+        qDebug() << "PreviewImagesExportWorker: Loaded" << previewDataList.size() << "preview images from cache for"
+                 << m_componentId;
+    }
+
+    // 如果缓存被清空，但内存里仍保留了预览图 URL，则在导出阶段直接回补下载。
+    if (previewDataList.isEmpty()) {
+        const QStringList previewUrls = m_data->previewImages();
+        if (!previewUrls.isEmpty()) {
+            ComponentCacheService* cache = ComponentCacheService::instance();
+            for (int i = 0; i < previewUrls.size(); ++i) {
+                const QByteArray imageData = cache->downloadPreviewImage(m_componentId, previewUrls[i], i);
+                if (!imageData.isEmpty()) {
+                    previewDataList.append(imageData);
+                }
+            }
+            qDebug() << "PreviewImagesExportWorker: Re-downloaded" << previewDataList.size()
+                     << "preview images from URLs for" << m_componentId;
+        }
+    }
+
+    if (previewDataList.isEmpty()) {
         // 无预览图数据时按跳过处理，不阻塞整体导出
         emit completed(m_componentId, true, QStringLiteral("Preview image data not available, skipped"));
         return;
@@ -58,7 +91,6 @@ void PreviewImagesExportWorker::run() {
 
     // 遍历导出所有预览图
     int successCount = 0;
-    QList<QByteArray> previewDataList = m_data->previewImageData();
     int totalCount = previewDataList.size();
 
     for (int i = 0; i < totalCount; ++i) {
@@ -126,11 +158,10 @@ void PreviewImagesExportWorker::run() {
         // 部分成功也视为失败，避免提交不完整的临时文件
         qWarning() << "PreviewImagesExportWorker: Partially exported" << successCount << "/" << totalCount
                    << "- treating as failure";
-        emit completed(m_componentId,
-                      false,
-                      QStringLiteral("Partial export failure: %1 of %2 images exported")
-                          .arg(successCount)
-                          .arg(totalCount));
+        emit completed(
+            m_componentId,
+            false,
+            QStringLiteral("Partial export failure: %1 of %2 images exported").arg(successCount).arg(totalCount));
     } else {
         emit completed(m_componentId, false, QStringLiteral("Failed to export any preview images"));
     }

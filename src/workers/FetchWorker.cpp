@@ -578,12 +578,10 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
                                 if (nodeObj.contains("attrs") && nodeObj["attrs"].isObject()) {
                                     QJsonObject attrs = nodeObj["attrs"].toObject();
                                     // 只从 c_etype == "outline3D" 的节点获取 3D 模型 UUID
-                                    if (attrs.contains("c_etype") &&
-                                        attrs["c_etype"].toString() == "outline3D" &&
+                                    if (attrs.contains("c_etype") && attrs["c_etype"].toString() == "outline3D" &&
                                         attrs.contains("uuid") && !attrs["uuid"].toString().isEmpty()) {
                                         uuid = attrs["uuid"].toString();
-                                        qDebug()
-                                            << "Found 3D model UUID from outline3D SVGNODE:" << uuid;
+                                        qDebug() << "Found 3D model UUID from outline3D SVGNODE:" << uuid;
                                         break;
                                     }
                                 }

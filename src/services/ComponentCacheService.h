@@ -274,6 +274,13 @@ public:
     QByteArray loadDatasheet(const QString& lcscId) const;
 
     /**
+     * @brief 检查元器件是否有符号封装缓存（CAD数据）
+     * @param lcscId 元器件ID
+     * @return bool 是否有有效的符号封装缓存
+     */
+    bool hasSymbolFootprintCache(const QString& lcscId) const;
+
+    /**
      * @brief 从L2磁盘缓存加载元器件元数据JSON
      * @param lcscId 元器件ID
      * @return QJsonObject 元数据对象，如果不存在返回空
@@ -472,6 +479,44 @@ private:
      * @brief 保存元数据JSON到L2
      */
     void saveMetadata(const QString& lcscId, const QJsonObject& metadata);
+
+    /**
+     * @brief 从ComponentData构建元数据
+     */
+    QJsonObject buildMetadata(const QString& componentId, const ComponentData& data) const;
+
+    /**
+     * @brief 合并新旧元数据，避免新数据缺字段时覆盖掉已有缓存
+     */
+    QJsonObject mergeMetadata(const QJsonObject& existing, const QJsonObject& incoming) const;
+
+    /**
+     * @brief 原子写文件，防止半写入缓存损坏
+     */
+    bool writeFileAtomically(const QString& path, const QByteArray& data) const;
+
+    /**
+     * @brief 解析datasheet缓存文件实际路径
+     */
+    QString resolveDatasheetPath(const QString& lcscId,
+                                 const QString& preferredFormat = QString(),
+                                 bool forWrite = false) const;
+
+    /**
+     * @brief 启动时自修复缓存目录
+     */
+    void selfHealCache();
+
+    /**
+     * @brief 修复单个元器件缓存目录
+     * @return true 表示目录保留，false 表示目录已删除或不可用
+     */
+    bool repairComponentCache(const QString& lcscId);
+
+    /**
+     * @brief 修复3D模型缓存目录中的坏文件
+     */
+    void repairModel3DCache();
 
     /**
      * @brief 生成缓存key

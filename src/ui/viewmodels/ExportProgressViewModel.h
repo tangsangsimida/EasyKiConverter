@@ -9,6 +9,7 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QUrl>
 #include <QVariantList>
 
 namespace EasyKiConverter {
@@ -43,6 +44,7 @@ class ExportProgressViewModel : public QObject {
     Q_PROPERTY(bool isStopping READ isStopping NOTIFY isStoppingChanged)
     Q_PROPERTY(int statisticsTotal READ statisticsTotal NOTIFY totalCountChanged)
     Q_PROPERTY(bool hasCompletedExport READ hasCompletedExport NOTIFY hasCompletedExportChanged)
+    Q_PROPERTY(QString cacheDirUrl READ cacheDirUrl CONSTANT)
 
 public:
     explicit ExportProgressViewModel(ParallelExportService* exportService,
@@ -110,6 +112,14 @@ public:
 
     bool hasCompletedExport() const {
         return m_hasCompletedExport;
+    }
+
+    QString cacheDirUrl() const {
+        auto cacheDir = ComponentCacheService::instance()->cacheDir();
+        if (cacheDir.isEmpty()) {
+            return QString();
+        }
+        return QUrl::fromLocalFile(cacheDir).toString();
     }
 
     Q_INVOKABLE QString getLastExportedPath() const;

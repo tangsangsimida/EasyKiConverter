@@ -9,9 +9,7 @@
 
 namespace EasyKiConverter {
 
-TempFileManager::TempFileManager(QObject* parent)
-    : QObject(parent) {
-}
+TempFileManager::TempFileManager(QObject* parent) : QObject(parent) {}
 
 TempFileManager::~TempFileManager() {
     rollbackAll();

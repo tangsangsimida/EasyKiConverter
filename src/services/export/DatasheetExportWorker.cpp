@@ -1,7 +1,7 @@
 #include "DatasheetExportWorker.h"
 
-#include "../ComponentCacheService.h"
 #include "../../models/ComponentData.h"
+#include "../ComponentCacheService.h"
 
 #include <QDebug>
 #include <QDir>
@@ -39,6 +39,15 @@ void DatasheetExportWorker::run() {
     // 检查数据手册数据是否可用（URL或数据二选一）
     QString datasheetUrl = m_data->datasheet();
     QByteArray datasheetData = m_data->datasheetData();
+
+    // 如果内存中没有数据手册数据，尝试从磁盘缓存加载
+    if (datasheetData.isEmpty() && !datasheetUrl.isEmpty()) {
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        datasheetData = cache->loadDatasheet(m_componentId);
+        if (!datasheetData.isEmpty()) {
+            qDebug() << "DatasheetExportWorker: Loaded datasheet from cache for" << m_componentId;
+        }
+    }
 
     if (datasheetUrl.isEmpty() && datasheetData.isEmpty()) {
         emit completed(m_componentId, false, QStringLiteral("Datasheet not available"));

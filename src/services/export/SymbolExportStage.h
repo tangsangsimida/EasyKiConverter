@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ExportTypeStage.h"
 #include "ExportProgress.h"
+#include "ExportTypeStage.h"
 #include "TempFileManager.h"
 
 namespace EasyKiConverter {
@@ -67,7 +67,10 @@ public:
 
 protected:
     // 以下方法覆盖基类纯虚函数，但在此实现中不使用
-    QObject* createWorker() override { return nullptr; }
+    QObject* createWorker() override {
+        return nullptr;
+    }
+
     void startWorker(QObject*, const QString&, const QSharedPointer<ComponentData>&) override {}
 
 private:
@@ -75,7 +78,7 @@ private:
      * @brief 在工作线程中执行库级别的导出
      */
     void doLibraryExport(const QStringList& componentIds,
-                          const QMap<QString, QSharedPointer<ComponentData>>& cachedData);
+                         const QMap<QString, QSharedPointer<ComponentData>>& cachedData);
 
     struct ExportOptions m_options;  ///< 导出选项（库级别）
     TempFileManager m_tempManager;  ///< 临时文件管理器
@@ -83,3 +86,19 @@ private:
 };
 
 }  // namespace EasyKiConverter
+
+// 我草了老铁，我感觉我的傻福朋友最近有点开智了，
+// 每当深夜就开始跟我讨论人生的意义到底是什么，
+// 我们每天日复一日的过着单调的生活，
+// 一年到底是过了365天还是把一天过了365遍。
+// 我说朋友，重复一天的生活有什么不好的，
+// 我怎么感觉每天都有不同的报应在等着我。
+// 之前有人跟我说我这辈子也就这样了，
+// 我说谢谢你呀，我的生活真的不会变得更糟糕了吗？
+// 但是我仔细回味回味感觉有些不对。
+// 为什么我平时傻福一样的朋友只会在晚上刷新出这些有哲理的问题，
+// 朋友你要是再在你看完新玩家招募动画以后，
+// 在贤者时间跟我聊这些问题！
+// 我就会在地球online把你下载到本地，
+// 狠狠的击破你的弱点！
+// 咕咕嘎嘎！！！

@@ -11,16 +11,14 @@
 
 namespace EasyKiConverter {
 
-Model3DExportStage::Model3DExportStage(QObject* parent)
-    : ExportTypeStage("Model3D", 2, parent) {
-}
+Model3DExportStage::Model3DExportStage(QObject* parent) : ExportTypeStage("Model3D", 2, parent) {}
 
 Model3DExportStage::~Model3DExportStage() {
     cancel();
 }
 
 void Model3DExportStage::start(const QStringList& componentIds,
-                              const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
+                               const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
     if (m_isExporting.load()) {
         qWarning() << "Model3DExportStage: Export already in progress";
         return;
@@ -58,7 +56,8 @@ void Model3DExportStage::start(const QStringList& componentIds,
         TempFilePaths paths;
         paths.wrlFinalPath = outputDir + QDir::separator() + componentId + QStringLiteral(".wrl");
         paths.stepFinalPath = outputDir + QDir::separator() + componentId + QStringLiteral(".step");
-        paths.wrlTempPath = m_tempManager.createTempFilePath(componentId + QStringLiteral("_wrl"), QStringLiteral(".wrl"));
+        paths.wrlTempPath =
+            m_tempManager.createTempFilePath(componentId + QStringLiteral("_wrl"), QStringLiteral(".wrl"));
         paths.stepTempPath =
             m_tempManager.createTempFilePath(componentId + QStringLiteral("_step"), QStringLiteral(".step"));
 
@@ -146,7 +145,8 @@ void Model3DExportStage::startWorker(QObject* worker,
             &Model3DExportWorker::completed,
             this,
             [stagePtr, exportWorker, componentId](const QString&, bool success, const QString& error) {
-                qInfo() << "Model3DExportStage: Worker completed signal received for" << componentId << "success:" << success;
+                qInfo() << "Model3DExportStage: Worker completed signal received for" << componentId
+                        << "success:" << success;
                 if (!stagePtr) {
                     qInfo() << "Model3DExportStage: stagePtr is null!";
                     return;

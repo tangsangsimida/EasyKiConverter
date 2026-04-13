@@ -216,37 +216,37 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
                 &QFutureWatcher<QByteArray>::finished,
                 this,
                 [this, watcher, componentId, imageIndex, componentImageData, loadedCount, totalImages]() {
-            QByteArray imageData = watcher->result();
+                    QByteArray imageData = watcher->result();
 
-            if (!imageData.isEmpty()) {
-                (*componentImageData)[imageIndex] = imageData;
-            }
-
-            ++(*loadedCount);
-
-            // 检查该组件是否所有图片都已加载完成
-            if (*loadedCount >= totalImages) {
-                qDebug() << "LcscImageService: All cached images loaded for" << componentId
-                         << ", emitting batch imageReady signals";
-
-                // 批量发射所有图片的 imageReady 信号
-                for (auto it = componentImageData->constBegin(); it != componentImageData->constEnd(); ++it) {
-                    if (!it.value().isEmpty()) {
-                        emit imageReady(componentId, it.value(), it.key());
+                    if (!imageData.isEmpty()) {
+                        (*componentImageData)[imageIndex] = imageData;
                     }
-                }
 
-                // 更新计数
-                m_downloadCounts[componentId] = totalImages;
+                    ++(*loadedCount);
 
-                // 检查下载完成
-                checkDownloadCompletion(componentId);
-            }
+                    // 检查该组件是否所有图片都已加载完成
+                    if (*loadedCount >= totalImages) {
+                        qDebug() << "LcscImageService: All cached images loaded for" << componentId
+                                 << ", emitting batch imageReady signals";
 
-            // 清理 watcher
-            m_pendingImageWatchers.removeOne(watcher);
-            watcher->deleteLater();
-        });
+                        // 批量发射所有图片的 imageReady 信号
+                        for (auto it = componentImageData->constBegin(); it != componentImageData->constEnd(); ++it) {
+                            if (!it.value().isEmpty()) {
+                                emit imageReady(componentId, it.value(), it.key());
+                            }
+                        }
+
+                        // 更新计数
+                        m_downloadCounts[componentId] = totalImages;
+
+                        // 检查下载完成
+                        checkDownloadCompletion(componentId);
+                    }
+
+                    // 清理 watcher
+                    m_pendingImageWatchers.removeOne(watcher);
+                    watcher->deleteLater();
+                });
 
         m_pendingImageWatchers.append(watcher);
         watcher->setFuture(future);

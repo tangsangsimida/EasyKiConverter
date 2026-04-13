@@ -112,16 +112,6 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                 auto item = findItemData(componentId);
                 if (item) {
                     item->insertPreviewImageSilent(image, imageIndex);
-                    qDebug() << "[ViewModel] previewImageReady - component:" << componentId << "index:" << imageIndex
-                             << "image valid:" << !image.isNull();
-                    // 添加防抖：收到图片后将其加入待更新列表，并重启防抖定时器
-                    {
-                        QMutexLocker locker(&m_previewImageMutex);
-                        if (!m_pendingPreviewImageItems.contains(item)) {
-                            m_pendingPreviewImageItems.append(item);
-                        }
-                    }
-                    m_previewImageUpdateTimer->start();
                 }
             });
     connect(m_service,
@@ -138,6 +128,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                     // 预览图失败也应该标记为 completed（不影响验证）
                     if (item->validationPhase() == "fetching_preview") {
                         item->setValidationPhase("completed");
+                        emit filteredCountChanged();
                     }
                 }
             });
@@ -158,6 +149,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                 auto item = findItemData(componentId);
                 if (item && item->validationPhase() == "fetching_preview") {
                     item->setValidationPhase("completed");
+                    emit filteredCountChanged();
                 }
             });
 }
@@ -415,6 +407,7 @@ void ComponentListViewModel::processNextBatchAdd() {
         auto item = new ComponentListItemData(id, this);
         item->setFetching(true);
         item->setValid(false);
+        item->setValidationPhase("validating");
         newItems.append(item);
     }
 
@@ -715,6 +708,7 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
     item->setValid(true);
     item->setValidationPhase("fetching_preview");  // 预览图获取阶段
     item->setErrorMessage("");
+    emit filteredCountChanged();
 
     m_validationStateManager->onComponentValidated(componentId);
     QTimer::singleShot(0, this, [this, componentId]() { onValidationComplete(componentId); });
@@ -856,41 +850,31 @@ void ComponentListViewModel::handleAllImagesReady(const QString& componentId, co
     if (item) {
         // 预览图获取完成，设置 validationPhase 为 completed
         item->setValidationPhase("completed");
-        qDebug() << "[ViewModel] handleAllImagesReady - component:" << componentId
-                 << "current raw images count:" << item->previewImagesRaw().size();
-        {
-            QMutexLocker locker(&m_previewImageMutex);
-            if (!m_pendingPreviewImageItems.contains(item)) {
-                m_pendingPreviewImageItems.append(item);
-            }
-        }
-        if (!m_previewImageUpdateTimer->isActive()) {
-            m_previewImageUpdateTimer->start();
-        }
+        emit filteredCountChanged();
     }
-    if (item && item->componentData()) {
-        QFutureWatcher<QList<QByteArray>>* watcher = new QFutureWatcher<QList<QByteArray>>(this);
+    if (item) {
+        QFutureWatcher<QStringList>* watcher = new QFutureWatcher<QStringList>(this);
         QPointer<ComponentListItemData> safeItem(item);
-        connect(watcher, &QFutureWatcher<QList<QByteArray>>::finished, this, [watcher, safeItem]() {
-            QList<QByteArray> imageDataList = watcher->result();
+        connect(watcher, &QFutureWatcher<QStringList>::finished, this, [watcher, safeItem]() {
+            const QStringList encodedImages = watcher->result();
             watcher->deleteLater();
-            if (!safeItem || imageDataList.isEmpty()) {
+            if (!safeItem || encodedImages.isEmpty()) {
                 return;
             }
-            if (safeItem->componentData()) {
-                safeItem->componentData()->setPreviewImageData(imageDataList);
-            }
+            safeItem->setEncodedPreviewImages(encodedImages);
         });
 
-        QFuture<QList<QByteArray>> future = QtConcurrent::run([imagePaths]() -> QList<QByteArray> {
-            QList<QByteArray> imageDataList;
+        QFuture<QStringList> future = QtConcurrent::run([imagePaths]() -> QStringList {
+            QStringList encodedImages;
             for (const QString& path : imagePaths) {
                 QFile file(path);
                 if (file.open(QIODevice::ReadOnly)) {
-                    imageDataList.append(file.readAll());
+                    encodedImages.append(QString::fromLatin1(file.readAll().toBase64()));
+                } else {
+                    encodedImages.append(QString());
                 }
             }
-            return imageDataList;
+            return encodedImages;
         });
         watcher->setFuture(future);
     }
@@ -943,29 +927,11 @@ void ComponentListViewModel::processCachePreviewImages() {
         return;
     }
 
-    // 使用 QTimer::singleShot(0) 批量调度到下一个事件循环，避免阻塞 UI
-    // 每批 2 个组件，分批处理让 UI 有时间响应
-    const int BATCH_SIZE = 1;
-    QList<QString> keys;
-    QList<QStringList> values;
-
-    for (auto it = pending.begin(); it != pending.end(); ++it) {
-        keys.append(it.key());
-        values.append(it.value());
-    }
-
-    int totalCount = keys.size();
-    for (int i = 0; i < totalCount; i += BATCH_SIZE) {
-        int batchEnd = qMin(i + BATCH_SIZE, totalCount);
-        int batchIndex = i / BATCH_SIZE;
-        QTimer::singleShot(0, this, [this, keys, values, i, batchEnd, batchIndex, totalCount]() {
-            for (int j = i; j < batchEnd; ++j) {
-                auto item = findItemData(keys[j]);
-                if (item) {
-                    item->setEncodedPreviewImages(values[j]);
-                }
-            }
-        });
+    for (auto it = pending.cbegin(); it != pending.cend(); ++it) {
+        auto item = findItemData(it.key());
+        if (item) {
+            item->setEncodedPreviewImages(it.value());
+        }
     }
 }
 
@@ -1156,7 +1122,6 @@ int ComponentListViewModel::filteredCount() const {
             if (m_filterMode == "all") {
                 count++;
             } else if (m_filterMode == "validating") {
-                // 验证中：仅 CAD 数据验证阶段（不包括预览图获取）
                 QString phase = item->validationPhase();
                 if (phase == "validating")
                     count++;
@@ -1181,7 +1146,11 @@ int ComponentListViewModel::validatingCount() const {
     {
         QMutexLocker locker(&m_listMutex);
         for (const auto& item : m_componentList) {
-            if (item && item->validationPhase() == "validating")
+            if (!item) {
+                continue;
+            }
+            const QString phase = item->validationPhase();
+            if (phase == "validating")
                 count++;
         }
     }

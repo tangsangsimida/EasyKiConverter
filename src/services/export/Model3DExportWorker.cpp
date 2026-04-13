@@ -2,10 +2,10 @@
 
 #include "../../core/kicad/Exporter3DModel.h"
 #include "../../models/ComponentData.h"
+#include "../../services/ComponentCacheService.h"
 
 #include <QDebug>
 #include <QDir>
-#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
 
@@ -44,8 +44,18 @@ void Model3DExportWorker::run() {
 
     qDebug() << "Model3DExportWorker: Exporting" << m_componentId;
 
-    // 检查3D模型UUID是否可用
-    if (!m_data->model3DData() || m_data->model3DData()->uuid().isEmpty()) {
+    QString uuid;
+    if (m_data->model3DData()) {
+        uuid = m_data->model3DData()->uuid();
+    }
+    if (uuid.isEmpty()) {
+        QSharedPointer<ComponentData> cachedComponent =
+            ComponentCacheService::instance()->loadComponentData(m_componentId);
+        if (cachedComponent && cachedComponent->model3DData()) {
+            uuid = cachedComponent->model3DData()->uuid();
+        }
+    }
+    if (uuid.isEmpty()) {
         emit completed(m_componentId, false, QStringLiteral("3D model UUID not available"));
         return;
     }
@@ -77,69 +87,86 @@ void Model3DExportWorker::run() {
         return;
     }
 
-    if (!m_options.overwriteExistingFiles && m_outputPaths.wrlTempPath.isEmpty() && m_outputPaths.stepTempPath.isEmpty() &&
-        QFile::exists(wrlFinalPath) && QFile::exists(stepFinalPath)) {
+    if (!m_options.overwriteExistingFiles && m_outputPaths.wrlTempPath.isEmpty() &&
+        m_outputPaths.stepTempPath.isEmpty() && QFile::exists(wrlFinalPath) && QFile::exists(stepFinalPath)) {
         qDebug() << "Model3DExportWorker: Files already exist, skipping" << wrlFinalPath << stepFinalPath;
         emit completed(m_componentId, true, QString());
         return;
     }
 
-    QString uuid = m_data->model3DData()->uuid();
+    ComponentCacheService* cache = ComponentCacheService::instance();
 
-    auto downloadModel = [this, &uuid](auto downloadMethod, const QString& targetPath, const QString& formatName) -> QString {
-        QString localError;
-        bool downloadCompleted = false;
-        QEventLoop loop;  // 使用事件循环处理同步调用中的信号
+    // 检查缓存中是否已有3D模型文件
+    bool wrlFromCache = false;
+    bool stepFromCache = false;
 
-        auto successHandler = [this, &downloadCompleted, &localError, targetPath, &loop](const QString& downloadedFilePath) {
-            if (downloadedFilePath != targetPath) {
-                return;
-            }
-            if (m_cancelled.load()) {
-                localError = QStringLiteral("Cancelled");
-                loop.quit();
-                return;
-            }
-            downloadCompleted = true;
-            loop.quit();
-        };
+    if (cache->hasModel3DCached(uuid, QStringLiteral("wrl")) &&
+        cache->copyModel3DToFile(uuid, QStringLiteral("wrl"), wrlWritePath)) {
+        qDebug() << "Model3DExportWorker: WRL cache hit for" << uuid;
+        wrlFromCache = true;
+    }
 
-        auto errorHandler = [&localError, &loop](const QString& errorMessage) {
-            localError = errorMessage;
-            loop.quit();
-        };
+    if (cache->hasModel3DCached(uuid, QStringLiteral("step")) &&
+        cache->copyModel3DToFile(uuid, QStringLiteral("step"), stepWritePath)) {
+        qDebug() << "Model3DExportWorker: STEP cache hit for" << uuid;
+        stepFromCache = true;
+    }
 
-        QMetaObject::Connection successConnection = connect(
-            m_exporter,
-            &Exporter3DModel::downloadSuccess,
-            this,
-            successHandler);
+    // 如果两个文件都从缓存加载成功，直接完成
+    if (wrlFromCache && stepFromCache) {
+        qDebug() << "Model3DExportWorker: Both WRL and STEP loaded from cache for" << m_componentId;
+        emit completed(m_componentId, true, QString());
+        return;
+    }
 
-        QMetaObject::Connection errorConnection = connect(
-            m_exporter,
-            &Exporter3DModel::downloadError,
-            this,
-            errorHandler);
-
-        (m_exporter->*downloadMethod)(uuid, targetPath);
-
-        // 如果信号尚未被处理（同步调用），运行事件循环等待
-        if (!downloadCompleted && localError.isEmpty()) {
-            loop.exec();
+    auto buildModelData = [this, &uuid]() {
+        Model3DData modelData;
+        modelData.setUuid(uuid);
+        if (m_data && m_data->model3DData()) {
+            modelData.setName(m_data->model3DData()->name());
+            modelData.setTranslation(m_data->model3DData()->translation());
+            modelData.setRotation(m_data->model3DData()->rotation());
         }
-
-        disconnect(successConnection);
-        disconnect(errorConnection);
-
-        if (!downloadCompleted && localError.isEmpty()) {
-            localError = QStringLiteral("%1 export did not complete").arg(formatName);
-        }
-        return localError;
+        return modelData;
     };
 
-    QString error = downloadModel(&Exporter3DModel::downloadObjModel, wrlWritePath, QStringLiteral("WRL"));
-    if (error.isEmpty() && !m_cancelled.load()) {
-        error = downloadModel(&Exporter3DModel::downloadStepModel, stepWritePath, QStringLiteral("STEP"));
+    QString error;
+    if (!wrlFromCache) {
+        QByteArray objData;
+        if (!m_exporter->downloadObjDataSync(uuid, &objData, &error)) {
+            if (error.isEmpty()) {
+                error = QStringLiteral("Failed to download OBJ data for WRL export");
+            }
+        } else {
+            Model3DData modelData = buildModelData();
+            modelData.setRawObj(QString::fromUtf8(objData));
+            if (!m_exporter->exportToWrl(modelData, wrlWritePath)) {
+                error = QStringLiteral("Failed to convert OBJ to WRL");
+            } else {
+                QFile file(wrlWritePath);
+                if (file.open(QIODevice::ReadOnly)) {
+                    cache->saveModel3D(uuid, file.readAll(), QStringLiteral("wrl"));
+                    qDebug() << "Model3DExportWorker: Saved WRL to cache for" << m_componentId << "uuid" << uuid;
+                }
+            }
+        }
+    }
+    if (error.isEmpty() && !stepFromCache && !m_cancelled.load()) {
+        QByteArray stepData;
+        if (!m_exporter->downloadStepDataSync(uuid, &stepData, &error)) {
+            if (error.isEmpty()) {
+                error = QStringLiteral("Failed to download STEP data");
+            }
+        } else {
+            Model3DData modelData = buildModelData();
+            modelData.setStep(stepData);
+            if (!m_exporter->exportToStep(modelData, stepWritePath)) {
+                error = QStringLiteral("Failed to write STEP file");
+            } else {
+                cache->saveModel3D(uuid, stepData, QStringLiteral("step"));
+                qDebug() << "Model3DExportWorker: Saved STEP to cache for" << m_componentId << "uuid" << uuid;
+            }
+        }
     }
 
     if (m_cancelled.load() && error.isEmpty()) {
@@ -152,7 +179,7 @@ void Model3DExportWorker::run() {
         return;
     }
 
-    qCritical("%s", qPrintable(QString("Model3DExportWorker: Download error: %1").arg(error)));
+    qCritical() << "Model3DExportWorker: Export failed for" << m_componentId << "uuid" << uuid << "error:" << error;
     emit completed(m_componentId, false, error);
 }
 

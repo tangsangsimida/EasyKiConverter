@@ -131,6 +131,21 @@ Card {
                     }
                 }
             }
+            // 打开缓存目录按钮（只在调试模式下显示）
+            ModernButton {
+                text: qsTranslate("MainWindow", "打开缓存目录")
+                iconName: "folder"
+                backgroundColor: AppStyle.colors.surface
+                textColor: AppStyle.colors.textPrimary
+                hoverColor: AppStyle.colors.border
+                pressedColor: AppStyle.colors.borderFocus
+                visible: exportStatisticsCard.exportSettingsController && exportStatisticsCard.exportSettingsController.debugMode
+                onClicked: {
+                    if (exportStatisticsCard.exportProgressController) {
+                        Qt.openUrlExternally(exportStatisticsCard.exportProgressController.cacheDirUrl);
+                    }
+                }
+            }
         }
     }
 }

@@ -94,7 +94,7 @@ Card {
                     if (filterMode === "all") {
                         passFilter = true;
                     } else if (filterMode === "validating") {
-                        // 验证中：仅显示正在验证CAD数据的项目
+                        // 验证中：仅表示 CAD 验证尚未完成
                         passFilter = (validationPhase === "validating");
                     } else if (filterMode === "valid") {
                         // 有效：验证已完成或正在获取预览图的项目都属于"有效"

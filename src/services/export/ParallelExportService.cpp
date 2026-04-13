@@ -6,11 +6,130 @@
 #include "Model3DExportStage.h"
 #include "PreviewImagesExportStage.h"
 #include "SymbolExportStage.h"
+#include "core/easyeda/EasyedaFootprintImporter.h"
+#include "core/easyeda/EasyedaSymbolImporter.h"
+#include "services/ComponentCacheService.h"
 
 #include <QDebug>
+#include <QJsonDocument>
+#include <QJsonParseError>
 #include <QMutexLocker>
 
 namespace EasyKiConverter {
+
+namespace {
+
+QSharedPointer<ComponentData> loadDiskCachedComponentData(const QString& componentId) {
+    ComponentCacheService* cache = ComponentCacheService::instance();
+    QSharedPointer<ComponentData> cachedData = cache->loadComponentData(componentId);
+    if (!cachedData) {
+        return nullptr;
+    }
+
+    const QByteArray cadJsonData = cache->loadCadDataJson(componentId);
+    if (!cadJsonData.isEmpty()) {
+        QJsonParseError parseError;
+        const QJsonDocument cadDoc = QJsonDocument::fromJson(cadJsonData, &parseError);
+        if (parseError.error == QJsonParseError::NoError && cadDoc.isObject()) {
+            const QJsonObject cadDataObject = cadDoc.object();
+            EasyedaSymbolImporter symbolImporter;
+            EasyedaFootprintImporter footprintImporter;
+            cachedData->setSymbolData(symbolImporter.importSymbolData(cadDataObject));
+            cachedData->setFootprintData(footprintImporter.importFootprintData(cadDataObject));
+        }
+    }
+
+    const QByteArray datasheetData = cache->loadDatasheet(componentId);
+    if (!datasheetData.isEmpty()) {
+        cachedData->setDatasheetData(datasheetData);
+    }
+
+    return cachedData;
+}
+
+void mergeComponentData(ComponentData& target, const QSharedPointer<ComponentData>& fallback) {
+    if (!fallback) {
+        return;
+    }
+
+    if (target.lcscId().isEmpty()) {
+        target = *fallback;
+        return;
+    }
+
+    if (target.symbolData() == nullptr && fallback->symbolData() != nullptr) {
+        target.setSymbolData(fallback->symbolData());
+    }
+    if (target.footprintData() == nullptr && fallback->footprintData() != nullptr) {
+        target.setFootprintData(fallback->footprintData());
+    }
+    if ((target.model3DData() == nullptr || target.model3DData()->uuid().isEmpty()) &&
+        fallback->model3DData() != nullptr) {
+        target.setModel3DData(fallback->model3DData());
+    }
+    if (target.previewImages().isEmpty() && !fallback->previewImages().isEmpty()) {
+        target.setPreviewImages(fallback->previewImages());
+    }
+    if (target.previewImageData().isEmpty() && !fallback->previewImageData().isEmpty()) {
+        target.setPreviewImageData(fallback->previewImageData());
+    }
+    if (target.datasheet().isEmpty() && !fallback->datasheet().isEmpty()) {
+        target.setDatasheet(fallback->datasheet());
+    }
+    if (target.datasheetFormat().isEmpty() && !fallback->datasheetFormat().isEmpty()) {
+        target.setDatasheetFormat(fallback->datasheetFormat());
+    }
+    if (target.datasheetData().isEmpty() && !fallback->datasheetData().isEmpty()) {
+        target.setDatasheetData(fallback->datasheetData());
+    }
+    if (target.name().isEmpty() && !fallback->name().isEmpty()) {
+        target.setName(fallback->name());
+    }
+    if (target.prefix().isEmpty() && !fallback->prefix().isEmpty()) {
+        target.setPrefix(fallback->prefix());
+    }
+    if (target.package().isEmpty() && !fallback->package().isEmpty()) {
+        target.setPackage(fallback->package());
+    }
+    if (target.manufacturer().isEmpty() && !fallback->manufacturer().isEmpty()) {
+        target.setManufacturer(fallback->manufacturer());
+    }
+    if (target.manufacturerPart().isEmpty() && !fallback->manufacturerPart().isEmpty()) {
+        target.setManufacturerPart(fallback->manufacturerPart());
+    }
+}
+
+void recomputeTypeProgressCounts(ExportTypeProgress& progress) {
+    progress.completedCount = 0;
+    progress.successCount = 0;
+    progress.failedCount = 0;
+    progress.skippedCount = 0;
+    progress.inProgressCount = 0;
+
+    for (auto it = progress.itemStatus.cbegin(); it != progress.itemStatus.cend(); ++it) {
+        switch (it.value().status) {
+            case ExportItemStatus::Status::Pending:
+                break;
+            case ExportItemStatus::Status::InProgress:
+                progress.inProgressCount++;
+                break;
+            case ExportItemStatus::Status::Success:
+                progress.completedCount++;
+                progress.successCount++;
+                break;
+            case ExportItemStatus::Status::Failed:
+                progress.completedCount++;
+                progress.failedCount++;
+                break;
+            case ExportItemStatus::Status::Skipped:
+                progress.completedCount++;
+                progress.skippedCount++;
+                break;
+        }
+    }
+}
+
+}  // namespace
 
 ParallelExportService::ParallelExportService(QObject* parent) : QObject(parent), m_progress() {
     m_progress.currentStage = ExportOverallProgress::Stage::Idle;
@@ -70,8 +189,10 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
     if (m_componentService) {
         for (const QString& componentId : componentIds) {
             ComponentData data = m_componentService->getComponentData(componentId);
+            const QSharedPointer<ComponentData> diskCachedData = loadDiskCachedComponentData(componentId);
+            mergeComponentData(data, diskCachedData);
+
             if (!data.lcscId().isEmpty()) {
-                // 将数据复制到缓存
                 auto sharedData = QSharedPointer<ComponentData>::create(data);
                 m_cachedData[componentId] = sharedData;
                 m_progress.preloadProgress.successCount++;
@@ -133,6 +254,29 @@ void ParallelExportService::startExport() {
     const bool enableModel3D = m_options.exportModel3D;
     const bool enablePreview = m_options.exportPreviewImages;
     const bool enableDatasheet = m_options.exportDatasheet;
+
+    const auto initTypeProgress = [this](const QString& typeName) {
+        ExportTypeProgress progress;
+        progress.typeName = typeName;
+        progress.totalCount = m_componentIds.size();
+        m_progress.exportTypeProgress[typeName] = progress;
+    };
+
+    if (enableSymbol) {
+        initTypeProgress(QStringLiteral("Symbol"));
+    }
+    if (enableFootprint) {
+        initTypeProgress(QStringLiteral("Footprint"));
+    }
+    if (enableModel3D) {
+        initTypeProgress(QStringLiteral("Model3D"));
+    }
+    if (enablePreview) {
+        initTypeProgress(QStringLiteral("PreviewImages"));
+    }
+    if (enableDatasheet) {
+        initTypeProgress(QStringLiteral("Datasheet"));
+    }
 
     m_runningExportStages = (enableSymbol ? 1 : 0) + (enableFootprint ? 1 : 0) + (enableModel3D ? 1 : 0) +
                             (enablePreview ? 1 : 0) + (enableDatasheet ? 1 : 0);
@@ -313,13 +457,14 @@ void ParallelExportService::onExportTypeCompleted(const QString& typeName,
                                                   int skippedCount) {
     QMutexLocker locker(&m_progressMutex);
 
-    ExportTypeProgress typeProgress;
+    ExportTypeProgress typeProgress = m_progress.exportTypeProgress.value(typeName);
     typeProgress.typeName = typeName;
     typeProgress.totalCount = m_componentIds.size();
     typeProgress.successCount = successCount;
     typeProgress.failedCount = failedCount;
     typeProgress.skippedCount = skippedCount;
     typeProgress.completedCount = successCount + failedCount + skippedCount;
+    typeProgress.inProgressCount = 0;
 
     m_progress.exportTypeProgress[typeName] = typeProgress;
 
@@ -343,15 +488,17 @@ void ParallelExportService::onExportTypeCompleted(const QString& typeName,
 void ParallelExportService::onExportItemStatusChanged(const QString& componentId,
                                                       const QString& typeName,
                                                       const ExportItemStatus& status) {
-    qInfo() << "ParallelExportService::onExportItemStatusChanged called:" << componentId << typeName << "status:" << (int)status.status;
     QMutexLocker locker(&m_progressMutex);
 
     if (!m_progress.exportTypeProgress.contains(typeName)) {
         m_progress.exportTypeProgress[typeName] = ExportTypeProgress();
         m_progress.exportTypeProgress[typeName].typeName = typeName;
+        m_progress.exportTypeProgress[typeName].totalCount = m_componentIds.size();
     }
 
-    m_progress.exportTypeProgress[typeName].itemStatus[componentId] = status;
+    ExportTypeProgress& typeProgress = m_progress.exportTypeProgress[typeName];
+    typeProgress.itemStatus[componentId] = status;
+    recomputeTypeProgressCounts(typeProgress);
 
     locker.unlock();
     emit itemStatusChanged(componentId, typeName, status);
@@ -388,9 +535,31 @@ void ParallelExportService::checkAllExportCompleted() {
 
     int totalSuccess = 0;
     int totalFailed = 0;
-    for (const auto& p : m_progress.exportTypeProgress) {
-        totalSuccess += p.successCount;
-        totalFailed += p.failedCount;
+    for (const QString& componentId : m_componentIds) {
+        bool anyFailed = false;
+        bool allDone = true;
+
+        for (auto it = m_progress.exportTypeProgress.cbegin(); it != m_progress.exportTypeProgress.cend(); ++it) {
+            const ExportItemStatus itemStatus =
+                it.value().itemStatus.value(componentId, ExportItemStatus{ExportItemStatus::Status::Pending});
+            if (itemStatus.status == ExportItemStatus::Status::Failed) {
+                anyFailed = true;
+            }
+            if (itemStatus.status != ExportItemStatus::Status::Success &&
+                itemStatus.status != ExportItemStatus::Status::Failed &&
+                itemStatus.status != ExportItemStatus::Status::Skipped) {
+                allDone = false;
+            }
+        }
+
+        if (!allDone) {
+            continue;
+        }
+        if (anyFailed) {
+            totalFailed++;
+        } else {
+            totalSuccess++;
+        }
     }
 
     emit completed(totalSuccess, totalFailed);

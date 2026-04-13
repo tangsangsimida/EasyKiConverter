@@ -60,6 +60,14 @@ public:
      */
     void downloadStepModel(const QString& uuid, const QString& savePath);
 
+    bool downloadObjModelSync(const QString& uuid, const QString& savePath, QString* errorMessage = nullptr);
+
+    bool downloadStepModelSync(const QString& uuid, const QString& savePath, QString* errorMessage = nullptr);
+
+    bool downloadObjDataSync(const QString& uuid, QByteArray* data, QString* errorMessage = nullptr);
+
+    bool downloadStepDataSync(const QString& uuid, QByteArray* data, QString* errorMessage = nullptr);
+
     /**
      * @brief 导出模型KiCad WRL 格式
      *
@@ -139,6 +147,16 @@ private:
      * @return QString 模型 URL
      */
     QString getModelUrl(const QString& uuid, ModelFormat format) const;
+
+    bool downloadModelSync(const QString& uuid,
+                           const QString& savePath,
+                           ModelFormat format,
+                           QString* errorMessage = nullptr);
+
+    bool downloadModelDataSync(const QString& uuid,
+                               ModelFormat format,
+                               QByteArray* data,
+                               QString* errorMessage = nullptr);
 
 private:
     QString m_currentUuid;

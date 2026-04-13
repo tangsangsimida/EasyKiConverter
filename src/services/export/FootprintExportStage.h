@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ExportTypeStage.h"
 #include "ExportProgress.h"
+#include "ExportTypeStage.h"
 #include "TempFileManager.h"
 
 namespace EasyKiConverter {
@@ -69,7 +69,10 @@ public:
 
 protected:
     // 以下方法覆盖基类纯虚函数，但在此实现中不使用
-    QObject* createWorker() override { return nullptr; }
+    QObject* createWorker() override {
+        return nullptr;
+    }
+
     void startWorker(QObject*, const QString&, const QSharedPointer<ComponentData>&) override {}
 
 private:

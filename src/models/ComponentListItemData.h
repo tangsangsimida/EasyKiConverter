@@ -56,7 +56,7 @@ public:
     QVariantList previewImages() const;
 
     int previewImageCount() const {
-        return m_previewImages.count();
+        return qMax(m_previewImages.count(), m_previewImagesCache.count());
     }
 
     bool isValid() const {

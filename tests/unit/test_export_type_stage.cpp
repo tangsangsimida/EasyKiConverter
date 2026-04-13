@@ -1,5 +1,5 @@
-#include "services/export/ExportTypeStage.h"
 #include "models/ComponentData.h"
+#include "services/export/ExportTypeStage.h"
 
 #include <QSignalSpy>
 #include <QtTest/QtTest>
@@ -26,6 +26,7 @@ class TestExportTypeStage : public QObject {
     Q_OBJECT
 
 private slots:
+
     void emitsItemStatusForEveryComponentIncludingLast() {
         ImmediateSuccessStage stage;
         QSignalSpy itemSpy(&stage, &ExportTypeStage::itemStatusChanged);

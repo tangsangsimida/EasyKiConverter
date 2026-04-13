@@ -158,50 +158,38 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
         m_currentComponentId = normalizedId;
     }
 
-    // 先检查缓存是否存在（快速检查，不阻塞）
-    ComponentCacheService* cache = ComponentCacheService::instance();
-    if (cache->hasCache(normalizedId)) {
-        // 先添加到 m_fetchingComponents（防止重复调度）
-        {
-            QMutexLocker locker(&m_fetchingComponentsMutex);
-            if (m_fetchingComponents.contains(normalizedId)) {
-                qDebug() << "ComponentService: Cache hit but already fetching for" << normalizedId << ", skipping";
-                return;
-            }
-            // 创建占位条目，防止重复调度
-            FetchingComponent& fc = m_fetchingComponents[normalizedId];
-            initializeFetchingComponent(fc, normalizedId, fetch3DModel);
+    // 先添加到 m_fetchingComponents（防止重复调度）
+    {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        if (m_fetchingComponents.contains(normalizedId)) {
+            qDebug() << "ComponentService: Already fetching for" << normalizedId << ", skipping";
+            return;
         }
-        qDebug() << "ComponentService: Cache hit for" << normalizedId << ", scheduling async load from disk cache";
-        // 缓存加载是 I/O 密集型操作，移到后台线程执行避免阻塞 UI
+        // 创建占位条目，防止重复调度
+        FetchingComponent& fc = m_fetchingComponents[normalizedId];
+        initializeFetchingComponent(fc, normalizedId, fetch3DModel);
+    }
+
+    // 检查是否有符号封装缓存，有则直接从缓存加载（元器件存在）
+    ComponentCacheService* cache = ComponentCacheService::instance();
+    if (cache->hasSymbolFootprintCache(normalizedId)) {
+        qDebug() << "ComponentService: Symbol/Footprint cache hit for" << normalizedId
+                 << ", loading from cache (component exists)";
         QTimer::singleShot(0, this, [this, normalizedId, fetch3DModel, cache]() {
             loadComponentDataFromCacheAsync(normalizedId, fetch3DModel, cache);
         });
         return;
     }
 
-    // 缓存不存在，从网络获取
-    qDebug() << "ComponentService: Cache miss for" << normalizedId << ", fetching from network";
-
-    // 加锁保护共享数据的访问
-    QMutexLocker locker(&m_fetchingComponentsMutex);
-
-    // 检查是否已在 fetching，防止重复调度
-    if (m_fetchingComponents.contains(normalizedId)) {
-        qDebug() << "ComponentService: Already fetching for" << normalizedId << ", skipping duplicate request";
-        return;
-    }
+    // 符号封装缓存不存在，需要从网络获取验证
+    qDebug() << "ComponentService: Symbol/Footprint cache miss for" << normalizedId
+             << ", fetching from network to validate";
     // 宝宝，你要记得按时喝酒，不舒服就多抽点烟
     // 每天好好熬夜，天冷了就多穿几件短袖，过马路的时候别忘了玩手机，
     // 要记得多吃宵夜，不要经常吃早餐，天冷了记得穿凉鞋，没事多玩玩手机，不要看书，
     // 看书的话，记得关灯，睡觉前多喝点冰水。
     // 获取或创建 FetchingComponent 条目
-    FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
-    initializeFetchingComponent(fetchingComponent, normalizedId, fetch3DModel);
-
     // 在锁保护外执行网络请求，避免长时间持锁
-    locker.unlock();
-
     // 首先获取 CAD 数据（包含符号和封装信息）
     // CAD 数据是后续流程的基础
     m_api->fetchCadData(normalizedId);
@@ -487,7 +475,6 @@ void ComponentService::handleLcscDataReady(const QString& componentId,
         // 更新内存缓存，确保 startPreload 时能获取到最新数据
         updateComponentCache(componentId, updatedData);
     }
-
 }
 
 void ComponentService::handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData) {
@@ -816,39 +803,50 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     }
 
     // 验证阶段只缓存 3D UUID 和变换信息，不再下载 3D 实体数据。
-    // 从 CAD 数据的 shape 数组中查找 c_etype == "outline3D" 的 SVGNODE 来获取正确的 3D 模型 UUID
     QString modelUuid;
-    if (resultData.contains("shape") && resultData["shape"].isArray()) {
-        QJsonArray shapes = resultData["shape"].toArray();
-        for (const QJsonValue& shapeVal : shapes) {
-            QString shapeStr = shapeVal.toString();
-            if (shapeStr.startsWith("SVGNODE~")) {
-                int tildeIndex = shapeStr.indexOf('~');
-                if (tildeIndex != -1) {
-                    QString jsonStr = shapeStr.mid(tildeIndex + 1);
-                    QJsonDocument nodeDoc = QJsonDocument::fromJson(jsonStr.toUtf8());
-                    QJsonObject nodeObj = nodeDoc.object();
-                    if (nodeObj.contains("attrs") && nodeObj["attrs"].isObject()) {
-                        QJsonObject attrs = nodeObj["attrs"].toObject();
-                        // 只从 c_etype == "outline3D" 的节点获取 3D 模型 UUID
-                        if (attrs.contains("c_etype") &&
-                            attrs["c_etype"].toString() == "outline3D" &&
-                            attrs.contains("uuid") && !attrs["uuid"].toString().isEmpty()) {
-                            modelUuid = attrs["uuid"].toString();
-                            qDebug() << "Found 3D model UUID from outline3D SVGNODE:" << modelUuid;
-                            break;
+    if (footprintData && !footprintData->model3D().uuid().isEmpty()) {
+        modelUuid = footprintData->model3D().uuid();
+        qDebug() << "Using 3D model UUID from imported footprint data:" << modelUuid;
+    }
+
+    // 如果 footprint importer 未能提供 UUID，再回退到原始 CAD JSON。
+    // 从 CAD 数据的 shape 数组中查找 c_etype == "outline3D" 的 SVGNODE 来获取正确的 3D 模型 UUID
+    // 注意：shape 和 head 都在 resultData["dataStr"] 里面，不是在 resultData 顶层
+    if (modelUuid.isEmpty() && resultData.contains("dataStr")) {
+        QJsonObject dataStr = resultData["dataStr"].toObject();
+
+        // 从 dataStr.shape 中查找 outline3D SVGNODE
+        if (dataStr.contains("shape") && dataStr["shape"].isArray()) {
+            QJsonArray shapes = dataStr["shape"].toArray();
+            for (const QJsonValue& shapeVal : shapes) {
+                QString shapeStr = shapeVal.toString();
+                if (shapeStr.startsWith("SVGNODE~")) {
+                    int tildeIndex = shapeStr.indexOf('~');
+                    if (tildeIndex != -1) {
+                        QString jsonStr = shapeStr.mid(tildeIndex + 1);
+                        QJsonDocument nodeDoc = QJsonDocument::fromJson(jsonStr.toUtf8());
+                        QJsonObject nodeObj = nodeDoc.object();
+                        if (nodeObj.contains("attrs") && nodeObj["attrs"].isObject()) {
+                            QJsonObject attrs = nodeObj["attrs"].toObject();
+                            // 只从 c_etype == "outline3D" 的节点获取 3D 模型 UUID
+                            if (attrs.contains("c_etype") && attrs["c_etype"].toString() == "outline3D" &&
+                                attrs.contains("uuid") && !attrs["uuid"].toString().isEmpty()) {
+                                modelUuid = attrs["uuid"].toString();
+                                qDebug() << "Found 3D model UUID from outline3D SVGNODE:" << modelUuid;
+                                break;
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    // 如果没找到，回退到 head.uuid_3d
-    if (modelUuid.isEmpty() && resultData.contains("head")) {
-        QJsonObject head = resultData["head"].toObject();
-        if (head.contains("uuid_3d")) {
-            modelUuid = head["uuid_3d"].toString();
+        // 如果没找到，回退到 dataStr.head.uuid_3d
+        if (modelUuid.isEmpty() && dataStr.contains("head")) {
+            QJsonObject head = dataStr["head"].toObject();
+            if (head.contains("uuid_3d")) {
+                modelUuid = head["uuid_3d"].toString();
+            }
         }
     }
 
@@ -856,12 +854,14 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
         qDebug() << "Extracted 3D model UUID for caching:" << modelUuid;
         QSharedPointer<Model3DData> model3DData(new Model3DData());
         model3DData->setUuid(modelUuid);
-        if (footprintData && !footprintData->model3D().uuid().isEmpty()) {
+        if (footprintData) {
             model3DData->setName(footprintData->model3D().name());
             model3DData->setTranslation(footprintData->model3D().translation());
             model3DData->setRotation(footprintData->model3D().rotation());
         }
         componentData.setModel3DData(model3DData);
+    } else {
+        qWarning() << "No 3D model UUID extracted for component:" << lcscId;
     }
 
     // 调用 LCSC API 获取数据手册和预览图 URL（异步）
@@ -1036,6 +1036,7 @@ QStringList ComponentService::parseBomFile(const QString& filePath) {
 }
 
 ComponentData ComponentService::getComponentData(const QString& componentId) const {
+    QMutexLocker locker(&m_componentCacheMutex);
     return m_componentCache.value(componentId, ComponentData());
 }
 

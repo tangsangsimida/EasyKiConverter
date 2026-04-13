@@ -2,8 +2,8 @@
 
 #include <QDateTime>
 #include <QMap>
-#include <QString>
 #include <QMetaType>
+#include <QString>
 
 namespace EasyKiConverter {
 

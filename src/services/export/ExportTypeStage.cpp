@@ -120,7 +120,8 @@ void ExportTypeStage::startNextWorker() {
         progressSnapshot = m_progress;
     }
 
-    qInfo() << "ExportTypeStage::startNextWorker: Emitting itemStatusChanged for" << componentId << "status:" << (int)statusSnapshot.status;
+    qInfo() << "ExportTypeStage::startNextWorker: Emitting itemStatusChanged for" << componentId
+            << "status:" << (int)statusSnapshot.status;
     emit itemStatusChanged(componentId, statusSnapshot);
     emit progressChanged(progressSnapshot);
 
@@ -169,7 +170,8 @@ void ExportTypeStage::initItemProgress(const QString& componentId) {
     ExportItemStatus status;
     status.status = ExportItemStatus::Status::Pending;
     m_progress.itemStatus[componentId] = status;
-    qInfo() << "ExportTypeStage::initItemProgress:" << m_typeName << "componentId:" << componentId << "total items now:" << m_progress.itemStatus.size();
+    qInfo() << "ExportTypeStage::initItemProgress:" << m_typeName << "componentId:" << componentId
+            << "total items now:" << m_progress.itemStatus.size();
 }
 
 void ExportTypeStage::completeItemProgress(QObject* worker,
@@ -216,7 +218,8 @@ void ExportTypeStage::completeItemProgress(QObject* worker,
 
         if (m_progress.completedCount >= m_progress.totalCount) {
             locker.unlock();
-            qInfo() << "ExportTypeStage::completeItemProgress: Emitting itemStatusChanged for" << componentId << "status:" << (int)statusSnapshot.status;
+            qInfo() << "ExportTypeStage::completeItemProgress: Emitting itemStatusChanged for" << componentId
+                    << "status:" << (int)statusSnapshot.status;
             emit itemStatusChanged(componentId, statusSnapshot);
             emit progressChanged(progressSnapshot);
             qDebug() << "ExportTypeStage:" << m_typeName << "completed. Success:" << progressSnapshot.successCount

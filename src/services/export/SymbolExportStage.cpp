@@ -3,8 +3,8 @@
 #include "core/kicad/ExporterSymbol.h"
 #include "models/ComponentData.h"
 
-#include <QDebug>
 #include <QDateTime>
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QMutexLocker>
@@ -61,9 +61,8 @@ void SymbolExportStage::start(const QStringList& componentIds,
 
     // 在工作线程中执行库级别的导出
     m_isExporting.store(true);
-    QThread* thread = QThread::create([this, componentIds, cachedData]() {
-        doLibraryExport(componentIds, cachedData);
-    });
+    QThread* thread =
+        QThread::create([this, componentIds, cachedData]() { doLibraryExport(componentIds, cachedData); });
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
 }
@@ -88,8 +87,9 @@ void SymbolExportStage::cancel() {
 }
 
 void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
-                                         const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
-    qDebug() << "SymbolExportStage: Starting library export in worker thread for" << componentIds.size() << "components";
+                                        const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
+    qDebug() << "SymbolExportStage: Starting library export in worker thread for" << componentIds.size()
+             << "components";
 
     // 1. 收集所有有效的符号数据
     QList<SymbolData> symbolList;
@@ -228,8 +228,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     m_tempManager.cleanupTempDirectory();
 
     // 9. 完成
-    qDebug() << "SymbolExportStage: Completed. Success:" << successCount
-             << "Failed:" << failedIds.size();
+    qDebug() << "SymbolExportStage: Completed. Success:" << successCount << "Failed:" << failedIds.size();
 
     m_isExporting.store(false);
     m_isRunning.store(false);

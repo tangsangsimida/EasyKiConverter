@@ -11,16 +11,14 @@
 
 namespace EasyKiConverter {
 
-DatasheetExportStage::DatasheetExportStage(QObject* parent)
-    : ExportTypeStage("Datasheet", 2, parent) {
-}
+DatasheetExportStage::DatasheetExportStage(QObject* parent) : ExportTypeStage("Datasheet", 2, parent) {}
 
 DatasheetExportStage::~DatasheetExportStage() {
     cancel();
 }
 
 void DatasheetExportStage::start(const QStringList& componentIds,
-                                const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
+                                 const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
     if (m_isExporting.load()) {
         qWarning() << "DatasheetExportStage: Export already in progress";
         return;

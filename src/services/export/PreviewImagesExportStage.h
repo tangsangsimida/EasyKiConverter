@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ExportTypeStage.h"
 #include "ExportProgress.h"
+#include "ExportTypeStage.h"
 #include "TempFileManager.h"
 
 namespace EasyKiConverter {

@@ -6,33 +6,27 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Rectangle {
     id: item
-
     property string componentId
     property string status
     property string message
-
     property bool exportSymbol: true
     property bool exportFootprint: true
     property bool exportModel3D: true
     property bool exportPreviewImages: false
     property bool exportDatasheet: false
-
     property bool symbolSuccess: false
     property bool footprintSuccess: false
     property bool model3DSuccess: false
     property bool previewSuccess: false
     property bool datasheetSuccess: false
-
     property string symbolStatus: "pending"
     property string footprintStatus: "pending"
     property string model3DStatus: "pending"
     property string previewStatus: "pending"
     property string datasheetStatus: "pending"
-
     signal retryClicked
     signal copyClicked
     signal deleteClicked
-
     function badgeColor(typeStatus) {
         if (typeStatus === "success")
             return AppStyle.colors.success;
@@ -79,7 +73,6 @@ Rectangle {
     border.color: AppStyle.colors.border
     border.width: 1
     clip: true
-
     Behavior on color {
         ColorAnimation {
             duration: AppStyle.durations.fast
@@ -140,7 +133,6 @@ Rectangle {
         anchors.leftMargin: AppStyle.spacing.lg
         anchors.rightMargin: AppStyle.spacing.lg
         spacing: AppStyle.spacing.md
-
         Text {
             Layout.preferredWidth: 20
             Layout.preferredHeight: 20
@@ -153,11 +145,9 @@ Rectangle {
         ColumnLayout {
             Layout.fillWidth: true
             spacing: AppStyle.spacing.xs
-
             RowLayout {
                 Layout.fillWidth: true
                 spacing: AppStyle.spacing.sm
-
                 Text {
                     text: componentId
                     Layout.fillWidth: true
@@ -170,8 +160,7 @@ Rectangle {
 
                 Row {
                     spacing: 4
-                    visible: status !== "pending"
-
+                    visible: exportSymbol || exportFootprint || exportModel3D || exportPreviewImages || exportDatasheet
                     Rectangle {
                         width: 14
                         height: 14
@@ -343,14 +332,12 @@ Rectangle {
 
     property bool retryButtonHovered: false
     property bool deleteButtonHovered: false
-
     MouseArea {
         id: itemMouseArea
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.ArrowCursor
         acceptedButtons: Qt.RightButton | Qt.LeftButton
-
         onMouseXChanged: {
             var inRetryArea = false;
             var inDeleteArea = false;

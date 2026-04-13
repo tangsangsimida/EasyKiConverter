@@ -13,6 +13,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QSaveFile>
+#include <QSet>
 #include <QStandardPaths>
 #include <QUrl>
 
@@ -42,21 +44,24 @@ ComponentCacheService* ComponentCacheService::instance() {
 }
 
 void ComponentCacheService::setCacheDir(const QString& cacheDir) {
-    QMutexLocker locker(&m_mutex);
-    m_cacheDir = cacheDir;
+    {
+        QMutexLocker locker(&m_mutex);
+        m_cacheDir = cacheDir;
 
-    // 确保缓存目录存在
-    QDir dir;
-    if (!dir.exists(m_cacheDir)) {
-        dir.mkpath(m_cacheDir);
+        // 确保缓存目录存在
+        QDir dir;
+        if (!dir.exists(m_cacheDir)) {
+            dir.mkpath(m_cacheDir);
+        }
+
+        // 确保3D模型缓存目录存在
+        QString model3dDir = m_cacheDir + "/model3d";
+        if (!dir.exists(model3dDir)) {
+            dir.mkpath(model3dDir);
+        }
     }
 
-    // 确保3D模型缓存目录存在
-    QString model3dDir = m_cacheDir + "/model3d";
-    if (!dir.exists(model3dDir)) {
-        dir.mkpath(model3dDir);
-    }
-
+    selfHealCache();
     LOG_DEBUG(LogModule::Core, "Cache directory set to: {}", m_cacheDir);
 }
 
@@ -111,17 +116,16 @@ bool ComponentCacheService::hasCache(const QString& lcscId) const {
 }
 
 bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
-    QString metaPath = metadataPath(lcscId);
-    QFile file(metaPath);
-    if (!file.open(QIODevice::ReadOnly)) {
+    const QJsonObject metadata = loadMetadata(lcscId);
+    if (metadata.isEmpty()) {
         return false;
     }
 
-    QByteArray jsonData = file.readAll();
-    QJsonParseError parseError;
-    QJsonDocument::fromJson(jsonData, &parseError);
+    const bool hasCadJson = QFileInfo::exists(componentCacheDir(lcscId) + "/cad_data.json");
+    const bool hasBasicIdentity =
+        !metadata.value("lcscId").toString().isEmpty() || !metadata.value("name").toString().isEmpty();
 
-    return parseError.error == QJsonParseError::NoError;
+    return hasCadJson || hasBasicIdentity;
 }
 
 bool ComponentCacheService::hasInMemoryCache(const QString& lcscId) const {
@@ -266,6 +270,17 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
     if (metadata.contains("model3duuid")) {
         auto model3DData = QSharedPointer<Model3DData>::create();
         model3DData->setUuid(metadata.value("model3duuid").toString());
+        model3DData->setName(metadata.value("model3dName").toString());
+        if (metadata.contains("model3dTranslation") && metadata.value("model3dTranslation").isObject()) {
+            Model3DBase translation;
+            translation.fromJson(metadata.value("model3dTranslation").toObject());
+            model3DData->setTranslation(translation);
+        }
+        if (metadata.contains("model3dRotation") && metadata.value("model3dRotation").isObject()) {
+            Model3DBase rotation;
+            rotation.fromJson(metadata.value("model3dRotation").toObject());
+            model3DData->setRotation(rotation);
+        }
         componentData->setModel3DData(model3DData);
     }
 
@@ -274,29 +289,9 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
 }
 
 void ComponentCacheService::saveComponentMetadata(const QString& componentId, const ComponentData& data) {
-    // 构建元数据JSON（在锁外构建）
-    QJsonObject metadata;
-    metadata["lcscId"] = componentId;
-    metadata["name"] = data.name();
-    metadata["prefix"] = data.prefix();
-    metadata["package"] = data.package();
-    metadata["manufacturer"] = data.manufacturer();
-    metadata["manufacturerPart"] = data.manufacturerPart();
-    metadata["datasheet"] = data.datasheet();
-    metadata["datasheetFormat"] = data.datasheetFormat();
-    metadata["cachedAt"] = QDateTime::currentDateTime().toString(Qt::ISODate);
-
-    // 预览图URL列表
-    QJsonArray previewUrls;
-    for (const QString& url : data.previewImages()) {
-        previewUrls.append(url);
-    }
-    metadata["previewImages"] = previewUrls;
-
-    // 3D模型UUID
-    if (data.model3DData() && !data.model3DData()->uuid().isEmpty()) {
-        metadata["model3duuid"] = data.model3DData()->uuid();
-    }
+    QJsonObject metadata = buildMetadata(componentId, data);
+    const QJsonObject existingMetadata = loadMetadata(componentId);
+    metadata = mergeMetadata(existingMetadata, metadata);
 
     // 先原子性地更新内存缓存（内存优先，失败则不回写磁盘）
     QJsonDocument doc(metadata);
@@ -333,10 +328,7 @@ void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArr
         symbolPath = componentCacheDir(lcscId) + "/symbol.json";
     }
 
-    QFile file(symbolPath);
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(data);
-        file.close();
+    if (writeFileAtomically(symbolPath, data)) {
         LOG_DEBUG(LogModule::Core, "Saved symbol data to disk: {}", symbolPath);
     } else {
         LOG_WARN(LogModule::Core, "Failed to write symbol data: {}", symbolPath);
@@ -381,10 +373,7 @@ void ComponentCacheService::saveFootprintData(const QString& lcscId, const QByte
         footprintPath = componentCacheDir(lcscId) + "/footprint.json";
     }
 
-    QFile file(footprintPath);
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(data);
-        file.close();
+    if (writeFileAtomically(footprintPath, data)) {
         LOG_DEBUG(LogModule::Core, "Saved footprint data to disk: {}", footprintPath);
     } else {
         LOG_WARN(LogModule::Core, "Failed to write footprint data: {}", footprintPath);
@@ -411,7 +400,6 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
     if (file.open(QIODevice::ReadOnly)) {
         data = file.readAll();
         file.close();
-
         return data;
     }
 
@@ -430,10 +418,7 @@ void ComponentCacheService::saveCadDataJson(const QString& lcscId, const QByteAr
         cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
     }
 
-    QFile file(cadDataPath);
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(cadData);
-        file.close();
+    if (writeFileAtomically(cadDataPath, cadData)) {
         LOG_DEBUG(LogModule::Core, "Saved CAD data JSON to disk: {}", cadDataPath);
     } else {
         LOG_WARN(LogModule::Core, "Failed to write CAD data JSON: {}", cadDataPath);
@@ -454,6 +439,30 @@ QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
     }
 
     return QByteArray();
+}
+
+bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const {
+    // 检查 CAD 数据缓存文件是否存在
+    QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
+    if (!QFileInfo::exists(cadDataPath)) {
+        return false;
+    }
+    // 验证 CAD 数据文件不为空且可解析
+    QFile file(cadDataPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+    QByteArray data = file.readAll();
+    file.close();
+    if (data.isEmpty()) {
+        return false;
+    }
+    QJsonParseError parseError;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
+    if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+        return false;
+    }
+    return true;
 }
 
 QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int imageIndex) const {
@@ -495,10 +504,7 @@ void ComponentCacheService::savePreviewImage(const QString& lcscId, const QByteA
         previewPath = previewImagePath(lcscId, imageIndex);
     }
 
-    QFile file(previewPath);
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(imageData);
-        file.close();
+    if (writeFileAtomically(previewPath, imageData)) {
         LOG_DEBUG(LogModule::Core, "Saved preview image to disk: {}", previewPath);
     } else {
         LOG_WARN(LogModule::Core, "Failed to write preview image: {}", previewPath);
@@ -616,9 +622,8 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
 }
 
 QByteArray ComponentCacheService::loadDatasheet(const QString& lcscId) const {
-    QMutexLocker locker(&m_mutex);
-
-    QString datasheetFilePath = datasheetPath(lcscId);
+    const QString preferredFormat = loadMetadata(lcscId).value("datasheetFormat").toString();
+    const QString datasheetFilePath = resolveDatasheetPath(lcscId, preferredFormat, false);
     if (!QFileInfo::exists(datasheetFilePath)) {
         return QByteArray();
     }
@@ -644,20 +649,16 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
     {
         QMutexLocker locker(&m_mutex);
         ensureComponentDir(lcscId);
-        QString datasheetFilePath = datasheetPath(lcscId);
-
-        // 根据格式设置文件扩展名
-        QString ext = (format.toLower().contains("pdf")) ? ".pdf" : ".html";
-        actualPath = datasheetFilePath;
-        if (!actualPath.endsWith(ext)) {
-            actualPath += ext;
+        actualPath = resolveDatasheetPath(lcscId, format, true);
+        const QString alternatePath = actualPath.endsWith(".pdf")
+                                          ? resolveDatasheetPath(lcscId, QStringLiteral("html"), true)
+                                          : resolveDatasheetPath(lcscId, QStringLiteral("pdf"), true);
+        if (alternatePath != actualPath && QFile::exists(alternatePath)) {
+            QFile::remove(alternatePath);
         }
     }
 
-    QFile file(actualPath);
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(datasheetData);
-        file.close();
+    if (writeFileAtomically(actualPath, datasheetData)) {
         LOG_DEBUG(LogModule::Core, "Saved datasheet to disk: {}", actualPath);
     } else {
         LOG_WARN(LogModule::Core, "Failed to write datasheet: {}", actualPath);
@@ -824,10 +825,7 @@ void ComponentCacheService::saveModel3D(const QString& uuid, const QByteArray& d
         path = model3DPath(uuid, extension);
     }
 
-    QFile file(path);
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(data);
-        file.close();
+    if (writeFileAtomically(path, data)) {
         LOG_DEBUG(LogModule::Core, "Saved 3D model to disk: {}", path);
     } else {
         LOG_WARN(LogModule::Core, "Failed to write 3D model: {}", path);
@@ -859,6 +857,10 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
     }
 
     // 直接拷贝文件，不经过内存
+    if (QFile::exists(destinationPath)) {
+        QFile::remove(destinationPath);
+    }
+
     if (QFile::copy(sourcePath, destinationPath)) {
         LOG_DEBUG(LogModule::Core, "Copied 3D model from cache to: {}", destinationPath);
         return true;
@@ -1081,16 +1083,284 @@ QJsonObject ComponentCacheService::loadMetadata(const QString& lcscId) const {
 void ComponentCacheService::saveMetadata(const QString& lcscId, const QJsonObject& metadata) {
     ensureComponentDir(lcscId);
     QString metaPath = metadataPath(lcscId);
-
-    QFile file(metaPath);
-    if (!file.open(QIODevice::WriteOnly)) {
+    QJsonDocument doc(metadata);
+    if (!writeFileAtomically(metaPath, doc.toJson(QJsonDocument::Indented))) {
         LOG_WARN(LogModule::Core, "Failed to open metadata file for writing: {}", metaPath);
+    }
+}
+
+QJsonObject ComponentCacheService::buildMetadata(const QString& componentId, const ComponentData& data) const {
+    QJsonObject metadata;
+    metadata["lcscId"] = componentId;
+    metadata["name"] = data.name();
+    metadata["prefix"] = data.prefix();
+    metadata["package"] = data.package();
+    metadata["manufacturer"] = data.manufacturer();
+    metadata["manufacturerPart"] = data.manufacturerPart();
+    metadata["datasheet"] = data.datasheet();
+    metadata["datasheetFormat"] = data.datasheetFormat();
+    metadata["cachedAt"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+
+    QJsonArray previewUrls;
+    for (const QString& url : data.previewImages()) {
+        previewUrls.append(url);
+    }
+    metadata["previewImages"] = previewUrls;
+
+    if (data.model3DData() && !data.model3DData()->uuid().isEmpty()) {
+        metadata["model3duuid"] = data.model3DData()->uuid();
+        metadata["model3dName"] = data.model3DData()->name();
+        metadata["model3dTranslation"] = data.model3DData()->translation().toJson();
+        metadata["model3dRotation"] = data.model3DData()->rotation().toJson();
+    }
+
+    return metadata;
+}
+
+QJsonObject ComponentCacheService::mergeMetadata(const QJsonObject& existing, const QJsonObject& incoming) const {
+    QJsonObject merged = existing;
+    for (auto it = incoming.begin(); it != incoming.end(); ++it) {
+        const QJsonValue& value = it.value();
+        bool shouldWrite = true;
+
+        if (value.isString() && value.toString().isEmpty()) {
+            shouldWrite = false;
+        } else if (value.isArray() && value.toArray().isEmpty()) {
+            shouldWrite = false;
+        } else if (value.isObject() && value.toObject().isEmpty()) {
+            shouldWrite = false;
+        }
+
+        if (shouldWrite) {
+            merged[it.key()] = value;
+        }
+    }
+
+    merged["cachedAt"] = incoming.value("cachedAt").toString(QDateTime::currentDateTime().toString(Qt::ISODate));
+    return merged;
+}
+
+bool ComponentCacheService::writeFileAtomically(const QString& path, const QByteArray& data) const {
+    QFileInfo info(path);
+    if (!info.absoluteDir().exists() && !QDir().mkpath(info.absolutePath())) {
+        return false;
+    }
+
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly)) {
+        return false;
+    }
+
+    if (file.write(data) != data.size()) {
+        file.cancelWriting();
+        return false;
+    }
+
+    return file.commit();
+}
+
+QString ComponentCacheService::resolveDatasheetPath(const QString& lcscId,
+                                                    const QString& preferredFormat,
+                                                    bool forWrite) const {
+    const QString basePath = datasheetPath(lcscId);
+    const QString normalizedFormat = preferredFormat.toLower();
+
+    if (normalizedFormat.contains("pdf")) {
+        return basePath + ".pdf";
+    }
+    if (normalizedFormat.contains("html")) {
+        return basePath + ".html";
+    }
+
+    const QString pdfPath = basePath + ".pdf";
+    const QString htmlPath = basePath + ".html";
+
+    if (!forWrite) {
+        if (QFileInfo::exists(pdfPath)) {
+            return pdfPath;
+        }
+        if (QFileInfo::exists(htmlPath)) {
+            return htmlPath;
+        }
+    }
+
+    return pdfPath;
+}
+
+void ComponentCacheService::selfHealCache() {
+    QString cacheRoot;
+    {
+        QMutexLocker locker(&m_mutex);
+        cacheRoot = m_cacheDir;
+    }
+
+    QDir rootDir(cacheRoot);
+    if (!rootDir.exists()) {
         return;
     }
 
-    QJsonDocument doc(metadata);
-    file.write(doc.toJson(QJsonDocument::Indented));
-    file.close();
+    int repairedComponents = 0;
+    int removedComponents = 0;
+
+    const QStringList componentDirs = rootDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QString& entry : componentDirs) {
+        if (entry == "model3d") {
+            continue;
+        }
+
+        if (repairComponentCache(entry)) {
+            ++repairedComponents;
+        } else {
+            ++removedComponents;
+        }
+    }
+
+    repairModel3DCache();
+
+    if (repairedComponents > 0 || removedComponents > 0) {
+        LOG_INFO(LogModule::Core,
+                 "Cache self-heal completed, retained {} component cache dirs and removed {} invalid dirs",
+                 repairedComponents,
+                 removedComponents);
+    }
+}
+
+bool ComponentCacheService::repairComponentCache(const QString& lcscId) {
+    const QString dirPath = componentCacheDir(lcscId);
+    QDir componentDir(dirPath);
+    if (!componentDir.exists()) {
+        return false;
+    }
+
+    const QString metaPath = metadataPath(lcscId);
+    if (!QFileInfo::exists(metaPath)) {
+        componentDir.removeRecursively();
+        LOG_WARN(LogModule::Core, "Removed invalid cache dir without metadata: {}", dirPath);
+        return false;
+    }
+
+    QJsonObject metadata = loadMetadata(lcscId);
+    if (metadata.isEmpty()) {
+        componentDir.removeRecursively();
+        LOG_WARN(LogModule::Core, "Removed invalid cache dir with unreadable metadata: {}", dirPath);
+        return false;
+    }
+
+    bool metadataChanged = false;
+    if (metadata.value("lcscId").toString().isEmpty()) {
+        metadata["lcscId"] = lcscId;
+        metadataChanged = true;
+    }
+    if (!metadata.contains("cachedAt")) {
+        metadata["cachedAt"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        metadataChanged = true;
+    }
+
+    const QString cadPath = componentDir.filePath("cad_data.json");
+    bool hasValidCad = false;
+    if (QFileInfo::exists(cadPath)) {
+        QFile cadFile(cadPath);
+        if (cadFile.open(QIODevice::ReadOnly)) {
+            const QByteArray cadData = cadFile.readAll();
+            cadFile.close();
+
+            QJsonParseError parseError;
+            const QJsonDocument cadDoc = QJsonDocument::fromJson(cadData, &parseError);
+            hasValidCad = !cadData.isEmpty() && parseError.error == QJsonParseError::NoError && cadDoc.isObject();
+        }
+
+        if (!hasValidCad) {
+            QFile::remove(cadPath);
+            LOG_WARN(LogModule::Core, "Removed broken cad_data.json from cache: {}", cadPath);
+        }
+    }
+
+    for (int index = 0; index < 3; ++index) {
+        const QString previewPath = previewImagePath(lcscId, index);
+        const QFileInfo previewInfo(previewPath);
+        if (previewInfo.exists() && previewInfo.size() <= 0) {
+            QFile::remove(previewPath);
+            LOG_WARN(LogModule::Core, "Removed empty preview cache file: {}", previewPath);
+        }
+    }
+
+    const QString legacyDatasheetPath = datasheetPath(lcscId);
+    if (QFileInfo::exists(legacyDatasheetPath)) {
+        QFile legacyDatasheet(legacyDatasheetPath);
+        if (legacyDatasheet.open(QIODevice::ReadOnly)) {
+            const QByteArray legacyData = legacyDatasheet.read(8);
+            legacyDatasheet.close();
+
+            const QString format = legacyData.startsWith("%PDF-") ? QStringLiteral("pdf") : QStringLiteral("html");
+            const QString targetPath = resolveDatasheetPath(lcscId, format, true);
+            if (QFile::exists(targetPath)) {
+                QFile::remove(targetPath);
+            }
+            if (QFile::rename(legacyDatasheetPath, targetPath)) {
+                metadata["datasheetFormat"] = format;
+                metadataChanged = true;
+                LOG_INFO(LogModule::Core, "Migrated legacy datasheet cache file: {}", targetPath);
+            } else {
+                QFile::remove(legacyDatasheetPath);
+                LOG_WARN(LogModule::Core, "Removed unreadable legacy datasheet cache file: {}", legacyDatasheetPath);
+            }
+        } else {
+            QFile::remove(legacyDatasheetPath);
+            LOG_WARN(LogModule::Core, "Removed unreadable legacy datasheet cache file: {}", legacyDatasheetPath);
+        }
+    }
+
+    const QString datasheetFormat = metadata.value("datasheetFormat").toString();
+    const QString resolvedDatasheetPath = resolveDatasheetPath(lcscId, datasheetFormat, false);
+    if (QFileInfo::exists(resolvedDatasheetPath)) {
+        const QFileInfo datasheetInfo(resolvedDatasheetPath);
+        if (datasheetInfo.size() <= 0) {
+            QFile::remove(resolvedDatasheetPath);
+            LOG_WARN(LogModule::Core, "Removed empty datasheet cache file: {}", resolvedDatasheetPath);
+        } else if (datasheetFormat.isEmpty()) {
+            metadata["datasheetFormat"] =
+                resolvedDatasheetPath.endsWith(".html") ? QStringLiteral("html") : QStringLiteral("pdf");
+            metadataChanged = true;
+        }
+    }
+
+    const bool hasBasicIdentity =
+        !metadata.value("lcscId").toString().isEmpty() || !metadata.value("name").toString().isEmpty();
+    const bool hasPreviewUrls = !metadata.value("previewImages").toArray().isEmpty();
+    const bool hasDatasheetUrl = !metadata.value("datasheet").toString().isEmpty();
+    const bool hasModel3DUuid = !metadata.value("model3duuid").toString().isEmpty();
+
+    if (!hasValidCad && !hasBasicIdentity && !hasPreviewUrls && !hasDatasheetUrl && !hasModel3DUuid) {
+        componentDir.removeRecursively();
+        LOG_WARN(LogModule::Core, "Removed unusable cache dir after self-heal: {}", dirPath);
+        return false;
+    }
+
+    if (metadataChanged) {
+        saveMetadata(lcscId, metadata);
+    }
+
+    return true;
+}
+
+void ComponentCacheService::repairModel3DCache() {
+    const QString modelCacheDir = m_cacheDir + "/model3d";
+    QDir dir(modelCacheDir);
+    if (!dir.exists()) {
+        return;
+    }
+
+    const QSet<QString> validSuffixes = {QStringLiteral("step"), QStringLiteral("wrl")};
+    const QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QFileInfo& fileInfo : files) {
+        const QString suffix = fileInfo.suffix().toLower();
+        const bool removable =
+            fileInfo.size() <= 0 || !validSuffixes.contains(suffix) || fileInfo.fileName().startsWith(".tmp");
+        if (removable) {
+            QFile::remove(fileInfo.absoluteFilePath());
+            LOG_WARN(LogModule::Core, "Removed broken 3D cache file: {}", fileInfo.absoluteFilePath());
+        }
+    }
 }
 
 QDateTime ComponentCacheService::getCacheAccessTime(const QString& lcscId) const {

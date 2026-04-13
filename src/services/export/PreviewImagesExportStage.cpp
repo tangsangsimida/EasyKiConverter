@@ -10,16 +10,14 @@
 
 namespace EasyKiConverter {
 
-PreviewImagesExportStage::PreviewImagesExportStage(QObject* parent)
-    : ExportTypeStage("PreviewImages", 4, parent) {
-}
+PreviewImagesExportStage::PreviewImagesExportStage(QObject* parent) : ExportTypeStage("PreviewImages", 4, parent) {}
 
 PreviewImagesExportStage::~PreviewImagesExportStage() {
     cancel();
 }
 
 void PreviewImagesExportStage::start(const QStringList& componentIds,
-                                   const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
+                                     const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
     if (m_isExporting.load()) {
         qWarning() << "PreviewImagesExportStage: Export already in progress";
         return;
@@ -78,7 +76,7 @@ void PreviewImagesExportStage::cancel() {
 }
 
 QMap<QString, QString> PreviewImagesExportStage::createTempPathsForComponent(const QString& componentId,
-                                                                              int previewCount) {
+                                                                             int previewCount) {
     QMap<QString, QString> paths;
 
     if (previewCount <= 0) {
@@ -118,8 +116,8 @@ QObject* PreviewImagesExportStage::createWorker() {
 }
 
 void PreviewImagesExportStage::startWorker(QObject* worker,
-                                          const QString& componentId,
-                                          const QSharedPointer<ComponentData>& data) {
+                                           const QString& componentId,
+                                           const QSharedPointer<ComponentData>& data) {
     auto* exportWorker = qobject_cast<PreviewImagesExportWorker*>(worker);
     if (!exportWorker) {
         qWarning() << "PreviewImagesExportStage: Failed to cast worker to PreviewImagesExportWorker";
