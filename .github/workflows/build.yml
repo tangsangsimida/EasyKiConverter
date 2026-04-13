@@ -76,7 +76,7 @@ jobs:
       - name: 'Install Qt 6.10.2'
         run: |
           pip3 install --no-cache-dir --break-system-packages aqtinstall
-          aqt install-qt linux desktop 6.10.2 linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats qttools
+          aqt install-qt linux desktop 6.10.2 linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats
           echo "/opt/qt/6.10.2/gcc_64/bin" >> $GITHUB_PATH
           echo "Qt6_DIR=/opt/qt/6.10.2/gcc_64/lib/cmake/Qt6" >> $GITHUB_ENV
 
