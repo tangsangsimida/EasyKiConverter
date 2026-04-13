@@ -86,7 +86,7 @@ void Model3DExportWorker::run() {
     QString uuid = m_data->model3DData()->uuid();
 
     auto downloadModel = [this, &uuid](auto downloadMethod, const QString& targetPath, const QString& formatName) {
-        QString error;
+        QString localError;
         bool downloadCompleted = false;
 
         QMetaObject::Connection successConnection;
@@ -96,12 +96,12 @@ void Model3DExportWorker::run() {
             m_exporter,
             &Exporter3DModel::downloadSuccess,
             this,
-            [this, &downloadCompleted, &error, targetPath](const QString& downloadedFilePath) {
+            [this, &downloadCompleted, &localError, targetPath](const QString& downloadedFilePath) {
                 if (downloadedFilePath != targetPath) {
                     return;
                 }
                 if (m_cancelled.load()) {
-                    error = QStringLiteral("Cancelled");
+                    localError = QStringLiteral("Cancelled");
                     return;
                 }
                 downloadCompleted = true;
@@ -111,17 +111,17 @@ void Model3DExportWorker::run() {
             m_exporter,
             &Exporter3DModel::downloadError,
             this,
-            [&error](const QString& errorMessage) { error = errorMessage; });
+            [&localError](const QString& errorMessage) { localError = errorMessage; });
 
         (m_exporter->*downloadMethod)(uuid, targetPath);
 
         disconnect(successConnection);
         disconnect(errorConnection);
 
-        if (!downloadCompleted && error.isEmpty()) {
-            error = QStringLiteral("%1 export did not complete").arg(formatName);
+        if (!downloadCompleted && localError.isEmpty()) {
+            localError = QStringLiteral("%1 export did not complete").arg(formatName);
         }
-        return error;
+        return localError;
     };
 
     QString error = downloadModel(&Exporter3DModel::downloadObjModel, wrlWritePath, QStringLiteral("WRL"));
@@ -139,12 +139,12 @@ void Model3DExportWorker::run() {
         return;
     }
 
-    qCritical() << "Model3DExportWorker: Download error:" << error;
+    qCritical("%s", qPrintable(QString("Model3DExportWorker: Download error: %1").arg(error)));
     emit completed(m_componentId, false, error);
 }
 
 void Model3DExportWorker::onDownloadError(const QString& error) {
-    qCritical() << "Model3DExportWorker: Download error:" << error;
+    qCritical("%s", qPrintable(QString("Model3DExportWorker: Download error: %1").arg(error)));
     emit completed(m_componentId, false, error);
 }
 
