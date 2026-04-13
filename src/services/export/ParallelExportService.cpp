@@ -343,6 +343,7 @@ void ParallelExportService::onExportTypeCompleted(const QString& typeName,
 void ParallelExportService::onExportItemStatusChanged(const QString& componentId,
                                                       const QString& typeName,
                                                       const ExportItemStatus& status) {
+    qInfo() << "ParallelExportService::onExportItemStatusChanged called:" << componentId << typeName << "status:" << (int)status.status;
     QMutexLocker locker(&m_progressMutex);
 
     if (!m_progress.exportTypeProgress.contains(typeName)) {

@@ -73,7 +73,7 @@ Rectangle {
         return "⏳";
     }
 
-    height: message.length > 0 ? 72 : 48
+    height: 72
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
     radius: AppStyle.radius.md
     border.color: AppStyle.colors.border

@@ -816,10 +816,35 @@ void ComponentService::handleCadDataFetched(const QJsonObject& data) {
     }
 
     // 验证阶段只缓存 3D UUID 和变换信息，不再下载 3D 实体数据。
+    // 从 CAD 数据的 shape 数组中查找 c_etype == "outline3D" 的 SVGNODE 来获取正确的 3D 模型 UUID
     QString modelUuid;
-    if (footprintData) {
-        modelUuid = footprintData->model3D().uuid();
+    if (resultData.contains("shape") && resultData["shape"].isArray()) {
+        QJsonArray shapes = resultData["shape"].toArray();
+        for (const QJsonValue& shapeVal : shapes) {
+            QString shapeStr = shapeVal.toString();
+            if (shapeStr.startsWith("SVGNODE~")) {
+                int tildeIndex = shapeStr.indexOf('~');
+                if (tildeIndex != -1) {
+                    QString jsonStr = shapeStr.mid(tildeIndex + 1);
+                    QJsonDocument nodeDoc = QJsonDocument::fromJson(jsonStr.toUtf8());
+                    QJsonObject nodeObj = nodeDoc.object();
+                    if (nodeObj.contains("attrs") && nodeObj["attrs"].isObject()) {
+                        QJsonObject attrs = nodeObj["attrs"].toObject();
+                        // 只从 c_etype == "outline3D" 的节点获取 3D 模型 UUID
+                        if (attrs.contains("c_etype") &&
+                            attrs["c_etype"].toString() == "outline3D" &&
+                            attrs.contains("uuid") && !attrs["uuid"].toString().isEmpty()) {
+                            modelUuid = attrs["uuid"].toString();
+                            qDebug() << "Found 3D model UUID from outline3D SVGNODE:" << modelUuid;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
+
+    // 如果没找到，回退到 head.uuid_3d
     if (modelUuid.isEmpty() && resultData.contains("head")) {
         QJsonObject head = resultData["head"].toObject();
         if (head.contains("uuid_3d")) {

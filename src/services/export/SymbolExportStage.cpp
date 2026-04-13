@@ -107,6 +107,11 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         if (it == cachedData.end() || !it.value()) {
             qWarning() << "SymbolExportStage: No data for component:" << componentId;
             failedIds.append(componentId);
+            // 发射 itemStatusChanged 信号通知 ViewModel
+            ExportItemStatus status;
+            status.status = ExportItemStatus::Status::Failed;
+            status.errorMessage = "No component data";
+            emit itemStatusChanged(componentId, status);
             continue;
         }
 
@@ -116,12 +121,22 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         if (!data->symbolData()) {
             qWarning() << "SymbolExportStage: No symbol data for component:" << componentId;
             failedIds.append(componentId);
+            // 发射 itemStatusChanged 信号通知 ViewModel
+            ExportItemStatus status;
+            status.status = ExportItemStatus::Status::Failed;
+            status.errorMessage = "No symbol data";
+            emit itemStatusChanged(componentId, status);
             continue;
         }
 
         // 添加到符号列表
         symbolList.append(*data->symbolData());
         successCount++;
+
+        // 发射 itemStatusChanged 信号通知 ViewModel
+        ExportItemStatus status;
+        status.status = ExportItemStatus::Status::Success;
+        emit itemStatusChanged(componentId, status);
 
         qDebug() << "SymbolExportStage: Collected symbol for" << componentId;
     }

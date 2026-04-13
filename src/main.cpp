@@ -9,6 +9,7 @@
 #include "src/core/network/NetworkClient.h"
 #include "src/services/ConfigService.h"
 #include "src/services/export/ParallelExportService.h"
+#include "src/services/export/ExportProgress.h"
 #include "src/ui/viewmodels/ComponentListViewModel.h"
 #include "src/ui/viewmodels/ExportProgressViewModel.h"
 #include "src/ui/viewmodels/ExportSettingsViewModel.h"
@@ -456,6 +457,12 @@ int main(int argc, char* argv[]) {
     EasyKiConverter::ComponentService* componentService = new EasyKiConverter::ComponentService();
     EasyKiConverter::ParallelExportService* exportService = new EasyKiConverter::ParallelExportService();
     exportService->setComponentService(componentService);
+
+    // 注册自定义类型以支持跨线程信号槽的 QueuedConnection
+    qRegisterMetaType<EasyKiConverter::ExportItemStatus>();
+    qRegisterMetaType<EasyKiConverter::ExportTypeProgress>();
+    qRegisterMetaType<EasyKiConverter::PreloadProgress>();
+    qRegisterMetaType<EasyKiConverter::ExportOverallProgress>();
 
     // 创建 ViewModel 实例（不设置 parent，手动管理生命周期）
     EasyKiConverter::ComponentListViewModel* componentListViewModel =

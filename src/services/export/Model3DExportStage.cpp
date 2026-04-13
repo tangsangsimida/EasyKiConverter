@@ -141,11 +141,14 @@ void Model3DExportStage::startWorker(QObject* worker,
 
     // 使用QPointer防止stage已销毁时lambda访问悬空指针
     QPointer<Model3DExportStage> stagePtr(this);
+    qInfo() << "Model3DExportStage: Connecting worker completed signal for" << componentId;
     connect(exportWorker,
             &Model3DExportWorker::completed,
             this,
             [stagePtr, exportWorker, componentId](const QString&, bool success, const QString& error) {
+                qInfo() << "Model3DExportStage: Worker completed signal received for" << componentId << "success:" << success;
                 if (!stagePtr) {
+                    qInfo() << "Model3DExportStage: stagePtr is null!";
                     return;
                 }
 

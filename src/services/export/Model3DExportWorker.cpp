@@ -5,6 +5,7 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
 
@@ -85,35 +86,47 @@ void Model3DExportWorker::run() {
 
     QString uuid = m_data->model3DData()->uuid();
 
-    auto downloadModel = [this, &uuid](auto downloadMethod, const QString& targetPath, const QString& formatName) {
+    auto downloadModel = [this, &uuid](auto downloadMethod, const QString& targetPath, const QString& formatName) -> QString {
         QString localError;
         bool downloadCompleted = false;
+        QEventLoop loop;  // 使用事件循环处理同步调用中的信号
 
-        QMetaObject::Connection successConnection;
-        QMetaObject::Connection errorConnection;
+        auto successHandler = [this, &downloadCompleted, &localError, targetPath, &loop](const QString& downloadedFilePath) {
+            if (downloadedFilePath != targetPath) {
+                return;
+            }
+            if (m_cancelled.load()) {
+                localError = QStringLiteral("Cancelled");
+                loop.quit();
+                return;
+            }
+            downloadCompleted = true;
+            loop.quit();
+        };
 
-        successConnection = connect(
+        auto errorHandler = [&localError, &loop](const QString& errorMessage) {
+            localError = errorMessage;
+            loop.quit();
+        };
+
+        QMetaObject::Connection successConnection = connect(
             m_exporter,
             &Exporter3DModel::downloadSuccess,
             this,
-            [this, &downloadCompleted, &localError, targetPath](const QString& downloadedFilePath) {
-                if (downloadedFilePath != targetPath) {
-                    return;
-                }
-                if (m_cancelled.load()) {
-                    localError = QStringLiteral("Cancelled");
-                    return;
-                }
-                downloadCompleted = true;
-            });
+            successHandler);
 
-        errorConnection = connect(
+        QMetaObject::Connection errorConnection = connect(
             m_exporter,
             &Exporter3DModel::downloadError,
             this,
-            [&localError](const QString& errorMessage) { localError = errorMessage; });
+            errorHandler);
 
         (m_exporter->*downloadMethod)(uuid, targetPath);
+
+        // 如果信号尚未被处理（同步调用），运行事件循环等待
+        if (!downloadCompleted && localError.isEmpty()) {
+            loop.exec();
+        }
 
         disconnect(successConnection);
         disconnect(errorConnection);

@@ -107,6 +107,11 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         if (it == cachedData.end() || !it.value()) {
             qWarning() << "FootprintExportStage: No data for component:" << componentId;
             failedIds.append(componentId);
+            // 发射 itemStatusChanged 信号通知 ViewModel
+            ExportItemStatus status;
+            status.status = ExportItemStatus::Status::Failed;
+            status.errorMessage = "No component data";
+            emit itemStatusChanged(componentId, status);
             continue;
         }
 
@@ -116,12 +121,22 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         if (!data->footprintData()) {
             qWarning() << "FootprintExportStage: No footprint data for component:" << componentId;
             failedIds.append(componentId);
+            // 发射 itemStatusChanged 信号通知 ViewModel
+            ExportItemStatus status;
+            status.status = ExportItemStatus::Status::Failed;
+            status.errorMessage = "No footprint data";
+            emit itemStatusChanged(componentId, status);
             continue;
         }
 
         // 添加到封装列表
         footprintList.append(*data->footprintData());
         successCount++;
+
+        // 发射 itemStatusChanged 信号通知 ViewModel
+        ExportItemStatus status;
+        status.status = ExportItemStatus::Status::Success;
+        emit itemStatusChanged(componentId, status);
 
         qDebug() << "FootprintExportStage: Collected footprint for" << componentId;
     }

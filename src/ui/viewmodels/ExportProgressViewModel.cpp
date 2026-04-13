@@ -228,7 +228,7 @@ void ExportProgressViewModel::handlePreloadProgressChanged(const PreloadProgress
 }
 
 void ExportProgressViewModel::handlePreloadCompleted(int successCount, int failedCount) {
-    qDebug() << "ExportProgressViewModel: Preload completed. Success:" << successCount << "Failed:" << failedCount;
+    qInfo() << "ExportProgressViewModel: Preload completed. Success:" << successCount << "Failed:" << failedCount;
 
     if (failedCount > 0) {
         setStatus(QString("Preload completed with %1 errors").arg(failedCount));
@@ -243,6 +243,7 @@ void ExportProgressViewModel::handlePreloadCompleted(int successCount, int faile
 }
 
 void ExportProgressViewModel::handleProgressChanged(const ExportOverallProgress& progress) {
+    qInfo() << "handleProgressChanged called, stage:" << (int)progress.currentStage;
     // Update stage progress values for QML binding
     switch (progress.currentStage) {
         case ExportOverallProgress::Stage::Preloading:
@@ -283,12 +284,16 @@ void ExportProgressViewModel::handleProgressChanged(const ExportOverallProgress&
     }
 
     emit stageProgressChanged();
-    markResultsDirty();
+    // 注意：不要在这里调用 markResultsDirty()，因为 handleProgressChanged 只更新进度值
+    // 不修改 m_resultsList，调用会导致 flushPendingUpdates 重新计算 counts
+    // counts 只应该通过 handleItemStatusChanged 或 handleCompleted 更新
 }
 
 void ExportProgressViewModel::handleItemStatusChanged(const QString& componentId,
                                                       const QString& typeName,
                                                       const ExportItemStatus& status) {
+    qInfo() << "handleItemStatusChanged called:" << componentId << typeName << "status:" << (int)status.status;
+    qInfo() << "  m_idToIndexMap size:" << m_idToIndexMap.size() << "m_resultsList size:" << m_resultsList.size();
     if (m_idToIndexMap.contains(componentId)) {
         int index = m_idToIndexMap[componentId];
         QVariantMap result = m_resultsList[index].toMap();
@@ -346,12 +351,14 @@ void ExportProgressViewModel::handleTypeCompleted(const QString& typeName,
     Q_UNUSED(successCount);
     Q_UNUSED(failedCount);
     Q_UNUSED(skippedCount);
-    qDebug() << "Type completed:" << typeName << "success=" << successCount << "failed=" << failedCount;
+    qInfo() << "Type completed:" << typeName << "success=" << successCount << "failed=" << failedCount;
 }
 
 void ExportProgressViewModel::handleCompleted(int successCount, int failedCount) {
-    qDebug() << "Export completed: success=" << successCount << "failed=" << failedCount;
+    qInfo() << "Export completed: success=" << successCount << "failed=" << failedCount;
 
+    // 直接使用从 ParallelExportService 获取的统计数字，不再通过 flushPendingUpdates 重新计算
+    // 因为 itemStatusChanged 信号可能未被正确调用，导致 m_resultsList 中的状态未更新
     m_successCount = successCount;
     m_failureCount = failedCount;
     if (m_isStopping) {
@@ -365,7 +372,6 @@ void ExportProgressViewModel::handleCompleted(int successCount, int failedCount)
 
     emit successCountChanged();
     emit failureCountChanged();
-    flushPendingUpdates();
 }
 
 void ExportProgressViewModel::handleCancelled() {
@@ -396,10 +402,15 @@ void ExportProgressViewModel::handleFailed(const QString& error) {
 }
 
 void ExportProgressViewModel::flushPendingUpdates() {
+    qInfo() << "flushPendingUpdates called, m_pendingUpdate:" << m_pendingUpdate;
     if (m_pendingUpdate) {
         m_pendingUpdate = false;
         updateResultsList();
+        // 发射所有相关信号以确保 QML 正确更新
+        qInfo() << "  Emitting signals: resultsListChanged, successCountChanged:" << m_successCount << "failureCountChanged:" << m_failureCount;
         emit resultsListChanged();
+        emit successCountChanged();
+        emit failureCountChanged();
         emit filteredResultsListChanged();
     }
 }
@@ -741,6 +752,7 @@ int ExportProgressViewModel::averageTypeProgress(const ExportOverallProgress& pr
 }
 
 void ExportProgressViewModel::markResultsDirty() {
+    qInfo() << "markResultsDirty called, m_pendingUpdate set to true";
     m_pendingUpdate = true;
     m_throttleTimer->start();
 }

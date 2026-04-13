@@ -3,6 +3,7 @@
 #include <QDateTime>
 #include <QMap>
 #include <QString>
+#include <QMetaType>
 
 namespace EasyKiConverter {
 
@@ -270,3 +271,8 @@ struct ExportOverallProgress {
 };
 
 }  // namespace EasyKiConverter
+
+Q_DECLARE_METATYPE(EasyKiConverter::ExportItemStatus)
+Q_DECLARE_METATYPE(EasyKiConverter::ExportTypeProgress)
+Q_DECLARE_METATYPE(EasyKiConverter::PreloadProgress)
+Q_DECLARE_METATYPE(EasyKiConverter::ExportOverallProgress)
