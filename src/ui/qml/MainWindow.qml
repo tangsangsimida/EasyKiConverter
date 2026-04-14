@@ -11,14 +11,51 @@ import EasyKiconverter_Cpp_Version 1.0
 
 Item {
     id: window
+    focus: true
     // 连接到 ViewModel
     property var componentListController: componentListViewModel
     property var exportSettingsController: exportSettingsViewModel
     property var exportProgressController: exportProgressViewModel
     property var themeController: themeSettingsViewModel
+    property var updateChecker: updateCheckerService
     // 窗口状态属性
     readonly property bool isMaximized: Window.window ? (Window.window.visibility === Window.Maximized || Window.window.visibility === Window.FullScreen) : false
     readonly property int windowRadius: isMaximized ? 0 : AppStyle.radius.lg
+    readonly property int calculatedMinimumWindowWidth: calculateMinimumWidth()
+
+    function mainFlickable() {
+        return scrollView.contentItem;
+    }
+
+    function clampScroll(targetY) {
+        var flickable = mainFlickable();
+        if (!flickable) {
+            return 0;
+        }
+        var maxY = Math.max(0, flickable.contentHeight - flickable.height);
+        return Math.max(0, Math.min(maxY, targetY));
+    }
+
+    function scrollToTop() {
+        var flickable = mainFlickable();
+        if (flickable) {
+            flickable.contentY = 0;
+        }
+    }
+
+    function scrollToBottom() {
+        var flickable = mainFlickable();
+        if (flickable) {
+            flickable.contentY = clampScroll(flickable.contentHeight);
+        }
+    }
+
+    function scrollPage(deltaPages) {
+        var flickable = mainFlickable();
+        if (flickable) {
+            flickable.contentY = clampScroll(flickable.contentY + flickable.height * deltaPages);
+        }
+    }
     // 用于测量文本宽度的 FontMetrics（考虑 DPI 缩放）
     FontMetrics {
         id: textMetrics
@@ -37,13 +74,59 @@ Item {
             console.log("语言切换到:", currentLanguage, "重新计算最小窗口宽度");
             // 强制触发重新计算
             Qt.callLater(function () {
-                if (appWindow && mainWindowLoader.item) {
-                    appWindow.dynamicMinimumWidth = mainWindowLoader.item.calculateMinimumWidth();
-                    console.log("更新最小窗口宽度为:", appWindow.dynamicMinimumWidth);
+                if (Window.window) {
+                    Window.window.dynamicMinimumWidth = calculateMinimumWidth();
+                    console.log("更新最小窗口宽度为:", Window.window.dynamicMinimumWidth);
                 }
             });
         }
     }
+    Shortcut {
+        sequence: "Home"
+        context: Qt.ApplicationShortcut
+        onActivated: scrollToTop()
+    }
+
+    Shortcut {
+        sequence: "End"
+        context: Qt.ApplicationShortcut
+        onActivated: scrollToBottom()
+    }
+
+    Shortcut {
+        sequence: "PageUp"
+        context: Qt.ApplicationShortcut
+        onActivated: scrollPage(-1)
+    }
+
+    Shortcut {
+        sequence: "PgUp"
+        context: Qt.ApplicationShortcut
+        onActivated: scrollPage(-1)
+    }
+
+    Shortcut {
+        sequence: "PageDown"
+        context: Qt.ApplicationShortcut
+        onActivated: scrollPage(1)
+    }
+
+    Shortcut {
+        sequence: "PgDown"
+        context: Qt.ApplicationShortcut
+        onActivated: scrollPage(1)
+    }
+
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_PageUp) {
+            scrollPage(-1);
+            event.accepted = true;
+        } else if (event.key === Qt.Key_PageDown) {
+            scrollPage(1);
+            event.accepted = true;
+        }
+    }
+
     // 计算最小窗口宽度（依赖 currentLanguage，语言切换时会自动重新计算）
     function calculateMinimumWidth() {
         // 始终测量所有可能显示的文本（不区分语言，确保安全）
@@ -55,10 +138,14 @@ Item {
         var texts = optionTexts.concat(descriptionTexts);
         // 测量文本宽度
         var maxOptionTextWidth = 0;
+        var maxDescriptionTextWidth = 0;
         for (var i = 0; i < texts.length; i++) {
             var textWidth = textMetrics.advanceWidth(texts[i]);
-            if (textWidth > maxOptionTextWidth) {
+            if (i < optionTexts.length && textWidth > maxOptionTextWidth) {
                 maxOptionTextWidth = textWidth;
+            }
+            if (i >= optionTexts.length && textWidth > maxDescriptionTextWidth) {
+                maxDescriptionTextWidth = textWidth;
             }
         }
 
@@ -220,6 +307,7 @@ Item {
         TitleBar {
             id: titleBar
             windowRadius: window.windowRadius
+            windowController: Window.window ? Window.window.windowController : null
         }
 
         // 主滚动区域
@@ -249,6 +337,11 @@ Item {
                         Layout.fillWidth: true
                         themeController: window.themeController
                         componentListController: window.componentListController
+                    }
+
+                    UpdateBanner {
+                        Layout.fillWidth: true
+                        updateChecker: window.updateChecker
                     }
 
                     // 元件输入卡片

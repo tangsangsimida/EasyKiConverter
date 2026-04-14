@@ -7,6 +7,7 @@ add_library(EasyKiConverterServices STATIC
     ComponentService.cpp
     ComponentCacheService.cpp
     ConfigService.cpp
+    UpdateCheckerService.cpp
     MemoryMonitor.cpp
     ComponentQueueManager.cpp
     ParallelFetchContext.cpp

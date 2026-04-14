@@ -76,6 +76,13 @@ void ComponentListItemData::setErrorMessage(const QString& error) {
     }
 }
 
+void ComponentListItemData::setRetryable(bool retryable) {
+    if (m_retryable != retryable) {
+        m_retryable = retryable;
+        emit validationStatusChanged();
+    }
+}
+
 void ComponentListItemData::setPreviewImageExported(bool exported) {
     if (m_previewImageExported != exported) {
         m_previewImageExported = exported;

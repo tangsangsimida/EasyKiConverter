@@ -15,6 +15,8 @@ ExportProgressCard 1.0 ExportProgressCard.qml
 ExportResultsCard 1.0 ExportResultsCard.qml
 ExportStatisticsCard 1.0 ExportStatisticsCard.qml
 ExportButtonsSection 1.0 ExportButtonsSection.qml
+UpdateBanner 1.0 UpdateBanner.qml
+WindowController 1.0 WindowController.qml
 WindowResizeHandles 1.0 WindowResizeHandles.qml
 ConfirmDialog 1.0 ConfirmDialog.qml
 ExitDialog 1.0 ExitDialog.qml

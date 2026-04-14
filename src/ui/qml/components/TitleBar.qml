@@ -8,6 +8,7 @@ Rectangle {
     id: titleBar
     // 外部属性
     property int windowRadius: 0
+    property var windowController
     width: parent.width
     height: 38
     color: AppStyle.colors.surface
@@ -31,7 +32,9 @@ Rectangle {
             Window.window.startSystemMove();
         }
         onDoubleClicked: {
-            if (Window.window.visibility === Window.Maximized) {
+            if (titleBar.windowController) {
+                titleBar.windowController.toggleMaximize();
+            } else if (Window.window.visibility === Window.Maximized) {
                 Window.window.showNormal();
             } else {
                 Window.window.showMaximized();
@@ -85,7 +88,9 @@ Rectangle {
                 }
 
                 onClicked: {
-                    if (Window.window) {
+                    if (titleBar.windowController) {
+                        titleBar.windowController.requestMinimize();
+                    } else if (Window.window) {
                         Window.window.showMinimized();
                     }
                 }
@@ -110,7 +115,9 @@ Rectangle {
                 }
 
                 onClicked: {
-                    if (Window.window.visibility === Window.Maximized) {
+                    if (titleBar.windowController) {
+                        titleBar.windowController.toggleMaximize();
+                    } else if (Window.window.visibility === Window.Maximized) {
                         Window.window.showNormal();
                     } else {
                         Window.window.showMaximized();
@@ -136,7 +143,13 @@ Rectangle {
                     }
                 }
 
-                onClicked: Window.window.close()
+                onClicked: {
+                    if (titleBar.windowController) {
+                        titleBar.windowController.requestClose();
+                    } else {
+                        Window.window.close();
+                    }
+                }
             }
         }
     }

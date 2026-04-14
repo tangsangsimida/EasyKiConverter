@@ -555,7 +555,7 @@ Rectangle {
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
-            visible: itemData && itemData.validationPhase === "failed"
+            visible: itemData && itemData.validationPhase === "failed" && itemData.retryable
             background: Rectangle {
                 color: parent.pressed ? AppStyle.colors.primaryHover : parent.hovered ? "#dbeafe" : "transparent"
                 radius: AppStyle.radius.sm

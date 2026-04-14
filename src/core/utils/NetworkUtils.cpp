@@ -174,7 +174,8 @@ void NetworkUtils::handleResponse() {
     }
 
     if (statusCode != 200 && statusCode != 0) {  // 某些情况下状态码可能为 0 但数据有效（如 local file，虽然这里不常用）
-        QString errorMsg = QString("HTTP request failed with status code: %1").arg(statusCode);
+        QString errorMsg = statusCode == 404 ? QStringLiteral("[NO_RETRY] HTTP 404: Component not found")
+                                             : QString("HTTP request failed with status code: %1").arg(statusCode);
         emit requestError(errorMsg);
         m_isRequesting = false;
         return;
@@ -233,7 +234,7 @@ void NetworkUtils::handleError(QNetworkReply::NetworkError error) {
         return;
     }
 
-    // 检查 HTTP 状态码，403 禁止访问不允许重试
+    // 检查 HTTP 状态码，403/404 这类确定性错误不允许重试
     int statusCode = m_currentReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 403) {
         qWarning() << "HTTP 403 Forbidden - server access denied, not retrying";
@@ -241,6 +242,20 @@ void NetworkUtils::handleError(QNetworkReply::NetworkError error) {
         emit requestError(errorMsg);
         m_isRequesting = false;
         // 安全地删除 reply
+        QPointer<QNetworkReply> replyPtr(m_currentReply);
+        m_currentReply = nullptr;
+        m_replyDeleting = true;
+        if (replyPtr) {
+            replyPtr->disconnect();
+            replyPtr->deleteLater();
+        }
+        return;
+    }
+    if (statusCode == 404) {
+        qWarning() << "HTTP 404 Not Found - component does not exist, not retrying";
+        QString errorMsg = QString("[NO_RETRY] HTTP 404: Component not found");
+        emit requestError(errorMsg);
+        m_isRequesting = false;
         QPointer<QNetworkReply> replyPtr(m_currentReply);
         m_currentReply = nullptr;
         m_replyDeleting = true;

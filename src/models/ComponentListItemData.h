@@ -27,6 +27,7 @@ class ComponentListItemData : public QObject {
     Q_PROPERTY(bool isFetching READ isFetching NOTIFY fetchingStatusChanged)
     Q_PROPERTY(QString validationPhase READ validationPhase NOTIFY validationPhaseChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY validationStatusChanged)
+    Q_PROPERTY(bool retryable READ retryable NOTIFY validationStatusChanged)
     Q_PROPERTY(QString datasheetUrl READ datasheetUrl NOTIFY datasheetChanged)
     Q_PROPERTY(bool previewImageExported READ previewImageExported NOTIFY exportStatusChanged)
     Q_PROPERTY(bool datasheetExported READ datasheetExported NOTIFY exportStatusChanged)
@@ -75,6 +76,10 @@ public:
         return m_errorMessage;
     }
 
+    bool retryable() const {
+        return m_retryable;
+    }
+
     QString datasheetUrl() const;
 
     bool previewImageExported() const {
@@ -102,6 +107,7 @@ public:
     void setFetching(bool fetching);
     void setValidationPhase(const QString& phase);
     void setErrorMessage(const QString& error);
+    void setRetryable(bool retryable);
     void setPreviewImageExported(bool exported);
     void setDatasheetExported(bool exported);
 
@@ -138,6 +144,7 @@ private:
     bool m_isFetching;
     QString m_validationPhase;  // "idle" | "validating" | "fetching_preview" | "completed" | "failed"
     QString m_errorMessage;
+    bool m_retryable = true;
     QSharedPointer<ComponentData> m_componentData;
     bool m_previewImageExported = false;
     bool m_datasheetExported = false;

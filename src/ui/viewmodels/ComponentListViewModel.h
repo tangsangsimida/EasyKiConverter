@@ -47,6 +47,8 @@ class ComponentListViewModel : public QAbstractListModel {
     Q_PROPERTY(int validCount READ validCount NOTIFY filteredCountChanged)
     Q_PROPERTY(int invalidCount READ invalidCount NOTIFY filteredCountChanged)
     Q_PROPERTY(bool isScrolling READ isScrolling NOTIFY isScrollingChanged)
+    Q_PROPERTY(bool validationReadyHint READ validationReadyHint NOTIFY attentionStateChanged)
+    Q_PROPERTY(bool previewReadyHint READ previewReadyHint NOTIFY attentionStateChanged)
 
 public:
     enum ComponentRoles { ItemDataRole = Qt::UserRole + 1 };
@@ -116,8 +118,17 @@ public slots:
         return m_isScrolling;
     }
 
+    bool validationReadyHint() const {
+        return m_validationReadyHint;
+    }
+
+    bool previewReadyHint() const {
+        return m_previewReadyHint;
+    }
+
     Q_INVOKABLE void setScrolling(bool scrolling);
     Q_INVOKABLE void updateExportStatus(const QString& componentId, int previewImageExported, int datasheetExported);
+    Q_INVOKABLE void dismissAttentionHints();
 
 signals:
     void componentCountChanged();
@@ -132,6 +143,7 @@ signals:
     void listCleared();
     void pasteCompleted(int added, int skipped);
     void outputPathChanged();
+    void attentionStateChanged();
 
 private slots:
     void handleComponentInfoReady(const QString& componentId, const ComponentData& data);
@@ -146,6 +158,7 @@ private slots:
     void handleAllImagesReady(const QString& componentId, const QStringList& imagePaths);
 
 private:
+    static bool isNonRetryableValidationError(const QString& error);
     bool componentExists(const QString& componentId) const;
     bool validateComponentId(const QString& componentId) const;
     QStringList extractComponentIdFromText(const QString& text) const;
@@ -161,6 +174,8 @@ private:
     void onPreviewImageEncodingDone(const QString& componentId, const QStringList& encodedImages);
     void scheduleListUpdate();  // 批量模式下的列表更新调度
     void delayedFetchPreviewImages();  // 延迟获取预览图，等待所有验证完成
+    void markPreviewFetchCompleted(const QString& componentId);
+    void clearAttentionHints();
 
 private:
     ComponentService* m_service;
@@ -212,6 +227,9 @@ private:
 
     // 延迟获取预览图定时器（等待验证全部完成）
     QTimer* m_delayedFetchPreviewTimer;
+    QSet<QString> m_pendingPreviewFetchIds;
+    bool m_validationReadyHint = false;
+    bool m_previewReadyHint = false;
 };
 
 }  // namespace EasyKiConverter

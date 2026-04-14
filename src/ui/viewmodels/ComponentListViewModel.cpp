@@ -96,6 +96,10 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
             this,
             [this](const QStringList& validatedIds) {
                 qDebug() << "All validations completed, validated component count:" << validatedIds.size();
+                const int totalCount = componentCount();
+                m_validationReadyHint = !validatedIds.isEmpty() && validatedIds.size() == totalCount;
+                m_previewReadyHint = false;
+                emit attentionStateChanged();
                 fetchAllPreviewImages();
             });
 
@@ -131,6 +135,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                         emit filteredCountChanged();
                     }
                 }
+                markPreviewFetchCompleted(componentId);
             });
     connect(m_service, &ComponentService::allImagesReady, this, &ComponentListViewModel::handleAllImagesReady);
     connect(m_service,
@@ -151,12 +156,20 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                     item->setValidationPhase("completed");
                     emit filteredCountChanged();
                 }
+                markPreviewFetchCompleted(componentId);
             });
 }
 
 ComponentListViewModel::~ComponentListViewModel() {
     qDeleteAll(m_componentList);
     m_componentList.clear();
+}
+
+bool ComponentListViewModel::isNonRetryableValidationError(const QString& error) {
+    return error.contains("HTTP 404", Qt::CaseInsensitive) || error.contains("404 Not Found", Qt::CaseInsensitive) ||
+           error.contains("component not found", Qt::CaseInsensitive) ||
+           error.contains("元器件不存在", Qt::CaseInsensitive) || error.contains("[NO_RETRY]", Qt::CaseInsensitive) ||
+           error.contains("No result", Qt::CaseInsensitive);
 }
 
 int ComponentListViewModel::rowCount(const QModelIndex& parent) const {
@@ -185,6 +198,7 @@ QHash<int, QByteArray> ComponentListViewModel::roleNames() const {
 }
 
 void ComponentListViewModel::addComponent(const QString& componentId) {
+    clearAttentionHints();
     QString trimmedId = componentId.trimmed();
 
     if (trimmedId.isEmpty()) {
@@ -256,6 +270,7 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
 }
 
 void ComponentListViewModel::removeComponent(int index) {
+    clearAttentionHints();
     // 获取要删除的 item 和 ID（需要锁保护）
     ComponentListItemData* item = nullptr;
     QString removedId;
@@ -304,6 +319,8 @@ void ComponentListViewModel::removeComponentById(const QString& componentId) {
 }
 
 void ComponentListViewModel::clearComponentList() {
+    clearAttentionHints();
+    m_pendingPreviewFetchIds.clear();
     // 获取列表大小（需要锁保护）
     int listCount;
     {
@@ -345,6 +362,7 @@ void ComponentListViewModel::rebuildComponentIdIndex() {
 }
 
 void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds) {
+    clearAttentionHints();
     QStringList newIds;
     for (const QString& rawId : componentIds) {
         QString id = rawId.trimmed().toUpper();
@@ -706,6 +724,7 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
     item->setComponentData(dataPtr);
     item->setFetching(false);
     item->setValid(true);
+    item->setRetryable(true);
     item->setValidationPhase("fetching_preview");  // 预览图获取阶段
     item->setErrorMessage("");
     emit filteredCountChanged();
@@ -738,6 +757,7 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
             bool isCadDataFailure =
                 error.contains("CAD data") || error.contains("Symbol data") || error.contains("Footprint data") ||
                 error.contains("Empty CAD") || error.contains("parse.*EasyEDA") ||
+                error.contains("No result", Qt::CaseInsensitive) ||
                 // 网络相关错误（CAD 数据获取也可能触发这些）
                 error.contains("403") || error.contains("404") || error.contains("timeout", Qt::CaseInsensitive) ||
                 error.contains("access denied", Qt::CaseInsensitive) ||
@@ -752,7 +772,16 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
                 qDebug() << "handleFetchError: component" << componentId << "CAD data fetch failed, marking as invalid";
                 item->setValid(false);
                 item->setValidationPhase("failed");
-                item->setErrorMessage(error);
+                const bool nonRetryable = isNonRetryableValidationError(error);
+                item->setRetryable(!nonRetryable);
+                if (error.contains("No result", Qt::CaseInsensitive) || error.contains("not found", Qt::CaseInsensitive) ||
+                    error.contains("404", Qt::CaseInsensitive)) {
+                    item->setErrorMessage(QStringLiteral("元器件不存在（404）"));
+                } else if (nonRetryable) {
+                    item->setErrorMessage(error);
+                } else {
+                    item->setErrorMessage(error);
+                }
                 m_validationStateManager->onComponentFailed(componentId);
                 emit filteredCountChanged();
             } else {
@@ -852,6 +881,7 @@ void ComponentListViewModel::handleAllImagesReady(const QString& componentId, co
         item->setValidationPhase("completed");
         emit filteredCountChanged();
     }
+    markPreviewFetchCompleted(componentId);
     if (item) {
         QFutureWatcher<QStringList>* watcher = new QFutureWatcher<QStringList>(this);
         QPointer<ComponentListItemData> safeItem(item);
@@ -956,8 +986,10 @@ void ComponentListViewModel::refreshComponentInfo(int index) {
     }
 
     if (item) {
+        clearAttentionHints();
         item->setFetching(true);
         item->setValid(false);
+        item->setRetryable(true);
         item->setValidationPhase("validating");
         item->setErrorMessage("");
         m_service->fetchComponentData(componentId, false);
@@ -968,13 +1000,14 @@ void ComponentListViewModel::refreshComponentInfo(int index) {
 }
 
 void ComponentListViewModel::retryAllInvalidComponents() {
+    clearAttentionHints();
     // 先收集需要重试的组件 ID 列表
     QStringList idsToRetry;
     {
         QMutexLocker locker(&m_listMutex);
         for (int i = 0; i < m_componentList.count(); ++i) {
             auto item = m_componentList.at(i);
-            if (item && !item->isValid() && !item->isFetching()) {
+            if (item && !item->isValid() && !item->isFetching() && item->retryable()) {
                 idsToRetry.append(item->componentId());
             }
         }
@@ -986,6 +1019,7 @@ void ComponentListViewModel::retryAllInvalidComponents() {
         if (item) {
             item->setFetching(true);
             item->setValid(false);
+            item->setRetryable(true);
             item->setValidationPhase("validating");
             item->setErrorMessage("");
             m_service->fetchComponentData(id, false);
@@ -1050,10 +1084,16 @@ void ComponentListViewModel::fetchAllPreviewImages() {
 
     if (validIds.isEmpty()) {
         qDebug() << "No valid components to fetch preview images for";
+        m_previewReadyHint = false;
+        m_validationReadyHint = false;
+        emit attentionStateChanged();
         return;
     }
 
     qDebug() << "Fetching preview images for" << validIds.count() << "valid components";
+    m_pendingPreviewFetchIds = QSet<QString>(validIds.begin(), validIds.end());
+    m_previewReadyHint = false;
+    emit attentionStateChanged();
 
     // 使用批量获取预览图接口，避免为每个组件创建单独的定时器
     // LcscImageService 会自动处理缓存加载和队列管理
@@ -1071,7 +1111,7 @@ void ComponentListViewModel::updateHasInvalidComponents() {
     {
         QMutexLocker locker(&m_listMutex);
         for (const auto& item : m_componentList) {
-            if (item && !item->isValid() && !item->isFetching()) {
+            if (item && !item->isValid() && !item->isFetching() && item->retryable()) {
                 hasInvalid = true;
                 break;
             }
@@ -1095,6 +1135,33 @@ void ComponentListViewModel::setScrolling(bool scrolling) {
     if (m_isScrolling != scrolling) {
         m_isScrolling = scrolling;
         emit isScrollingChanged();
+    }
+}
+
+void ComponentListViewModel::markPreviewFetchCompleted(const QString& componentId) {
+    if (componentId.isEmpty() || !m_pendingPreviewFetchIds.contains(componentId)) {
+        return;
+    }
+
+    m_pendingPreviewFetchIds.remove(componentId);
+    if (m_pendingPreviewFetchIds.isEmpty()) {
+        m_validationReadyHint = false;
+        m_previewReadyHint = true;
+        emit attentionStateChanged();
+    }
+}
+
+void ComponentListViewModel::dismissAttentionHints() {
+    clearAttentionHints();
+}
+
+void ComponentListViewModel::clearAttentionHints() {
+    const bool changed = m_validationReadyHint || m_previewReadyHint || !m_pendingPreviewFetchIds.isEmpty();
+    m_validationReadyHint = false;
+    m_previewReadyHint = false;
+    m_pendingPreviewFetchIds.clear();
+    if (changed) {
+        emit attentionStateChanged();
     }
 }
 

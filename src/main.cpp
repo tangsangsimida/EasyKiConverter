@@ -8,6 +8,7 @@
 #include "src/core/LanguageManager.h"
 #include "src/core/network/NetworkClient.h"
 #include "src/services/ConfigService.h"
+#include "src/services/UpdateCheckerService.h"
 #include "src/services/export/ExportProgress.h"
 #include "src/services/export/ParallelExportService.h"
 #include "src/ui/viewmodels/ComponentListViewModel.h"
@@ -472,6 +473,7 @@ int main(int argc, char* argv[]) {
     EasyKiConverter::ExportProgressViewModel* exportProgressViewModel =
         new EasyKiConverter::ExportProgressViewModel(exportService, componentService, componentListViewModel);
     EasyKiConverter::ThemeSettingsViewModel* themeSettingsViewModel = new EasyKiConverter::ThemeSettingsViewModel();
+    EasyKiConverter::UpdateCheckerService* updateCheckerService = new EasyKiConverter::UpdateCheckerService();
 
     // 创建 QML 引擎
     auto* engine = new QQmlApplicationEngine();
@@ -495,6 +497,7 @@ int main(int argc, char* argv[]) {
     engine->rootContext()->setContextProperty("exportSettingsViewModel", exportSettingsViewModel);
     engine->rootContext()->setContextProperty("exportProgressViewModel", exportProgressViewModel);
     engine->rootContext()->setContextProperty("themeSettingsViewModel", themeSettingsViewModel);
+    engine->rootContext()->setContextProperty("updateCheckerService", updateCheckerService);
     engine->rootContext()->setContextProperty("configService", EasyKiConverter::ConfigService::instance());
     engine->rootContext()->setContextProperty("componentCacheService",
                                               EasyKiConverter::ComponentCacheService::instance());
@@ -768,6 +771,8 @@ int main(int argc, char* argv[]) {
     // 点击关闭按钮时直接退出应用程序
     app.setQuitOnLastWindowClosed(true);
 
+    QTimer::singleShot(2000, updateCheckerService, &EasyKiConverter::UpdateCheckerService::checkForUpdates);
+
     // 连接应用程序的 aboutToQuit 信号，确保退出前清理所有资源
     QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {
         qDebug() << "Application is about to quit, performing cleanup...";
@@ -798,6 +803,7 @@ int main(int argc, char* argv[]) {
     engine->rootContext()->setContextProperty("exportSettingsViewModel", nullptr);
     engine->rootContext()->setContextProperty("exportProgressViewModel", nullptr);
     engine->rootContext()->setContextProperty("themeSettingsViewModel", nullptr);
+    engine->rootContext()->setContextProperty("updateCheckerService", nullptr);
     engine->rootContext()->setContextProperty("componentCacheService", nullptr);
 
     // 2. 先销毁 QML 引擎，阻止事件继续投递到 QML/QObject 图树
@@ -811,6 +817,8 @@ int main(int argc, char* argv[]) {
 
     // 4. 销毁 ViewModel
     qDebug() << "Destroying ViewModels...";
+    delete updateCheckerService;
+    updateCheckerService = nullptr;
     delete themeSettingsViewModel;
     themeSettingsViewModel = nullptr;
     delete exportProgressViewModel;

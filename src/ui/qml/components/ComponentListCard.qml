@@ -9,6 +9,10 @@ Card {
     // 外部依赖
     property var componentListController
     property var exportProgressController
+    readonly property bool showAttentionHint: showValidationHint || showPreviewHint
+    readonly property bool showValidationHint: componentListController ? componentListController.validationReadyHint : false
+    readonly property bool showPreviewHint: componentListController ? componentListController.previewReadyHint : false
+    readonly property color hintColor: showPreviewHint ? "#31c36b" : (showValidationHint ? "#2f7ef8" : "transparent")
     title: qsTranslate("MainWindow", "元器件列表")
     // 默认折叠，只有在有元器件时才展开
     isCollapsed: componentListController ? componentListController.componentCount === 0 : true
@@ -40,6 +44,16 @@ Card {
             target: componentListCard.componentListController
             function onFilteredCountChanged() {
                 filterUpdateDebounceTimer.restart();
+            }
+        },
+        Connections {
+            target: componentListCard.exportProgressController
+            function onIsExportingChanged() {
+                if (componentListCard.exportProgressController &&
+                    componentListCard.exportProgressController.isExporting &&
+                    componentListCard.componentListController) {
+                    componentListCard.componentListController.dismissAttentionHints();
+                }
             }
         },
         // 搜索过滤模型 (作为资源定义，不参与布局)
@@ -115,6 +129,54 @@ Card {
             }
         }
     ]
+    overlayContent: [
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -12
+            radius: componentListCard.radius + 12
+            color: "transparent"
+            border.width: componentListCard.showAttentionHint ? 4 : 0
+            border.color: Qt.alpha(componentListCard.hintColor, 0.42)
+            opacity: componentListCard.showAttentionHint ? 0.75 : 0.0
+            visible: opacity > 0
+
+            SequentialAnimation on opacity {
+                loops: Animation.Infinite
+                running: componentListCard.showAttentionHint
+                NumberAnimation { from: 0.24; to: 0.78; duration: 900; easing.type: Easing.InOutQuad }
+                NumberAnimation { from: 0.78; to: 0.28; duration: 900; easing.type: Easing.InOutQuad }
+            }
+
+            Behavior on border.color {
+                ColorAnimation { duration: 180 }
+            }
+        },
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -22
+            radius: componentListCard.radius + 22
+            color: "transparent"
+            border.width: componentListCard.showAttentionHint ? 10 : 0
+            border.color: Qt.alpha(componentListCard.hintColor, 0.14)
+            opacity: componentListCard.showAttentionHint ? 0.50 : 0.0
+            visible: opacity > 0
+
+            SequentialAnimation on opacity {
+                loops: Animation.Infinite
+                running: componentListCard.showAttentionHint
+                NumberAnimation { from: 0.05; to: 0.34; duration: 1250; easing.type: Easing.OutCubic }
+                NumberAnimation { from: 0.34; to: 0.03; duration: 1250; easing.type: Easing.InCubic }
+            }
+
+            SequentialAnimation on scale {
+                loops: Animation.Infinite
+                running: componentListCard.showAttentionHint
+                NumberAnimation { from: 0.992; to: 1.018; duration: 1250; easing.type: Easing.OutCubic }
+                NumberAnimation { from: 1.018; to: 0.996; duration: 1250; easing.type: Easing.InCubic }
+            }
+        }
+    ]
+
     Item {
         id: toolbarContainer
         width: parent.width

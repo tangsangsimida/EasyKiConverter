@@ -8,6 +8,7 @@ Rectangle {
     // API
     property alias title: titleText.text
     default property alias content: contentLayout.children
+    property alias overlayContent: overlayLayer.data
     // 折叠功能属性
     property bool collapsible: true
     property bool isCollapsed: false
@@ -94,6 +95,12 @@ Rectangle {
         onContainsMouseChanged: {
             card.state = containsMouse ? "hovered" : "normal";
         }
+    }
+
+    Item {
+        id: overlayLayer
+        anchors.fill: parent
+        z: 10
     }
 
     ColumnLayout {
