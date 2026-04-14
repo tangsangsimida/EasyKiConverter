@@ -16,11 +16,14 @@ const QList<QNetworkReply*> AsyncNetworkRequest::s_emptyReplies;
 AsyncNetworkRequest::AsyncNetworkRequest(const QUrl& url,
                                          QNetworkAccessManager* networkManager,
                                          const RetryPolicy& policy,
+                                         const QByteArray& body,
                                          QObject* parent)
     : QObject(parent)
     , m_url(url)
     , m_networkManager(networkManager)
     , m_policy(policy)
+    , m_postBody(body)
+    , m_isPostRequest(!body.isEmpty())
     , m_cancelled(0)
     , m_finished(0)
     , m_currentReply(nullptr)
@@ -140,8 +143,15 @@ void AsyncNetworkRequest::startAttempt(int attemptNumber) {
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
     // Note: We handle gzip manually in processResponse() since Qt doesn't auto-decompress
 
-    // Create the reply
-    QNetworkReply* reply = m_networkManager->get(request);
+    // Create the reply - use POST if body is provided
+    QNetworkReply* reply;
+    if (m_isPostRequest && !m_postBody.isEmpty()) {
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        reply = m_networkManager->post(request, m_postBody);
+        qDebug() << "AsyncNetworkRequest: Sending POST request to" << m_url << "with body size" << m_postBody.size();
+    } else {
+        reply = m_networkManager->get(request);
+    }
 
     {
         QMutexLocker locker(&m_repliesMutex);

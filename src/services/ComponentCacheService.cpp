@@ -13,6 +13,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QPointer>
 #include <QSaveFile>
 #include <QSet>
 #include <QStandardPaths>
@@ -564,6 +565,7 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
     bool wasRateLimited = false;
 
     AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(imageUrl), policy);
+    QPointer<AsyncNetworkRequest> requestPtr(request);
 
     // 连接完成信号
     QObject::connect(request, &AsyncNetworkRequest::finished, &loop, [&](const NetworkResult& result) {
@@ -581,6 +583,9 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
             statusCode = result.statusCode;
             retryCount = result.retryCount;
         }
+        if (requestPtr) {
+            requestPtr->deleteLater();
+        }
         loop.quit();
     });
 
@@ -590,7 +595,9 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
     progressTimer.setInterval(100);  // 每100ms检查一次取消标志
     QObject::connect(&progressTimer, &QTimer::timeout, &loop, [&]() {
         if (cancelled && cancelled->loadRelaxed()) {
-            request->cancel();
+            if (requestPtr) {
+                requestPtr->cancel();
+            }
             loop.quit();
         }
     });
@@ -617,7 +624,10 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
         LOG_WARN(LogModule::Core, "Preview image download failed for {}: {}", lcscId, errorString);
     }
 
-    // 清理 - request 会自动管理自己的生命周期
+    // 清理 request 对象
+    if (requestPtr) {
+        requestPtr->deleteLater();
+    }
     return data;
 }
 
@@ -728,6 +738,7 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
     bool wasRateLimited = false;
 
     AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(datasheetUrl), policy);
+    QPointer<AsyncNetworkRequest> requestPtr(request);
 
     // 连接完成信号
     QObject::connect(request, &AsyncNetworkRequest::finished, &loop, [&](const NetworkResult& result) {
@@ -750,6 +761,9 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
             statusCode = result.statusCode;
             retryCount = result.retryCount;
         }
+        if (requestPtr) {
+            requestPtr->deleteLater();
+        }
         loop.quit();
     });
 
@@ -759,7 +773,9 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
     progressTimer.setInterval(100);  // 每100ms检查一次取消标志
     QObject::connect(&progressTimer, &QTimer::timeout, &loop, [&]() {
         if (cancelled && cancelled->loadRelaxed()) {
-            request->cancel();
+            if (requestPtr) {
+                requestPtr->cancel();
+            }
             loop.quit();
         }
     });
@@ -786,6 +802,10 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
         LOG_WARN(LogModule::Core, "Datasheet download failed for {}: {}", lcscId, errorString);
     }
 
+    // 清理 request 对象
+    if (requestPtr) {
+        requestPtr->deleteLater();
+    }
     return data;
 }
 

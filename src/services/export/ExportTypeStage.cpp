@@ -4,6 +4,7 @@
 
 #include <QDebug>
 #include <QMutexLocker>
+#include <QPointer>
 
 namespace EasyKiConverter {
 
@@ -137,10 +138,15 @@ void ExportTypeStage::cancel() {
     m_cancelled.store(true);
 
     // 取消所有活跃worker（在锁内完成以避免与 completeItemProgress 竞争）
+    // 使用 QPointer 保护 worker 指针，防止在 cancel 过程中 worker 被删除导致悬空指针
     {
         QMutexLocker locker(&m_workerMutex);
         for (QObject* worker : m_activeWorkers) {
-            if (auto* exportWorker = dynamic_cast<IExportWorker*>(worker)) {
+            QPointer<QObject> workerPtr(worker);  // 使用 QPointer 保护
+            if (!workerPtr) {
+                continue;  // worker 已删除，跳过
+            }
+            if (auto* exportWorker = dynamic_cast<IExportWorker*>(workerPtr.data())) {
                 exportWorker->cancel();
             }
         }

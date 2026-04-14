@@ -51,7 +51,20 @@ jobs:
     if: |-
       github.event_name == 'workflow_dispatch' ||
       (
-        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.discussion_comment.author_association || github.event.discussion.author_association || 'NONE')
+        github.event_name == 'issue_comment' &&
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+      ) ||
+      (
+        github.event_name == 'pull_request_review_comment' &&
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request_review_comment.author_association)
+      ) ||
+      (
+        github.event_name == 'discussion_comment' &&
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.discussion_comment.author_association)
+      ) ||
+      (
+        github.event_name == 'discussion' &&
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.discussion.author_association)
       )
     runs-on: 'ubuntu-latest'
     steps:
@@ -71,9 +84,9 @@ jobs:
           elif [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
             CONTEXT_TYPE="pr"
             CONTEXT_ID="${{ github.event.pull_request.number }}"
-            COMMENT_BODY="${{ github.event.comment.body }}"
-            AUTHOR="${{ github.event.comment.user.login }}"
-            PARENT_ID="${{ github.event.comment.id }}"
+            COMMENT_BODY="${{ github.event.pull_request_review_comment.body }}"
+            AUTHOR="${{ github.event.pull_request_review_comment.user.login }}"
+            PARENT_ID="${{ github.event.pull_request_review_comment.id }}"
             REPO="${{ github.repository }}"
           elif [[ "${{ github.event_name }}" == "discussion_comment" ]]; then
             CONTEXT_TYPE="discussion"
@@ -107,18 +120,18 @@ jobs:
           echo "parent_id=${PARENT_ID}" >> "${GITHUB_OUTPUT}"
           echo "repo=${REPO}" >> "${GITHUB_OUTPUT}"
 
-      - name: 'Check if @dennisbot is mentioned'
+      - name: 'Check if @bot_easykiconverter is mentioned'
         id: 'check_mention'
         run: |
           set -euo pipefail
 
           COMMENT_BODY="${{ steps.detect_mention.outputs.comment_body }}"
 
-          # Check for @dennisbot mention (case insensitive)
-          if echo "${COMMENT_BODY}" | grep -qi "@dennisbot"; then
+          # Check for @bot_easykiconverter mention (case insensitive)
+          if echo "${COMMENT_BODY}" | grep -qi "@bot_easykiconverter"; then
             echo "mentioned=true" >> "${GITHUB_OUTPUT}"
-            # Extract the question (remove the @dennisbot part)
-            QUESTION=$(echo "${COMMENT_BODY}" | sed -E 's/@dennisbot[,:]?//gi' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            # Extract the question (remove the @bot_easykiconverter part)
+            QUESTION=$(echo "${COMMENT_BODY}" | sed -E 's/@bot_easykiconverter[,:]?//gi' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
             echo "question<<EOF" >> "${GITHUB_OUTPUT}"
             echo "${QUESTION}" >> "${GITHUB_OUTPUT}"
             echo "EOF" >> "${GITHUB_OUTPUT}"
@@ -253,7 +266,7 @@ jobs:
           # Reply to the comment thread using in_reply_to
           gh api repos/${{ github.repository }}/issues/${{ steps.detect_mention.outputs.context_id }}/comments \
             --method POST \
-            --field body="<!-- @dennisbot -->${RESPONSE}" \
+            --field body="<!-- @bot_easykiconverter -->${RESPONSE}" \
             --field in_reply_to="${PARENT_ID}" 2>/dev/null || true
 
       - name: 'Post response to PR'
@@ -266,7 +279,7 @@ jobs:
           # For PR review comments, add as a general PR comment
           gh api repos/${{ github.repository }}/issues/${{ steps.detect_mention.outputs.context_id }}/comments \
             --method POST \
-            --field body="<!-- @dennisbot -->${RESPONSE}" 2>/dev/null || true
+            --field body="<!-- @bot_easykiconverter -->${RESPONSE}" 2>/dev/null || true
 
       - name: 'Post response to discussion'
         if: steps.generate_response.outputs.result == 'success' && steps.detect_mention.outputs.context_type == 'discussion'
@@ -285,7 +298,7 @@ jobs:
 
           if [ -n "${NODE_ID}" ]; then
             gh api graphql -f query="mutation {
-              addDiscussionComment(input: {discussionId: \"${NODE_ID}\", body: \"<!-- @dennisbot -->${RESPONSE}\"}) {
+              addDiscussionComment(input: {discussionId: \"${NODE_ID}\", body: \"<!-- @bot_easykiconverter -->${RESPONSE}\"}) {
                 comment { id }
               }
             }" 2>/dev/null || true

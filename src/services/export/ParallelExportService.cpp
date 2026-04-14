@@ -137,10 +137,9 @@ ParallelExportService::ParallelExportService(QObject* parent) : QObject(parent),
 
 ParallelExportService::~ParallelExportService() {
     // 取消所有导出阶段，防止worker在stage销毁后访问已释放对象
-    // cancel()设置原子标志后立即返回，不会等待worker完成（waitForDone会导致崩溃）
     for (auto* stage : m_exportStages) {
         stage->cancel();
-        delete stage;  // 释放内存
+        stage->deleteLater();  // 使用 deleteLater 确保线程安全清理
     }
 
     // 清理阶段列表

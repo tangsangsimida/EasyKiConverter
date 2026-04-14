@@ -25,6 +25,7 @@ namespace EasyKiConverter {
  * - Progress tracking
  * - Automatic retry with exponential backoff
  * - Gzip decompression
+ * - POST requests with body data
  *
  * Usage:
  *   auto* request = client->getAsync(url, policy);
@@ -110,11 +111,12 @@ private:
     friend class NetworkClient;
 
     /**
-     * @brief Constructor - private, use NetworkClient::getAsync()
+     * @brief Constructor - private, use NetworkClient::getAsync() or postAsync()
      */
     AsyncNetworkRequest(const QUrl& url,
                         QNetworkAccessManager* networkManager,
                         const RetryPolicy& policy,
+                        const QByteArray& body = QByteArray(),
                         QObject* parent = nullptr);
 
     /**
@@ -165,6 +167,8 @@ private:
     QUrl m_url;
     QNetworkAccessManager* m_networkManager;
     RetryPolicy m_policy;
+    QByteArray m_postBody;  ///< Request body for POST requests
+    bool m_isPostRequest;  ///< Whether this is a POST request
     QAtomicInt m_cancelled;
     QAtomicInt m_finished;
     mutable QMutex m_resultMutex;

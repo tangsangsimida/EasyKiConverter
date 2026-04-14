@@ -61,10 +61,11 @@ void SymbolExportStage::start(const QStringList& componentIds,
 
     // 在工作线程中执行库级别的导出
     m_isExporting.store(true);
-    QThread* thread =
-        QThread::create([this, componentIds, cachedData]() { doLibraryExport(componentIds, cachedData); });
-    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-    thread->start();
+    m_workerThread = QThread::create([this, componentIds, cachedData]() { doLibraryExport(componentIds, cachedData); });
+    connect(m_workerThread, &QThread::finished, this, [this]() {
+        m_workerThread = nullptr;
+    });
+    m_workerThread->start();
 }
 
 void SymbolExportStage::cancel() {
@@ -76,6 +77,17 @@ void SymbolExportStage::cancel() {
 
     // 设置取消标志
     m_cancelled.store(true);
+
+    // 等待工作线程结束（最多等待 5 秒）
+    if (m_workerThread && m_workerThread->isRunning()) {
+        qDebug() << "SymbolExportStage: Waiting for worker thread to finish...";
+        m_workerThread->quit();
+        if (!m_workerThread->wait(5000)) {
+            qWarning() << "SymbolExportStage: Thread did not finish in 5s, terminating";
+            m_workerThread->terminate();
+        }
+        m_workerThread = nullptr;
+    }
 
     // 清理临时文件
     m_tempManager.rollbackAll();

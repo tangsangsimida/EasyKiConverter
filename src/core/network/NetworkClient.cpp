@@ -59,17 +59,13 @@ AsyncNetworkRequest* NetworkClient::getAsync(const QUrl& url, const RetryPolicy&
 }
 
 AsyncNetworkRequest* NetworkClient::postAsync(const QUrl& url, const QByteArray& body, const RetryPolicy& policy) {
-    // Note: For POST, we'd need to extend AsyncNetworkRequest to support body
-    // For now, fall back to sync implementation
-    Q_UNUSED(body);
-
     // Use thread-local QNetworkAccessManager (same approach as getAsync)
     static thread_local std::unique_ptr<QNetworkAccessManager> threadQNAM = nullptr;
     if (!threadQNAM) {
         threadQNAM = std::make_unique<QNetworkAccessManager>();
     }
 
-    auto* request = new AsyncNetworkRequest(url, threadQNAM.get(), policy, nullptr);
+    auto* request = new AsyncNetworkRequest(url, threadQNAM.get(), policy, body, nullptr);
 
     // Start request synchronously in current thread
     request->start();

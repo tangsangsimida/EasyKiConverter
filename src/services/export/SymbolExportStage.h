@@ -4,6 +4,8 @@
 #include "ExportTypeStage.h"
 #include "TempFileManager.h"
 
+#include <QThread>
+
 namespace EasyKiConverter {
 
 /**
@@ -83,6 +85,7 @@ private:
     struct ExportOptions m_options;  ///< 导出选项（库级别）
     TempFileManager m_tempManager;  ///< 临时文件管理器
     std::atomic<bool> m_isExporting{false};  ///< 是否正在导出
+    QThread* m_workerThread = nullptr;  ///< 工作线程指针
 };
 
 }  // namespace EasyKiConverter
