@@ -20,7 +20,13 @@ constexpr int FETCH_WEIGHT = 30;
 constexpr int PROCESS_WEIGHT = 50;
 constexpr int WRITE_WEIGHT = 20;
 
-}
+const QString TYPE_SYMBOL = QStringLiteral("Symbol");
+const QString TYPE_FOOTPRINT = QStringLiteral("Footprint");
+const QString TYPE_MODEL3D = QStringLiteral("Model3D");
+const QString TYPE_PREVIEW = QStringLiteral("PreviewImages");
+const QString TYPE_DATASHEET = QStringLiteral("Datasheet");
+
+}  // namespace
 
 ExportProgressViewModel::ExportProgressViewModel(ParallelExportService* exportService,
                                                  ComponentService* componentService,
@@ -282,19 +288,25 @@ void ExportProgressViewModel::handleProgressChanged(const ExportOverallProgress&
             m_writeProgress = 0;
             setProgress(weightedOverallProgress());
             break;
-        case ExportOverallProgress::Stage::Exporting:
+        case ExportOverallProgress::Stage::Exporting: {
             setStatus("Exporting components...");
-            m_fetchProgress = stageTypeProgress(
-                progress, {QStringLiteral("PreviewImages"), QStringLiteral("Datasheet"), QStringLiteral("Model3D")});
-            m_processProgress = stageTypeProgress(progress, {QStringLiteral("Symbol"), QStringLiteral("Footprint")});
-            m_writeProgress = stageTypeProgress(progress,
-                                                {QStringLiteral("Symbol"),
-                                                 QStringLiteral("Footprint"),
-                                                 QStringLiteral("Model3D"),
-                                                 QStringLiteral("PreviewImages"),
-                                                 QStringLiteral("Datasheet")});
+            // 阶段定义统一为：
+            // 1. 抓取：需要额外获取的数据是否准备完成（预览图/手册/3D源数据）
+            // 2. 处理：符号/封装/3D转换任务是否完成
+            // 3. 写入：最终文件是否已经落盘
+            m_fetchProgress = stageTypeProgress(progress, {TYPE_PREVIEW, TYPE_DATASHEET, TYPE_MODEL3D});
+
+            const int rawProcessProgress = stageTypeProgress(progress, {TYPE_SYMBOL, TYPE_FOOTPRINT, TYPE_MODEL3D});
+            const int rawWriteProgress =
+                stageTypeProgress(progress, {TYPE_SYMBOL, TYPE_FOOTPRINT, TYPE_MODEL3D, TYPE_PREVIEW, TYPE_DATASHEET});
+
+            // UI 上的三段进度条必须遵守抓取 -> 处理 -> 写入的阶段依赖关系。
+            // 即使底层某些类型先完成，后续阶段也不能先于前置阶段显示完成。
+            m_processProgress = qMin(rawProcessProgress, m_fetchProgress);
+            m_writeProgress = qMin(rawWriteProgress, m_processProgress);
             setProgress(weightedOverallProgress());
             break;
+        }
         case ExportOverallProgress::Stage::Completed:
             m_fetchProgress = 100;
             m_processProgress = 100;
@@ -829,7 +841,8 @@ int ExportProgressViewModel::averageTypeProgress(const ExportOverallProgress& pr
     return qBound(0, sum / count, 100);
 }
 
-int ExportProgressViewModel::stageTypeProgress(const ExportOverallProgress& progress, const QStringList& typeNames) const {
+int ExportProgressViewModel::stageTypeProgress(const ExportOverallProgress& progress,
+                                               const QStringList& typeNames) const {
     bool hasEnabledType = false;
     for (const QString& typeName : typeNames) {
         const bool enabled = (typeName == "Symbol" && m_exportSymbolEnabled) ||
@@ -862,8 +875,8 @@ int ExportProgressViewModel::countItemsWithTypeStatus(const QString& key, const 
 }
 
 int ExportProgressViewModel::weightedOverallProgress() const {
-    const int weighted = (m_fetchProgress * FETCH_WEIGHT) + (m_processProgress * PROCESS_WEIGHT) +
-                         (m_writeProgress * WRITE_WEIGHT);
+    const int weighted =
+        (m_fetchProgress * FETCH_WEIGHT) + (m_processProgress * PROCESS_WEIGHT) + (m_writeProgress * WRITE_WEIGHT);
     return qBound(0, weighted / 100, 100);
 }
 

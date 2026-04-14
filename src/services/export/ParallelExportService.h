@@ -1,9 +1,9 @@
 #pragma once
 
-#include "ComponentDataCache.h"
 #include "ExportProgress.h"
 
 #include <QMap>
+#include <QMutex>
 #include <QObject>
 #include <QSharedPointer>
 #include <QString>
@@ -12,6 +12,7 @@
 namespace EasyKiConverter {
 
 class ComponentService;
+class ComponentData;
 class ExportTypeStage;
 
 /**
@@ -248,7 +249,6 @@ private:
     QStringList m_componentIds;  ///< 待处理的元器件ID列表
     QMap<QString, QSharedPointer<ComponentData>> m_cachedData;  ///< 缓存的元器件数据
     QMap<QString, ExportTypeStage*> m_exportStages;  ///< 各导出类型的Stage实例
-    ComponentDataCache m_cache;  ///< 数据缓存
     ComponentService* m_componentService{nullptr};  ///< 元器件服务引用（用于获取已验证的数据）
 
     ExportOverallProgress m_progress;  ///< 整体进度

@@ -40,6 +40,19 @@ target_include_directories(test_export_type_stage PRIVATE
 )
 add_test(NAME test_export_type_stage COMMAND test_export_type_stage)
 
+add_executable(test_export_progress_viewmodel test_export_progress_viewmodel.cpp)
+target_link_libraries(test_export_progress_viewmodel PRIVATE
+    Qt6::Test
+    Qt6::Gui
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_export_progress_viewmodel PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_export_progress_viewmodel COMMAND test_export_progress_viewmodel)
+
 # 日志系统测试
 add_executable(test_logging test_logging.cpp)
 target_link_libraries(test_logging PRIVATE

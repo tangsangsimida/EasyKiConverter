@@ -99,6 +99,23 @@ Card {
                 Layout.fillWidth: true
             }
         }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: AppStyle.spacing.lg
+            StatItem {
+                label: qsTranslate("MainWindow", "预览图")
+                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.previewSuccessCount || 0) : 0
+                Layout.fillWidth: true
+            }
+            StatItem {
+                label: qsTranslate("MainWindow", "手册")
+                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.datasheetSuccessCount || 0) : 0
+                Layout.fillWidth: true
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
         // 底部按钮组（居中排列）
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
