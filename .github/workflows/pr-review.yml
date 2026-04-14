@@ -162,8 +162,13 @@ jobs:
           PR_DIFF: '${{ steps.pr_diff.outputs.pr_diff }}'
           PR_SHA: '${{ steps.pr_sha.outputs.sha }}'
           DIFF_TRUNCATED: '${{ steps.pr_diff.outputs.diff_truncated }}'
+          MINIMAX_API_KEY: '${{ secrets.MINIMAX_API_KEY }}'
         run: |
           set -euo pipefail
+
+          echo "=== Starting PR Review ==="
+          echo "PR Number: ${PR_NUMBER}"
+          echo "Diff Truncated: ${DIFF_TRUNCATED}"
 
           # First, get a summary review comment (always)
           SUMMARY_PROMPT="## 角色
@@ -173,10 +178,7 @@ jobs:
           - 仓库: ${{ github.repository }}
           - PR编号: \${PR_NUMBER}
           - PR数据: \${PR_DATA}
-          - 变更文件: \${CHANGED_FILES}
-
-          ## 代码变更 (diff)
-          \${PR_DIFF}
+          - 变更文件数量: $(echo "${CHANGED_FILES}" | wc -l)
 
           ## 审查重点
           1. 内存安全（最高优先级）：空指针、内存泄漏、野指针、缓冲区溢出、智能指针使用
@@ -193,18 +195,40 @@ jobs:
 
           如果代码存在内存安全问题，必须在概述中明确标注【内存安全警告】。"
 
-          SUMMARY=$(curl -s https://api.minimaxi.com/v1/chat/completions \
-            -H "Authorization: Bearer ${{ secrets.MINIMAX_API_KEY }}" \
+          echo "Calling MiniMax API for summary..."
+          SUMMARY_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" https://api.minimaxi.com/v1/chat/completions \
+            -H "Authorization: Bearer ${MINIMAX_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "{
               \"model\": \"MiniMax-M2.7\",
               \"messages\": [{\"role\": \"user\", \"content\": \"${SUMMARY_PROMPT}\"}],
               \"max_tokens\": 2000
-            }" | jq -r '.choices[0].message.content // empty')
+            }")
+
+          HTTP_CODE=$(echo "${SUMMARY_RESPONSE}" | tail -1 | sed 's/HTTP_CODE://')
+          SUMMARY_BODY=$(echo "${SUMMARY_RESPONSE}" | head -n -1)
+
+          echo "HTTP Code: ${HTTP_CODE}"
+
+          if [ "${HTTP_CODE}" != "200" ]; then
+            echo "ERROR: MiniMax API returned HTTP ${HTTP_CODE}"
+            echo "Response: ${SUMMARY_BODY}"
+            exit 1
+          fi
+
+          SUMMARY=$(echo "${SUMMARY_BODY}" | jq -r '.choices[0].message.content // empty')
+
+          echo "Summary response length: ${#SUMMARY}"
+          echo "Summary content preview: ${SUMMARY:0:200}..."
 
           # Create the summary review
-          if [ -n "${SUMMARY}" ]; then
+          if [ -n "${SUMMARY}" ] && [ "${SUMMARY}" != "null" ] && [ ${#SUMMARY} -gt 10 ]; then
+            echo "Creating PR review comment..."
             gh pr review "${PR_NUMBER}" --body "${SUMMARY}" --comment
+            echo "PR review comment created successfully"
+          else
+            echo "WARNING: Summary is empty or too short, skipping PR review comment"
+            echo "Summary value: '${SUMMARY}'"
           fi
 
           # Function to create inline comments from JSON response
@@ -282,16 +306,22 @@ jobs:
               - 只输出JSON数组，不要有其他内容
               - 如果没有问题，返回空数组 []"
 
-              INLINE_RESPONSE=$(curl -s https://api.minimaxi.com/v1/chat/completions \
-                -H "Authorization: Bearer ${{ secrets.MINIMAX_API_KEY }}" \
+              INLINE_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" https://api.minimaxi.com/v1/chat/completions \
+                -H "Authorization: Bearer ${MINIMAX_API_KEY}" \
                 -H "Content-Type: application/json" \
                 -d "{
                   \"model\": \"MiniMax-M2.7\",
                   \"messages\": [{\"role\": \"user\", \"content\": \"${INLINE_PROMPT}\"}],
                   \"max_tokens\": 4000
-                }" | jq -r '.choices[0].message.content // empty')
-
-              echo "Response for ${FILE_PATH}: ${INLINE_RESPONSE}"
+                }")
+              HTTP_CODE=$(echo "${INLINE_RESPONSE}" | tail -1 | sed 's/HTTP_CODE://')
+              INLINE_RESPONSE=$(echo "${INLINE_RESPONSE}" | head -n -1)
+              if [ "${HTTP_CODE}" != "200" ]; then
+                echo "ERROR: MiniMax API returned HTTP ${HTTP_CODE} for ${FILE_PATH}"
+                continue
+              fi
+              INLINE_RESPONSE=$(echo "${INLINE_RESPONSE}" | jq -r '.choices[0].message.content // empty')
+              echo "Response for ${FILE_PATH}: ${INLINE_RESPONSE:0:100}..."
               create_inline_comments "${INLINE_RESPONSE}"
             done
           else
@@ -322,20 +352,27 @@ jobs:
             - 只输出JSON数组，不要有其他内容
             - 如果没有问题，返回空数组 []"
 
-            INLINE_RESPONSE=$(curl -s https://api.minimaxi.com/v1/chat/completions \
-              -H "Authorization: Bearer ${{ secrets.MINIMAX_API_KEY }}" \
+            echo "Calling MiniMax API for inline comments (full diff mode)..."
+            INLINE_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" https://api.minimaxi.com/v1/chat/completions \
+              -H "Authorization: Bearer ${MINIMAX_API_KEY}" \
               -H "Content-Type: application/json" \
               -d "{
                 \"model\": \"MiniMax-M2.7\",
                 \"messages\": [{\"role\": \"user\", \"content\": \"${INLINE_PROMPT}\"}],
                 \"max_tokens\": 4000
-              }" | jq -r '.choices[0].message.content // empty')
-
-            echo "=== Inline Comments Response ==="
-            echo "${INLINE_RESPONSE}"
-            echo "================================"
-
-            create_inline_comments "${INLINE_RESPONSE}"
+              }")
+            HTTP_CODE=$(echo "${INLINE_RESPONSE}" | tail -1 | sed 's/HTTP_CODE://')
+            INLINE_RESPONSE=$(echo "${INLINE_RESPONSE}" | head -n -1)
+            if [ "${HTTP_CODE}" != "200" ]; then
+              echo "ERROR: MiniMax API returned HTTP ${HTTP_CODE}"
+              echo "Response: ${INLINE_RESPONSE}"
+            else
+              INLINE_RESPONSE=$(echo "${INLINE_RESPONSE}" | jq -r '.choices[0].message.content // empty')
+              echo "=== Inline Comments Response ==="
+              echo "${INLINE_RESPONSE:0:500}..."
+              echo "================================"
+              create_inline_comments "${INLINE_RESPONSE}"
+            fi
           fi
 
           echo "pr_review_result=success" >> "$GITHUB_OUTPUT"
