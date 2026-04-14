@@ -108,12 +108,12 @@ jobs:
           set -eo pipefail
           PR_NUM='${{ steps.get_pr.outputs.pr_number }}'
 
-          # Get file list using REST API (doesn't have the 20000 line limit)
-          FILES_JSON=$(gh api repos/${{ github.repository }}/pulls/${PR_NUM}/files --jq '[.[].filename]' 2>/dev/null || echo '[]')
+          # Get file list and their patch data using REST API
+          FILES_DATA=$(gh api repos/${{ github.repository }}/pulls/${PR_NUM}/files --jq '[.[].filename]' 2>/dev/null || echo '[]')
 
-          echo "files=${FILES_JSON}" >> "$GITHUB_OUTPUT"
+          echo "files=${FILES_DATA}" >> "$GITHUB_OUTPUT"
 
-      - name: 'Get PR diff'
+      - name: 'Get PR diff stats'
         id: 'pr_diff'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
@@ -121,19 +121,25 @@ jobs:
           set -eo pipefail
           PR_NUM='${{ steps.get_pr.outputs.pr_number }}'
 
-          # Try to get full diff first
-          PR_DIFF=$(gh pr diff "${PR_NUM}" 2>&1) || true
+          # Check total lines of diff using REST API (safer than gh pr diff)
+          DIFF_SUM=$(gh api repos/${{ github.repository }}/pulls/${PR_NUM}/files --jq '[.[].additions + .[].deletions] | add' 2>/dev/null || echo "0")
+          FILE_COUNT=$(gh api repos/${{ github.repository }}/pulls/${PR_NUM}/files --jq 'length' 2>/dev/null || echo "0")
 
-          # Check if diff is too large
-          if echo "${PR_DIFF}" | head -n 5 | grep -qi "too large\|406"; then
+          echo "Total diff lines: ${DIFF_SUM}"
+          echo "Total files: ${FILE_COUNT}"
+
+          # If total diff is too large, use per-file mode
+          if [ "${DIFF_SUM}" -gt 15000 ]; then
             echo "diff_truncated=true" >> "$GITHUB_OUTPUT"
             echo "pr_diff<<EOF" >> "$GITHUB_OUTPUT"
-            echo "[Diff 过大，将使用逐文件审查模式]" >> "$GITHUB_OUTPUT"
+            echo "[Diff 过大（${DIFF_SUM} 行），将使用逐文件审查模式]" >> "$GITHUB_OUTPUT"
             echo "EOF" >> "$GITHUB_OUTPUT"
           else
             echo "diff_truncated=false" >> "$GITHUB_OUTPUT"
+            # Try to get diff summary for context
+            PR_STATS=$(gh pr view "${PR_NUM}" --json additions,deletions,changedFiles --jq '{additions: .additions, deletions: .deletions, changedFiles: .changedFiles}' 2>/dev/null || echo '{}')
             echo "pr_diff<<EOF" >> "$GITHUB_OUTPUT"
-            echo "${PR_DIFF}" >> "$GITHUB_OUTPUT"
+            echo "[Diff 正常模式] 变更统计: ${PR_STATS}" >> "$GITHUB_OUTPUT}"
             echo "EOF" >> "$GITHUB_OUTPUT"
           fi
 
