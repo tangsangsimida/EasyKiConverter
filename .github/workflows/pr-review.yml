@@ -89,7 +89,9 @@ jobs:
           fi
           echo "pr_number=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
           PR_DATA="$(gh pr view "${PR_NUMBER}" --json title,body,additions,deletions,changedFiles,baseRefName,headRefName)"
-          echo "pr_data=${PR_DATA}" >> "${GITHUB_OUTPUT}"
+          echo "pr_data<<EOF" >> "${GITHUB_OUTPUT}"
+          echo "${PR_DATA}" >> "${GITHUB_OUTPUT}"
+          echo "EOF" >> "${GITHUB_OUTPUT}"
           CHANGED_FILES="$(gh api repos/${{ github.repository }}/pulls/${PR_NUMBER}/files --jq '[.[].filename] | join("\n")' 2>/dev/null || echo "")"
           echo "changed_files<<EOF" >> "${GITHUB_OUTPUT}"
           echo "${CHANGED_FILES}" >> "${GITHUB_OUTPUT}"
@@ -100,7 +102,7 @@ jobs:
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
-          set -eo pipefail
+          set -euo pipefail
           PR_NUM='${{ steps.get_pr.outputs.pr_number }}'
           FILES_DATA=$(gh api repos/${{ github.repository }}/pulls/${PR_NUM}/files --jq '[.[].filename]' 2>/dev/null || echo '[]')
           echo "files=${FILES_DATA}" >> "$GITHUB_OUTPUT"
@@ -110,7 +112,7 @@ jobs:
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
-          set -eo pipefail
+          set -euo pipefail
           PR_NUM='${{ steps.get_pr.outputs.pr_number }}'
           DIFF_SUM=$(gh api repos/${{ github.repository }}/pulls/${PR_NUM}/files --jq '[.[].additions + .[].deletions] | add' 2>/dev/null || echo "0")
           FILE_COUNT=$(gh api repos/${{ github.repository }}/pulls/${PR_NUM}/files --jq 'length' 2>/dev/null || echo "0")
@@ -119,7 +121,7 @@ jobs:
           if [ "${DIFF_SUM}" -gt 15000 ]; then
             echo "diff_truncated=true" >> "$GITHUB_OUTPUT"
             echo "pr_diff<<EOF" >> "$GITHUB_OUTPUT"
-            echo "[Diff 过大（${DIFF_SUM} 行），将使用逐文件审查模式]" >> "$GITHUB_OUTPUT"
+            echo "[Diff 过大，将使用逐文件审查模式]" >> "$GITHUB_OUTPUT"
             echo "EOF" >> "$GITHUB_OUTPUT"
           else
             echo "diff_truncated=false" >> "$GITHUB_OUTPUT"
@@ -134,227 +136,25 @@ jobs:
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
-          PR_SHA=$(gh api repos/${{ github.repository }}/pulls/${{ steps.get_pr.outputs.pr_number }} --jq '.head.sha')
+          PR_NUM='${{ steps.get_pr.outputs.pr_number }}'
+          PR_SHA=$(gh api repos/${{ github.repository }}/pulls/${PR_NUM} --jq '.head.sha')
           echo "sha=${PR_SHA}" >> "$GITHUB_OUTPUT"
 
-      - name: 'PR Review with Inline Comments'
+      - name: 'Run PR Review'
         id: 'pr_review'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
           PR_NUMBER: '${{ steps.get_pr.outputs.pr_number }}'
-          PR_DATA: '${{ steps.get_pr.outputs.pr_data }}'
           CHANGED_FILES: '${{ steps.get_pr.outputs.changed_files }}'
-          PR_DIFF: '${{ steps.pr_diff.outputs.pr_diff }}'
           PR_SHA: '${{ steps.pr_sha.outputs.sha }}'
           DIFF_TRUNCATED: '${{ steps.pr_diff.outputs.diff_truncated }}'
           MINIMAX_API_KEY: '${{ secrets.MINIMAX_API_KEY }}'
           REPO_NAME: '${{ github.repository }}'
         run: |
           set -euo pipefail
-          echo "=== Starting PR Review ==="
-          echo "PR Number: ${PR_NUMBER}"
-          echo "Diff Truncated: ${DIFF_TRUNCATED}"
-          FILE_COUNT=$(echo "${CHANGED_FILES}" | wc -l)
-
-          # Build summary prompt using printf to avoid heredoc issues
-          SUMMARY_CONTENT=$(printf '%s\n' \
-            "## 角色" \
-            "你是一个专业的代码审查员，首要关注点是内存安全。" \
-            "" \
-            "## PR 信息" \
-            "- 仓库: ${REPO_NAME}" \
-            "- PR编号: ${PR_NUMBER}" \
-            "- 变更文件数量: ${FILE_COUNT}" \
-            "" \
-            "## 审查重点" \
-            "1. 内存安全（最高优先级）：空指针、内存泄漏、野指针、缓冲区溢出、智能指针使用" \
-            "2. 资源安全：文件句柄、锁、数据库连接是否正确释放" \
-            "3. 代码正确性：逻辑错误、边界条件、并发问题" \
-            "4. 可维护性：代码复杂度、重复代码、命名规范" \
-            "" \
-            "## 任务" \
-            "请用中文生成一份PR审查概述，包含：" \
-            "1. 审查概述（简要评价本次变更）" \
-            "2. 内存安全发现（列出发现的内存安全问题）" \
-            "3. 其他发现（最多3个重点问题）" \
-            "4. 改进建议" \
-            "" \
-            "如果代码存在内存安全问题，必须在概述中明确标注【内存安全警告】。")
-
-          SUMMARY_JSON=$(jq -n --arg content "${SUMMARY_CONTENT}" '{model: "MiniMax-M2.7", messages: [{role: "user", content: $content}], max_tokens: 2000}')
-
-          echo "Calling MiniMax API for summary..."
-          SUMMARY_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" https://api.minimaxi.com/v1/chat/completions \
-            -H "Authorization: Bearer ${MINIMAX_API_KEY}" \
-            -H "Content-Type: application/json" \
-            -d "${SUMMARY_JSON}")
-
-          HTTP_CODE=$(echo "${SUMMARY_RESPONSE}" | tail -1 | sed 's/HTTP_CODE://')
-          SUMMARY_BODY=$(echo "${SUMMARY_RESPONSE}" | head -n -1)
-
-          echo "HTTP Code: ${HTTP_CODE}"
-
-          if [ "${HTTP_CODE}" != "200" ]; then
-            echo "ERROR: MiniMax API returned HTTP ${HTTP_CODE}"
-            echo "Response: ${SUMMARY_BODY}"
-            exit 1
-          fi
-
-          SUMMARY=$(echo "${SUMMARY_BODY}" | jq -r '.choices[0].message.content // empty')
-          echo "Summary response length: ${#SUMMARY}"
-          echo "Summary content preview: ${SUMMARY:0:200}..."
-
-          if [ -n "${SUMMARY}" ] && [ "${SUMMARY}" != "null" ] && [ ${#SUMMARY} -gt 10 ]; then
-            echo "Creating PR review comment..."
-            gh pr review "${PR_NUMBER}" --body "${SUMMARY}" --comment
-            echo "PR review comment created successfully"
-          else
-            echo "WARNING: Summary is empty or too short, skipping PR review comment"
-          fi
-
-          # Function to create inline comments
-          create_inline_comments() {
-            local RESPONSE="$1"
-            echo "${RESPONSE}" | jq -r '.[] | @json' 2>/dev/null | while read -r comment; do
-              if [ -n "${comment}" ] && [ "${comment}" != "null" ]; then
-                local C_PATH=$(echo "${comment}" | jq -r '.path')
-                local C_LINE=$(echo "${comment}" | jq -r '.line')
-                local C_SIDE=$(echo "${comment}" | jq -r '.side // "RIGHT"')
-                local C_BODY=$(echo "${comment}" | jq -r '.body')
-                if [ -n "${C_PATH}" ] && [ -n "${C_LINE}" ] && [ -n "${C_BODY}" ] && [ "${C_PATH}" != "null" ] && [ "${C_LINE}" != "null" ] && [ "${C_BODY}" != "null" ]; then
-                  echo "Creating inline comment on ${C_PATH}:${C_LINE}"
-                  gh api repos/${{ github.repository }}/pulls/${PR_NUMBER}/comments \
-                    --method POST \
-                    --field body="${C_BODY}" \
-                    --field commit_id="${PR_SHA}" \
-                    --field path="${C_PATH}" \
-                    --field line="${C_LINE}" \
-                    --field side="${C_SIDE}" 2>/dev/null || true
-                fi
-              fi
-            done
-          }
-
-          # Per-file review mode
-          if [[ "${DIFF_TRUNCATED}" == "true" ]]; then
-            echo "Diff too large, using per-file review mode..."
-            FILES_JSON='${{ steps.changed_files.outputs.files }}'
-            FILE_COUNT=$(echo "${FILES_JSON}" | jq 'length')
-            echo "Total files to review: ${FILE_COUNT}"
-
-            echo "${FILES_JSON}" | jq -r '.[]' | while read -r FILE_PATH; do
-              echo "--- Reviewing file: ${FILE_PATH} ---"
-
-              FILE_DIFF=$(gh api repos/${{ github.repository }}/pulls/${{ steps.get_pr.outputs.pr_number }}/files \
-                --jq ".[] | select(.filename == \"${FILE_PATH}\") | .patch" 2>/dev/null || echo "")
-
-              if [ -z "${FILE_DIFF}" ] || [ "${FILE_DIFF}" == "null" ]; then
-                echo "Skipping ${FILE_PATH} - no diff available"
-                continue
-              fi
-
-              INLINE_CONTENT=$(printf '%s\n' \
-                "## 角色" \
-                "你是一个专业的代码审查员，负责在具体代码行添加评论。你的首要任务是确保代码的内存安全。" \
-                "" \
-                "## 文件路径" \
-                "${FILE_PATH}" \
-                "" \
-                "## 文件 diff" \
-                "${FILE_DIFF}" \
-                "" \
-                "## 内存安全审查要点（严格程度：极高）" \
-                "1. **空指针解引用**：所有指针使用前必须检查是否为 nullptr" \
-                "2. **内存泄漏**：禁止 raw new/delete，必须使用 smart pointers" \
-                "3. **野指针/悬空指针**：检查是否有 use-after-free 风险" \
-                "4. **缓冲区溢出**：数组访问是否进行边界检查" \
-                "5. **智能指针滥用**：QSharedPointer::create() vs new" \
-                "6. **资源泄漏**：文件句柄、锁等是否正确释放" \
-                "7. **nullptr vs NULL vs 0**：必须使用 nullptr" \
-                "" \
-                "## 任务" \
-                "请仔细分析diff，在有内存安全问题的代码行添加评论。格式如下JSON数组：" \
-                "[{\"path\": \"文件路径\", \"line\": 行号, \"side\": \"RIGHT\", \"body\": \"评论内容\"}]" \
-                "" \
-                "## 规则" \
-                "- 只评论有问题的代码行" \
-                "- line必须是diff中实际的行号" \
-                "- body不超过200字，标注问题类型" \
-                "- 只输出JSON数组，不要有其他内容" \
-                "- 如果没有问题，返回空数组 []")
-
-              INLINE_JSON=$(jq -n --arg content "${INLINE_CONTENT}" '{model: "MiniMax-M2.7", messages: [{role: "user", content: $content}], max_tokens: 4000}')
-
-              INLINE_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" https://api.minimaxi.com/v1/chat/completions \
-                -H "Authorization: Bearer ${MINIMAX_API_KEY}" \
-                -H "Content-Type: application/json" \
-                -d "${INLINE_JSON}")
-
-              HTTP_CODE=$(echo "${INLINE_RESPONSE}" | tail -1 | sed 's/HTTP_CODE://')
-              INLINE_BODY=$(echo "${INLINE_RESPONSE}" | head -n -1)
-
-              if [ "${HTTP_CODE}" != "200" ]; then
-                echo "ERROR: MiniMax API returned HTTP ${HTTP_CODE} for ${FILE_PATH}"
-                continue
-              fi
-
-              INLINE_RESPONSE=$(echo "${INLINE_BODY}" | jq -r '.choices[0].message.content // empty')
-              echo "Response for ${FILE_PATH}: ${INLINE_RESPONSE:0:100}..."
-              create_inline_comments "${INLINE_RESPONSE}"
-            done
-          else
-            # Full diff mode
-            INLINE_CONTENT=$(printf '%s\n' \
-              "## 角色" \
-              "你是一个专业的代码审查员，负责在具体代码行添加评论。你的首要任务是确保代码的内存安全。" \
-              "" \
-              "## PR diff" \
-              "${PR_DIFF}" \
-              "" \
-              "## 内存安全审查要点（严格程度：极高）" \
-              "1. **空指针解引用**：所有指针使用前必须检查是否为 nullptr" \
-              "2. **内存泄漏**：禁止 raw new/delete，必须使用 smart pointers" \
-              "3. **野指针/悬空指针**：检查是否有 use-after-free 风险" \
-              "4. **缓冲区溢出**：数组访问是否进行边界检查" \
-              "5. **智能指针滥用**：QSharedPointer::create() vs new" \
-              "6. **资源泄漏**：文件句柄、锁等是否正确释放" \
-              "7. **nullptr vs NULL vs 0**：必须使用 nullptr" \
-              "" \
-              "## 任务" \
-              "请仔细分析diff，在有内存安全问题的代码行添加评论。格式如下JSON数组：" \
-              "[{\"path\": \"文件路径\", \"line\": 行号, \"side\": \"RIGHT\", \"body\": \"评论内容\"}]" \
-              "" \
-              "## 规则" \
-              "- 只评论有问题的代码行" \
-              "- line必须是diff中实际的行号" \
-              "- body不超过200字，标注问题类型" \
-              "- 只输出JSON数组，不要有其他内容" \
-              "- 如果没有问题，返回空数组 []")
-
-            INLINE_JSON=$(jq -n --arg content "${INLINE_CONTENT}" '{model: "MiniMax-M2.7", messages: [{role: "user", content: $content}], max_tokens: 4000}')
-
-            echo "Calling MiniMax API for inline comments (full diff mode)..."
-            INLINE_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" https://api.minimaxi.com/v1/chat/completions \
-              -H "Authorization: Bearer ${MINIMAX_API_KEY}" \
-              -H "Content-Type: application/json" \
-              -d "${INLINE_JSON}")
-
-            HTTP_CODE=$(echo "${INLINE_RESPONSE}" | tail -1 | sed 's/HTTP_CODE://')
-            INLINE_BODY=$(echo "${INLINE_RESPONSE}" | head -n -1)
-
-            if [ "${HTTP_CODE}" != "200" ]; then
-              echo "ERROR: MiniMax API returned HTTP ${HTTP_CODE}"
-              echo "Response: ${INLINE_BODY}"
-            else
-              INLINE_RESPONSE=$(echo "${INLINE_BODY}" | jq -r '.choices[0].message.content // empty')
-              echo "=== Inline Comments Response ==="
-              echo "${INLINE_RESPONSE:0:500}..."
-              echo "================================"
-              create_inline_comments "${INLINE_RESPONSE}"
-            fi
-          fi
-
-          echo "pr_review_result=success" >> "$GITHUB_OUTPUT"
+          SCRIPT_BASE64="aW1wb3J0IG9zLCBqc29uLCBzdWJwcm9jZXNzLCBzeXMKCnByX251bWJlciA9IG9zLmVudmlyb25bIlBSX05VTUJFUiJdCnJlcG9fbmFtZSA9IG9zLmVudmlyb25bIlJFUE9fTkFNRSJdCmRpZmZfdHJ1bmNhdGVkID0gb3MuZW52aXJvblsiRElGRl9UUlVOQ0FURUQiXQpwcl9zaGEgPSBvcy5lbnZpcm9uWyJQUl9TSEEiXQphcGlfa2V5ID0gb3MuZW52aXJvblsiTUlOSU1BWF9BUElfS0VZIl0KY2hhbmdlZF9maWxlcyA9IG9zLmVudmlyb25bIkNIQU5HRURfRklMRVMiXQoKcHJpbnQoZiI9PT0gUFIgUmV2aWV3ID09PSIpCnByaW50KGYiUFI6IHtwcl9udW1iZXJ9IikKcHJpbnQoZiJUcnVuY2F0ZWQ6IHtkaWZmX3RydW5jYXRlZH0iKQoKZmlsZV9jb3VudCA9IGxlbihbZiBmb3IgZiBpbiBjaGFuZ2VkX2ZpbGVzLnNwbGl0KCJcbiIpIGlmIGYuc3RyaXAoKV0pCnByaW50KGYiRmlsZXM6IHtmaWxlX2NvdW50fSIpCgpkZWYgY2FsbF9taW5pbWF4KHRleHQpOgogICAgcGF5bG9hZCA9IHsibW9kZWwiOiAiTWluaU1heC1NMi43IiwgIm1lc3NhZ2VzIjogW3sicm9sZSI6ICJ1c2VyIiwgImNvbnRlbnQiOiB0ZXh0fV0sICJtYXhfdG9rZW5zIjogNDAwMH0KICAgIGNtZCA9IFsiY3VybCIsICItcyIsICItWCIsICJQT1NUIiwgImh0dHBzOi8vYXBpLm1pbmltYXhpLmNvbS92MS9jaGF0L2NvbXBsZXRpb25zIiwKICAgICAgICAgICAiLUgiLCAiQXV0aG9yaXphdGlvbjogQmVhcmVyICIgKyBhcGlfa2V5LAogICAgICAgICAgICItSCIsICJDb250ZW50LVR5cGU6IGFwcGxpY2F0aW9uL2pzb24iLAogICAgICAgICAgICItZCIsIGpzb24uZHVtcHMocGF5bG9hZCldCiAgICByID0gc3VicHJvY2Vzcy5ydW4oY21kLCBjYXB0dXJlX291dHB1dD1UcnVlLCB0ZXh0PVRydWUpCiAgICBpZiByLnJldHVybmNvZGUgIT0gMDoKICAgICAgICBwcmludChmIkN1cmwgZXJyOiB7ci5zdGRlcnJ9IikKICAgICAgICByZXR1cm4gTm9uZQogICAgdHJ5OgogICAgICAgIHJlc3AgPSBqc29uLmxvYWRzKHIuc3Rkb3V0KQogICAgICAgIHJldHVybiByZXNwLmdldCgiY2hvaWNlcyIsIFt7fV0pWzBdLmdldCgibWVzc2FnZSIsIHt9KS5nZXQoImNvbnRlbnQiLCAiIikKICAgIGV4Y2VwdDoKICAgICAgICBwcmludChmIlBhcnNlIGVycjoge3Iuc3Rkb3V0WzoxMDBdfSIpCiAgICAgICAgcmV0dXJuIE5vbmUKCmRlZiBjcmVhdGVfaW5saW5lKHBhdGgsIGxpbmUsIHNpZGUsIGJvZHkpOgogICAgc3VicHJvY2Vzcy5ydW4oWyJnaCIsICJhcGkiLCBmInJlcG9zL3tyZXBvX25hbWV9L3B1bGxzL3twcl9udW1iZXJ9L2NvbW1lbnRzIiwKICAgICAgICAgICAgICAgICAgICItLW1ldGhvZCIsICJQT1NUIiwKICAgICAgICAgICAgICAgICAgICItLWZpZWxkIiwgZiJib2R5PXtib2R5fSIsCiAgICAgICAgICAgICAgICAgICAiLS1maWVsZCIsIGYiY29tbWl0X2lkPXtwcl9zaGF9IiwKICAgICAgICAgICAgICAgICAgICItLWZpZWxkIiwgZiJwYXRoPXtwYXRofSIsCiAgICAgICAgICAgICAgICAgICAiLS1maWVsZCIsIGYibGluZT17bGluZX0iLAogICAgICAgICAgICAgICAgICAgIi0tZmllbGQiLCBmInNpZGU9e3NpZGV9Il0sIGNhcHR1cmVfb3V0cHV0PVRydWUpCgpzdW1tYXJ5X3BhcnRzID0gWwogICAgIiMjIOinkuiJslxu5L2g5piv5LiA5Liq5LiT5Lia55qE5Luj56CB5a6h5p+l5ZGY77yM6aaW6KaB5YWz5rOo54K55piv5YaF5a2Y5a6J5YWo44CCXG5cbiMjIFBSIOS/oeaBryIsCiAgICBmIlxuLSDku5PlupM6IHtyZXBvX25hbWV9IiwKICAgIGYiXG4tIFBS57yW5Y+3OiB7cHJfbnVtYmVyfSIsCiAgICBmIlxuLSDlj5jmm7Tmlofku7bmlbDph486IHtmaWxlX2NvdW50fSIsCiAgICAiXG5cbiMjIOWuoeafpemHjeeCuVxuMS4g5YaF5a2Y5a6J5YWo77yI5pyA6auY5LyY5YWI57qn77yJXG4yLiDotYTmupDlronlhahcbjMuIOS7o+eggeato+ehruaAp1xuNC4g5Y+v57u05oqk5oCnXG5cbiMjIOS7u+WKoVxu6K+355So5Lit5paH55Sf5oiQUEvlrqHmn6XmpoLov7DvvIzljIXlkKvvvJoxLuamgui/sCAyLuWGheWtmOWuieWFqOWPkeeOsCAzLuWFtuS7luWPkeeOsCA0LuaUuei/m+W7uuiurlxuXG7lpoLmnpzlrZjlnKjlhoXlrZjlronlhajpl47popjvvIzmoIfms6jjgJDlhoXlrZjlronlhajorablkYrjgJHjgIIiCl0Kc3VtbWFyeV90ZXh0ID0gIiIuam9pbihzdW1tYXJ5X3BhcnRzKQpwcmludCgiQ2FsbGluZyBzdW1tYXJ5IEFQSS4uLiIpCnN1bW1hcnkgPSBjYWxsX21pbmltYXgoc3VtbWFyeV90ZXh0KQppZiBub3Qgc3VtbWFyeToKICAgIHN5cy5leGl0KDEpCnByaW50KGYiU3VtbWFyeToge3N1bW1hcnlbOjIwMF19Li4uIikKc3VicHJvY2Vzcy5ydW4oWyJnaCIsICJwciIsICJyZXZpZXciLCBwcl9udW1iZXIsICItLWJvZHkiLCBzdW1tYXJ5LCAiLS1jb21tZW50Il0pCnByaW50KCJTdW1tYXJ5IGNvbW1lbnQgY3JlYXRlZCIpCgpkZWYgZG9fY29tbWVudHMocmVzcG9uc2UpOgogICAgdHJ5OgogICAgICAgIGNvbW1lbnRzID0ganNvbi5sb2FkcyhyZXNwb25zZSkgaWYgaXNpbnN0YW5jZShyZXNwb25zZSwgc3RyKSBlbHNlIHJlc3BvbnNlCiAgICBleGNlcHQ6CiAgICAgICAgY29tbWVudHMgPSBbXQogICAgZm9yIGMgaW4gY29tbWVudHM6CiAgICAgICAgaWYgaXNpbnN0YW5jZShjLCBkaWN0KSBhbmQgYWxsKGsgaW4gYyBmb3IgayBpbiBbInBhdGgiLCAibGluZSIsICJib2R5Il0pOgogICAgICAgICAgICBwcmludChmIkNvbW1lbnQgb24ge2NbJ3BhdGgnXX06e2NbJ2xpbmUnXX0iKQogICAgICAgICAgICBjcmVhdGVfaW5saW5lKGNbInBhdGgiXSwgY1sibGluZSJdLCBjLmdldCgic2lkZSIsICJSSUdIVCIpLCBjWyJib2R5Il0pCgppZiBkaWZmX3RydW5jYXRlZCA9PSAidHJ1ZSI6CiAgICBwcmludCgiUGVyLWZpbGUgbW9kZS4uLiIpCiAgICByID0gc3VicHJvY2Vzcy5ydW4oWyJnaCIsICJhcGkiLCBmInJlcG9zL3tyZXBvX25hbWV9L3B1bGxzL3twcl9udW1iZXJ9L2ZpbGVzIiwgIi0tanEiLCAiWy5bXS5maWxlbmFtZV0iXSwKICAgICAgICAgICAgICAgICAgICAgY2FwdHVyZV9vdXRwdXQ9VHJ1ZSwgdGV4dD1UcnVlKQogICAgdHJ5OgogICAgICAgIGZpbGVzID0ganNvbi5sb2FkcyhyLnN0ZG91dC5zdHJpcCgpIG9yICJbXSIpCiAgICBleGNlcHQ6CiAgICAgICAgZmlsZXMgPSBbXQogICAgZm9yIGZwIGluIGZpbGVzOgogICAgICAgIHByaW50KGYiLS0tIHtmcH0gLS0tIikKICAgICAgICByID0gc3VicHJvY2Vzcy5ydW4oWyJnaCIsICJhcGkiLCBmInJlcG9zL3tyZXBvX25hbWV9L3B1bGxzL3twcl9udW1iZXJ9L2ZpbGVzIiwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICItLWpxIiwgZiIuW10gfCBzZWxlY3QoLmZpbGVuYW1lID09IFwie2ZwfVwiKSB8IC5wYXRjaCJdLAogICAgICAgICAgICAgICAgICAgICAgICAgIGNhcHR1cmVfb3V0cHV0PVRydWUsIHRleHQ9VHJ1ZSkKICAgICAgICBmZCA9IHIuc3Rkb3V0LnN0cmlwKCkKICAgICAgICBpZiBub3QgZmQ6CiAgICAgICAgICAgIGNvbnRpbnVlCiAgICAgICAgaXBhcnRzID0gWwogICAgICAgICAgICAiIyMg6KeS6ImyXG7kvaDmmK/kuIDkuKrkuJPkuJrnmoTku6PnoIHlrqHmn6XlkZjjgIJcblxuIyMg5paH5Lu2XG4iICsgZnAsCiAgICAgICAgICAgICJcblxuIyMgZGlmZlxuIiArIGZkLAogICAgICAgICAgICAiXG5cbiMjIOS7u+WKoVxu5Zyo5pyJ5YaF5a2Y5a6J5YWo6Zeu6aKY55qE6KGM5re75YqgSlNPTuivhOiuuu+8mlxuW3tcInBhdGhcIjpcIlwiLFwibGluZVwiOixcInNpZGVcIjpcIlJJR0hUXCIsXCJib2R5XCI6XCJcIn1dXG5cbiMjIOinhOWImVxuLSDlj6ror4TorrrmnInpl67popjooYxcbi0gbGluZeaYr+WunumZheihjOWPt1xuLSBib2R55qCH5rOo6Zeu6aKY57G75Z6LXG4tIOWPqui+k+WHukpTT07mlbDnu4Rcbi0g5peg6Zeu6aKY6L+U5ZueW10iCiAgICAgICAgXQogICAgICAgIGl0ZXh0ID0gIiIuam9pbihpcGFydHMpCiAgICAgICAgcmVzcCA9IGNhbGxfbWluaW1heChpdGV4dCkKICAgICAgICBpZiByZXNwOgogICAgICAgICAgICBkb19jb21tZW50cyhyZXNwKQpwcmludCgiRG9uZSIpCg=="
+          echo "$SCRIPT_BASE64" | base64 -d > /tmp/review.py
+          python3 /tmp/review.py
 
       - name: 'Post PR review failure comment'
         if: |-
