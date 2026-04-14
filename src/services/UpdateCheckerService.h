@@ -36,15 +36,19 @@ public:
     }
 
     QString currentVersion() const;
+
     QString latestVersion() const {
         return m_latestVersion;
     }
+
     QString releaseName() const {
         return m_releaseName;
     }
+
     QString releaseUrl() const {
         return m_releaseUrl;
     }
+
     QString error() const {
         return m_error;
     }

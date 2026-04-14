@@ -98,6 +98,33 @@ ExportProgressViewModel::ExportProgressViewModel(ParallelExportService* exportSe
 
 ExportProgressViewModel::~ExportProgressViewModel() {}
 
+void ExportProgressViewModel::beginExportRun(const QStringList& componentIds, const QString& statusText) {
+    m_componentIds = componentIds;
+    const int newTotalCount = m_resultsList.isEmpty() ? componentIds.size() : m_resultsList.size();
+    if (m_totalCount != newTotalCount) {
+        m_totalCount = newTotalCount;
+        emit totalCountChanged();
+    }
+    m_isStopping = false;
+    m_pendingUpdate = false;
+    if (m_throttleTimer) {
+        m_throttleTimer->stop();
+    }
+
+    setHasCompletedExport(false);
+    setIsExporting(true);
+    setStatus(statusText);
+    m_fetchProgress = 0;
+    m_processProgress = 0;
+    m_writeProgress = 0;
+    setProgress(0);
+
+    emit stageProgressChanged();
+    emit isStoppingChanged();
+    emit resultsListChanged();
+    emit filteredResultsListChanged();
+}
+
 void ExportProgressViewModel::startExport(const QStringList& componentIds,
                                           const QString& outputPath,
                                           const QString& libName,
@@ -136,10 +163,8 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     m_exportDatasheetEnabled = exportDatasheet;
 
     m_componentIds = componentIds;
-    m_totalCount = componentIds.size();
     m_successCount = 0;
     m_failureCount = 0;
-    m_isStopping = false;
     m_pendingUpdate = false;
     if (m_throttleTimer) {
         m_throttleTimer->stop();
@@ -147,10 +172,6 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     setHasCompletedExport(false);
     m_resultsList.clear();
     m_idToIndexMap.clear();
-    m_fetchProgress = 0;
-    m_processProgress = 0;
-    m_writeProgress = 0;
-    setProgress(0);
 
     for (int i = 0; i < componentIds.size(); ++i) {
         m_idToIndexMap[componentIds[i]] = i;
@@ -186,14 +207,9 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     m_exportService->setOptions(options);
     m_exportService->setOutputPath(outputPath);
 
-    setIsExporting(true);
-    setStatus("Preloading component data...");
-    emit resultsListChanged();
-    emit filteredResultsListChanged();
-    emit totalCountChanged();
+    beginExportRun(componentIds, QStringLiteral("Preloading component data..."));
     emit successCountChanged();
     emit failureCountChanged();
-    emit stageProgressChanged();
 
     // Start preload - actual export will begin after preload completes
     m_exportService->startPreload(componentIds);
@@ -652,10 +668,12 @@ void ExportProgressViewModel::retryComponent(const QString& componentId) {
 
     // Update counts and notify UI
     markResultsDirty();
+    flushPendingUpdates();
 
     // Re-trigger export if not currently exporting
     if (!m_isExporting && m_exportService) {
         QStringList idsToRetry = {componentId};
+        beginExportRun(idsToRetry, QStringLiteral("Preloading component data..."));
         m_exportService->startPreload(idsToRetry);
     }
 }
@@ -690,9 +708,11 @@ void ExportProgressViewModel::retryFailedComponents() {
 
     // Update counts and notify UI
     markResultsDirty();
+    flushPendingUpdates();
 
     // Re-trigger export if not currently exporting
     if (!m_isExporting && m_exportService) {
+        beginExportRun(failedIds, QStringLiteral("Preloading component data..."));
         m_exportService->startPreload(failedIds);
     }
 }

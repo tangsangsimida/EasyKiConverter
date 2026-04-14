@@ -774,8 +774,8 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
                 item->setValidationPhase("failed");
                 const bool nonRetryable = isNonRetryableValidationError(error);
                 item->setRetryable(!nonRetryable);
-                if (error.contains("No result", Qt::CaseInsensitive) || error.contains("not found", Qt::CaseInsensitive) ||
-                    error.contains("404", Qt::CaseInsensitive)) {
+                if (error.contains("No result", Qt::CaseInsensitive) ||
+                    error.contains("not found", Qt::CaseInsensitive) || error.contains("404", Qt::CaseInsensitive)) {
                     item->setErrorMessage(QStringLiteral("元器件不存在（404）"));
                 } else if (nonRetryable) {
                     item->setErrorMessage(error);

@@ -6,13 +6,11 @@ import "styles"
 
 ApplicationWindow {
     id: appWindow
-
     property alias windowController: appWindowController
     property int defaultWidth: Math.max(900, Screen.desktopAvailableWidth * 0.68)
     property int defaultHeight: Math.max(680, Screen.desktopAvailableHeight * 0.72)
     property int windowRadius: visibility === Window.Maximized ? 0 : 10
     property int dynamicMinimumWidth: 855
-
     width: configService ? (configService.getWindowWidth() > 0 ? configService.getWindowWidth() : defaultWidth) : defaultWidth
     height: configService ? (configService.getWindowHeight() > 0 ? configService.getWindowHeight() : defaultHeight) : defaultHeight
     x: configService && configService.getWindowX() > 0 ? configService.getWindowX() : (Screen.desktopAvailableWidth - width) / 2
@@ -22,9 +20,7 @@ ApplicationWindow {
     visible: true
     title: "EasyKiConverter - 元器件转换工具"
     color: "transparent"
-    flags: Qt.Window | Qt.FramelessWindowHint | Qt.CustomizeWindowHint | Qt.WindowMinimizeButtonHint |
-        Qt.WindowMaximizeButtonHint
-
+    flags: Qt.Window | Qt.FramelessWindowHint | Qt.CustomizeWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint
     WindowController {
         id: appWindowController
         window: appWindow
@@ -66,14 +62,12 @@ ApplicationWindow {
     }
 
     onClosing: close => appWindowController.handleClosing(close)
-
     Component.onCompleted: {
         appWindowController.restoreWindowState();
     }
 
     Item {
         anchors.fill: parent
-
         Loader {
             id: mainWindowLoader
             anchors.fill: parent

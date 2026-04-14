@@ -22,7 +22,6 @@ Item {
     readonly property bool isMaximized: Window.window ? (Window.window.visibility === Window.Maximized || Window.window.visibility === Window.FullScreen) : false
     readonly property int windowRadius: isMaximized ? 0 : AppStyle.radius.lg
     readonly property int calculatedMinimumWindowWidth: calculateMinimumWidth()
-
     function mainFlickable() {
         return scrollView.contentItem;
     }

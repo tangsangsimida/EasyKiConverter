@@ -187,6 +187,7 @@ private:
     QString typeStatusKey(const QString& typeName) const;
     void updateOverallItemStatus(QVariantMap& result) const;
     void resetItemForRetry(QVariantMap& result) const;
+    void beginExportRun(const QStringList& componentIds, const QString& statusText);
     int averageTypeProgress(const ExportOverallProgress& progress, const QStringList& typeNames) const;
     int stageTypeProgress(const ExportOverallProgress& progress, const QStringList& typeNames) const;
     int countItemsWithTypeStatus(const QString& key, const QString& expectedStatus) const;

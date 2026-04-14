@@ -4,16 +4,13 @@ import QtQuick.Window
 
 QtObject {
     id: controller
-
     required property ApplicationWindow window
     property var configService
     property var exportProgressController
     property var closeConfirmDialog
     property var exitOptionDialog
-
     property real normalWidth: window.width
     property real normalHeight: window.height
-
     function clampGeometry() {
         if (!window) {
             return;
@@ -48,7 +45,6 @@ QtObject {
     function persistGeometry() {
         if (!configService || !window)
             return;
-
         if (window.visibility === Window.Maximized) {
             configService.setWindowWidth(Math.round(normalWidth));
             configService.setWindowHeight(Math.round(normalHeight));
@@ -68,9 +64,7 @@ QtObject {
     function restoreWindowState() {
         if (!window || !configService)
             return;
-
         clampGeometry();
-
         if (configService.getWindowMaximized()) {
             Qt.callLater(function () {
                 if (window)
@@ -168,7 +162,6 @@ QtObject {
 
     property Connections windowConnections: Connections {
         target: controller.window
-
         function onWidthChanged() {
             if (controller.window.visibility === Window.Windowed) {
                 controller.normalWidth = controller.window.width;

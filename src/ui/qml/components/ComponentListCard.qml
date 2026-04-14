@@ -49,9 +49,7 @@ Card {
         Connections {
             target: componentListCard.exportProgressController
             function onIsExportingChanged() {
-                if (componentListCard.exportProgressController &&
-                    componentListCard.exportProgressController.isExporting &&
-                    componentListCard.componentListController) {
+                if (componentListCard.exportProgressController && componentListCard.exportProgressController.isExporting && componentListCard.componentListController) {
                     componentListCard.componentListController.dismissAttentionHints();
                 }
             }
@@ -139,16 +137,27 @@ Card {
             border.color: Qt.alpha(componentListCard.hintColor, 0.42)
             opacity: componentListCard.showAttentionHint ? 0.75 : 0.0
             visible: opacity > 0
-
             SequentialAnimation on opacity {
                 loops: Animation.Infinite
                 running: componentListCard.showAttentionHint
-                NumberAnimation { from: 0.24; to: 0.78; duration: 900; easing.type: Easing.InOutQuad }
-                NumberAnimation { from: 0.78; to: 0.28; duration: 900; easing.type: Easing.InOutQuad }
+                NumberAnimation {
+                    from: 0.24
+                    to: 0.78
+                    duration: 900
+                    easing.type: Easing.InOutQuad
+                }
+                NumberAnimation {
+                    from: 0.78
+                    to: 0.28
+                    duration: 900
+                    easing.type: Easing.InOutQuad
+                }
             }
 
             Behavior on border.color {
-                ColorAnimation { duration: 180 }
+                ColorAnimation {
+                    duration: 180
+                }
             }
         },
         Rectangle {
@@ -160,23 +169,41 @@ Card {
             border.color: Qt.alpha(componentListCard.hintColor, 0.14)
             opacity: componentListCard.showAttentionHint ? 0.50 : 0.0
             visible: opacity > 0
-
             SequentialAnimation on opacity {
                 loops: Animation.Infinite
                 running: componentListCard.showAttentionHint
-                NumberAnimation { from: 0.05; to: 0.34; duration: 1250; easing.type: Easing.OutCubic }
-                NumberAnimation { from: 0.34; to: 0.03; duration: 1250; easing.type: Easing.InCubic }
+                NumberAnimation {
+                    from: 0.05
+                    to: 0.34
+                    duration: 1250
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    from: 0.34
+                    to: 0.03
+                    duration: 1250
+                    easing.type: Easing.InCubic
+                }
             }
 
             SequentialAnimation on scale {
                 loops: Animation.Infinite
                 running: componentListCard.showAttentionHint
-                NumberAnimation { from: 0.992; to: 1.018; duration: 1250; easing.type: Easing.OutCubic }
-                NumberAnimation { from: 1.018; to: 0.996; duration: 1250; easing.type: Easing.InCubic }
+                NumberAnimation {
+                    from: 0.992
+                    to: 1.018
+                    duration: 1250
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    from: 1.018
+                    to: 0.996
+                    duration: 1250
+                    easing.type: Easing.InCubic
+                }
             }
         }
     ]
-
     Item {
         id: toolbarContainer
         width: parent.width
