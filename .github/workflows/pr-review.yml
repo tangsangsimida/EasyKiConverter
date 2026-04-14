@@ -93,7 +93,8 @@ jobs:
           echo "pr_number=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
           PR_DATA="$(gh pr view "${PR_NUMBER}" --json title,body,additions,deletions,changedFiles,baseRefName,headRefName)"
           echo "pr_data=${PR_DATA}" >> "${GITHUB_OUTPUT}"
-          CHANGED_FILES="$(gh pr diff "${PR_NUMBER}" --name-only)"
+          # Use REST API instead of gh pr diff to avoid 406 error
+          CHANGED_FILES="$(gh api repos/${{ github.repository }}/pulls/${PR_NUMBER}/files --jq '[.[].filename] | join("\n")' 2>/dev/null || echo "")"
           {
             echo "changed_files<<EOF"
             echo "${CHANGED_FILES}"
