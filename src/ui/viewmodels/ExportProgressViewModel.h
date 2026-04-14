@@ -45,6 +45,11 @@ class ExportProgressViewModel : public QObject {
     Q_PROPERTY(int statisticsTotal READ statisticsTotal NOTIFY totalCountChanged)
     Q_PROPERTY(bool hasCompletedExport READ hasCompletedExport NOTIFY hasCompletedExportChanged)
     Q_PROPERTY(QString cacheDirUrl READ cacheDirUrl CONSTANT)
+    Q_PROPERTY(int symbolSuccessCount READ symbolSuccessCount NOTIFY resultsListChanged)
+    Q_PROPERTY(int footprintSuccessCount READ footprintSuccessCount NOTIFY resultsListChanged)
+    Q_PROPERTY(int model3DSuccessCount READ model3DSuccessCount NOTIFY resultsListChanged)
+    Q_PROPERTY(int previewSuccessCount READ previewSuccessCount NOTIFY resultsListChanged)
+    Q_PROPERTY(int datasheetSuccessCount READ datasheetSuccessCount NOTIFY resultsListChanged)
 
 public:
     explicit ExportProgressViewModel(ParallelExportService* exportService,
@@ -114,6 +119,12 @@ public:
         return m_hasCompletedExport;
     }
 
+    int symbolSuccessCount() const;
+    int footprintSuccessCount() const;
+    int model3DSuccessCount() const;
+    int previewSuccessCount() const;
+    int datasheetSuccessCount() const;
+
     QString cacheDirUrl() const {
         auto cacheDir = ComponentCacheService::instance()->cacheDir();
         if (cacheDir.isEmpty()) {
@@ -177,6 +188,9 @@ private:
     void updateOverallItemStatus(QVariantMap& result) const;
     void resetItemForRetry(QVariantMap& result) const;
     int averageTypeProgress(const ExportOverallProgress& progress, const QStringList& typeNames) const;
+    int stageTypeProgress(const ExportOverallProgress& progress, const QStringList& typeNames) const;
+    int countItemsWithTypeStatus(const QString& key, const QString& expectedStatus) const;
+    int weightedOverallProgress() const;
     void markResultsDirty();
 
 private:

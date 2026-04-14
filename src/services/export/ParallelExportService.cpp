@@ -14,6 +14,7 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QMutexLocker>
+#include <QTimer>
 
 namespace EasyKiConverter {
 
@@ -183,46 +184,32 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
     m_progress.preloadProgress = PreloadProgress();
     m_progress.preloadProgress.totalCount = componentIds.size();
     m_cachedData.clear();
+    m_preloadCompleted = false;
+    m_nextPreloadIndex = 0;
 
-    // 从ComponentService获取已验证的元器件数据
-    if (m_componentService) {
-        for (const QString& componentId : componentIds) {
-            ComponentData data = m_componentService->getComponentData(componentId);
-            const QSharedPointer<ComponentData> diskCachedData = loadDiskCachedComponentData(componentId);
-            mergeComponentData(data, diskCachedData);
-
-            if (!data.lcscId().isEmpty()) {
-                auto sharedData = QSharedPointer<ComponentData>::create(data);
-                m_cachedData[componentId] = sharedData;
-                m_progress.preloadProgress.successCount++;
-                qDebug() << "ParallelExportService: Loaded data for" << componentId;
-            } else {
-                m_progress.preloadProgress.failedCount++;
-                qWarning() << "ParallelExportService: No data found for component:" << componentId;
-            }
-            m_progress.preloadProgress.completedCount++;
-        }
-    } else {
-        qWarning() << "ParallelExportService: ComponentService not set, cannot load data";
-        // 模拟完成但所有都失败
-        for (const QString& componentId : componentIds) {
-            m_progress.preloadProgress.completedCount++;
-            m_progress.preloadProgress.failedCount++;
-        }
+    {
+        QMutexLocker locker(&m_progressMutex);
+        m_progress.preloadProgress.currentComponentId.clear();
+        m_progress.preloadProgress.inProgressCount = 0;
     }
 
-    qDebug() << "ParallelExportService: Preload completed. Success:" << m_progress.preloadProgress.successCount
-             << "Failed:" << m_progress.preloadProgress.failedCount;
-
-    m_preloadCompleted = true;
-    m_progress.currentStage = ExportOverallProgress::Stage::Idle;
-    emit preloadCompleted(m_progress.preloadProgress.successCount, m_progress.preloadProgress.failedCount);
+    emit preloadProgressChanged(m_progress.preloadProgress);
+    updateOverallProgress();
+    QTimer::singleShot(0, this, &ParallelExportService::processNextPreloadBatch);
 }
 
 void ParallelExportService::cancelPreload() {
     qDebug() << "ParallelExportService: Cancelling preload";
-    m_progress.preloadProgress.inProgressCount = 0;
-    m_progress.currentStage = ExportOverallProgress::Stage::Idle;
+    m_cancelRequested = true;
+    m_nextPreloadIndex = m_componentIds.size();
+    {
+        QMutexLocker locker(&m_progressMutex);
+        m_progress.preloadProgress.inProgressCount = 0;
+        m_progress.preloadProgress.currentComponentId.clear();
+        m_progress.currentStage = ExportOverallProgress::Stage::Cancelled;
+        m_progress.endTime = QDateTime::currentDateTime();
+    }
+    updateOverallProgress();
     emit cancelled();
 }
 
@@ -393,6 +380,11 @@ void ParallelExportService::cancelExport() {
     qDebug() << "ParallelExportService: Cancelling export";
     m_cancelRequested = true;
 
+    if (m_progress.currentStage == ExportOverallProgress::Stage::Preloading) {
+        cancelPreload();
+        return;
+    }
+
     for (auto* stage : m_exportStages) {
         stage->cancel();
     }
@@ -504,6 +496,86 @@ void ParallelExportService::onExportItemStatusChanged(const QString& componentId
 
     // 更新整体进度
     updateOverallProgress();
+}
+
+void ParallelExportService::processNextPreloadBatch() {
+    if (m_cancelRequested || m_progress.currentStage != ExportOverallProgress::Stage::Preloading) {
+        return;
+    }
+
+    constexpr int BATCH_SIZE = 8;
+
+    if (!m_componentService) {
+        qWarning() << "ParallelExportService: ComponentService not set, cannot load data";
+        {
+            QMutexLocker locker(&m_progressMutex);
+            m_progress.preloadProgress.completedCount = m_componentIds.size();
+            m_progress.preloadProgress.failedCount = m_componentIds.size();
+            m_progress.preloadProgress.inProgressCount = 0;
+            m_progress.preloadProgress.currentComponentId.clear();
+            m_progress.currentStage = ExportOverallProgress::Stage::Idle;
+            m_progress.endTime = QDateTime::currentDateTime();
+        }
+        emit preloadProgressChanged(m_progress.preloadProgress);
+        emit preloadCompleted(0, m_componentIds.size());
+        return;
+    }
+
+    int processedInBatch = 0;
+    while (processedInBatch < BATCH_SIZE && m_nextPreloadIndex < m_componentIds.size() && !m_cancelRequested) {
+        const QString componentId = m_componentIds.at(m_nextPreloadIndex++);
+        {
+            QMutexLocker locker(&m_progressMutex);
+            m_progress.preloadProgress.currentComponentId = componentId;
+            m_progress.preloadProgress.inProgressCount = 1;
+        }
+
+        ComponentData data = m_componentService->getComponentData(componentId);
+        const QSharedPointer<ComponentData> diskCachedData = loadDiskCachedComponentData(componentId);
+        mergeComponentData(data, diskCachedData);
+
+        {
+            QMutexLocker locker(&m_progressMutex);
+            if (!data.lcscId().isEmpty()) {
+                auto sharedData = QSharedPointer<ComponentData>::create(data);
+                m_cachedData[componentId] = sharedData;
+                m_progress.preloadProgress.successCount++;
+                qDebug() << "ParallelExportService: Loaded data for" << componentId;
+            } else {
+                m_progress.preloadProgress.failedCount++;
+                m_progress.preloadProgress.failedComponents[componentId] = QStringLiteral("No component data found");
+                qWarning() << "ParallelExportService: No data found for component:" << componentId;
+            }
+
+            m_progress.preloadProgress.completedCount++;
+            m_progress.preloadProgress.inProgressCount = 0;
+        }
+
+        processedInBatch++;
+    }
+
+    const bool finished = m_nextPreloadIndex >= m_componentIds.size();
+    if (finished) {
+        {
+            QMutexLocker locker(&m_progressMutex);
+            m_progress.preloadProgress.currentComponentId.clear();
+            m_progress.currentStage = ExportOverallProgress::Stage::Idle;
+            m_progress.endTime = QDateTime::currentDateTime();
+        }
+        qDebug() << "ParallelExportService: Preload completed. Success:" << m_progress.preloadProgress.successCount
+                 << "Failed:" << m_progress.preloadProgress.failedCount;
+        m_preloadCompleted = true;
+    }
+
+    emit preloadProgressChanged(m_progress.preloadProgress);
+    updateOverallProgress();
+
+    if (finished) {
+        emit preloadCompleted(m_progress.preloadProgress.successCount, m_progress.preloadProgress.failedCount);
+        return;
+    }
+
+    QTimer::singleShot(0, this, &ParallelExportService::processNextPreloadBatch);
 }
 
 void ParallelExportService::updateOverallProgress() {

@@ -85,17 +85,17 @@ Card {
             spacing: AppStyle.spacing.lg
             StatItem {
                 label: qsTranslate("MainWindow", "符号")
-                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.filteredSuccessCount || 0) : 0
+                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.symbolSuccessCount || 0) : 0
                 Layout.fillWidth: true
             }
             StatItem {
                 label: qsTranslate("MainWindow", "封装")
-                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.filteredSuccessCount || 0) : 0
+                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.footprintSuccessCount || 0) : 0
                 Layout.fillWidth: true
             }
             StatItem {
                 label: qsTranslate("MainWindow", "3D模型")
-                value: "0"
+                value: exportStatisticsCard.exportProgressController ? (exportStatisticsCard.exportProgressController.model3DSuccessCount || 0) : 0
                 Layout.fillWidth: true
             }
         }

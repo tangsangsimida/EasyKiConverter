@@ -219,6 +219,7 @@ private slots:
     void onExportTypeProgressChanged(const QString& typeName, const ExportTypeProgress& progress);
     void onExportTypeCompleted(const QString& typeName, int successCount, int failedCount, int skippedCount);
     void onExportItemStatusChanged(const QString& componentId, const QString& typeName, const ExportItemStatus& status);
+    void processNextPreloadBatch();
 
 private:
     /**
@@ -255,6 +256,7 @@ private:
     bool m_preloadCompleted{false};  ///< 预加载是否已完成
     int m_runningExportStages{0};  ///< 正在运行的导出Stage数量
     bool m_cancelRequested{false};  ///< 当前导出是否已请求取消
+    int m_nextPreloadIndex{0};  ///< 下一批预加载索引
 };
 
 }  // namespace EasyKiConverter

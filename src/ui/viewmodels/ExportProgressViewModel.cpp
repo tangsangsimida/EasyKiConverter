@@ -14,6 +14,14 @@
 
 namespace EasyKiConverter {
 
+namespace {
+
+constexpr int FETCH_WEIGHT = 30;
+constexpr int PROCESS_WEIGHT = 50;
+constexpr int WRITE_WEIGHT = 20;
+
+}
+
 ExportProgressViewModel::ExportProgressViewModel(ParallelExportService* exportService,
                                                  ComponentService* componentService,
                                                  ComponentListViewModel* componentListViewModel,
@@ -126,9 +134,17 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     m_successCount = 0;
     m_failureCount = 0;
     m_isStopping = false;
+    m_pendingUpdate = false;
+    if (m_throttleTimer) {
+        m_throttleTimer->stop();
+    }
     setHasCompletedExport(false);
     m_resultsList.clear();
     m_idToIndexMap.clear();
+    m_fetchProgress = 0;
+    m_processProgress = 0;
+    m_writeProgress = 0;
+    setProgress(0);
 
     for (int i = 0; i < componentIds.size(); ++i) {
         m_idToIndexMap[componentIds[i]] = i;
@@ -169,6 +185,9 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     emit resultsListChanged();
     emit filteredResultsListChanged();
     emit totalCountChanged();
+    emit successCountChanged();
+    emit failureCountChanged();
+    emit stageProgressChanged();
 
     // Start preload - actual export will begin after preload completes
     m_exportService->startPreload(componentIds);
@@ -219,12 +238,17 @@ void ExportProgressViewModel::handleCloseRequest() {
 }
 
 void ExportProgressViewModel::handlePreloadProgressChanged(const PreloadProgress& progress) {
-    setStatus(QString("Preloading... %1/%2").arg(progress.completedCount).arg(progress.totalCount));
-
-    // Update progress based on preload stage
-    if (progress.totalCount > 0) {
-        setProgress((progress.completedCount * 100) / progress.totalCount / 2);  // Preload is first 50%
+    QString statusText = QString("Preloading... %1/%2").arg(progress.completedCount).arg(progress.totalCount);
+    if (!progress.currentComponentId.isEmpty()) {
+        statusText += QString(" (%1)").arg(progress.currentComponentId);
     }
+    setStatus(statusText);
+
+    m_fetchProgress = qBound(0, progress.percentage(), 100);
+    m_processProgress = 0;
+    m_writeProgress = 0;
+    setProgress(weightedOverallProgress());
+    emit stageProgressChanged();
 }
 
 void ExportProgressViewModel::handlePreloadCompleted(int successCount, int failedCount) {
@@ -256,20 +280,20 @@ void ExportProgressViewModel::handleProgressChanged(const ExportOverallProgress&
             m_fetchProgress = progress.preloadProgress.percentage();
             m_processProgress = 0;
             m_writeProgress = 0;
-            setProgress(m_fetchProgress / 2);
+            setProgress(weightedOverallProgress());
             break;
         case ExportOverallProgress::Stage::Exporting:
             setStatus("Exporting components...");
-            m_fetchProgress = averageTypeProgress(
+            m_fetchProgress = stageTypeProgress(
                 progress, {QStringLiteral("PreviewImages"), QStringLiteral("Datasheet"), QStringLiteral("Model3D")});
-            m_processProgress = averageTypeProgress(progress, {QStringLiteral("Symbol"), QStringLiteral("Footprint")});
-            m_writeProgress = averageTypeProgress(progress,
-                                                  {QStringLiteral("Symbol"),
-                                                   QStringLiteral("Footprint"),
-                                                   QStringLiteral("Model3D"),
-                                                   QStringLiteral("PreviewImages"),
-                                                   QStringLiteral("Datasheet")});
-            setProgress(50 + (m_writeProgress / 2));
+            m_processProgress = stageTypeProgress(progress, {QStringLiteral("Symbol"), QStringLiteral("Footprint")});
+            m_writeProgress = stageTypeProgress(progress,
+                                                {QStringLiteral("Symbol"),
+                                                 QStringLiteral("Footprint"),
+                                                 QStringLiteral("Model3D"),
+                                                 QStringLiteral("PreviewImages"),
+                                                 QStringLiteral("Datasheet")});
+            setProgress(weightedOverallProgress());
             break;
         case ExportOverallProgress::Stage::Completed:
             m_fetchProgress = 100;
@@ -279,9 +303,16 @@ void ExportProgressViewModel::handleProgressChanged(const ExportOverallProgress&
             setStatus("Export completed");
             break;
         case ExportOverallProgress::Stage::Cancelled:
+            m_fetchProgress = 0;
+            m_processProgress = 0;
+            m_writeProgress = 0;
+            setProgress(0);
             setStatus("Export cancelled");
             break;
         case ExportOverallProgress::Stage::Failed:
+            m_fetchProgress = 0;
+            m_processProgress = 0;
+            m_writeProgress = 0;
             setStatus("Export failed");
             break;
         default:
@@ -374,21 +405,29 @@ void ExportProgressViewModel::handleCompleted(int successCount, int failedCount)
 void ExportProgressViewModel::handleCancelled() {
     qInfo() << "Export cancelled";
 
-    // 将所有未完成的项标记为失败
-    int failureCount = 0;
+    // 将所有未完成的项标记为失败，并同步各类型状态，避免小球状态残留
     for (int i = 0; i < m_resultsList.size(); ++i) {
         QVariantMap result = m_resultsList[i].toMap();
         QString currentStatus = result["status"].toString();
         if (currentStatus == "pending" || currentStatus == "in_progress") {
-            result["status"] = "failed";
             result["error"] = "Export cancelled";
+            const QStringList statusKeys = {
+                QStringLiteral("symbolStatus"),
+                QStringLiteral("footprintStatus"),
+                QStringLiteral("model3DStatus"),
+                QStringLiteral("previewStatus"),
+                QStringLiteral("datasheetStatus"),
+            };
+            for (const QString& key : statusKeys) {
+                const QString currentTypeStatus = result.value(key).toString();
+                if (currentTypeStatus == "pending" || currentTypeStatus == "in_progress") {
+                    result[key] = "failed";
+                }
+            }
+            updateOverallItemStatus(result);
             m_resultsList[i] = result;
-            failureCount++;
         }
     }
-
-    // 如果有取消前已计入的成功数，加上取消后的失败数
-    m_failureCount = failureCount;
 
     if (m_isStopping) {
         m_isStopping = false;
@@ -402,10 +441,7 @@ void ExportProgressViewModel::handleCancelled() {
     m_processProgress = 0;
     m_writeProgress = 0;
     emit stageProgressChanged();
-    emit successCountChanged();
-    emit failureCountChanged();
-    emit resultsListChanged();
-    emit filteredResultsListChanged();
+    flushPendingUpdates();
 }
 
 void ExportProgressViewModel::handleFailed(const QString& error) {
@@ -416,6 +452,11 @@ void ExportProgressViewModel::handleFailed(const QString& error) {
     }
     setIsExporting(false);
     setHasCompletedExport(false);
+    setProgress(0);
+    m_fetchProgress = 0;
+    m_processProgress = 0;
+    m_writeProgress = 0;
+    emit stageProgressChanged();
     setStatus(QString("Export failed: %1").arg(error));
 }
 
@@ -500,6 +541,26 @@ int ExportProgressViewModel::filteredPendingCount() const {
     return pending;
 }
 
+int ExportProgressViewModel::symbolSuccessCount() const {
+    return countItemsWithTypeStatus(QStringLiteral("symbolStatus"), QStringLiteral("success"));
+}
+
+int ExportProgressViewModel::footprintSuccessCount() const {
+    return countItemsWithTypeStatus(QStringLiteral("footprintStatus"), QStringLiteral("success"));
+}
+
+int ExportProgressViewModel::model3DSuccessCount() const {
+    return countItemsWithTypeStatus(QStringLiteral("model3DStatus"), QStringLiteral("success"));
+}
+
+int ExportProgressViewModel::previewSuccessCount() const {
+    return countItemsWithTypeStatus(QStringLiteral("previewStatus"), QStringLiteral("success"));
+}
+
+int ExportProgressViewModel::datasheetSuccessCount() const {
+    return countItemsWithTypeStatus(QStringLiteral("datasheetStatus"), QStringLiteral("success"));
+}
+
 void ExportProgressViewModel::setFilterMode(const QString& mode) {
     if (m_filterMode != mode) {
         m_filterMode = mode;
@@ -534,6 +595,10 @@ void ExportProgressViewModel::clearCache() {
 }
 
 void ExportProgressViewModel::resetExport() {
+    if (m_throttleTimer) {
+        m_throttleTimer->stop();
+    }
+    m_pendingUpdate = false;
     setIsExporting(false);
     setProgress(0);
     setStatus("Ready");
@@ -762,6 +827,44 @@ int ExportProgressViewModel::averageTypeProgress(const ExportOverallProgress& pr
         return 0;
     }
     return qBound(0, sum / count, 100);
+}
+
+int ExportProgressViewModel::stageTypeProgress(const ExportOverallProgress& progress, const QStringList& typeNames) const {
+    bool hasEnabledType = false;
+    for (const QString& typeName : typeNames) {
+        const bool enabled = (typeName == "Symbol" && m_exportSymbolEnabled) ||
+                             (typeName == "Footprint" && m_exportFootprintEnabled) ||
+                             (typeName == "Model3D" && m_exportModel3DEnabled) ||
+                             (typeName == "PreviewImages" && m_exportPreviewEnabled) ||
+                             (typeName == "Datasheet" && m_exportDatasheetEnabled);
+        if (enabled) {
+            hasEnabledType = true;
+            break;
+        }
+    }
+
+    if (!hasEnabledType) {
+        return 100;
+    }
+
+    return averageTypeProgress(progress, typeNames);
+}
+
+int ExportProgressViewModel::countItemsWithTypeStatus(const QString& key, const QString& expectedStatus) const {
+    int count = 0;
+    for (const QVariant& item : m_resultsList) {
+        const QVariantMap map = item.toMap();
+        if (map.value(key).toString() == expectedStatus) {
+            count++;
+        }
+    }
+    return count;
+}
+
+int ExportProgressViewModel::weightedOverallProgress() const {
+    const int weighted = (m_fetchProgress * FETCH_WEIGHT) + (m_processProgress * PROCESS_WEIGHT) +
+                         (m_writeProgress * WRITE_WEIGHT);
+    return qBound(0, weighted / 100, 100);
 }
 
 void ExportProgressViewModel::markResultsDirty() {
