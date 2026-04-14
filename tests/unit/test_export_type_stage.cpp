@@ -40,7 +40,8 @@ private slots:
 
         stage.start(ids, cachedData);
 
-        QCOMPARE(itemSpy.count(), ids.size());
+        // Each component emits 2 signals: InProgress (from startNextWorker) and Success (from completeItemProgress)
+        QCOMPARE(itemSpy.count(), ids.size() * 2);
         QCOMPARE(completedSpy.count(), 1);
 
         const ExportTypeProgress progress = stage.getProgress();
