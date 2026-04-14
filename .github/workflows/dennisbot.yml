@@ -1,0 +1,292 @@
+name: 'DennisBot Q&A'
+
+on:
+  issue_comment:
+    types:
+      - 'created'
+      - 'edited'
+  pull_request_review_comment:
+    types:
+      - 'created'
+      - 'edited'
+  discussion_comment:
+    types:
+      - 'created'
+      - 'edited'
+  discussion:
+    types:
+      - 'created'
+      - 'edited'
+  workflow_dispatch:
+    inputs:
+      question:
+        description: 'Question to ask DennisBot'
+        required: true
+        type: 'string'
+      context_type:
+        description: 'Context type (issue/pr/discussion)'
+        required: true
+        type: 'string'
+      context_id:
+        description: 'Issue/PR/Discussion number'
+        required: true
+        type: 'string'
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.event.comment.id || github.event.discussion.id || inputs.context_id }}'
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: 'bash'
+
+permissions:
+  contents: 'read'
+  issues: 'write'
+  pull-requests: 'write'
+  discussions: 'write'
+
+jobs:
+  dennisbot-qa:
+    if: |-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.discussion_comment.author_association || github.event.discussion.author_association || 'NONE')
+      )
+    runs-on: 'ubuntu-latest'
+    steps:
+      - name: 'Detect mention and extract question'
+        id: 'detect_mention'
+        run: |
+          set -euo pipefail
+
+          # Determine context type and extract info
+          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            CONTEXT_TYPE="issue"
+            CONTEXT_ID="${{ github.event.issue.number }}"
+            COMMENT_BODY="${{ github.event.comment.body }}"
+            AUTHOR="${{ github.event.comment.user.login }}"
+            PARENT_ID="${{ github.event.comment.id }}"
+            REPO="${{ github.repository }}"
+          elif [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
+            CONTEXT_TYPE="pr"
+            CONTEXT_ID="${{ github.event.pull_request.number }}"
+            COMMENT_BODY="${{ github.event.comment.body }}"
+            AUTHOR="${{ github.event.comment.user.login }}"
+            PARENT_ID="${{ github.event.comment.id }}"
+            REPO="${{ github.repository }}"
+          elif [[ "${{ github.event_name }}" == "discussion_comment" ]]; then
+            CONTEXT_TYPE="discussion"
+            CONTEXT_ID="${{ github.event.discussion.id }}"
+            COMMENT_BODY="${{ github.event.discussion_comment.body }}"
+            AUTHOR="${{ github.event.discussion_comment.user.login }}"
+            PARENT_ID="${{ github.event.discussion_comment.id }}"
+            REPO="${{ github.repository }}"
+          elif [[ "${{ github.event_name }}" == "discussion" ]]; then
+            CONTEXT_TYPE="discussion"
+            CONTEXT_ID="${{ github.event.discussion.id }}"
+            COMMENT_BODY="${{ github.event.discussion.body }}"
+            AUTHOR="${{ github.event.discussion.user.login }}"
+            PARENT_ID=""
+            REPO="${{ github.repository }}"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            CONTEXT_TYPE="${{ inputs.context_type }}"
+            CONTEXT_ID="${{ inputs.context_id }}"
+            COMMENT_BODY="${{ inputs.question }}"
+            AUTHOR="workflow-dispatch"
+            PARENT_ID=""
+            REPO="${{ github.repository }}"
+          fi
+
+          echo "context_type=${CONTEXT_TYPE}" >> "${GITHUB_OUTPUT}"
+          echo "context_id=${CONTEXT_ID}" >> "${GITHUB_OUTPUT}"
+          echo "comment_body<<EOF" >> "${GITHUB_OUTPUT}"
+          echo "${COMMENT_BODY}" >> "${GITHUB_OUTPUT}"
+          echo "EOF" >> "${GITHUB_OUTPUT}"
+          echo "author=${AUTHOR}" >> "${GITHUB_OUTPUT}"
+          echo "parent_id=${PARENT_ID}" >> "${GITHUB_OUTPUT}"
+          echo "repo=${REPO}" >> "${GITHUB_OUTPUT}"
+
+      - name: 'Check if @dennisbot is mentioned'
+        id: 'check_mention'
+        run: |
+          set -euo pipefail
+
+          COMMENT_BODY="${{ steps.detect_mention.outputs.comment_body }}"
+
+          # Check for @dennisbot mention (case insensitive)
+          if echo "${COMMENT_BODY}" | grep -qi "@dennisbot"; then
+            echo "mentioned=true" >> "${GITHUB_OUTPUT}"
+            # Extract the question (remove the @dennisbot part)
+            QUESTION=$(echo "${COMMENT_BODY}" | sed -E 's/@dennisbot[,:]?//gi' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            echo "question<<EOF" >> "${GITHUB_OUTPUT}"
+            echo "${QUESTION}" >> "${GITHUB_OUTPUT}"
+            echo "EOF" >> "${GITHUB_OUTPUT}"
+          else
+            echo "mentioned=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: 'Skip if not mentioned'
+        if: "steps.check_mention.outputs.mentioned != 'true'"
+        run: |
+          echo "DennisBot was not mentioned, skipping..."
+          exit 0
+
+      - name: 'Get conversation context'
+        id: 'get_context'
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        run: |
+          set -euo pipefail
+
+          CONTEXT_TYPE="${{ steps.detect_mention.outputs.context_type }}"
+          CONTEXT_ID="${{ steps.detect_mention.outputs.context_id }}"
+
+          if [[ "${CONTEXT_TYPE}" == "issue" ]]; then
+            ISSUE_DATA=$(gh issue view "${CONTEXT_ID}" --json title,body,comments --jq '.{"title": .title, "body": .body, "comments": [.comments[] | {author: .author.login, body: .body}]}' 2>/dev/null || echo '{"title": "", "body": "", "comments": []}')
+            echo "context<<EOF" >> "${GITHUB_OUTPUT}"
+            echo "Issue #${CONTEXT_ID}:" >> "${GITHUB_OUTPUT}"
+            echo "${ISSUE_DATA}" >> "${GITHUB_OUTPUT}"
+            echo "EOF" >> "${GITHUB_OUTPUT}"
+          elif [[ "${CONTEXT_TYPE}" == "pr" ]]; then
+            PR_DATA=$(gh pr view "${CONTEXT_ID}" --json title,body,comments --jq '.{"title": .title, "body": .body, "comments": [.comments[] | {author: .author.login, body: .body}]}' 2>/dev/null || echo '{"title": "", "body": "", "comments": []}')
+            echo "context<<EOF" >> "${GITHUB_OUTPUT}"
+            echo "PR #${CONTEXT_ID}:" >> "${GITHUB_OUTPUT}"
+            echo "${PR_DATA}" >> "${GITHUB_OUTPUT}"
+            echo "EOF" >> "${GITHUB_OUTPUT}"
+          elif [[ "${CONTEXT_TYPE}" == "discussion" ]]; then
+            DISCUSSION_DATA=$(gh api graphql -f query="{
+              repository(owner: \"$(echo '${{ github.repository }}' | cut -d/ -f1)\", name: \"$(echo '${{ github.repository }}' | cut -d/ -f2)\") {
+                discussion(number: ${CONTEXT_ID}) {
+                  title
+                  body
+                  comments(first: 20) {
+                    nodes {
+                      author { login }
+                      body
+                    }
+                  }
+                }
+              }
+            }" 2>/dev/null | jq -r '.data.repository.discussion | {"title": .title, "body": .body, "comments": [.comments.nodes[] | {author: .author.login, body: .body}]}' || echo '{"title": "", "body": "", "comments": []}')
+            echo "context<<EOF" >> "${GITHUB_OUTPUT}"
+            echo "Discussion #${CONTEXT_ID}:" >> "${GITHUB_OUTPUT}"
+            echo "${DISCUSSION_DATA}" >> "${GITHUB_OUTPUT}"
+            echo "EOF" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: 'Generate response'
+        id: 'generate_response'
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        run: |
+          set -euo pipefail
+
+          QUESTION="${{ steps.check_mention.outputs.question }}"
+          CONTEXT="${{ steps.get_context.outputs.context }}"
+          AUTHOR="${{ steps.detect_mention.outputs.author }}"
+          CONTEXT_TYPE="${{ steps.detect_mention.outputs.context_type }}"
+          CONTEXT_ID="${{ steps.detect_mention.outputs.context_id }}"
+
+          if [[ -z "${QUESTION}" ]]; then
+            echo "question=Hello! How can I help you with this ${CONTEXT_TYPE}?" >> "${GITHUB_OUTPUT}"
+          fi
+
+          SYSTEM_PROMPT="## 角色
+          你叫 DennisBot，是一个专业、友好、乐于助人的代码助手。你正在帮助用户解答关于代码仓库的问题。
+
+          ## 行为准则
+          - 用中文回答
+          - 回答要准确、专业
+          - 如果不确定，明确说明
+          - 可以主动提供改进建议
+          - 代码相关问题要给出具体例子
+          - 保持友好和耐心
+
+          ## 注意事项
+          - 如果用户只是在打招呼或提及你但没有具体问题，友好回应并询问能帮什么忙
+          - 不要编造代码中不存在的功能或API
+          - 如果需要查看代码才能回答，说明需要查看哪些代码
+
+          ## 当前任务
+          用户在 ${CONTEXT_TYPE} #${CONTEXT_ID} 中 @ 了你并提问。你的回答会被直接发到评论区。"
+
+          USER_PROMPT="## 用户问题
+          ${QUESTION}
+
+          ## ${CONTEXT_TYPE} 上下文
+          ${CONTEXT}
+
+          ## 回答要求
+          请直接回答问题，回答会被发到评论区。用中文回答。"
+
+          RESPONSE=$(curl -s https://api.minimaxi.com/v1/chat/completions \
+            -H "Authorization: Bearer ${{ secrets.MINIMAX_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"model\": \"MiniMax-M2.7\",
+              \"messages\": [
+                {\"role\": \"system\", \"content\": \"${SYSTEM_PROMPT}\"},
+                {\"role\": \"user\", \"content\": \"${USER_PROMPT}\"}
+              ],
+              \"max_tokens\": 4000
+            }" | jq -r '.choices[0].message.content // empty')
+
+          if [ -z "${RESPONSE}" ]; then
+            echo "Failed to get response from MiniMax API"
+            exit 1
+          fi
+
+          echo "response<<EOF" >> "${GITHUB_OUTPUT}"
+          echo "${RESPONSE}" >> "${GITHUB_OUTPUT}"
+          echo "EOF" >> "${GITHUB_OUTPUT}"
+          echo "result=success" >> "${GITHUB_OUTPUT}"
+
+      - name: 'Post response to issue'
+        if: steps.generate_response.outputs.result == 'success' && steps.detect_mention.outputs.context_type == 'issue'
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        run: |
+          set -euo pipefail
+          RESPONSE="${{ steps.generate_response.outputs.response }}"
+          PARENT_ID="${{ steps.detect_mention.outputs.parent_id }}"
+          # Reply to the comment thread using in_reply_to
+          gh api repos/${{ github.repository }}/issues/${{ steps.detect_mention.outputs.context_id }}/comments \
+            --method POST \
+            --field body="<!-- @dennisbot -->${RESPONSE}" \
+            --field in_reply_to="${PARENT_ID}" 2>/dev/null || true
+
+      - name: 'Post response to PR'
+        if: steps.generate_response.outputs.result == 'success' && steps.detect_mention.outputs.context_type == 'pr'
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        run: |
+          set -euo pipefail
+          RESPONSE="${{ steps.generate_response.outputs.response }}"
+          # For PR review comments, add as a general PR comment
+          gh api repos/${{ github.repository }}/issues/${{ steps.detect_mention.outputs.context_id }}/comments \
+            --method POST \
+            --field body="<!-- @dennisbot -->${RESPONSE}" 2>/dev/null || true
+
+      - name: 'Post response to discussion'
+        if: steps.generate_response.outputs.result == 'success' && steps.detect_mention.outputs.context_type == 'discussion'
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        run: |
+          set -euo pipefail
+          RESPONSE="${{ steps.generate_response.outputs.response }}"
+          DISCUSSION_ID="${{ steps.detect_mention.outputs.context_id }}"
+          # Get the discussion node ID first
+          NODE_ID=$(gh api graphql -f query="{
+            repository(owner: \"$(echo '${{ github.repository }}' | cut -d/ -f1)\", name: \"$(echo '${{ github.repository }}' | cut -d/ -f2)\") {
+              discussion(number: ${DISCUSSION_ID}) { id }
+            }
+          }" --jq '.data.repository.discussion.id' 2>/dev/null)
+
+          if [ -n "${NODE_ID}" ]; then
+            gh api graphql -f query="mutation {
+              addDiscussionComment(input: {discussionId: \"${NODE_ID}\", body: \"<!-- @dennisbot -->${RESPONSE}\"}) {
+                comment { id }
+              }
+            }" 2>/dev/null || true
+          fi

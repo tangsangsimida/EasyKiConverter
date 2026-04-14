@@ -59,46 +59,69 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run iFlow CLI Issue Triage (Chinese Mode)
-        uses: iflow-ai/iflow-cli-action@v2.0.0
-        id: iflow_cli_issue_triage
+      - name: Get available labels
+        id: labels
+        run: |
+          LABELS=$(gh label list --json name --jq '.[].name')
+          echo "labels=$LABELS" >> "$GITHUB_OUTPUT"
+
+      - name: Run MiniMax AI Issue Triage
+        id: triage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_TITLE: ${{ steps.issue_context.outputs.title }}
           ISSUE_BODY: ${{ steps.issue_context.outputs.body }}
           ISSUE_NUMBER: ${{ steps.issue_context.outputs.number }}
-          REPOSITORY: ${{ github.repository }}
-        with:
-          api_key: ${{ secrets.IFLOW_API_KEY }}
-          model: qwen3-coder-plus
-          timeout: "3600"
-          debug: "true"
-          prompt: |
-            ## 角色
-            你是一个专业的 GitHub Issue 分类助手。请用中文思考，并严格按照以下步骤操作。
+          LABELS: ${{ steps.labels.outputs.labels }}
+        run: |
+          set -euo pipefail
 
-            ## 任务目标
-            分析当前 Issue 的标题和内容，为其打上最合适的现有标签（仅限仓库中已存在的标签）。
-            标签格式应为：`kind/*`（如 kind/bug）、`priority/*`（如 priority/p1）等。
+          PROMPT="## 角色
+          你是一个专业的 GitHub Issue 分类助手。请用中文思考，并严格按照以下步骤操作。
 
-            ## 操作步骤
-            1. 首先运行命令：`gh label list` 获取仓库中所有可用标签。
-            2. 仔细阅读 Issue 标题：“ $ {ISSUE_TITLE}” 和内容：“ $ {ISSUE_BODY}”。
-            3. 判断 Issue 类型（例如：bug、功能增强、文档改进、代码清理等）和优先级（p0 至 p3）。
-            4. 使用以下命令为 Issue 添加标签：
-               `gh issue edit " $ {ISSUE_NUMBER}" --add-label "label1,label2"`
-            5. 如果存在 "status/needs-triage" 标签，请移除它：
-               `gh issue edit " $ {ISSUE_NUMBER}" --remove-label "status/needs-triage"`
+          ## 任务目标
+          分析当前 Issue 的标题和内容，为其打上最合适的现有标签（仅限仓库中已存在的标签）。
+          仓库可用标签: ${LABELS}
+          标签格式应为：kind/*（如 kind/bug）、priority/*（如 priority/p1）等。
 
-            ## 重要规则
-            - ❗ 只能使用 `gh label list` 返回的标签，禁止自创标签。
-            - ❌ 不要添加任何评论，不要修改 Issue 内容。
-            - 🔍 仅处理当前 Issue（编号： $ {ISSUE_NUMBER}）。
-            - 📌 必须同时考虑类型和优先级，尽可能打全标签。
-            - 💬 所有 shell 变量必须写作 " $ {VAR}"（带双引号和花括号）。
+          ## Issue 信息
+          标题: ${ISSUE_TITLE}
+          内容: ${ISSUE_BODY}
 
-            ## 输出要求
-            执行成功后无需额外输出。若因权限或标签不存在而失败，请确保错误信息清晰。
+          ## 输出要求
+          仅输出一行JSON格式的标签列表，格式如下：
+          {\"labels\": [\"label1\", \"label2\"]}
+          不要添加任何解释，仅输出JSON。"
+
+          RESPONSE=$(curl -s https://api.minimaxi.com/v1/chat/completions \
+            -H "Authorization: Bearer ${{ secrets.MINIMAX_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"model\": \"MiniMax-M2.7\",
+              \"messages\": [{\"role\": \"user\", \"content\": \"${PROMPT}\"}],
+              \"max_tokens\": 500
+            }")
+
+          echo "Response: ${RESPONSE}"
+
+          LABELS_OUTPUT=$(echo "${RESPONSE}" | jq -r '.choices[0].message.content // empty')
+
+          if [ -z "${LABELS_OUTPUT}" ]; then
+            echo "Failed to get response from MiniMax API"
+            exit 1
+          fi
+
+          LABEL_ARRAY=$(echo "${LABELS_OUTPUT}" | jq -r '.labels[]' 2>/dev/null || echo "")
+
+          if [ -n "${LABEL_ARRAY}" ]; then
+            LABEL_LIST=$(echo "${LABEL_ARRAY}" | tr '\n' ',' | sed 's/,$//')
+            echo "Applying labels: ${LABEL_LIST}"
+            gh issue edit "${ISSUE_NUMBER}" --add-label "${LABEL_LIST}" 2>/dev/null || true
+          fi
+
+          gh issue edit "${ISSUE_NUMBER}" --remove-label "status/needs-triage" 2>/dev/null || true
+
+          echo "triage_result=success" >> "$GITHUB_OUTPUT"
 
       - name: Post Success Comment (Optional)
         if: success() && (github.event_name != 'issues')
@@ -115,7 +138,7 @@ jobs:
             });
 
       - name: Post Failure Comment
-        if: failure() && steps.iflow_cli_issue_triage.outcome == 'failure'
+        if: failure() && steps.triage.outcome == 'failure'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -125,5 +148,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issueNumber,
-              body: `❌ 自动分类失败。\n\n请查看 [Action 运行日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) 以排查问题。\n\n常见原因：\n- 仓库中缺少必要的标签（如 kind/bug）\n- IFLOW_API_KEY 无效或配额不足\n- 模型临时不可用`
+              body: `❌ 自动分类失败。\n\n请查看 [Action 运行日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) 以排查问题。\n\n常见原因：\n- 仓库中缺少必要的标签（如 kind/bug）\n- MINIMAX_API_KEY 无效或配额不足\n- 模型临时不可用`
             });
