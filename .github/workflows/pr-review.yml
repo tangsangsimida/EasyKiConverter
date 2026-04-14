@@ -105,11 +105,32 @@ jobs:
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
-          set -euo pipefail
-          PR_DIFF=$(gh pr diff '${{ steps.get_pr.outputs.pr_number }}')
-          echo "pr_diff<<EOF" >> "$GITHUB_OUTPUT"
-          echo "${PR_DIFF}" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          set -eo pipefail
+          PR_NUM='${{ steps.get_pr.outputs.pr_number }}'
+
+          # Try to get full diff
+          PR_DIFF=$(gh pr diff "${PR_NUM}" 2>&1) || true
+
+          # Check if diff is too large
+          if echo "${PR_DIFF}" | head -n 5 | grep -qi "too large\|406"; then
+            echo "diff_truncated=true" >> "$GITHUB_OUTPUT"
+            # Fallback: get file names and stat for each file
+            PR_FILES=$(gh pr diff "${PR_NUM}" --name-only 2>/dev/null || echo "")
+            PR_STATS=$(gh pr view "${PR_NUM}" --json additions,deletions,changedFiles --jq '{additions: .additions, deletions: .deletions, changedFiles: .changedFiles}' 2>/dev/null || echo '{"additions": 0, "deletions": 0, "changedFiles": 0}')
+            echo "pr_diff<<EOF" >> "$GITHUB_OUTPUT"
+            echo "[Diff 过大（超过20000行），无法获取完整变更内容]" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_OUTPUT"
+            echo "变更统计: ${PR_STATS}" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_OUTPUT}"
+            echo "变更文件列表:" >> "$GITHUB_OUTPUT}"
+            echo "${PR_FILES}" >> "$GITHUB_OUTPUT}"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          else
+            echo "diff_truncated=false" >> "$GITHUB_OUTPUT"
+            echo "pr_diff<<EOF" >> "$GITHUB_OUTPUT"
+            echo "${PR_DIFF}" >> "$GITHUB_OUTPUT}"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: 'Get PR commit SHA'
         id: 'pr_sha'
@@ -128,10 +149,11 @@ jobs:
           CHANGED_FILES: '${{ steps.get_pr.outputs.changed_files }}'
           PR_DIFF: '${{ steps.pr_diff.outputs.pr_diff }}'
           PR_SHA: '${{ steps.pr_sha.outputs.sha }}'
+          DIFF_TRUNCATED: '${{ steps.pr_diff.outputs.diff_truncated }}'
         run: |
           set -euo pipefail
 
-          # First, get a summary review comment
+          # First, get a summary review comment (always)
           SUMMARY_PROMPT="## 角色
           你是一个专业的代码审查员，首要关注点是内存安全。
 
@@ -167,6 +189,18 @@ jobs:
               \"messages\": [{\"role\": \"user\", \"content\": \"${SUMMARY_PROMPT}\"}],
               \"max_tokens\": 2000
             }" | jq -r '.choices[0].message.content // empty')
+
+          # Create the summary review
+          if [ -n "${SUMMARY}" ]; then
+            gh pr review "${PR_NUMBER}" --body "${SUMMARY}" --comment
+          fi
+
+          # Only do inline comments if diff is NOT truncated
+          if [[ "${DIFF_TRUNCATED}" == "true" ]]; then
+            echo "Diff is too large, skipping inline comments"
+            echo "pr_review_result=success (summary only)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
           # Now get inline comments - Memory Safety Focus
           INLINE_PROMPT="## 角色
@@ -222,11 +256,6 @@ jobs:
           echo "=== Inline Comments Response ==="
           echo "${INLINE_RESPONSE}"
           echo "================================"
-
-          # Create the summary review
-          if [ -n "${SUMMARY}" ]; then
-            gh pr review "${PR_NUMBER}" --body "${SUMMARY}" --comment
-          fi
 
           # Parse and create inline comments
           echo "${INLINE_RESPONSE}" | jq -r '.[] | @json' 2>/dev/null | while read -r comment; do
