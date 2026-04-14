@@ -100,6 +100,19 @@ jobs:
             echo "EOF"
           } >> "${GITHUB_OUTPUT}"
 
+      - name: 'Get changed files list'
+        id: 'changed_files'
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        run: |
+          set -eo pipefail
+          PR_NUM='${{ steps.get_pr.outputs.pr_number }}'
+
+          # Get file list using REST API (doesn't have the 20000 line limit)
+          FILES_JSON=$(gh api repos/${{ github.repository }}/pulls/${PR_NUM}/files --jq '[.[].filename]' 2>/dev/null || echo '[]')
+
+          echo "files=${FILES_JSON}" >> "$GITHUB_OUTPUT"
+
       - name: 'Get PR diff'
         id: 'pr_diff'
         env:
@@ -108,27 +121,19 @@ jobs:
           set -eo pipefail
           PR_NUM='${{ steps.get_pr.outputs.pr_number }}'
 
-          # Try to get full diff
+          # Try to get full diff first
           PR_DIFF=$(gh pr diff "${PR_NUM}" 2>&1) || true
 
           # Check if diff is too large
           if echo "${PR_DIFF}" | head -n 5 | grep -qi "too large\|406"; then
             echo "diff_truncated=true" >> "$GITHUB_OUTPUT"
-            # Fallback: get file names and stat for each file
-            PR_FILES=$(gh pr diff "${PR_NUM}" --name-only 2>/dev/null || echo "")
-            PR_STATS=$(gh pr view "${PR_NUM}" --json additions,deletions,changedFiles --jq '{additions: .additions, deletions: .deletions, changedFiles: .changedFiles}' 2>/dev/null || echo '{"additions": 0, "deletions": 0, "changedFiles": 0}')
             echo "pr_diff<<EOF" >> "$GITHUB_OUTPUT"
-            echo "[Diff 过大（超过20000行），无法获取完整变更内容]" >> "$GITHUB_OUTPUT"
-            echo "" >> "$GITHUB_OUTPUT"
-            echo "变更统计: ${PR_STATS}" >> "$GITHUB_OUTPUT"
-            echo "" >> "$GITHUB_OUTPUT}"
-            echo "变更文件列表:" >> "$GITHUB_OUTPUT}"
-            echo "${PR_FILES}" >> "$GITHUB_OUTPUT}"
+            echo "[Diff 过大，将使用逐文件审查模式]" >> "$GITHUB_OUTPUT"
             echo "EOF" >> "$GITHUB_OUTPUT"
           else
             echo "diff_truncated=false" >> "$GITHUB_OUTPUT"
             echo "pr_diff<<EOF" >> "$GITHUB_OUTPUT"
-            echo "${PR_DIFF}" >> "$GITHUB_OUTPUT}"
+            echo "${PR_DIFF}" >> "$GITHUB_OUTPUT"
             echo "EOF" >> "$GITHUB_OUTPUT"
           fi
 
@@ -195,88 +200,136 @@ jobs:
             gh pr review "${PR_NUMBER}" --body "${SUMMARY}" --comment
           fi
 
-          # Only do inline comments if diff is NOT truncated
-          if [[ "${DIFF_TRUNCATED}" == "true" ]]; then
-            echo "Diff is too large, skipping inline comments"
-            echo "pr_review_result=success (summary only)" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
+          # Function to create inline comments from JSON response
+          create_inline_comments() {
+            local RESPONSE="$1"
+            echo "${RESPONSE}" | jq -r '.[] | @json' 2>/dev/null | while read -r comment; do
+              if [ -n "${comment}" ] && [ "${comment}" != "null" ]; then
+                local C_PATH=$(echo "${comment}" | jq -r '.path')
+                local C_LINE=$(echo "${comment}" | jq -r '.line')
+                local C_SIDE=$(echo "${comment}" | jq -r '.side // "RIGHT"')
+                local C_BODY=$(echo "${comment}" | jq -r '.body')
 
-          # Now get inline comments - Memory Safety Focus
-          INLINE_PROMPT="## 角色
-          你是一个专业的代码审查员，负责在具体代码行添加评论。你的首要任务是确保代码的内存安全。
-
-          ## PR diff
-          \${PR_DIFF}
-
-          ## 内存安全审查要点（严格程度：极高）
-          1. **空指针解引用**：所有指针使用前必须检查是否为 nullptr
-          2. **内存泄漏**：禁止 raw new/delete，必须使用 smart pointers（std::unique_ptr, std::shared_ptr, QSharedPointer）
-          3. **野指针/悬空指针**：检查是否有 use-after-free 风险，指针赋值前是否已失效
-          4. **缓冲区溢出**：数组访问是否进行边界检查，std::vector::at() vs operator[] 的使用
-          5. **智能指针滥用**：QSharedPointer::create() vs new，循环引用风险（QSharedPointer 父子循环）
-          6. **资源泄漏**：文件句柄、数据库连接、锁等是否正确释放
-          7. **复制粘贴错误**：检查从其他代码复制过来的片段是否有遗漏的修改
-          8. **nullptr vs NULL vs 0**：必须使用 nullptr，禁止 NULL 或 0
-
-          ## 任务
-          请仔细分析diff，在有内存安全问题的代码行添加评论。格式如下JSON数组：
-          [
-            {
-              \"path\": \"文件路径\",
-              \"line\": 行号,
-              \"side\": \"RIGHT\",
-              \"body\": \"评论内容（中文）【内存安全警告：问题类型】\"
-            }
-          ]
-
-          ## 规则
-          - 宁可错杀不可放过：疑似内存安全问题的代码行必须标记
-          - line必须是diff中实际修改的行号
-          - side通常是RIGHT（新增内容），如果是删除则用LEFT
-          - body必须明确标注问题类型，如【空指针】【内存泄漏】【缓冲区溢出】【悬空指针】【建议使用智能指针】
-          - 只输出JSON数组，不要有任何其他内容
-          - 如果没有问题，返回空数组 []
-
-          ## 示例
-          [
-            {\"path\": \"src/core/ExportService.cpp\", \"line\": 156, \"side\": \"RIGHT\", \"body\": \"【内存泄漏】raw new 而非使用 QSharedPointer::create()\"},
-            {\"path\": \"src/core/ExportService.cpp\", \"line\": 203, \"side\": \"RIGHT\", \"body\": \"【空指针】ptr 未检查 nullptr 就解引用\"}
-          ]"
-
-          INLINE_RESPONSE=$(curl -s https://api.minimaxi.com/v1/chat/completions \
-            -H "Authorization: Bearer ${{ secrets.MINIMAX_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"model\": \"MiniMax-M2.7\",
-              \"messages\": [{\"role\": \"user\", \"content\": \"${INLINE_PROMPT}\"}],
-              \"max_tokens\": 4000
-            }" | jq -r '.choices[0].message.content // empty')
-
-          echo "=== Inline Comments Response ==="
-          echo "${INLINE_RESPONSE}"
-          echo "================================"
-
-          # Parse and create inline comments
-          echo "${INLINE_RESPONSE}" | jq -r '.[] | @json' 2>/dev/null | while read -r comment; do
-            if [ -n "${comment}" ] && [ "${comment}" != "null" ]; then
-              PATH=$(echo "${comment}" | jq -r '.path')
-              LINE=$(echo "${comment}" | jq -r '.line')
-              SIDE=$(echo "${comment}" | jq -r '.side // "RIGHT"')
-              BODY=$(echo "${comment}" | jq -r '.body')
-
-              if [ -n "${PATH}" ] && [ -n "${LINE}" ] && [ -n "${BODY}" ] && [ "${PATH}" != "null" ] && [ "${LINE}" != "null" ] && [ "${BODY}" != "null" ]; then
-                echo "Creating comment on ${PATH}:${LINE}"
-                gh api repos/${{ github.repository }}/pulls/${PR_NUMBER}/comments \
-                  --method POST \
-                  --field body="${BODY}" \
-                  --field commit_id="${PR_SHA}" \
-                  --field path="${PATH}" \
-                  --field line="${LINE}" \
-                  --field side="${SIDE}" 2>/dev/null || true
+                if [ -n "${C_PATH}" ] && [ -n "${C_LINE}" ] && [ -n "${C_BODY}" ] && [ "${C_PATH}" != "null" ] && [ "${C_LINE}" != "null" ] && [ "${C_BODY}" != "null" ]; then
+                  echo "Creating inline comment on ${C_PATH}:${C_LINE}"
+                  gh api repos/${{ github.repository }}/pulls/${PR_NUMBER}/comments \
+                    --method POST \
+                    --field body="${C_BODY}" \
+                    --field commit_id="${PR_SHA}" \
+                    --field path="${C_PATH}" \
+                    --field line="${C_LINE}" \
+                    --field side="${C_SIDE}" 2>/dev/null || true
+                fi
               fi
-            fi
-          done
+            done
+          }
+
+          # Per-file review mode (when diff is truncated)
+          if [[ "${DIFF_TRUNCATED}" == "true" ]]; then
+            echo "Diff too large, using per-file review mode..."
+
+            # Get files list from the previously saved JSON
+            FILES_JSON='${{ steps.changed_files.outputs.files }}'
+            FILE_COUNT=$(echo "${FILES_JSON}" | jq 'length')
+            echo "Total files to review: ${FILE_COUNT}"
+
+            echo "${FILES_JSON}" | jq -r '.[]' | while read -r FILE_PATH; do
+              echo "--- Reviewing file: ${FILE_PATH} ---"
+
+              # Get diff for this specific file using REST API
+              FILE_DIFF=$(gh api repos/${{ github.repository }}/pulls/${{ steps.get_pr.outputs.pr_number }}/files \
+                --jq ".[] | select(.filename == \"${FILE_PATH}\") | .patch" 2>/dev/null || echo "")
+
+              if [ -z "${FILE_DIFF}" ] || [ "${FILE_DIFF}" == "null" ]; then
+                echo "Skipping ${FILE_PATH} - no diff available"
+                continue
+              fi
+
+              # Create inline prompt for this file
+              INLINE_PROMPT="## 角色
+              你是一个专业的代码审查员，负责在具体代码行添加评论。你的首要任务是确保代码的内存安全。
+
+              ## 文件路径
+              \${FILE_PATH}
+
+              ## 文件 diff
+              \${FILE_DIFF}
+
+              ## 内存安全审查要点（严格程度：极高）
+              1. **空指针解引用**：所有指针使用前必须检查是否为 nullptr
+              2. **内存泄漏**：禁止 raw new/delete，必须使用 smart pointers
+              3. **野指针/悬空指针**：检查是否有 use-after-free 风险
+              4. **缓冲区溢出**：数组访问是否进行边界检查
+              5. **智能指针滥用**：QSharedPointer::create() vs new
+              6. **资源泄漏**：文件句柄、锁等是否正确释放
+              7. **nullptr vs NULL vs 0**：必须使用 nullptr
+
+              ## 任务
+              请仔细分析diff，在有内存安全问题的代码行添加评论。格式如下JSON数组：
+              [{\"path\": \"文件路径\", \"line\": 行号, \"side\": \"RIGHT\", \"body\": \"评论内容\"}]
+
+              ## 规则
+              - 只评论有问题的代码行
+              - line必须是diff中实际的行号
+              - body不超过200字，标注问题类型
+              - 只输出JSON数组，不要有其他内容
+              - 如果没有问题，返回空数组 []"
+
+              INLINE_RESPONSE=$(curl -s https://api.minimaxi.com/v1/chat/completions \
+                -H "Authorization: Bearer ${{ secrets.MINIMAX_API_KEY }}" \
+                -H "Content-Type: application/json" \
+                -d "{
+                  \"model\": \"MiniMax-M2.7\",
+                  \"messages\": [{\"role\": \"user\", \"content\": \"${INLINE_PROMPT}\"}],
+                  \"max_tokens\": 4000
+                }" | jq -r '.choices[0].message.content // empty')
+
+              echo "Response for ${FILE_PATH}: ${INLINE_RESPONSE}"
+              create_inline_comments "${INLINE_RESPONSE}"
+            done
+          else
+            # Full diff mode - use the complete diff for inline comments
+            INLINE_PROMPT="## 角色
+            你是一个专业的代码审查员，负责在具体代码行添加评论。你的首要任务是确保代码的内存安全。
+
+            ## PR diff
+            \${PR_DIFF}
+
+            ## 内存安全审查要点（严格程度：极高）
+            1. **空指针解引用**：所有指针使用前必须检查是否为 nullptr
+            2. **内存泄漏**：禁止 raw new/delete，必须使用 smart pointers
+            3. **野指针/悬空指针**：检查是否有 use-after-free 风险
+            4. **缓冲区溢出**：数组访问是否进行边界检查
+            5. **智能指针滥用**：QSharedPointer::create() vs new
+            6. **资源泄漏**：文件句柄、锁等是否正确释放
+            7. **nullptr vs NULL vs 0**：必须使用 nullptr
+
+            ## 任务
+            请仔细分析diff，在有内存安全问题的代码行添加评论。格式如下JSON数组：
+            [{\"path\": \"文件路径\", \"line\": 行号, \"side\": \"RIGHT\", \"body\": \"评论内容\"}]
+
+            ## 规则
+            - 只评论有问题的代码行
+            - line必须是diff中实际的行号
+            - body不超过200字，标注问题类型
+            - 只输出JSON数组，不要有其他内容
+            - 如果没有问题，返回空数组 []"
+
+            INLINE_RESPONSE=$(curl -s https://api.minimaxi.com/v1/chat/completions \
+              -H "Authorization: Bearer ${{ secrets.MINIMAX_API_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"model\": \"MiniMax-M2.7\",
+                \"messages\": [{\"role\": \"user\", \"content\": \"${INLINE_PROMPT}\"}],
+                \"max_tokens\": 4000
+              }" | jq -r '.choices[0].message.content // empty')
+
+            echo "=== Inline Comments Response ==="
+            echo "${INLINE_RESPONSE}"
+            echo "================================"
+
+            create_inline_comments "${INLINE_RESPONSE}"
+          fi
 
           echo "pr_review_result=success" >> "$GITHUB_OUTPUT"
 
