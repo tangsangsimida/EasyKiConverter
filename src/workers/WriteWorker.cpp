@@ -16,11 +16,15 @@
 #include <QJsonObject>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QRegularExpression>
 #include <QThread>
 #include <QThreadPool>
 #include <QWaitCondition>
+#include <QtConcurrent>
 
 namespace EasyKiConverter {
+
+const QRegularExpression INVALID_FILENAME_CHARS("[<>:\"/\\|?*]");
 
 WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
                          const QString& outputPath,
@@ -28,6 +32,8 @@ WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
                          bool exportSymbol,
                          bool exportFootprint,
                          bool exportModel3D,
+                         bool exportPreviewImages,
+                         bool exportDatasheet,
                          bool debugMode,
                          const QString& tempDir,
                          QObject* parent)
@@ -38,16 +44,20 @@ WriteWorker::WriteWorker(QSharedPointer<ComponentExportStatus> status,
     , m_exportSymbol(exportSymbol)
     , m_exportFootprint(exportFootprint)
     , m_exportModel3D(exportModel3D)
+    , m_exportPreviewImages(exportPreviewImages)
+    , m_exportDatasheet(exportDatasheet)
     , m_debugMode(debugMode)
     , m_tempDir(tempDir)
-    , m_symbolExporter()
-    , m_footprintExporter()
-    , m_model3DExporter()
     , m_isAborted(0) {}
 
 WriteWorker::~WriteWorker() {}
 
 void WriteWorker::run() {
+    if (!m_status) {
+        qWarning() << "WriteWorker: null export status, skip run";
+        return;
+    }
+
     // 检查是否已被取消 (v3.0.5+)
     if (m_isAborted.loadRelaxed()) {
         m_status->writeSuccess = false;
@@ -64,10 +74,11 @@ void WriteWorker::run() {
     m_status->addDebugLog(QString("WriteWorker started for component: %1").arg(m_status->componentId));
 
     // 初始化所有写入状态
-
     m_status->symbolWritten = false;
     m_status->footprintWritten = false;
     m_status->model3DWritten = false;
+    m_status->previewImageWritten = false;
+    m_status->datasheetWritten = false;
 
     if (!m_status->fetchSuccess || !m_status->processSuccess) {
         m_status->writeDurationMs = 0;
@@ -98,59 +109,197 @@ void WriteWorker::run() {
         return;
     }
 
-    // 串行写入文件，每个函数独立更新自己的状态
+    // 并行写入文件
+    // 使用 QtConcurrent::run() + QFutureWatcher 实现并行执行
+    // 每项写完后立即发出 itemWriteCompleted 信号，实现实时进度更新
+    // 注意：QtConcurrent 不支持工作线程抛出异常，所有 lambda 必须捕获异常
+    QList<QFutureWatcher<bool>*> watchers;
+
+    // 符号写入任务
     if (m_exportSymbol && m_status->symbolData) {
-        writeSymbolFile(*m_status);
-        if (m_isAborted.loadRelaxed())
-            goto cleanup;
+        QFuture<bool> future = QtConcurrent::run([this]() {
+            try {
+                QMutexLocker locker(&m_symbolMutex);
+                return writeSymbolFile(*m_status);
+            } catch (const std::bad_alloc& e) {
+                qCritical() << "Memory allocation failed in symbol write:" << e.what();
+                return false;
+            } catch (const std::exception& e) {
+                qCritical() << "Exception in symbol write:" << e.what();
+                return false;
+            }
+        });
+        QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>();
+        connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
+            bool result = watcher->result();
+            m_status->symbolWritten = result;
+            emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Symbol), result);
+            // deleteLater removed - watchers are cleaned up by qDeleteAll below
+        });
+        watcher->setFuture(future);
+        watchers.append(watcher);
     }
 
+    // 封装写入任务
     if (m_exportFootprint && m_status->footprintData) {
-        writeFootprintFile(*m_status);
-        if (m_isAborted.loadRelaxed())
-            goto cleanup;
+        QFuture<bool> future = QtConcurrent::run([this]() {
+            try {
+                QMutexLocker locker(&m_footprintMutex);
+                return writeFootprintFile(*m_status);
+            } catch (const std::bad_alloc& e) {
+                qCritical() << "Memory allocation failed in footprint write:" << e.what();
+                return false;
+            } catch (const std::exception& e) {
+                qCritical() << "Exception in footprint write:" << e.what();
+                return false;
+            }
+        });
+        QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>();
+        connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
+            bool result = watcher->result();
+            m_status->footprintWritten = result;
+            emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Footprint), result);
+            // deleteLater removed - watchers are cleaned up by qDeleteAll below
+        });
+        watcher->setFuture(future);
+        watchers.append(watcher);
     }
 
-    if (m_exportModel3D && m_status->model3DData && !m_status->model3DData->rawObj().isEmpty()) {
-        write3DModelFile(*m_status);
+    // 3D模型写入任务
+    if (m_exportModel3D && m_status->model3DData &&
+        (!m_status->model3DData->rawObj().isEmpty() || !m_status->cachedModel3DWrlPath.isEmpty())) {
+        QFuture<bool> future = QtConcurrent::run([this]() {
+            try {
+                QMutexLocker locker(&m_model3DMutex);
+                return write3DModelFile(*m_status);
+            } catch (const std::bad_alloc& e) {
+                qCritical() << "Memory allocation failed in 3D model write:" << e.what();
+                return false;
+            } catch (const std::exception& e) {
+                qCritical() << "Exception in 3D model write:" << e.what();
+                return false;
+            }
+        });
+        QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>();
+        connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
+            bool result = watcher->result();
+            m_status->model3DWritten = result;
+            emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Model3D), result);
+            // deleteLater removed - watchers are cleaned up by qDeleteAll below
+        });
+        watcher->setFuture(future);
+        watchers.append(watcher);
     }
 
-cleanup:
+    // 预览图写入任务
+    if (m_exportPreviewImages && !m_status->previewImageDataList.isEmpty()) {
+        QFuture<bool> future = QtConcurrent::run([this]() {
+            try {
+                return writePreviewImageFile(*m_status);
+            } catch (const std::bad_alloc& e) {
+                qCritical() << "Memory allocation failed in preview image write:" << e.what();
+                return false;
+            } catch (const std::exception& e) {
+                qCritical() << "Exception in preview image write:" << e.what();
+                return false;
+            }
+        });
+        QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>();
+        connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
+            bool result = watcher->result();
+            m_status->previewImageWritten = result;
+            emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::PreviewImage), result);
+            // deleteLater removed - watchers are cleaned up by qDeleteAll below
+        });
+        watcher->setFuture(future);
+        watchers.append(watcher);
+    }
+
+    // 手册写入任务
+    if (m_exportDatasheet && !m_status->datasheetData.isEmpty()) {
+        QFuture<bool> future = QtConcurrent::run([this]() {
+            try {
+                return writeDatasheetFile(*m_status);
+            } catch (const std::bad_alloc& e) {
+                qCritical() << "Memory allocation failed in datasheet write:" << e.what();
+                return false;
+            } catch (const std::exception& e) {
+                qCritical() << "Exception in datasheet write:" << e.what();
+                return false;
+            }
+        });
+        QFutureWatcher<bool>* watcher = new QFutureWatcher<bool>();
+        connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
+            bool result = watcher->result();
+            m_status->datasheetWritten = result;
+            emit itemWriteCompleted(m_status->componentId, static_cast<int>(ExportItemType::Datasheet), result);
+            // deleteLater removed - watchers are cleaned up by qDeleteAll below
+        });
+        watcher->setFuture(future);
+        watchers.append(watcher);
+    }
+
+    // 等待所有写入任务完成
+    for (QFutureWatcher<bool>* watcher : watchers) {
+        watcher->waitForFinished();
+    }
+
+    // 清理 watchers
+    qDeleteAll(watchers);
+    watchers.clear();
+
+    // 检查是否被取消
     if (m_isAborted.loadRelaxed()) {
         m_status->writeDurationMs = writeTimer.elapsed();
         m_status->writeSuccess = false;
         m_status->writeMessage = "Export cancelled";
         m_status->isCancelled = true;
-        // 状态已在开头初始化为 false，无需再次设置
         m_status->addDebugLog(QString("WriteWorker cancelled for component: %1").arg(m_status->componentId));
         emit writeCompleted(m_status);
         return;
     }
 
     // 根据用户请求的导出项和实际完成情况，决定最终的成功状态
-    // 注意：3D模型导出失败不影响符号和封装的导出成功状态
-    // 符号和封装是捆绑的核心输出，3D模型是可选附加输出
-    bool coreSuccess = true;
-    bool model3DFailed = false;
-    if (m_exportSymbol && !m_status->symbolWritten) {
-        coreSuccess = false;
+    bool symbolSuccess = (!m_exportSymbol) || m_status->symbolWritten;
+    bool footprintSuccess = (!m_exportFootprint) || m_status->footprintWritten;
+    bool model3DSuccess = (!m_exportModel3D) || m_status->model3DWritten;
+    bool previewImageSuccess = (!m_exportPreviewImages) || m_status->previewImageWritten;
+    bool datasheetSuccess = (!m_exportDatasheet) || m_status->datasheetWritten;
+
+    bool overallSuccess =
+        symbolSuccess && footprintSuccess && model3DSuccess && previewImageSuccess && datasheetSuccess;
+
+    QStringList successItems;
+    QStringList failedItems;
+    if (m_exportSymbol) {
+        symbolSuccess ? successItems.append("S") : failedItems.append("S");
     }
-    if (m_exportFootprint && !m_status->footprintWritten) {
-        coreSuccess = false;
+    if (m_exportFootprint) {
+        footprintSuccess ? successItems.append("F") : failedItems.append("F");
     }
-    if (m_exportModel3D && !m_status->model3DWritten) {
-        model3DFailed = true;  // 仅记录，不影响核心成功状态
-        m_status->addDebugLog("WARNING: 3D model export failed, but symbol/footprint export is not affected.");
+    if (m_exportModel3D) {
+        model3DSuccess ? successItems.append("3D") : failedItems.append("3D");
+    }
+    if (m_exportPreviewImages) {
+        previewImageSuccess ? successItems.append("P") : failedItems.append("P");
+    }
+    if (m_exportDatasheet) {
+        datasheetSuccess ? successItems.append("D") : failedItems.append("D");
     }
 
-    m_status->writeSuccess = coreSuccess;
-    if (coreSuccess && model3DFailed) {
-        m_status->writeMessage = "Write completed (3D model export failed, symbol/footprint OK)";
-    } else if (coreSuccess) {
+    m_status->writeSuccess = overallSuccess;
+    if (overallSuccess) {
         m_status->writeMessage = "Write completed successfully";
     } else {
-        m_status->writeMessage = "Failed to write one or more core files (symbol/footprint)";
+        m_status->writeMessage = QString("Export completed with failures: %1").arg(failedItems.join(", "));
     }
+
+    m_status->addDebugLog(QString("WriteWorker completed - Symbol:%1 Footprint:%2 3D:%3 Preview:%4 Datasheet:%5")
+                              .arg(symbolSuccess ? "OK" : "FAIL")
+                              .arg(footprintSuccess ? "OK" : "FAIL")
+                              .arg(model3DSuccess ? "OK" : "FAIL")
+                              .arg(previewImageSuccess ? "OK" : "FAIL")
+                              .arg(datasheetSuccess ? "OK" : "FAIL"));
 
     if (m_debugMode) {
         exportDebugData(*m_status);
@@ -230,7 +379,8 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
     QString model3DStepPath;
     if (m_exportModel3D && status.model3DData && !status.model3DData->uuid().isEmpty()) {
         model3DWrlPath = QString("../%1.3dmodels/%2.wrl").arg(m_libName, footprintName);
-        if (!status.model3DStepRaw.isEmpty()) {
+        // 检查是否有STEP数据（无论是原始数据还是缓存路径）
+        if (!status.model3DStepRaw.isEmpty() || !status.cachedModel3DStepPath.isEmpty()) {
             model3DStepPath = QString("../%1.3dmodels/%2.step").arg(m_libName, footprintName);
         }
     }
@@ -261,7 +411,8 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
 }
 
 bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
-    if (!status.model3DData || status.model3DData->rawObj().isEmpty()) {
+    // 如果既没有原始数据也没有缓存路径，则跳过
+    if (!status.model3DData || (status.model3DData->rawObj().isEmpty() && status.cachedModel3DWrlPath.isEmpty())) {
         return true;
     }
 
@@ -286,19 +437,42 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
 
     bool wrlSuccess = false;
 
-    QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
-    wrlSuccess = AtomicFileWriter::writeAtomically(
-        m_tempDir, wrlFilePath, ".wrl.tmp", [this, &status](const QString& tempPath) -> bool {
-            return m_model3DExporter.exportToWrl(*status.model3DData, tempPath);
-        });
-
-    if (wrlSuccess) {
-        status.addDebugLog(QString("3D model WRL file written atomically: %1").arg(wrlFilePath));
+    // WRL文件写入：优先使用缓存直接拷贝（避免大文件经过内存）
+    if (!status.cachedModel3DWrlPath.isEmpty()) {
+        QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
+        wrlSuccess = AtomicFileWriter::copyAtomically(status.cachedModel3DWrlPath, wrlFilePath, m_tempDir);
+        if (wrlSuccess) {
+            status.addDebugLog(QString("3D model WRL file copied from cache: %1").arg(status.cachedModel3DWrlPath));
+        } else {
+            status.addDebugLog(QString("ERROR: Failed to copy WRL file from cache"));
+        }
     } else {
-        status.addDebugLog(QString("ERROR: Failed to write WRL file"));
+        // 使用导出器生成WRL文件
+        QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
+        wrlSuccess = AtomicFileWriter::writeAtomically(
+            m_tempDir, wrlFilePath, ".wrl.tmp", [this, &status](const QString& tempPath) -> bool {
+                return m_model3DExporter.exportToWrl(*status.model3DData, tempPath);
+            });
+        if (wrlSuccess) {
+            status.addDebugLog(QString("3D model WRL file written atomically: %1").arg(wrlFilePath));
+        } else {
+            status.addDebugLog(QString("ERROR: Failed to write WRL file"));
+        }
     }
 
-    if (!status.model3DStepRaw.isEmpty()) {
+    // STEP文件写入：优先使用缓存直接拷贝（避免大文件经过内存）
+    if (!status.cachedModel3DStepPath.isEmpty()) {
+        // 使用直接拷贝模式（不经过内存）
+        QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
+        bool stepWriteSuccess = AtomicFileWriter::copyAtomically(status.cachedModel3DStepPath, stepFilePath, m_tempDir);
+
+        if (stepWriteSuccess) {
+            status.addDebugLog(QString("3D model STEP file copied from cache: %1").arg(status.cachedModel3DStepPath));
+        } else {
+            status.addDebugLog(QString("WARNING: Failed to copy STEP file from cache: %1").arg(stepFilePath));
+        }
+    } else if (!status.model3DStepRaw.isEmpty()) {
+        // 使用内存模式（原有逻辑）
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
         bool stepWriteSuccess = AtomicFileWriter::writeAtomically(
             m_tempDir, stepFilePath, ".step.tmp", [&status](const QString& tempPath) -> bool {
@@ -580,6 +754,83 @@ bool WriteWorker::exportDebugData(ComponentExportStatus& status) {
 
     status.addDebugLog(QString("Debug data export completed for component: %1").arg(status.componentId));
     return true;
+}
+
+bool WriteWorker::writePreviewImageFile(ComponentExportStatus& status) {
+    QDir outputDir(m_outputPath);
+    QString imagesDir = outputDir.filePath("images");
+    if (!createOutputDirectory(imagesDir)) {
+        status.addDebugLog(QString("ERROR: Failed to create images directory: %1").arg(imagesDir));
+        return false;
+    }
+
+    QString safeName = status.componentId;
+    safeName.replace(INVALID_FILENAME_CHARS, "_");
+
+    bool allSuccess = true;
+    int exportedCount = 0;
+
+    for (int i = 0; i < status.previewImageDataList.size(); ++i) {
+        if (status.previewImageDataList[i].isEmpty()) {
+            continue;
+        }
+
+        QString filename = QString("%1_%2.jpg").arg(safeName).arg(i);
+        QString filePath = QDir(imagesDir).filePath(filename);
+
+        QFile file(filePath);
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write(status.previewImageDataList[i]);
+            file.close();
+            exportedCount++;
+        } else {
+            allSuccess = false;
+            status.addDebugLog(QString("ERROR: Failed to write preview image: %1").arg(filePath));
+        }
+    }
+
+    if (exportedCount > 0) {
+        status.addDebugLog(QString("Preview images written: %1 files to %2").arg(exportedCount).arg(imagesDir));
+    }
+    status.previewImageWritten = allSuccess;
+    return allSuccess;
+}
+
+bool WriteWorker::writeDatasheetFile(ComponentExportStatus& status) {
+    if (status.datasheetData.isEmpty()) {
+        return true;
+    }
+
+    QDir outputDir(m_outputPath);
+    QString datasheetsDir = outputDir.filePath("datasheets");
+    if (!createOutputDirectory(datasheetsDir)) {
+        status.addDebugLog(QString("ERROR: Failed to create datasheets directory: %1").arg(datasheetsDir));
+        return false;
+    }
+
+    QString safeName = status.componentId;
+    safeName.replace(INVALID_FILENAME_CHARS, "_");
+
+    // 根据数据内容判断格式
+    QString extension = "pdf";
+    if (status.datasheetData.startsWith("<!DOCTYPE html") || status.datasheetData.startsWith("<html")) {
+        extension = "html";
+    }
+
+    QString filename = QString("%1.%2").arg(safeName).arg(extension);
+    QString filePath = QDir(datasheetsDir).filePath(filename);
+
+    QFile file(filePath);
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(status.datasheetData);
+        file.close();
+        status.addDebugLog(QString("Datasheet written: %1").arg(filePath));
+        status.datasheetWritten = true;
+        return true;
+    }
+
+    status.addDebugLog(QString("ERROR: Failed to write datasheet: %1").arg(filePath));
+    return false;
 }
 
 void WriteWorker::abort() {

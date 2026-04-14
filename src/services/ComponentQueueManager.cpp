@@ -65,6 +65,16 @@ void ComponentQueueManager::checkAndProcessNext() {
 
     int activeCount = m_pendingComponents.size();
 
+    // 如果所有槽位都满了，启用定时器作为安全网（防止某些请求完成但信号未触发的情况）
+    // 否则禁用定时器（正常情况下 requestCompleted 会直接触发处理）
+    if (activeCount >= m_maxConcurrentRequests && !m_requestQueue.isEmpty()) {
+        if (!m_checkTimer->isActive()) {
+            m_checkTimer->start();
+        }
+    } else {
+        m_checkTimer->stop();
+    }
+
     while (activeCount < m_maxConcurrentRequests && !m_requestQueue.isEmpty()) {
         QString componentId = m_requestQueue.takeFirst();
 
@@ -84,6 +94,7 @@ void ComponentQueueManager::checkAndProcessNext() {
 
     if (m_requestQueue.isEmpty() && activeCount == 0) {
         qDebug() << "ComponentQueueManager: All components processed. Queue empty.";
+        m_checkTimer->stop();
         emit queueEmpty();
         stop();
     }

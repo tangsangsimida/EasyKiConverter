@@ -1,11 +1,11 @@
 ﻿# Workers 模块
 
 add_library(EasyKiConverterWorkers STATIC
-    ExportWorker.cpp
     NetworkWorker.cpp
     FetchWorker.cpp
     ProcessWorker.cpp
     WriteWorker.cpp
+    MediaFetchWorker.cpp
 )
 
 target_include_directories(EasyKiConverterWorkers

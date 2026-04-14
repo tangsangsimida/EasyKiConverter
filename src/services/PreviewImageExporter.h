@@ -1,7 +1,7 @@
 #ifndef PREVIEWIMAGEEXPORTER_H
 #define PREVIEWIMAGEEXPORTER_H
 
-#include "ExportService.h"
+#include "export/ExportProgress.h"
 
 #include <QDir>
 #include <QObject>
@@ -17,7 +17,6 @@ public:
     ~PreviewImageExporter() override;
 
     void setOptions(const ExportOptions& options);
-    void setNetworkManager(QNetworkAccessManager* manager);
 
     bool exportFromUrls(const QStringList& imageUrls, const QString& outputPath, const QString& componentName);
     bool exportFromCache(const QStringList& imagePaths, const QString& outputPath, const QString& componentName);
@@ -34,7 +33,6 @@ private:
 
 private:
     ExportOptions m_options;
-    QNetworkAccessManager* m_networkManager;
 };
 
 }  // namespace EasyKiConverter

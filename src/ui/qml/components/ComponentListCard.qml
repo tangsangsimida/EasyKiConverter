@@ -13,6 +13,12 @@ Card {
     // 默认折叠，只有在有元器件时才展开
     isCollapsed: componentListController ? componentListController.componentCount === 0 : true
     resources: [
+        // 防抖定时器，避免频繁调用 updateFilter()
+        Timer {
+            id: filterUpdateDebounceTimer
+            interval: 50
+            onTriggered: visualModel.updateFilter()
+        },
         // 监听组件数量变化，自动展开
         Connections {
             target: componentListCard.componentListController
@@ -26,14 +32,14 @@ Card {
         Connections {
             target: componentListCard.componentListController
             function onFilterModeChanged() {
-                visualModel.updateFilter();
+                filterUpdateDebounceTimer.restart();
             }
         },
         // 监听筛选数量变化，自动更新过滤
         Connections {
             target: componentListCard.componentListController
             function onFilteredCountChanged() {
-                visualModel.updateFilter();
+                filterUpdateDebounceTimer.restart();
             }
         },
         // 搜索过滤模型 (作为资源定义，不参与布局)
@@ -82,18 +88,19 @@ Card {
                     // 获取数据对象
                     var dataObj = item.model.itemData;
                     var idStr = dataObj && dataObj.componentId !== undefined ? dataObj.componentId : "";
-                    var isFetching = dataObj && dataObj.isFetching !== undefined ? dataObj.isFetching : false;
-                    var isValid = dataObj && dataObj.isValid !== undefined ? dataObj.isValid : true;
-                    // 验证状态筛选
+                    var validationPhase = dataObj && dataObj.validationPhase !== undefined ? dataObj.validationPhase : "idle";
+                    // 验证状态筛选（使用 validationPhase）
                     var passFilter = false;
                     if (filterMode === "all") {
                         passFilter = true;
                     } else if (filterMode === "validating") {
-                        passFilter = isFetching;
+                        // 验证中：仅表示 CAD 验证尚未完成
+                        passFilter = (validationPhase === "validating");
                     } else if (filterMode === "valid") {
-                        passFilter = !isFetching && isValid;
+                        // 有效：验证已完成或正在获取预览图的项目都属于"有效"
+                        passFilter = (validationPhase === "completed" || validationPhase === "fetching_preview");
                     } else if (filterMode === "invalid") {
-                        passFilter = !isFetching && !isValid;
+                        passFilter = (validationPhase === "failed");
                     }
 
                     // 搜索词筛选
@@ -162,7 +169,7 @@ Card {
             contentHeight: height
             clip: true
             interactive: true
-            boundsBehavior: Flickable.StopOnBounds
+            boundsBehavior: Flickable.StopAtBounds
             RowLayout {
                 id: toolbarRowLayout
                 width: implicitWidth
@@ -363,7 +370,7 @@ Card {
                     }
 
                     onTextChanged: {
-                        visualModel.updateFilter();
+                        filterUpdateDebounceTimer.restart();
                     }
                 }
 
@@ -505,6 +512,10 @@ Card {
             Layout.preferredHeight: 300
             Layout.topMargin: AppStyle.spacing.md
             clip: true
+            // 启用虚拟化，缓存上下各一屏的项
+            cacheBuffer: 500
+            // 启用 Item 回收，减少创建/销毁开销
+            reuseItems: true
             cellWidth: {
                 var w = width - AppStyle.spacing.md;
                 var c = Math.max(1, Math.floor(w / 230));

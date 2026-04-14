@@ -1,11 +1,16 @@
 #ifndef LCSCIMAGESERVICE_H
 #define LCSCIMAGESERVICE_H
 
+#include "ComponentCacheService.h"
+
+#include <QAtomicInt>
+#include <QFutureWatcher>
 #include <QMap>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QObject>
 #include <QQueue>
+#include <QSet>
 #include <QString>
 #include <QStringList>
 
@@ -16,7 +21,8 @@ namespace EasyKiConverter {
 /**
  * @brief LCSC 图片服务类
  *
- * 专门负责抓取 LCSC 元件预览图，使用官方 API 获取多张预览图
+ * 专门负责抓取 LCSC 元件预览图和数据手册
+ * 下载后直接写磁盘，不在内存中缓存
  */
 class LcscImageService : public QObject {
     Q_OBJECT
@@ -52,12 +58,22 @@ public:
      */
     void cancelAll();
 
+    /**
+     * @brief 下载数据手册
+     *
+     * 当 ComponentService 接收到 LCSC API 返回的数据手册 URL 后调用此方法触发下载
+     *
+     * @param componentId 元件 ID
+     * @param datasheetUrl 数据手册 URL
+     */
+    void fetchDatasheet(const QString& componentId, const QString& datasheetUrl);
+
 signals:
     /**
      * @brief 单张图片下载成功信号
      *
      * @param componentId 元件 ID
-     * @param imageData 图片数据（内存）
+     * @param imageData 图片数据
      * @param imageIndex 图片索引（0-2）
      */
     void imageReady(const QString& componentId, const QByteArray& imageData, int imageIndex);
@@ -66,9 +82,9 @@ signals:
      * @brief 所有图片下载完成信号
      *
      * @param componentId 元件 ID
-     * @param imageDataList 图片数据列表（内存）
+     * @param imagePaths 图片路径列表
      */
-    void allImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
+    void allImagesReady(const QString& componentId, const QStringList& imagePaths);
 
     /**
      * @brief LCSC API 数据获取成功信号（包含数据手册和预览图 URL）
@@ -87,7 +103,7 @@ signals:
      * @brief 数据手册下载成功信号
      *
      * @param componentId 元件 ID
-     * @param datasheetData 数据手册数据（内存）
+     * @param datasheetData 数据手册数据（从磁盘读取）
      */
     void datasheetReady(const QString& componentId, const QByteArray& datasheetData);
 
@@ -107,6 +123,8 @@ private slots:
                                 int retryCount);
 
 private:
+    bool tryLoadCachedPreviewImages(const QString& componentId);
+    void loadCachedPreviewImagesAsync(const QString& componentId, ComponentCacheService* cache);
     void performApiSearch(const QString& componentId, int retryCount);
     void performFallback(const QString& componentId);
     void performDownload(const QString& componentId, const QString& imageUrl, int imageIndex, int retryCount);
@@ -117,17 +135,21 @@ private:
     void addRandomDelay(std::function<void()> callback = nullptr);
 
     QNetworkAccessManager* m_networkManager;
+    QThreadPool* m_cacheThreadPool;  // 缓存加载专用线程池
     QQueue<QString> m_queue;
     QSet<QString> m_requestedComponents;  // 已经请求过的组件（防止重复请求）
-    QMap<QString, QString> m_manufacturerParts;  // componentId -> manufacturerPart
-    QMap<QString, QString> m_pendingDatasheets;  // componentId -> datasheetUrl
-    QMap<QString, QByteArray> m_downloadedDatasheets;  // componentId -> datasheet data (memory)
-    QMap<QString, QStringList> m_pendingImages;  // componentId -> imageUrls
-    QMap<QString, QList<QByteArray>> m_downloadedImages;  // componentId -> image data list (memory)
+
+    // 跟踪下载状态（只存计数，不存实际数据）
     QMap<QString, int> m_downloadCounts;  // componentId -> downloaded count
-    QMap<QString, int> m_datasheetDownloadStatus;  // 数据手册下载状态：0=pending, 1=success, 2=failed
-    int m_activeRequests;  // 当前活跃的预览图下载数
-    static const int MAX_CONCURRENT_REQUESTS = 10;  // 最大并发下载数（平衡网络资源占用和下载速度）
+    QMap<QString, int> m_expectedCounts;  // componentId -> expected count
+
+    // 跟踪异步加载的 watcher，用于非阻塞预览图加载
+    QList<QFutureWatcher<QByteArray>*> m_pendingImageWatchers;
+
+    int m_activeRequests;  // 当前活跃的下载数
+    QAtomicInt m_isCancelled;  // 取消标志，防止 cancelAll() 后 pending 回调继续执行
+    static const int MAX_CONCURRENT_REQUESTS = 10;  // 最大并发下载数（缓存加载）
+    static const int MAX_NETWORK_CONCURRENT_REQUESTS = 5;  // 最大网络并发请求数（网络加载）
     static const int MAX_IMAGES_PER_COMPONENT = 3;  // 每个组件最多下载3张预览图
     static const int MAX_RETRY_COUNT = 3;  // 下载失败时的最大重试次数
 };

@@ -77,7 +77,6 @@ ApplicationWindow {
             console.log("  visibility:", visibility);
             console.log("  normalWidth:", normalWidth, "normalHeight:", normalHeight);
             console.log("  wasMaximized:", wasMaximized);
-
             // 最大化时保存正常大小，否则保存当前大小
             if (visibility === Window.Maximized) {
                 configService.setWindowWidth(normalWidth);
@@ -101,7 +100,6 @@ ApplicationWindow {
             console.log("  保存的 windowY:", configService.getWindowY());
             console.log("  保存的 windowWidth:", configService.getWindowWidth());
             console.log("  保存的 windowHeight:", configService.getWindowHeight());
-
             // 保存最大化状态
             configService.setWindowMaximized(visibility === Window.Maximized);
             console.log("保存最大化状态:", visibility === Window.Maximized);
@@ -117,10 +115,9 @@ ApplicationWindow {
         cancelText: qsTr("继续转换")
         confirmColor: AppStyle.colors.danger
         onAccepted: {
-            if (exportProgressViewModel.handleCloseRequest()) {
-                saveWindowPosition();
-                Qt.quit();
-            }
+            exportProgressViewModel.handleCloseRequest();
+            saveWindowPosition();
+            Qt.quit();
         }
     }
 

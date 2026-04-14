@@ -486,18 +486,12 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     double yHigh = 2.54;  // 默认值：100mil
     double yLow = -2.54;  // 默认值：-100mil
     if (!pins.isEmpty()) {
-        qDebug() << "Pin coordinates calculation:";
         for (const SymbolPin& pin : pins) {
             double pinY = -m_graphicsGenerator.pxToMm(pin.settings.posY - originY);
-            qDebug() << "  Pin" << pin.settings.spicePinNumber << "- raw Y:" << pin.settings.posY
-                     << "converted Y:" << pinY;
             yHigh = qMax(yHigh, pinY);
             yLow = qMin(yLow, pinY);
         }
-    } else {
-        qDebug() << "No pins found, using default yHigh and yLow values";
     }
-    qDebug() << "Final yHigh:" << yHigh << "yLow:" << yLow;
 
     // 生成属性
     double fieldOffset = 5.08;  // FIELD_OFFSET_START
@@ -626,19 +620,13 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
 
     content += "  )\n";  // 结束主符号
 
-    qDebug() << "=== Generated Symbol Content ===";
-    qDebug() << "Content length:" << content.length();
-    qDebug() << "Content contains sub-symbol 0:" << content.contains("MCIMX6Y2CVM08AB_0_1");
-    qDebug() << "Content contains sub-symbol 1:" << content.contains("MCIMX6Y2CVM08AB_1_1");
-    qDebug() << "Content preview (first 1000 chars):" << content.left(1000);
-    qDebug() << "Content preview (last 1000 chars):" << content.right(1000);
-
     return content;
 }
 
 QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
                                           const QString& symbolName,
                                           const QString& libName) const {
+    Q_UNUSED(libName);
     QString content;
     // 单部分符号：使用 _0_1 作为子符号名称
     content += QString("    (symbol \"%1_0_1\"\n").arg(symbolName);
@@ -654,6 +642,7 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
                                           const SymbolPart& part,
                                           const QString& symbolName,
                                           const QString& libName) const {
+    Q_UNUSED(libName);
     QString content;
 
     // 多部分符号：使用 _{unitNumber}_1 作为子符号名称

@@ -2,6 +2,7 @@
 
 add_subdirectory(easyeda)
 add_subdirectory(kicad)
+add_subdirectory(network)
 add_subdirectory(utils)
 
 add_library(EasyKiConverterCore STATIC)
@@ -16,6 +17,7 @@ target_link_libraries(EasyKiConverterCore
     PUBLIC
         EasyKiConverterEasyeda
         EasyKiConverterKicad
+        EasyKiConverterNetwork
         EasyKiConverterUtils
         EasyKiConverterModels
 )

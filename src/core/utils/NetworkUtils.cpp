@@ -1,5 +1,7 @@
 #include "NetworkUtils.h"
 
+#include "core/utils/GzipUtils.h"
+
 #include <QBuffer>
 #include <QByteArray>
 #include <QDebug>
@@ -8,9 +10,6 @@
 #include <QNetworkRequest>
 #include <QPointer>
 
-// 包含 zlib.h（所有平台统一使用）
-#include <zlib.h>
-
 namespace EasyKiConverter {
 
 NetworkUtils::NetworkUtils(QObject* parent)
@@ -18,8 +17,8 @@ NetworkUtils::NetworkUtils(QObject* parent)
     , m_networkManager(new QNetworkAccessManager(this))
     , m_currentReply(nullptr)
     , m_timeoutTimer(new QTimer(this))
-    , m_timeout(30)
-    , m_maxRetries(3)
+    , m_timeout(60)  // 弱网环境下超时时间从30秒增加到60秒
+    , m_maxRetries(5)  // 弱网环境下重试次数从3次增加到5次
     , m_retryCount(0)
     , m_isRequesting(false)
     , m_expectBinaryData(false)
@@ -181,11 +180,14 @@ void NetworkUtils::handleResponse() {
         return;
     }
 
-    // 检查是否是 gzip 压缩的数据
-    if (responseData.size() >= 2 && static_cast<unsigned char>(responseData[0]) == 0x1F &&
-        static_cast<unsigned char>(responseData[1]) == 0x8B) {
-        responseData = decompressGzip(responseData);
+    // 解压 gzip 数据（如果非 gzip 则原样返回）
+    GzipUtils::DecompressResult decompResult = GzipUtils::decompress(responseData);
+    if (!decompResult.success) {
+        emit requestError("Failed to decompress gzip data");
+        m_isRequesting = false;
+        return;
     }
+    responseData = decompResult.data;
 
     if (m_expectBinaryData) {
         emit binaryDataFetched(responseData);
@@ -228,6 +230,24 @@ void NetworkUtils::handleError(QNetworkReply::NetworkError error) {
     if (!m_currentReply) {
         qWarning() << "Error: m_currentReply is null, possibly already handled by timeout";
         m_isRequesting = false;
+        return;
+    }
+
+    // 检查 HTTP 状态码，403 禁止访问不允许重试
+    int statusCode = m_currentReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode == 403) {
+        qWarning() << "HTTP 403 Forbidden - server access denied, not retrying";
+        QString errorMsg = QString("HTTP 403: Access denied by server (no retry)");
+        emit requestError(errorMsg);
+        m_isRequesting = false;
+        // 安全地删除 reply
+        QPointer<QNetworkReply> replyPtr(m_currentReply);
+        m_currentReply = nullptr;
+        m_replyDeleting = true;
+        if (replyPtr) {
+            replyPtr->disconnect();
+            replyPtr->deleteLater();
+        }
         return;
     }
 
@@ -329,45 +349,9 @@ bool NetworkUtils::shouldRetry(int statusCode) {
 }
 
 int NetworkUtils::calculateRetryDelay(int retryCount) {
-    if (retryCount == 1)
-        return 3000;
-    if (retryCount == 2)
-        return 5000;
-    return 10000;
-}
-
-QByteArray NetworkUtils::decompressGzip(const QByteArray& compressedData) {
-    if (compressedData.size() < 2)
-        return QByteArray();
-
-    z_stream stream;
-    memset(&stream, 0, sizeof(stream));
-
-    if (inflateInit2(&stream, 15 + 16) != Z_OK)
-        return QByteArray();
-
-    stream.next_in = const_cast<Bytef*>(reinterpret_cast<const Bytef*>(compressedData.constData()));
-    stream.avail_in = compressedData.size();
-
-    QByteArray decompressedData;
-    const int chunkSize = 4096;
-    char buffer[chunkSize];
-
-    int ret;
-    do {
-        stream.next_out = reinterpret_cast<Bytef*>(buffer);
-        stream.avail_out = chunkSize;
-        ret = inflate(&stream, Z_NO_FLUSH);
-        if (ret == Z_OK || ret == Z_STREAM_END) {
-            decompressedData.append(buffer, chunkSize - stream.avail_out);
-        } else {
-            inflateEnd(&stream);
-            return QByteArray();
-        }
-    } while (ret != Z_STREAM_END && stream.avail_in > 0);
-
-    inflateEnd(&stream);
-    return (ret == Z_STREAM_END) ? decompressedData : QByteArray();
+    // 弱网环境下无延迟立即重试，服务器不会限流
+    Q_UNUSED(retryCount);
+    return 0;
 }
 
 }  // namespace EasyKiConverter

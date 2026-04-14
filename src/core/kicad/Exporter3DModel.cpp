@@ -1,6 +1,6 @@
 #include "Exporter3DModel.h"
 
-#include "core/utils/NetworkUtils.h"
+#include "core/network/NetworkClient.h"
 
 #include <QDebug>
 #include <QFile>
@@ -14,50 +14,46 @@ namespace EasyKiConverter {
 static const QString ENDPOINT_3D_MODEL = "https://modules.easyeda.com/3dmodel/%1";
 static const QString ENDPOINT_3D_MODEL_STEP = "https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1";
 
-Exporter3DModel::Exporter3DModel(QObject* parent) : QObject(parent), m_networkUtils(new NetworkUtils(this)) {
-    connect(m_networkUtils, &NetworkUtils::requestSuccess, this, [this](const QJsonObject& data) {
-        Q_UNUSED(data);
-        emit downloadSuccess(m_savePath);
-    });
-    connect(m_networkUtils, &NetworkUtils::requestError, this, [this](const QString& errorMessage) {
-        emit downloadError(errorMessage);
-    });
-}
+Exporter3DModel::Exporter3DModel(QObject* parent) : QObject(parent) {}
 
 Exporter3DModel::~Exporter3DModel() {
     cancel();
 }
 
 void Exporter3DModel::downloadObjModel(const QString& uuid, const QString& savePath) {
-    if (uuid.isEmpty()) {
-        QString errorMsg = "UUID is empty";
-        qWarning() << errorMsg;
-        emit downloadError(errorMsg);
+    QString errorMessage;
+    if (downloadObjModelSync(uuid, savePath, &errorMessage)) {
+        emit downloadSuccess(savePath);
         return;
     }
 
-    m_currentUuid = uuid;
-    m_savePath = savePath;
-
-    QString url = getModelUrl(uuid, ModelFormat::OBJ);
-
-    m_networkUtils->sendGetRequest(url, 60, 3);
+    emit downloadError(errorMessage);
 }
 
 void Exporter3DModel::downloadStepModel(const QString& uuid, const QString& savePath) {
-    if (uuid.isEmpty()) {
-        QString errorMsg = "UUID is empty";
-        qWarning() << errorMsg;
-        emit downloadError(errorMsg);
+    QString errorMessage;
+    if (downloadStepModelSync(uuid, savePath, &errorMessage)) {
+        emit downloadSuccess(savePath);
         return;
     }
 
-    m_currentUuid = uuid;
-    m_savePath = savePath;
+    emit downloadError(errorMessage);
+}
 
-    QString url = getModelUrl(uuid, ModelFormat::STEP);
+bool Exporter3DModel::downloadObjModelSync(const QString& uuid, const QString& savePath, QString* errorMessage) {
+    return downloadModelSync(uuid, savePath, ModelFormat::OBJ, errorMessage);
+}
 
-    m_networkUtils->sendGetRequest(url, 60, 3);
+bool Exporter3DModel::downloadStepModelSync(const QString& uuid, const QString& savePath, QString* errorMessage) {
+    return downloadModelSync(uuid, savePath, ModelFormat::STEP, errorMessage);
+}
+
+bool Exporter3DModel::downloadObjDataSync(const QString& uuid, QByteArray* data, QString* errorMessage) {
+    return downloadModelDataSync(uuid, ModelFormat::OBJ, data, errorMessage);
+}
+
+bool Exporter3DModel::downloadStepDataSync(const QString& uuid, QByteArray* data, QString* errorMessage) {
+    return downloadModelDataSync(uuid, ModelFormat::STEP, data, errorMessage);
 }
 
 bool Exporter3DModel::exportToWrl(const Model3DData& modelData, const QString& savePath) {
@@ -123,7 +119,8 @@ void Exporter3DModel::convertToKiCadCoordinates(Model3DData& modelData) {
 }
 
 void Exporter3DModel::cancel() {
-    m_networkUtils->cancelRequest();
+    // 使用同步的 NetworkClient，不需要取消请求
+    // 如果需要支持取消，可以使用 wasCancelled 标志
 }
 
 QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const QByteArray& objData) {
@@ -275,6 +272,75 @@ QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const 
     }
 
     return content;
+}
+
+bool Exporter3DModel::downloadModelSync(const QString& uuid,
+                                        const QString& savePath,
+                                        ModelFormat format,
+                                        QString* errorMessage) {
+    QByteArray data;
+    if (!downloadModelDataSync(uuid, format, &data, errorMessage)) {
+        return false;
+    }
+
+    QFile file(savePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        const QString errorMsg = QString("Failed to open file for writing: %1").arg(savePath);
+        qWarning() << errorMsg;
+        if (errorMessage) {
+            *errorMessage = errorMsg;
+        }
+        return false;
+    }
+
+    file.write(data);
+    file.close();
+    qDebug() << "Exporter3DModel: Successfully downloaded 3D model to" << savePath;
+    return true;
+}
+
+bool Exporter3DModel::downloadModelDataSync(const QString& uuid,
+                                            ModelFormat format,
+                                            QByteArray* data,
+                                            QString* errorMessage) {
+    if (errorMessage) {
+        errorMessage->clear();
+    }
+    if (data) {
+        data->clear();
+    }
+
+    if (uuid.isEmpty()) {
+        const QString errorMsg = QStringLiteral("UUID is empty");
+        qWarning() << errorMsg;
+        if (errorMessage) {
+            *errorMessage = errorMsg;
+        }
+        return false;
+    }
+
+    m_currentUuid = uuid;
+
+    RetryPolicy policy;
+    policy.maxRetries = 3;
+    policy.baseTimeoutMs = 60000;
+
+    const QString url = getModelUrl(uuid, format);
+    const NetworkResult result = NetworkClient::instance().get(QUrl(url), policy);
+    if (!result.success) {
+        const QString errorMsg =
+            QString("Download failed for %1 (%2): %3")
+                .arg(uuid, format == ModelFormat::OBJ ? QStringLiteral("OBJ") : QStringLiteral("STEP"), result.error);
+        qWarning() << errorMsg;
+        if (errorMessage) {
+            *errorMessage = errorMsg;
+        }
+        return false;
+    }
+    if (data) {
+        *data = result.data;
+    }
+    return true;
 }
 
 QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {

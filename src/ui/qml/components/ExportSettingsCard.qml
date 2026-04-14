@@ -10,62 +10,6 @@ Card {
     // 信号：请求打开输出目录对话框
     signal openOutputFolderDialog
     title: qsTranslate("MainWindow", "导出设置")
-    // 用于测量文本宽度的 Text 元素（不可见）
-    Text {
-        id: textMeasurer
-        visible: false
-        font.pixelSize: ResponsiveHelper.fontSizes.md
-        font.family: "Arial"
-    }
-
-    // 计算选项文本所需的宽度
-    readonly property int optionTextWidth: {
-        // 测量所有选项文本的宽度
-        var texts = [qsTranslate("MainWindow", "符号库"), qsTranslate("MainWindow", "封装库"), qsTranslate("MainWindow", "3D模型"), qsTranslate("MainWindow", "预览图"), qsTranslate("MainWindow", "手册")];
-        var maxWidth = 0;
-        for (var i = 0; i < texts.length; i++) {
-            textMeasurer.text = texts[i];
-            var textWidth = textMeasurer.paintedWidth;
-            if (textWidth > maxWidth) {
-                maxWidth = textWidth;
-            }
-        }
-
-        // 加上复选框指示器的宽度（22px）和间距（8px）
-        return maxWidth + 22 + 8;
-    }
-
-    // 计算导出模式选项文本所需的宽度
-    readonly property int exportModeTextWidth: {
-        // 测量导出模式文本的宽度
-        var texts = [qsTranslate("MainWindow", "追加"), qsTranslate("MainWindow", "更新")];
-        var maxWidth = 0;
-        for (var i = 0; i < texts.length; i++) {
-            textMeasurer.text = texts[i];
-            var textWidth = textMeasurer.paintedWidth;
-            if (textWidth > maxWidth) {
-                maxWidth = textWidth;
-            }
-        }
-
-        // 加上单选按钮指示器的宽度（20px）和间距（8px）
-        return maxWidth + 20 + 8;
-    }
-
-    // 计算导出选项所需的最小宽度
-    readonly property int minimumRequiredWidth: {
-        // 5个普通选项 + 1个导出模式选项
-        var optionsWidth = optionTextWidth * 5 + exportModeTextWidth;
-        // 5个间距（使用最小间距）
-        var spacingWidth = 6 * 5;
-        // 卡片的左右内边距（24px * 2）
-        var cardPadding = 24 * 2;
-        // 卡片的边框（1px * 2）
-        var cardBorder = 2;
-        // 额外的安全边距（20px）
-        var safetyMargin = 20;
-        return optionsWidth + spacingWidth + cardPadding + cardBorder + safetyMargin;
-    }
     GridLayout {
         width: parent.width
         columns: 2

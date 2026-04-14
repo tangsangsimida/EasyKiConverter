@@ -208,7 +208,22 @@ Loader {
                     anchors.horizontalCenter: parent ? undefined : undefined
                     componentId: modelData.componentId || ""
                     status: modelData.status || "pending"
-                    message: modelData.message || ""
+                    message: modelData.error || modelData.message || ""
+                    exportSymbol: modelData.symbolStatus !== "disabled"
+                    exportFootprint: modelData.footprintStatus !== "disabled"
+                    exportModel3D: modelData.model3DStatus !== "disabled"
+                    exportPreviewImages: modelData.previewStatus !== "disabled"
+                    exportDatasheet: modelData.datasheetStatus !== "disabled"
+                    symbolSuccess: !!modelData.symbolSuccess
+                    footprintSuccess: !!modelData.footprintSuccess
+                    model3DSuccess: !!modelData.model3DSuccess
+                    previewSuccess: !!modelData.previewSuccess
+                    datasheetSuccess: !!modelData.datasheetSuccess
+                    symbolStatus: modelData.symbolStatus || "pending"
+                    footprintStatus: modelData.footprintStatus || "pending"
+                    model3DStatus: modelData.model3DStatus || "pending"
+                    previewStatus: modelData.previewStatus || "pending"
+                    datasheetStatus: modelData.datasheetStatus || "pending"
                     onRetryClicked: resultsLoader.exportProgressController.retryComponent(componentId)
                     onDeleteClicked: resultsLoader.exportProgressController.removeResult(componentId)
                 }

@@ -1,17 +1,15 @@
 #include "PreviewImageExporter.h"
 
+#include "core/network/NetworkClient.h"
+
 #include <QDebug>
 #include <QDir>
-#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
 
 namespace EasyKiConverter {
 
-PreviewImageExporter::PreviewImageExporter(QObject* parent) : QObject(parent), m_networkManager(nullptr) {}
+PreviewImageExporter::PreviewImageExporter(QObject* parent) : QObject(parent) {}
 
 PreviewImageExporter::~PreviewImageExporter() = default;
 
@@ -19,20 +17,11 @@ void PreviewImageExporter::setOptions(const ExportOptions& options) {
     m_options = options;
 }
 
-void PreviewImageExporter::setNetworkManager(QNetworkAccessManager* manager) {
-    m_networkManager = manager;
-}
-
 bool PreviewImageExporter::exportFromUrls(const QStringList& imageUrls,
                                           const QString& outputPath,
                                           const QString& componentName) {
     if (imageUrls.isEmpty()) {
         return true;
-    }
-
-    if (!m_networkManager) {
-        qWarning() << "PreviewImageExporter: No network manager set";
-        return false;
     }
 
     QString imagesDirPath = QString("%1/%2.preview").arg(outputPath, m_options.libName);
@@ -57,19 +46,13 @@ bool PreviewImageExporter::exportFromUrls(const QStringList& imageUrls,
             continue;
         }
 
-        QNetworkRequest request(imageUrl);
-        request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0");
-        QNetworkReply* reply = m_networkManager->get(request);
+        // Use NetworkClient with default retry policy (3 retries, 30s timeout)
+        NetworkResult result = NetworkClient::instance().get(QUrl(imageUrl));
 
-        QEventLoop loop;
-        connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        loop.exec();
-
-        if (reply->error() == QNetworkReply::NoError) {
-            QByteArray imageData = reply->readAll();
+        if (result.success) {
             QFile file(imagePath);
             if (file.open(QIODevice::WriteOnly)) {
-                file.write(imageData);
+                file.write(result.data);
                 file.close();
                 qDebug() << "Preview image exported successfully:" << imagePath;
             } else {
@@ -77,11 +60,9 @@ bool PreviewImageExporter::exportFromUrls(const QStringList& imageUrls,
                 allSuccess = false;
             }
         } else {
-            qWarning() << "Failed to download preview image:" << imageUrl << reply->errorString();
+            qWarning() << "Failed to download preview image:" << imageUrl << result.error;
             allSuccess = false;
         }
-
-        reply->deleteLater();
     }
 
     return allSuccess;

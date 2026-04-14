@@ -116,14 +116,6 @@ private:
      */
     int calculateRetryDelay(int retryCount);
 
-    /**
-     * @brief 解压 gzip 数据
-     *
-     * @param compressedData 压缩的数据
-     * @return QByteArray 解压后的数据
-     */
-    QByteArray decompressGzip(const QByteArray& compressedData);
-
 private:
     QNetworkAccessManager* m_networkManager;
     QNetworkReply* m_currentReply;

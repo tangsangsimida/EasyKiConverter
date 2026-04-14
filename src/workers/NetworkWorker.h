@@ -1,12 +1,13 @@
 #ifndef NETWORKWORKER_H
 #define NETWORKWORKER_H
 
+#include "BaseWorker.h"
+
 #include <QJsonObject>
 #include <QMutex>
+#include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QObject>
 #include <QPointer>
-#include <QRunnable>
 #include <QTimer>
 
 namespace EasyKiConverter {
@@ -16,7 +17,7 @@ namespace EasyKiConverter {
  *
  * 用于在后台线程中执行网络请求任务
  */
-class NetworkWorker : public QObject, public QRunnable {
+class NetworkWorker : public BaseWorker {
     Q_OBJECT
 
 public:
@@ -109,13 +110,6 @@ private:
      */
     bool fetch3DModelMtl();
 
-    /**
-     * @brief 解压gzip数据
-     * @param compressedData 压缩的数据
-         * @return QByteArray 解压后的数据
-     */
-    QByteArray decompressGzip(const QByteArray& compressedData);
-
 public slots:
     /**
      * @brief 中断当前网络请求
@@ -124,7 +118,6 @@ public slots:
 
     /**
      * @brief 执行网络请求（含超时和重试）
-     * @param manager 网络访问管理器
      * @param request 网络请求
      * @param timeoutMs 超时时间（毫秒）
      * @param maxRetries 最大重试次数
@@ -132,8 +125,7 @@ public slots:
      * @param errorMsg 错误消息输出
      * @return bool 是否成功
      */
-    bool executeRequest(QNetworkAccessManager& manager,
-                        const QNetworkRequest& request,
+    bool executeRequest(const QNetworkRequest& request,
                         int timeoutMs,
                         int maxRetries,
                         QByteArray& outData,
@@ -145,6 +137,7 @@ private:
     QString m_uuid;
     QPointer<QNetworkReply> m_currentReply;
     QMutex m_mutex;
+    QNetworkAccessManager m_networkManager;  // 成员变量，确保生命周期与worker一致
 
     // 超时配置
     static const int DEFAULT_TIMEOUT_MS = 30000;  // 默认超时 30 秒

@@ -106,7 +106,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # 查找 Qt 6 组件
-find_package(Qt6 REQUIRED COMPONENTS Quick Network Core Gui Widgets QuickControls2 Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Quick Network Core Gui Widgets QuickControls2 Concurrent LinguistTools)
 find_package(Qt6 REQUIRED COMPONENTS Gui) # 再次确保 Gui
 
 # 尝试查找 zlib 库
@@ -247,6 +247,19 @@ else()
     message(STATUS "Symbol and footprint debug export is DISABLED")
 endif()
 
+# ============================================
+# 翻译文件 (Qt 6.6+ LinguistTools)
+# 使用 qt_add_translations 自动发现 .ts 文件并生成 .qm 文件
+# ============================================
+set(TS_FILES
+    resources/translations/translations_easykiconverter_en.ts
+    resources/translations/translations_easykiconverter_zh_CN.ts
+)
+
+qt_add_translations(appEasyKiconverter_Cpp_Version
+    TS_FILES ${TS_FILES}
+)
+
 # 添加 QML 模块
 qt_add_qml_module(appEasyKiconverter_Cpp_Version
     URI EasyKiconverter_Cpp_Version
@@ -277,8 +290,6 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/imgs/background.jpg
         src/ui/qml/styles/qmldir
         src/ui/qml/components/qmldir
-        resources/translations/translations_easykiconverter_en.qm
-        resources/translations/translations_easykiconverter_zh_CN.qm
 )
 
 # 控制台模式选项（调试时启用可看到控制台日志）

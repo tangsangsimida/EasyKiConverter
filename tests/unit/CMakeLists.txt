@@ -28,6 +28,18 @@ target_include_directories(test_models PRIVATE
 )
 add_test(NAME test_models COMMAND test_models)
 
+# 导出阶段测试
+add_executable(test_export_type_stage test_export_type_stage.cpp)
+target_link_libraries(test_export_type_stage PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_export_type_stage PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_export_type_stage COMMAND test_export_type_stage)
+
 # 日志系统测试
 add_executable(test_logging test_logging.cpp)
 target_link_libraries(test_logging PRIVATE

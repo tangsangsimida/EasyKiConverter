@@ -1,21 +1,20 @@
 #include "ExportProgressViewModel.h"
 
-#include "SystemTrayManager.h"
-#include "services/ExportService_Pipeline.h"
+#include "services/export/ExportProgress.h"
+#include "services/export/ParallelExportService.h"
 #include "utils/FileUtils.h"
 #include "utils/logging/LogMacros.h"
 
 #include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
-#include <QGuiApplication>
 #include <QStandardPaths>
 #include <QTimer>
-#include <QWindow>
+#include <QtGlobal>
 
 namespace EasyKiConverter {
 
-ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
+ExportProgressViewModel::ExportProgressViewModel(ParallelExportService* exportService,
                                                  ComponentService* componentService,
                                                  ComponentListViewModel* componentListViewModel,
                                                  QObject* parent)
@@ -23,125 +22,67 @@ ExportProgressViewModel::ExportProgressViewModel(ExportService* exportService,
     , m_exportService(exportService)
     , m_componentService(componentService)
     , m_componentListViewModel(componentListViewModel)
-    , m_systemTrayManager(nullptr)
     , m_status("Ready")
     , m_progress(0)
     , m_isExporting(false)
-    , m_isStopping(false)
+    , m_totalCount(0)
     , m_successCount(0)
-    , m_successSymbolCount(0)
-    , m_successFootprintCount(0)
-    , m_successModel3DCount(0)
     , m_failureCount(0)
-    , m_fetchedCount(0)
+    , m_filterMode("all")
+    , m_pendingUpdate(false)
     , m_fetchProgress(0)
     , m_processProgress(0)
     , m_writeProgress(0)
-    , m_usePipelineMode(false)
-    , m_filterMode("all")
-    , m_pendingUpdate(false)
-    , m_hasStatistics(false) {
+    , m_isStopping(false)
+    , m_hasCompletedExport(false)
+    , m_exportSymbolEnabled(true)
+    , m_exportFootprintEnabled(true)
+    , m_exportModel3DEnabled(false)
+    , m_exportPreviewEnabled(false)
+    , m_exportDatasheetEnabled(false) {
     m_throttleTimer = new QTimer(this);
-    m_throttleTimer->setInterval(100);
+    m_throttleTimer->setInterval(150);
     m_throttleTimer->setSingleShot(true);
     connect(m_throttleTimer, &QTimer::timeout, this, &ExportProgressViewModel::flushPendingUpdates);
 
     if (m_exportService) {
-        connect(m_exportService, &ExportService::exportProgress, this, &ExportProgressViewModel::handleExportProgress);
         connect(m_exportService,
-                &ExportService::componentExported,
+                &ParallelExportService::preloadProgressChanged,
                 this,
-                &ExportProgressViewModel::handleComponentExported);
-        connect(
-            m_exportService, &ExportService::exportCompleted, this, &ExportProgressViewModel::handleExportCompleted);
-        connect(m_exportService, &ExportService::exportFailed, this, &ExportProgressViewModel::handleExportFailed);
-
-        if (auto* pipelineService = qobject_cast<ExportServicePipeline*>(m_exportService)) {
-            connect(pipelineService,
-                    &ExportServicePipeline::pipelineProgressUpdated,
-                    this,
-                    &ExportProgressViewModel::handlePipelineProgressUpdated);
-            connect(pipelineService,
-                    &ExportServicePipeline::statisticsReportGenerated,
-                    this,
-                    &ExportProgressViewModel::handleStatisticsReportGenerated);
-            m_usePipelineMode = true;
-        }
+                &ExportProgressViewModel::handlePreloadProgressChanged);
+        connect(m_exportService,
+                &ParallelExportService::preloadCompleted,
+                this,
+                &ExportProgressViewModel::handlePreloadCompleted);
+        connect(m_exportService,
+                &ParallelExportService::progressChanged,
+                this,
+                &ExportProgressViewModel::handleProgressChanged);
+        connect(m_exportService,
+                &ParallelExportService::itemStatusChanged,
+                this,
+                &ExportProgressViewModel::handleItemStatusChanged);
+        connect(m_exportService,
+                &ParallelExportService::typeCompleted,
+                this,
+                &ExportProgressViewModel::handleTypeCompleted);
+        connect(m_exportService, &ParallelExportService::completed, this, &ExportProgressViewModel::handleCompleted);
+        connect(m_exportService, &ParallelExportService::cancelled, this, &ExportProgressViewModel::handleCancelled);
+        connect(m_exportService, &ParallelExportService::failed, this, &ExportProgressViewModel::handleFailed);
     }
 
     if (m_componentService) {
         connect(m_componentService,
                 &ComponentService::cadDataReady,
                 this,
-                &ExportProgressViewModel::handleComponentDataFetched);
-        connect(m_componentService,
-                &ComponentService::allComponentsDataCollected,
-                this,
-                &ExportProgressViewModel::handleAllComponentsDataCollected);
-    }
-
-    m_systemTrayManager = new SystemTrayManager(this);
-    m_systemTrayManager->initialize();
-
-    connect(m_systemTrayManager,
-            &SystemTrayManager::showWindowRequested,
-            this,
-            &ExportProgressViewModel::handleShowWindowRequested);
-    connect(
-        m_systemTrayManager, &SystemTrayManager::quitRequested, this, &ExportProgressViewModel::handleQuitRequested);
-}
-
-void ExportProgressViewModel::setUsePipelineMode(bool usePipeline) {
-    m_usePipelineMode = usePipeline;
-}
-
-void ExportProgressViewModel::handleShowWindowRequested() {
-    qDebug() << "Show window requested from system tray";
-    auto windows = QGuiApplication::topLevelWindows();
-    for (auto* window : windows) {
-        if (window) {
-            window->show();
-            window->raise();
-            window->requestActivate();
-        }
+                [this](const QString& componentId, const ComponentData& data) {
+                    Q_UNUSED(componentId);
+                    Q_UNUSED(data);
+                });
     }
 }
 
-void ExportProgressViewModel::handleQuitRequested() {
-    qDebug() << "Quit requested from system tray";
-    QCoreApplication::quit();
-}
-
-ExportProgressViewModel::~ExportProgressViewModel() {
-    if (m_throttleTimer) {
-        m_throttleTimer->stop();
-        m_throttleTimer->deleteLater();
-        m_throttleTimer = nullptr;
-    }
-}
-
-bool ExportProgressViewModel::openLastExportedFolder() {
-    QString path = m_exportOptions.outputPath;
-
-    LOG_DEBUG(LogModule::UI, "Opening last exported folder: {}", path);
-
-    if (path.isEmpty()) {
-        LOG_WARN(LogModule::UI, "No export has been performed yet, or export path is empty");
-        return false;
-    }
-
-    // 创建 FileUtils 实例来打开文件夹（使用栈对象避免堆分配）
-    FileUtils fileUtils(this);
-    bool success = fileUtils.openFolder(path);
-
-    if (!success) {
-        LOG_ERROR(LogModule::UI, "Failed to open last exported folder: {}", path);
-        return false;
-    }
-
-    LOG_DEBUG(LogModule::UI, "Successfully opened last exported folder: {}", path);
-    return true;
-}
+ExportProgressViewModel::~ExportProgressViewModel() {}
 
 void ExportProgressViewModel::startExport(const QStringList& componentIds,
                                           const QString& outputPath,
@@ -154,192 +95,362 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
                                           bool overwriteExistingFiles,
                                           bool updateMode,
                                           bool debugMode) {
+    qDebug() << "ExportProgressViewModel: Starting export for" << componentIds.size() << "components";
+
     if (m_isExporting) {
         qWarning() << "Export already in progress";
         return;
     }
 
-    // 处理输出路径
-    QString absoluteOutputPath = outputPath;
-    if (absoluteOutputPath.isEmpty()) {
-        // 如果导出路径为空，使用默认路径：~/Documents/EasyKiConverter/库名称
-        QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-        QDir exportDir(documentsPath);
-
-        // 创建 EasyKiConverter 目录
-        if (!exportDir.exists("EasyKiConverter")) {
-            exportDir.mkdir("EasyKiConverter");
-        }
-        exportDir.cd("EasyKiConverter");
-
-        // 使用库名称作为导出路径
-        absoluteOutputPath = exportDir.absoluteFilePath(libName);
-        LOG_DEBUG(LogModule::UI, "Using default export path (empty input): {}", absoluteOutputPath);
-    } else {
-        QDir dir(absoluteOutputPath);
-
-        if (dir.isAbsolute()) {
-            // 如果是绝对路径，规范化路径（处理 .. 和 . 等）
-            absoluteOutputPath = dir.cleanPath(absoluteOutputPath);
-            LOG_DEBUG(LogModule::UI, "Normalized absolute path: {} -> {}", outputPath, absoluteOutputPath);
-        } else {
-            // 如果是相对路径，相对于 ~/Documents/EasyKiConverter/ 转换为绝对路径
-            QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-            QDir exportDir(documentsPath);
-
-            // 创建 EasyKiConverter 目录
-            if (!exportDir.exists("EasyKiConverter")) {
-                exportDir.mkdir("EasyKiConverter");
-            }
-            exportDir.cd("EasyKiConverter");
-
-            // 直接拼接相对路径，不添加库名称
-            absoluteOutputPath = exportDir.absoluteFilePath(absoluteOutputPath);
-            LOG_DEBUG(LogModule::UI,
-                      "Converted relative path to absolute path (Documents/EasyKiConverter/userPath): {} -> {}",
-                      outputPath,
-                      absoluteOutputPath);
-        }
-    }
-
-    // 最终验证路径
-    if (absoluteOutputPath.isEmpty()) {
-        LOG_WARN(LogModule::UI, "Final output path is still empty! Using fallback to Desktop.");
-        absoluteOutputPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
-        absoluteOutputPath = QDir(absoluteOutputPath).absoluteFilePath(libName);
-    }
-
-    // 保存导出选项
-    m_exportOptions.outputPath = absoluteOutputPath;
-    m_exportOptions.libName = libName;
-    m_exportOptions.exportSymbol = exportSymbol;
-    m_exportOptions.exportFootprint = exportFootprint;
-    m_exportOptions.exportModel3D = exportModel3D;
-    m_exportOptions.exportPreviewImages = exportPreviewImages;
-    m_exportOptions.exportDatasheet = exportDatasheet;
-    m_exportOptions.overwriteExistingFiles = overwriteExistingFiles;
-    m_exportOptions.updateMode = updateMode;
-    m_exportOptions.debugMode = debugMode;
-
-    LOG_DEBUG(LogModule::UI,
-              "Export options - OutputPath: {}, LibName: {}",
-              m_exportOptions.outputPath,
-              m_exportOptions.libName);
-
-    startExportInternal(componentIds, false);
-}
-
-bool ExportProgressViewModel::handleCloseRequest() {
-    // 如果正在导出，先尝试停止
-    if (m_isExporting && m_exportService) {
-        qDebug() << "Close requested while exporting. Initiating immediate cancel...";
-
-        // 1. 发送取消信号（cancelExport 会自动清理线程池）
-        cancelExport();
-
-        // 2. 确保状态重置
-        m_isExporting = false;
-        m_isStopping = false;
-    }
-
-    return true;
-}
-
-void ExportProgressViewModel::cancelExport() {
-    if (!m_exportService)
+    if (!m_exportService) {
+        qWarning() << "ParallelExportService is not available";
+        setStatus("Export service not available");
         return;
+    }
 
-    qDebug() << "ExportProgressViewModel::cancelExport() called";
+    if (componentIds.isEmpty()) {
+        qWarning() << "No components to export";
+        setStatus("No components to export");
+        return;
+    }
 
-    // 1. 瞬时响应：立即通知后端中断（原子操作，<1ms）
-    m_exportService->cancelExport();
+    // Store component IDs
+    m_exportSymbolEnabled = exportSymbol;
+    m_exportFootprintEnabled = exportFootprint;
+    m_exportModel3DEnabled = exportModel3D;
+    m_exportPreviewEnabled = exportPreviewImages;
+    m_exportDatasheetEnabled = exportDatasheet;
 
-    // 2. 立即更新按钮状态（同步执行，<1ms）
-    m_isStopping = true;
-    emit isStoppingChanged();
-    m_status = "Stopping export...";
-    emit statusChanged();
-
-    qDebug() << "Cancel operation initiated in <1ms";
-
-    // 3. 异步处理 UI 列表更新（不阻塞取消操作）
-    QTimer::singleShot(0, this, [this]() {
-        bool updated = false;
-        for (int i = 0; i < m_resultsList.size(); ++i) {
-            QVariantMap item = m_resultsList[i].toMap();
-            QString status = item["status"].toString();
-
-            // 更新所有未完成的状态 (v3.0.5+ 改进)
-            if (status == "pending" || status == "fetching" || status == "processing" || status == "writing") {
-                item["status"] = "failed";
-                item["message"] = "Export cancelled";
-                // CRITICAL FIX: 在取消时，将所有分项成功标志也重置为 false
-                item["symbolSuccess"] = false;
-                item["footprintSuccess"] = false;
-                item["model3DSuccess"] = false;
-                m_resultsList[i] = item;
-                updated = true;
-            }
-        }
-
-        if (updated) {
-            emit resultsListChanged();
-            updateStatistics();
-        }
-        qDebug() << "UI update completed after cancellation";
-    });
-}
-
-void ExportProgressViewModel::resetExport() {
-    qDebug() << "ExportProgressViewModel::resetExport() called";
-
-    // 重置所有导出状态
-    m_progress = 0;
-    m_status = "";
-    m_isExporting = false;
-    m_isStopping = false;
+    m_componentIds = componentIds;
+    m_totalCount = componentIds.size();
     m_successCount = 0;
-    m_successSymbolCount = 0;
-    m_successFootprintCount = 0;
-    m_successModel3DCount = 0;
     m_failureCount = 0;
-    m_fetchProgress = 0;
-    m_processProgress = 0;
-    m_writeProgress = 0;
-
-    // 清空结果列表
+    m_isStopping = false;
+    setHasCompletedExport(false);
     m_resultsList.clear();
     m_idToIndexMap.clear();
 
-    // 清空统计信息
-    m_hasStatistics = false;
-    m_statisticsReportPath = "";
-    m_statisticsSummary = "";
-    m_statistics = ExportStatistics();
+    for (int i = 0; i < componentIds.size(); ++i) {
+        m_idToIndexMap[componentIds[i]] = i;
+        QVariantMap item;
+        item["componentId"] = componentIds[i];
+        item["status"] = "pending";
+        item["symbolSuccess"] = !m_exportSymbolEnabled;
+        item["footprintSuccess"] = !m_exportFootprintEnabled;
+        item["model3DSuccess"] = !m_exportModel3DEnabled;
+        item["previewSuccess"] = !m_exportPreviewEnabled;
+        item["datasheetSuccess"] = !m_exportDatasheetEnabled;
+        item["symbolStatus"] = m_exportSymbolEnabled ? "pending" : "disabled";
+        item["footprintStatus"] = m_exportFootprintEnabled ? "pending" : "disabled";
+        item["model3DStatus"] = m_exportModel3DEnabled ? "pending" : "disabled";
+        item["previewStatus"] = m_exportPreviewEnabled ? "pending" : "disabled";
+        item["datasheetStatus"] = m_exportDatasheetEnabled ? "pending" : "disabled";
+        m_resultsList.append(item);
+    }
 
-    // 触发所有相关的信号更新
-    emit progressChanged();
-    emit statusChanged();
-    emit isExportingChanged();
-    emit isStoppingChanged();
+    // Build export options
+    ExportOptions options;
+    options.outputPath = outputPath;
+    options.libName = libName;
+    options.exportSymbol = exportSymbol;
+    options.exportFootprint = exportFootprint;
+    options.exportModel3D = exportModel3D;
+    options.exportPreviewImages = exportPreviewImages;
+    options.exportDatasheet = exportDatasheet;
+    options.overwriteExistingFiles = overwriteExistingFiles;
+    options.updateMode = updateMode;
+    options.debugMode = debugMode;
+
+    m_exportService->setOptions(options);
+    m_exportService->setOutputPath(outputPath);
+
+    setIsExporting(true);
+    setStatus("Preloading component data...");
+    emit resultsListChanged();
+    emit filteredResultsListChanged();
+    emit totalCountChanged();
+
+    // Start preload - actual export will begin after preload completes
+    m_exportService->startPreload(componentIds);
+}
+
+void ExportProgressViewModel::cancelExport() {
+    qDebug() << "ExportProgressViewModel: Cancelling export";
+
+    if (!m_exportService) {
+        return;
+    }
+
+    if (!m_isStopping) {
+        m_isStopping = true;
+        emit isStoppingChanged();
+    }
+    m_exportService->cancelExport();
+}
+
+void ExportProgressViewModel::updateComponentExportStatus(const QString& componentId,
+                                                          int previewImageExported,
+                                                          int datasheetExported) {
+    if (!m_idToIndexMap.contains(componentId)) {
+        return;
+    }
+
+    const int index = m_idToIndexMap.value(componentId);
+    QVariantMap result = m_resultsList[index].toMap();
+
+    if (previewImageExported >= 0) {
+        result["previewSuccess"] = (previewImageExported > 0);
+        result["previewStatus"] = (previewImageExported > 0) ? "success" : "failed";
+    }
+    if (datasheetExported >= 0) {
+        result["datasheetSuccess"] = (datasheetExported > 0);
+        result["datasheetStatus"] = (datasheetExported > 0) ? "success" : "failed";
+    }
+
+    updateOverallItemStatus(result);
+    m_resultsList[index] = result;
+    markResultsDirty();
+}
+
+void ExportProgressViewModel::handleCloseRequest() {
+    if (m_isExporting) {
+        cancelExport();
+    }
+}
+
+void ExportProgressViewModel::handlePreloadProgressChanged(const PreloadProgress& progress) {
+    setStatus(QString("Preloading... %1/%2").arg(progress.completedCount).arg(progress.totalCount));
+
+    // Update progress based on preload stage
+    if (progress.totalCount > 0) {
+        setProgress((progress.completedCount * 100) / progress.totalCount / 2);  // Preload is first 50%
+    }
+}
+
+void ExportProgressViewModel::handlePreloadCompleted(int successCount, int failedCount) {
+    qInfo() << "ExportProgressViewModel: Preload completed. Success:" << successCount << "Failed:" << failedCount;
+
+    if (failedCount > 0) {
+        setStatus(QString("Preload completed with %1 errors").arg(failedCount));
+    } else {
+        setStatus("Starting export...");
+    }
+
+    // Start the actual export after preload completes
+    // Use QTimer::singleShot to defer to event loop, preventing UI freeze during retry
+    // This allows pending signals/events to be processed before starting heavy export work
+    if (m_exportService) {
+        QTimer::singleShot(0, this, [this]() {
+            if (m_exportService) {
+                m_exportService->startExport();
+            }
+        });
+    }
+}
+
+void ExportProgressViewModel::handleProgressChanged(const ExportOverallProgress& progress) {
+    // Update stage progress values for QML binding
+    switch (progress.currentStage) {
+        case ExportOverallProgress::Stage::Preloading:
+            setStatus("Preloading components...");
+            m_fetchProgress = progress.preloadProgress.percentage();
+            m_processProgress = 0;
+            m_writeProgress = 0;
+            setProgress(m_fetchProgress / 2);
+            break;
+        case ExportOverallProgress::Stage::Exporting:
+            setStatus("Exporting components...");
+            m_fetchProgress = averageTypeProgress(
+                progress, {QStringLiteral("PreviewImages"), QStringLiteral("Datasheet"), QStringLiteral("Model3D")});
+            m_processProgress = averageTypeProgress(progress, {QStringLiteral("Symbol"), QStringLiteral("Footprint")});
+            m_writeProgress = averageTypeProgress(progress,
+                                                  {QStringLiteral("Symbol"),
+                                                   QStringLiteral("Footprint"),
+                                                   QStringLiteral("Model3D"),
+                                                   QStringLiteral("PreviewImages"),
+                                                   QStringLiteral("Datasheet")});
+            setProgress(50 + (m_writeProgress / 2));
+            break;
+        case ExportOverallProgress::Stage::Completed:
+            m_fetchProgress = 100;
+            m_processProgress = 100;
+            m_writeProgress = 100;
+            setProgress(100);
+            setStatus("Export completed");
+            break;
+        case ExportOverallProgress::Stage::Cancelled:
+            setStatus("Export cancelled");
+            break;
+        case ExportOverallProgress::Stage::Failed:
+            setStatus("Export failed");
+            break;
+        default:
+            break;
+    }
+
+    emit stageProgressChanged();
+}
+
+void ExportProgressViewModel::handleItemStatusChanged(const QString& componentId,
+                                                      const QString& typeName,
+                                                      const ExportItemStatus& status) {
+    if (m_idToIndexMap.contains(componentId)) {
+        int index = m_idToIndexMap[componentId];
+        QVariantMap result = m_resultsList[index].toMap();
+
+        // Update individual type success flags
+        if (typeName == "Symbol") {
+            result["symbolSuccess"] = (status.status == ExportItemStatus::Status::Success);
+        } else if (typeName == "Footprint") {
+            result["footprintSuccess"] = (status.status == ExportItemStatus::Status::Success);
+        } else if (typeName == "Model3D") {
+            result["model3DSuccess"] = (status.status == ExportItemStatus::Status::Success);
+        } else if (typeName == "PreviewImages") {
+            result["previewSuccess"] = (status.status == ExportItemStatus::Status::Success);
+        } else if (typeName == "Datasheet") {
+            result["datasheetSuccess"] = (status.status == ExportItemStatus::Status::Success);
+        }
+
+        if (status.status == ExportItemStatus::Status::Failed) {
+            result["error"] = status.errorMessage;
+        }
+
+        QString statusText = "pending";
+        switch (status.status) {
+            case ExportItemStatus::Status::Pending:
+                statusText = "pending";
+                break;
+            case ExportItemStatus::Status::InProgress:
+                statusText = "in_progress";
+                break;
+            case ExportItemStatus::Status::Success:
+                statusText = "success";
+                break;
+            case ExportItemStatus::Status::Failed:
+                statusText = "failed";
+                break;
+            case ExportItemStatus::Status::Skipped:
+                statusText = "skipped";
+                break;
+        }
+        result[typeStatusKey(typeName)] = statusText;
+
+        updateOverallItemStatus(result);
+
+        m_resultsList[index] = result;
+
+        markResultsDirty();
+    }
+}
+
+void ExportProgressViewModel::handleTypeCompleted(const QString& typeName,
+                                                  int successCount,
+                                                  int failedCount,
+                                                  int skippedCount) {
+    Q_UNUSED(typeName);
+    Q_UNUSED(successCount);
+    Q_UNUSED(failedCount);
+    Q_UNUSED(skippedCount);
+    qInfo() << "Type completed:" << typeName << "success=" << successCount << "failed=" << failedCount;
+}
+
+void ExportProgressViewModel::handleCompleted(int successCount, int failedCount) {
+    qInfo() << "Export completed: success=" << successCount << "failed=" << failedCount;
+    Q_UNUSED(successCount);
+    Q_UNUSED(failedCount);
+    if (m_isStopping) {
+        m_isStopping = false;
+        emit isStoppingChanged();
+    }
+    setIsExporting(false);
+    setHasCompletedExport(true);
+    setProgress(100);
+    updateResultsList();
+    setStatus(m_failureCount > 0 ? QString("Completed with %1 errors").arg(m_failureCount)
+                                 : "Export completed successfully");
+    flushPendingUpdates();
+}
+
+void ExportProgressViewModel::handleCancelled() {
+    qInfo() << "Export cancelled";
+
+    // 将所有未完成的项标记为失败
+    int failureCount = 0;
+    for (int i = 0; i < m_resultsList.size(); ++i) {
+        QVariantMap result = m_resultsList[i].toMap();
+        QString currentStatus = result["status"].toString();
+        if (currentStatus == "pending" || currentStatus == "in_progress") {
+            result["status"] = "failed";
+            result["error"] = "Export cancelled";
+            m_resultsList[i] = result;
+            failureCount++;
+        }
+    }
+
+    // 如果有取消前已计入的成功数，加上取消后的失败数
+    m_failureCount = failureCount;
+
+    if (m_isStopping) {
+        m_isStopping = false;
+        emit isStoppingChanged();
+    }
+    setIsExporting(false);
+    setHasCompletedExport(false);
+    setProgress(0);
+    setStatus("Export cancelled");
+    m_fetchProgress = 0;
+    m_processProgress = 0;
+    m_writeProgress = 0;
+    emit stageProgressChanged();
     emit successCountChanged();
     emit failureCountChanged();
     emit resultsListChanged();
     emit filteredResultsListChanged();
-    emit statisticsChanged();
-    emit fetchProgressChanged();
-    emit processProgressChanged();
-    emit writeProgressChanged();
-
-    qDebug() << "Export status reset completed";
 }
 
-void ExportProgressViewModel::setFilterMode(const QString& mode) {
-    if (m_filterMode != mode) {
-        m_filterMode = mode;
-        emit filterModeChanged();
+void ExportProgressViewModel::handleFailed(const QString& error) {
+    qWarning() << "Export failed:" << error;
+    if (m_isStopping) {
+        m_isStopping = false;
+        emit isStoppingChanged();
+    }
+    setIsExporting(false);
+    setHasCompletedExport(false);
+    setStatus(QString("Export failed: %1").arg(error));
+}
+
+void ExportProgressViewModel::flushPendingUpdates() {
+    if (m_pendingUpdate) {
+        m_pendingUpdate = false;
+        updateResultsList();
+        emit resultsListChanged();
         emit filteredResultsListChanged();
     }
+}
+
+void ExportProgressViewModel::updateResultsList() {
+    int success = 0;
+    int failure = 0;
+    for (const auto& item : m_resultsList) {
+        QVariantMap map = item.toMap();
+        if (map.value("status") == "success") {
+            success++;
+        } else if (map.value("status") == "failed") {
+            failure++;
+        }
+    }
+    if (m_successCount != success) {
+        m_successCount = success;
+        emit successCountChanged();
+    }
+    if (m_failureCount != failure) {
+        m_failureCount = failure;
+        emit failureCountChanged();
+    }
+}
+
+void ExportProgressViewModel::updateFilteredResults() {
+    emit filteredResultsListChanged();
 }
 
 QVariantList ExportProgressViewModel::filteredResultsList() const {
@@ -348,399 +459,314 @@ QVariantList ExportProgressViewModel::filteredResultsList() const {
     }
 
     QVariantList filtered;
-    for (const auto& var : m_resultsList) {
-        QVariantMap item = var.toMap();
-        QString status = item["status"].toString();
-        if (m_filterMode == "success" && status == "success") {
-            filtered.append(var);
-        } else if (m_filterMode == "failed" && status == "failed") {
-            filtered.append(var);
-        } else if (m_filterMode == "exporting" && status != "success" && status != "failed") {
-            filtered.append(var);
+    for (const auto& item : m_resultsList) {
+        QVariantMap map = item.toMap();
+        if (m_filterMode == "success" && map.value("status") == "success") {
+            filtered.append(item);
+        } else if (m_filterMode == "failed" && map.value("status") == "failed") {
+            filtered.append(item);
+        } else if (m_filterMode == "exporting" &&
+                   (map.value("status") == "pending" || map.value("status") == "in_progress")) {
+            filtered.append(item);
         }
     }
     return filtered;
 }
 
-void ExportProgressViewModel::handleExportProgress(int current, int total) {
-    int newProgress = total > 0 ? (current * 100 / total) : 0;
-    if (m_progress != newProgress) {
-        m_progress = newProgress;
-        emit progressChanged();
+int ExportProgressViewModel::filteredSuccessCount() const {
+    if (m_filterMode == "all" || m_filterMode == "success") {
+        return m_successCount;
     }
+    return 0;
 }
 
-QString ExportProgressViewModel::getStatusString(int stage,
-                                                 bool success,
-                                                 bool symbolSuccess,
-                                                 bool footprintSuccess,
-                                                 bool model3DSuccess) const {
-    if (!success) {
-        return "failed";
+int ExportProgressViewModel::filteredFailedCount() const {
+    if (m_filterMode == "all" || m_filterMode == "failed") {
+        return m_failureCount;
     }
+    return 0;
+}
 
-    switch (stage) {
-        case 0:
-            return "fetch_completed";
-        case 1:
-            return "processing";
-        case 2: {
-            // 严格成功判定：检查用户请求的所有项是否都已成功写入
-            bool allRequestedItemsDone = true;
-            if (m_exportOptions.exportSymbol && !symbolSuccess)
-                allRequestedItemsDone = false;
-            if (m_exportOptions.exportFootprint && !footprintSuccess)
-                allRequestedItemsDone = false;
-            if (m_exportOptions.exportModel3D && !model3DSuccess)
-                allRequestedItemsDone = false;
-
-            return allRequestedItemsDone ? "success" : "failed";
+int ExportProgressViewModel::filteredPendingCount() const {
+    // Count items with "in_progress" or "pending" status
+    int pending = 0;
+    for (const auto& item : m_resultsList) {
+        QVariantMap map = item.toMap();
+        QString status = map.value("status").toString();
+        if (status == "pending" || status == "in_progress") {
+            pending++;
         }
-        default:
-            return "success";
+    }
+    return pending;
+}
+
+void ExportProgressViewModel::setFilterMode(const QString& mode) {
+    if (m_filterMode != mode) {
+        m_filterMode = mode;
+        emit filterModeChanged();
+        updateFilteredResults();
     }
 }
 
-void ExportProgressViewModel::handleComponentExported(const QString& componentId,
-                                                      bool success,
-                                                      const QString& message,
-                                                      int stage,
-                                                      bool symbolSuccess,
-                                                      bool footprintSuccess,
-                                                      bool model3DSuccess) {
-    int index = m_idToIndexMap.value(componentId, -1);
-    // 使用增强后的判定逻辑
-    QString statusStr = getStatusString(stage, success, symbolSuccess, footprintSuccess, model3DSuccess);
-
-    if (index >= 0 && index < m_resultsList.size()) {
-        QVariantMap result = m_resultsList[index].toMap();
-        result["status"] = statusStr;
-        result["message"] = statusStr == "failed" && success ? "Partial export failed (missing parts)" : message;
-        // 保存分项状态
-        result["symbolSuccess"] = symbolSuccess;
-        result["footprintSuccess"] = footprintSuccess;
-        result["model3DSuccess"] = model3DSuccess;
-        m_resultsList[index] = result;
-    } else {
-        QVariantMap result;
-        result["componentId"] = componentId;
-        result["status"] = statusStr;
-        result["message"] = message;
-        result["symbolSuccess"] = symbolSuccess;
-        result["footprintSuccess"] = footprintSuccess;
-        result["model3DSuccess"] = model3DSuccess;
-        m_resultsList.append(result);
-        m_idToIndexMap[componentId] = m_resultsList.size() - 1;
+QString ExportProgressViewModel::getLastExportedPath() const {
+    if (m_exportService) {
+        return m_exportService->outputPath();
     }
-
-    if (!m_pendingUpdate) {
-        m_pendingUpdate = true;
-        m_throttleTimer->start();
-    }
-
-    updateStatistics();
-    emit componentExported(componentId, success, message);
+    return QString();
 }
 
-void ExportProgressViewModel::updateStatistics() {
-    int globalSuccess = 0;
-    int globalFailed = 0;
-    int globalSymbol = 0;
-    int globalFootprint = 0;
-    int globalModel3D = 0;
-
-    for (const auto& var : m_resultsList) {
-        QVariantMap item = var.toMap();
-        QString status = item["status"].toString();
-
-        if (status == "success") {
-            globalSuccess++;
-        } else if (status == "failed") {
-            globalFailed++;
-        }
-
-        // 累加分项成功数（只有当该类型被启用时才计数）
-        if (m_exportOptions.exportSymbol && item["symbolSuccess"].toBool())
-            globalSymbol++;
-        if (m_exportOptions.exportFootprint && item["footprintSuccess"].toBool())
-            globalFootprint++;
-        if (m_exportOptions.exportModel3D && item["model3DSuccess"].toBool())
-            globalModel3D++;
+bool ExportProgressViewModel::openLastExportedFolder() {
+    QString path = getLastExportedPath();
+    if (path.isEmpty()) {
+        return false;
     }
 
-    if (m_successCount != globalSuccess) {
-        m_successCount = globalSuccess;
-        emit successCountChanged();
+    if (!QDir(path).exists()) {
+        QDir().mkpath(path);
     }
 
-    if (m_failureCount != globalFailed) {
-        m_failureCount = globalFailed;
-        emit failureCountChanged();
-    }
-
-    // 更新分项计数
-    if (m_successSymbolCount != globalSymbol || m_successFootprintCount != globalFootprint ||
-        m_successModel3DCount != globalModel3D) {
-        m_successSymbolCount = globalSymbol;
-        m_successFootprintCount = globalFootprint;
-        m_successModel3DCount = globalModel3D;
-        emit successCountChanged();  // 触发 UI 刷新
-    }
+    FileUtils utils;
+    return utils.openFolder(path);
 }
 
-void ExportProgressViewModel::flushPendingUpdates() {
-    if (m_pendingUpdate) {
-        m_pendingUpdate = false;
-        emit resultsListChanged();
-        emit filteredResultsListChanged();
-    }
+void ExportProgressViewModel::clearCache() {
+    ComponentCacheService::instance()->clearAllCache();
 }
 
-void ExportProgressViewModel::prepopulateResultsList(const QStringList& componentIds) {
+void ExportProgressViewModel::resetExport() {
+    setIsExporting(false);
+    setProgress(0);
+    setStatus("Ready");
     m_resultsList.clear();
     m_idToIndexMap.clear();
-
-    for (int i = 0; i < componentIds.size(); ++i) {
-        QVariantMap result;
-        result["componentId"] = componentIds[i];
-        result["status"] = "pending";
-        result["message"] = "Waiting to start...";
-        m_resultsList.append(result);
-        m_idToIndexMap[componentIds[i]] = i;
-    }
-}
-
-void ExportProgressViewModel::handleComponentDataFetched(const QString& componentId, const ComponentData& data) {
-    Q_UNUSED(componentId);
-    Q_UNUSED(data);
-}
-
-void ExportProgressViewModel::handleAllComponentsDataCollected(const QList<ComponentData>& componentDataList) {
-    m_status = "Exporting components in parallel...";
-    emit statusChanged();
-    m_exportService->executeExportPipelineWithDataParallel(componentDataList, m_exportOptions);
-}
-
-void ExportProgressViewModel::handleExportCompleted(int totalCount, int successCount) {
-    Q_UNUSED(totalCount);
-    Q_UNUSED(successCount);
-
-    // 扫尾：确保 pending 项标记为取消
-    for (int i = 0; i < m_resultsList.size(); ++i) {
-        QVariantMap item = m_resultsList[i].toMap();
-        if (item["status"].toString() == "pending") {
-            item["status"] = "failed";
-            item["message"] = "Export cancelled";
-            m_resultsList[i] = item;
-        }
-    }
-
-    // 全量刷新统计
-    updateStatistics();
-
-    if (m_pendingUpdate) {
-        m_throttleTimer->stop();
-        flushPendingUpdates();
-    }
-
+    m_filterMode = "all";
+    m_totalCount = 0;
+    m_successCount = 0;
+    m_failureCount = 0;
     m_isStopping = false;
-    emit isStoppingChanged();
-    m_isExporting = false;
-    emit isExportingChanged();
-    m_status = "Export completed";
-    emit statusChanged();
-    emit exportCompleted(m_successCount, m_failureCount);
-
-    // 显示系统通知
-    showExportCompleteNotification();
-}
-
-void ExportProgressViewModel::handleExportFailed(const QString& error) {
-    if (m_pendingUpdate) {
-        m_throttleTimer->stop();
-        flushPendingUpdates();
-    }
-
-    m_isStopping = false;
-    m_isExporting = false;
-    emit isStoppingChanged();
-    emit isExportingChanged();
-    m_status = "Export failed: " + error;
-    emit statusChanged();
-    updateStatistics();
-}
-
-void ExportProgressViewModel::handlePipelineProgressUpdated(const PipelineProgress& progress) {
-    if (m_fetchProgress != progress.fetchProgress()) {
-        m_fetchProgress = progress.fetchProgress();
-        emit fetchProgressChanged();
-    }
-    if (m_processProgress != progress.processProgress()) {
-        m_processProgress = progress.processProgress();
-        emit processProgressChanged();
-    }
-    if (m_writeProgress != progress.writeProgress()) {
-        m_writeProgress = progress.writeProgress();
-        emit writeProgressChanged();
-    }
-
-    int newProgress = progress.overallProgress();
-    if (m_progress != newProgress) {
-        m_progress = newProgress;
-        emit progressChanged();
-    }
-}
-
-void ExportProgressViewModel::handleStatisticsReportGenerated(const QString& reportPath,
-                                                              const ExportStatistics& statistics) {
-    m_hasStatistics = true;
-    m_statisticsReportPath = reportPath;
-    m_statistics = statistics;
-    m_statisticsSummary = statistics.getSummary();
-    emit statisticsChanged();
-}
-
-void ExportProgressViewModel::retryFailedComponents() {
-    if (m_isExporting)
-        return;
-
-    QStringList failedIds;
-    for (int i = 0; i < m_resultsList.size(); ++i) {
-        if (m_resultsList[i].toMap()["status"].toString() != "success") {
-            failedIds << m_resultsList[i].toMap()["componentId"].toString();
-        }
-    }
-
-    if (!failedIds.isEmpty()) {
-        startExportInternal(failedIds, true);
-    }
-}
-
-void ExportProgressViewModel::retryComponent(const QString& componentId) {
-    if (m_isExporting)
-        return;
-    startExportInternal(QStringList() << componentId, true);
-}
-
-void ExportProgressViewModel::removeResult(const QString& componentId) {
-    for (int i = 0; i < m_resultsList.size(); ++i) {
-        QVariantMap item = m_resultsList[i].toMap();
-        if (item["componentId"].toString() == componentId) {
-            QString status = item["status"].toString();
-            if (status == "failed") {
-                m_failureCount--;
-                emit failureCountChanged();
-            } else if (status == "success") {
-                m_successCount--;
-                emit successCountChanged();
-            }
-            m_resultsList.removeAt(i);
-            emit resultsListChanged();
-            emit filteredResultsListChanged();
-            return;
-        }
-    }
-}
-
-void ExportProgressViewModel::startExportInternal(const QStringList& componentIds, bool isRetry) {
-    if (!m_exportService || !m_componentService)
-        return;
-
-    m_isExporting = true;
-    m_progress = 0;
-    m_fetchedCount = 0;
+    setHasCompletedExport(false);
     m_fetchProgress = 0;
     m_processProgress = 0;
     m_writeProgress = 0;
-    m_componentIds = componentIds;
-    m_collectedData.clear();
-    m_status = isRetry ? "Retrying..." : "Starting export...";
 
-    // 取消所有未完成的预览图获取工作
-    m_componentService->cancelAllPreviewImageFetches();
-
-    if (!isRetry) {
-        m_successCount = 0;
-        m_failureCount = 0;
-        prepopulateResultsList(componentIds);
-    } else {
-        // 重试模式：仅更新被重试项的状态
-        for (const QString& id : componentIds) {
-            int index = m_idToIndexMap.value(id, -1);
-            if (index >= 0) {
-                QVariantMap item = m_resultsList[index].toMap();
-                item["status"] = "pending";
-                item["message"] = "Waiting to retry...";
-                m_resultsList[index] = item;
-            }
-        }
-    }
-
-    // 无论是新开始还是重试，都先执行一次全量统计同步
-    updateStatistics();
     emit resultsListChanged();
-    emit isExportingChanged();
-    emit progressChanged();
-    emit statusChanged();
-
-    if (isRetry) {
-        m_exportService->retryExport(componentIds, m_exportOptions);
-    } else {
-        if (m_usePipelineMode && qobject_cast<ExportServicePipeline*>(m_exportService)) {
-            auto* pipelineService = qobject_cast<ExportServicePipeline*>(m_exportService);
-
-            // Gather preloaded data
-            if (m_componentListViewModel) {
-                QMap<QString, QSharedPointer<ComponentData>> preloadedData;
-                for (const QString& id : componentIds) {
-                    auto data = m_componentListViewModel->getPreloadedData(id);
-                    if (data) {
-                        qDebug() << "Preloaded component:" << id
-                                 << "PreviewImages (URLs):" << data->previewImages().size()
-                                 << "PreviewImageData (bytes):" << data->previewImageData().size() << "Datasheet (URL):"
-                                 << (data->datasheet().isEmpty() ? "empty" : data->datasheet().left(50))
-                                 << "DatasheetData (bytes):" << data->datasheetData().size();
-                        preloadedData.insert(id, data);
-                    }
-                }
-                if (!preloadedData.isEmpty()) {
-                    qDebug() << "Passing" << preloadedData.size() << "preloaded components to pipeline";
-                    pipelineService->setPreloadedData(preloadedData);
-                    pipelineService->setComponentListViewModel(m_componentListViewModel);
-                } else {
-                    qDebug() << "No preloaded data available";
-                }
-            }
-
-            pipelineService->executeExportPipelineWithStages(componentIds, m_exportOptions);
-        } else {
-            m_componentService->setOutputPath(m_exportOptions.outputPath);
-            m_componentService->fetchMultipleComponentsData(componentIds, m_exportOptions.exportModel3D);
-        }
-    }
+    emit filterModeChanged();
+    emit filteredResultsListChanged();
+    emit isStoppingChanged();
+    emit successCountChanged();
+    emit failureCountChanged();
+    emit totalCountChanged();
+    emit stageProgressChanged();
 }
 
-void ExportProgressViewModel::showExportCompleteNotification() {
-    if (!m_systemTrayManager) {
-        qDebug() << "System tray manager not initialized";
+void ExportProgressViewModel::retryComponent(const QString& componentId) {
+    qDebug() << "Retry requested for component:" << componentId;
+
+    if (!m_idToIndexMap.contains(componentId)) {
+        qWarning() << "Component not found in results:" << componentId;
         return;
     }
 
-    QString duration;
-    if (m_statistics.totalDurationMs > 0) {
-        double durationSec = m_statistics.totalDurationMs / 1000.0;
-        if (durationSec < 60.0) {
-            duration = QString::number(durationSec, 'f', 1) + QStringLiteral(" 秒");
-        } else {
-            int minutes = static_cast<int>(durationSec / 60.0);
-            double seconds = durationSec - (minutes * 60.0);
-            duration = QString::number(minutes) + QStringLiteral(" 分 ") + QString::number(seconds, 'f', 0) +
-                       QStringLiteral(" 秒");
+    int index = m_idToIndexMap[componentId];
+    QVariantMap result = m_resultsList[index].toMap();
+
+    resetItemForRetry(result);
+    m_resultsList[index] = result;
+
+    // Update counts and notify UI
+    markResultsDirty();
+
+    // Re-trigger export if not currently exporting
+    if (!m_isExporting && m_exportService) {
+        QStringList idsToRetry = {componentId};
+        m_exportService->startPreload(idsToRetry);
+    }
+}
+
+void ExportProgressViewModel::retryFailedComponents() {
+    qDebug() << "Retry requested for all failed components";
+
+    // Collect all failed component IDs
+    QStringList failedIds;
+    for (const auto& item : m_resultsList) {
+        QVariantMap map = item.toMap();
+        if (map.value("status") == "failed") {
+            QString id = map.value("componentId").toString();
+            failedIds.append(id);
+
+            // Reset status to pending
+            if (m_idToIndexMap.contains(id)) {
+                int index = m_idToIndexMap[id];
+                QVariantMap result = m_resultsList[index].toMap();
+                resetItemForRetry(result);
+                m_resultsList[index] = result;
+            }
         }
     }
 
-    m_systemTrayManager->showExportNotification(
-        m_successCount, m_failureCount, m_successSymbolCount, m_successFootprintCount, m_successModel3DCount, duration);
+    if (failedIds.isEmpty()) {
+        qDebug() << "No failed components to retry";
+        return;
+    }
+
+    qDebug() << "Retrying" << failedIds.size() << "failed components";
+
+    // Update counts and notify UI
+    markResultsDirty();
+
+    // Re-trigger export if not currently exporting
+    if (!m_isExporting && m_exportService) {
+        m_exportService->startPreload(failedIds);
+    }
+}
+
+void ExportProgressViewModel::removeResult(const QString& componentId) {
+    if (m_idToIndexMap.contains(componentId)) {
+        int index = m_idToIndexMap[componentId];
+        m_resultsList.removeAt(index);
+        m_idToIndexMap.remove(componentId);
+        // Reindex remaining items
+        for (int i = index; i < m_resultsList.size(); ++i) {
+            QString id = m_resultsList[i].toMap().value("componentId").toString();
+            m_idToIndexMap[id] = i;
+        }
+        // Update counts first, then notify UI of list change
+        markResultsDirty();
+    }
+}
+
+void ExportProgressViewModel::setStatus(const QString& status) {
+    if (m_status != status) {
+        m_status = status;
+        emit statusChanged();
+    }
+}
+
+void ExportProgressViewModel::setIsExporting(bool exporting) {
+    if (m_isExporting != exporting) {
+        m_isExporting = exporting;
+        emit isExportingChanged();
+    }
+}
+
+void ExportProgressViewModel::setProgress(int progress) {
+    if (m_progress != progress) {
+        m_progress = progress;
+        emit progressChanged();
+    }
+}
+
+void ExportProgressViewModel::setHasCompletedExport(bool completed) {
+    if (m_hasCompletedExport != completed) {
+        m_hasCompletedExport = completed;
+        emit hasCompletedExportChanged();
+    }
+}
+
+QString ExportProgressViewModel::typeStatusKey(const QString& typeName) const {
+    if (typeName == "Symbol") {
+        return "symbolStatus";
+    }
+    if (typeName == "Footprint") {
+        return "footprintStatus";
+    }
+    if (typeName == "Model3D") {
+        return "model3DStatus";
+    }
+    if (typeName == "PreviewImages") {
+        return "previewStatus";
+    }
+    if (typeName == "Datasheet") {
+        return "datasheetStatus";
+    }
+    return QString();
+}
+
+void ExportProgressViewModel::updateOverallItemStatus(QVariantMap& result) const {
+    struct TypeRule {
+        bool enabled;
+        QString statusKey;
+    };
+
+    const QList<TypeRule> rules = {
+        {m_exportSymbolEnabled, "symbolStatus"},
+        {m_exportFootprintEnabled, "footprintStatus"},
+        {m_exportModel3DEnabled, "model3DStatus"},
+        {m_exportPreviewEnabled, "previewStatus"},
+        {m_exportDatasheetEnabled, "datasheetStatus"},
+    };
+
+    bool hasEnabledType = false;
+    bool anyFailed = false;
+    bool anyInProgress = false;
+    bool allDone = true;
+
+    for (const TypeRule& rule : rules) {
+        if (!rule.enabled) {
+            continue;
+        }
+
+        hasEnabledType = true;
+        const QString status = result.value(rule.statusKey, "pending").toString();
+        if (status == "failed") {
+            anyFailed = true;
+        }
+        if (status == "in_progress") {
+            anyInProgress = true;
+        }
+        if (status != "success" && status != "failed" && status != "skipped") {
+            allDone = false;
+        }
+    }
+
+    if (!hasEnabledType) {
+        result["status"] = "success";
+    } else if (allDone) {
+        result["status"] = anyFailed ? "failed" : "success";
+    } else if (anyInProgress) {
+        result["status"] = "in_progress";
+    } else {
+        result["status"] = "pending";
+    }
+}
+
+void ExportProgressViewModel::resetItemForRetry(QVariantMap& result) const {
+    result["status"] = "pending";
+    result["symbolSuccess"] = !m_exportSymbolEnabled;
+    result["footprintSuccess"] = !m_exportFootprintEnabled;
+    result["model3DSuccess"] = !m_exportModel3DEnabled;
+    result["previewSuccess"] = !m_exportPreviewEnabled;
+    result["datasheetSuccess"] = !m_exportDatasheetEnabled;
+    result["symbolStatus"] = m_exportSymbolEnabled ? "pending" : "disabled";
+    result["footprintStatus"] = m_exportFootprintEnabled ? "pending" : "disabled";
+    result["model3DStatus"] = m_exportModel3DEnabled ? "pending" : "disabled";
+    result["previewStatus"] = m_exportPreviewEnabled ? "pending" : "disabled";
+    result["datasheetStatus"] = m_exportDatasheetEnabled ? "pending" : "disabled";
+    result["error"] = QString();
+}
+
+int ExportProgressViewModel::averageTypeProgress(const ExportOverallProgress& progress,
+                                                 const QStringList& typeNames) const {
+    int sum = 0;
+    int count = 0;
+    for (const QString& typeName : typeNames) {
+        auto it = progress.exportTypeProgress.constFind(typeName);
+        if (it == progress.exportTypeProgress.constEnd()) {
+            continue;
+        }
+        sum += it.value().percentage();
+        count++;
+    }
+
+    if (count == 0) {
+        return 0;
+    }
+    return qBound(0, sum / count, 100);
+}
+
+void ExportProgressViewModel::markResultsDirty() {
+    m_pendingUpdate = true;
+    m_throttleTimer->start();
 }
 
 }  // namespace EasyKiConverter

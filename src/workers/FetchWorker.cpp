@@ -1,5 +1,8 @@
 #include "FetchWorker.h"
 
+#include "BaseWorker.h"
+#include "core/utils/GzipUtils.h"
+
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QElapsedTimer>
@@ -29,16 +32,15 @@ FetchWorker::FetchWorker(const QString& componentId,
                          bool fetch3DOnly,
                          const QString& existing3DUuid,
                          QObject* parent)
-    : QObject(parent)
-    , m_componentId(componentId)
+    : m_componentId(componentId)
     , m_ownNetworkManager(nullptr)
     , m_need3DModel(need3DModel)
     , m_fetch3DOnly(fetch3DOnly)
     , m_existing3DUuid(existing3DUuid)
     , m_currentReply(nullptr)
     , m_isAborted(0) {
-    // 禁用自动删除，因为我们使用 deleteLater 管理生命周期
-    setAutoDelete(false);
+    Q_UNUSED(parent);
+    // setAutoDelete(false) is set in BaseWorker constructor
 }
 
 FetchWorker::~FetchWorker() {
@@ -56,6 +58,7 @@ void FetchWorker::run() {
     QSharedPointer<ComponentExportStatus> status = QSharedPointer<ComponentExportStatus>::create();
     status->componentId = m_componentId;
     status->need3DModel = m_need3DModel;
+    status->fetch3DOnly = m_fetch3DOnly;
 
     // 早期取消检查
     if (m_isAborted.loadRelaxed()) {
@@ -137,7 +140,12 @@ void FetchWorker::run() {
                 if (actualObjData.size() >= 2 && (unsigned char)actualObjData[0] == 0x1f &&
                     (unsigned char)actualObjData[1] == 0x8b) {
                     status->addDebugLog("3D model data is gzip compressed, decompressing...");
-                    actualObjData = decompressGzip(actualObjData);
+                    GzipUtils::DecompressResult decompResult = GzipUtils::decompress(actualObjData);
+                    if (decompResult.success) {
+                        actualObjData = decompResult.data;
+                    } else {
+                        status->addDebugLog("ERROR: Gzip decompression failed for 3D model data");
+                    }
                     status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
                 }
 
@@ -145,7 +153,8 @@ void FetchWorker::run() {
                 status->addDebugLog(QString("3D model OBJ data ready: %1 bytes").arg(actualObjData.size()));
 
                 // 下载 STEP 格式
-                QString stepUrl = QString("https://modules.easyeda.com/3dmodel/%1.step").arg(m_existing3DUuid);
+                QString stepUrl =
+                    QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(m_existing3DUuid);
                 status->addDebugLog(QString("Downloading STEP model from: %1").arg(stepUrl));
 
                 QByteArray stepData = httpGet(stepUrl, MODEL_3D_TIMEOUT_MS, status);
@@ -422,8 +431,8 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 qDebug() << "Request cancelled by abort for URL:" << url;
                 return QByteArray();
             }
-            // 请求超时，不再重试
-            qWarning() << "Request timeout (cancelled) for URL:" << url << "after" << timeoutMs << "ms";
+            // 请求超时，记录诊断信息，继续重试
+            qWarning() << "Request timeout for URL:" << url << "after" << timeoutMs << "ms, will retry";
 
             // 记录网络诊断信息
             if (status) {
@@ -436,9 +445,7 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
                 diag.wasRateLimited = false;
                 status->networkDiagnostics.append(diag);
             }
-
-            // 超时后不再重试
-            return QByteArray();
+            // 继续重试，不返回
         } else {
             qWarning() << "Network error:" << replyPtr->errorString() << "URL:" << url;
 
@@ -462,7 +469,13 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
         if (success) {
             if (!result.isEmpty() && result.size() >= 2 && (unsigned char)result[0] == 0x1f &&
                 (unsigned char)result[1] == 0x8b) {
-                result = decompressGzip(result);
+                GzipUtils::DecompressResult decompResult = GzipUtils::decompress(result);
+                if (decompResult.success) {
+                    result = decompResult.data;
+                } else {
+                    qWarning() << "Gzip decompression failed in httpGet";
+                    return QByteArray();
+                }
             }
             return result;
         }
@@ -471,51 +484,6 @@ QByteArray FetchWorker::httpGet(const QString& url, int timeoutMs, QSharedPointe
     }
 
     return QByteArray();
-}
-
-QByteArray FetchWorker::decompressGzip(const QByteArray& compressedData) {
-    if (compressedData.size() < 18) {
-        qWarning() << "Invalid gzip data size";
-        return QByteArray();
-    }
-
-    z_stream stream;
-    memset(&stream, 0, sizeof(stream));
-
-    if (inflateInit2(&stream, 15 + 16) != Z_OK) {
-        qWarning() << "Failed to initialize zlib";
-        return QByteArray();
-    }
-
-    stream.next_in = (Bytef*)compressedData.data();
-    stream.avail_in = compressedData.size();
-    stream.next_out = nullptr;
-    stream.avail_out = 0;
-
-    QByteArray decompressed;
-    const int bufferSize = 8192;
-    char buffer[bufferSize];
-
-    int ret;
-    do {
-        stream.avail_out = bufferSize;
-        stream.next_out = (Bytef*)buffer;
-
-        ret = inflate(&stream, Z_NO_FLUSH);
-
-        if (ret == Z_OK || ret == Z_STREAM_END) {
-            decompressed.append(buffer, bufferSize - stream.avail_out);
-        }
-    } while (ret == Z_OK);
-
-    inflateEnd(&stream);
-
-    if (ret != Z_STREAM_END) {
-        qWarning() << "Failed to decompress gzip data, error:" << ret;
-        return QByteArray();
-    }
-
-    return decompressed;
 }
 
 QByteArray FetchWorker::decompressZip(const QByteArray& zipData) {
@@ -541,8 +509,12 @@ QByteArray FetchWorker::decompressZip(const QByteArray& zipData) {
         std::uint16_t compressionMethod = ((std::uint8_t)zipData[pos + 8] | ((std::uint8_t)zipData[pos + 9] << 8));
         if (compressionMethod == 8) {
             QByteArray compressedData = zipData.mid(dataStart, compressedSize);
-            QByteArray decompressedData = decompressGzip(compressedData);
-            result.append(decompressedData);
+            GzipUtils::DecompressResult decompResult = GzipUtils::decompress(compressedData);
+            if (decompResult.success) {
+                result.append(decompResult.data);
+            } else {
+                qWarning() << "Failed to decompress ZIP entry at pos" << pos;
+            }
         } else if (compressionMethod == 0) {
             QByteArray uncompressedData = zipData.mid(dataStart, uncompressedSize);
             result.append(uncompressedData);
@@ -605,10 +577,11 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
                                 QJsonObject nodeObj = nodeDoc.object();
                                 if (nodeObj.contains("attrs") && nodeObj["attrs"].isObject()) {
                                     QJsonObject attrs = nodeObj["attrs"].toObject();
-                                    if (attrs.contains("uuid") && !attrs["uuid"].toString().isEmpty()) {
+                                    // 只从 c_etype == "outline3D" 的节点获取 3D 模型 UUID
+                                    if (attrs.contains("c_etype") && attrs["c_etype"].toString() == "outline3D" &&
+                                        attrs.contains("uuid") && !attrs["uuid"].toString().isEmpty()) {
                                         uuid = attrs["uuid"].toString();
-                                        qDebug()
-                                            << "Found 3D model UUID in packageDetail.dataStr.shape (SVGNODE):" << uuid;
+                                        qDebug() << "Found 3D model UUID from outline3D SVGNODE:" << uuid;
                                         break;
                                     }
                                 }
@@ -659,7 +632,12 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
         (unsigned char)actualObjData[1] == 0x8b) {
         status->addDebugLog("3D model data is gzip compressed, decompressing...");
 
-        actualObjData = decompressGzip(actualObjData);
+        GzipUtils::DecompressResult decompResult = GzipUtils::decompress(actualObjData);
+        if (decompResult.success) {
+            actualObjData = decompResult.data;
+        } else {
+            status->addDebugLog("ERROR: Gzip decompression failed for 3D model data");
+        }
 
         status->addDebugLog(QString("Decompressed 3D model data size: %1 bytes").arg(actualObjData.size()));
     }

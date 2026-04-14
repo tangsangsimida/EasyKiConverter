@@ -1,6 +1,7 @@
 #ifndef COMPONENTSERVICE_H
 #define COMPONENTSERVICE_H
 
+#include "ComponentCacheService.h"
 #include "LcscImageService.h"
 #include "ParallelFetchContext.h"
 #include "models/ComponentData.h"
@@ -8,6 +9,7 @@
 #include "models/Model3DData.h"
 #include "models/SymbolData.h"
 
+#include <QByteArray>
 #include <QImage>
 #include <QJsonObject>
 #include <QMap>
@@ -123,11 +125,25 @@ public:
     void clearCache();
 
     /**
+     * @brief 更新元件缓存
+     * @param componentId 元件ID
+     * @param data 元件数据
+     */
+    void updateComponentCache(const QString& componentId, const ComponentData& data);
+
+    /**
      * @brief 取消所有正在进行的预览图获取操作
      *
      * 当用户点击开始导出时调用，以确保取消所有未完成的预览图获取工作
      */
     void cancelAllPreviewImageFetches();
+
+    /**
+     * @brief 取消所有正在进行的元件数据获取请求
+     *
+     * 当清空元器件列表时调用，以中断所有悬空请求
+     */
+    void cancelAllPendingRequests();
 
     /**
      * @brief 设置输出路径
@@ -198,9 +214,17 @@ signals:
      * @brief 所有预览图片下载完成信号
      *
      * @param componentId 元件ID
-     * @param imageDataList 图片数据列表（内存）
+     * @param imagePaths 图片路径列表
      */
-    void allImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
+    void allImagesReady(const QString& componentId, const QStringList& imagePaths);
+
+    /**
+     * @brief 批量预览图数据获取成功信号（用于缓存加载，避免频繁UI更新）
+     *
+     * @param componentId 元件ID
+     * @param encodedImages Base64编码的预览图数据列表（按索引排序）
+     */
+    void previewImagesReady(const QString& componentId, const QStringList& encodedImages);
 
     /**
      * @brief 获取错误信号
@@ -256,14 +280,6 @@ private slots:
      */
     void handleCadDataFetched(const QJsonObject& data);
 
-    /**
-     * @brief 处理3D模型数据获取成功
-     *
-     * @param uuid 模型UUID
-     * @param data 模型数据
-     */
-    void handleModel3DFetched(const QString& uuid, const QByteArray& data);
-
     void handleFetchError(const QString& errorMessage);
 
     /**
@@ -287,7 +303,7 @@ private slots:
     /**
      * @brief 处理所有预览图片下载完成
      */
-    void handleAllImagesReady(const QString& componentId, const QList<QByteArray>& imageDataList);
+    void handleAllImagesReady(const QString& componentId, const QStringList& imagePaths);
 
     /**
      * @brief 处理预览图获取失败
@@ -310,13 +326,6 @@ private:
      * @brief 初始化API连接
      */
     void initializeApiConnections();
-
-    /**
-     * @brief 完成元件数据收集
-     *
-     * @param componentId 元件ID
-     */
-    void completeComponentData(const QString& componentId);
 
     /**
      * @brief 处理获取错误
@@ -379,6 +388,30 @@ private:
 
     // 图片抓取已移至独立的 LcscImageService 类
 
+    /**
+     * @brief 缓存加载结果结构体（用于异步缓存加载）
+     */
+    struct CacheLoadResult {
+        QString componentId;
+        bool success;
+        QSharedPointer<ComponentData> cachedData;
+        QByteArray cadDataJson;  // 原始 CAD JSON 数据
+        QList<QPair<int, QByteArray>> previewImageData;  // index, data
+        QByteArray datasheetData;
+        // 预解析的符号和封装数据（在后台线程解析）
+        QSharedPointer<SymbolData> symbolData;
+        QSharedPointer<FootprintData> footprintData;
+    };
+
+    /**
+     * @brief 异步从缓存加载元件数据（后台线程执行）
+     *
+     * @param normalizedId 元件 ID
+     * @param fetch3DModel 是否获取 3D 模型
+     * @param cache 缓存服务指针
+     */
+    void loadComponentDataFromCacheAsync(const QString& normalizedId, bool fetch3DModel, ComponentCacheService* cache);
+
 private:
     class EasyedaApi* m_api;
     class EasyedaImporter* m_importer;
@@ -399,25 +432,16 @@ private:
         ComponentData data;
         bool hasComponentInfo;
         bool hasCadData;
-        bool hasObjData;
-        bool hasStepData;
         bool fetch3DModel;  // 是否需要获取 3D 模型
+        bool hasTriggeredLcscFetch;  // 是否已触发 LCSC 数据获取（防止重复触发）
         QString errorMessage;
+        int pendingAsyncDownloads;  // 等待的异步下载数量（数据手册、预览图等）
     };
 
     QMap<QString, FetchingComponent> m_fetchingComponents;
 
     // 当前处理的元件ID
     QString m_currentComponentId;
-
-    // 待处理的组件数据（用于等待3D 模型数据）
-    ComponentData m_pendingComponentData;
-
-    // 待处理的 3D 模型 UUID
-    QString m_pendingModelUuid;
-
-    // 是否已经下载了WRL 格式
-    bool m_hasDownloadedWrl;
 
     // 并行数据收集状态
     ParallelFetchContext* m_parallelContext;
@@ -427,6 +451,7 @@ private:
     class ComponentQueueManager* m_queueManager;
     int m_activeRequestCount;
     int m_maxConcurrentRequests;
+    bool m_batchFetch3DModel;
 
     // 内部状态处理
 
@@ -437,6 +462,9 @@ private:
      * @param fetch3DModel 是否获取3D模型
      */
     void fetchComponentDataInternal(const QString& componentId, bool fetch3DModel);
+    void initializeFetchingComponent(FetchingComponent& fetchingComponent,
+                                     const QString& componentId,
+                                     bool fetch3DModel);
 
     // 输出路径
     QString m_outputPath;

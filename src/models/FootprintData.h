@@ -381,8 +381,8 @@ public:
     void clear();
 
 private:
-    FootprintInfo m_info;
-    FootprintBBox m_bbox;
+    FootprintInfo m_info{};
+    FootprintBBox m_bbox{};
     QList<FootprintPad> m_pads;
     QList<FootprintTrack> m_tracks;
     QList<FootprintHole> m_holes;

@@ -4,12 +4,16 @@
 
 namespace EasyKiConverter {
 
+// 静态成员初始化
+bool ComponentListItemData::s_holdPreviewImageNotifications = false;
+QMutex ComponentListItemData::s_previewImageMutex;
+
 ComponentListItemData::ComponentListItemData(const QString& componentId, QObject* parent)
     : QObject(parent)
     , m_componentId(componentId)
-    , m_currentPreviewIndex(0)
     , m_isValid(true)  // 默认为 true，直到验证失败
-    , m_isFetching(false) {}
+    , m_isFetching(false)
+    , m_validationPhase("idle") {}
 
 void ComponentListItemData::setName(const QString& name) {
     if (m_name != name) {
@@ -25,27 +29,12 @@ void ComponentListItemData::setPackage(const QString& package) {
     }
 }
 
-void ComponentListItemData::setThumbnail(const QImage& thumbnail) {
-    m_thumbnail = thumbnail;
-    m_thumbnailBase64Cache.clear();  // 清除缓存，下次访问时重新生成
-    emit thumbnailChanged();
+void ComponentListItemData::setNameSilent(const QString& name) {
+    m_name = name;
 }
 
-QString ComponentListItemData::thumbnailBase64() const {
-    if (m_thumbnail.isNull()) {
-        return QString();
-    }
-
-    // 使用缓存避免每次 QML 访问都重新编码
-    if (m_thumbnailBase64Cache.isEmpty()) {
-        QByteArray byteArray;
-        QBuffer buffer(&byteArray);
-        buffer.open(QIODevice::WriteOnly);
-        m_thumbnail.save(&buffer, "PNG");
-        m_thumbnailBase64Cache = QString::fromLatin1(byteArray.toBase64().data());
-    }
-
-    return m_thumbnailBase64Cache;
+void ComponentListItemData::setPackageSilent(const QString& package) {
+    m_package = package;
 }
 
 void ComponentListItemData::setComponentData(const QSharedPointer<ComponentData>& data) {
@@ -73,6 +62,13 @@ void ComponentListItemData::setFetching(bool fetching) {
     }
 }
 
+void ComponentListItemData::setValidationPhase(const QString& phase) {
+    if (m_validationPhase != phase) {
+        m_validationPhase = phase;
+        emit validationPhaseChanged();
+    }
+}
+
 void ComponentListItemData::setErrorMessage(const QString& error) {
     if (m_errorMessage != error) {
         m_errorMessage = error;
@@ -80,25 +76,46 @@ void ComponentListItemData::setErrorMessage(const QString& error) {
     }
 }
 
-QVariantList ComponentListItemData::previewImages() const {
-    QVariantList result;
+void ComponentListItemData::setPreviewImageExported(bool exported) {
+    if (m_previewImageExported != exported) {
+        m_previewImageExported = exported;
+        emit exportStatusChanged();
+    }
+}
+
+void ComponentListItemData::setDatasheetExported(bool exported) {
+    if (m_datasheetExported != exported) {
+        m_datasheetExported = exported;
+        emit exportStatusChanged();
+    }
+}
+
+void ComponentListItemData::updatePreviewImagesCache() const {
+    m_previewImagesCache.clear();
     for (const QImage& image : m_previewImages) {
+        if (image.isNull()) {
+            m_previewImagesCache.append(QVariant());
+            continue;
+        }
         QByteArray byteArray;
         QBuffer buffer(&byteArray);
         buffer.open(QIODevice::WriteOnly);
         image.save(&buffer, "PNG");
-        result.append(QString::fromLatin1(byteArray.toBase64().data()));
+        m_previewImagesCache.append(QString::fromLatin1(byteArray.toBase64().data()));
     }
-    return result;
+}
+
+QVariantList ComponentListItemData::previewImages() const {
+    if (m_previewImagesCache.isEmpty() && !m_previewImages.isEmpty()) {
+        updatePreviewImagesCache();
+    }
+    return m_previewImagesCache;
 }
 
 void ComponentListItemData::addPreviewImage(const QImage& image) {
     if (!image.isNull()) {
         m_previewImages.append(image);
-        // 如果是第一张图片，设置为主缩略图
-        if (m_previewImages.size() == 1) {
-            setThumbnail(image);
-        }
+        m_previewImagesCache.clear();
         emit previewImagesChanged();
     }
 }
@@ -108,62 +125,82 @@ void ComponentListItemData::insertPreviewImage(const QImage& image, int index) {
         return;
     }
 
-    // 确保列表大小足够
     while (m_previewImages.size() <= index) {
         m_previewImages.append(QImage());
     }
 
-    // 插入或替换指定位置的图片
     if (m_previewImages[index].isNull()) {
         m_previewImages[index] = image;
         qDebug() << "Inserted preview image at index:" << index;
     } else {
-        // 如果该位置已有图片，替换它
         m_previewImages[index] = image;
         qDebug() << "Replaced preview image at index:" << index;
     }
 
-    // 第一张预览图始终覆盖缩略图显示
-    if (index == 0) {
-        setThumbnail(image);
-        qDebug() << "First preview image (index 0) set as thumbnail";
-    } else if (!hasThumbnail()) {
-        // 如果没有缩略图且不是第一张，使用当前图片作为缩略图
-        setThumbnail(image);
+    m_previewImagesCache.clear();
+    emit previewImagesChanged();
+}
+
+void ComponentListItemData::insertPreviewImageSilent(const QImage& image, int index) {
+    if (image.isNull()) {
+        return;
     }
 
+    while (m_previewImages.size() <= index) {
+        m_previewImages.append(QImage());
+    }
+
+    m_previewImages[index] = image;
+
+    // 注意：不在这里更新缓存和发射信号
+    // 缓存更新和信号发射由 ComponentListViewModel 的 batchUpdatePreviewImages 统一处理
+    // 这样可以避免在主线程中进行耗时的图片编码操作
+}
+
+// 编码单张图片
+static QString encodeImageToBase64(const QImage& image) {
+    if (image.isNull()) {
+        return QString();
+    }
+    QByteArray byteArray;
+    QBuffer buffer(&byteArray);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "PNG");
+    return QString::fromLatin1(byteArray.toBase64().data());
+}
+
+void ComponentListItemData::finishPreviewImageLoading() {
+    m_previewImagesCache.clear();
+    for (const QImage& image : m_previewImages) {
+        if (image.isNull()) {
+            m_previewImagesCache.append(QVariant());
+            continue;
+        }
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        buffer.open(QIODevice::WriteOnly);
+        image.save(&buffer, "PNG");
+        m_previewImagesCache.append(QString::fromLatin1(byteArray.toBase64().data()));
+    }
+    emit previewImagesChanged();
+}
+
+void ComponentListItemData::setEncodedPreviewImages(const QStringList& encodedImages) {
+    m_previewImagesCache.clear();
+    for (const QString& encoded : encodedImages) {
+        if (encoded.isEmpty()) {
+            m_previewImagesCache.append(QVariant());
+        } else {
+            m_previewImagesCache.append(encoded);
+        }
+    }
     emit previewImagesChanged();
 }
 
 void ComponentListItemData::setPreviewImages(const QList<QImage>& images) {
     m_previewImages = images;
-    if (!images.isEmpty()) {
-        setThumbnail(images.first());
-        m_currentPreviewIndex = 0;
-    }
+    m_previewImagesCache.clear();
     emit previewImagesChanged();
-}
-
-void ComponentListItemData::setCurrentPreviewIndex(int index) {
-    if (index >= 0 && index < m_previewImages.size() && index != m_currentPreviewIndex) {
-        m_currentPreviewIndex = index;
-        setThumbnail(m_previewImages[index]);
-        emit currentPreviewIndexChanged();
-    }
-}
-
-void ComponentListItemData::nextPreviewImage() {
-    if (!m_previewImages.isEmpty()) {
-        int nextIndex = (m_currentPreviewIndex + 1) % m_previewImages.size();
-        setCurrentPreviewIndex(nextIndex);
-    }
-}
-
-void ComponentListItemData::previousPreviewImage() {
-    if (!m_previewImages.isEmpty()) {
-        int prevIndex = (m_currentPreviewIndex - 1 + m_previewImages.size()) % m_previewImages.size();
-        setCurrentPreviewIndex(prevIndex);
-    }
 }
 
 QString ComponentListItemData::datasheetUrl() const {
@@ -171,6 +208,50 @@ QString ComponentListItemData::datasheetUrl() const {
         return m_componentData->datasheet();
     }
     return QString();
+}
+
+void ComponentListItemData::setEncodedPreviewImagesHoldNotify(const QStringList& encodedImages) {
+    m_previewImagesCache.clear();
+    for (const QString& encoded : encodedImages) {
+        if (encoded.isEmpty()) {
+            m_previewImagesCache.append(QVariant());
+        } else {
+            m_previewImagesCache.append(encoded);
+        }
+    }
+    // 如果没有暂停通知，则发射信号
+    bool shouldNotify;
+    {
+        QMutexLocker locker(&s_previewImageMutex);
+        shouldNotify = !s_holdPreviewImageNotifications;
+    }
+    if (shouldNotify) {
+        emit previewImagesChanged();
+    }
+}
+
+void ComponentListItemData::setEncodedPreviewImagesSilent(const QStringList& encodedImages) {
+    m_previewImagesCache.clear();
+    for (const QString& encoded : encodedImages) {
+        if (encoded.isEmpty()) {
+            m_previewImagesCache.append(QVariant());
+        } else {
+            m_previewImagesCache.append(encoded);
+        }
+    }
+    // 不发射信号，由其他更新触发 UI 刷新
+}
+
+void ComponentListItemData::holdPreviewImageNotifications() {
+    QMutexLocker locker(&s_previewImageMutex);
+    s_holdPreviewImageNotifications = true;
+}
+
+void ComponentListItemData::flushPreviewImageNotifications() {
+    // 静态方法无法发射实例信号，改为发射所有待更新项的信号
+    // 使用锁保护确保线程安全
+    QMutexLocker locker(&s_previewImageMutex);
+    s_holdPreviewImageNotifications = false;
 }
 
 }  // namespace EasyKiConverter

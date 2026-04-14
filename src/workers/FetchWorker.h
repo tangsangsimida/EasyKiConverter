@@ -1,15 +1,14 @@
 #ifndef FETCHWORKER_H
 #define FETCHWORKER_H
 
+#include "BaseWorker.h"
 #include "models/ComponentExportStatus.h"
 
 #include <QAtomicInt>
 #include <QMutex>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QObject>
 #include <QRandomGenerator>
-#include <QRunnable>
 
 namespace EasyKiConverter {
 
@@ -18,7 +17,7 @@ namespace EasyKiConverter {
  *
  * 负责从网络下载原始数据（I/O密集型任务）
  */
-class FetchWorker : public QObject, public QRunnable {
+class FetchWorker : public BaseWorker {
     Q_OBJECT
 
 public:
@@ -70,13 +69,6 @@ private:
     QByteArray httpGet(const QString& url,
                        int timeoutMs = 30000,
                        QSharedPointer<ComponentExportStatus> status = nullptr);
-
-    /**
-     * @brief 解压gzip数据
-     * @param compressedData 压缩的数据
-         * @return QByteArray 解压后的数据
-     */
-    QByteArray decompressGzip(const QByteArray& compressedData);
 
     /**
      * @brief 解压ZIP数据
