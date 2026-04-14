@@ -62,9 +62,7 @@ void SymbolExportStage::start(const QStringList& componentIds,
     // 在工作线程中执行库级别的导出
     m_isExporting.store(true);
     m_workerThread = QThread::create([this, componentIds, cachedData]() { doLibraryExport(componentIds, cachedData); });
-    connect(m_workerThread, &QThread::finished, this, [this]() {
-        m_workerThread = nullptr;
-    });
+    connect(m_workerThread, &QThread::finished, this, [this]() { m_workerThread = nullptr; });
     m_workerThread->start();
 }
 
