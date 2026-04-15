@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Effects
 import "../styles"
 
 /**
@@ -20,542 +19,268 @@ import "../styles"
  * - ExitDialog：无任务时显示，提供"最小化到托盘"/"退出程序"/"取消"选项
  * - ConfirmDialog：有任务时显示，提供"强制退出"/"继续转换"选项
  */
-FocusScope {
+SliderDialogBase {
     id: root
-    anchors.fill: parent
-    visible: false
-    z: 9999
-    focus: visible  // 当对话框可见时接收焦点
-    // 常量
-    readonly property int buttonHeight: 48
-    readonly property real sliderOpacity: 0.25
-    // 属性
+    // ===== 属性 =====
     property bool rememberChoice: false
-    property Item activeButton: null  // 当前活跃的按钮
-    property Item selectedButton: exitButton  // 当前键盘选中的按钮，默认为退出按钮
-    property string focusArea: "button"  // 当前聚焦区域："button" 或 "checkbox"，默认为按钮
-    // 信号
+    property string focusArea: "button"  // "button" or "checkbox"
+    // ===== 信号 =====
     signal minimizeToTray(bool remember)
     signal exitApp(bool remember)
     signal canceled
-    // 更新滑块位置
-    function updateSlider(targetButton, targetColor) {
-        // 计算按钮在 buttonBox 中的相对位置
-        var buttonY = targetButton.mapToItem(buttonBox, 0, 0).y;
-        // 果冻拉伸效果：向下移动时轻微压缩高度
-        var centerY = buttonBox.height / 2;
-        var stretchFactor = 1.0 + Math.abs(buttonY - centerY) / centerY * 0.02;
-        sliderBackground.y = buttonY;
-        sliderBackground.height = buttonHeight * (2.0 - stretchFactor);  // 使用常量
-        sliderBackground.color = targetColor;
-        sliderBackground.opacity = sliderOpacity;  // 使用常量
-        // 更新活跃按钮
-        activeButton = targetButton;
-    }
-
-    // 隐藏滑块
-    function hideSlider() {
-        sliderBackground.opacity = 0;
-        // 清除活跃按钮
-        activeButton = null;
-    }
-
-    // 打开/关闭
-    function open() {
-        visible = true;
-        // 直接设置对话框为完全显示状态，不播放打开动画
-        dialogBox.rotation = 0;
-        dialogBox.scale = 1.0;
-        dialogBox.opacity = 1.0;
-        dialogBoxTranslate.y = 0;
-        // 设置默认选中为退出按钮
-        selectedButton = exitButton;
-        // 设置滑块默认聚焦在退出选项上
-        updateSlider(exitButton, AppStyle.colors.danger);
-        // 重置聚焦区域为按钮
-        focusArea = "button";
-        // 强制焦点到 root 以便键盘导航
-        root.forceActiveFocus();
-    }
-
-    function close() {
-        visible = false;
-    }
-
-    function closeWithAnimation() {
-        hideAnim.start();
-    }
-
-    // 对话框主体
-    Rectangle {
-        id: dialogBox
-        width: Math.min(parent.width * 0.9, 440)
-        implicitHeight: contentCol.implicitHeight + AppStyle.spacing.xxxl * 2
-        anchors.centerIn: parent
-        color: AppStyle.isDarkMode ? "#1e293b" : "#ffffff"
-        radius: AppStyle.radius.xl
-        scale: 1.0
-        opacity: 1.0
-        rotation: 0
-        transform: Translate {
-            id: dialogBoxTranslate
-            y: 0
-        }
-
-        // 边框
-        Rectangle {
-            anchors.fill: parent
-            radius: AppStyle.radius.xl
-            color: "transparent"
-            border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.1)
-            border.width: 1
-            z: 1
-        }
-
-        // 阴影
-        Rectangle {
-            anchors.fill: parent
-            radius: AppStyle.radius.xl
-            color: "transparent"
-            z: -1
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowColor: AppStyle.shadows.lg.color
-                shadowBlur: 1.5
-                shadowHorizontalOffset: AppStyle.shadows.lg.horizontalOffset
-                shadowVerticalOffset: AppStyle.shadows.lg.verticalOffset
+    // ===== 按钮规格 =====
+    buttonSpecs: [
+        {
+            text: qsTr("最小化到托盘"),
+            color: AppStyle.colors.primary,
+            action: function () {
+                root.minimizeToTray(rememberChoice);
+            }
+        },
+        {
+            isSeparator: true
+        },
+        {
+            text: qsTr("退出程序"),
+            color: AppStyle.colors.danger,
+            action: function () {
+                root.exitApp(rememberChoice);
+            }
+        },
+        {
+            isSeparator: true
+        },
+        {
+            text: qsTr("取消"),
+            color: AppStyle.colors.textSecondary,
+            action: function () {
+                root.closeWithAnimation();
+                Qt.callLater(root.canceled);
             }
         }
-
-        ColumnLayout {
-            id: contentCol
-            anchors.fill: parent
-            anchors.margins: AppStyle.spacing.xxxl
-            spacing: AppStyle.spacing.lg
-            // 标题
-            Text {
-                text: qsTr("关闭程序")
-                Layout.fillWidth: true
-                font.pixelSize: AppStyle.fontSizes.xl
-                font.bold: true
-                color: AppStyle.colors.textPrimary
-                horizontalAlignment: Text.AlignHCenter
+    ]
+    // 覆写 title 和 message
+    title: qsTr("关闭程序")
+    message: qsTr("您可以选择最小化到系统托盘以保持后台运行，或者完全退出程序。")
+    // ===== 额外内容：记住选择复选框 ======
+    extraContentSource: RowLayout {
+        id: rememberLayout
+        spacing: AppStyle.spacing.sm
+        CheckBox {
+            id: rememberCheckBox
+            checked: root.rememberChoice
+            onClicked: {
+                root.rememberChoice = checked;
             }
 
-            // 提示内容
-            Text {
-                text: qsTr("您可以选择最小化到系统托盘以保持后台运行，或者完全退出程序。")
-                Layout.fillWidth: true
-                font.pixelSize: AppStyle.fontSizes.md
-                color: AppStyle.colors.textSecondary
-                wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignHCenter
-                lineHeight: 1.3
-            }
-
-            // 按钮组容器
-            Rectangle {
-                id: buttonBox
-                Layout.fillWidth: true
-                Layout.topMargin: AppStyle.spacing.md
-                implicitHeight: buttonCol.implicitHeight + AppStyle.spacing.md * 2
-                color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.05) : Qt.rgba(0, 0, 0, 0.03)
-                radius: AppStyle.radius.lg
-                border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.08)
-                border.width: 1
-                // 滑块背景（果冻效果）
-                Rectangle {
-                    id: sliderBackground
-                    x: AppStyle.spacing.sm
-                    y: AppStyle.spacing.sm
-                    width: buttonBox.width - AppStyle.spacing.sm * 2
-                    height: buttonHeight  // 使用常量
-                    radius: AppStyle.radius.md
-                    color: AppStyle.colors.primary
-                    opacity: 0
-                    z: 2
-                    // Q弹动画（弹簧效果 - 垂直移动）
-                    Behavior on y {
-                        enabled: sliderBackground.visible
-                        SpringAnimation {
-                            spring: 5.0
-                            damping: 0.5
-                            mass: 0.8
-                            epsilon: 0.25  // 防止在微小像素点上持续计算
-                        }
-                    }
-
-                    // Q弹动画（弹簧效果 - 高度变化，果冻拉伸）
-                    Behavior on height {
-                        enabled: sliderBackground.visible
-                        SpringAnimation {
-                            spring: 6.0  // 稍微更强的弹簧，让拉伸更有弹性
-                            damping: 0.4  // 更低的阻尼，让效果更明显
-                            mass: 0.7
-                            epsilon: 0.25
-                        }
-                    }
-
-                    // 颜色渐变动画
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: 250
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    // 淡入淡出动画
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: 200
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    // 发光效果（只在可见时启用以提高性能）
-                    layer.enabled: sliderBackground.opacity > 0
-                    layer.effect: MultiEffect {
-                        shadowEnabled: true
-                        shadowColor: sliderBackground.color
-                        shadowBlur: 1.0
-                        shadowVerticalOffset: 0
-                        shadowHorizontalOffset: 0
+            indicator: Rectangle {
+                implicitWidth: 22
+                implicitHeight: 22
+                x: rememberCheckBox.leftPadding
+                y: parent.height / 2 - height / 2
+                radius: 4
+                color: rememberCheckBox.checked ? AppStyle.colors.primary : "transparent"
+                border.color: rememberCheckBox.checked ? AppStyle.colors.primary : (root.focusArea === "checkbox" ? AppStyle.colors.primary : AppStyle.colors.textSecondary)
+                border.width: root.focusArea === "checkbox" ? 2.5 : 1.5
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 150
                     }
                 }
-
-                // 按钮列
-                ColumnLayout {
-                    id: buttonCol
-                    anchors.fill: parent
-                    anchors.topMargin: AppStyle.spacing.sm
-                    anchors.bottomMargin: AppStyle.spacing.sm
-                    spacing: 0
-                    z: 1
-                    // 最小化到托盘
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: buttonHeight  // 使用常量
-                        ModernButton {
-                            id: minimizeButton
-                            anchors.fill: parent
-                            text: qsTr("最小化到托盘")
-                            backgroundColor: "transparent"
-                            // 动态文本颜色：当滑块在上方时变亮，键盘选中时使用不同颜色
-                            textColor: root.activeButton === minimizeButton ? Qt.lighter(AppStyle.colors.primary, 1.3) : (root.selectedButton === minimizeButton ? AppStyle.colors.primary : AppStyle.colors.textPrimary)
-                            hoverColor: "transparent"
-                            // 文本颜色渐变动画
-                            Behavior on textColor {
-                                ColorAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-
-                            // 缩放效果：当滑块在上方时轻微放大，键盘选中时也放大，按下时缩小
-                            scale: pressed ? 0.95 : (root.activeButton === minimizeButton || root.selectedButton === minimizeButton) ? 1.05 : 1.0
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-
-                            onHoveredChanged: {
-                                if (hovered) {
-                                    root.updateSlider(this, AppStyle.colors.primary);
-                                } else if (!exitButton.hovered && !cancelButton.hovered && !pressed) {
-                                    // 只在没有按下且没有悬停在其他按钮上时隐藏滑块
-                                    root.hideSlider();
-                                }
-                            }
-
-                            onClicked: {
-                                root.minimizeToTray(rememberChoice);
-                            }
-                        }
-                    }
-
-                    // 分隔线
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 1
-                        color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.08) : Qt.rgba(0, 0, 0, 0.06)
-                    }
-
-                    // 退出程序
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: buttonHeight  // 使用常量
-                        ModernButton {
-                            id: exitButton
-                            anchors.fill: parent
-                            text: qsTr("退出程序")
-                            backgroundColor: "transparent"
-                            // 动态文本颜色：当滑块在上方时变亮
-                            textColor: root.activeButton === exitButton ? Qt.lighter(AppStyle.colors.danger, 1.3) : (root.selectedButton === exitButton ? AppStyle.colors.danger : AppStyle.colors.textPrimary)
-                            hoverColor: "transparent"
-                            // 文本颜色渐变动画
-                            Behavior on textColor {
-                                ColorAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-
-                            // 缩放效果：当滑块在上方时轻微放大，键盘选中时也放大，按下时缩小
-                            scale: pressed ? 0.95 : (root.activeButton === exitButton || root.selectedButton === exitButton) ? 1.05 : 1.0
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-
-                            onHoveredChanged: {
-                                if (hovered) {
-                                    root.updateSlider(this, AppStyle.colors.danger);
-                                } else if (!minimizeButton.hovered && !cancelButton.hovered && !pressed) {
-                                    // 只在没有按下且没有悬停在其他按钮上时隐藏滑块
-                                    root.hideSlider();
-                                }
-                            }
-
-                            onClicked: {
-                                root.exitApp(rememberChoice);
-                            }
-                        }
-                    }
-
-                    // 分隔线
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 1
-                        color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.08) : Qt.rgba(0, 0, 0, 0.06)
-                    }
-
-                    // 取消
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: buttonHeight  // 使用常量
-                        ModernButton {
-                            id: cancelButton
-                            anchors.fill: parent
-                            text: qsTr("取消")
-                            backgroundColor: "transparent"
-                            // 动态文本颜色：当滑块在上方时变亮
-                            textColor: root.activeButton === cancelButton ? Qt.lighter(AppStyle.colors.textSecondary, 1.5) : (root.selectedButton === cancelButton ? AppStyle.colors.textSecondary : AppStyle.colors.textPrimary)
-                            hoverColor: "transparent"
-                            // 文本颜色渐变动画
-                            Behavior on textColor {
-                                ColorAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-
-                            // 缩放效果：当滑块在上方时轻微放大，键盘选中时也放大，按下时缩小
-                            scale: pressed ? 0.95 : (root.activeButton === cancelButton || root.selectedButton === cancelButton) ? 1.05 : 1.0
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-
-                            onHoveredChanged: {
-                                if (hovered) {
-                                    root.updateSlider(this, AppStyle.colors.textSecondary);
-                                } else if (!minimizeButton.hovered && !exitButton.hovered && !pressed) {
-                                    // 只在没有按下且没有悬停在其他按钮上时隐藏滑块
-                                    root.hideSlider();
-                                }
-                            }
-
-                            onClicked: {
-                                root.closeWithAnimation();
-                                Qt.callLater(root.canceled);
-                            }
-                        }
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: 150
                     }
                 }
-            }
-
-            // 记住选择复选框
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.topMargin: AppStyle.spacing.md
-                spacing: AppStyle.spacing.sm
-                CheckBox {
-                    id: rememberCheckBox
-                    checked: root.rememberChoice  // 双向绑定
-                    onClicked: {
-                        root.rememberChoice = checked;
-                    }
-
-                    indicator: Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
-                        x: rememberCheckBox.leftPadding
-                        y: parent.height / 2 - height / 2
-                        radius: 4
-                        color: rememberCheckBox.checked ? AppStyle.colors.primary : "transparent"
-                        border.color: rememberCheckBox.checked ? AppStyle.colors.primary : (root.focusArea === "checkbox" ? AppStyle.colors.primary : AppStyle.colors.textSecondary)
-                        border.width: root.focusArea === "checkbox" ? 2.5 : 1.5
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 150
-                            }
-                        }
-                        Behavior on border.color {
-                            ColorAnimation {
-                                duration: 150
-                            }
-                        }
-                        Behavior on border.width {
-                            NumberAnimation {
-                                duration: 150
-                            }
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "✓"
-                            font.pixelSize: 16
-                            font.bold: true
-                            color: "#ffffff"
-                            visible: rememberCheckBox.checked
-                        }
+                Behavior on border.width {
+                    NumberAnimation {
+                        duration: 150
                     }
                 }
 
                 Text {
-                    text: qsTr("记住我的选择")
-                    font.pixelSize: AppStyle.fontSizes.sm
-                    color: AppStyle.colors.textSecondary
+                    anchors.centerIn: parent
+                    text: "\u2713"
+                    font.pixelSize: 16
+                    font.bold: true
+                    color: "#ffffff"
+                    visible: rememberCheckBox.checked
                 }
             }
         }
+
+        Text {
+            text: qsTr("记住我的选择")
+            font.pixelSize: AppStyle.fontSizes.sm
+            color: AppStyle.colors.textSecondary
+        }
     }
 
-    // 键盘事件处理
+    // ===== 键盘事件 ======
+    // 注意：这个对话框没有 Escape 键处理，让 Main.qml 的 Shortcut 处理
+    function getButtonByIndex(index) {
+        var btnIndex = 0;
+        for (var i = 0; i < buttonSpecs.length; i++) {
+            if (!buttonSpecs[i].isSeparator) {
+                if (btnIndex === index) {
+                    return buttonColLayout.children[i].actualButton;
+                }
+                btnIndex++;
+            }
+        }
+        return null;
+    }
+
+    function getButtonSpecByIndex(index) {
+        var btnIndex = 0;
+        for (var i = 0; i < buttonSpecs.length; i++) {
+            if (!buttonSpecs[i].isSeparator) {
+                if (btnIndex === index) {
+                    return buttonSpecs[i];
+                }
+                btnIndex++;
+            }
+        }
+        return null;
+    }
+
+    // 获取按钮在 buttonSpecs 中的实际索引
+    function getSpecIndexForButton(buttonIndex) {
+        var btnIndex = 0;
+        for (var i = 0; i < buttonSpecs.length; i++) {
+            if (!buttonSpecs[i].isSeparator) {
+                if (btnIndex === buttonIndex) {
+                    return i;
+                }
+                btnIndex++;
+            }
+        }
+        return -1;
+    }
+
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Up || event.key === Qt.Key_Left) {
-            // 向上/左导航：只在聚焦在按钮时才在按钮之间导航
             if (focusArea === "button") {
-                if (selectedButton === exitButton) {
-                    selectedButton = minimizeButton;
-                    updateSlider(minimizeButton, AppStyle.colors.primary);
-                } else if (selectedButton === cancelButton) {
-                    selectedButton = exitButton;
-                    updateSlider(exitButton, AppStyle.colors.danger);
-                } else if (selectedButton === minimizeButton) {
-                    selectedButton = cancelButton;
-                    updateSlider(cancelButton, AppStyle.colors.textSecondary);
+                // 向上/左导航
+                var currentIndex = 0;
+                var targetIndex = 0;
+                var btnCount = 0;
+                for (var i = 0; i < buttonSpecs.length; i++) {
+                    if (!buttonSpecs[i].isSeparator) {
+                        if (buttonColLayout.children[i].actualButton === selectedButton) {
+                            currentIndex = i;
+                        }
+                        btnCount++;
+                    }
+                }
+                // 找到上一个按钮
+                var prevBtnIndex = -1;
+                for (var j = currentIndex - 1; j >= 0; j--) {
+                    if (!buttonSpecs[j].isSeparator) {
+                        prevBtnIndex = j;
+                        break;
+                    }
+                }
+                if (prevBtnIndex >= 0) {
+                    selectedButton = buttonColLayout.children[prevBtnIndex].actualButton;
+                    updateSlider(selectedButton, buttonSpecs[prevBtnIndex].color);
                 }
             }
             event.accepted = true;
         } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Right) {
-            // 向下/右导航：只在聚焦在按钮时才在按钮之间导航
             if (focusArea === "button") {
-                if (selectedButton === minimizeButton) {
-                    selectedButton = exitButton;
-                    updateSlider(exitButton, AppStyle.colors.danger);
-                } else if (selectedButton === exitButton) {
-                    selectedButton = cancelButton;
-                    updateSlider(cancelButton, AppStyle.colors.textSecondary);
-                } else if (selectedButton === cancelButton) {
-                    selectedButton = minimizeButton;
-                    updateSlider(minimizeButton, AppStyle.colors.primary);
+                // 向下/右导航
+                var currentIdx = 0;
+                var nextIdx = -1;
+                for (var k = 0; k < buttonSpecs.length; k++) {
+                    if (!buttonSpecs[k].isSeparator) {
+                        if (buttonColLayout.children[k].actualButton === selectedButton) {
+                            currentIdx = k;
+                        }
+                    }
+                }
+                for (var l = currentIdx + 1; l < buttonSpecs.length; l++) {
+                    if (!buttonSpecs[l].isSeparator) {
+                        nextIdx = l;
+                        break;
+                    }
+                }
+                if (nextIdx >= 0) {
+                    selectedButton = buttonColLayout.children[nextIdx].actualButton;
+                    updateSlider(selectedButton, buttonSpecs[nextIdx].color);
                 }
             }
             event.accepted = true;
         } else if (event.key === Qt.Key_Tab) {
-            // Tab 键：在选项按钮和记住选择复选框之间切换
+            // Tab 键：在按钮和复选框之间切换
             if (focusArea === "button") {
-                // 从选项按钮切换到记住选择复选框，隐藏滑块
                 focusArea = "checkbox";
                 hideSlider();
             } else {
-                // 从记住选择复选框切换到选项按钮，显示滑块
                 focusArea = "button";
-                // 更新当前选中的按钮的滑块位置
-                if (selectedButton === minimizeButton) {
-                    updateSlider(minimizeButton, AppStyle.colors.primary);
-                } else if (selectedButton === exitButton) {
-                    updateSlider(exitButton, AppStyle.colors.danger);
-                } else if (selectedButton === cancelButton) {
-                    updateSlider(cancelButton, AppStyle.colors.textSecondary);
+                if (selectedButton) {
+                    for (var m = 0; m < buttonSpecs.length; m++) {
+                        if (buttonColLayout.children[m].actualButton === selectedButton) {
+                            updateSlider(selectedButton, buttonSpecs[m].color);
+                            break;
+                        }
+                    }
                 }
             }
             event.accepted = true;
         } else if (event.key === Qt.Key_Space) {
-            // 空格键：当聚焦在记住选择复选框时切换选择状态
             if (focusArea === "checkbox") {
                 root.rememberChoice = !root.rememberChoice;
                 event.accepted = true;
             }
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            // 回车键确认选择
             if (focusArea === "checkbox") {
-                // 当聚焦在记住选择复选框时，回车键切换选择状态
                 root.rememberChoice = !root.rememberChoice;
                 event.accepted = true;
-            } else if (selectedButton === minimizeButton) {
-                root.minimizeToTray(rememberChoice);
-            } else if (selectedButton === exitButton) {
-                root.exitApp(rememberChoice);
-            } else if (selectedButton === cancelButton) {
-                root.closeWithAnimation();
-                Qt.callLater(root.canceled);
+            } else if (selectedButton) {
+                // 执行选中按钮的动作
+                for (var n = 0; n < buttonSpecs.length; n++) {
+                    if (buttonColLayout.children[n].actualButton === selectedButton) {
+                        if (buttonSpecs[n].action) {
+                            buttonSpecs[n].action();
+                        }
+                        break;
+                    }
+                }
             }
             event.accepted = true;
         } else if (event.key === Qt.Key_Escape) {
-            // ESC 键取消 - 不处理，让Main.qml的Shortcut处理
+            // ESC 键不处理，让 Main.qml 的 Shortcut 处理
             event.accepted = false;
         } else {
-            // 其他键盘事件也被拦截，防止传播到主窗口
             event.accepted = true;
         }
     }
 
-    // 向下滑动消失动画
-
-    SequentialAnimation {
-        id: hideAnim
-        ParallelAnimation {
-            NumberAnimation {
-                target: dialogBox
-                property: "opacity"
-                from: 1
-                to: 0
-                duration: 200
-                easing.type: Easing.OutQuad
+    // ===== 覆写 open 函数 =====
+    function open() {
+        visible = true;
+        root.dialogBox.rotation = 0;
+        root.dialogBox.scale = 1.0;
+        root.dialogBox.opacity = 1.0;
+        root.dialogBoxTranslate.y = 0;
+        // 默认选中第一个按钮（最小化到托盘）
+        // 遍历 buttonSpecs，使用单独计数器追踪 children 索引
+        var childIndex = 0;
+        for (var i = 0; i < buttonSpecs.length; i++) {
+            if (buttonSpecs[i].isSeparator) {
+                continue;
             }
-
-            NumberAnimation {
-                target: dialogBoxTranslate
-                property: "y"
-                from: 0
-                to: root.height
-                duration: 200
-                easing.type: Easing.OutQuad
+            // 找到第一个非分隔线的按钮
+            var loader = buttonColLayout.children[childIndex];
+            if (loader && loader.actualButton) {
+                selectedButton = loader.actualButton;
+                updateSlider(selectedButton, buttonSpecs[i].color);
+                break;
             }
-
-            NumberAnimation {
-                target: dialogBox
-                property: "scale"
-                from: 1.0
-                to: 0.9
-                duration: 200
-                easing.type: Easing.OutQuad
-            }
+            childIndex++;
         }
-
-        PropertyAction {
-            target: root
-            property: "visible"
-            value: false
-        }
+        focusArea = "button";
+        root.forceActiveFocus();
     }
 }
