@@ -70,12 +70,18 @@ SliderDialogBase {
         root.dialogBoxTranslate.y = 0;
         showAnim.start();
         root.forceActiveFocus();
-        // 默认聚焦在取消按钮（第一个）
+        // 默认聚焦在取消按钮（第一个非分隔线项）
+        var childIndex = 0;
         for (var i = 0; i < buttonSpecs.length; i++) {
-            if (!buttonSpecs[i].isSeparator && buttonColLayout.children[i] && buttonColLayout.children[i].actualButton) {
-                root.updateSlider(buttonColLayout.children[i].actualButton, AppStyle.colors.textSecondary);
+            if (buttonSpecs[i].isSeparator) {
+                continue;
+            }
+            var loader = buttonColLayout.children[childIndex];
+            if (loader && loader.actualButton) {
+                root.updateSlider(loader.actualButton, AppStyle.colors.textSecondary);
                 break;
             }
+            childIndex++;
         }
     }
 }

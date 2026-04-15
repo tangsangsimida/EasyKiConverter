@@ -100,7 +100,7 @@ SliderDialogBase {
 
                 Text {
                     anchors.centerIn: parent
-                    text: "✓"
+                    text: "\u2713"
                     font.pixelSize: 16
                     font.bold: true
                     color: "#ffffff"
@@ -265,16 +265,20 @@ SliderDialogBase {
         root.dialogBox.opacity = 1.0;
         root.dialogBoxTranslate.y = 0;
         // 默认选中第一个按钮（最小化到托盘）
-        // 跳过可能的分隔线，找到第一个真正的按钮
+        // 遍历 buttonSpecs，使用单独计数器追踪 children 索引
+        var childIndex = 0;
         for (var i = 0; i < buttonSpecs.length; i++) {
-            if (!buttonSpecs[i].isSeparator && buttonColLayout.children[i]) {
-                var loader = buttonColLayout.children[i];
-                if (loader.actualButton) {
-                    selectedButton = loader.actualButton;
-                    updateSlider(selectedButton, buttonSpecs[i].color);
-                    break;
-                }
+            if (buttonSpecs[i].isSeparator) {
+                continue;
             }
+            // 找到第一个非分隔线的按钮
+            var loader = buttonColLayout.children[childIndex];
+            if (loader && loader.actualButton) {
+                selectedButton = loader.actualButton;
+                updateSlider(selectedButton, buttonSpecs[i].color);
+                break;
+            }
+            childIndex++;
         }
         focusArea = "button";
         root.forceActiveFocus();

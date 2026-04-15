@@ -256,7 +256,7 @@ FocusScope {
                 Layout.fillWidth: true
                 Layout.topMargin: AppStyle.spacing.md
                 sourceComponent: root.extraContentSource
-                visible: sourceComponent !== undefined && sourceComponent !== null
+                visible: root.extraContentSource
             }
         }
     }
