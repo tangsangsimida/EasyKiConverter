@@ -13,7 +13,7 @@
 namespace EasyKiConverter {
 
 /**
- * @brief Singleton network client with unified retry/backoff behavior
+ * @brief 单例网络客户端，统一管理重试/退避行为
  */
 class NetworkClient : public QObject, public INetworkClient, public TestableSingleton<NetworkClient> {
     Q_OBJECT
@@ -21,27 +21,39 @@ class NetworkClient : public QObject, public INetworkClient, public TestableSing
 
 public:
     /**
-     * @brief Get singleton instance
+     * @brief 获取单例实例
      */
     using TestableSingleton<NetworkClient>::instance;
 
     /**
-     * @brief Send HTTP GET request with retry (synchronous, blocks until complete)
+     * @brief 发送 HTTP GET 请求（同步，阻塞直到完成）
+     *
+     * @note 此方法使用 thread-local QNetworkAccessManager，必须在具有 Qt 事件循环的线程中调用。
+     *       请勿在 bare std::thread 中调用。
      */
     NetworkResult get(const QUrl& url, const RetryPolicy& policy = {}) override;
 
     /**
-     * @brief Send HTTP GET request with resource type for profiling
+     * @brief 发送 HTTP GET 请求（带资源类型，用于配置Profile）
+     *
+     * @note 此方法使用 thread-local QNetworkAccessManager，必须在具有 Qt 事件循环的线程中调用。
+     *       请勿在 bare std::thread 中调用。
      */
     NetworkResult get(const QUrl& url, ResourceType resourceType, const RetryPolicy& policy = {}) override;
 
     /**
-     * @brief Send HTTP POST request with retry (synchronous, blocks until complete)
+     * @brief 发送 HTTP POST 请求（同步，阻塞直到完成）
+     *
+     * @note 此方法使用 thread-local QNetworkAccessManager，必须在具有 Qt 事件循环的线程中调用。
+     *       请勿在 bare std::thread 中调用。
      */
     NetworkResult post(const QUrl& url, const QByteArray& body, const RetryPolicy& policy = {}) override;
 
     /**
-     * @brief Send HTTP POST request with resource type for profiling
+     * @brief 发送 HTTP POST 请求（带资源类型，用于配置Profile）
+     *
+     * @note 此方法使用 thread-local QNetworkAccessManager，必须在具有 Qt 事件循环的线程中调用。
+     *       请勿在 bare std::thread 中调用。
      */
     NetworkResult post(const QUrl& url,
                        const QByteArray& body,
@@ -49,29 +61,35 @@ public:
                        const RetryPolicy& policy = {}) override;
 
     /**
-     * @brief Send HTTP GET request asynchronously (non-blocking)
+     * @brief 发送 HTTP GET 请求（异步，非阻塞）
      *
-     * The returned AsyncNetworkRequest must be managed by the caller.
-     * The caller should connect to finished() signal and delete the request when done.
-     * The request can be cancelled at any time via AsyncNetworkRequest::cancel().
+     * 返回的 AsyncNetworkRequest 由调用方管理生命周期。
+     * 调用方应连接 finished() 信号并在完成后删除请求。
+     * 可通过 AsyncNetworkRequest::cancel() 随时取消请求。
      *
-     * @param url Request URL
-     * @param resourceType Type of resource being requested
-     * @param policy Retry policy
-     * @return AsyncNetworkRequest* - caller takes ownership
+     * @note 此方法使用 thread-local QNetworkAccessManager，必须在具有 Qt 事件循环的线程中调用
+     *       （如主线程或 QThread 子类）。请勿在 bare std::thread 中调用。
+     *
+     * @param url 请求 URL
+     * @param resourceType 资源类型
+     * @param policy 重试策略
+     * @return AsyncNetworkRequest* - 调用方负责生命周期管理
      */
     Q_INVOKABLE AsyncNetworkRequest* getAsync(const QUrl& url,
                                               ResourceType resourceType = ResourceType::Unknown,
                                               const RetryPolicy& policy = {}) override;
 
     /**
-     * @brief Send HTTP POST request asynchronously (non-blocking)
+     * @brief 发送 HTTP POST 请求（异步，非阻塞）
      *
-     * @param url Request URL
-     * @param body Request body
-     * @param resourceType Type of resource being requested
-     * @param policy Retry policy
-     * @return AsyncNetworkRequest* - caller takes ownership
+     * @note 此方法使用 thread-local QNetworkAccessManager，必须在具有 Qt 事件循环的线程中调用
+     *       （如主线程或 QThread 子类）。请勿在 bare std::thread 中调用。
+     *
+     * @param url 请求 URL
+     * @param body 请求体
+     * @param resourceType 资源类型
+     * @param policy 重试策略
+     * @return AsyncNetworkRequest* - 调用方负责生命周期管理
      */
     Q_INVOKABLE AsyncNetworkRequest* postAsync(const QUrl& url,
                                                const QByteArray& body,
@@ -79,17 +97,17 @@ public:
                                                const RetryPolicy& policy = {}) override;
 
     /**
-     * @brief Check if data is gzip compressed
+     * @brief 检查数据是否为 gzip 压缩格式
      */
     static bool isGzipCompressed(const QByteArray& data);
 
     /**
-     * @brief Decompress gzip data
+     * @brief 解压 gzip 数据
      */
     static QByteArray decompressGzip(const QByteArray& data);
 
     /**
-     * @brief Destroy singleton instance
+     * @brief 销毁单例实例
      */
     using TestableSingleton<NetworkClient>::destroyInstance;
 

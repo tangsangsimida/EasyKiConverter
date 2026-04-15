@@ -12,58 +12,57 @@ namespace EasyKiConverter {
 class AsyncNetworkRequest;
 
 /**
- * @brief Resource type for network requests
+ * @brief 网络请求资源类型
  *
- * Used to select appropriate RequestProfile and for diagnostics
+ * 用于选择合适的 RequestProfile 和诊断信息
  */
 enum class ResourceType {
-    ComponentInfo,  // Component metadata JSON from EasyEDA API
-    CadData,  // CAD data JSON (symbol, footprint)
-    ProductSearch,  // LCSC product search / detail JSON
-    PreviewImage,  // Component preview images
-    Datasheet,  // PDF datasheets
-    Model3DObj,  // 3D model OBJ files
-    Model3DStep,  // 3D model STEP files
-    UpdateCheck,  // GitHub release metadata
-    WorkerRequest,  // Generic worker request (FetchWorker, NetworkWorker)
+    ComponentInfo,  // EasyEDA API 组件元数据 JSON
+    CadData,  // CAD 数据 JSON (符号、封装)
+    ProductSearch,  // LCSC 产品搜索/详情 JSON
+    PreviewImage,  // 组件预览图
+    Datasheet,  // PDF 数据手册
+    Model3DObj,  // 3D 模型 OBJ 文件
+    Model3DStep,  // 3D 模型 STEP 文件
+    UpdateCheck,  // GitHub 发布元数据
+    WorkerRequest,  // 通用工作线程请求 (FetchWorker, NetworkWorker)
     Unknown
 };
 
 /**
- * @brief Request profile containing type-specific network policy
+ * @brief 请求配置结构体，包含特定资源类型的网络策略
  *
- * Each profile defines timeout, retry, backoff, and concurrency settings
- * optimized for a specific type of resource.
+ * 每个 profile 定义针对特定资源类型优化的超时、重试、退避和并发设置
  */
 struct RequestProfile {
     ResourceType type = ResourceType::Unknown;
-    QString name;  // Human-readable name for diagnostics
+    QString name;  // 用于诊断的可读名称
 
-    int connectTimeoutMs = 30000;  // Connection timeout
-    int readTimeoutMs = 30000;  // Read timeout (for large files)
+    int connectTimeoutMs = 30000;  // 连接超时
+    int readTimeoutMs = 30000;  // 读取超时（大文件）
     int maxRetries = 3;
-    double backoffBaseMs = 1000.0;  // Base delay for exponential backoff
-    double backoffMultiplier = 2.0;  // Multiplier for each retry
-    double jitterFactor = 0.2;  // Jitter percentage (0.0-1.0)
+    double backoffBaseMs = 1000.0;  // 指数退避基础延迟
+    double backoffMultiplier = 2.0;  // 每次重试的倍数
+    double jitterFactor = 0.2;  // 抖动百分比 (0.0-1.0)
 
-    int weakNetworkMaxRetries = 5;  // More retries in weak network mode
-    int weakNetworkTimeoutMultiplier = 2;  // Double timeout in weak network mode
+    int weakNetworkMaxRetries = 5;  // 弱网模式下更多重试
+    int weakNetworkTimeoutMultiplier = 2;  // 弱网模式下双倍超时
 
-    // Priority for scheduling (lower = higher priority)
+    // 调度优先级（越低越高）
     int priority = 100;
 
-    // Concurrency limit for this resource type
+    // 此资源类型的并发限制
     int maxConcurrent = 5;
 
-    // Whether to enable request cancellation
+    // 是否允许取消请求
     bool allowCancellation = true;
 
-    // Whether this resource type is cacheable
+    // 此资源类型是否可缓存
     bool cacheable = false;
 };
 
 /**
- * @brief Predefined request profiles for common resource types
+ * @brief 预定义的请求配置
  */
 struct RequestProfiles {
     static RequestProfile componentInfo() {
@@ -264,7 +263,7 @@ struct RequestProfiles {
 };
 
 /**
- * @brief Error type classification for diagnostics
+ * @brief 错误类型分类（用于诊断）
  */
 enum class NetworkErrorType {
     None,
@@ -283,7 +282,7 @@ enum class NetworkErrorType {
 };
 
 /**
- * @brief Unified diagnostic information for network requests
+ * @brief 网络请求的统一诊断信息
  */
 struct NetworkDiagnostic {
     QString url;
@@ -310,11 +309,11 @@ struct NetworkDiagnostic {
     qint64 dnsLookupMs = 0;
     qint64 connectMs = 0;
     qint64 tlsHandshakeMs = 0;
-    qint64 waitMs = 0;  // Time waiting for response
-    qint64 transferMs = 0;  // Time for data transfer
+    qint64 waitMs = 0;  // 等待响应时间
+    qint64 transferMs = 0;  // 数据传输时间
 
     /**
-     * @brief Convert error type to string for logging
+     * @brief 将错误类型转换为字符串（用于日志）
      */
     static QString errorTypeToString(NetworkErrorType type) {
         switch (type) {
@@ -349,7 +348,7 @@ struct NetworkDiagnostic {
 };
 
 /**
- * @brief Retry policy for network requests
+ * @brief 网络请求重试策略
  */
 struct RetryPolicy {
     int maxRetries = 3;
@@ -361,7 +360,7 @@ struct RetryPolicy {
     QVector<int> retryableStatusCodes = {429, 500, 502, 503, 504};
 
     /**
-     * @brief Create RetryPolicy from RequestProfile
+     * @brief 根据 RequestProfile 创建 RetryPolicy
      */
     static RetryPolicy fromProfile(const RequestProfile& profile, bool isWeakNetwork = false) {
         RetryPolicy policy;
@@ -384,7 +383,7 @@ struct RetryPolicy {
 };
 
 /**
- * @brief Result of a network request
+ * @brief 网络请求结果
  */
 struct NetworkResult {
     QByteArray data;
@@ -394,47 +393,46 @@ struct NetworkResult {
     qint64 elapsedMs = 0;
     bool success = false;
     bool wasCancelled = false;  // true if request was cancelled via abort()
-    NetworkDiagnostic diagnostic;  // Unified diagnostic information
+    NetworkDiagnostic diagnostic;  // 统一诊断信息
 };
 
 /**
- * @brief Network client interface
+ * @brief 网络客户端接口
  *
- * Provides a unified interface for network requests with consistent
- * timeout/retry/backoff behavior across all network components.
+ * 提供统一的网络请求接口，所有网络组件共享一致的超时/重试/退避行为
  */
 class INetworkClient {
 public:
     virtual ~INetworkClient() = default;
 
     /**
-     * @brief Send HTTP GET request
-     * @param url Request URL
-     * @param policy Retry policy (default: 3 retries, 30s timeout)
-     * @return NetworkResult with response data or error
+     * @brief 发送 HTTP GET 请求
+     * @param url 请求 URL
+     * @param policy 重试策略（默认：3 次重试，30s 超时）
+     * @return NetworkResult 返回响应数据或错误
      */
     virtual NetworkResult get(const QUrl& url, const RetryPolicy& policy = {}) = 0;
 
     /**
-     * @brief Send HTTP GET request with resource type for profiling
-     * @param url Request URL
-     * @param resourceType Type of resource being requested
-     * @param policy Retry policy
-     * @return NetworkResult with response data or error
+     * @brief 发送 HTTP GET 请求（带资源类型，用于配置Profile）
+     * @param url 请求 URL
+     * @param resourceType 资源类型
+     * @param policy 重试策略
+     * @return NetworkResult 返回响应数据或错误
      */
     virtual NetworkResult get(const QUrl& url, ResourceType resourceType, const RetryPolicy& policy = {}) = 0;
 
     /**
-     * @brief Send HTTP POST request
-     * @param url Request URL
-     * @param body Request body
-     * @param policy Retry policy
-     * @return NetworkResult with response data or error
+     * @brief 发送 HTTP POST 请求
+     * @param url 请求 URL
+     * @param body 请求体
+     * @param policy 重试策略
+     * @return NetworkResult 返回响应数据或错误
      */
     virtual NetworkResult post(const QUrl& url, const QByteArray& body, const RetryPolicy& policy = {}) = 0;
 
     /**
-     * @brief Send HTTP POST request with resource type for profiling
+     * @brief 发送 HTTP POST 请求（带资源类型，用于配置Profile）
      * @param url Request URL
      * @param body Request body
      * @param resourceType Type of resource being requested
@@ -447,14 +445,14 @@ public:
                                const RetryPolicy& policy = {}) = 0;
 
     /**
-     * @brief Send HTTP GET request asynchronously
+     * @brief 异步发送 HTTP GET 请求
      */
     virtual AsyncNetworkRequest* getAsync(const QUrl& url,
                                           ResourceType resourceType,
                                           const RetryPolicy& policy = {}) = 0;
 
     /**
-     * @brief Send HTTP POST request asynchronously
+     * @brief 异步发送 HTTP POST 请求
      */
     virtual AsyncNetworkRequest* postAsync(const QUrl& url,
                                            const QByteArray& body,
