@@ -415,7 +415,7 @@ public:
 
     /**
      * @brief 发送 HTTP GET 请求（带资源类型，用于配置Profile）
-     * @param url 请求 URL
+     * @param url ���求 URL
      * @param resourceType 资源类型
      * @param policy 重试策略
      * @return NetworkResult 返回响应数据或错误
@@ -433,11 +433,11 @@ public:
 
     /**
      * @brief 发送 HTTP POST 请求（带资源类型，用于配置Profile）
-     * @param url Request URL
-     * @param body Request body
-     * @param resourceType Type of resource being requested
-     * @param policy Retry policy
-     * @return NetworkResult with response data or error
+     * @param url 请求 URL
+     * @param body 请求体
+     * @param resourceType 资源类型
+     * @param policy 重试策略
+     * @return NetworkResult 返回响应数据或错误
      */
     virtual NetworkResult post(const QUrl& url,
                                const QByteArray& body,
