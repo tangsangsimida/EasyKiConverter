@@ -26,62 +26,58 @@ FocusScope {
     visible: false
     z: 9999
     focus: visible
-
     // ===== 子类可覆盖的属性 =====
     property bool hasOverlay: false
     /** @property Component extraContentSource - 子类可通过此属性添加额外内容组件（如复选框） */
     property Component extraContentSource: null
-
     // ===== 共用常量 =====
     readonly property int buttonHeight: 48
     readonly property real sliderOpacity: 0.25
-
     // ===== 子类可使用的属性 =====
     property Item activeButton: null  // 当前悬停的按钮
     property Item selectedButton: null  // 当前键盘选中的按钮（用于 ExitDialog 键盘导航）
-
     // ===== 按钮规格列表 =====
     // 格式: { text, color, action } 或 { isSeparator: true }
     property list<var> buttonSpecs
-
     // ===== 公共函数 =====
 
     function updateSlider(targetButton, targetColor) {
-        if (!buttonBox) return
-        var buttonY = targetButton.mapToItem(buttonBox, 0, 0).y
-        var centerY = buttonBox.height / 2
-        var stretchFactor = 1.0 + Math.abs(buttonY - centerY) / centerY * 0.02
-        sliderBackground.y = buttonY
-        sliderBackground.height = buttonHeight * (2.0 - stretchFactor)
-        sliderBackground.color = targetColor
-        sliderBackground.opacity = sliderOpacity
-        activeButton = targetButton
+        if (!buttonBox)
+            return;
+        var buttonY = targetButton.mapToItem(buttonBox, 0, 0).y;
+        var centerY = buttonBox.height / 2;
+        var stretchFactor = 1.0 + Math.abs(buttonY - centerY) / centerY * 0.02;
+        sliderBackground.y = buttonY;
+        sliderBackground.height = buttonHeight * (2.0 - stretchFactor);
+        sliderBackground.color = targetColor;
+        sliderBackground.opacity = sliderOpacity;
+        activeButton = targetButton;
     }
 
     function hideSlider() {
-        sliderBackground.opacity = 0
-        activeButton = null
+        sliderBackground.opacity = 0;
+        activeButton = null;
     }
 
     function open() {
-        visible = true
+        visible = true;
         if (hasOverlay) {
-            showAnim.start()
+            showAnim.start();
         } else {
-            dialogBox.rotation = 0
-            dialogBox.scale = 1.0
-            dialogBox.opacity = 1.0
-            dialogBoxTranslate.y = 0
+            dialogBox.rotation = 0;
+            dialogBox.scale = 1.0;
+            dialogBox.opacity = 1.0;
+            dialogBoxTranslate.y = 0;
         }
-        root.forceActiveFocus()
+        root.forceActiveFocus();
     }
 
     function close() {
-        visible = false
+        visible = false;
     }
 
     function closeWithAnimation() {
-        hideAnim.start()
+        hideAnim.start();
     }
 
     // ===== 遮罩层 =====
@@ -144,7 +140,6 @@ FocusScope {
             anchors.fill: parent
             anchors.margins: AppStyle.spacing.xxxl
             spacing: AppStyle.spacing.lg
-
             // 标题（子类可覆盖 ID）
             Text {
                 id: titleText
@@ -178,7 +173,6 @@ FocusScope {
                 radius: AppStyle.radius.lg
                 border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.08)
                 border.width: 1
-
                 // 滑块背景
                 Rectangle {
                     id: sliderBackground
@@ -190,7 +184,6 @@ FocusScope {
                     color: AppStyle.colors.primary
                     opacity: 0
                     z: 2
-
                     Behavior on y {
                         enabled: sliderBackground.visible
                         SpringAnimation {
@@ -243,7 +236,6 @@ FocusScope {
                     anchors.bottomMargin: AppStyle.spacing.sm
                     spacing: 0
                     z: 1
-
                     // 动态生成按钮
                     Repeater {
                         model: root.buttonSpecs
@@ -292,22 +284,20 @@ FocusScope {
             property bool isSliderButton: true
             // 关联的颜色
             property color sliderColor: modelData.color
-
             text: modelData.text
             backgroundColor: "transparent"
             textColor: {
                 // 悬停状态优先
                 if (root.activeButton === btn) {
-                    return Qt.lighter(sliderColor, 1.3)
+                    return Qt.lighter(sliderColor, 1.3);
                 }
                 // 键盘选中状态
                 if (root.selectedButton === btn) {
-                    return sliderColor
+                    return sliderColor;
                 }
-                return AppStyle.colors.textPrimary
+                return AppStyle.colors.textPrimary;
             }
             hoverColor: "transparent"
-
             Behavior on textColor {
                 ColorAnimation {
                     duration: 150
@@ -325,16 +315,16 @@ FocusScope {
 
             onHoveredChanged: {
                 if (hovered) {
-                    root.activeButton = btn
-                    root.updateSlider(btn, sliderColor)
+                    root.activeButton = btn;
+                    root.updateSlider(btn, sliderColor);
                 } else {
-                    root.hideSlider()
+                    root.hideSlider();
                 }
             }
 
             onClicked: {
                 if (modelData.action) {
-                    modelData.action()
+                    modelData.action();
                 }
             }
         }

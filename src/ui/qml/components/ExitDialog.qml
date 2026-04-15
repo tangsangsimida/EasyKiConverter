@@ -21,48 +21,47 @@ import "../styles"
  */
 SliderDialogBase {
     id: root
-
     // ===== 属性 =====
     property bool rememberChoice: false
     property string focusArea: "button"  // "button" or "checkbox"
-
     // ===== 信号 =====
     signal minimizeToTray(bool remember)
     signal exitApp(bool remember)
     signal canceled
-
     // ===== 按钮规格 =====
     buttonSpecs: [
         {
             text: qsTr("最小化到托盘"),
             color: AppStyle.colors.primary,
-            action: function() {
-                root.minimizeToTray(rememberChoice)
+            action: function () {
+                root.minimizeToTray(rememberChoice);
             }
         },
-        { isSeparator: true },
+        {
+            isSeparator: true
+        },
         {
             text: qsTr("退出程序"),
             color: AppStyle.colors.danger,
-            action: function() {
-                root.exitApp(rememberChoice)
+            action: function () {
+                root.exitApp(rememberChoice);
             }
         },
-        { isSeparator: true },
+        {
+            isSeparator: true
+        },
         {
             text: qsTr("取消"),
             color: AppStyle.colors.textSecondary,
-            action: function() {
-                root.closeWithAnimation()
-                Qt.callLater(root.canceled)
+            action: function () {
+                root.closeWithAnimation();
+                Qt.callLater(root.canceled);
             }
         }
     ]
-
     // 覆写 title 和 message
     title: qsTr("关闭程序")
     message: qsTr("您可以选择最小化到系统托盘以保持后台运行，或者完全退出程序。")
-
     // ===== 额外内容：记住选择复选框 ======
     extraContentSource: RowLayout {
         id: rememberLayout
@@ -71,7 +70,7 @@ SliderDialogBase {
             id: rememberCheckBox
             checked: root.rememberChoice
             onClicked: {
-                root.rememberChoice = checked
+                root.rememberChoice = checked;
             }
 
             indicator: Rectangle {
@@ -120,156 +119,156 @@ SliderDialogBase {
     // ===== 键盘事件 ======
     // 注意：这个对话框没有 Escape 键处理，让 Main.qml 的 Shortcut 处理
     function getButtonByIndex(index) {
-        var btnIndex = 0
+        var btnIndex = 0;
         for (var i = 0; i < buttonSpecs.length; i++) {
             if (!buttonSpecs[i].isSeparator) {
                 if (btnIndex === index) {
-                    return buttonColLayout.children[i].actualButton
+                    return buttonColLayout.children[i].actualButton;
                 }
-                btnIndex++
+                btnIndex++;
             }
         }
-        return null
+        return null;
     }
 
     function getButtonSpecByIndex(index) {
-        var btnIndex = 0
+        var btnIndex = 0;
         for (var i = 0; i < buttonSpecs.length; i++) {
             if (!buttonSpecs[i].isSeparator) {
                 if (btnIndex === index) {
-                    return buttonSpecs[i]
+                    return buttonSpecs[i];
                 }
-                btnIndex++
+                btnIndex++;
             }
         }
-        return null
+        return null;
     }
 
     // 获取按钮在 buttonSpecs 中的实际索引
     function getSpecIndexForButton(buttonIndex) {
-        var btnIndex = 0
+        var btnIndex = 0;
         for (var i = 0; i < buttonSpecs.length; i++) {
             if (!buttonSpecs[i].isSeparator) {
                 if (btnIndex === buttonIndex) {
-                    return i
+                    return i;
                 }
-                btnIndex++
+                btnIndex++;
             }
         }
-        return -1
+        return -1;
     }
 
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Up || event.key === Qt.Key_Left) {
             if (focusArea === "button") {
                 // 向上/左导航
-                var currentIndex = 0
-                var targetIndex = 0
-                var btnCount = 0
+                var currentIndex = 0;
+                var targetIndex = 0;
+                var btnCount = 0;
                 for (var i = 0; i < buttonSpecs.length; i++) {
                     if (!buttonSpecs[i].isSeparator) {
                         if (buttonColLayout.children[i].actualButton === selectedButton) {
-                            currentIndex = i
+                            currentIndex = i;
                         }
-                        btnCount++
+                        btnCount++;
                     }
                 }
                 // 找到上一个按钮
-                var prevBtnIndex = -1
+                var prevBtnIndex = -1;
                 for (var j = currentIndex - 1; j >= 0; j--) {
                     if (!buttonSpecs[j].isSeparator) {
-                        prevBtnIndex = j
-                        break
+                        prevBtnIndex = j;
+                        break;
                     }
                 }
                 if (prevBtnIndex >= 0) {
-                    selectedButton = buttonColLayout.children[prevBtnIndex].actualButton
-                    updateSlider(selectedButton, buttonSpecs[prevBtnIndex].color)
+                    selectedButton = buttonColLayout.children[prevBtnIndex].actualButton;
+                    updateSlider(selectedButton, buttonSpecs[prevBtnIndex].color);
                 }
             }
-            event.accepted = true
+            event.accepted = true;
         } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Right) {
             if (focusArea === "button") {
                 // 向下/右导航
-                var currentIdx = 0
-                var nextIdx = -1
+                var currentIdx = 0;
+                var nextIdx = -1;
                 for (var k = 0; k < buttonSpecs.length; k++) {
                     if (!buttonSpecs[k].isSeparator) {
                         if (buttonColLayout.children[k].actualButton === selectedButton) {
-                            currentIdx = k
+                            currentIdx = k;
                         }
                     }
                 }
                 for (var l = currentIdx + 1; l < buttonSpecs.length; l++) {
                     if (!buttonSpecs[l].isSeparator) {
-                        nextIdx = l
-                        break
+                        nextIdx = l;
+                        break;
                     }
                 }
                 if (nextIdx >= 0) {
-                    selectedButton = buttonColLayout.children[nextIdx].actualButton
-                    updateSlider(selectedButton, buttonSpecs[nextIdx].color)
+                    selectedButton = buttonColLayout.children[nextIdx].actualButton;
+                    updateSlider(selectedButton, buttonSpecs[nextIdx].color);
                 }
             }
-            event.accepted = true
+            event.accepted = true;
         } else if (event.key === Qt.Key_Tab) {
             // Tab 键：在按钮和复选框之间切换
             if (focusArea === "button") {
-                focusArea = "checkbox"
-                hideSlider()
+                focusArea = "checkbox";
+                hideSlider();
             } else {
-                focusArea = "button"
+                focusArea = "button";
                 if (selectedButton) {
                     for (var m = 0; m < buttonSpecs.length; m++) {
                         if (buttonColLayout.children[m].actualButton === selectedButton) {
-                            updateSlider(selectedButton, buttonSpecs[m].color)
-                            break
+                            updateSlider(selectedButton, buttonSpecs[m].color);
+                            break;
                         }
                     }
                 }
             }
-            event.accepted = true
+            event.accepted = true;
         } else if (event.key === Qt.Key_Space) {
             if (focusArea === "checkbox") {
-                root.rememberChoice = !root.rememberChoice
-                event.accepted = true
+                root.rememberChoice = !root.rememberChoice;
+                event.accepted = true;
             }
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             if (focusArea === "checkbox") {
-                root.rememberChoice = !root.rememberChoice
-                event.accepted = true
+                root.rememberChoice = !root.rememberChoice;
+                event.accepted = true;
             } else if (selectedButton) {
                 // 执行选中按钮的动作
                 for (var n = 0; n < buttonSpecs.length; n++) {
                     if (buttonColLayout.children[n].actualButton === selectedButton) {
                         if (buttonSpecs[n].action) {
-                            buttonSpecs[n].action()
+                            buttonSpecs[n].action();
                         }
-                        break
+                        break;
                     }
                 }
             }
-            event.accepted = true
+            event.accepted = true;
         } else if (event.key === Qt.Key_Escape) {
             // ESC 键不处理，让 Main.qml 的 Shortcut 处理
-            event.accepted = false
+            event.accepted = false;
         } else {
-            event.accepted = true
+            event.accepted = true;
         }
     }
 
     // ===== 覆写 open 函数 =====
     function open() {
-        visible = true
-        dialogBox.rotation = 0
-        dialogBox.scale = 1.0
-        dialogBox.opacity = 1.0
-        dialogBoxTranslate.y = 0
+        visible = true;
+        dialogBox.rotation = 0;
+        dialogBox.scale = 1.0;
+        dialogBox.opacity = 1.0;
+        dialogBoxTranslate.y = 0;
         // 默认选中第一个按钮（最小化到托盘）
-        selectedButton = buttonColLayout.children[0].actualButton
+        selectedButton = buttonColLayout.children[0].actualButton;
         // 设置滑块默认聚焦在第一个选项上
-        updateSlider(selectedButton, buttonSpecs[0].color)
-        focusArea = "button"
-        root.forceActiveFocus()
+        updateSlider(selectedButton, buttonSpecs[0].color);
+        focusArea = "button";
+        root.forceActiveFocus();
     }
 }
