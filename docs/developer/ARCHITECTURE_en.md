@@ -190,7 +190,7 @@ The conversion engine is responsible for actual conversion work, located in the 
 
 **Utilities Module:**
 - `GeometryUtils` - Geometry calculation utilities
-- `NetworkUtils` - Network request utilities
+- `NetworkUtils` - (deprecated, replaced by NetworkClient)
 - `LayerMapper` - Layer mapping utilities
 
 ### Workers

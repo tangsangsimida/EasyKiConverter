@@ -45,7 +45,7 @@ bool DatasheetExporter::exportDatasheet(const QString& datasheetUrl,
     }
 
     // Use NetworkClient with default retry policy (3 retries, 30s timeout)
-    NetworkResult result = NetworkClient::instance().get(QUrl(datasheetUrl));
+    NetworkResult result = NetworkClient::instance().get(QUrl(datasheetUrl), ResourceType::Datasheet);
 
     if (result.success) {
         QFile file(datasheetPath);

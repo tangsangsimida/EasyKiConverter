@@ -23,6 +23,42 @@ namespace EasyKiConverter {
 
 std::unique_ptr<ComponentCacheService> ComponentCacheService::s_instance;
 
+namespace {
+
+QString normalizePreviewImageUrl(const QString& imageUrl) {
+    QString normalizedUrl = imageUrl.trimmed();
+    if (normalizedUrl.isEmpty()) {
+        return QString();
+    }
+
+    if (normalizedUrl.startsWith(QStringLiteral("//"))) {
+        normalizedUrl.prepend(QStringLiteral("https:"));
+    } else if (normalizedUrl.startsWith(QStringLiteral("/image.lceda.cn/")) ||
+               normalizedUrl.startsWith(QStringLiteral("/file.elecfans.com/")) ||
+               normalizedUrl.startsWith(QStringLiteral("/www.lcsc.com/"))) {
+        normalizedUrl.remove(0, 1);
+        normalizedUrl.prepend(QStringLiteral("https://"));
+    } else if (normalizedUrl.startsWith(QStringLiteral("/web1/")) ||
+               normalizedUrl.startsWith(QStringLiteral("/M00/"))) {
+        normalizedUrl.remove(0, 1);
+        normalizedUrl.prepend(QStringLiteral("https://file.elecfans.com/"));
+    } else if (normalizedUrl.startsWith('/')) {
+        normalizedUrl.remove(0, 1);
+        normalizedUrl.prepend(QStringLiteral("https://image.lceda.cn/"));
+    }
+
+    normalizedUrl.replace(QStringLiteral("https://image.lceda.cn//image.lceda.cn/"),
+                          QStringLiteral("https://image.lceda.cn/"));
+    normalizedUrl.replace(QStringLiteral("http://image.lceda.cn//image.lceda.cn/"),
+                          QStringLiteral("https://image.lceda.cn/"));
+    normalizedUrl.replace(QStringLiteral("https://image.lceda.cn/image.lceda.cn/"),
+                          QStringLiteral("https://image.lceda.cn/"));
+
+    return normalizedUrl;
+}
+
+}  // namespace
+
 ComponentCacheService::ComponentCacheService(QObject* parent)
     : QObject(parent), m_memoryCacheLimitMB(50), m_memoryCacheSize(0) {
     // 默认缓存目录：{用户数据目录}/easykiconverter/cache
@@ -260,7 +296,10 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
     QJsonArray previewUrls = metadata.value("previewImages").toArray();
     QStringList urlList;
     for (const QJsonValue& val : previewUrls) {
-        urlList.append(val.toString());
+        const QString normalizedUrl = normalizePreviewImageUrl(val.toString());
+        if (!normalizedUrl.isEmpty()) {
+            urlList.append(normalizedUrl);
+        }
     }
     componentData->setPreviewImages(urlList);
 
@@ -564,7 +603,8 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
     int retryCount = 0;
     bool wasRateLimited = false;
 
-    AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(imageUrl), policy);
+    AsyncNetworkRequest* request =
+        NetworkClient::instance().getAsync(QUrl(imageUrl), ResourceType::PreviewImage, policy);
     QPointer<AsyncNetworkRequest> requestPtr(request);
 
     // 连接完成信号
@@ -737,7 +777,8 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
     int retryCount = 0;
     bool wasRateLimited = false;
 
-    AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(datasheetUrl), policy);
+    AsyncNetworkRequest* request =
+        NetworkClient::instance().getAsync(QUrl(datasheetUrl), ResourceType::Datasheet, policy);
     QPointer<AsyncNetworkRequest> requestPtr(request);
 
     // 连接完成信号
@@ -1123,7 +1164,10 @@ QJsonObject ComponentCacheService::buildMetadata(const QString& componentId, con
 
     QJsonArray previewUrls;
     for (const QString& url : data.previewImages()) {
-        previewUrls.append(url);
+        const QString normalizedUrl = normalizePreviewImageUrl(url);
+        if (!normalizedUrl.isEmpty()) {
+            previewUrls.append(normalizedUrl);
+        }
     }
     metadata["previewImages"] = previewUrls;
 

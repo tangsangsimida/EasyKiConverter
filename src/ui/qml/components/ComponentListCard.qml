@@ -20,7 +20,7 @@ Card {
         // 防抖定时器，避免频繁调用 updateFilter()
         Timer {
             id: filterUpdateDebounceTimer
-            interval: 50
+            interval: 120
             onTriggered: visualModel.updateFilter()
         },
         // 监听组件数量变化，自动展开

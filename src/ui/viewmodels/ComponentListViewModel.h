@@ -213,6 +213,7 @@ private:
     QThreadPool* m_encodingThreadPool;
 
     QStringList m_pendingComponentIds;
+    int m_pendingBatchValidationCount = 0;
     QTimer* m_batchAddTimer;
     static constexpr int BATCH_ADD_SIZE = 10;
 

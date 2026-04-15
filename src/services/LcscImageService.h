@@ -2,13 +2,13 @@
 #define LCSCIMAGESERVICE_H
 
 #include "ComponentCacheService.h"
+#include "core/network/AsyncNetworkRequest.h"
 
 #include <QAtomicInt>
 #include <QFutureWatcher>
 #include <QMap>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
 #include <QObject>
+#include <QPointer>
 #include <QQueue>
 #include <QSet>
 #include <QString>
@@ -114,27 +114,22 @@ signals:
 
 private slots:
     void processQueue();
-    void handleApiResponse(QSharedPointer<QNetworkReply> reply, const QString& componentId, int retryCount);
-    void handleFallbackResponse(QNetworkReply* reply, const QString& componentId);
-    void handleDownloadResponse(QSharedPointer<QNetworkReply> reply,
-                                const QString& componentId,
-                                const QString& imageUrl,
-                                int imageIndex,
-                                int retryCount);
 
 private:
     bool tryLoadCachedPreviewImages(const QString& componentId);
     void loadCachedPreviewImagesAsync(const QString& componentId, ComponentCacheService* cache);
-    void performApiSearch(const QString& componentId, int retryCount);
+    void startPreviewImageDownloads(const QString& componentId, const QStringList& imageUrls);
+    void performApiSearch(const QString& componentId);
     void performFallback(const QString& componentId);
-    void performDownload(const QString& componentId, const QString& imageUrl, int imageIndex, int retryCount);
-    void performDatasheetDownload(const QString& componentId, const QString& datasheetUrl, int retryCount);
+    void performDownload(const QString& componentId, const QString& imageUrl, int imageIndex);
+    void performDatasheetDownload(const QString& componentId, const QString& datasheetUrl);
     void checkDownloadCompletion(const QString& componentId);
     void checkComponentCompletion(const QString& componentId);
     void emitAllImagesReady(const QString& componentId);
     void addRandomDelay(std::function<void()> callback = nullptr);
+    void trackAsyncRequest(AsyncNetworkRequest* request);
+    void untrackAsyncRequest(AsyncNetworkRequest* request);
 
-    QNetworkAccessManager* m_networkManager;
     QThreadPool* m_cacheThreadPool;  // 缓存加载专用线程池
     QQueue<QString> m_queue;
     QSet<QString> m_requestedComponents;  // 已经请求过的组件（防止重复请求）
@@ -145,11 +140,12 @@ private:
 
     // 跟踪异步加载的 watcher，用于非阻塞预览图加载
     QList<QFutureWatcher<QByteArray>*> m_pendingImageWatchers;
+    QList<QPointer<AsyncNetworkRequest>> m_activeAsyncRequests;
 
     int m_activeRequests;  // 当前活跃的下载数
     QAtomicInt m_isCancelled;  // 取消标志，防止 cancelAll() 后 pending 回调继续执行
     static const int MAX_CONCURRENT_REQUESTS = 10;  // 最大并发下载数（缓存加载）
-    static const int MAX_NETWORK_CONCURRENT_REQUESTS = 5;  // 最大网络并发请求数（网络加载）
+    static const int MAX_NETWORK_CONCURRENT_REQUESTS = 10;  // 最大网络并发请求数（网络加载）
     static const int MAX_IMAGES_PER_COMPONENT = 3;  // 每个组件最多下载3张预览图
     static const int MAX_RETRY_COUNT = 3;  // 下载失败时的最大重试次数
 };

@@ -2,15 +2,16 @@
 #define FETCHWORKER_H
 
 #include "BaseWorker.h"
+#include "core/network/INetworkClient.h"
 #include "models/ComponentExportStatus.h"
 
 #include <QAtomicInt>
 #include <QMutex>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
 #include <QRandomGenerator>
 
 namespace EasyKiConverter {
+
+class AsyncNetworkRequest;
 
 /**
  * @brief 抓取工作线程
@@ -68,7 +69,8 @@ private:
      */
     QByteArray httpGet(const QString& url,
                        int timeoutMs = 30000,
-                       QSharedPointer<ComponentExportStatus> status = nullptr);
+                       QSharedPointer<ComponentExportStatus> status = nullptr,
+                       ResourceType resourceType = ResourceType::WorkerRequest);
 
     /**
      * @brief 解压ZIP数据
@@ -93,12 +95,11 @@ private:
 
 private:
     QString m_componentId;
-    QNetworkAccessManager* m_ownNetworkManager;
     bool m_need3DModel;
     bool m_fetch3DOnly;  // 是否只获取3D模型
     QString m_existing3DUuid;  // 已有的3D模型UUID
 
-    QNetworkReply* m_currentReply;
+    AsyncNetworkRequest* m_currentRequest;
     QMutex m_replyMutex;
     QAtomicInt m_isAborted;
 

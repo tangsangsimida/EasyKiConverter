@@ -2,8 +2,6 @@
 
 add_library(EasyKiConverterUtils STATIC
     GeometryUtils.cpp
-    NetworkUtils.cpp
-    INetworkAdapter.cpp
     LayerMapper.cpp
     SvgPathParser.cpp
     AtomicFileWriter.cpp

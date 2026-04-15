@@ -2,10 +2,11 @@ find_package(Qt6 REQUIRED COMPONENTS Test Gui Network)
 
 add_executable(test_easyeda_api
     test_easyeda_api.cpp
-    ../common/MockNetworkAdapter.hpp
+    ../common/MockNetworkClient.hpp
 )
 target_link_libraries(test_easyeda_api PRIVATE
     Qt6::Test
+    Qt6::Network
     EasyKiConverterLib
 )
 
@@ -27,6 +28,18 @@ target_include_directories(test_models PRIVATE
     ${CMAKE_SOURCE_DIR}
 )
 add_test(NAME test_models COMMAND test_models)
+
+add_executable(test_component_cache_service test_component_cache_service.cpp)
+target_link_libraries(test_component_cache_service PRIVATE
+    Qt6::Test
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_component_cache_service PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_component_cache_service COMMAND test_component_cache_service)
 
 # 导出阶段测试
 add_executable(test_export_type_stage test_export_type_stage.cpp)
