@@ -7,7 +7,7 @@
 - `unit/`: 单元测试项目。针对核心逻辑（Core）、模型（Models）和服务（Services）进行独立验证。
   - `test_easyeda_api.cpp`: 验证与 EasyEDA 服务器交互的客户端逻辑（支持 Mock）。
 - `common/`: 测试辅助类和通用 Mock 对象。
-  - `MockNetworkAdapter.hpp`: 用于拦截网络请求的模拟适配器。
+  - `MockNetworkClient.hpp`: 用于拦截统一网络客户端请求的模拟实现。
 - `reports/`: (Git 忽略) 用于存放构建过程中生成的 XML/HTML 测试报告。
 
 ## 如何运行测试
@@ -37,7 +37,7 @@ ctest --output-on-failure
 
 ## 测试规范
 
-1. **依赖注入**：所有涉及 IO（网络、文件系统）的类应通过接口（如 `INetworkAdapter`）接受依赖，以便在测试中注入 Mock。
+1. **依赖注入**：所有涉及 IO（网络、文件系统）的类应通过接口（如 `INetworkClient`）接受依赖，以便在测试中注入 Mock。
 2. **异步测试**：对于涉及信号槽的测试，务必使用 `QSignalSpy::wait()` 配合超时处理，严禁使用同步循环检查。
 3. **隔离性**：每个测试用例应在 `init()` 中重置 Mock 状态，在 `cleanup()` 中执行必要的资源回收。
 

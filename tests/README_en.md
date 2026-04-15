@@ -7,7 +7,7 @@ This directory contains all test code and configurations for the EasyKiConverter
 - `unit/`: Unit test projects. Independent verification for core logic (Core), models (Models), and services (Services).
   - `test_easyeda_api.cpp`: Verifies client logic for interacting with EasyEDA servers (supports Mock).
 - `common/`: Test helper classes and common Mock objects.
-  - `MockNetworkAdapter.hpp`: A mock adapter used to intercept network requests.
+  - `MockNetworkClient.hpp`: A mock implementation used to intercept unified network client requests.
 - `reports/`: (Git ignored) Storage for XML/HTML test reports generated during the build process.
 
 ## How to Run Tests
@@ -37,7 +37,7 @@ ctest --output-on-failure
 
 ## Testing Standards
 
-1. **Dependency Injection**: All classes involving IO (network, filesystem) should accept dependencies via interfaces (e.g., `INetworkAdapter`) to allow Mock injection during testing.
+1. **Dependency Injection**: All classes involving IO (network, filesystem) should accept dependencies via interfaces (e.g., `INetworkClient`) to allow Mock injection during testing.
 2. **Asynchronous Testing**: For tests involving signals and slots, always use `QSignalSpy::wait()` with appropriate timeouts. Synchronous polling loops are strictly prohibited.
 3. **Isolation**: Each test case should reset Mock state in `init()` and perform necessary resource cleanup in `cleanup()`.
 

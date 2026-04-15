@@ -586,7 +586,8 @@ void ComponentCacheService::downloadPreviewImageAsync(const QString& lcscId,
     policy.maxRetries = 3;
     policy.baseTimeoutMs = 30000;
 
-    AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(imageUrl), policy);
+    AsyncNetworkRequest* request =
+        NetworkClient::instance().getAsync(QUrl(imageUrl), ResourceType::PreviewImage, policy);
 
     // 使用 QObject::connect 自动清理 lambda 回调
     // 注意：由于我们使用堆分配的 request，需要在回调完成后删除它
@@ -674,7 +675,8 @@ void ComponentCacheService::downloadDatasheetAsync(const QString& lcscId,
     policy.maxRetries = 3;
     policy.baseTimeoutMs = 45000;
 
-    AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(datasheetUrl), policy);
+    AsyncNetworkRequest* request =
+        NetworkClient::instance().getAsync(QUrl(datasheetUrl), ResourceType::Datasheet, policy);
 
     QObject::connect(request, &AsyncNetworkRequest::finished, this, [=](const NetworkResult& result) {
         ComponentExportStatus::NetworkDiagnostics diag;

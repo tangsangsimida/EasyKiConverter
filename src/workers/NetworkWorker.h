@@ -2,15 +2,14 @@
 #define NETWORKWORKER_H
 
 #include "BaseWorker.h"
+#include "core/network/INetworkClient.h"
 
 #include <QJsonObject>
 #include <QMutex>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QPointer>
-#include <QTimer>
 
 namespace EasyKiConverter {
+
+class AsyncNetworkRequest;
 
 /**
  * @brief 网络工作线程
@@ -21,111 +20,35 @@ class NetworkWorker : public BaseWorker {
     Q_OBJECT
 
 public:
-    /**
-     * @brief 任务类型
-     */
     enum class TaskType { FetchComponentInfo, FetchCadData, Fetch3DModelObj, Fetch3DModelMtl };
 
-    /**
-     * @brief 构造函数
-         * @param componentId 元件ID
-     * @param taskType 任务类型
-     * @param uuid UUID（用于3D模型下载）
-         * @param parent 父对象
-         */
     explicit NetworkWorker(const QString& componentId,
                            TaskType taskType,
                            const QString& uuid = QString(),
                            QObject* parent = nullptr);
 
-    /**
-     * @brief 析构函数
-     */
     ~NetworkWorker() override;
 
-    /**
-     * @brief 执行网络请求任务
-     */
     void run() override;
 
 signals:
-    /**
-     * @brief 组件信息获取完成信号
-     * @param componentId 元件ID
-     * @param data 组件数据
-     */
     void componentInfoFetched(const QString& componentId, const QJsonObject& data);
-
-    /**
-     * @brief CAD数据获取完成信号
-     * @param componentId 元件ID
-     * @param data CAD数据
-     */
     void cadDataFetched(const QString& componentId, const QJsonObject& data);
-
-    /**
-     * @brief 3D模型数据获取完成信号
-     * @param componentId 元件ID
-     * @param uuid UUID
-     * @param data 模型数据
-     */
     void model3DFetched(const QString& componentId, const QString& uuid, const QByteArray& data);
-
-    /**
-     * @brief 网络请求失败信号
-     * @param componentId 元件ID
-     * @param errorMessage 错误消息
-     */
     void fetchError(const QString& componentId, const QString& errorMessage);
-
-    /**
-     * @brief 请求进度信号
-     * @param componentId 元件ID
-     * @param progress 进度（0-100）
-         */
     void requestProgress(const QString& componentId, int progress);
 
 private:
-    /**
-     * @brief 获取组件信息
-     * @return bool 是否成功
-     */
     bool fetchComponentInfo();
-
-    /**
-     * @brief 获取CAD数据
-     * @return bool 是否成功
-     */
     bool fetchCadData();
-
-    /**
-     * @brief 获取3D模型OBJ数据
-     * @return bool 是否成功
-     */
     bool fetch3DModelObj();
-
-    /**
-     * @brief 获取3D模型MTL数据
-     * @return bool 是否成功
-     */
     bool fetch3DModelMtl();
 
 public slots:
-    /**
-     * @brief 中断当前网络请求
-     */
     void abort();
 
-    /**
-     * @brief 执行网络请求（含超时和重试）
-     * @param request 网络请求
-     * @param timeoutMs 超时时间（毫秒）
-     * @param maxRetries 最大重试次数
-     * @param outData 响应数据输出
-     * @param errorMsg 错误消息输出
-     * @return bool 是否成功
-     */
-    bool executeRequest(const QNetworkRequest& request,
+    bool executeRequest(const QUrl& url,
+                        ResourceType resourceType,
                         int timeoutMs,
                         int maxRetries,
                         QByteArray& outData,
@@ -135,15 +58,12 @@ private:
     QString m_componentId;
     TaskType m_taskType;
     QString m_uuid;
-    QPointer<QNetworkReply> m_currentReply;
+    AsyncNetworkRequest* m_currentRequest;
     QMutex m_mutex;
-    QNetworkAccessManager m_networkManager;  // 成员变量，确保生命周期与worker一致
 
-    // 超时配置
-    static const int DEFAULT_TIMEOUT_MS = 30000;  // 默认超时 30 秒
-    static const int MODEL_TIMEOUT_MS = 45000;  // 3D 模型超时 45 秒
-    static const int MAX_RETRIES = 3;  // 最大重试次数
-    static constexpr int RETRY_DELAYS_MS[] = {3000, 5000, 10000};  // 递增重试延迟
+    static const int DEFAULT_TIMEOUT_MS = 30000;
+    static const int MODEL_TIMEOUT_MS = 45000;
+    static const int MAX_RETRIES = 3;
 };
 
 }  // namespace EasyKiConverter

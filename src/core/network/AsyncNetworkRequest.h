@@ -38,6 +38,8 @@ class AsyncNetworkRequest : public QObject {
     Q_OBJECT
 
 public:
+    static AsyncNetworkRequest* createFinished(const NetworkResult& result, QObject* parent = nullptr);
+
     /**
      * @brief Destructor - ensures cleanup
      */
@@ -115,6 +117,7 @@ private:
      */
     AsyncNetworkRequest(const QUrl& url,
                         QNetworkAccessManager* networkManager,
+                        ResourceType resourceType,
                         const RetryPolicy& policy,
                         const QByteArray& body = QByteArray(),
                         QObject* parent = nullptr);
@@ -157,7 +160,7 @@ private:
     /**
      * @brief Check if should retry based on status code
      */
-    bool shouldRetryInternal(int statusCode, int retryCount) const;
+    bool shouldRetryInternal(int statusCode, QNetworkReply::NetworkError error, int retryCount) const;
 
     /**
      * @brief Cleanup current attempt
@@ -166,6 +169,7 @@ private:
 
     QUrl m_url;
     QNetworkAccessManager* m_networkManager;
+    ResourceType m_resourceType;
     RetryPolicy m_policy;
     QByteArray m_postBody;  ///< Request body for POST requests
     bool m_isPostRequest;  ///< Whether this is a POST request

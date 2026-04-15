@@ -5,12 +5,10 @@
 #include "INetworkClient.h"
 #include "utils/TestableSingleton.h"
 
-#include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QObject>
 #include <QRandomGenerator>
-#include <QTimer>
 
 namespace EasyKiConverter {
 
@@ -33,9 +31,22 @@ public:
     NetworkResult get(const QUrl& url, const RetryPolicy& policy = {}) override;
 
     /**
+     * @brief Send HTTP GET request with resource type for profiling
+     */
+    NetworkResult get(const QUrl& url, ResourceType resourceType, const RetryPolicy& policy = {}) override;
+
+    /**
      * @brief Send HTTP POST request with retry (synchronous, blocks until complete)
      */
     NetworkResult post(const QUrl& url, const QByteArray& body, const RetryPolicy& policy = {}) override;
+
+    /**
+     * @brief Send HTTP POST request with resource type for profiling
+     */
+    NetworkResult post(const QUrl& url,
+                       const QByteArray& body,
+                       ResourceType resourceType,
+                       const RetryPolicy& policy = {}) override;
 
     /**
      * @brief Send HTTP GET request asynchronously (non-blocking)
@@ -45,20 +56,27 @@ public:
      * The request can be cancelled at any time via AsyncNetworkRequest::cancel().
      *
      * @param url Request URL
+     * @param resourceType Type of resource being requested
      * @param policy Retry policy
      * @return AsyncNetworkRequest* - caller takes ownership
      */
-    Q_INVOKABLE AsyncNetworkRequest* getAsync(const QUrl& url, const RetryPolicy& policy = {});
+    Q_INVOKABLE AsyncNetworkRequest* getAsync(const QUrl& url,
+                                              ResourceType resourceType = ResourceType::Unknown,
+                                              const RetryPolicy& policy = {}) override;
 
     /**
      * @brief Send HTTP POST request asynchronously (non-blocking)
      *
      * @param url Request URL
      * @param body Request body
+     * @param resourceType Type of resource being requested
      * @param policy Retry policy
      * @return AsyncNetworkRequest* - caller takes ownership
      */
-    Q_INVOKABLE AsyncNetworkRequest* postAsync(const QUrl& url, const QByteArray& body, const RetryPolicy& policy = {});
+    Q_INVOKABLE AsyncNetworkRequest* postAsync(const QUrl& url,
+                                               const QByteArray& body,
+                                               ResourceType resourceType = ResourceType::Unknown,
+                                               const RetryPolicy& policy = {}) override;
 
     /**
      * @brief Check if data is gzip compressed
@@ -80,11 +98,13 @@ protected:
     ~NetworkClient() override;
 
 private:
-    NetworkResult executeRequest(const QUrl& url, const QByteArray& body, const RetryPolicy& policy);
+    NetworkResult executeRequest(const QUrl& url,
+                                 const QByteArray& body,
+                                 ResourceType resourceType,
+                                 const RetryPolicy& policy);
     int calculateRetryDelay(int retryCount, const RetryPolicy& policy);
-    bool shouldRetry(int statusCode, int retryCount, const RetryPolicy& policy);
-
-    QNetworkAccessManager* m_networkManager;
+    bool shouldRetry(int statusCode, QNetworkReply::NetworkError error, int retryCount, const RetryPolicy& policy);
+    void populateDiagnostic(NetworkDiagnostic& diag, const QUrl& url, ResourceType resourceType);
 };
 
 }  // namespace EasyKiConverter

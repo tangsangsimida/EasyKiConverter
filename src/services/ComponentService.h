@@ -20,8 +20,6 @@
 #include <QString>
 #include <QStringList>
 
-class QNetworkAccessManager;
-
 namespace EasyKiConverter {
 
 /**
@@ -271,14 +269,14 @@ private slots:
      *
      * @param data 组件信息数据
      */
-    void handleComponentInfoFetched(const QJsonObject& data);
+    void handleComponentInfoFetched(const QString& componentId, const QJsonObject& data);
 
     /**
      * @brief 处理CAD数据获取成功
      *
      * @param data CAD数据
      */
-    void handleCadDataFetched(const QJsonObject& data);
+    void handleCadDataFetched(const QString& componentId, const QJsonObject& data);
 
     void handleFetchError(const QString& errorMessage);
 
@@ -414,8 +412,6 @@ private:
 
 private:
     class EasyedaApi* m_api;
-    class EasyedaImporter* m_importer;
-    QNetworkAccessManager* m_networkManager;
     LcscImageService* m_imageService;
 
     // 添加互斥锁保护并发访问

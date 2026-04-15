@@ -13,14 +13,32 @@ namespace EasyKiConverter {
 // Static member initialization
 const QList<QNetworkReply*> AsyncNetworkRequest::s_emptyReplies;
 
+AsyncNetworkRequest* AsyncNetworkRequest::createFinished(const NetworkResult& result, QObject* parent) {
+    auto* request =
+        new AsyncNetworkRequest(QUrl(), nullptr, result.diagnostic.resourceType, RetryPolicy(), QByteArray(), parent);
+    {
+        QMutexLocker locker(&request->m_resultMutex);
+        request->m_result = result;
+    }
+    if (result.wasCancelled) {
+        request->m_cancelled.storeRelease(1);
+    }
+    request->m_finished.storeRelease(1);
+
+    QMetaObject::invokeMethod(request, [request, result]() { emit request->finished(result); }, Qt::QueuedConnection);
+    return request;
+}
+
 AsyncNetworkRequest::AsyncNetworkRequest(const QUrl& url,
                                          QNetworkAccessManager* networkManager,
+                                         ResourceType resourceType,
                                          const RetryPolicy& policy,
                                          const QByteArray& body,
                                          QObject* parent)
     : QObject(parent)
     , m_url(url)
     , m_networkManager(networkManager)
+    , m_resourceType(resourceType)
     , m_policy(policy)
     , m_postBody(body)
     , m_isPostRequest(!body.isEmpty())
@@ -30,7 +48,12 @@ AsyncNetworkRequest::AsyncNetworkRequest(const QUrl& url,
     , m_timeoutTimer(nullptr)
     , m_currentRetryCount(0)
     , m_timeoutMs(policy.baseTimeoutMs)
-    , m_gzipUsed(false) {}
+    , m_gzipUsed(false) {
+    m_result.diagnostic.url = m_url.toString();
+    m_result.diagnostic.host = m_url.host();
+    m_result.diagnostic.resourceType = m_resourceType;
+    m_result.diagnostic.profileName = RequestProfiles::fromType(m_resourceType).name;
+}
 
 AsyncNetworkRequest::~AsyncNetworkRequest() {
     // Cancel any pending operations
@@ -81,6 +104,9 @@ void AsyncNetworkRequest::cancel() {
             m_result.wasCancelled = true;
             m_result.success = false;
             m_result.error = "Cancelled";
+            m_result.diagnostic.wasCanceled = true;
+            m_result.diagnostic.errorType = NetworkErrorType::Canceled;
+            m_result.diagnostic.errorMessage = m_result.error;
 
             m_finished.storeRelease(1);
             emit finished(m_result);
@@ -133,6 +159,8 @@ void AsyncNetworkRequest::startAttempt(int attemptNumber) {
         m_result.error = "Network manager is null";
         m_result.success = false;
         m_result.wasCancelled = false;
+        m_result.diagnostic.errorType = NetworkErrorType::Other;
+        m_result.diagnostic.errorMessage = m_result.error;
         m_finished.storeRelease(1);
         emit finished(m_result);
         return;
@@ -140,15 +168,21 @@ void AsyncNetworkRequest::startAttempt(int attemptNumber) {
 
     QNetworkRequest request(m_url);
     request.setHeader(QNetworkRequest::UserAgentHeader, "EasyKiConverter/1.0");
+    request.setRawHeader("X-Requested-With", "XMLHttpRequest");
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
     // Note: We handle gzip manually in processResponse() since Qt doesn't auto-decompress
 
     // Create the reply - use POST if body is provided
     QNetworkReply* reply;
     if (m_isPostRequest && !m_postBody.isEmpty()) {
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        // Auto-detect Content-Type based on body format
+        // If body contains = and &, it's likely URL-encoded form data
+        if (m_postBody.contains('=') && m_postBody.contains('&')) {
+            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        } else {
+            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        }
         reply = m_networkManager->post(request, m_postBody);
-        qDebug() << "AsyncNetworkRequest: Sending POST request to" << m_url << "with body size" << m_postBody.size();
     } else {
         reply = m_networkManager->get(request);
     }
@@ -226,6 +260,9 @@ void AsyncNetworkRequest::handleTimeout() {
         m_result.error = "Timeout";
         m_result.success = false;
         m_result.wasCancelled = false;
+        m_result.diagnostic.errorType = NetworkErrorType::Timeout;
+        m_result.diagnostic.errorMessage = m_result.error;
+        m_result.diagnostic.retryCount = m_currentRetryCount;
 
         m_finished.storeRelease(1);
         emit finished(m_result);
@@ -236,6 +273,8 @@ void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
     QMutexLocker locker(&m_resultMutex);
 
     m_result.statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    m_result.diagnostic.statusCode = m_result.statusCode;
+    m_result.diagnostic.retryCount = m_currentRetryCount;
 
     // Check for error
     if (reply->error() != QNetworkReply::NoError) {
@@ -246,13 +285,16 @@ void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
             m_result.wasCancelled = true;
             m_result.success = false;
             m_result.error = "Cancelled";
+            m_result.diagnostic.wasCanceled = true;
+            m_result.diagnostic.errorType = NetworkErrorType::Canceled;
+            m_result.diagnostic.errorMessage = m_result.error;
             m_finished.storeRelease(1);
             emit finished(m_result);
             return;
         }
 
         // Check if should retry
-        if (shouldRetryInternal(m_result.statusCode, m_currentRetryCount)) {
+        if (shouldRetryInternal(m_result.statusCode, reply->error(), m_currentRetryCount)) {
             locker.unlock();
             scheduleRetry(m_currentRetryCount);
             return;
@@ -262,6 +304,40 @@ void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
         m_result.error = errorString;
         m_result.success = false;
         m_result.wasCancelled = false;
+        m_result.diagnostic.errorMessage = m_result.error;
+
+        switch (reply->error()) {
+            case QNetworkReply::TimeoutError:
+                m_result.diagnostic.errorType = NetworkErrorType::Timeout;
+                break;
+            case QNetworkReply::ConnectionRefusedError:
+                m_result.diagnostic.errorType = NetworkErrorType::ConnectionRefused;
+                break;
+            case QNetworkReply::HostNotFoundError:
+                m_result.diagnostic.errorType = NetworkErrorType::HostNotFound;
+                break;
+            case QNetworkReply::SslHandshakeFailedError:
+                m_result.diagnostic.errorType = NetworkErrorType::SSLError;
+                break;
+            case QNetworkReply::OperationCanceledError:
+                m_result.diagnostic.errorType = NetworkErrorType::Canceled;
+                m_result.diagnostic.wasCanceled = true;
+                break;
+            default:
+                if (m_result.statusCode == 429) {
+                    m_result.diagnostic.errorType = NetworkErrorType::RateLimited;
+                    m_result.diagnostic.wasRateLimited = true;
+                } else if (m_result.statusCode >= 500) {
+                    m_result.diagnostic.errorType = NetworkErrorType::ServerError;
+                } else if (m_result.statusCode == 404) {
+                    m_result.diagnostic.errorType = NetworkErrorType::NotFound;
+                } else if (m_result.statusCode == 403) {
+                    m_result.diagnostic.errorType = NetworkErrorType::Forbidden;
+                } else {
+                    m_result.diagnostic.errorType = NetworkErrorType::Other;
+                }
+                break;
+        }
 
         m_finished.storeRelease(1);
         emit finished(m_result);
@@ -284,6 +360,8 @@ void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
             m_result.error = "Gzip decompression failed";
             m_result.success = false;
             m_result.wasCancelled = false;
+            m_result.diagnostic.errorType = NetworkErrorType::DecompressionFailed;
+            m_result.diagnostic.errorMessage = m_result.error;
             m_finished.storeRelease(1);
             emit finished(m_result);
             return;
@@ -294,6 +372,8 @@ void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
     m_result.success = true;
     m_result.retryCount = m_currentRetryCount;
     m_result.wasCancelled = false;
+    m_result.diagnostic.errorType = NetworkErrorType::None;
+    m_result.diagnostic.errorMessage.clear();
 
     m_finished.storeRelease(1);
     emit finished(m_result);
@@ -338,22 +418,28 @@ int AsyncNetworkRequest::calculateRetryDelay(int retryCount) const {
     return baseDelay + jitter;
 }
 
-bool AsyncNetworkRequest::shouldRetryInternal(int statusCode, int retryCount) const {
+bool AsyncNetworkRequest::shouldRetryInternal(int statusCode, QNetworkReply::NetworkError error, int retryCount) const {
     if (retryCount >= m_policy.maxRetries) {
         return false;
     }
 
-    // Retry on rate limit
-    if (statusCode == 429) {
+    if (m_policy.retryableStatusCodes.contains(statusCode)) {
         return true;
     }
 
-    // Retry on server errors
-    if (statusCode >= 500 && statusCode < 600) {
-        return true;
+    switch (error) {
+        case QNetworkReply::TimeoutError:
+        case QNetworkReply::TemporaryNetworkFailureError:
+        case QNetworkReply::NetworkSessionFailedError:
+        case QNetworkReply::UnknownNetworkError:
+        case QNetworkReply::RemoteHostClosedError:
+        case QNetworkReply::HostNotFoundError:
+        case QNetworkReply::ConnectionRefusedError:
+        case QNetworkReply::ProxyTimeoutError:
+            return true;
+        default:
+            return false;
     }
-
-    return false;
 }
 
 void AsyncNetworkRequest::cleanupAttempt() {

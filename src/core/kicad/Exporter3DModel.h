@@ -7,11 +7,6 @@
 #include <QObject>
 #include <QString>
 
-// 前向声明
-namespace EasyKiConverter {
-class NetworkUtils;
-}
-
 namespace EasyKiConverter {
 
 /**

@@ -16,7 +16,7 @@ namespace EasyKiConverter {
 enum class LogModule : uint32_t {
     None = 0,
     Core = 1 << 0,  ///< 核心功能 (main, LanguageManager)
-    Network = 1 << 1,  ///< 网络请求 (FetchWorker, NetworkUtils)
+    Network = 1 << 1,  ///< 网络请求 (NetworkClient, FetchWorker)
     Export = 1 << 2,  ///< 导出功能 (ExportService, ExportWorker)
     UI = 1 << 3,  ///< 用户界面 (ViewModels)
     Parser = 1 << 4,  ///< 数据解析 (BOM, JSON)
