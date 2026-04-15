@@ -198,7 +198,7 @@ Model 层负责数据的存储和管理。
 
 **工具模块：**
 - `GeometryUtils` - 几何计算工具
-- `NetworkUtils` - 网络请求工具
+- `NetworkUtils` - (已废弃，改用 NetworkClient)
 - `LayerMapper` - 图层映射工具
 
 ### 工作线程（Workers）

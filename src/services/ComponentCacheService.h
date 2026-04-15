@@ -34,7 +34,6 @@ namespace EasyKiConverter {
  *   - 手册文件 (datasheet.pdf/.html)
  *   - 3D模型文件 (*.step, *.wrl)
  *   - 元数据 (component.json)
- *   - 缓存过期：7天
  *   - 磁盘配额：5GB，超限LRU淘汰
  *
  * 缓存目录结构：
