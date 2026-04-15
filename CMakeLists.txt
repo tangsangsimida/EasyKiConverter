@@ -221,6 +221,7 @@ set(QML_FILES
     src/ui/qml/components/ConfirmDialog.qml
     src/ui/qml/components/WindowResizeHandles.qml
     src/ui/qml/components/ExitDialog.qml
+    src/ui/qml/components/SliderDialogBase.qml
     src/ui/qml/styles/AppStyle.qml
     src/ui/qml/styles/ResponsiveHelper.qml
 )

@@ -36,6 +36,12 @@ FocusScope {
     // ===== 子类可使用的属性 =====
     property Item activeButton: null  // 当前悬停的按钮
     property Item selectedButton: null  // 当前键盘选中的按钮（用于 ExitDialog 键盘导航）
+    property string title: qsTr("对话框")  // 对话框标题
+    property string message: qsTr("提示信息")  // 对话框消息
+    // ===== 内部元素引用（供子类使用）=====
+    property alias dialogBox: dialogBox  // 对话框容器
+    property alias dialogBoxTranslate: dialogBoxTranslate  // 对话框位移
+    property alias buttonColLayout: buttonColLayout  // 按钮列布局
     // ===== 按钮规格列表 =====
     // 格式: { text, color, action } 或 { isSeparator: true }
     property list<var> buttonSpecs
@@ -148,7 +154,7 @@ FocusScope {
                 font.bold: true
                 color: AppStyle.colors.textPrimary
                 horizontalAlignment: Text.AlignHCenter
-                text: qsTr("对话框")
+                text: root.title
             }
 
             // 内容（子类可覆盖 ID）
@@ -160,7 +166,7 @@ FocusScope {
                 wrapMode: Text.WordWrap
                 horizontalAlignment: Text.AlignHCenter
                 lineHeight: 1.3
-                text: qsTr("提示信息")
+                text: root.message
             }
 
             // 按钮组容器
@@ -261,6 +267,7 @@ FocusScope {
         Loader {
             Layout.fillWidth: true
             Layout.preferredHeight: modelData.isSeparator ? 1 : buttonHeight
+            property var specData: modelData  // 传递数据
             sourceComponent: modelData.isSeparator ? separatorComponent : buttonComponent
             // 暴露内部按钮引用，以便外部（ExitDialog键盘导航）可以获取实际按钮
             property Item actualButton: item
@@ -282,9 +289,10 @@ FocusScope {
             id: btn
             // 标记自身以便父组件识别
             property bool isSliderButton: true
-            // 关联的颜色
-            property color sliderColor: modelData.color
-            text: modelData.text
+            // 关联的颜色 - parent是Loader，Loader.parent是ColumnLayout
+            property color sliderColor: parent.specData ? parent.specData.color : AppStyle.colors.primary
+            property string btnText: parent.specData ? parent.specData.text : ""
+            text: btnText
             backgroundColor: "transparent"
             textColor: {
                 // 悬停状态优先
@@ -323,8 +331,8 @@ FocusScope {
             }
 
             onClicked: {
-                if (modelData.action) {
-                    modelData.action();
+                if (parent.specData && parent.specData.action) {
+                    parent.specData.action();
                 }
             }
         }
@@ -333,7 +341,7 @@ FocusScope {
     // ===== 打开动画 =====
     ParallelAnimation {
         id: showAnim
-        enabled: hasOverlay
+        running: hasOverlay
         NumberAnimation {
             target: overlay
             property: "opacity"

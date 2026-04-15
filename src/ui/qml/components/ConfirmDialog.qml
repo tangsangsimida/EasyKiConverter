@@ -29,13 +29,16 @@ SliderDialogBase {
     hasOverlay: true
     title: qsTr("退出确认")
     message: qsTr("转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？")
+    property color confirmColor: AppStyle.colors.danger
+    property string confirmText: qsTr("确定")
+    property string cancelText: qsTr("取消")
     // ===== 信号 =====
     signal accepted
     signal rejected
     // ===== 按钮规格 =====
     buttonSpecs: [
         {
-            text: qsTr("取消"),
+            text: root.cancelText,
             color: AppStyle.colors.textSecondary,
             action: function () {
                 root.rejected();
@@ -46,8 +49,8 @@ SliderDialogBase {
             isSeparator: true
         },
         {
-            text: qsTr("确定"),
-            color: AppStyle.colors.danger,
+            text: root.confirmText,
+            color: confirmColor,
             action: function () {
                 root.accepted();
                 root.close();
@@ -63,11 +66,16 @@ SliderDialogBase {
     // ===== 覆写 open 函数 =====
     function open() {
         visible = true;
-        dialogBox.y = 0;
-        dialogBoxTranslate.y = 0;
+        root.dialogBox.y = 0;
+        root.dialogBoxTranslate.y = 0;
         showAnim.start();
         root.forceActiveFocus();
         // 默认聚焦在取消按钮（第一个）
-        root.updateSlider(buttonColLayout.children[0].actualButton, AppStyle.colors.textSecondary);
+        for (var i = 0; i < buttonSpecs.length; i++) {
+            if (!buttonSpecs[i].isSeparator && buttonColLayout.children[i] && buttonColLayout.children[i].actualButton) {
+                root.updateSlider(buttonColLayout.children[i].actualButton, AppStyle.colors.textSecondary);
+                break;
+            }
+        }
     }
 }

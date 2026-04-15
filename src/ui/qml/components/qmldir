@@ -20,3 +20,4 @@ WindowController 1.0 WindowController.qml
 WindowResizeHandles 1.0 WindowResizeHandles.qml
 ConfirmDialog 1.0 ConfirmDialog.qml
 ExitDialog 1.0 ExitDialog.qml
+SliderDialogBase 1.0 SliderDialogBase.qml

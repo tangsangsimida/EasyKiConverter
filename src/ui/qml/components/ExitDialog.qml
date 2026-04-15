@@ -260,14 +260,22 @@ SliderDialogBase {
     // ===== 覆写 open 函数 =====
     function open() {
         visible = true;
-        dialogBox.rotation = 0;
-        dialogBox.scale = 1.0;
-        dialogBox.opacity = 1.0;
-        dialogBoxTranslate.y = 0;
+        root.dialogBox.rotation = 0;
+        root.dialogBox.scale = 1.0;
+        root.dialogBox.opacity = 1.0;
+        root.dialogBoxTranslate.y = 0;
         // 默认选中第一个按钮（最小化到托盘）
-        selectedButton = buttonColLayout.children[0].actualButton;
-        // 设置滑块默认聚焦在第一个选项上
-        updateSlider(selectedButton, buttonSpecs[0].color);
+        // 跳过可能的分隔线，找到第一个真正的按钮
+        for (var i = 0; i < buttonSpecs.length; i++) {
+            if (!buttonSpecs[i].isSeparator && buttonColLayout.children[i]) {
+                var loader = buttonColLayout.children[i];
+                if (loader.actualButton) {
+                    selectedButton = loader.actualButton;
+                    updateSlider(selectedButton, buttonSpecs[i].color);
+                    break;
+                }
+            }
+        }
         focusArea = "button";
         root.forceActiveFocus();
     }
