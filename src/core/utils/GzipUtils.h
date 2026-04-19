@@ -9,7 +9,7 @@ namespace GzipUtils {
  * @brief Gzip decompression utilities
  *
  * Provides unified gzip decompression for all network components.
- * Replaces duplicate implementations in NetworkUtils, NetworkWorker, and FetchWorker.
+ * Replaces duplicate gzip handling in NetworkClient and worker-side requests.
  */
 
 /**

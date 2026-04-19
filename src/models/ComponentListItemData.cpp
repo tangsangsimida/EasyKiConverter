@@ -119,6 +119,24 @@ QVariantList ComponentListItemData::previewImages() const {
     return m_previewImagesCache;
 }
 
+int ComponentListItemData::previewImageCount() const {
+    int cacheCount = 0;
+    for (const QVariant& cached : m_previewImagesCache) {
+        if (cached.isValid() && !cached.toString().isEmpty()) {
+            ++cacheCount;
+        }
+    }
+
+    int rawCount = 0;
+    for (const QImage& image : m_previewImages) {
+        if (!image.isNull()) {
+            ++rawCount;
+        }
+    }
+
+    return qMax(cacheCount, rawCount);
+}
+
 void ComponentListItemData::addPreviewImage(const QImage& image) {
     if (!image.isNull()) {
         m_previewImages.append(image);
@@ -201,6 +219,30 @@ void ComponentListItemData::setEncodedPreviewImages(const QStringList& encodedIm
             m_previewImagesCache.append(encoded);
         }
     }
+    emit previewImagesChanged();
+}
+
+void ComponentListItemData::setEncodedPreviewImageAt(const QString& encodedImage, int index, bool notify) {
+    if (index < 0) {
+        return;
+    }
+
+    while (m_previewImagesCache.size() <= index) {
+        m_previewImagesCache.append(QVariant());
+    }
+
+    if (encodedImage.isEmpty()) {
+        m_previewImagesCache[index] = QVariant();
+    } else {
+        m_previewImagesCache[index] = encodedImage;
+    }
+
+    if (notify) {
+        emit previewImagesChanged();
+    }
+}
+
+void ComponentListItemData::notifyPreviewImagesChanged() {
     emit previewImagesChanged();
 }
 

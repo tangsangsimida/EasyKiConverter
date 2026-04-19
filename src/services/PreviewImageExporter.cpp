@@ -47,7 +47,7 @@ bool PreviewImageExporter::exportFromUrls(const QStringList& imageUrls,
         }
 
         // Use NetworkClient with default retry policy (3 retries, 30s timeout)
-        NetworkResult result = NetworkClient::instance().get(QUrl(imageUrl));
+        NetworkResult result = NetworkClient::instance().get(QUrl(imageUrl), ResourceType::PreviewImage);
 
         if (result.success) {
             QFile file(imagePath);

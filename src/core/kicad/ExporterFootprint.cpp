@@ -1,6 +1,7 @@
 #include "ExporterFootprint.h"
 
 #include "core/utils/GeometryUtils.h"
+#include "utils/PathSecurity.h"
 
 #include <QDebug>
 #include <QDir>
@@ -61,7 +62,9 @@ bool ExporterFootprint::exportFootprint(const FootprintData& footprintData,
 
 bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footprints,
                                                const QString& libName,
-                                               const QString& filePath) {
+                                               const QString& filePath,
+                                               bool preferWrl,
+                                               bool exportStep) {
     qDebug() << "=== Export Footprint Library ===";
     qDebug() << "Library name:" << libName;
     qDebug() << "Output path:" << filePath;
@@ -104,7 +107,37 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
             exportedCount++;
         }
 
-        QString content = generateFootprintContent(footprint);
+        QString content;
+        if (!footprint.model3D().name().isEmpty() || !footprint.model3D().uuid().isEmpty()) {
+            QString modelName = footprint.model3D().name();
+            if (modelName.isEmpty()) {
+                modelName = footprint.info().name;
+            }
+            modelName = PathSecurity::sanitizeFilename(modelName);
+
+            const bool hasModel3D = !footprint.model3D().name().isEmpty();
+            const bool useWrl = preferWrl && hasModel3D;
+            const bool useStep = exportStep && hasModel3D;
+
+            // libName 也需要sanitize，防止Windows非法字符导致问题
+            QString safeLibName = PathSecurity::sanitizeFilename(libName);
+
+            if (useWrl && useStep) {
+                QString wrlPath = QStringLiteral("../%1.3dmodels/%2.wrl").arg(safeLibName, modelName);
+                QString stepPath = QStringLiteral("../%1.3dmodels/%2.step").arg(safeLibName, modelName);
+                content = generateFootprintContent(footprint, wrlPath, stepPath);
+            } else if (useWrl) {
+                QString wrlPath = QStringLiteral("../%1.3dmodels/%2.wrl").arg(safeLibName, modelName);
+                content = generateFootprintContent(footprint, wrlPath);
+            } else if (useStep) {
+                QString stepPath = QStringLiteral("../%1.3dmodels/%2.step").arg(safeLibName, modelName);
+                content = generateFootprintContent(footprint, stepPath);
+            } else {
+                content = generateFootprintContent(footprint);
+            }
+        } else {
+            content = generateFootprintContent(footprint);
+        }
 
         QFile file(fullPath);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -135,10 +168,10 @@ QString ExporterFootprint::generateHeader(const QString& libName) const {
         .arg(libName);
 }
 
-QString ExporterFootprint::generateFootprintContent(const FootprintData& footprintData,
-                                                    const QString& model3DPath) const {
-    QString content;
-
+void ExporterFootprint::generateFootprintBaseContent(const FootprintData& footprintData,
+                                                     QString& content,
+                                                     double& outBboxX,
+                                                     double& outBboxY) const {
     content += QString("(footprint easykiconverter:%1\n").arg(footprintData.info().name);
     content += "  (version 20221018)\n";
 
@@ -172,15 +205,10 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData& footpri
     double bboxX = footprintData.bbox().x;
     double bboxY = footprintData.bbox().y;
 
-    // 计算封装中心点（用于将封装居中显示）
     double centerX = bboxX + footprintData.bbox().width / 2.0;
     double centerY = bboxY + footprintData.bbox().height / 2.0;
-    qDebug() << "Footprint center - centerX:" << centerX << "centerY:" << centerY;
-
-    // 调整bboxX和bboxY为中心点，这样所有图形元素都会相对于中心点定位
     bboxX = centerX;
     bboxY = centerY;
-    qDebug() << "Adjusted bboxX:" << bboxX << "bboxY:" << bboxY;
 
     content += QString("  (fp_text reference REF** (at 0 %1) (layer F.SilkS)\n")
                    .arg(m_graphicsGenerator.pxToMm(yLow - bboxY - 4));
@@ -238,13 +266,22 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData& footpri
         qWarning() << "Warning: No courtyard found, generated from BBox";
     }
 
+    outBboxX = bboxX;
+    outBboxY = bboxY;
+}
+
+QString ExporterFootprint::generateFootprintContent(const FootprintData& footprintData,
+                                                    const QString& model3DPath) const {
+    QString content;
+    double bboxX = 0, bboxY = 0;
+    generateFootprintBaseContent(footprintData, content, bboxX, bboxY);
+
     if (!footprintData.model3D().name().isEmpty() || !model3DPath.isEmpty()) {
         content += m_graphicsGenerator.generateModel3D(
             footprintData.model3D(), bboxX, bboxY, model3DPath, footprintData.info().type);
     }
 
     content += ")\n";
-
     return content;
 }
 
@@ -252,105 +289,8 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData& footpri
                                                     const QString& model3DWrlPath,
                                                     const QString& model3DStepPath) const {
     QString content;
-
-    content += QString("(footprint easykiconverter:%1\n").arg(footprintData.info().name);
-    content += "  (version 20221018)\n";
-
-    bool isThroughHole = false;
-    for (const FootprintPad& pad : footprintData.pads()) {
-        if (pad.holeRadius > 0) {
-            isThroughHole = true;
-            break;
-        }
-    }
-
-    if (isThroughHole) {
-        content += "\t(attr through_hole)\n";
-    } else {
-        content += "\t(attr smd)\n";
-    }
-
-    double yLow = 0;
-    double yHigh = 0;
-    if (!footprintData.pads().isEmpty()) {
-        yLow = footprintData.pads().first().centerY;
-        yHigh = footprintData.pads().first().centerY;
-        for (const FootprintPad& pad : footprintData.pads()) {
-            if (pad.centerY < yLow)
-                yLow = pad.centerY;
-            if (pad.centerY > yHigh)
-                yHigh = pad.centerY;
-        }
-    }
-
-    double bboxX = footprintData.bbox().x;
-    double bboxY = footprintData.bbox().y;
-
-    // 计算封装中心点（用于将封装居中显示）
-    double centerX = bboxX + footprintData.bbox().width / 2.0;
-    double centerY = bboxY + footprintData.bbox().height / 2.0;
-    qDebug() << "Footprint center - centerX:" << centerX << "centerY:" << centerY;
-
-    // 调整bboxX和bboxY为中心点，这样所有图形元素都会相对于中心点定位
-    bboxX = centerX;
-    bboxY = centerY;
-    qDebug() << "Adjusted bboxX:" << bboxX << "bboxY:" << bboxY;
-
-    content += QString("\t(fp_text reference REF** (at 0 %1) (layer F.SilkS)\n")
-                   .arg(m_graphicsGenerator.pxToMm(yLow - bboxY - 4));
-    content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
-    content += "\t)\n";
-
-    content += QString("\t(fp_text value %1 (at 0 %2) (layer F.Fab)\n")
-                   .arg(footprintData.info().name)
-                   .arg(m_graphicsGenerator.pxToMm(yHigh - bboxY + 4));
-    content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
-    content += "\t)\n";
-
-    content += "\t(fp_text user %R (at 0 0) (layer F.Fab)\n";
-    content += "\t\t(effects (font (size 1 1) (thickness 0.15)))\n";
-    content += "\t)\n";
-
-    for (const FootprintTrack& track : footprintData.tracks()) {
-        content += m_graphicsGenerator.generateTrack(track, bboxX, bboxY);
-    }
-    for (const FootprintRectangle& rect : footprintData.rectangles()) {
-        content += m_graphicsGenerator.generateRectangle(rect, bboxX, bboxY);
-    }
-
-    for (const FootprintPad& pad : footprintData.pads()) {
-        content += m_graphicsGenerator.generatePad(pad, bboxX, bboxY);
-    }
-
-    for (const FootprintHole& hole : footprintData.holes()) {
-        content += m_graphicsGenerator.generateHole(hole, bboxX, bboxY);
-    }
-
-    for (const FootprintCircle& circle : footprintData.circles()) {
-        content += m_graphicsGenerator.generateCircle(circle, bboxX, bboxY);
-    }
-
-    for (const FootprintArc& arc : footprintData.arcs()) {
-        content += m_graphicsGenerator.generateArc(arc, bboxX, bboxY);
-    }
-
-    for (const FootprintText& text : footprintData.texts()) {
-        content += m_graphicsGenerator.generateText(text, bboxX, bboxY);
-    }
-
-    bool hasCourtYard = false;
-    for (const FootprintSolidRegion& region : footprintData.solidRegions()) {
-        QString regionContent = m_graphicsGenerator.generateSolidRegion(region, bboxX, bboxY);
-        content += regionContent;
-        if (region.layerId == 99) {
-            hasCourtYard = true;
-        }
-    }
-
-    if (!hasCourtYard && footprintData.bbox().width > 0 && footprintData.bbox().height > 0) {
-        content += m_graphicsGenerator.generateCourtyardFromBBox(footprintData.bbox(), bboxX, bboxY);
-        qWarning() << "Warning: No courtyard found, generated from BBox";
-    }
+    double bboxX = 0, bboxY = 0;
+    generateFootprintBaseContent(footprintData, content, bboxX, bboxY);
 
     if (!footprintData.model3D().name().isEmpty() || !model3DWrlPath.isEmpty() || !model3DStepPath.isEmpty()) {
         if (!model3DWrlPath.isEmpty()) {

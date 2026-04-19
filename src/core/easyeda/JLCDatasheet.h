@@ -1,7 +1,7 @@
 #ifndef JLCDATASHEET_H
 #define JLCDATASHEET_H
 
-#include "core/utils/NetworkUtils.h"
+#include "core/network/AsyncNetworkRequest.h"
 
 #include <QFile>
 #include <QObject>
@@ -38,6 +38,9 @@ public:
      */
     void downloadDatasheet(const QString& datasheetUrl, const QString& savePath);
 
+    void setWeakNetworkSupport(bool enabled);
+    bool weakNetworkSupport() const;
+
     /**
      * @brief 取消下载
      */
@@ -66,26 +69,12 @@ signals:
      */
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 
-private slots:
-    /**
-     * @brief 处理下载响应
-     *
-     * @param data 响应数据
-     */
-    void handleDownloadResponse(const QJsonObject& data);
-
-    /**
-     * @brief 处理下载错误
-     *
-     * @param errorMessage 错误信息
-     */
-    void handleDownloadError(const QString& errorMessage);
-
 private:
-    NetworkUtils* m_networkUtils;
+    AsyncNetworkRequest* m_activeRequest;
     QString m_savePath;
     QString m_datasheetUrl;
     bool m_isDownloading;
+    bool m_weakNetworkSupport;
 };
 
 }  // namespace EasyKiConverter

@@ -1,7 +1,15 @@
 #ifndef ASYNCNETWORKREQUEST_H
 #define ASYNCNETWORKREQUEST_H
 
-#include "INetworkClient.h"
+#include "core/network/INetworkClient.h"
+
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+
+// Forward declaration for friend class
+namespace EasyKiConverter::Test {
+class MockNetworkClient;
+}
 
 #include <QAtomicInt>
 #include <QByteArray>
@@ -18,33 +26,44 @@
 namespace EasyKiConverter {
 
 /**
- * @brief Async network request that supports cancellation
+ * @brief 异步网络请求，支持取消
  *
- * Supports:
- * - Cancellation via cancel()
- * - Progress tracking
- * - Automatic retry with exponential backoff
- * - Gzip decompression
- * - POST requests with body data
+ * 支持：
+ * - 通过 cancel() 取消请求
+ * - 进度跟踪
+ * - 自动重试与指数退避
+ * - Gzip 解压
+ * - 带请求体的 POST 请求
  *
- * Usage:
+ * 使用示例：
  *   auto* request = client->getAsync(url, policy);
  *   connect(request, &AsyncNetworkRequest::finished, this, [](const NetworkResult& result) {
  *       if (result.wasCancelled) { ... }
  *   });
- *   // To cancel: request->cancel();
+ *   // 取消请求：request->cancel();
  */
 class AsyncNetworkRequest : public QObject {
     Q_OBJECT
 
 public:
+    static AsyncNetworkRequest* createFinished(const NetworkResult& result, QObject* parent = nullptr);
+
     /**
-     * @brief Destructor - ensures cleanup
+     * @brief 延迟完成请求 - 用于测试场景
+     * @param result 要发送的结果
+     * @param delayMs 延迟毫秒数
+     *
+     * 此方法用于模拟异步网络请求，避免信号在槽连接建立前发出
+     */
+    Q_INVOKABLE void completeWithResultDelayed(const NetworkResult& result, int delayMs = 0);
+
+    /**
+     * @brief 析构函数，确保清理
      */
     ~AsyncNetworkRequest() override;
 
     /**
-     * @brief Cancel the request
+     * @brief 取消请求
      *
      * Can be called from any thread. The request will abort as soon as possible.
      * The finished signal will be emitted with wasCancelled=true.
@@ -52,24 +71,24 @@ public:
     Q_INVOKABLE void cancel();
 
     /**
-     * @brief Check if request has been cancelled
+     * @brief 检查请求是否已取消
      */
     bool isCancelled() const;
 
     /**
-     * @brief Check if request has completed (successfully or with error)
+     * @brief 检查请求是否已完成 (successfully or with error)
      */
     bool isFinished() const;
 
     /**
-     * @brief Get the result
+     * @brief 获取结果
      *
      * Only valid after finished signal is emitted.
      */
     NetworkResult result() const;
 
     /**
-     * @brief Set timeout in milliseconds
+     * @brief 设置超时时间（毫秒）
      *
      * Default is 30000ms (30 seconds).
      * Set to 0 to disable timeout.
@@ -77,31 +96,31 @@ public:
     void setTimeoutMs(int ms);
 
     /**
-     * @brief Get current retry count
+     * @brief 获取当前重试次数
      */
     int currentRetryCount() const;
 
 signals:
     /**
-     * @brief Emitted when request completes (success, error, or cancelled)
+     * @brief 请求完成时发射（成功、错误或取消） (success, error, or cancelled)
      * @param result The result of the request
      */
     void finished(const NetworkResult& result);
 
     /**
-     * @brief Emitted during download to report progress
+     * @brief 下载过程中发射以报告进度 to report progress
      * @param bytesReceived Bytes received so far
      * @param bytesTotal Total bytes to receive (-1 if unknown)
      */
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 
     /**
-     * @brief Emitted when request times out
+     * @brief 请求超时时发射
      */
     void timeout();
 
     /**
-     * @brief Emitted when request is retried
+     * @brief 请求重试时发射
      * @param retryCount Current retry count (0-based)
      * @param delayMs Delay before retry
      */
@@ -109,63 +128,70 @@ signals:
 
 private:
     friend class NetworkClient;
+    friend class Test::MockNetworkClient;
 
     /**
-     * @brief Constructor - private, use NetworkClient::getAsync() or postAsync()
+     * @brief 构造函数 - 私有，使用 NetworkClient::getAsync() 或 postAsync()
      */
     AsyncNetworkRequest(const QUrl& url,
                         QNetworkAccessManager* networkManager,
+                        ResourceType resourceType,
                         const RetryPolicy& policy,
                         const QByteArray& body = QByteArray(),
                         QObject* parent = nullptr);
 
     /**
-     * @brief Start the request
+     * @brief 启动请求
      */
     void start();
 
     /**
-     * @brief Start a single attempt (may be called multiple times for retries)
+     * @brief 启动单次尝试（重试时会多次调用） (may be called multiple times for retries)
      */
     void startAttempt(int attemptNumber);
 
     /**
-     * @brief Handle attempt completion
+     * @brief 处理尝试完成
      */
     void handleAttemptFinished();
 
     /**
-     * @brief Handle timeout
+     * @brief 处理超时
      */
     void handleTimeout();
 
     /**
-     * @brief Process response data
+     * @brief 处理响应数据
      */
     void processResponse(QNetworkReply* reply);
 
     /**
-     * @brief Schedule a retry
+     * @brief 调度重试
      */
     void scheduleRetry(int retryCount);
 
     /**
-     * @brief Calculate retry delay with jitter
+     * @brief 计算带抖动的重试延迟
      */
     int calculateRetryDelay(int retryCount) const;
 
     /**
-     * @brief Check if should retry based on status code
+     * @brief 检查是否应该根据状态码重试
      */
-    bool shouldRetryInternal(int statusCode, int retryCount) const;
+    bool shouldRetryInternal(int statusCode, QNetworkReply::NetworkError error, int retryCount) const;
 
     /**
-     * @brief Cleanup current attempt
+     * @brief 清理当前尝试
      */
     void cleanupAttempt();
+    bool completeWithResult(const NetworkResult& result);
+    NetworkResult cancelledResult(const QString& errorMessage = QStringLiteral("Cancelled")) const;
+    NetworkResult timeoutResult() const;
+    bool hasActiveReply() const;
 
     QUrl m_url;
     QNetworkAccessManager* m_networkManager;
+    ResourceType m_resourceType;
     RetryPolicy m_policy;
     QByteArray m_postBody;  ///< Request body for POST requests
     bool m_isPostRequest;  ///< Whether this is a POST request
@@ -179,6 +205,7 @@ private:
     int m_currentRetryCount;
     int m_timeoutMs;
     bool m_gzipUsed;
+    QAtomicInt m_currentAttemptTimedOut;
 
     QList<QNetworkReply*> m_pendingReplies;  // For cleanup on destruction
     mutable QMutex m_repliesMutex;

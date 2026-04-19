@@ -20,8 +20,18 @@ Card {
         // 防抖定时器，避免频繁调用 updateFilter()
         Timer {
             id: filterUpdateDebounceTimer
-            interval: 50
+            interval: 120
             onTriggered: visualModel.updateFilter()
+        },
+        Timer {
+            id: previewPrefetchTimer
+            interval: 120
+            repeat: false
+            onTriggered: {
+                if (componentListCard.componentListController) {
+                    componentListCard.componentListController.fetchPreviewImages(componentListCard.componentListController.getAllComponentIds());
+                }
+            }
         },
         // 监听组件数量变化，自动展开
         Connections {
@@ -44,6 +54,12 @@ Card {
             target: componentListCard.componentListController
             function onFilteredCountChanged() {
                 filterUpdateDebounceTimer.restart();
+            }
+        },
+        Connections {
+            target: componentListCard.componentListController
+            function onPreviewFetchRequested() {
+                previewPrefetchTimer.restart();
             }
         },
         Connections {
@@ -619,6 +635,37 @@ Card {
             onMovingChanged: {
                 if (componentListCard.componentListController) {
                     componentListCard.componentListController.setScrolling(moving);
+                }
+            }
+
+            function requestVisiblePreviewImages() {
+                if (!componentListCard.componentListController) {
+                    return;
+                }
+
+                var ids = [];
+                var top = componentList.contentY;
+                var bottom = top + componentList.height;
+                var prefetchMargin = componentList.cellHeight;
+                for (var i = 0; i < componentList.count; ++i) {
+                    var delegate = componentList.itemAtIndex(i);
+                    if (!delegate || !delegate.itemData || !delegate.itemData.componentId) {
+                        continue;
+                    }
+
+                    var itemTop = delegate.y;
+                    var itemBottom = delegate.y + delegate.height;
+                    if (itemBottom < top - prefetchMargin || itemTop > bottom + prefetchMargin) {
+                        continue;
+                    }
+
+                    if (!delegate.itemData.previewImageCount || delegate.itemData.previewImageCount === 0) {
+                        ids.push(delegate.itemData.componentId);
+                    }
+                }
+
+                if (ids.length > 0) {
+                    componentListCard.componentListController.fetchPreviewImages(ids);
                 }
             }
 

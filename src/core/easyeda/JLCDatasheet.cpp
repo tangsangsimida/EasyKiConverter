@@ -1,19 +1,25 @@
 #include "JLCDatasheet.h"
 
+#include "core/network/NetworkClient.h"
+
 #include <QDebug>
 #include <QFile>
-#include <QNetworkReply>
 
 namespace EasyKiConverter {
 
 JLCDatasheet::JLCDatasheet(QObject* parent)
-    : QObject(parent), m_networkUtils(new NetworkUtils(this)), m_isDownloading(false) {
-    connect(m_networkUtils, &NetworkUtils::requestSuccess, this, &JLCDatasheet::handleDownloadResponse);
-    connect(m_networkUtils, &NetworkUtils::requestError, this, &JLCDatasheet::handleDownloadError);
-}
+    : QObject(parent), m_activeRequest(nullptr), m_isDownloading(false), m_weakNetworkSupport(false) {}
 
 JLCDatasheet::~JLCDatasheet() {
     cancel();
+}
+
+void JLCDatasheet::setWeakNetworkSupport(bool enabled) {
+    m_weakNetworkSupport = enabled;
+}
+
+bool JLCDatasheet::weakNetworkSupport() const {
+    return m_weakNetworkSupport;
 }
 
 void JLCDatasheet::downloadDatasheet(const QString& datasheetUrl, const QString& savePath) {
@@ -23,7 +29,7 @@ void JLCDatasheet::downloadDatasheet(const QString& datasheetUrl, const QString&
     }
 
     if (datasheetUrl.isEmpty()) {
-        QString errorMsg = "Datasheet URL is empty";
+        const QString errorMsg = "Datasheet URL is empty";
         qWarning() << errorMsg;
         emit downloadError(errorMsg);
         return;
@@ -33,33 +39,58 @@ void JLCDatasheet::downloadDatasheet(const QString& datasheetUrl, const QString&
     m_savePath = savePath;
     m_isDownloading = true;
 
-    qDebug() << "Downloading datasheet from:" << datasheetUrl;
+    RequestProfile profile = RequestProfiles::datasheet();
+    m_activeRequest = NetworkClient::instance().getAsync(
+        QUrl(datasheetUrl), ResourceType::Datasheet, RetryPolicy::fromProfile(profile, m_weakNetworkSupport));
 
-    // 发GET 请求
-    m_networkUtils->sendGetRequest(datasheetUrl, 60, 3);
+    connect(m_activeRequest, &AsyncNetworkRequest::downloadProgress, this, &JLCDatasheet::downloadProgress);
+    connect(m_activeRequest, &AsyncNetworkRequest::finished, this, [this](const NetworkResult& result) {
+        AsyncNetworkRequest* finishedRequest = m_activeRequest;
+        m_activeRequest = nullptr;
+        m_isDownloading = false;
+
+        if (result.wasCancelled) {
+            if (finishedRequest) {
+                finishedRequest->deleteLater();
+            }
+            return;
+        }
+
+        if (!result.success) {
+            qWarning() << "Datasheet download error:" << result.error;
+            emit downloadError(result.error);
+            if (finishedRequest) {
+                finishedRequest->deleteLater();
+            }
+            return;
+        }
+
+        QFile file(m_savePath);
+        if (!file.open(QIODevice::WriteOnly)) {
+            emit downloadError(QString("Failed to save datasheet: %1").arg(file.errorString()));
+            if (finishedRequest) {
+                finishedRequest->deleteLater();
+            }
+            return;
+        }
+
+        file.write(result.data);
+        file.close();
+
+        emit downloadSuccess(m_savePath);
+
+        if (finishedRequest) {
+            finishedRequest->deleteLater();
+        }
+    });
 }
 
 void JLCDatasheet::cancel() {
-    m_networkUtils->cancelRequest();
+    if (m_activeRequest && !m_activeRequest->isFinished()) {
+        m_activeRequest->cancel();
+        m_activeRequest = nullptr;
+    }
     m_isDownloading = false;
-}
-
-void JLCDatasheet::handleDownloadResponse(const QJsonObject& data) {
-    Q_UNUSED(data);
-    m_isDownloading = false;
-
-    // 注意：数据手册下载通常返回二进制数据，不是 JSON
-    // 这里需要使QNetworkReply 直接访问二进制数
-    // 暂时先发送成功信
-    qDebug() << "Datasheet download completed";
-
-    emit downloadSuccess(m_savePath);
-}
-
-void JLCDatasheet::handleDownloadError(const QString& errorMessage) {
-    m_isDownloading = false;
-    qWarning() << "Datasheet download error:" << errorMessage;
-    emit downloadError(errorMessage);
 }
 
 }  // namespace EasyKiConverter

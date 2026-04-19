@@ -326,7 +326,8 @@ bool Exporter3DModel::downloadModelDataSync(const QString& uuid,
     policy.baseTimeoutMs = 60000;
 
     const QString url = getModelUrl(uuid, format);
-    const NetworkResult result = NetworkClient::instance().get(QUrl(url), policy);
+    const ResourceType resourceType = format == ModelFormat::OBJ ? ResourceType::Model3DObj : ResourceType::Model3DStep;
+    const NetworkResult result = NetworkClient::instance().get(QUrl(url), resourceType, policy);
     if (!result.success) {
         const QString errorMsg =
             QString("Download failed for %1 (%2): %3")

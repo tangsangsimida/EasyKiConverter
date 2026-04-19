@@ -176,7 +176,8 @@ void PipelineCompletionHandler::exportPreviewImagesFromViewModel(ComponentListVi
                     // 3. 磁盘缓存也没有，从 URL 下载并缓存
                     qDebug() << "Preview image not in cache, downloading for component:" << componentId
                              << "index:" << i;
-                    imageData = ComponentCacheService::instance()->downloadPreviewImage(componentId, imageUrls[i], i);
+                    imageData = ComponentCacheService::instance()->downloadPreviewImage(
+                        componentId, imageUrls[i], i, nullptr, nullptr, options.weakNetworkSupport);
                     if (!imageData.isEmpty()) {
                         previewImageDataList.append(imageData);
                     }
@@ -243,8 +244,12 @@ void PipelineCompletionHandler::exportDatasheetsFromViewModel(ComponentListViewM
             } else {
                 // 3. 磁盘缓存也没有，从 URL 下载并缓存
                 qDebug() << "Datasheet not in cache, downloading for component:" << componentId;
-                datasheetData = ComponentCacheService::instance()->downloadDatasheet(
-                    componentId, componentData->datasheet(), &datasheetFormat);
+                datasheetData = ComponentCacheService::instance()->downloadDatasheet(componentId,
+                                                                                     componentData->datasheet(),
+                                                                                     &datasheetFormat,
+                                                                                     nullptr,
+                                                                                     nullptr,
+                                                                                     options.weakNetworkSupport);
             }
         }
 

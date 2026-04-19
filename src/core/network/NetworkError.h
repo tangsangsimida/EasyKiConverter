@@ -8,7 +8,7 @@
 namespace EasyKiConverter {
 
 /**
- * @brief Unified network error representation
+ * @brief 统一的网络错误表示
  */
 class NetworkError {
 public:

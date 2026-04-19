@@ -26,13 +26,24 @@ ExportSettingsViewModel::ExportSettingsViewModel(ParallelExportService* exportSe
     , m_exportSymbol(true)
     , m_exportFootprint(true)
     , m_exportModel3D(true)
+    , m_exportModel3DFormat(ExportOptions::MODEL_3D_FORMAT_BOTH)
     , m_exportPreviewImages(false)
     , m_exportDatasheet(false)
     , m_overwriteExistingFiles(false)
+    , m_weakNetworkSupport(false)
     , m_exportMode(0)
     , m_debugMode(false)
     , m_isExporting(false)
     , m_status("Ready") {
+    // 初始化时检查调试模式（命令行参数优先，环境变量向后兼容）
+    bool envDebugMode = qEnvironmentVariableIsSet("EASYKICONVERTER_DEBUG_MODE");
+    if (envDebugMode) {
+        QString debugValue = qEnvironmentVariable("EASYKICONVERTER_DEBUG_MODE", "false").toLower();
+        m_debugMode = (debugValue == "true" || debugValue == "1" || debugValue == "yes");
+    } else {
+        m_debugMode = m_configService->getDebugMode();
+    }
+
     loadFromConfig();
 
     if (m_exportService) {
@@ -101,6 +112,14 @@ void ExportSettingsViewModel::setExportModel3D(bool enabled) {
     }
 }
 
+void ExportSettingsViewModel::setExportModel3DFormat(int format) {
+    if (m_exportModel3DFormat != format) {
+        m_exportModel3DFormat = format;
+        m_configService->setExportModel3DFormat(format);
+        emit exportModel3DFormatChanged();
+    }
+}
+
 void ExportSettingsViewModel::setExportPreviewImages(bool enabled) {
     if (m_exportPreviewImages != enabled) {
         m_exportPreviewImages = enabled;
@@ -122,6 +141,14 @@ void ExportSettingsViewModel::setOverwriteExistingFiles(bool enabled) {
         m_overwriteExistingFiles = enabled;
         m_configService->setOverwriteExistingFiles(enabled);
         emit overwriteExistingFilesChanged();
+    }
+}
+
+void ExportSettingsViewModel::setWeakNetworkSupport(bool enabled) {
+    if (m_weakNetworkSupport != enabled) {
+        m_weakNetworkSupport = enabled;
+        m_configService->setWeakNetworkSupport(enabled);
+        emit weakNetworkSupportChanged();
     }
 }
 
@@ -221,17 +248,21 @@ void ExportSettingsViewModel::buildExportOptions() {
     options.exportSymbol = m_exportSymbol;
     options.exportFootprint = m_exportFootprint;
     options.exportModel3D = m_exportModel3D;
+    options.exportModel3DFormat = m_exportModel3DFormat;
     options.exportPreviewImages = m_exportPreviewImages;
     options.exportDatasheet = m_exportDatasheet;
     options.overwriteExistingFiles = m_overwriteExistingFiles;
+    options.weakNetworkSupport = m_weakNetworkSupport;
     options.updateMode = (m_exportMode == 1);
     options.debugMode = m_debugMode;
 
-    qDebug() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
-             << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
-             << "3D Model:" << options.exportModel3D << "Preview Images:" << options.exportPreviewImages
-             << "Datasheet:" << options.exportDatasheet << "Update Mode:" << options.updateMode
-             << "Debug Mode:" << options.debugMode;
+    qInfo() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
+            << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
+            << "3D Model:" << options.exportModel3D << "3D Model Format:" << options.exportModel3DFormat
+            << "(1=WRL, 2=STEP, 3=Both)" << "Preview Images:" << options.exportPreviewImages
+            << "Datasheet:" << options.exportDatasheet
+            << "Client Weak Network Adaptation:" << options.weakNetworkSupport << "Update Mode:" << options.updateMode
+            << "Debug Mode:" << options.debugMode;
 
     m_exportService->setOptions(options);
     m_exportService->setOutputPath(absoluteOutputPath);
@@ -337,9 +368,11 @@ void ExportSettingsViewModel::loadFromConfig() {
     m_exportSymbol = m_configService->getExportSymbol();
     m_exportFootprint = m_configService->getExportFootprint();
     m_exportModel3D = m_configService->getExportModel3D();
+    m_exportModel3DFormat = m_configService->getExportModel3DFormat();
     m_exportPreviewImages = m_configService->getExportPreviewImages();
     m_exportDatasheet = m_configService->getExportDatasheet();
     m_overwriteExistingFiles = m_configService->getOverwriteExistingFiles();
+    m_weakNetworkSupport = m_configService->getWeakNetworkSupport();
 
     bool envDebugMode = qEnvironmentVariableIsSet("EASYKICONVERTER_DEBUG_MODE");
     if (envDebugMode) {
@@ -354,9 +387,11 @@ void ExportSettingsViewModel::loadFromConfig() {
     emit exportSymbolChanged();
     emit exportFootprintChanged();
     emit exportModel3DChanged();
+    emit exportModel3DFormatChanged();
     emit exportPreviewImagesChanged();
     emit exportDatasheetChanged();
     emit overwriteExistingFilesChanged();
+    emit weakNetworkSupportChanged();
     emit debugModeChanged();
 }
 
@@ -370,9 +405,11 @@ void ExportSettingsViewModel::resetConfig() {
     m_exportSymbol = true;
     m_exportFootprint = true;
     m_exportModel3D = true;
+    m_exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_BOTH;
     m_exportPreviewImages = false;
     m_exportDatasheet = false;
     m_overwriteExistingFiles = false;
+    m_weakNetworkSupport = false;
     m_exportMode = 0;
     m_debugMode = false;
 
@@ -381,9 +418,11 @@ void ExportSettingsViewModel::resetConfig() {
     m_configService->setExportSymbol(m_exportSymbol);
     m_configService->setExportFootprint(m_exportFootprint);
     m_configService->setExportModel3D(m_exportModel3D);
+    m_configService->setExportModel3DFormat(m_exportModel3DFormat);
     m_configService->setExportPreviewImages(m_exportPreviewImages);
     m_configService->setExportDatasheet(m_exportDatasheet);
     m_configService->setOverwriteExistingFiles(m_overwriteExistingFiles);
+    m_configService->setWeakNetworkSupport(m_weakNetworkSupport);
     m_configService->setDebugMode(m_debugMode);
 
     emit outputPathChanged();
@@ -391,9 +430,11 @@ void ExportSettingsViewModel::resetConfig() {
     emit exportSymbolChanged();
     emit exportFootprintChanged();
     emit exportModel3DChanged();
+    emit exportModel3DFormatChanged();
     emit exportPreviewImagesChanged();
     emit exportDatasheetChanged();
     emit overwriteExistingFilesChanged();
+    emit weakNetworkSupportChanged();
     emit exportModeChanged();
     emit debugModeChanged();
 }

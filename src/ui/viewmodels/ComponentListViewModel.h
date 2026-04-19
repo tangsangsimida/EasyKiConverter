@@ -127,6 +127,7 @@ public slots:
     }
 
     Q_INVOKABLE void setScrolling(bool scrolling);
+    Q_INVOKABLE void fetchPreviewImages(const QStringList& componentIds);
     Q_INVOKABLE void updateExportStatus(const QString& componentId, int previewImageExported, int datasheetExported);
     Q_INVOKABLE void dismissAttentionHints();
 
@@ -144,6 +145,7 @@ signals:
     void pasteCompleted(int added, int skipped);
     void outputPathChanged();
     void attentionStateChanged();
+    void previewFetchRequested();
 
 private slots:
     void handleComponentInfoReady(const QString& componentId, const ComponentData& data);
@@ -155,7 +157,6 @@ private slots:
                                const QString& datasheetUrl,
                                const QStringList& imageUrls);
     void handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData);
-    void handleAllImagesReady(const QString& componentId, const QStringList& imagePaths);
 
 private:
     static bool isNonRetryableValidationError(const QString& error);
@@ -163,6 +164,7 @@ private:
     bool validateComponentId(const QString& componentId) const;
     QStringList extractComponentIdFromText(const QString& text) const;
     ComponentListItemData* findItemData(const QString& componentId) const;
+    void recomputeStateCounters();
     void updateHasInvalidComponents();
     void rebuildComponentIdIndex();
     void startValidationQueue();
@@ -194,6 +196,10 @@ private:
 
     QString m_filterMode = "all";
     bool m_isScrolling = false;
+    int m_validatingCountCache = 0;
+    int m_validCountCache = 0;
+    int m_invalidCountCache = 0;
+    int m_retryableInvalidCountCache = 0;
 
     QStringList m_validationQueue;
     QSet<QString> m_inFlightComponentIds;  // 追踪正在处理中的组件，避免重复调度
@@ -207,14 +213,17 @@ private:
 
     // 缓存预览图批量更新（防抖）
     QMap<QString, QStringList> m_pendingCachePreviewImages;
+    QMap<QString, QMap<int, QString>> m_pendingIncrementalPreviewImages;
     mutable QMutex m_cachePreviewMutex;  // Protects m_pendingCachePreviewImages
     QTimer* m_cachePreviewImageTimer;
 
     QThreadPool* m_encodingThreadPool;
 
     QStringList m_pendingComponentIds;
+    int m_pendingBatchValidationCount = 0;
     QTimer* m_batchAddTimer;
-    static constexpr int BATCH_ADD_SIZE = 10;
+    // 批处理大小（BOM导入时增大以减少调度开销，配合m_bomImportMode降低UI更新频率）
+    static constexpr int BATCH_ADD_SIZE = 50;
 
     // 批量更新模式（验证期间暂停 UI 更新）
     bool m_batchUpdateMode = false;
@@ -224,6 +233,13 @@ private:
     // 列表更新批处理（合并 componentCountChanged 和 filteredCountChanged）
     bool m_batchListUpdateMode = false;
     QTimer* m_batchListUpdateTimer;
+
+    // BOM 导入模式（限制 UI 更新频率）
+    bool m_bomImportMode = false;
+    QTimer* m_bomImportUpdateTimer;
+    int m_bomImportPendingUpdates = 0;  // BOM 导入模式下待处理的验证完成计数
+    bool m_listUpdatePending = false;  // 防抖标志，防止定时器级联重启
+    bool m_bomImportComplete = false;  // BOM 导入已完成（所有组件已启动验证）
 
     // 延迟获取预览图定时器（等待验证全部完成）
     QTimer* m_delayedFetchPreviewTimer;

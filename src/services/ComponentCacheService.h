@@ -34,7 +34,6 @@ namespace EasyKiConverter {
  *   - 手册文件 (datasheet.pdf/.html)
  *   - 3D模型文件 (*.step, *.wrl)
  *   - 元数据 (component.json)
- *   - 缓存过期：7天
  *   - 磁盘配额：5GB，超限LRU淘汰
  *
  * 缓存目录结构：
@@ -107,26 +106,8 @@ public:
                                     const QString& imageUrl,
                                     int imageIndex,
                                     ComponentExportStatus::NetworkDiagnostics* diag = nullptr,
-                                    QAtomicInt* cancelled = nullptr);
-
-    /**
-     * @brief 下载预览图（完全异步版本，支持取消）
-     *
-     * 此方法立即返回，通过回调报告结果。
-     * 回调会在信号触发时调用。
-     *
-     * @param lcscId 元器件ID
-     * @param imageUrl 图片URL
-     * @param imageIndex 图片索引
-     * @param cancelled 可选的取消标志，如果不为nullptr且被设置为1则立即返回
-     * @param onComplete 下载完成时的回调，签名为 void(const QByteArray& data, const ComponentExportStatus::NetworkDiagnostics& diag)
-     */
-    template <typename Callback>
-    void downloadPreviewImageAsync(const QString& lcscId,
-                                   const QString& imageUrl,
-                                   int imageIndex,
-                                   QAtomicInt* cancelled,
-                                   Callback&& onComplete);
+                                    QAtomicInt* cancelled = nullptr,
+                                    bool weakNetwork = false);
 
     /**
      * @brief 检查元器件是否有有效缓存
@@ -202,11 +183,12 @@ public:
     QSharedPointer<ComponentData> loadComponentData(const QString& lcscId) const;
 
     /**
-     * @brief 保存元器件元数据到L2磁盘缓存（component.json）
+     * @brief 异步保存元器件元数据到L2磁盘缓存（不阻塞UI）
      * @param componentId 元器件ID
      * @param data 元器件数据
+     * @note 适用于批量操作，避免频繁的同步文件I/O阻塞UI
      */
-    void saveComponentMetadata(const QString& componentId, const ComponentData& data);
+    void saveComponentMetadataAsync(const QString& componentId, const ComponentData& data);
 
     /**
      * @brief 保存符号CAD数据到L2磁盘缓存
@@ -308,23 +290,8 @@ public:
                                  const QString& datasheetUrl,
                                  QString* format,
                                  ComponentExportStatus::NetworkDiagnostics* diag = nullptr,
-                                 QAtomicInt* cancelled = nullptr);
-
-    /**
-     * @brief 下载数据手册（完全异步版本，支持取消）
-     *
-     * 此方法立即返回，通过回调报告结果。
-     *
-     * @param lcscId 元器件ID
-     * @param datasheetUrl 数据手册URL
-     * @param cancelled 可选的取消标志，如果不为nullptr且被设置为1则立即返回
-     * @param onComplete 下载完成时的回调，签名为 void(const QByteArray& data, const ComponentExportStatus::NetworkDiagnostics& diag)
-     */
-    template <typename Callback>
-    void downloadDatasheetAsync(const QString& lcscId,
-                                const QString& datasheetUrl,
-                                QAtomicInt* cancelled,
-                                Callback&& onComplete);
+                                 QAtomicInt* cancelled = nullptr,
+                                 bool weakNetwork = false);
 
     /**
      * @brief 加载3D模型（STEP/WRL）
@@ -536,181 +503,6 @@ private:
     // 跟踪L1缓存总大小（字节）
     qint64 m_memoryCacheSize;
 };
-
-// ==================== 模板方法实现 ====================
-
-template <typename Callback>
-void ComponentCacheService::downloadPreviewImageAsync(const QString& lcscId,
-                                                      const QString& imageUrl,
-                                                      int imageIndex,
-                                                      QAtomicInt* cancelled,
-                                                      Callback&& onComplete) {
-    // 先检查取消标志
-    if (cancelled && cancelled->loadRelaxed()) {
-        ComponentExportStatus::NetworkDiagnostics diag;
-        diag.url = imageUrl;
-        diag.errorString = "Cancelled before start";
-        onComplete(QByteArray(), diag);
-        return;
-    }
-
-    // 检查磁盘缓存
-    {
-        QString previewFilePath = previewImagePath(lcscId, imageIndex);
-        if (QFileInfo::exists(previewFilePath)) {
-            QFile file(previewFilePath);
-            if (file.open(QIODevice::ReadOnly)) {
-                ComponentExportStatus::NetworkDiagnostics diag;
-                diag.url = imageUrl;
-                diag.statusCode = 200;
-                diag.errorString = "";
-                diag.retryCount = 0;
-                diag.wasRateLimited = false;
-                onComplete(file.readAll(), diag);
-                return;
-            }
-        }
-    }
-
-    // 检查取消标志
-    if (cancelled && cancelled->loadRelaxed()) {
-        ComponentExportStatus::NetworkDiagnostics diag;
-        diag.url = imageUrl;
-        diag.errorString = "Cancelled";
-        onComplete(QByteArray(), diag);
-        return;
-    }
-
-    // 启动异步请求
-    RetryPolicy policy;
-    policy.maxRetries = 3;
-    policy.baseTimeoutMs = 30000;
-
-    AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(imageUrl), policy);
-
-    // 使用 QObject::connect 自动清理 lambda 回调
-    // 注意：由于我们使用堆分配的 request，需要在回调完成后删除它
-    QObject::connect(request, &AsyncNetworkRequest::finished, this, [=](const NetworkResult& result) {
-        ComponentExportStatus::NetworkDiagnostics diag;
-        diag.url = imageUrl;
-
-        if (cancelled && cancelled->loadRelaxed()) {
-            diag.errorString = "Cancelled";
-            onComplete(QByteArray(), diag);
-        } else if (result.wasCancelled) {
-            diag.errorString = "Cancelled";
-            onComplete(QByteArray(), diag);
-        } else if (result.success) {
-            // 保存到磁盘缓存
-            savePreviewImage(lcscId, result.data, imageIndex);
-            diag.statusCode = result.statusCode;
-            diag.errorString = "";
-            diag.retryCount = result.retryCount;
-            diag.wasRateLimited = (result.statusCode == 429);
-            onComplete(result.data, diag);
-        } else {
-            diag.statusCode = result.statusCode;
-            diag.errorString = result.error;
-            diag.retryCount = result.retryCount;
-            diag.wasRateLimited = (result.statusCode == 429);
-            onComplete(QByteArray(), diag);
-        }
-
-        // 清理请求对象
-        request->deleteLater();
-    });
-}
-
-template <typename Callback>
-void ComponentCacheService::downloadDatasheetAsync(const QString& lcscId,
-                                                   const QString& datasheetUrl,
-                                                   QAtomicInt* cancelled,
-                                                   Callback&& onComplete) {
-    // 先检查取消标志
-    if (cancelled && cancelled->loadRelaxed()) {
-        ComponentExportStatus::NetworkDiagnostics diag;
-        diag.url = datasheetUrl;
-        diag.errorString = "Cancelled before start";
-        onComplete(QByteArray(), diag);
-        return;
-    }
-
-    // 确定格式
-    QString ext = datasheetUrl.toLower().contains(".html") ? "html" : "pdf";
-
-    // 检查磁盘缓存
-    {
-        QString datasheetFilePath = datasheetPath(lcscId);
-        QString fullPath = datasheetFilePath;
-        if (!fullPath.endsWith(".pdf") && !fullPath.endsWith(".html")) {
-            fullPath += "." + ext;
-        }
-        if (QFileInfo::exists(fullPath)) {
-            QFile file(fullPath);
-            if (file.open(QIODevice::ReadOnly)) {
-                ComponentExportStatus::NetworkDiagnostics diag;
-                diag.url = datasheetUrl;
-                diag.statusCode = 200;
-                diag.errorString = "";
-                diag.retryCount = 0;
-                diag.wasRateLimited = false;
-                onComplete(file.readAll(), diag);
-                return;
-            }
-        }
-    }
-
-    // 检查取消标志
-    if (cancelled && cancelled->loadRelaxed()) {
-        ComponentExportStatus::NetworkDiagnostics diag;
-        diag.url = datasheetUrl;
-        diag.errorString = "Cancelled";
-        onComplete(QByteArray(), diag);
-        return;
-    }
-
-    // 启动异步请求
-    RetryPolicy policy;
-    policy.maxRetries = 3;
-    policy.baseTimeoutMs = 45000;
-
-    AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(datasheetUrl), policy);
-
-    QObject::connect(request, &AsyncNetworkRequest::finished, this, [=](const NetworkResult& result) {
-        ComponentExportStatus::NetworkDiagnostics diag;
-        diag.url = datasheetUrl;
-
-        if (cancelled && cancelled->loadRelaxed()) {
-            diag.errorString = "Cancelled";
-            onComplete(QByteArray(), diag);
-        } else if (result.wasCancelled) {
-            diag.errorString = "Cancelled";
-            onComplete(QByteArray(), diag);
-        } else if (result.success) {
-            // 检测实际格式
-            QString detectedExt = ext;
-            if (ext == "pdf" && result.data.size() >= 5 && !result.data.startsWith("%PDF-")) {
-                detectedExt = "html";
-            }
-            // 保存到磁盘缓存
-            saveDatasheet(lcscId, result.data, detectedExt);
-            diag.statusCode = result.statusCode;
-            diag.errorString = "";
-            diag.retryCount = result.retryCount;
-            diag.wasRateLimited = (result.statusCode == 429);
-            onComplete(result.data, diag);
-        } else {
-            diag.statusCode = result.statusCode;
-            diag.errorString = result.error;
-            diag.retryCount = result.retryCount;
-            diag.wasRateLimited = (result.statusCode == 429);
-            onComplete(QByteArray(), diag);
-        }
-
-        // 清理请求对象
-        request->deleteLater();
-    });
-}
 
 }  // namespace EasyKiConverter
 

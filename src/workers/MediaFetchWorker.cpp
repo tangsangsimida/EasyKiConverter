@@ -1,6 +1,8 @@
 #include "MediaFetchWorker.h"
 
+#include "services/CacheRepository.h"
 #include "services/ComponentCacheService.h"
+#include "services/ConfigService.h"
 
 #include <QDebug>
 
@@ -89,11 +91,12 @@ void MediaFetchWorker::startPreviewDownload(int index, ComponentCacheService* ca
     }
 
     // 使用异步下载
-    cache->downloadPreviewImageAsync(
+    CacheRepository::instance()->fetchPreviewImageAsync(
         m_componentId,
         url,
         index,
         &m_isAborted,
+        ConfigService::instance()->getWeakNetworkSupport(),
         [this, index, cache](const QByteArray& imageData, const ComponentExportStatus::NetworkDiagnostics& diag) {
             if (m_isAborted.loadRelaxed()) {
                 m_pendingOperations--;
@@ -150,10 +153,11 @@ void MediaFetchWorker::startDatasheetDownload(ComponentCacheService* cache) {
 
     // 使用异步下载
     m_pendingOperations++;
-    cache->downloadDatasheetAsync(
+    CacheRepository::instance()->fetchDatasheetAsync(
         m_componentId,
         m_datasheetUrl,
         &m_isAborted,
+        ConfigService::instance()->getWeakNetworkSupport(),
         [this](const QByteArray& data, const ComponentExportStatus::NetworkDiagnostics& diag) {
             if (m_isAborted.loadRelaxed()) {
                 m_pendingOperations--;
