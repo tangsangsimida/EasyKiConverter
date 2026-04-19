@@ -49,43 +49,30 @@ public:
                          const QString& model3DStepPath);
 
     /**
-     * @brief 导出多个封装KiCad 封装
-         *
+     * @brief 批量导出封装库（KiCad .kicad_mod 格式）
+     *
      * @param footprints 封装列表
-     * @param libName 库名称
-         * @param filePath 输出文件路径
+     * @param libName 库名称（用于构建 3D 模型相对路径）
+     * @param filePath 输出目录路径（.pretty 目录）
+     * @param preferWrl 是否优先使用 WRL 格式（默认 true，向后兼容）
+     * @param exportStep 是否同时导出 STEP 格式（默认 false，向后兼容）
+     * @note 默认参数仅导出 WRL，以保持与旧版本的兼容行为。
+     *       调用方应显式传入 exportStep=true 以启用双格式导出。
      * @return bool 是否成功
      */
     bool exportFootprintLibrary(const QList<FootprintData>& footprints,
                                 const QString& libName,
-                                const QString& filePath);
+                                const QString& filePath,
+                                bool preferWrl = true,
+                                bool exportStep = false);
 
 private:
-    /**
-     * @brief 生成 KiCad 封装
-         *
-     * @param libName 库名称
-         * @return QString 头部文本
-     */
     QString generateHeader(const QString& libName) const;
-
-    /**
-     * @brief 生成 KiCad 封装内容
-     *
-     * @param footprintData 封装数据
-     * @param model3DPath 3D模型路径
-     * @return QString 封装内容
-     */
+    void generateFootprintBaseContent(const FootprintData& footprintData,
+                                      QString& content,
+                                      double& outBboxX,
+                                      double& outBboxY) const;
     QString generateFootprintContent(const FootprintData& footprintData, const QString& model3DPath = QString()) const;
-
-    /**
-     * @brief 生成 KiCad 封装内容（两D模型
-         *
-     * @param footprintData 封装数据
-     * @param model3DWrlPath WRL模型路径
-     * @param model3DStepPath STEP模型路径
-     * @return QString 封装内容
-     */
     QString generateFootprintContent(const FootprintData& footprintData,
                                      const QString& model3DWrlPath,
                                      const QString& model3DStepPath) const;

@@ -3,6 +3,7 @@
 #include "../../core/kicad/Exporter3DModel.h"
 #include "../../models/ComponentData.h"
 #include "../../services/ComponentCacheService.h"
+#include "../../utils/PathSecurity.h"
 
 #include <QDebug>
 #include <QDir>
@@ -11,7 +12,9 @@
 
 namespace EasyKiConverter {
 
-Model3DExportWorker::Model3DExportWorker(QObject* parent) : QObject(parent), m_exporter(new Exporter3DModel(this)) {}
+Model3DExportWorker::Model3DExportWorker(QObject* parent) : QObject(parent), m_exporter(new Exporter3DModel(this)) {
+    setAutoDelete(false);
+}
 
 Model3DExportWorker::~Model3DExportWorker() {
     if (m_exporter) {
@@ -60,6 +63,33 @@ void Model3DExportWorker::run() {
         return;
     }
 
+    // 根据选项决定是否导出 WRL 和 STEP
+    const bool needWrl = m_options.needsModel3DWrl();
+    const bool needStep = m_options.needsModel3DStep();
+
+    qInfo() << "Model3DExportWorker::run() for" << m_componentId
+            << "exportModel3DFormat:" << m_options.exportModel3DFormat << "needWrl:" << needWrl
+            << "needStep:" << needStep;
+
+    // 如果两种格式都不需要导出，直接完成
+    if (!needWrl && !needStep) {
+        qDebug() << "Model3DExportWorker: No format selected, skipping" << m_componentId;
+        emit completed(m_componentId, true, QString());
+        return;
+    }
+
+    // 获取模型名称用于命名文件（仅在需要时）
+    QString modelName;
+    if (m_data && m_data->model3DData()) {
+        modelName = m_data->model3DData()->name();
+    }
+    if (modelName.isEmpty()) {
+        modelName = m_componentId;
+    } else {
+        // 使用 PathSecurity 清理文件名中的非法字符
+        modelName = PathSecurity::sanitizeFilename(modelName);
+    }
+
     // 构建输出路径
     QString outputDir = m_options.outputPath;
     if (outputDir.isEmpty()) {
@@ -72,48 +102,60 @@ void Model3DExportWorker::run() {
         return;
     }
 
-    const QString wrlFinalPath = outputDir + QStringLiteral("/") + m_componentId + QStringLiteral(".wrl");
-    const QString stepFinalPath = outputDir + QStringLiteral("/") + m_componentId + QStringLiteral(".step");
+    const QString wrlFinalPath =
+        needWrl ? (outputDir + QStringLiteral("/") + modelName + QStringLiteral(".wrl")) : QString();
+    const QString stepFinalPath =
+        needStep ? (outputDir + QStringLiteral("/") + modelName + QStringLiteral(".step")) : QString();
     const QString wrlWritePath = m_outputPaths.wrlTempPath.isEmpty() ? wrlFinalPath : m_outputPaths.wrlTempPath;
     const QString stepWritePath = m_outputPaths.stepTempPath.isEmpty() ? stepFinalPath : m_outputPaths.stepTempPath;
 
     const auto ensureParentDir = [](const QString& filePath) {
+        if (filePath.isEmpty())
+            return true;
         QFileInfo fileInfo(filePath);
         return fileInfo.absoluteDir().exists() || QDir().mkpath(fileInfo.absolutePath());
     };
 
-    if (!ensureParentDir(wrlWritePath) || !ensureParentDir(stepWritePath)) {
+    if ((needWrl && !ensureParentDir(wrlWritePath)) || (needStep && !ensureParentDir(stepWritePath))) {
         emit completed(m_componentId, false, QStringLiteral("Failed to create 3D model output directory"));
         return;
     }
 
     if (!m_options.overwriteExistingFiles && m_outputPaths.wrlTempPath.isEmpty() &&
-        m_outputPaths.stepTempPath.isEmpty() && QFile::exists(wrlFinalPath) && QFile::exists(stepFinalPath)) {
-        qDebug() << "Model3DExportWorker: Files already exist, skipping" << wrlFinalPath << stepFinalPath;
-        emit completed(m_componentId, true, QString());
-        return;
+        m_outputPaths.stepTempPath.isEmpty()) {
+        bool bothExist = true;
+        if (needWrl && !QFile::exists(wrlFinalPath))
+            bothExist = false;
+        if (needStep && !QFile::exists(stepFinalPath))
+            bothExist = false;
+        if (bothExist && (needWrl || needStep)) {
+            qDebug() << "Model3DExportWorker: Files already exist, skipping" << wrlFinalPath << stepFinalPath;
+            emit completed(m_componentId, true, QString());
+            return;
+        }
     }
 
     ComponentCacheService* cache = ComponentCacheService::instance();
 
-    // 检查缓存中是否已有3D模型文件
+    // 根据选项决定是否需要从缓存加载
     bool wrlFromCache = false;
     bool stepFromCache = false;
 
-    if (cache->hasModel3DCached(uuid, QStringLiteral("wrl")) &&
+    // 只有需要导出时才从缓存加载
+    if (needWrl && cache->hasModel3DCached(uuid, QStringLiteral("wrl")) &&
         cache->copyModel3DToFile(uuid, QStringLiteral("wrl"), wrlWritePath)) {
         qDebug() << "Model3DExportWorker: WRL cache hit for" << uuid;
         wrlFromCache = true;
     }
 
-    if (cache->hasModel3DCached(uuid, QStringLiteral("step")) &&
+    if (needStep && cache->hasModel3DCached(uuid, QStringLiteral("step")) &&
         cache->copyModel3DToFile(uuid, QStringLiteral("step"), stepWritePath)) {
         qDebug() << "Model3DExportWorker: STEP cache hit for" << uuid;
         stepFromCache = true;
     }
 
     // 如果两个文件都从缓存加载成功，直接完成
-    if (wrlFromCache && stepFromCache) {
+    if ((!needWrl || wrlFromCache) && (!needStep || stepFromCache)) {
         qDebug() << "Model3DExportWorker: Both WRL and STEP loaded from cache for" << m_componentId;
         emit completed(m_componentId, true, QString());
         return;
@@ -131,7 +173,8 @@ void Model3DExportWorker::run() {
     };
 
     QString error;
-    if (!wrlFromCache) {
+    // 只在需要 WRL 且未从缓存加载时导出
+    if (needWrl && !wrlFromCache) {
         QByteArray objData;
         if (!m_exporter->downloadObjDataSync(uuid, &objData, &error)) {
             if (error.isEmpty()) {
@@ -151,7 +194,8 @@ void Model3DExportWorker::run() {
             }
         }
     }
-    if (error.isEmpty() && !stepFromCache && !m_cancelled.load()) {
+    // 只在需要 STEP 且未从缓存加载时导出
+    if (error.isEmpty() && needStep && !stepFromCache && !m_cancelled.load()) {
         QByteArray stepData;
         if (!m_exporter->downloadStepDataSync(uuid, &stepData, &error)) {
             if (error.isEmpty()) {
@@ -174,7 +218,8 @@ void Model3DExportWorker::run() {
     }
 
     if (error.isEmpty()) {
-        qDebug() << "Model3DExportWorker: Successfully exported WRL and STEP for" << m_componentId;
+        qDebug() << "Model3DExportWorker: Successfully exported" << (needWrl ? "WRL" : "") << (needStep ? "STEP" : "")
+                 << "for" << m_componentId;
         emit completed(m_componentId, true, QString());
         return;
     }

@@ -131,6 +131,7 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
                                           bool exportSymbol,
                                           bool exportFootprint,
                                           bool exportModel3D,
+                                          int exportModel3DFormat,
                                           bool exportPreviewImages,
                                           bool exportDatasheet,
                                           bool overwriteExistingFiles,
@@ -198,6 +199,7 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     options.exportSymbol = exportSymbol;
     options.exportFootprint = exportFootprint;
     options.exportModel3D = exportModel3D;
+    options.exportModel3DFormat = exportModel3DFormat;
     options.exportPreviewImages = exportPreviewImages;
     options.exportDatasheet = exportDatasheet;
     options.overwriteExistingFiles = overwriteExistingFiles;
@@ -468,6 +470,7 @@ void ExportProgressViewModel::handleCancelled() {
     m_fetchProgress = 0;
     m_processProgress = 0;
     m_writeProgress = 0;
+    updateResultsList();  // 更新失败数量统计
     emit stageProgressChanged();
     flushPendingUpdates();
 }
@@ -484,6 +487,7 @@ void ExportProgressViewModel::handleFailed(const QString& error) {
     m_fetchProgress = 0;
     m_processProgress = 0;
     m_writeProgress = 0;
+    updateResultsList();  // 更新失败数量统计
     emit stageProgressChanged();
     setStatus(QString("Export failed: %1").arg(error));
 }

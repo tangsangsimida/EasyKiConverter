@@ -9,7 +9,9 @@
 
 namespace EasyKiConverter {
 
-DatasheetExportWorker::DatasheetExportWorker() : QObject(nullptr) {}
+DatasheetExportWorker::DatasheetExportWorker() : QObject(nullptr) {
+    setAutoDelete(false);
+}
 
 void DatasheetExportWorker::setData(const QString& componentId,
                                     const QSharedPointer<ComponentData>& data,
@@ -111,8 +113,8 @@ void DatasheetExportWorker::run() {
             }
         } else if (!datasheetUrl.isEmpty()) {
             QString format = m_data->datasheetFormat();
-            QByteArray downloadedData =
-                ComponentCacheService::instance()->downloadDatasheet(m_componentId, datasheetUrl, &format);
+            QByteArray downloadedData = ComponentCacheService::instance()->downloadDatasheet(
+                m_componentId, datasheetUrl, &format, nullptr, nullptr, m_options.weakNetworkSupport);
 
             if (downloadedData.isEmpty()) {
                 emit completed(m_componentId, false, QStringLiteral("Failed to download datasheet from cached URL"));
