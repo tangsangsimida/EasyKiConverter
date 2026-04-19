@@ -119,15 +119,18 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
             const bool useWrl = preferWrl && hasModel3D;
             const bool useStep = exportStep && hasModel3D;
 
+            // libName 也需要sanitize，防止Windows非法字符导致问题
+            QString safeLibName = PathSecurity::sanitizeFilename(libName);
+
             if (useWrl && useStep) {
-                QString wrlPath = QStringLiteral("../%1.3dmodels/%2.wrl").arg(libName, modelName);
-                QString stepPath = QStringLiteral("../%1.3dmodels/%2.step").arg(libName, modelName);
+                QString wrlPath = QStringLiteral("../%1.3dmodels/%2.wrl").arg(safeLibName, modelName);
+                QString stepPath = QStringLiteral("../%1.3dmodels/%2.step").arg(safeLibName, modelName);
                 content = generateFootprintContent(footprint, wrlPath, stepPath);
             } else if (useWrl) {
-                QString wrlPath = QStringLiteral("../%1.3dmodels/%2.wrl").arg(libName, modelName);
+                QString wrlPath = QStringLiteral("../%1.3dmodels/%2.wrl").arg(safeLibName, modelName);
                 content = generateFootprintContent(footprint, wrlPath);
             } else if (useStep) {
-                QString stepPath = QStringLiteral("../%1.3dmodels/%2.step").arg(libName, modelName);
+                QString stepPath = QStringLiteral("../%1.3dmodels/%2.step").arg(safeLibName, modelName);
                 content = generateFootprintContent(footprint, stepPath);
             } else {
                 content = generateFootprintContent(footprint);
