@@ -322,6 +322,85 @@ python tools/python/build_project.py
 
 ---
 
+## UI 滚动位置相关
+
+### Q: 导出结果列表在转换过程中更新后自动回到顶部
+
+**问题描述**：
+用户在导出过程中向下滚动结果列表查看进度，但每当有元器件状态更新（如从"导出中"变为"成功"）时，列表会自动滚动回顶部，导致用户难以持续跟踪底部的元器件状态。
+
+**根本原因**：
+`ExportResultsCard.qml` 中的 GridView 直接绑定到 `filteredResultsList` 属性，而该属性的 getter 方法每次调用都返回一个新的 `QVariantList`：
+
+```cpp
+QVariantList ExportProgressViewModel::filteredResultsList() const {
+    // 每次创建新的列表
+    QVariantList filtered;
+    for (const auto& item : m_resultsList) {
+        // 过滤逻辑...
+        filtered.append(item);
+    }
+    return filtered;
+}
+```
+
+每次 `filteredResultsListChanged()` 信号触发时：
+1. QML 调用 getter 获取新列表
+2. GridView 收到一个全新的列表对象
+3. 滚动位置被重置到顶部
+
+而元器件列表使用 `DelegateModel` 绑定到原始模型，通过 `DelegateModelGroup` 的 `inDisplay` 属性控制显示/隐藏，避免位置重置。
+
+**解决方案**：
+参考 `ComponentListCard.qml` 的实现方式，使用 `DelegateModel` 替代直接绑定：
+
+1. 添加 `DelegateModel` 绑定到原始 `resultsList`
+2. 使用 `DelegateModelGroup` 控制显示/隐藏
+3. 添加防抖定时器（50ms）避免频繁过滤
+4. 监听 `filterModeChanged` 和 `resultsListChanged` 信号触发过滤
+5. 在 `updateFilter()` 函数中通过 `item.inDisplay` 控制每项是否显示
+
+```qml
+DelegateModel {
+    id: visualModel
+    model: resultsLoader.exportProgressController.resultsList
+    groups: [
+        DelegateModelGroup {
+            id: displayGroup
+            includeByDefault: true
+            name: "display"
+        }
+    ]
+    filterOnGroup: "display"
+    delegate: ResultListItem { ... }
+    
+    function updateFilter() {
+        for (var i = 0; i < items.count; i++) {
+            var item = items.get(i);
+            var dataObj = item.model.modelData || item.model;
+            var status = dataObj.status || "pending";
+            var passFilter = false;
+            // 过滤逻辑...
+            item.inDisplay = passFilter;
+        }
+    }
+}
+```
+
+**回归预防**：
+- 任何新增的列表视图，如果需要在运行时更新数据并保持滚动位置，必须使用 `DelegateModel`
+- 不要直接绑定到每次返回新对象的属性
+- 列表过滤/筛选必须通过 `DelegateModelGroup` 的 `inDisplay` 属性控制，而不是重新创建列表
+- 使用 `cacheBuffer: 500` 和 `reuseItems: true` 启用虚拟化和 Item 回收
+
+**相关文件**：
+- `src/ui/qml/components/ExportResultsCard.qml` - 使用 DelegateModel 替代直接绑定
+- `src/ui/qml/components/ComponentListCard.qml` - 参考实现
+
+**状态**：✅ 已修复 (2026-04-19)
+
+---
+
 ## 回归测试清单
 
 每次发布前请确认以下功能正常：
@@ -336,6 +415,7 @@ python tools/python/build_project.py
 - [ ] 最大化关闭后重启仍为最大化
 - [ ] 最大化恢复到窗口化时保留上次 normal geometry
 - [ ] 新增 QML 组件时，`qmldir`、CMake 资源清单、UI 测试清单已同步更新
+- [ ] 导出结果列表在转换过程中保持滚动位置，不会自动回到顶部
 
 ---
 
