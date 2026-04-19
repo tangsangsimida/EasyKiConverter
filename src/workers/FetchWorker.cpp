@@ -3,7 +3,9 @@
 #include "BaseWorker.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/GzipUtils.h"
+#include "services/ConfigService.h"
 
+#include <QAtomicInt>
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QElapsedTimer>
@@ -14,10 +16,42 @@
 #include <QMutex>
 #include <QThread>
 #include <QTimer>
+#include <QWaitCondition>
 
 #include <zlib.h>
 
 namespace EasyKiConverter {
+
+namespace {
+
+class BlockingRequestContext {
+public:
+    void complete(const NetworkResult& result) {
+        QMutexLocker locker(&m_mutex);
+        if (m_finished) {
+            return;
+        }
+        m_result = result;
+        m_finished = true;
+        m_condition.wakeAll();
+    }
+
+    NetworkResult wait() {
+        QMutexLocker locker(&m_mutex);
+        while (!m_finished) {
+            m_condition.wait(&m_mutex);
+        }
+        return m_result;
+    }
+
+private:
+    QMutex m_mutex;
+    QWaitCondition m_condition;
+    NetworkResult m_result;
+    bool m_finished = false;
+};
+
+}  // namespace
 
 QAtomicInt FetchWorker::s_activeRequests = 0;
 QMutex FetchWorker::s_rateLimitMutex;
@@ -230,22 +264,33 @@ QByteArray FetchWorker::httpGet(const QString& url,
     RequestProfile profile = RequestProfiles::fromType(resourceType);
     profile.connectTimeoutMs = timeoutMs;
     profile.readTimeoutMs = qMax(profile.readTimeoutMs, timeoutMs);
-    RetryPolicy policy = RetryPolicy::fromProfile(profile);
+    RetryPolicy policy = RetryPolicy::fromProfile(profile, ConfigService::instance()->getWeakNetworkSupport());
 
     AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(url), resourceType, policy);
+    if (!request) {
+        if (status) {
+            ComponentExportStatus::NetworkDiagnostics diag;
+            diag.url = url;
+            diag.errorString = QStringLiteral("Failed to create network request");
+            status->networkDiagnostics.append(diag);
+        }
+        return QByteArray();
+    }
+
     {
         QMutexLocker locker(&m_replyMutex);
-        if (m_isAborted.loadRelaxed()) {
-            request->cancel();
-            request->deleteLater();
-            return QByteArray();
-        }
         m_currentRequest = request;
     }
 
-    QEventLoop loop;
-    connect(request, &AsyncNetworkRequest::finished, &loop, &QEventLoop::quit);
-    loop.exec();
+    auto context = std::make_shared<BlockingRequestContext>();
+    QObject::connect(
+        request,
+        &AsyncNetworkRequest::finished,
+        request,
+        [context](const NetworkResult& result) { context->complete(result); },
+        Qt::DirectConnection);
+
+    const NetworkResult result = context->wait();
 
     {
         QMutexLocker locker(&m_replyMutex);
@@ -253,9 +298,7 @@ QByteArray FetchWorker::httpGet(const QString& url,
             m_currentRequest = nullptr;
         }
     }
-
-    const NetworkResult result = request->result();
-    request->deleteLater();
+    QMetaObject::invokeMethod(request, &QObject::deleteLater, Qt::QueuedConnection);
 
     if (result.wasCancelled && m_isAborted.loadRelaxed()) {
         return QByteArray();
@@ -281,18 +324,9 @@ QByteArray FetchWorker::httpGet(const QString& url,
         return QByteArray();
     }
 
-    QByteArray response = result.data;
-    if (!response.isEmpty() && response.size() >= 2 && static_cast<unsigned char>(response[0]) == 0x1f &&
-        static_cast<unsigned char>(response[1]) == 0x8b) {
-        GzipUtils::DecompressResult decompResult = GzipUtils::decompress(response);
-        if (!decompResult.success) {
-            qWarning() << "Gzip decompression failed in httpGet";
-            return QByteArray();
-        }
-        response = decompResult.data;
-    }
-
-    return response;
+    // Note: AsyncNetworkRequest already handles gzip decompression internally
+    // based on Content-Encoding header or magic bytes. result.data is already decompressed.
+    return result.data;
 }
 
 QByteArray FetchWorker::decompressZip(const QByteArray& zipData) {

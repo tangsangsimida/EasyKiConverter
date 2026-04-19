@@ -1,5 +1,6 @@
 #include "UpdateCheckerService.h"
 
+#include "ConfigService.h"
 #include "core/network/NetworkClient.h"
 
 #include <QCoreApplication>
@@ -48,7 +49,8 @@ void UpdateCheckerService::checkForUpdates() {
     setError(QString());
     setChecking(true);
 
-    const RetryPolicy policy = RetryPolicy::fromProfile(RequestProfiles::updateCheck());
+    const RetryPolicy policy =
+        RetryPolicy::fromProfile(RequestProfiles::updateCheck(), ConfigService::instance()->getWeakNetworkSupport());
 
     m_activeRequest =
         NetworkClient::instance().getAsync(QUrl(QString::fromLatin1(RELEASES_URL)), ResourceType::UpdateCheck, policy);

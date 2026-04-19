@@ -4,22 +4,22 @@
 <context>
     <name>ComponentListCard</name>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="191"/>
+        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="360"/>
         <source>全部 (%1)</source>
         <translation>全部 (%1)</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="210"/>
+        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="379"/>
         <source>验证中 (%1)</source>
         <translation>验证中 (%1)</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="229"/>
+        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="398"/>
         <source>有效 (%1)</source>
         <translation>有效 (%1)</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="248"/>
+        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="417"/>
         <source>无效 (%1)</source>
         <translation>无效 (%1)</translation>
     </message>
@@ -27,7 +27,7 @@
 <context>
     <name>ComponentListItem</name>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListItem.qml" line="66"/>
+        <location filename="../../src/ui/qml/components/ComponentListItem.qml" line="85"/>
         <source>已复制</source>
         <translation>已复制</translation>
     </message>
@@ -35,12 +35,22 @@
 <context>
     <name>ConfirmDialog</name>
     <message>
-        <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="45"/>
+        <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="30"/>
+        <source>退出确认</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="31"/>
+        <source>转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？</source>
+        <translation type="unfinished">转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="33"/>
         <source>确定</source>
         <translation>确定</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="46"/>
+        <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="34"/>
         <source>取消</source>
         <translation>取消</translation>
     </message>
@@ -48,32 +58,32 @@
 <context>
     <name>ExitDialog</name>
     <message>
-        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="138"/>
+        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="63"/>
         <source>关闭程序</source>
         <translation>关闭程序</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="148"/>
+        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="64"/>
         <source>您可以选择最小化到系统托盘以保持后台运行，或者完全退出程序。</source>
         <translation>您可以选择最小化到系统托盘以保持后台运行，或者完全退出程序。</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="242"/>
+        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="34"/>
         <source>最小化到托盘</source>
         <translation>最小化到托盘</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="293"/>
+        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="44"/>
         <source>退出程序</source>
         <translation>退出程序</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="344"/>
+        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="54"/>
         <source>取消</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="433"/>
+        <location filename="../../src/ui/qml/components/ExitDialog.qml" line="113"/>
         <source>记住我的选择</source>
         <translation>记住我的选择</translation>
     </message>
@@ -219,32 +229,27 @@
 <context>
     <name>Main</name>
     <message>
-        <location filename="../../src/ui/qml/Main.qml" line="68"/>
         <source>确认退出</source>
-        <translation>确认退出</translation>
+        <translation type="vanished">确认退出</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/Main.qml" line="69"/>
         <source>转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？</source>
-        <translation>转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？</translation>
+        <translation type="vanished">转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/Main.qml" line="70"/>
         <source>强制退出</source>
-        <translation>强制退出</translation>
+        <translation type="vanished">强制退出</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/Main.qml" line="71"/>
         <source>继续转换</source>
-        <translation>继续转换</translation>
+        <translation type="vanished">继续转换</translation>
     </message>
 </context>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../src/ui/qml/MainWindow.qml" line="117"/>
         <source>选择 BOM 文件</source>
-        <translation>选择 BOM 文件</translation>
+        <translation type="vanished">选择 BOM 文件</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/HeaderSection.qml" line="25"/>
@@ -272,52 +277,67 @@
         <translation>粘贴</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/BomImportCard.qml" line="13"/>
+        <location filename="../../src/ui/qml/components/BomImportCard.qml" line="14"/>
         <source>导入BOM文件</source>
         <translation>导入BOM文件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/BomImportCard.qml" line="18"/>
+        <location filename="../../src/ui/qml/components/BomImportCard.qml" line="19"/>
         <source>选择BOM文件</source>
         <translation>选择BOM文件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/BomImportCard.qml" line="30"/>
+        <location filename="../../src/ui/qml/components/BomImportCard.qml" line="31"/>
         <source>未选择文件</source>
         <translation>未选择文件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="12"/>
+        <location filename="../../src/ui/qml/components/BomImportCard.qml" line="44"/>
+        <source>客户端弱网络适配</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/BomImportCard.qml" line="53"/>
+        <source>仅影响本机网络请求策略，不代表服务器限流；开启后会使用更保守的并发、超时和重试配置</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/BomImportCard.qml" line="95"/>
+        <source>导入 BOM 前可先开启，验证和预览图加载也会使用该策略</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="16"/>
         <source>元器件列表</source>
         <translation>元器件列表</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="117"/>
+        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="286"/>
         <source>共 %1 个元器件</source>
         <translation>共 %1 个元器件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="270"/>
+        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="439"/>
         <source>搜索元器件...</source>
         <translation>搜索元器件...</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="342"/>
+        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="511"/>
         <source>重试所有</source>
         <translation>重试所有</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="391"/>
+        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="560"/>
         <source>复制所有编号</source>
         <translation>复制所有编号</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="416"/>
+        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="585"/>
         <source>已复制所有编号</source>
         <translation>已复制所有编号</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="423"/>
+        <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="592"/>
         <source>清空列表</source>
         <translation>清空列表</translation>
     </message>
@@ -327,89 +347,80 @@
         <translation>导出设置</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="79"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="23"/>
         <source>输出路径</source>
         <translation>输出路径</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="97"/>
-        <location filename="../../src/ui/qml/MainWindow.qml" line="126"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="41"/>
         <source>选择输出目录</source>
         <translation>选择输出目录</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="119"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="63"/>
         <source>浏览</source>
         <translation>浏览</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="136"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="80"/>
         <source>库名称</source>
         <translation>库名称</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="151"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="95"/>
         <source>输入库名称 (例如: MyLibrary)</source>
         <translation>输入库名称 (例如: MyLibrary)</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="24"/>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="197"/>
-        <location filename="../../src/ui/qml/MainWindow.qml" line="51"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="141"/>
         <source>符号库</source>
         <translation>符号库</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="206"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="150"/>
         <source>导出符号库文件</source>
         <translation>导出符号库文件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="24"/>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="253"/>
-        <location filename="../../src/ui/qml/MainWindow.qml" line="51"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="197"/>
         <source>封装库</source>
         <translation>封装库</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="262"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="206"/>
         <source>导出封装库文件</source>
         <translation>导出封装库文件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="24"/>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="309"/>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="113"/>
-        <location filename="../../src/ui/qml/MainWindow.qml" line="51"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="253"/>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="97"/>
         <source>3D模型</source>
         <translation>3D模型</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="318"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="262"/>
         <source>导出 3D 模型文件</source>
         <translation>导出 3D 模型文件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="24"/>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="365"/>
-        <location filename="../../src/ui/qml/MainWindow.qml" line="51"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="309"/>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="106"/>
         <source>预览图</source>
         <translation>预览图</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="374"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="318"/>
         <source>导出预览图文件</source>
         <translation>导出预览图文件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="24"/>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="421"/>
-        <location filename="../../src/ui/qml/MainWindow.qml" line="51"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="365"/>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="111"/>
         <source>手册</source>
         <translation>手册</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="430"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="374"/>
         <source>导出数据手册文件</source>
         <translation>导出数据手册文件</translation>
     </message>
@@ -418,39 +429,33 @@
         <translation type="vanished">调试模式</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="477"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="421"/>
         <source>导出模式</source>
         <translation>导出模式</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="41"/>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="491"/>
-        <location filename="../../src/ui/qml/MainWindow.qml" line="51"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="435"/>
         <source>追加</source>
         <translation>追加</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="500"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="444"/>
         <source>保留已存在的元器件，只追加新的元器件</source>
         <translation>保留已存在的元器件，只追加新的元器件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="530"/>
-        <location filename="../../src/ui/qml/MainWindow.qml" line="53"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="474"/>
         <source>保留已存在的元器件</source>
         <translation>保留已存在的元器件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="41"/>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="540"/>
-        <location filename="../../src/ui/qml/MainWindow.qml" line="51"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="484"/>
         <source>更新</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="549"/>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="579"/>
-        <location filename="../../src/ui/qml/MainWindow.qml" line="53"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="493"/>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="523"/>
         <source>覆盖已存在的元器件</source>
         <translation>覆盖已存在的元器件</translation>
     </message>
@@ -535,77 +540,95 @@
         <translation>成功率</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="51"/>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="60"/>
+        <source>抓取进度</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="65"/>
+        <source>处理进度</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="70"/>
+        <source>写入进度</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="77"/>
+        <source>导出详情</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="126"/>
+        <source>打开输出目录</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="140"/>
+        <source>清空缓存</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>时间统计</source>
-        <translation>时间统计</translation>
+        <translation type="vanished">时间统计</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="61"/>
         <source>总耗时</source>
-        <translation>总耗时</translation>
+        <translation type="vanished">总耗时</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="83"/>
         <source>平均抓取</source>
-        <translation>平均抓取</translation>
+        <translation type="vanished">平均抓取</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="88"/>
         <source>平均处理</source>
-        <translation>平均处理</translation>
+        <translation type="vanished">平均处理</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="93"/>
         <source>平均写入</source>
-        <translation>平均写入</translation>
+        <translation type="vanished">平均写入</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="103"/>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="87"/>
         <source>符号</source>
         <translation>符号</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="108"/>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="92"/>
         <source>封装</source>
         <translation>封装</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="120"/>
         <source>网络统计</source>
-        <translation>网络统计</translation>
+        <translation type="vanished">网络统计</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="130"/>
         <source>总请求数</source>
-        <translation>总请求数</translation>
+        <translation type="vanished">总请求数</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="135"/>
         <source>重试次数</source>
-        <translation>重试次数</translation>
+        <translation type="vanished">重试次数</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="140"/>
         <source>平均延迟</source>
-        <translation>平均延迟</translation>
+        <translation type="vanished">平均延迟</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="145"/>
         <source>速率限制</source>
-        <translation>速率限制</translation>
+        <translation type="vanished">速率限制</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="155"/>
         <source>峰值内存</source>
-        <translation>峰值内存</translation>
+        <translation type="vanished">峰值内存</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="180"/>
         <source>打开详细统计报告</source>
-        <translation>打开详细统计报告</translation>
+        <translation type="vanished">打开详细统计报告</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="193"/>
+        <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="153"/>
         <source>打开缓存目录</source>
         <translation>打开缓存目录</translation>
     </message>
@@ -624,124 +647,178 @@
         <source>打开导出目录失败，请检查导出路径是否存在。</source>
         <translation>打开导出目录失败，请检查导出路径是否存在。</translation>
     </message>
+    <message>
+        <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="45"/>
+        <source>发现新版本 %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="52"/>
+        <source>当前版本 %1，最新发布：%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="52"/>
+        <source>当前版本 %1，可前往 GitHub 查看发布说明。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="63"/>
+        <source>查看更新</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="72"/>
+        <source>稍后提醒</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="727"/>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="755"/>
         <source>导出完成</source>
-        <translation>导出完成</translation>
+        <translation type="vanished">导出完成</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="735"/>
         <source>导出失败：%1 个元器件全部失败</source>
-        <translation>导出失败：%1 个元器件全部失败</translation>
+        <translation type="vanished">导出失败：%1 个元器件全部失败</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="739"/>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="742"/>
         <source>成功 %1 个，失败 %2 个</source>
-        <translation>成功 %1 个，失败 %2 个</translation>
+        <translation type="vanished">成功 %1 个，失败 %2 个</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="747"/>
         <source>
 输出：符号 %1 · 封装 %2 · 3D %3</source>
-        <translation>
+        <translation type="vanished">
 输出：符号 %1 · 封装 %2 · 3D %3</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="759"/>
         <source>成功导出 1 个元器件</source>
-        <translation>成功导出 1 个元器件</translation>
+        <translation type="vanished">成功导出 1 个元器件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="761"/>
         <source>成功导出 %1 个元器件</source>
-        <translation>成功导出 %1 个元器件</translation>
+        <translation type="vanished">成功导出 %1 个元器件</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="766"/>
         <source>输出：符号 %1 · 封装 %2 · 3D %3</source>
-        <translation>输出：符号 %1 · 封装 %2 · 3D %3</translation>
+        <translation type="vanished">输出：符号 %1 · 封装 %2 · 3D %3</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="776"/>
         <source>%1 秒</source>
-        <translation>%1 秒</translation>
+        <translation type="vanished">%1 秒</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="780"/>
         <source>%1 分 %2 秒</source>
-        <translation>%1 分 %2 秒</translation>
+        <translation type="vanished">%1 分 %2 秒</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="782"/>
         <source>耗时：%1</source>
-        <translation>耗时：%1</translation>
+        <translation type="vanished">耗时：%1</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="842"/>
         <source>EasyKiConverter - LCSC 转换工具</source>
-        <translation>EasyKiConverter - LCSC 转换工具</translation>
+        <translation type="vanished">EasyKiConverter - LCSC 转换工具</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="847"/>
         <source>显示窗口</source>
-        <translation>显示窗口</translation>
+        <translation type="vanished">显示窗口</translation>
     </message>
     <message>
-        <location filename="../../src/ui/viewmodels/ExportProgressViewModel.cpp" line="861"/>
         <source>退出</source>
-        <translation>退出</translation>
+        <translation type="vanished">退出</translation>
     </message>
 </context>
 <context>
     <name>ResultListItem</name>
     <message>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="167"/>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="178"/>
         <source>符号: %1</source>
         <translation>符号: %1</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="187"/>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="200"/>
         <source>封装: %1</source>
         <translation>封装: %1</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="167"/>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="187"/>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="207"/>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="44"/>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="54"/>
         <source>已导出</source>
         <translation>已导出</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="67"/>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="46"/>
+        <source>失败</source>
+        <translation type="unfinished">失败</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="48"/>
+        <source>处理中</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="50"/>
+        <source>已跳过</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="52"/>
+        <source>未启用</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="55"/>
+        <source>等待中</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="119"/>
         <source>已复制</source>
         <translation>已复制</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="167"/>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="187"/>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="207"/>
         <source>未完成</source>
-        <translation>未完成</translation>
+        <translation type="vanished">未完成</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="207"/>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="222"/>
         <source>3D模型: %1</source>
         <translation>3D模型: %1</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="250"/>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="244"/>
+        <source>预览图: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="266"/>
+        <source>手册: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="305"/>
         <source>重试</source>
         <translation>重试</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="285"/>
+        <location filename="../../src/ui/qml/components/ResultListItem.qml" line="328"/>
         <source>删除</source>
         <translation>删除</translation>
+    </message>
+</context>
+<context>
+    <name>SliderDialogBase</name>
+    <message>
+        <location filename="../../src/ui/qml/components/SliderDialogBase.qml" line="39"/>
+        <source>对话框</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/SliderDialogBase.qml" line="40"/>
+        <source>提示信息</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

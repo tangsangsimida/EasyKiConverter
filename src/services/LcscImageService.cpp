@@ -1,5 +1,6 @@
 #include "LcscImageService.h"
 
+#include "ConfigService.h"
 #include "core/network/NetworkClient.h"
 
 #include <QDebug>
@@ -8,10 +9,8 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QRandomGenerator>
 #include <QRegularExpression>
 #include <QSharedPointer>
-#include <QThread>
 #include <QTimer>
 #include <QUrlQuery>
 #include <QtConcurrent>
@@ -85,10 +84,71 @@ QStringList extractPreviewImageUrlsFromProduct(const QJsonObject& product) {
     return deduplicateAndNormalizeUrls(imageUrls);
 }
 
+QString extractComponentCode(const QJsonObject& product) {
+    static const QStringList directKeys = {QStringLiteral("component_code"),
+                                           QStringLiteral("productCode"),
+                                           QStringLiteral("product_code"),
+                                           QStringLiteral("productNo"),
+                                           QStringLiteral("product_no"),
+                                           QStringLiteral("number"),
+                                           QStringLiteral("code"),
+                                           QStringLiteral("lcscPart"),
+                                           QStringLiteral("lcscPartNumber")};
+
+    for (const QString& key : directKeys) {
+        const QString value = product.value(key).toString().trimmed();
+        if (!value.isEmpty()) {
+            return value.toUpper();
+        }
+    }
+
+    const QJsonObject deviceInfo = product.value(QStringLiteral("device_info")).toObject();
+    if (!deviceInfo.isEmpty()) {
+        for (const QString& key : directKeys) {
+            const QString value = deviceInfo.value(key).toString().trimmed();
+            if (!value.isEmpty()) {
+                return value.toUpper();
+            }
+        }
+
+        const QJsonObject attributes = deviceInfo.value(QStringLiteral("attributes")).toObject();
+        static const QStringList attributeKeys = {QStringLiteral("LCSC Part"),
+                                                  QStringLiteral("LCSC Part #"),
+                                                  QStringLiteral("LCSC Part Number"),
+                                                  QStringLiteral("Part Number")};
+        for (const QString& key : attributeKeys) {
+            const QString value = attributes.value(key).toString().trimmed();
+            if (!value.isEmpty()) {
+                return value.toUpper();
+            }
+        }
+    }
+
+    return QString();
+}
+
+QJsonObject selectBestProductForComponent(const QString& componentId, const QJsonArray& productList) {
+    const QString normalizedId = componentId.trimmed().toUpper();
+    for (const QJsonValue& value : productList) {
+        const QJsonObject product = value.toObject();
+        if (extractComponentCode(product) == normalizedId) {
+            return product;
+        }
+    }
+
+    // 不再 fallback 到第一个产品，如果没有精确匹配则返回空对象
+    // 原因：之前的 fallback 逻辑会导致显示错误元器件的预览图，造成用户混淆
+    return QJsonObject();
+}
+
+bool isWeakNetworkEnabled() {
+    return ConfigService::instance()->getWeakNetworkSupport();
+}
+
 }  // namespace
 
 LcscImageService::LcscImageService(QObject* parent)
-    : QObject(parent), m_cacheThreadPool(new QThreadPool(this)), m_activeRequests(0), m_isCancelled(0) {
+    : QObject(parent), m_cacheThreadPool(new QThreadPool(this)), m_isCancelled(0) {
     m_cacheThreadPool->setMaxThreadCount(MAX_CONCURRENT_REQUESTS);
 }
 
@@ -97,7 +157,7 @@ void LcscImageService::fetchPreviewImages(const QString& componentId) {
         return;
     }
 
-    if (m_requestedComponents.contains(componentId) || m_queue.contains(componentId)) {
+    if (m_requestedComponents.contains(componentId)) {
         qDebug() << "Component" << componentId << "already requested, skipping duplicate request";
         return;
     }
@@ -107,20 +167,8 @@ void LcscImageService::fetchPreviewImages(const QString& componentId) {
         return;
     }
 
-    if (m_requestedComponents.contains(componentId)) {
-        qDebug() << "Component" << componentId << "already requested, skipping duplicate request";
-        return;
-    }
-
-    if (m_queue.contains(componentId)) {
-        qDebug() << "Component" << componentId << "already in queue, skipping duplicate request";
-        return;
-    }
-
-    qDebug() << "Adding component" << componentId << "to fetch queue (first time)";
     m_requestedComponents.insert(componentId);
-    m_queue.enqueue(componentId);
-    processQueue();
+    performApiSearch(componentId);
 }
 
 void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) {
@@ -131,7 +179,7 @@ void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) 
             continue;
         }
 
-        if (m_requestedComponents.contains(componentId) || m_queue.contains(componentId)) {
+        if (m_requestedComponents.contains(componentId)) {
             continue;
         }
 
@@ -140,20 +188,15 @@ void LcscImageService::fetchBatchPreviewImages(const QStringList& componentIds) 
             continue;
         }
 
-        if (m_queue.contains(componentId)) {
-            continue;
-        }
-
-        m_queue.enqueue(componentId);
+        m_requestedComponents.insert(componentId);
+        performApiSearch(componentId);
     }
-    processQueue();
 }
 
 void LcscImageService::clearCache() {
     qDebug() << "LcscImageService: Clearing all cache data";
 
     m_requestedComponents.clear();
-    m_queue.clear();
     m_downloadCounts.clear();
     m_expectedCounts.clear();
 
@@ -165,10 +208,8 @@ void LcscImageService::cancelAll() {
 
     m_isCancelled = 1;
     m_requestedComponents.clear();
-    m_queue.clear();
     m_downloadCounts.clear();
     m_expectedCounts.clear();
-    m_activeRequests = 0;
 
     for (const auto& request : m_activeAsyncRequests) {
         if (request && !request->isFinished()) {
@@ -299,14 +340,6 @@ void LcscImageService::startPreviewImageDownloads(const QString& componentId, co
     }
 }
 
-void LcscImageService::processQueue() {
-    while (m_activeRequests < MAX_NETWORK_CONCURRENT_REQUESTS && !m_queue.isEmpty()) {
-        const QString componentId = m_queue.dequeue();
-        m_activeRequests++;
-        performApiSearch(componentId);
-    }
-}
-
 void LcscImageService::performApiSearch(const QString& componentId) {
     if (m_isCancelled) {
         return;
@@ -329,7 +362,7 @@ void LcscImageService::performApiSearch(const QString& componentId) {
         NetworkClient::instance().postAsync(QUrl("https://pro.lceda.cn/api/v2/eda/product/search"),
                                             postData,
                                             ResourceType::ProductSearch,
-                                            RetryPolicy::fromProfile(profile));
+                                            RetryPolicy::fromProfile(profile, isWeakNetworkEnabled()));
     trackAsyncRequest(request);
 
     QObject::connect(
@@ -345,7 +378,8 @@ void LcscImageService::performApiSearch(const QString& componentId) {
                 qWarning() << "LcscImageService: API search failed for component:" << componentId
                            << "error:" << result.error;
                 request->deleteLater();
-                performFallback(componentId);
+                // 不再触发fallback，直接报告无预览图
+                emit error(componentId, "No preview image available from API");
                 return;
             }
 
@@ -353,7 +387,8 @@ void LcscImageService::performApiSearch(const QString& componentId) {
             if (doc.isNull()) {
                 qWarning() << "LcscImageService: Failed to parse JSON response for component:" << componentId;
                 request->deleteLater();
-                performFallback(componentId);
+                // 不再触发fallback，直接报告无预览图
+                emit error(componentId, "No preview image available from API");
                 return;
             }
 
@@ -364,17 +399,18 @@ void LcscImageService::performApiSearch(const QString& componentId) {
                 if (resultObject.contains("productList")) {
                     const QJsonArray productList = resultObject["productList"].toArray();
                     if (!productList.isEmpty()) {
-                        const QJsonObject product = productList[0].toObject();
-                        QStringList imageUrls = extractPreviewImageUrlsFromProduct(product);
+                        const QJsonObject product = selectBestProductForComponent(componentId, productList);
+                        const QString matchedComponentCode = extractComponentCode(product);
 
-                        if (imageUrls.isEmpty()) {
-                            for (const QJsonValue& value : productList) {
-                                imageUrls = extractPreviewImageUrlsFromProduct(value.toObject());
-                                if (!imageUrls.isEmpty()) {
-                                    break;
-                                }
-                            }
+                        // 如果没有找到匹配的元器件，直接报告错误，不再使用 fallback
+                        if (matchedComponentCode.isEmpty()) {
+                            qWarning() << "LcscImageService: No matching product found for component:" << componentId;
+                            request->deleteLater();
+                            emit error(componentId, "No preview image available from API");
+                            return;
                         }
+
+                        QStringList imageUrls = extractPreviewImageUrlsFromProduct(product);
 
                         QString manufacturerPart;
                         QString datasheetUrl;
@@ -394,14 +430,9 @@ void LcscImageService::performApiSearch(const QString& componentId) {
                         emit lcscDataReady(componentId, manufacturerPart, datasheetUrl, imageUrls);
 
                         if (!imageUrls.isEmpty()) {
-                            m_activeRequests = qMax(0, m_activeRequests - 1);
                             startPreviewImageDownloads(componentId, imageUrls);
-                            processQueue();
                         } else {
-                            m_activeRequests = qMax(0, m_activeRequests - 1);
                             emit error(componentId, "No images available");
-                            checkComponentCompletion(componentId);
-                            processQueue();
                         }
 
                         request->deleteLater();
@@ -411,75 +442,23 @@ void LcscImageService::performApiSearch(const QString& componentId) {
             }
 
             request->deleteLater();
-            performFallback(componentId);
-        });
-}
-
-void LcscImageService::performFallback(const QString& componentId) {
-    if (m_isCancelled) {
-        return;
-    }
-
-    RequestProfile profile = RequestProfiles::previewImage();
-    profile.name = "LcscFallbackSearch";
-    profile.connectTimeoutMs = 15000;
-    profile.readTimeoutMs = 15000;
-    profile.maxRetries = 1;
-
-    AsyncNetworkRequest* request =
-        NetworkClient::instance().getAsync(QUrl(QString("https://www.lcsc.com/search?q=%1").arg(componentId)),
-                                           ResourceType::PreviewImage,
-                                           RetryPolicy::fromProfile(profile));
-    trackAsyncRequest(request);
-
-    QObject::connect(
-        request, &AsyncNetworkRequest::finished, this, [this, request, componentId](const NetworkResult& result) {
-            untrackAsyncRequest(request);
-
-            if (m_isCancelled) {
-                request->deleteLater();
-                return;
-            }
-
-            if (!result.success) {
-                m_activeRequests = qMax(0, m_activeRequests - 1);
-                emit error(componentId, QString("Fallback search failed: %1").arg(result.error));
-                processQueue();
-                request->deleteLater();
-                return;
-            }
-
-            const QString html = QString::fromUtf8(result.data);
-            QRegularExpression re("src=\"(https://file\\.elecfans\\.com/web1/M00/[^\"]+\\.jpg)\"");
-            QRegularExpressionMatch match = re.match(html);
-
-            if (match.hasMatch()) {
-                QStringList imageUrls = {match.captured(1)};
-                m_activeRequests = qMax(0, m_activeRequests - 1);
-                startPreviewImageDownloads(componentId, imageUrls);
-                processQueue();
-            } else {
-                m_activeRequests = qMax(0, m_activeRequests - 1);
-                emit error(componentId, "Image not found");
-                processQueue();
-            }
-
-            request->deleteLater();
+            // 不再触发fallback，直接报告无预览图
+            emit error(componentId, "No preview image available from API");
         });
 }
 
 void LcscImageService::performDownload(const QString& componentId, const QString& imageUrl, int imageIndex) {
-    addRandomDelay([this, componentId, imageUrl, imageIndex]() {
-        if (m_isCancelled) {
-            return;
-        }
+    if (m_isCancelled) {
+        return;
+    }
 
-        AsyncNetworkRequest* request = NetworkClient::instance().getAsync(
-            QUrl(imageUrl), ResourceType::PreviewImage, RetryPolicy::fromProfile(RequestProfiles::previewImage()));
-        trackAsyncRequest(request);
+    AsyncNetworkRequest* request = NetworkClient::instance().getAsync(
+        QUrl(imageUrl),
+        ResourceType::PreviewImage,
+        RetryPolicy::fromProfile(RequestProfiles::previewImage(), isWeakNetworkEnabled()));
+    trackAsyncRequest(request);
 
-        connect(
-            request,
+    connect(request,
             &AsyncNetworkRequest::finished,
             this,
             [this, request, componentId, imageIndex](const NetworkResult& result) {
@@ -498,7 +477,6 @@ void LcscImageService::performDownload(const QString& componentId, const QString
                 }
 
                 const QByteArray imageData = result.data;
-                // Validate that the downloaded data is actually an image (not HTML error page)
                 if (!imageData.isEmpty() && !QString::fromUtf8(imageData).contains("<!DOCTYPE", Qt::CaseInsensitive)) {
                     ComponentCacheService::instance()->savePreviewImage(componentId, imageData, imageIndex);
                     m_downloadCounts[componentId]++;
@@ -507,16 +485,13 @@ void LcscImageService::performDownload(const QString& componentId, const QString
                 } else {
                     qWarning() << "LcscImageService: Downloaded invalid data for" << componentId << "index"
                                << imageIndex << "- may be blocked (403), falling back to API";
-                    // Invalid image (403 blocked), try API instead
                     m_downloadCounts[componentId]++;
                     checkDownloadCompletion(componentId);
-                    // TODO: Implement fallback to API here - for now just emit error
                     emit error(componentId, "Image blocked (403), please retry");
                 }
 
                 request->deleteLater();
             });
-    });
 }
 
 void LcscImageService::checkDownloadCompletion(const QString& componentId) {
@@ -529,7 +504,6 @@ void LcscImageService::checkDownloadCompletion(const QString& componentId) {
 
     if (downloadedCount >= expectedCount) {
         emitAllImagesReady(componentId);
-        checkComponentCompletion(componentId);
     }
 }
 
@@ -552,60 +526,46 @@ void LcscImageService::emitAllImagesReady(const QString& componentId) {
     m_expectedCounts.remove(componentId);
 }
 
-void LcscImageService::checkComponentCompletion(const QString& componentId) {
-    m_activeRequests = qMax(0, m_activeRequests - 1);
-    processQueue();
-}
-
 void LcscImageService::performDatasheetDownload(const QString& componentId, const QString& datasheetUrl) {
-    addRandomDelay([this, componentId, datasheetUrl]() {
-        if (m_isCancelled) {
-            return;
-        }
+    if (m_isCancelled) {
+        return;
+    }
 
-        AsyncNetworkRequest* request = NetworkClient::instance().getAsync(
-            QUrl(datasheetUrl), ResourceType::Datasheet, RetryPolicy::fromProfile(RequestProfiles::datasheet()));
-        trackAsyncRequest(request);
+    AsyncNetworkRequest* request = NetworkClient::instance().getAsync(
+        QUrl(datasheetUrl),
+        ResourceType::Datasheet,
+        RetryPolicy::fromProfile(RequestProfiles::datasheet(), isWeakNetworkEnabled()));
+    trackAsyncRequest(request);
 
-        connect(request,
-                &AsyncNetworkRequest::finished,
-                this,
-                [this, request, componentId, datasheetUrl](const NetworkResult& result) {
-                    untrackAsyncRequest(request);
+    connect(request,
+            &AsyncNetworkRequest::finished,
+            this,
+            [this, request, componentId, datasheetUrl](const NetworkResult& result) {
+                untrackAsyncRequest(request);
 
-                    if (m_isCancelled) {
-                        request->deleteLater();
-                        return;
-                    }
-
-                    if (!result.success) {
-                        emit error(componentId, QString("Datasheet download failed: %1").arg(result.error));
-                        request->deleteLater();
-                        return;
-                    }
-
-                    const QByteArray datasheetData = result.data;
-                    if (!datasheetData.isEmpty()) {
-                        QString format = datasheetUrl.toLower().contains(".html") ? "html" : "pdf";
-                        ComponentCacheService::instance()->saveDatasheet(componentId, datasheetData, format);
-                        QByteArray savedData = ComponentCacheService::instance()->loadDatasheet(componentId);
-                        emit datasheetReady(componentId, savedData);
-                    } else {
-                        emit error(componentId, "Failed to read datasheet data");
-                    }
-
+                if (m_isCancelled) {
                     request->deleteLater();
-                });
-    });
-}
+                    return;
+                }
 
-void LcscImageService::addRandomDelay(std::function<void()> callback) {
-    int delay = QRandomGenerator::global()->bounded(50, 150);
-    QTimer::singleShot(delay, this, [callback]() {
-        if (callback) {
-            callback();
-        }
-    });
+                if (!result.success) {
+                    emit error(componentId, QString("Datasheet download failed: %1").arg(result.error));
+                    request->deleteLater();
+                    return;
+                }
+
+                const QByteArray datasheetData = result.data;
+                if (!datasheetData.isEmpty()) {
+                    QString format = datasheetUrl.toLower().contains(".html") ? "html" : "pdf";
+                    ComponentCacheService::instance()->saveDatasheet(componentId, datasheetData, format);
+                    QByteArray savedData = ComponentCacheService::instance()->loadDatasheet(componentId);
+                    emit datasheetReady(componentId, savedData);
+                } else {
+                    emit error(componentId, "Failed to read datasheet data");
+                }
+
+                request->deleteLater();
+            });
 }
 
 void LcscImageService::trackAsyncRequest(AsyncNetworkRequest* request) {

@@ -1,6 +1,6 @@
 #include "LanguageManager.h"
 
-#include "src/services/ConfigService.h"
+#include "services/ConfigService.h"
 
 #include <QCoreApplication>
 #include <QDebug>

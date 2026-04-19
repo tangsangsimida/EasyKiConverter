@@ -2,6 +2,7 @@
 
 #include "BomParser.h"
 #include "ComponentQueueManager.h"
+#include "ConfigService.h"
 #include "core/easyeda/EasyedaApi.h"
 #include "core/easyeda/EasyedaFootprintImporter.h"
 #include "core/easyeda/EasyedaSymbolImporter.h"
@@ -78,6 +79,19 @@ QString normalizePreviewImageUrl(const QString& imageUrl) {
                           QStringLiteral("https://image.lceda.cn/"));
 
     return normalizedUrl;
+}
+
+int previewImageIndexFromPath(const QString& path) {
+    static const QRegularExpression re(QStringLiteral("preview_(\\d+)\\.jpg$"),
+                                       QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpressionMatch match = re.match(path);
+    if (!match.hasMatch()) {
+        return -1;
+    }
+
+    bool ok = false;
+    const int index = match.captured(1).toInt(&ok);
+    return ok ? index : -1;
 }
 
 CadParseResult parseCadPayload(const QString& componentId, const QJsonObject& rawData) {
@@ -178,7 +192,7 @@ CadFetchTaskResult fetchAndParseCadData(const QString& componentId) {
     taskResult.componentId = componentId;
 
     const RequestProfile profile = RequestProfiles::cadData();
-    const RetryPolicy policy = RetryPolicy::fromProfile(profile);
+    const RetryPolicy policy = RetryPolicy::fromProfile(profile, ConfigService::instance()->getWeakNetworkSupport());
     const QUrl url(EASYEDA_COMPONENT_API_ENDPOINT.arg(componentId));
     const NetworkResult networkResult = NetworkClient::instance().get(url, ResourceType::CadData, policy);
     if (!networkResult.success) {
@@ -213,13 +227,14 @@ ComponentService::ComponentService(QObject* parent)
     , m_parallelContext(nullptr)
     , m_imageService(nullptr)
     , m_activeRequestCount(0)
-    , m_maxConcurrentRequests(5)
+    , m_maxConcurrentRequests(ConfigService::instance()->getValidationConcurrentCount())
     , m_queueManager(nullptr)
     , m_batchFetch3DModel(true) {
     try {
         m_api = new EasyedaApi();
         if (m_api) {
             m_api->setParent(this);
+            m_api->setWeakNetworkSupport(ConfigService::instance()->getWeakNetworkSupport());
         }
         m_imageService = new LcscImageService(this);
 
@@ -250,7 +265,7 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     , m_parallelContext(nullptr)
     , m_imageService(nullptr)
     , m_activeRequestCount(0)
-    , m_maxConcurrentRequests(5)
+    , m_maxConcurrentRequests(ConfigService::instance()->getValidationConcurrentCount())
     , m_queueManager(nullptr)
     , m_batchFetch3DModel(true) {
     if (m_api && !m_api->parent()) {
@@ -325,20 +340,55 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
         m_currentComponentId = normalizedId;
     }
 
+    ComponentData reusableData;
+    bool reuseExistingForParallel = false;
+    bool shouldSkipAsDuplicate = false;
+
     // 先添加到 m_fetchingComponents（防止重复调度）
     {
         QMutexLocker locker(&m_fetchingComponentsMutex);
         if (m_fetchingComponents.contains(normalizedId)) {
-            qDebug() << "ComponentService: Already fetching for" << normalizedId << ", skipping";
-            return;
+            const FetchingComponent& existing = m_fetchingComponents[normalizedId];
+            const bool hasReusableData =
+                !existing.data.lcscId().isEmpty() && (existing.hasCadData || existing.data.symbolData() != nullptr ||
+                                                      existing.data.footprintData() != nullptr);
+
+            if (m_parallelContext != nullptr && hasReusableData) {
+                reusableData = existing.data;
+                reuseExistingForParallel = true;
+            } else if (m_parallelContext != nullptr && !hasReusableData) {
+                qDebug() << "ComponentService: Removing stale fetching state for" << normalizedId
+                         << "before parallel preload retry";
+                m_fetchingComponents.remove(normalizedId);
+            } else {
+                shouldSkipAsDuplicate = true;
+            }
         }
-        // 创建占位条目，防止重复调度
-        FetchingComponent& fc = m_fetchingComponents[normalizedId];
-        initializeFetchingComponent(fc, normalizedId, fetch3DModel);
+
+        if (!reuseExistingForParallel && !shouldSkipAsDuplicate && !m_fetchingComponents.contains(normalizedId)) {
+            // 创建占位条目，防止重复调度
+            FetchingComponent& fc = m_fetchingComponents[normalizedId];
+            initializeFetchingComponent(fc, normalizedId, fetch3DModel);
+        }
+    }
+
+    if (reuseExistingForParallel) {
+        qDebug() << "ComponentService: Reusing existing fetched data for parallel preload:" << normalizedId;
+        updateComponentCache(normalizedId, reusableData);
+        handleParallelDataCollected(normalizedId, reusableData);
+        return;
+    }
+
+    if (shouldSkipAsDuplicate) {
+        qDebug() << "ComponentService: Already fetching for" << normalizedId << ", skipping duplicate request";
+        return;
     }
 
     // 检查是否有符号封装缓存，有则直接从缓存加载（元器件存在）
     ComponentCacheService* cache = ComponentCacheService::instance();
+    if (m_api) {
+        m_api->setWeakNetworkSupport(ConfigService::instance()->getWeakNetworkSupport());
+    }
     if (cache->hasSymbolFootprintCache(normalizedId)) {
         qDebug() << "ComponentService: Symbol/Footprint cache hit for" << normalizedId
                  << ", loading from cache (component exists)";
@@ -720,11 +770,14 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
 
     // 如果所有异步下载都完成了，标记组件完成
     if (shouldMarkCompleted) {
-        QMutexLocker locker(&m_parallelContextMutex);
-        if (m_parallelContext != nullptr) {
-            m_parallelContext->markCompleted(componentId, completedData);
+        ParallelFetchContext* parallelContext = nullptr;
+        {
+            QMutexLocker locker(&m_parallelContextMutex);
+            parallelContext = m_parallelContext;
         }
-        locker.unlock();
+        if (parallelContext != nullptr) {
+            parallelContext->markCompleted(componentId, completedData);
+        }
 
         if (m_queueManager != nullptr) {
             m_queueManager->requestCompleted(componentId);
@@ -803,12 +856,16 @@ void ComponentService::handleAllImagesReady(const QString& componentId, const QS
         // 更新 m_fetchingComponents 中的数据
         if (m_fetchingComponents.contains(componentId)) {
             FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
-            // 从路径加载图片数据
             QList<QByteArray> imageDataList;
+            imageDataList.resize(3);
             for (const QString& path : imagePaths) {
+                const int imageIndex = previewImageIndexFromPath(path);
+                if (imageIndex < 0 || imageIndex >= imageDataList.size()) {
+                    continue;
+                }
                 QFile file(path);
                 if (file.open(QIODevice::ReadOnly)) {
-                    imageDataList.append(file.readAll());
+                    imageDataList[imageIndex] = file.readAll();
                     file.close();
                 }
             }
@@ -821,7 +878,22 @@ void ComponentService::handleAllImagesReady(const QString& componentId, const QS
         }
     }  // 锁在这里释放
 
+    QStringList encodedImages(3);
+    for (const QString& path : imagePaths) {
+        const int imageIndex = previewImageIndexFromPath(path);
+        if (imageIndex < 0 || imageIndex >= encodedImages.size()) {
+            continue;
+        }
+
+        QFile file(path);
+        if (file.open(QIODevice::ReadOnly)) {
+            encodedImages[imageIndex] = QString::fromLatin1(file.readAll().toBase64().data());
+            file.close();
+        }
+    }
+
     // 锁外发送信号（避免信号槽死锁）
+    emit previewImagesReady(componentId, encodedImages);
     emit allImagesReady(componentId, imagePaths);
 }
 
@@ -933,6 +1005,11 @@ QString ComponentService::getOutputPath() const {
 }
 
 void ComponentService::fetchMultipleComponentsData(const QStringList& componentIds, bool fetch3DModel) {
+    m_maxConcurrentRequests = ConfigService::instance()->getValidationConcurrentCount();
+    if (m_queueManager != nullptr) {
+        m_queueManager->setMaxConcurrentRequests(m_maxConcurrentRequests);
+    }
+
     qDebug() << "Fetching data for" << componentIds.size()
              << "components with async queue (max concurrent:" << m_maxConcurrentRequests << ")";
 
@@ -947,6 +1024,7 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
     connect(m_parallelContext, &ParallelFetchContext::allCompleted, this, [this](const QList<ComponentData>& data) {
         emit allComponentsDataCollected(data);
         m_activeRequestCount = 0;
+        resetQueueState();
     });
     m_parallelContext->start(componentIds.size());
     m_activeRequestCount = 0;
@@ -969,11 +1047,14 @@ void ComponentService::handleParallelDataCollected(const QString& componentId, c
         }
     }
 
-    QMutexLocker locker(&m_parallelContextMutex);
-    if (m_parallelContext != nullptr) {
-        m_parallelContext->markCompleted(componentId, completedData);
+    ParallelFetchContext* parallelContext = nullptr;
+    {
+        QMutexLocker locker(&m_parallelContextMutex);
+        parallelContext = m_parallelContext;
     }
-    locker.unlock();
+    if (parallelContext != nullptr) {
+        parallelContext->markCompleted(componentId, completedData);
+    }
 
     if (m_queueManager != nullptr) {
         m_queueManager->requestCompleted(componentId);
@@ -984,11 +1065,14 @@ void ComponentService::handleParallelFetchError(const QString& componentId, cons
     qDebug() << "Parallel fetch error for:" << componentId << error;
 
     Q_UNUSED(error);
-    QMutexLocker locker(&m_parallelContextMutex);
-    if (m_parallelContext != nullptr) {
-        m_parallelContext->markFailed(componentId);
+    ParallelFetchContext* parallelContext = nullptr;
+    {
+        QMutexLocker locker(&m_parallelContextMutex);
+        parallelContext = m_parallelContext;
     }
-    locker.unlock();
+    if (parallelContext != nullptr) {
+        parallelContext->markFailed(componentId);
+    }
 
     if (m_queueManager != nullptr) {
         m_queueManager->requestCompleted(componentId);

@@ -56,9 +56,7 @@ public:
 
     QVariantList previewImages() const;
 
-    int previewImageCount() const {
-        return qMax(m_previewImages.count(), m_previewImagesCache.count());
-    }
+    int previewImageCount() const;
 
     bool isValid() const {
         return m_isValid;
@@ -117,6 +115,8 @@ public:
     void finishPreviewImageLoading();
     // 设置预编码的图片
     void setEncodedPreviewImages(const QStringList& encodedImages);
+    void setEncodedPreviewImageAt(const QString& encodedImage, int index, bool notify = true);
+    void notifyPreviewImagesChanged();
 
     // 获取原始图片
     QList<QImage> previewImagesRaw() const {
