@@ -7,10 +7,19 @@
 
 namespace EasyKiConverter {
 
-JLCDatasheet::JLCDatasheet(QObject* parent) : QObject(parent), m_activeRequest(nullptr), m_isDownloading(false) {}
+JLCDatasheet::JLCDatasheet(QObject* parent)
+    : QObject(parent), m_activeRequest(nullptr), m_isDownloading(false), m_weakNetworkSupport(false) {}
 
 JLCDatasheet::~JLCDatasheet() {
     cancel();
+}
+
+void JLCDatasheet::setWeakNetworkSupport(bool enabled) {
+    m_weakNetworkSupport = enabled;
+}
+
+bool JLCDatasheet::weakNetworkSupport() const {
+    return m_weakNetworkSupport;
 }
 
 void JLCDatasheet::downloadDatasheet(const QString& datasheetUrl, const QString& savePath) {
@@ -32,7 +41,7 @@ void JLCDatasheet::downloadDatasheet(const QString& datasheetUrl, const QString&
 
     RequestProfile profile = RequestProfiles::datasheet();
     m_activeRequest = NetworkClient::instance().getAsync(
-        QUrl(datasheetUrl), ResourceType::Datasheet, RetryPolicy::fromProfile(profile));
+        QUrl(datasheetUrl), ResourceType::Datasheet, RetryPolicy::fromProfile(profile, m_weakNetworkSupport));
 
     connect(m_activeRequest, &AsyncNetworkRequest::downloadProgress, this, &JLCDatasheet::downloadProgress);
     connect(m_activeRequest, &AsyncNetworkRequest::finished, this, [this](const NetworkResult& result) {

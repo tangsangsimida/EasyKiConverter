@@ -24,6 +24,8 @@ void DatasheetExportStage::start(const QStringList& componentIds,
         return;
     }
 
+    m_threadPool.setMaxThreadCount(m_options.weakNetworkSupport ? 1 : 2);
+
     // 构建输出目录：outputPath/libName.datasheet/
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
     QString baseOutputDir = m_options.outputPath;
@@ -140,23 +142,27 @@ void DatasheetExportStage::startWorker(QObject* worker,
 
     // 使用QPointer防止stage已销毁时lambda访问悬空指针
     QPointer<DatasheetExportStage> stagePtr(this);
-    connect(exportWorker,
-            &DatasheetExportWorker::completed,
-            this,
-            [stagePtr, exportWorker, componentId](const QString&, bool success, const QString& error) {
-                if (!stagePtr) {
-                    return;
-                }
+    connect(
+        exportWorker,
+        &DatasheetExportWorker::completed,
+        this,
+        [stagePtr, exportWorker, componentId](const QString&, bool success, const QString& error) {
+            if (!stagePtr) {
+                exportWorker->deleteLater();
+                return;
+            }
 
-                // 如果成功，提交临时文件
-                if (success && stagePtr->m_finalPaths.contains(componentId)) {
-                    QString tempPath = stagePtr->m_tempPaths.value(componentId);
-                    QString finalPath = stagePtr->m_finalPaths.value(componentId);
-                    stagePtr->commitTempFile(tempPath, finalPath);
-                }
+            // 如果成功，提交临时文件
+            if (success && stagePtr->m_finalPaths.contains(componentId)) {
+                QString tempPath = stagePtr->m_tempPaths.value(componentId);
+                QString finalPath = stagePtr->m_finalPaths.value(componentId);
+                stagePtr->commitTempFile(tempPath, finalPath);
+            }
 
-                stagePtr->completeItemProgress(exportWorker, componentId, success, error);
-            });
+            stagePtr->completeItemProgress(exportWorker, componentId, success, error);
+            exportWorker->deleteLater();
+        },
+        Qt::QueuedConnection);
 
     m_threadPool.start(exportWorker);
 }

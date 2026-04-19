@@ -1,7 +1,15 @@
 #ifndef ASYNCNETWORKREQUEST_H
 #define ASYNCNETWORKREQUEST_H
 
-#include "INetworkClient.h"
+#include "core/network/INetworkClient.h"
+
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+
+// Forward declaration for friend class
+namespace EasyKiConverter::Test {
+class MockNetworkClient;
+}
 
 #include <QAtomicInt>
 #include <QByteArray>
@@ -39,6 +47,15 @@ class AsyncNetworkRequest : public QObject {
 
 public:
     static AsyncNetworkRequest* createFinished(const NetworkResult& result, QObject* parent = nullptr);
+
+    /**
+     * @brief 延迟完成请求 - 用于测试场景
+     * @param result 要发送的结果
+     * @param delayMs 延迟毫秒数
+     *
+     * 此方法用于模拟异步网络请求，避免信号在槽连接建立前发出
+     */
+    Q_INVOKABLE void completeWithResultDelayed(const NetworkResult& result, int delayMs = 0);
 
     /**
      * @brief 析构函数，确保清理
@@ -111,6 +128,7 @@ signals:
 
 private:
     friend class NetworkClient;
+    friend class Test::MockNetworkClient;
 
     /**
      * @brief 构造函数 - 私有，使用 NetworkClient::getAsync() 或 postAsync()
@@ -166,6 +184,10 @@ private:
      * @brief 清理当前尝试
      */
     void cleanupAttempt();
+    bool completeWithResult(const NetworkResult& result);
+    NetworkResult cancelledResult(const QString& errorMessage = QStringLiteral("Cancelled")) const;
+    NetworkResult timeoutResult() const;
+    bool hasActiveReply() const;
 
     QUrl m_url;
     QNetworkAccessManager* m_networkManager;
@@ -183,6 +205,7 @@ private:
     int m_currentRetryCount;
     int m_timeoutMs;
     bool m_gzipUsed;
+    QAtomicInt m_currentAttemptTimedOut;
 
     QList<QNetworkReply*> m_pendingReplies;  // For cleanup on destruction
     mutable QMutex m_repliesMutex;

@@ -20,14 +20,31 @@ namespace EasyKiConverter {
  * @endcode
  */
 struct ExportOptions {
+    // 3D模型格式常量 (位掩码)
+    static constexpr int MODEL_3D_FORMAT_NONE = 0;  // 无格式
+    static constexpr int MODEL_3D_FORMAT_WRL = 1;  // WRL (bit 0)
+    static constexpr int MODEL_3D_FORMAT_STEP = 2;  // STEP (bit 1)
+    static constexpr int MODEL_3D_FORMAT_BOTH = 3;  // Both (WRL + STEP)
+
+    // 3D模型格式判断辅助方法
+    constexpr bool needsModel3DWrl() const {
+        return (exportModel3DFormat & MODEL_3D_FORMAT_WRL) != 0;
+    }
+
+    constexpr bool needsModel3DStep() const {
+        return (exportModel3DFormat & MODEL_3D_FORMAT_STEP) != 0;
+    }
+
     QString outputPath;  ///< 导出文件输出目录路径
     QString libName;  ///< 库名称（用于构建子目录路径）
     bool exportSymbol = true;  ///< 是否导出符号 (Symbol)
     bool exportFootprint = true;  ///< 是否导出封装 (Footprint)
     bool exportModel3D = false;  ///< 是否导出3D模型 (3D Model)
+    int exportModel3DFormat = MODEL_3D_FORMAT_BOTH;  ///< 3D模型格式
     bool exportPreviewImages = false;  ///< 是否导出预览图 (Preview Images)
     bool exportDatasheet = false;  ///< 是否导出数据手册 (Datasheet)
     bool overwriteExistingFiles = false;  ///< 是否覆盖已存在的文件
+    bool weakNetworkSupport = false;  ///< 是否启用客户端弱网络适配
     bool updateMode = false;  ///< 更新模式：仅导出缺失或已更改的文件
     bool debugMode = false;  ///< 调试模式：输出详细调试信息
 };

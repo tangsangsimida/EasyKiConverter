@@ -2,21 +2,87 @@
 
 #include "core/utils/GzipUtils.h"
 
+#include <QCoreApplication>
+#include <QDateTime>
 #include <QDebug>
 #include <QElapsedTimer>
-#include <QEventLoop>
+#include <QMetaObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QThread>
+#include <QStringList>
+#include <QTimer>
 
+#include <limits>
 #include <memory>
 
 namespace EasyKiConverter {
 
-NetworkClient::NetworkClient() = default;
+namespace {
 
-NetworkClient::~NetworkClient() = default;
+class BlockingRequestContext {
+public:
+    void complete(const NetworkResult& result) {
+        QMutexLocker locker(&mutex);
+        if (finished) {
+            return;
+        }
+        storedResult = result;
+        finished = true;
+        condition.wakeAll();
+    }
+
+    NetworkResult wait() {
+        QMutexLocker locker(&mutex);
+        while (!finished) {
+            condition.wait(&mutex);
+        }
+        return storedResult;
+    }
+
+private:
+    QMutex mutex;
+    QWaitCondition condition;
+    NetworkResult storedResult;
+    bool finished = false;
+};
+
+}  // namespace
+
+NetworkClient::NetworkClient() {
+    m_networkThread.setObjectName(QStringLiteral("EasyKiConverterNetworkThread"));
+    m_networkThread.start();
+
+    m_asyncNetworkManager = new QNetworkAccessManager();
+    m_asyncNetworkManager->moveToThread(&m_networkThread);
+}
+
+NetworkClient::~NetworkClient() {
+    QList<QPointer<AsyncNetworkRequest>> pendingRequests;
+    {
+        QMutexLocker locker(&m_asyncQueueMutex);
+        for (const PendingAsyncRequest& pending : std::as_const(m_pendingAsyncRequests)) {
+            pendingRequests.append(pending.request);
+        }
+        m_pendingAsyncRequests.clear();
+    }
+
+    for (const QPointer<AsyncNetworkRequest>& request : pendingRequests) {
+        if (!request) {
+            continue;
+        }
+        request->cancel();
+        QMetaObject::invokeMethod(request, &QObject::deleteLater, Qt::QueuedConnection);
+    }
+
+    if (m_asyncNetworkManager) {
+        QMetaObject::invokeMethod(m_asyncNetworkManager, &QObject::deleteLater, Qt::QueuedConnection);
+        m_asyncNetworkManager = nullptr;
+    }
+
+    m_networkThread.quit();
+    m_networkThread.wait();
+}
 
 // static
 bool NetworkClient::isGzipCompressed(const QByteArray& data) {
@@ -52,40 +118,86 @@ NetworkResult NetworkClient::post(const QUrl& url,
     return executeRequest(url, body, resourceType, policy);
 }
 
-AsyncNetworkRequest* NetworkClient::getAsync(const QUrl& url, ResourceType resourceType, const RetryPolicy& policy) {
-    // Use thread-local QNetworkAccessManager to avoid cross-thread issues
-    // This approach is the same as FetchWorker - each thread has its own QNAM
-    static thread_local std::unique_ptr<QNetworkAccessManager> threadQNAM = nullptr;
-    if (!threadQNAM) {
-        threadQNAM = std::make_unique<QNetworkAccessManager>();
+NetworkRuntimeStats NetworkClient::runtimeStats() const {
+    NetworkRuntimeStats stats;
+
+    QMutexLocker locker(&m_asyncQueueMutex);
+    for (auto it = m_resourceStats.cbegin(); it != m_resourceStats.cend(); ++it) {
+        const NetworkResourceStats& snapshot = it.value().snapshot;
+        stats.totalQueuedRequests += snapshot.queuedRequests;
+        stats.totalActiveRequests += snapshot.activeRequests;
+        stats.totalStartedRequests += snapshot.startedRequests;
+        stats.totalCompletedRequests += snapshot.completedRequests;
+        stats.totalSucceededRequests += snapshot.succeededRequests;
+        stats.totalFailedRequests += snapshot.failedRequests;
+        stats.totalCancelledRequests += snapshot.cancelledRequests;
+        stats.totalTimeoutRequests += snapshot.timeoutRequests;
+        stats.totalRateLimitedRequests += snapshot.rateLimitedRequests;
+        stats.totalRetryAttempts += snapshot.retryAttempts;
+        stats.totalBackpressureEvents += snapshot.backpressureEvents;
+        stats.resources.append(snapshot);
     }
 
-    // Create request with thread-local QNAM - no parent, caller manages lifetime
-    auto* request = new AsyncNetworkRequest(url, threadQNAM.get(), resourceType, policy, nullptr);
+    return stats;
+}
 
-    // Start request synchronously in current thread (same thread as threadQNAM)
-    // This avoids the crash issues with moveToThread
-    request->start();
+QString NetworkClient::formatRuntimeStats() const {
+    const NetworkRuntimeStats stats = runtimeStats();
+    QStringList lines;
+    lines << QStringLiteral(
+                 "NetworkRuntimeStats total{queued=%1 active=%2 started=%3 completed=%4 ok=%5 fail=%6 "
+                 "cancelled=%7 timeout=%8 rateLimited=%9 retries=%10 backpressure=%11}")
+                 .arg(stats.totalQueuedRequests)
+                 .arg(stats.totalActiveRequests)
+                 .arg(stats.totalStartedRequests)
+                 .arg(stats.totalCompletedRequests)
+                 .arg(stats.totalSucceededRequests)
+                 .arg(stats.totalFailedRequests)
+                 .arg(stats.totalCancelledRequests)
+                 .arg(stats.totalTimeoutRequests)
+                 .arg(stats.totalRateLimitedRequests)
+                 .arg(stats.totalRetryAttempts)
+                 .arg(stats.totalBackpressureEvents);
 
-    return request;
+    for (const NetworkResourceStats& resource : stats.resources) {
+        lines << QStringLiteral(
+                     "  [%1] queued=%2/%3 active=%4/%5 backpressure=%6 started=%7 completed=%8 ok=%9 fail=%10 "
+                     "cancelled=%11 timeout=%12 rateLimited=%13 retries=%14 queueDelay(last/avg/max)=%15/%16/%17ms "
+                     "latency(last/avg/max)=%18/%19/%20ms")
+                     .arg(resource.profileName)
+                     .arg(resource.queuedRequests)
+                     .arg(resource.peakQueuedRequests)
+                     .arg(resource.activeRequests)
+                     .arg(resource.peakActiveRequests)
+                     .arg(resource.backpressureEvents)
+                     .arg(resource.startedRequests)
+                     .arg(resource.completedRequests)
+                     .arg(resource.succeededRequests)
+                     .arg(resource.failedRequests)
+                     .arg(resource.cancelledRequests)
+                     .arg(resource.timeoutRequests)
+                     .arg(resource.rateLimitedRequests)
+                     .arg(resource.retryAttempts)
+                     .arg(resource.lastQueueDelayMs)
+                     .arg(resource.averageQueueDelayMs)
+                     .arg(resource.maxQueueDelayMs)
+                     .arg(resource.lastLatencyMs)
+                     .arg(resource.averageLatencyMs)
+                     .arg(resource.maxLatencyMs);
+    }
+
+    return lines.join(QLatin1Char('\n'));
+}
+
+AsyncNetworkRequest* NetworkClient::getAsync(const QUrl& url, ResourceType resourceType, const RetryPolicy& policy) {
+    return enqueueAsyncRequest(url, QByteArray(), resourceType, policy);
 }
 
 AsyncNetworkRequest* NetworkClient::postAsync(const QUrl& url,
                                               const QByteArray& body,
                                               ResourceType resourceType,
                                               const RetryPolicy& policy) {
-    // Use thread-local QNetworkAccessManager (same approach as getAsync)
-    static thread_local std::unique_ptr<QNetworkAccessManager> threadQNAM = nullptr;
-    if (!threadQNAM) {
-        threadQNAM = std::make_unique<QNetworkAccessManager>();
-    }
-
-    auto* request = new AsyncNetworkRequest(url, threadQNAM.get(), resourceType, policy, body, nullptr);
-
-    // Start request synchronously in current thread
-    request->start();
-
-    return request;
+    return enqueueAsyncRequest(url, body, resourceType, policy);
 }
 
 void NetworkClient::populateDiagnostic(NetworkDiagnostic& diag, const QUrl& url, ResourceType resourceType) {
@@ -99,138 +211,262 @@ NetworkResult NetworkClient::executeRequest(const QUrl& url,
                                             const QByteArray& body,
                                             ResourceType resourceType,
                                             const RetryPolicy& policy) {
-    // Synchronous requests are used from worker threads during export.
-    // Use a thread-local QNAM so reply objects are created in the calling thread.
-    static thread_local std::unique_ptr<QNetworkAccessManager> threadQNAM = nullptr;
-    if (!threadQNAM) {
-        threadQNAM = std::make_unique<QNetworkAccessManager>();
-    }
-
-    NetworkResult result;
-    QElapsedTimer timer;
-    timer.start();
-
-    // Populate diagnostic info
-    populateDiagnostic(result.diagnostic, url, resourceType);
-
-    for (int retryCount = 0; retryCount <= policy.maxRetries; ++retryCount) {
-        QEventLoop loop;
-        QNetworkRequest request(url);
-
-        // Set headers
-        request.setHeader(QNetworkRequest::UserAgentHeader, "EasyKiConverter/1.0");
-        request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
-
-        QNetworkReply* reply = nullptr;
-        if (body.isEmpty()) {
-            reply = threadQNAM->get(request);
-        } else {
-            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-            reply = threadQNAM->post(request, body);
-        }
-
-        QTimer timeoutTimer;
-        timeoutTimer.setSingleShot(true);
-        timeoutTimer.start(policy.baseTimeoutMs);
-
-        QObject::connect(&timeoutTimer, &QTimer::timeout, &loop, [&]() {
-            reply->abort();
-            loop.quit();
-        });
-
-        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-
-        loop.exec();
-
-        result.statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        result.elapsedMs = timer.elapsed();
-        result.diagnostic.latencyMs = result.elapsedMs;
-        result.diagnostic.retryCount = retryCount;
-        result.diagnostic.statusCode = result.statusCode;
-
-        if (reply->error() == QNetworkReply::NoError) {
-            result.data = reply->readAll();
-
-            // Decompress if gzip
-            if (GzipUtils::isGzipped(result.data)) {
-                GzipUtils::DecompressResult decompResult = GzipUtils::decompress(result.data);
-                if (decompResult.success) {
-                    result.data = decompResult.data;
-                } else {
-                    qWarning() << "Gzip decompression failed for URL:" << url;
-                    result.error = "Gzip decompression failed";
-                    result.diagnostic.errorType = NetworkErrorType::DecompressionFailed;
-                    result.diagnostic.errorMessage = result.error;
-                    reply->deleteLater();
-                    return result;
-                }
-            }
-
-            result.success = true;
-            result.retryCount = retryCount;
-            result.diagnostic.totalElapsedMs = result.elapsedMs;
-            reply->deleteLater();
-            return result;
-        }
-
-        // Classify error type for diagnostics
-        QNetworkReply::NetworkError error = reply->error();
-        switch (error) {
-            case QNetworkReply::TimeoutError:
-                result.diagnostic.errorType = NetworkErrorType::Timeout;
-                break;
-            case QNetworkReply::ConnectionRefusedError:
-                result.diagnostic.errorType = NetworkErrorType::ConnectionRefused;
-                break;
-            case QNetworkReply::HostNotFoundError:
-                result.diagnostic.errorType = NetworkErrorType::HostNotFound;
-                break;
-            case QNetworkReply::OperationCanceledError:
-                result.diagnostic.errorType = NetworkErrorType::Canceled;
-                result.diagnostic.wasCanceled = true;
-                break;
-            default:
-                if (result.statusCode == 429) {
-                    result.diagnostic.errorType = NetworkErrorType::RateLimited;
-                    result.diagnostic.wasRateLimited = true;
-                } else if (result.statusCode >= 500) {
-                    result.diagnostic.errorType = NetworkErrorType::ServerError;
-                } else if (result.statusCode == 404) {
-                    result.diagnostic.errorType = NetworkErrorType::NotFound;
-                } else if (result.statusCode == 403) {
-                    result.diagnostic.errorType = NetworkErrorType::Forbidden;
-                } else {
-                    result.diagnostic.errorType = NetworkErrorType::Other;
-                }
-                break;
-        }
-
-        // Check if we should retry
-        if (shouldRetry(result.statusCode, reply->error(), retryCount, policy)) {
-            int delay = calculateRetryDelay(retryCount, policy);
-            qDebug() << QString("NetworkClient: Retry %1/%2 for %3 after %4ms delay")
-                            .arg(retryCount + 1)
-                            .arg(policy.maxRetries)
-                            .arg(url.toString())
-                            .arg(delay);
-            QThread::msleep(static_cast<unsigned long>(qMax(0, delay)));
-            reply->deleteLater();
-            continue;
-        }
-
-        result.error = reply->errorString();
-        result.diagnostic.errorMessage = result.error;
+    auto* request = enqueueAsyncRequest(url, body, resourceType, policy);
+    if (!request) {
+        NetworkResult result;
+        populateDiagnostic(result.diagnostic, url, resourceType);
+        result.error = QStringLiteral("Failed to create async request");
         result.success = false;
-        result.diagnostic.totalElapsedMs = result.elapsedMs;
-        reply->deleteLater();
+        result.diagnostic.errorType = NetworkErrorType::Other;
+        result.diagnostic.errorMessage = result.error;
         return result;
     }
 
-    result.success = false;
-    result.error = "Max retries exceeded";
-    result.diagnostic.errorMessage = result.error;
-    result.diagnostic.totalElapsedMs = result.elapsedMs;
+    auto context = std::make_shared<BlockingRequestContext>();
+    QObject::connect(
+        request,
+        &AsyncNetworkRequest::finished,
+        request,
+        [context](const NetworkResult& result) { context->complete(result); },
+        Qt::DirectConnection);
+
+    const NetworkResult result = context->wait();
+    QMetaObject::invokeMethod(request, &QObject::deleteLater, Qt::QueuedConnection);
     return result;
+}
+
+AsyncNetworkRequest* NetworkClient::enqueueAsyncRequest(const QUrl& url,
+                                                        const QByteArray& body,
+                                                        ResourceType resourceType,
+                                                        const RetryPolicy& policy) {
+    if (!m_asyncNetworkManager) {
+        return nullptr;
+    }
+
+    auto* request = new AsyncNetworkRequest(url, m_asyncNetworkManager, resourceType, policy, body, nullptr);
+    request->moveToThread(&m_networkThread);
+
+    const RequestProfile profile = RequestProfiles::fromType(resourceType);
+    {
+        QMutexLocker locker(&m_asyncQueueMutex);
+        PendingAsyncRequest pending;
+        pending.request = request;
+        pending.resourceType = resourceType;
+        pending.priority = profile.priority;
+        pending.sequence = m_asyncSequence++;
+        pending.enqueuedAtMs = QDateTime::currentMSecsSinceEpoch();
+        m_pendingAsyncRequests.append(pending);
+        updateStatsForEnqueuedRequest(resourceType);
+    }
+
+    QObject::connect(
+        request,
+        &AsyncNetworkRequest::finished,
+        this,
+        [this, resourceType](const NetworkResult& result) {
+            updateStatsForCompletedRequest(resourceType, result);
+            onAsyncRequestFinished(resourceType);
+        },
+        Qt::QueuedConnection);
+
+    scheduleAsyncPump();
+    return request;
+}
+
+void NetworkClient::scheduleAsyncPump() {
+    bool shouldSchedule = false;
+    {
+        QMutexLocker locker(&m_asyncQueueMutex);
+        if (!m_asyncPumpScheduled) {
+            m_asyncPumpScheduled = true;
+            shouldSchedule = true;
+        }
+    }
+
+    if (shouldSchedule) {
+        QMetaObject::invokeMethod(this, &NetworkClient::pumpAsyncQueue, Qt::QueuedConnection);
+    }
+}
+
+void NetworkClient::pumpAsyncQueue() {
+    while (true) {
+        QPointer<AsyncNetworkRequest> requestToStart;
+        ResourceType resourceType = ResourceType::Unknown;
+
+        {
+            QMutexLocker locker(&m_asyncQueueMutex);
+            int bestIndex = -1;
+            int bestPriority = std::numeric_limits<int>::max();
+            quint64 bestSequence = std::numeric_limits<quint64>::max();
+
+            for (int i = m_pendingAsyncRequests.size() - 1; i >= 0; --i) {
+                const PendingAsyncRequest& pending = m_pendingAsyncRequests.at(i);
+                if (!pending.request || pending.request->isFinished()) {
+                    m_pendingAsyncRequests.removeAt(i);
+                }
+            }
+
+            for (int i = 0; i < m_pendingAsyncRequests.size(); ++i) {
+                const PendingAsyncRequest& pending = m_pendingAsyncRequests.at(i);
+                if (!pending.request || pending.request->isFinished()) {
+                    continue;
+                }
+
+                const RequestProfile profile = RequestProfiles::fromType(pending.resourceType);
+                const int activeCount = m_activeAsyncRequestsByType.value(static_cast<int>(pending.resourceType), 0);
+                if (activeCount >= profile.maxConcurrent) {
+                    continue;
+                }
+
+                if (pending.priority < bestPriority ||
+                    (pending.priority == bestPriority && pending.sequence < bestSequence)) {
+                    bestIndex = i;
+                    bestPriority = pending.priority;
+                    bestSequence = pending.sequence;
+                }
+            }
+
+            if (bestIndex < 0) {
+                m_asyncPumpScheduled = false;
+                break;
+            }
+
+            PendingAsyncRequest pending = m_pendingAsyncRequests.takeAt(bestIndex);
+            requestToStart = pending.request;
+            resourceType = pending.resourceType;
+            m_activeAsyncRequestsByType[static_cast<int>(resourceType)] =
+                m_activeAsyncRequestsByType.value(static_cast<int>(resourceType), 0) + 1;
+            const qint64 queueDelayMs = qMax<qint64>(0, QDateTime::currentMSecsSinceEpoch() - pending.enqueuedAtMs);
+            updateStatsForDequeuedRequest(resourceType, queueDelayMs);
+            updateStatsForStartedRequest(resourceType);
+        }
+
+        if (!requestToStart) {
+            onAsyncRequestFinished(resourceType);
+            continue;
+        }
+
+        QMetaObject::invokeMethod(
+            requestToStart,
+            [requestToStart]() {
+                if (requestToStart) {
+                    requestToStart->start();
+                }
+            },
+            Qt::QueuedConnection);
+    }
+}
+
+void NetworkClient::onAsyncRequestFinished(ResourceType resourceType) {
+    {
+        QMutexLocker locker(&m_asyncQueueMutex);
+        const int key = static_cast<int>(resourceType);
+        const int activeCount = m_activeAsyncRequestsByType.value(key, 0);
+        if (activeCount <= 1) {
+            m_activeAsyncRequestsByType.remove(key);
+        } else {
+            m_activeAsyncRequestsByType[key] = activeCount - 1;
+        }
+        refreshDynamicStatsLocked(resourceType);
+    }
+
+    scheduleAsyncPump();
+}
+
+void NetworkClient::updateStatsForEnqueuedRequest(ResourceType resourceType) {
+    const int key = static_cast<int>(resourceType);
+    MutableResourceStats& stats = m_resourceStats[key];
+    const RequestProfile profile = RequestProfiles::fromType(resourceType);
+    stats.snapshot.resourceType = resourceType;
+    stats.snapshot.profileName = profile.name;
+    stats.snapshot.maxConcurrent = profile.maxConcurrent;
+    if (m_activeAsyncRequestsByType.value(key, 0) >= profile.maxConcurrent) {
+        ++stats.snapshot.backpressureEvents;
+    }
+    refreshDynamicStatsLocked(resourceType);
+}
+
+void NetworkClient::updateStatsForDequeuedRequest(ResourceType resourceType, qint64 queueDelayMs) {
+    const int key = static_cast<int>(resourceType);
+    MutableResourceStats& stats = m_resourceStats[key];
+    const RequestProfile profile = RequestProfiles::fromType(resourceType);
+    stats.snapshot.resourceType = resourceType;
+    stats.snapshot.profileName = profile.name;
+    stats.snapshot.maxConcurrent = profile.maxConcurrent;
+    stats.snapshot.lastQueueDelayMs = queueDelayMs;
+    stats.totalQueueDelayMs += queueDelayMs;
+    stats.snapshot.averageQueueDelayMs =
+        stats.snapshot.startedRequests > 0
+            ? (stats.totalQueueDelayMs / static_cast<qint64>(stats.snapshot.startedRequests))
+            : 0;
+    stats.snapshot.maxQueueDelayMs = qMax(stats.snapshot.maxQueueDelayMs, queueDelayMs);
+    refreshDynamicStatsLocked(resourceType);
+}
+
+void NetworkClient::updateStatsForStartedRequest(ResourceType resourceType) {
+    const int key = static_cast<int>(resourceType);
+    MutableResourceStats& stats = m_resourceStats[key];
+    const RequestProfile profile = RequestProfiles::fromType(resourceType);
+    stats.snapshot.resourceType = resourceType;
+    stats.snapshot.profileName = profile.name;
+    stats.snapshot.maxConcurrent = profile.maxConcurrent;
+    ++stats.snapshot.startedRequests;
+    stats.snapshot.averageQueueDelayMs =
+        stats.snapshot.startedRequests > 0
+            ? (stats.totalQueueDelayMs / static_cast<qint64>(stats.snapshot.startedRequests))
+            : 0;
+    refreshDynamicStatsLocked(resourceType);
+}
+
+void NetworkClient::updateStatsForCompletedRequest(ResourceType resourceType, const NetworkResult& result) {
+    QMutexLocker locker(&m_asyncQueueMutex);
+    const int key = static_cast<int>(resourceType);
+    MutableResourceStats& stats = m_resourceStats[key];
+    const RequestProfile profile = RequestProfiles::fromType(resourceType);
+    stats.snapshot.resourceType = resourceType;
+    stats.snapshot.profileName = profile.name;
+    stats.snapshot.maxConcurrent = profile.maxConcurrent;
+    ++stats.snapshot.completedRequests;
+    stats.snapshot.retryAttempts += static_cast<quint64>(qMax(0, result.retryCount));
+    stats.snapshot.lastLatencyMs = result.elapsedMs;
+    stats.totalLatencyMs += result.elapsedMs;
+    stats.snapshot.averageLatencyMs =
+        stats.snapshot.completedRequests > 0
+            ? (stats.totalLatencyMs / static_cast<qint64>(stats.snapshot.completedRequests))
+            : 0;
+    stats.snapshot.maxLatencyMs = qMax(stats.snapshot.maxLatencyMs, result.elapsedMs);
+
+    if (result.wasCancelled || result.diagnostic.wasCanceled) {
+        ++stats.snapshot.cancelledRequests;
+    } else if (result.success) {
+        ++stats.snapshot.succeededRequests;
+    } else {
+        ++stats.snapshot.failedRequests;
+    }
+
+    if (result.diagnostic.errorType == NetworkErrorType::Timeout) {
+        ++stats.snapshot.timeoutRequests;
+    }
+    if (result.diagnostic.wasRateLimited || result.statusCode == 429) {
+        ++stats.snapshot.rateLimitedRequests;
+    }
+    refreshDynamicStatsLocked(resourceType);
+}
+
+void NetworkClient::refreshDynamicStatsLocked(ResourceType resourceType) {
+    const int key = static_cast<int>(resourceType);
+    MutableResourceStats& stats = m_resourceStats[key];
+    int queuedCount = 0;
+    for (const PendingAsyncRequest& pending : std::as_const(m_pendingAsyncRequests)) {
+        if (pending.request && !pending.request->isFinished() && pending.resourceType == resourceType) {
+            ++queuedCount;
+        }
+    }
+
+    stats.snapshot.queuedRequests = queuedCount;
+    stats.snapshot.activeRequests = m_activeAsyncRequestsByType.value(key, 0);
+    stats.snapshot.peakQueuedRequests = qMax(stats.snapshot.peakQueuedRequests, queuedCount);
+    stats.snapshot.peakActiveRequests = qMax(stats.snapshot.peakActiveRequests, stats.snapshot.activeRequests);
 }
 
 int NetworkClient::calculateRetryDelay(int retryCount, const RetryPolicy& policy) {
@@ -239,7 +475,6 @@ int NetworkClient::calculateRetryDelay(int retryCount, const RetryPolicy& policy
     }
     int baseDelay = policy.delays[retryCount];
 
-    // Add jitter using QRandomGenerator
     int jitterRange = static_cast<int>(baseDelay * policy.jitterFactor);
     int jitter = QRandomGenerator::global()->bounded(-jitterRange, jitterRange + 1);
     return baseDelay + jitter;

@@ -30,8 +30,10 @@ void ParallelFetchContext::markCompleted(const QString& componentId, const Compo
 
 void ParallelFetchContext::markFailed(const QString& componentId) {
     Q_UNUSED(componentId);
-    QMutexLocker locker(&m_mutex);
-    ++m_completedCount;
+    {
+        QMutexLocker locker(&m_mutex);
+        ++m_completedCount;
+    }
     checkCompletion();
 }
 

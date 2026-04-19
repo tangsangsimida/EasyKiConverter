@@ -190,7 +190,7 @@ Loader {
                 id: resultsList
                 Layout.fillWidth: true
                 Layout.minimumHeight: 200
-                Layout.preferredHeight: Math.min(resultsList.contentHeight + 20, 500)
+                Layout.preferredHeight: visible ? 500 : 0
                 Layout.topMargin: AppStyle.spacing.md
                 visible: resultsLoader.exportProgressController.resultsList.length > 0
                 clip: true
@@ -229,33 +229,6 @@ Loader {
                 }
                 ScrollBar.vertical: ScrollBar {
                     policy: ScrollBar.AsNeeded
-                }
-                // 添加列表项进入动画
-                add: Transition {
-                    NumberAnimation {
-                        property: "opacity"
-                        from: 0
-                        to: 1
-                        duration: AppStyle.durations.normal
-                        easing.type: AppStyle.easings.easeOut
-                    }
-                    NumberAnimation {
-                        property: "scale"
-                        from: 0.8
-                        to: 1
-                        duration: AppStyle.durations.normal
-                        easing.type: AppStyle.easings.easeOut
-                    }
-                }
-                // 列表项移除动画
-                remove: Transition {
-                    NumberAnimation {
-                        property: "opacity"
-                        from: 1
-                        to: 0
-                        duration: AppStyle.durations.normal
-                        easing.type: AppStyle.easings.easeOut
-                    }
                 }
             }
         }

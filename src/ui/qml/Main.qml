@@ -11,13 +11,13 @@ ApplicationWindow {
     property int defaultHeight: Math.max(680, Screen.desktopAvailableHeight * 0.72)
     property int windowRadius: visibility === Window.Maximized ? 0 : 10
     property int dynamicMinimumWidth: 855
-    width: configService ? (configService.getWindowWidth() > 0 ? configService.getWindowWidth() : defaultWidth) : defaultWidth
-    height: configService ? (configService.getWindowHeight() > 0 ? configService.getWindowHeight() : defaultHeight) : defaultHeight
-    x: configService && configService.getWindowX() > 0 ? configService.getWindowX() : (Screen.desktopAvailableWidth - width) / 2
-    y: configService && configService.getWindowY() > 0 ? configService.getWindowY() : (Screen.desktopAvailableHeight - height) / 2
+    width: defaultWidth
+    height: defaultHeight
+    x: 0
+    y: 0
     minimumWidth: dynamicMinimumWidth
     minimumHeight: 620
-    visible: true
+    visible: false
     title: "EasyKiConverter - 元器件转换工具"
     color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.CustomizeWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint
@@ -63,7 +63,7 @@ ApplicationWindow {
 
     onClosing: close => appWindowController.handleClosing(close)
     Component.onCompleted: {
-        appWindowController.restoreWindowState();
+        appWindowController.initializeWindow();
     }
 
     Item {

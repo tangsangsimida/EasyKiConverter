@@ -298,6 +298,86 @@ Card {
                         leftPadding: parent.indicator.width + parent.spacing
                     }
                 }
+                // 3D模型格式按钮组 - 仅在3D模型启用时显示，独立切换
+                // 当两个格式都取消勾选时，自动取消3D模型主复选框
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: ResponsiveHelper.spacing.xs
+                    visible: model3dCheckbox.checked
+                    // WRL 按钮 - 点击切换
+                    Rectangle {
+                        Layout.preferredWidth: 46
+                        Layout.preferredHeight: 26
+                        radius: 4
+                        property bool wrlActive: exportSettingsCard.exportSettingsController ? (exportSettingsCard.exportSettingsController.exportModel3DFormat & 1) !== 0 : false
+                        color: wrlActive ? AppStyle.colors.primary : "transparent"
+                        border.color: wrlActive ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                        border.width: 1.5
+                        MouseArea {
+                            id: wrlBtn
+                            anchors.fill: parent
+                            onClicked: {
+                                var current = exportSettingsCard.exportSettingsController.exportModel3DFormat;
+                                if ((current & 1) !== 0) {
+                                    // WRL已选中，取消选中WRL
+                                    var newFormat = current & ~1;
+                                    if (newFormat === 0) {
+                                        // 两个都取消了，取消主复选框
+                                        exportSettingsCard.exportSettingsController.setExportModel3D(false);
+                                    } else {
+                                        exportSettingsCard.exportSettingsController.setExportModel3DFormat(newFormat);
+                                    }
+                                } else {
+                                    // WRL未选中，勾选WRL
+                                    exportSettingsCard.exportSettingsController.setExportModel3DFormat(current | 1);
+                                }
+                            }
+                        }
+                        Text {
+                            anchors.centerIn: parent
+                            text: "WRL"
+                            font.pixelSize: ResponsiveHelper.fontSizes.xs
+                            color: parent.wrlActive ? "#ffffff" : AppStyle.colors.textSecondary
+                        }
+                    }
+                    // STEP 按钮 - 点击切换
+                    Rectangle {
+                        Layout.preferredWidth: 50
+                        Layout.preferredHeight: 26
+                        radius: 4
+                        property bool stepActive: exportSettingsCard.exportSettingsController ? (exportSettingsCard.exportSettingsController.exportModel3DFormat & 2) !== 0 : false
+                        color: stepActive ? AppStyle.colors.primary : "transparent"
+                        border.color: stepActive ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                        border.width: 1.5
+                        MouseArea {
+                            id: stepBtn
+                            anchors.fill: parent
+                            onClicked: {
+                                var current = exportSettingsCard.exportSettingsController.exportModel3DFormat;
+                                if ((current & 2) !== 0) {
+                                    // STEP已选中，取消选中STEP
+                                    var newFormat = current & ~2;
+                                    if (newFormat === 0) {
+                                        // 两个都取消了，取消主复选框
+                                        exportSettingsCard.exportSettingsController.setExportModel3D(false);
+                                    } else {
+                                        exportSettingsCard.exportSettingsController.setExportModel3DFormat(newFormat);
+                                    }
+                                } else {
+                                    // STEP未选中，勾选STEP
+                                    exportSettingsCard.exportSettingsController.setExportModel3DFormat(current | 2);
+                                }
+                            }
+                        }
+                        Text {
+                            anchors.centerIn: parent
+                            text: "STEP"
+                            font.pixelSize: ResponsiveHelper.fontSizes.xs
+                            color: parent.stepActive ? "#ffffff" : AppStyle.colors.textSecondary
+                        }
+                    }
+                }
             }
             // 预览图选项
             ColumnLayout {

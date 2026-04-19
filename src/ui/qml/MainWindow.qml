@@ -353,6 +353,7 @@ Item {
                     BomImportCard {
                         Layout.fillWidth: true
                         componentListController: window.componentListController
+                        exportSettingsController: window.exportSettingsController
                         onOpenBomFileDialog: bomFileDialog.open()
                     }
 

@@ -5,6 +5,7 @@
 #include <QMutex>
 #include <QObject>
 #include <QString>
+#include <QVariantMap>
 
 namespace EasyKiConverter {
 
@@ -119,6 +120,20 @@ public:
     void setExportModel3D(bool enabled);
 
     /**
+     * @brief 获取3D模型格式
+     *
+     * @return int 3D模型格式(位掩码): 0=NONE, 1=WRL, 2=STEP, 3=BOTH
+     */
+    int getExportModel3DFormat() const;
+
+    /**
+     * @brief 设置3D模型格式
+     *
+     * @param format 3D模型格式(位掩码): 0=NONE, 1=WRL, 2=STEP, 3=BOTH
+     */
+    void setExportModel3DFormat(int format);
+
+    /**
      * @brief 是否导出预览图
      *
      * @return bool 是否导出预览图
@@ -161,6 +176,34 @@ public:
     void setOverwriteExistingFiles(bool enabled);
 
     /**
+     * @brief 是否启用客户端弱网络适配
+     *
+     * @return bool 是否启用客户端弱网络适配
+     */
+    bool getWeakNetworkSupport() const;
+
+    /**
+     * @brief 设置是否启用客户端弱网络适配
+     *
+     * @param enabled 是否启用
+     */
+    void setWeakNetworkSupport(bool enabled);
+
+    /**
+     * @brief 获取验证阶段的并发数
+     *
+     * @return int 并发数
+     */
+    int getValidationConcurrentCount() const;
+
+    /**
+     * @brief 获取预览图阶段的并发数
+     *
+     * @return int 并发数
+     */
+    int getPreviewConcurrentCount() const;
+
+    /**
      * @brief 是否启用深色模式
      *
      * @return bool 是否启用深色模式
@@ -190,74 +233,18 @@ public:
     void setDebugMode(bool enabled, bool save = true);
 
     /**
-     * @brief 获取窗口宽度
+     * @brief 获取窗口状态值对象
      *
-     * @return int 窗口宽度
+     * @return QVariantMap 包含 x/y/width/height/maximized 字段
      */
-    Q_INVOKABLE int getWindowWidth() const;
+    Q_INVOKABLE QVariantMap getWindowState() const;
 
     /**
-     * @brief 设置窗口宽度
+     * @brief 设置窗口状态值对象
      *
-     * @param width 窗口宽度
+     * @param state 包含 x/y/width/height/maximized 字段的值对象
      */
-    Q_INVOKABLE void setWindowWidth(int width);
-
-    /**
-     * @brief 获取窗口高度
-     *
-     * @return int 窗口高度
-     */
-    Q_INVOKABLE int getWindowHeight() const;
-
-    /**
-     * @brief 设置窗口高度
-     *
-     * @param height 窗口高度
-     */
-    Q_INVOKABLE void setWindowHeight(int height);
-
-    /**
-     * @brief 获取窗口X坐标
-     *
-     * @return int 窗口X坐标
-     */
-    Q_INVOKABLE int getWindowX() const;
-
-    /**
-     * @brief 设置窗口X坐标
-     *
-     * @param x 窗口X坐标
-     */
-    Q_INVOKABLE void setWindowX(int x);
-
-    /**
-     * @brief 获取窗口Y坐标
-     *
-     * @return int 窗口Y坐标
-     */
-    Q_INVOKABLE int getWindowY() const;
-
-    /**
-     * @brief 设置窗口Y坐标
-     *
-     * @param y 窗口Y坐标
-     */
-    Q_INVOKABLE void setWindowY(int y);
-
-    /**
-     * @brief 获取窗口最大化状态
-     *
-     * @return bool 是否最大化
-     */
-    Q_INVOKABLE bool getWindowMaximized() const;
-
-    /**
-     * @brief 设置窗口最大化状态
-     *
-     * @param maximized 是否最大化
-     */
-    Q_INVOKABLE void setWindowMaximized(bool maximized);
+    Q_INVOKABLE void setWindowState(const QVariantMap& state);
 
     /**
      * @brief 获取退出偏好
@@ -294,6 +281,11 @@ signals:
     void configChanged();
 
 private:
+    static constexpr int DEFAULT_WINDOW_WIDTH = -1;
+    static constexpr int DEFAULT_WINDOW_HEIGHT = -1;
+    static constexpr int DEFAULT_WINDOW_X = -9999;
+    static constexpr int DEFAULT_WINDOW_Y = -9999;
+
     /**
      * @brief 构造函数
      *
@@ -317,6 +309,7 @@ private:
      * @return QString 配置文件路径
      */
     QString getDefaultConfigPath() const;
+    QVariantMap buildWindowState_locked() const;
 
 private:
     static ConfigService* s_instance;

@@ -9,12 +9,9 @@
 #include <QMap>
 #include <QObject>
 #include <QPointer>
-#include <QQueue>
 #include <QSet>
 #include <QString>
 #include <QStringList>
-
-#include <functional>
 
 namespace EasyKiConverter {
 
@@ -112,26 +109,19 @@ signals:
      */
     void error(const QString& componentId, const QString& errorMessage);
 
-private slots:
-    void processQueue();
-
 private:
     bool tryLoadCachedPreviewImages(const QString& componentId);
     void loadCachedPreviewImagesAsync(const QString& componentId, ComponentCacheService* cache);
     void startPreviewImageDownloads(const QString& componentId, const QStringList& imageUrls);
     void performApiSearch(const QString& componentId);
-    void performFallback(const QString& componentId);
     void performDownload(const QString& componentId, const QString& imageUrl, int imageIndex);
     void performDatasheetDownload(const QString& componentId, const QString& datasheetUrl);
     void checkDownloadCompletion(const QString& componentId);
-    void checkComponentCompletion(const QString& componentId);
     void emitAllImagesReady(const QString& componentId);
-    void addRandomDelay(std::function<void()> callback = nullptr);
     void trackAsyncRequest(AsyncNetworkRequest* request);
     void untrackAsyncRequest(AsyncNetworkRequest* request);
 
     QThreadPool* m_cacheThreadPool;  // 缓存加载专用线程池
-    QQueue<QString> m_queue;
     QSet<QString> m_requestedComponents;  // 已经请求过的组件（防止重复请求）
 
     // 跟踪下载状态（只存计数，不存实际数据）
@@ -142,10 +132,8 @@ private:
     QList<QFutureWatcher<QByteArray>*> m_pendingImageWatchers;
     QList<QPointer<AsyncNetworkRequest>> m_activeAsyncRequests;
 
-    int m_activeRequests;  // 当前活跃的下载数
     QAtomicInt m_isCancelled;  // 取消标志，防止 cancelAll() 后 pending 回调继续执行
     static const int MAX_CONCURRENT_REQUESTS = 10;  // 最大并发下载数（缓存加载）
-    static const int MAX_NETWORK_CONCURRENT_REQUESTS = 10;  // 最大网络并发请求数（网络加载）
     static const int MAX_IMAGES_PER_COMPONENT = 3;  // 每个组件最多下载3张预览图
     static const int MAX_RETRY_COUNT = 3;  // 下载失败时的最大重试次数
 };

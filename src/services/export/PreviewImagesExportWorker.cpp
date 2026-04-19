@@ -11,7 +11,9 @@
 
 namespace EasyKiConverter {
 
-PreviewImagesExportWorker::PreviewImagesExportWorker() : QObject(nullptr) {}
+PreviewImagesExportWorker::PreviewImagesExportWorker() : QObject(nullptr) {
+    setAutoDelete(false);
+}
 
 void PreviewImagesExportWorker::setData(const QString& componentId,
                                         const QSharedPointer<ComponentData>& data,
@@ -61,7 +63,8 @@ void PreviewImagesExportWorker::run() {
         if (!previewUrls.isEmpty()) {
             ComponentCacheService* cache = ComponentCacheService::instance();
             for (int i = 0; i < previewUrls.size(); ++i) {
-                const QByteArray imageData = cache->downloadPreviewImage(m_componentId, previewUrls[i], i);
+                const QByteArray imageData = cache->downloadPreviewImage(
+                    m_componentId, previewUrls[i], i, nullptr, nullptr, m_options.weakNetworkSupport);
                 if (!imageData.isEmpty()) {
                     previewDataList.append(imageData);
                 }
@@ -78,9 +81,20 @@ void PreviewImagesExportWorker::run() {
     }
 
     // 构建输出路径
-    QString outputDir = m_options.outputPath;
-    if (outputDir.isEmpty()) {
-        outputDir = QDir::currentPath() + QStringLiteral("/export/previews");
+    // 注意：如果没有使用临时路径（previewCount <= 0 的情况），
+    // m_options.outputPath 仍然是根目录，需要手动添加 .preview 子目录
+    QString outputDir;
+    if (m_tempPaths.isEmpty()) {
+        // 没有使用临时路径，使用 .preview 子目录
+        QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
+        QString baseOutputDir = m_options.outputPath;
+        if (baseOutputDir.isEmpty()) {
+            baseOutputDir = QDir::currentPath() + QStringLiteral("/export");
+        }
+        outputDir = baseOutputDir + QDir::separator() + libName + QStringLiteral(".preview");
+    } else {
+        // 使用 setTempPaths 设置的路径
+        outputDir = m_options.outputPath;
     }
 
     QDir dir;

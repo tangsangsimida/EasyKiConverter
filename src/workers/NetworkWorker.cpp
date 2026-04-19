@@ -3,14 +3,50 @@
 #include "core/network/AsyncNetworkRequest.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/GzipUtils.h"
+#include "services/ConfigService.h"
 
+#include <QAtomicInt>
+#include <QCoreApplication>
 #include <QDebug>
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMutexLocker>
+#include <QWaitCondition>
 
 namespace EasyKiConverter {
+
+namespace {
+
+class BlockingRequestContext {
+public:
+    void complete(const NetworkResult& result) {
+        QMutexLocker locker(&m_mutex);
+        if (m_finished) {
+            return;
+        }
+        m_result = result;
+        m_finished = true;
+        m_condition.wakeAll();
+    }
+
+    NetworkResult wait() {
+        QMutexLocker locker(&m_mutex);
+        while (!m_finished) {
+            m_condition.wait(&m_mutex);
+        }
+        return m_result;
+    }
+
+private:
+    QMutex m_mutex;
+    QWaitCondition m_condition;
+    NetworkResult m_result;
+    bool m_finished = false;
+};
+
+}  // namespace
 
 NetworkWorker::NetworkWorker(const QString& componentId, TaskType taskType, const QString& uuid, QObject* parent)
     : m_componentId(componentId), m_taskType(taskType), m_uuid(uuid), m_currentRequest(nullptr) {
@@ -54,7 +90,7 @@ bool NetworkWorker::fetchComponentInfo() {
     QByteArray responseData;
     QString errorMsg;
 
-    const QUrl url(QString("https://easyeda.com/api/components/%1").arg(m_componentId));
+    const QUrl url(QString("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(m_componentId));
     if (!executeRequest(url, ResourceType::ComponentInfo, DEFAULT_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
         emit fetchError(m_componentId, errorMsg);
         return false;
@@ -77,21 +113,15 @@ bool NetworkWorker::fetchCadData() {
     QByteArray responseData;
     QString errorMsg;
 
-    const QUrl url(QString("https://easyeda.com/api/components/%1/cad").arg(m_componentId));
+    const QUrl url(QString("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(m_componentId));
     if (!executeRequest(url, ResourceType::CadData, DEFAULT_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
         emit fetchError(m_componentId, errorMsg);
         return false;
     }
 
-    GzipUtils::DecompressResult decompResult = GzipUtils::decompress(responseData);
-    if (!decompResult.success) {
-        QString errorMessage = "Failed to decompress CAD data";
-        qWarning() << "Decompression error in fetchCadData:" << errorMessage;
-        emit fetchError(m_componentId, errorMessage);
-        return false;
-    }
-
-    QJsonDocument doc = QJsonDocument::fromJson(decompResult.data);
+    // Note: AsyncNetworkRequest already handles gzip decompression internally.
+    // responseData is already decompressed if it was gzip-compressed.
+    QJsonDocument doc = QJsonDocument::fromJson(responseData);
     if (doc.isNull() || !doc.isObject()) {
         QString errorMessage = "Invalid JSON response";
         qWarning() << "JSON parse error in fetchCadData:" << errorMessage;
@@ -108,7 +138,7 @@ bool NetworkWorker::fetch3DModelObj() {
     QByteArray responseData;
     QString errorMsg;
 
-    const QUrl url(QString("https://easyeda.com/api/models/%1/obj").arg(m_uuid));
+    const QUrl url(QString("https://modules.easyeda.com/3dmodel/%1").arg(m_uuid));
     if (!executeRequest(url, ResourceType::Model3DObj, MODEL_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
         emit fetchError(m_componentId, errorMsg);
         return false;
@@ -123,7 +153,7 @@ bool NetworkWorker::fetch3DModelMtl() {
     QByteArray responseData;
     QString errorMsg;
 
-    const QUrl url(QString("https://easyeda.com/api/models/%1/mtl").arg(m_uuid));
+    const QUrl url(QString("https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1").arg(m_uuid));
     if (!executeRequest(url, ResourceType::Model3DStep, MODEL_TIMEOUT_MS, MAX_RETRIES, responseData, errorMsg)) {
         emit fetchError(m_componentId, errorMsg);
         return false;
@@ -144,23 +174,28 @@ bool NetworkWorker::executeRequest(const QUrl& url,
     profile.connectTimeoutMs = timeoutMs;
     profile.readTimeoutMs = qMax(profile.readTimeoutMs, timeoutMs);
     profile.maxRetries = maxRetries;
-    RetryPolicy policy = RetryPolicy::fromProfile(profile);
+    RetryPolicy policy = RetryPolicy::fromProfile(profile, ConfigService::instance()->getWeakNetworkSupport());
 
     AsyncNetworkRequest* request = NetworkClient::instance().getAsync(url, resourceType, policy);
+    if (!request) {
+        errorMsg = QStringLiteral("Failed to create network request");
+        return false;
+    }
+
     {
         QMutexLocker locker(&m_mutex);
         m_currentRequest = request;
     }
 
-    QEventLoop loop;
-    connect(request, &AsyncNetworkRequest::finished, &loop, &QEventLoop::quit);
-    connect(request, &AsyncNetworkRequest::downloadProgress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
-        if (bytesTotal > 0) {
-            int progress = static_cast<int>((static_cast<double>(bytesReceived) / bytesTotal) * 100.0);
-            emit requestProgress(m_componentId, qBound(0, progress, 100));
-        }
-    });
-    loop.exec();
+    auto context = std::make_shared<BlockingRequestContext>();
+    QObject::connect(
+        request,
+        &AsyncNetworkRequest::finished,
+        request,
+        [context](const NetworkResult& result) { context->complete(result); },
+        Qt::DirectConnection);
+
+    const NetworkResult result = context->wait();
 
     {
         QMutexLocker locker(&m_mutex);
@@ -168,9 +203,7 @@ bool NetworkWorker::executeRequest(const QUrl& url,
             m_currentRequest = nullptr;
         }
     }
-
-    const NetworkResult result = request->result();
-    request->deleteLater();
+    QMetaObject::invokeMethod(request, &QObject::deleteLater, Qt::QueuedConnection);
 
     if (result.wasCancelled) {
         errorMsg = "Request cancelled";

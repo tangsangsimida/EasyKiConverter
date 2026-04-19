@@ -188,6 +188,21 @@ void ConfigService::setExportModel3D(bool enabled) {
     saveConfig();
 }
 
+int ConfigService::getExportModel3DFormat() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["exportModel3DFormat"].toInt(3);  // 默认 3=Both (WRL+STEP)
+}
+
+void ConfigService::setExportModel3DFormat(int format) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["exportModel3DFormat"] = format;
+    emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
+}
+
 bool ConfigService::getExportPreviewImages() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exportPreviewImages"].toBool(false);
@@ -216,6 +231,28 @@ void ConfigService::setExportDatasheet(bool enabled) {
     // 释放锁后保存
     locker.unlock();
     saveConfig();
+}
+
+bool ConfigService::getWeakNetworkSupport() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["weakNetworkSupport"].toBool(false);
+}
+
+void ConfigService::setWeakNetworkSupport(bool enabled) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["weakNetworkSupport"] = enabled;
+    emit configChanged();
+
+    locker.unlock();
+    saveConfig();
+}
+
+int ConfigService::getValidationConcurrentCount() const {
+    return getWeakNetworkSupport() ? 5 : 10;
+}
+
+int ConfigService::getPreviewConcurrentCount() const {
+    return getWeakNetworkSupport() ? 3 : 6;
 }
 
 bool ConfigService::getOverwriteExistingFiles() const {
@@ -264,74 +301,30 @@ void ConfigService::setDebugMode(bool enabled, bool save) {
     }
 }
 
-int ConfigService::getWindowWidth() const {
-    QMutexLocker locker(&m_configMutex);
-    return m_config["windowWidth"].toInt(-1);  // -1 表示使用默认值
+QVariantMap ConfigService::buildWindowState_locked() const {
+    return {
+        {"x", m_config["windowX"].toInt(DEFAULT_WINDOW_X)},
+        {"y", m_config["windowY"].toInt(DEFAULT_WINDOW_Y)},
+        {"width", m_config["windowWidth"].toInt(DEFAULT_WINDOW_WIDTH)},
+        {"height", m_config["windowHeight"].toInt(DEFAULT_WINDOW_HEIGHT)},
+        {"maximized", m_config["windowMaximized"].toBool(false)},
+    };
 }
 
-void ConfigService::setWindowWidth(int width) {
+QVariantMap ConfigService::getWindowState() const {
     QMutexLocker locker(&m_configMutex);
-    m_config["windowWidth"] = width;
-    emit configChanged();
-
-    // 释放锁后保存
-    locker.unlock();
-    saveConfig();
+    return buildWindowState_locked();
 }
 
-int ConfigService::getWindowHeight() const {
+void ConfigService::setWindowState(const QVariantMap& state) {
     QMutexLocker locker(&m_configMutex);
-    return m_config["windowHeight"].toInt(-1);  // -1 表示使用默认值
-}
+    const QVariantMap currentState = buildWindowState_locked();
 
-void ConfigService::setWindowHeight(int height) {
-    QMutexLocker locker(&m_configMutex);
-    m_config["windowHeight"] = height;
-    emit configChanged();
-
-    // 释放锁后保存
-    locker.unlock();
-    saveConfig();
-}
-
-int ConfigService::getWindowX() const {
-    QMutexLocker locker(&m_configMutex);
-    return m_config["windowX"].toInt(-9999);  // -9999 表示使用默认值（居中）
-}
-
-void ConfigService::setWindowX(int x) {
-    QMutexLocker locker(&m_configMutex);
-    m_config["windowX"] = x;
-    emit configChanged();
-
-    // 释放锁后保存
-    locker.unlock();
-    saveConfig();
-}
-
-int ConfigService::getWindowY() const {
-    QMutexLocker locker(&m_configMutex);
-    return m_config["windowY"].toInt(-9999);  // -9999 表示使用默认值（居中）
-}
-
-void ConfigService::setWindowY(int y) {
-    QMutexLocker locker(&m_configMutex);
-    m_config["windowY"] = y;
-    emit configChanged();
-
-    // 释放锁后保存
-    locker.unlock();
-    saveConfig();
-}
-
-bool ConfigService::getWindowMaximized() const {
-    QMutexLocker locker(&m_configMutex);
-    return m_config["windowMaximized"].toBool(false);
-}
-
-void ConfigService::setWindowMaximized(bool maximized) {
-    QMutexLocker locker(&m_configMutex);
-    m_config["windowMaximized"] = maximized;
+    m_config["windowX"] = state.value("x", currentState.value("x")).toInt();
+    m_config["windowY"] = state.value("y", currentState.value("y")).toInt();
+    m_config["windowWidth"] = state.value("width", currentState.value("width")).toInt();
+    m_config["windowHeight"] = state.value("height", currentState.value("height")).toInt();
+    m_config["windowMaximized"] = state.value("maximized", currentState.value("maximized")).toBool();
     emit configChanged();
 
     // 释放锁后保存
@@ -360,18 +353,20 @@ void ConfigService::initializeDefaultConfig() {
     m_config["exportSymbol"] = true;
     m_config["exportFootprint"] = true;
     m_config["exportModel3D"] = true;
+    m_config["exportModel3DFormat"] = 3;  // 默认 3=Both (WRL+STEP)
     m_config["exportPreviewImages"] = false;
     m_config["exportDatasheet"] = false;
     m_config["overwriteExistingFiles"] = false;
+    m_config["weakNetworkSupport"] = false;
     m_config["darkMode"] = false;
     // 注意：debugMode 不在这里设置，因为它不应该保存在配置文件中
     // 它完全由命令行参数和环境变量控制
 
     // 窗口配置默认值（-1 或 -9999 表示使用默认值）
-    m_config["windowWidth"] = -1;
-    m_config["windowHeight"] = -1;
-    m_config["windowX"] = -9999;
-    m_config["windowY"] = -9999;
+    m_config["windowWidth"] = DEFAULT_WINDOW_WIDTH;
+    m_config["windowHeight"] = DEFAULT_WINDOW_HEIGHT;
+    m_config["windowX"] = DEFAULT_WINDOW_X;
+    m_config["windowY"] = DEFAULT_WINDOW_Y;
     m_config["windowMaximized"] = false;
     // 退出偏好默认值（空字符串表示未记住）
     m_config["exitPreference"] = "";

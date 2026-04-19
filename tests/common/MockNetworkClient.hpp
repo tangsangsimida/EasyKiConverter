@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QString>
+#include <QTimer>
 
 namespace EasyKiConverter::Test {
 
@@ -75,7 +76,12 @@ public:
 
     AsyncNetworkRequest* getAsync(const QUrl& url, ResourceType resourceType, const RetryPolicy& policy = {}) override {
         Q_UNUSED(policy);
-        return AsyncNetworkRequest::createFinished(get(url, resourceType, policy));
+        // 使用延迟完成避免信号在连接建立前发出
+        // createFinished 会同步发出 finished 信号，
+        // 如果不延迟，EasyedaApi 还没 connect 就收不到信号了
+        auto* request = new AsyncNetworkRequest(QUrl(), nullptr, resourceType, RetryPolicy(), QByteArray(), nullptr);
+        request->completeWithResultDelayed(get(url, resourceType, RetryPolicy()), 0);
+        return request;
     }
 
     AsyncNetworkRequest* postAsync(const QUrl& url,
@@ -84,6 +90,14 @@ public:
                                    const RetryPolicy& policy = {}) override {
         Q_UNUSED(policy);
         return AsyncNetworkRequest::createFinished(post(url, body, resourceType, policy));
+    }
+
+    NetworkRuntimeStats runtimeStats() const override {
+        return {};
+    }
+
+    QString formatRuntimeStats() const override {
+        return QStringLiteral("MockNetworkClient runtime stats unavailable");
     }
 
 private:

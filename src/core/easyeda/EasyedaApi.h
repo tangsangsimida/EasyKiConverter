@@ -22,6 +22,9 @@ public:
     explicit EasyedaApi(INetworkClient* networkClient, QObject* parent = nullptr);
     ~EasyedaApi() override;
 
+    void setWeakNetworkSupport(bool enabled);
+    bool weakNetworkSupport() const;
+
     void fetchComponentInfo(const QString& lcscId);
     void fetchCadData(const QString& lcscId);
     void fetch3DModelObj(const QString& uuid);
@@ -54,6 +57,7 @@ private:
     QString m_currentLcscId;
     QString m_currentUuid;
     bool m_isFetching;
+    bool m_weakNetworkSupport;
     QVector<QPointer<AsyncNetworkRequest>> m_activeRequests;
     QMutex m_requestsMutex;
 };

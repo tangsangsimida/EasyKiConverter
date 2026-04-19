@@ -20,11 +20,15 @@ class ExportSettingsViewModel : public QObject {
     Q_PROPERTY(bool exportSymbol READ exportSymbol WRITE setExportSymbol NOTIFY exportSymbolChanged)
     Q_PROPERTY(bool exportFootprint READ exportFootprint WRITE setExportFootprint NOTIFY exportFootprintChanged)
     Q_PROPERTY(bool exportModel3D READ exportModel3D WRITE setExportModel3D NOTIFY exportModel3DChanged)
+    Q_PROPERTY(
+        int exportModel3DFormat READ exportModel3DFormat WRITE setExportModel3DFormat NOTIFY exportModel3DFormatChanged)
     Q_PROPERTY(bool exportPreviewImages READ exportPreviewImages WRITE setExportPreviewImages NOTIFY
                    exportPreviewImagesChanged)
     Q_PROPERTY(bool exportDatasheet READ exportDatasheet WRITE setExportDatasheet NOTIFY exportDatasheetChanged)
     Q_PROPERTY(bool overwriteExistingFiles READ overwriteExistingFiles WRITE setOverwriteExistingFiles NOTIFY
                    overwriteExistingFilesChanged)
+    Q_PROPERTY(
+        bool weakNetworkSupport READ weakNetworkSupport WRITE setWeakNetworkSupport NOTIFY weakNetworkSupportChanged)
     Q_PROPERTY(int exportMode READ exportMode WRITE setExportMode NOTIFY exportModeChanged)
     Q_PROPERTY(bool debugMode READ debugMode WRITE setDebugMode NOTIFY debugModeChanged)
     Q_PROPERTY(bool isExporting READ isExporting NOTIFY isExportingChanged)
@@ -55,6 +59,11 @@ public:
         return m_exportModel3D;
     }
 
+    // 3D模型格式(位掩码): 0=NONE, 1=WRL, 2=STEP, 3=BOTH
+    int exportModel3DFormat() const {
+        return m_exportModel3DFormat;
+    }
+
     bool exportPreviewImages() const {
         return m_exportPreviewImages;
     }
@@ -65,6 +74,10 @@ public:
 
     bool overwriteExistingFiles() const {
         return m_overwriteExistingFiles;
+    }
+
+    bool weakNetworkSupport() const {
+        return m_weakNetworkSupport;
     }
 
     int exportMode() const {
@@ -89,9 +102,11 @@ public:
     Q_INVOKABLE void setExportSymbol(bool enabled);
     Q_INVOKABLE void setExportFootprint(bool enabled);
     Q_INVOKABLE void setExportModel3D(bool enabled);
+    Q_INVOKABLE void setExportModel3DFormat(int format);
     Q_INVOKABLE void setExportPreviewImages(bool enabled);
     Q_INVOKABLE void setExportDatasheet(bool enabled);
     Q_INVOKABLE void setOverwriteExistingFiles(bool enabled);
+    Q_INVOKABLE void setWeakNetworkSupport(bool enabled);
     Q_INVOKABLE void setExportMode(int mode);
     Q_INVOKABLE void setDebugMode(bool enabled);
 
@@ -108,9 +123,11 @@ signals:
     void exportSymbolChanged();
     void exportFootprintChanged();
     void exportModel3DChanged();
+    void exportModel3DFormatChanged();
     void exportPreviewImagesChanged();
     void exportDatasheetChanged();
     void overwriteExistingFilesChanged();
+    void weakNetworkSupportChanged();
     void exportModeChanged();
     void debugModeChanged();
     void isExportingChanged();
@@ -141,9 +158,11 @@ private:
     bool m_exportSymbol;
     bool m_exportFootprint;
     bool m_exportModel3D;
+    int m_exportModel3DFormat;  // bitmask: 1=WRL, 2=STEP, 3=Both
     bool m_exportPreviewImages;
     bool m_exportDatasheet;
     bool m_overwriteExistingFiles;
+    bool m_weakNetworkSupport;
     int m_exportMode;  // 0 = 追加模式, 1 = 更新模式
     bool m_debugMode;
     bool m_isExporting;

@@ -3,6 +3,7 @@
 #include "ExportProgress.h"
 #include "IExportWorker.h"
 
+#include <QFileInfo>
 #include <QObject>
 #include <QRunnable>
 #include <QSharedPointer>
@@ -42,6 +43,11 @@ public:
      */
     void setTempPaths(const QMap<QString, QString>& tempPaths) {
         m_tempPaths = tempPaths;
+        // 从 tempPaths 提取输出目录并更新 m_options.outputPath
+        if (!m_tempPaths.isEmpty()) {
+            const QString firstPath = m_tempPaths.first();
+            m_options.outputPath = QFileInfo(firstPath).absolutePath();
+        }
     }
 
     /**

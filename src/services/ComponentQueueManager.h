@@ -17,6 +17,7 @@ public:
 
     void start(const QStringList& componentIds);
     void stop();
+    void setMaxConcurrentRequests(int maxConcurrent);
     void checkAndProcessNext();
     void requestCompleted(const QString& componentId);
     void reset();

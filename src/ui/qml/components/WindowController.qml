@@ -9,68 +9,18 @@ QtObject {
     property var exportProgressController
     property var closeConfirmDialog
     property var exitOptionDialog
-    property real normalWidth: window.width
-    property real normalHeight: window.height
-    function clampGeometry() {
-        if (!window) {
-            return;
-        }
-
-        const screen = window.screen;
-        if (!screen) {
-            return;
-        }
-
-        const bounds = screen.availableGeometry;
-        if (window.width > bounds.width) {
-            window.width = bounds.width;
-        }
-        if (window.height > bounds.height) {
-            window.height = bounds.height;
-        }
-        if (window.x < bounds.x) {
-            window.x = bounds.x;
-        }
-        if (window.y < bounds.y) {
-            window.y = bounds.y;
-        }
-        if (window.x + window.width > bounds.x + bounds.width) {
-            window.x = bounds.x + bounds.width - window.width;
-        }
-        if (window.y + window.height > bounds.y + bounds.height) {
-            window.y = bounds.y + bounds.height - window.height;
-        }
+    readonly property WindowPersistenceManager persistenceManager: WindowPersistenceManager {
+        window: controller.window
+        configService: controller.configService
+    }
+    readonly property WindowStartupManager startupManager: WindowStartupManager {
+        window: controller.window
+        configService: controller.configService
+        persistenceManager: controller.persistenceManager
     }
 
-    function persistGeometry() {
-        if (!configService || !window)
-            return;
-        if (window.visibility === Window.Maximized) {
-            configService.setWindowWidth(Math.round(normalWidth));
-            configService.setWindowHeight(Math.round(normalHeight));
-        } else {
-            configService.setWindowWidth(Math.round(window.width));
-            configService.setWindowHeight(Math.round(window.height));
-        }
-
-        if (window.visibility !== Window.Maximized && window.visibility !== Window.FullScreen && window.visibility !== Window.Minimized) {
-            configService.setWindowX(Math.round(window.x));
-            configService.setWindowY(Math.round(window.y));
-        }
-
-        configService.setWindowMaximized(window.visibility === Window.Maximized);
-    }
-
-    function restoreWindowState() {
-        if (!window || !configService)
-            return;
-        clampGeometry();
-        if (configService.getWindowMaximized()) {
-            Qt.callLater(function () {
-                if (window)
-                    window.showMaximized();
-            });
-        }
+    function initializeWindow() {
+        startupManager.initializeWindow();
     }
 
     function toggleMaximize() {
@@ -79,17 +29,20 @@ QtObject {
         }
 
         if (window.visibility === Window.Maximized || window.visibility === Window.FullScreen) {
-            window.showNormal();
-            clampGeometry();
+            persistenceManager.requestRestoreNormalWindow();
             return;
         }
 
-        persistGeometry();
+        persistenceManager.captureNormalGeometry();
+        persistenceManager.persistGeometry();
+        persistenceManager.beginStateTransition();
         window.showMaximized();
     }
 
     function requestMinimize() {
-        persistGeometry();
+        persistenceManager.captureNormalGeometry();
+        persistenceManager.persistGeometry();
+        persistenceManager.beginStateTransition();
         if (window)
             window.showMinimized();
     }
@@ -102,7 +55,7 @@ QtObject {
     function confirmExit() {
         if (exportProgressController)
             exportProgressController.handleCloseRequest();
-        persistGeometry();
+        persistenceManager.persistGeometry();
         Qt.quit();
     }
 
@@ -158,24 +111,5 @@ QtObject {
         close.accepted = false;
         if (exitOptionDialog)
             exitOptionDialog.open();
-    }
-
-    property Connections windowConnections: Connections {
-        target: controller.window
-        function onWidthChanged() {
-            if (controller.window.visibility === Window.Windowed) {
-                controller.normalWidth = controller.window.width;
-            }
-        }
-
-        function onHeightChanged() {
-            if (controller.window.visibility === Window.Windowed) {
-                controller.normalHeight = controller.window.height;
-            }
-        }
-
-        function onScreenChanged() {
-            controller.clampGeometry();
-        }
     }
 }

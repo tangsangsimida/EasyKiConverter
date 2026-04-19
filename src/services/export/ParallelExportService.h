@@ -221,8 +221,15 @@ private slots:
     void onExportTypeCompleted(const QString& typeName, int successCount, int failedCount, int skippedCount);
     void onExportItemStatusChanged(const QString& componentId, const QString& typeName, const ExportItemStatus& status);
     void processNextPreloadBatch();
+    /**
+     * @brief 处理并行获取完成的组件数据
+     * @param componentDataList 获取到的组件数据列表
+     */
+    void onAllComponentDataCollected(const QList<ComponentData>& componentDataList);
 
 private:
+    void logNetworkRuntimeStats(const QString& context) const;
+    void writeExportDetailedReport(const QString& reason) const;
     /**
      * @brief 创建导出Stage实例
      * @param typeName 导出类型名称

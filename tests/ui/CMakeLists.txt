@@ -24,6 +24,8 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExportButtonsSection.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/UpdateBanner.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowController.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowPersistenceManager.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowStartupManager.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowResizeHandles.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/AppStyle.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/ResponsiveHelper.qml

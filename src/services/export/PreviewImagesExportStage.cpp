@@ -23,6 +23,8 @@ void PreviewImagesExportStage::start(const QStringList& componentIds,
         return;
     }
 
+    m_threadPool.setMaxThreadCount(m_options.weakNetworkSupport ? 2 : 4);
+
     // 构建输出目录：outputPath/libName.preview/
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
     QString baseOutputDir = m_options.outputPath;
@@ -140,42 +142,46 @@ void PreviewImagesExportStage::startWorker(QObject* worker,
 
     // 使用QPointer防止stage已销毁时lambda访问悬空指针
     QPointer<PreviewImagesExportStage> stagePtr(this);
-    connect(exportWorker,
-            &PreviewImagesExportWorker::completed,
-            this,
-            [stagePtr, exportWorker, componentId](const QString&, bool success, const QString& error) {
-                if (!stagePtr) {
-                    return;
-                }
+    connect(
+        exportWorker,
+        &PreviewImagesExportWorker::completed,
+        this,
+        [stagePtr, exportWorker, componentId](const QString&, bool success, const QString& error) {
+            if (!stagePtr) {
+                exportWorker->deleteLater();
+                return;
+            }
 
-                // 如果成功，提交所有临时文件
-                if (success) {
-                    QString outputDir = stagePtr->m_outputDirs.value(componentId);
-                    QString tempDir = outputDir + QDir::separator() + QStringLiteral(".tmp.") + componentId;
+            // 如果成功，提交所有临时文件
+            if (success) {
+                QString outputDir = stagePtr->m_outputDirs.value(componentId);
+                QString tempDir = outputDir + QDir::separator() + QStringLiteral(".tmp.") + componentId;
 
-                    // 移动所有临时文件到最终目录
-                    QDir tempQDir(tempDir);
-                    if (tempQDir.exists()) {
-                        for (const QFileInfo& info : tempQDir.entryInfoList(QDir::Files)) {
-                            QString fileName = info.fileName();
-                            QString finalPath = outputDir + QDir::separator() + fileName;
-                            QString tempPath = info.absoluteFilePath();
+                // 移动所有临时文件到最终目录
+                QDir tempQDir(tempDir);
+                if (tempQDir.exists()) {
+                    for (const QFileInfo& info : tempQDir.entryInfoList(QDir::Files)) {
+                        QString fileName = info.fileName();
+                        QString finalPath = outputDir + QDir::separator() + fileName;
+                        QString tempPath = info.absoluteFilePath();
 
-                            // 使用QFile::rename移动文件
-                            if (QFile::exists(finalPath)) {
-                                QFile::remove(finalPath);
-                            }
-                            if (QFile::rename(tempPath, finalPath)) {
-                                qDebug() << "PreviewImagesExportStage: Committed" << finalPath;
-                            }
+                        // 使用QFile::rename移动文件
+                        if (QFile::exists(finalPath)) {
+                            QFile::remove(finalPath);
                         }
-                        // 删除临时目录
-                        tempQDir.removeRecursively();
+                        if (QFile::rename(tempPath, finalPath)) {
+                            qDebug() << "PreviewImagesExportStage: Committed" << finalPath;
+                        }
                     }
+                    // 删除临时目录
+                    tempQDir.removeRecursively();
                 }
+            }
 
-                stagePtr->completeItemProgress(exportWorker, componentId, success, error);
-            });
+            stagePtr->completeItemProgress(exportWorker, componentId, success, error);
+            exportWorker->deleteLater();
+        },
+        Qt::QueuedConnection);
 
     m_threadPool.start(exportWorker);
 }

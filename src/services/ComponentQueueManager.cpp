@@ -57,6 +57,16 @@ void ComponentQueueManager::stop() {
     m_isRunning = false;
 }
 
+void ComponentQueueManager::setMaxConcurrentRequests(int maxConcurrent) {
+    if (maxConcurrent <= 0) {
+        return;
+    }
+    if (m_maxConcurrentRequests != maxConcurrent) {
+        m_maxConcurrentRequests = maxConcurrent;
+        qDebug() << "ComponentQueueManager: Max concurrent requests set to" << m_maxConcurrentRequests;
+    }
+}
+
 void ComponentQueueManager::checkAndProcessNext() {
     if (!m_isRunning) {
         m_checkTimer->stop();

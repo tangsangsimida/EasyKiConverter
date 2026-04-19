@@ -5,9 +5,9 @@
 // 意淫我有多少多少家产，然后怕班里有人会读心术紧急撤回一条意淫，
 // 那这在恋爱小说里我不就是那种…背景板吗，
 // 就每天在学校挂机任务就完成的npc
+#include "services/ConfigService.h"
 #include "src/core/LanguageManager.h"
 #include "src/core/network/NetworkClient.h"
-#include "src/services/ConfigService.h"
 #include "src/services/UpdateCheckerService.h"
 #include "src/services/export/ExportProgress.h"
 #include "src/services/export/ParallelExportService.h"
@@ -621,18 +621,30 @@ int main(int argc, char* argv[]) {
 
         qWarning() << "===== 图标调试信息结束 =====";
 
-        auto* configService = EasyKiConverter::ConfigService::instance();
+        QTimer::singleShot(100, [window]() {
+            qDebug() << "Startup window state:" << "visible=" << window->isVisible()
+                     << "visibility=" << window->visibility() << "position=" << window->position()
+                     << "size=" << window->size()
+                     << "screen=" << (window->screen() ? window->screen()->name() : QStringLiteral("null"));
 
-        // 先隐藏窗口，等待 QML 完全加载后再显示
-        window->hide();
+            if (!window->isVisible()) {
+                qWarning() << "检测到根窗口仍为隐藏状态，执行 C++ 侧兜底显示";
+                window->show();
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+                window->raise();
+                window->requestActivate();
+#endif
+                QCoreApplication::processEvents();
+                qDebug() << "Fallback display state:" << "visible=" << window->isVisible()
+                         << "visibility=" << window->visibility() << "position=" << window->position()
+                         << "size=" << window->size();
+            }
 
-        // 使用延迟执行，确保 QML 窗口已经完全初始化并获取到正确的尺寸
-        QTimer::singleShot(100, [window, configService]() {
             // 窗口显示后再次设置任务栏图标
             QString appDir = normalizeMountedAppDir(QCoreApplication::applicationDirPath());
             QString projectRoot = resolveProjectRootFromAppDir(appDir);
 
-            bool isDarkModeForIcon = configService->getDarkMode();
+            bool isDarkModeForIcon = EasyKiConverter::ConfigService::instance()->getDarkMode();
             QString iconThemeDir = isDarkModeForIcon ? "hicolor-dark" : "hicolor";
             bool isAppImage = !qgetenv("APPIMAGE").isEmpty();
 
@@ -689,82 +701,6 @@ int main(int argc, char* argv[]) {
             if (!iconSet) {
                 qWarning() << "[FAIL] 窗口显示后未能重新设置任务栏图标";
             }
-
-            int savedX = configService->getWindowX();
-            int savedY = configService->getWindowY();
-
-            int posX, posY;
-            bool useSavedPosition = false;
-
-            // 如果配置中保存了有效位置（不是默认值 (0,0)），则使用保存的位置
-            if (savedX > 0 && savedY > 0) {
-                posX = savedX;
-                posY = savedY;
-                useSavedPosition = true;
-                qDebug() << "使用保存的窗口位置:" << posX << posY;
-            } else {
-                // 否则居中显示
-                QScreen* screen = window->screen();
-                if (screen) {
-                    QRect screenGeometry = screen->availableGeometry();
-                    int screenWidth = screenGeometry.width();
-                    int screenHeight = screenGeometry.height();
-
-                    // 使用窗口的当前尺寸
-                    int windowWidth = window->width();
-                    int windowHeight = window->height();
-
-                    // 如果窗口尺寸不合理（小于最小尺寸），使用默认尺寸
-                    if (windowWidth < 800)
-                        windowWidth = 800;
-                    if (windowHeight < 600)
-                        windowHeight = 600;
-
-                    // 计算居中位置
-                    posX = (screenWidth - windowWidth) / 2;
-                    posY = (screenHeight - windowHeight) / 2;
-
-                    qDebug() << "屏幕尺寸:" << screenWidth << "x" << screenHeight << "窗口尺寸:" << windowWidth << "x"
-                             << windowHeight << "计算居中位置:" << posX << "," << posY;
-
-                    // 保存居中位置到配置，避免下次启动时又回到左上角
-                    configService->setWindowX(posX);
-                    configService->setWindowY(posY);
-                    configService->saveConfig();
-                    qDebug() << "已保存居中位置到配置";
-                } else {
-                    posX = 100;
-                    posY = 100;
-                }
-            }
-
-            qDebug() << "设置窗口位置到:" << posX << posY;
-
-            // 使用 setPosition 设置窗口位置
-            window->setPosition(posX, posY);
-
-            // 显示窗口
-            window->show();
-
-            // 等待窗口实际显示，然后检查实际位置
-            QTimer::singleShot(100, [window, posX, posY, useSavedPosition]() {
-                QScreen* screen = window->screen();
-                if (screen) {
-                    QRect screenGeometry = screen->availableGeometry();
-                    QRect windowGeometry = window->geometry();
-
-                    qDebug() << "窗口已显示:";
-                    qDebug() << "  期望位置: (" << posX << "," << posY << ")";
-                    qDebug() << "  实际位置: (" << windowGeometry.x() << "," << windowGeometry.y() << ")";
-                    qDebug() << "  窗口大小: (" << windowGeometry.width() << "x" << windowGeometry.height() << ")";
-                    qDebug() << "  屏幕大小: (" << screenGeometry.width() << "x" << screenGeometry.height() << ")";
-
-                    // 如果使用保存位置但实际位置不对，说明保存的位置有问题
-                    if (useSavedPosition && (windowGeometry.x() <= 0 || windowGeometry.y() <= 0)) {
-                        qDebug() << "警告: 保存的窗口位置无效，下次启动将重新居中";
-                    }
-                }
-            });
         });
     }
 

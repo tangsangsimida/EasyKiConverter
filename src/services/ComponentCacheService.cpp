@@ -3,17 +3,13 @@
 #include "core/network/NetworkClient.h"
 #include "utils/logging/LogMacros.h"
 
-#include <QCoreApplication>
+#include <QAtomicInt>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#include <QPointer>
 #include <QSaveFile>
 #include <QSet>
 #include <QStandardPaths>
@@ -482,27 +478,50 @@ QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
 }
 
 bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const {
-    // 检查 CAD 数据缓存文件是否存在
+    // Fast path: if metadata is in memory cache, cad_data.json exists and was previously valid
+    // This avoids disk I/O for components that were cached in this session
+    QString metadataKey = makeMemoryKey(lcscId, "metadata");
+    {
+        QMutexLocker locker(&m_mutex);
+        if (m_memoryCache.contains(metadataKey)) {
+            // Metadata in memory means component was cached before
+            // Just need to verify cad_data.json still exists (fast stat call)
+            QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
+            return QFileInfo::exists(cadDataPath);
+        }
+    }
+
+    // Slow path: memory cache miss - do fast disk check without full JSON parse
+    // The actual JSON validity will be verified when loading the data
     QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
     if (!QFileInfo::exists(cadDataPath)) {
         return false;
     }
-    // 验证 CAD 数据文件不为空且可解析
+
+    // Quick integrity check: verify file has minimum size and ends with valid JSON terminator
+    // This guards against truncated files from crashes during write, without full JSON parse
+    const qint64 fileSize = QFileInfo(cadDataPath).size();
+    if (fileSize < 2) {  // Minimum valid JSON: "{}"
+        return false;
+    }
+
+    // Check last non-whitespace character is '}' (JSON object terminator)
     QFile file(cadDataPath);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return false;
+    if (file.open(QIODevice::ReadOnly)) {
+        const qint64 readSize = qMin(fileSize, qint64(16));
+        file.seek(fileSize - readSize);  // Read last 16 bytes
+        QByteArray tail = file.read(readSize);
+        file.close();
+        // Find last non-whitespace character
+        for (int i = tail.size() - 1; i >= 0; --i) {
+            char c = tail[i];
+            if (c == ' ' || c == '\n' || c == '\r' || c == '\t') {
+                continue;
+            }
+            return (c == '}');
+        }
     }
-    QByteArray data = file.readAll();
-    file.close();
-    if (data.isEmpty()) {
-        return false;
-    }
-    QJsonParseError parseError;
-    QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
-    if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
-        return false;
-    }
-    return true;
+    return false;
 }
 
 QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int imageIndex) const {
@@ -556,7 +575,8 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
                                                        const QString& imageUrl,
                                                        int imageIndex,
                                                        ComponentExportStatus::NetworkDiagnostics* diag,
-                                                       QAtomicInt* cancelled) {
+                                                       QAtomicInt* cancelled,
+                                                       bool weakNetwork) {
     if (imageUrl.isEmpty() || imageIndex < 0) {
         return QByteArray();
     }
@@ -591,61 +611,24 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
         return QByteArray();
     }
 
-    // 使用 AsyncNetworkRequest 支持取消
-    RetryPolicy policy;
-    policy.maxRetries = 3;
-    policy.baseTimeoutMs = 30000;  // 30秒超时
+    const RetryPolicy policy = RetryPolicy::fromProfile(RequestProfiles::previewImage(), weakNetwork);
+    const NetworkResult result = NetworkClient::instance().get(QUrl(imageUrl), ResourceType::PreviewImage, policy);
 
-    QEventLoop loop;
     QByteArray data;
-    int statusCode = 0;
+    int statusCode = result.statusCode;
     QString errorString;
-    int retryCount = 0;
-    bool wasRateLimited = false;
+    int retryCount = result.retryCount;
+    bool wasRateLimited = result.diagnostic.wasRateLimited;
 
-    AsyncNetworkRequest* request =
-        NetworkClient::instance().getAsync(QUrl(imageUrl), ResourceType::PreviewImage, policy);
-    QPointer<AsyncNetworkRequest> requestPtr(request);
-
-    // 连接完成信号
-    QObject::connect(request, &AsyncNetworkRequest::finished, &loop, [&](const NetworkResult& result) {
-        if (cancelled && cancelled->loadRelaxed()) {
-            // 被取消，保持空数据
-        } else if (result.wasCancelled) {
-            errorString = "Cancelled";
-        } else if (result.success) {
-            data = result.data;
-            statusCode = result.statusCode;
-            retryCount = result.retryCount;
-            wasRateLimited = (result.statusCode == 429);
-        } else {
-            errorString = result.error;
-            statusCode = result.statusCode;
-            retryCount = result.retryCount;
-        }
-        if (requestPtr) {
-            requestPtr->deleteLater();
-        }
-        loop.quit();
-    });
-
-    // 连接进度信号，定期检查取消标志
-    QTimer progressTimer;
-    progressTimer.setSingleShot(false);
-    progressTimer.setInterval(100);  // 每100ms检查一次取消标志
-    QObject::connect(&progressTimer, &QTimer::timeout, &loop, [&]() {
-        if (cancelled && cancelled->loadRelaxed()) {
-            if (requestPtr) {
-                requestPtr->cancel();
-            }
-            loop.quit();
-        }
-    });
-
-    // 开始事件循环
-    progressTimer.start();
-    loop.exec();
-    progressTimer.stop();
+    if (cancelled && cancelled->loadRelaxed()) {
+        errorString = "Cancelled";
+    } else if (result.wasCancelled) {
+        errorString = "Cancelled";
+    } else if (result.success) {
+        data = result.data;
+    } else {
+        errorString = result.error;
+    }
 
     // 更新诊断信息
     if (diag) {
@@ -664,10 +647,6 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
         LOG_WARN(LogModule::Core, "Preview image download failed for {}: {}", lcscId, errorString);
     }
 
-    // 清理 request 对象
-    if (requestPtr) {
-        requestPtr->deleteLater();
-    }
     return data;
 }
 
@@ -720,7 +699,8 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
                                                     const QString& datasheetUrl,
                                                     QString* format,
                                                     ComponentExportStatus::NetworkDiagnostics* diag,
-                                                    QAtomicInt* cancelled) {
+                                                    QAtomicInt* cancelled,
+                                                    bool weakNetwork) {
     if (datasheetUrl.isEmpty()) {
         return QByteArray();
     }
@@ -765,66 +745,28 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
         return QByteArray();
     }
 
-    // 使用 AsyncNetworkRequest 支持取消
-    RetryPolicy policy;
-    policy.maxRetries = 3;
-    policy.baseTimeoutMs = 45000;  // 45秒超时，数据手册可能较大
+    const RetryPolicy policy = RetryPolicy::fromProfile(RequestProfiles::datasheet(), weakNetwork);
+    const NetworkResult result = NetworkClient::instance().get(QUrl(datasheetUrl), ResourceType::Datasheet, policy);
 
-    QEventLoop loop;
     QByteArray data;
-    int statusCode = 0;
+    int statusCode = result.statusCode;
     QString errorString;
-    int retryCount = 0;
-    bool wasRateLimited = false;
+    int retryCount = result.retryCount;
+    bool wasRateLimited = result.diagnostic.wasRateLimited;
 
-    AsyncNetworkRequest* request =
-        NetworkClient::instance().getAsync(QUrl(datasheetUrl), ResourceType::Datasheet, policy);
-    QPointer<AsyncNetworkRequest> requestPtr(request);
-
-    // 连接完成信号
-    QObject::connect(request, &AsyncNetworkRequest::finished, &loop, [&](const NetworkResult& result) {
-        if (cancelled && cancelled->loadRelaxed()) {
-            // 被取消，保持空数据
-        } else if (result.wasCancelled) {
-            errorString = "Cancelled";
-        } else if (result.success) {
-            data = result.data;
-            statusCode = result.statusCode;
-            retryCount = result.retryCount;
-            wasRateLimited = (result.statusCode == 429);
-            // 检测实际格式（通过内容）
-            if (format && ext == "pdf" && data.size() >= 5 && !data.startsWith("%PDF-")) {
-                ext = "html";
-                *format = ext;
-            }
-        } else {
-            errorString = result.error;
-            statusCode = result.statusCode;
-            retryCount = result.retryCount;
+    if (cancelled && cancelled->loadRelaxed()) {
+        errorString = "Cancelled";
+    } else if (result.wasCancelled) {
+        errorString = "Cancelled";
+    } else if (result.success) {
+        data = result.data;
+        if (format && ext == "pdf" && data.size() >= 5 && !data.startsWith("%PDF-")) {
+            ext = "html";
+            *format = ext;
         }
-        if (requestPtr) {
-            requestPtr->deleteLater();
-        }
-        loop.quit();
-    });
-
-    // 连接进度信号，定期检查取消标志
-    QTimer progressTimer;
-    progressTimer.setSingleShot(false);
-    progressTimer.setInterval(100);  // 每100ms检查一次取消标志
-    QObject::connect(&progressTimer, &QTimer::timeout, &loop, [&]() {
-        if (cancelled && cancelled->loadRelaxed()) {
-            if (requestPtr) {
-                requestPtr->cancel();
-            }
-            loop.quit();
-        }
-    });
-
-    // 开始事件循环
-    progressTimer.start();
-    loop.exec();
-    progressTimer.stop();
+    } else {
+        errorString = result.error;
+    }
 
     // 更新诊断信息
     if (diag) {
@@ -843,10 +785,6 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
         LOG_WARN(LogModule::Core, "Datasheet download failed for {}: {}", lcscId, errorString);
     }
 
-    // 清理 request 对象
-    if (requestPtr) {
-        requestPtr->deleteLater();
-    }
     return data;
 }
 

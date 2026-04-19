@@ -13,15 +13,24 @@ static const QString ENDPOINT_3D_MODEL = "https://modules.easyeda.com/3dmodel/%1
 static const QString ENDPOINT_3D_MODEL_STEP = "https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1";
 
 EasyedaApi::EasyedaApi(QObject* parent)
-    : QObject(parent), m_networkClient(&NetworkClient::instance()), m_isFetching(false) {}
+    : QObject(parent), m_networkClient(&NetworkClient::instance()), m_isFetching(false), m_weakNetworkSupport(false) {}
 
 EasyedaApi::EasyedaApi(INetworkClient* networkClient, QObject* parent)
     : QObject(parent)
     , m_networkClient(networkClient ? networkClient : &NetworkClient::instance())
-    , m_isFetching(false) {}
+    , m_isFetching(false)
+    , m_weakNetworkSupport(false) {}
 
 EasyedaApi::~EasyedaApi() {
     cancelRequest();
+}
+
+void EasyedaApi::setWeakNetworkSupport(bool enabled) {
+    m_weakNetworkSupport = enabled;
+}
+
+bool EasyedaApi::weakNetworkSupport() const {
+    return m_weakNetworkSupport;
 }
 
 void EasyedaApi::fetchComponentInfo(const QString& lcscId) {
@@ -77,7 +86,7 @@ void EasyedaApi::fetchWithNetworkClient(const QString& id, const QUrl& url, Reso
     }
 
     RequestProfile profile = RequestProfiles::fromType(resourceType);
-    RetryPolicy policy = RetryPolicy::fromProfile(profile);
+    RetryPolicy policy = RetryPolicy::fromProfile(profile, m_weakNetworkSupport);
     AsyncNetworkRequest* request = m_networkClient->getAsync(url, resourceType, policy);
 
     {
