@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQml.Models
 import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Loader {
@@ -9,6 +10,26 @@ Loader {
     property var exportProgressController
     active: resultsLoader.exportProgressController ? (resultsLoader.exportProgressController.isExporting || resultsLoader.exportProgressController.resultsList.length > 0) : false
     visible: active  // 确保 Loader 在没有结果时不占用空间
+
+    resources: [
+        // 防抖定时器，避免频繁调用 updateFilter()
+        Timer {
+            id: filterUpdateTimer
+            interval: 50
+            onTriggered: visualModel.updateFilter()
+        },
+        // 监听筛选模式变化，更新过滤
+        Connections {
+            target: resultsLoader.exportProgressController
+            function onFilterModeChanged() {
+                filterUpdateTimer.restart();
+            }
+            function onResultsListChanged() {
+                filterUpdateTimer.restart();
+            }
+        }
+    ]
+
     sourceComponent: Card {
         title: qsTranslate("MainWindow", "转换结果")
         ColumnLayout {
@@ -194,6 +215,10 @@ Loader {
                 Layout.topMargin: AppStyle.spacing.md
                 visible: resultsLoader.exportProgressController.resultsList.length > 0
                 clip: true
+                // 启用虚拟化，缓存上下各一屏的项
+                cacheBuffer: 500
+                // 启用 Item 回收，减少创建/销毁开销
+                reuseItems: true
                 cellWidth: {
                     var w = width - AppStyle.spacing.md;
                     var c = Math.max(1, Math.floor(w / 230));
@@ -202,7 +227,25 @@ Loader {
                 cellHeight: 80
                 flow: GridView.FlowLeftToRight
                 layoutDirection: Qt.LeftToRight
-                model: resultsLoader.exportProgressController.filteredResultsList
+                // 使用 DelegateModel 来保持滚动位置
+                model: visualModel
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AsNeeded
+                }
+            }
+
+            // DelegateModel 用于过滤，避免每次过滤都重置滚动位置
+            DelegateModel {
+                id: visualModel
+                model: resultsLoader.exportProgressController ? resultsLoader.exportProgressController.resultsList : []
+                groups: [
+                    DelegateModelGroup {
+                        id: displayGroup
+                        includeByDefault: true
+                        name: "display"
+                    }
+                ]
+                filterOnGroup: "display"
                 delegate: ResultListItem {
                     width: resultsList.cellWidth - AppStyle.spacing.md
                     anchors.horizontalCenter: parent ? undefined : undefined
@@ -227,8 +270,27 @@ Loader {
                     onRetryClicked: resultsLoader.exportProgressController.retryComponent(componentId)
                     onDeleteClicked: resultsLoader.exportProgressController.removeResult(componentId)
                 }
-                ScrollBar.vertical: ScrollBar {
-                    policy: ScrollBar.AsNeeded
+
+                // 过滤函数
+                function updateFilter() {
+                    var filterMode = resultsLoader.exportProgressController ? resultsLoader.exportProgressController.filterMode : "all";
+                    for (var i = 0; i < items.count; i++) {
+                        var item = items.get(i);
+                        var model = item.model;
+                        var dataObj = model.modelData || model;
+                        var status = dataObj.status || "pending";
+                        var passFilter = false;
+                        if (filterMode === "all") {
+                            passFilter = true;
+                        } else if (filterMode === "exporting") {
+                            passFilter = (status === "pending" || status === "in_progress");
+                        } else if (filterMode === "success") {
+                            passFilter = (status === "success");
+                        } else if (filterMode === "failed") {
+                            passFilter = (status === "failed");
+                        }
+                        item.inDisplay = passFilter;
+                    }
                 }
             }
         }
