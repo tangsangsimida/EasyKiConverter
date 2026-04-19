@@ -306,12 +306,6 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
 
                     ++(*loadedCount);
                     if (*loadedCount >= totalImages) {
-                        for (auto it = componentImageData->constBegin(); it != componentImageData->constEnd(); ++it) {
-                            if (!it.value().isEmpty()) {
-                                emit imageReady(componentId, it.value(), it.key());
-                            }
-                        }
-
                         m_downloadCounts[componentId] = totalImages;
                         checkDownloadCompletion(componentId);
                     }

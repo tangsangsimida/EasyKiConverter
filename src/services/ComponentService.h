@@ -395,6 +395,7 @@ private:
         QSharedPointer<ComponentData> cachedData;
         QByteArray cadDataJson;  // 原始 CAD JSON 数据
         QList<QPair<int, QByteArray>> previewImageData;  // index, data
+        QStringList encodedPreviewImages;  // 后台线程预编码后的预览图
         QByteArray datasheetData;
         // 预解析的符号和封装数据（在后台线程解析）
         QSharedPointer<SymbolData> symbolData;

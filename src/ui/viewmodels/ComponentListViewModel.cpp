@@ -82,6 +82,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
     m_batchListUpdateTimer->setInterval(150);
     connect(m_batchListUpdateTimer, &QTimer::timeout, this, [this]() {
         m_batchListUpdateMode = false;
+        m_listUpdatePending = false;
         recomputeStateCounters();
         updateHasInvalidComponents();
         emit componentCountChanged();
@@ -95,6 +96,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
     connect(m_bomImportUpdateTimer, &QTimer::timeout, this, [this]() {
         // BOM 导入模式结束，恢复正常更新
         m_bomImportMode = false;
+        m_listUpdatePending = false;
         // 处理累积的验证完成计数
         if (m_bomImportPendingUpdates > 0) {
             m_bomImportPendingUpdates = 0;
@@ -222,6 +224,7 @@ QHash<int, QByteArray> ComponentListViewModel::roleNames() const {
 
 void ComponentListViewModel::addComponent(const QString& componentId) {
     clearAttentionHints();
+    m_bomImportComplete = false;
     QString trimmedId = componentId.trimmed();
 
     if (trimmedId.isEmpty()) {
@@ -343,6 +346,10 @@ void ComponentListViewModel::removeComponentById(const QString& componentId) {
 
 void ComponentListViewModel::clearComponentList() {
     clearAttentionHints();
+    m_bomImportComplete = false;
+    m_listUpdatePending = false;
+    m_bomImportMode = false;
+    m_bomImportPendingUpdates = 0;
     m_pendingPreviewFetchIds.clear();
     {
         QMutexLocker locker(&m_cachePreviewMutex);
@@ -415,6 +422,8 @@ void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds)
 
     if (newIds.isEmpty())
         return;
+
+    m_bomImportComplete = false;
 
     // 大量元器件导入时启用 BOM 导入模式，降低 UI 更新频率
     if (newIds.count() >= 20 && !m_bomImportMode) {
@@ -505,6 +514,8 @@ void ComponentListViewModel::processNextBatchAdd() {
             }
         }
 
+        // BOM 导入完成，标记并启动验证队列
+        m_bomImportComplete = true;
         startValidationQueue();
     }
 
@@ -567,6 +578,19 @@ void ComponentListViewModel::onValidationComplete(const QString& componentId) {
 
     if (m_validationPendingCount > 0) {
         m_validationPendingCount--;
+    }
+
+    // BOM 导入完成后，跳过 scheduleListUpdate 和 startValidationQueue
+    // 避免频繁调用导致 O(n²) 复杂度和 UI 阻塞
+    // 验证流程已在 processNextBatchAdd -> startValidationQueue 中启动
+    if (m_bomImportComplete) {
+        // BOM 导入已完成，只处理队列中的下一个验证
+        if (!m_validationQueue.isEmpty()) {
+            processNextValidation();
+        } else if (m_validationPendingCount == 0) {
+            m_bomImportComplete = false;
+        }
+        return;
     }
 
     // BOM 导入模式下，跳过频繁的 scheduleListUpdate，避免 UI 阻塞
@@ -1014,6 +1038,7 @@ void ComponentListViewModel::refreshComponentInfo(int index) {
 
     if (item) {
         clearAttentionHints();
+        m_bomImportComplete = false;
         item->setFetching(true);
         item->setValid(false);
         item->setRetryable(true);
@@ -1044,6 +1069,7 @@ void ComponentListViewModel::retryAllInvalidComponents() {
     for (const QString& id : idsToRetry) {
         auto item = findItemData(id);
         if (item) {
+            m_bomImportComplete = false;
             item->setFetching(true);
             item->setValid(false);
             item->setRetryable(true);
@@ -1231,6 +1257,11 @@ int ComponentListViewModel::invalidCount() const {
 }
 
 void ComponentListViewModel::scheduleListUpdate() {
+    // 防抖：防止定时器级联重启
+    // 如果已经有待处理的列表更新，直接跳过
+    if (m_listUpdatePending) {
+        return;
+    }
     if (!m_batchListUpdateMode) {
         m_batchListUpdateMode = true;
     }
@@ -1242,8 +1273,10 @@ void ComponentListViewModel::scheduleListUpdate() {
     }
     // BOM 导入模式下使用较长的更新间隔，减少 UI 抖动
     if (m_bomImportMode) {
+        m_listUpdatePending = true;
         m_bomImportUpdateTimer->start();
     } else {
+        m_listUpdatePending = true;
         m_batchListUpdateTimer->start();
     }
 }

@@ -6,6 +6,41 @@
 
 ## 预览图相关
 
+### Q: 为什么导入已有缓存的 BOM 表反而会卡住 UI，而无缓存时没有明显卡顿？
+
+**问题描述**：
+用户导入 BOM 表时，如果相关元器件已经命中本地缓存，界面会阻塞几秒；删除缓存后重新导入，阻塞现象反而不明显。
+
+**根本原因**：
+这是一个典型的“缓存命中路径退化为主线程重活”的问题：
+
+1. 缓存命中后，`ComponentService::loadComponentDataFromCacheAsync()` 曾在主线程执行预览图 Base64 编码。
+2. `LcscImageService::loadCachedPreviewImagesAsync()` 曾逐张发 `imageReady`，导致 UI 层重复处理图片并触发多次刷新。
+3. `ComponentListViewModel` 的 `m_bomImportComplete` 若没有在下一轮导入/刷新/重试前复位，会让后续状态机走偏，放大 UI 更新成本。
+
+**修复方案**：
+- 缓存预览图的读取和 Base64 编码全部放到后台线程完成。
+- 缓存图片加载完成后只走批量 `previewImagesReady`，不再逐张回放 `imageReady`。
+- 在单项添加、批量导入、清空列表、刷新、重试和验证收尾时，统一复位 BOM 导入状态。
+
+**回归预防**：
+- 不要因为“命中缓存”就把后处理逻辑放回主线程。
+- 缓存路径优先使用批量信号，避免逐项 UI 刷新。
+- 修改 `ComponentListViewModel` 的 BOM 导入状态机时，必须同时检查：
+  - `m_bomImportMode`
+  - `m_listUpdatePending`
+  - `m_bomImportComplete`
+
+**相关文件**：
+- `src/services/ComponentService.cpp`
+- `src/services/LcscImageService.cpp`
+- `src/ui/viewmodels/ComponentListViewModel.cpp`
+- `src/services/ComponentCacheService.cpp`
+
+**状态**：✅ 已修复 (2026-04-19)
+
+---
+
 ### Q: 预览图出现在错误的目录或使用了错误的图片
 
 **问题描述**：

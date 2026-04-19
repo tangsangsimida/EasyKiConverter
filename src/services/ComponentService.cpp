@@ -429,7 +429,8 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
 
         updateComponentCache(result.componentId, result.parsed.componentData);
         emit cadDataReady(result.componentId, result.parsed.componentData);
-        ComponentCacheService::instance()->saveComponentMetadata(result.componentId, result.parsed.componentData);
+        // 使用异步保存，不阻塞UI
+        ComponentCacheService::instance()->saveComponentMetadataAsync(result.componentId, result.parsed.componentData);
         ComponentCacheService::instance()->saveCadDataJson(
             result.componentId, QJsonDocument(result.parsed.resultData).toJson(QJsonDocument::Compact));
 
@@ -481,10 +482,12 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
         result.success = true;
 
         // 加载预览图数据（返回字节数据，在主线程创建 QImage）
+        result.encodedPreviewImages = QStringList(3);
         for (int i = 0; i < 3; ++i) {
             QByteArray imageData = cache->loadPreviewImage(normalizedId, i);
             if (!imageData.isEmpty()) {
                 result.previewImageData.append({i, imageData});
+                result.encodedPreviewImages[i] = QString::fromLatin1(imageData.toBase64());
             }
         }
 
@@ -542,7 +545,8 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
 
                 updateComponentCache(result.componentId, result.parsed.componentData);
                 emit cadDataReady(result.componentId, result.parsed.componentData);
-                ComponentCacheService::instance()->saveComponentMetadata(result.componentId,
+                // 使用异步保存，不阻塞UI
+                ComponentCacheService::instance()->saveComponentMetadataAsync(result.componentId,
                                                                          result.parsed.componentData);
                 ComponentCacheService::instance()->saveCadDataJson(
                     result.componentId, QJsonDocument(result.parsed.resultData).toJson(QJsonDocument::Compact));
@@ -590,18 +594,9 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
         }
 
         // 从缓存加载预览图数据（批量发送，避免频繁 UI 更新）
-        // 预览图数据是 JPG 字节，直接编码为 base64 字符串
-        if (!result.previewImageData.isEmpty()) {
-            QStringList encodedImages(3);  // 预分配3个位置
-            for (const auto& [imageIndex, imageData] : result.previewImageData) {
-                if (imageIndex >= 0 && imageIndex < 3) {
-                    encodedImages[imageIndex] = QString::fromLatin1(imageData.toBase64().data());
-                }
-            }
-            // 使用 QTimer::singleShot(0) 将信号发射调度到下一个事件循环
-            QTimer::singleShot(0, this, [this, normalizedId, encodedImages]() {
-                emit previewImagesReady(normalizedId, encodedImages);
-            });
+        if (!result.encodedPreviewImages.isEmpty()) {
+            const QStringList encodedImages = result.encodedPreviewImages;
+            QTimer::singleShot(0, this, [this, normalizedId, encodedImages]() { emit previewImagesReady(normalizedId, encodedImages); });
         }
 
         // 加载数据手册
@@ -714,8 +709,8 @@ void ComponentService::handleLcscDataReady(const QString& componentId,
         // 发送 LCSC 数据更新信号，以便 ComponentListViewModel 可以更新缓存的 ComponentData
         emit lcscDataUpdated(componentId, manufacturerPart, datasheetUrl, imageUrls);
 
-        // 保存到磁盘缓存
-        ComponentCacheService::instance()->saveComponentMetadata(componentId, updatedData);
+        // 保存到磁盘缓存（异步，不阻塞UI）
+        ComponentCacheService::instance()->saveComponentMetadataAsync(componentId, updatedData);
 
         // 更新内存缓存，确保 startPreload 时能获取到最新数据
         updateComponentCache(componentId, updatedData);
@@ -849,52 +844,51 @@ void ComponentService::handleAllImagesReady(const QString& componentId, const QS
     // 注意：预览图已由 LcscImageService::handleDownloadResponse 在下载时保存到磁盘
     // 这里不需要再次保存，避免重复 I/O
 
-    // 加锁保护共享数据的访问
-    {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
+    // 使用 QtConcurrent 在后台线程执行文件读取和 Base64 编码，避免阻塞 UI
+    // 然后在主线程发送信号
+    QFuture<QStringList> future = QtConcurrent::run([this, componentId, imagePaths]() {
+        QStringList encodedImages(3);
+        QList<QByteArray> imageDataList;
+        imageDataList.resize(3);
 
-        // 更新 m_fetchingComponents 中的数据
-        if (m_fetchingComponents.contains(componentId)) {
-            FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
-            QList<QByteArray> imageDataList;
-            imageDataList.resize(3);
-            for (const QString& path : imagePaths) {
-                const int imageIndex = previewImageIndexFromPath(path);
-                if (imageIndex < 0 || imageIndex >= imageDataList.size()) {
-                    continue;
-                }
-                QFile file(path);
-                if (file.open(QIODevice::ReadOnly)) {
-                    imageDataList[imageIndex] = file.readAll();
-                    file.close();
-                }
+        for (const QString& path : imagePaths) {
+            const int imageIndex = previewImageIndexFromPath(path);
+            if (imageIndex < 0 || imageIndex >= encodedImages.size()) {
+                continue;
             }
-            fetchingComponent.data.setPreviewImageData(imageDataList);
-            qDebug() << "All image data updated in ComponentData for component:" << componentId
-                     << "count:" << imageDataList.size();
-        } else {
-            qWarning() << "Component" << componentId
-                       << "not found in m_fetchingComponents, cannot update all images data";
-        }
-    }  // 锁在这里释放
 
-    QStringList encodedImages(3);
-    for (const QString& path : imagePaths) {
-        const int imageIndex = previewImageIndexFromPath(path);
-        if (imageIndex < 0 || imageIndex >= encodedImages.size()) {
-            continue;
+            QFile file(path);
+            if (file.open(QIODevice::ReadOnly)) {
+                QByteArray data = file.readAll();
+                encodedImages[imageIndex] = QString::fromLatin1(data.toBase64().data());
+                imageDataList[imageIndex] = data;
+                file.close();
+            }
         }
 
-        QFile file(path);
-        if (file.open(QIODevice::ReadOnly)) {
-            encodedImages[imageIndex] = QString::fromLatin1(file.readAll().toBase64().data());
-            file.close();
+        // 在后台线程更新 m_fetchingComponents（使用锁保护）
+        {
+            QMutexLocker locker(&m_fetchingComponentsMutex);
+            if (m_fetchingComponents.contains(componentId)) {
+                FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
+                fetchingComponent.data.setPreviewImageData(imageDataList);
+                qDebug() << "All image data updated in ComponentData for component:" << componentId
+                         << "count:" << imageDataList.size();
+            }
         }
-    }
 
-    // 锁外发送信号（避免信号槽死锁）
-    emit previewImagesReady(componentId, encodedImages);
-    emit allImagesReady(componentId, imagePaths);
+        return encodedImages;
+    });
+
+    // 使用 QFutureWatcher 在主线程接收结果并发送信号
+    auto* watcher = new QFutureWatcher<QStringList>(this);
+    connect(watcher, &QFutureWatcher<QStringList>::finished, this, [this, watcher, componentId, imagePaths]() {
+        QStringList encodedImages = watcher->result();
+        watcher->deleteLater();
+        emit previewImagesReady(componentId, encodedImages);
+        emit allImagesReady(componentId, imagePaths);
+    });
+    watcher->setFuture(future);
 }
 
 void ComponentService::handleComponentInfoFetched(const QString& componentId, const QJsonObject& data) {
@@ -947,7 +941,8 @@ void ComponentService::handleCadDataFetched(const QString& componentId, const QJ
 
         updateComponentCache(parsed.componentId, parsed.componentData);
         emit cadDataReady(parsed.componentId, parsed.componentData);
-        ComponentCacheService::instance()->saveComponentMetadata(parsed.componentId, parsed.componentData);
+        // 使用异步保存，不阻塞UI
+        ComponentCacheService::instance()->saveComponentMetadataAsync(parsed.componentId, parsed.componentData);
         ComponentCacheService::instance()->saveCadDataJson(
             parsed.componentId, QJsonDocument(parsed.resultData).toJson(QJsonDocument::Compact));
 

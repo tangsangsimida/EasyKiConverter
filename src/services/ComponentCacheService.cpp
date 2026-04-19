@@ -14,6 +14,7 @@
 #include <QSet>
 #include <QStandardPaths>
 #include <QUrl>
+#include <QtConcurrent>
 
 namespace EasyKiConverter {
 
@@ -324,32 +325,31 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
     return componentData;
 }
 
-void ComponentCacheService::saveComponentMetadata(const QString& componentId, const ComponentData& data) {
-    QJsonObject metadata = buildMetadata(componentId, data);
-    const QJsonObject existingMetadata = loadMetadata(componentId);
-    metadata = mergeMetadata(existingMetadata, metadata);
 
-    // 先原子性地更新内存缓存（内存优先，失败则不回写磁盘）
-    QJsonDocument doc(metadata);
-    QString key = makeMemoryKey(componentId, "metadata");
-    QByteArray* newData = new QByteArray(doc.toJson(QJsonDocument::Compact));
+void ComponentCacheService::saveComponentMetadataAsync(const QString& componentId, const ComponentData& data) {
+    // 异步版本：在后台线程执行文件I/O，不阻塞UI
+    // 复制需要的数据以供后台线程使用
+    QJsonObject metadataToSave = buildMetadata(componentId, data);
 
-    qint64 sizeAfterUpdate = 0;
-    {
-        QMutexLocker locker(&m_mutex);
+    (void)QtConcurrent::run([this, componentId, metadataToSave]() {
+        // 在后台线程执行：合并元数据并保存到磁盘
+        const QJsonObject existingMetadata = loadMetadata(componentId);
+        QJsonObject mergedMetadata = mergeMetadata(existingMetadata, metadataToSave);
 
-        // 直接插入即可，QCache 会自动处理相同 key 的旧数据的删除
-        m_memoryCache.insert(key, newData, newData->size());
-        sizeAfterUpdate = m_memoryCache.totalCost();
-    }
+        // 只更新内存缓存（不发送信号，避免UI线程竞争）
+        QJsonDocument doc(mergedMetadata);
+        QString key = makeMemoryKey(componentId, "metadata");
+        QByteArray* newData = new QByteArray(doc.toJson(QJsonDocument::Compact));
 
-    // 内存更新成功后保存到磁盘（磁盘失败不影响内存缓存一致性）
-    saveMetadata(componentId, metadata);
+        {
+            QMutexLocker locker(&m_mutex);
+            m_memoryCache.insert(key, newData, newData->size());
+        }
 
-    // 在锁外发送信号
-    emit memoryCacheSizeChanged(sizeAfterUpdate);
-    emit cacheSaved(componentId);
-    LOG_DEBUG(LogModule::Core, "Saved component metadata to cache: {}", componentId);
+        // 保存到磁盘
+        saveMetadata(componentId, mergedMetadata);
+        LOG_DEBUG(LogModule::Core, "Async saved component metadata to cache: {}", componentId);
+    });
 }
 
 void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArray& data) {
@@ -584,24 +584,26 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
     QElapsedTimer timer;
     timer.start();
 
-    // 检查磁盘缓存
+    // 检查磁盘缓存 - 只在锁内获取路径，文件读取在锁外执行以避免阻塞
+    QString previewFilePath;
     {
         QMutexLocker locker(&m_mutex);
-        QString previewFilePath = previewImagePath(lcscId, imageIndex);
-        if (QFileInfo::exists(previewFilePath)) {
-            QFile file(previewFilePath);
-            if (file.open(QIODevice::ReadOnly)) {
-                LOG_DEBUG(LogModule::Core, "Preview image loaded from disk cache: {}", previewFilePath);
-                if (diag) {
-                    diag->url = imageUrl;
-                    diag->statusCode = 200;
-                    diag->errorString = "";
-                    diag->retryCount = 0;
-                    diag->latencyMs = timer.elapsed();
-                    diag->wasRateLimited = false;
-                }
-                return file.readAll();
+        previewFilePath = previewImagePath(lcscId, imageIndex);
+    }
+
+    if (QFileInfo::exists(previewFilePath)) {
+        QFile file(previewFilePath);
+        if (file.open(QIODevice::ReadOnly)) {
+            LOG_DEBUG(LogModule::Core, "Preview image loaded from disk cache: {}", previewFilePath);
+            if (diag) {
+                diag->url = imageUrl;
+                diag->statusCode = 200;
+                diag->errorString = "";
+                diag->retryCount = 0;
+                diag->latencyMs = timer.elapsed();
+                diag->wasRateLimited = false;
             }
+            return file.readAll();
         }
     }
 

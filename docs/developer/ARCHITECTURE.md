@@ -619,6 +619,55 @@ EasyKiConverter_QT/
 - GZIP 解压缩
 - 连接池管理
 
+### BOM 导入与缓存命中路径的 UI 响应性约束
+
+#### 背景
+
+2026-04-19 修复过一个回归问题：导入**已有缓存**的 BOM 表时，界面会阻塞数秒；而无缓存时因为主要工作在网络线程中，反而没有明显卡顿。
+
+#### 根本原因
+
+问题不在“是否命中缓存”本身，而在**缓存命中后的后处理仍然跑在主线程**：
+
+1. `ComponentService::loadComponentDataFromCacheAsync()` 虽然在后台线程读取了缓存文件，但返回主线程后仍对预览图执行 Base64 编码。
+2. `LcscImageService::loadCachedPreviewImagesAsync()` 在缓存路径中逐张回放 `imageReady`，导致 UI 层重复进行图片解码/编码和多次刷新。
+3. `ComponentListViewModel` 的 BOM 导入状态 `m_bomImportComplete` 一度只置位不复位，后续导入/刷新/重试会走错误分支，放大列表更新频率。
+
+#### 设计约束
+
+后续修改 BOM 导入、缓存加载、预览图展示链路时，必须遵守以下约束：
+
+- 缓存命中路径必须与网络路径一样，默认视为“批量高开销路径”，不能在主线程做大块 I/O 或 CPU 工作。
+- 预览图文件读取、Base64 编码、CAD JSON 解析、metadata 合并与磁盘写入，必须放在后台线程执行。
+- 主线程只负责：
+  - 更新轻量状态
+  - 发射批量信号
+  - 驱动 `QAbstractListModel` / QML 刷新
+- 缓存预览图优先走 `previewImagesReady` 这类**批量信号**，避免逐张 `imageReady` 触发级联刷新。
+- BOM 导入相关状态机（`m_bomImportMode` / `m_listUpdatePending` / `m_bomImportComplete`）必须在导入完成、清空列表、单项刷新、批量重试等入口显式复位。
+
+#### 代码落点
+
+- `src/services/ComponentService.cpp`
+  - 缓存预览图的 Base64 编码必须在后台线程完成，再回到主线程发 `previewImagesReady`。
+- `src/services/LcscImageService.cpp`
+  - 缓存图片批量加载完成后，不再逐张补发 `imageReady`。
+- `src/ui/viewmodels/ComponentListViewModel.cpp`
+  - BOM 导入结束后只做必要的批量 UI 更新。
+  - 状态变量必须在新一轮导入/重试开始前复位。
+- `src/services/ComponentCacheService.cpp`
+  - metadata 保存保持异步，避免批量缓存命中后同步落盘拖慢 UI。
+
+#### 回归检查清单
+
+如果后续再次出现“有缓存比没缓存更卡”的现象，优先检查：
+
+1. 是否把缓存文件读取后的 CPU 工作又挪回了主线程。
+2. 是否从批量信号退化回了逐项信号。
+3. 是否在 BOM 导入期间频繁调用 `scheduleListUpdate()` / `recomputeStateCounters()`。
+4. `m_bomImportComplete`、`m_bomImportMode`、`m_listUpdatePending` 是否存在漏复位。
+5. 是否新增了同步磁盘写入、同步图片编码、同步 JSON 解析等逻辑。
+
 ### 弱网容错（v3.0.4 分析）
 
 项目存在四套网络请求实现，弱网容错能力不一致：

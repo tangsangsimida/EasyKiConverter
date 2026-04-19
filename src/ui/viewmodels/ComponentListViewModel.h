@@ -238,6 +238,8 @@ private:
     bool m_bomImportMode = false;
     QTimer* m_bomImportUpdateTimer;
     int m_bomImportPendingUpdates = 0;  // BOM 导入模式下待处理的验证完成计数
+    bool m_listUpdatePending = false;  // 防抖标志，防止定时器级联重启
+    bool m_bomImportComplete = false;  // BOM 导入已完成（所有组件已启动验证）
 
     // 延迟获取预览图定时器（等待验证全部完成）
     QTimer* m_delayedFetchPreviewTimer;

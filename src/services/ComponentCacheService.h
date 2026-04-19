@@ -183,11 +183,12 @@ public:
     QSharedPointer<ComponentData> loadComponentData(const QString& lcscId) const;
 
     /**
-     * @brief 保存元器件元数据到L2磁盘缓存（component.json）
+     * @brief 异步保存元器件元数据到L2磁盘缓存（不阻塞UI）
      * @param componentId 元器件ID
      * @param data 元器件数据
+     * @note 适用于批量操作，避免频繁的同步文件I/O阻塞UI
      */
-    void saveComponentMetadata(const QString& componentId, const ComponentData& data);
+    void saveComponentMetadataAsync(const QString& componentId, const ComponentData& data);
 
     /**
      * @brief 保存符号CAD数据到L2磁盘缓存
