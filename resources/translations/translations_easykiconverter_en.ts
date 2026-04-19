@@ -41,12 +41,12 @@
     <message>
         <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="30"/>
         <source>退出确认</source>
-        <translation type="unfinished"></translation>
+        <translation>Exit Confirmation</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="31"/>
         <source>转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？</source>
-        <translation type="unfinished">Conversion is in progress. Exiting will cancel the current conversion, but exported files will be preserved. Are you sure you want to exit?</translation>
+        <translation>Conversion is in progress. Exiting will cancel the current conversion, but exported files will be preserved. Are you sure you want to exit?</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="33"/>
@@ -201,17 +201,17 @@
     <message>
         <location filename="../../src/ui/qml/components/BomImportCard.qml" line="44"/>
         <source>客户端弱网络适配</source>
-        <translation type="unfinished"></translation>
+        <translation>Client Weak Network Adaptation</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/BomImportCard.qml" line="53"/>
         <source>仅影响本机网络请求策略，不代表服务器限流；开启后会使用更保守的并发、超时和重试配置</source>
-        <translation type="unfinished"></translation>
+        <translation>Only affects local network request policy, does not represent server rate limiting; when enabled, more conservative concurrency, timeout, and retry settings will be used</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/BomImportCard.qml" line="95"/>
         <source>导入 BOM 前可先开启，验证和预览图加载也会使用该策略</source>
-        <translation type="unfinished"></translation>
+        <translation>Can be enabled before importing BOM, verification and preview image loading will also use this policy</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="16"/>
@@ -440,32 +440,32 @@
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="60"/>
         <source>抓取进度</source>
-        <translation type="unfinished"></translation>
+        <translation>Fetch Progress</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="65"/>
         <source>处理进度</source>
-        <translation type="unfinished"></translation>
+        <translation>Processing Progress</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="70"/>
         <source>写入进度</source>
-        <translation type="unfinished"></translation>
+        <translation>Write Progress</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="77"/>
         <source>导出详情</source>
-        <translation type="unfinished"></translation>
+        <translation>Export Details</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="126"/>
         <source>打开输出目录</source>
-        <translation type="unfinished"></translation>
+        <translation>Open Output Directory</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="140"/>
         <source>清空缓存</source>
-        <translation type="unfinished"></translation>
+        <translation>Clear Cache</translation>
     </message>
     <message>
         <source>总耗时</source>
@@ -562,27 +562,27 @@
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="45"/>
         <source>发现新版本 %1</source>
-        <translation type="unfinished"></translation>
+        <translation>New version %1 found</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="52"/>
         <source>当前版本 %1，最新发布：%2</source>
-        <translation type="unfinished"></translation>
+        <translation>Current version %1, latest release: %2</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="52"/>
         <source>当前版本 %1，可前往 GitHub 查看发布说明。</source>
-        <translation type="unfinished"></translation>
+        <translation>Current version %1, please visit GitHub to view release notes.</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="63"/>
         <source>查看更新</source>
-        <translation type="unfinished"></translation>
+        <translation>View Update</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="72"/>
         <source>稍后提醒</source>
-        <translation type="unfinished"></translation>
+        <translation>Remind Later</translation>
     </message>
 </context>
 <context>
@@ -676,27 +676,27 @@ Output: Symbols %1 · Footprints %2 · 3D %3</translation>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="46"/>
         <source>失败</source>
-        <translation type="unfinished">Failed</translation>
+        <translation>Failed</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="48"/>
         <source>处理中</source>
-        <translation type="unfinished"></translation>
+        <translation>Processing</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="50"/>
         <source>已跳过</source>
-        <translation type="unfinished"></translation>
+        <translation>Skipped</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="52"/>
         <source>未启用</source>
-        <translation type="unfinished"></translation>
+        <translation>Not Enabled</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="55"/>
         <source>等待中</source>
-        <translation type="unfinished"></translation>
+        <translation>Waiting</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="222"/>
@@ -706,12 +706,12 @@ Output: Symbols %1 · Footprints %2 · 3D %3</translation>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="244"/>
         <source>预览图: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Preview: %1</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="266"/>
         <source>手册: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Datasheet: %1</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="305"/>
@@ -729,12 +729,12 @@ Output: Symbols %1 · Footprints %2 · 3D %3</translation>
     <message>
         <location filename="../../src/ui/qml/components/SliderDialogBase.qml" line="39"/>
         <source>对话框</source>
-        <translation type="unfinished"></translation>
+        <translation>Dialog</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/SliderDialogBase.qml" line="40"/>
         <source>提示信息</source>
-        <translation type="unfinished"></translation>
+        <translation>Prompt</translation>
     </message>
 </context>
 <context>

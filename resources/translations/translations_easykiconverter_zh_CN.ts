@@ -37,12 +37,12 @@
     <message>
         <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="30"/>
         <source>退出确认</source>
-        <translation type="unfinished"></translation>
+        <translation>退出确认</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="31"/>
         <source>转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？</source>
-        <translation type="unfinished">转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？</translation>
+        <translation>转换正在进行中。退出将取消当前转换，已导出的文件会保留。确定要退出吗？</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ConfirmDialog.qml" line="33"/>
@@ -294,17 +294,17 @@
     <message>
         <location filename="../../src/ui/qml/components/BomImportCard.qml" line="44"/>
         <source>客户端弱网络适配</source>
-        <translation type="unfinished"></translation>
+        <translation>客户端弱网络适配</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/BomImportCard.qml" line="53"/>
         <source>仅影响本机网络请求策略，不代表服务器限流；开启后会使用更保守的并发、超时和重试配置</source>
-        <translation type="unfinished"></translation>
+        <translation>仅影响本机网络请求策略，不代表服务器限流；开启后会使用更保守的并发、超时和重试配置</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/BomImportCard.qml" line="95"/>
         <source>导入 BOM 前可先开启，验证和预览图加载也会使用该策略</source>
-        <translation type="unfinished"></translation>
+        <translation>导入 BOM 前可先开启，验证和预览图加载也会使用该策略</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="16"/>
@@ -542,32 +542,32 @@
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="60"/>
         <source>抓取进度</source>
-        <translation type="unfinished"></translation>
+        <translation>抓取进度</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="65"/>
         <source>处理进度</source>
-        <translation type="unfinished"></translation>
+        <translation>处理进度</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="70"/>
         <source>写入进度</source>
-        <translation type="unfinished"></translation>
+        <translation>写入进度</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="77"/>
         <source>导出详情</source>
-        <translation type="unfinished"></translation>
+        <translation>导出详情</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="126"/>
         <source>打开输出目录</source>
-        <translation type="unfinished"></translation>
+        <translation>打开输出目录</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportStatisticsCard.qml" line="140"/>
         <source>清空缓存</source>
-        <translation type="unfinished"></translation>
+        <translation>清空缓存</translation>
     </message>
     <message>
         <source>时间统计</source>
@@ -650,27 +650,27 @@
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="45"/>
         <source>发现新版本 %1</source>
-        <translation type="unfinished"></translation>
+        <translation>发现新版本 %1</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="52"/>
         <source>当前版本 %1，最新发布：%2</source>
-        <translation type="unfinished"></translation>
+        <translation>当前版本 %1，最新发布：%2</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="52"/>
         <source>当前版本 %1，可前往 GitHub 查看发布说明。</source>
-        <translation type="unfinished"></translation>
+        <translation>当前版本 %1，可前往 GitHub 查看发布说明。</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="63"/>
         <source>查看更新</source>
-        <translation type="unfinished"></translation>
+        <translation>查看更新</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="72"/>
         <source>稍后提醒</source>
-        <translation type="unfinished"></translation>
+        <translation>稍后提醒</translation>
     </message>
 </context>
 <context>
@@ -751,27 +751,27 @@
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="46"/>
         <source>失败</source>
-        <translation type="unfinished">失败</translation>
+        <translation>失败</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="48"/>
         <source>处理中</source>
-        <translation type="unfinished"></translation>
+        <translation>处理中</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="50"/>
         <source>已跳过</source>
-        <translation type="unfinished"></translation>
+        <translation>已跳过</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="52"/>
         <source>未启用</source>
-        <translation type="unfinished"></translation>
+        <translation>未启用</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="55"/>
         <source>等待中</source>
-        <translation type="unfinished"></translation>
+        <translation>等待中</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="119"/>
@@ -790,12 +790,12 @@
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="244"/>
         <source>预览图: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>预览图: %1</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="266"/>
         <source>手册: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>手册: %1</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ResultListItem.qml" line="305"/>
@@ -813,12 +813,12 @@
     <message>
         <location filename="../../src/ui/qml/components/SliderDialogBase.qml" line="39"/>
         <source>对话框</source>
-        <translation type="unfinished"></translation>
+        <translation>对话框</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/SliderDialogBase.qml" line="40"/>
         <source>提示信息</source>
-        <translation type="unfinished"></translation>
+        <translation>提示信息</translation>
     </message>
 </context>
 <context>

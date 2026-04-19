@@ -27,6 +27,7 @@ private slots:
                               true,
                               true,
                               true,
+                              0,
                               true,
                               false,
                               false,
@@ -75,8 +76,18 @@ private slots:
         ParallelExportService service;
         ExportProgressViewModel viewModel(&service, nullptr, nullptr);
 
-        viewModel.startExport(
-            {"C1", "C2"}, "/tmp/easykiconverter-test", "testlib", true, true, true, false, false, false, false, false);
+        viewModel.startExport({"C1", "C2"},
+                              "/tmp/easykiconverter-test",
+                              "testlib",
+                              true,
+                              true,
+                              true,
+                              0,
+                              false,
+                              false,
+                              false,
+                              false,
+                              false);
 
         auto makeStatus = [](ExportItemStatus::Status state, const QString& error = QString()) {
             ExportItemStatus status;
