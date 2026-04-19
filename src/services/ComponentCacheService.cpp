@@ -325,31 +325,34 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
     return componentData;
 }
 
+void ComponentCacheService::saveComponentMetadata(const QString& componentId, const ComponentData& data) {
+    QJsonObject metadata = buildMetadata(componentId, data);
+    const QJsonObject existingMetadata = loadMetadata(componentId);
+    metadata = mergeMetadata(existingMetadata, metadata);
+
+    QJsonDocument doc(metadata);
+    QString key = makeMemoryKey(componentId, "metadata");
+    QByteArray* newData = new QByteArray(doc.toJson(QJsonDocument::Compact));
+    qint64 sizeAfterUpdate = 0;
+
+    {
+        QMutexLocker locker(&m_mutex);
+        m_memoryCache.insert(key, newData, newData->size());
+        sizeAfterUpdate = m_memoryCache.totalCost();
+    }
+
+    saveMetadata(componentId, metadata);
+    emit memoryCacheSizeChanged(sizeAfterUpdate);
+    emit cacheSaved(componentId);
+    LOG_DEBUG(LogModule::Core, "Saved component metadata to cache: {}", componentId);
+}
 
 void ComponentCacheService::saveComponentMetadataAsync(const QString& componentId, const ComponentData& data) {
     // 异步版本：在后台线程执行文件I/O，不阻塞UI
     // 复制需要的数据以供后台线程使用
-    QJsonObject metadataToSave = buildMetadata(componentId, data);
+    const ComponentData dataCopy = data;
 
-    (void)QtConcurrent::run([this, componentId, metadataToSave]() {
-        // 在后台线程执行：合并元数据并保存到磁盘
-        const QJsonObject existingMetadata = loadMetadata(componentId);
-        QJsonObject mergedMetadata = mergeMetadata(existingMetadata, metadataToSave);
-
-        // 只更新内存缓存（不发送信号，避免UI线程竞争）
-        QJsonDocument doc(mergedMetadata);
-        QString key = makeMemoryKey(componentId, "metadata");
-        QByteArray* newData = new QByteArray(doc.toJson(QJsonDocument::Compact));
-
-        {
-            QMutexLocker locker(&m_mutex);
-            m_memoryCache.insert(key, newData, newData->size());
-        }
-
-        // 保存到磁盘
-        saveMetadata(componentId, mergedMetadata);
-        LOG_DEBUG(LogModule::Core, "Async saved component metadata to cache: {}", componentId);
-    });
+    (void)QtConcurrent::run([this, componentId, dataCopy]() { saveComponentMetadata(componentId, dataCopy); });
 }
 
 void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArray& data) {
