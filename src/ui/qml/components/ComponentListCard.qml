@@ -372,6 +372,8 @@ Card {
                             width: (filterSegmentedControl.width - 8) / 4
                             height: filterSegmentedControl.height - 8
                             flat: true
+                            enabled: componentListCard.componentListController ? componentListCard.componentListController.validatingCount > 0 : false
+                            opacity: enabled ? 1.0 : 0.4
                             background: Rectangle {
                                 color: "transparent"
                             }
@@ -383,7 +385,11 @@ Card {
                                 verticalAlignment: Text.AlignVCenter
                                 font.pixelSize: 12
                             }
-                            onClicked: componentListCard.componentListController.setFilterMode("validating")
+                            onClicked: {
+                                if (componentListCard.componentListController && componentListCard.componentListController.validatingCount > 0) {
+                                    componentListCard.componentListController.setFilterMode("validating");
+                                }
+                            }
                         }
 
                         // 有效
@@ -391,6 +397,8 @@ Card {
                             width: (filterSegmentedControl.width - 8) / 4
                             height: filterSegmentedControl.height - 8
                             flat: true
+                            enabled: componentListCard.componentListController ? componentListCard.componentListController.validCount > 0 : false
+                            opacity: enabled ? 1.0 : 0.4
                             background: Rectangle {
                                 color: "transparent"
                             }
@@ -402,7 +410,11 @@ Card {
                                 verticalAlignment: Text.AlignVCenter
                                 font.pixelSize: 12
                             }
-                            onClicked: componentListCard.componentListController.setFilterMode("valid")
+                            onClicked: {
+                                if (componentListCard.componentListController && componentListCard.componentListController.validCount > 0) {
+                                    componentListCard.componentListController.setFilterMode("valid");
+                                }
+                            }
                         }
 
                         // 无效
@@ -410,6 +422,8 @@ Card {
                             width: (filterSegmentedControl.width - 8) / 4
                             height: filterSegmentedControl.height - 8
                             flat: true
+                            enabled: componentListCard.componentListController ? componentListCard.componentListController.invalidCount > 0 : false
+                            opacity: enabled ? 1.0 : 0.4
                             background: Rectangle {
                                 color: "transparent"
                             }
@@ -421,7 +435,11 @@ Card {
                                 verticalAlignment: Text.AlignVCenter
                                 font.pixelSize: 12
                             }
-                            onClicked: componentListCard.componentListController.setFilterMode("invalid")
+                            onClicked: {
+                                if (componentListCard.componentListController && componentListCard.componentListController.invalidCount > 0) {
+                                    componentListCard.componentListController.setFilterMode("invalid");
+                                }
+                            }
                         }
                     }
                 }
