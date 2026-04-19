@@ -38,6 +38,9 @@ public:
      */
     void downloadDatasheet(const QString& datasheetUrl, const QString& savePath);
 
+    void setWeakNetworkSupport(bool enabled);
+    bool weakNetworkSupport() const;
+
     /**
      * @brief 取消下载
      */
@@ -71,6 +74,7 @@ private:
     QString m_savePath;
     QString m_datasheetUrl;
     bool m_isDownloading;
+    bool m_weakNetworkSupport;
 };
 
 }  // namespace EasyKiConverter

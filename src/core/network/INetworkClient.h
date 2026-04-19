@@ -97,7 +97,10 @@ struct RequestProfiles {
         profile.weakNetworkMaxRetries = 5;
         profile.weakNetworkTimeoutMultiplier = 2;
         profile.priority = 10;
-        profile.maxConcurrent = 5;
+        // Normal-mode validation historically runs at 10-way fan-out. Keeping
+        // the scheduler cap at 5 halves BOM verification throughput even when
+        // weak-network mode is disabled.
+        profile.maxConcurrent = 10;
         profile.allowCancellation = true;
         profile.cacheable = true;
         return profile;
@@ -396,6 +399,46 @@ struct NetworkResult {
     NetworkDiagnostic diagnostic;  // 统一诊断信息
 };
 
+struct NetworkResourceStats {
+    ResourceType resourceType = ResourceType::Unknown;
+    QString profileName;
+    int queuedRequests = 0;
+    int activeRequests = 0;
+    int peakQueuedRequests = 0;
+    int peakActiveRequests = 0;
+    int maxConcurrent = 0;
+    quint64 backpressureEvents = 0;
+    quint64 startedRequests = 0;
+    quint64 completedRequests = 0;
+    quint64 succeededRequests = 0;
+    quint64 failedRequests = 0;
+    quint64 cancelledRequests = 0;
+    quint64 timeoutRequests = 0;
+    quint64 rateLimitedRequests = 0;
+    quint64 retryAttempts = 0;
+    qint64 lastQueueDelayMs = 0;
+    qint64 averageQueueDelayMs = 0;
+    qint64 maxQueueDelayMs = 0;
+    qint64 lastLatencyMs = 0;
+    qint64 averageLatencyMs = 0;
+    qint64 maxLatencyMs = 0;
+};
+
+struct NetworkRuntimeStats {
+    QVector<NetworkResourceStats> resources;
+    quint64 totalStartedRequests = 0;
+    quint64 totalCompletedRequests = 0;
+    quint64 totalSucceededRequests = 0;
+    quint64 totalFailedRequests = 0;
+    quint64 totalCancelledRequests = 0;
+    quint64 totalTimeoutRequests = 0;
+    quint64 totalRateLimitedRequests = 0;
+    quint64 totalRetryAttempts = 0;
+    quint64 totalBackpressureEvents = 0;
+    int totalQueuedRequests = 0;
+    int totalActiveRequests = 0;
+};
+
 /**
  * @brief 网络客户端接口
  *
@@ -415,7 +458,7 @@ public:
 
     /**
      * @brief 发送 HTTP GET 请求（带资源类型，用于配置Profile）
-     * @param url ���求 URL
+     * @param url 请求 URL
      * @param resourceType 资源类型
      * @param policy 重试策略
      * @return NetworkResult 返回响应数据或错误
@@ -458,6 +501,9 @@ public:
                                            const QByteArray& body,
                                            ResourceType resourceType,
                                            const RetryPolicy& policy = {}) = 0;
+
+    virtual NetworkRuntimeStats runtimeStats() const = 0;
+    virtual QString formatRuntimeStats() const = 0;
 };
 
 }  // namespace EasyKiConverter
