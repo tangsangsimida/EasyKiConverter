@@ -771,6 +771,9 @@ int main(int argc, char* argv[]) {
     delete componentService;
     componentService = nullptr;
 
+    qDebug() << "Destroying network client singleton...";
+    EasyKiConverter::NetworkClient::destroyInstance();
+
     // 6. 最后清理日志
     qDebug() << "Cleaning up logging...";
     EasyKiConverter::QtLogAdapter::uninstall();

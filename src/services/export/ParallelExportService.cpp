@@ -154,7 +154,11 @@ ParallelExportService::~ParallelExportService() {
 void ParallelExportService::cleanupExportStages() {
     for (auto* stage : m_exportStages) {
         if (stage) {
-            stage->deleteLater();
+            if (stage->isRunning()) {
+                stage->setParent(this);
+            } else {
+                stage->deleteLater();
+            }
         }
     }
     m_exportStages.clear();
@@ -178,6 +182,13 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
         return;
     }
 
+    if (m_componentService) {
+        disconnect(m_componentService, &ComponentService::allComponentsDataCollected, this, nullptr);
+    }
+
+    cleanupExportStages();
+    m_runningExportStages = 0;
+    ++m_activeRunGeneration;
     m_cancelRequested = false;
     qDebug() << "ParallelExportService: Starting preload for" << componentIds.size() << "components";
 
@@ -224,8 +235,12 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
 
 void ParallelExportService::cancelPreload() {
     qDebug() << "ParallelExportService: Cancelling preload";
+    ++m_activeRunGeneration;
     m_cancelRequested = true;
     m_nextPreloadIndex = m_componentIds.size();
+    if (m_componentService) {
+        disconnect(m_componentService, &ComponentService::allComponentsDataCollected, this, nullptr);
+    }
     {
         QMutexLocker locker(&m_progressMutex);
         m_progress.preloadProgress.inProgressCount = 0;
@@ -259,6 +274,7 @@ void ParallelExportService::startExport() {
 
     cleanupExportStages();
     m_cancelRequested = false;
+    const quint64 runGeneration = m_activeRunGeneration;
 
     qDebug() << "ParallelExportService: Starting export for" << m_componentIds.size() << "components";
 
@@ -362,15 +378,31 @@ void ParallelExportService::startExport() {
         connect(stage,
                 &SymbolExportStage::itemStatusChanged,
                 this,
-                [this](const QString& componentId, const ExportItemStatus& status) {
+                [this, runGeneration](const QString& componentId, const ExportItemStatus& status) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        return;
+                    }
                     onExportItemStatusChanged(componentId, QStringLiteral("Symbol"), status);
                 });
-        connect(stage, &SymbolExportStage::progressChanged, this, [this](const ExportTypeProgress& progress) {
-            onExportTypeProgressChanged(QStringLiteral("Symbol"), progress);
-        });
-        connect(stage, &SymbolExportStage::completed, this, [this](int success, int failed, int skipped) {
-            onExportTypeCompleted(QStringLiteral("Symbol"), success, failed, skipped);
-        });
+        connect(stage,
+                &SymbolExportStage::progressChanged,
+                this,
+                [this, runGeneration](const ExportTypeProgress& progress) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        return;
+                    }
+                    onExportTypeProgressChanged(QStringLiteral("Symbol"), progress);
+                });
+        connect(stage,
+                &SymbolExportStage::completed,
+                this,
+                [this, stage, runGeneration](int success, int failed, int skipped) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        stage->deleteLater();
+                        return;
+                    }
+                    onExportTypeCompleted(QStringLiteral("Symbol"), success, failed, skipped);
+                });
         stage->start(exportableComponentIds, m_cachedData);
     }
 
@@ -382,15 +414,31 @@ void ParallelExportService::startExport() {
         connect(stage,
                 &FootprintExportStage::itemStatusChanged,
                 this,
-                [this](const QString& componentId, const ExportItemStatus& status) {
+                [this, runGeneration](const QString& componentId, const ExportItemStatus& status) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        return;
+                    }
                     onExportItemStatusChanged(componentId, QStringLiteral("Footprint"), status);
                 });
-        connect(stage, &FootprintExportStage::progressChanged, this, [this](const ExportTypeProgress& progress) {
-            onExportTypeProgressChanged(QStringLiteral("Footprint"), progress);
-        });
-        connect(stage, &FootprintExportStage::completed, this, [this](int success, int failed, int skipped) {
-            onExportTypeCompleted(QStringLiteral("Footprint"), success, failed, skipped);
-        });
+        connect(stage,
+                &FootprintExportStage::progressChanged,
+                this,
+                [this, runGeneration](const ExportTypeProgress& progress) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        return;
+                    }
+                    onExportTypeProgressChanged(QStringLiteral("Footprint"), progress);
+                });
+        connect(stage,
+                &FootprintExportStage::completed,
+                this,
+                [this, stage, runGeneration](int success, int failed, int skipped) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        stage->deleteLater();
+                        return;
+                    }
+                    onExportTypeCompleted(QStringLiteral("Footprint"), success, failed, skipped);
+                });
         stage->start(exportableComponentIds, m_cachedData);
     }
 
@@ -402,15 +450,31 @@ void ParallelExportService::startExport() {
         connect(stage,
                 &Model3DExportStage::itemStatusChanged,
                 this,
-                [this](const QString& componentId, const ExportItemStatus& status) {
+                [this, runGeneration](const QString& componentId, const ExportItemStatus& status) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        return;
+                    }
                     onExportItemStatusChanged(componentId, QStringLiteral("Model3D"), status);
                 });
-        connect(stage, &Model3DExportStage::progressChanged, this, [this](const ExportTypeProgress& progress) {
-            onExportTypeProgressChanged(QStringLiteral("Model3D"), progress);
-        });
-        connect(stage, &Model3DExportStage::completed, this, [this](int success, int failed, int skipped) {
-            onExportTypeCompleted(QStringLiteral("Model3D"), success, failed, skipped);
-        });
+        connect(stage,
+                &Model3DExportStage::progressChanged,
+                this,
+                [this, runGeneration](const ExportTypeProgress& progress) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        return;
+                    }
+                    onExportTypeProgressChanged(QStringLiteral("Model3D"), progress);
+                });
+        connect(stage,
+                &Model3DExportStage::completed,
+                this,
+                [this, stage, runGeneration](int success, int failed, int skipped) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        stage->deleteLater();
+                        return;
+                    }
+                    onExportTypeCompleted(QStringLiteral("Model3D"), success, failed, skipped);
+                });
         stage->start(exportableComponentIds, m_cachedData);
     }
 
@@ -422,15 +486,31 @@ void ParallelExportService::startExport() {
         connect(stage,
                 &PreviewImagesExportStage::itemStatusChanged,
                 this,
-                [this](const QString& componentId, const ExportItemStatus& status) {
+                [this, runGeneration](const QString& componentId, const ExportItemStatus& status) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        return;
+                    }
                     onExportItemStatusChanged(componentId, QStringLiteral("PreviewImages"), status);
                 });
-        connect(stage, &PreviewImagesExportStage::progressChanged, this, [this](const ExportTypeProgress& progress) {
-            onExportTypeProgressChanged(QStringLiteral("PreviewImages"), progress);
-        });
-        connect(stage, &PreviewImagesExportStage::completed, this, [this](int success, int failed, int skipped) {
-            onExportTypeCompleted(QStringLiteral("PreviewImages"), success, failed, skipped);
-        });
+        connect(stage,
+                &PreviewImagesExportStage::progressChanged,
+                this,
+                [this, runGeneration](const ExportTypeProgress& progress) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        return;
+                    }
+                    onExportTypeProgressChanged(QStringLiteral("PreviewImages"), progress);
+                });
+        connect(stage,
+                &PreviewImagesExportStage::completed,
+                this,
+                [this, stage, runGeneration](int success, int failed, int skipped) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        stage->deleteLater();
+                        return;
+                    }
+                    onExportTypeCompleted(QStringLiteral("PreviewImages"), success, failed, skipped);
+                });
         stage->start(exportableComponentIds, m_cachedData);
     }
 
@@ -442,15 +522,31 @@ void ParallelExportService::startExport() {
         connect(stage,
                 &DatasheetExportStage::itemStatusChanged,
                 this,
-                [this](const QString& componentId, const ExportItemStatus& status) {
+                [this, runGeneration](const QString& componentId, const ExportItemStatus& status) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        return;
+                    }
                     onExportItemStatusChanged(componentId, QStringLiteral("Datasheet"), status);
                 });
-        connect(stage, &DatasheetExportStage::progressChanged, this, [this](const ExportTypeProgress& progress) {
-            onExportTypeProgressChanged(QStringLiteral("Datasheet"), progress);
-        });
-        connect(stage, &DatasheetExportStage::completed, this, [this](int success, int failed, int skipped) {
-            onExportTypeCompleted(QStringLiteral("Datasheet"), success, failed, skipped);
-        });
+        connect(stage,
+                &DatasheetExportStage::progressChanged,
+                this,
+                [this, runGeneration](const ExportTypeProgress& progress) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        return;
+                    }
+                    onExportTypeProgressChanged(QStringLiteral("Datasheet"), progress);
+                });
+        connect(stage,
+                &DatasheetExportStage::completed,
+                this,
+                [this, stage, runGeneration](int success, int failed, int skipped) {
+                    if (runGeneration != m_activeRunGeneration) {
+                        stage->deleteLater();
+                        return;
+                    }
+                    onExportTypeCompleted(QStringLiteral("Datasheet"), success, failed, skipped);
+                });
         stage->start(exportableComponentIds, m_cachedData);
     }
 
@@ -466,6 +562,7 @@ void ParallelExportService::startExport() {
 
 void ParallelExportService::cancelExport() {
     qDebug() << "ParallelExportService: Cancelling export";
+    ++m_activeRunGeneration;
     m_cancelRequested = true;
 
     if (m_progress.currentStage == ExportOverallProgress::Stage::Preloading) {
@@ -524,6 +621,10 @@ void ParallelExportService::onPreloadItemCompleted(const QString& componentId, b
 }
 
 void ParallelExportService::onExportTypeProgressChanged(const QString& typeName, const ExportTypeProgress& progress) {
+    if (m_cancelRequested || m_progress.currentStage == ExportOverallProgress::Stage::Cancelled) {
+        return;
+    }
+
     {
         QMutexLocker locker(&m_progressMutex);
         m_progress.exportTypeProgress[typeName] = progress;
@@ -569,6 +670,10 @@ void ParallelExportService::onExportTypeCompleted(const QString& typeName,
 void ParallelExportService::onExportItemStatusChanged(const QString& componentId,
                                                       const QString& typeName,
                                                       const ExportItemStatus& status) {
+    if (m_cancelRequested || m_progress.currentStage == ExportOverallProgress::Stage::Cancelled) {
+        return;
+    }
+
     QMutexLocker locker(&m_progressMutex);
 
     if (!m_progress.exportTypeProgress.contains(typeName)) {
@@ -672,7 +777,9 @@ void ParallelExportService::processNextPreloadBatch() {
 
 void ParallelExportService::onAllComponentDataCollected(const QList<ComponentData>& componentDataList) {
     // 断开连接，避免重复处理
-    disconnect(m_componentService, &ComponentService::allComponentsDataCollected, this, nullptr);
+    if (m_componentService) {
+        disconnect(m_componentService, &ComponentService::allComponentsDataCollected, this, nullptr);
+    }
 
     // 检查是否已请求取消 - 如果是则直接返回，避免覆盖取消状态
     {

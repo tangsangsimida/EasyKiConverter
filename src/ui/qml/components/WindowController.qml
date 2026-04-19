@@ -9,6 +9,7 @@ QtObject {
     property var exportProgressController
     property var closeConfirmDialog
     property var exitOptionDialog
+    property bool forceExitRequested: false
     readonly property WindowPersistenceManager persistenceManager: WindowPersistenceManager {
         window: controller.window
         configService: controller.configService
@@ -47,16 +48,62 @@ QtObject {
             window.showMinimized();
     }
 
+    function processCloseRequest() {
+        if (closeConfirmDialog && closeConfirmDialog.visible) {
+            return;
+        }
+        if (exitOptionDialog && exitOptionDialog.visible) {
+            return;
+        }
+
+        if (exportProgressController && exportProgressController.isExporting) {
+            if (closeConfirmDialog)
+                closeConfirmDialog.open();
+            return;
+        }
+
+        if (configService) {
+            var exitPreference = configService.getExitPreference();
+            if (exitPreference === "minimize") {
+                requestMinimize();
+                return;
+            }
+            if (exitPreference === "exit") {
+                confirmExit();
+                return;
+            }
+        }
+
+        if (exitOptionDialog)
+            exitOptionDialog.open();
+    }
+
     function requestClose() {
-        if (window)
-            window.close();
+        processCloseRequest();
+    }
+
+    function resumeExport() {
+        forceExitRequested = false;
+        if (closeConfirmDialog)
+            closeConfirmDialog.close();
+        if (window) {
+            window.raise();
+            window.requestActivate();
+        }
     }
 
     function confirmExit() {
+        forceExitRequested = true;
+        if (closeConfirmDialog)
+            closeConfirmDialog.close();
+        if (exitOptionDialog)
+            exitOptionDialog.close();
         if (exportProgressController)
             exportProgressController.handleCloseRequest();
         persistenceManager.persistGeometry();
-        Qt.quit();
+        if (window)
+            window.close();
+        Qt.callLater(Qt.quit);
     }
 
     function handleEsc() {
@@ -78,38 +125,11 @@ QtObject {
     }
 
     function handleClosing(close) {
-        if (closeConfirmDialog && closeConfirmDialog.visible) {
-            close.accepted = false;
+        if (forceExitRequested) {
+            close.accepted = true;
             return;
         }
-        if (exitOptionDialog && exitOptionDialog.visible) {
-            close.accepted = false;
-            return;
-        }
-
-        if (exportProgressController && exportProgressController.isExporting) {
-            close.accepted = false;
-            if (closeConfirmDialog)
-                closeConfirmDialog.open();
-            return;
-        }
-
-        if (configService) {
-            var exitPreference = configService.getExitPreference();
-            if (exitPreference === "minimize") {
-                close.accepted = false;
-                requestMinimize();
-                return;
-            }
-            if (exitPreference === "exit") {
-                close.accepted = false;
-                confirmExit();
-                return;
-            }
-        }
-
         close.accepted = false;
-        if (exitOptionDialog)
-            exitOptionDialog.open();
+        processCloseRequest();
     }
 }

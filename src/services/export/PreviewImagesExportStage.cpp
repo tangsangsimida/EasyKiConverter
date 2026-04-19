@@ -65,8 +65,7 @@ void PreviewImagesExportStage::cancel() {
 
     qDebug() << "PreviewImagesExportStage: Cancelling...";
 
-    // 设置取消标志
-    m_cancelled.store(true);
+    ExportTypeStage::cancel();
 
     // 回滚所有临时文件
     m_tempManager.rollbackAll();

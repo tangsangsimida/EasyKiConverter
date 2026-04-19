@@ -264,6 +264,7 @@ private:
     int m_runningExportStages{0};  ///< 正在运行的导出Stage数量
     bool m_cancelRequested{false};  ///< 当前导出是否已请求取消
     int m_nextPreloadIndex{0};  ///< 下一批预加载索引
+    quint64 m_activeRunGeneration{0};  ///< 当前导出会话代数，用于屏蔽取消后的迟到回调
 };
 
 }  // namespace EasyKiConverter

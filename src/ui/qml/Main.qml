@@ -38,6 +38,7 @@ ApplicationWindow {
         cancelText: qsTr("继续转换")
         confirmColor: AppStyle.colors.danger
         onAccepted: appWindowController.confirmExit()
+        onRejected: appWindowController.resumeExport()
     }
 
     ExitDialog {
@@ -54,6 +55,7 @@ ApplicationWindow {
             }
             appWindowController.confirmExit();
         }
+        onCanceled: appWindowController.resumeExport()
     }
 
     Shortcut {
