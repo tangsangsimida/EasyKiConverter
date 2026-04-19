@@ -547,7 +547,7 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
                 emit cadDataReady(result.componentId, result.parsed.componentData);
                 // 使用异步保存，不阻塞UI
                 ComponentCacheService::instance()->saveComponentMetadataAsync(result.componentId,
-                                                                         result.parsed.componentData);
+                                                                              result.parsed.componentData);
                 ComponentCacheService::instance()->saveCadDataJson(
                     result.componentId, QJsonDocument(result.parsed.resultData).toJson(QJsonDocument::Compact));
 
@@ -596,7 +596,9 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
         // 从缓存加载预览图数据（批量发送，避免频繁 UI 更新）
         if (!result.encodedPreviewImages.isEmpty()) {
             const QStringList encodedImages = result.encodedPreviewImages;
-            QTimer::singleShot(0, this, [this, normalizedId, encodedImages]() { emit previewImagesReady(normalizedId, encodedImages); });
+            QTimer::singleShot(0, this, [this, normalizedId, encodedImages]() {
+                emit previewImagesReady(normalizedId, encodedImages);
+            });
         }
 
         // 加载数据手册
