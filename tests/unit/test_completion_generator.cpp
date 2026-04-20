@@ -1,7 +1,7 @@
-#include <QTest>
-#include <QString>
-
 #include "utils/cli/CompletionGenerator.h"
+
+#include <QString>
+#include <QTest>
 
 using namespace EasyKiConverter;
 
@@ -23,7 +23,7 @@ private:
 
 void TestCompletionGenerator::testGenerateBash() {
     QString script = CompletionGenerator::generate(CompletionGenerator::Shell::Bash);
-    
+
     QVERIFY(!script.isEmpty());
     QVERIFY(script.contains("# EasyKiConverter bash completion script"));
     QVERIFY(script.contains("_easykiconverter_complete()"));
@@ -42,7 +42,7 @@ void TestCompletionGenerator::testGenerateBash() {
 
 void TestCompletionGenerator::testGenerateZsh() {
     QString script = CompletionGenerator::generate(CompletionGenerator::Shell::Zsh);
-    
+
     QVERIFY(!script.isEmpty());
     QVERIFY(script.contains("#compdef easykiconverter"));
     QVERIFY(script.contains("_easykiconverter()"));
@@ -60,7 +60,7 @@ void TestCompletionGenerator::testGenerateZsh() {
 
 void TestCompletionGenerator::testGenerateFish() {
     QString script = CompletionGenerator::generate(CompletionGenerator::Shell::Fish);
-    
+
     QVERIFY(!script.isEmpty());
     QVERIFY(script.contains("# EasyKiConverter fish completion script"));
     QVERIFY(script.contains("complete -c easykiconverter"));
@@ -79,15 +79,15 @@ void TestCompletionGenerator::testParseShell() {
     QCOMPARE(CompletionGenerator::parseShell("bash"), CompletionGenerator::Shell::Bash);
     QCOMPARE(CompletionGenerator::parseShell("BASH"), CompletionGenerator::Shell::Bash);
     QCOMPARE(CompletionGenerator::parseShell("Bash"), CompletionGenerator::Shell::Bash);
-    
+
     QCOMPARE(CompletionGenerator::parseShell("zsh"), CompletionGenerator::Shell::Zsh);
     QCOMPARE(CompletionGenerator::parseShell("ZSH"), CompletionGenerator::Shell::Zsh);
     QCOMPARE(CompletionGenerator::parseShell("Zsh"), CompletionGenerator::Shell::Zsh);
-    
+
     QCOMPARE(CompletionGenerator::parseShell("fish"), CompletionGenerator::Shell::Fish);
     QCOMPARE(CompletionGenerator::parseShell("FISH"), CompletionGenerator::Shell::Fish);
     QCOMPARE(CompletionGenerator::parseShell("Fish"), CompletionGenerator::Shell::Fish);
-    
+
     // Default to bash for unknown
     QCOMPARE(CompletionGenerator::parseShell("unknown"), CompletionGenerator::Shell::Bash);
     QCOMPARE(CompletionGenerator::parseShell(""), CompletionGenerator::Shell::Bash);
@@ -99,13 +99,13 @@ void TestCompletionGenerator::testGetInstallInstructions() {
     QVERIFY(bashInstructions.contains("Bash"));
     QVERIFY(bashInstructions.contains("--completion bash"));
     QVERIFY(bashInstructions.contains("~/.bashrc"));
-    
+
     QString zshInstructions = CompletionGenerator::getInstallInstructions(CompletionGenerator::Shell::Zsh);
     QVERIFY(!zshInstructions.isEmpty());
     QVERIFY(zshInstructions.contains("Zsh"));
     QVERIFY(zshInstructions.contains("--completion zsh"));
     QVERIFY(zshInstructions.contains("~/.zshrc"));
-    
+
     QString fishInstructions = CompletionGenerator::getInstallInstructions(CompletionGenerator::Shell::Fish);
     QVERIFY(!fishInstructions.isEmpty());
     QVERIFY(fishInstructions.contains("Fish"));

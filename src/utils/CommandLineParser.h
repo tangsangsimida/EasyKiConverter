@@ -253,6 +253,10 @@ private:
     void setupOptions();
     void setupCliOptions();
 
+    // 存储命令行参数（在 QCoreApplication 创建前获取）
+    int m_argc = 0;
+    char** m_argv = nullptr;
+
     QCommandLineParser m_parser;
     QCommandLineOption m_debugOption;
     QCommandLineOption m_logLevelOption;

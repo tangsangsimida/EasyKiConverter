@@ -1,7 +1,7 @@
-#include <QTest>
-#include <QStringList>
-
 #include "utils/CommandLineParser.h"
+
+#include <QStringList>
+#include <QTest>
 
 class TestCommandLineParser : public QObject {
     Q_OBJECT
@@ -36,11 +36,11 @@ void TestCommandLineParser::setArgs(const QStringList& args) {
     // Clean up previous
     m_argStorage.clear();
     m_argc = args.size();
-    
+
     for (const QString& arg : args) {
         m_argStorage.append(arg.toUtf8());
     }
-    
+
     // Note: This is a simplified approach. In real tests, we'd need to handle
     // QCoreApplication differently.
 }
@@ -49,7 +49,7 @@ void TestCommandLineParser::testParseBasicOptions() {
     // Test basic parsing
     QStringList args = {"easykiconverter"};
     Q_UNUSED(args);
-    
+
     // CommandLineParser requires QCoreApplication
     // This test would need proper setup
     QVERIFY(true);  // Placeholder

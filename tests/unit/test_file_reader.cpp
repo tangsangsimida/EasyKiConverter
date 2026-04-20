@@ -1,9 +1,9 @@
-#include <QTest>
-#include <QTemporaryDir>
-#include <QFile>
-#include <QTextStream>
-
 #include "utils/cli/FileReader.h"
+
+#include <QFile>
+#include <QTemporaryDir>
+#include <QTest>
+#include <QTextStream>
 
 using namespace EasyKiConverter;
 
@@ -13,7 +13,7 @@ class TestFileReader : public QObject {
 private slots:
     void initTestCase();
     void cleanupTestCase();
-    
+
     void testReadComponentListFile();
     void testReadComponentListFileEmpty();
     void testReadComponentListFileNotFound();
@@ -49,10 +49,10 @@ QString TestFileReader::createTempFile(const QString& name, const QString& conte
 void TestFileReader::testReadComponentListFile() {
     QString content = "C23186\nC23166\nC23102\n";
     QString filePath = createTempFile("components.txt", content);
-    
+
     QString error;
     QStringList ids = FileReader::readComponentListFile(filePath, error);
-    
+
     QVERIFY(error.isEmpty());
     QCOMPARE(ids.size(), 3);
     QVERIFY(ids.contains("C23186"));
@@ -63,10 +63,10 @@ void TestFileReader::testReadComponentListFile() {
 void TestFileReader::testReadComponentListFileEmpty() {
     QString content = "\n\n\n";
     QString filePath = createTempFile("empty.txt", content);
-    
+
     QString error;
     QStringList ids = FileReader::readComponentListFile(filePath, error);
-    
+
     QVERIFY(error.isEmpty());
     QVERIFY(ids.isEmpty());
 }
@@ -74,7 +74,7 @@ void TestFileReader::testReadComponentListFileEmpty() {
 void TestFileReader::testReadComponentListFileNotFound() {
     QString error;
     QStringList ids = FileReader::readComponentListFile("/nonexistent/file.txt", error);
-    
+
     QVERIFY(!error.isEmpty());
     QVERIFY(error.contains("不存在"));
     QVERIFY(ids.isEmpty());
@@ -82,7 +82,7 @@ void TestFileReader::testReadComponentListFileNotFound() {
 
 void TestFileReader::testFileExists() {
     QString filePath = createTempFile("exists.txt", "test");
-    
+
     QVERIFY(FileReader::fileExists(filePath));
     QVERIFY(!FileReader::fileExists("/nonexistent/file.txt"));
 }

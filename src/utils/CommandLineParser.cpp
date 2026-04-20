@@ -46,8 +46,9 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
     m_parser.addOption(m_completeOption);
 
     // 设置应用程序参数（用于帮助和版本信息）
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
+    // 重要：在 QCoreApplication 创建前存储参数，以确保 CLI 模式检测可靠
+    m_argc = argc;
+    m_argv = argv;
 }
 
 void CommandLineParser::setupOptions() {
@@ -75,11 +76,22 @@ void CommandLineParser::setupCliOptions() {
 }
 
 bool CommandLineParser::parse() {
-    bool result = m_parser.parse(QCoreApplication::arguments());
+    // 重要：使用存储的 argv 而非 QCoreApplication::arguments()
+    // 因为此函数可能在 QCoreApplication 创建前被调用
+    QStringList args;
+    if (m_argv) {
+        args.reserve(m_argc);
+        for (int i = 0; i < m_argc; ++i) {
+            args.append(QString::fromLocal8Bit(m_argv[i]));
+        }
+    }
+
+    bool result = m_parser.parse(args);
 
     if (result) {
         // 检测 CLI 子命令
-        QStringList args = QCoreApplication::arguments();
+        // 使用 args 而非 QCoreApplication::arguments() 保证可靠性
+
 
         // 检查是否包含 "convert" 命令
         for (int i = 1; i < args.size(); ++i) {
@@ -293,15 +305,13 @@ QString CommandLineParser::componentId() const {
 }
 
 bool CommandLineParser::exportSymbol() const {
-    // --symbol 是 flag 选项，默认 false（未设置则不导出符号库）
-    // 用户可通过 --symbol=true 或 --symbol=true 来显式启用
-    // 注意：由于 m_symbolOption 定义为无值 flag，以下逻辑在 isSet() 时返回 true
-    return m_parser.isSet(m_symbolOption);
+    // 默认为 true，除非显式设置为 false
+    return !m_parser.isSet(m_symbolOption) || m_parser.value(m_symbolOption).toLower() != "false";
 }
 
 bool CommandLineParser::exportFootprint() const {
-    // --footprint 是 flag 选项，默认 false（未设置则不导出封装库）
-    return m_parser.isSet(m_footprintOption);
+    // 默认为 true，除非显式设置为 false
+    return !m_parser.isSet(m_footprintOption) || m_parser.value(m_footprintOption).toLower() != "false";
 }
 
 bool CommandLineParser::export3DModel() const {
@@ -336,8 +346,8 @@ QString CommandLineParser::cliHelpText() const {
     stream << "  -i, --input <path>      输入文件路径（BOM 表或元器件列表文件）\n";
     stream << "  -o, --output <path>     输出目录路径（必需）\n";
     stream << "  -c, --component <id>    LCSC 元器件编号\n";
-    stream << "  --symbol                导出符号库\n";
-    stream << "  --footprint             导出封装库\n";
+    stream << "  --symbol                导出符号库（默认: true）\n";
+    stream << "  --footprint             导出封装库（默认: true）\n";
     stream << "  --3d-model              导出 3D 模型\n";
     stream << "  --preview               导出预览图\n";
     stream << "  --progress              显示进度条\n";
