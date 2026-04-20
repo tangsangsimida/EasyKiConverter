@@ -101,6 +101,41 @@
 
 ## 导出与窗口生命周期相关
 
+### Q: 为什么第二次把新元器件追加导出到同一个 `.kicad_sym` 后，KiCad 里看不到新符号？
+
+**问题描述**：
+第一次导出后，符号库文件已经存在。随后用户选择新的元器件，继续导出到同一个符号库目录，导出流程显示成功，但在 KiCad 中重新打开该 `.kicad_sym` 时，看不到新追加的符号。
+
+**根本原因**：
+这是符号库“追加导出”路径失效导致的回归问题：
+
+1. `SymbolExportStage` 曾在目标 `.kicad_sym` 已存在且 `overwriteExistingFiles == false` 时，直接整库 `skip` 返回，根本没有进入追加逻辑。
+2. 即使后续调用了 `ExporterSymbol::exportSymbolLibrary(..., appendMode, updateMode)`，它操作的也是一个全新的临时文件，而不是现有库文件的副本。
+3. 结果是 append/update 逻辑没有基于已有库内容做 merge，最终写回的内容无法包含“旧库 + 新符号”的正确组合。
+
+**修复方案**：
+- 删除“文件已存在且不覆盖就整库跳过”的早退逻辑。
+- 在追加/更新模式下，先把现有 `.kicad_sym` 复制到临时文件。
+- 在该临时文件上执行 `ExporterSymbol::exportSymbolLibrary()` 的 merge 逻辑。
+- merge 完成后，再用临时文件提交覆盖最终库文件。
+
+**回归预防**：
+- 任何“追加到现有库”的导出逻辑，都不能只看最终文件是否存在后直接跳过。
+- 如果 merge 逻辑依赖读取已有文件内容，执行对象必须是“现有文件副本”而不是空白临时文件。
+- 修改 `SymbolExportStage`、`TempFileManager` 或 `ExporterSymbol` 时，必须同时验证：
+  - 首次导出到空目录
+  - 第二次追加新符号到同一 `.kicad_sym`
+  - 更新已存在符号到同一 `.kicad_sym`
+
+**相关文件**：
+- `src/services/export/SymbolExportStage.cpp`
+- `src/core/kicad/ExporterSymbol.cpp`
+- `src/services/export/TempFileManager.cpp`
+
+**状态**：✅ 已修复 (2026-04-20)
+
+---
+
 ### Q: 为什么点击“停止导出”后再立即点“重试所有失败项”会导致未响应，甚至连关闭/强退流程也异常？
 
 **问题描述**：
@@ -411,6 +446,7 @@ DelegateModel {
 - [ ] 预览图只从 API 固定位置获取
 - [ ] 弱网络模式下的导出成功率
 - [ ] 符号库、封装库导出功能
+- [ ] 已有 `.kicad_sym` 上追加导出新符号后，KiCad 中可见新符号
 - [ ] 主窗口启动后可见，并出现在任务栏
 - [ ] 最大化关闭后重启仍为最大化
 - [ ] 最大化恢复到窗口化时保留上次 normal geometry
