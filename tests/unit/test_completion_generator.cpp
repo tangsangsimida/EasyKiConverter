@@ -1,0 +1,133 @@
+#include <QTest>
+#include <QString>
+
+#include "utils/cli/CompletionGenerator.h"
+
+using namespace EasyKiConverter;
+
+class TestCompletionGenerator : public QObject {
+    Q_OBJECT
+
+private slots:
+    void testGenerateBash();
+    void testGenerateZsh();
+    void testGenerateFish();
+    void testParseShell();
+    void testGetInstallInstructions();
+
+private:
+    void verifyBashScript(const QString& script);
+    void verifyZshScript(const QString& script);
+    void verifyFishScript(const QString& script);
+};
+
+void TestCompletionGenerator::testGenerateBash() {
+    QString script = CompletionGenerator::generate(CompletionGenerator::Shell::Bash);
+    
+    QVERIFY(!script.isEmpty());
+    QVERIFY(script.contains("# EasyKiConverter bash completion script"));
+    QVERIFY(script.contains("_easykiconverter_complete()"));
+    QVERIFY(script.contains("complete -F _easykiconverter_complete easykiconverter"));
+    QVERIFY(script.contains("convert"));
+    QVERIFY(script.contains("bom"));
+    QVERIFY(script.contains("component"));
+    QVERIFY(script.contains("batch"));
+    QVERIFY(script.contains("--input"));
+    QVERIFY(script.contains("--output"));
+    QVERIFY(script.contains("--component"));
+    QVERIFY(script.contains("--completion"));
+    QVERIFY(script.contains("--complete"));
+    QVERIFY(script.contains("lcsc-id"));
+}
+
+void TestCompletionGenerator::testGenerateZsh() {
+    QString script = CompletionGenerator::generate(CompletionGenerator::Shell::Zsh);
+    
+    QVERIFY(!script.isEmpty());
+    QVERIFY(script.contains("#compdef easykiconverter"));
+    QVERIFY(script.contains("_easykiconverter()"));
+    QVERIFY(script.contains("convert"));
+    QVERIFY(script.contains("bom"));
+    QVERIFY(script.contains("component"));
+    QVERIFY(script.contains("batch"));
+    QVERIFY(script.contains("--input"));
+    QVERIFY(script.contains("--output"));
+    QVERIFY(script.contains("--component"));
+    QVERIFY(script.contains("--completion"));
+    QVERIFY(script.contains("--complete"));
+    QVERIFY(script.contains("lcsc-id"));
+}
+
+void TestCompletionGenerator::testGenerateFish() {
+    QString script = CompletionGenerator::generate(CompletionGenerator::Shell::Fish);
+    
+    QVERIFY(!script.isEmpty());
+    QVERIFY(script.contains("# EasyKiConverter fish completion script"));
+    QVERIFY(script.contains("complete -c easykiconverter"));
+    QVERIFY(script.contains("convert"));
+    QVERIFY(script.contains("bom"));
+    QVERIFY(script.contains("component"));
+    QVERIFY(script.contains("batch"));
+    QVERIFY(script.contains("--input"));
+    QVERIFY(script.contains("--output"));
+    QVERIFY(script.contains("--component"));
+    QVERIFY(script.contains("--completion"));
+    QVERIFY(script.contains("--complete"));
+}
+
+void TestCompletionGenerator::testParseShell() {
+    QCOMPARE(CompletionGenerator::parseShell("bash"), CompletionGenerator::Shell::Bash);
+    QCOMPARE(CompletionGenerator::parseShell("BASH"), CompletionGenerator::Shell::Bash);
+    QCOMPARE(CompletionGenerator::parseShell("Bash"), CompletionGenerator::Shell::Bash);
+    
+    QCOMPARE(CompletionGenerator::parseShell("zsh"), CompletionGenerator::Shell::Zsh);
+    QCOMPARE(CompletionGenerator::parseShell("ZSH"), CompletionGenerator::Shell::Zsh);
+    QCOMPARE(CompletionGenerator::parseShell("Zsh"), CompletionGenerator::Shell::Zsh);
+    
+    QCOMPARE(CompletionGenerator::parseShell("fish"), CompletionGenerator::Shell::Fish);
+    QCOMPARE(CompletionGenerator::parseShell("FISH"), CompletionGenerator::Shell::Fish);
+    QCOMPARE(CompletionGenerator::parseShell("Fish"), CompletionGenerator::Shell::Fish);
+    
+    // Default to bash for unknown
+    QCOMPARE(CompletionGenerator::parseShell("unknown"), CompletionGenerator::Shell::Bash);
+    QCOMPARE(CompletionGenerator::parseShell(""), CompletionGenerator::Shell::Bash);
+}
+
+void TestCompletionGenerator::testGetInstallInstructions() {
+    QString bashInstructions = CompletionGenerator::getInstallInstructions(CompletionGenerator::Shell::Bash);
+    QVERIFY(!bashInstructions.isEmpty());
+    QVERIFY(bashInstructions.contains("Bash"));
+    QVERIFY(bashInstructions.contains("--completion bash"));
+    QVERIFY(bashInstructions.contains("~/.bashrc"));
+    
+    QString zshInstructions = CompletionGenerator::getInstallInstructions(CompletionGenerator::Shell::Zsh);
+    QVERIFY(!zshInstructions.isEmpty());
+    QVERIFY(zshInstructions.contains("Zsh"));
+    QVERIFY(zshInstructions.contains("--completion zsh"));
+    QVERIFY(zshInstructions.contains("~/.zshrc"));
+    
+    QString fishInstructions = CompletionGenerator::getInstallInstructions(CompletionGenerator::Shell::Fish);
+    QVERIFY(!fishInstructions.isEmpty());
+    QVERIFY(fishInstructions.contains("Fish"));
+    QVERIFY(fishInstructions.contains("--completion fish"));
+    QVERIFY(fishInstructions.contains("~/.config/fish"));
+}
+
+void TestCompletionGenerator::verifyBashScript(const QString& script) {
+    QVERIFY(script.contains("cur"));
+    QVERIFY(script.contains("prev"));
+    QVERIFY(script.contains("COMPREPLY"));
+}
+
+void TestCompletionGenerator::verifyZshScript(const QString& script) {
+    QVERIFY(script.contains("_arguments"));
+    QVERIFY(script.contains("_describe"));
+}
+
+void TestCompletionGenerator::verifyFishScript(const QString& script) {
+    QVERIFY(script.contains("complete"));
+    QVERIFY(script.contains("-c easykiconverter"));
+}
+
+QTEST_MAIN(TestCompletionGenerator)
+#include "test_completion_generator.moc"

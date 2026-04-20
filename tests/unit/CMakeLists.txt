@@ -78,3 +78,39 @@ target_include_directories(test_logging PRIVATE
     ${CMAKE_SOURCE_DIR}
 )
 add_test(NAME test_logging COMMAND test_logging)
+
+# CLI 相关测试
+add_executable(test_command_line_parser test_command_line_parser.cpp)
+target_link_libraries(test_command_line_parser PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_command_line_parser PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_command_line_parser COMMAND test_command_line_parser)
+
+add_executable(test_completion_generator test_completion_generator.cpp)
+target_link_libraries(test_completion_generator PRIVATE
+    Qt6::Test
+    EasyKiConverter::Cli
+    EasyKiConverterLib
+)
+target_include_directories(test_completion_generator PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_completion_generator COMMAND test_completion_generator)
+
+add_executable(test_file_reader test_file_reader.cpp)
+target_link_libraries(test_file_reader PRIVATE
+    Qt6::Test
+    EasyKiConverter::Cli
+    EasyKiConverterLib
+)
+target_include_directories(test_file_reader PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_file_reader COMMAND test_file_reader)

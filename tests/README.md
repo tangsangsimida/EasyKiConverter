@@ -6,11 +6,13 @@
 
 - `unit/`: 单元测试项目。针对核心逻辑（Core）、模型（Models）和服务（Services）进行独立验证。
   - `test_easyeda_api.cpp`: 验证与 EasyEDA 服务器交互的客户端逻辑（支持 Mock）。
+  - `test_command_line_parser.cpp`: 命令行参数解析器测试。
+  - `test_completion_generator.cpp`: Shell 补全脚本生成器测试。
+  - `test_file_reader.cpp`: 文件读取工具测试。
 - `ui/`: UI/QML 自动化测试。
 - `manual/`: 手动测试清单，供测试人员按步骤执行回归验证。
   - `WINDOW_STATE_MANUAL_CHECKLIST.md`: 主窗口显示、最大化恢复、窗口化恢复和位置持久化测试清单。
   - `CLI_TEST_MANUAL.md`: CLI 模式手动测试手册，包含完整的测试用例和步骤。
-  - `CLI_TEST_ITEMS.md`: CLI 测试条目清单，快速参考测试项目。
 - `common/`: 测试辅助类和通用 Mock 对象。
   - `MockNetworkClient.hpp`: 用于拦截统一网络客户端请求的模拟实现。
 - `reports/`: (Git 忽略) 用于存放构建过程中生成的 XML/HTML 测试报告。
@@ -45,8 +47,7 @@ ctest --output-on-failure
 窗口状态、桌面映射、任务栏可见性这类场景目前不适合完全依赖自动化测试。执行相关回归时，请参考：
 
 - [窗口状态手动测试清单](./manual/WINDOW_STATE_MANUAL_CHECKLIST.md)
-- [CLI 模式手动测试手册](./manual/CLI_TEST_MANUAL.md) - 包含完整的 CLI 测试用例和步骤
-- [CLI 测试条目清单](./manual/CLI_TEST_ITEMS.md) - 快速参考测试项目
+- [CLI 模式手动测试手册](./manual/CLI_TEST_MANUAL.md)
 
 ## 测试规范
 

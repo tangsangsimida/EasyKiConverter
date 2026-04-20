@@ -293,18 +293,20 @@ QString CommandLineParser::componentId() const {
 }
 
 bool CommandLineParser::exportSymbol() const {
-    // 默认为 true，除非显式设置为 false
-    return !m_parser.isSet(m_symbolOption) || m_parser.value(m_symbolOption).toLower() != "false";
+    // --symbol 是 flag 选项，默认 false（未设置则不导出符号库）
+    // 用户可通过 --symbol=true 或 --symbol=true 来显式启用
+    // 注意：由于 m_symbolOption 定义为无值 flag，以下逻辑在 isSet() 时返回 true
+    return m_parser.isSet(m_symbolOption);
 }
 
 bool CommandLineParser::exportFootprint() const {
-    // 默认为 true，除非显式设置为 false
-    return !m_parser.isSet(m_footprintOption) || m_parser.value(m_footprintOption).toLower() != "false";
+    // --footprint 是 flag 选项，默认 false（未设置则不导出封装库）
+    return m_parser.isSet(m_footprintOption);
 }
 
 bool CommandLineParser::export3DModel() const {
-    // 默认为 true，除非显式设置为 false
-    return !m_parser.isSet(m_3dModelOption) || m_parser.value(m_3dModelOption).toLower() != "false";
+    // --3d-model 是 flag 选项，默认 false（未设置则不导出 3D 模型）
+    return m_parser.isSet(m_3dModelOption);
 }
 
 bool CommandLineParser::exportPreview() const {
@@ -334,8 +336,8 @@ QString CommandLineParser::cliHelpText() const {
     stream << "  -i, --input <path>      输入文件路径（BOM 表或元器件列表文件）\n";
     stream << "  -o, --output <path>     输出目录路径（必需）\n";
     stream << "  -c, --component <id>    LCSC 元器件编号\n";
-    stream << "  --symbol                导出符号库（默认: true）\n";
-    stream << "  --footprint             导出封装库（默认: true）\n";
+    stream << "  --symbol                导出符号库\n";
+    stream << "  --footprint             导出封装库\n";
     stream << "  --3d-model              导出 3D 模型\n";
     stream << "  --preview               导出预览图\n";
     stream << "  --progress              显示进度条\n";
@@ -367,6 +369,10 @@ bool CommandLineParser::isCompleteRequested() const {
 
 QString CommandLineParser::completeType() const {
     return m_parser.value(m_completeOption).toLower();
+}
+
+bool CommandLineParser::hasConvertCommand() const {
+    return m_hasConvertCommand;
 }
 
 }  // namespace EasyKiConverter

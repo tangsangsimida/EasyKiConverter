@@ -243,6 +243,12 @@ public:
      */
     QString completeType() const;
 
+    /**
+     * @brief 是否包含 convert 命令（无论子命令是否有效）
+     * @return convert 命令存在返回 true，否则返回 false
+     */
+    bool hasConvertCommand() const;
+
 private:
     void setupOptions();
     void setupCliOptions();

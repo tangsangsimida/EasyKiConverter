@@ -228,6 +228,7 @@ int main(int argc, char* argv[]) {
     // 在 QApplication 构造函数之前检查命令行参数
     bool showHelp = false;
     bool showVersion = false;
+    bool cliModeRequested = false;
     for (int i = 1; i < argc; ++i) {
         QString arg = QString::fromLocal8Bit(argv[i]);
         // 支持 Unix 风格（-h, --help）和 Windows 风格（/h, /help, /?, ?）的参数
@@ -238,172 +239,148 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // 创建命令行参数解析器（在 QApplication 之前，以支持纯 CLI 模式）
+    EasyKiConverter::CommandLineParser cmdParser(argc, argv);
+
+    // 早期解析：检查是否为纯 CLI 模式（不需要 GUI）
+    bool parsed = cmdParser.parse();
+    bool isCompletionMode = parsed && cmdParser.isCompletionRequested();
+    bool isCompleteMode = parsed && cmdParser.isCompleteRequested();
+    bool isCliMode = parsed && cmdParser.isCliMode();
+    bool isConvertCommand = parsed && cmdParser.hasConvertCommand();
+
+    // 纯 CLI 模式：--completion, --complete, --help, --version, convert 子命令
+    // 这些模式不需要 QApplication，只需要 QCoreApplication
+    cliModeRequested = isCompletionMode || isCompleteMode || showHelp || showVersion || isCliMode || isConvertCommand;
+
+    if (cliModeRequested) {
+        // 纯 CLI 模式：使用 QCoreApplication
+        QCoreApplication app(argc, argv);
+        app.setApplicationName("EasyKiConverter");
+        app.setApplicationVersion("3.1.3");
+        app.setOrganizationName("EasyKiConverter");
+        app.setOrganizationDomain("easykiconverter.com");
+
+        if (showHelp) {
+            QString helpText = cmdParser.helpText();
+            QTextStream consoleOut(stdout);
+            consoleOut << helpText;
+            return 0;
+        }
+
+        if (showVersion) {
+            QString versionText = "EasyKiConverter " + app.applicationVersion() + "\n";
+            QTextStream consoleOut(stdout);
+            consoleOut << versionText;
+            return 0;
+        }
+
+        if (!parsed) {
+            QTextStream err(stderr);
+            err << "错误: 无效的命令行参数\n";
+            err << cmdParser.helpText();
+            return 1;
+        }
+
+        if (!cmdParser.validate()) {
+            QTextStream err(stderr);
+            err << "错误: 参数值无效\n";
+            err << cmdParser.validationError() << "\n\n";
+            err << cmdParser.helpText();
+            return 1;
+        }
+
+        // 处理补全请求
+        if (isCompletionMode) {
+            QString shell = cmdParser.completionShell();
+            auto shellType = EasyKiConverter::CompletionGenerator::parseShell(shell);
+            QTextStream out(stdout);
+            out << EasyKiConverter::CompletionGenerator::generate(shellType);
+            return 0;
+        }
+
+        // 处理动态补全请求
+        if (isCompleteMode) {
+            QString completeType = cmdParser.completeType();
+            QTextStream out(stdout);
+
+            if (completeType == "lcsc-id") {
+                // 输出缓存中的 LCSC ID 列表
+                auto* cache = EasyKiConverter::ComponentCacheService::instance();
+                if (cache) {
+                    QStringList ids = cache->getCachedComponentIds();
+                    for (const QString& id : ids) {
+                        out << id << "\n";
+                    }
+                }
+            }
+
+            return 0;
+        }
+
+        // CLI 转换模式
+        if (isCliMode) {
+#ifdef _WIN32
+            // 尝试附加到父进程的控制台
+            if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+                AllocConsole();
+                SetConsoleTitleA("EasyKiConverter - CLI");
+            }
+            (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
+            (void)reopenConsoleStream(stderr, "CONOUT$", "w", "stderr");
+#endif
+            // 初始化日志系统（CLI 模式也需要日志）
+            bool debugMode = isDebugMode(cmdParser);
+            setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile(), cmdParser.isSyncLogging());
+
+            // 创建并执行 CLI 转换器
+            EasyKiConverter::CliConverter cliConverter(cmdParser);
+            bool success = cliConverter.execute();
+
+            if (!success) {
+                QTextStream err(stderr);
+                err << "错误: " << cliConverter.errorMessage() << "\n";
+            }
+
+            // 清理日志
+            EasyKiConverter::QtLogAdapter::uninstall();
+            auto* logger = EasyKiConverter::Logger::instance();
+            if (logger) {
+                logger->flush();
+                logger->close();
+            }
+
+            return success ? 0 : 1;
+        }
+
+        // convert 命令存在但无效子命令（如 easykiconverter convert abc）
+        if (isConvertCommand && !isCliMode) {
+            QTextStream err(stderr);
+            err << "错误: 无效的 convert 子命令\n";
+            err << "有效的子命令: bom, component, batch\n\n";
+            err << cmdParser.cliHelpText();
+            return 1;
+        }
+
+        // 未知情况，但既然是 CLI 模式尝试 GUI 启动
+        return 0;
+    }
+
+    // GUI 模式：使用完整的 QApplication
     // 设置 QML 样式为 Basic，以消除原生样式自定义警告
-    // 注意：样式必须在创建应用程序实例之前设置
     QQuickStyle::setStyle("Basic");
 
     QApplication app(argc, argv);
 
-    // 设置应用程序信息（必须在解析命令行参数之前）
+    // 设置应用程序信息
     app.setApplicationName("EasyKiConverter");
     app.setApplicationVersion("3.1.3");
     app.setOrganizationName("EasyKiConverter");
     app.setOrganizationDomain("easykiconverter.com");
 
-    // 创建命令行参数解析器（必须在检查showHelp之前）
-    EasyKiConverter::CommandLineParser cmdParser(argc, argv);
-
-    if (showHelp) {
-        // 使用 CommandLineParser 生成的帮助文本
-        QString helpText = cmdParser.helpText();
-
-#ifdef _WIN32
-        // 尝试附加到父进程的控制台（如果是从命令行启动的）
-        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
-            // 如果附加失败，创建新的控制台窗口
-            AllocConsole();
-            SetConsoleTitleA("EasyKiConverter - Help");
-        }
-        // 重定向标准输出
-        (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
-        (void)reopenConsoleStream(stderr, "CONOUT$", "w", "stderr");
-
-        // 输出帮助信息到控制台
-        QTextStream consoleOut(stdout);
-        consoleOut << helpText;
-#else
-        QTextStream consoleOut(stdout);
-        consoleOut << helpText;
-#endif
-        return 0;
-    }
-
-    if (showVersion) {
-        QString versionText = "EasyKiConverter " + app.applicationVersion() + "\n";
-
-#ifdef _WIN32
-        // 尝试附加到父进程的控制台（如果是从命令行启动的）
-        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
-            // 如果附加失败，创建新的控制台窗口
-            AllocConsole();
-            SetConsoleTitleA("EasyKiConverter - Version");
-        }
-        // 重定向标准输出
-        (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
-
-        // 输出版本信息到控制台
-        QTextStream consoleOut(stdout);
-        consoleOut << versionText;
-#else
-        QTextStream consoleOut(stdout);
-        consoleOut << versionText;
-#endif
-        return 0;
-    }
-
-    // 解析所有命令行参数
-    if (!cmdParser.parse()) {
-#ifdef _WIN32
-        // 尝试附加到父进程的控制台（如果是从命令行启动的）
-        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
-            // 如果附加失败，创建新的控制台窗口
-            AllocConsole();
-            SetConsoleTitleA("EasyKiConverter - Error");
-        }
-        // 重新打开标准输出
-        (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
-        (void)reopenConsoleStream(stderr, "CONOUT$", "w", "stderr");
-#endif
-        QTextStream err(stderr);
-        err << "错误: 无效的命令行参数\n";
-        err << cmdParser.helpText();
-        return 1;
-    }
-
-    // 验证参数值
-    if (!cmdParser.validate()) {
-#ifdef _WIN32
-        // 尝试附加到父进程的控制台（如果是从命令行启动的）
-        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
-            // 如果附加失败，创建新的控制台窗口
-            AllocConsole();
-            SetConsoleTitleA("EasyKiConverter - Error");
-        }
-        // 重新打开标准输出
-        (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
-        (void)reopenConsoleStream(stderr, "CONOUT$", "w", "stderr");
-#endif
-        QTextStream err(stderr);
-        err << "错误: 参数值无效\n";
-        err << cmdParser.validationError() << "\n\n";
-        err << cmdParser.helpText();
-        return 1;
-    }
-
-    // 处理补全请求（在所有其他处理之前）
-    if (cmdParser.isCompletionRequested()) {
-        QString shell = cmdParser.completionShell();
-        auto shellType = EasyKiConverter::CompletionGenerator::parseShell(shell);
-        QTextStream out(stdout);
-        out << EasyKiConverter::CompletionGenerator::generate(shellType);
-        return 0;
-    }
-
-    // 处理动态补全请求
-    if (cmdParser.isCompleteRequested()) {
-        QString completeType = cmdParser.completeType();
-        QTextStream out(stdout);
-
-        if (completeType == "lcsc-id") {
-            // 输出缓存中的 LCSC ID 列表
-            auto* cache = EasyKiConverter::ComponentCacheService::instance();
-            if (cache) {
-                QStringList ids = cache->getCachedComponentIds();
-                for (const QString& id : ids) {
-                    out << id << "\n";
-                }
-            }
-        }
-
-        return 0;
-    }
-
-    // 检查是否为 CLI 模式
-    if (cmdParser.isCliMode()) {
-#ifdef _WIN32
-        // 尝试附加到父进程的控制台（如果是从命令行启动的）
-        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
-            // 如果附加失败，创建新的控制台窗口
-            AllocConsole();
-            SetConsoleTitleA("EasyKiConverter - CLI");
-        }
-        // 重定向标准输出
-        (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
-        (void)reopenConsoleStream(stderr, "CONOUT$", "w", "stderr");
-#endif
-        // 初始化日志系统（CLI 模式也需要日志）
-        bool debugMode = isDebugMode(cmdParser);
-        setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile(), cmdParser.isSyncLogging());
-
-        // 创建并执行 CLI 转换器
-        EasyKiConverter::CliConverter cliConverter(cmdParser);
-        bool success = cliConverter.execute();
-
-        if (!success) {
-            QTextStream err(stderr);
-            err << "错误: " << cliConverter.errorMessage() << "\n";
-        }
-
-        // 清理日志
-        EasyKiConverter::QtLogAdapter::uninstall();
-        auto* logger = EasyKiConverter::Logger::instance();
-        if (logger) {
-            logger->flush();
-            logger->close();
-        }
-
-        return success ? 0 : 1;
-    }
+    // 注意：所有 CLI 模式处理（--help, --version, --completion, --complete, convert 子命令）
+    // 已在 QCoreApplication 阶段处理完毕。如果到达此处，说明是纯 GUI 启动。
+    // 命令行参数已在 CLI 路径解析并验证，无需重复解析。
 
     // 检查调试模式（命令行参数优先，环境变量向后兼容）
     bool debugMode = isDebugMode(cmdParser);
