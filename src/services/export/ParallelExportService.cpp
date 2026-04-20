@@ -909,6 +909,11 @@ void ParallelExportService::logNetworkRuntimeStats(const QString& context) const
 }
 
 void ParallelExportService::writeExportDetailedReport(const QString& reason) const {
+    // 只在调试模式下生成详细报告
+    if (!m_options.debugMode) {
+        return;
+    }
+
     if (m_options.outputPath.trimmed().isEmpty()) {
         return;
     }

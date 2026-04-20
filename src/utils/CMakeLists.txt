@@ -75,6 +75,8 @@ add_library(EasyKiConverterCli STATIC
     cli/BatchConverter.h
     cli/CliConverter.cpp
     cli/CliConverter.h
+    cli/CompletionGenerator.cpp
+    cli/CompletionGenerator.h
 )
 
 set_target_properties(EasyKiConverterSafeUtils PROPERTIES

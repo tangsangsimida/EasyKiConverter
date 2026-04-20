@@ -9,6 +9,8 @@
 - `ui/`: UI/QML 自动化测试。
 - `manual/`: 手动测试清单，供测试人员按步骤执行回归验证。
   - `WINDOW_STATE_MANUAL_CHECKLIST.md`: 主窗口显示、最大化恢复、窗口化恢复和位置持久化测试清单。
+  - `CLI_TEST_MANUAL.md`: CLI 模式手动测试手册，包含完整的测试用例和步骤。
+  - `CLI_TEST_ITEMS.md`: CLI 测试条目清单，快速参考测试项目。
 - `common/`: 测试辅助类和通用 Mock 对象。
   - `MockNetworkClient.hpp`: 用于拦截统一网络客户端请求的模拟实现。
 - `reports/`: (Git 忽略) 用于存放构建过程中生成的 XML/HTML 测试报告。
@@ -43,6 +45,8 @@ ctest --output-on-failure
 窗口状态、桌面映射、任务栏可见性这类场景目前不适合完全依赖自动化测试。执行相关回归时，请参考：
 
 - [窗口状态手动测试清单](./manual/WINDOW_STATE_MANUAL_CHECKLIST.md)
+- [CLI 模式手动测试手册](./manual/CLI_TEST_MANUAL.md) - 包含完整的 CLI 测试用例和步骤
+- [CLI 测试条目清单](./manual/CLI_TEST_ITEMS.md) - 快速参考测试项目
 
 ## 测试规范
 

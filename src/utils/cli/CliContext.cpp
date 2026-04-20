@@ -28,15 +28,17 @@ ExportOptions CliContext::createExportOptions() const {
     // 设置输出路径
     options.outputPath = m_parser.outputDir();
 
-    // 设置导出类型
+    // 设置导出类型（CLI 默认：符号库、封装库、3D模型-WRL格式）
     options.exportSymbol = m_parser.exportSymbol();
     options.exportFootprint = m_parser.exportFootprint();
     options.exportModel3D = m_parser.export3DModel();
+    options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
     options.exportPreviewImages = m_parser.exportPreview();
+    options.exportDatasheet = false;
 
     // 设置默认值
-    options.exportDatasheet = false;
     options.overwriteExistingFiles = true;
+    options.debugMode = m_parser.isDebugMode();
 
     return options;
 }

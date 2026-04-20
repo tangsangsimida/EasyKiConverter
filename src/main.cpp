@@ -7,6 +7,7 @@
 // 就每天在学校挂机任务就完成的npc
 #include "core/LanguageManager.h"
 #include "core/network/NetworkClient.h"
+#include "services/ComponentCacheService.h"
 #include "services/ConfigService.h"
 #include "services/UpdateCheckerService.h"
 #include "services/export/ExportProgress.h"
@@ -17,6 +18,7 @@
 #include "ui/viewmodels/ThemeSettingsViewModel.h"
 #include "utils/CommandLineParser.h"
 #include "utils/cli/CliConverter.h"
+#include "utils/cli/CompletionGenerator.h"
 #include "utils/logging/Log.h"
 
 #include <QApplication>
@@ -336,6 +338,34 @@ int main(int argc, char* argv[]) {
         err << cmdParser.validationError() << "\n\n";
         err << cmdParser.helpText();
         return 1;
+    }
+
+    // 处理补全请求（在所有其他处理之前）
+    if (cmdParser.isCompletionRequested()) {
+        QString shell = cmdParser.completionShell();
+        auto shellType = EasyKiConverter::CompletionGenerator::parseShell(shell);
+        QTextStream out(stdout);
+        out << EasyKiConverter::CompletionGenerator::generate(shellType);
+        return 0;
+    }
+
+    // 处理动态补全请求
+    if (cmdParser.isCompleteRequested()) {
+        QString completeType = cmdParser.completeType();
+        QTextStream out(stdout);
+
+        if (completeType == "lcsc-id") {
+            // 输出缓存中的 LCSC ID 列表
+            auto* cache = EasyKiConverter::ComponentCacheService::instance();
+            if (cache) {
+                QStringList ids = cache->getCachedComponentIds();
+                for (const QString& id : ids) {
+                    out << id << "\n";
+                }
+            }
+        }
+
+        return 0;
     }
 
     // 检查是否为 CLI 模式

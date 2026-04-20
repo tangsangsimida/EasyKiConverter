@@ -25,7 +25,9 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
     , m_3dModelOption("3d-model", "导出 3D 模型")
     , m_previewOption("preview", "导出预览图")
     , m_progressOption("progress", "显示进度条")
-    , m_quietOption(QStringList() << "q" << "quiet", "安静模式，减少输出") {
+    , m_quietOption(QStringList() << "q" << "quiet", "安静模式，减少输出")
+    , m_completionOption("completion", "生成 Shell 补全脚本 (bash/zsh/fish)", "shell")
+    , m_completeOption("complete", "内部选项：输出动态补全数据", "type") {
     m_parser.setApplicationDescription(
         QCoreApplication::translate("main", "EasyKiConverter - LCSC/EasyEDA 元件转 KiCad 库工具"));
 
@@ -38,6 +40,10 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
 
     // CLI 模式选项
     setupCliOptions();
+
+    // 补全选项
+    m_parser.addOption(m_completionOption);
+    m_parser.addOption(m_completeOption);
 
     // 设置应用程序参数（用于帮助和版本信息）
     Q_UNUSED(argc);
@@ -297,7 +303,8 @@ bool CommandLineParser::exportFootprint() const {
 }
 
 bool CommandLineParser::export3DModel() const {
-    return m_parser.isSet(m_3dModelOption);
+    // 默认为 true，除非显式设置为 false
+    return !m_parser.isSet(m_3dModelOption) || m_parser.value(m_3dModelOption).toLower() != "false";
 }
 
 bool CommandLineParser::exportPreview() const {
@@ -342,6 +349,24 @@ QString CommandLineParser::cliHelpText() const {
     stream << "  easykiconverter convert batch -i components.txt -o ./output --3d-model\n";
 
     return help;
+}
+
+// ========== 补全相关方法实现 ==========
+
+bool CommandLineParser::isCompletionRequested() const {
+    return m_parser.isSet(m_completionOption);
+}
+
+QString CommandLineParser::completionShell() const {
+    return m_parser.value(m_completionOption).toLower();
+}
+
+bool CommandLineParser::isCompleteRequested() const {
+    return m_parser.isSet(m_completeOption);
+}
+
+QString CommandLineParser::completeType() const {
+    return m_parser.value(m_completeOption).toLower();
 }
 
 }  // namespace EasyKiConverter

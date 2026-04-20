@@ -217,6 +217,32 @@ public:
      */
     QString cliHelpText() const;
 
+    // ========== 补全相关方法 ==========
+
+    /**
+     * @brief 是否请求生成补全脚本
+     * @return 请求返回 true，否则返回 false
+     */
+    bool isCompletionRequested() const;
+
+    /**
+     * @brief 获取补全脚本类型 (bash/zsh/fish)
+     * @return Shell 类型字符串
+     */
+    QString completionShell() const;
+
+    /**
+     * @brief 是否请求动态补全数据
+     * @return 请求返回 true，否则返回 false
+     */
+    bool isCompleteRequested() const;
+
+    /**
+     * @brief 获取动态补全类型
+     * @return 补全类型字符串 (如 "lcsc-id")
+     */
+    QString completeType() const;
+
 private:
     void setupOptions();
     void setupCliOptions();
@@ -241,6 +267,10 @@ private:
     QCommandLineOption m_previewOption;
     QCommandLineOption m_progressOption;
     QCommandLineOption m_quietOption;
+
+    // 补全选项
+    QCommandLineOption m_completionOption;
+    QCommandLineOption m_completeOption;
 
     CliMode m_cliMode = CliMode::None;
     bool m_hasConvertCommand = false;

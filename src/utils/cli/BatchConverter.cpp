@@ -82,9 +82,7 @@ void BatchConverter::onPreloadCompleted(int successCount, int failedCount) {
 
 void BatchConverter::onProgressChanged(const ExportOverallProgress& progress) {
     if (context()->parser().showProgress()) {
-        int total = progress.totalComponents;
-        int completed = progress.totalSuccessCount() + progress.totalFailedCount();
-        int percent = total > 0 ? (completed * 100 / total) : 0;
+        int percent = progress.overallPercentage();
         printProgressBar(percent);
     }
 }
