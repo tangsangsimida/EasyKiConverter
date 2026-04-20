@@ -77,7 +77,7 @@ source ~/.bashrc
 - `true`、`1`、`yes` - 启用调试模式
 - `false`、`0`、`no` 或未设置 - 禁用调试模式
 
-### 方法 2：CMake 构建选项
+### 方法 3：CMake 构建选项
 
 从源代码构建时，可以启用调试模式符号/封装导出：
 
@@ -87,7 +87,7 @@ cmake -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64" 
 
 这将编译具有额外调试导出功能的代码。
 
-### 方法 3：配置文件（备用）
+### 方法 4：配置文件（备用）
 
 如果未设置环境变量，可以通过配置文件控制调试模式：
 - **Windows**：`%APPDATA%\EasyKiConverter\EasyKiConverter\config.json`

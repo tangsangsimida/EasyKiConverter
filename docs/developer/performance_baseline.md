@@ -13,7 +13,7 @@
 
 ## 验证环境参考
 - **OS**: Windows 10/11
-- **Qt Version**: 6.6.x
+- **Qt Version**: 6.10.1
 - **Compiler**: MSVC 2019+ / MinGW 11+
 - **CPU**: Intel i5-11th Gen / AMD Ryzen 5 5000+ 或等效 CI Runner
 

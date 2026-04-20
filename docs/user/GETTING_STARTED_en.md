@@ -68,7 +68,26 @@ EasyKiConverter supports configuring startup behavior via command line arguments
 ./EasyKiConverter.exe --version
 ```
 
-For more command line argument information, please see the [Debug Mode Documentation](DEBUG_MODE_en.md).
+For more command line argument information, please see the [CLI Usage Documentation](../CLI_USAGE.md) or run `--help`.
+
+### Using CLI Mode
+
+EasyKiConverter supports a pure command line mode for conversion without GUI:
+
+```bash
+# Convert BOM file
+./EasyKiConverter convert bom --input BOM.csv --output /path/to/export
+
+# Convert single component
+./EasyKiConverter convert component C12345 --output /path/to/export
+
+# Batch convert
+./EasyKiConverter convert batch --input components.txt --output /path/to/export
+
+# Generate Shell completion scripts
+./EasyKiConverter --completion bash
+./EasyKiConverter --completion zsh
+```
 
 ### Step 2: Add Components
 

@@ -235,6 +235,29 @@ EasyKiConverter 自动将 EasyEDA 图层映射到 KiCad 图层。支持的图层
 - **快捷键支持**：使用 Alt+F4 或其他快捷键也会触发确认对话框
 - **安全退出**：确保所有操作完成后再退出应用程序
 
+### CLI 模式
+
+除了图形界面模式，EasyKiConverter 还支持纯命令行模式，无需启动 GUI 即可进行转换：
+
+```bash
+# 转换 BOM 表
+EasyKiConverter convert bom --input BOM.csv --output /path/to/export
+
+# 转换单个元器件
+EasyKiConverter convert component C12345 --output /path/to/export
+
+# 批量转换
+EasyKiConverter convert batch --input components.txt --output /path/to/export
+
+# 生成 Shell 自动补全脚本
+EasyKiConverter --completion bash
+EasyKiConverter --completion zsh
+```
+
+CLI 模式支持离线批量导出，适合自动化工作流程。
+
+更多 CLI 功能请参见 [CLI 使用文档](../CLI_USAGE.md)。
+
 ## 配置选项
 
 ### 主题设置

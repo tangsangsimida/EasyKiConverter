@@ -11,23 +11,23 @@ We follow a tiered testing strategy:
 
 ## 2. Dependency Injection & Mocking Strategy
 
-For testability, core components (like `EasyedaApi`) should not use concrete IO classes (like `NetworkUtils`) directly. Instead, they interact through interfaces.
+For testability, core components (like `EasyedaApi`) should not use concrete network clients directly. Instead, they interact through interfaces.
 
-### INetworkAdapter Interface
-All network operations are defined in the `INetworkAdapter` interface.
+### INetworkClient Interface
+All network operations are defined in the `INetworkClient` interface, supporting Mock implementations.
 
 ```cpp
-// Example: Injecting the adapter
-EasyedaApi api(new MockNetworkAdapter());
+// Example: Injecting a Mock client
+EasyedaApi api(new MockNetworkClient());
 ```
 
-### Using MockNetworkAdapter
-In tests, you can preset API results via `MockNetworkAdapter`:
+### Using MockNetworkClient
+In tests, you can preset API results via `MockNetworkClient`:
 
 ```cpp
 QJsonObject mockData;
 mockData.insert("success", true);
-mockAdapter->addJsonResponse("https://api.url", mockData);
+m_mockClient->addJsonResponse("https://api.url", mockData);
 ```
 
 ## 3. Key Points for Asynchronous Testing

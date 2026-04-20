@@ -77,7 +77,7 @@ source ~/.bashrc
 - `true`, `1`, `yes` - Enable debug mode
 - `false`, `0`, `no`, or not set - Disable debug mode
 
-### Method 2: CMake Build Option
+### Method 3: CMake Build Option
 
 When building from source, you can enable debug mode symbol/footprint export:
 
@@ -87,7 +87,7 @@ cmake -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64" 
 
 This compiles the code with additional debug export capabilities.
 
-### Method 3: Configuration File (Fallback)
+### Method 4: Configuration File (Fallback)
 
 If the environment variable is not set, debug mode can be controlled via the configuration file:
 - **Windows**: `%APPDATA%\EasyKiConverter\EasyKiConverter\config.json`

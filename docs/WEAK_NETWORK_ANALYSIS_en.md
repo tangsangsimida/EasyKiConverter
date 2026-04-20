@@ -2,99 +2,122 @@
 
 ## Overview
 
-This report documents the weak network resilience analysis of the EasyKiConverter project at version v3.0.4, including evaluation of timeout/retry/backoff mechanisms across all network components, identified issues, and improvement recommendations.
+This report documents the weak network resilience analysis of the EasyKiConverter project, including evaluation of timeout/retry/backoff mechanisms across all network components, identified issues, and improvement recommendations.
 
 ## Analysis Date
 
-2026-02-12
+2026-02-12 (Document updated: 2026-04-20)
 
 ## Network Architecture Overview
 
-The project contains **four independent network request implementations** with significantly different weak network resilience capabilities:
+The project contains **multiple independent network request implementations** with significantly different weak network resilience capabilities:
 
 | Component | Purpose | Timeout | Retry | Rate Limit Backoff |
 |-----------|---------|---------|-------|-------------------|
-| `FetchWorker` | Pipeline batch export (new) | Yes 8-10s | Yes 3x (no retry on timeout) | Yes (exponential ×2) |
+| `FetchWorker` | Pipeline batch export | Yes 15-30s | Yes 3x (with timeout retry) | Yes (exponential ×2) |
 | `NetworkUtils` | Single component preview | Yes 60s | Yes 5x | Yes |
 | `NetworkWorker` | Legacy single fetch | Yes (QTimer) | Yes 3x | No |
 | `ComponentService` | LCSC preview images | Yes 15-45s | Yes 3x | No |
-| `PreviewImageExporter` | Preview image export | **No** | No | No |
+| `PreviewImageExporter` | Preview image export | Yes (30s via NetworkClient) | Yes (3x) | Yes |
+| `DatasheetExporter` | Datasheet export | Yes (30s via NetworkClient) | Yes (3x) | Yes |
 
 ---
 
-## Critical Issues
+## Fixed Issues
 
-### Issue 1: `FetchWorker` Does Not Retry After Timeout
+### ✅ Issue 1: `FetchWorker` Does Not Retry After Timeout (FIXED)
 
-**Severity**: Critical
+**Original Severity**: Critical
 
-**Description**:
+**Fix**:
 
-In the `FetchWorker::httpGet` method, timeout errors (`QNetworkReply::OperationCanceledError`) are treated as unrecoverable, skipping all remaining retries:
+`AsyncNetworkRequest::shouldRetryInternal` now includes `QNetworkReply::TimeoutError` as a retryable error:
 
 ```cpp
-} else if (replyPtr->error() == QNetworkReply::OperationCanceledError) {
-    if (m_isAborted.loadRelaxed()) {
-        return QByteArray();
-    }
-    // No retry after timeout
-    return QByteArray();
+switch (error) {
+    case QNetworkReply::TimeoutError:
+    case QNetworkReply::TemporaryNetworkFailureError:
+    // ... other errors
+        return true;
+    default:
+        return false;
 }
 ```
 
-In weak network environments, timeouts are the most common error type. Not retrying on timeout means that under weak network conditions, nearly all requests fail on the first attempt, rendering the 3-retry mechanism ineffective.
-
-For comparison, `NetworkUtils` in the same project correctly retries timed-out requests.
-
-**Code Location**: `src/workers/FetchWorker.cpp`
-
-**Impact**: All network requests in the pipeline batch export
+**Code Location**: `src/core/network/AsyncNetworkRequest.cpp`
 
 ---
 
-### Issue 2: `PreviewImageExporter` / `DatasheetExporter` Lack Timeout and Retry Protection
+### ✅ Issue 2: `PreviewImageExporter` / `DatasheetExporter` Lack Timeout Protection (FIXED)
 
-**Severity**: Critical
+**Original Severity**: Critical
 
-**Description**:
+**Fix**:
 
-`PreviewImageExporter` and `DatasheetExporter` use unprotected `QEventLoop::exec()` that waits indefinitely:
+Now uses `NetworkClient::instance().get()` instead of unprotected `QEventLoop::exec()`:
 
 ```cpp
-// PreviewImageExporter.cpp:62-66
-QEventLoop loop;
-connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-loop.exec();  // No timeout, no retry
+// Use NetworkClient with default retry policy (3 retries, 30s timeout)
+NetworkResult result = NetworkClient::instance().get(QUrl(imageUrl), ResourceType::PreviewImage);
 ```
-
-Under weak network conditions, these may block permanently with no retry mechanism.
 
 **Code Location**: `src/services/PreviewImageExporter.cpp`, `src/services/DatasheetExporter.cpp`
 
-**Impact**: Preview image and datasheet download scenarios
-
 ---
 
-## Moderate Issues
+### ✅ Issue 3: `FetchWorker` Timeout Values Too Short (FIXED)
 
-### Issue 3: `FetchWorker` Timeout Values Too Short
+**Original Severity**: Moderate
 
-**Severity**: Moderate
+**Fix**:
 
-**Description**:
+Timeout values have been increased:
 
 ```cpp
-static const int COMPONENT_INFO_TIMEOUT_MS = 8000;   // Component info timeout
-static const int MODEL_3D_TIMEOUT_MS = 10000;         // 3D model timeout
+static const int COMPONENT_INFO_TIMEOUT_MS = 15000;  // Component info timeout (ms)
+static const int MODEL_3D_TIMEOUT_MS = 30000;         // 3D model timeout (ms)
 ```
-
-Under weak network conditions (RTT > 2s), 8 seconds is extremely tight for a complete HTTPS request (DNS + TLS + HTTP), especially for initial connections without connection reuse.
 
 **Code Location**: `src/workers/FetchWorker.h`
 
 ---
 
-### Issue 4: Thundering Herd Effect in Pipeline Fetch Stage
+### ✅ Issue 5: `FetchWorker` Retry Delay Too Short (FIXED)
+
+**Original Severity**: Moderate
+
+**Fix**:
+
+Now uses incremental delay strategy with random jitter:
+
+```cpp
+static constexpr int RETRY_DELAYS_MS[] = {3000, 5000, 10000};
+
+int FetchWorker::calculateRetryDelay(int retryCount) {
+    int baseDelay = RETRY_DELAYS_MS[retryCount];
+    int jitter = static_cast<int>(baseDelay * 0.2);
+    int randomOffset = QRandomGenerator::global()->bounded(-jitter, jitter + 1);
+    return qMax(100, baseDelay + randomOffset);
+}
+```
+
+**Code Location**: `src/workers/FetchWorker.cpp`
+
+---
+
+### ✅ Issue 6: Timeout Inconsistency Between Preview Images and 3D Models (FIXED)
+
+**Original Severity**: Low
+
+**Fix**:
+
+3D model timeout increased to 30s, proportional to data volume.
+
+---
+
+## Remaining Issues
+
+### ⚠️ Issue 4: Thundering Herd Effect in Pipeline Fetch Stage
 
 **Severity**: Moderate
 
@@ -107,32 +130,6 @@ Under weak network conditions (RTT > 2s), 8 seconds is extremely tight for a com
 - Rate limit backoff delays use `QThread::msleep()` to block threads, potentially causing thread pool starvation
 
 **Code Location**: `src/services/ExportService_Pipeline.cpp`
-
----
-
-### Issue 5: `FetchWorker` Retry Delay Too Short
-
-**Severity**: Moderate
-
-**Description**:
-
-```cpp
-static const int HTTP_RETRY_DELAY_MS = 500;  // Fixed 500ms
-```
-
-Compared to `NetworkUtils` which uses an incremental delay strategy (3s -> 5s -> 10s), `FetchWorker`'s fixed 500ms delay is too aggressive for weak network environments.
-
-**Code Location**: `src/workers/FetchWorker.h`
-
----
-
-### Issue 6: Timeout Inconsistency Between Preview Images and 3D Models
-
-**Severity**: Low
-
-**Description**:
-
-`ComponentService::downloadLcscImage` sets a 15s timeout for image downloads (typically 10KB-100KB), while `FetchWorker` sets only 10s for 3D model data downloads that may be several MB. The data volume and timeout values are disproportionate.
 
 ---
 
@@ -152,28 +149,35 @@ Compared to `NetworkUtils` which uses an incremental delay strategy (3s -> 5s ->
 
 ## Weak Network Anomaly Summary
 
-| Scenario | Trigger Condition | Behavior | Severity |
-|----------|------------------|----------|----------|
-| Batch export total failure | Weak network + `FetchWorker` no timeout retry | All components marked failed | **Critical** |
-| Preview/datasheet permanent block | `PreviewImageExporter` used under weak network | UI unresponsive | **Critical** |
-| Initial request timeout | RTT > 2s + DNS/TLS needed | 8s insufficient for connection | **Moderate** |
-| Thundering herd | 5 concurrent timeouts + simultaneous retries | Bandwidth saturated then timeout | **Moderate** |
-| Ineffective retries | Fixed 500ms delay + no timeout retry | Only effective for non-timeout errors | **Moderate** |
+| Scenario | Trigger Condition | Behavior | Severity | Status |
+|----------|------------------|----------|----------|--------|
+| Batch export total failure | ~~Weak network + `FetchWorker` no timeout retry~~ | ~~All components marked failed~~ | ~~**Critical**~~ | ✅ **Fixed** |
+| Preview/datasheet permanent block | ~~`PreviewImageExporter` used under weak network~~ | ~~UI unresponsive~~ | ~~**Critical**~~ | ✅ **Fixed** |
+| Initial request timeout | ~~RTT > 2s + DNS/TLS needed + 8s insufficient~~ | ~~Timeout~~ | ~~**Moderate**~~ | ✅ **Fixed** |
+| Thundering herd | 5 concurrent timeouts + simultaneous retries | Bandwidth saturated then timeout | **Moderate** | ⚠️ **Still exists** |
+| Ineffective retries | ~~Fixed 500ms delay + no timeout retry~~ | ~~Only effective for non-timeout errors~~ | ~~**Moderate**~~ | ✅ **Fixed** |
 
 ---
 
 ## Improvement Recommendations
 
-### P0 Improvements (Recommended Priority)
+### ✅ P0 Improvements (COMPLETED)
 
-1. **`FetchWorker` should retry after timeout**: Remove the logic that skips retry on `OperationCanceledError`
-2. **Increase timeout values appropriately**: Component info timeout recommended 15-20s, 3D model timeout recommended 30s
+1. **`FetchWorker` should retry after timeout** ✅ Implemented - `AsyncNetworkRequest::shouldRetryInternal` includes `TimeoutError`
+2. **Increase timeout values appropriately** ✅ Implemented - Component info 15s, 3D model 30s
 
-### P1 Improvements (Recommended Follow-up)
+### ✅ P1 Improvements (COMPLETED)
 
-3. **Add timeout to `PreviewImageExporter`/`DatasheetExporter`**: Use QTimer to protect `QEventLoop::exec()`
-4. **Use incremental retry delays**: Reference `NetworkUtils` delay strategy (3s -> 5s -> 10s) instead of 500ms fixed delay
-5. **Add jitter**: Introduce random jitter to retry delays to avoid thundering herd effects
+3. **Add timeout to `PreviewImageExporter`/`DatasheetExporter`** ✅ Implemented - Uses `NetworkClient` instead of `QEventLoop::exec()`
+4. **Use incremental retry delays** ✅ Implemented - 3s -> 5s -> 10s incremental delays
+5. **Add jitter** ✅ Implemented - 20% random jitter
+
+### ⚠️ Still Needs Improvement
+
+6. **Resolve thundering herd effect**: Further optimization needed for Fetch stage concurrency strategy:
+   - Submit requests in batches to avoid simultaneous timeouts and retries
+   - Use adaptive concurrency control
+   - Improve backoff strategy synchronization
 
 ---
 

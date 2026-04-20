@@ -1,4 +1,4 @@
-﻿# 本地编译指南
+# 本地编译指南
 
 本文档介绍如何在本地编译 EasyKiConverter 项目。
 
@@ -13,7 +13,7 @@
 ### Qt 版本
 
 - Qt 6.6 或更高版本
-- 推荐 Qt 6.10.1
+- 推荐 Qt 6.10.2（CI 使用版本）
 
 ### CMake 版本
 
@@ -56,7 +56,7 @@
 1. 访问 [Qt 官网](https://www.qt.io/download)
 2. 下载 Qt Online Installer
 3. 运行安装程序
-4. 选择 Qt 6.10.1 或更高版本
+4. 选择 Qt 6.10.2 或更高版本
 5. 选择 MinGW 13.10 编译器
 6. 安装所需的 Qt 模块：
    - Qt Quick
@@ -106,7 +106,7 @@ xcode-select --install
 1. 访问 [Qt 官网](https://www.qt.io/download)
 2. 下载 macOS 安装包
 3. 运行安装程序
-4. 安装 Qt 6.10.1 或更高版本
+4. 安装 Qt 6.10.2 或更高版本
 
 ### Linux
 
@@ -221,9 +221,11 @@ python tools/python/build_project.py -c -y
 | `-y, --yes` | 自动确认（与 -c 配合使用）|
 | `-i, --install` | 构建后执行安装 |
 | `-v, --verbose` | 详细日志输出 |
-| `--check` | 仅检查环境依赖 |
+| `--check` | 仅检查环境依赖（CMake/编译器/Qt6）|
 | `--config-only` | 仅执行 CMake 配置 |
-| `-j, --parallel` | 并行编译线程数 |
+| `-j, --jobs N` | 并行编译线程数（默认 CPU 核心数）|
+| `--test` | 构建后运行测试 (ctest) |
+| `--env-check` | 完整环境检查（包含 lupdate、clang-format、qmlformat）|
 
 ### 手动构建（CMake）
 
@@ -237,7 +239,7 @@ mkdir build
 cd build
 
 # 配置项目
-cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64"
+cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.2/mingw_64"
 
 # 编译项目（Debug 版本）
 cmake --build . --config Debug
@@ -257,7 +259,7 @@ mkdir build
 cd build
 
 # 配置项目
-cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/msvc2019_64"
+cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="C:/Qt/6.10.2/msvc2019_64"
 
 # 编译项目（Debug 版本）
 cmake --build . --config Debug
@@ -277,7 +279,7 @@ mkdir build
 cd build
 
 # 配置项目
-cmake .. -DCMAKE_PREFIX_PATH="/usr/local/Qt-6.10.1"
+cmake .. -DCMAKE_PREFIX_PATH="/usr/local/Qt-6.10.2"
 
 # 编译项目（Debug 版本）
 cmake --build . --config Debug
@@ -297,7 +299,7 @@ mkdir build
 cd build
 
 # 配置项目
-cmake .. -DCMAKE_PREFIX_PATH="/opt/Qt/6.10.1/gcc_64"
+cmake .. -DCMAKE_PREFIX_PATH="/opt/Qt/6.10.2/gcc_64"
 
 # 编译项目（Debug 版本）
 cmake --build . --config Debug
@@ -319,7 +321,7 @@ mkdir build
 cd build
 
 # 配置项目（启用测试构建）
-cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64" -DEASYKICONVERTER_BUILD_TESTS=ON
+cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.2/mingw_64" -DEASYKICONVERTER_BUILD_TESTS=ON
 
 # 编译项目（Debug 版本）
 cmake --build . --config Debug
@@ -342,7 +344,7 @@ mkdir build
 cd build
 
 # 配置项目（启用测试构建）
-cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/msvc2019_64" -DEASYKICONVERTER_BUILD_TESTS=ON
+cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="C:/Qt/6.10.2/msvc2019_64" -DEASYKICONVERTER_BUILD_TESTS=ON
 
 # 编译项目（Debug 版本）
 cmake --build . --config Debug
@@ -365,7 +367,7 @@ mkdir build
 cd build
 
 # 配置项目（启用测试构建和覆盖率支持）
-cmake .. -DCMAKE_PREFIX_PATH="/opt/Qt/6.10.1/gcc_64" -DEASYKICONVERTER_BUILD_TESTS=ON -DENABLE_COVERAGE=ON
+cmake .. -DCMAKE_PREFIX_PATH="/opt/Qt/6.10.2/gcc_64" -DEASYKICONVERTER_BUILD_TESTS=ON -DENABLE_COVERAGE=ON
 
 # 编译项目（Debug 版本）
 cmake --build . --config Debug
@@ -395,7 +397,7 @@ ctest --output-on-failure
 3. 选择 "文件" -> "打开文件或项目"
 4. 选择项目根目录下的 `CMakeLists.txt`
 5. 配置构建套件（Kit）：
-   - 选择 Qt 版本（Qt 6.10.1 或更高）
+   - 选择 Qt 版本（Qt 6.10.2 或更高）
    - 选择编译器（MinGW、Clang 或 GCC）
 6. 点击 "配置项目"
 7. 点击 "构建"按钮（或按 Ctrl+B）
@@ -406,7 +408,7 @@ ctest --output-on-failure
 ### 启用调试导出功能
 
 ```bash
-cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64" -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=ON
+cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.2/mingw_64" -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=ON
 ```
 
 这将启用调试数据导出功能，用于调试转换过程。
@@ -468,7 +470,7 @@ Could not find Qt6
 确保 CMAKE_PREFIX_PATH 指向正确的 Qt 安装路径。
 
 ```bash
-cmake .. -DCMAKE_PREFIX_PATH="/path/to/Qt/6.10.1/gcc_64"
+cmake .. -DCMAKE_PREFIX_PATH="/path/to/Qt/6.10.2/gcc_64"
 ```
 
 ### 找不到 zlib
@@ -533,13 +535,13 @@ Failed to load platform plugin "windows"
 将 Qt 的 bin 目录添加到 PATH 环境变量。
 
 ```bash
-set PATH=C:\Qt\6.10.1\mingw_64\bin;%PATH%
+set PATH=C:\Qt\6.10.2\mingw_64\bin;%PATH%
 ```
 
 **Linux/macOS：**
 ```bash
-export PATH="/path/to/Qt/6.10.1/gcc_64/bin:$PATH"
-export LD_LIBRARY_PATH="/path/to/Qt/6.10.1/gcc_64/lib:$LD_LIBRARY_PATH"
+export PATH="/path/to/Qt/6.10.2/gcc_64/bin:$PATH"
+export LD_LIBRARY_PATH="/path/to/Qt/6.10.2/gcc_64/lib:$LD_LIBRARY_PATH"
 ```
 
 ### 编译错误

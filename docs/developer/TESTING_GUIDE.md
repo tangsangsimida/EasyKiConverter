@@ -11,23 +11,23 @@
 
 ## 2. 依赖注入与 Mock 策略
 
-为了实现可测试性，核心组件（如 `EasyedaApi`）不应直接使用具体的 IO 类（如 `NetworkUtils`），而是通过接口进行交互。
+为了实现可测试性，核心组件（如 `EasyedaApi`）不应直接使用具体的网络客户端，而是通过接口进行交互。
 
-### INetworkAdapter 接口
-所有的网络操作都定义在 `INetworkAdapter` 接口中。
+### INetworkClient 接口
+所有网络操作都通过 `INetworkClient` 接口定义，支持 Mock 实现。
 
 ```cpp
-// 示例：注入适配器
-EasyedaApi api(new MockNetworkAdapter());
+// 示例：注入 Mock 客户端
+EasyedaApi api(new MockNetworkClient());
 ```
 
-### 使用 MockNetworkAdapter
-在测试中，你可以通过 `MockNetworkAdapter` 预设 API 的返回结果：
+### 使用 MockNetworkClient
+在测试中，你可以通过 `MockNetworkClient` 预设 API 的返回结果：
 
 ```cpp
 QJsonObject mockData;
 mockData.insert("success", true);
-mockAdapter->addJsonResponse("https://api.url", mockData);
+m_mockClient->addJsonResponse("https://api.url", mockData);
 ```
 
 ## 3. 编写异步测试的关键点

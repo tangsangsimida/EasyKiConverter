@@ -2,6 +2,36 @@
 
 This document records the additions, fixes, and changes in each version of EasyKiConverter.
 
+## [3.1.4] - 2026-04-20
+
+### Added
+
+- **CLI Mode Enhancements**
+  - Added complete command line interface support including `--cli` pure CLI mode
+  - Added Shell auto-completion functionality (CompletionGenerator)
+  - Added BOM batch conversion functionality (BomConverter)
+  - Enhanced CommandLineParser argument processing mechanism
+
+- **Code Decoupling Refactoring**
+  - Extracted UrlUtils module to eliminate duplicate code in 3 places
+  - Extracted CacheHealthManager module (351 lines)
+  - Extracted CachePruner module (143 lines)
+  - Extracted CadDataLoader module (182 lines)
+  - Extracted SymbolPinSerializer and SymbolShapeSerializer modules
+  - Extracted ExportReportGenerator and ExportWorkerHelpers modules
+
+### Fixed
+
+- **KiCad Symbol Append Export Issue**
+  - Updated FAQ documentation to explain the issue where newly appended symbols are not visible in KiCad
+  - Reason: KiCad requires restart or symbol library reload to see new symbols
+
+### Improved
+
+- **UI Improvements**
+  - ExportResultsCard added filtering functionality and virtualization support for better list performance
+  - ComponentListCard fixed preview image display logic
+
 ## [3.0.14] - 2026-03-09
 
 ### Added
@@ -354,11 +384,12 @@ This document records the additions, fixes, and changes in each version of EasyK
 
 - **Before/After Optimization Comparison**
   | Metric | Before (16 threads) | After (3 threads) | Improvement |
-  |--------|-------------------|------------------|-------------|
-  | Total Time | 263.72s | 14.43s | [减少] 94.5% |
-  | Throughput | 0.08 components/sec | 1.45 components/sec | [增加] 1712% |
-  | Average Fetch Time | 65.8s | 1.76s | [减少] 97.3% |
-  | Components Over 3s | 21 | 3 | [减少] 85.7% |  | Timeout Requests | Unknown | 0 | [OK] Completely Eliminated |
+  |--------|---------------------|-------------------|--------------|
+  | Total Time | 263.72s | 14.43s | [Reduced] 94.5% |
+  | Throughput | 0.08 components/sec | 1.45 components/sec | [Increased] 1712% |
+  | Average Fetch Time | 65.8s | 1.76s | [Reduced] 97.3% |
+  | Components Over 3s | 21 | 3 | [Reduced] 85.7% |
+  | Timeout Requests | Unknown | 0 | [OK] Completely Eliminated |
 
 ## [3.0.0] - 2026-01-18
 

@@ -12,9 +12,10 @@ EasyKiConverter 支持 BOM（物料清单）文件导入功能，可以自动从
 ## 元件编号识别规则
 
 系统会自动识别符合以下格式的 LCSC 元件编号：
-- 以 `C` 开头
+- 以 `C` 或 `c` 开头（不区分大小写）
 - 后跟至少 4 位数字
 - 示例：`C1234`, `C12345`, `C1234567890`
+- 系统会自动过滤常见的非 LCSC 元件编号（如 `C0402`, `C0603`, `C0805`, `C1206`）
 
 ## 使用方法
 
@@ -27,6 +28,8 @@ EasyKiConverter 支持 BOM（物料清单）文件导入功能，可以自动从
 
 ### 2. 通过代码使用
 
+**方式一：使用 ComponentService**
+
 ```cpp
 #include "services/ComponentService.h"
 
@@ -36,22 +39,31 @@ ComponentService* service = new ComponentService(this);
 // 解析 BOM 文件
 QString bomFilePath = "path/to/your/bom.csv";
 QStringList componentIds = service->parseBomFile(bomFilePath);
+```
 
-// 输出结果
-qDebug() << "提取到的元件编号：" << componentIds;
-// 输出：提取到的元件编号：("C1234", "C5678", "C9012")
+**方式二：直接使用 BomParser**
+
+```cpp
+#include "services/BomParser.h"
+
+// 创建 BomParser 实例
+BomParser parser;
+
+// 解析 BOM 文件
+QString bomFilePath = "path/to/your/bom.csv";
+QStringList componentIds = parser.parse(bomFilePath);
 ```
 
 ### 3. 验证元件编号
 
 ```cpp
-// 验证单个元件编号
-bool isValid = service->validateComponentId("C1234");  // 返回 true
-bool isInvalid = service->validateComponentId("D1234"); // 返回 false
+// 使用 BomParser 验证单个元件编号
+bool isValid = BomParser::validateId("C1234");  // 返回 true
+bool isInvalid = BomParser::validateId("D1234"); // 返回 false
 
 // 从文本中提取元件编号
 QString text = "元件列表: C1234, C5678, C9012";
-QStringList ids = service->extractComponentIdFromText(text);
+QStringList ids = ComponentService::extractComponentIdFromText(text);
 // ids = ["C1234", "C5678", "C9012"]
 ```
 
@@ -99,57 +111,37 @@ QStringList ComponentService::parseCsvBomFile(const QString& filePath) {
 
 ### Excel 解析
 
-Excel 解析提供两种实现方式：
-
-1. **使用 QXlsx 库**（推荐）
-   - 需要 QXlsx 库支持
-   - 直接读取 Excel 文件，无需转换
-
-2. **使用 Python pandas**（备用方案）
-   - 当 QXlsx 不可用时使用
-   - 通过 QProcess 调用 Python 脚本将 Excel 转换为 CSV
-   - 需要系统安装 Python 和 pandas 库
+Excel 解析使用 QXlsx 库直接读取 Excel 文件，支持 `.xlsx` 和 `.xls` 格式。
 
 ```cpp
-QStringList ComponentService::parseExcelBomFile(const QString& filePath) {
-    #ifdef QT_XLSX_LIB
-        // 使用 QXlsx 库直接解析
-    #else
-        // 使用 Python pandas 转换为 CSV 后解析
-    #endif
+// 位于 src/services/BomParser.cpp
+QStringList BomParser::parseExcel(const QString& filePath) {
+    QXlsx::Document xlsx(filePath);
+    if (!xlsx.load()) {
+        return QStringList();
+    }
+    // 遍历所有工作表的所有单元格提取元件编号
+    for (const QString& sheetName : xlsx.sheetNames()) {
+        xlsx.selectSheet(sheetName);
+        // ...
+    }
+    return componentIds;
 }
 ```
 
-## 测试
-
-### 运行测试
-
-```bash
-cd tests
-cmake -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64"
-cmake --build build
-./build/test_component_service.exe
-```
-
-### 测试用例
-
-- `testValidateComponentId()`：测试元件编号验证
-- `testExtractComponentIdFromText()`：测试文本提取功能
-- `testParseBomFile()`：测试 BOM 文件解析
-
 ## 限制和注意事项
 
-1. **元件编号格式**：只识别以 `C` 开头的 LCSC 元件编号
-2. **Excel 依赖**：Excel 解析需要 QXlsx 库或 Python pandas
-3. **文件大小**：大型 BOM 文件可能需要较长的处理时间
-4. **编码格式**：CSV 文件建议使用 UTF-8 编码
-5. **Python 依赖**：使用 Python 备用方案需要系统安装 Python 和 pandas
+1. **元件编号格式**：只识别以 `C` 或 `c` 开头的 LCSC 元件编号
+2. **Excel 依赖**：Excel 解析需要 QXlsx 库支持
+3. **排除规则**：系统会自动过滤 `C0402`, `C0603`, `C0805`, `C1206` 等常见非 LCSC 元件编号
+4. **文件大小**：大型 BOM 文件可能需要较长的处理时间
+5. **编码格式**：CSV 文件建议使用 UTF-8 编码
 
 ## 性能优化
 
 - 使用正则表达式快速匹配元件编号
 - 自动去重，避免重复处理
-- 支持并行处理多个 BOM 文件
+- 支持多工作表 Excel 文件并行遍历
 - 内存高效，适合大型 BOM 文件
 
 ## 错误处理

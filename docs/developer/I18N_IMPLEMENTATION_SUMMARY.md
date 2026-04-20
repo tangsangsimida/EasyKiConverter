@@ -10,7 +10,7 @@
 
 ## 技术栈
 
-- Qt 6.10.1
+- Qt 6.10.2
 - C++17
 - QML (Qt Quick)
 - CMake 3.16+
@@ -25,10 +25,10 @@
 
 **功能：**
 - 单例模式实现
-- 自动检测系统语言
 - 手动语言切换（中文/英文）
-- 语言设置持久化（使用 QSettings）
+- 语言设置持久化（使用 ConfigService）
 - QTranslator 管理和安装
+- 支持翻译文件热重载（通过 `refreshRequired` 信号）
 
 **关键接口：**
 ```cpp
@@ -41,11 +41,14 @@ Q_INVOKABLE void setLanguage(const QString& languageCode);
 // 获取当前语言
 Q_INVOKABLE QString currentLanguage() const;
 
-// 检测系统语言
+// 检测系统语言（已禁用，直接返回英文）
 Q_INVOKABLE QString detectSystemLanguage() const;
 
 // 信号
 void languageChanged(const QString& language);
+
+// 请求刷新界面信号（翻译文件更新后通知 QML 刷新）
+void refreshRequired();
 ```
 
 **支持的语言代码：**
@@ -353,63 +356,58 @@ qmlRegisterSingletonType<QObject>(
 
 ### 2. 语言检测逻辑
 
-LanguageManager 使用 `QLocale` 来检测系统语言：
+系统语言检测已禁用，直接返回英文：
 
 ```cpp
 QString LanguageManager::detectSystemLanguage() const {
-    QLocale systemLocale = QLocale::system();
-    QString systemLang = systemLocale.name(); // 例如: "zh_CN", "en_US"
-    
-    if (systemLang.startsWith("zh")) {
-        return "zh_CN";
-    } else if (systemLang.startsWith("en")) {
-        return "en";
-    }
-    return "en"; // 默认英语
+    // 不再使用系统语言检测，直接返回英文
+    return "en";
 }
 ```
 
 ### 3. 翻译文件路径
 
-翻译文件使用 Qt 资源系统：
+翻译文件使用 Qt 资源系统（由 `qt_add_translations` 自动生成）：
 
 ```cpp
-QString translationFile = QString(":/translations/translations_easykiconverter_%1.qm")
-                             .arg(languageCode);
+// 翻译文件路径格式（使用 /i18n 前缀）
+QString resourcePath = QString(":/i18n/translations_easykiconverter_%1.qm").arg(languageCode);
+
+// 备选：文件系统路径（开发时可能有用）
+QString localPath = QString("resources/translations/translations_easykiconverter_%1.qm").arg(languageCode);
 ```
 
-### 4. QSettings 持久化
+### 4. ConfigService 持久化
 
-语言设置保存在注册表（Windows）或配置文件（Linux/macOS）：
+语言设置通过 ConfigService 持久化到配置文件：
 
 ```cpp
-QSettings settings("EasyKiConverter", "Settings");
-settings.setValue("language", languageCode);
+// 加载语言设置
+auto* configService = ConfigService::instance();
+m_currentLanguage = configService->getLanguage();
+
+// 保存语言设置
+configService->setLanguage(m_currentLanguage);
 ```
 
 ## 已知问题和限制
 
-1. **.qm 文件未生成**：当前实现使用 .ts 文件（XML 格式），生产环境应该生成 .qm 文件（二进制格式）以提升性能。
-
-2. **动态翻译更新**：当前实现需要重启应用程序才能完全应用语言更改。未来可以实现动态更新功能。
-
-3. **语言选择 UI**：当前实现缺少语言选择 UI 组件，需要在 MainWindow 中添加语言切换按钮或下拉菜单。
+1. **动态翻译更新**：当前实现通过 `refreshRequired` 信号支持翻译文件热重载，但界面刷新可能需要重启才能完全应用。
 
 ## 未来改进
 
-1. **添加语言选择 UI**：在设置区域添加语言选择器
-2. **生成 .qm 文件**：在 CMake 中添加 lrelease 步骤自动生成 .qm 文件
-3. **动态翻译更新**：实现不需要重启的语言切换
-4. **更多语言支持**：添加其他语言（如繁体中文、日语、韩语等）
-5. **翻译完整性检查**：添加自动化测试确保所有字符串都已翻译
+1. **生成 .qm 文件**：在 CMake 中添加 lrelease 步骤自动生成 .qm 文件
+2. **动态翻译更新**：实现不需要重启的语言切换
+3. **更多语言支持**：添加其他语言（如繁体中文、日语、韩语等）
+4. **翻译完整性检查**：添加自动化测试确保所有字符串都已翻译
 
 ## 测试建议
 
-1. **系统语言检测测试**：更改系统语言，验证应用程序是否正确检测
-2. **手动语言切换测试**：使用 QSettings API 测试语言切换
-3. **翻译完整性测试**：检查所有 UI 元素是否都有翻译
-4. **参数化字符串测试**：验证带参数的字符串（如 "共 %1 个元器件"）是否正确显示
-5. **跨平台测试**：在 Windows、Linux 和 macOS 上测试语言切换功能
+1. **手动语言切换测试**：通过 HeaderSection UI 测试语言切换功能
+2. **翻译完整性测试**：检查所有 UI 元素是否都有翻译
+3. **参数化字符串测试**：验证带参数的字符串（如 "共 %1 个元器件"）是否正确显示
+4. **跨平台测试**：在 Windows、Linux 和 macOS 上测试语言切换功能
+5. **翻译文件加载测试**：验证翻译文件路径解析是否正确
 
 ## 参考资料
 

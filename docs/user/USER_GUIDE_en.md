@@ -190,6 +190,29 @@ Intelligent extraction of component IDs from clipboard text:
 - Format validation
 - User-friendly interface
 
+### CLI Mode
+
+In addition to GUI mode, EasyKiConverter also supports a pure command line mode for conversion without launching the GUI:
+
+```bash
+# Convert BOM file
+EasyKiConverter convert bom --input BOM.csv --output /path/to/export
+
+# Convert single component
+EasyKiConverter convert component C12345 --output /path/to/export
+
+# Batch convert
+EasyKiConverter convert batch --input components.txt --output /path/to/export
+
+# Generate Shell completion scripts
+EasyKiConverter --completion bash
+EasyKiConverter --completion zsh
+```
+
+CLI mode supports offline batch export, suitable for automated workflows.
+
+For more CLI features, see the [CLI Usage Documentation](../CLI_USAGE.md).
+
 ## Configuration Options
 
 ### Theme Settings

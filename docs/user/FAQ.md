@@ -32,7 +32,7 @@ EasyKiConverter 支持：
 ### 系统要求是什么？
 
 - 操作系统：Windows 10/11、macOS 10.15+ 或 Linux
-- 内存：1GB RAM 最低，2GB 推荐
+- 内存：4GB RAM 最低，8GB 推荐
 - 磁盘空间：100MB 用于应用程序，额外空间用于转换后的文件
 - 网络：用于下载元件数据和 3D 模型的互联网连接
 
@@ -297,8 +297,17 @@ export EASYKICONVERTER_DEBUG_MODE=true
 EasyKiConverter 支持命令行接口，可以集成到构建系统中：
 
 ```bash
-EasyKiConverter --input components.txt --output ./export --batch
+# 批量转换
+easykiconverter convert batch -i <component_list_file> -o <output_dir>
+
+# 转换单个元件
+easykiconverter convert component -c <lcsc_id> -o <output_dir>
+
+# 转换 BOM 表
+easykiconverter convert bom -i <bom_file> -o <output_dir>
 ```
+
+详细说明请参考 [CLI 使用说明](../CLI_USAGE.md)。
 
 ### 如何自定义导出选项？
 

@@ -1,4 +1,4 @@
-﻿# Features
+# Features
 
 This document provides a detailed description of the features available in EasyKiConverter.
 
@@ -73,21 +73,26 @@ Support multi-threaded parallel processing to fully utilize multi-core CPUs.
 - Better resource utilization
 - Improved user experience
 
-### Two-Stage Export Strategy
+### Three-Stage Pipeline Parallel Architecture
 
-Optimize batch conversion performance with two-stage strategy.
+Optimize batch conversion performance with three-stage pipeline strategy.
 
-**Stage 1: Data Collection (Parallel)**
-- Multi-threaded parallel data collection
+**Stage 1: Data Fetch (Fetch, 5 threads)**
+- Parallel data fetching from network
 - Asynchronous network requests
-- Progress tracking
-- Error handling
+- Timeout and retry support
 
-**Stage 2: Data Export (Serial)**
-- Serial data export
+**Stage 2: Data Processing (Process, N cores)**
+- Multi-core CPU parallel processing
+- Symbol, footprint, 3D model conversion
+- Full utilization of multi-core performance
+
+**Stage 3: Data Write (Write, 3 threads)**
+- Parallel file writing
 - File write conflict prevention
 - Data consistency guarantee
-- Progress reporting
+
+**Progress weights**: Fetch 30%, Process 50%, Write 20%
 
 **Benefits:**
 - Optimal performance

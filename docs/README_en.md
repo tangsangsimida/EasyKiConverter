@@ -11,38 +11,46 @@ Documentation is organized into three categories based on target audience:
 These documents help users understand what the project is and how to use it.
 
 - [User Guide](user/USER_GUIDE_en.md) - Detailed usage instructions
-- [用户手册](user/USER_GUIDE.md) - 用户手册
 - [Getting Started](user/GETTING_STARTED_en.md) - Quick start guide
-- [快速开始](user/GETTING_STARTED.md) - 快速入门
 - [FAQ](user/FAQ_en.md) - Frequently asked questions
-- [常见问题](user/FAQ.md) - 常见问题
 - [Features](user/FEATURES_en.md) - Detailed feature descriptions
-- [功能特性](user/FEATURES.md) - 功能特性
+- [Debug Mode](user/DEBUG_MODE_en.md) - Debug mode configuration
+- [Installation Codes](user/INSTALLATION_CODES_en.md) - Installer exit codes
+- [Privacy Policy](user/PRIVACY_POLICY_en.md) - Privacy policy
 
 ### For Developers (developer/)
 
 These documents help other developers (or your future self) understand the project, contribute, and maintain it.
 
 - [Build Guide](developer/BUILD_en.md) - Build from source
-- [构建指南](developer/BUILD.md) - 构建指南
 - [Contributing Guide](developer/CONTRIBUTING_en.md) - How to contribute code
-- [贡献指南](developer/CONTRIBUTING.md) - 贡献指南
 - [Architecture](developer/ARCHITECTURE_en.md) - Project architecture design
-- [架构文档](developer/ARCHITECTURE.md) - 架构文档
 - [Testing Guide](developer/TESTING_GUIDE_en.md) - Testing architecture & Mocking strategy
+- [BOM Parsing Guide](developer/BOM_PARSING_GUIDE_en.md) - BOM file parsing documentation
+- [Coding Style](developer/CODING_STYLE_en.md) - Code style guidelines
+- [Performance Baseline](developer/performance_baseline_en.md) - Performance benchmarks
+- [i18n Implementation](developer/I18N_IMPLEMENTATION_SUMMARY.md) - Internationalization summary
+- [Flatpak Development](developer/FLATPAK_DEVELOPMENT.md) - Flatpak packaging guide
 
 ### For Project & Strategy (project/)
 
 These documents record the project's evolution and future direction, helping the team make correct strategic decisions.
 
 - [Roadmap](project/ROADMAP_en.md) - Future development directions
-- [项目路线图](project/ROADMAP.md) - 项目路线图
 - [Architecture Decision Records](project/adr/README_en.md) - Technical decision records
+- [Logging Architecture](project/LOGGING_ARCHITECTURE.md) - Logging system design
+- [Weak Network Analysis](WEAK_NETWORK_ANALYSIS_en.md) - Network resilience analysis
+- [Performance Optimization Report](PERFORMANCE_OPTIMIZATION_REPORT_en.md) - Optimization history
+
+### Additional Documentation
+
+- [CLI Usage](CLI_USAGE.md) - Command-line interface usage
+- [API Documentation](api/index.md) - API reference documentation
 
 ## Documentation Languages
 
-All documents are available in both Chinese and English:
-- Chinese documents use Chinese filenames
+Most documents are available in both Chinese and English:
+- Chinese documents use Chinese filenames (without _en suffix)
 - English documents use English filenames (with _en suffix)
 
 ## How to Use Documentation
@@ -82,6 +90,6 @@ If you want to improve documentation:
 
 ## Related Resources
 
-- [Project Homepage](README_en.md)
+- [Project Homepage](../README_en.md)
 - [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues)
 - [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions)

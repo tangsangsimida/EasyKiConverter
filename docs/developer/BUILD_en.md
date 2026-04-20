@@ -1,4 +1,4 @@
-﻿# Build Guide
+# Build Guide
 
 This document provides detailed instructions for building the EasyKiConverter project locally.
 
@@ -14,7 +14,7 @@ This document provides detailed instructions for building the EasyKiConverter pr
 
 #### Qt Framework
 
-- **Version**: Qt 6.8 or higher (Recommended Qt 6.10.1)
+- **Version**: Qt 6.8 or higher (Recommended Qt 6.10.2)
 - **Required Modules**:
   - Qt Quick
   - Qt Network
@@ -57,7 +57,7 @@ This document provides detailed instructions for building the EasyKiConverter pr
 #### 1. Install Qt
 
 1. Download Qt Online Installer from https://www.qt.io/download
-2. Run the installer and select Qt 6.10.1
+2. Run the installer and select Qt 6.10.2
 3. Select MinGW 13.10 compiler
 4. Select required modules:
    - Qt Quick
@@ -145,7 +145,7 @@ mkdir build
 cd build
 
 # Configure project
-cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.1/mingw_64"
+cmake .. -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:/Qt/6.10.2/mingw_64"
 
 # Build project (Debug version)
 cmake --build . --config Debug
@@ -165,7 +165,7 @@ mkdir build
 cd build
 
 # Configure project
-cmake .. -DCMAKE_PREFIX_PATH="/usr/local/Qt-6.10.1"
+cmake .. -DCMAKE_PREFIX_PATH="/usr/local/Qt-6.10.2"
 
 # Build project (Debug version)
 cmake --build . --config Debug
@@ -185,7 +185,7 @@ mkdir build
 cd build
 
 # Configure project
-cmake .. -DCMAKE_PREFIX_PATH="/opt/Qt/6.10.1/gcc_64"
+cmake .. -DCMAKE_PREFIX_PATH="/opt/Qt/6.10.2/gcc_64"
 
 # Build project (Debug version)
 cmake --build . --config Debug
@@ -248,7 +248,7 @@ cmake --build . --parallel 4
 2. Select "Open File or Project"
 3. Select `CMakeLists.txt` in the project root
 4. Configure build kit:
-   - Select Qt version (Qt 6.10.1 or higher)
+   - Select Qt version (Qt 6.10.2 or higher)
    - Select compiler (MinGW, Clang, or GCC)
 5. Click "Configure Project"
 6. Click "Build" button (or press Ctrl+B)
@@ -284,7 +284,7 @@ rm -rf build
 1. Verify Qt installation path
 2. Set CMAKE_PREFIX_PATH correctly:
    ```bash
-   cmake .. -DCMAKE_PREFIX_PATH="/path/to/Qt/6.10.1/compiler"
+   cmake .. -DCMAKE_PREFIX_PATH="/path/to/Qt/6.10.2/compiler"
    ```
 
 ### Issue: zlib not found

@@ -229,9 +229,9 @@ fix(export): resolve footprint parsing error
 Fix footprint parsing error when processing components with
 custom-shaped pads.
 
-- Update Type判断逻辑
-- Add BBox完整解析
-- Fix UUID提取问题
+- Update Type judgment logic
+- Add BBox complete parsing
+- Fix UUID extraction issue
 
 Fixes #456
 ```

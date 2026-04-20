@@ -55,19 +55,14 @@ This guide is primarily based on the [Qt Coding Style](https://wiki.qt.io/Qt_Cod
 
 ### 2.2. Braces `{}`
 
-*   **All Blocks (Functions, Classes, Namespaces, Control Statements)**: The opening brace `{` goes on a **new line** (Allman style).
+*   **All Blocks (Functions, Classes, Namespaces, Control Statements)**: The opening brace `{` goes on the **same line** (K&R style).
     ```cpp
-    class MyClass
-    {
+    class MyClass {
     public:
-        void myFunction()
-        {
-            if (condition)
-            {
+        void myFunction() {
+            if (condition) {
                 // ...
-            }
-            else
-            {
+            } else {
                 // ...
             }
         }

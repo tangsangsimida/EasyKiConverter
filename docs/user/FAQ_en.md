@@ -297,8 +297,17 @@ If your network environment is unstable (high latency, high packet loss), you ma
 EasyKiConverter supports command-line interface and can be integrated into build systems:
 
 ```bash
-EasyKiConverter --input components.txt --output ./export --batch
+# Batch conversion
+easykiconverter convert batch -i <component_list_file> -o <output_dir>
+
+# Convert single component
+easykiconverter convert component -c <lcsc_id> -o <output_dir>
+
+# Convert BOM file
+easykiconverter convert bom -i <bom_file> -o <output_dir>
 ```
+
+For detailed instructions, please refer to [CLI Usage Guide](../CLI_USAGE.md).
 
 ### How do I customize export options?
 

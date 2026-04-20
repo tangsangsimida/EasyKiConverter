@@ -254,7 +254,26 @@ cmake --build . --config Debug -- -j$(nproc)
 ./bin/EasyKiConverter.exe --version
 ```
 
-更多命令行参数说明，请参见 [调试模式文档](DEBUG_MODE.md)。
+### 使用 CLI 模式
+
+应用程序支持纯命令行模式，可以不启动 GUI 直接进行转换操作：
+
+```bash
+# 转换 BOM 表
+./bin/EasyKiConverter convert bom --input BOM.csv --output /path/to/export
+
+# 转换单个元器件
+./bin/EasyKiConverter convert component C12345 --output /path/to/export
+
+# 批量转换
+./bin/EasyKiConverter convert batch --input components.txt --output /path/to/export
+
+# 生成 Shell 自动补全脚本
+./bin/EasyKiConverter --completion bash
+./bin/EasyKiConverter --completion zsh
+```
+
+更多命令行参数说明，请参见 [CLI 使用文档](../CLI_USAGE.md) 或运行 `--help`。
 
 ### 基本使用流程
 

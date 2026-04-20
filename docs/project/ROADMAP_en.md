@@ -4,7 +4,7 @@ This document shows the future direction of the project and the main features pl
 
 ## Current Status
 
-- **Current Version**: 3.0.8
+- **Current Version**: 3.1.4
 - **Development Status**: Refactoring complete, entering optimization phase
 - **Completion**: ~95% (core features implemented, architecture refactoring complete)
 

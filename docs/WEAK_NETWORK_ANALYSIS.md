@@ -2,99 +2,122 @@
 
 ## 概述
 
-本报告记录了 EasyKiConverter 项目在 v3.0.4 版本中针对弱网环境的支持能力分析，包括各网络组件的超时/重试/退避机制评估、已识别的问题和改进建议。
+本报告记录了 EasyKiConverter 项目针对弱网环境的支持能力分析，包括各网络组件的超时/重试/退避机制评估、已识别的问题和改进建议。
 
 ## 分析日期
 
-2026-02-12
+2026-02-12（文档更新：2026-04-20）
 
 ## 网络架构概览
 
-项目中存在 **四套独立的网络请求实现**，各自弱网容错能力差异显著：
+项目中存在 **多套独立的网络请求实现**，各自弱网容错能力差异显著：
 
 | 组件 | 用途 | 超时 | 重试 | 速率限制退避 |
 |------|------|------|------|-------------|
-| `FetchWorker` | 流水线批量导出（新版） | 是 8-10s | 是 3次（超时不重试） | 是（指数 ×2） |
+| `FetchWorker` | 流水线批量导出 | 是 15-30s | 是 3次（含超时重试） | 是（指数 ×2） |
 | `NetworkUtils` | 单件预览获取 | 是 60s | 是 5次 | 是 |
 | `NetworkWorker` | 旧版单件获取 | 是（QTimer） | 是 3次 | 否 |
 | `ComponentService` | LCSC 预览图 | 是 15-45s | 是 3次 | 否 |
-| `PreviewImageExporter` | 预览图导出 | **否** | 否 | 否 |
+| `PreviewImageExporter` | 预览图导出 | 是（30s via NetworkClient） | 是（3次） | 是 |
+| `DatasheetExporter` | Datasheet 导出 | 是（30s via NetworkClient） | 是（3次） | 是 |
 
 ---
 
-## 严重问题
+## 已修复的问题
 
-### 问题 1: `FetchWorker` 超时后不重试
+### ✅ 问题 1: `FetchWorker` 超时后不重试（已修复）
 
-**严重程度**：严重
+**原严重程度**：严重
 
-**问题描述**：
+**修复方案**：
 
-在 `FetchWorker::httpGet` 方法中，超时错误（`QNetworkReply::OperationCanceledError`）被视为不可恢复错误，直接跳过所有剩余重试：
+`AsyncNetworkRequest::shouldRetryInternal` 方法现在包含 `QNetworkReply::TimeoutError` 作为可重试错误：
 
 ```cpp
-} else if (replyPtr->error() == QNetworkReply::OperationCanceledError) {
-    if (m_isAborted.loadRelaxed()) {
-        return QByteArray();
-    }
-    // 超时后不再重试
-    return QByteArray();
+switch (error) {
+    case QNetworkReply::TimeoutError:
+    case QNetworkReply::TemporaryNetworkFailureError:
+    // ... 其他错误
+        return true;
+    default:
+        return false;
 }
 ```
 
-对于弱网环境，超时是最常见的错误类型。不对超时进行重试意味着弱网下几乎所有请求都会一次失败，3次重试机制形同虚设。
-
-作为对比，同项目的 `NetworkUtils` 对超时请求会正确执行重试。
-
-**代码位置**：`src/workers/FetchWorker.cpp`
-
-**影响范围**：流水线批量导出的所有网络请求
+**代码位置**：`src/core/network/AsyncNetworkRequest.cpp`
 
 ---
 
-### 问题 2: `PreviewImageExporter` / `DatasheetExporter` 无超时和重试保护
+### ✅ 问题 2: `PreviewImageExporter` / `DatasheetExporter` 无超时保护（已修复）
 
-**严重程度**：严重
+**原严重程度**：严重
 
-**问题描述**：
+**修复方案**：
 
-`PreviewImageExporter` 和 `DatasheetExporter` 使用无保护的 `QEventLoop::exec()` 无限等待：
+现在使用 `NetworkClient::instance().get()` 替代无保护的 `QEventLoop::exec()`：
 
 ```cpp
-// PreviewImageExporter.cpp:62-66
-QEventLoop loop;
-connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-loop.exec();  // 无超时、无重试
+// Use NetworkClient with default retry policy (3 retries, 30s timeout)
+NetworkResult result = NetworkClient::instance().get(QUrl(imageUrl), ResourceType::PreviewImage);
 ```
-
-弱网下可能永久阻塞，且失败后无重试机制。
 
 **代码位置**：`src/services/PreviewImageExporter.cpp`、`src/services/DatasheetExporter.cpp`
 
-**影响范围**：预览图和 datasheet 下载场景
-
 ---
 
-## 中等问题
+### ✅ 问题 3: `FetchWorker` 超时时间过短（已修复）
 
-### 问题 3: `FetchWorker` 超时时间过短
+**原严重程度**：中等
 
-**严重程度**：中等
+**修复方案**：
 
-**问题描述**：
+超时时间已增加：
 
 ```cpp
-static const int COMPONENT_INFO_TIMEOUT_MS = 8000;   // 组件信息超时
-static const int MODEL_3D_TIMEOUT_MS = 10000;         // 3D模型超时
+static const int COMPONENT_INFO_TIMEOUT_MS = 15000;  // 组件信息超时（毫秒）
+static const int MODEL_3D_TIMEOUT_MS = 30000;        // 3D模型超时（毫秒）
 ```
-
-弱网环境下（RTT > 2秒），8秒对于一次完整的 HTTPS 请求（DNS + TLS + HTTP）来说非常紧张，特别是首次连接（无连接复用时）。
 
 **代码位置**：`src/workers/FetchWorker.h`
 
 ---
 
-### 问题 4: 流水线 Fetch 阶段惊群效应
+### ✅ 问题 5: `FetchWorker` 重试延迟过短（已修复）
+
+**原严重程度**：中等
+
+**修复方案**：
+
+现在使用递增延迟策略 + 随机抖动：
+
+```cpp
+static constexpr int RETRY_DELAYS_MS[] = {3000, 5000, 10000};
+
+int FetchWorker::calculateRetryDelay(int retryCount) {
+    int baseDelay = RETRY_DELAYS_MS[retryCount];
+    int jitter = static_cast<int>(baseDelay * 0.2);
+    int randomOffset = QRandomGenerator::global()->bounded(-jitter, jitter + 1);
+    return qMax(100, baseDelay + randomOffset);
+}
+```
+
+**代码位置**：`src/workers/FetchWorker.cpp`
+
+---
+
+### ✅ 问题 6: 预览图与 3D 模型超时不一致（已修复）
+
+**原严重程度**：低
+
+**修复方案**：
+
+3D 模型超时时间已增加到 30s，与数据量成正比。
+
+---
+
+## 仍存在的问题
+
+### ⚠️ 问题 4: 流水线 Fetch 阶段惊群效应
 
 **严重程度**：中等
 
@@ -107,32 +130,6 @@ static const int MODEL_3D_TIMEOUT_MS = 10000;         // 3D模型超时
 - 速率限制退避延迟使用 `QThread::msleep()` 阻塞线程，可能导致线程池饥饿
 
 **代码位置**：`src/services/ExportService_Pipeline.cpp`
-
----
-
-### 问题 5: `FetchWorker` 重试延迟过短
-
-**严重程度**：中等
-
-**问题描述**：
-
-```cpp
-static const int HTTP_RETRY_DELAY_MS = 500;  // 固定500ms
-```
-
-对比 `NetworkUtils` 使用递增延迟策略（3s -> 5s -> 10s），`FetchWorker` 的 500ms 固定延迟在弱网环境下过于激进。
-
-**代码位置**：`src/workers/FetchWorker.h`
-
----
-
-### 问题 6: 预览图与 3D 模型超时不一致
-
-**严重程度**：低
-
-**问题描述**：
-
-`ComponentService::downloadLcscImage` 下载图片（通常 10KB-100KB）设置 15s 超时，而 `FetchWorker` 下载可能数 MB 的 3D 模型数据却只有 10s 超时。数据量与超时时间不成比例。
 
 ---
 
@@ -152,28 +149,35 @@ static const int HTTP_RETRY_DELAY_MS = 500;  // 固定500ms
 
 ## 弱网异常场景汇总
 
-| 场景 | 触发条件 | 表现 | 严重程度 |
-|------|---------|------|---------|
-| 批量导出全部失败 | 弱网 + `FetchWorker` 超时不重试 | 所有元件标记失败 | **严重** |
-| 预览图/datasheet 永久阻塞 | `PreviewImageExporter` 在弱网下使用 | UI 无响应 | **严重** |
-| 首次请求超时 | RTT > 2s + 需 DNS/TLS | 8s 超时不够建立连接 | **中等** |
-| 惊群效应 | 5 并发同时超时同时重试 | 带宽瞬间占满再超时 | **中等** |
-| 重试无效 | 500ms 固定延迟 + 不重试超时 | 仅对非超时错误生效 | **中等** |
+| 场景 | 触发条件 | 表现 | 严重程度 | 状态 |
+|------|---------|------|----------|------|
+| 批量导出全部失败 | ~~弱网 + `FetchWorker` 超时不重试~~ | ~~所有元件标记失败~~ | ~~**严重**~~ | ✅ **已修复** |
+| 预览图/datasheet 永久阻塞 | ~~`PreviewImageExporter` 在弱网下使用~~ | ~~UI 无响应~~ | ~~**严重**~~ | ✅ **已修复** |
+| 首次请求超时 | ~~RTT > 2s + 需 DNS/TLS + 8s 超时不够~~ | ~~超时~~ | ~~**中等**~~ | ✅ **已修复** |
+| 惊群效应 | 5 并发同时超时同时重试 | 带宽瞬间占满再超时 | **中等** | ⚠️ **仍存在** |
+| 重试无效 | ~~500ms 固定延迟 + 不重试超时~~ | ~~仅对非超时错误生效~~ | ~~**中等**~~ | ✅ **已修复** |
 
 ---
 
 ## 改进建议
 
-### P0 改进（建议优先实施）
+### ✅ P0 改进（已完成）
 
-1. **`FetchWorker` 超时后应重试**：移除超时后直接返回的逻辑，对 `OperationCanceledError` 执行正常重试
-2. **增加超时时间**：组件信息超时建议调整为 15-20s，3D 模型超时建议调整为 30s
+1. **`FetchWorker` 超时后应重试** ✅ 已实现 - `AsyncNetworkRequest::shouldRetryInternal` 包含 `TimeoutError`
+2. **增加超时时间** ✅ 已实现 - 组件信息 15s，3D 模型 30s
 
-### P1 改进（建议后续实施）
+### ✅ P1 改进（已完成）
 
-3. **为 `PreviewImageExporter`/`DatasheetExporter` 添加超时**：使用 QTimer 保护 `QEventLoop::exec()`
-4. **使用递增重试延迟**：参考 `NetworkUtils` 的延迟策略（3s -> 5s -> 10s）替代 500ms 固定延迟
-5. **添加抖动（Jitter）**：在重试延迟中加入随机抖动，避免惊群效应
+3. **为 `PreviewImageExporter`/`DatasheetExporter` 添加超时** ✅ 已实现 - 使用 `NetworkClient` 替代 `QEventLoop::exec()`
+4. **使用递增重试延迟** ✅ 已实现 - 3s -> 5s -> 10s 递增延迟
+5. **添加抖动（Jitter）** ✅ 已实现 - 20% 随机抖动
+
+### ⚠️ 仍需改进
+
+6. **解决惊群效应**：需要进一步优化 Fetch 阶段的并发策略，例如：
+   - 分批提交请求，避免同时超时同时重试
+   - 使用自适应并发控制
+   - 改进退避策略的同步机制
 
 ---
 

@@ -2,6 +2,36 @@
 
 本文档记录了 EasyKiConverter 每个版本的新增、修复和更改内容。
 
+## [3.1.4] - 2026-04-20
+
+### 新增
+
+- **CLI 模式增强**
+  - 新增完整的命令行接口支持，包括 `--cli` 纯命令行模式
+  - 添加 Shell 自动补全功能（CompletionGenerator）
+  - 新增 BOM 批量转换功能（BomConverter）
+  - 增强 CommandLineParser 参数处理机制
+
+- **代码解耦重构**
+  - 提取 UrlUtils 模块，消除 3 处重复代码
+  - 提取 CacheHealthManager 模块（351 行）
+  - 提取 CachePruner 模块（143 行）
+  - 提取 CadDataLoader 模块（182 行）
+  - 提取 SymbolPinSerializer 和 SymbolShapeSerializer 模块
+  - 提取 ExportReportGenerator 和 ExportWorkerHelpers 模块
+
+### 修复
+
+- **KiCad 符号追加导出问题**
+  - 更新 FAQ 文档说明 KiCad 中追加导出新符号不可见的问题
+  - 原因：KiCad 需要重启或重新加载符号库才能看到新符号
+
+### 改进
+
+- **UI 改进**
+  - ExportResultsCard 添加过滤功能和虚拟化支持，优化结果列表性能
+  - ComponentListCard 修复预览图显示逻辑
+
 ## [3.0.14] - 2026-03-09
 
 ### 新增
@@ -422,7 +452,8 @@
   | 总耗时 | 263.72秒 | 14.43秒 | [减少] 94.5% |
   | 吞吐量 | 0.08组件/秒 | 1.45组件/秒 | [增加] 1712% |
   | 平均抓取时间 | 65.8秒 | 1.76秒 | [减少] 97.3% |
-  | 超过3秒组件 | 21个 | 3个 | [减少] 85.7% |  | 超时请求 | 未知 | 0个 | [成功] 完全消除 |
+  | 超过3秒组件 | 21个 | 3个 | [减少] 85.7% |
+  | 超时请求 | 未知 | 0个 | [成功] 完全消除 |
 
 ## [3.0.0] - 2026-01-18
 

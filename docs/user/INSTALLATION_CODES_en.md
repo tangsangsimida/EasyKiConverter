@@ -119,7 +119,7 @@ EasyKiConverter uses **Inno Setup** to create Windows installers (.exe format).
 ## Installer Information
 
 - **Name**: EasyKiConverter Setup
-- **Version**: 3.0.9
+- **Version**: 3.1.4
 - **Architecture**: x64
 - **Type**: Inno Setup (.exe)
 - **Size**: Approximately 100-150 MB

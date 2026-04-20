@@ -153,15 +153,42 @@ Service 层负责业务逻辑的处理，提供核心功能。
 - `CommandLineParser` - 命令行参数解析器
 - `LcscImageService` - LCSC 预览图服务
 - `BomParser` - BOM 文件解析器
+- `CacheHealthManager` - 缓存自愈管理
+- `CachePruner` - LRU 缓存淘汰
+- `CadDataLoader` - CAD 数据解析
+- `ComponentCacheService` - 组件缓存服务
+- `ExportReportGenerator` - 导出报告生成
+- `ExportWorkerHelpers` - 导出辅助函数
 
 **职责：**
 - 业务逻辑处理
 - 数据验证
 - 调用底层 API
 - 管理转换流程
-- 命令行参数处理
+- 命令行参数处理（`CommandLineParser`）
 - 网络图片获取
 - BOM 文件导入
+
+### CLI 模块（命令行接口）
+
+CLI 模块位于 `src/utils/cli/` 目录，提供纯命令行模式支持。
+
+**主要类：**
+- `CliConverter` - CLI 主转换器
+- `CliPrinter` - 命令行输出格式化
+- `CliContext` - CLI 上下文管理
+- `BaseConverter` - 转换器基类
+- `BatchConverter` - 批量转换器
+- `BomConverter` - BOM 批量转换
+- `ComponentConverter` - 单元件转换
+- `FileReader` - 文件读取
+- `CompletionGenerator` - Shell 自动补全生成器
+
+**职责：**
+- 纯命令行模式运行（`--cli` 参数）
+- Shell 自动补全支持
+- BOM 批量导入转换
+- 离线批量导出
 
 ### Model 层（模型层）
 
@@ -198,8 +225,13 @@ Model 层负责数据的存储和管理。
 
 **工具模块：**
 - `GeometryUtils` - 几何计算工具
-- `NetworkUtils` - (已废弃，改用 NetworkClient)
 - `LayerMapper` - 图层映射工具
+- `UrlUtils` - URL 规范化工具（统一预览图 URL 处理）
+- `FileUtils` - 文件操作工具
+- `PathSecurity` - 路径安全检查
+- `NetworkClient` - 统一网络请求客户端（带重试和退避）
+- `SvgPathParser` - SVG 路径解析
+- `GzipUtils` - GZIP 压缩解压
 
 ### 工作线程（Workers）
 
@@ -673,9 +705,11 @@ EasyKiConverter_QT/
 项目存在四套网络请求实现，弱网容错能力不一致：
 
 - **`FetchWorker`**（流水线批量导出）：支持超时（8-10s）和重试（3次），但超时后不重试
-- **`NetworkUtils`**（单件预览获取）：最完善的弱网支持，支持超时（30s）+重试+递增延迟
+- **`NetworkClient`**（统一网络层）：支持超时、重试和指数退避，已整合到 ComponentService
 - **`NetworkWorker`**（旧版单件获取）：无超时和重试机制，弱网下可能永久阻塞
 - **`ComponentService`**（LCSC 预览图）：支持超时（15s）+重试，有 Fallback 备用方案
+
+> 注：`NetworkUtils` 源码已移除，其功能已整合到 `NetworkClient` 统一网络层。
 
 已知问题及改进方向详见 [弱网支持分析报告](../WEAK_NETWORK_ANALYSIS.md) 和 [ADR-007](../project/adr/007-weak-network-resilience-analysis.md)。
 
