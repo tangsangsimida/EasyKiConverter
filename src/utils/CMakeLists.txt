@@ -57,6 +57,26 @@ add_library(EasyKiConverterSafeUtils STATIC
     CommandLineParser.h
 )
 
+# 3. CLI 模块库
+add_library(EasyKiConverterCli STATIC
+    cli/CliContext.cpp
+    cli/CliContext.h
+    cli/CliPrinter.cpp
+    cli/CliPrinter.h
+    cli/FileReader.cpp
+    cli/FileReader.h
+    cli/BaseConverter.cpp
+    cli/BaseConverter.h
+    cli/BomConverter.cpp
+    cli/BomConverter.h
+    cli/ComponentConverter.cpp
+    cli/ComponentConverter.h
+    cli/BatchConverter.cpp
+    cli/BatchConverter.h
+    cli/CliConverter.cpp
+    cli/CliConverter.h
+)
+
 set_target_properties(EasyKiConverterSafeUtils PROPERTIES
     AUTOMOC ON
 )
@@ -80,3 +100,34 @@ else()
 endif()
 
 add_library(EasyKiConverter::SafeUtils ALIAS EasyKiConverterSafeUtils)
+
+# CLI 模块库配置
+set_target_properties(EasyKiConverterCli PROPERTIES
+    AUTOMOC ON
+)
+
+# 查找 Qt 网络组件
+find_package(Qt6 REQUIRED COMPONENTS Network)
+
+target_link_libraries(EasyKiConverterCli
+    PUBLIC
+        Qt6::Core
+        Qt6::Network
+        EasyKiConverterSafeUtils
+        EasyKiConverterLogging
+        EasyKiConverterServices
+)
+
+target_include_directories(EasyKiConverterCli
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
+)
+
+if(MSVC)
+    target_compile_options(EasyKiConverterCli PRIVATE /W4)
+else()
+    target_compile_options(EasyKiConverterCli PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+add_library(EasyKiConverter::Cli ALIAS EasyKiConverterCli)

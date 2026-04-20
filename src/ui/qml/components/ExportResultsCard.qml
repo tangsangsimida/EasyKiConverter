@@ -10,7 +10,6 @@ Loader {
     property var exportProgressController
     active: resultsLoader.exportProgressController ? (resultsLoader.exportProgressController.isExporting || resultsLoader.exportProgressController.resultsList.length > 0) : false
     visible: active  // 确保 Loader 在没有结果时不占用空间
-
     resources: [
         // 防抖定时器，避免频繁调用 updateFilter()
         Timer {
@@ -29,7 +28,6 @@ Loader {
             }
         }
     ]
-
     sourceComponent: Card {
         title: qsTranslate("MainWindow", "转换结果")
         ColumnLayout {

@@ -313,6 +313,7 @@ set_target_properties(appEasyKiconverter_Cpp_Version PROPERTIES
 target_link_libraries(appEasyKiconverter_Cpp_Version
     PRIVATE
         EasyKiConverterLib
+        EasyKiConverter::Cli
         Qt6::Quick
         Qt6::QuickControls2
         Qt6::Gui

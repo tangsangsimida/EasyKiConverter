@@ -22,9 +22,24 @@ namespace EasyKiConverter {
  * - --version, -v: 显示版本信息
  * - --portable: 便携模式（配置文件保存在程序目录）
  * - --sync-logging: 启用同步控制台日志输出（确保彩色日志显示，方便调试）
+ *
+ * CLI 模式子命令：
+ * - convert bom: 转换 BOM 表
+ * - convert component: 转换单个元器件
+ * - convert batch: 批量转换
  */
 class CommandLineParser {
 public:
+    /**
+     * @brief CLI 模式枚举
+     */
+    enum class CliMode {
+        None,  // 无 CLI 模式，启动 GUI
+        ConvertBom,  // 转换 BOM 表
+        ConvertComponent,  // 转换单个元器件
+        ConvertBatch  // 批量转换
+    };
+
     /**
      * @brief 构造函数
      * @param argc 参数数量
@@ -128,8 +143,83 @@ public:
      */
     QStringList positionalArguments() const;
 
+    // ========== CLI 模式相关方法 ==========
+
+    /**
+     * @brief 是否处于 CLI 模式
+     * @return CLI 模式返回 true，否则返回 false
+     */
+    bool isCliMode() const;
+
+    /**
+     * @brief 获取 CLI 模式
+     * @return CLI 模式枚举
+     */
+    CliMode cliMode() const;
+
+    /**
+     * @brief 获取输入文件路径（用于 BOM 表和批量转换）
+     * @return 输入文件路径
+     */
+    QString inputFile() const;
+
+    /**
+     * @brief 获取输出目录路径
+     * @return 输出目录路径
+     */
+    QString outputDir() const;
+
+    /**
+     * @brief 获取 LCSC 元器件编号（用于单个元器件转换）
+     * @return LCSC 编号
+     */
+    QString componentId() const;
+
+    /**
+     * @brief 是否导出符号库
+     * @return 导出返回 true，否则返回 false
+     */
+    bool exportSymbol() const;
+
+    /**
+     * @brief 是否导出封装库
+     * @return 导出返回 true，否则返回 false
+     */
+    bool exportFootprint() const;
+
+    /**
+     * @brief 是否导出 3D 模型
+     * @return 导出返回 true，否则返回 false
+     */
+    bool export3DModel() const;
+
+    /**
+     * @brief 是否导出预览图
+     * @return 导出返回 true，否则返回 false
+     */
+    bool exportPreview() const;
+
+    /**
+     * @brief 是否显示进度条
+     * @return 显示返回 true，否则返回 false
+     */
+    bool showProgress() const;
+
+    /**
+     * @brief 是否为安静模式
+     * @return 安静模式返回 true，否则返回 false
+     */
+    bool isQuietMode() const;
+
+    /**
+     * @brief 获取 CLI 帮助文本
+     * @return CLI 帮助文本
+     */
+    QString cliHelpText() const;
+
 private:
     void setupOptions();
+    void setupCliOptions();
 
     QCommandLineParser m_parser;
     QCommandLineOption m_debugOption;
@@ -140,6 +230,23 @@ private:
     QCommandLineOption m_themeOption;
     QCommandLineOption m_portableOption;
     QCommandLineOption m_syncLoggingOption;
+
+    // CLI 模式选项
+    QCommandLineOption m_inputOption;
+    QCommandLineOption m_outputOption;
+    QCommandLineOption m_componentOption;
+    QCommandLineOption m_symbolOption;
+    QCommandLineOption m_footprintOption;
+    QCommandLineOption m_3dModelOption;
+    QCommandLineOption m_previewOption;
+    QCommandLineOption m_progressOption;
+    QCommandLineOption m_quietOption;
+
+    CliMode m_cliMode = CliMode::None;
+    bool m_hasConvertCommand = false;
+    bool m_hasBomSubcommand = false;
+    bool m_hasComponentSubcommand = false;
+    bool m_hasBatchSubcommand = false;
 };
 
 }  // namespace EasyKiConverter

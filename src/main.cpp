@@ -5,18 +5,19 @@
 // 意淫我有多少多少家产，然后怕班里有人会读心术紧急撤回一条意淫，
 // 那这在恋爱小说里我不就是那种…背景板吗，
 // 就每天在学校挂机任务就完成的npc
+#include "core/LanguageManager.h"
+#include "core/network/NetworkClient.h"
 #include "services/ConfigService.h"
-#include "src/core/LanguageManager.h"
-#include "src/core/network/NetworkClient.h"
-#include "src/services/UpdateCheckerService.h"
-#include "src/services/export/ExportProgress.h"
-#include "src/services/export/ParallelExportService.h"
-#include "src/ui/viewmodels/ComponentListViewModel.h"
-#include "src/ui/viewmodels/ExportProgressViewModel.h"
-#include "src/ui/viewmodels/ExportSettingsViewModel.h"
-#include "src/ui/viewmodels/ThemeSettingsViewModel.h"
-#include "src/utils/CommandLineParser.h"
-#include "src/utils/logging/Log.h"
+#include "services/UpdateCheckerService.h"
+#include "services/export/ExportProgress.h"
+#include "services/export/ParallelExportService.h"
+#include "ui/viewmodels/ComponentListViewModel.h"
+#include "ui/viewmodels/ExportProgressViewModel.h"
+#include "ui/viewmodels/ExportSettingsViewModel.h"
+#include "ui/viewmodels/ThemeSettingsViewModel.h"
+#include "utils/CommandLineParser.h"
+#include "utils/cli/CliConverter.h"
+#include "utils/logging/Log.h"
 
 #include <QApplication>
 #include <QDebug>
@@ -335,6 +336,43 @@ int main(int argc, char* argv[]) {
         err << cmdParser.validationError() << "\n\n";
         err << cmdParser.helpText();
         return 1;
+    }
+
+    // 检查是否为 CLI 模式
+    if (cmdParser.isCliMode()) {
+#ifdef _WIN32
+        // 尝试附加到父进程的控制台（如果是从命令行启动的）
+        if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+            // 如果附加失败，创建新的控制台窗口
+            AllocConsole();
+            SetConsoleTitleA("EasyKiConverter - CLI");
+        }
+        // 重定向标准输出
+        (void)reopenConsoleStream(stdout, "CONOUT$", "w", "stdout");
+        (void)reopenConsoleStream(stderr, "CONOUT$", "w", "stderr");
+#endif
+        // 初始化日志系统（CLI 模式也需要日志）
+        bool debugMode = isDebugMode(cmdParser);
+        setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile(), cmdParser.isSyncLogging());
+
+        // 创建并执行 CLI 转换器
+        EasyKiConverter::CliConverter cliConverter(cmdParser);
+        bool success = cliConverter.execute();
+
+        if (!success) {
+            QTextStream err(stderr);
+            err << "错误: " << cliConverter.errorMessage() << "\n";
+        }
+
+        // 清理日志
+        EasyKiConverter::QtLogAdapter::uninstall();
+        auto* logger = EasyKiConverter::Logger::instance();
+        if (logger) {
+            logger->flush();
+            logger->close();
+        }
+
+        return success ? 0 : 1;
     }
 
     // 检查调试模式（命令行参数优先，环境变量向后兼容）
