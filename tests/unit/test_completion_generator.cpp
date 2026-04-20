@@ -68,11 +68,11 @@ void TestCompletionGenerator::testGenerateFish() {
     QVERIFY(script.contains("bom"));
     QVERIFY(script.contains("component"));
     QVERIFY(script.contains("batch"));
-    QVERIFY(script.contains("--input"));
-    QVERIFY(script.contains("--output"));
-    QVERIFY(script.contains("--component"));
-    QVERIFY(script.contains("--completion"));
-    QVERIFY(script.contains("--complete"));
+    QVERIFY(script.contains("-l input"));  // Fish uses -l <long-name>
+    QVERIFY(script.contains("-l output"));
+    QVERIFY(script.contains("-l component"));
+    QVERIFY(script.contains("-l completion"));
+    // 注意: --complete 是 bash 动态补全辅助选项，Fish 不需要
 }
 
 void TestCompletionGenerator::testParseShell() {

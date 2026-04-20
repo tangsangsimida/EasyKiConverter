@@ -92,7 +92,6 @@ bool CommandLineParser::parse() {
         // 检测 CLI 子命令
         // 使用 args 而非 QCoreApplication::arguments() 保证可靠性
 
-
         // 检查是否包含 "convert" 命令
         for (int i = 1; i < args.size(); ++i) {
             QString arg = args[i].toLower();

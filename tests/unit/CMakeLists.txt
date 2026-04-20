@@ -84,6 +84,7 @@ add_executable(test_command_line_parser test_command_line_parser.cpp)
 target_link_libraries(test_command_line_parser PRIVATE
     Qt6::Test
     EasyKiConverterLib
+    EasyKiConverter::Cli
 )
 target_include_directories(test_command_line_parser PRIVATE
     ${CMAKE_SOURCE_DIR}/src

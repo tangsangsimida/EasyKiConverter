@@ -362,8 +362,11 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        // 未知情况，但既然是 CLI 模式尝试 GUI 启动
-        return 0;
+        // 到达此处的唯一可能是 isConvertCommand 但 isCliMode=false（无效子命令）
+        // 该路径已在上面返回 1，此处不会执行到此
+        // 防御性断言：确保所有 CLI 模式请求都在上面正确处理
+        Q_ASSERT_X(false, "main", "Unhandled CLI mode path");
+        return 1;
     }
 
     // GUI 模式：使用完整的 QApplication
