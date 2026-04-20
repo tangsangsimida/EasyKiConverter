@@ -2,6 +2,7 @@
 
 #include "ConfigService.h"
 #include "core/network/NetworkClient.h"
+#include "core/utils/UrlUtils.h"
 
 #include <QDebug>
 #include <QFile>
@@ -19,55 +20,6 @@ namespace EasyKiConverter {
 
 namespace {
 
-QString normalizePreviewImageUrl(const QString& imageUrl) {
-    QString normalizedUrl = imageUrl.trimmed();
-    if (normalizedUrl.isEmpty()) {
-        return QString();
-    }
-
-    if (normalizedUrl.startsWith(QStringLiteral("//"))) {
-        normalizedUrl.prepend(QStringLiteral("https:"));
-    } else if (normalizedUrl.startsWith(QStringLiteral("/image.lceda.cn/")) ||
-               normalizedUrl.startsWith(QStringLiteral("/file.elecfans.com/")) ||
-               normalizedUrl.startsWith(QStringLiteral("/www.lcsc.com/"))) {
-        normalizedUrl.remove(0, 1);
-        normalizedUrl.prepend(QStringLiteral("https://"));
-    } else if (normalizedUrl.startsWith(QStringLiteral("/web1/")) ||
-               normalizedUrl.startsWith(QStringLiteral("/M00/"))) {
-        normalizedUrl.remove(0, 1);
-        normalizedUrl.prepend(QStringLiteral("https://file.elecfans.com/"));
-    } else if (normalizedUrl.startsWith('/')) {
-        normalizedUrl.remove(0, 1);
-        normalizedUrl.prepend(QStringLiteral("https://image.lceda.cn/"));
-    } else if (normalizedUrl.contains("alimg.szlcsc.com")) {
-        if (!normalizedUrl.startsWith("http")) {
-            normalizedUrl = "https://" + normalizedUrl;
-        }
-    } else if (!normalizedUrl.contains("://")) {
-        normalizedUrl = "https://image.lceda.cn/" + normalizedUrl;
-    }
-
-    normalizedUrl.replace(QStringLiteral("https://image.lceda.cn//image.lceda.cn/"),
-                          QStringLiteral("https://image.lceda.cn/"));
-    normalizedUrl.replace(QStringLiteral("http://image.lceda.cn//image.lceda.cn/"),
-                          QStringLiteral("https://image.lceda.cn/"));
-    normalizedUrl.replace(QStringLiteral("https://image.lceda.cn/image.lceda.cn/"),
-                          QStringLiteral("https://image.lceda.cn/"));
-
-    return normalizedUrl;
-}
-
-QStringList deduplicateAndNormalizeUrls(const QStringList& imageUrls) {
-    QStringList normalizedUrls;
-    for (const QString& imageUrl : imageUrls) {
-        const QString normalizedUrl = normalizePreviewImageUrl(imageUrl);
-        if (!normalizedUrl.isEmpty() && !normalizedUrls.contains(normalizedUrl)) {
-            normalizedUrls.append(normalizedUrl);
-        }
-    }
-    return normalizedUrls;
-}
-
 QStringList extractPreviewImageUrlsFromProduct(const QJsonObject& product) {
     QStringList imageUrls;
     if (product.contains(QStringLiteral("image"))) {
@@ -81,7 +33,7 @@ QStringList extractPreviewImageUrlsFromProduct(const QJsonObject& product) {
         imageUrls.removeLast();
     }
 
-    return deduplicateAndNormalizeUrls(imageUrls);
+    return UrlUtils::deduplicateAndNormalizeUrls(imageUrls);
 }
 
 QString extractComponentCode(const QJsonObject& product) {
@@ -274,6 +226,7 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
 
     if (pathsToLoad.isEmpty()) {
         qDebug() << "LcscImageService: No cached images found for" << componentId;
+        m_requestedComponents.remove(componentId);
         checkDownloadCompletion(componentId);
         return;
     }
@@ -320,8 +273,9 @@ void LcscImageService::loadCachedPreviewImagesAsync(const QString& componentId, 
 }
 
 void LcscImageService::startPreviewImageDownloads(const QString& componentId, const QStringList& imageUrls) {
-    const QStringList normalizedUrls = deduplicateAndNormalizeUrls(imageUrls);
+    const QStringList normalizedUrls = UrlUtils::deduplicateAndNormalizeUrls(imageUrls);
     if (normalizedUrls.isEmpty()) {
+        m_requestedComponents.remove(componentId);
         emit error(componentId, "No preview image URLs available");
         return;
     }
@@ -372,6 +326,7 @@ void LcscImageService::performApiSearch(const QString& componentId) {
                 qWarning() << "LcscImageService: API search failed for component:" << componentId
                            << "error:" << result.error;
                 request->deleteLater();
+                m_requestedComponents.remove(componentId);
                 // 不再触发fallback，直接报告无预览图
                 emit error(componentId, "No preview image available from API");
                 return;
@@ -381,6 +336,7 @@ void LcscImageService::performApiSearch(const QString& componentId) {
             if (doc.isNull()) {
                 qWarning() << "LcscImageService: Failed to parse JSON response for component:" << componentId;
                 request->deleteLater();
+                m_requestedComponents.remove(componentId);
                 // 不再触发fallback，直接报告无预览图
                 emit error(componentId, "No preview image available from API");
                 return;
@@ -400,6 +356,7 @@ void LcscImageService::performApiSearch(const QString& componentId) {
                         if (matchedComponentCode.isEmpty()) {
                             qWarning() << "LcscImageService: No matching product found for component:" << componentId;
                             request->deleteLater();
+                            m_requestedComponents.remove(componentId);
                             emit error(componentId, "No preview image available from API");
                             return;
                         }
@@ -436,6 +393,7 @@ void LcscImageService::performApiSearch(const QString& componentId) {
             }
 
             request->deleteLater();
+            m_requestedComponents.remove(componentId);
             // 不再触发fallback，直接报告无预览图
             emit error(componentId, "No preview image available from API");
         });
@@ -518,6 +476,7 @@ void LcscImageService::emitAllImagesReady(const QString& componentId) {
 
     m_downloadCounts.remove(componentId);
     m_expectedCounts.remove(componentId);
+    m_requestedComponents.remove(componentId);
 }
 
 void LcscImageService::performDatasheetDownload(const QString& componentId, const QString& datasheetUrl) {

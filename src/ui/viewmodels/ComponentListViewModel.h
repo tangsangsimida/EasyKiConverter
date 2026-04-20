@@ -226,7 +226,6 @@ private:
     static constexpr int BATCH_ADD_SIZE = 50;
 
     // 批量更新模式（验证期间暂停 UI 更新）
-    bool m_batchUpdateMode = false;
     QList<QPointer<ComponentListItemData>> m_batchUpdateItems;
     QTimer* m_batchUpdateTimer;
 

@@ -67,7 +67,6 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
     m_batchUpdateTimer->setSingleShot(true);
     m_batchUpdateTimer->setInterval(100);
     connect(m_batchUpdateTimer, &QTimer::timeout, this, [this]() {
-        m_batchUpdateMode = false;
         for (const QPointer<ComponentListItemData>& item : m_batchUpdateItems) {
             if (item) {
                 emit item->dataChanged();
@@ -843,7 +842,7 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
                 // CAD 数据获取失败，标记为验证失败
                 item->setValid(false);
                 item->setValidationPhase("failed");
-                const bool nonRetryable = isNonRetryableValidationError(error);
+                const bool nonRetryable = ComponentListViewModel::isNonRetryableValidationError(error);
                 item->setRetryable(!nonRetryable);
                 if (error.contains("No result", Qt::CaseInsensitive) ||
                     error.contains("not found", Qt::CaseInsensitive) || error.contains("404", Qt::CaseInsensitive)) {

@@ -1,6 +1,10 @@
 #include "ComponentCacheService.h"
 
+#include "CacheHealthManager.h"
+#include "CachePruner.h"
 #include "core/network/NetworkClient.h"
+#include "core/utils/UrlUtils.h"
+#include "services/ComponentService.h"
 #include "utils/logging/LogMacros.h"
 
 #include <QAtomicInt>
@@ -19,42 +23,6 @@
 namespace EasyKiConverter {
 
 std::unique_ptr<ComponentCacheService> ComponentCacheService::s_instance;
-
-namespace {
-
-QString normalizePreviewImageUrl(const QString& imageUrl) {
-    QString normalizedUrl = imageUrl.trimmed();
-    if (normalizedUrl.isEmpty()) {
-        return QString();
-    }
-
-    if (normalizedUrl.startsWith(QStringLiteral("//"))) {
-        normalizedUrl.prepend(QStringLiteral("https:"));
-    } else if (normalizedUrl.startsWith(QStringLiteral("/image.lceda.cn/")) ||
-               normalizedUrl.startsWith(QStringLiteral("/file.elecfans.com/")) ||
-               normalizedUrl.startsWith(QStringLiteral("/www.lcsc.com/"))) {
-        normalizedUrl.remove(0, 1);
-        normalizedUrl.prepend(QStringLiteral("https://"));
-    } else if (normalizedUrl.startsWith(QStringLiteral("/web1/")) ||
-               normalizedUrl.startsWith(QStringLiteral("/M00/"))) {
-        normalizedUrl.remove(0, 1);
-        normalizedUrl.prepend(QStringLiteral("https://file.elecfans.com/"));
-    } else if (normalizedUrl.startsWith('/')) {
-        normalizedUrl.remove(0, 1);
-        normalizedUrl.prepend(QStringLiteral("https://image.lceda.cn/"));
-    }
-
-    normalizedUrl.replace(QStringLiteral("https://image.lceda.cn//image.lceda.cn/"),
-                          QStringLiteral("https://image.lceda.cn/"));
-    normalizedUrl.replace(QStringLiteral("http://image.lceda.cn//image.lceda.cn/"),
-                          QStringLiteral("https://image.lceda.cn/"));
-    normalizedUrl.replace(QStringLiteral("https://image.lceda.cn/image.lceda.cn/"),
-                          QStringLiteral("https://image.lceda.cn/"));
-
-    return normalizedUrl;
-}
-
-}  // namespace
 
 ComponentCacheService::ComponentCacheService(QObject* parent)
     : QObject(parent), m_memoryCacheLimitMB(50), m_memoryCacheSize(0) {
@@ -293,7 +261,7 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
     QJsonArray previewUrls = metadata.value("previewImages").toArray();
     QStringList urlList;
     for (const QJsonValue& val : previewUrls) {
-        const QString normalizedUrl = normalizePreviewImageUrl(val.toString());
+        const QString normalizedUrl = UrlUtils::normalizePreviewImageUrl(val.toString());
         if (!normalizedUrl.isEmpty()) {
             urlList.append(normalizedUrl);
         }
@@ -993,59 +961,9 @@ qint64 ComponentCacheService::calculateDirSize(const QString& dirPath) const {
 }
 
 void ComponentCacheService::pruneCache(qint64 targetSizeBytes) {
-    // 第一阶段：锁外收集所有缓存目录的信息
-    QList<QPair<QString, QDateTime>> cacheList;
-    qint64 currentSize = 0;
-
-    {
-        QDir dir(m_cacheDir);
-        for (const QString& subDir : dir.entryList(QDir::Dirs)) {
-            if (subDir == "." || subDir == ".." || subDir == "model3d") {
-                continue;
-            }
-            QString dirPath = QDir::cleanPath(m_cacheDir + "/" + subDir);
-            QFileInfo info(dirPath);
-            if (info.exists()) {
-                cacheList.append(qMakePair(subDir, info.lastModified()));
-                currentSize += calculateDirSize(dirPath);
-            }
-        }
-    }
-
-    if (currentSize <= targetSizeBytes) {
-        return;
-    }
-
-    // 按访问时间排序（最老的在前）
-    std::sort(
-        cacheList.begin(), cacheList.end(), [](const QPair<QString, QDateTime>& a, const QPair<QString, QDateTime>& b) {
-            return a.second < b.second;
-        });
-
-    // 第二阶段：锁内执行删除操作
-    {
-        QMutexLocker locker(&m_mutex);
-
-        // 删除最老的缓存直到达到目标大小
-        for (const auto& pair : cacheList) {
-            if (currentSize <= targetSizeBytes) {
-                break;
-            }
-
-            QString dirPath = QDir::cleanPath(m_cacheDir + "/" + pair.first);
-            qint64 dirSize = calculateDirSize(dirPath);
-
-            QDir d;
-            if (d.exists(dirPath)) {
-                d.removeRecursively();
-                currentSize -= dirSize;
-                LOG_DEBUG(LogModule::Core, "Pruned cache: {} size: {}", pair.first, dirSize);
-            }
-        }
-    }  // 锁在此处释放
-
-    // 在锁外发送信号，避免死锁
-    emit cacheSizeChanged(currentSize);
+    CachePruner pruner(m_cacheDir);
+    qint64 newSize = pruner.pruneTo(targetSizeBytes);
+    emit cacheSizeChanged(newSize);
 }
 
 void ComponentCacheService::setMemoryCacheLimit(int maxSizeMB) {
@@ -1107,7 +1025,7 @@ QJsonObject ComponentCacheService::buildMetadata(const QString& componentId, con
 
     QJsonArray previewUrls;
     for (const QString& url : data.previewImages()) {
-        const QString normalizedUrl = normalizePreviewImageUrl(url);
+        const QString normalizedUrl = UrlUtils::normalizePreviewImageUrl(url);
         if (!normalizedUrl.isEmpty()) {
             previewUrls.append(normalizedUrl);
         }
@@ -1195,179 +1113,8 @@ QString ComponentCacheService::resolveDatasheetPath(const QString& lcscId,
 }
 
 void ComponentCacheService::selfHealCache() {
-    QString cacheRoot;
-    {
-        QMutexLocker locker(&m_mutex);
-        cacheRoot = m_cacheDir;
-    }
-
-    QDir rootDir(cacheRoot);
-    if (!rootDir.exists()) {
-        return;
-    }
-
-    int repairedComponents = 0;
-    int removedComponents = 0;
-
-    const QStringList componentDirs = rootDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
-    for (const QString& entry : componentDirs) {
-        if (entry == "model3d") {
-            continue;
-        }
-
-        if (repairComponentCache(entry)) {
-            ++repairedComponents;
-        } else {
-            ++removedComponents;
-        }
-    }
-
-    repairModel3DCache();
-
-    if (repairedComponents > 0 || removedComponents > 0) {
-        LOG_INFO(LogModule::Core,
-                 "Cache self-heal completed, retained {} component cache dirs and removed {} invalid dirs",
-                 repairedComponents,
-                 removedComponents);
-    }
-}
-
-bool ComponentCacheService::repairComponentCache(const QString& lcscId) {
-    const QString dirPath = componentCacheDir(lcscId);
-    QDir componentDir(dirPath);
-    if (!componentDir.exists()) {
-        return false;
-    }
-
-    const QString metaPath = metadataPath(lcscId);
-    if (!QFileInfo::exists(metaPath)) {
-        componentDir.removeRecursively();
-        LOG_WARN(LogModule::Core, "Removed invalid cache dir without metadata: {}", dirPath);
-        return false;
-    }
-
-    QJsonObject metadata = loadMetadata(lcscId);
-    if (metadata.isEmpty()) {
-        componentDir.removeRecursively();
-        LOG_WARN(LogModule::Core, "Removed invalid cache dir with unreadable metadata: {}", dirPath);
-        return false;
-    }
-
-    bool metadataChanged = false;
-    if (metadata.value("lcscId").toString().isEmpty()) {
-        metadata["lcscId"] = lcscId;
-        metadataChanged = true;
-    }
-    if (!metadata.contains("cachedAt")) {
-        metadata["cachedAt"] = QDateTime::currentDateTime().toString(Qt::ISODate);
-        metadataChanged = true;
-    }
-
-    const QString cadPath = componentDir.filePath("cad_data.json");
-    bool hasValidCad = false;
-    if (QFileInfo::exists(cadPath)) {
-        QFile cadFile(cadPath);
-        if (cadFile.open(QIODevice::ReadOnly)) {
-            const QByteArray cadData = cadFile.readAll();
-            cadFile.close();
-
-            QJsonParseError parseError;
-            const QJsonDocument cadDoc = QJsonDocument::fromJson(cadData, &parseError);
-            hasValidCad = !cadData.isEmpty() && parseError.error == QJsonParseError::NoError && cadDoc.isObject();
-        }
-
-        if (!hasValidCad) {
-            QFile::remove(cadPath);
-            LOG_WARN(LogModule::Core, "Removed broken cad_data.json from cache: {}", cadPath);
-        }
-    }
-
-    for (int index = 0; index < 3; ++index) {
-        const QString previewPath = previewImagePath(lcscId, index);
-        const QFileInfo previewInfo(previewPath);
-        if (previewInfo.exists() && previewInfo.size() <= 0) {
-            QFile::remove(previewPath);
-            LOG_WARN(LogModule::Core, "Removed empty preview cache file: {}", previewPath);
-        }
-    }
-
-    const QString legacyDatasheetPath = datasheetPath(lcscId);
-    if (QFileInfo::exists(legacyDatasheetPath)) {
-        QFile legacyDatasheet(legacyDatasheetPath);
-        if (legacyDatasheet.open(QIODevice::ReadOnly)) {
-            const QByteArray legacyData = legacyDatasheet.read(8);
-            legacyDatasheet.close();
-
-            const QString format = legacyData.startsWith("%PDF-") ? QStringLiteral("pdf") : QStringLiteral("html");
-            const QString targetPath = resolveDatasheetPath(lcscId, format, true);
-            if (QFile::exists(targetPath)) {
-                QFile::remove(targetPath);
-            }
-            if (QFile::rename(legacyDatasheetPath, targetPath)) {
-                metadata["datasheetFormat"] = format;
-                metadataChanged = true;
-                LOG_INFO(LogModule::Core, "Migrated legacy datasheet cache file: {}", targetPath);
-            } else {
-                QFile::remove(legacyDatasheetPath);
-                LOG_WARN(LogModule::Core, "Removed unreadable legacy datasheet cache file: {}", legacyDatasheetPath);
-            }
-        } else {
-            QFile::remove(legacyDatasheetPath);
-            LOG_WARN(LogModule::Core, "Removed unreadable legacy datasheet cache file: {}", legacyDatasheetPath);
-        }
-    }
-
-    const QString datasheetFormat = metadata.value("datasheetFormat").toString();
-    const QString resolvedDatasheetPath = resolveDatasheetPath(lcscId, datasheetFormat, false);
-    if (QFileInfo::exists(resolvedDatasheetPath)) {
-        const QFileInfo datasheetInfo(resolvedDatasheetPath);
-        if (datasheetInfo.size() <= 0) {
-            QFile::remove(resolvedDatasheetPath);
-            LOG_WARN(LogModule::Core, "Removed empty datasheet cache file: {}", resolvedDatasheetPath);
-        } else if (datasheetFormat.isEmpty()) {
-            metadata["datasheetFormat"] =
-                resolvedDatasheetPath.endsWith(".html") ? QStringLiteral("html") : QStringLiteral("pdf");
-            metadataChanged = true;
-        }
-    }
-
-    const bool hasBasicIdentity =
-        !metadata.value("lcscId").toString().isEmpty() || !metadata.value("name").toString().isEmpty();
-    const bool hasPreviewUrls = !metadata.value("previewImages").toArray().isEmpty();
-    const bool hasDatasheetUrl = !metadata.value("datasheet").toString().isEmpty();
-    const bool hasModel3DUuid = !metadata.value("model3duuid").toString().isEmpty();
-
-    if (!hasValidCad && !hasBasicIdentity && !hasPreviewUrls && !hasDatasheetUrl && !hasModel3DUuid) {
-        componentDir.removeRecursively();
-        LOG_WARN(LogModule::Core, "Removed unusable cache dir after self-heal: {}", dirPath);
-        return false;
-    }
-
-    if (metadataChanged) {
-        saveMetadata(lcscId, metadata);
-    }
-
-    return true;
-}
-
-void ComponentCacheService::repairModel3DCache() {
-    const QString modelCacheDir = m_cacheDir + "/model3d";
-    QDir dir(modelCacheDir);
-    if (!dir.exists()) {
-        return;
-    }
-
-    const QSet<QString> validSuffixes = {QStringLiteral("step"), QStringLiteral("wrl")};
-    const QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
-    for (const QFileInfo& fileInfo : files) {
-        const QString suffix = fileInfo.suffix().toLower();
-        const bool removable =
-            fileInfo.size() <= 0 || !validSuffixes.contains(suffix) || fileInfo.fileName().startsWith(".tmp");
-        if (removable) {
-            QFile::remove(fileInfo.absoluteFilePath());
-            LOG_WARN(LogModule::Core, "Removed broken 3D cache file: {}", fileInfo.absoluteFilePath());
-        }
-    }
+    CacheHealthManager healer(m_cacheDir);
+    healer.healAll();
 }
 
 QDateTime ComponentCacheService::getCacheAccessTime(const QString& lcscId) const {

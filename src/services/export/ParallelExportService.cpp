@@ -6,135 +6,19 @@
 #include "Model3DExportStage.h"
 #include "PreviewImagesExportStage.h"
 #include "SymbolExportStage.h"
-#include "core/easyeda/EasyedaFootprintImporter.h"
-#include "core/easyeda/EasyedaSymbolImporter.h"
 #include "core/network/NetworkClient.h"
 #include "services/ComponentCacheService.h"
+#include "services/export/ExportReportGenerator.h"
+#include "services/export/ExportWorkerHelpers.h"
 
 #include <QDebug>
 #include <QDir>
-#include <QJsonDocument>
-#include <QJsonParseError>
 #include <QMutexLocker>
 #include <QSaveFile>
 #include <QTextStream>
 #include <QTimer>
 
 namespace EasyKiConverter {
-
-namespace {
-
-QSharedPointer<ComponentData> loadDiskCachedComponentData(const QString& componentId) {
-    ComponentCacheService* cache = ComponentCacheService::instance();
-    QSharedPointer<ComponentData> cachedData = cache->loadComponentData(componentId);
-    if (!cachedData) {
-        return nullptr;
-    }
-
-    const QByteArray cadJsonData = cache->loadCadDataJson(componentId);
-    if (!cadJsonData.isEmpty()) {
-        QJsonParseError parseError;
-        const QJsonDocument cadDoc = QJsonDocument::fromJson(cadJsonData, &parseError);
-        if (parseError.error == QJsonParseError::NoError && cadDoc.isObject()) {
-            const QJsonObject cadDataObject = cadDoc.object();
-            EasyedaSymbolImporter symbolImporter;
-            EasyedaFootprintImporter footprintImporter;
-            cachedData->setSymbolData(symbolImporter.importSymbolData(cadDataObject));
-            cachedData->setFootprintData(footprintImporter.importFootprintData(cadDataObject));
-        }
-    }
-
-    const QByteArray datasheetData = cache->loadDatasheet(componentId);
-    if (!datasheetData.isEmpty()) {
-        cachedData->setDatasheetData(datasheetData);
-    }
-
-    return cachedData;
-}
-
-void mergeComponentData(ComponentData& target, const QSharedPointer<ComponentData>& fallback) {
-    if (!fallback) {
-        return;
-    }
-
-    if (target.lcscId().isEmpty()) {
-        target = *fallback;
-        return;
-    }
-
-    if (target.symbolData() == nullptr && fallback->symbolData() != nullptr) {
-        target.setSymbolData(fallback->symbolData());
-    }
-    if (target.footprintData() == nullptr && fallback->footprintData() != nullptr) {
-        target.setFootprintData(fallback->footprintData());
-    }
-    if ((target.model3DData() == nullptr || target.model3DData()->uuid().isEmpty()) &&
-        fallback->model3DData() != nullptr) {
-        target.setModel3DData(fallback->model3DData());
-    }
-    if (target.previewImages().isEmpty() && !fallback->previewImages().isEmpty()) {
-        target.setPreviewImages(fallback->previewImages());
-    }
-    if (target.previewImageData().isEmpty() && !fallback->previewImageData().isEmpty()) {
-        target.setPreviewImageData(fallback->previewImageData());
-    }
-    if (target.datasheet().isEmpty() && !fallback->datasheet().isEmpty()) {
-        target.setDatasheet(fallback->datasheet());
-    }
-    if (target.datasheetFormat().isEmpty() && !fallback->datasheetFormat().isEmpty()) {
-        target.setDatasheetFormat(fallback->datasheetFormat());
-    }
-    if (target.datasheetData().isEmpty() && !fallback->datasheetData().isEmpty()) {
-        target.setDatasheetData(fallback->datasheetData());
-    }
-    if (target.name().isEmpty() && !fallback->name().isEmpty()) {
-        target.setName(fallback->name());
-    }
-    if (target.prefix().isEmpty() && !fallback->prefix().isEmpty()) {
-        target.setPrefix(fallback->prefix());
-    }
-    if (target.package().isEmpty() && !fallback->package().isEmpty()) {
-        target.setPackage(fallback->package());
-    }
-    if (target.manufacturer().isEmpty() && !fallback->manufacturer().isEmpty()) {
-        target.setManufacturer(fallback->manufacturer());
-    }
-    if (target.manufacturerPart().isEmpty() && !fallback->manufacturerPart().isEmpty()) {
-        target.setManufacturerPart(fallback->manufacturerPart());
-    }
-}
-
-void recomputeTypeProgressCounts(ExportTypeProgress& progress) {
-    progress.completedCount = 0;
-    progress.successCount = 0;
-    progress.failedCount = 0;
-    progress.skippedCount = 0;
-    progress.inProgressCount = 0;
-
-    for (auto it = progress.itemStatus.cbegin(); it != progress.itemStatus.cend(); ++it) {
-        switch (it.value().status) {
-            case ExportItemStatus::Status::Pending:
-                break;
-            case ExportItemStatus::Status::InProgress:
-                progress.inProgressCount++;
-                break;
-            case ExportItemStatus::Status::Success:
-                progress.completedCount++;
-                progress.successCount++;
-                break;
-            case ExportItemStatus::Status::Failed:
-                progress.completedCount++;
-                progress.failedCount++;
-                break;
-            case ExportItemStatus::Status::Skipped:
-                progress.completedCount++;
-                progress.skippedCount++;
-                break;
-        }
-    }
-}
-
-}  // namespace
 
 ParallelExportService::ParallelExportService(QObject* parent) : QObject(parent), m_progress() {
     m_progress.currentStage = ExportOverallProgress::Stage::Idle;
@@ -684,7 +568,7 @@ void ParallelExportService::onExportItemStatusChanged(const QString& componentId
 
     ExportTypeProgress& typeProgress = m_progress.exportTypeProgress[typeName];
     typeProgress.itemStatus[componentId] = status;
-    recomputeTypeProgressCounts(typeProgress);
+    ExportWorkerHelpers::recomputeTypeProgressCounts(typeProgress);
 
     locker.unlock();
     emit itemStatusChanged(componentId, typeName, status);
@@ -728,8 +612,9 @@ void ParallelExportService::processNextPreloadBatch() {
         }
 
         ComponentData data = m_componentService->getComponentData(componentId);
-        const QSharedPointer<ComponentData> diskCachedData = loadDiskCachedComponentData(componentId);
-        mergeComponentData(data, diskCachedData);
+        const QSharedPointer<ComponentData> diskCachedData =
+            ExportWorkerHelpers::loadDiskCachedComponentData(componentId);
+        ExportWorkerHelpers::mergeComponentData(data, diskCachedData);
 
         {
             QMutexLocker locker(&m_progressMutex);
@@ -904,100 +789,17 @@ void ParallelExportService::checkAllExportCompleted() {
 }
 
 void ParallelExportService::logNetworkRuntimeStats(const QString& context) const {
-    const QString snapshot = NetworkClient::instance().formatRuntimeStats();
-    qInfo().noquote() << QStringLiteral("ParallelExportService network runtime stats [%1]\n%2").arg(context, snapshot);
+    ExportReportGenerator::logNetworkStats(context);
 }
 
 void ParallelExportService::writeExportDetailedReport(const QString& reason) const {
-    // 只在调试模式下生成详细报告
-    if (!m_options.debugMode) {
-        return;
-    }
-
-    if (m_options.outputPath.trimmed().isEmpty()) {
-        return;
-    }
-
-    QDir outputDir(m_options.outputPath);
-    if (!outputDir.exists() && !outputDir.mkpath(QStringLiteral("."))) {
-        qWarning() << "ParallelExportService: Failed to create diagnostics report directory:" << outputDir.path();
-        return;
-    }
-
-    const QString reportPath = outputDir.filePath(QStringLiteral("easykiconverter_export_detailed_report.md"));
-    QSaveFile file(reportPath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qWarning() << "ParallelExportService: Failed to open export detailed report for writing:" << reportPath;
-        return;
-    }
-
+    // 获取进度快照（线程安全）
     ExportOverallProgress progressSnapshot;
     {
         QMutexLocker locker(&m_progressMutex);
         progressSnapshot = m_progress;
     }
-
-    QTextStream out(&file);
-    out.setEncoding(QStringConverter::Utf8);
-    out << "# EasyKiConverter Export Detailed Report\n\n";
-    out << "- Generated: " << QDateTime::currentDateTime().toString(Qt::ISODate) << "\n";
-    out << "- Reason: " << reason << "\n";
-    out << "- Weak network support: " << (m_options.weakNetworkSupport ? "enabled" : "disabled") << "\n";
-    out << "- Output path: " << m_options.outputPath << "\n";
-    out << "- Current stage: " << static_cast<int>(progressSnapshot.currentStage) << "\n";
-    out << "- Start time: " << progressSnapshot.startTime.toString(Qt::ISODate) << "\n";
-    out << "- End time: " << progressSnapshot.endTime.toString(Qt::ISODate) << "\n";
-    out << "- Total components: " << progressSnapshot.totalComponents << "\n\n";
-
-    out << "## Export Options\n\n";
-    out << "- Library name: " << m_options.libName << "\n";
-    out << "- Export symbol: " << (m_options.exportSymbol ? "yes" : "no") << "\n";
-    out << "- Export footprint: " << (m_options.exportFootprint ? "yes" : "no") << "\n";
-    out << "- Export 3D model: " << (m_options.exportModel3D ? "yes" : "no") << "\n";
-    out << "- Export preview images: " << (m_options.exportPreviewImages ? "yes" : "no") << "\n";
-    out << "- Export datasheet: " << (m_options.exportDatasheet ? "yes" : "no") << "\n";
-    out << "- Overwrite existing files: " << (m_options.overwriteExistingFiles ? "yes" : "no") << "\n";
-    out << "- Update mode: " << (m_options.updateMode ? "yes" : "no") << "\n";
-    out << "- Debug mode: " << (m_options.debugMode ? "yes" : "no") << "\n\n";
-
-    out << "## Preload\n\n";
-    out << "- Completed: " << progressSnapshot.preloadProgress.completedCount << "/"
-        << progressSnapshot.preloadProgress.totalCount << "\n";
-    out << "- Success: " << progressSnapshot.preloadProgress.successCount << "\n";
-    out << "- Failed: " << progressSnapshot.preloadProgress.failedCount << "\n";
-    out << "- In progress: " << progressSnapshot.preloadProgress.inProgressCount << "\n";
-    if (!progressSnapshot.preloadProgress.failedComponents.isEmpty()) {
-        out << "\n### Preload Failures\n\n";
-        for (auto it = progressSnapshot.preloadProgress.failedComponents.cbegin();
-             it != progressSnapshot.preloadProgress.failedComponents.cend();
-             ++it) {
-            out << "- `" << it.key() << "`: " << it.value() << "\n";
-        }
-    }
-
-    out << "\n## Export Type Progress\n\n";
-    for (auto it = progressSnapshot.exportTypeProgress.cbegin(); it != progressSnapshot.exportTypeProgress.cend();
-         ++it) {
-        const ExportTypeProgress& typeProgress = it.value();
-        out << "### " << it.key() << "\n\n";
-        out << "- Completed: " << typeProgress.completedCount << "/" << typeProgress.totalCount << "\n";
-        out << "- Success: " << typeProgress.successCount << "\n";
-        out << "- Failed: " << typeProgress.failedCount << "\n";
-        out << "- Skipped: " << typeProgress.skippedCount << "\n";
-        out << "- In progress: " << typeProgress.inProgressCount << "\n";
-    }
-
-    out << "\n## Weak Network Diagnostics\n\n";
-    out << "### Network Runtime Stats\n\n```\n";
-    out << NetworkClient::instance().formatRuntimeStats() << "\n";
-    out << "```\n";
-
-    if (!file.commit()) {
-        qWarning() << "ParallelExportService: Failed to commit export detailed report:" << reportPath;
-        return;
-    }
-
-    qInfo() << "ParallelExportService: Export detailed report written to" << reportPath;
+    ExportReportGenerator::writeDetailedReport(reason, m_options, progressSnapshot);
 }
 
 }  // namespace EasyKiConverter

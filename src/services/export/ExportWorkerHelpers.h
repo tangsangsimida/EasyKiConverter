@@ -3,12 +3,14 @@
 
 #include "ExportProgress.h"
 
+#include <QSharedPointer>
 #include <QString>
 
 class QDir;
-class ComponentData;
 
 namespace EasyKiConverter {
+
+class ComponentData;
 
 /**
  * @brief 导出Worker公共辅助函数
@@ -65,6 +67,26 @@ public:
      * @return 完整默认路径
      */
     static QString defaultOutputDir(const QString& subdir);
+
+    /**
+     * @brief 从磁盘缓存加载元器件数据
+     * @param componentId 元器件ID
+     * @return 加载的数据，如果无缓存则返回nullptr
+     */
+    static QSharedPointer<ComponentData> loadDiskCachedComponentData(const QString& componentId);
+
+    /**
+     * @brief 合并ComponentData，source中有值则不覆盖
+     * @param target 目标数据对象
+     * @param fallback 回退数据源
+     */
+    static void mergeComponentData(ComponentData& target, const QSharedPointer<ComponentData>& fallback);
+
+    /**
+     * @brief 根据itemStatus重新计算各状态计数
+     * @param progress 导出类型进度
+     */
+    static void recomputeTypeProgressCounts(ExportTypeProgress& progress);
 };
 
 }  // namespace EasyKiConverter

@@ -16,6 +16,8 @@
 
 #include <memory>
 
+class CacheHealthManager;
+
 namespace EasyKiConverter {
 
 /**
@@ -481,17 +483,6 @@ private:
      * @brief 启动时自修复缓存目录
      */
     void selfHealCache();
-
-    /**
-     * @brief 修复单个元器件缓存目录
-     * @return true 表示目录保留，false 表示目录已删除或不可用
-     */
-    bool repairComponentCache(const QString& lcscId);
-
-    /**
-     * @brief 修复3D模型缓存目录中的坏文件
-     */
-    void repairModel3DCache();
 
     /**
      * @brief 生成缓存key

@@ -1,12 +1,14 @@
 #include "ComponentService.h"
 
 #include "BomParser.h"
+#include "CadDataLoader.h"
 #include "ComponentQueueManager.h"
 #include "ConfigService.h"
 #include "core/easyeda/EasyedaApi.h"
 #include "core/easyeda/EasyedaFootprintImporter.h"
 #include "core/easyeda/EasyedaSymbolImporter.h"
 #include "core/network/NetworkClient.h"
+#include "core/utils/UrlUtils.h"
 
 #include <QDebug>
 #include <QDir>
@@ -30,57 +32,6 @@
 namespace EasyKiConverter {
 
 namespace {
-
-const QString EASYEDA_COMPONENT_API_ENDPOINT =
-    QStringLiteral("https://easyeda.com/api/products/%1/components?version=6.5.51");
-
-struct CadParseResult {
-    QString componentId;
-    QJsonObject resultData;
-    ComponentData componentData;
-    QString errorMessage;
-    bool success = false;
-};
-
-struct CadFetchTaskResult {
-    QString componentId;
-    CadParseResult parsed;
-    QString errorMessage;
-    bool success = false;
-};
-
-QString normalizePreviewImageUrl(const QString& imageUrl) {
-    QString normalizedUrl = imageUrl.trimmed();
-    if (normalizedUrl.isEmpty()) {
-        return QString();
-    }
-
-    if (normalizedUrl.startsWith(QStringLiteral("//"))) {
-        normalizedUrl.prepend(QStringLiteral("https:"));
-    } else if (normalizedUrl.startsWith(QStringLiteral("/image.lceda.cn/")) ||
-               normalizedUrl.startsWith(QStringLiteral("/file.elecfans.com/")) ||
-               normalizedUrl.startsWith(QStringLiteral("/www.lcsc.com/"))) {
-        normalizedUrl.remove(0, 1);
-        normalizedUrl.prepend(QStringLiteral("https://"));
-    } else if (normalizedUrl.startsWith(QStringLiteral("/web1/")) ||
-               normalizedUrl.startsWith(QStringLiteral("/M00/"))) {
-        normalizedUrl.remove(0, 1);
-        normalizedUrl.prepend(QStringLiteral("https://file.elecfans.com/"));
-    } else if (normalizedUrl.startsWith('/')) {
-        normalizedUrl.remove(0, 1);
-        normalizedUrl.prepend(QStringLiteral("https://image.lceda.cn/"));
-    }
-
-    normalizedUrl.replace(QStringLiteral("https://image.lceda.cn//image.lceda.cn/"),
-                          QStringLiteral("https://image.lceda.cn/"));
-    normalizedUrl.replace(QStringLiteral("http://image.lceda.cn//image.lceda.cn/"),
-                          QStringLiteral("https://image.lceda.cn/"));
-    normalizedUrl.replace(QStringLiteral("https://image.lceda.cn/image.lceda.cn/"),
-                          QStringLiteral("https://image.lceda.cn/"));
-
-    return normalizedUrl;
-}
-
 int previewImageIndexFromPath(const QString& path) {
     static const QRegularExpression re(QStringLiteral("preview_(\\d+)\\.jpg$"),
                                        QRegularExpression::CaseInsensitiveOption);
@@ -93,131 +44,6 @@ int previewImageIndexFromPath(const QString& path) {
     const int index = match.captured(1).toInt(&ok);
     return ok ? index : -1;
 }
-
-CadParseResult parseCadPayload(const QString& componentId, const QJsonObject& rawData) {
-    CadParseResult parsed;
-    parsed.componentId = componentId;
-
-    QJsonObject resultData = rawData;
-    if (rawData.contains("result")) {
-        resultData = rawData.value("result").toObject();
-    }
-
-    if (resultData.isEmpty()) {
-        parsed.errorMessage = QStringLiteral("Empty CAD data");
-        return parsed;
-    }
-
-    ComponentData componentData;
-    componentData.setLcscId(componentId);
-    componentData.setName(resultData.value("title").toString());
-    componentData.setPackage(resultData.value("package").toString());
-    componentData.setManufacturer(resultData.value("manufacturer").toString());
-    componentData.setDatasheet(resultData.value("datasheet").toString());
-
-    EasyedaSymbolImporter symbolImporter;
-    QSharedPointer<SymbolData> symbolData = symbolImporter.importSymbolData(resultData);
-    if (!symbolData) {
-        parsed.errorMessage = QStringLiteral("Failed to parse Symbol data from EasyEDA JSON");
-        return parsed;
-    }
-    componentData.setSymbolData(symbolData);
-
-    if (!symbolData->info().thumb.isEmpty()) {
-        const QString thumbUrl = normalizePreviewImageUrl(symbolData->info().thumb);
-        componentData.setPreviewImages(QStringList() << thumbUrl);
-    }
-
-    if (!symbolData->info().datasheet.isEmpty() && componentData.datasheet().isEmpty()) {
-        const QString datasheetUrl = normalizePreviewImageUrl(symbolData->info().datasheet);
-        componentData.setDatasheet(datasheetUrl);
-    }
-
-    EasyedaFootprintImporter footprintImporter;
-    QSharedPointer<FootprintData> footprintData = footprintImporter.importFootprintData(resultData);
-    if (!footprintData) {
-        parsed.errorMessage =
-            QStringLiteral("Failed to parse Footprint data from EasyEDA JSON (Library might be corrupted)");
-        return parsed;
-    }
-    componentData.setFootprintData(footprintData);
-
-    QString modelUuid = footprintData->model3D().uuid();
-    if (modelUuid.isEmpty() && resultData.contains("dataStr")) {
-        const QJsonObject dataStr = resultData.value("dataStr").toObject();
-        const QJsonArray shapes = dataStr.value("shape").toArray();
-        for (const QJsonValue& shapeVal : shapes) {
-            const QString shapeStr = shapeVal.toString();
-            if (!shapeStr.startsWith(QStringLiteral("SVGNODE~"))) {
-                continue;
-            }
-
-            const int tildeIndex = shapeStr.indexOf('~');
-            if (tildeIndex < 0) {
-                continue;
-            }
-
-            const QJsonDocument nodeDoc = QJsonDocument::fromJson(shapeStr.mid(tildeIndex + 1).toUtf8());
-            const QJsonObject attrs = nodeDoc.object().value("attrs").toObject();
-            if (attrs.value("c_etype").toString() == QLatin1String("outline3D")) {
-                modelUuid = attrs.value("uuid").toString();
-                if (!modelUuid.isEmpty()) {
-                    break;
-                }
-            }
-        }
-
-        if (modelUuid.isEmpty()) {
-            modelUuid = dataStr.value("head").toObject().value("uuid_3d").toString();
-        }
-    }
-
-    if (!modelUuid.isEmpty()) {
-        auto model3DData = QSharedPointer<Model3DData>::create();
-        model3DData->setUuid(modelUuid);
-        model3DData->setName(footprintData->model3D().name());
-        model3DData->setTranslation(footprintData->model3D().translation());
-        model3DData->setRotation(footprintData->model3D().rotation());
-        componentData.setModel3DData(model3DData);
-    }
-
-    parsed.resultData = resultData;
-    parsed.componentData = componentData;
-    parsed.success = true;
-    return parsed;
-}
-
-CadFetchTaskResult fetchAndParseCadData(const QString& componentId) {
-    CadFetchTaskResult taskResult;
-    taskResult.componentId = componentId;
-
-    const RequestProfile profile = RequestProfiles::cadData();
-    const RetryPolicy policy = RetryPolicy::fromProfile(profile, ConfigService::instance()->getWeakNetworkSupport());
-    const QUrl url(EASYEDA_COMPONENT_API_ENDPOINT.arg(componentId));
-    const NetworkResult networkResult = NetworkClient::instance().get(url, ResourceType::CadData, policy);
-    if (!networkResult.success) {
-        taskResult.errorMessage =
-            networkResult.error.isEmpty() ? QStringLiteral("CAD request failed") : networkResult.error;
-        return taskResult;
-    }
-
-    QJsonParseError parseError;
-    const QJsonDocument jsonDoc = QJsonDocument::fromJson(networkResult.data, &parseError);
-    if (parseError.error != QJsonParseError::NoError || !jsonDoc.isObject()) {
-        taskResult.errorMessage = QStringLiteral("Failed to parse CAD response JSON");
-        return taskResult;
-    }
-
-    taskResult.parsed = parseCadPayload(componentId, jsonDoc.object());
-    if (!taskResult.parsed.success) {
-        taskResult.errorMessage = taskResult.parsed.errorMessage;
-        return taskResult;
-    }
-
-    taskResult.success = true;
-    return taskResult;
-}
-
 }  // namespace
 
 ComponentService::ComponentService(QObject* parent)
@@ -341,7 +167,7 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     }
 
     ComponentData reusableData;
-    bool reuseExistingForParallel = false;
+    bool reuseExistingData = false;
     bool shouldSkipAsDuplicate = false;
 
     // 先添加到 m_fetchingComponents（防止重复调度）
@@ -353,9 +179,9 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
                 !existing.data.lcscId().isEmpty() && (existing.hasCadData || existing.data.symbolData() != nullptr ||
                                                       existing.data.footprintData() != nullptr);
 
-            if (m_parallelContext != nullptr && hasReusableData) {
+            if (hasReusableData) {
                 reusableData = existing.data;
-                reuseExistingForParallel = true;
+                reuseExistingData = true;
             } else if (m_parallelContext != nullptr && !hasReusableData) {
                 qDebug() << "ComponentService: Removing stale fetching state for" << normalizedId
                          << "before parallel preload retry";
@@ -365,17 +191,21 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
             }
         }
 
-        if (!reuseExistingForParallel && !shouldSkipAsDuplicate && !m_fetchingComponents.contains(normalizedId)) {
+        if (!reuseExistingData && !shouldSkipAsDuplicate && !m_fetchingComponents.contains(normalizedId)) {
             // 创建占位条目，防止重复调度
             FetchingComponent& fc = m_fetchingComponents[normalizedId];
             initializeFetchingComponent(fc, normalizedId, fetch3DModel);
         }
     }
 
-    if (reuseExistingForParallel) {
-        qDebug() << "ComponentService: Reusing existing fetched data for parallel preload:" << normalizedId;
+    if (reuseExistingData) {
+        qDebug() << "ComponentService: Reusing existing fetched data for:" << normalizedId;
         updateComponentCache(normalizedId, reusableData);
-        handleParallelDataCollected(normalizedId, reusableData);
+        emit cadDataReady(normalizedId, reusableData);
+
+        if (m_parallelContext != nullptr) {
+            handleParallelDataCollected(normalizedId, reusableData);
+        }
         return;
     }
 
@@ -399,7 +229,7 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     }
 
     // 符号封装缓存不存在，改为后台线程直接获取并解析 CAD 数据，避免主线程卡顿。
-    auto future = QtConcurrent::run([normalizedId]() { return fetchAndParseCadData(normalizedId); });
+    auto future = QtConcurrent::run([normalizedId]() { return CadDataLoader::fetchAndParseCadData(normalizedId); });
     auto* watcher = new QFutureWatcher<CadFetchTaskResult>(this);
     connect(watcher, &QFutureWatcher<CadFetchTaskResult>::finished, this, [this, watcher]() {
         const CadFetchTaskResult result = watcher->result();
@@ -515,7 +345,8 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
                 FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
                 initializeFetchingComponent(fetchingComponent, normalizedId, fetch3DModel);
             }
-            auto retryFuture = QtConcurrent::run([normalizedId]() { return fetchAndParseCadData(normalizedId); });
+            auto retryFuture =
+                QtConcurrent::run([normalizedId]() { return CadDataLoader::fetchAndParseCadData(normalizedId); });
             auto* retryWatcher = new QFutureWatcher<CadFetchTaskResult>(this);
             connect(retryWatcher, &QFutureWatcher<CadFetchTaskResult>::finished, this, [this, retryWatcher]() {
                 const CadFetchTaskResult result = retryWatcher->result();
@@ -920,7 +751,8 @@ void ComponentService::handleComponentInfoFetched(const QString& componentId, co
 }
 
 void ComponentService::handleCadDataFetched(const QString& componentId, const QJsonObject& data) {
-    auto future = QtConcurrent::run([componentId, data]() { return parseCadPayload(componentId, data); });
+    auto future =
+        QtConcurrent::run([componentId, data]() { return CadDataLoader::parseCadPayload(componentId, data); });
     auto* watcher = new QFutureWatcher<CadParseResult>(this);
     connect(watcher, &QFutureWatcher<CadParseResult>::finished, this, [this, watcher]() {
         const CadParseResult parsed = watcher->result();

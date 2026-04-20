@@ -7,50 +7,46 @@
 
 namespace EasyKiConverter {
 
+class SymbolPinSerializer;
+class SymbolShapeSerializer;
+
 class SymbolDataSerializer {
 public:
     static QJsonObject toJson(const SymbolData& data);
     static bool fromJson(SymbolData& data, const QJsonObject& json);
 
-    // Helpers for internal structs
+    // Root-level struct serializers
     static QJsonObject toJson(const SymbolInfo& info);
     static bool fromJson(SymbolInfo& info, const QJsonObject& json);
-
-    static QJsonObject toJson(const SymbolBBox& bbox);
-    static bool fromJson(SymbolBBox& bbox, const QJsonObject& json);
 
     static QJsonObject toJson(const SymbolPin& pin);
     static bool fromJson(SymbolPin& pin, const QJsonObject& json);
 
-    static QJsonObject toJson(const SymbolRectangle& rect);
-    static bool fromJson(SymbolRectangle& rect, const QJsonObject& json);
-
-    static QJsonObject toJson(const SymbolCircle& circle);
-    static bool fromJson(SymbolCircle& circle, const QJsonObject& json);
-
-    static QJsonObject toJson(const SymbolArc& arc);
-    static bool fromJson(SymbolArc& arc, const QJsonObject& json);
-
-    static QJsonObject toJson(const SymbolEllipse& ellipse);
-    static bool fromJson(SymbolEllipse& ellipse, const QJsonObject& json);
-
-    static QJsonObject toJson(const SymbolPolyline& polyline);
-    static bool fromJson(SymbolPolyline& polyline, const QJsonObject& json);
-
-    static QJsonObject toJson(const SymbolPolygon& polygon);
-    static bool fromJson(SymbolPolygon& polygon, const QJsonObject& json);
-
-    static QJsonObject toJson(const SymbolPath& path);
-    static bool fromJson(SymbolPath& path, const QJsonObject& json);
-
-    static QJsonObject toJson(const SymbolText& text);
-    static bool fromJson(SymbolText& text, const QJsonObject& json);
-
     static QJsonObject toJson(const SymbolPart& part);
     static bool fromJson(SymbolPart& part, const QJsonObject& json);
 
+    // Shape types delegate to SymbolShapeSerializer
+    static QJsonObject toJson(const SymbolBBox& bbox);
+    static bool fromJson(SymbolBBox& bbox, const QJsonObject& json);
+    static QJsonObject toJson(const SymbolRectangle& rect);
+    static bool fromJson(SymbolRectangle& rect, const QJsonObject& json);
+    static QJsonObject toJson(const SymbolCircle& circle);
+    static bool fromJson(SymbolCircle& circle, const QJsonObject& json);
+    static QJsonObject toJson(const SymbolArc& arc);
+    static bool fromJson(SymbolArc& arc, const QJsonObject& json);
+    static QJsonObject toJson(const SymbolEllipse& ellipse);
+    static bool fromJson(SymbolEllipse& ellipse, const QJsonObject& json);
+    static QJsonObject toJson(const SymbolPolyline& polyline);
+    static bool fromJson(SymbolPolyline& polyline, const QJsonObject& json);
+    static QJsonObject toJson(const SymbolPolygon& polygon);
+    static bool fromJson(SymbolPolygon& polygon, const QJsonObject& json);
+    static QJsonObject toJson(const SymbolPath& path);
+    static bool fromJson(SymbolPath& path, const QJsonObject& json);
+    static QJsonObject toJson(const SymbolText& text);
+    static bool fromJson(SymbolText& text, const QJsonObject& json);
+
 private:
-    // Internal helpers for smaller structs
+    // Internal helpers delegate to specialized serializers
     static QJsonObject toJson(const SymbolPinSettings& settings);
     static bool fromJson(SymbolPinSettings& settings, const QJsonObject& json);
 

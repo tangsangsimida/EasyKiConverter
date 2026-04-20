@@ -1,180 +1,215 @@
 #include "SymbolDataSerializer.h"
 
+#include "SymbolPinSerializer.h"
+#include "SymbolShapeSerializer.h"
+
 #include <QDebug>
 #include <QJsonArray>
 
 namespace EasyKiConverter {
 
-// ==================== SymbolPinSettings ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolPinSettings& settings) {
-    QJsonObject json;
-    json["is_displayed"] = settings.isDisplayed;
-    json["type"] = static_cast<int>(settings.type);
-    json["spice_pin_number"] = settings.spicePinNumber;
-    json["pos_x"] = settings.posX;
-    json["pos_y"] = settings.posY;
-    json["rotation"] = settings.rotation;
-    json["id"] = settings.id;
-    json["is_locked"] = settings.isLocked;
-    return json;
+// Pin sub-type helpers delegate to SymbolPinSerializer
+static QJsonObject toJson(const SymbolPinSettings& settings) {
+    return SymbolPinSerializer::toJson(settings);
 }
 
-bool SymbolDataSerializer::fromJson(SymbolPinSettings& settings, const QJsonObject& json) {
-    if (!json.contains("type") || !json.contains("spice_pin_number")) {
-        return false;
-    }
-    settings.isDisplayed = json["is_displayed"].toBool(true);
-    settings.type = static_cast<PinType>(json["type"].toInt(0));
-    settings.spicePinNumber = json["spice_pin_number"].toString();
-    settings.posX = json["pos_x"].toDouble(0.0);
-    settings.posY = json["pos_y"].toDouble(0.0);
-    settings.rotation = json["rotation"].toInt(0);
-    settings.id = json["id"].toString();
-    settings.isLocked = json["is_locked"].toBool(false);
-    return true;
+static bool fromJson(SymbolPinSettings& settings, const QJsonObject& json) {
+    return SymbolPinSerializer::fromJson(settings, json);
 }
 
-// ==================== SymbolPinDot ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolPinDot& dot) {
-    QJsonObject json;
-    json["dot_x"] = dot.dotX;
-    json["dot_y"] = dot.dotY;
-    return json;
+static QJsonObject toJson(const SymbolPinDot& dot) {
+    return SymbolPinSerializer::toJson(dot);
 }
 
-bool SymbolDataSerializer::fromJson(SymbolPinDot& dot, const QJsonObject& json) {
-    dot.dotX = json["dot_x"].toDouble(0.0);
-    dot.dotY = json["dot_y"].toDouble(0.0);
-    return true;
+static bool fromJson(SymbolPinDot& dot, const QJsonObject& json) {
+    return SymbolPinSerializer::fromJson(dot, json);
 }
 
-// ==================== SymbolPinPath ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolPinPath& path) {
-    QJsonObject json;
-    json["path"] = path.path;
-    json["color"] = path.color;
-    return json;
+static QJsonObject toJson(const SymbolPinPath& path) {
+    return SymbolPinSerializer::toJson(path);
 }
 
-bool SymbolDataSerializer::fromJson(SymbolPinPath& path, const QJsonObject& json) {
-    if (!json.contains("path")) {
-        return false;
-    }
-    path.path = json["path"].toString();
-    path.color = json["color"].toString();
-    return true;
+static bool fromJson(SymbolPinPath& path, const QJsonObject& json) {
+    return SymbolPinSerializer::fromJson(path, json);
 }
 
-// ==================== SymbolPinName ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolPinName& name) {
-    QJsonObject json;
-    json["is_displayed"] = name.isDisplayed;
-    json["pos_x"] = name.posX;
-    json["pos_y"] = name.posY;
-    json["rotation"] = name.rotation;
-    json["text"] = name.text;
-    json["text_anchor"] = name.textAnchor;
-    json["font"] = name.font;
-    json["font_size"] = name.fontSize;
-    return json;
+static QJsonObject toJson(const SymbolPinName& name) {
+    return SymbolPinSerializer::toJson(name);
 }
 
-bool SymbolDataSerializer::fromJson(SymbolPinName& name, const QJsonObject& json) {
-    if (!json.contains("text")) {
-        return false;
-    }
-    name.isDisplayed = json["is_displayed"].toBool(true);
-    name.posX = json["pos_x"].toDouble(0.0);
-    name.posY = json["pos_y"].toDouble(0.0);
-    name.rotation = json["rotation"].toInt(0);
-    name.text = json["text"].toString();
-    name.textAnchor = json["text_anchor"].toString();
-    name.font = json["font"].toString();
-    name.fontSize = json["font_size"].toDouble(7.0);
-    return true;
+static bool fromJson(SymbolPinName& name, const QJsonObject& json) {
+    return SymbolPinSerializer::fromJson(name, json);
 }
 
-// ==================== SymbolPinDotBis ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolPinDotBis& dot) {
-    QJsonObject json;
-    json["is_displayed"] = dot.isDisplayed;
-    json["circle_x"] = dot.circleX;
-    json["circle_y"] = dot.circleY;
-    return json;
+static QJsonObject toJson(const SymbolPinDotBis& dot) {
+    return SymbolPinSerializer::toJson(dot);
 }
 
-bool SymbolDataSerializer::fromJson(SymbolPinDotBis& dot, const QJsonObject& json) {
-    dot.isDisplayed = json["is_displayed"].toBool(false);
-    dot.circleX = json["circle_x"].toDouble(0.0);
-    dot.circleY = json["circle_y"].toDouble(0.0);
-    return true;
+static bool fromJson(SymbolPinDotBis& dot, const QJsonObject& json) {
+    return SymbolPinSerializer::fromJson(dot, json);
 }
 
-// ==================== SymbolPinClock ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolPinClock& clock) {
-    QJsonObject json;
-    json["is_displayed"] = clock.isDisplayed;
-    json["path"] = clock.path;
-    return json;
+static QJsonObject toJson(const SymbolPinClock& clock) {
+    return SymbolPinSerializer::toJson(clock);
 }
 
-bool SymbolDataSerializer::fromJson(SymbolPinClock& clock, const QJsonObject& json) {
-    clock.isDisplayed = json["is_displayed"].toBool(false);
-    clock.path = json["path"].toString();
-    return true;
+static bool fromJson(SymbolPinClock& clock, const QJsonObject& json) {
+    return SymbolPinSerializer::fromJson(clock, json);
 }
 
-// ==================== SymbolPin ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolPin& pin) {
-    QJsonObject json;
-    json["settings"] = toJson(pin.settings);
-    json["pin_dot"] = toJson(pin.pinDot);
-    json["pin_path"] = toJson(pin.pinPath);
-    json["name"] = toJson(pin.name);
-    json["dot"] = toJson(pin.dot);
-    json["clock"] = toJson(pin.clock);
-    return json;
+// Shape helpers delegate to SymbolShapeSerializer
+static QJsonObject toJson(const SymbolBBox& bbox) {
+    return SymbolShapeSerializer::toJson(bbox);
 }
 
-bool SymbolDataSerializer::fromJson(SymbolPin& pin, const QJsonObject& json) {
-    if (!json.contains("settings") || !json.contains("name")) {
-        return false;
-    }
-    if (!fromJson(pin.settings, json["settings"].toObject())) {
-        return false;
-    }
-    fromJson(pin.pinDot, json["pin_dot"].toObject());
-    fromJson(pin.pinPath, json["pin_path"].toObject());
-    fromJson(pin.name, json["name"].toObject());
-    fromJson(pin.dot, json["dot"].toObject());
-    fromJson(pin.clock, json["clock"].toObject());
-    return true;
+static bool fromJson(SymbolBBox& bbox, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(bbox, json);
 }
 
-// ==================== SymbolBBox ====================
+static QJsonObject toJson(const SymbolRectangle& rect) {
+    return SymbolShapeSerializer::toJson(rect);
+}
 
+static bool fromJson(SymbolRectangle& rect, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(rect, json);
+}
+
+static QJsonObject toJson(const SymbolCircle& circle) {
+    return SymbolShapeSerializer::toJson(circle);
+}
+
+static bool fromJson(SymbolCircle& circle, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(circle, json);
+}
+
+static QJsonObject toJson(const SymbolArc& arc) {
+    return SymbolShapeSerializer::toJson(arc);
+}
+
+static bool fromJson(SymbolArc& arc, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(arc, json);
+}
+
+static QJsonObject toJson(const SymbolEllipse& ellipse) {
+    return SymbolShapeSerializer::toJson(ellipse);
+}
+
+static bool fromJson(SymbolEllipse& ellipse, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(ellipse, json);
+}
+
+static QJsonObject toJson(const SymbolPolyline& polyline) {
+    return SymbolShapeSerializer::toJson(polyline);
+}
+
+static bool fromJson(SymbolPolyline& polyline, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(polyline, json);
+}
+
+static QJsonObject toJson(const SymbolPolygon& polygon) {
+    return SymbolShapeSerializer::toJson(polygon);
+}
+
+static bool fromJson(SymbolPolygon& polygon, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(polygon, json);
+}
+
+static QJsonObject toJson(const SymbolPath& path) {
+    return SymbolShapeSerializer::toJson(path);
+}
+
+static bool fromJson(SymbolPath& path, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(path, json);
+}
+
+static QJsonObject toJson(const SymbolText& text) {
+    return SymbolShapeSerializer::toJson(text);
+}
+
+static bool fromJson(SymbolText& text, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(text, json);
+}
+
+// Class method definitions for shape types (also delegate to SymbolShapeSerializer)
 QJsonObject SymbolDataSerializer::toJson(const SymbolBBox& bbox) {
-    QJsonObject json;
-    json["x"] = bbox.x;
-    json["y"] = bbox.y;
-    json["width"] = bbox.width;
-    json["height"] = bbox.height;
-    return json;
+    return SymbolShapeSerializer::toJson(bbox);
 }
 
 bool SymbolDataSerializer::fromJson(SymbolBBox& bbox, const QJsonObject& json) {
-    bbox.x = json["x"].toDouble(0.0);
-    bbox.y = json["y"].toDouble(0.0);
-    bbox.width = json["width"].toDouble(0.0);
-    bbox.height = json["height"].toDouble(0.0);
-    return true;
+    return SymbolShapeSerializer::fromJson(bbox, json);
+}
+
+QJsonObject SymbolDataSerializer::toJson(const SymbolRectangle& rect) {
+    return SymbolShapeSerializer::toJson(rect);
+}
+
+bool SymbolDataSerializer::fromJson(SymbolRectangle& rect, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(rect, json);
+}
+
+QJsonObject SymbolDataSerializer::toJson(const SymbolCircle& circle) {
+    return SymbolShapeSerializer::toJson(circle);
+}
+
+bool SymbolDataSerializer::fromJson(SymbolCircle& circle, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(circle, json);
+}
+
+QJsonObject SymbolDataSerializer::toJson(const SymbolArc& arc) {
+    return SymbolShapeSerializer::toJson(arc);
+}
+
+bool SymbolDataSerializer::fromJson(SymbolArc& arc, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(arc, json);
+}
+
+QJsonObject SymbolDataSerializer::toJson(const SymbolEllipse& ellipse) {
+    return SymbolShapeSerializer::toJson(ellipse);
+}
+
+bool SymbolDataSerializer::fromJson(SymbolEllipse& ellipse, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(ellipse, json);
+}
+
+QJsonObject SymbolDataSerializer::toJson(const SymbolPolyline& polyline) {
+    return SymbolShapeSerializer::toJson(polyline);
+}
+
+bool SymbolDataSerializer::fromJson(SymbolPolyline& polyline, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(polyline, json);
+}
+
+QJsonObject SymbolDataSerializer::toJson(const SymbolPolygon& polygon) {
+    return SymbolShapeSerializer::toJson(polygon);
+}
+
+bool SymbolDataSerializer::fromJson(SymbolPolygon& polygon, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(polygon, json);
+}
+
+QJsonObject SymbolDataSerializer::toJson(const SymbolPath& path) {
+    return SymbolShapeSerializer::toJson(path);
+}
+
+bool SymbolDataSerializer::fromJson(SymbolPath& path, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(path, json);
+}
+
+QJsonObject SymbolDataSerializer::toJson(const SymbolText& text) {
+    return SymbolShapeSerializer::toJson(text);
+}
+
+bool SymbolDataSerializer::fromJson(SymbolText& text, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(text, json);
+}
+
+// SymbolPin delegates to SymbolPinSerializer
+QJsonObject SymbolDataSerializer::toJson(const SymbolPin& pin) {
+    return SymbolPinSerializer::toJson(pin);
+}
+
+bool SymbolDataSerializer::fromJson(SymbolPin& pin, const QJsonObject& json) {
+    return SymbolPinSerializer::fromJson(pin, json);
 }
 
 // ==================== SymbolInfo ====================
@@ -271,263 +306,6 @@ bool SymbolDataSerializer::fromJson(SymbolInfo& info, const QJsonObject& json) {
     info.manufacturerPart = json["manufacturer_part"].toString();
     info.jlcpcbPartClass = json["jlcpcb_part_class"].toString();
 
-    return true;
-}
-
-// ==================== SymbolRectangle ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolRectangle& rect) {
-    QJsonObject json;
-    json["pos_x"] = rect.posX;
-    json["pos_y"] = rect.posY;
-    json["rx"] = rect.rx;
-    json["ry"] = rect.ry;
-    json["width"] = rect.width;
-    json["height"] = rect.height;
-    json["stroke_color"] = rect.strokeColor;
-    json["stroke_width"] = rect.strokeWidth;
-    json["stroke_style"] = rect.strokeStyle;
-    json["fill_color"] = rect.fillColor;
-    json["id"] = rect.id;
-    json["is_locked"] = rect.isLocked;
-    return json;
-}
-
-bool SymbolDataSerializer::fromJson(SymbolRectangle& rect, const QJsonObject& json) {
-    rect.posX = json["pos_x"].toDouble(0.0);
-    rect.posY = json["pos_y"].toDouble(0.0);
-    rect.rx = json["rx"].toDouble(0.0);
-    rect.ry = json["ry"].toDouble(0.0);
-    rect.width = json["width"].toDouble(0.0);
-    rect.height = json["height"].toDouble(0.0);
-    rect.strokeColor = json["stroke_color"].toString();
-    rect.strokeWidth = json["stroke_width"].toDouble(0.0);
-    rect.strokeStyle = json["stroke_style"].toString();
-    rect.fillColor = json["fill_color"].toString();
-    rect.id = json["id"].toString();
-    rect.isLocked = json["is_locked"].toBool(false);
-    return true;
-}
-
-// ==================== SymbolCircle ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolCircle& circle) {
-    QJsonObject json;
-    json["center_x"] = circle.centerX;
-    json["center_y"] = circle.centerY;
-    json["radius"] = circle.radius;
-    json["stroke_color"] = circle.strokeColor;
-    json["stroke_width"] = circle.strokeWidth;
-    json["stroke_style"] = circle.strokeStyle;
-    json["fill_color"] = circle.fillColor;
-    json["id"] = circle.id;
-    json["is_locked"] = circle.isLocked;
-    return json;
-}
-
-bool SymbolDataSerializer::fromJson(SymbolCircle& circle, const QJsonObject& json) {
-    circle.centerX = json["center_x"].toDouble(0.0);
-    circle.centerY = json["center_y"].toDouble(0.0);
-    circle.radius = json["radius"].toDouble(0.0);
-    circle.strokeColor = json["stroke_color"].toString();
-    circle.strokeWidth = json["stroke_width"].toDouble(0.0);
-    circle.strokeStyle = json["stroke_style"].toString();
-    circle.fillColor = json["fill_color"].toBool(false);
-    circle.id = json["id"].toString();
-    circle.isLocked = json["is_locked"].toBool(false);
-    return true;
-}
-
-// ==================== SymbolArc ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolArc& arc) {
-    QJsonObject json;
-    QJsonArray pathArray;
-    for (const QPointF& point : arc.path) {
-        QJsonObject pointObj;
-        pointObj["x"] = point.x();
-        pointObj["y"] = point.y();
-        pathArray.append(pointObj);
-    }
-    json["path"] = pathArray;
-    json["helper_dots"] = arc.helperDots;
-    json["stroke_color"] = arc.strokeColor;
-    json["stroke_width"] = arc.strokeWidth;
-    json["stroke_style"] = arc.strokeStyle;
-    json["fill_color"] = arc.fillColor;
-    json["id"] = arc.id;
-    json["is_locked"] = arc.isLocked;
-    return json;
-}
-
-bool SymbolDataSerializer::fromJson(SymbolArc& arc, const QJsonObject& json) {
-    if (json.contains("path") && json["path"].isArray()) {
-        QJsonArray pathArray = json["path"].toArray();
-        arc.path.clear();
-        for (const QJsonValue& value : pathArray) {
-            if (value.isObject()) {
-                QJsonObject pointObj = value.toObject();
-                QPointF point(pointObj["x"].toDouble(0.0), pointObj["y"].toDouble(0.0));
-                arc.path.append(point);
-            }
-        }
-    }
-    arc.helperDots = json["helper_dots"].toString();
-    arc.strokeColor = json["stroke_color"].toString();
-    arc.strokeWidth = json["stroke_width"].toDouble(0.0);
-    arc.strokeStyle = json["stroke_style"].toString();
-    arc.fillColor = json["fill_color"].toBool(false);
-    arc.id = json["id"].toString();
-    arc.isLocked = json["is_locked"].toBool(false);
-    return true;
-}
-
-// ==================== SymbolEllipse ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolEllipse& ellipse) {
-    QJsonObject json;
-    json["center_x"] = ellipse.centerX;
-    json["center_y"] = ellipse.centerY;
-    json["radius_x"] = ellipse.radiusX;
-    json["radius_y"] = ellipse.radiusY;
-    json["stroke_color"] = ellipse.strokeColor;
-    json["stroke_width"] = ellipse.strokeWidth;
-    json["stroke_style"] = ellipse.strokeStyle;
-    json["fill_color"] = ellipse.fillColor;
-    json["id"] = ellipse.id;
-    json["is_locked"] = ellipse.isLocked;
-    return json;
-}
-
-bool SymbolDataSerializer::fromJson(SymbolEllipse& ellipse, const QJsonObject& json) {
-    ellipse.centerX = json["center_x"].toDouble(0.0);
-    ellipse.centerY = json["center_y"].toDouble(0.0);
-    ellipse.radiusX = json["radius_x"].toDouble(0.0);
-    ellipse.radiusY = json["radius_y"].toDouble(0.0);
-    ellipse.strokeColor = json["stroke_color"].toString();
-    ellipse.strokeWidth = json["stroke_width"].toDouble(0.0);
-    ellipse.strokeStyle = json["stroke_style"].toString();
-    ellipse.fillColor = json["fill_color"].toBool(false);
-    ellipse.id = json["id"].toString();
-    ellipse.isLocked = json["is_locked"].toBool(false);
-    return true;
-}
-
-// ==================== SymbolPolyline ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolPolyline& polyline) {
-    QJsonObject json;
-    json["points"] = polyline.points;
-    json["stroke_color"] = polyline.strokeColor;
-    json["stroke_width"] = polyline.strokeWidth;
-    json["stroke_style"] = polyline.strokeStyle;
-    json["fill_color"] = polyline.fillColor;
-    json["id"] = polyline.id;
-    json["is_locked"] = polyline.isLocked;
-    return json;
-}
-
-bool SymbolDataSerializer::fromJson(SymbolPolyline& polyline, const QJsonObject& json) {
-    polyline.points = json["points"].toString();
-    polyline.strokeColor = json["stroke_color"].toString();
-    polyline.strokeWidth = json["stroke_width"].toDouble(0.0);
-    polyline.strokeStyle = json["stroke_style"].toString();
-    polyline.fillColor = json["fill_color"].toBool(false);
-    polyline.id = json["id"].toString();
-    polyline.isLocked = json["is_locked"].toBool(false);
-    return true;
-}
-
-// ==================== SymbolPolygon ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolPolygon& polygon) {
-    QJsonObject json;
-    json["points"] = polygon.points;
-    json["stroke_color"] = polygon.strokeColor;
-    json["stroke_width"] = polygon.strokeWidth;
-    json["stroke_style"] = polygon.strokeStyle;
-    json["fill_color"] = polygon.fillColor;
-    json["id"] = polygon.id;
-    json["is_locked"] = polygon.isLocked;
-    return json;
-}
-
-bool SymbolDataSerializer::fromJson(SymbolPolygon& polygon, const QJsonObject& json) {
-    polygon.points = json["points"].toString();
-    polygon.strokeColor = json["stroke_color"].toString();
-    polygon.strokeWidth = json["stroke_width"].toDouble(0.0);
-    polygon.strokeStyle = json["stroke_style"].toString();
-    polygon.fillColor = json["fill_color"].toBool(false);
-    polygon.id = json["id"].toString();
-    polygon.isLocked = json["is_locked"].toBool(false);
-    return true;
-}
-
-// ==================== SymbolPath ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolPath& path) {
-    QJsonObject json;
-    json["paths"] = path.paths;
-    json["stroke_color"] = path.strokeColor;
-    json["stroke_width"] = path.strokeWidth;
-    json["stroke_style"] = path.strokeStyle;
-    json["fill_color"] = path.fillColor;
-    json["id"] = path.id;
-    json["is_locked"] = path.isLocked;
-    return json;
-}
-
-bool SymbolDataSerializer::fromJson(SymbolPath& path, const QJsonObject& json) {
-    path.paths = json["paths"].toString();
-    path.strokeColor = json["stroke_color"].toString();
-    path.strokeWidth = json["stroke_width"].toDouble(0.0);
-    path.strokeStyle = json["stroke_style"].toString();
-    path.fillColor = json["fill_color"].toBool(false);
-    path.id = json["id"].toString();
-    path.isLocked = json["is_locked"].toBool(false);
-    return true;
-}
-
-// ==================== SymbolText ====================
-
-QJsonObject SymbolDataSerializer::toJson(const SymbolText& text) {
-    QJsonObject json;
-    json["mark"] = text.mark;
-    json["pos_x"] = text.posX;
-    json["pos_y"] = text.posY;
-    json["rotation"] = text.rotation;
-    json["color"] = text.color;
-    json["font"] = text.font;
-    json["text_size"] = text.textSize;
-    json["bold"] = text.bold;
-    json["italic"] = text.italic;
-    json["baseline"] = text.baseline;
-    json["type"] = text.type;
-    json["text"] = text.text;
-    json["visible"] = text.visible;
-    json["anchor"] = text.anchor;
-    json["id"] = text.id;
-    json["is_locked"] = text.isLocked;
-    return json;
-}
-
-bool SymbolDataSerializer::fromJson(SymbolText& text, const QJsonObject& json) {
-    text.mark = json["mark"].toString();
-    text.posX = json["pos_x"].toDouble(0.0);
-    text.posY = json["pos_y"].toDouble(0.0);
-    text.rotation = json["rotation"].toInt(0);
-    text.color = json["color"].toString();
-    text.font = json["font"].toString();
-    text.textSize = json["text_size"].toDouble(10.0);
-    text.bold = json["bold"].toBool(false);
-    text.italic = json["italic"].toString();
-    text.baseline = json["baseline"].toString();
-    text.type = json["type"].toString();
-    text.text = json["text"].toString();
-    text.visible = json["visible"].toBool(true);
-    text.anchor = json["anchor"].toString();
-    text.id = json["id"].toString();
-    text.isLocked = json["is_locked"].toBool(false);
     return true;
 }
 

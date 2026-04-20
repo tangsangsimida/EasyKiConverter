@@ -182,15 +182,9 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
-    // 4. 检查文件是否已存在且不覆盖
-    if (QFile::exists(finalPath) && !m_options.overwriteExistingFiles) {
-        qDebug() << "SymbolExportStage: File already exists, skipping:" << finalPath;
-        m_isExporting.store(false);
-        emit completed(0, 0, symbolList.size());
-        return;
-    }
+    const bool finalFileExists = QFile::exists(finalPath);
 
-    // 5. 创建临时文件并导出
+    // 4. 创建临时文件并导出
     QString tempPath = m_tempManager.createSymbolTempPath(libName, QStringLiteral(".kicad_sym"));
     if (tempPath.isEmpty()) {
         qCritical() << "SymbolExportStage: Failed to create temp file path";
@@ -199,13 +193,27 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
+    // 追加/更新到现有符号库时，先把最终文件复制到临时文件，再在临时文件上执行 merge。
+    if (finalFileExists && (!m_options.overwriteExistingFiles || m_options.updateMode)) {
+        QFile::remove(tempPath);
+        if (!QFile::copy(finalPath, tempPath)) {
+            qCritical() << "SymbolExportStage: Failed to copy existing symbol library to temp:" << finalPath << "->"
+                        << tempPath;
+            m_tempManager.rollbackAll();
+            m_isExporting.store(false);
+            emit completed(0, symbolList.size(), 0);
+            return;
+        }
+    }
+
     qDebug() << "SymbolExportStage: Exporting" << symbolList.size() << "symbols to temp:" << tempPath;
 
     // 6. 执行符号库导出
     bool exportSuccess = false;
     {
         ExporterSymbol exporter;
-        exportSuccess = exporter.exportSymbolLibrary(symbolList, libName, tempPath, false, m_options.updateMode);
+        bool appendMode = !m_options.overwriteExistingFiles;
+        exportSuccess = exporter.exportSymbolLibrary(symbolList, libName, tempPath, appendMode, m_options.updateMode);
     }
 
     if (m_cancelled.load()) {
