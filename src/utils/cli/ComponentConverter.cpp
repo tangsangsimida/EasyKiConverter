@@ -30,12 +30,9 @@ bool ComponentConverter::execute() {
     exportService->setOutputPath(context()->parser().outputDir());
 
     // 连接信号
-    connect(exportService, &ParallelExportService::preloadCompleted,
-            this, &ComponentConverter::onExportCompleted);
-    connect(exportService, &ParallelExportService::completed,
-            this, &ComponentConverter::onExportCompleted);
-    connect(exportService, &ParallelExportService::failed,
-            this, &ComponentConverter::onExportFailed);
+    connect(exportService, &ParallelExportService::preloadCompleted, this, &ComponentConverter::onExportCompleted);
+    connect(exportService, &ParallelExportService::completed, this, &ComponentConverter::onExportCompleted);
+    connect(exportService, &ParallelExportService::failed, this, &ComponentConverter::onExportFailed);
 
     // 创建事件循环等待预加载完成
     QEventLoop preloadLoop;

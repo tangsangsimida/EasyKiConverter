@@ -40,14 +40,10 @@ bool BomConverter::execute() {
     exportService->setOutputPath(context()->parser().outputDir());
 
     // 连接信号
-    connect(exportService, &ParallelExportService::preloadCompleted,
-            this, &BomConverter::onPreloadCompleted);
-    connect(exportService, &ParallelExportService::progressChanged,
-            this, &BomConverter::onProgressChanged);
-    connect(exportService, &ParallelExportService::completed,
-            this, &BomConverter::onExportCompleted);
-    connect(exportService, &ParallelExportService::failed,
-            this, &BomConverter::onExportFailed);
+    connect(exportService, &ParallelExportService::preloadCompleted, this, &BomConverter::onPreloadCompleted);
+    connect(exportService, &ParallelExportService::progressChanged, this, &BomConverter::onProgressChanged);
+    connect(exportService, &ParallelExportService::completed, this, &BomConverter::onExportCompleted);
+    connect(exportService, &ParallelExportService::failed, this, &BomConverter::onExportFailed);
 
     // 创建事件循环等待预加载完成
     QEventLoop preloadLoop;

@@ -39,14 +39,10 @@ bool BatchConverter::execute() {
     exportService->setOutputPath(context()->parser().outputDir());
 
     // 连接信号
-    connect(exportService, &ParallelExportService::preloadCompleted,
-            this, &BatchConverter::onPreloadCompleted);
-    connect(exportService, &ParallelExportService::progressChanged,
-            this, &BatchConverter::onProgressChanged);
-    connect(exportService, &ParallelExportService::completed,
-            this, &BatchConverter::onExportCompleted);
-    connect(exportService, &ParallelExportService::failed,
-            this, &BatchConverter::onExportFailed);
+    connect(exportService, &ParallelExportService::preloadCompleted, this, &BatchConverter::onPreloadCompleted);
+    connect(exportService, &ParallelExportService::progressChanged, this, &BatchConverter::onProgressChanged);
+    connect(exportService, &ParallelExportService::completed, this, &BatchConverter::onExportCompleted);
+    connect(exportService, &ParallelExportService::failed, this, &BatchConverter::onExportFailed);
 
     // 创建事件循环等待预加载完成
     QEventLoop preloadLoop;
