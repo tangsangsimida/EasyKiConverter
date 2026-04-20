@@ -58,22 +58,22 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.3/resources/imgs/screenshot1.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.4/resources/imgs/screenshot1.png</image>
       <caption>Main application window with component conversion interface</caption>
       <caption xml:lang="zh_CN">主应用窗口 - 元件转换界面</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.3/resources/imgs/screenshot2.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.4/resources/imgs/screenshot2.png</image>
       <caption>Component input and list management</caption>
       <caption xml:lang="zh_CN">元件输入和列表管理</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.3/resources/imgs/screenshot3.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.4/resources/imgs/screenshot3.png</image>
       <caption>Export settings and progress tracking</caption>
       <caption xml:lang="zh_CN">导出设置和进度跟踪</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.3/resources/imgs/screenshot4.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.4/resources/imgs/screenshot4.png</image>
       <caption>Dark mode theme support</caption>
       <caption xml:lang="zh_CN">深色主题支持</caption>
     </screenshot>
@@ -105,6 +105,39 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="3.1.4" date="2026-04-20">
+      <description>
+        <p>Changes from 3.1.3 to 3.1.4</p>
+        <p xml:lang="zh_CN">从 3.1.3 到 3.1.4 的变更</p>
+        <p>New Features:</p>
+        <p xml:lang="zh_CN">新功能:</p>
+        <ul>
+          <li xml:lang="zh_CN">增强 CLI 模式支持，修复命令行解析和补全功能</li>
+          <li xml:lang="zh_CN">改进命令行解析器参数处理机制</li>
+          <li xml:lang="zh_CN">添加纯 CLI 模式支持以优化命令行体验</li>
+          <li xml:lang="zh_CN">添加 Shell 自动补全功能并优化 CLI 文档</li>
+          <li xml:lang="zh_CN">添加命令行接口支持</li>
+          <li xml:lang="zh_CN">解决导出结果列表在转换过程中自动回到顶部的问题，使用 DelegateModel 保持滚动位置</li>
+          <li xml:lang="zh_CN">禁用元器件列表统计为0的筛选选项</li>
+          <li xml:lang="zh_CN">添加过滤功能和虚拟化支持，优化结果列表性能</li>
+        </ul>
+        <p>Bug Fixes:</p>
+        <p xml:lang="zh_CN">修复:</p>
+        <ul>
+          <li xml:lang="zh_CN">更新 FAQ 以解决 KiCad 中追加导出新符号不可见的问题</li>
+        </ul>
+        <p>Refactoring:</p>
+        <p xml:lang="zh_CN">重构:</p>
+        <ul>
+          <li xml:lang="zh_CN">提取符号引脚和形状序列化器到独立文件</li>
+        </ul>
+        <p>Other Changes:</p>
+        <p xml:lang="zh_CN">其他变更:</p>
+        <ul>
+          <li>code-format</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.1.3" date="2026-04-19">
       <description>
         <p>Changes from 3.1.2 to 3.1.3</p>
