@@ -313,6 +313,15 @@ void ComponentListViewModel::removeComponent(int index) {
         m_validatedComponentIds.removeAll(removedId);
     }
 
+    // 当删除最后一个元器件时，触发与清空列表相同的效果
+    if (listCount == 1) {
+        // 先释放即将删除的 item
+        delete item;
+        // 调用 clearComponentList 执行完整的清空逻辑
+        clearComponentList();
+        return;
+    }
+
     // 检查是否正在获取中（锁外操作，因为 m_pendingValidationCount 有自己的逻辑）
     if (item->isFetching()) {
         m_pendingValidationCount--;

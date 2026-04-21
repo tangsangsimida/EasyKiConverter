@@ -1,8 +1,8 @@
 #include "SymbolExportStage.h"
 
+#include "DebugExportHelper.h"
 #include "core/kicad/ExporterSymbol.h"
 #include "models/ComponentData.h"
-#include "DebugExportHelper.h"
 
 #include <QDateTime>
 #include <QDebug>
