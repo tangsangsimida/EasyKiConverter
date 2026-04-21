@@ -9,7 +9,7 @@ ApplicationWindow {
     property alias windowController: appWindowController
     property int defaultWidth: Math.max(900, Screen.desktopAvailableWidth * 0.68)
     property int defaultHeight: Math.max(680, Screen.desktopAvailableHeight * 0.72)
-    property int windowRadius: visibility === Window.Maximized ? 0 : 10
+    property int windowRadius: visibility === Window.Maximized ? 0 : AppStyle.radius.lg
     property int dynamicMinimumWidth: 855
     width: defaultWidth
     height: defaultHeight

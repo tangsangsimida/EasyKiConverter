@@ -221,6 +221,10 @@ QString resolveProjectRootFromAppDir(QString appDir) {
 }  // anonymous namespace
 
 int main(int argc, char* argv[]) {
+    // 优先尝试 Vulkan 后端，若不支持则自动回退到默认后端
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::Vulkan);
+    qInfo() << "已将渲染后端优先设置为 Vulkan";
+
     // 设置 stdout 为无缓冲模式，确保日志颜色正常显示
     setbuf(stdout, nullptr);
     setbuf(stderr, nullptr);
@@ -374,6 +378,21 @@ int main(int argc, char* argv[]) {
     QQuickStyle::setStyle("Basic");
 
     QApplication app(argc, argv);
+
+    // 自动检测并记录实际生效的渲染后端
+    QTimer::singleShot(0, []() {
+        QQuickWindow tempWindow;
+        const char* apiName = "Unknown";
+        switch (tempWindow.graphicsApi()) {
+            case QSGRendererInterface::OpenGL: apiName = "OpenGL"; break;
+            case QSGRendererInterface::Vulkan: apiName = "Vulkan"; break;
+            case QSGRendererInterface::Software: apiName = "Software"; break;
+            case QSGRendererInterface::Direct3D11: apiName = "Direct3D 11"; break;
+            case QSGRendererInterface::Metal: apiName = "Metal"; break;
+            default: apiName = "Other/Unknown"; break;
+        }
+        qInfo() << "当前实际运行的渲染 API:" << apiName;
+    });
 
     // 设置应用程序信息
     app.setApplicationName("EasyKiConverter");
