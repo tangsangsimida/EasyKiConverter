@@ -9,6 +9,7 @@
 #include <QFileInfo>
 #include <QImage>
 #include <QSaveFile>
+#include <QtConcurrent>
 
 namespace EasyKiConverter {
 
@@ -169,9 +170,10 @@ void PreviewImagesExportWorker::run() {
     if (successCount == totalCount) {
         qDebug() << "PreviewImagesExportWorker: Successfully exported all previews for" << m_componentId;
 
-        // Debug 模式导出原始数据
         if (m_options.debugMode) {
-            DebugExportHelper::exportDebugData(m_componentId, m_data, m_options.outputPath);
+            QtConcurrent::run([componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
+                DebugExportHelper::exportDebugData(componentId, data, outputPath);
+            });
         }
 
         emit completed(m_componentId, true, QString());

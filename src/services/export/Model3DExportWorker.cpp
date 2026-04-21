@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QtConcurrent>
 
 namespace EasyKiConverter {
 
@@ -158,6 +159,11 @@ void Model3DExportWorker::run() {
     // 如果两个文件都从缓存加载成功，直接完成
     if ((!needWrl || wrlFromCache) && (!needStep || stepFromCache)) {
         qDebug() << "Model3DExportWorker: Both WRL and STEP loaded from cache for" << m_componentId;
+        if (m_options.debugMode) {
+            QtConcurrent::run([componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
+                DebugExportHelper::exportDebugData(componentId, data, outputPath);
+            });
+        }
         emit completed(m_componentId, true, QString());
         return;
     }
@@ -222,9 +228,10 @@ void Model3DExportWorker::run() {
         qDebug() << "Model3DExportWorker: Successfully exported" << (needWrl ? "WRL" : "") << (needStep ? "STEP" : "")
                  << "for" << m_componentId;
 
-        // Debug 模式导出原始数据
         if (m_options.debugMode) {
-            DebugExportHelper::exportDebugData(m_componentId, m_data, m_options.outputPath);
+            QtConcurrent::run([componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
+                DebugExportHelper::exportDebugData(componentId, data, outputPath);
+            });
         }
 
         emit completed(m_componentId, true, QString());

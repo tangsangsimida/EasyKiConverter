@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QtConcurrent>
 
 namespace EasyKiConverter {
 
@@ -79,9 +80,10 @@ void FootprintExportWorker::run() {
         if (success) {
             qDebug() << "FootprintExportWorker: Successfully exported" << filePath;
 
-            // Debug 模式导出原始数据
             if (m_options.debugMode) {
-                DebugExportHelper::exportDebugData(m_componentId, m_data, m_options.outputPath);
+                QtConcurrent::run([componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
+                    DebugExportHelper::exportDebugData(componentId, data, outputPath);
+                });
             }
 
             emit completed(m_componentId, true, QString());

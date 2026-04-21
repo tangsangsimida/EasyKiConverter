@@ -10,6 +10,7 @@
 #include <QFile>
 #include <QMutexLocker>
 #include <QThread>
+#include <QtConcurrent>
 
 namespace EasyKiConverter {
 
@@ -149,9 +150,10 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         status.status = ExportItemStatus::Status::Success;
         emit itemStatusChanged(componentId, status);
 
-        // Debug 模式导出原始数据
         if (m_options.debugMode) {
-            DebugExportHelper::exportDebugData(componentId, data, m_options.outputPath);
+            QtConcurrent::run([componentId, data, outputPath = m_options.outputPath]() {
+                DebugExportHelper::exportDebugData(componentId, data, outputPath);
+            });
         }
 
         qDebug() << "SymbolExportStage: Collected symbol for" << componentId;

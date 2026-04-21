@@ -1,12 +1,24 @@
 #include "DebugExportHelper.h"
 
 #include "ComponentData.h"
+#include "core/utils/AtomicFileWriter.h"
 
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 
 namespace EasyKiConverter {
+
+namespace {
+
+static const QString kCinfoRawFile = QStringLiteral("cinfo_raw.json");
+static const QString kCadRawFile = QStringLiteral("cad_raw.json");
+static const QString kModel3dRawFile = QStringLiteral("model3d_raw.obj");
+static const QString kSymbolFile = QStringLiteral("symbol.json");
+static const QString kFootprintFile = QStringLiteral("footprint.json");
+static const QString kComponentInfoFile = QStringLiteral("component_info.json");
+
+}  // anonymous namespace
 
 bool DebugExportHelper::exportDebugData(const QString& componentId,
                                         const QSharedPointer<ComponentData>& data,
@@ -17,7 +29,7 @@ bool DebugExportHelper::exportDebugData(const QString& componentId,
     }
 
     QString debugDirPath = QStringLiteral("%1/debug/%2").arg(outputPath, componentId);
-    if (!createOutputDirectory(debugDirPath)) {
+    if (!AtomicFileWriter::createDirectory(debugDirPath)) {
         qWarning() << "DebugExportHelper: Failed to create debug directory:" << debugDirPath;
         return false;
     }
@@ -26,98 +38,74 @@ bool DebugExportHelper::exportDebugData(const QString& componentId,
 
     bool success = true;
 
-    // 导出 cinfo_raw.json
     if (!data->cinfoJsonRaw().isEmpty()) {
-        QString filePath = debugDirPath + QStringLiteral("/cinfo_raw.json");
-        if (!writeFile(filePath, data->cinfoJsonRaw())) {
-            qWarning() << "DebugExportHelper: Failed to write cinfo_raw.json";
+        QString filePath = debugDirPath + QStringLiteral("/") + kCinfoRawFile;
+        if (!writeAtomically(debugDirPath, filePath, data->cinfoJsonRaw())) {
             success = false;
         }
     }
 
-    // 导出 cad_raw.json
     if (!data->cadJsonRaw().isEmpty()) {
-        QString filePath = debugDirPath + QStringLiteral("/cad_raw.json");
-        if (!writeFile(filePath, data->cadJsonRaw())) {
-            qWarning() << "DebugExportHelper: Failed to write cad_raw.json";
+        QString filePath = debugDirPath + QStringLiteral("/") + kCadRawFile;
+        if (!writeAtomically(debugDirPath, filePath, data->cadJsonRaw())) {
             success = false;
         }
     }
 
-    // 导出 model3d_raw.obj
     if (!data->model3DObjRaw().isEmpty()) {
-        QString filePath = debugDirPath + QStringLiteral("/model3d_raw.obj");
-        if (!writeFile(filePath, data->model3DObjRaw())) {
-            qWarning() << "DebugExportHelper: Failed to write model3d_raw.obj";
+        QString filePath = debugDirPath + QStringLiteral("/") + kModel3dRawFile;
+        if (!writeAtomically(debugDirPath, filePath, data->model3DObjRaw())) {
             success = false;
         }
     }
 
-    // 导出 symbol.json（解析后的符号数据）
     if (data->symbolData()) {
         QJsonObject symbolObj = data->symbolData()->toJson();
         if (!symbolObj.isEmpty()) {
-            QString filePath = debugDirPath + QStringLiteral("/symbol.json");
+            QString filePath = debugDirPath + QStringLiteral("/") + kSymbolFile;
             QJsonDocument doc(symbolObj);
-            if (!writeFile(filePath, doc.toJson(QJsonDocument::Indented))) {
-                qWarning() << "DebugExportHelper: Failed to write symbol.json";
+            if (!writeAtomically(debugDirPath, filePath, doc.toJson(QJsonDocument::Indented))) {
                 success = false;
             }
         }
     }
 
-    // 导出 footprint.json（解析后的封装数据）
     if (data->footprintData()) {
         QJsonObject footprintObj = data->footprintData()->toJson();
         if (!footprintObj.isEmpty()) {
-            QString filePath = debugDirPath + QStringLiteral("/footprint.json");
+            QString filePath = debugDirPath + QStringLiteral("/") + kFootprintFile;
             QJsonDocument doc(footprintObj);
-            if (!writeFile(filePath, doc.toJson(QJsonDocument::Indented))) {
-                qWarning() << "DebugExportHelper: Failed to write footprint.json";
+            if (!writeAtomically(debugDirPath, filePath, doc.toJson(QJsonDocument::Indented))) {
                 success = false;
             }
         }
     }
 
-    // 导出 component_info.json（包含基本信息）
     QJsonObject componentInfo;
-    componentInfo["lcscId"] = data->lcscId();
-    componentInfo["name"] = data->name();
-    componentInfo["prefix"] = data->prefix();
-    componentInfo["package"] = data->package();
-    componentInfo["manufacturer"] = data->manufacturer();
-    componentInfo["manufacturerPart"] = data->manufacturerPart();
+    componentInfo[QStringLiteral("lcscId")] = data->lcscId();
+    componentInfo[QStringLiteral("name")] = data->name();
+    componentInfo[QStringLiteral("prefix")] = data->prefix();
+    componentInfo[QStringLiteral("package")] = data->package();
+    componentInfo[QStringLiteral("manufacturer")] = data->manufacturer();
+    componentInfo[QStringLiteral("manufacturerPart")] = data->manufacturerPart();
     if (!data->previewImages().isEmpty()) {
         QJsonArray previewArray;
         for (const QString& url : data->previewImages()) {
             previewArray.append(url);
         }
-        componentInfo["previewImages"] = previewArray;
+        componentInfo[QStringLiteral("previewImages")] = previewArray;
     }
-    QString filePath = debugDirPath + QStringLiteral("/component_info.json");
+    QString filePath = debugDirPath + QStringLiteral("/") + kComponentInfoFile;
     QJsonDocument doc(componentInfo);
-    if (!writeFile(filePath, doc.toJson(QJsonDocument::Indented))) {
-        qWarning() << "DebugExportHelper: Failed to write component_info.json";
+    if (!writeAtomically(debugDirPath, filePath, doc.toJson(QJsonDocument::Indented))) {
         success = false;
     }
 
     return success;
 }
 
-bool DebugExportHelper::createOutputDirectory(const QString& path) {
-    QDir dir;
-    return dir.mkpath(path);
-}
-
-bool DebugExportHelper::writeFile(const QString& filePath, const QByteArray& data) {
-    QFile file(filePath);
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(data);
-        file.close();
-        return true;
-    }
-    qWarning() << "DebugExportHelper: Failed to open file for writing:" << filePath;
-    return false;
+bool DebugExportHelper::writeAtomically(const QString& tempDir, const QString& filePath, const QByteArray& data) {
+    return AtomicFileWriter::writeAtomically(tempDir, filePath, QStringLiteral(".tmp"), data);
 }
 
 }  // namespace EasyKiConverter
