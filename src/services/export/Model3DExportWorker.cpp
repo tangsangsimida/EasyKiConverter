@@ -4,6 +4,7 @@
 #include "../../models/ComponentData.h"
 #include "../../services/ComponentCacheService.h"
 #include "../../utils/PathSecurity.h"
+#include "DebugExportHelper.h"
 
 #include <QDebug>
 #include <QDir>
@@ -220,6 +221,12 @@ void Model3DExportWorker::run() {
     if (error.isEmpty()) {
         qDebug() << "Model3DExportWorker: Successfully exported" << (needWrl ? "WRL" : "") << (needStep ? "STEP" : "")
                  << "for" << m_componentId;
+
+        // Debug 模式导出原始数据
+        if (m_options.debugMode) {
+            DebugExportHelper::exportDebugData(m_componentId, m_data, m_options.outputPath);
+        }
+
         emit completed(m_componentId, true, QString());
         return;
     }

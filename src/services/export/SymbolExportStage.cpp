@@ -2,6 +2,7 @@
 
 #include "core/kicad/ExporterSymbol.h"
 #include "models/ComponentData.h"
+#include "DebugExportHelper.h"
 
 #include <QDateTime>
 #include <QDebug>
@@ -147,6 +148,11 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         ExportItemStatus status;
         status.status = ExportItemStatus::Status::Success;
         emit itemStatusChanged(componentId, status);
+
+        // Debug 模式导出原始数据
+        if (m_options.debugMode) {
+            DebugExportHelper::exportDebugData(componentId, data, m_options.outputPath);
+        }
 
         qDebug() << "SymbolExportStage: Collected symbol for" << componentId;
     }

@@ -2,6 +2,7 @@
 
 #include "../../core/kicad/ExporterSymbol.h"
 #include "../../models/ComponentData.h"
+#include "DebugExportHelper.h"
 
 #include <QDebug>
 #include <QDir>
@@ -76,6 +77,12 @@ void SymbolExportWorker::run() {
 
         if (success) {
             qDebug() << "SymbolExportWorker: Successfully exported" << filePath;
+
+            // Debug 模式导出原始数据
+            if (m_options.debugMode) {
+                DebugExportHelper::exportDebugData(m_componentId, m_data, m_options.outputPath);
+            }
+
             emit completed(m_componentId, true, QString());
         } else {
             emit completed(m_componentId, false, QStringLiteral("Failed to export symbol"));

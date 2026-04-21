@@ -2,6 +2,7 @@
 
 #include "../../core/kicad/ExporterFootprint.h"
 #include "../../models/ComponentData.h"
+#include "DebugExportHelper.h"
 
 #include <QDebug>
 #include <QDir>
@@ -77,6 +78,12 @@ void FootprintExportWorker::run() {
 
         if (success) {
             qDebug() << "FootprintExportWorker: Successfully exported" << filePath;
+
+            // Debug 模式导出原始数据
+            if (m_options.debugMode) {
+                DebugExportHelper::exportDebugData(m_componentId, m_data, m_options.outputPath);
+            }
+
             emit completed(m_componentId, true, QString());
         } else {
             emit completed(m_componentId, false, QStringLiteral("Failed to export footprint"));

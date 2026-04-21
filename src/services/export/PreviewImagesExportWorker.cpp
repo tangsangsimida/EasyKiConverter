@@ -2,6 +2,7 @@
 
 #include "../../models/ComponentData.h"
 #include "../../services/ComponentCacheService.h"
+#include "DebugExportHelper.h"
 
 #include <QDebug>
 #include <QDir>
@@ -167,6 +168,12 @@ void PreviewImagesExportWorker::run() {
 
     if (successCount == totalCount) {
         qDebug() << "PreviewImagesExportWorker: Successfully exported all previews for" << m_componentId;
+
+        // Debug 模式导出原始数据
+        if (m_options.debugMode) {
+            DebugExportHelper::exportDebugData(m_componentId, m_data, m_options.outputPath);
+        }
+
         emit completed(m_componentId, true, QString());
     } else if (successCount > 0) {
         // 部分成功也视为失败，避免提交不完整的临时文件

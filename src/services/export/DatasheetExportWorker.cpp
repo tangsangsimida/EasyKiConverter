@@ -2,6 +2,7 @@
 
 #include "../../models/ComponentData.h"
 #include "../ComponentCacheService.h"
+#include "DebugExportHelper.h"
 
 #include <QDebug>
 #include <QDir>

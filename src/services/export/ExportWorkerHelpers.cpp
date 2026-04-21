@@ -59,6 +59,16 @@ QSharedPointer<ComponentData> ExportWorkerHelpers::loadDiskCachedComponentData(c
             cachedData->setSymbolData(symbolImporter.importSymbolData(cadDataObject));
             cachedData->setFootprintData(footprintImporter.importFootprintData(cadDataObject));
         }
+        // 保存原始 CAD JSON 数据用于 debug 导出
+        cachedData->setCadJsonRaw(cadJsonData);
+    }
+
+    // 加载 3D 模型 OBJ 原始数据
+    if (cachedData->model3DData() && !cachedData->model3DData()->uuid().isEmpty()) {
+        const QByteArray model3DObjData = cache->loadModel3D(cachedData->model3DData()->uuid(), QStringLiteral("obj"));
+        if (!model3DObjData.isEmpty()) {
+            cachedData->setModel3DObjRaw(model3DObjData);
+        }
     }
 
     const QByteArray datasheetData = cache->loadDatasheet(componentId);
@@ -118,6 +128,17 @@ void ExportWorkerHelpers::mergeComponentData(ComponentData& target, const QShare
     }
     if (target.manufacturerPart().isEmpty() && !fallback->manufacturerPart().isEmpty()) {
         target.setManufacturerPart(fallback->manufacturerPart());
+    }
+
+    // 合并 raw 数据用于 debug 导出
+    if (target.cadJsonRaw().isEmpty() && !fallback->cadJsonRaw().isEmpty()) {
+        target.setCadJsonRaw(fallback->cadJsonRaw());
+    }
+    if (target.cinfoJsonRaw().isEmpty() && !fallback->cinfoJsonRaw().isEmpty()) {
+        target.setCinfoJsonRaw(fallback->cinfoJsonRaw());
+    }
+    if (target.model3DObjRaw().isEmpty() && !fallback->model3DObjRaw().isEmpty()) {
+        target.setModel3DObjRaw(fallback->model3DObjRaw());
     }
 }
 

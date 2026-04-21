@@ -170,6 +170,16 @@ public:
         m_model3DData = data;
     }
 
+    // Debug 导出用的原始数据访问器
+    QByteArray cinfoJsonRaw() const { return m_cinfoJsonRaw; }
+    void setCinfoJsonRaw(const QByteArray& data) { m_cinfoJsonRaw = data; }
+
+    QByteArray cadJsonRaw() const { return m_cadJsonRaw; }
+    void setCadJsonRaw(const QByteArray& data) { m_cadJsonRaw = data; }
+
+    QByteArray model3DObjRaw() const { return m_model3DObjRaw; }
+    void setModel3DObjRaw(const QByteArray& data) { m_model3DObjRaw = data; }
+
     // JSON 序列
     QJsonObject toJson() const;
     bool fromJson(const QJsonObject& json);
@@ -197,6 +207,11 @@ private:
     QSharedPointer<SymbolData> m_symbolData;  // 符号数据
     QSharedPointer<FootprintData> m_footprintData;  // 封装数据
     QSharedPointer<Model3DData> m_model3DData;  // 3D 模型数据
+
+    // Debug 导出用的原始数据
+    QByteArray m_cinfoJsonRaw;  // 元器件信息原始 JSON
+    QByteArray m_cadJsonRaw;  // CAD 数据原始 JSON（包含符号和封装）
+    QByteArray m_model3DObjRaw;  // 3D 模型 OBJ 原始数据
 };
 
 }  // namespace EasyKiConverter
