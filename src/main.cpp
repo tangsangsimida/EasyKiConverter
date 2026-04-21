@@ -384,12 +384,24 @@ int main(int argc, char* argv[]) {
         QQuickWindow tempWindow;
         const char* apiName = "Unknown";
         switch (tempWindow.graphicsApi()) {
-            case QSGRendererInterface::OpenGL: apiName = "OpenGL"; break;
-            case QSGRendererInterface::Vulkan: apiName = "Vulkan"; break;
-            case QSGRendererInterface::Software: apiName = "Software"; break;
-            case QSGRendererInterface::Direct3D11: apiName = "Direct3D 11"; break;
-            case QSGRendererInterface::Metal: apiName = "Metal"; break;
-            default: apiName = "Other/Unknown"; break;
+            case QSGRendererInterface::OpenGL:
+                apiName = "OpenGL";
+                break;
+            case QSGRendererInterface::Vulkan:
+                apiName = "Vulkan";
+                break;
+            case QSGRendererInterface::Software:
+                apiName = "Software";
+                break;
+            case QSGRendererInterface::Direct3D11:
+                apiName = "Direct3D 11";
+                break;
+            case QSGRendererInterface::Metal:
+                apiName = "Metal";
+                break;
+            default:
+                apiName = "Other/Unknown";
+                break;
         }
         qInfo() << "当前实际运行的渲染 API:" << apiName;
     });

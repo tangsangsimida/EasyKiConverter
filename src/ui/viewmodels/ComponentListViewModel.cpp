@@ -296,17 +296,29 @@ void ComponentListViewModel::addComponent(const QString& componentId) {
 
 void ComponentListViewModel::removeComponent(int index) {
     clearAttentionHints();
-    // 获取要删除的 item 和 ID（需要锁保护）
-    ComponentListItemData* item = nullptr;
-    QString removedId;
-    int listCount;
 
+    // 检查是否是最后一个元器件（需要锁保护）
+    int listCount;
     {
         QMutexLocker locker(&m_listMutex);
         listCount = m_componentList.count();
         if (index < 0 || index >= listCount) {
             return;
         }
+    }
+
+    // 当删除最后一个元器件时，触发与清空列表相同的效果
+    if (listCount == 1) {
+        clearComponentList();
+        return;
+    }
+
+    // 获取要删除的 item 和 ID（需要锁保护）
+    ComponentListItemData* item = nullptr;
+    QString removedId;
+
+    {
+        QMutexLocker locker(&m_listMutex);
         item = m_componentList.takeAt(index);
         removedId = item->componentId();
         m_componentIdIndex.remove(removedId);

@@ -63,6 +63,15 @@ Card {
             }
         },
         Connections {
+            target: componentListCard.componentListController
+            function onListCleared() {
+                searchInput.text = ""; // 清空搜索
+                if (componentListCard.exportProgressController) {
+                    componentListCard.exportProgressController.resetExport(); // 重置导出状态
+                }
+            }
+        },
+        Connections {
             target: componentListCard.exportProgressController
             function onIsExportingChanged() {
                 if (componentListCard.exportProgressController && componentListCard.exportProgressController.isExporting && componentListCard.componentListController) {

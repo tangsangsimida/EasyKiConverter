@@ -171,14 +171,29 @@ public:
     }
 
     // Debug 导出用的原始数据访问器
-    QByteArray cinfoJsonRaw() const { return m_cinfoJsonRaw; }
-    void setCinfoJsonRaw(const QByteArray& data) { m_cinfoJsonRaw = data; }
+    QByteArray cinfoJsonRaw() const {
+        return m_cinfoJsonRaw;
+    }
 
-    QByteArray cadJsonRaw() const { return m_cadJsonRaw; }
-    void setCadJsonRaw(const QByteArray& data) { m_cadJsonRaw = data; }
+    void setCinfoJsonRaw(const QByteArray& data) {
+        m_cinfoJsonRaw = data;
+    }
 
-    QByteArray model3DObjRaw() const { return m_model3DObjRaw; }
-    void setModel3DObjRaw(const QByteArray& data) { m_model3DObjRaw = data; }
+    QByteArray cadJsonRaw() const {
+        return m_cadJsonRaw;
+    }
+
+    void setCadJsonRaw(const QByteArray& data) {
+        m_cadJsonRaw = data;
+    }
+
+    QByteArray model3DObjRaw() const {
+        return m_model3DObjRaw;
+    }
+
+    void setModel3DObjRaw(const QByteArray& data) {
+        m_model3DObjRaw = data;
+    }
 
     // JSON 序列
     QJsonObject toJson() const;
