@@ -115,3 +115,30 @@ target_include_directories(test_file_reader PRIVATE
     ${CMAKE_SOURCE_DIR}
 )
 add_test(NAME test_file_reader COMMAND test_file_reader)
+
+# CadDataLoader 业务层错误检查测试
+add_executable(test_cad_data_loader test_cad_data_loader.cpp)
+target_link_libraries(test_cad_data_loader PRIVATE
+    Qt6::Test
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_cad_data_loader PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/tests
+)
+add_test(NAME test_cad_data_loader COMMAND test_cad_data_loader)
+
+# ComponentListViewModel 删除正在验证的元器件测试
+add_executable(test_component_list_viewmodel test_component_list_viewmodel.cpp)
+target_link_libraries(test_component_list_viewmodel PRIVATE
+    Qt6::Test
+    Qt6::Gui
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_component_list_viewmodel PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/tests
+)
+add_test(NAME test_component_list_viewmodel COMMAND test_component_list_viewmodel)
