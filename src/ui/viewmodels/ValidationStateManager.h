@@ -15,6 +15,7 @@ public:
 
     void startValidation(int count);
     void addValidation(int count);
+    void cancelValidation(int count);
     void onComponentValidated(const QString& componentId);
     void onComponentFailed(const QString& componentId);
     void reset();

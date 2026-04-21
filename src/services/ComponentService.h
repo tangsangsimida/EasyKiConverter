@@ -144,6 +144,14 @@ public:
     void cancelAllPendingRequests();
 
     /**
+     * @brief 取消特定元件的数据获取请求
+     *
+     * 当删除单个元器件时调用，以中断该元器件的悬空请求
+     * @param componentId 元件ID
+     */
+    void cancelRequestForComponent(const QString& componentId);
+
+    /**
      * @brief 设置输出路径
      *
      * @param path 输出路径

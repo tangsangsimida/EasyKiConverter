@@ -30,6 +30,18 @@ void ValidationStateManager::addValidation(int count) {
              << ", total:" << m_totalValidationCount;
 }
 
+void ValidationStateManager::cancelValidation(int count) {
+    if (count <= 0) {
+        return;
+    }
+    m_pendingValidationCount = qMax(0, m_pendingValidationCount - count);
+    m_totalValidationCount = qMax(0, m_totalValidationCount - count);
+    emit validationStateChanged(m_pendingValidationCount);
+    qDebug() << "Cancelled" << count << "components from validation, pending count:" << m_pendingValidationCount
+             << ", total:" << m_totalValidationCount;
+    checkAndNotifyCompletion();
+}
+
 void ValidationStateManager::onComponentValidated(const QString& componentId) {
     if (m_pendingValidationCount > 0) {
         m_pendingValidationCount--;

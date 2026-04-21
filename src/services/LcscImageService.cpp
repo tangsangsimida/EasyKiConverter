@@ -173,6 +173,21 @@ void LcscImageService::cancelAll() {
     qDebug() << "LcscImageService: All pending preview image fetches cancelled";
 }
 
+void LcscImageService::cancelRequestForComponent(const QString& componentId) {
+    qDebug() << "LcscImageService: Cancelling request for component" << componentId;
+
+    // 从请求组件列表中移除
+    m_requestedComponents.remove(componentId);
+    m_downloadCounts.remove(componentId);
+    m_expectedCounts.remove(componentId);
+
+    // 取消与该组件相关的异步请求
+    // 注意：由于AsyncNetworkRequest没有暴露componentId信息，我们无法精确取消特定组件的请求
+    // 但通过从m_requestedComponents中移除，响应到达时会被忽略
+
+    qDebug() << "LcscImageService: Request cancelled for component" << componentId;
+}
+
 void LcscImageService::fetchDatasheet(const QString& componentId, const QString& datasheetUrl) {
     if (componentId.isEmpty() || datasheetUrl.isEmpty()) {
         qWarning() << "LcscImageService::fetchDatasheet called with empty componentId or datasheetUrl";
@@ -322,6 +337,12 @@ void LcscImageService::performApiSearch(const QString& componentId) {
                 return;
             }
 
+            // 检查组件是否已被取消
+            if (!m_requestedComponents.contains(componentId)) {
+                request->deleteLater();
+                return;
+            }
+
             if (!result.success) {
                 qWarning() << "LcscImageService: API search failed for component:" << componentId
                            << "error:" << result.error;
@@ -417,6 +438,12 @@ void LcscImageService::performDownload(const QString& componentId, const QString
                 untrackAsyncRequest(request);
 
                 if (m_isCancelled) {
+                    request->deleteLater();
+                    return;
+                }
+
+                // 检查组件是否已被取消
+                if (!m_requestedComponents.contains(componentId)) {
                     request->deleteLater();
                     return;
                 }

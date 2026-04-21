@@ -982,6 +982,24 @@ void ComponentService::cancelAllPendingRequests() {
     qDebug() << "ComponentService: All pending requests cancelled";
 }
 
+void ComponentService::cancelRequestForComponent(const QString& componentId) {
+    QString normalizedId = componentId.toUpper();
+    qDebug() << "ComponentService: Cancelling request for component" << normalizedId;
+
+    // 从正在获取的组件记录中移除，防止响应到达时更新已清除的数据
+    {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        m_fetchingComponents.remove(normalizedId);
+    }
+
+    // 取消预览图获取
+    if (m_imageService) {
+        m_imageService->cancelRequestForComponent(normalizedId);
+    }
+
+    qDebug() << "ComponentService: Request cancelled for component" << normalizedId;
+}
+
 void ComponentService::handleFetchErrorForComponent(const QString& componentId, const QString& error) {
     qWarning() << "Fetch error for component" << componentId << ":" << error;
     if (m_parallelContext != nullptr) {

@@ -325,9 +325,28 @@ void ComponentListViewModel::removeComponent(int index) {
         m_validatedComponentIds.removeAll(removedId);
     }
 
+    // 取消该元器件的网络请求
+    if (m_service) {
+        m_service->cancelRequestForComponent(removedId);
+    }
+
+    // 检查元器件是否已经在飞行中（已 dispatch）
+    bool wasInFlight = m_inFlightComponentIds.contains(removedId);
+
+    // 从验证队列和飞行中列表中移除
+    m_validationQueue.removeAll(removedId);
+    m_inFlightComponentIds.remove(removedId);
+
     // 检查是否正在获取中（锁外操作，因为 m_pendingValidationCount 有自己的逻辑）
     if (item->isFetching()) {
         m_pendingValidationCount--;
+        // 只有当元器件已经在飞行中（已 dispatch）时才减少 m_validationPendingCount
+        // 因为 m_validationPendingCount 只在 dispatch 时增加
+        if (wasInFlight) {
+            m_validationPendingCount--;
+        }
+        // 通知 ValidationStateManager 取消验证
+        m_validationStateManager->cancelValidation(1);
     }
 
     beginRemoveRows(QModelIndex(), index, index);
@@ -841,12 +860,16 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
                 error.contains("CAD data") || error.contains("Symbol data") || error.contains("Footprint data") ||
                 error.contains("Empty CAD") || error.contains("parse.*EasyEDA") ||
                 error.contains("No result", Qt::CaseInsensitive) ||
+                // API 业务层错误
+                error.contains("API returned success=false", Qt::CaseInsensitive) ||
+                error.contains("API response missing result field", Qt::CaseInsensitive) ||
                 // 网络相关错误（CAD 数据获取也可能触发这些）
                 error.contains("403") || error.contains("404") || error.contains("timeout", Qt::CaseInsensitive) ||
                 error.contains("access denied", Qt::CaseInsensitive) ||
                 error.contains("forbidden", Qt::CaseInsensitive) || error.contains("not found", Qt::CaseInsensitive) ||
                 error.contains("connection closed", Qt::CaseInsensitive) ||
                 error.contains("operation canceled", Qt::CaseInsensitive) ||
+                error.contains("Request cancelled", Qt::CaseInsensitive) ||
                 error.contains("network error", Qt::CaseInsensitive) ||
                 error.contains("fetch error", Qt::CaseInsensitive);
 

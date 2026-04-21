@@ -268,6 +268,85 @@
 
 ---
 
+### Q: 不存在的元器件被误判为验证成功，且错误响应被缓存
+
+**问题描述**：
+当请求不存在的元器件（如 C2041）时，EasyEDA API 返回业务层 404 错误：
+```json
+{"code":404,"message":"Component not found","success":false}
+```
+
+但系统将此响应误判为验证成功，导致：
+- 元器件显示为"验证成功"但没有预览图
+- 错误响应被缓存到本地磁盘
+- 后续请求从缓存加载，持续显示为成功
+
+**根本原因**：
+`src/services/CadDataLoader.cpp:fetchAndParseCadData()` 只检查了：
+- HTTP/网络层是否成功
+- JSON 是否能解析
+
+但没有检查返回体里的业务层错误标记：
+- `success: false`
+- `code: 404`
+- `result` 缺失或为空
+
+**修复方案**：
+在 `CadDataLoader::fetchAndParseCadData()` 中添加业务层错误检查：
+1. 检查 `success == false` → 返回错误（404时返回"元器件不存在（404）"）
+2. 检查 `result` 缺失或为 null → 返回错误
+3. 检查 `result` 为空对象 → 返回错误
+
+**回归预防**：
+- 任何解析 API 响应的代码都必须检查业务层 `success` 字段
+- 不要因为 HTTP 成功就认为业务成功
+- `result` 字段缺失或为空时必须视为失败
+
+**相关文件**：
+- `src/services/CadDataLoader.cpp:117` - fetchAndParseCadData()
+- `src/workers/FetchWorker.cpp:203` - 参考实现（已有正确判断）
+
+**状态**：✅ 已修复 (2026-04-21)
+
+---
+
+### Q: 请求被取消时未标记为验证失败
+
+**问题描述**：
+当网络请求被取消时（如用户删除元器件时），系统未将此标记为验证失败。
+
+**根本原因**：
+`handleFetchError()` 的 `isCadDataFailure` 检查中没有包含 "Request cancelled" 错误信息。
+
+**修复方案**：
+在 `isCadDataFailure` 检查中添加 `error.contains("Request cancelled")`。
+
+**相关文件**：
+- `src/ui/viewmodels/ComponentListViewModel.cpp:850` - isCadDataFailure 检查
+
+**状态**：✅ 已修复 (2026-04-21)
+
+---
+
+### Q: 删除元器件时未取消网络请求，导致缓存被保存
+
+**问题描述**：
+删除元器件时没有取消该元器件的网络请求，导致请求完成后数据被缓存。
+
+**修复方案**：
+1. 在 `ComponentService` 中添加 `cancelRequestForComponent()` 方法
+2. 在 `LcscImageService` 中添加 `cancelRequestForComponent()` 方法
+3. 在 `ComponentListViewModel::removeComponent()` 中调用 `cancelRequestForComponent()`
+
+**相关文件**：
+- `src/services/ComponentService.cpp` - cancelRequestForComponent()
+- `src/services/LcscImageService.cpp` - cancelRequestForComponent()
+- `src/ui/viewmodels/ComponentListViewModel.cpp:340` - removeComponent() 调用
+
+**状态**：✅ 已修复 (2026-04-21)
+
+---
+
 ## 构建相关
 
 ### Q: CMake 配置失败，提示生成器不匹配

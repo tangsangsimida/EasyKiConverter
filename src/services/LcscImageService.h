@@ -56,6 +56,14 @@ public:
     void cancelAll();
 
     /**
+     * @brief 取消特定元件的预览图获取操作
+     *
+     * 当删除单个元器件时调用，以中断该元器件的预览图获取工作
+     * @param componentId 元件ID
+     */
+    void cancelRequestForComponent(const QString& componentId);
+
+    /**
      * @brief 下载数据手册
      *
      * 当 ComponentService 接收到 LCSC API 返回的数据手册 URL 后调用此方法触发下载

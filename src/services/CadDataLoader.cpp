@@ -135,7 +135,33 @@ CadFetchTaskResult CadDataLoader::fetchAndParseCadData(const QString& componentI
         return taskResult;
     }
 
-    taskResult.parsed = parseCadPayload(componentId, jsonDoc.object());
+    const QJsonObject root = jsonDoc.object();
+
+    // 检查业务层错误：success == false
+    if (root.contains("success") && !root.value("success").toBool()) {
+        const int code = root.value("code").toInt();
+        const QString message = root.value("message").toString();
+        if (code == 404) {
+            taskResult.errorMessage = QStringLiteral("元器件不存在（404）");
+        } else {
+            taskResult.errorMessage = message.isEmpty() ? QStringLiteral("API returned success=false") : message;
+        }
+        return taskResult;
+    }
+
+    // 检查 result 字段是否缺失或为 null
+    if (!root.contains("result") || root.value("result").isNull()) {
+        taskResult.errorMessage = QStringLiteral("API response missing result field");
+        return taskResult;
+    }
+
+    // 检查 result 是否为空对象
+    if (root.value("result").isObject() && root.value("result").toObject().isEmpty()) {
+        taskResult.errorMessage = QStringLiteral("Empty CAD data");
+        return taskResult;
+    }
+
+    taskResult.parsed = parseCadPayload(componentId, root);
     if (!taskResult.parsed.success) {
         taskResult.errorMessage = taskResult.parsed.errorMessage;
         return taskResult;

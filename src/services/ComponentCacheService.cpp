@@ -458,21 +458,29 @@ bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const
             // Metadata in memory means component was cached before
             // Just need to verify cad_data.json still exists (fast stat call)
             QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
-            return QFileInfo::exists(cadDataPath);
+            bool exists = QFileInfo::exists(cadDataPath);
+            LOG_DEBUG(LogModule::Core,
+                      "hasSymbolFootprintCache: memory hit for {}, cad_data.json exists: {}",
+                      lcscId,
+                      exists);
+            return exists;
         }
     }
 
     // Slow path: memory cache miss - do fast disk check without full JSON parse
     // The actual JSON validity will be verified when loading the data
     QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
-    if (!QFileInfo::exists(cadDataPath)) {
+    QFileInfo fileInfo(cadDataPath);
+    if (!fileInfo.exists()) {
+        LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: no cad_data.json for {}", lcscId);
         return false;
     }
 
     // Quick integrity check: verify file has minimum size and ends with valid JSON terminator
     // This guards against truncated files from crashes during write, without full JSON parse
-    const qint64 fileSize = QFileInfo(cadDataPath).size();
+    const qint64 fileSize = fileInfo.size();
     if (fileSize < 2) {  // Minimum valid JSON: "{}"
+        LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: cad_data.json too small for {}", lcscId);
         return false;
     }
 
@@ -489,9 +497,12 @@ bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const
             if (c == ' ' || c == '\n' || c == '\r' || c == '\t') {
                 continue;
             }
-            return (c == '}');
+            bool valid = (c == '}');
+            LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: disk check for {}, valid: {}", lcscId, valid);
+            return valid;
         }
     }
+    LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: failed to open cad_data.json for {}", lcscId);
     return false;
 }
 
