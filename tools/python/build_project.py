@@ -271,12 +271,13 @@ class BuildStatistics:
 
 
 class BuildManager:
-    def __init__(self, verbose: bool = False):
+    def __init__(self, verbose: bool = False, build_dir: Optional[Path] = None, qt_path: Optional[str] = None):
         self.project_root = Path(__file__).parent.parent.parent.absolute()
-        self.build_dir = self.project_root / "build"
+        self.build_dir = build_dir if build_dir else self.project_root / "build"
         self.build_cache_dir = self.build_dir / ".cache"
         self.build_logs_dir = self.build_dir / "logs"
         self.verbose = verbose
+        self.qt_path = qt_path
         self.config = self._load_config()
         self.stats = BuildStatistics()
         self._ensure_build_dirs()
@@ -333,7 +334,7 @@ class BuildManager:
         return logger
 
     def _load_config(self) -> Dict[str, Any]:
-        """加载构建配置"""
+        """加载构建配置，支持平台特定设置"""
         config_file = self.project_root / "tools" / "config" / "build_config.json"
         default_config = {
             "qt_version": "6.10.1",
@@ -348,23 +349,55 @@ class BuildManager:
             try:
                 with open(config_file, "r", encoding="utf-8") as f:
                     user_config = json.load(f)
+
+                    # 确定当前平台
+                    current_platform = platform.system().lower()
+                    platform_key = {
+                        "windows": "windows",
+                        "linux": "linux",
+                        "darwin": "macos",
+                    }.get(current_platform)
+
+                    # 获取平台映射表
+                    platform_map = user_config.get("_platform_map", {})
+
+                    # 应用平台特定的 qt_path（通过映射表查找）
+                    if platform_key and platform_map:
+                        mapping = platform_map.get(platform_key, {})
+                        qt_path_key = mapping.get("qt_path_key")
+                        generator_key = mapping.get("generator_key")
+
+                        if qt_path_key and qt_path_key in user_config:
+                            default_config["qt_path"] = user_config[qt_path_key]
+
+                        if generator_key and generator_key in user_config:
+                            default_config["cmake_generator"] = user_config[generator_key]
+
+                    # 应用 cmake_options
                     if "cmake_options" in user_config:
                         if isinstance(user_config["cmake_options"], dict):
                             default_config["cmake_options"].update(
                                 user_config["cmake_options"]
                             )
-                        user_config.pop("cmake_options")
-                    default_config.update(user_config)
+
+                    # 应用其他顶层配置
+                    for key in ["qt_version", "build_types"]:
+                        if key in user_config:
+                            default_config[key] = user_config[key]
+
             except Exception as e:
                 print(f"警告: 加载配置文件失败, 使用默认配置: {e}")
 
         return default_config
 
     def _get_cmake_generator(self) -> str:
-        """获取最佳 CMake 生成器 (支持 VS 2019/2022)"""
-        if shutil.which("ninja"):
-            return "Ninja"
+        """获取 CMake 生成器，优先使用配置值，与 VSCode 保持一致"""
+        # 优先使用配置文件中的生成器设置
+        configured_generator = self.config.get("cmake_generator")
+        if configured_generator:
+            return configured_generator
 
+        # 自动检测逻辑（备用）
         if platform.system() == "Windows":
             gen_info = self._get_msvc_generator()
             if gen_info:
@@ -399,6 +432,19 @@ class BuildManager:
 
     def _get_qt_prefix_path(self) -> Tuple[bool, Optional[str]]:
         """检测 Qt 并验证版本匹配性"""
+        # 优先级：1. 命令行参数 2. 配置文件中的 qt_path 3. 环境变量/自动检测
+        if self.qt_path:
+            p = Path(self.qt_path)
+            if (p / "lib" / "cmake" / "Qt6" / "Qt6Config.cmake").exists():
+                return True, self.qt_path
+
+        # 配置文件中的平台特定 qt_path
+        config_qt_path = self.config.get("qt_path")
+        if config_qt_path:
+            p = Path(config_qt_path)
+            if (p / "lib" / "cmake" / "Qt6" / "Qt6Config.cmake").exists():
+                return True, str(p)
+
         qt_candidates = []
 
         env_vars = ["Qt6_DIR", "QTDIR", "QT_PREFIX_PATH", "Qt6_ROOT", "QT_ROOT"]
@@ -945,10 +991,24 @@ def main():
         "--config-only", action="store_true", help="仅执行配置，不执行构建"
     )
     parser.add_argument("-j", "--jobs", type=int, help="并行任务数 (默认 CPU 核心数)")
+    parser.add_argument(
+        "-b",
+        "--build-dir",
+        type=str,
+        help="构建目录 (默认: build，需与 VSCode cmake.buildDirectory 一致)",
+    )
+    parser.add_argument(
+        "-q",
+        "--qt-path",
+        type=str,
+        help="Qt 路径 (需与 VSCode CMAKE_PREFIX_PATH 一致)",
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="显示详细输出")
 
     args = parser.parse_args()
-    manager = BuildManager(verbose=args.verbose)
+    build_dir = Path(args.build_dir) if args.build_dir else None
+    qt_path = args.qt_path if args.qt_path else None
+    manager = BuildManager(verbose=args.verbose, build_dir=build_dir, qt_path=qt_path)
 
     try:
         if args.env_check:
