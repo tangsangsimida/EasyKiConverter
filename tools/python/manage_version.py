@@ -23,12 +23,12 @@ EasyKiConverter 版本管理工具
 用法示例:
     1. 检查当前版本:
        python tools/python/manage_version.py --check
-    2. 更新所有文件到新版本（自动生成 release 描述）:
+    2. 更新所有文件到新版本（仅添加默认 release 条目）:
        python tools/python/manage_version.py 3.1.0
-    3. 仅更新 metainfo.xml:
-       python tools/python/manage_version.py 3.1.0 --metainfo-only
-    4. 跳过 release 描述生成:
-       python tools/python/manage_version.py 3.1.0 --no-release-notes
+     3. 更新所有文件并自动生成详细 release 描述:
+        python tools/python/manage_version.py 3.1.0 --generate-release-notes
+     4. 仅更新 metainfo.xml:
+        python tools/python/manage_version.py 3.1.0 --metainfo-only
 
 注意事项:
     - 脚本会直接修改文件，建议在 Git 工作区干净的状态下运行以便回滚。
@@ -216,7 +216,9 @@ def update_cmake_lists(new_version, force=False):
 
     try:
         with open(CMAKE_LISTS_PATH, "r", encoding="utf-8") as f:
-            content = f.read()
+            original_content = f.read()
+
+        content = original_content
 
         # 1. 更新 VERSION_FROM_CI 默认值
         # set(VERSION_FROM_CI "3.0.13")
@@ -235,7 +237,7 @@ def update_cmake_lists(new_version, force=False):
         pattern3 = r"(project\(EasyKiconverter_Cpp_Version\s+VERSION\s+)(\d+\.\d+\.\d+)(\s+LANGUAGES)"
         content = re.sub(pattern3, f"\\g<1>{new_version}\\g<3>", content)
 
-        if content == content:
+        if original_content == content:
             if force:
                 print(f"  ✓ {CMAKE_LISTS_PATH} 版本已经是 {new_version}")
                 return True
@@ -245,11 +247,11 @@ def update_cmake_lists(new_version, force=False):
         else:
             with open(CMAKE_LISTS_PATH, "w", encoding="utf-8") as f:
                 f.write(content)
-            print(f"  ✓ 成功更新 {CMake_LISTS_PATH}")
+            print(f"  ✓ 成功更新 {CMAKE_LISTS_PATH}")
             return True
 
     except Exception as e:
-        print(f"  ✗ 更新 {CMake_LISTS_PATH} 失败: {e}")
+        print(f"  ✗ 更新 {CMAKE_LISTS_PATH} 失败: {e}")
         import traceback
 
         traceback.print_exc()
@@ -355,18 +357,22 @@ def update_metainfo_xml(new_version, generate_release=False, force=False):
                     release_description = generate_release_description(
                         old_version, new_version, commits
                     )
-
-                    # 在 <releases> 标签后插入新的 release
-                    releases_pattern = r"(<releases>)"
-                    new_content = re.sub(
-                        releases_pattern,
-                        f"\\g<1>\n{release_description}",
-                        new_content,
-                        count=1,
-                    )
-                    print(f"  ✓ 已自动添加 release 描述")
+                    print(f"  ✓ 已自动添加详细 release 描述")
                 else:
-                    print(f"  ℹ  跳过 release 描述生成（使用 --no-release-notes 参数）")
+                    # 生成简单的默认 release 描述
+                    release_description = generate_release_description(
+                        old_version, new_version, []
+                    )
+                    print(f"  ℹ  已添加默认 release 描述（使用 --generate-release-notes 生成详细描述）")
+
+                # 在 <releases> 标签后插入新的 release
+                releases_pattern = r"(<releases>)"
+                new_content = re.sub(
+                    releases_pattern,
+                    f"\\g<1>\n{release_description}",
+                    new_content,
+                    count=1,
+                )
             else:
                 if force:
                     print(
@@ -855,7 +861,7 @@ def main():
         "--metainfo-only", action="store_true", help="仅更新 metainfo.xml"
     )
     parser.add_argument(
-        "--no-release-notes", action="store_true", help="跳过自动生成 release 描述"
+        "--generate-release-notes", action="store_true", help="从 Git 提交历史自动生成详细的 release 描述"
     )
     parser.add_argument(
         "--force", action="store_true", help="强制更新所有文件，即使版本相同"
@@ -901,7 +907,7 @@ def main():
     if args.metainfo_only:
         print("\n仅更新 metainfo.xml...")
         if update_metainfo_xml(
-            new_version, generate_release=not args.no_release_notes, force=args.force
+            new_version, generate_release=args.generate_release_notes, force=args.force
         ):
             print("\nmetainfo.xml 更新完成！")
         else:
@@ -919,7 +925,7 @@ def main():
     success &= update_cmake_lists(new_version, force=args.force)
     success &= update_main_cpp(new_version, force=args.force)
     success &= update_metainfo_xml(
-        new_version, generate_release=not args.no_release_notes, force=args.force
+        new_version, generate_release=args.generate_release_notes, force=args.force
     )
     success &= update_mkdocs_yaml(new_version, force=args.force)
     success &= update_appx_manifest(new_version, force=args.force)
@@ -927,8 +933,8 @@ def main():
 
     if success:
         print("\n✓ 所有文件更新完成！")
-        if args.no_release_notes:
-            print(f"\n提示: 请手动编辑 {METAINFO_XML_PATH} 添加新版本的 release 描述")
+        if not args.generate_release_notes:
+            print(f"\n提示: 已添加默认 release 条目，如需自动生成详细描述请使用 --generate-release-notes")
 
         # 验证更新结果
         print("\n正在验证更新结果...")

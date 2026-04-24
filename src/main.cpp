@@ -261,7 +261,7 @@ int main(int argc, char* argv[]) {
         // 纯 CLI 模式：使用 QCoreApplication
         QCoreApplication app(argc, argv);
         app.setApplicationName("EasyKiConverter");
-        app.setApplicationVersion("3.1.4");
+        app.setApplicationVersion("3.1.5");
         app.setOrganizationName("EasyKiConverter");
         app.setOrganizationDomain("easykiconverter.com");
 
@@ -420,7 +420,7 @@ int main(int argc, char* argv[]) {
 
     // 设置应用程序信息
     app.setApplicationName("EasyKiConverter");
-    app.setApplicationVersion("3.1.4");
+    app.setApplicationVersion("3.1.5");
     app.setOrganizationName("EasyKiConverter");
     app.setOrganizationDomain("easykiconverter.com");
 

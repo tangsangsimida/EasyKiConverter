@@ -58,22 +58,22 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.4/resources/imgs/screenshot1.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.5/resources/imgs/screenshot1.png</image>
       <caption>Main application window with component conversion interface</caption>
       <caption xml:lang="zh_CN">主应用窗口 - 元件转换界面</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.4/resources/imgs/screenshot2.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.5/resources/imgs/screenshot2.png</image>
       <caption>Component input and list management</caption>
       <caption xml:lang="zh_CN">元件输入和列表管理</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.4/resources/imgs/screenshot3.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.5/resources/imgs/screenshot3.png</image>
       <caption>Export settings and progress tracking</caption>
       <caption xml:lang="zh_CN">导出设置和进度跟踪</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.4/resources/imgs/screenshot4.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.5/resources/imgs/screenshot4.png</image>
       <caption>Dark mode theme support</caption>
       <caption xml:lang="zh_CN">深色主题支持</caption>
     </screenshot>
@@ -105,6 +105,38 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="3.1.5" date="2026-04-24">
+      <description>
+        <p>Changes from 3.1.4 to 3.1.5</p>
+        <p xml:lang="zh_CN">从 3.1.4 到 3.1.5 的变更</p>
+        <p>New Features:</p>
+        <p xml:lang="zh_CN">新功能:</p>
+        <ul>
+          <li xml:lang="zh_CN">添加 CadDataLoader 和 ComponentListViewModel 的单元测试</li>
+          <li xml:lang="zh_CN">增加对多种图形API的支持，包括OpenVG、Null和Direct3D12</li>
+          <li></li>
+          <li xml:lang="zh_CN">优先使用Vulkan渲染后端并添加渲染API检测</li>
+          <li xml:lang="zh_CN">使用原子写入改进调试数据导出功能</li>
+          <li xml:lang="zh_CN">添加debug数据导出功能</li>
+          <li xml:lang="zh_CN">支持多平台Qt路径配置和构建选项</li>
+        </ul>
+        <p>Bug Fixes:</p>
+        <p xml:lang="zh_CN">修复:</p>
+        <ul>
+          <li xml:lang="zh_CN">添加元器件请求取消功能并修复API业务层错误处理</li>
+        </ul>
+        <p>Chores:</p>
+        <p xml:lang="zh_CN">其他:</p>
+        <ul>
+          <li xml:lang="zh_CN">移除Docker环境构建工作流</li>
+        </ul>
+        <p>Other Changes:</p>
+        <p xml:lang="zh_CN">其他变更:</p>
+        <ul>
+          <li>Update documentation for EasyKiConverter</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.1.4" date="2026-04-20">
       <description>
         <p>Changes from 3.1.3 to 3.1.4</p>
