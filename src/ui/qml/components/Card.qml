@@ -30,7 +30,7 @@ Rectangle {
             return Qt.rgba(0, 0, 0, 0.08);
         }
     }
-    border.width: 1
+    border.width: AppStyle.borderWidths.thin
     // 颜色变化动画
     Behavior on color {
         ColorAnimation {

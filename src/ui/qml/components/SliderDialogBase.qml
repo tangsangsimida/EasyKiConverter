@@ -121,7 +121,7 @@ FocusScope {
             radius: AppStyle.radius.xl
             color: "transparent"
             border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.1)
-            border.width: 1
+            border.width: AppStyle.borderWidths.thin
             z: 1
         }
 
@@ -178,7 +178,7 @@ FocusScope {
                 color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.05) : Qt.rgba(0, 0, 0, 0.03)
                 radius: AppStyle.radius.lg
                 border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.08)
-                border.width: 1
+                border.width: AppStyle.borderWidths.thin
                 // 滑块背景
                 Rectangle {
                     id: sliderBackground

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Shapes
 import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 import EasyKiconverter_Cpp_Version 1.0
 
@@ -15,7 +16,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.topMargin: 30
         text: "EasyKiConverter"
-        font.pixelSize: 48
+        font.pixelSize: AppStyle.fontSizes.display
         font.bold: true
         color: AppStyle.colors.textPrimary
         horizontalAlignment: Text.AlignHCenter
@@ -23,7 +24,7 @@ ColumnLayout {
     Text {
         Layout.fillWidth: true
         text: qsTranslate("MainWindow", "将嘉立创EDA元器件转换为KiCad格式")
-        font.pixelSize: 18
+        font.pixelSize: AppStyle.fontSizes.lg
         color: AppStyle.isDarkMode ? AppStyle.colors.textPrimary : AppStyle.colors.textSecondary
         horizontalAlignment: Text.AlignHCenter
     }
@@ -68,7 +69,7 @@ ColumnLayout {
             background: Rectangle {
                 color: AppStyle.colors.surface
                 border.color: languageComboBox.hovered ? AppStyle.colors.borderFocus : AppStyle.colors.border
-                border.width: 1
+                border.width: AppStyle.borderWidths.thin
                 radius: AppStyle.radius.md
                 Behavior on border.color {
                     ColorAnimation {
@@ -79,35 +80,27 @@ ColumnLayout {
 
             contentItem: Text {
                 text: languageComboBox.displayText
-                font.pixelSize: 12
+                font.pixelSize: AppStyle.fontSizes.xs
                 color: AppStyle.colors.textPrimary
                 verticalAlignment: Text.AlignVCenter
                 leftPadding: 8
                 rightPadding: 8
             }
 
-            indicator: Canvas {
-                id: canvas
+            indicator: Shape {
+                id: indicatorShape
                 x: languageComboBox.width - width - languageComboBox.rightPadding
                 y: languageComboBox.topPadding + (languageComboBox.availableHeight - height) / 2
                 width: 12
                 height: 8
-                contextType: "2d"
-                Connections {
-                    target: languageComboBox
-                    function onPressedChanged() {
-                        canvas.requestPaint();
-                    }
-                }
 
-                onPaint: {
-                    context.reset();
-                    context.moveTo(0, 0);
-                    context.lineTo(width / 2, height);
-                    context.lineTo(width, 0);
-                    context.closePath();
-                    context.fillStyle = AppStyle.colors.textSecondary;
-                    context.fill();
+                ShapePath {
+                    strokeWidth: 0
+                    fillColor: AppStyle.colors.textSecondary
+                    PathMove { x: 0; y: 0 }
+                    PathLine { x: indicatorShape.width / 2; y: indicatorShape.height }
+                    PathLine { x: indicatorShape.width; y: 0 }
+                    PathLine { x: 0; y: 0 }
                 }
             }
 
@@ -116,7 +109,7 @@ ColumnLayout {
                 height: 36
                 contentItem: Text {
                     text: modelData.text
-                    font.pixelSize: 12
+                    font.pixelSize: AppStyle.fontSizes.xs
                     color: AppStyle.colors.textPrimary
                     verticalAlignment: Text.AlignVCenter
                     leftPadding: 8
@@ -146,7 +139,7 @@ ColumnLayout {
                         height: 36
                         contentItem: Text {
                             text: modelData.text
-                            font.pixelSize: 12
+                            font.pixelSize: AppStyle.fontSizes.xs
                             color: AppStyle.colors.textPrimary
                             verticalAlignment: Text.AlignVCenter
                             leftPadding: 8
@@ -161,7 +154,7 @@ ColumnLayout {
                 background: Rectangle {
                     color: AppStyle.colors.surface
                     border.color: AppStyle.colors.border
-                    border.width: 1
+                    border.width: AppStyle.borderWidths.thin
                     radius: AppStyle.radius.md
                 }
             }
@@ -178,7 +171,7 @@ ColumnLayout {
             z: 100
             Rectangle {
                 anchors.fill: parent
-                radius: 8
+                radius: AppStyle.radius.md
                 color: githubButton.containsMouse ? (AppStyle.isDarkMode ? "#334155" : "#e2e8f0") : "transparent"
                 Behavior on color {
                     ColorAnimation {
@@ -192,7 +185,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 width: parent.width + 10
                 height: parent.height + 10
-                radius: 12
+                radius: AppStyle.radius.lg
                 color: AppStyle.isDarkMode ? "#ffffff" : "#000000"
                 opacity: githubButton.containsMouse ? 0.15 : 0.0
                 scale: githubButton.containsMouse ? 1.3 : 0.8
@@ -259,7 +252,7 @@ ColumnLayout {
             Rectangle {
                 id: themeSwitchBackground
                 anchors.fill: parent
-                radius: 8
+                radius: AppStyle.radius.md
                 color: themeSwitchButton.containsMouse ? (AppStyle.isDarkMode ? "#334155" : "#e2e8f0") : "transparent"
                 Behavior on color {
                     ColorAnimation {
@@ -273,7 +266,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 width: parent.width + 10
                 height: parent.height + 10
-                radius: 12
+                radius: AppStyle.radius.lg
                 color: AppStyle.isDarkMode ? "#fbbf24" : "#3b82f6"
                 opacity: themeSwitchButton.containsMouse ? 0.2 : 0.0
                 scale: themeSwitchButton.containsMouse ? 1.3 : 0.8

@@ -31,7 +31,7 @@ ColumnLayout {
             color: AppStyle.colors.surface
             radius: AppStyle.radius.lg
             border.color: AppStyle.colors.border
-            border.width: 1
+            border.width: AppStyle.borderWidths.thin
         }
 
         standardButtons: Dialog.Ok

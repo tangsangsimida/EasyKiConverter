@@ -7,9 +7,9 @@ Rectangle {
     id: updateBanner
     property var updateChecker
     radius: AppStyle.radius.lg
-    color: AppStyle.isDarkMode ? "#12243a" : "#e8f2ff"
-    border.width: 1
-    border.color: AppStyle.isDarkMode ? "#29507d" : "#9bc0ff"
+    color: AppStyle.colors.infoSurface
+    border.width: AppStyle.borderWidths.thin
+    border.color: AppStyle.colors.infoBorder
     visible: updateChecker && updateChecker.hasUpdate && !updateChecker.dismissed
     implicitHeight: visible ? bannerLayout.implicitHeight + AppStyle.spacing.lg * 2 : 0
     Behavior on implicitHeight {
@@ -27,13 +27,13 @@ Rectangle {
         Rectangle {
             Layout.preferredWidth: 36
             Layout.preferredHeight: 36
-            radius: 18
-            color: AppStyle.isDarkMode ? "#1e3b60" : "#d4e6ff"
+            radius: width / 2  // 声明式圆角
+            color: AppStyle.colors.infoLight
             Text {
                 anchors.centerIn: parent
                 text: "i"
                 color: AppStyle.colors.primary
-                font.pixelSize: 18
+                font.pixelSize: AppStyle.fontSizes.lg
                 font.bold: true
             }
         }

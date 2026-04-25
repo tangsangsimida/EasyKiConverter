@@ -47,7 +47,7 @@ Rectangle {
         spacing: 0
         // 图标
         Image {
-            source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.png"
+            source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/app_icon.svg"
             Layout.preferredWidth: 20
             Layout.preferredHeight: 20
             Layout.leftMargin: 10
@@ -59,7 +59,7 @@ Rectangle {
         Text {
             text: "EasyKiConverter"
             color: AppStyle.colors.textPrimary
-            font.pixelSize: 13
+            font.pixelSize: AppStyle.titleBar.fontSize
             font.bold: true
             Layout.leftMargin: 12
             Layout.fillWidth: true
@@ -79,7 +79,7 @@ Rectangle {
                 icon.width: 10
                 icon.height: 10
                 background: Rectangle {
-                    color: parent.hovered ? (AppStyle.isDarkMode ? "#1affffff" : "#1a000000") : "transparent"
+                    color: parent.hovered ? (AppStyle.isDarkMode ? AppStyle.titleBar.hoverOverlayDark : AppStyle.titleBar.hoverOverlayLight) : "transparent"
                     Behavior on color {
                         ColorAnimation {
                             duration: 150
@@ -106,7 +106,7 @@ Rectangle {
                 icon.width: 10
                 icon.height: 10
                 background: Rectangle {
-                    color: parent.hovered ? (AppStyle.isDarkMode ? "#1affffff" : "#1a000000") : "transparent"
+                    color: parent.hovered ? (AppStyle.isDarkMode ? AppStyle.titleBar.hoverOverlayDark : AppStyle.titleBar.hoverOverlayLight) : "transparent"
                     Behavior on color {
                         ColorAnimation {
                             duration: 150
@@ -131,11 +131,11 @@ Rectangle {
                 height: 38
                 flat: true
                 icon.source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/close.svg"
-                icon.color: hovered ? "white" : "transparent"
+                icon.color: hovered ? AppStyle.colors.textOnPrimary : "transparent"
                 icon.width: 10
                 icon.height: 10
                 background: Rectangle {
-                    color: parent.hovered ? "#c42b1c" : "transparent"
+                    color: parent.hovered ? AppStyle.titleBar.closeButton : "transparent"
                     Behavior on color {
                         ColorAnimation {
                             duration: 150

@@ -24,7 +24,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             width: 32
             height: 32
-            radius: 16
+            radius: width / 2  // 声明式圆角
             // 背景色：完成(绿) / 进行中(白+边框) / 等待(灰)
             color: root.isCompleted ? AppStyle.colors.success : (root.isActive ? "transparent" : AppStyle.colors.border)
             // 边框：进行中(亮色) / 其他(无)
@@ -51,9 +51,9 @@ Item {
                 anchors.centerIn: parent
                 text: root.isCompleted ? "✓" : root.index.toString()
                 font.bold: true
-                font.pixelSize: 14
+                font.pixelSize: AppStyle.fontSizes.sm
                 // 颜色：进行中(亮色) / 其他(白色)
-                color: root.isActive ? root.activeColor : "#ffffff"
+                color: root.isActive ? root.activeColor : AppStyle.colors.textOnPrimary
             }
         }
 
@@ -61,7 +61,7 @@ Item {
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: root.label
-            font.pixelSize: 12
+            font.pixelSize: AppStyle.fontSizes.xs
             font.bold: root.isActive
             color: root.isActive || root.isCompleted ? AppStyle.colors.textPrimary : AppStyle.colors.textSecondary
         }
@@ -70,7 +70,7 @@ Item {
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: Math.round(root.progress) + "%"
-            font.pixelSize: 10
+            font.pixelSize: 10  // 小尺寸进度百分比，暂不归入标准字体阶梯
             color: root.isCompleted ? AppStyle.colors.success : (root.isActive ? root.activeColor : "transparent")
             visible: root.progress > 0
         }

@@ -78,7 +78,7 @@ SliderDialogBase {
                 implicitHeight: 22
                 x: rememberCheckBox.leftPadding
                 y: parent.height / 2 - height / 2
-                radius: 4
+                radius: AppStyle.radius.xs
                 color: rememberCheckBox.checked ? AppStyle.colors.primary : "transparent"
                 border.color: rememberCheckBox.checked ? AppStyle.colors.primary : (root.focusArea === "checkbox" ? AppStyle.colors.primary : AppStyle.colors.textSecondary)
                 border.width: root.focusArea === "checkbox" ? 2.5 : 1.5
@@ -101,9 +101,9 @@ SliderDialogBase {
                 Text {
                     anchors.centerIn: parent
                     text: "\u2713"
-                    font.pixelSize: 16
+                    font.pixelSize: AppStyle.fontSizes.md
                     font.bold: true
-                    color: "#ffffff"
+                    color: AppStyle.colors.textOnPrimary
                     visible: rememberCheckBox.checked
                 }
             }

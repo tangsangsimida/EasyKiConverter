@@ -57,10 +57,10 @@ Card {
                 implicitHeight: 22
                 x: weakNetworkCheckbox.leftPadding
                 y: parent.height / 2 - height / 2
-                radius: 4
+                radius: AppStyle.radius.xs
                 color: weakNetworkCheckbox.checked ? AppStyle.colors.primary : "transparent"
                 border.color: weakNetworkCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                border.width: 1.5
+                border.width: AppStyle.borderWidths.normal
                 Behavior on color {
                     ColorAnimation {
                         duration: 150
@@ -75,8 +75,8 @@ Card {
                 Text {
                     anchors.centerIn: parent
                     text: "✓"
-                    font.pixelSize: 14
-                    color: "#ffffff"
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    color: AppStyle.colors.textOnPrimary
                     visible: weakNetworkCheckbox.checked
                 }
             }

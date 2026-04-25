@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Effects
+import QtQuick.Shapes
 import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Rectangle {
@@ -17,7 +18,7 @@ Rectangle {
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
     radius: AppStyle.radius.md
     border.color: AppStyle.colors.border
-    border.width: 1
+    border.width: AppStyle.borderWidths.thin
     // 缓存搜索正则以优化性能
     property string cachedSearchText: ""
     property var cachedRegex: null
@@ -64,7 +65,7 @@ Rectangle {
         background: Rectangle {
             color: AppStyle.isDarkMode ? "#1e293b" : "#ffffff"
             radius: AppStyle.radius.md
-            border.width: 1
+            border.width: AppStyle.borderWidths.thin
             border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.1)
             layer.enabled: true
             layer.effect: MultiEffect {
@@ -78,7 +79,7 @@ Rectangle {
             spacing: 4
             Text {
                 text: "✓"
-                color: "#22c55e"
+                color: AppStyle.colors.success
                 font.bold: true
             }
             Text {
@@ -165,10 +166,10 @@ Rectangle {
                 id: previewBackground
                 width: 48
                 height: 48
-                color: "white"
+                color: AppStyle.colors.textOnPrimary
                 radius: AppStyle.radius.sm
                 border.color: AppStyle.colors.border
-                border.width: 1
+                border.width: AppStyle.borderWidths.thin
                 clip: true
                 Image {
                     anchors.centerIn: parent
@@ -207,29 +208,23 @@ Rectangle {
                     anchors.centerIn: parent
                     width: 26
                     height: 26
-                    radius: 13
+                    radius: width / 2  // 声明式圆角
                     color: "transparent"
-                    border.color: "#22c55e"
-                    border.width: 2
+                    border.color: AppStyle.colors.success
+                    border.width: AppStyle.borderWidths.thick
                     visible: (itemData && (itemData.validationPhase === "completed" || itemData.validationPhase === "fetching_preview") && (!itemData.previewImageCount || itemData.previewImageCount === 0))
-                    Canvas {
-                        id: checkCanvas
+                    Shape {
+                        id: checkShape
                         anchors.fill: parent
-                        onPaint: {
-                            var ctx = getContext("2d");
-                            ctx.clearRect(0, 0, width, height);
-                            ctx.strokeStyle = "#22c55e";
-                            ctx.lineWidth = 2;
-                            ctx.lineCap = "round";
-                            ctx.lineJoin = "round";
-                            ctx.beginPath();
-                            var cx = width / 2;
-                            var cy = height / 2;
-                            var size = 6;
-                            ctx.moveTo(cx - size, cy);
-                            ctx.lineTo(cx - size / 3, cy + size / 2);
-                            ctx.lineTo(cx + size, cy - size / 2);
-                            ctx.stroke();
+                        ShapePath {
+                            strokeColor: AppStyle.colors.success
+                            strokeWidth: 2
+                            fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
+                            joinStyle: ShapePath.RoundJoin
+                            PathMove { x: checkShape.width / 2 - 6; y: checkShape.height / 2 }
+                            PathLine { x: checkShape.width / 2 - 2; y: checkShape.height / 2 + 3 }
+                            PathLine { x: checkShape.width / 2 + 6; y: checkShape.height / 2 - 3 }
                         }
                     }
                 }
@@ -239,31 +234,29 @@ Rectangle {
                     anchors.centerIn: parent
                     width: 26
                     height: 26
-                    radius: 13
+                    radius: width / 2  // 声明式圆角
                     color: "transparent"
                     border.color: AppStyle.colors.danger
-                    border.width: 2
+                    border.width: AppStyle.borderWidths.thick
                     visible: (itemData && itemData.validationPhase === "failed")
-                    Canvas {
-                        id: crossCanvas
+                    Shape {
+                        id: crossShape
                         anchors.fill: parent
-                        onPaint: {
-                            var ctx = getContext("2d");
-                            ctx.clearRect(0, 0, width, height);
-                            ctx.strokeStyle = AppStyle.colors.danger;
-                            ctx.lineWidth = 2;
-                            ctx.lineCap = "round";
-                            var cx = width / 2;
-                            var cy = height / 2;
-                            var size = 6;
-                            ctx.beginPath();
-                            ctx.moveTo(cx - size, cy - size);
-                            ctx.lineTo(cx + size, cy + size);
-                            ctx.stroke();
-                            ctx.beginPath();
-                            ctx.moveTo(cx + size, cy - size);
-                            ctx.lineTo(cx - size, cy + size);
-                            ctx.stroke();
+                        ShapePath {
+                            strokeColor: AppStyle.colors.danger
+                            strokeWidth: 2
+                            fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
+                            PathMove { x: crossShape.width / 2 - 6; y: crossShape.height / 2 - 6 }
+                            PathLine { x: crossShape.width / 2 + 6; y: crossShape.height / 2 + 6 }
+                        }
+                        ShapePath {
+                            strokeColor: AppStyle.colors.danger
+                            strokeWidth: 2
+                            fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
+                            PathMove { x: crossShape.width / 2 + 6; y: crossShape.height / 2 - 6 }
+                            PathLine { x: crossShape.width / 2 - 6; y: crossShape.height / 2 + 6 }
                         }
                     }
                 }
@@ -339,7 +332,7 @@ Rectangle {
                     background: Rectangle {
                         color: AppStyle.colors.surface
                         border.color: AppStyle.colors.primary
-                        border.width: 2
+                        border.width: AppStyle.borderWidths.thick
                         radius: AppStyle.radius.md
                         // 阴影效果
                         layer.enabled: true
@@ -369,7 +362,7 @@ Rectangle {
                                     color: AppStyle.colors.background
                                     radius: AppStyle.radius.sm
                                     border.color: AppStyle.colors.border
-                                    border.width: 1
+                                    border.width: AppStyle.borderWidths.thin
                                     clip: true
                                     Image {
                                         anchors.fill: parent
@@ -397,13 +390,13 @@ Rectangle {
                                         width: 20
                                         height: 20
                                         color: AppStyle.colors.primary
-                                        radius: 10
+                                        radius: width / 2  // 声明式圆角
                                         Text {
                                             anchors.centerIn: parent
                                             text: index + 1
-                                            font.pixelSize: 11
+                                            font.pixelSize: 11  // 小尺寸序号，暂不归入标准字体阶梯
                                             font.bold: true
-                                            color: "white"
+                                            color: AppStyle.colors.textOnPrimary
                                         }
                                     }
 
@@ -413,13 +406,13 @@ Rectangle {
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         width: parent.width
                                         height: 25
-                                        color: "#CC000000"
+                                        color: AppStyle.colors.overlay
                                         Text {
                                             anchors.centerIn: parent
                                             text: itemData ? itemData.componentId : ""
-                                            color: "white"
+                                            color: AppStyle.colors.textOnPrimary
                                             font.bold: true
-                                            font.pixelSize: 9
+                                            font.pixelSize: AppStyle.fontSizes.xxs
                                         }
                                     }
                                 }

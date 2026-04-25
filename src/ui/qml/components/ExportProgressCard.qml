@@ -96,7 +96,7 @@ Card {
                     Rectangle {
                         height: parent.height
                         width: (parent.width / 3) * ((exportProgressCard.exportProgressController ? exportProgressCard.exportProgressController.fetchProgress : 0) / 100)
-                        color: "#22c55e"
+                        color: AppStyle.colors.success
                         visible: width > 0
                         Behavior on width {
                             NumberAnimation {
@@ -109,7 +109,7 @@ Card {
                     Rectangle {
                         height: parent.height
                         width: (parent.width / 3) * ((exportProgressCard.exportProgressController ? exportProgressCard.exportProgressController.processProgress : 0) / 100)
-                        color: "#3b82f6"
+                        color: AppStyle.colors.primary
                         visible: width > 0
                         Behavior on width {
                             NumberAnimation {
@@ -122,7 +122,7 @@ Card {
                     Rectangle {
                         height: parent.height
                         width: (parent.width / 3) * ((exportProgressCard.exportProgressController ? exportProgressCard.exportProgressController.writeProgress : 0) / 100)
-                        color: "#f59e0b"
+                        color: AppStyle.colors.warning
                         visible: width > 0
                         Behavior on width {
                             NumberAnimation {
@@ -136,7 +136,7 @@ Card {
             // 总进度文字 (放在右侧)
             Text {
                 text: Math.round(exportProgressCard.exportProgressController ? exportProgressCard.exportProgressController.progress : 0) + "%"
-                font.pixelSize: 14
+                font.pixelSize: AppStyle.fontSizes.sm
                 font.bold: true
                 color: AppStyle.colors.textPrimary
                 Layout.alignment: Qt.AlignVCenter
@@ -147,7 +147,7 @@ Card {
             id: statusLabel
             Layout.fillWidth: true
             text: exportProgressCard.exportProgressController ? exportProgressCard.exportProgressController.status : ""
-            font.pixelSize: 14
+            font.pixelSize: AppStyle.fontSizes.sm
             color: AppStyle.colors.textSecondary
             horizontalAlignment: Text.AlignHCenter
             visible: exportProgressCard.exportProgressController && exportProgressCard.exportProgressController.status && exportProgressCard.exportProgressController.status.length > 0

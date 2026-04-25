@@ -150,14 +150,14 @@ Card {
                     ToolTip.text: qsTranslate("MainWindow", "导出符号库文件")
                     ToolTip.delay: 500
                     indicator: Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
+                        implicitWidth: AppStyle.sizes.checkbox
+                        implicitHeight: AppStyle.sizes.checkbox
                         x: symbolCheckbox.leftPadding
                         y: parent.height / 2 - height / 2
-                        radius: 4
+                        radius: AppStyle.radius.xs
                         color: symbolCheckbox.checked ? AppStyle.colors.primary : "transparent"
                         border.color: symbolCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                        border.width: 1.5
+                        border.width: AppStyle.borderWidths.normal
                         Behavior on color {
                             ColorAnimation {
                                 duration: 150
@@ -172,8 +172,8 @@ Card {
                         Text {
                             anchors.centerIn: parent
                             text: "✓"
-                            font.pixelSize: 14
-                            color: "#ffffff"
+                            font.pixelSize: AppStyle.fontSizes.sm
+                            color: AppStyle.colors.textOnPrimary
                             visible: symbolCheckbox.checked
                         }
                     }
@@ -206,14 +206,14 @@ Card {
                     ToolTip.text: qsTranslate("MainWindow", "导出封装库文件")
                     ToolTip.delay: 500
                     indicator: Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
+                        implicitWidth: AppStyle.sizes.checkbox
+                        implicitHeight: AppStyle.sizes.checkbox
                         x: footprintCheckbox.leftPadding
                         y: parent.height / 2 - height / 2
-                        radius: 4
+                        radius: AppStyle.radius.xs
                         color: footprintCheckbox.checked ? AppStyle.colors.primary : "transparent"
                         border.color: footprintCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                        border.width: 1.5
+                        border.width: AppStyle.borderWidths.normal
                         Behavior on color {
                             ColorAnimation {
                                 duration: 150
@@ -228,8 +228,8 @@ Card {
                         Text {
                             anchors.centerIn: parent
                             text: "✓"
-                            font.pixelSize: 14
-                            color: "#ffffff"
+                            font.pixelSize: AppStyle.fontSizes.sm
+                            color: AppStyle.colors.textOnPrimary
                             visible: footprintCheckbox.checked
                         }
                     }
@@ -262,14 +262,14 @@ Card {
                     ToolTip.text: qsTranslate("MainWindow", "导出 3D 模型文件")
                     ToolTip.delay: 500
                     indicator: Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
+                        implicitWidth: AppStyle.sizes.checkbox
+                        implicitHeight: AppStyle.sizes.checkbox
                         x: model3dCheckbox.leftPadding
                         y: parent.height / 2 - height / 2
-                        radius: 4
+                        radius: AppStyle.radius.xs
                         color: model3dCheckbox.checked ? AppStyle.colors.primary : "transparent"
                         border.color: model3dCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                        border.width: 1.5
+                        border.width: AppStyle.borderWidths.normal
                         Behavior on color {
                             ColorAnimation {
                                 duration: 150
@@ -284,8 +284,8 @@ Card {
                         Text {
                             anchors.centerIn: parent
                             text: "✓"
-                            font.pixelSize: 14
-                            color: "#ffffff"
+                            font.pixelSize: AppStyle.fontSizes.sm
+                            color: AppStyle.colors.textOnPrimary
                             visible: model3dCheckbox.checked
                         }
                     }
@@ -309,11 +309,11 @@ Card {
                     Rectangle {
                         Layout.preferredWidth: 46
                         Layout.preferredHeight: 26
-                        radius: 4
+                        radius: AppStyle.radius.xs
                         property bool wrlActive: exportSettingsCard.exportSettingsController ? (exportSettingsCard.exportSettingsController.exportModel3DFormat & 1) !== 0 : false
                         color: wrlActive ? AppStyle.colors.primary : "transparent"
                         border.color: wrlActive ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                        border.width: 1.5
+                        border.width: AppStyle.borderWidths.normal
                         MouseArea {
                             id: wrlBtn
                             anchors.fill: parent
@@ -345,11 +345,11 @@ Card {
                     Rectangle {
                         Layout.preferredWidth: 50
                         Layout.preferredHeight: 26
-                        radius: 4
+                        radius: AppStyle.radius.xs
                         property bool stepActive: exportSettingsCard.exportSettingsController ? (exportSettingsCard.exportSettingsController.exportModel3DFormat & 2) !== 0 : false
                         color: stepActive ? AppStyle.colors.primary : "transparent"
                         border.color: stepActive ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                        border.width: 1.5
+                        border.width: AppStyle.borderWidths.normal
                         MouseArea {
                             id: stepBtn
                             anchors.fill: parent
@@ -398,14 +398,14 @@ Card {
                     ToolTip.text: qsTranslate("MainWindow", "导出预览图文件")
                     ToolTip.delay: 500
                     indicator: Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
+                        implicitWidth: AppStyle.sizes.checkbox
+                        implicitHeight: AppStyle.sizes.checkbox
                         x: previewImagesCheckbox.leftPadding
                         y: parent.height / 2 - height / 2
-                        radius: 4
+                        radius: AppStyle.radius.xs
                         color: previewImagesCheckbox.checked ? AppStyle.colors.primary : "transparent"
                         border.color: previewImagesCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                        border.width: 1.5
+                        border.width: AppStyle.borderWidths.normal
                         Behavior on color {
                             ColorAnimation {
                                 duration: 150
@@ -420,8 +420,8 @@ Card {
                         Text {
                             anchors.centerIn: parent
                             text: "✓"
-                            font.pixelSize: 14
-                            color: "#ffffff"
+                            font.pixelSize: AppStyle.fontSizes.sm
+                            color: AppStyle.colors.textOnPrimary
                             visible: previewImagesCheckbox.checked
                         }
                     }
@@ -454,14 +454,14 @@ Card {
                     ToolTip.text: qsTranslate("MainWindow", "导出数据手册文件")
                     ToolTip.delay: 500
                     indicator: Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
+                        implicitWidth: AppStyle.sizes.checkbox
+                        implicitHeight: AppStyle.sizes.checkbox
                         x: datasheetCheckbox.leftPadding
                         y: parent.height / 2 - height / 2
-                        radius: 4
+                        radius: AppStyle.radius.xs
                         color: datasheetCheckbox.checked ? AppStyle.colors.primary : "transparent"
                         border.color: datasheetCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                        border.width: 1.5
+                        border.width: AppStyle.borderWidths.normal
                         Behavior on color {
                             ColorAnimation {
                                 duration: 150
@@ -476,8 +476,8 @@ Card {
                         Text {
                             anchors.centerIn: parent
                             text: "✓"
-                            font.pixelSize: 14
-                            color: "#ffffff"
+                            font.pixelSize: AppStyle.fontSizes.sm
+                            color: AppStyle.colors.textOnPrimary
                             visible: datasheetCheckbox.checked
                         }
                     }
@@ -524,19 +524,19 @@ Card {
                             ToolTip.text: qsTranslate("MainWindow", "保留已存在的元器件，只追加新的元器件")
                             ToolTip.delay: 500
                             indicator: Rectangle {
-                                implicitWidth: 20
-                                implicitHeight: 20
+                                implicitWidth: AppStyle.sizes.radioButton
+                                implicitHeight: AppStyle.sizes.radioButton
                                 x: appendModeRadio.leftPadding
                                 y: parent.height / 2 - height / 2
-                                radius: 10
+                                radius: width / 2  // 声明式圆角
                                 color: "transparent"
                                 border.color: appendModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                                border.width: 1.5
+                                border.width: AppStyle.borderWidths.normal
                                 Rectangle {
                                     anchors.centerIn: parent
-                                    width: 10
-                                    height: 10
-                                    radius: 5
+                                    width: AppStyle.sizes.radioButtonIndicator
+                                    height: AppStyle.sizes.radioButtonIndicator
+                                    radius: width / 2  // 声明式圆角
                                     color: AppStyle.colors.primary
                                     visible: appendModeRadio.checked
                                 }
@@ -573,19 +573,19 @@ Card {
                             ToolTip.text: qsTranslate("MainWindow", "覆盖已存在的元器件")
                             ToolTip.delay: 500
                             indicator: Rectangle {
-                                implicitWidth: 20
-                                implicitHeight: 20
+                                implicitWidth: AppStyle.sizes.radioButton
+                                implicitHeight: AppStyle.sizes.radioButton
                                 x: updateModeRadio.leftPadding
                                 y: parent.height / 2 - height / 2
-                                radius: 10
+                                radius: width / 2  // 声明式圆角
                                 color: "transparent"
                                 border.color: updateModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                                border.width: 1.5
+                                border.width: AppStyle.borderWidths.normal
                                 Rectangle {
                                     anchors.centerIn: parent
-                                    width: 10
-                                    height: 10
-                                    radius: 5
+                                    width: AppStyle.sizes.radioButtonIndicator
+                                    height: AppStyle.sizes.radioButtonIndicator
+                                    radius: width / 2  // 声明式圆角
                                     color: AppStyle.colors.primary
                                     visible: updateModeRadio.checked
                                 }

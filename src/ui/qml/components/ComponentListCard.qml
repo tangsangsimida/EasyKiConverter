@@ -293,7 +293,7 @@ Card {
                 Text {
                     id: componentCountLabel
                     text: qsTranslate("MainWindow", "共 %1 个元器件").arg(componentListCard.componentListController ? componentListCard.componentListController.componentCount : 0)
-                    font.pixelSize: 14
+                    font.pixelSize: AppStyle.fontSizes.sm
                     color: AppStyle.colors.textSecondary
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -371,7 +371,7 @@ Card {
                                 font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "all"
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
-                                font.pixelSize: 12
+                                font.pixelSize: AppStyle.fontSizes.xs
                             }
                             onClicked: componentListCard.componentListController.setFilterMode("all")
                         }
@@ -392,7 +392,7 @@ Card {
                                 font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "validating"
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
-                                font.pixelSize: 12
+                                font.pixelSize: AppStyle.fontSizes.xs
                             }
                             onClicked: {
                                 if (componentListCard.componentListController && componentListCard.componentListController.validatingCount > 0) {
@@ -417,7 +417,7 @@ Card {
                                 font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "valid"
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
-                                font.pixelSize: 12
+                                font.pixelSize: AppStyle.fontSizes.xs
                             }
                             onClicked: {
                                 if (componentListCard.componentListController && componentListCard.componentListController.validCount > 0) {
@@ -442,7 +442,7 @@ Card {
                                 font.bold: (componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all") === "invalid"
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
-                                font.pixelSize: 12
+                                font.pixelSize: AppStyle.fontSizes.xs
                             }
                             onClicked: {
                                 if (componentListCard.componentListController && componentListCard.componentListController.invalidCount > 0) {
@@ -497,7 +497,7 @@ Card {
                         anchors.leftMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
                         text: ""
-                        font.pixelSize: 12
+                        font.pixelSize: AppStyle.fontSizes.xs
                         color: AppStyle.colors.textSecondary
                     }
 
@@ -518,7 +518,7 @@ Card {
                         anchors.fill: parent
                         color: retryAllButtonMouseArea.pressed ? AppStyle.colors.primaryHover : retryAllButtonMouseArea.containsMouse ? Qt.darker(AppStyle.colors.primary, 1.1) : AppStyle.colors.primary
                         radius: AppStyle.radius.md
-                        opacity: 0.8
+                        opacity: AppStyle.opacities.medium
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppStyle.durations.fast
@@ -537,7 +537,7 @@ Card {
                         anchors.centerIn: parent
                         text: qsTranslate("MainWindow", "重试所有")
                         font.pixelSize: AppStyle.fontSizes.sm
-                        color: "white"
+                        color: AppStyle.colors.textOnPrimary
                     }
 
                     // 鼠标区域
@@ -586,7 +586,7 @@ Card {
                         anchors.centerIn: parent
                         text: qsTranslate("MainWindow", "复制所有编号")
                         font.pixelSize: AppStyle.fontSizes.sm
-                        color: "white"
+                        color: AppStyle.colors.textOnPrimary
                     }
 
                     // 鼠标区域

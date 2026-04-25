@@ -71,7 +71,7 @@ Rectangle {
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
     radius: AppStyle.radius.md
     border.color: AppStyle.colors.border
-    border.width: 1
+    border.width: AppStyle.borderWidths.thin
     clip: true
     Behavior on color {
         ColorAnimation {
@@ -98,7 +98,7 @@ Rectangle {
         background: Rectangle {
             color: AppStyle.isDarkMode ? "#1e293b" : "#ffffff"
             radius: AppStyle.radius.md
-            border.width: 1
+            border.width: AppStyle.borderWidths.thin
             border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.1)
             layer.enabled: true
             layer.effect: MultiEffect {
@@ -112,7 +112,7 @@ Rectangle {
             spacing: 4
             Text {
                 text: "✓"
-                color: "#22c55e"
+                color: AppStyle.colors.success
                 font.bold: true
             }
             Text {
@@ -136,7 +136,7 @@ Rectangle {
         Text {
             Layout.preferredWidth: 20
             Layout.preferredHeight: 20
-            font.pixelSize: 16
+            font.pixelSize: AppStyle.fontSizes.md
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             text: item.overallIcon()
@@ -164,14 +164,14 @@ Rectangle {
                     Rectangle {
                         width: 14
                         height: 14
-                        radius: 7
+                        radius: width / 2  // 声明式圆角
                         visible: exportSymbol
                         color: item.badgeColor(symbolStatus)
                         Text {
                             anchors.centerIn: parent
                             text: "S"
-                            font.pixelSize: 9
-                            color: "white"
+                            font.pixelSize: AppStyle.fontSizes.xxs
+                            color: AppStyle.colors.textOnPrimary
                             font.bold: true
                         }
                         ToolTip.visible: symMa.containsMouse
@@ -186,14 +186,14 @@ Rectangle {
                     Rectangle {
                         width: 14
                         height: 14
-                        radius: 7
+                        radius: width / 2  // 声明式圆角
                         visible: exportFootprint
                         color: item.badgeColor(footprintStatus)
                         Text {
                             anchors.centerIn: parent
                             text: "F"
-                            font.pixelSize: 9
-                            color: "white"
+                            font.pixelSize: AppStyle.fontSizes.xxs
+                            color: AppStyle.colors.textOnPrimary
                             font.bold: true
                         }
                         ToolTip.visible: ftMa.containsMouse
@@ -208,14 +208,14 @@ Rectangle {
                     Rectangle {
                         width: 14
                         height: 14
-                        radius: 7
+                        radius: width / 2  // 声明式圆角
                         visible: exportModel3D
                         color: item.badgeColor(model3DStatus)
                         Text {
                             anchors.centerIn: parent
                             text: "3"
-                            font.pixelSize: 9
-                            color: "white"
+                            font.pixelSize: AppStyle.fontSizes.xxs
+                            color: AppStyle.colors.textOnPrimary
                             font.bold: true
                         }
                         ToolTip.visible: m3Ma.containsMouse
@@ -230,14 +230,14 @@ Rectangle {
                     Rectangle {
                         width: 14
                         height: 14
-                        radius: 7
+                        radius: width / 2  // 声明式圆角
                         visible: exportPreviewImages
                         color: item.badgeColor(previewStatus)
                         Text {
                             anchors.centerIn: parent
                             text: "P"
-                            font.pixelSize: 9
-                            color: "white"
+                            font.pixelSize: AppStyle.fontSizes.xxs
+                            color: AppStyle.colors.textOnPrimary
                             font.bold: true
                         }
                         ToolTip.visible: prevMa.containsMouse
@@ -252,14 +252,14 @@ Rectangle {
                     Rectangle {
                         width: 14
                         height: 14
-                        radius: 7
+                        radius: width / 2  // 声明式圆角
                         visible: exportDatasheet
                         color: item.badgeColor(datasheetStatus)
                         Text {
                             anchors.centerIn: parent
                             text: "D"
-                            font.pixelSize: 9
-                            color: "white"
+                            font.pixelSize: AppStyle.fontSizes.xxs
+                            color: AppStyle.colors.textOnPrimary
                             font.bold: true
                         }
                         ToolTip.visible: datasheetMa.containsMouse
