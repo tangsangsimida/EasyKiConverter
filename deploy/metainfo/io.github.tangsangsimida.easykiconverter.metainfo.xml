@@ -112,28 +112,38 @@
         <p>New Features:</p>
         <p xml:lang="zh_CN">新功能:</p>
         <ul>
+          <li>Add unit tests for CadDataLoader and ComponentListViewModel</li>
           <li xml:lang="zh_CN">添加 CadDataLoader 和 ComponentListViewModel 的单元测试</li>
+          <li>Add support for multiple graphics APIs including OpenVG, Null, and Direct3D12</li>
           <li xml:lang="zh_CN">增加对多种图形API的支持，包括OpenVG、Null和Direct3D12</li>
-          <li></li>
+          <li>Prefer Vulkan rendering backend and add rendering API detection</li>
           <li xml:lang="zh_CN">优先使用Vulkan渲染后端并添加渲染API检测</li>
+          <li>Improve debug data export with atomic writes</li>
           <li xml:lang="zh_CN">使用原子写入改进调试数据导出功能</li>
+          <li>Add debug data export functionality</li>
           <li xml:lang="zh_CN">添加debug数据导出功能</li>
+          <li>Support multi-platform Qt path configuration and build options</li>
           <li xml:lang="zh_CN">支持多平台Qt路径配置和构建选项</li>
         </ul>
         <p>Bug Fixes:</p>
         <p xml:lang="zh_CN">修复:</p>
         <ul>
+          <li>Add component request cancellation and fix API business layer error handling</li>
           <li xml:lang="zh_CN">添加元器件请求取消功能并修复API业务层错误处理</li>
+        </ul>
+        <p>Refactoring:</p>
+        <p xml:lang="zh_CN">重构:</p>
+        <ul>
+          <li>Unify QML component styles using AppStyle</li>
+          <li xml:lang="zh_CN">使用AppStyle统一QML组件样式</li>
         </ul>
         <p>Chores:</p>
         <p xml:lang="zh_CN">其他:</p>
         <ul>
+          <li>Remove Docker environment build workflow</li>
           <li xml:lang="zh_CN">移除Docker环境构建工作流</li>
-        </ul>
-        <p>Other Changes:</p>
-        <p xml:lang="zh_CN">其他变更:</p>
-        <ul>
-          <li>Update documentation for EasyKiConverter</li>
+          <li>Update EasyKiConverter documentation</li>
+          <li xml:lang="zh_CN">更新 EasyKiConverter 文档</li>
         </ul>
       </description>
     </release>
