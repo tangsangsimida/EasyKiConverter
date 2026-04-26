@@ -38,6 +38,7 @@
 #include <QScreen>
 #include <QSize>
 #include <QStandardPaths>
+#include <QSurfaceFormat>
 #include <QTextStream>
 #include <QTimer>
 #include <QUrl>
@@ -221,9 +222,21 @@ QString resolveProjectRootFromAppDir(QString appDir) {
 }  // anonymous namespace
 
 int main(int argc, char* argv[]) {
-    // 优先尝试 Vulkan 后端，若不支持则自动回退到默认后端
+    QSurfaceFormat surfaceFormat = QSurfaceFormat::defaultFormat();
+    surfaceFormat.setAlphaBufferSize(8);
+    QSurfaceFormat::setDefaultFormat(surfaceFormat);
+    QQuickWindow::setDefaultAlphaBuffer(true);
+
+#ifdef _WIN32
+    // Windows 透明无边框窗口在 Vulkan 后端下可能出现圆角透明区域被合成为黑色。
+    // Direct3D 11 是 Qt Quick 在 Windows 上更稳定的默认路径。
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::Direct3D11);
+    qInfo() << "已将 Windows 渲染后端设置为 Direct3D 11，并启用 alpha buffer";
+#else
+    // 非 Windows 平台保留 Vulkan 优先策略。
     QQuickWindow::setGraphicsApi(QSGRendererInterface::Vulkan);
     qInfo() << "已将渲染后端优先设置为 Vulkan";
+#endif
 
     // 设置 stdout 为无缓冲模式，确保日志颜色正常显示
     setbuf(stdout, nullptr);
