@@ -3,7 +3,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Window
-import QtQuick.Effects
 import QtQml.Models
 import "styles"
 import "components"
@@ -230,39 +229,55 @@ Item {
         anchors.fill: parent
         color: "transparent"
         radius: AppStyle.radius.lg
-        // 圆角背景容器（GPU 加速，MultiEffect mask 实现真正圆角裁切）
-        Rectangle {
-            id: backgroundShape
+        // 使用 Canvas 裁剪顶层窗口背景，避免 Windows + Vulkan 透明窗口下的 mask 区域变黑。
+        Image {
+            id: bgSource
+            visible: false
+            source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/imgs/background.jpg"
+            asynchronous: true
+            cache: true
+            onStatusChanged: if (status === Image.Ready) {
+                backgroundCanvas.requestPaint();
+            }
+        }
+
+        Canvas {
+            id: backgroundCanvas
             anchors.fill: parent
-            color: AppStyle.colors.background
-            radius: windowRadius
+            onPaint: {
+                const ctx = getContext("2d");
+                ctx.reset();
 
-            Image {
-                id: bgImage
-                anchors.fill: parent
-                fillMode: Image.PreserveAspectCrop
-                source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/imgs/background.jpg"
-                asynchronous: true
-                cache: true
-                visible: false
-                layer.enabled: true
+                const r = windowRadius;
+                ctx.beginPath();
+                ctx.roundedRect(0, 0, width, height, r, r);
+                ctx.closePath();
+                ctx.clip();
+
+                ctx.fillStyle = AppStyle.colors.background;
+                ctx.fill();
+
+                if (bgSource.status === Image.Ready) {
+                    const sw = bgSource.sourceSize.width;
+                    const sh = bgSource.sourceSize.height;
+                    if (sw > 0 && sh > 0) {
+                        const scale = Math.max(width / sw, height / sh);
+                        const dw = sw * scale;
+                        const dh = sh * scale;
+                        const dx = (width - dw) / 2;
+                        const dy = (height - dh) / 2;
+                        ctx.drawImage(bgSource, dx, dy, dw, dh);
+                    }
+                }
             }
 
-            Rectangle {
-                id: maskRect
-                anchors.fill: parent
-                radius: windowRadius
-                color: "white"
-                visible: false
-                layer.enabled: true
-            }
-
-            MultiEffect {
-                anchors.fill: parent
-                source: bgImage
-                maskEnabled: true
-                maskSource: maskRect
-            }
+            onWidthChanged: requestPaint()
+            onHeightChanged: requestPaint()
+            onVisibleChanged: requestPaint()
+            property int radiusTrigger: windowRadius
+            onRadiusTriggerChanged: requestPaint()
+            property color backgroundTrigger: AppStyle.colors.background
+            onBackgroundTriggerChanged: requestPaint()
         }
         // 半透明遮罩层（确保内容可读性）
         Rectangle {
