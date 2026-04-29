@@ -301,11 +301,20 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
         }
 
         // 从 metadata.json 恢复 model3DData
+        // 注意：loadComponentData 已经加载了 model3DData（包含 name、translation、rotation）
+        // 这里只在没有 model3DData 或 UUID 缺失时进行补充，不要覆盖已有数据
         QJsonObject metadata = cache->loadMetadata(normalizedId);
         if (metadata.contains("model3duuid")) {
-            auto model3DData = QSharedPointer<Model3DData>::create();
-            model3DData->setUuid(metadata.value("model3duuid").toString());
-            cachedData->setModel3DData(model3DData);
+            const QString uuid = metadata.value("model3duuid").toString();
+            if (!uuid.isEmpty()) {
+                if (!cachedData->model3DData()) {
+                    auto model3DData = QSharedPointer<Model3DData>::create();
+                    model3DData->setUuid(uuid);
+                    cachedData->setModel3DData(model3DData);
+                } else if (cachedData->model3DData()->uuid().isEmpty()) {
+                    cachedData->model3DData()->setUuid(uuid);
+                }
+            }
         }
 
         result.cachedData = cachedData;

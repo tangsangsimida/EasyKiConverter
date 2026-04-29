@@ -250,6 +250,47 @@
 
 ---
 
+### Q: 导出的 3D 模型文件名与封装内记录的 3D 模型路径不一致
+
+**问题描述**：
+导出的 3D 模型文件名为 `C0603.step`，但封装内记录的 3D 模型路径却是 `../lib.3dmodels/C0603_L1.6-W0.8-H0.8.step`，导致 KiCad 无法找到对应的 3D 模型文件。
+
+**根本原因**：
+`Model3DData` 对象中的 `name` 字段在数据流传递过程中被意外丢失，由两个独立的 bug 共同导致：
+
+**Bug 1 - ProcessWorker 重建 Model3DData 丢失属性**：
+`ProcessWorker::parse3DModelData()` 收到 3D 模型 OBJ 数据后，会**重新创建** `Model3DData` 对象来存放原始数据，但旧代码只恢复了 `uuid`，`name`、`translation`、`rotation` 全部丢失。
+
+**Bug 2 - ComponentService 缓存加载覆盖已有 model3DData**：
+`ComponentCacheService::loadComponentData()` 已经从 `metadata.json` 正确加载了包含 `name` 的完整 `model3DData`，但 `ComponentService::loadComponentDataFromCacheAsync()` 会**重新创建一个只有 UUID 的 `model3DData`**，并通过 `setModel3DData()` 覆盖掉已有的完整数据。
+
+**数据流分析**：
+```
+EasyEDA API -> FootprintData.model3D().name() = "C0603_L1.6-W0.8-H0.8"
+                   |
+              【Bug 2】缓存加载 -> model3DData()->name() 被覆盖为空
+                   |
+              3D 模型导出 -> 回退到封装名 -> C0603.step
+              封装导出   -> 使用原始名称 -> C0603_L1.6-W0.8-H0.8.step（路径）
+```
+
+**修复方案**：
+1. `ProcessWorker::parse3DModelData()`：重建 `Model3DData` 前，先保存并恢复 `name`、`translation`、`rotation`
+2. `ComponentService::loadComponentDataFromCacheAsync()`：只在 `cachedData->model3DData()` 不存在或 UUID 缺失时才创建/补充，不再调用 `setModel3DData()` 覆盖已有数据
+
+**回归预防**：
+- 重建对象时必须备份旧对象的所有属性，不要假设新对象只需要部分字段
+- 缓存加载路径不要重复解析/覆盖，补充逻辑应该是"只在缺失时补充"，而不是"无条件重建"
+- 测试缓存场景时，必须同时验证：首次获取（无缓存）和缓存命中，两者的行为应当完全一致
+
+**相关文件**：
+- `src/workers/ProcessWorker.cpp` - 恢复 Model3DData 完整属性
+- `src/services/ComponentService.cpp` - 不再覆盖已有的 model3DData
+
+**状态**：✅ 已修复 (2026-04-29)
+
+---
+
 ## 网络相关
 
 ### Q: 在弱网络环境下导出失败率很高
