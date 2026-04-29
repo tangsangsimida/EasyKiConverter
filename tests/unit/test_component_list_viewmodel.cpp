@@ -101,6 +101,24 @@ private slots:
         // cancelValidation 不会触发它，只会减少 pendingCount 并调用 checkAndNotifyCompletion
         // checkAndNotifyCompletion 只在 isAllDone() && m_previewFetchEnabled 时触发
     }
+
+    void testMixedSuccessAndFailure_CompletesWithValidIds() {
+        ValidationStateManager manager;
+
+        manager.startValidation(3);
+        QSignalSpy spy(&manager, &ValidationStateManager::validationCompleted);
+
+        manager.onComponentValidated("C1");
+        manager.onComponentFailed("C2");
+        manager.onComponentValidated("C3");
+
+        QCOMPARE(manager.pendingCount(), 0);
+        QCOMPARE(spy.count(), 1);
+
+        const QList<QVariant> arguments = spy.takeFirst();
+        const QStringList validatedIds = arguments.at(0).toStringList();
+        QCOMPARE(validatedIds, QStringList({"C1", "C3"}));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestValidationStateManager)

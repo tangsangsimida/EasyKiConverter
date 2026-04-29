@@ -827,7 +827,7 @@ void ComponentListViewModel::handleCadDataReady(const QString& componentId, cons
     item->setFetching(false);
     item->setValid(true);
     item->setRetryable(true);
-    item->setValidationPhase("fetching_preview");  // 预览图获取阶段
+    item->setValidationPhase("completed");
     item->setErrorMessage("");
     scheduleListUpdate();
 
@@ -1189,6 +1189,14 @@ void ComponentListViewModel::fetchPreviewImages(const QStringList& componentIds)
     m_pendingPreviewFetchIds = QSet<QString>(validIds.begin(), validIds.end());
     m_previewReadyHint = false;
     emit attentionStateChanged();
+
+    for (const QString& componentId : std::as_const(validIds)) {
+        auto item = findItemData(componentId);
+        if (item && item->isValid() && item->previewImageCount() == 0) {
+            item->setValidationPhase("fetching_preview");
+        }
+    }
+    scheduleListUpdate();
 
     // 使用批量获取预览图接口，避免为每个组件创建单独的定时器
     // LcscImageService 会自动处理缓存加载和队列管理

@@ -94,13 +94,11 @@ QStringList ValidationStateManager::validatedComponentIds() const {
 }
 
 void ValidationStateManager::checkAndNotifyCompletion() {
-    // 只有当所有应该验证的组件都验证完成时，才触发预览图获取
-    // 需要同时满足：
-    // 1. m_pendingValidationCount <= 0（没有待验证的组件）
-    // 2. m_validatedComponentIds.size() == m_totalValidationCount（验证的组件数等于总数）
-    if (m_pendingValidationCount <= 0 && m_validatedComponentIds.size() == m_totalValidationCount) {
-        qDebug() << "All validations completed," << m_validatedComponentIds.size() << "components validated (total was"
-                 << m_totalValidationCount << "), triggering preview fetch";
+    const int completedCount = m_validatedComponentIds.size() + m_failedComponentIds.size();
+    if (m_totalValidationCount > 0 && m_pendingValidationCount <= 0 && completedCount >= m_totalValidationCount) {
+        qDebug() << "All validations completed," << m_validatedComponentIds.size() << "components validated,"
+                 << m_failedComponentIds.size() << "components failed (total was" << m_totalValidationCount
+                 << "), triggering preview fetch for valid components";
         emit validationCompleted(m_validatedComponentIds);
     }
 }

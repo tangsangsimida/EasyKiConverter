@@ -405,6 +405,15 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
         }
         if (result.footprintData) {
             result.cachedData->setFootprintData(result.footprintData);
+            const Model3DData parsedModel3D = result.footprintData->model3D();
+            if (!parsedModel3D.uuid().isEmpty()) {
+                auto model3DData = QSharedPointer<Model3DData>::create();
+                model3DData->setUuid(parsedModel3D.uuid());
+                model3DData->setName(parsedModel3D.name());
+                model3DData->setTranslation(parsedModel3D.translation());
+                model3DData->setRotation(parsedModel3D.rotation());
+                result.cachedData->setModel3DData(model3DData);
+            }
         }
 
         // 更新 m_fetchingComponents
@@ -976,6 +985,8 @@ void ComponentService::cancelAllPreviewImageFetches() {
 
 void ComponentService::cancelAllPendingRequests() {
     qDebug() << "ComponentService: Cancelling all pending component data requests";
+
+    NetworkClient::instance().cancelAllRequests();
 
     // 清空正在获取的组件记录，防止响应到达时更新已清除的数据
     {

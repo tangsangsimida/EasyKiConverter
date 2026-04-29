@@ -2,7 +2,9 @@
 #include "models/FootprintDataSerializer.h"
 #include "models/SymbolData.h"
 #include "models/SymbolDataSerializer.h"
+#include "core/easyeda/EasyedaFootprintImporter.h"
 
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QtTest>
@@ -88,6 +90,39 @@ private slots:
         QCOMPARE(restored.pads().at(0).shape, original.pads().at(0).shape);
     }
 
+    void testModel3DAbsoluteOriginImport() {
+        EasyedaFootprintImporter importer;
+        const QJsonObject cadData = makeCadDataWithModelOrigin(QStringLiteral("3998.803,2982.7698"));
+
+        const QSharedPointer<FootprintData> footprint = importer.importFootprintData(cadData);
+
+        QVERIFY(footprint);
+        QCOMPARE(footprint->model3D().translation().x, 3998.803);
+        QCOMPARE(footprint->model3D().translation().y, 2982.7698);
+    }
+
+    void testModel3DRelativeOriginImport() {
+        EasyedaFootprintImporter importer;
+        const QJsonObject cadData = makeCadDataWithModelOrigin(QStringLiteral("1.5,-2"));
+
+        const QSharedPointer<FootprintData> footprint = importer.importFootprintData(cadData);
+
+        QVERIFY(footprint);
+        QCOMPARE(footprint->model3D().translation().x, 4000.3);
+        QCOMPARE(footprint->model3D().translation().y, 2980.35);
+    }
+
+    void testModel3DUnrelatedOriginFallsBackToFootprintCenter() {
+        EasyedaFootprintImporter importer;
+        const QJsonObject cadData = makeCadDataWithModelOrigin(QStringLiteral("400,300"));
+
+        const QSharedPointer<FootprintData> footprint = importer.importFootprintData(cadData);
+
+        QVERIFY(footprint);
+        QCOMPARE(footprint->model3D().translation().x, 3998.8);
+        QCOMPARE(footprint->model3D().translation().y, 2982.35);
+    }
+
     void testSymbolGeometrySerialization() {
         SymbolData original;
 
@@ -116,6 +151,50 @@ private slots:
         QCOMPARE(restored.rectangles().at(0).width, 50.0);
         QCOMPARE(restored.circles().size(), 1);
         QCOMPARE(restored.circles().at(0).radius, 20.0);
+    }
+
+private:
+    QJsonObject makeCadDataWithModelOrigin(const QString& origin) const {
+        QJsonObject cadData;
+        cadData.insert(QStringLiteral("SMT"), true);
+
+        QJsonObject cPara;
+        cPara.insert(QStringLiteral("package"), QStringLiteral("TEST_FOOTPRINT"));
+        cPara.insert(QStringLiteral("3DModel"), QStringLiteral("TEST_MODEL"));
+
+        QJsonObject head;
+        head.insert(QStringLiteral("c_para"), cPara);
+
+        QJsonObject bbox;
+        bbox.insert(QStringLiteral("x"), 3977.3);
+        bbox.insert(QStringLiteral("y"), 2971.0);
+        bbox.insert(QStringLiteral("width"), 43.0);
+        bbox.insert(QStringLiteral("height"), 22.7);
+
+        QJsonObject attrs;
+        attrs.insert(QStringLiteral("c_etype"), QStringLiteral("outline3D"));
+        attrs.insert(QStringLiteral("uuid"), QStringLiteral("model-uuid"));
+        attrs.insert(QStringLiteral("title"), QStringLiteral("TEST_MODEL"));
+        attrs.insert(QStringLiteral("c_origin"), origin);
+        attrs.insert(QStringLiteral("c_rotation"), QStringLiteral("0,0,0"));
+        attrs.insert(QStringLiteral("z"), QStringLiteral("0"));
+
+        QJsonObject svgNode;
+        svgNode.insert(QStringLiteral("attrs"), attrs);
+
+        QJsonArray shapes;
+        shapes.append(QStringLiteral("SVGNODE~") + QString::fromUtf8(QJsonDocument(svgNode).toJson(QJsonDocument::Compact)));
+
+        QJsonObject dataStr;
+        dataStr.insert(QStringLiteral("head"), head);
+        dataStr.insert(QStringLiteral("BBox"), bbox);
+        dataStr.insert(QStringLiteral("shape"), shapes);
+
+        QJsonObject packageDetail;
+        packageDetail.insert(QStringLiteral("dataStr"), dataStr);
+        cadData.insert(QStringLiteral("packageDetail"), packageDetail);
+
+        return cadData;
     }
 };
 

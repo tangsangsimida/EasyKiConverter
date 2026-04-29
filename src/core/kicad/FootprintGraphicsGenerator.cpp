@@ -517,23 +517,15 @@ QString FootprintGraphicsGenerator::generateModel3D(const Model3DData& model3D,
         rotZ += 360.0;
     }
 
-    // 计算 3D 模型的偏移
-    // 需要区分相对偏移（像素单位）和绝对偏移（毫米单位）两种情况
-    double finalOffsetX, finalOffsetY;
-
-    // 判断是否为绝对偏移（毫米单位）：值很小说明已经转换为毫米
-    if (qAbs(model3D.translation().x) < 100 && qAbs(model3D.translation().y) < 100) {
-        // 绝对偏移：translation 已经是毫米单位
-        // 符号已居中对齐，直接使用绝对偏移值
-        finalOffsetX = model3D.translation().x;
-        finalOffsetY = -model3D.translation().y;  // Y 轴取反
-    } else {
-        // 相对偏移：translation 是像素单位，需要转换为毫米
-        // 计算相对于 bbox 的偏移
-        double offsetX = model3D.translation().x - bboxX;
-        double offsetY = model3D.translation().y - bboxY;
-        finalOffsetX = pxToMmRounded(offsetX);
-        finalOffsetY = -pxToMmRounded(offsetY);  // Y 轴取反
+    // translation 在解析阶段已经统一为 EasyEDA 绝对坐标。
+    const double offsetX = model3D.translation().x - bboxX;
+    const double offsetY = model3D.translation().y - bboxY;
+    double finalOffsetX = pxToMmRounded(offsetX);
+    double finalOffsetY = -pxToMmRounded(offsetY);
+    constexpr double MAX_REASONABLE_MODEL_OFFSET_MM = 50.0;
+    if (qAbs(finalOffsetX) > MAX_REASONABLE_MODEL_OFFSET_MM || qAbs(finalOffsetY) > MAX_REASONABLE_MODEL_OFFSET_MM) {
+        finalOffsetX = 0.0;
+        finalOffsetY = 0.0;
     }
 
     content += QString("  (model \"%1\"\n").arg(finalPath);
