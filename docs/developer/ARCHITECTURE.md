@@ -4,7 +4,11 @@
 
 ## 架构概览
 
-EasyKiConverter 采用 MVVM (Model-View-ViewModel) 架构模式，提供清晰的职责分离和高效的代码组织。
+EasyKiConverter 采用 MVVM (Model-View-ViewModel) 架构模式，支持 GUI 和 CLI 双模式运行，提供清晰的职责分离和高效的代码组织。
+
+**双模式支持：**
+- **GUI 模式**：QApplication + QML（默认模式）
+- **CLI 模式**：QCoreApplication + CliConverter（纯命令行模式）
 
 ## 架构模式
 
@@ -146,8 +150,8 @@ Service 层负责业务逻辑的处理，提供核心功能。
 
 **主要类：**
 - `ComponentService` - 元件服务
-- `ExportService` - 导出服务（传统）
-- `ParallelExportService` - 流水线并行导出服务
+- `ExportService` - 导出服务
+- `ParallelExportService` - 并行导出服务（两阶段架构）
 - `ConfigService` - 配置服务
 - `PipelineCompletionHandler` - 导出完成处理器
 - `CommandLineParser` - 命令行参数解析器
@@ -185,10 +189,20 @@ CLI 模块位于 `src/utils/cli/` 目录，提供纯命令行模式支持。
 - `CompletionGenerator` - Shell 自动补全生成器
 
 **职责：**
-- 纯命令行模式运行（`--cli` 参数）
-- Shell 自动补全支持
-- BOM 批量导入转换
+- 纯命令行模式运行（`convert` 子命令）
+- Shell 自动补全支持（`--completion bash/zsh/fish`）
+- BOM 批量导入转换（`convert bom <file>`）
+- 单元件转换（`convert component <id>`）
+- 批量转换（`convert batch <ids...>`）
 - 离线批量导出
+
+**CLI 命令示例：**
+```bash
+./easykiconverter convert bom BOM_FILE.xlsx           # BOM 文件转换
+./easykiconverter convert component C12345             # 单个元件转换
+./easykiconverter convert batch C12345 C67890          # 批量转换
+./easykiconverter --completion bash > completion.sh    # 生成 bash 补全脚本
+```
 
 ### Model 层（模型层）
 
@@ -233,194 +247,185 @@ Model 层负责数据的存储和管理。
 - `SvgPathParser` - SVG 路径解析
 - `GzipUtils` - GZIP 压缩解压
 
-### 工作线程（Workers）
+### 网络架构（NetworkClient）
 
-工作线程负责后台任务处理，位于 `src/workers` 目录。
+所有 HTTP 请求都通过 `NetworkClient` 单例处理，采用**专用网络线程 + 按 ResourceType 并发控制**的架构。
 
-- `ExportWorker` - 导出工作线程（基础）
-- `NetworkWorker` - 网络工作线程
-- `FetchWorker` - 抓取工作线程（流水线阶段一）
-- `ProcessWorker` - 处理工作线程（流水线阶段二）
-- `WriteWorker` - 写入工作线程（流水线阶段三）
-
-## 流水线并行架构
-
-### 架构概述
-
-项目实现了**三阶段流水线并行架构**，用于批量导出元件数据，最大化性能。
+#### 架构概述
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    流水线并行架构                                  │
+│  NetworkClient (Singleton)                                       │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  ┌─────────────┐    ┌───────────────┐    ┌─────────────┐       │
-│  │  Fetch      │───▶│  Process      │───▶│   Write     │       │
-│  │  Stage      │    │  Stage        │    │   Stage     │       │
-│  │             │    │               │    │             │       │
-│  │ • 组件信息  │    │ • 解析 JSON   │    │ • 写符号    │       │
-│  │ • CAD 数据  │    │ • 转换格式     │    │ • 写封装    │       │
-│  │ • 3D 模型   │    │ • 几何计算     │    │ • 写 3D 模型│       │
-│  └─────────────┘    └───────────────┘    └─────────────┘       │
-│         │                    │                    │               │
-│         ▼                    ▼                    ▼               │
-│   5 threads            N cores             3 threads            │
-│   (I/O 密集型)        (CPU 密集型)        (磁盘 I/O 密集型)     │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │         线程安全有界队列（BoundedThreadSafeQueue）        │   │
-│  │  ┌─────────────────────┐    ┌──────────────────────┐     │   │
-│  │  │  FetchProcessQueue  │───▶│  ProcessWriteQueue  │     │   │
-│  │  │   (大小动态调整)      │    │   (大小动态调整)     │     │   │
-│  │  └─────────────────────┘    └──────────────────────┘     │   │
-│  └──────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  专用网络线程 ("EasyKiConverterNetworkThread")               ││
+│  │  - 所有 HTTP 请求都在此线程中执行                            ││
+│  │  - QNetworkAccessManager 在此线程中运行                      ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                              │                                   │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  请求队列 (m_pendingAsyncRequests)                           ││
+│  │  - 所有请求都入队到同一个队列                                ││
+│  │  - 按 ResourceType 分组进行并发控制                          ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                              │                                   │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  并发控制 (m_activeAsyncRequestsByType)                      ││
+│  │  - 每种 ResourceType 有独立的 maxConcurrent 限制             ││
+│  │  - pumpAsyncQueue() 按优先级和并发限制调度请求               ││
+│  └─────────────────────────────────────────────────────────────┘│
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 三阶段详解
+#### 关键实现细节
 
-#### 阶段一：抓取阶段（Fetch Stage）
+1. **单线程处理所有请求**：所有网络请求都在 `m_networkThread` 这一个线程中执行
 
-**职责**：从网络下载所有原始数据
+2. **按 ResourceType 并发控制**：虽然只有一个网络线程，但通过 `m_activeAsyncRequestsByType` 跟踪每种资源类型的活跃请求数，确保不超过 `maxConcurrent` 限制
 
-**线程池配置**：
-- 线程数：5（I/O 密集型）
-- 适合：网络请求并发（避免触发服务器限流）
+3. **同步请求也是异步实现**：`get()`/`post()` 同步方法内部也是调用 `enqueueAsyncRequest()` 入队，然后通过 `BlockingRequestContext::wait()` 阻塞等待结果
 
-**任务**：
-- 获取组件信息（包含 CAD 数据）
-- 下载 3D 模型（OBJ 和 STEP 格式）
-- 处理 GZIP/ZIP 压缩数据
-- 使用 QSharedPointer 避免数据拷贝
+4. **请求调度**：`pumpAsyncQueue()` 方法会：
+   - 清理已完成的请求
+   - 按优先级和 ResourceType 的并发限制选择下一个请求
+   - 通过 `QMetaObject::invokeMethod` 在网络线程中启动请求
 
-**Worker**: `FetchWorker`
+#### ResourceType 并发配置
 
-**特点**：
-- 纯 I/O 密集型
-- 使用同步网络请求（QEventLoop）
-- 支持自动重试（待实现）
+> 注：以下表格与源代码 `src/core/network/INetworkClient.h` 中的定义保持同步。
 
----
+| ResourceType | maxConcurrent | 描述 |
+|--------------|---------------|------|
+| ComponentInfo | 10 | 组件元数据 JSON |
+| CadData | 10 | CAD 数据 JSON（符号/封装） |
+| PreviewImage | 5 | 组件预览图 |
+| ProductSearch | 5 | LCSC 产品搜索 |
+| Datasheet | 3 | PDF 数据手册 |
+| Model3DObj | 3 | 3D 模型 OBJ 文件 |
+| Model3DStep | 3 | 3D 模型 STEP 文件 |
+| UpdateCheck | 2 | GitHub 发布元数据 |
+| WorkerRequest | 5 | 通用工作线程请求 |
 
-#### 阶段二：处理阶段（Process Stage）
+#### 请求者
 
-**职责**：解析和转换数据
+- **EasyedaApi**：组件/CAD/3D 数据（使用 `NetworkClient::get()`）
+- **LcscImageService**：预览图 + 数据手册（使用 `NetworkClient::getAsync()`）
+- **ComponentService**：协调并行获取，通过 `m_maxConcurrentRequests` 控制并发
 
-**线程池配置**：
-- 线程数：等于 CPU 核心数（CPU 密集型）
-- 适合：大量 CPU 计算
+#### 使用模式
 
-**任务**：
-- 解析组件信息 JSON
-- 解析 CAD 数据 JSON
-- 解析 3D 模型数据（OBJ 格式）
-- 生成 KiCad 符号数据
-- 生成 KiCad 封装数据
-- 几何计算和转换
-
-**Worker**: `ProcessWorker`
-
-**特点**：
-- **纯 CPU 密集型**（不包含任何网络 I/O）
-- 使用 EasyedaImporter 进行数据导入
-- 零数据拷贝（使用 QSharedPointer）
-
----
-
-#### 阶段三：写入阶段（Write Stage）
-
-**职责**：将转换后的数据写入文件
-
-**线程池配置**：
-- 线程数：3（磁盘 I/O 密集型）
-- 适合：文件写入并发（避免过度并行导致性能下降）
-
-**任务**：
-- 写入符号库文件（.kicad_sym）
-- 写入封装文件（.kicad_mod）
-- 写入 3D 模型文件（.wrl、.step）
-- 合并符号库（临时文件）
-- 导出调试数据（如果启用）
-
-**Worker**: `WriteWorker`
-
-**特点**：
-- **并行写入**：单个组件的符号、封装、3D 模型同时写入
-- 使用 QThreadPool 实现并行
-- 避免文件写入冲突
-
----
-
-### 阶段间通信
-
-#### 线程安全有界队列
-
-**队列类型**：
 ```cpp
-BoundedThreadSafeQueue<QSharedPointer<ComponentExportStatus>> *m_queue;
+// 同步请求（内部使用异步队列 + 阻塞等待）
+RetryPolicy policy;
+policy.maxRetries = 3;
+policy.baseTimeoutMs = 30000;
+NetworkResult result = NetworkClient::instance().get(url, policy);
+
+// 带 ResourceType 的同步请求（使用预定义的 RequestProfile）
+NetworkResult result = NetworkClient::instance().get(
+    url, ResourceType::ComponentInfo, RetryPolicy::fromProfile(RequestProfiles::componentInfo()));
+
+// 异步请求（返回 AsyncNetworkRequest*，调用方管理生命周期）
+AsyncNetworkRequest* req = NetworkClient::instance().getAsync(url, ResourceType::PreviewImage);
+connect(req, &AsyncNetworkRequest::finished, this, [req](const NetworkResult& r) {
+    if (r.success) { /* ... */ }
+    req->deleteLater();  // 必须在完成后删除
+});
 ```
 
-**特点**：
-- 线程安全（使用 QMutex 和 QWaitCondition）
-- 有界（防止内存溢出）
-- 支持阻塞和非阻塞操作
-- 使用 QSharedPointer 避免数据拷贝
+#### 注意事项
 
-**队列大小**：
-- 动态调整：任务数的 1/4
-- 最小值：100
-- 避免队列满导致的阻塞
+- **不要在 bare std::thread 中使用**：NetworkClient 需要 Qt 事件循环
+- **同步请求会阻塞调用线程**：但网络处理在专用线程中执行
+- **生命周期管理**：异步请求返回的 `AsyncNetworkRequest*` 由调用方负责删除
 
----
+### 工作线程（Workers）
 
-### 进度计算
+工作线程负责后台任务处理，位于 `src/workers` 目录。
 
-**三阶段进度权重**：
-- Fetch 阶段：30%
-- Process 阶段：50%
-- Write 阶段：20%
+- `FetchWorker` - 网络数据获取工作线程
+- `ProcessWorker` - 数据处理工作线程（CPU 密集型）
+- `WriteWorker` - 文件写入工作线程
+- `MediaFetchWorker` - 媒体文件获取工作线程
+- `NetworkWorker` - 网络工作线程
 
-**总进度计算**：
-```cpp
-int overallProgress() {
-    return (fetchProgress() * 30 +
-            processProgress() * 50 +
-            writeProgress() * 20) / 100;
-}
+## 导出架构
+
+### 架构概述
+
+项目实现了**两阶段导出架构**，用于批量导出元件数据，最大化性能。
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    导出架构                                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  阶段一：预加载 (Preload)                                    ││
+│  │  • ComponentService::fetchMultipleComponentsData()          ││
+│  │  • 并行获取所有组件数据（网络 I/O）                          ││
+│  │  • 并发数：m_maxConcurrentRequests (默认 10)                ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                              ↓                                   │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  阶段二：导出 (Export)                                       ││
+│  │  • ParallelExportService 协调多个 ExportTypeStage           ││
+│  │  • 每种导出类型独立并行运行                                  ││
+│  │  • 各类型有自己的线程池配置：                                ││
+│  │    - Symbol: maxConcurrent=1 (库级别导出)                    ││
+│  │    - Footprint: maxConcurrent=1 (库级别导出)                 ││
+│  │    - Model3D: maxConcurrent=2 (弱网时降为 1)                 ││
+│  │    - PreviewImages: maxConcurrent=4 (弱网时降为 2)           ││
+│  │    - Datasheet: maxConcurrent=2 (弱网时降为 1)               ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**进度反馈**：
-- 实时更新各阶段进度
-- 显示当前处理的元件
-- 显示预估剩余时间
+### 阶段一：预加载（Preload）
+
+**职责**：从网络获取所有原始数据
+
+**实现**：
+- 使用 `ComponentService::fetchMultipleComponentsData()` 并行获取
+- 通过 `NetworkClient` 单例发起网络请求
+- 使用专用网络线程 + QNetworkAccessManager
+- 并发数由 `m_maxConcurrentRequests` 控制（默认 10）
+
+**特点**：
+- 数据获取在用户添加组件时就已经完成（验证阶段）
+- 预加载只是从内存缓存中加载已验证的数据
+- 支持重试/退避机制
 
 ---
 
-### 性能优化
+### 阶段二：导出（Export）
 
-#### P0 改进（架构优化）
+**职责**：将数据转换并写入文件
 
-1. **ProcessWorker 移除网络请求**
-   - CPU 利用率提升 50-80%
-   - 充分利用多核 CPU
+**实现**：
+- 使用 `ParallelExportService` 协调多个 `ExportTypeStage`
+- 每种导出类型独立并行运行
+- 每种类型有自己的线程池配置
 
-2. **使用 QSharedPointer 传递数据**
-   - 内存占用减少 50-70%
-   - 性能提升 20-30%
+**导出类型及并发配置**：
 
-3. **调整 ProcessWorker 为纯 CPU 密集型**
-   - CPU 利用率提升 40-60%
+> 注：以下表格与 `ParallelExportService::createExportStages()` 中的线程池配置保持同步。
 
-#### P1 改进（性能优化）
+| 导出类型 | 最大并发数 | 说明 |
+|----------|-----------|------|
+| Symbol | 1 | 库级别导出，单线程 |
+| Footprint | 1 | 库级别导出，单线程 |
+| Model3D | 2 | 弱网时降为 1 |
+| PreviewImages | 4 | 弱网时降为 2 |
+| Datasheet | 2 | 弱网时降为 1 |
 
-1. **动态队列大小**
-   - 避免队列满导致的阻塞
-   - 吞吐量提升 15-25%
-
-2. **并行写入文件**
-   - 写入阶段耗时减少 30-50%
-   - 磁盘 I/O 并发度提升 2-3 倍
+**特点**：
+- 各类型独立并行，互不阻塞
+- 库级别导出（Symbol/Footprint）使用单线程，避免文件写入冲突
+- 支持弱网模式自动降级
 
 ---
 
@@ -429,57 +434,40 @@ int overallProgress() {
 ```
 用户输入元件ID
     ↓
-ParallelExportService.startPreload() + startExport()
+ComponentService::fetchComponentData() 或 fetchMultipleComponentsData()
+    ↓ (并行获取)
+┌─────────────────────────────────────────────┐
+│  网络获取 (NetworkClient)                    │
+│  • EasyedaApi: 组件信息 + CAD 数据           │
+│  • LcscImageService: 预览图 + 数据手册       │
+│  • 3D 模型下载                               │
+└─────────────────────────────────────────────┘
+    ↓ (ComponentData 缓存)
+ParallelExportService::startPreload() + startExport()
     ↓
 ┌─────────────────────────────────────────────┐
-│  Fetch Stage (5 threads)                     │
-│  • 下载组件信息                              │
-│  • 下载 CAD 数据                             │
-│  • 下载 3D 模型                              │
+│  SymbolExportStage (1 thread)                │
+│  • 合并所有符号到单个 .kicad_sym 文件        │
 └─────────────────────────────────────────────┘
-    ↓ (QSharedPointer<ComponentExportStatus>)
 ┌─────────────────────────────────────────────┐
-│  Process Stage (N cores)                     │
-│  • 解析 JSON                                 │
-│  • 转换格式                                  │
-│  • 几何计算                                  │
+│  FootprintExportStage (1 thread)             │
+│  • 合并所有封装到单个 .kicad_mod 目录        │
 └─────────────────────────────────────────────┘
-    ↓ (QSharedPointer<ComponentExportStatus>)
 ┌─────────────────────────────────────────────┐
-│  Write Stage (3 threads)                     │
-│  • 并行写入符号、封装、3D 模型               │
-│  • 合并符号库                                │
+│  Model3DExportStage (2 threads)              │
+│  • 并行写入 3D 模型文件 (.wrl, .step)        │
+└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│  PreviewImagesExportStage (4 threads)        │
+│  • 并行下载和写入预览图文件                  │
+└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│  DatasheetExportStage (2 threads)            │
+│  • 并行下载和写入数据手册文件                │
 └─────────────────────────────────────────────┘
     ↓
 完成导出
 ```
-
----
-
-### 错误处理
-
-**失败诊断**：
-- 精确识别失败阶段（Fetch/Process/Write）
-- 详细的错误消息
-- 调试日志记录
-
-**容错机制**：
-- 3D 模型下载失败不影响整体流程
-- 单个元件失败不影响其他元件
-- 支持部分成功导出
-
----
-
-### 性能指标
-
-**预期性能**（100 个元件）：
-
-| 指标 | 改进前 | 改进后 | 提升 |
-|------|-------|--------|------|
-| 总耗时 | 240 秒 | 110 秒 | 54% |
-| 吞吐量 | 0.42 组件/秒 | 0.91 组件/秒 | 117% |
-| 内存使用 | 400 MB | 200 MB | 50% |
-| CPU 利用率 | 60% | 90% | 50% |
 
 ---
 
@@ -499,15 +487,17 @@ ParallelExportService.startPreload() + startExport()
 
 优化批量转换性能的两阶段策略。
 
-**阶段一：数据收集（并行）**
-- 使用多线程并行收集所有元件数据
-- 充分利用多核 CPU 性能
-- 异步网络请求
+**阶段一：预加载（并行）**
+- 使用 `ComponentService::fetchMultipleComponentsData()` 并行获取所有元件数据
+- 通过 `NetworkClient` 单例发起网络请求
+- 并发数由 `m_maxConcurrentRequests` 控制（默认 10）
+- 数据获取在用户添加组件时就已经完成（验证阶段）
 
-**阶段二：数据导出（串行）**
-- 串行导出所有收集到的数据
-- 避免文件写入冲突
-- 保证数据一致性
+**阶段二：导出（并行）**
+- 使用 `ParallelExportService` 协调多个 `ExportTypeStage`
+- 每种导出类型独立并行运行
+- 库级别导出（Symbol/Footprint）使用单线程
+- 其他类型根据网络状况动态调整并发数
 
 ### 单例模式
 
@@ -702,11 +692,9 @@ EasyKiConverter_QT/
 
 ### 弱网容错（v3.0.4 分析）
 
-项目存在四套网络请求实现，弱网容错能力不一致：
+项目存在多套网络请求实现，弱网容错能力不一致：
 
-- **`FetchWorker`**（流水线批量导出）：支持超时（8-10s）和重试（3次），但超时后不重试
 - **`NetworkClient`**（统一网络层）：支持超时、重试和指数退避，已整合到 ComponentService
-- **`NetworkWorker`**（旧版单件获取）：无超时和重试机制，弱网下可能永久阻塞
 - **`ComponentService`**（LCSC 预览图）：支持超时（15s）+重试，有 Fallback 备用方案
 
 > 注：`NetworkUtils` 源码已移除，其功能已整合到 `NetworkClient` 统一网络层。

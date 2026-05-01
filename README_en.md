@@ -18,7 +18,7 @@
 
 
 
-**EasyKiConverter** is a modern C++ desktop tool based on Qt 6 and MVVM architecture, designed for electronics engineers to efficiently convert component data from LCSC and EasyEDA into KiCad library files.
+**EasyKiConverter** is a modern C++ desktop tool based on Qt 6 and MVVM architecture, designed for electronics engineers to efficiently convert component data from LCSC and EasyEDA into KiCad library files. Supports both GUI and CLI modes.
 
 ## Key Features
 
@@ -29,6 +29,7 @@
 *   **Smart Configuration**: Real-time auto-save of settings, supporting breakpoint memory and debug mode state restoration.
 *   **Smart Assistance**: Support for intelligent extraction of component IDs from clipboard.
 *   **LCSC Preview Images**: Automatically fetch LCSC component preview images, supporting thumbnail display and hover preview.
+*   **CLI Mode**: Pure command-line mode for batch processing and automation scripts.
 
 ## Quick Start
 
@@ -44,7 +45,14 @@ This project has implemented full-platform CI/CD automated building. If you are 
 
 ## System Architecture
 
-EasyKiConverter adopts a modern MVVM architecture design, achieving a clear layered structure and efficient parallel processing.
+EasyKiConverter adopts a modern MVVM architecture design, supporting both GUI and CLI modes, achieving a clear layered structure and efficient parallel processing.
+
+**Core Architecture Features:**
+- **Dual Mode**: GUI (QApplication + QML) and CLI (QCoreApplication + CliConverter)
+- **MVVM Layering**: QML View ↔ C++ ViewModel ↔ C++ Service ↔ C++ Model
+- **Export Pipeline**: Preload (parallel fetch) → Export (per-type stages with independent thread pools)
+- **Network Architecture**: NetworkClient singleton with dedicated network thread + QNetworkAccessManager, retry/backoff support
+- **Async Logging System**: LogModule categories with multiple output appenders
 
 ![System Architecture](docs/diagrams/EasyKiConverter_Architecture.svg)
 
