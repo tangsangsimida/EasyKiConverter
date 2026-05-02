@@ -308,7 +308,9 @@ void ExportSettingsViewModel::buildExportOptions() {
             << "Datasheet:" << options.exportDatasheet
             << "Client Weak Network Adaptation:" << options.weakNetworkSupport << "Update Mode:" << options.updateMode
             << "Debug Mode:" << options.debugMode << "Symbol Description:" << options.exportSymbolDescription
-            << "Footprint Description:" << options.exportFootprintDescription;
+            << "Footprint Description:" << options.exportFootprintDescription
+            << "Symbol Library Description:" << options.symbolLibraryDescription
+            << "Footprint Library Description:" << options.footprintLibraryDescription;
 
     m_exportService->setOptions(options);
     m_exportService->setOutputPath(absoluteOutputPath);

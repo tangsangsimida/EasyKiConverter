@@ -76,7 +76,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         int index = 0;
         for (const SymbolData& symbol : symbols) {
             qDebug() << "Exporting symbol" << (++index) << "of" << symbols.count() << ":" << symbol.info().name;
-            out << generateSymbolContent(symbol, libName);
+            out << generateSymbolContent(symbol, libName, libraryDescription);
         }
 
         // 生成尾部
@@ -356,7 +356,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     // 再导出新符号和被覆盖的符号
     for (const SymbolData& symbol : symbolsToExport) {
         qDebug() << "Exporting symbol" << (++index) << "of" << symbolsToExport.count() << ":" << symbol.info().name;
-        out << generateSymbolContent(symbol, libName);
+        out << generateSymbolContent(symbol, libName, libraryDescription);
     }
 
     // 生成尾部
@@ -384,7 +384,9 @@ QString ExporterSymbol::generateHeader(const QString& libName, const QString& li
     return header;
 }
 
-QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, const QString& libName) const {
+QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData,
+                                              const QString& libName,
+                                              const QString& libraryDescription) const {
     QString content;
 
     // V6 格式 - 主符号定义（包含属性）
@@ -600,11 +602,13 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     }
 
     // ki_description 属性（符号库描述）
-    if (!symbolData.info().description.isEmpty()) {
+    // 优先使用元器件自身的描述，如果为空则使用库描述
+    QString kiDescription = symbolData.info().description.isEmpty() ? libraryDescription : symbolData.info().description;
+    if (!kiDescription.isEmpty()) {
         fieldOffset += 2.54;
         content += QString("    (property\n");
         content += QString("      \"ki_description\"\n");
-        content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().description));
+        content += QString("      \"%1\"\n").arg(escapePropertyValue(kiDescription));
         content += "      (id 6)\n";
         content +=
             QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);

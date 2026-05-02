@@ -154,7 +154,8 @@ public slots:
                      bool exportDatasheet,
                      bool overwriteExistingFiles,
                      bool updateMode,
-                     bool debugMode);
+                     bool debugMode,
+                     const QString& symbolLibraryDescription = QString());
     void cancelExport();
     void handleCloseRequest();
     void updateComponentExportStatus(const QString& componentId, int previewImageExported, int datasheetExported);

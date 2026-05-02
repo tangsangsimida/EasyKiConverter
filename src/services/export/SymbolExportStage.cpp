@@ -222,6 +222,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         ExporterSymbol exporter;
         bool appendMode = !m_options.overwriteExistingFiles;
         QString libraryDescription = m_options.exportSymbolDescription ? m_options.symbolLibraryDescription : QString();
+        qDebug() << "SymbolExportStage: libraryDescription=" << libraryDescription;
         exportSuccess = exporter.exportSymbolLibrary(
             symbolList, libName, tempPath, appendMode, m_options.updateMode, libraryDescription);
     }
