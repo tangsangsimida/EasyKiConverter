@@ -51,6 +51,20 @@ public:
                              bool updateMode = false,
                              const QString& libraryDescription = QString());
 
+    /**
+     * @brief 生成 sym-lib-table 文件
+     *
+     * @param libName 库名称
+     * @param libFilePath 符号库文件路径
+     * @param outputDir 输出目录
+     * @param libraryDescription 库描述
+     * @return bool 是否成功
+     */
+    bool generateSymLibTable(const QString& libName,
+                             const QString& libFilePath,
+                             const QString& outputDir,
+                             const QString& libraryDescription = QString());
+
 private:
     /**
      * @brief 生成 KiCad 符号
@@ -58,19 +72,16 @@ private:
      * @param libName 库名称
          * @return QString 头部文本
      */
-    QString generateHeader(const QString& libName, const QString& libraryDescription = QString()) const;
+    QString generateHeader(const QString& libName) const;
 
     /**
      * @brief 生成 KiCad 符号内容
      *
      * @param symbolData 符号数据
      * @param libName 库名称（用于 Footprint 前缀
-     * @param libraryDescription 库描述（用于 ki_description 字段）
-         * @return QString 符号内容
+     * @return QString 符号内容
      */
-    QString generateSymbolContent(const SymbolData& symbolData,
-                                  const QString& libName,
-                                  const QString& libraryDescription = QString()) const;
+    QString generateSymbolContent(const SymbolData& symbolData, const QString& libName) const;
 
     /**
      * @brief 生成 KiCad 子符号（用于多部分符号）

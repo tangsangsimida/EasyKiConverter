@@ -68,6 +68,20 @@ public:
                                 const QString& libraryDescription = QString(),
                                 const QString& libraryKeywords = QString());
 
+    /**
+     * @brief 生成 fp-lib-table 文件
+     *
+     * @param libName 库名称
+     * @param libDirPath 封装库目录路径（.pretty 目录）
+     * @param outputDir 输出目录
+     * @param libraryDescription 库描述
+     * @return bool 是否成功
+     */
+    bool generateFpLibTable(const QString& libName,
+                            const QString& libDirPath,
+                            const QString& outputDir,
+                            const QString& libraryDescription = QString());
+
 private:
     QString generateHeader(const QString& libName) const;
     void generateFootprintBaseContent(const FootprintData& footprintData,

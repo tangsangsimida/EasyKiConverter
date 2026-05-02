@@ -155,7 +155,9 @@ public slots:
                      bool overwriteExistingFiles,
                      bool updateMode,
                      bool debugMode,
-                     const QString& symbolLibraryDescription = QString());
+                     const QString& symbolLibraryDescription = QString(),
+                     const QString& footprintLibraryDescription = QString(),
+                     const QString& footprintLibraryKeywords = QString());
     void cancelExport();
     void handleCloseRequest();
     void updateComponentExportStatus(const QString& componentId, int previewImageExported, int datasheetExported);

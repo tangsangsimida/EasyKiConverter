@@ -6,6 +6,7 @@ add_library(EasyKiConverterKicad STATIC
     ExporterFootprint.cpp
     FootprintGraphicsGenerator.cpp
     Exporter3DModel.cpp
+    KiCadLibTable.cpp
 )
 
 target_include_directories(EasyKiConverterKicad

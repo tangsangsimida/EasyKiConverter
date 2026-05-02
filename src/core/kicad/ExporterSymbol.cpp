@@ -1,10 +1,12 @@
 #include "ExporterSymbol.h"
 
+#include "KiCadLibTable.h"
 #include "core/utils/GeometryUtils.h"
 #include "core/utils/SvgPathParser.h"
 
 #include <QDebug>
 #include <QFile>
+#include <QFileInfo>
 #include <QRegularExpression>
 #include <QTextStream>
 
@@ -76,7 +78,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         int index = 0;
         for (const SymbolData& symbol : symbols) {
             qDebug() << "Exporting symbol" << (++index) << "of" << symbols.count() << ":" << symbol.info().name;
-            out << generateSymbolContent(symbol, libName, libraryDescription);
+            out << generateSymbolContent(symbol, libName);
         }
 
         // 生成尾部
@@ -230,7 +232,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     out.setEncoding(QStringConverter::Utf8);
 
     // 生成头部
-    out << generateHeader(libName, libraryDescription);
+    out << generateHeader(libName);
 
     // 生成所有符号（包括未覆盖的现有符号和新导出的符号）
     int index = 0;
@@ -356,7 +358,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     // 再导出新符号和被覆盖的符号
     for (const SymbolData& symbol : symbolsToExport) {
         qDebug() << "Exporting symbol" << (++index) << "of" << symbolsToExport.count() << ":" << symbol.info().name;
-        out << generateSymbolContent(symbol, libName, libraryDescription);
+        out << generateSymbolContent(symbol, libName);
     }
 
     // 生成尾部
@@ -367,7 +369,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     return true;
 }
 
-QString ExporterSymbol::generateHeader(const QString& libName, const QString& libraryDescription) const {
+QString ExporterSymbol::generateHeader(const QString& libName) const {
     Q_UNUSED(libName);  // 库名在符号内容中使用，不在头部使用
     QString version = m_detectedVersion.isEmpty() ? "20211014" : m_detectedVersion;
     QString header = QString(
@@ -376,17 +378,10 @@ QString ExporterSymbol::generateHeader(const QString& libName, const QString& li
                          "  (generator https://github.com/tangsangsimida/EasyKiConverter)\n")
                          .arg(version);
 
-    // 添加库描述（如果提供）
-    if (!libraryDescription.isEmpty()) {
-        header += QString("  (description \"%1\")\n").arg(libraryDescription);
-    }
-
     return header;
 }
 
-QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData,
-                                              const QString& libName,
-                                              const QString& libraryDescription) const {
+QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, const QString& libName) const {
     QString content;
 
     // V6 格式 - 主符号定义（包含属性）
@@ -601,14 +596,12 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData,
         content += "    )\n";
     }
 
-    // ki_description 属性（符号库描述）
-    // 优先使用元器件自身的描述，如果为空则使用库描述
-    QString kiDescription = symbolData.info().description.isEmpty() ? libraryDescription : symbolData.info().description;
-    if (!kiDescription.isEmpty()) {
+    // ki_description 属性（仅使用元器件自身描述，库描述写入 sym-lib-table）
+    if (!symbolData.info().description.isEmpty()) {
         fieldOffset += 2.54;
         content += QString("    (property\n");
         content += QString("      \"ki_description\"\n");
-        content += QString("      \"%1\"\n").arg(escapePropertyValue(kiDescription));
+        content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().description));
         content += "      (id 6)\n";
         content +=
             QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
@@ -687,6 +680,13 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
     content += "    )\n";  // 结束子符号
 
     return content;
+}
+
+bool ExporterSymbol::generateSymLibTable(const QString& libName,
+                                         const QString& libFilePath,
+                                         const QString& outputDir,
+                                         const QString& libraryDescription) {
+    return generateKiCadLibTable("sym_lib_table", "sym-lib-table", libName, libFilePath, outputDir, libraryDescription);
 }
 
 }  // namespace EasyKiConverter

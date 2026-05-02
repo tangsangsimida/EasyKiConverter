@@ -137,7 +137,9 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
                                           bool overwriteExistingFiles,
                                           bool updateMode,
                                           bool debugMode,
-                                          const QString& symbolLibraryDescription) {
+                                          const QString& symbolLibraryDescription,
+                                          const QString& footprintLibraryDescription,
+                                          const QString& footprintLibraryKeywords) {
     qDebug() << "ExportProgressViewModel: Starting export for" << componentIds.size() << "components";
 
     if (m_isExporting) {
@@ -207,7 +209,10 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     options.updateMode = updateMode;
     options.debugMode = debugMode;
     options.exportSymbolDescription = true;
+    options.exportFootprintDescription = true;
     options.symbolLibraryDescription = symbolLibraryDescription;
+    options.footprintLibraryDescription = footprintLibraryDescription;
+    options.footprintLibraryKeywords = footprintLibraryKeywords;
 
     m_exportService->setOptions(options);
     m_exportService->setOutputPath(outputPath);

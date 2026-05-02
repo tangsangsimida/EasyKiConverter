@@ -6,6 +6,7 @@ add_library(EasyKiConverterUtils STATIC
     SvgPathParser.cpp
     AtomicFileWriter.cpp
     GzipUtils.cpp
+    KiCadTableUtils.cpp
     UrlUtils.cpp
 )
 

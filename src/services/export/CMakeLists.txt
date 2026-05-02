@@ -19,6 +19,7 @@ set(EXPORT_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/ComponentDataCache.h
     ${CMAKE_CURRENT_SOURCE_DIR}/TempFileManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/DebugExportHelper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/KiCadLibraryTableManager.h
     PARENT_SCOPE
 )
 
@@ -40,5 +41,6 @@ set(EXPORT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/ExportWorkerHelpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TempFileManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DebugExportHelper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/KiCadLibraryTableManager.cpp
     PARENT_SCOPE
 )

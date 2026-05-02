@@ -1,6 +1,7 @@
 #include "SymbolExportStage.h"
 
 #include "DebugExportHelper.h"
+#include "KiCadLibraryTableManager.h"
 #include "core/kicad/ExporterSymbol.h"
 #include "models/ComponentData.h"
 
@@ -10,7 +11,7 @@
 #include <QFile>
 #include <QMutexLocker>
 #include <QThread>
-#include <QtConcurrent>
+#include <QThreadPool>
 
 namespace EasyKiConverter {
 
@@ -151,7 +152,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         emit itemStatusChanged(componentId, status);
 
         if (m_options.debugMode) {
-            QtConcurrent::run([componentId, data, outputPath = m_options.outputPath]() {
+            QThreadPool::globalInstance()->start([componentId, data, outputPath = m_options.outputPath]() {
                 DebugExportHelper::exportDebugData(componentId, data, outputPath);
             });
         }
@@ -218,11 +219,10 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
     // 6. 执行符号库导出
     bool exportSuccess = false;
+    QString libraryDescription = m_options.exportSymbolDescription ? m_options.symbolLibraryDescription : QString();
     {
         ExporterSymbol exporter;
         bool appendMode = !m_options.overwriteExistingFiles;
-        QString libraryDescription = m_options.exportSymbolDescription ? m_options.symbolLibraryDescription : QString();
-        qDebug() << "SymbolExportStage: libraryDescription=" << libraryDescription;
         exportSuccess = exporter.exportSymbolLibrary(
             symbolList, libName, tempPath, appendMode, m_options.updateMode, libraryDescription);
     }
@@ -251,6 +251,13 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         m_isExporting.store(false);
         emit completed(0, symbolList.size(), 0);
         return;
+    }
+
+    // 7.1 生成 sym-lib-table 文件（如果提供了库描述）
+    if (!libraryDescription.isEmpty()) {
+        ExporterSymbol symTableExporter;
+        symTableExporter.generateSymLibTable(libName, finalPath, outputDir, libraryDescription);
+        KiCadLibraryTableManager::registerSymbolLibrary(outputDir, libName, finalPath, libraryDescription);
     }
 
     // 8. 清理临时目录

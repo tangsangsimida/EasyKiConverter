@@ -1,5 +1,6 @@
 #include "FootprintExportStage.h"
 
+#include "KiCadLibraryTableManager.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "models/ComponentData.h"
 
@@ -195,13 +196,13 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
     // 5. 执行封装库导出
     bool exportSuccess = false;
+    QString libraryDescription =
+        m_options.exportFootprintDescription ? m_options.footprintLibraryDescription : QString();
     {
         ExporterFootprint exporter;
         // 传入3D模型格式标志：WRL和STEP可以同时导出，生成两个 (model ...) 块
         const bool preferWrl = m_options.needsModel3DWrl();
         const bool exportStep = m_options.needsModel3DStep();
-        QString libraryDescription =
-            m_options.exportFootprintDescription ? m_options.footprintLibraryDescription : QString();
         QString libraryKeywords = m_options.exportFootprintDescription ? m_options.footprintLibraryKeywords : QString();
         exportSuccess = exporter.exportFootprintLibrary(
             footprintList, libName, tempDirPath, preferWrl, exportStep, libraryDescription, libraryKeywords);
@@ -231,6 +232,13 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         m_isExporting.store(false);
         emit completed(0, footprintList.size(), 0);
         return;
+    }
+
+    // 6.1 生成 fp-lib-table 文件（如果提供了库描述）
+    if (!libraryDescription.isEmpty()) {
+        ExporterFootprint fpTableExporter;
+        fpTableExporter.generateFpLibTable(libName, finalDir, outputDir, libraryDescription);
+        KiCadLibraryTableManager::registerFootprintLibrary(outputDir, libName, finalDir, libraryDescription);
     }
 
     // 7. 清理临时目录
