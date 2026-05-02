@@ -8,38 +8,29 @@ Card {
     property var exportSettingsController
     signal openOutputFolderDialog
     title: qsTranslate("MainWindow", "导出设置")
-
-    ScrollView {
-        id: scrollView
+    ColumnLayout {
+        id: rootLayout
         width: parent.width
-        height: parent.height
-        clip: true
-        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-        ScrollBar.vertical.policy: ScrollBar.AsNeeded
-
-        ColumnLayout {
-            id: rootLayout
-            width: scrollView.availableWidth > 0 ? scrollView.availableWidth : parent.width
-            spacing: AppStyle.spacing.md
-
-            // ==================== SectionHeader 组件 ====================
-            component SectionHeader: RowLayout {
-                Layout.fillWidth: true
-                spacing: AppStyle.spacing.sm
-                property string sectionTitle: ""
-                Text {
-                    text: sectionTitle
-                    font.pixelSize: AppStyle.fontSizes.sm
-                    font.bold: true
-                    color: AppStyle.colors.textSecondary
-                }
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 1
-                    color: AppStyle.colors.border
-                    opacity: 0.5
-                }
+        spacing: AppStyle.spacing.lg
+        anchors.margins: AppStyle.spacing.md
+        // ==================== SectionHeader 组件 ====================
+        component SectionHeader: RowLayout {
+            Layout.fillWidth: true
+            spacing: AppStyle.spacing.sm
+            property string sectionTitle: ""
+            Text {
+                text: sectionTitle
+                font.pixelSize: AppStyle.fontSizes.sm
+                font.bold: true
+                color: AppStyle.colors.textSecondary
             }
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 1
+                color: AppStyle.colors.border
+                opacity: 0.5
+            }
+        }
 
             // ==================== 基础配置区块 ====================
             SectionHeader {
@@ -52,7 +43,6 @@ Card {
                 columns: 2
                 columnSpacing: AppStyle.spacing.xl
                 rowSpacing: AppStyle.spacing.md
-
                 // 输出路径
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -81,7 +71,7 @@ Card {
                             font.pixelSize: AppStyle.fontSizes.sm
                             color: AppStyle.colors.textPrimary
                             placeholderTextColor: AppStyle.colors.textSecondary
-                            background: Rectangle {
+                                background: Rectangle {
                                 color: AppStyle.colors.surface
                                 border.color: outputPathInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
                                 border.width: outputPathInput.focus ? 2 : 1
@@ -146,7 +136,6 @@ Card {
                 columns: 3
                 columnSpacing: AppStyle.spacing.md
                 rowSpacing: AppStyle.spacing.sm
-
                 // 符号库描述
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -253,7 +242,6 @@ Card {
             Flow {
                 Layout.fillWidth: true
                 spacing: AppStyle.spacing.lg
-
                 // 符号库选项
                 CheckBox {
                     id: symbolCheckbox
@@ -530,7 +518,6 @@ Card {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: AppStyle.spacing.xl
-
                 // 追加模式
                 RadioButton {
                     id: appendModeRadio
@@ -627,4 +614,3 @@ Card {
             }
         }
     }
-}

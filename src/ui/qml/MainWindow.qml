@@ -362,6 +362,7 @@ Item {
                     // 导出设置卡片
                     ExportSettingsCard {
                         Layout.fillWidth: true
+                        Layout.fillHeight: true
                         exportSettingsController: window.exportSettingsController
                         onOpenOutputFolderDialog: outputFolderDialog.open()
                     }
