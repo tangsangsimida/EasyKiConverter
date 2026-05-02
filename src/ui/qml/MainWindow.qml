@@ -247,16 +247,13 @@ Item {
             onPaint: {
                 const ctx = getContext("2d");
                 ctx.reset();
-
                 const r = windowRadius;
                 ctx.beginPath();
                 ctx.roundedRect(0, 0, width, height, r, r);
                 ctx.closePath();
                 ctx.clip();
-
                 ctx.fillStyle = AppStyle.colors.background;
                 ctx.fill();
-
                 if (bgSource.status === Image.Ready) {
                     const sw = bgSource.sourceSize.width;
                     const sh = bgSource.sourceSize.height;

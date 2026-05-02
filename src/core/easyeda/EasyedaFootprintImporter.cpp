@@ -413,7 +413,8 @@ void EasyedaFootprintImporter::importSvgNodeData(const QString& svgNodeData,
                     const double originX = originParts[0].toDouble();
                     const double originY = originParts[1].toDouble();
                     const double originZ = attrs.contains("z") ? attrs["z"].toDouble() : 0.0;
-                    const Model3DBase translation = normalizeModelOrigin(originX, originY, originZ, footprintData->bbox());
+                    const Model3DBase translation =
+                        normalizeModelOrigin(originX, originY, originZ, footprintData->bbox());
                     model3D.setTranslation(translation);
                 }
             }

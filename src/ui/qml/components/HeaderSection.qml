@@ -93,14 +93,25 @@ ColumnLayout {
                 y: languageComboBox.topPadding + (languageComboBox.availableHeight - height) / 2
                 width: 12
                 height: 8
-
                 ShapePath {
                     strokeWidth: 0
                     fillColor: AppStyle.colors.textSecondary
-                    PathMove { x: 0; y: 0 }
-                    PathLine { x: indicatorShape.width / 2; y: indicatorShape.height }
-                    PathLine { x: indicatorShape.width; y: 0 }
-                    PathLine { x: 0; y: 0 }
+                    PathMove {
+                        x: 0
+                        y: 0
+                    }
+                    PathLine {
+                        x: indicatorShape.width / 2
+                        y: indicatorShape.height
+                    }
+                    PathLine {
+                        x: indicatorShape.width
+                        y: 0
+                    }
+                    PathLine {
+                        x: 0
+                        y: 0
+                    }
                 }
             }
 

@@ -1,8 +1,8 @@
+#include "core/easyeda/EasyedaFootprintImporter.h"
 #include "models/FootprintData.h"
 #include "models/FootprintDataSerializer.h"
 #include "models/SymbolData.h"
 #include "models/SymbolDataSerializer.h"
-#include "core/easyeda/EasyedaFootprintImporter.h"
 
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -183,7 +183,8 @@ private:
         svgNode.insert(QStringLiteral("attrs"), attrs);
 
         QJsonArray shapes;
-        shapes.append(QStringLiteral("SVGNODE~") + QString::fromUtf8(QJsonDocument(svgNode).toJson(QJsonDocument::Compact)));
+        shapes.append(QStringLiteral("SVGNODE~") +
+                      QString::fromUtf8(QJsonDocument(svgNode).toJson(QJsonDocument::Compact)));
 
         QJsonObject dataStr;
         dataStr.insert(QStringLiteral("head"), head);

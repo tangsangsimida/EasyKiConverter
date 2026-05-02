@@ -31,6 +31,16 @@ class ExportSettingsViewModel : public QObject {
         bool weakNetworkSupport READ weakNetworkSupport WRITE setWeakNetworkSupport NOTIFY weakNetworkSupportChanged)
     Q_PROPERTY(int exportMode READ exportMode WRITE setExportMode NOTIFY exportModeChanged)
     Q_PROPERTY(bool debugMode READ debugMode WRITE setDebugMode NOTIFY debugModeChanged)
+    Q_PROPERTY(bool exportSymbolDescription READ exportSymbolDescription WRITE setExportSymbolDescription NOTIFY
+                   exportSymbolDescriptionChanged)
+    Q_PROPERTY(bool exportFootprintDescription READ exportFootprintDescription WRITE setExportFootprintDescription
+                   NOTIFY exportFootprintDescriptionChanged)
+    Q_PROPERTY(QString symbolLibraryDescription READ symbolLibraryDescription WRITE setSymbolLibraryDescription NOTIFY
+                   symbolLibraryDescriptionChanged)
+    Q_PROPERTY(QString footprintLibraryDescription READ footprintLibraryDescription WRITE setFootprintLibraryDescription
+                   NOTIFY footprintLibraryDescriptionChanged)
+    Q_PROPERTY(QString footprintLibraryKeywords READ footprintLibraryKeywords WRITE setFootprintLibraryKeywords NOTIFY
+                   footprintLibraryKeywordsChanged)
     Q_PROPERTY(bool isExporting READ isExporting NOTIFY isExportingChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
 
@@ -88,6 +98,26 @@ public:
         return m_debugMode;
     }
 
+    bool exportSymbolDescription() const {
+        return m_exportSymbolDescription;
+    }
+
+    bool exportFootprintDescription() const {
+        return m_exportFootprintDescription;
+    }
+
+    QString symbolLibraryDescription() const {
+        return m_symbolLibraryDescription;
+    }
+
+    QString footprintLibraryDescription() const {
+        return m_footprintLibraryDescription;
+    }
+
+    QString footprintLibraryKeywords() const {
+        return m_footprintLibraryKeywords;
+    }
+
     bool isExporting() const {
         return m_isExporting;
     }
@@ -109,6 +139,11 @@ public:
     Q_INVOKABLE void setWeakNetworkSupport(bool enabled);
     Q_INVOKABLE void setExportMode(int mode);
     Q_INVOKABLE void setDebugMode(bool enabled);
+    Q_INVOKABLE void setExportSymbolDescription(bool enabled);
+    Q_INVOKABLE void setExportFootprintDescription(bool enabled);
+    Q_INVOKABLE void setSymbolLibraryDescription(const QString& desc);
+    Q_INVOKABLE void setFootprintLibraryDescription(const QString& desc);
+    Q_INVOKABLE void setFootprintLibraryKeywords(const QString& keywords);
 
 public slots:
     Q_INVOKABLE void saveConfig();
@@ -130,6 +165,11 @@ signals:
     void weakNetworkSupportChanged();
     void exportModeChanged();
     void debugModeChanged();
+    void exportSymbolDescriptionChanged();
+    void exportFootprintDescriptionChanged();
+    void symbolLibraryDescriptionChanged();
+    void footprintLibraryDescriptionChanged();
+    void footprintLibraryKeywordsChanged();
     void isExportingChanged();
     void statusChanged();
     void preloadStarted();
@@ -165,6 +205,11 @@ private:
     bool m_weakNetworkSupport;
     int m_exportMode;  // 0 = 追加模式, 1 = 更新模式
     bool m_debugMode;
+    bool m_exportSymbolDescription;
+    bool m_exportFootprintDescription;
+    QString m_symbolLibraryDescription;
+    QString m_footprintLibraryDescription;
+    QString m_footprintLibraryKeywords;
     bool m_isExporting;
     QString m_status;
     QStringList m_pendingComponentIds;

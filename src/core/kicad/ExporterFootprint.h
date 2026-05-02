@@ -64,14 +64,30 @@ public:
                                 const QString& libName,
                                 const QString& filePath,
                                 bool preferWrl = true,
-                                bool exportStep = false);
+                                bool exportStep = false,
+                                const QString& libraryDescription = QString(),
+                                const QString& libraryKeywords = QString());
 
 private:
     QString generateHeader(const QString& libName) const;
     void generateFootprintBaseContent(const FootprintData& footprintData,
                                       QString& content,
                                       double& outBboxX,
-                                      double& outBboxY) const;
+                                      double& outBboxY,
+                                      const QString& libraryDescription = QString(),
+                                      const QString& libraryKeywords = QString()) const;
+    // 基础版本：支持描述和关键词，内部委托到双路径重载
+    QString generateFootprintContent(const FootprintData& footprintData,
+                                     const QString& model3DPath,
+                                     const QString& libraryDescription,
+                                     const QString& libraryKeywords) const;
+    // 双3D模型路径版本：支持描述和关键词
+    QString generateFootprintContent(const FootprintData& footprintData,
+                                     const QString& model3DWrlPath,
+                                     const QString& model3DStepPath,
+                                     const QString& libraryDescription,
+                                     const QString& libraryKeywords) const;
+    // 兼容旧调用：无描述/关键词，内部委托到基础版本
     QString generateFootprintContent(const FootprintData& footprintData, const QString& model3DPath = QString()) const;
     QString generateFootprintContent(const FootprintData& footprintData,
                                      const QString& model3DWrlPath,

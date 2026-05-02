@@ -48,7 +48,8 @@ public:
                              const QString& libName,
                              const QString& filePath,
                              bool appendMode = true,
-                             bool updateMode = false);
+                             bool updateMode = false,
+                             const QString& libraryDescription = QString());
 
 private:
     /**
@@ -57,7 +58,7 @@ private:
      * @param libName 库名称
          * @return QString 头部文本
      */
-    QString generateHeader(const QString& libName) const;
+    QString generateHeader(const QString& libName, const QString& libraryDescription = QString()) const;
 
     /**
      * @brief 生成 KiCad 符号内容

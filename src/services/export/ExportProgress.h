@@ -47,6 +47,11 @@ struct ExportOptions {
     bool weakNetworkSupport = false;  ///< 是否启用客户端弱网络适配
     bool updateMode = false;  ///< 更新模式：仅导出缺失或已更改的文件
     bool debugMode = false;  ///< 调试模式：输出详细调试信息
+    bool exportSymbolDescription = true;  ///< 是否导出符号库描述 (ki_description)
+    bool exportFootprintDescription = true;  ///< 是否导出封装库描述 (descr)
+    QString symbolLibraryDescription;  ///< 用户输入的符号库描述文本
+    QString footprintLibraryDescription;  ///< 用户输入的封装库描述文本
+    QString footprintLibraryKeywords;  ///< 用户输入的封装库关键词文本
 };
 
 /**

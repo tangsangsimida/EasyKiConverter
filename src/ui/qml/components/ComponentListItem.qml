@@ -222,9 +222,18 @@ Rectangle {
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
                             joinStyle: ShapePath.RoundJoin
-                            PathMove { x: checkShape.width / 2 - 6; y: checkShape.height / 2 }
-                            PathLine { x: checkShape.width / 2 - 2; y: checkShape.height / 2 + 3 }
-                            PathLine { x: checkShape.width / 2 + 6; y: checkShape.height / 2 - 3 }
+                            PathMove {
+                                x: checkShape.width / 2 - 6
+                                y: checkShape.height / 2
+                            }
+                            PathLine {
+                                x: checkShape.width / 2 - 2
+                                y: checkShape.height / 2 + 3
+                            }
+                            PathLine {
+                                x: checkShape.width / 2 + 6
+                                y: checkShape.height / 2 - 3
+                            }
                         }
                     }
                 }
@@ -247,16 +256,28 @@ Rectangle {
                             strokeWidth: 2
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
-                            PathMove { x: crossShape.width / 2 - 6; y: crossShape.height / 2 - 6 }
-                            PathLine { x: crossShape.width / 2 + 6; y: crossShape.height / 2 + 6 }
+                            PathMove {
+                                x: crossShape.width / 2 - 6
+                                y: crossShape.height / 2 - 6
+                            }
+                            PathLine {
+                                x: crossShape.width / 2 + 6
+                                y: crossShape.height / 2 + 6
+                            }
                         }
                         ShapePath {
                             strokeColor: AppStyle.colors.danger
                             strokeWidth: 2
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
-                            PathMove { x: crossShape.width / 2 + 6; y: crossShape.height / 2 - 6 }
-                            PathLine { x: crossShape.width / 2 - 6; y: crossShape.height / 2 + 6 }
+                            PathMove {
+                                x: crossShape.width / 2 + 6
+                                y: crossShape.height / 2 - 6
+                            }
+                            PathLine {
+                                x: crossShape.width / 2 - 6
+                                y: crossShape.height / 2 + 6
+                            }
                         }
                     }
                 }

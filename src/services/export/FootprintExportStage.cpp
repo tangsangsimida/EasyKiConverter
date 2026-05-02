@@ -200,7 +200,11 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         // 传入3D模型格式标志：WRL和STEP可以同时导出，生成两个 (model ...) 块
         const bool preferWrl = m_options.needsModel3DWrl();
         const bool exportStep = m_options.needsModel3DStep();
-        exportSuccess = exporter.exportFootprintLibrary(footprintList, libName, tempDirPath, preferWrl, exportStep);
+        QString libraryDescription =
+            m_options.exportFootprintDescription ? m_options.footprintLibraryDescription : QString();
+        QString libraryKeywords = m_options.exportFootprintDescription ? m_options.footprintLibraryKeywords : QString();
+        exportSuccess = exporter.exportFootprintLibrary(
+            footprintList, libName, tempDirPath, preferWrl, exportStep, libraryDescription, libraryKeywords);
     }
 
     if (m_cancelled.load()) {
