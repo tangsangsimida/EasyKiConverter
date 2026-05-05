@@ -510,7 +510,7 @@ Card {
             }
 
             Text {
-                text: qsTranslate("MainWindow", "保留已存在的元器件")
+                text: qsTranslate("MainWindow", "保留已经存在的元器件数据，并追加新的元器件")
                 font.pixelSize: AppStyle.fontSizes.sm
                 color: AppStyle.colors.textSecondary
                 verticalAlignment: Text.AlignVCenter
@@ -557,7 +557,7 @@ Card {
             }
 
             Text {
-                text: qsTranslate("MainWindow", "覆盖已存在的元器件")
+                text: qsTranslate("MainWindow", "覆盖已经存在的元器件数据，并追加新的元器件")
                 font.pixelSize: AppStyle.fontSizes.sm
                 color: AppStyle.colors.textSecondary
                 verticalAlignment: Text.AlignVCenter

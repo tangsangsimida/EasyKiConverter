@@ -279,9 +279,44 @@
         <translation>Enter Library Name (e.g., MyLibrary)</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="109"/>
+        <source>基础配置</source>
+        <translation>Basic Configuration</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="112"/>
+        <source>库描述</source>
+        <translation>Library Description</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="125"/>
+        <source>符号库描述 (sym-lib-table)</source>
+        <translation>Symbol Library Description (sym-lib-table)</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="140"/>
+        <source>输入符号库描述</source>
+        <translation>Enter Symbol Library Description</translation>
+    </message>
+    <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="141"/>
         <source>符号库</source>
         <translation>Symbols</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="158"/>
+        <source>封装库描述 (fp-lib-table)</source>
+        <translation>Footprint Library Description (fp-lib-table)</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="173"/>
+        <source>输入封装库描述</source>
+        <translation>Enter Footprint Library Description</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="189"/>
+        <source>关键词</source>
+        <translation>Keywords</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="197"/>
@@ -289,8 +324,9 @@
         <translation>Footprints</translation>
     </message>
     <message>
-        <source>调试模式</source>
-        <translation type="vanished">Debug Mode</translation>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="230"/>
+        <source>导出选项</source>
+        <translation>Export Options</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="421"/>
@@ -299,13 +335,27 @@
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="435"/>
+        <source>追加模式</source>
+        <translation>Append Mode</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="484"/>
+        <source>更新模式</source>
+        <translation>Update Mode</translation>
+    </message>
+    <message>
+        <source>调试模式</source>
+        <translation type="vanished">Debug Mode</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="435"/>
         <source>追加</source>
         <translation>Append</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="474"/>
-        <source>保留已存在的元器件</source>
-        <translation>Preserve</translation>
+        <source>保留已经存在的元器件数据，并追加新的元器件</source>
+        <translation>Preserve existing component data and append new components</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="484"/>
@@ -553,11 +603,6 @@
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="374"/>
         <source>导出数据手册文件</source>
         <translation>Export datasheet files</translation>
-    </message>
-    <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="444"/>
-        <source>保留已经存在的元器件数据，并追加新的元器件</source>
-        <translation>Preserve existing component data and append new components</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="45"/>
