@@ -117,7 +117,6 @@ Card {
             columns: 2
             columnSpacing: AppStyle.spacing.xl
             rowSpacing: AppStyle.spacing.md
-
             // 符号库描述：写入 sym-lib-table，不是单个符号描述
             ColumnLayout {
                 Layout.fillWidth: true

@@ -13,15 +13,11 @@ SliderDialogBase {
     hasOverlay: true
     title: qsTr("元器件描述")
     message: qsTr("编辑当前元器件导出到符号和封装中的描述。")
-
     property string descriptionText: ""
-
     signal accepted(string description)
     signal rejected
-
     mainContentSource: ColumnLayout {
         spacing: AppStyle.spacing.sm
-
         TextArea {
             id: descriptionInput
             Layout.fillWidth: true
@@ -34,7 +30,6 @@ SliderDialogBase {
             placeholderText: qsTr("留空则不导出描述")
             onTextChanged: root.descriptionText = text
             Component.onCompleted: Qt.callLater(forceActiveFocus)
-
             background: Rectangle {
                 color: AppStyle.colors.surface
                 border.color: descriptionInput.activeFocus ? AppStyle.colors.borderFocus : AppStyle.colors.border
@@ -65,7 +60,6 @@ SliderDialogBase {
             }
         }
     ]
-
     Keys.onEscapePressed: {
         root.rejected();
         root.closeWithAnimation();
@@ -77,7 +71,6 @@ SliderDialogBase {
         root.dialogBoxTranslate.y = 0;
         root.showAnimation.start();
         root.forceActiveFocus();
-
         var childIndex = 0;
         for (var i = 0; i < buttonSpecs.length; i++) {
             if (buttonSpecs[i].isSeparator) {
