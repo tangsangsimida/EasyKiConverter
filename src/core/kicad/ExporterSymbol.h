@@ -48,7 +48,22 @@ public:
                              const QString& libName,
                              const QString& filePath,
                              bool appendMode = true,
-                             bool updateMode = false);
+                             bool updateMode = false,
+                             const QString& libraryDescription = QString());
+
+    /**
+     * @brief 生成 sym-lib-table 文件
+     *
+     * @param libName 库名称
+     * @param libFilePath 符号库文件路径
+     * @param outputDir 输出目录
+     * @param libraryDescription 库描述
+     * @return bool 是否成功
+     */
+    bool generateSymLibTable(const QString& libName,
+                             const QString& libFilePath,
+                             const QString& outputDir,
+                             const QString& libraryDescription = QString());
 
 private:
     /**
@@ -64,7 +79,7 @@ private:
      *
      * @param symbolData 符号数据
      * @param libName 库名称（用于 Footprint 前缀
-         * @return QString 符号内容
+     * @return QString 符号内容
      */
     QString generateSymbolContent(const SymbolData& symbolData, const QString& libName) const;
 

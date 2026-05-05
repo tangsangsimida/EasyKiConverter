@@ -12,6 +12,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintInfo& info) {
     json["name"] = info.name;
     json["type"] = info.type;
     json["model_3d_name"] = info.model3DName;
+    json["description"] = info.description;
 
     // EasyEDA API 原始字段
     json["uuid"] = info.uuid;
@@ -51,6 +52,7 @@ bool FootprintDataSerializer::fromJson(FootprintInfo& info, const QJsonObject& j
     info.name = json["name"].toString();
     info.type = json["type"].toString();
     info.model3DName = json["model_3d_name"].toString();
+    info.description = json["description"].toString();
 
     // EasyEDA API 原始字段
     info.uuid = json["uuid"].toString();

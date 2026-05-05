@@ -75,7 +75,8 @@ QString TempFileManager::createSymbolTempPath(const QString& libName, const QStr
 
     // 符号库临时文件：libName.suffix
     QString tempName = libName + suffix;
-    QString tempPath = tempDirectory() + QDir::separator() + tempName;
+    const QString tempDir = tempDirectory();
+    QString tempPath = tempDir + QDir::separator() + tempName;
 
     m_tempFiles.insert(tempPath);
     qDebug() << "TempFileManager: Created symbol temp path:" << tempPath;
@@ -320,12 +321,11 @@ bool TempFileManager::ensureTempDirectory() const {
         return false;
     }
 
-    QDir dir(tempDir);
-    if (dir.exists()) {
+    if (QDir(tempDir).exists()) {
         return true;
     }
 
-    return dir.mkpath(tempDir);
+    return QDir().mkpath(tempDir);
 }
 
 bool TempFileManager::deleteFile(const QString& path) const {

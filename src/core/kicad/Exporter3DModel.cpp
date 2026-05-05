@@ -7,6 +7,9 @@
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QTextStream>
+#include <QVector>
+
+#include <limits>
 
 namespace EasyKiConverter {
 
@@ -430,8 +433,13 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
 
     // qDebug() << "Found" << materials.size() << "materials";
 
-    // 第二遍：提取顶点数据（存储为字符串，用于 WRL 输出
-    QStringList vertexStrings;  // 存储顶点坐标字符
+    // 第二遍：提取顶点数据
+    QVector<Model3DBase> convertedVertices;
+    double minX = std::numeric_limits<double>::max();
+    double maxX = std::numeric_limits<double>::lowest();
+    double minY = std::numeric_limits<double>::max();
+    double maxY = std::numeric_limits<double>::lowest();
+    double minZ = std::numeric_limits<double>::max();
     for (const QString& line : lines) {
         QString trimmedLine = line.trimmed();
         if (trimmedLine.isEmpty() || trimmedLine.startsWith('#')) {
@@ -449,18 +457,38 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
                 double x = parts[1].toDouble() / 2.54;
                 double y = parts[2].toDouble() / 2.54;
                 double z = parts[3].toDouble() / 2.54;
-                // 保留 4 位小数，与 Python 版本保持一致
-                QString vertexStr = QString("%1 %2 %3").arg(x, 0, 'f', 4).arg(y, 0, 'f', 4).arg(z, 0, 'f', 4);
-                vertexStrings.append(vertexStr);
-
-                // 同时保存JSON 数组，用于后续处
-                QJsonArray vertex;
-                vertex.append(x);
-                vertex.append(y);
-                vertex.append(z);
-                vertices.append(vertex);
+                convertedVertices.append(Model3DBase(x, y, z));
+                minX = qMin(minX, x);
+                maxX = qMax(maxX, x);
+                minY = qMin(minY, y);
+                maxY = qMax(maxY, y);
+                minZ = qMin(minZ, z);
             }
         }
+    }
+
+    const bool hasVertices = !convertedVertices.isEmpty();
+    const double normalizeX = hasVertices ? (minX + maxX) / 2.0 : 0.0;
+    const double normalizeY = hasVertices ? (minY + maxY) / 2.0 : 0.0;
+    const double normalizeZ = hasVertices && minZ > 0.0 ? minZ : 0.0;
+
+    QStringList vertexStrings;
+    for (Model3DBase vertexData : convertedVertices) {
+        vertexData.x -= normalizeX;
+        vertexData.y -= normalizeY;
+        vertexData.z -= normalizeZ;
+
+        // 保留 4 位小数，与 Python 版本保持一致
+        QString vertexStr =
+            QString("%1 %2 %3").arg(vertexData.x, 0, 'f', 4).arg(vertexData.y, 0, 'f', 4).arg(vertexData.z, 0, 'f', 4);
+        vertexStrings.append(vertexStr);
+
+        // 同时保存JSON 数组，用于后续处理
+        QJsonArray vertex;
+        vertex.append(vertexData.x);
+        vertex.append(vertexData.y);
+        vertex.append(vertexData.z);
+        vertices.append(vertex);
     }
 
     // qDebug() << "Found" << vertices.size() << "vertices";

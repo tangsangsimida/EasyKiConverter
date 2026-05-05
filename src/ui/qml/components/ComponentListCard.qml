@@ -13,6 +13,7 @@ Card {
     readonly property bool showValidationHint: componentListController ? componentListController.validationReadyHint : false
     readonly property bool showPreviewHint: componentListController ? componentListController.previewReadyHint : false
     readonly property color hintColor: showPreviewHint ? "#31c36b" : (showValidationHint ? "#2f7ef8" : "transparent")
+    property string editingDescriptionComponentId: ""
     title: qsTranslate("MainWindow", "元器件列表")
     // 默认折叠，只有在有元器件时才展开
     isCollapsed: componentListController ? componentListController.componentCount === 0 : true
@@ -112,6 +113,11 @@ Card {
                         componentListCard.componentListController.refreshComponentInfo(index);
                     }
                 }
+                onDescriptionEditRequested: function (componentId, description) {
+                    componentListCard.editingDescriptionComponentId = componentId;
+                    descriptionDialog.descriptionText = description;
+                    descriptionDialog.open();
+                }
             }
 
             // 过滤函数
@@ -150,6 +156,17 @@ Card {
                     item.inDisplay = passFilter && passSearch;
                 }
             }
+        },
+        DescriptionEditDialog {
+            id: descriptionDialog
+            parent: componentListCard.Window.window ? componentListCard.Window.window.contentItem : componentListCard
+            onAccepted: function (description) {
+                if (componentListCard.componentListController && componentListCard.editingDescriptionComponentId !== "") {
+                    componentListCard.componentListController.updateComponentDescription(componentListCard.editingDescriptionComponentId, description);
+                }
+                componentListCard.editingDescriptionComponentId = "";
+            }
+            onRejected: componentListCard.editingDescriptionComponentId = ""
         }
     ]
     overlayContent: [

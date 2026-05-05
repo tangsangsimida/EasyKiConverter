@@ -7,7 +7,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
-#include <QtConcurrent>
+#include <QThreadPool>
 
 namespace EasyKiConverter {
 
@@ -80,9 +80,10 @@ void SymbolExportWorker::run() {
             qDebug() << "SymbolExportWorker: Successfully exported" << filePath;
 
             if (m_options.debugMode) {
-                QtConcurrent::run([componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
-                    DebugExportHelper::exportDebugData(componentId, data, outputPath);
-                });
+                QThreadPool::globalInstance()->start(
+                    [componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
+                        DebugExportHelper::exportDebugData(componentId, data, outputPath);
+                    });
             }
 
             emit completed(m_componentId, true, QString());

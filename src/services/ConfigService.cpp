@@ -279,6 +279,10 @@ void ConfigService::setDarkMode(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["darkMode"] = enabled;
     emit configChanged();
+
+    // 释放锁后保存
+    locker.unlock();
+    saveConfig();
 }
 
 bool ConfigService::getDebugMode() const {

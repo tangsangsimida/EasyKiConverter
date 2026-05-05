@@ -106,6 +106,14 @@ public:
     QString formatRuntimeStats() const override;
 
     /**
+     * @brief Cancel all queued and active async requests managed by this client.
+     *
+     * This is used during export/application cancellation to unblock synchronous
+     * callers that are waiting on NetworkClient::get()/post().
+     */
+    void cancelAllRequests();
+
+    /**
      * @brief 检查数据是否为 gzip 压缩格式
      */
     static bool isGzipCompressed(const QByteArray& data);
@@ -163,6 +171,7 @@ private:
     QNetworkAccessManager* m_asyncNetworkManager = nullptr;
     mutable QMutex m_asyncQueueMutex;
     QList<PendingAsyncRequest> m_pendingAsyncRequests;
+    QList<QPointer<AsyncNetworkRequest>> m_liveAsyncRequests;
     QHash<int, int> m_activeAsyncRequestsByType;
     QHash<int, MutableResourceStats> m_resourceStats;
     quint64 m_asyncSequence = 0;

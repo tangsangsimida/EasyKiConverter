@@ -1,10 +1,12 @@
 #include "ExporterSymbol.h"
 
+#include "KiCadLibTable.h"
 #include "core/utils/GeometryUtils.h"
 #include "core/utils/SvgPathParser.h"
 
 #include <QDebug>
 #include <QFile>
+#include <QFileInfo>
 #include <QRegularExpression>
 #include <QTextStream>
 
@@ -41,7 +43,8 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                                          const QString& libName,
                                          const QString& filePath,
                                          bool appendMode,
-                                         bool updateMode) {
+                                         bool updateMode,
+                                         const QString& libraryDescription) {
     qDebug() << "=== Export Symbol Library ===";
     qDebug() << "Library name:" << libName;
     qDebug() << "Output path:" << filePath;
@@ -49,6 +52,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     qDebug() << "KiCad version: V6";
     qDebug() << "Append mode:" << appendMode;
     qDebug() << "Update mode:" << updateMode;
+    qDebug() << "Library description:" << libraryDescription;
 
     // 重置检测到的版本，避免影响后续调用
     m_detectedVersion.clear();
@@ -180,8 +184,6 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
 
     qDebug() << "Existing symbols count:" << existingSymbols.count();
     qDebug() << "Sub-symbol names:" << subSymbolNames;
-
-    qDebug() << "Existing symbols count:" << existingSymbols.count();
 
     // 确定要导出的符号
     QList<SymbolData> symbolsToExport;
@@ -368,13 +370,15 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
 }
 
 QString ExporterSymbol::generateHeader(const QString& libName) const {
-    Q_UNUSED(libName);
+    Q_UNUSED(libName);  // 库名在符号内容中使用，不在头部使用
     QString version = m_detectedVersion.isEmpty() ? "20211014" : m_detectedVersion;
-    return QString(
-               "(kicad_symbol_lib\n"
-               "  (version %1)\n"
-               "  (generator https://github.com/tangsangsimida/EasyKiConverter)\n")
-        .arg(version);
+    QString header = QString(
+                         "(kicad_symbol_lib\n"
+                         "  (version %1)\n"
+                         "  (generator https://github.com/tangsangsimida/EasyKiConverter)\n")
+                         .arg(version);
+
+    return header;
 }
 
 QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, const QString& libName) const {
@@ -592,6 +596,22 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += "    )\n";
     }
 
+    // ki_description 属性 - 单个元器件描述；库描述写入 sym-lib-table
+    const QString symbolDescription = symbolData.info().description.trimmed();
+    if (!symbolDescription.isEmpty()) {
+        fieldOffset += 2.54;
+        content += QString("    (property\n");
+        content += QString("      \"ki_description\"\n");
+        content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolDescription));
+        content += "      (id 6)\n";
+        content +=
+            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
+        content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
+                       .arg(fontSize, 0, 'f', 2)
+                       .arg(fontSize, 0, 'f', 2);
+        content += "    )\n";
+    }
+
     // 检查是否为多部分符
     bool isMultiPart = symbolData.isMultiPart();
     qDebug() << "=== Symbol Type Check ===";
@@ -661,6 +681,13 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
     content += "    )\n";  // 结束子符号
 
     return content;
+}
+
+bool ExporterSymbol::generateSymLibTable(const QString& libName,
+                                         const QString& libFilePath,
+                                         const QString& outputDir,
+                                         const QString& libraryDescription) {
+    return generateKiCadLibTable("sym_lib_table", "sym-lib-table", libName, libFilePath, outputDir, libraryDescription);
 }
 
 }  // namespace EasyKiConverter

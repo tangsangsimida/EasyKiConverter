@@ -28,6 +28,8 @@ FocusScope {
     focus: visible
     // ===== 子类可覆盖的属性 =====
     property bool hasOverlay: false
+    /** @property Component mainContentSource - 子类可通过此属性在按钮上方添加主要内容组件（如输入框） */
+    property Component mainContentSource: null
     /** @property Component extraContentSource - 子类可通过此属性添加额外内容组件（如复选框） */
     property Component extraContentSource: null
     // ===== 共用常量 =====
@@ -42,6 +44,7 @@ FocusScope {
     property alias dialogBox: dialogBox  // 对话框容器
     property alias dialogBoxTranslate: dialogBoxTranslate  // 对话框位移
     property alias buttonColLayout: buttonColLayout  // 按钮列布局
+    property alias showAnimation: showAnim  // 打开动画
     // ===== 按钮规格列表 =====
     // 格式: { text, color, action } 或 { isSeparator: true }
     property list<var> buttonSpecs
@@ -68,7 +71,7 @@ FocusScope {
     function open() {
         visible = true;
         if (hasOverlay) {
-            showAnim.start();
+            showAnimation.start();
         } else {
             dialogBox.rotation = 0;
             dialogBox.scale = 1.0;
@@ -167,6 +170,15 @@ FocusScope {
                 horizontalAlignment: Text.AlignHCenter
                 lineHeight: 1.3
                 text: root.message
+            }
+
+            // 主内容（由子类通过 mainContentSource 设置，位于按钮组上方）
+            Loader {
+                id: mainContentLoader
+                Layout.fillWidth: true
+                Layout.topMargin: AppStyle.spacing.sm
+                sourceComponent: root.mainContentSource
+                visible: root.mainContentSource
             }
 
             // 按钮组容器

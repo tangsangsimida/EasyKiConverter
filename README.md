@@ -19,7 +19,7 @@
 
 
 
-**EasyKiConverter** 是一个基于 Qt 6 和 MVVM 架构的现代化 C++ 桌面工具，专为电子工程师设计，旨在将嘉立创 (LCSC) 和 EasyEDA 的元件数据高效转换为 KiCad 库文件。
+**EasyKiConverter** 是一个基于 Qt 6 和 MVVM 架构的现代化 C++ 桌面工具，专为电子工程师设计，旨在将嘉立创 (LCSC) 和 EasyEDA 的元件数据高效转换为 KiCad 库文件。支持 GUI 和 CLI 两种运行模式。
 
 ## 主要特性
 
@@ -30,6 +30,7 @@
 *   **智能配置**：配置项实时自动保存，支持断点记忆与调试模式状态恢复。
 *   **智能辅助**：支持从剪贴板智能提取元件编号。
 *   **LCSC 预览图**：自动获取 LCSC 元件预览图，支持缩略图显示和悬停预览。
+*   **CLI 模式**：支持纯命令行模式，适用于批量处理和自动化脚本。
 
 ## 快速开始
 
@@ -45,7 +46,14 @@
 
 ## 系统架构
 
-EasyKiConverter 采用现代化的 MVVM 架构设计，实现了清晰的分层结构和高效的并行处理。
+EasyKiConverter 采用现代化的 MVVM 架构设计，支持 GUI 和 CLI 双模式运行，实现了清晰的分层结构和高效的并行处理。
+
+**核心架构特点：**
+- **双模式运行**：GUI 模式 (QApplication + QML) 和 CLI 模式 (QCoreApplication + CliConverter)
+- **MVVM 分层**：QML View ↔ C++ ViewModel ↔ C++ Service ↔ C++ Model
+- **导出流水线**：预加载（并行获取）→ 导出（按类型独立并行，各有线程池）
+- **网络架构**：NetworkClient 单例，专用网络线程 + QNetworkAccessManager，支持重试/退避
+- **异步日志系统**：支持 LogModule 分类和多种输出方式
 
 ![系统架构图](docs/diagrams/EasyKiConverter_Architecture.svg)
 

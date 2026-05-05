@@ -1,5 +1,6 @@
 #include "ExporterFootprint.h"
 
+#include "KiCadLibTable.h"
 #include "core/utils/GeometryUtils.h"
 #include "utils/PathSecurity.h"
 
@@ -64,11 +65,15 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
                                                const QString& libName,
                                                const QString& filePath,
                                                bool preferWrl,
-                                               bool exportStep) {
+                                               bool exportStep,
+                                               const QString& libraryDescription,
+                                               const QString& libraryKeywords) {
     qDebug() << "=== Export Footprint Library ===";
     qDebug() << "Library name:" << libName;
     qDebug() << "Output path:" << filePath;
     qDebug() << "Footprint count:" << footprints.count();
+    qDebug() << "Library description:" << libraryDescription;
+    qDebug() << "Library keywords:" << libraryKeywords;
 
     QDir libDir(filePath);
 
@@ -125,18 +130,18 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
             if (useWrl && useStep) {
                 QString wrlPath = QStringLiteral("../%1.3dmodels/%2.wrl").arg(safeLibName, modelName);
                 QString stepPath = QStringLiteral("../%1.3dmodels/%2.step").arg(safeLibName, modelName);
-                content = generateFootprintContent(footprint, wrlPath, stepPath);
+                content = generateFootprintContent(footprint, wrlPath, stepPath, libraryDescription, libraryKeywords);
             } else if (useWrl) {
                 QString wrlPath = QStringLiteral("../%1.3dmodels/%2.wrl").arg(safeLibName, modelName);
-                content = generateFootprintContent(footprint, wrlPath);
+                content = generateFootprintContent(footprint, wrlPath, libraryDescription, libraryKeywords);
             } else if (useStep) {
                 QString stepPath = QStringLiteral("../%1.3dmodels/%2.step").arg(safeLibName, modelName);
-                content = generateFootprintContent(footprint, stepPath);
+                content = generateFootprintContent(footprint, stepPath, libraryDescription, libraryKeywords);
             } else {
-                content = generateFootprintContent(footprint);
+                content = generateFootprintContent(footprint, QString(), libraryDescription, libraryKeywords);
             }
         } else {
-            content = generateFootprintContent(footprint);
+            content = generateFootprintContent(footprint, QString(), libraryDescription, libraryKeywords);
         }
 
         QFile file(fullPath);
@@ -159,6 +164,13 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
     return true;
 }
 
+bool ExporterFootprint::generateFpLibTable(const QString& libName,
+                                           const QString& libDirPath,
+                                           const QString& outputDir,
+                                           const QString& libraryDescription) {
+    return generateKiCadLibTable("fp_lib_table", "fp-lib-table", libName, libDirPath, outputDir, libraryDescription);
+}
+
 QString ExporterFootprint::generateHeader(const QString& libName) const {
     return QString(
                "(kicad_pcb (version 20221018) (generator easyeda2kicad)\n"
@@ -171,9 +183,22 @@ QString ExporterFootprint::generateHeader(const QString& libName) const {
 void ExporterFootprint::generateFootprintBaseContent(const FootprintData& footprintData,
                                                      QString& content,
                                                      double& outBboxX,
-                                                     double& outBboxY) const {
+                                                     double& outBboxY,
+                                                     const QString& libraryDescription,
+                                                     const QString& libraryKeywords) const {
     content += QString("(footprint easykiconverter:%1\n").arg(footprintData.info().name);
     content += "  (version 20221018)\n";
+
+    // 导出封装描述 (descr) - 单个元器件描述；库描述写入 fp-lib-table
+    const QString footprintDescription = footprintData.info().description.trimmed();
+    if (!footprintDescription.isEmpty()) {
+        content += QString("  (descr \"%1\")\n").arg(footprintDescription);
+    }
+
+    // 导出封装标签 (tags) - 用户输入
+    if (!libraryKeywords.isEmpty()) {
+        content += QString("  (tags \"%1\")\n").arg(libraryKeywords);
+    }
 
     bool isThroughHole = false;
     for (const FootprintPad& pad : footprintData.pads()) {
@@ -272,9 +297,24 @@ void ExporterFootprint::generateFootprintBaseContent(const FootprintData& footpr
 
 QString ExporterFootprint::generateFootprintContent(const FootprintData& footprintData,
                                                     const QString& model3DPath) const {
+    // 委托给带 libraryDescription/libraryKeywords 参数的版本
+    return generateFootprintContent(footprintData, model3DPath, QString(), QString());
+}
+
+QString ExporterFootprint::generateFootprintContent(const FootprintData& footprintData,
+                                                    const QString& model3DWrlPath,
+                                                    const QString& model3DStepPath) const {
+    // 委托给带 libraryDescription/libraryKeywords 参数的版本
+    return generateFootprintContent(footprintData, model3DWrlPath, model3DStepPath, QString(), QString());
+}
+
+QString ExporterFootprint::generateFootprintContent(const FootprintData& footprintData,
+                                                    const QString& model3DPath,
+                                                    const QString& libraryDescription,
+                                                    const QString& libraryKeywords) const {
     QString content;
     double bboxX = 0, bboxY = 0;
-    generateFootprintBaseContent(footprintData, content, bboxX, bboxY);
+    generateFootprintBaseContent(footprintData, content, bboxX, bboxY, libraryDescription, libraryKeywords);
 
     if (!footprintData.model3D().name().isEmpty() || !model3DPath.isEmpty()) {
         content += m_graphicsGenerator.generateModel3D(
@@ -287,10 +327,12 @@ QString ExporterFootprint::generateFootprintContent(const FootprintData& footpri
 
 QString ExporterFootprint::generateFootprintContent(const FootprintData& footprintData,
                                                     const QString& model3DWrlPath,
-                                                    const QString& model3DStepPath) const {
+                                                    const QString& model3DStepPath,
+                                                    const QString& libraryDescription,
+                                                    const QString& libraryKeywords) const {
     QString content;
     double bboxX = 0, bboxY = 0;
-    generateFootprintBaseContent(footprintData, content, bboxX, bboxY);
+    generateFootprintBaseContent(footprintData, content, bboxX, bboxY, libraryDescription, libraryKeywords);
 
     if (!footprintData.model3D().name().isEmpty() || !model3DWrlPath.isEmpty() || !model3DStepPath.isEmpty()) {
         if (!model3DWrlPath.isEmpty()) {

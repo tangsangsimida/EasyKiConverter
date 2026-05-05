@@ -68,7 +68,7 @@ SliderDialogBase {
         visible = true;
         root.dialogBox.y = 0;
         root.dialogBoxTranslate.y = 0;
-        showAnim.start();
+        root.showAnimation.start();
         root.forceActiveFocus();
         // 默认聚焦在取消按钮（第一个非分隔线项）
         var childIndex = 0;

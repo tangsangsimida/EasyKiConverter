@@ -160,7 +160,7 @@ void Model3DExportWorker::run() {
     if ((!needWrl || wrlFromCache) && (!needStep || stepFromCache)) {
         qDebug() << "Model3DExportWorker: Both WRL and STEP loaded from cache for" << m_componentId;
         if (m_options.debugMode) {
-            QtConcurrent::run([componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
+            (void)QtConcurrent::run([componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
                 DebugExportHelper::exportDebugData(componentId, data, outputPath);
             });
         }
@@ -229,7 +229,7 @@ void Model3DExportWorker::run() {
                  << "for" << m_componentId;
 
         if (m_options.debugMode) {
-            QtConcurrent::run([componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
+            (void)QtConcurrent::run([componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
                 DebugExportHelper::exportDebugData(componentId, data, outputPath);
             });
         }

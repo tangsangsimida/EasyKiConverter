@@ -206,10 +206,16 @@ bool ProcessWorker::parse3DModelData(ComponentExportStatus& status) {
         return true;
     }
 
-    // 保存已有 model3DData 的 UUID（如果有的话）
+    // 保存已有 model3DData 的属性（如果有的话）
     QString existingUuid;
-    if (status.model3DData && !status.model3DData->uuid().isEmpty()) {
+    QString existingName;
+    Model3DBase existingTranslation;
+    Model3DBase existingRotation;
+    if (status.model3DData) {
         existingUuid = status.model3DData->uuid();
+        existingName = status.model3DData->name();
+        existingTranslation = status.model3DData->translation();
+        existingRotation = status.model3DData->rotation();
     }
 
     // 创建3D模型数据
@@ -223,6 +229,25 @@ bool ProcessWorker::parse3DModelData(ComponentExportStatus& status) {
     } else if (status.footprintData && !status.footprintData->model3D().uuid().isEmpty()) {
         status.model3DData->setUuid(status.footprintData->model3D().uuid());
         status.addDebugLog(QString("Using 3D model UUID from footprintData: %1").arg(status.model3DData->uuid()));
+    }
+
+    // 恢复 name、translation、rotation：优先使用预加载数据，其次从 footprintData 获取
+    if (!existingName.isEmpty()) {
+        status.model3DData->setName(existingName);
+    } else if (status.footprintData && !status.footprintData->model3D().name().isEmpty()) {
+        status.model3DData->setName(status.footprintData->model3D().name());
+    }
+
+    if (existingTranslation.x != 0.0 || existingTranslation.y != 0.0 || existingTranslation.z != 0.0) {
+        status.model3DData->setTranslation(existingTranslation);
+    } else if (status.footprintData) {
+        status.model3DData->setTranslation(status.footprintData->model3D().translation());
+    }
+
+    if (existingRotation.x != 0.0 || existingRotation.y != 0.0 || existingRotation.z != 0.0) {
+        status.model3DData->setRotation(existingRotation);
+    } else if (status.footprintData) {
+        status.model3DData->setRotation(status.footprintData->model3D().rotation());
     }
 
     return true;

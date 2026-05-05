@@ -130,6 +130,13 @@ public:
     void updateComponentCache(const QString& componentId, const ComponentData& data);
 
     /**
+     * @brief 更新元件的符号/封装描述
+     * @param componentId 元件ID
+     * @param description 用户编辑后的描述
+     */
+    void updateComponentDescription(const QString& componentId, const QString& description);
+
+    /**
      * @brief 取消所有正在进行的预览图获取操作
      *
      * 当用户点击开始导出时调用，以确保取消所有未完成的预览图获取工作
@@ -339,7 +346,7 @@ private:
      * @param componentId 元件ID
      * @param error 错误信息
      */
-    void handleFetchErrorForComponent(const QString& componentId, const QString& error);
+    void emitFetchErrorAndClearState(const QString& componentId, const QString& error);
 
     /**
      * @brief 处理并行数据收集完成

@@ -1,5 +1,6 @@
 #include "FootprintExportStage.h"
 
+#include "KiCadLibraryTableManager.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "models/ComponentData.h"
 
@@ -153,6 +154,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
     if (m_cancelled.load()) {
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, componentIds.size(), 0);
         return;
     }
@@ -160,6 +162,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     if (footprintList.isEmpty()) {
         qWarning() << "FootprintExportStage: No valid footprints to export";
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, componentIds.size(), 0);
         return;
     }
@@ -178,6 +181,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     if (!dir.mkpath(outputDir)) {
         qCritical() << "FootprintExportStage: Failed to create output directory:" << outputDir;
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, footprintList.size(), 0);
         return;
     }
@@ -187,6 +191,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     if (tempDirPath.isEmpty()) {
         qCritical() << "FootprintExportStage: Failed to create temp dir path";
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, footprintList.size(), 0);
         return;
     }
@@ -195,17 +200,21 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
     // 5. 执行封装库导出
     bool exportSuccess = false;
+    QString libraryDescription = m_options.footprintLibraryDescription;
     {
         ExporterFootprint exporter;
         // 传入3D模型格式标志：WRL和STEP可以同时导出，生成两个 (model ...) 块
         const bool preferWrl = m_options.needsModel3DWrl();
         const bool exportStep = m_options.needsModel3DStep();
-        exportSuccess = exporter.exportFootprintLibrary(footprintList, libName, tempDirPath, preferWrl, exportStep);
+        QString libraryKeywords = m_options.footprintLibraryKeywords;
+        exportSuccess = exporter.exportFootprintLibrary(
+            footprintList, libName, tempDirPath, preferWrl, exportStep, libraryDescription, libraryKeywords);
     }
 
     if (m_cancelled.load()) {
         m_tempManager.rollbackAll();
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, footprintList.size(), 0);
         return;
     }
@@ -214,6 +223,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         qCritical() << "FootprintExportStage: Failed to export footprint library";
         m_tempManager.rollbackAll();
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, footprintList.size(), 0);
         return;
     }
@@ -225,8 +235,16 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         qCritical() << "FootprintExportStage: Failed to commit temp dir";
         m_tempManager.rollbackAll();
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, footprintList.size(), 0);
         return;
+    }
+
+    // 6.1 生成 fp-lib-table 文件（如果提供了库描述）
+    if (!libraryDescription.isEmpty()) {
+        ExporterFootprint fpTableExporter;
+        fpTableExporter.generateFpLibTable(libName, finalDir, outputDir, libraryDescription);
+        KiCadLibraryTableManager::registerFootprintLibrary(outputDir, libName, finalDir, libraryDescription);
     }
 
     // 7. 清理临时目录

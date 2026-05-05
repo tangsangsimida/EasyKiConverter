@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 # 从 CI 环境动态获取版本号，如果没有定义则使用默认版本
 if(NOT DEFINED VERSION_FROM_CI)
-    set(VERSION_FROM_CI "3.1.6")
+    set(VERSION_FROM_CI "3.1.7")
     message(STATUS "VERSION_FROM_CI not defined, using default: ${VERSION_FROM_CI}")
 else()
     message(STATUS "VERSION_FROM_CI defined: ${VERSION_FROM_CI}")
@@ -221,6 +221,7 @@ set(QML_FILES
     src/ui/qml/components/WindowPersistenceManager.qml
     src/ui/qml/components/WindowStartupManager.qml
     src/ui/qml/components/ConfirmDialog.qml
+    src/ui/qml/components/DescriptionEditDialog.qml
     src/ui/qml/components/WindowResizeHandles.qml
     src/ui/qml/components/ExitDialog.qml
     src/ui/qml/components/SliderDialogBase.qml

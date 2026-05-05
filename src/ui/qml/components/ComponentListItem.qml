@@ -13,6 +13,7 @@ Rectangle {
     signal deleteClicked
     signal copyClicked
     signal retryClicked
+    signal descriptionEditRequested(string componentId, string description)
     height: 64 // 增加高度以容纳缩略图和更多信息
     // 悬停效果
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
@@ -186,7 +187,10 @@ Rectangle {
                             return "";
                         if (!itemData.previewImages || itemData.previewImages.length === 0)
                             return "";
-                        return "data:image/jpeg;base64," + itemData.previewImages[0];
+                        var imageData = itemData.previewImages[0];
+                        if (!imageData || imageData === "")
+                            return "";
+                        return "data:image/jpeg;base64," + imageData;
                     }
                     fillMode: Image.PreserveAspectFit
                     cache: true
@@ -222,9 +226,18 @@ Rectangle {
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
                             joinStyle: ShapePath.RoundJoin
-                            PathMove { x: checkShape.width / 2 - 6; y: checkShape.height / 2 }
-                            PathLine { x: checkShape.width / 2 - 2; y: checkShape.height / 2 + 3 }
-                            PathLine { x: checkShape.width / 2 + 6; y: checkShape.height / 2 - 3 }
+                            PathMove {
+                                x: checkShape.width / 2 - 6
+                                y: checkShape.height / 2
+                            }
+                            PathLine {
+                                x: checkShape.width / 2 - 2
+                                y: checkShape.height / 2 + 3
+                            }
+                            PathLine {
+                                x: checkShape.width / 2 + 6
+                                y: checkShape.height / 2 - 3
+                            }
                         }
                     }
                 }
@@ -247,16 +260,28 @@ Rectangle {
                             strokeWidth: 2
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
-                            PathMove { x: crossShape.width / 2 - 6; y: crossShape.height / 2 - 6 }
-                            PathLine { x: crossShape.width / 2 + 6; y: crossShape.height / 2 + 6 }
+                            PathMove {
+                                x: crossShape.width / 2 - 6
+                                y: crossShape.height / 2 - 6
+                            }
+                            PathLine {
+                                x: crossShape.width / 2 + 6
+                                y: crossShape.height / 2 + 6
+                            }
                         }
                         ShapePath {
                             strokeColor: AppStyle.colors.danger
                             strokeWidth: 2
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
-                            PathMove { x: crossShape.width / 2 + 6; y: crossShape.height / 2 - 6 }
-                            PathLine { x: crossShape.width / 2 - 6; y: crossShape.height / 2 + 6 }
+                            PathMove {
+                                x: crossShape.width / 2 + 6
+                                y: crossShape.height / 2 - 6
+                            }
+                            PathLine {
+                                x: crossShape.width / 2 - 6
+                                y: crossShape.height / 2 + 6
+                            }
                         }
                     }
                 }
@@ -529,18 +554,44 @@ Rectangle {
                     if (phase === "failed")
                         return itemData.errorMessage || "验证失败";
                     if (phase === "completed" || itemData.isValid) {
-                        var info = [];
-                        if (itemData.name)
-                            info.push(itemData.name);
-                        if (itemData.package)
-                            info.push(itemData.package);
-                        return info.join(" | ");
+                        return itemData.description || itemData.name || "";
                     }
                     return "";
                 }
                 font.pixelSize: AppStyle.fontSizes.sm
                 color: (itemData && itemData.validationPhase === "failed") ? AppStyle.colors.danger : AppStyle.colors.textSecondary
                 elide: Text.ElideRight
+            }
+        }
+        // 重试按钮（仅对验证失败的元器件显示）
+        Button {
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            Layout.alignment: Qt.AlignVCenter
+            visible: itemData && itemData.isValid
+            background: Rectangle {
+                color: parent.pressed ? AppStyle.colors.primaryPressed : parent.hovered ? "#dbeafe" : "transparent"
+                radius: AppStyle.radius.sm
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppStyle.durations.fast
+                    }
+                }
+            }
+            contentItem: Text {
+                text: "✎"
+                font.pixelSize: AppStyle.fontSizes.lg
+                font.bold: true
+                color: parent.hovered ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            ToolTip.visible: hovered
+            ToolTip.text: qsTr("编辑元器件描述")
+            onClicked: {
+                if (itemData) {
+                    rootItem.descriptionEditRequested(itemData.componentId, itemData.description || "");
+                }
             }
         }
         // 重试按钮（仅对验证失败的元器件显示）

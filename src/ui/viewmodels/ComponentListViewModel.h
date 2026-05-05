@@ -130,6 +130,7 @@ public slots:
     Q_INVOKABLE void fetchPreviewImages(const QStringList& componentIds);
     Q_INVOKABLE void updateExportStatus(const QString& componentId, int previewImageExported, int datasheetExported);
     Q_INVOKABLE void dismissAttentionHints();
+    Q_INVOKABLE void updateComponentDescription(const QString& componentId, const QString& description);
 
 signals:
     void componentCountChanged();

@@ -78,6 +78,11 @@ AsyncNetworkRequest::~AsyncNetworkRequest() {
 }
 
 void AsyncNetworkRequest::cancel() {
+    if (thread() != QThread::currentThread()) {
+        QMetaObject::invokeMethod(this, &AsyncNetworkRequest::cancel, Qt::QueuedConnection);
+        return;
+    }
+
     if (!m_cancelled.testAndSetRelaxed(0, 1)) {
         return;
     }
@@ -88,19 +93,14 @@ void AsyncNetworkRequest::cancel() {
         m_timeoutTimer->stop();
     }
 
-    bool shouldCompleteImmediately = false;
     {
         QMutexLocker locker(&m_repliesMutex);
         if (m_currentReply && !m_currentReply->isFinished()) {
             m_currentReply->abort();
-        } else {
-            shouldCompleteImmediately = true;
         }
     }
 
-    if (shouldCompleteImmediately) {
-        completeWithResult(cancelledResult());
-    }
+    completeWithResult(cancelledResult());
 }
 
 bool AsyncNetworkRequest::isCancelled() const {

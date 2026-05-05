@@ -372,6 +372,26 @@
         <translation>输入库名称 (例如: MyLibrary)</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="109"/>
+        <source>基础配置</source>
+        <translation>基础配置</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="112"/>
+        <source>库描述</source>
+        <translation>库描述</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="125"/>
+        <source>符号库描述 (sym-lib-table)</source>
+        <translation>符号库描述 (sym-lib-table)</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="140"/>
+        <source>输入符号库描述</source>
+        <translation>输入符号库描述</translation>
+    </message>
+    <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="141"/>
         <source>符号库</source>
         <translation>符号库</translation>
@@ -382,9 +402,44 @@
         <translation>导出符号库文件</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="158"/>
+        <source>封装库描述 (fp-lib-table)</source>
+        <translation>封装库描述 (fp-lib-table)</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="173"/>
+        <source>输入封装库描述</source>
+        <translation>输入封装库描述</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="189"/>
+        <source>关键词</source>
+        <translation>关键词</translation>
+    </message>
+    <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="197"/>
         <source>封装库</source>
         <translation>封装库</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="230"/>
+        <source>导出选项</source>
+        <translation>导出选项</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="421"/>
+        <source>导出模式</source>
+        <translation>导出模式</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="435"/>
+        <source>追加模式</source>
+        <translation>追加模式</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="484"/>
+        <source>更新模式</source>
+        <translation>更新模式</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="206"/>
@@ -440,13 +495,8 @@
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="444"/>
-        <source>保留已存在的元器件，只追加新的元器件</source>
-        <translation>保留已存在的元器件，只追加新的元器件</translation>
-    </message>
-    <message>
-        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="474"/>
-        <source>保留已存在的元器件</source>
-        <translation>保留已存在的元器件</translation>
+        <source>保留已经存在的元器件数据，并追加新的元器件</source>
+        <translation>保留已经存在的元器件数据，并追加新的元器件</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="484"/>
@@ -456,8 +506,8 @@
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="493"/>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="523"/>
-        <source>覆盖已存在的元器件</source>
-        <translation>覆盖已存在的元器件</translation>
+        <source>覆盖已经存在的元器件数据，并追加新的元器件</source>
+        <translation>覆盖已经存在的元器件数据，并追加新的元器件</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportProgressCard.qml" line="10"/>

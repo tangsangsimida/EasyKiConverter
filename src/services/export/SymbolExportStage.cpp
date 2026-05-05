@@ -1,6 +1,7 @@
 #include "SymbolExportStage.h"
 
 #include "DebugExportHelper.h"
+#include "KiCadLibraryTableManager.h"
 #include "core/kicad/ExporterSymbol.h"
 #include "models/ComponentData.h"
 
@@ -8,9 +9,10 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QMutexLocker>
 #include <QThread>
-#include <QtConcurrent>
+#include <QThreadPool>
 
 namespace EasyKiConverter {
 
@@ -105,6 +107,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
     // 1. 收集所有有效的符号数据
     QList<SymbolData> symbolList;
+    QStringList collectedIds;
     QStringList failedIds;
     int successCount = 0;
     int skippedCount = 0;
@@ -119,7 +122,6 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         if (it == cachedData.end() || !it.value()) {
             qWarning() << "SymbolExportStage: No data for component:" << componentId;
             failedIds.append(componentId);
-            // 发射 itemStatusChanged 信号通知 ViewModel
             ExportItemStatus status;
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = "No component data";
@@ -129,11 +131,9 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
         QSharedPointer<ComponentData> data = it.value();
 
-        // 检查符号数据
         if (!data->symbolData()) {
             qWarning() << "SymbolExportStage: No symbol data for component:" << componentId;
             failedIds.append(componentId);
-            // 发射 itemStatusChanged 信号通知 ViewModel
             ExportItemStatus status;
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = "No symbol data";
@@ -141,17 +141,16 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
             continue;
         }
 
-        // 添加到符号列表
         symbolList.append(*data->symbolData());
+        collectedIds.append(componentId);
         successCount++;
 
-        // 发射 itemStatusChanged 信号通知 ViewModel
         ExportItemStatus status;
         status.status = ExportItemStatus::Status::Success;
         emit itemStatusChanged(componentId, status);
 
         if (m_options.debugMode) {
-            QtConcurrent::run([componentId, data, outputPath = m_options.outputPath]() {
+            QThreadPool::globalInstance()->start([componentId, data, outputPath = m_options.outputPath]() {
                 DebugExportHelper::exportDebugData(componentId, data, outputPath);
             });
         }
@@ -161,6 +160,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
     if (m_cancelled.load()) {
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, componentIds.size(), 0);
         return;
     }
@@ -168,9 +168,31 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     if (symbolList.isEmpty()) {
         qWarning() << "SymbolExportStage: No valid symbols to export";
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, componentIds.size(), 0);
         return;
     }
+
+    const auto failCollectedSymbols = [this, &collectedIds, &failedIds, &successCount](const QString& errorMessage) {
+        for (const QString& componentId : collectedIds) {
+            failedIds.append(componentId);
+            ExportItemStatus status;
+            status.status = ExportItemStatus::Status::Failed;
+            status.errorMessage = errorMessage;
+            status.endTime = QDateTime::currentDateTime();
+            emit itemStatusChanged(componentId, status);
+        }
+        successCount = 0;
+    };
+
+    const auto abortExport = [&](const QString& errorMessage) {
+        qCritical() << "SymbolExportStage:" << errorMessage;
+        failCollectedSymbols(errorMessage);
+        m_tempManager.rollbackAll();
+        m_isExporting.store(false);
+        m_isRunning.store(false);
+        emit completed(0, failedIds.size(), 0);
+    };
 
     // 2. 构建输出路径
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
@@ -184,9 +206,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     // 3. 确保输出目录存在
     QDir dir;
     if (!dir.mkpath(outputDir)) {
-        qCritical() << "SymbolExportStage: Failed to create output directory:" << outputDir;
-        m_isExporting.store(false);
-        emit completed(0, symbolList.size(), 0);
+        abortExport(QStringLiteral("Failed to create output directory: %1").arg(outputDir));
         return;
     }
 
@@ -195,59 +215,98 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     // 4. 创建临时文件并导出
     QString tempPath = m_tempManager.createSymbolTempPath(libName, QStringLiteral(".kicad_sym"));
     if (tempPath.isEmpty()) {
-        qCritical() << "SymbolExportStage: Failed to create temp file path";
-        m_isExporting.store(false);
-        emit completed(0, symbolList.size(), 0);
+        abortExport(QStringLiteral("Failed to create temp file path"));
         return;
     }
 
     // 追加/更新到现有符号库时，先把最终文件复制到临时文件，再在临时文件上执行 merge。
     if (finalFileExists && (!m_options.overwriteExistingFiles || m_options.updateMode)) {
-        QFile::remove(tempPath);
-        if (!QFile::copy(finalPath, tempPath)) {
-            qCritical() << "SymbolExportStage: Failed to copy existing symbol library to temp:" << finalPath << "->"
-                        << tempPath;
-            m_tempManager.rollbackAll();
-            m_isExporting.store(false);
-            emit completed(0, symbolList.size(), 0);
+        const QString tempDirPath = QFileInfo(tempPath).absolutePath();
+        if (!QDir().mkpath(tempDirPath)) {
+            abortExport(QStringLiteral("Failed to create temp symbol library directory: %1").arg(tempDirPath));
             return;
+        }
+
+        QFile tempFile(tempPath);
+        if (tempFile.exists() && !tempFile.remove()) {
+            abortExport(QStringLiteral("Failed to remove stale temp symbol library: %1").arg(tempPath));
+            return;
+        }
+
+        QFile sourceFile(finalPath);
+        if (!sourceFile.open(QIODevice::ReadOnly)) {
+            if (!QFileInfo::exists(finalPath)) {
+                qWarning()
+                    << "SymbolExportStage: Existing symbol library disappeared before copy, creating new library:"
+                    << finalPath;
+            } else {
+                abortExport(QStringLiteral("Failed to open existing symbol library for copy: %1").arg(finalPath));
+                return;
+            }
+        } else if (!tempFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            abortExport(QStringLiteral("Failed to create temp symbol library for copy: %1").arg(tempPath));
+            return;
+        } else {
+            constexpr qint64 kChunkSize = 65536;
+            char buf[kChunkSize];
+            bool copyError = false;
+            while (!sourceFile.atEnd()) {
+                qint64 bytesRead = sourceFile.read(buf, kChunkSize);
+                if (bytesRead < 0) {
+                    abortExport(QStringLiteral("Failed to read existing symbol library: %1").arg(finalPath));
+                    copyError = true;
+                    break;
+                }
+                if (tempFile.write(buf, bytesRead) != bytesRead) {
+                    abortExport(QStringLiteral("Failed to write temp symbol library copy: %1").arg(tempPath));
+                    copyError = true;
+                    break;
+                }
+            }
+            if (copyError) {
+                return;
+            }
+            tempFile.close();
         }
     }
 
     qDebug() << "SymbolExportStage: Exporting" << symbolList.size() << "symbols to temp:" << tempPath;
 
-    // 6. 执行符号库导出
+    // 5. 执行符号库导出
     bool exportSuccess = false;
+    QString libraryDescription = m_options.symbolLibraryDescription;
     {
         ExporterSymbol exporter;
         bool appendMode = !m_options.overwriteExistingFiles;
-        exportSuccess = exporter.exportSymbolLibrary(symbolList, libName, tempPath, appendMode, m_options.updateMode);
+        exportSuccess = exporter.exportSymbolLibrary(
+            symbolList, libName, tempPath, appendMode, m_options.updateMode, libraryDescription);
     }
 
     if (m_cancelled.load()) {
         m_tempManager.rollbackAll();
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, symbolList.size(), 0);
         return;
     }
 
     if (!exportSuccess) {
-        qCritical() << "SymbolExportStage: Failed to export symbol library";
-        m_tempManager.rollbackAll();
-        m_isExporting.store(false);
-        emit completed(0, symbolList.size(), 0);
+        abortExport(QStringLiteral("Failed to export symbol library"));
         return;
     }
 
-    // 7. 提交临时文件（重命名为最终路径）
-    if (m_tempManager.commit(finalPath)) {
-        qDebug() << "SymbolExportStage: Successfully exported to:" << finalPath;
-    } else {
-        qCritical() << "SymbolExportStage: Failed to commit temp file";
-        m_tempManager.rollbackAll();
-        m_isExporting.store(false);
-        emit completed(0, symbolList.size(), 0);
+    // 6. 提交临时文件（重命名为最终路径）
+    if (!m_tempManager.commit(finalPath)) {
+        abortExport(QStringLiteral("Failed to commit temp file"));
         return;
+    }
+    qDebug() << "SymbolExportStage: Successfully exported to:" << finalPath;
+
+    // 7. 生成 sym-lib-table 文件（如果提供了库描述）
+    if (!libraryDescription.isEmpty()) {
+        ExporterSymbol symTableExporter;
+        symTableExporter.generateSymLibTable(libName, finalPath, outputDir, libraryDescription);
+        KiCadLibraryTableManager::registerSymbolLibrary(outputDir, libName, finalPath, libraryDescription);
     }
 
     // 8. 清理临时目录

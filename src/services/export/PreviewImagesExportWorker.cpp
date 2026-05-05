@@ -171,7 +171,7 @@ void PreviewImagesExportWorker::run() {
         qDebug() << "PreviewImagesExportWorker: Successfully exported all previews for" << m_componentId;
 
         if (m_options.debugMode) {
-            QtConcurrent::run([componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
+            (void)QtConcurrent::run([componentId = m_componentId, data = m_data, outputPath = m_options.outputPath]() {
                 DebugExportHelper::exportDebugData(componentId, data, outputPath);
             });
         }

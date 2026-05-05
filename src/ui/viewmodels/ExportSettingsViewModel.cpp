@@ -33,6 +33,11 @@ ExportSettingsViewModel::ExportSettingsViewModel(ParallelExportService* exportSe
     , m_weakNetworkSupport(false)
     , m_exportMode(0)
     , m_debugMode(false)
+    , m_exportSymbolDescription(true)
+    , m_exportFootprintDescription(true)
+    , m_symbolLibraryDescription("")
+    , m_footprintLibraryDescription("")
+    , m_footprintLibraryKeywords("")
     , m_isExporting(false)
     , m_status("Ready") {
     // 初始化时检查调试模式（命令行参数优先，环境变量向后兼容）
@@ -176,6 +181,41 @@ void ExportSettingsViewModel::setDebugMode(bool enabled) {
     }
 }
 
+void ExportSettingsViewModel::setExportSymbolDescription(bool enabled) {
+    if (m_exportSymbolDescription != enabled) {
+        m_exportSymbolDescription = enabled;
+        emit exportSymbolDescriptionChanged();
+    }
+}
+
+void ExportSettingsViewModel::setExportFootprintDescription(bool enabled) {
+    if (m_exportFootprintDescription != enabled) {
+        m_exportFootprintDescription = enabled;
+        emit exportFootprintDescriptionChanged();
+    }
+}
+
+void ExportSettingsViewModel::setSymbolLibraryDescription(const QString& desc) {
+    if (m_symbolLibraryDescription != desc) {
+        m_symbolLibraryDescription = desc;
+        emit symbolLibraryDescriptionChanged();
+    }
+}
+
+void ExportSettingsViewModel::setFootprintLibraryDescription(const QString& desc) {
+    if (m_footprintLibraryDescription != desc) {
+        m_footprintLibraryDescription = desc;
+        emit footprintLibraryDescriptionChanged();
+    }
+}
+
+void ExportSettingsViewModel::setFootprintLibraryKeywords(const QString& keywords) {
+    if (m_footprintLibraryKeywords != keywords) {
+        m_footprintLibraryKeywords = keywords;
+        emit footprintLibraryKeywordsChanged();
+    }
+}
+
 void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
     qDebug() << "Starting export for" << componentIds.size() << "components";
 
@@ -255,6 +295,11 @@ void ExportSettingsViewModel::buildExportOptions() {
     options.weakNetworkSupport = m_weakNetworkSupport;
     options.updateMode = (m_exportMode == 1);
     options.debugMode = m_debugMode;
+    options.exportSymbolDescription = m_exportSymbolDescription;
+    options.exportFootprintDescription = m_exportFootprintDescription;
+    options.symbolLibraryDescription = m_symbolLibraryDescription;
+    options.footprintLibraryDescription = m_footprintLibraryDescription;
+    options.footprintLibraryKeywords = m_footprintLibraryKeywords;
 
     qInfo() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
             << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
@@ -262,7 +307,10 @@ void ExportSettingsViewModel::buildExportOptions() {
             << "(1=WRL, 2=STEP, 3=Both)" << "Preview Images:" << options.exportPreviewImages
             << "Datasheet:" << options.exportDatasheet
             << "Client Weak Network Adaptation:" << options.weakNetworkSupport << "Update Mode:" << options.updateMode
-            << "Debug Mode:" << options.debugMode;
+            << "Debug Mode:" << options.debugMode << "Symbol Description:" << options.exportSymbolDescription
+            << "Footprint Description:" << options.exportFootprintDescription
+            << "Symbol Library Description:" << options.symbolLibraryDescription
+            << "Footprint Library Description:" << options.footprintLibraryDescription;
 
     m_exportService->setOptions(options);
     m_exportService->setOutputPath(absoluteOutputPath);
@@ -382,6 +430,13 @@ void ExportSettingsViewModel::loadFromConfig() {
         m_debugMode = m_configService->getDebugMode();
     }
 
+    // 新字段使用默认值（ConfigService 暂未支持持久化）
+    m_exportSymbolDescription = true;
+    m_exportFootprintDescription = true;
+    m_symbolLibraryDescription.clear();
+    m_footprintLibraryDescription.clear();
+    m_footprintLibraryKeywords.clear();
+
     emit outputPathChanged();
     emit libNameChanged();
     emit exportSymbolChanged();
@@ -393,6 +448,11 @@ void ExportSettingsViewModel::loadFromConfig() {
     emit overwriteExistingFilesChanged();
     emit weakNetworkSupportChanged();
     emit debugModeChanged();
+    emit exportSymbolDescriptionChanged();
+    emit exportFootprintDescriptionChanged();
+    emit symbolLibraryDescriptionChanged();
+    emit footprintLibraryDescriptionChanged();
+    emit footprintLibraryKeywordsChanged();
 }
 
 void ExportSettingsViewModel::saveConfig() {
@@ -412,6 +472,11 @@ void ExportSettingsViewModel::resetConfig() {
     m_weakNetworkSupport = false;
     m_exportMode = 0;
     m_debugMode = false;
+    m_exportSymbolDescription = true;
+    m_exportFootprintDescription = true;
+    m_symbolLibraryDescription.clear();
+    m_footprintLibraryDescription.clear();
+    m_footprintLibraryKeywords.clear();
 
     m_configService->setOutputPath(m_outputPath);
     m_configService->setLibName(m_libName);
@@ -437,6 +502,11 @@ void ExportSettingsViewModel::resetConfig() {
     emit weakNetworkSupportChanged();
     emit exportModeChanged();
     emit debugModeChanged();
+    emit exportSymbolDescriptionChanged();
+    emit exportFootprintDescriptionChanged();
+    emit symbolLibraryDescriptionChanged();
+    emit footprintLibraryDescriptionChanged();
+    emit footprintLibraryKeywordsChanged();
 }
 
 }  // namespace EasyKiConverter

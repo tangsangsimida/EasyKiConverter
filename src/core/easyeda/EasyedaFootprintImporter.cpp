@@ -186,6 +186,43 @@ QSharedPointer<FootprintData> EasyedaFootprintImporter::importFootprintData(cons
     return footprintData;
 }
 
+namespace {
+bool isAbsoluteModelOrigin(double originX, double originY, const FootprintBBox& bbox) {
+    if (bbox.width <= 0.0 || bbox.height <= 0.0) {
+        return qAbs(originX) >= 1000.0 || qAbs(originY) >= 1000.0;
+    }
+
+    const double margin = qMax(bbox.width, bbox.height) * 2.0;
+    return originX >= bbox.x - margin && originX <= bbox.x + bbox.width + margin && originY >= bbox.y - margin &&
+           originY <= bbox.y + bbox.height + margin;
+}
+
+bool isRelativeModelOrigin(double originX, double originY, const FootprintBBox& bbox) {
+    const double limit = bbox.width > 0.0 && bbox.height > 0.0 ? qMax(bbox.width, bbox.height) * 2.0 : 1000.0;
+    return qAbs(originX) <= limit && qAbs(originY) <= limit;
+}
+
+Model3DBase normalizeModelOrigin(double originX, double originY, double originZ, const FootprintBBox& bbox) {
+    Model3DBase translation;
+    const double bboxCenterX = bbox.x + bbox.width / 2.0;
+    const double bboxCenterY = bbox.y + bbox.height / 2.0;
+
+    if (isAbsoluteModelOrigin(originX, originY, bbox)) {
+        translation.x = originX;
+        translation.y = originY;
+    } else if (isRelativeModelOrigin(originX, originY, bbox)) {
+        translation.x = bboxCenterX + originX;
+        translation.y = bboxCenterY + originY;
+    } else {
+        translation.x = bboxCenterX;
+        translation.y = bboxCenterY;
+    }
+
+    translation.z = originZ;
+    return translation;
+}
+}  // namespace
+
 FootprintPad EasyedaFootprintImporter::importPadData(const QString& padData) {
     FootprintPad pad;
     QStringList fields = EasyedaUtils::parseDataString(padData);
@@ -373,22 +410,11 @@ void EasyedaFootprintImporter::importSvgNodeData(const QString& svgNodeData,
                 QString c_origin = attrs["c_origin"].toString();
                 QStringList originParts = c_origin.split(",");
                 if (originParts.size() >= 2) {
-                    Model3DBase translation;
-                    double originX = originParts[0].toDouble();
-                    double originY = originParts[1].toDouble();
-
-                    if (qAbs(originX) < 1000 && qAbs(originY) < 1000) {
-                        double bboxCenterX = footprintData->bbox().x + footprintData->bbox().width / 2.0;
-                        double bboxCenterY = footprintData->bbox().y + footprintData->bbox().height / 2.0;
-
-                        translation.x = bboxCenterX;
-                        translation.y = bboxCenterY;
-                    } else {
-                        translation.x = originX;
-                        translation.y = originY;
-                    }
-
-                    translation.z = attrs.contains("z") ? attrs["z"].toDouble() : 0.0;
+                    const double originX = originParts[0].toDouble();
+                    const double originY = originParts[1].toDouble();
+                    const double originZ = attrs.contains("z") ? attrs["z"].toDouble() : 0.0;
+                    const Model3DBase translation =
+                        normalizeModelOrigin(originX, originY, originZ, footprintData->bbox());
                     model3D.setTranslation(translation);
                 }
             }
@@ -443,10 +469,10 @@ void EasyedaFootprintImporter::importSvgNodeData(const QString& svgNodeData,
             QString c_origin = attrs["c_origin"].toString();
             QStringList originParts = c_origin.split(",");
             if (originParts.size() >= 2) {
-                Model3DBase translation;
-                translation.x = originParts[0].toDouble();
-                translation.y = originParts[1].toDouble();
-                translation.z = attrs.contains("z") ? attrs["z"].toDouble() : 0.0;
+                const double originX = originParts[0].toDouble();
+                const double originY = originParts[1].toDouble();
+                const double originZ = attrs.contains("z") ? attrs["z"].toDouble() : 0.0;
+                const Model3DBase translation = normalizeModelOrigin(originX, originY, originZ, footprintData->bbox());
                 model3D.setTranslation(translation);
             }
         }

@@ -58,22 +58,7 @@ NetworkClient::NetworkClient() {
 }
 
 NetworkClient::~NetworkClient() {
-    QList<QPointer<AsyncNetworkRequest>> pendingRequests;
-    {
-        QMutexLocker locker(&m_asyncQueueMutex);
-        for (const PendingAsyncRequest& pending : std::as_const(m_pendingAsyncRequests)) {
-            pendingRequests.append(pending.request);
-        }
-        m_pendingAsyncRequests.clear();
-    }
-
-    for (const QPointer<AsyncNetworkRequest>& request : pendingRequests) {
-        if (!request) {
-            continue;
-        }
-        request->cancel();
-        QMetaObject::invokeMethod(request, &QObject::deleteLater, Qt::QueuedConnection);
-    }
+    cancelAllRequests();
 
     if (m_asyncNetworkManager) {
         QMetaObject::invokeMethod(m_asyncNetworkManager, &QObject::deleteLater, Qt::QueuedConnection);
@@ -256,6 +241,7 @@ AsyncNetworkRequest* NetworkClient::enqueueAsyncRequest(const QUrl& url,
         pending.sequence = m_asyncSequence++;
         pending.enqueuedAtMs = QDateTime::currentMSecsSinceEpoch();
         m_pendingAsyncRequests.append(pending);
+        m_liveAsyncRequests.append(request);
         updateStatsForEnqueuedRequest(resourceType);
     }
 
@@ -263,8 +249,12 @@ AsyncNetworkRequest* NetworkClient::enqueueAsyncRequest(const QUrl& url,
         request,
         &AsyncNetworkRequest::finished,
         this,
-        [this, resourceType](const NetworkResult& result) {
+        [this, request, resourceType](const NetworkResult& result) {
             updateStatsForCompletedRequest(resourceType, result);
+            {
+                QMutexLocker locker(&m_asyncQueueMutex);
+                m_liveAsyncRequests.removeAll(request);
+            }
             onAsyncRequestFinished(resourceType);
         },
         Qt::QueuedConnection);
@@ -354,6 +344,32 @@ void NetworkClient::pumpAsyncQueue() {
                 }
             },
             Qt::QueuedConnection);
+    }
+}
+
+void NetworkClient::cancelAllRequests() {
+    QList<QPointer<AsyncNetworkRequest>> requestsToCancel;
+    {
+        QMutexLocker locker(&m_asyncQueueMutex);
+        requestsToCancel = m_liveAsyncRequests;
+        m_pendingAsyncRequests.clear();
+        m_asyncPumpScheduled = false;
+    }
+
+    for (const QPointer<AsyncNetworkRequest>& request : std::as_const(requestsToCancel)) {
+        if (!request || request->isFinished()) {
+            continue;
+        }
+
+        if (request->thread() == QThread::currentThread()) {
+            request->cancel();
+        } else if (QThread::currentThread() == &m_networkThread) {
+            request->cancel();
+        } else {
+            const Qt::ConnectionType connectionType =
+                m_networkThread.isRunning() ? Qt::BlockingQueuedConnection : Qt::QueuedConnection;
+            QMetaObject::invokeMethod(request, &AsyncNetworkRequest::cancel, connectionType);
+        }
     }
 }
 
