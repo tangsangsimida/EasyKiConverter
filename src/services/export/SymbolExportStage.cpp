@@ -106,6 +106,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
     // 1. 收集所有有效的符号数据
     QList<SymbolData> symbolList;
+    QStringList collectedIds;
     QStringList failedIds;
     int successCount = 0;
     int skippedCount = 0;
@@ -144,6 +145,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
         // 添加到符号列表
         symbolList.append(*data->symbolData());
+        collectedIds.append(componentId);
         successCount++;
 
         // 发射 itemStatusChanged 信号通知 ViewModel
@@ -162,6 +164,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
     if (m_cancelled.load()) {
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, componentIds.size(), 0);
         return;
     }
@@ -169,9 +172,22 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     if (symbolList.isEmpty()) {
         qWarning() << "SymbolExportStage: No valid symbols to export";
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, componentIds.size(), 0);
         return;
     }
+
+    const auto failCollectedSymbols = [this, &collectedIds, &failedIds, &successCount](const QString& errorMessage) {
+        for (const QString& componentId : collectedIds) {
+            failedIds.append(componentId);
+            ExportItemStatus status;
+            status.status = ExportItemStatus::Status::Failed;
+            status.errorMessage = errorMessage;
+            status.endTime = QDateTime::currentDateTime();
+            emit itemStatusChanged(componentId, status);
+        }
+        successCount = 0;
+    };
 
     // 2. 构建输出路径
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
@@ -187,6 +203,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     if (!dir.mkpath(outputDir)) {
         qCritical() << "SymbolExportStage: Failed to create output directory:" << outputDir;
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, symbolList.size(), 0);
         return;
     }
@@ -198,19 +215,35 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     if (tempPath.isEmpty()) {
         qCritical() << "SymbolExportStage: Failed to create temp file path";
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, symbolList.size(), 0);
         return;
     }
 
     // 追加/更新到现有符号库时，先把最终文件复制到临时文件，再在临时文件上执行 merge。
     if (finalFileExists && (!m_options.overwriteExistingFiles || m_options.updateMode)) {
-        QFile::remove(tempPath);
-        if (!QFile::copy(finalPath, tempPath)) {
-            qCritical() << "SymbolExportStage: Failed to copy existing symbol library to temp:" << finalPath << "->"
-                        << tempPath;
+        QFile tempFile(tempPath);
+        if (tempFile.exists() && !tempFile.remove()) {
+            const QString errorMessage = QStringLiteral("Failed to remove stale temp symbol library: %1").arg(tempPath);
+            qCritical() << "SymbolExportStage:" << errorMessage << "error:" << tempFile.errorString();
+            failCollectedSymbols(errorMessage);
             m_tempManager.rollbackAll();
             m_isExporting.store(false);
-            emit completed(0, symbolList.size(), 0);
+            m_isRunning.store(false);
+            emit completed(0, failedIds.size(), 0);
+            return;
+        }
+
+        QFile sourceFile(finalPath);
+        if (!sourceFile.copy(tempPath)) {
+            const QString errorMessage =
+                QStringLiteral("Failed to copy existing symbol library to temp: %1 -> %2").arg(finalPath, tempPath);
+            qCritical() << "SymbolExportStage:" << errorMessage << "error:" << sourceFile.errorString();
+            failCollectedSymbols(errorMessage);
+            m_tempManager.rollbackAll();
+            m_isExporting.store(false);
+            m_isRunning.store(false);
+            emit completed(0, failedIds.size(), 0);
             return;
         }
     }
@@ -219,7 +252,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
     // 6. 执行符号库导出
     bool exportSuccess = false;
-    QString libraryDescription = m_options.exportSymbolDescription ? m_options.symbolLibraryDescription : QString();
+    QString libraryDescription = m_options.symbolLibraryDescription;
     {
         ExporterSymbol exporter;
         bool appendMode = !m_options.overwriteExistingFiles;
@@ -230,15 +263,19 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     if (m_cancelled.load()) {
         m_tempManager.rollbackAll();
         m_isExporting.store(false);
+        m_isRunning.store(false);
         emit completed(0, symbolList.size(), 0);
         return;
     }
 
     if (!exportSuccess) {
-        qCritical() << "SymbolExportStage: Failed to export symbol library";
+        const QString errorMessage = QStringLiteral("Failed to export symbol library");
+        qCritical() << "SymbolExportStage:" << errorMessage;
+        failCollectedSymbols(errorMessage);
         m_tempManager.rollbackAll();
         m_isExporting.store(false);
-        emit completed(0, symbolList.size(), 0);
+        m_isRunning.store(false);
+        emit completed(0, failedIds.size(), 0);
         return;
     }
 
@@ -246,10 +283,13 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     if (m_tempManager.commit(finalPath)) {
         qDebug() << "SymbolExportStage: Successfully exported to:" << finalPath;
     } else {
-        qCritical() << "SymbolExportStage: Failed to commit temp file";
+        const QString errorMessage = QStringLiteral("Failed to commit temp file");
+        qCritical() << "SymbolExportStage:" << errorMessage;
+        failCollectedSymbols(errorMessage);
         m_tempManager.rollbackAll();
         m_isExporting.store(false);
-        emit completed(0, symbolList.size(), 0);
+        m_isRunning.store(false);
+        emit completed(0, failedIds.size(), 0);
         return;
     }
 

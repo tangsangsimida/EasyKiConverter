@@ -186,7 +186,10 @@ Rectangle {
                             return "";
                         if (!itemData.previewImages || itemData.previewImages.length === 0)
                             return "";
-                        return "data:image/jpeg;base64," + itemData.previewImages[0];
+                        var imageData = itemData.previewImages[0];
+                        if (!imageData || imageData === "")
+                            return "";
+                        return "data:image/jpeg;base64," + imageData;
                     }
                     fillMode: Image.PreserveAspectFit
                     cache: true

@@ -511,7 +511,7 @@ Card {
                 }
                 font.pixelSize: AppStyle.fontSizes.sm
                 ToolTip.visible: hovered
-                ToolTip.text: qsTranslate("MainWindow", "保留已存在的元器件，只追加新的元器件")
+                ToolTip.text: qsTranslate("MainWindow", "保留已经存在的元器件数据，并追加新的元器件")
                 indicator: Rectangle {
                     implicitWidth: AppStyle.sizes.radioButton
                     implicitHeight: AppStyle.sizes.radioButton
@@ -558,7 +558,7 @@ Card {
                 }
                 font.pixelSize: AppStyle.fontSizes.sm
                 ToolTip.visible: hovered
-                ToolTip.text: qsTranslate("MainWindow", "覆盖已存在的元器件")
+                ToolTip.text: qsTranslate("MainWindow", "覆盖已经存在的元器件数据，并追加新的元器件")
                 indicator: Rectangle {
                     implicitWidth: AppStyle.sizes.radioButton
                     implicitHeight: AppStyle.sizes.radioButton

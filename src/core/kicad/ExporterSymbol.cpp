@@ -78,7 +78,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         int index = 0;
         for (const SymbolData& symbol : symbols) {
             qDebug() << "Exporting symbol" << (++index) << "of" << symbols.count() << ":" << symbol.info().name;
-            out << generateSymbolContent(symbol, libName);
+            out << generateSymbolContent(symbol, libName, libraryDescription);
         }
 
         // 生成尾部
@@ -358,7 +358,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     // 再导出新符号和被覆盖的符号
     for (const SymbolData& symbol : symbolsToExport) {
         qDebug() << "Exporting symbol" << (++index) << "of" << symbolsToExport.count() << ":" << symbol.info().name;
-        out << generateSymbolContent(symbol, libName);
+        out << generateSymbolContent(symbol, libName, libraryDescription);
     }
 
     // 生成尾部
@@ -381,7 +381,9 @@ QString ExporterSymbol::generateHeader(const QString& libName) const {
     return header;
 }
 
-QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, const QString& libName) const {
+QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData,
+                                              const QString& libName,
+                                              const QString& libraryDescription) const {
     QString content;
 
     // V6 格式 - 主符号定义（包含属性）
@@ -596,12 +598,13 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += "    )\n";
     }
 
-    // ki_description 属性（仅使用元器件自身描述，库描述写入 sym-lib-table）
-    if (!symbolData.info().description.isEmpty()) {
+    // ki_description 属性 - 用户输入；留空时不写入
+    const QString symbolDescription = libraryDescription.trimmed();
+    if (!symbolDescription.isEmpty()) {
         fieldOffset += 2.54;
         content += QString("    (property\n");
         content += QString("      \"ki_description\"\n");
-        content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().description));
+        content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolDescription));
         content += "      (id 6)\n";
         content +=
             QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);

@@ -440,8 +440,8 @@
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="444"/>
-        <source>保留已存在的元器件，只追加新的元器件</source>
-        <translation>保留已存在的元器件，只追加新的元器件</translation>
+        <source>保留已经存在的元器件数据，并追加新的元器件</source>
+        <translation>保留已经存在的元器件数据，并追加新的元器件</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="474"/>
@@ -456,8 +456,8 @@
     <message>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="493"/>
         <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="523"/>
-        <source>覆盖已存在的元器件</source>
-        <translation>覆盖已存在的元器件</translation>
+        <source>覆盖已经存在的元器件数据，并追加新的元器件</source>
+        <translation>覆盖已经存在的元器件数据，并追加新的元器件</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/ExportProgressCard.qml" line="10"/>

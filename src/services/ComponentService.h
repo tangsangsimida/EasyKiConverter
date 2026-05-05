@@ -339,7 +339,7 @@ private:
      * @param componentId 元件ID
      * @param error 错误信息
      */
-    void handleFetchErrorForComponent(const QString& componentId, const QString& error);
+    void emitFetchErrorAndClearState(const QString& componentId, const QString& error);
 
     /**
      * @brief 处理并行数据收集完成

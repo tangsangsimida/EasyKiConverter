@@ -243,7 +243,7 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
         }
 
         if (!result.success) {
-            emit fetchError(result.componentId, result.errorMessage);
+            emitFetchErrorAndClearState(result.componentId, result.errorMessage);
             return;
         }
 
@@ -317,6 +317,13 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
             }
         }
 
+        if (!result.symbolData || !result.footprintData) {
+            qWarning() << "Cache load incomplete for" << normalizedId << "- symbol:" << (result.symbolData != nullptr)
+                       << "footprint:" << (result.footprintData != nullptr);
+            result.success = false;
+            return result;
+        }
+
         result.cachedData = cachedData;
         result.success = true;
 
@@ -369,7 +376,7 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
                 }
 
                 if (!result.success) {
-                    emit fetchError(result.componentId, result.errorMessage);
+                    emitFetchErrorAndClearState(result.componentId, result.errorMessage);
                     return;
                 }
 
@@ -777,7 +784,7 @@ void ComponentService::handleCadDataFetched(const QString& componentId, const QJ
         watcher->deleteLater();
 
         if (!parsed.success) {
-            emit fetchError(parsed.componentId, parsed.errorMessage);
+            emitFetchErrorAndClearState(parsed.componentId, parsed.errorMessage);
             return;
         }
 
@@ -806,15 +813,7 @@ void ComponentService::handleCadDataFetched(const QString& componentId, const QJ
 }
 
 void ComponentService::handleFetchError(const QString& errorMessage) {
-    qDebug() << "Fetch error:" << errorMessage;
-
-    // 如果在并行模式下，处理并行错误
-    if (m_parallelContext != nullptr) {
-        handleParallelFetchError(m_currentComponentId, errorMessage);
-    }
-
-    // 最后发送信号，防止信号连接的槽函数删除了本对象导致后续访问成员变量崩溃
-    emit fetchError(m_currentComponentId, errorMessage);
+    emitFetchErrorAndClearState(m_currentComponentId, errorMessage);
 }
 
 void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QString& error) {
@@ -833,14 +832,7 @@ void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QSt
         }
     }
 
-    qDebug() << "Fetch error for component:" << componentId << "Error:" << error;
-
-    // 如果在并行模式下，处理并行错误
-    if (m_parallelContext != nullptr) {
-        handleParallelFetchError(componentId, error);
-    }
-
-    emit fetchError(componentId, error);
+    emitFetchErrorAndClearState(componentId, error);
 }
 
 void ComponentService::setOutputPath(const QString& path) {
@@ -1020,11 +1012,24 @@ void ComponentService::cancelRequestForComponent(const QString& componentId) {
     qDebug() << "ComponentService: Request cancelled for component" << normalizedId;
 }
 
-void ComponentService::handleFetchErrorForComponent(const QString& componentId, const QString& error) {
+void ComponentService::emitFetchErrorAndClearState(const QString& componentId, const QString& error) {
     qWarning() << "Fetch error for component" << componentId << ":" << error;
-    if (m_parallelContext != nullptr) {
-        handleParallelFetchError(componentId, error);
+
+    {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        m_fetchingComponents.remove(componentId);
     }
+    {
+        QMutexLocker locker(&m_componentCacheMutex);
+        const auto it = m_componentCache.find(componentId);
+        if (it != m_componentCache.end() && !it.value().isValid()) {
+            m_componentCache.erase(it);
+        }
+    }
+
+    handleParallelFetchError(componentId, error);
+
+    // fetchError 必须最后发送，因为连接的槽函数可能会删除本对象
     emit fetchError(componentId, error);
 }
 

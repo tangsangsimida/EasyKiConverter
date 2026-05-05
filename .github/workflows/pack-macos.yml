@@ -38,7 +38,7 @@ jobs:
               arch: arm64
             }
           - {
-              os: macos-15,
+              os: macos-15-intel,
               arch: intel
             }
     env:
@@ -97,13 +97,13 @@ jobs:
             cp resources/icons/app_icon.icns ${APP_NAME}.app/Contents/Resources/AppIcon.icns
           fi
 
-          cat > ${APP_NAME}.app/Contents/Info.plist << 'EOF'
+          cat > ${APP_NAME}.app/Contents/Info.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
               <key>CFBundleExecutable</key>
-              <string>EasyKiconverter_Cpp_Version</string>
+              <string>easykiconverter</string>
               <key>CFBundleIdentifier</key>
               <string>com.tangsangsimida.EasyKiConverter</string>
               <key>CFBundleName</key>
@@ -137,7 +137,7 @@ jobs:
       - name: 'SHA256Sum of DMG'
         run: |
           cd "$GITHUB_WORKSPACE/" || { >&2 echo "Cannot cd to '$GITHUB_WORKSPACE/'!"; exit 11 ; }
-          shasum ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg | tee ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
+          shasum -a 256 ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg | tee ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
 
       - name: 'Artifact Upload'
         uses: actions/upload-artifact@v4
