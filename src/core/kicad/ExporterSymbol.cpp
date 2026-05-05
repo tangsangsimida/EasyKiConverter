@@ -78,7 +78,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         int index = 0;
         for (const SymbolData& symbol : symbols) {
             qDebug() << "Exporting symbol" << (++index) << "of" << symbols.count() << ":" << symbol.info().name;
-            out << generateSymbolContent(symbol, libName, libraryDescription);
+            out << generateSymbolContent(symbol, libName);
         }
 
         // 生成尾部
@@ -358,7 +358,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     // 再导出新符号和被覆盖的符号
     for (const SymbolData& symbol : symbolsToExport) {
         qDebug() << "Exporting symbol" << (++index) << "of" << symbolsToExport.count() << ":" << symbol.info().name;
-        out << generateSymbolContent(symbol, libName, libraryDescription);
+        out << generateSymbolContent(symbol, libName);
     }
 
     // 生成尾部
@@ -381,9 +381,7 @@ QString ExporterSymbol::generateHeader(const QString& libName) const {
     return header;
 }
 
-QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData,
-                                              const QString& libName,
-                                              const QString& libraryDescription) const {
+QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, const QString& libName) const {
     QString content;
 
     // V6 格式 - 主符号定义（包含属性）
@@ -598,8 +596,8 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData,
         content += "    )\n";
     }
 
-    // ki_description 属性 - 用户输入；留空时不写入
-    const QString symbolDescription = libraryDescription.trimmed();
+    // ki_description 属性 - 单个元器件描述；库描述写入 sym-lib-table
+    const QString symbolDescription = symbolData.info().description.trimmed();
     if (!symbolDescription.isEmpty()) {
         fieldOffset += 2.54;
         content += QString("    (property\n");

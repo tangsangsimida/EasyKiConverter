@@ -21,6 +21,7 @@ class ComponentListItemData : public QObject {
     Q_PROPERTY(QString componentId READ componentId CONSTANT)
     Q_PROPERTY(QString name READ name NOTIFY dataChanged)
     Q_PROPERTY(QString package READ package NOTIFY dataChanged)
+    Q_PROPERTY(QString description READ description NOTIFY dataChanged)
     Q_PROPERTY(QVariantList previewImages READ previewImages NOTIFY previewImagesChanged)
     Q_PROPERTY(int previewImageCount READ previewImageCount NOTIFY previewImagesChanged)
     Q_PROPERTY(bool isValid READ isValid NOTIFY validationStatusChanged)
@@ -52,6 +53,10 @@ public:
 
     QString package() const {
         return m_package;
+    }
+
+    QString description() const {
+        return m_description;
     }
 
     QVariantList previewImages() const;
@@ -95,6 +100,7 @@ public:
     // Setter 方法
     void setName(const QString& name);
     void setPackage(const QString& package);
+    void setDescription(const QString& description);
     void setNameSilent(const QString& name);
     void setPackageSilent(const QString& package);
     void addPreviewImage(const QImage& image);
@@ -134,10 +140,13 @@ signals:
 
 private:
     void updatePreviewImagesCache() const;
+    void applyDescriptionToComponentData();
 
     QString m_componentId;
     QString m_name;
     QString m_package;
+    QString m_description;
+    bool m_descriptionEdited = false;
     QList<QImage> m_previewImages;
     mutable QVariantList m_previewImagesCache;
     bool m_isValid;

@@ -954,6 +954,24 @@ void ComponentService::updateComponentCache(const QString& componentId, const Co
     qDebug() << "ComponentService: Updated cache for" << componentId;
 }
 
+void ComponentService::updateComponentDescription(const QString& componentId, const QString& description) {
+    QMutexLocker locker(&m_componentCacheMutex);
+    auto it = m_componentCache.find(componentId);
+    if (it == m_componentCache.end()) {
+        return;
+    }
+    if (it->symbolData()) {
+        SymbolInfo info = it->symbolData()->info();
+        info.description = description;
+        it->symbolData()->setInfo(info);
+    }
+    if (it->footprintData()) {
+        FootprintInfo info = it->footprintData()->info();
+        info.description = description;
+        it->footprintData()->setInfo(info);
+    }
+}
+
 void ComponentService::clearCache() {
     m_componentCache.clear();
 

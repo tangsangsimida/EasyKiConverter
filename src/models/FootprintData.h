@@ -17,6 +17,7 @@ struct FootprintInfo {
     QString name;
     QString type;
     QString model3DName;
+    QString description;
 
     // EasyEDA API 原始字段
     QString uuid;

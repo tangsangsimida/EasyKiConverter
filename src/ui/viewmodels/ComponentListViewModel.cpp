@@ -1249,6 +1249,18 @@ void ComponentListViewModel::dismissAttentionHints() {
     clearAttentionHints();
 }
 
+void ComponentListViewModel::updateComponentDescription(const QString& componentId, const QString& description) {
+    ComponentListItemData* item = findItemData(componentId);
+    if (!item) {
+        return;
+    }
+
+    item->setDescription(description);
+    if (m_service) {
+        m_service->updateComponentDescription(componentId, description);
+    }
+}
+
 void ComponentListViewModel::clearAttentionHints() {
     const bool changed = m_validationReadyHint || m_previewReadyHint || !m_pendingPreviewFetchIds.isEmpty();
     m_validationReadyHint = false;

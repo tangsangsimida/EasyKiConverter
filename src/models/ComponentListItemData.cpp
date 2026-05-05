@@ -29,6 +29,17 @@ void ComponentListItemData::setPackage(const QString& package) {
     }
 }
 
+void ComponentListItemData::setDescription(const QString& description) {
+    m_descriptionEdited = true;
+    if (m_description != description) {
+        m_description = description;
+        applyDescriptionToComponentData();
+        emit dataChanged();
+        return;
+    }
+    applyDescriptionToComponentData();
+}
+
 void ComponentListItemData::setNameSilent(const QString& name) {
     m_name = name;
 }
@@ -44,8 +55,29 @@ void ComponentListItemData::setComponentData(const QSharedPointer<ComponentData>
             setName(data->name());
         if (!data->package().isEmpty())
             setPackage(data->package());
+        if (!m_descriptionEdited) {
+            m_description = data->name();
+        }
+        applyDescriptionToComponentData();
     }
     emit dataChanged();
+}
+
+void ComponentListItemData::applyDescriptionToComponentData() {
+    if (!m_componentData) {
+        return;
+    }
+
+    if (m_componentData->symbolData()) {
+        SymbolInfo info = m_componentData->symbolData()->info();
+        info.description = m_description;
+        m_componentData->symbolData()->setInfo(info);
+    }
+    if (m_componentData->footprintData()) {
+        FootprintInfo info = m_componentData->footprintData()->info();
+        info.description = m_description;
+        m_componentData->footprintData()->setInfo(info);
+    }
 }
 
 void ComponentListItemData::setValid(bool valid) {

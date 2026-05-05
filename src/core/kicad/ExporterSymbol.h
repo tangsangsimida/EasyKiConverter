@@ -81,9 +81,7 @@ private:
      * @param libName 库名称（用于 Footprint 前缀
      * @return QString 符号内容
      */
-    QString generateSymbolContent(const SymbolData& symbolData,
-                                  const QString& libName,
-                                  const QString& libraryDescription = QString()) const;
+    QString generateSymbolContent(const SymbolData& symbolData, const QString& libName) const;
 
     /**
      * @brief 生成 KiCad 子符号（用于多部分符号）

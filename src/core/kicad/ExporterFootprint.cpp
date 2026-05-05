@@ -189,9 +189,10 @@ void ExporterFootprint::generateFootprintBaseContent(const FootprintData& footpr
     content += QString("(footprint easykiconverter:%1\n").arg(footprintData.info().name);
     content += "  (version 20221018)\n";
 
-    // 导出封装描述 (descr) - 用户输入
-    if (!libraryDescription.isEmpty()) {
-        content += QString("  (descr \"%1\")\n").arg(libraryDescription);
+    // 导出封装描述 (descr) - 单个元器件描述；库描述写入 fp-lib-table
+    const QString footprintDescription = footprintData.info().description.trimmed();
+    if (!footprintDescription.isEmpty()) {
+        content += QString("  (descr \"%1\")\n").arg(footprintDescription);
     }
 
     // 导出封装标签 (tags) - 用户输入

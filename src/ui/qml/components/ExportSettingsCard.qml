@@ -106,109 +106,80 @@ Card {
             }
         }
 
-        // ==================== 库元数据区块 ====================
+        // ==================== 库描述区块 ====================
         SectionHeader {
-            id: metadataHeader
-            sectionTitle: qsTranslate("MainWindow", "库元数据")
+            id: libraryDescriptionHeader
+            sectionTitle: qsTranslate("MainWindow", "库描述")
         }
 
         GridLayout {
             Layout.fillWidth: true
-            columns: 3
-            columnSpacing: AppStyle.spacing.md
-            rowSpacing: AppStyle.spacing.sm
-            // 符号库描述
+            columns: 2
+            columnSpacing: AppStyle.spacing.xl
+            rowSpacing: AppStyle.spacing.md
+
+            // 符号库描述：写入 sym-lib-table，不是单个符号描述
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: AppStyle.spacing.xs
                 Text {
-                    text: qsTranslate("MainWindow", "符号库描述")
-                    font.pixelSize: AppStyle.fontSizes.xs
-                    color: AppStyle.colors.textSecondary
+                    text: qsTranslate("MainWindow", "符号库描述 (sym-lib-table)")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    font.bold: true
+                    color: AppStyle.colors.textPrimary
                 }
                 TextField {
-                    id: symbolDescInput
+                    id: symbolLibraryDescriptionInput
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 32
+                    Layout.preferredHeight: 36
                     text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.symbolLibraryDescription : ""
                     onTextChanged: {
                         if (exportSettingsCard.exportSettingsController) {
                             exportSettingsCard.exportSettingsController.setSymbolLibraryDescription(text);
                         }
                     }
-                    placeholderText: qsTranslate("MainWindow", "符号库描述")
-                    font.pixelSize: AppStyle.fontSizes.xs
+                    placeholderText: qsTranslate("MainWindow", "输入符号库描述")
+                    font.pixelSize: AppStyle.fontSizes.sm
                     color: AppStyle.colors.textPrimary
                     placeholderTextColor: AppStyle.colors.textSecondary
                     background: Rectangle {
                         color: AppStyle.colors.surface
-                        border.color: symbolDescInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
-                        border.width: symbolDescInput.focus ? 2 : 1
-                        radius: AppStyle.radius.sm
+                        border.color: symbolLibraryDescriptionInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                        border.width: symbolLibraryDescriptionInput.focus ? 2 : 1
+                        radius: AppStyle.radius.md
                     }
                 }
             }
 
-            // 封装库描述
+            // 封装库描述：写入 fp-lib-table，不是单个封装描述
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: AppStyle.spacing.xs
                 Text {
-                    text: qsTranslate("MainWindow", "封装库描述")
-                    font.pixelSize: AppStyle.fontSizes.xs
-                    color: AppStyle.colors.textSecondary
+                    text: qsTranslate("MainWindow", "封装库描述 (fp-lib-table)")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    font.bold: true
+                    color: AppStyle.colors.textPrimary
                 }
                 TextField {
-                    id: footprintDescInput
+                    id: footprintLibraryDescriptionInput
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 32
+                    Layout.preferredHeight: 36
                     text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.footprintLibraryDescription : ""
                     onTextChanged: {
                         if (exportSettingsCard.exportSettingsController) {
                             exportSettingsCard.exportSettingsController.setFootprintLibraryDescription(text);
                         }
                     }
-                    placeholderText: qsTranslate("MainWindow", "封装库描述")
-                    font.pixelSize: AppStyle.fontSizes.xs
+                    placeholderText: qsTranslate("MainWindow", "输入封装库描述")
+                    font.pixelSize: AppStyle.fontSizes.sm
                     color: AppStyle.colors.textPrimary
                     placeholderTextColor: AppStyle.colors.textSecondary
                     background: Rectangle {
                         color: AppStyle.colors.surface
-                        border.color: footprintDescInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
-                        border.width: footprintDescInput.focus ? 2 : 1
-                        radius: AppStyle.radius.sm
-                    }
-                }
-            }
-
-            // 封装库关键词
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: AppStyle.spacing.xs
-                Text {
-                    text: qsTranslate("MainWindow", "关键词")
-                    font.pixelSize: AppStyle.fontSizes.xs
-                    color: AppStyle.colors.textSecondary
-                }
-                TextField {
-                    id: footprintKeywordsInput
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 32
-                    text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.footprintLibraryKeywords : ""
-                    onTextChanged: {
-                        if (exportSettingsCard.exportSettingsController) {
-                            exportSettingsCard.exportSettingsController.setFootprintLibraryKeywords(text);
-                        }
-                    }
-                    placeholderText: qsTranslate("MainWindow", "关键词")
-                    font.pixelSize: AppStyle.fontSizes.xs
-                    color: AppStyle.colors.textPrimary
-                    placeholderTextColor: AppStyle.colors.textSecondary
-                    background: Rectangle {
-                        color: AppStyle.colors.surface
-                        border.color: footprintKeywordsInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
-                        border.width: footprintKeywordsInput.focus ? 2 : 1
-                        radius: AppStyle.radius.sm
+                        border.color: footprintLibraryDescriptionInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                        border.width: footprintLibraryDescriptionInput.focus ? 2 : 1
+                        radius: AppStyle.radius.md
                     }
                 }
             }

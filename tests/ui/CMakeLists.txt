@@ -26,7 +26,11 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowController.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowPersistenceManager.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowStartupManager.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ConfirmDialog.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/DescriptionEditDialog.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowResizeHandles.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExitDialog.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/SliderDialogBase.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/AppStyle.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/ResponsiveHelper.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_BasicComponents.qml
