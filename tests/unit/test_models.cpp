@@ -1,12 +1,15 @@
 #include "core/easyeda/EasyedaFootprintImporter.h"
+#include "core/kicad/Exporter3DModel.h"
 #include "models/FootprintData.h"
 #include "models/FootprintDataSerializer.h"
 #include "models/SymbolData.h"
 #include "models/SymbolDataSerializer.h"
 
+#include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTemporaryDir>
 #include <QtTest>
 
 using namespace EasyKiConverter;
@@ -121,6 +124,37 @@ private slots:
         QVERIFY(footprint);
         QCOMPARE(footprint->model3D().translation().x, 3998.8);
         QCOMPARE(footprint->model3D().translation().y, 2982.35);
+    }
+
+    void testStepExportPreservesStepAssemblyStructure() {
+        Model3DData modelData;
+        modelData.setStep(
+            QByteArray("ISO-10303-21;\n"
+                       "DATA;\n"
+                       "#1=CARTESIAN_POINT('',(10.,20.,5.));\n"
+                       "#2=CARTESIAN_POINT('',(14.,24.,7.));\n"
+                       "#3=CARTESIAN_POINT('',(0.,0.,0.));\n"
+                       "#4=VERTEX_POINT('',#1);\n"
+                       "#5=VERTEX_POINT('',#2);\n"
+                       "#6=DIRECTION('',(0.,0.,1.));\n"
+                       "ENDSEC;\n"
+                       "END-ISO-10303-21;\n"));
+
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString stepPath = tempDir.filePath(QStringLiteral("model.step"));
+
+        Exporter3DModel exporter;
+        QVERIFY(exporter.exportToStep(modelData, stepPath));
+
+        QFile stepFile(stepPath);
+        QVERIFY(stepFile.open(QIODevice::ReadOnly));
+        const QString content = QString::fromLatin1(stepFile.readAll());
+
+        QVERIFY(content.contains(QStringLiteral("#1=CARTESIAN_POINT('',(10.,20.,5.));")));
+        QVERIFY(content.contains(QStringLiteral("#2=CARTESIAN_POINT('',(14.,24.,7.));")));
+        QVERIFY(content.contains(QStringLiteral("#3=CARTESIAN_POINT('',(0.,0.,0.));")));
+        QVERIFY(content.contains(QStringLiteral("#6=DIRECTION('',(0.,0.,1.));")));
     }
 
     void testSymbolGeometrySerialization() {

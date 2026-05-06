@@ -23,7 +23,8 @@ bool Model3DBase::fromJson(const QJsonObject& json) {
 
 // ==================== Model3DData ====================
 
-Model3DData::Model3DData() : m_name(), m_uuid(), m_translation(), m_rotation(), m_rawObj(), m_step() {}
+Model3DData::Model3DData()
+    : m_name(), m_uuid(), m_translation(), m_rotation(), m_stepOffsetMm(), m_rawObj(), m_step() {}
 
 QJsonObject Model3DData::toJson() const {
     QJsonObject json;
@@ -32,6 +33,7 @@ QJsonObject Model3DData::toJson() const {
     json["uuid"] = m_uuid;
     json["translation"] = m_translation.toJson();
     json["rotation"] = m_rotation.toJson();
+    json["step_offset_mm"] = m_stepOffsetMm.toJson();
     json["raw_obj"] = m_rawObj;
 
     // STEP 数据Base64 编码存储
@@ -56,6 +58,13 @@ bool Model3DData::fromJson(const QJsonObject& json) {
     if (json.contains("rotation") && json["rotation"].isObject()) {
         if (!m_rotation.fromJson(json["rotation"].toObject())) {
             qWarning() << "Failed to parse 3D model rotation";
+            return false;
+        }
+    }
+
+    if (json.contains("step_offset_mm") && json["step_offset_mm"].isObject()) {
+        if (!m_stepOffsetMm.fromJson(json["step_offset_mm"].toObject())) {
+            qWarning() << "Failed to parse 3D model STEP offset";
             return false;
         }
     }
@@ -93,6 +102,7 @@ void Model3DData::clear() {
     m_uuid.clear();
     m_translation = Model3DBase();
     m_rotation = Model3DBase();
+    m_stepOffsetMm = Model3DBase();
     m_rawObj.clear();
     m_step.clear();
 }

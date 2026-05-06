@@ -150,11 +150,8 @@ void Model3DExportWorker::run() {
         wrlFromCache = true;
     }
 
-    if (needStep && cache->hasModel3DCached(uuid, QStringLiteral("step")) &&
-        cache->copyModel3DToFile(uuid, QStringLiteral("step"), stepWritePath)) {
-        qDebug() << "Model3DExportWorker: STEP cache hit for" << uuid;
-        stepFromCache = true;
-    }
+    // STEP files are kept in their original server coordinate system. Older development builds wrote normalized STEP
+    // content into the cache, so refresh STEP from the server instead of trusting a possibly transformed cached file.
 
     // 如果两个文件都从缓存加载成功，直接完成
     if ((!needWrl || wrlFromCache) && (!needStep || stepFromCache)) {
@@ -214,7 +211,10 @@ void Model3DExportWorker::run() {
             if (!m_exporter->exportToStep(modelData, stepWritePath)) {
                 error = QStringLiteral("Failed to write STEP file");
             } else {
-                cache->saveModel3D(uuid, stepData, QStringLiteral("step"));
+                QFile file(stepWritePath);
+                if (file.open(QIODevice::ReadOnly)) {
+                    cache->saveModel3D(uuid, file.readAll(), QStringLiteral("step"));
+                }
                 qDebug() << "Model3DExportWorker: Saved STEP to cache for" << m_componentId << "uuid" << uuid;
             }
         }

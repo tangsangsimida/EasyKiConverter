@@ -78,6 +78,14 @@ public:
         m_step = step;
     }
 
+    Model3DBase stepOffsetMm() const {
+        return m_stepOffsetMm;
+    }
+
+    void setStepOffsetMm(const Model3DBase& offset) {
+        m_stepOffsetMm = offset;
+    }
+
     // JSON 序列
     QJsonObject toJson() const;
     bool fromJson(const QJsonObject& json);
@@ -94,6 +102,7 @@ private:
     QString m_uuid;
     Model3DBase m_translation;
     Model3DBase m_rotation;
+    Model3DBase m_stepOffsetMm;
     QString m_rawObj;
     QByteArray m_step;
 };

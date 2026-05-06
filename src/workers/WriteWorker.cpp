@@ -412,7 +412,10 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
 
 bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     // 如果既没有原始数据也没有缓存路径，则跳过
-    if (!status.model3DData || (status.model3DData->rawObj().isEmpty() && status.cachedModel3DWrlPath.isEmpty())) {
+    const bool hasWrlData =
+        status.model3DData && (!status.model3DData->rawObj().isEmpty() || !status.cachedModel3DWrlPath.isEmpty());
+    const bool hasStepData = !status.model3DStepRaw.isEmpty() || !status.cachedModel3DStepPath.isEmpty();
+    if (!hasWrlData && !hasStepData) {
         return true;
     }
 
@@ -438,7 +441,7 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     bool wrlSuccess = false;
 
     // WRL文件写入：优先使用缓存直接拷贝（避免大文件经过内存）
-    if (!status.cachedModel3DWrlPath.isEmpty()) {
+    if (hasWrlData && !status.cachedModel3DWrlPath.isEmpty()) {
         QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
         wrlSuccess = AtomicFileWriter::copyAtomically(status.cachedModel3DWrlPath, wrlFilePath, m_tempDir);
         if (wrlSuccess) {
@@ -446,7 +449,7 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
         } else {
             status.addDebugLog(QString("ERROR: Failed to copy WRL file from cache"));
         }
-    } else {
+    } else if (hasWrlData) {
         // 使用导出器生成WRL文件
         QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
         wrlSuccess = AtomicFileWriter::writeAtomically(
@@ -460,32 +463,44 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
         }
     }
 
-    // STEP文件写入：优先使用缓存直接拷贝（避免大文件经过内存）
+    // STEP 文件保持服务器原始坐标系，避免破坏它与 WRL 模型原本一致的装配关系。
+    bool stepSuccess = false;
     if (!status.cachedModel3DStepPath.isEmpty()) {
-        // 使用直接拷贝模式（不经过内存）
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
-        bool stepWriteSuccess = AtomicFileWriter::copyAtomically(status.cachedModel3DStepPath, stepFilePath, m_tempDir);
+        bool stepWriteSuccess = AtomicFileWriter::writeAtomically(
+            m_tempDir, stepFilePath, ".step.tmp", [this, &status](const QString& tempPath) -> bool {
+                QFile file(status.cachedModel3DStepPath);
+                if (!file.open(QIODevice::ReadOnly)) {
+                    return false;
+                }
+                Model3DData modelData;
+                if (status.model3DData) {
+                    modelData = *status.model3DData;
+                }
+                modelData.setStep(file.readAll());
+                return m_model3DExporter.exportToStep(modelData, tempPath);
+            });
 
         if (stepWriteSuccess) {
-            status.addDebugLog(QString("3D model STEP file copied from cache: %1").arg(status.cachedModel3DStepPath));
+            stepSuccess = true;
+            status.addDebugLog(QString("3D model STEP file written from cache: %1").arg(status.cachedModel3DStepPath));
         } else {
             status.addDebugLog(QString("WARNING: Failed to copy STEP file from cache: %1").arg(stepFilePath));
         }
     } else if (!status.model3DStepRaw.isEmpty()) {
-        // 使用内存模式（原有逻辑）
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
         bool stepWriteSuccess = AtomicFileWriter::writeAtomically(
-            m_tempDir, stepFilePath, ".step.tmp", [&status](const QString& tempPath) -> bool {
-                QFile file(tempPath);
-                if (!file.open(QIODevice::WriteOnly)) {
-                    return false;
+            m_tempDir, stepFilePath, ".step.tmp", [this, &status](const QString& tempPath) -> bool {
+                Model3DData modelData;
+                if (status.model3DData) {
+                    modelData = *status.model3DData;
                 }
-                qint64 written = file.write(status.model3DStepRaw);
-                file.close();
-                return written == status.model3DStepRaw.size();
+                modelData.setStep(status.model3DStepRaw);
+                return m_model3DExporter.exportToStep(modelData, tempPath);
             });
 
         if (stepWriteSuccess) {
+            stepSuccess = true;
             status.addDebugLog(QString("3D model STEP file written"));
         } else {
             status.addDebugLog(QString("WARNING: Failed to write STEP file: %1").arg(stepFilePath));
@@ -493,8 +508,8 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
         status.clearStepData();
     }
 
-    status.model3DWritten = wrlSuccess;
-    return wrlSuccess;
+    status.model3DWritten = wrlSuccess || stepSuccess;
+    return status.model3DWritten;
 }
 
 bool WriteWorker::createOutputDirectory(const QString& path) {
