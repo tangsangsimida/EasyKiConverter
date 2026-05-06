@@ -92,7 +92,6 @@ bool Exporter3DModel::exportToStep(const Model3DData& modelData, const QString& 
         return false;
     }
 
-    // 直接写入 STEP 二进制数
     file.write(modelData.step());
     file.close();
 

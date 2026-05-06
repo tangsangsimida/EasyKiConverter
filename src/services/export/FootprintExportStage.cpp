@@ -3,15 +3,87 @@
 #include "KiCadLibraryTableManager.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "models/ComponentData.h"
+#include "services/ComponentCacheService.h"
 
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QMutexLocker>
+#include <QRegularExpression>
+#include <QSet>
 #include <QThread>
 
+#include <limits>
+
 namespace EasyKiConverter {
+
+namespace {
+bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center) {
+    if (stepData.isEmpty() || center == nullptr) {
+        return false;
+    }
+
+    const QString content = QString::fromLatin1(stepData);
+    static const QRegularExpression pointRegex(
+        QStringLiteral("#(\\d+)\\s*=\\s*CARTESIAN_POINT\\s*\\(\\s*('[^']*'|\\$)\\s*,\\s*\\(([^()]*)\\)\\s*\\)"),
+        QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression vertexPointRegex(QStringLiteral("VERTEX_POINT\\s*\\([^,]*,\\s*#(\\d+)\\s*\\)"),
+                                                     QRegularExpression::CaseInsensitiveOption);
+
+    QSet<QString> vertexPointIds;
+    QRegularExpressionMatchIterator vertexMatches = vertexPointRegex.globalMatch(content);
+    while (vertexMatches.hasNext()) {
+        vertexPointIds.insert(vertexMatches.next().captured(1));
+    }
+
+    double minX = std::numeric_limits<double>::max();
+    double maxX = std::numeric_limits<double>::lowest();
+    double minY = std::numeric_limits<double>::max();
+    double maxY = std::numeric_limits<double>::lowest();
+    double minZ = std::numeric_limits<double>::max();
+    bool hasGeometryPoint = false;
+
+    QRegularExpressionMatchIterator matches = pointRegex.globalMatch(content);
+    while (matches.hasNext()) {
+        const QRegularExpressionMatch match = matches.next();
+        if (!vertexPointIds.isEmpty() && !vertexPointIds.contains(match.captured(1))) {
+            continue;
+        }
+
+        const QStringList coordinateParts = match.captured(3).split(',', Qt::SkipEmptyParts);
+        if (coordinateParts.size() < 3) {
+            continue;
+        }
+
+        bool okX = false;
+        bool okY = false;
+        bool okZ = false;
+        const double x = coordinateParts.at(0).trimmed().toDouble(&okX);
+        const double y = coordinateParts.at(1).trimmed().toDouble(&okY);
+        const double z = coordinateParts.at(2).trimmed().toDouble(&okZ);
+        if (!okX || !okY || !okZ) {
+            continue;
+        }
+
+        minX = qMin(minX, x);
+        maxX = qMax(maxX, x);
+        minY = qMin(minY, y);
+        maxY = qMax(maxY, y);
+        minZ = qMin(minZ, z);
+        hasGeometryPoint = true;
+    }
+
+    if (!hasGeometryPoint) {
+        return false;
+    }
+
+    center->x = (minX + maxX) / 2.0;
+    center->y = (minY + maxY) / 2.0;
+    center->z = minZ;
+    return true;
+}
+}  // namespace
 
 FootprintExportStage::FootprintExportStage(QObject* parent)
     : ExportTypeStage("Footprint", 1, parent) {  // maxConcurrent=1 因为是库级别导出
@@ -140,8 +212,35 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
             continue;
         }
 
+        FootprintData footprint = *data->footprintData();
+        if (m_options.needsModel3DStep()) {
+            Model3DData model3D = footprint.model3D();
+            if (!model3D.uuid().isEmpty()) {
+                QByteArray stepData;
+                if (data->model3DData() && !data->model3DData()->step().isEmpty()) {
+                    stepData = data->model3DData()->step();
+                }
+                if (stepData.isEmpty()) {
+                    stepData = ComponentCacheService::instance()->loadModel3D(model3D.uuid(), QStringLiteral("step"));
+                }
+
+                Model3DBase geometryCenter;
+                if (calculateStepGeometryCenter(stepData, &geometryCenter)) {
+                    Model3DBase stepOffset;
+                    stepOffset.x = -geometryCenter.x;
+                    stepOffset.y = -geometryCenter.y;
+                    stepOffset.z = geometryCenter.z > 0.0 ? -geometryCenter.z : 0.0;
+                    model3D.setStepOffsetMm(stepOffset);
+                    footprint.setModel3D(model3D);
+                    qDebug() << "FootprintExportStage: STEP geometry center for" << componentId << "uuid"
+                             << model3D.uuid() << "center:" << geometryCenter.x << geometryCenter.y << geometryCenter.z
+                             << "offset:" << stepOffset.x << stepOffset.y << stepOffset.z;
+                }
+            }
+        }
+
         // 添加到封装列表
-        footprintList.append(*data->footprintData());
+        footprintList.append(footprint);
         successCount++;
 
         // 发射 itemStatusChanged 信号通知 ViewModel

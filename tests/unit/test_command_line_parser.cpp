@@ -18,6 +18,8 @@ private slots:
     void testParseConvertComponent();  // convert component → CliMode::ConvertComponent
     void testParseConvertBatch();  // convert batch → CliMode::ConvertBatch
     void testParseConvertInvalid();  // convert abc → hasConvertCommand=true 但 isCliMode=false
+    void testLibNameDefault();
+    void testLibNameExplicit();
 
     // --symbol / --footprint / --3d-model 默认语义
     void testExportSymbolDefaultTrue();  // 默认 true，未设置时不导出符号库
@@ -25,6 +27,9 @@ private slots:
     void testExport3dModelDefaultFalse();  // 默认 false（opt-in），未设置时不导出 3D 模型
     void testExportSymbolExplicitTrue();  // --symbol=true 显式启用
     void testExport3dModelExplicitTrue();  // --3d-model 显式启用
+    void testModel3DFormatDefaultWrl();
+    void testModel3DFormatBoth();
+    void testModel3DFormatInvalid();
 
     // 补全脚本契约（验证不再暴露不存在的命令）
     void testCompletionScriptNoHelpVersionSubcommands();
@@ -118,6 +123,21 @@ void TestCommandLineParser::testParseConvertInvalid() {
     delete parser;
 }
 
+void TestCommandLineParser::testLibNameDefault() {
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "bom.xlsx", "-o", "out"});
+    parser->parse();
+    QCOMPARE(parser->libName(), QStringLiteral("EasyKiConverter"));
+    delete parser;
+}
+
+void TestCommandLineParser::testLibNameExplicit() {
+    auto* parser =
+        makeParser({"easykiconverter", "convert", "bom", "-i", "bom.xlsx", "-o", "out", "--lib-name", "my_lib"});
+    parser->parse();
+    QCOMPARE(parser->libName(), QStringLiteral("my_lib"));
+    delete parser;
+}
+
 // ========== 导出选项默认语义 ==========
 
 void TestCommandLineParser::testExportSymbolDefaultTrue() {
@@ -158,6 +178,32 @@ void TestCommandLineParser::testExport3dModelExplicitTrue() {
     auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o", "--3d-model"});
     parser->parse();
     QVERIFY(parser->export3DModel() == true);
+    delete parser;
+}
+
+void TestCommandLineParser::testModel3DFormatDefaultWrl() {
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o", "--3d-model"});
+    parser->parse();
+    QVERIFY(parser->validate());
+    QCOMPARE(parser->model3DFormat(), QStringLiteral("wrl"));
+    delete parser;
+}
+
+void TestCommandLineParser::testModel3DFormatBoth() {
+    auto* parser = makeParser(
+        {"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o", "--3d-model", "--3d-model-format", "both"});
+    parser->parse();
+    QVERIFY(parser->validate());
+    QCOMPARE(parser->model3DFormat(), QStringLiteral("both"));
+    delete parser;
+}
+
+void TestCommandLineParser::testModel3DFormatInvalid() {
+    auto* parser = makeParser(
+        {"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o", "--3d-model", "--3d-model-format", "obj"});
+    parser->parse();
+    QVERIFY(!parser->validate());
+    QVERIFY(parser->validationError().contains(QStringLiteral("无效的 3D 模型格式")));
     delete parser;
 }
 

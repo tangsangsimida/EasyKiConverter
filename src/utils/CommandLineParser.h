@@ -170,6 +170,12 @@ public:
     QString outputDir() const;
 
     /**
+     * @brief 获取导出库名称
+     * @return 库名称
+     */
+    QString libName() const;
+
+    /**
      * @brief 获取 LCSC 元器件编号（用于单个元器件转换）
      * @return LCSC 编号
      */
@@ -192,6 +198,12 @@ public:
      * @return 导出返回 true，否则返回 false
      */
     bool export3DModel() const;
+
+    /**
+     * @brief 获取 3D 模型导出格式
+     * @return 格式名称 (wrl/step/both)
+     */
+    QString model3DFormat() const;
 
     /**
      * @brief 是否导出预览图
@@ -270,10 +282,12 @@ private:
     // CLI 模式选项
     QCommandLineOption m_inputOption;
     QCommandLineOption m_outputOption;
+    QCommandLineOption m_libNameOption;
     QCommandLineOption m_componentOption;
     QCommandLineOption m_symbolOption;
     QCommandLineOption m_footprintOption;
     QCommandLineOption m_3dModelOption;
+    QCommandLineOption m_3dModelFormatOption;
     QCommandLineOption m_previewOption;
     QCommandLineOption m_progressOption;
     QCommandLineOption m_quietOption;

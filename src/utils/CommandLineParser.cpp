@@ -19,10 +19,12 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
     , m_syncLoggingOption(QStringList() << "sync-logging", "启用同步控制台日志输出（确保彩色日志显示，方便调试）")
     , m_inputOption(QStringList() << "i" << "input", "输入文件路径 (BOM 表或元器件列表文件)", "path")
     , m_outputOption(QStringList() << "o" << "output", "输出目录路径", "path")
+    , m_libNameOption("lib-name", "导出库名称", "name", "EasyKiConverter")
     , m_componentOption(QStringList() << "c" << "component", "LCSC 元器件编号", "id")
     , m_symbolOption("symbol", "导出符号库 (默认: true)")
     , m_footprintOption("footprint", "导出封装库 (默认: true)")
     , m_3dModelOption("3d-model", "导出 3D 模型")
+    , m_3dModelFormatOption("3d-model-format", "3D 模型格式 (wrl/step/both，默认: wrl)", "format", "wrl")
     , m_previewOption("preview", "导出预览图")
     , m_progressOption("progress", "显示进度条")
     , m_quietOption(QStringList() << "q" << "quiet", "安静模式，减少输出")
@@ -66,10 +68,12 @@ void CommandLineParser::setupOptions() {
 void CommandLineParser::setupCliOptions() {
     m_parser.addOption(m_inputOption);
     m_parser.addOption(m_outputOption);
+    m_parser.addOption(m_libNameOption);
     m_parser.addOption(m_componentOption);
     m_parser.addOption(m_symbolOption);
     m_parser.addOption(m_footprintOption);
     m_parser.addOption(m_3dModelOption);
+    m_parser.addOption(m_3dModelFormatOption);
     m_parser.addOption(m_previewOption);
     m_parser.addOption(m_progressOption);
     m_parser.addOption(m_quietOption);
@@ -205,6 +209,14 @@ bool CommandLineParser::validate() const {
 
     // CLI 模式验证
     if (isCliMode()) {
+        if (m_parser.isSet(m_3dModelFormatOption)) {
+            const QString format = model3DFormat();
+            const QStringList validFormats = {"wrl", "step", "both"};
+            if (!validFormats.contains(format)) {
+                return false;
+            }
+        }
+
         // 验证输出目录
         if (!m_parser.isSet(m_outputOption)) {
             return false;
@@ -261,6 +273,14 @@ QString CommandLineParser::validationError() const {
 
     // CLI 模式验证错误
     if (isCliMode()) {
+        if (m_parser.isSet(m_3dModelFormatOption)) {
+            const QString format = model3DFormat();
+            const QStringList validFormats = {"wrl", "step", "both"};
+            if (!validFormats.contains(format)) {
+                errors.append(QString("无效的 3D 模型格式: %1（有效值: %2）").arg(format).arg(validFormats.join(", ")));
+            }
+        }
+
         if (!m_parser.isSet(m_outputOption)) {
             errors.append("CLI 模式必须指定输出目录 (-o/--output)");
         }
@@ -299,6 +319,10 @@ QString CommandLineParser::outputDir() const {
     return m_parser.value(m_outputOption);
 }
 
+QString CommandLineParser::libName() const {
+    return m_parser.value(m_libNameOption);
+}
+
 QString CommandLineParser::componentId() const {
     return m_parser.value(m_componentOption);
 }
@@ -316,6 +340,10 @@ bool CommandLineParser::exportFootprint() const {
 bool CommandLineParser::export3DModel() const {
     // --3d-model 是 flag 选项，默认 false（未设置则不导出 3D 模型）
     return m_parser.isSet(m_3dModelOption);
+}
+
+QString CommandLineParser::model3DFormat() const {
+    return m_parser.value(m_3dModelFormatOption).toLower();
 }
 
 bool CommandLineParser::exportPreview() const {
@@ -344,10 +372,12 @@ QString CommandLineParser::cliHelpText() const {
     stream << "选项:\n";
     stream << "  -i, --input <path>      输入文件路径（BOM 表或元器件列表文件）\n";
     stream << "  -o, --output <path>     输出目录路径（必需）\n";
+    stream << "  --lib-name <name>       导出库名称（默认: EasyKiConverter）\n";
     stream << "  -c, --component <id>    LCSC 元器件编号\n";
     stream << "  --symbol                导出符号库（默认: true）\n";
     stream << "  --footprint             导出封装库（默认: true）\n";
     stream << "  --3d-model              导出 3D 模型\n";
+    stream << "  --3d-model-format <fmt> 3D 模型格式（wrl/step/both，默认: wrl）\n";
     stream << "  --preview               导出预览图\n";
     stream << "  --progress              显示进度条\n";
     stream << "  -q, --quiet             安静模式，减少输出\n\n";

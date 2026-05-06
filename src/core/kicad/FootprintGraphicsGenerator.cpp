@@ -528,6 +528,13 @@ QString FootprintGraphicsGenerator::generateModel3D(const Model3DData& model3D,
         finalOffsetY = 0.0;
     }
 
+    if (finalPath.endsWith(QStringLiteral(".step"), Qt::CaseInsensitive) ||
+        finalPath.endsWith(QStringLiteral(".stp"), Qt::CaseInsensitive)) {
+        finalOffsetX += model3D.stepOffsetMm().x;
+        finalOffsetY += model3D.stepOffsetMm().y;
+        z += model3D.stepOffsetMm().z;
+    }
+
     content += QString("  (model \"%1\"\n").arg(finalPath);
 
     content += QString("    (offset (xyz %1 %2 %3))\n")

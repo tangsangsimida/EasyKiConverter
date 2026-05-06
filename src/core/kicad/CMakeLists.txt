@@ -19,5 +19,6 @@ target_link_libraries(EasyKiConverterKicad
     PUBLIC
         Qt6::Core
         EasyKiConverterModels
+        EasyKiConverterNetwork
         EasyKiConverterUtils
 )
