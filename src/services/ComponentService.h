@@ -412,6 +412,7 @@ private:
         QList<QPair<int, QByteArray>> previewImageData;  // index, data
         QStringList encodedPreviewImages;  // 后台线程预编码后的预览图
         QByteArray datasheetData;
+        QByteArray objData;  // 3D 模型 OBJ 原始数据
         // 预解析的符号和封装数据（在后台线程解析）
         QSharedPointer<SymbolData> symbolData;
         QSharedPointer<FootprintData> footprintData;

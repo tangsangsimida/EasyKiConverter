@@ -66,6 +66,7 @@ ADR 文件应使用以下命名格式：
 - [ADR 007: Weak Network Resilience Analysis](007-weak-network-resilience-analysis_en.md) (English)
 - [ADR 008: 显式对象生命周期管理](008-explicit-object-lifecycle-management.md)
 - [ADR 009: 网络层架构整合与状态管理统一](009-network-layer-consolidation.md)
+- [ADR 010: 组件缓存架构](010-component-cache-architecture.md)
 
 ## 参考资料
 

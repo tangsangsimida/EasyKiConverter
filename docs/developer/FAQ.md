@@ -181,6 +181,59 @@
 
 ---
 
+### Q: 重试失败组件后，导出的封装库中只有重试的组件，之前成功的组件丢失
+
+**问题描述**：
+导出 BOM 后部分元器件失败，点击"重试失败组件"后，导出的 KiCad 库中仅包含重试的组件，之前已成功导出的组件全部丢失。
+
+**根本原因**：
+重试流程将**仅失败的组件 ID** 传递给整个导出流水线，库级别的导出阶段（Symbol、Footprint）只处理这些 ID，生成的输出仅包含重试的组件，然后替换磁盘上已有的库文件。
+
+**封装丢失路径**：
+1. `retryFailedComponents()` 将失败 ID 传给 `startPreload()` — `ExportProgressViewModel.cpp:728`
+2. `ParallelExportService::startPreload()` 用子集覆盖 `m_componentIds` — `ParallelExportService.cpp:79`
+3. `startExport()` 仅将这些 ID 传给 `FootprintExportStage::start()` — `ParallelExportService.cpp:326`
+4. `FootprintExportStage::doLibraryExport()` 创建新的空临时目录，仅写入重试的封装 — `FootprintExportStage.cpp:428,448`
+5. `TempFileManager::commitDirectory()` 删除整个已有 `.pretty` 目录（`removeRecursively()`），替换为仅含重试封装的临时目录 — `TempFileManager.cpp:205`
+
+**符号丢失路径**：
+- 当 `overwriteExistingFiles=true` 时，临时文件从空开始，仅写入重试的符号，已有符号全部丢失 — `SymbolExportStage.cpp:223`
+
+**不受影响的类型**：
+- 3D 模型（`.wrl`、`.step`）、预览图、数据手册：每个组件独立文件，仅替换重试的组件文件。
+
+**修复方案**：
+在 `ExportOptions` 中添加 `retryMode` 标志，告知库级别导出阶段在重试时保留已有输出。
+
+1. `ExportProgress.h` — 添加 `bool retryMode = false`
+2. `ExportProgressViewModel.cpp` — `retryComponent()` 和 `retryFailedComponents()` 中设置 `retryMode = true`
+3. `FootprintExportStage.cpp` — 重试模式下，先将已有 `.kicad_mod` 复制到临时目录，再执行导出
+4. `SymbolExportStage.cpp` — 重试模式下，始终复制已有 `.kicad_sym` 到临时文件
+5. `ParallelExportService.cpp` — 导出启动后重置 `retryMode = false`
+
+**关键陷阱**：
+`TempFileManager::createTempDirectoryPath()` 仅返回路径字符串，**不会在磁盘上创建目录**。必须先调用 `QDir().mkpath(tempDirPath)` 创建目录，否则 `QFile::copy()` 会因目标目录不存在而静默失败。
+
+**回归预防**：
+修改以下文件时需验证重试场景：
+- `FootprintExportStage.cpp` — 封装库写入逻辑
+- `SymbolExportStage.cpp` — 符号库写入逻辑
+- `TempFileManager.cpp` — 临时目录提交/替换逻辑
+- `ParallelExportService.cpp` — 导出流水线编排
+- `ExportProgressViewModel.cpp` — 重试入口
+
+**相关文件**：
+- `src/services/export/ExportProgress.h` — 添加 retryMode 字段
+- `src/ui/viewmodels/ExportProgressViewModel.cpp` — 重试入口设置标志
+- `src/services/export/FootprintExportStage.cpp` — 复制已有封装到临时目录
+- `src/services/export/SymbolExportStage.cpp` — 复制已有符号库到临时文件
+- `src/services/export/ParallelExportService.cpp` — 重置标志
+- `src/services/export/TempFileManager.cpp` — 临时目录提交逻辑
+
+**状态**：✅ 已修复 (2026-05-08)
+
+---
+
 ## 3D 模型相关
 
 ### Q: 3D 模型选择使用循环切换逻辑而非独立 toggle
@@ -247,6 +300,51 @@
 - 错误情况：`exportModel3DFormat: 3 needWrl: true needStep: true`
 
 **状态**：✅ 已修复 (2026-04-19)
+
+---
+
+### Q: 有缓存的情况下导出 3D 模型仍会发起网络请求
+
+**问题描述**：
+批量导出时，即使所有 3D 模型（STEP/OBJ）都已缓存到本地磁盘，导出过程仍会发起大量网络请求，导致弱网环境下导出缓慢甚至超时失败。
+
+**根本原因**：
+3D 模型缓存复用存在多个设计缺陷：
+
+1. **STEP 导出先网络后缓存**（最严重）：`Model3DExportWorker::run()` 中 STEP 的处理顺序是先调用 `downloadStepDataSync()` 发起网络请求，只有网络失败后才检查磁盘缓存。批量导出 100 个组件时，即使所有 STEP 都已缓存，仍会发起 100 次网络请求。
+
+2. **预加载不加载 OBJ 二进制数据**：`ComponentService::loadComponentDataFromCacheAsync()` 加载了 symbol、footprint、preview、datasheet，但不加载 OBJ 二进制数据，导致 `m_data->model3DObjRaw()` 总是为空，导出阶段需要重新从磁盘读取或网络下载。
+
+3. **缓存验证不完整**：`ComponentCacheService::hasModel3DCached()` 只检查文件是否存在，不验证文件大小是否大于 0，可能将损坏的空文件误判为有效缓存。
+
+**修复方案**：
+
+1. **STEP 缓存优先**：修改 `Model3DExportWorker.cpp`，将 STEP 导出逻辑从"先网络后缓存"改为"先缓存后网络"：
+   ```
+   之前：downloadStepDataSync() → 失败后才查缓存
+   之后：cache->loadModel3D(uuid, "step") → 无缓存时才 downloadStepDataSync()
+   ```
+
+2. **预加载 OBJ 数据**：在 `ComponentService::loadComponentDataFromCacheAsync()` 中添加 OBJ 二进制数据的加载，设置到 `ComponentData::model3DObjRaw`，避免导出阶段重复磁盘 I/O。
+
+3. **缓存完整性检查**：增强 `hasModel3DCached()`，同时检查文件存在且大小大于 0。
+
+**回归预防**：
+- 新增缓存使用逻辑时，必须遵循"先缓存后网络"的优先级顺序
+- 预加载阶段应尽可能加载所有需要的数据到内存，减少导出阶段的 I/O
+- 缓存存在性检查应包含基本的完整性验证（文件大小 > 0）
+- 修改 `Model3DExportWorker` 缓存逻辑时，必须验证：
+  - 有缓存时不发起网络请求
+  - 无缓存时正常下载并保存到缓存
+  - 网络失败时有缓存兜底
+
+**相关文件**：
+- `src/services/export/Model3DExportWorker.cpp` - STEP 缓存优先逻辑
+- `src/services/ComponentService.cpp` - 预加载 OBJ 数据
+- `src/services/ComponentService.h` - CacheLoadResult 添加 objData 字段
+- `src/services/ComponentCacheService.cpp` - 缓存完整性验证
+
+**状态**：✅ 已修复 (2026-05-08)
 
 ---
 
@@ -572,6 +670,9 @@ DelegateModel {
 - [ ] 最大化恢复到窗口化时保留上次 normal geometry
 - [ ] 新增 QML 组件时，`qmldir`、CMake 资源清单、UI 测试清单已同步更新
 - [ ] 导出结果列表在转换过程中保持滚动位置，不会自动回到顶部
+- [ ] 有缓存时导出 3D 模型不发起网络请求（STEP 缓存优先）
+- [ ] 重试失败元器件后，导出的库中同时包含已成功项和重试项
+- [ ] 重试失败组件后，已有封装/符号未丢失
 
 ---
 

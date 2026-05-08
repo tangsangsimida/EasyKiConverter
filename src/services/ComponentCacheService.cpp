@@ -775,7 +775,9 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
 bool ComponentCacheService::hasModel3DCached(const QString& uuid, const QString& extension) const {
     QMutexLocker locker(&m_mutex);
     QString path = model3DPath(uuid, extension);
-    return QFileInfo::exists(path);
+    QFileInfo fileInfo(path);
+    // 检查文件存在且大小大于 0（防止损坏的空文件被误判为有效缓存）
+    return fileInfo.exists() && fileInfo.size() > 0;
 }
 
 QByteArray ComponentCacheService::loadModel3D(const QString& uuid, const QString& extension) const {
