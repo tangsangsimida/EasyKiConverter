@@ -343,11 +343,11 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
             result.datasheetData = datasheetData;
         }
 
-        // 加载 3D 模型 OBJ 数据（避免导出阶段重复从磁盘读取）
+        // 预加载 OBJ 数据，避免导出阶段重复磁盘 I/O
         if (fetch3DModel && cachedData->model3DData() && !cachedData->model3DData()->uuid().isEmpty()) {
             QByteArray objData = cache->loadModel3D(cachedData->model3DData()->uuid(), QStringLiteral("obj"));
             if (!objData.isEmpty()) {
-                result.objData = objData;
+                cachedData->setModel3DObjRaw(objData);
             }
         }
 
@@ -429,11 +429,6 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
                 model3DData->setRotation(parsedModel3D.rotation());
                 result.cachedData->setModel3DData(model3DData);
             }
-        }
-
-        // 设置预加载的 OBJ 数据（避免导出阶段重复从磁盘读取）
-        if (!result.objData.isEmpty()) {
-            result.cachedData->setModel3DObjRaw(result.objData);
         }
 
         // 更新 m_fetchingComponents

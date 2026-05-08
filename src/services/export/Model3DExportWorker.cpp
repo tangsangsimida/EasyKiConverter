@@ -192,36 +192,29 @@ void Model3DExportWorker::run() {
     // STEP 文件保持服务器原始坐标系。优先使用磁盘缓存，缓存未命中时才发起网络请求。
     if (error.isEmpty() && needStep && !m_cancelled.load()) {
         QByteArray stepData;
-        bool stepFromCache = false;
 
-        // 优先级1: 磁盘缓存
-        if (cache->hasModel3DCached(uuid, QStringLiteral("step"))) {
-            stepData = cache->loadModel3D(uuid, QStringLiteral("step"));
-            if (!stepData.isEmpty()) {
-                stepFromCache = true;
-                qDebug() << "Model3DExportWorker: STEP cache hit for" << m_componentId << "uuid" << uuid;
-            }
+        // 优先级1: 磁盘缓存（零拷贝，不经过内存）
+        if (cache->copyModel3DToFile(uuid, QStringLiteral("step"), stepWritePath)) {
+            qDebug() << "Model3DExportWorker: STEP cache hit for" << m_componentId << "uuid" << uuid;
         }
-
         // 优先级2: 网络下载（缓存未命中时）
-        if (stepData.isEmpty() && !m_cancelled.load()) {
+        else if (!m_cancelled.load()) {
             if (!m_exporter->downloadStepDataSync(uuid, &stepData, &error)) {
                 if (error.isEmpty()) {
                     error = QStringLiteral("Failed to download STEP data");
                 }
             }
-        }
 
-        // 写入文件并更新缓存
-        if (!stepData.isEmpty()) {
-            Model3DData modelData = buildModelData();
-            modelData.setStep(stepData);
-            if (!m_exporter->exportToStep(modelData, stepWritePath)) {
-                error = QStringLiteral("Failed to write STEP file");
-            } else if (!stepFromCache) {
-                // 网络下载的数据才需要保存到缓存
-                cache->saveModel3D(uuid, stepData, QStringLiteral("step"));
-                qDebug() << "Model3DExportWorker: Saved STEP to cache for" << m_componentId << "uuid" << uuid;
+            // 写入文件并更新缓存
+            if (!stepData.isEmpty()) {
+                Model3DData modelData = buildModelData();
+                modelData.setStep(stepData);
+                if (!m_exporter->exportToStep(modelData, stepWritePath)) {
+                    error = QStringLiteral("Failed to write STEP file");
+                } else {
+                    cache->saveModel3D(uuid, stepData, QStringLiteral("step"));
+                    qDebug() << "Model3DExportWorker: Saved STEP to cache for" << m_componentId << "uuid" << uuid;
+                }
             }
         }
     }

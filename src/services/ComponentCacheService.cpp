@@ -776,7 +776,7 @@ bool ComponentCacheService::hasModel3DCached(const QString& uuid, const QString&
     QMutexLocker locker(&m_mutex);
     QString path = model3DPath(uuid, extension);
     QFileInfo fileInfo(path);
-    // 检查文件存在且大小大于 0（防止损坏的空文件被误判为有效缓存）
+    // 空文件视为未缓存（防止损坏文件被误判）
     return fileInfo.exists() && fileInfo.size() > 0;
 }
 
