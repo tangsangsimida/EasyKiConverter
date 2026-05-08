@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
+#include <QRegularExpression>
 #include <QTextStream>
 #include <QVector>
 
@@ -16,6 +17,7 @@ namespace EasyKiConverter {
 // API 端点
 static const QString ENDPOINT_3D_MODEL = "https://modules.easyeda.com/3dmodel/%1";
 static const QString ENDPOINT_3D_MODEL_STEP = "https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1";
+static constexpr double WRL_UNIT_TO_MM = 2.54;
 
 Exporter3DModel::Exporter3DModel(QObject* parent) : QObject(parent) {}
 
@@ -96,6 +98,108 @@ bool Exporter3DModel::exportToStep(const Model3DData& modelData, const QString& 
     file.close();
 
     return true;
+}
+
+double Exporter3DModel::calculateObjMinZ(const QByteArray& objData) {
+    if (objData.isEmpty()) {
+        return std::numeric_limits<double>::max();
+    }
+
+    double minZ = std::numeric_limits<double>::max();
+    int start = 0;
+    while (start < objData.size()) {
+        int end = objData.indexOf('\n', start);
+        if (end < 0) {
+            end = objData.size();
+        }
+
+        // 检查行是否以 "v " 开头
+        if (end - start >= 2 && objData.at(start) == 'v' && objData.at(start + 1) == ' ') {
+            // 跳过 "v " 前缀，解析三个坐标分量
+            int pos = start + 2;
+            // 跳过前两个分量 (x, y)
+            int component = 0;
+            while (pos < end && component < 2) {
+                if (objData.at(pos) == ' ') {
+                    component++;
+                    // 跳过连续空格
+                    while (pos < end && objData.at(pos) == ' ') {
+                        pos++;
+                    }
+                } else {
+                    pos++;
+                }
+            }
+
+            // 解析 Z 分量
+            if (pos < end) {
+                bool ok = false;
+                double z = QByteArray(objData.constData() + pos, end - pos).toDouble(&ok);
+                if (ok) {
+                    minZ = qMin(minZ, z);
+                }
+            }
+        }
+
+        start = end + 1;
+    }
+    if (minZ == std::numeric_limits<double>::max()) {
+        return minZ;
+    }
+
+    // STEP offset 使用 KiCad 的模型 offset 单位；WRL 文件坐标会除以 2.54，
+    // 但 KiCad 显示高度仍应按 OBJ 原始 Z 与 STEP 对齐。
+    return minZ > 0.0 ? 0.0 : minZ;
+}
+
+double Exporter3DModel::calculateWrlDisplayMinZ(const QByteArray& wrlData) {
+    if (wrlData.isEmpty()) {
+        return std::numeric_limits<double>::max();
+    }
+
+    static const QRegularExpression numberRegex(QStringLiteral("[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?"));
+
+    double minZ = std::numeric_limits<double>::max();
+    bool inPointArray = false;
+    int coordinateComponent = 0;
+    const QStringList lines = QString::fromUtf8(wrlData).split('\n');
+    for (const QString& line : lines) {
+        QString segment = line;
+        if (!inPointArray) {
+            const int pointStart = segment.indexOf(QStringLiteral("point ["));
+            if (pointStart < 0) {
+                continue;
+            }
+            inPointArray = true;
+            coordinateComponent = 0;
+            segment = segment.mid(pointStart + QStringLiteral("point [").size());
+        }
+
+        const int pointEnd = segment.indexOf(QLatin1Char(']'));
+        if (pointEnd >= 0) {
+            segment = segment.left(pointEnd);
+        }
+
+        QRegularExpressionMatchIterator matches = numberRegex.globalMatch(segment);
+        while (matches.hasNext()) {
+            const QRegularExpressionMatch match = matches.next();
+            bool ok = false;
+            const double value = match.captured(0).toDouble(&ok);
+            if (!ok) {
+                continue;
+            }
+            if (coordinateComponent % 3 == 2) {
+                minZ = qMin(minZ, value * WRL_UNIT_TO_MM);
+            }
+            coordinateComponent++;
+        }
+
+        if (pointEnd >= 0) {
+            inPointArray = false;
+        }
+    }
+
+    return minZ;
 }
 
 void Exporter3DModel::convertToKiCadCoordinates(Model3DData& modelData) {

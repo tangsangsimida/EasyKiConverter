@@ -1,7 +1,9 @@
 #include "FootprintExportStage.h"
 
 #include "KiCadLibraryTableManager.h"
+#include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
+#include "core/utils/GeometryUtils.h"
 #include "models/ComponentData.h"
 #include "services/ComponentCacheService.h"
 
@@ -9,32 +11,45 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
 #include <QMutexLocker>
 #include <QRegularExpression>
 #include <QSet>
 #include <QThread>
 
+#include <cmath>
 #include <limits>
 
 namespace EasyKiConverter {
 
 namespace {
+constexpr double MODEL_Z_OFFSET_EPSILON_MM = 0.01;
+constexpr double EASYEDA_UNIT_TO_MM = 0.254;
+
 bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center) {
     if (stepData.isEmpty() || center == nullptr) {
         return false;
     }
 
     const QString content = QString::fromLatin1(stepData);
+    // Thread-safe: const QRegularExpression; globalMatch() is reentrant.
     static const QRegularExpression pointRegex(
         QStringLiteral("#(\\d+)\\s*=\\s*CARTESIAN_POINT\\s*\\(\\s*('[^']*'|\\$)\\s*,\\s*\\(([^()]*)\\)\\s*\\)"),
         QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression vertexPointRegex(QStringLiteral("VERTEX_POINT\\s*\\([^,]*,\\s*#(\\d+)\\s*\\)"),
                                                      QRegularExpression::CaseInsensitiveOption);
 
-    QSet<QString> vertexPointIds;
+    QSet<int> vertexPointIds;
     QRegularExpressionMatchIterator vertexMatches = vertexPointRegex.globalMatch(content);
     while (vertexMatches.hasNext()) {
-        vertexPointIds.insert(vertexMatches.next().captured(1));
+        bool ok = false;
+        int id = vertexMatches.next().captured(1).toInt(&ok);
+        if (ok) {
+            vertexPointIds.insert(id);
+        }
     }
 
     double minX = std::numeric_limits<double>::max();
@@ -47,7 +62,9 @@ bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center
     QRegularExpressionMatchIterator matches = pointRegex.globalMatch(content);
     while (matches.hasNext()) {
         const QRegularExpressionMatch match = matches.next();
-        if (!vertexPointIds.isEmpty() && !vertexPointIds.contains(match.captured(1))) {
+        bool idOk = false;
+        int pointId = match.captured(1).toInt(&idOk);
+        if (!vertexPointIds.isEmpty() && (!idOk || !vertexPointIds.contains(pointId))) {
             continue;
         }
 
@@ -82,6 +99,81 @@ bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center
     center->y = (minY + maxY) / 2.0;
     center->z = minZ;
     return true;
+}
+
+double calculateStepZOffset(double wrlDisplayMinZ, double stepMinZ) {
+    if (wrlDisplayMinZ == std::numeric_limits<double>::max()) {
+        return stepMinZ > MODEL_Z_OFFSET_EPSILON_MM ? -stepMinZ : 0.0;
+    }
+
+    const double offset = wrlDisplayMinZ - stepMinZ;
+    return qAbs(offset) < MODEL_Z_OFFSET_EPSILON_MM ? 0.0 : offset;
+}
+
+bool readModelSourceZMm(const QByteArray& cadJsonRaw, const QString& modelUuid, double* zMm) {
+    if (cadJsonRaw.isEmpty() || modelUuid.isEmpty() || zMm == nullptr) {
+        return false;
+    }
+
+    QJsonParseError parseError;
+    const QJsonDocument cadDoc = QJsonDocument::fromJson(cadJsonRaw, &parseError);
+    if (parseError.error != QJsonParseError::NoError || !cadDoc.isObject()) {
+        return false;
+    }
+
+    const QJsonObject packageData =
+        cadDoc.object().value(QStringLiteral("packageDetail")).toObject().value(QStringLiteral("dataStr")).toObject();
+    const QJsonArray shapes = packageData.value(QStringLiteral("shape")).toArray();
+    for (const QJsonValue& shapeValue : shapes) {
+        const QString shape = shapeValue.toString();
+        if (!shape.startsWith(QStringLiteral("SVGNODE~"))) {
+            continue;
+        }
+
+        const QByteArray svgNodeJson = shape.mid(QStringLiteral("SVGNODE~").size()).toUtf8();
+        QJsonParseError svgParseError;
+        const QJsonDocument svgDoc = QJsonDocument::fromJson(svgNodeJson, &svgParseError);
+        if (svgParseError.error != QJsonParseError::NoError || !svgDoc.isObject()) {
+            continue;
+        }
+
+        const QJsonObject attrs = svgDoc.object().value(QStringLiteral("attrs")).toObject();
+        if (attrs.value(QStringLiteral("uuid")).toString() != modelUuid) {
+            continue;
+        }
+
+        bool ok = false;
+        double z = 0.0;
+        const QJsonValue zValue = attrs.value(QStringLiteral("z"));
+        if (zValue.isString()) {
+            z = zValue.toString().toDouble(&ok);
+        } else if (zValue.isDouble()) {
+            z = zValue.toDouble();
+            ok = true;
+        }
+        if (!ok) {
+            return false;
+        }
+
+        *zMm = GeometryUtils::convertToMm(z);
+        return true;
+    }
+
+    return false;
+}
+
+double calculateWrlBaseZOffset(const QString& fpType, double wrlDisplayMinZ, double sourceZMm) {
+    if (fpType != QStringLiteral("smd") || wrlDisplayMinZ == std::numeric_limits<double>::max()) {
+        return 0.0;
+    }
+
+    const double offset = -wrlDisplayMinZ + sourceZMm;
+    return offset > MODEL_Z_OFFSET_EPSILON_MM ? offset : 0.0;
+}
+
+double zOffsetMmToEasyEdaUnits(double zOffsetMm) {
+    const double roundedOffset = std::round(zOffsetMm * 100.0) / 100.0;
+    return -(roundedOffset - 0.000001) / EASYEDA_UNIT_TO_MM;
 }
 }  // namespace
 
@@ -226,14 +318,58 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
                 Model3DBase geometryCenter;
                 if (calculateStepGeometryCenter(stepData, &geometryCenter)) {
+                    // 与 WRL 导出阶段保持一致：WRL 由 OBJ 派生，优先使用内存/磁盘缓存中的 OBJ。
+                    // 如果只能复用 WRL 缓存，则按缓存 WRL 的实际显示几何计算，避免新偏移配旧 WRL。
+                    QByteArray objData = data->model3DObjRaw();
+                    if (objData.isEmpty() && data->model3DData()) {
+                        objData = data->model3DData()->rawObj().toUtf8();
+                    }
+                    if (objData.isEmpty()) {
+                        objData = ComponentCacheService::instance()->loadModel3D(model3D.uuid(), QStringLiteral("obj"));
+                    }
+                    QByteArray wrlData;
+                    if (objData.isEmpty()) {
+                        wrlData = ComponentCacheService::instance()->loadModel3D(model3D.uuid(), QStringLiteral("wrl"));
+                    }
+                    if (objData.isEmpty() && wrlData.isEmpty()) {
+                        Exporter3DModel modelExporter;
+                        if (modelExporter.downloadObjDataSync(model3D.uuid(), &objData) && !objData.isEmpty()) {
+                            ComponentCacheService::instance()->saveModel3D(
+                                model3D.uuid(), objData, QStringLiteral("obj"));
+                        }
+                    }
+
+                    double wrlDisplayMinZ = std::numeric_limits<double>::max();
+                    if (!objData.isEmpty()) {
+                        wrlDisplayMinZ = Exporter3DModel::calculateObjMinZ(objData);
+                    } else if (!wrlData.isEmpty()) {
+                        wrlDisplayMinZ = Exporter3DModel::calculateWrlDisplayMinZ(wrlData);
+                    }
+                    QByteArray cadJsonRaw = data->cadJsonRaw();
+                    if (cadJsonRaw.isEmpty()) {
+                        cadJsonRaw = ComponentCacheService::instance()->loadCadDataJson(componentId);
+                    }
+                    double sourceZMm = GeometryUtils::convertToMm(model3D.translation().z);
+                    (void)readModelSourceZMm(cadJsonRaw, model3D.uuid(), &sourceZMm);
+                    const double wrlBaseZOffset =
+                        calculateWrlBaseZOffset(footprint.info().type, wrlDisplayMinZ, sourceZMm);
+                    if (wrlBaseZOffset > 0.0) {
+                        Model3DBase translation = model3D.translation();
+                        translation.z = zOffsetMmToEasyEdaUnits(wrlBaseZOffset);
+                        model3D.setTranslation(translation);
+                    }
+                    const double stepMinZ = geometryCenter.z;
+
                     Model3DBase stepOffset;
                     stepOffset.x = -geometryCenter.x;
                     stepOffset.y = -geometryCenter.y;
-                    stepOffset.z = -geometryCenter.z;
+                    stepOffset.z = calculateStepZOffset(wrlDisplayMinZ, stepMinZ);
                     model3D.setStepOffsetMm(stepOffset);
                     footprint.setModel3D(model3D);
-                    qDebug() << "FootprintExportStage: STEP geometry center for" << componentId << "uuid"
-                             << model3D.uuid() << "center:" << geometryCenter.x << geometryCenter.y << geometryCenter.z
+                    qDebug() << "FootprintExportStage: STEP offset for" << componentId << "uuid" << model3D.uuid()
+                             << "center:" << geometryCenter.x << geometryCenter.y << geometryCenter.z
+                             << "wrlDisplayMinZ:" << wrlDisplayMinZ << "stepMinZ:" << stepMinZ
+                             << "sourceZMm:" << sourceZMm << "wrlBaseZOffset:" << wrlBaseZOffset
                              << "offset:" << stepOffset.x << stepOffset.y << stepOffset.z;
                 }
             }

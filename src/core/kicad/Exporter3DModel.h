@@ -64,6 +64,28 @@ public:
     bool downloadStepDataSync(const QString& uuid, QByteArray* data, QString* errorMessage = nullptr);
 
     /**
+     * @brief 计算 OBJ 顶点数据的最小 Z 坐标（WRL 坐标系）
+     *
+     * 解析 OBJ 格式的顶点数据，返回与 KiCad 模型 offset 单位匹配的 WRL 显示最小 Z 值。
+     * 用于 STEP 模型的 Z 轴偏移对齐。
+     *
+     * @param objData OBJ 格式的原始数据
+     * @return 最小 Z 坐标，无有效顶点时返回 numeric_limits<double>::max()
+     */
+    static double calculateObjMinZ(const QByteArray& objData);
+
+    /**
+     * @brief 计算 WRL 文件在 KiCad 显示单位下的最小 Z 坐标
+     *
+     * WRL 坐标本身没有单位，KiCad 按 1 WRL unit = 0.1 inch = 2.54 mm 解释。
+     * 用于在只能复用 WRL 缓存时，按实际写出的 WRL 几何对齐 STEP。
+     *
+     * @param wrlData WRL 文件数据
+     * @return KiCad 显示单位下的最小 Z 坐标，无有效顶点时返回 numeric_limits<double>::max()
+     */
+    static double calculateWrlDisplayMinZ(const QByteArray& wrlData);
+
+    /**
      * @brief 导出模型KiCad WRL 格式
      *
      * @param modelData 模型数据

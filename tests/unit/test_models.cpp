@@ -12,6 +12,8 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <limits>
+
 using namespace EasyKiConverter;
 
 class TestModels : public QObject {
@@ -155,6 +157,35 @@ private slots:
         QVERIFY(content.contains(QStringLiteral("#2=CARTESIAN_POINT('',(14.,24.,7.));")));
         QVERIFY(content.contains(QStringLiteral("#3=CARTESIAN_POINT('',(0.,0.,0.));")));
         QVERIFY(content.contains(QStringLiteral("#6=DIRECTION('',(0.,0.,1.));")));
+    }
+
+    void testObjMinZMatchesExportedWrlNormalization() {
+        const QByteArray positiveObj(
+            "v 0 0 2.54\n"
+            "v 1 1 5.08\n"
+            "f 1 2 1\n");
+        QCOMPARE(Exporter3DModel::calculateObjMinZ(positiveObj), 0.0);
+
+        const QByteArray negativeObj(
+            "v 0 0 -2.54\n"
+            "v 1 1 2.54\n"
+            "f 1 2 1\n");
+        QCOMPARE(Exporter3DModel::calculateObjMinZ(negativeObj), -2.54);
+
+        QCOMPARE(Exporter3DModel::calculateObjMinZ(QByteArray("f 1 2 3\n")), std::numeric_limits<double>::max());
+
+        const QByteArray wrlData(
+            "Shape {\n"
+            "  geometry IndexedFaceSet {\n"
+            "    coord Coordinate {\n"
+            "      point [\n"
+            "        0 0 -0.5,\n"
+            "        0 0 1.0,\n"
+            "      ]\n"
+            "    }\n"
+            "  }\n"
+            "}\n");
+        QCOMPARE(Exporter3DModel::calculateWrlDisplayMinZ(wrlData), -1.27);
     }
 
     void testSymbolGeometrySerialization() {

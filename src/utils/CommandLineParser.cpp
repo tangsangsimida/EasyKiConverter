@@ -5,6 +5,8 @@
 
 namespace EasyKiConverter {
 
+static const QStringList VALID_3D_MODEL_FORMATS = {"wrl", "step", "both"};
+
 CommandLineParser::CommandLineParser(int argc, char* argv[])
     : m_debugOption(QStringList() << "d" << "debug", "启用调试模式（显示详细日志和控制台窗口）")
     , m_logLevelOption(QStringList() << "log-level",
@@ -210,9 +212,7 @@ bool CommandLineParser::validate() const {
     // CLI 模式验证
     if (isCliMode()) {
         if (m_parser.isSet(m_3dModelFormatOption)) {
-            const QString format = model3DFormat();
-            const QStringList validFormats = {"wrl", "step", "both"};
-            if (!validFormats.contains(format)) {
+            if (!VALID_3D_MODEL_FORMATS.contains(model3DFormat())) {
                 return false;
             }
         }
@@ -275,9 +275,9 @@ QString CommandLineParser::validationError() const {
     if (isCliMode()) {
         if (m_parser.isSet(m_3dModelFormatOption)) {
             const QString format = model3DFormat();
-            const QStringList validFormats = {"wrl", "step", "both"};
-            if (!validFormats.contains(format)) {
-                errors.append(QString("无效的 3D 模型格式: %1（有效值: %2）").arg(format).arg(validFormats.join(", ")));
+            if (!VALID_3D_MODEL_FORMATS.contains(format)) {
+                errors.append(
+                    QString("无效的 3D 模型格式: %1（有效值: %2）").arg(format).arg(VALID_3D_MODEL_FORMATS.join(", ")));
             }
         }
 

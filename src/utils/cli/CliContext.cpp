@@ -5,6 +5,16 @@
 
 namespace EasyKiConverter {
 
+static int model3DFormatFromString(const QString& format) {
+    if (format == QStringLiteral("step")) {
+        return ExportOptions::MODEL_3D_FORMAT_STEP;
+    }
+    if (format == QStringLiteral("both")) {
+        return ExportOptions::MODEL_3D_FORMAT_BOTH;
+    }
+    return ExportOptions::MODEL_3D_FORMAT_WRL;
+}
+
 CliContext::CliContext(const CommandLineParser& parser) : m_parser(parser) {
     // 创建服务实例
     m_componentService = new ComponentService();
@@ -33,14 +43,7 @@ ExportOptions CliContext::createExportOptions() const {
     options.exportSymbol = m_parser.exportSymbol();
     options.exportFootprint = m_parser.exportFootprint();
     options.exportModel3D = m_parser.export3DModel();
-    const QString model3DFormat = m_parser.model3DFormat();
-    if (model3DFormat == QStringLiteral("step")) {
-        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_STEP;
-    } else if (model3DFormat == QStringLiteral("both")) {
-        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_BOTH;
-    } else {
-        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
-    }
+    options.exportModel3DFormat = model3DFormatFromString(m_parser.model3DFormat());
     options.exportPreviewImages = m_parser.exportPreview();
     options.exportDatasheet = false;
 

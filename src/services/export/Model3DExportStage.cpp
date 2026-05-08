@@ -3,6 +3,7 @@
 #include "Model3DExportWorker.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "models/ComponentData.h"
+#include "services/ComponentCacheService.h"
 #include "utils/PathSecurity.h"
 
 #include <QDebug>
@@ -62,8 +63,25 @@ void Model3DExportStage::start(const QStringList& componentIds,
     qInfo() << "Model3DExportStage::start() - exportModel3DFormat:" << m_options.exportModel3DFormat
             << "needWrl:" << needWrl << "needStep:" << needStep;
 
+    const auto hasModel3DUuid = [&cachedData](const QString& componentId) {
+        auto it = cachedData.constFind(componentId);
+        if (it != cachedData.constEnd() && it.value() && it.value()->model3DData() &&
+            !it.value()->model3DData()->uuid().isEmpty()) {
+            return true;
+        }
+
+        QSharedPointer<ComponentData> cachedComponent =
+            ComponentCacheService::instance()->loadComponentData(componentId);
+        return cachedComponent && cachedComponent->model3DData() && !cachedComponent->model3DData()->uuid().isEmpty();
+    };
+
     m_componentPaths.clear();
     for (const QString& componentId : componentIds) {
+        if ((needWrl || needStep) && !hasModel3DUuid(componentId)) {
+            qDebug() << "Model3DExportStage: No 3D model UUID, skipping temp paths for" << componentId;
+            continue;
+        }
+
         TempFilePaths paths;
         // 最终文件名会在 startWorker() 中根据模型名称动态设置
         // 只有在用户选择对应格式时才创建临时路径
