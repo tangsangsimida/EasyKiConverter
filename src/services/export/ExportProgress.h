@@ -44,6 +44,7 @@ struct ExportOptions {
     bool exportPreviewImages = false;  ///< 是否导出预览图 (Preview Images)
     bool exportDatasheet = false;  ///< 是否导出数据手册 (Datasheet)
     bool overwriteExistingFiles = false;  ///< 是否覆盖已存在的文件
+    bool retryMode = false;  ///< 重试模式：保留已有库内容，仅更新重试的组件
     bool weakNetworkSupport = false;  ///< 是否启用客户端弱网络适配
     bool updateMode = false;  ///< 更新模式：仅导出缺失或已更改的文件
     bool debugMode = false;  ///< 调试模式：输出详细调试信息

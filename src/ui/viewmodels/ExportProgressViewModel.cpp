@@ -685,6 +685,9 @@ void ExportProgressViewModel::retryComponent(const QString& componentId) {
     // Re-trigger export if not currently exporting
     if (!m_isExporting && m_exportService) {
         QStringList idsToRetry = {componentId};
+        ExportOptions opts = m_exportService->options();
+        opts.retryMode = true;
+        m_exportService->setOptions(opts);
         beginExportRun(idsToRetry, QStringLiteral("Preloading component data..."));
         m_exportService->startPreload(idsToRetry);
     }
@@ -724,6 +727,9 @@ void ExportProgressViewModel::retryFailedComponents() {
 
     // Re-trigger export if not currently exporting
     if (!m_isExporting && m_exportService) {
+        ExportOptions opts = m_exportService->options();
+        opts.retryMode = true;
+        m_exportService->setOptions(opts);
         beginExportRun(failedIds, QStringLiteral("Preloading component data..."));
         m_exportService->startPreload(failedIds);
     }

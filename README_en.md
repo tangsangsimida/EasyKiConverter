@@ -54,10 +54,6 @@ EasyKiConverter adopts a modern MVVM architecture design, supporting both GUI an
 - **Network Architecture**: NetworkClient singleton with dedicated network thread + QNetworkAccessManager, retry/backoff support
 - **Async Logging System**: LogModule categories with multiple output appenders
 
-![System Architecture](docs/diagrams/EasyKiConverter_Architecture.svg)
-
-![Project Workflow](docs/diagrams/EasyKiConverter_Workflow.svg)
-
 ## Documentation
 
 **User Guide**

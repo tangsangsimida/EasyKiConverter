@@ -55,10 +55,6 @@ EasyKiConverter 采用现代化的 MVVM 架构设计，支持 GUI 和 CLI 双模
 - **网络架构**：NetworkClient 单例，专用网络线程 + QNetworkAccessManager，支持重试/退避
 - **异步日志系统**：支持 LogModule 分类和多种输出方式
 
-![系统架构图](docs/diagrams/EasyKiConverter_Architecture.svg)
-
-![项目运行流程图](docs/diagrams/EasyKiConverter_Workflow.svg)
-
 ## 文档中心
 
 **用户指南**

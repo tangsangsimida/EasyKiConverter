@@ -220,7 +220,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     }
 
     // 追加/更新到现有符号库时，先把最终文件复制到临时文件，再在临时文件上执行 merge。
-    if (finalFileExists && (!m_options.overwriteExistingFiles || m_options.updateMode)) {
+    if (finalFileExists && (!m_options.overwriteExistingFiles || m_options.updateMode || m_options.retryMode)) {
         const QString tempDirPath = QFileInfo(tempPath).absolutePath();
         if (!QDir().mkpath(tempDirPath)) {
             abortExport(QStringLiteral("Failed to create temp symbol library directory: %1").arg(tempDirPath));

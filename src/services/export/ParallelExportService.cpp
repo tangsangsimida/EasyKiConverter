@@ -160,7 +160,8 @@ void ParallelExportService::startExport() {
     m_cancelRequested = false;
     const quint64 runGeneration = m_activeRunGeneration;
 
-    qDebug() << "ParallelExportService: Starting export for" << m_componentIds.size() << "components";
+    qDebug() << "ParallelExportService: Starting export for" << m_componentIds.size() << "components"
+             << (m_options.retryMode ? "(retry mode)" : "");
 
     m_progress.currentStage = ExportOverallProgress::Stage::Exporting;
     m_progress.startTime = QDateTime::currentDateTime();
@@ -433,6 +434,9 @@ void ParallelExportService::startExport() {
                 });
         stage->start(exportableComponentIds, m_cachedData);
     }
+
+    // 重试模式仅对本次导出生效，避免影响后续正常导出
+    m_options.retryMode = false;
 
     if (m_runningExportStages == 0) {
         qWarning() << "ParallelExportService: No export types enabled";

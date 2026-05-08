@@ -147,9 +147,7 @@ double Exporter3DModel::calculateObjMinZ(const QByteArray& objData) {
         return minZ;
     }
 
-    // STEP offset 使用 KiCad 的模型 offset 单位；WRL 文件坐标会除以 2.54，
-    // 但 KiCad 显示高度仍应按 OBJ 原始 Z 与 STEP 对齐。
-    return minZ > 0.0 ? 0.0 : minZ;
+    return minZ;
 }
 
 double Exporter3DModel::calculateWrlDisplayMinZ(const QByteArray& wrlData) {
@@ -555,11 +553,11 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
         }
 
         if (parts[0] == 'v') {
-            // 顶点数据，转换为毫米（除以 2.54）
+            // 顶点数据，转换为毫米
             if (parts.size() >= 4) {
-                double x = parts[1].toDouble() / 2.54;
-                double y = parts[2].toDouble() / 2.54;
-                double z = parts[3].toDouble() / 2.54;
+                double x = parts[1].toDouble() / WRL_UNIT_TO_MM;
+                double y = parts[2].toDouble() / WRL_UNIT_TO_MM;
+                double z = parts[3].toDouble() / WRL_UNIT_TO_MM;
                 convertedVertices.append(Model3DBase(x, y, z));
                 minX = qMin(minX, x);
                 maxX = qMax(maxX, x);

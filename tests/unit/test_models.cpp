@@ -164,7 +164,7 @@ private slots:
             "v 0 0 2.54\n"
             "v 1 1 5.08\n"
             "f 1 2 1\n");
-        QCOMPARE(Exporter3DModel::calculateObjMinZ(positiveObj), 0.0);
+        QCOMPARE(Exporter3DModel::calculateObjMinZ(positiveObj), 2.54);
 
         const QByteArray negativeObj(
             "v 0 0 -2.54\n"

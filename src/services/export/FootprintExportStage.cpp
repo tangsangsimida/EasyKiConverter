@@ -27,7 +27,9 @@ namespace EasyKiConverter {
 
 namespace {
 constexpr double MODEL_Z_OFFSET_EPSILON_MM = 0.01;
-constexpr double EASYEDA_UNIT_TO_MM = 0.254;
+constexpr double EASYEDA_UNIT_TO_MM = 0.254;  // 逆向转换用，正向请用 GeometryUtils::convertToMm()
+constexpr double EASYEDA_Z_OFFSET_BIAS = 0.000001;  // 避免对齐到精确零值导致 KiCad 忽略偏移
+constexpr auto FP_TYPE_SMD = "smd";
 
 bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center) {
     if (stepData.isEmpty() || center == nullptr) {
@@ -163,7 +165,7 @@ bool readModelSourceZMm(const QByteArray& cadJsonRaw, const QString& modelUuid, 
 }
 
 double calculateWrlBaseZOffset(const QString& fpType, double wrlDisplayMinZ, double sourceZMm) {
-    if (fpType != QStringLiteral("smd") || wrlDisplayMinZ == std::numeric_limits<double>::max()) {
+    if (fpType != QLatin1String(FP_TYPE_SMD) || wrlDisplayMinZ == std::numeric_limits<double>::max()) {
         return 0.0;
     }
 
@@ -173,7 +175,7 @@ double calculateWrlBaseZOffset(const QString& fpType, double wrlDisplayMinZ, dou
 
 double zOffsetMmToEasyEdaUnits(double zOffsetMm) {
     const double roundedOffset = std::round(zOffsetMm * 100.0) / 100.0;
-    return -(roundedOffset - 0.000001) / EASYEDA_UNIT_TO_MM;
+    return -(roundedOffset - EASYEDA_Z_OFFSET_BIAS) / EASYEDA_UNIT_TO_MM;
 }
 }  // namespace
 
@@ -318,8 +320,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
                 Model3DBase geometryCenter;
                 if (calculateStepGeometryCenter(stepData, &geometryCenter)) {
-                    // 与 WRL 导出阶段保持一致：WRL 由 OBJ 派生，优先使用内存/磁盘缓存中的 OBJ。
-                    // 如果只能复用 WRL 缓存，则按缓存 WRL 的实际显示几何计算，避免新偏移配旧 WRL。
+                    // OBJ/WRL 数据加载优先级参见 Model3DExportWorker
                     QByteArray objData = data->model3DObjRaw();
                     if (objData.isEmpty() && data->model3DData()) {
                         objData = data->model3DData()->rawObj().toUtf8();
@@ -341,7 +342,9 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
                     double wrlDisplayMinZ = std::numeric_limits<double>::max();
                     if (!objData.isEmpty()) {
-                        wrlDisplayMinZ = Exporter3DModel::calculateObjMinZ(objData);
+                        // OBJ 全部顶点在 Z>0 时，模型视为平放在板面上，钳位到 0
+                        const double rawMinZ = Exporter3DModel::calculateObjMinZ(objData);
+                        wrlDisplayMinZ = rawMinZ > 0.0 ? 0.0 : rawMinZ;
                     } else if (!wrlData.isEmpty()) {
                         wrlDisplayMinZ = Exporter3DModel::calculateWrlDisplayMinZ(wrlData);
                     }
@@ -429,6 +432,24 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         m_isRunning.store(false);
         emit completed(0, footprintList.size(), 0);
         return;
+    }
+
+    // 重试模式：将已有封装复制到临时目录，保留之前成功的组件
+    if (m_options.retryMode && QDir(finalDir).exists()) {
+        if (!QDir().mkpath(tempDirPath)) {
+            qCritical() << "FootprintExportStage: Failed to create temp dir for retry:" << tempDirPath;
+            m_isExporting.store(false);
+            m_isRunning.store(false);
+            emit completed(0, footprintList.size(), 0);
+            return;
+        }
+        const QStringList existingFiles = QDir(finalDir).entryList({"*.kicad_mod"}, QDir::Files);
+        for (const QString& file : existingFiles) {
+            if (!QFile::copy(finalDir + QDir::separator() + file, tempDirPath + QDir::separator() + file)) {
+                qWarning() << "FootprintExportStage: Failed to copy existing footprint:" << file;
+            }
+        }
+        qDebug() << "FootprintExportStage: Retry mode - copied" << existingFiles.size() << "existing footprints";
     }
 
     qDebug() << "FootprintExportStage: Exporting" << footprintList.size() << "footprints to temp:" << tempDirPath;
