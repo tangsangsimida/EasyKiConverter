@@ -332,19 +332,24 @@
 **回归预防**：
 - 新增缓存使用逻辑时，必须遵循"先缓存后网络"的优先级顺序
 - 预加载阶段应尽可能加载所有需要的数据到内存，减少导出阶段的 I/O
+- 封装阶段计算 STEP 偏移时不能依赖并行的 3D 模型导出阶段先写入缓存；缺少 STEP 数据时也必须按"内存 → 磁盘缓存 → 网络下载并保存缓存"获取
 - 缓存存在性检查应包含基本的完整性验证（文件大小 > 0）
 - 修改 `Model3DExportWorker` 缓存逻辑时，必须验证：
   - 有缓存时不发起网络请求
   - 无缓存时正常下载并保存到缓存
   - 网络失败时有缓存兜底
+- 修改 `FootprintExportStage` STEP 偏移逻辑时，必须验证：
+  - 首次导出且 STEP 未缓存时也能计算 Z 偏移
+  - 3D 模型导出阶段与封装导出阶段并行运行时，封装阶段不依赖前者完成顺序
 
 **相关文件**：
 - `src/services/export/Model3DExportWorker.cpp` - STEP 缓存优先逻辑
+- `src/services/export/FootprintExportStage.cpp` - STEP 偏移计算时的 STEP 数据获取逻辑
 - `src/services/ComponentService.cpp` - 预加载 OBJ 数据
 - `src/services/ComponentService.h` - CacheLoadResult 添加 objData 字段
 - `src/services/ComponentCacheService.cpp` - 缓存完整性验证
 
-**状态**：✅ 已修复 (2026-05-08)
+**状态**：✅ 已修复 (2026-05-08)，并补充封装阶段 STEP 偏移回归修复 (2026-05-09)
 
 ---
 
