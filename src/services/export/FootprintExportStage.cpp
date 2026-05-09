@@ -331,6 +331,13 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                 if (stepData.isEmpty()) {
                     stepData = ComponentCacheService::instance()->loadModel3D(model3D.uuid(), QStringLiteral("step"));
                 }
+                if (stepData.isEmpty()) {
+                    Exporter3DModel modelExporter;
+                    if (modelExporter.downloadStepDataSync(model3D.uuid(), &stepData) && !stepData.isEmpty()) {
+                        ComponentCacheService::instance()->saveModel3D(
+                            model3D.uuid(), stepData, QStringLiteral("step"));
+                    }
+                }
 
                 Model3DBase geometryCenter;
                 if (calculateStepGeometryCenter(stepData, &geometryCenter)) {
