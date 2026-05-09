@@ -26,6 +26,24 @@ protected:
     }
 };
 
+class DeferredStage final : public ExportTypeStage {
+public:
+    DeferredStage() : ExportTypeStage("Deferred", 1, nullptr) {}
+
+protected:
+    QObject* createWorker() override {
+        return new QObject();
+    }
+
+    void startWorker(QObject* worker, const QString& componentId, const QSharedPointer<ComponentData>& data) override {
+        Q_UNUSED(data);
+        QTimer::singleShot(0, worker, [this, worker, componentId]() {
+            completeItemProgress(worker, componentId, false, QStringLiteral("Cancelled"));
+            worker->deleteLater();
+        });
+    }
+};
+
 class TestExportTypeStage : public QObject {
     Q_OBJECT
 
@@ -53,6 +71,25 @@ private slots:
         QCOMPARE(progress.completedCount, ids.size());
         QCOMPARE(progress.successCount, ids.size());
         QCOMPARE(progress.failedCount, 0);
+    }
+
+    void cancelledStageStaysRunningUntilActiveWorkersDrain() {
+        DeferredStage stage;
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+
+        QStringList ids = {"C1001", "C1002", "C1003"};
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        for (const QString& id : ids) {
+            cachedData[id] = QSharedPointer<ComponentData>::create();
+        }
+
+        stage.start(ids, cachedData);
+        stage.cancel();
+
+        QVERIFY(stage.isRunning());
+        QVERIFY2(completedSpy.wait(1000), "Cancelled stage should finish when active workers drain");
+        QVERIFY(!stage.isRunning());
+        QCOMPARE(completedSpy.count(), 1);
     }
 
     void footprintLibraryExportPreservesExistingFilesWhenNotOverwriting() {

@@ -251,6 +251,7 @@ private:
      * @brief 清理已结束的Stage对象
      */
     void cleanupExportStages();
+    void discardExportStage(const QString& typeName, ExportTypeStage* stage);
 
     ExportOptions m_options;  ///< 导出选项
     QStringList m_componentIds;  ///< 待处理的元器件ID列表

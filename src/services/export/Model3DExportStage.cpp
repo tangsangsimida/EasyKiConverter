@@ -122,7 +122,9 @@ void Model3DExportStage::cancel() {
     m_tempManager.rollbackAll();
 
     m_isExporting.store(false);
-    m_isRunning.store(false);
+    if (!hasActiveWorkers()) {
+        m_isRunning.store(false);
+    }
 
     qDebug() << "Model3DExportStage: Cancelled";
 }

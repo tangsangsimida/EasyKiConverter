@@ -48,6 +48,15 @@ void ParallelExportService::cleanupExportStages() {
     m_exportStages.clear();
 }
 
+void ParallelExportService::discardExportStage(const QString& typeName, ExportTypeStage* stage) {
+    if (m_exportStages.value(typeName) == stage) {
+        m_exportStages.remove(typeName);
+    }
+    if (stage) {
+        stage->deleteLater();
+    }
+}
+
 void ParallelExportService::setOptions(const ExportOptions& options) {
     m_options = options;
 }
@@ -283,7 +292,7 @@ void ParallelExportService::startExport() {
                 this,
                 [this, stage, runGeneration](int success, int failed, int skipped) {
                     if (runGeneration != m_activeRunGeneration) {
-                        stage->deleteLater();
+                        discardExportStage(QStringLiteral("Symbol"), stage);
                         return;
                     }
                     onExportTypeCompleted(QStringLiteral("Symbol"), success, failed, skipped);
@@ -319,7 +328,7 @@ void ParallelExportService::startExport() {
                 this,
                 [this, stage, runGeneration](int success, int failed, int skipped) {
                     if (runGeneration != m_activeRunGeneration) {
-                        stage->deleteLater();
+                        discardExportStage(QStringLiteral("Footprint"), stage);
                         return;
                     }
                     onExportTypeCompleted(QStringLiteral("Footprint"), success, failed, skipped);
@@ -355,7 +364,7 @@ void ParallelExportService::startExport() {
                 this,
                 [this, stage, runGeneration](int success, int failed, int skipped) {
                     if (runGeneration != m_activeRunGeneration) {
-                        stage->deleteLater();
+                        discardExportStage(QStringLiteral("Model3D"), stage);
                         return;
                     }
                     onExportTypeCompleted(QStringLiteral("Model3D"), success, failed, skipped);
@@ -391,7 +400,7 @@ void ParallelExportService::startExport() {
                 this,
                 [this, stage, runGeneration](int success, int failed, int skipped) {
                     if (runGeneration != m_activeRunGeneration) {
-                        stage->deleteLater();
+                        discardExportStage(QStringLiteral("PreviewImages"), stage);
                         return;
                     }
                     onExportTypeCompleted(QStringLiteral("PreviewImages"), success, failed, skipped);
@@ -427,7 +436,7 @@ void ParallelExportService::startExport() {
                 this,
                 [this, stage, runGeneration](int success, int failed, int skipped) {
                     if (runGeneration != m_activeRunGeneration) {
-                        stage->deleteLater();
+                        discardExportStage(QStringLiteral("Datasheet"), stage);
                         return;
                     }
                     onExportTypeCompleted(QStringLiteral("Datasheet"), success, failed, skipped);
@@ -525,31 +534,29 @@ void ParallelExportService::onExportTypeCompleted(const QString& typeName,
                                                   int successCount,
                                                   int failedCount,
                                                   int skippedCount) {
-    QMutexLocker locker(&m_progressMutex);
+    {
+        QMutexLocker locker(&m_progressMutex);
 
-    ExportTypeProgress typeProgress = m_progress.exportTypeProgress.value(typeName);
-    typeProgress.typeName = typeName;
-    typeProgress.totalCount = m_componentIds.size();
-    typeProgress.successCount = successCount;
-    typeProgress.failedCount = failedCount;
-    typeProgress.skippedCount = skippedCount;
-    typeProgress.completedCount = successCount + failedCount + skippedCount;
-    typeProgress.inProgressCount = 0;
+        ExportTypeProgress typeProgress = m_progress.exportTypeProgress.value(typeName);
+        typeProgress.typeName = typeName;
+        typeProgress.totalCount = m_componentIds.size();
+        typeProgress.successCount = successCount;
+        typeProgress.failedCount = failedCount;
+        typeProgress.skippedCount = skippedCount;
+        typeProgress.completedCount = successCount + failedCount + skippedCount;
+        typeProgress.inProgressCount = 0;
 
-    m_progress.exportTypeProgress[typeName] = typeProgress;
+        m_progress.exportTypeProgress[typeName] = typeProgress;
 
-    if (m_runningExportStages > 0) {
-        m_runningExportStages--;
+        if (m_runningExportStages > 0) {
+            m_runningExportStages--;
+        }
     }
 
-    locker.unlock();
     emit typeCompleted(typeName, successCount, failedCount, skippedCount);
 
-    if (m_exportStages.contains(typeName)) {
-        auto* finishedStage = m_exportStages.take(typeName);
-        if (finishedStage) {
-            finishedStage->deleteLater();
-        }
+    if (auto* finishedStage = m_exportStages.value(typeName)) {
+        discardExportStage(typeName, finishedStage);
     }
 
     checkAllExportCompleted();

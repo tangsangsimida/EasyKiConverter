@@ -198,7 +198,10 @@ FootprintExportStage::FootprintExportStage(QObject* parent)
 }
 
 FootprintExportStage::~FootprintExportStage() {
-    cancel();
+    m_cancelled.store(true);
+    if (m_workerThread && m_workerThread->isRunning()) {
+        m_workerThread->wait();
+    }
 }
 
 void FootprintExportStage::start(const QStringList& componentIds,
@@ -257,13 +260,13 @@ void FootprintExportStage::cancel() {
     // 设置取消标志
     m_cancelled.store(true);
 
-    // 等待工作线程结束（最多等待 5 秒）
+    // 等待工作线程协作式退出（最多等待 5 秒）。不能 terminate()：强杀线程可能中断 Qt/C++ 对象析构或持锁区。
     if (m_workerThread && m_workerThread->isRunning()) {
         qDebug() << "FootprintExportStage: Waiting for worker thread to finish...";
         m_workerThread->quit();
         if (!m_workerThread->wait(5000)) {
-            qWarning() << "FootprintExportStage: Thread did not finish in 5s, terminating";
-            m_workerThread->terminate();
+            qWarning() << "FootprintExportStage: Thread did not finish in 5s, leaving it to finish asynchronously";
+            return;
         }
         m_workerThread = nullptr;
     }

@@ -137,6 +137,8 @@ void ExportTypeStage::cancel() {
     qDebug() << "ExportTypeStage:" << m_typeName << "cancelling...";
     m_cancelled.store(true);
 
+    bool hasActiveWorkers = false;
+
     // 取消所有活跃worker（在锁内完成以避免与 completeItemProgress 竞争）
     // 使用 QPointer 保护 worker 指针，防止在 cancel 过程中 worker 被删除导致悬空指针
     {
@@ -153,10 +155,10 @@ void ExportTypeStage::cancel() {
         // 清空待处理队列
         m_pendingComponents.clear();
 
-        // 在锁内设置 m_isRunning = false，避免与 completeItemProgress 竞争
-        // 注意：completeItemProgress 也可能在所有 worker 被取消后到达 completedCount >= totalCount
-        // 的状态并设置 m_isRunning = false，这是安全的（原子变量的重复写入是无害的）
-        m_isRunning.store(false);
+        hasActiveWorkers = !m_activeWorkers.isEmpty();
+        if (!hasActiveWorkers) {
+            m_isRunning.store(false);
+        }
     }
 
     qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
@@ -169,6 +171,11 @@ ExportTypeProgress ExportTypeStage::getProgress() const {
 
 bool ExportTypeStage::isRunning() const {
     return m_isRunning.load();
+}
+
+bool ExportTypeStage::hasActiveWorkers() const {
+    QMutexLocker locker(&m_workerMutex);
+    return !m_activeWorkers.isEmpty();
 }
 
 void ExportTypeStage::initItemProgress(const QString& componentId) {
@@ -186,6 +193,7 @@ void ExportTypeStage::completeItemProgress(QObject* worker,
                                            const QString& error) {
     // 1. 从活跃worker集合移除
     bool shouldStartNext = false;
+    bool hasActiveWorkers = false;
     {
         QMutexLocker workerLocker(&m_workerMutex);
         if (worker) {
@@ -193,7 +201,12 @@ void ExportTypeStage::completeItemProgress(QObject* worker,
         }
         // 检查是否还有待处理的worker
         shouldStartNext = !m_pendingComponents.isEmpty();
+        hasActiveWorkers = !m_activeWorkers.isEmpty();
     }
+
+    ExportItemStatus statusSnapshot;
+    ExportTypeProgress progressSnapshot;
+    bool shouldComplete = false;
 
     // 2. 更新进度
     {
@@ -211,7 +224,7 @@ void ExportTypeStage::completeItemProgress(QObject* worker,
         if (!success) {
             status.errorMessage = error;
         }
-        const ExportItemStatus statusSnapshot = status;
+        statusSnapshot = status;
 
         m_progress.completedCount++;
         if (success) {
@@ -220,24 +233,23 @@ void ExportTypeStage::completeItemProgress(QObject* worker,
             m_progress.failedCount++;
         }
         m_progress.inProgressCount--;
-        const ExportTypeProgress progressSnapshot = m_progress;
+        progressSnapshot = m_progress;
 
-        if (m_progress.completedCount >= m_progress.totalCount) {
-            locker.unlock();
-            qInfo() << "ExportTypeStage::completeItemProgress: Emitting itemStatusChanged for" << componentId
-                    << "status:" << (int)statusSnapshot.status;
-            emit itemStatusChanged(componentId, statusSnapshot);
-            emit progressChanged(progressSnapshot);
-            qDebug() << "ExportTypeStage:" << m_typeName << "completed. Success:" << progressSnapshot.successCount
-                     << "Failed:" << progressSnapshot.failedCount << "Skipped:" << progressSnapshot.skippedCount;
-            emit completed(progressSnapshot.successCount, progressSnapshot.failedCount, progressSnapshot.skippedCount);
-            m_isRunning.store(false);
-            return;
-        } else {
-            locker.unlock();
-            emit itemStatusChanged(componentId, statusSnapshot);
-            emit progressChanged(progressSnapshot);
-        }
+        const bool cancelledAndDrained = m_cancelled.load() && !hasActiveWorkers && !shouldStartNext;
+        shouldComplete = m_progress.completedCount >= m_progress.totalCount || cancelledAndDrained;
+    }
+
+    emit itemStatusChanged(componentId, statusSnapshot);
+    emit progressChanged(progressSnapshot);
+
+    if (shouldComplete) {
+        qInfo() << "ExportTypeStage::completeItemProgress: Emitting itemStatusChanged for" << componentId
+                << "status:" << (int)statusSnapshot.status;
+        qDebug() << "ExportTypeStage:" << m_typeName << "completed. Success:" << progressSnapshot.successCount
+                 << "Failed:" << progressSnapshot.failedCount << "Skipped:" << progressSnapshot.skippedCount;
+        emit completed(progressSnapshot.successCount, progressSnapshot.failedCount, progressSnapshot.skippedCount);
+        m_isRunning.store(false);
+        return;
     }
 
     // 3. 启动下一个待处理的worker（按需创建）
