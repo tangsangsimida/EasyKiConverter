@@ -105,6 +105,60 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="3.1.7" date="2026-05-05">
+      <description>
+        <p>Changes from 3.1.6 to 3.1.7</p>
+        <p xml:lang="zh_CN">从 3.1.6 到 3.1.7 的变更</p>
+        <p>New Features:</p>
+        <p xml:lang="zh_CN">新功能:</p>
+        <ul>
+          <li>Add symbol library description and keyword export for KiCad library files</li>
+          <li xml:lang="zh_CN">为 KiCad 库文件添加符号库描述和关键词导出</li>
+          <li>Add component description editing dialog for customizing export descriptions</li>
+          <li xml:lang="zh_CN">添加元器件描述编辑对话框，支持自定义导出描述</li>
+          <li>Add STEP model Z-axis offset alignment to match WRL model pad positioning in KiCad</li>
+          <li xml:lang="zh_CN">添加 STEP 模型 Z 轴偏移对齐，确保在 KiCad 中与 WRL 模型焊盘位置一致</li>
+          <li>Add CLI --3d-model-format option to select 3D model export format (wrl/step/both)</li>
+          <li xml:lang="zh_CN">添加 CLI --3d-model-format 选项，支持选择 3D 模型导出格式（wrl/step/both）</li>
+          <li>Add CLI --lib-name option to customize exported library name</li>
+          <li xml:lang="zh_CN">添加 CLI --lib-name 选项，支持自定义导出库名称</li>
+          <li>Add retry mode for export to preserve existing library content and only update failed components</li>
+          <li xml:lang="zh_CN">为导出功能添加重试模式，保留已有库内容并仅更新失败的组件</li>
+        </ul>
+        <p>Bug Fixes:</p>
+        <p xml:lang="zh_CN">修复:</p>
+        <ul>
+          <li>Fix STEP/WRL 3D model offset misalignment causing models to land at different pad positions in KiCad</li>
+          <li xml:lang="zh_CN">修复 STEP/WRL 3D 模型偏移不一致导致在 KiCad 中模型落在不同焊盘位置的问题</li>
+          <li>Fix stale fetchingComponent entry causing validation requests to be silently skipped in ComponentService</li>
+          <li xml:lang="zh_CN">修复 ComponentService 中陈旧的 fetchingComponent 条目导致验证请求被静默跳过的问题</li>
+          <li>Fix 3D model cache using corrupted empty files as valid cache hits</li>
+          <li xml:lang="zh_CN">修复 3D 模型缓存将损坏的空文件误判为有效缓存的问题</li>
+          <li>Fix STEP export logic to use cache-first strategy instead of network-first</li>
+          <li xml:lang="zh_CN">修复 STEP 导出逻辑，从"先网络后缓存"改为"先缓存后网络"策略</li>
+          <li>Fix export error handling to properly clear stale component state on fetch failures</li>
+          <li xml:lang="zh_CN">修复导出错误处理，在获取失败时正确清除陈旧组件状态</li>
+          <li>Fix async request cancellation thread safety in NetworkClient</li>
+          <li xml:lang="zh_CN">修复 NetworkClient 中异步请求取消的线程安全问题</li>
+          <li>Fix footprint library export to preserve existing footprints when not in overwrite mode</li>
+          <li xml:lang="zh_CN">修复封装库导出在非覆盖模式下保留已有封装的问题</li>
+        </ul>
+        <p>Improvements:</p>
+        <p xml:lang="zh_CN">改进:</p>
+        <ul>
+          <li>Optimize STEP geometry parsing with single-pass CARTESIAN_POINT collection and VERTEX_POINT lookup</li>
+          <li xml:lang="zh_CN">优化 STEP 几何解析，采用单次遍历收集 CARTESIAN_POINT 并通过 VERTEX_POINT 查找</li>
+          <li>Unify 3D model coordinate units to millimeters and extract WRL_UNIT_TO_MM constant</li>
+          <li xml:lang="zh_CN">统一 3D 模型坐标单位为毫米并提取 WRL_UNIT_TO_MM 常量</li>
+          <li>Preload OBJ binary data during cache loading to avoid repeated disk I/O in export stage</li>
+          <li xml:lang="zh_CN">在缓存加载阶段预加载 OBJ 二进制数据，避免导出阶段重复磁盘 I/O</li>
+          <li>WRL files are regenerated from OBJ when available instead of using stale cached WRL</li>
+          <li xml:lang="zh_CN">有 OBJ 数据时始终重新生成 WRL 文件，避免使用过期的缓存 WRL</li>
+          <li>Improve NetworkClient with cancelAllRequests() API and proper thread-safe request lifecycle</li>
+          <li xml:lang="zh_CN">改进 NetworkClient，添加 cancelAllRequests() API 并完善线程安全的请求生命周期管理</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.1.6" date="2026-04-26">
       <description>
         <p>Changes from 3.1.5 to 3.1.6</p>
@@ -163,39 +217,7 @@
         </ul>
       </description>
     </release>
-    <release version="3.1.4" date="2026-04-20">
-      <description>
-        <p>Changes from 3.1.3 to 3.1.4</p>
-        <p xml:lang="zh_CN">从 3.1.3 到 3.1.4 的变更</p>
-        <p>New Features:</p>
-        <p xml:lang="zh_CN">新功能:</p>
-        <ul>
-          <li xml:lang="zh_CN">增强 CLI 模式支持，修复命令行解析和补全功能</li>
-          <li xml:lang="zh_CN">改进命令行解析器参数处理机制</li>
-          <li xml:lang="zh_CN">添加纯 CLI 模式支持以优化命令行体验</li>
-          <li xml:lang="zh_CN">添加 Shell 自动补全功能并优化 CLI 文档</li>
-          <li xml:lang="zh_CN">添加命令行接口支持</li>
-          <li xml:lang="zh_CN">解决导出结果列表在转换过程中自动回到顶部的问题，使用 DelegateModel 保持滚动位置</li>
-          <li xml:lang="zh_CN">禁用元器件列表统计为0的筛选选项</li>
-          <li xml:lang="zh_CN">添加过滤功能和虚拟化支持，优化结果列表性能</li>
-        </ul>
-        <p>Bug Fixes:</p>
-        <p xml:lang="zh_CN">修复:</p>
-        <ul>
-          <li xml:lang="zh_CN">更新 FAQ 以解决 KiCad 中追加导出新符号不可见的问题</li>
-        </ul>
-        <p>Refactoring:</p>
-        <p xml:lang="zh_CN">重构:</p>
-        <ul>
-          <li xml:lang="zh_CN">提取符号引脚和形状序列化器到独立文件</li>
-        </ul>
-        <p>Other Changes:</p>
-        <p xml:lang="zh_CN">其他变更:</p>
-        <ul>
-          <li>code-format</li>
-        </ul>
-      </description>
-    </release>
+    <release version="3.1.4" date="2026-04-20"/>
     <release version="3.1.3" date="2026-04-19"/>
     <release version="3.1.2" date="2026-03-26"/>
     <release version="3.1.1" date="2026-03-25"/>
