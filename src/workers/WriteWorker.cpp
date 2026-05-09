@@ -465,7 +465,6 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
     // STEP 文件保持服务器原始坐标系，避免破坏它与 WRL 模型原本一致的装配关系。
     bool stepSuccess = false;
     if (!status.cachedModel3DStepPath.isEmpty()) {
-        // 缓存路径：直接拷贝（避免大文件经过内存）
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
         stepSuccess = AtomicFileWriter::copyAtomically(status.cachedModel3DStepPath, stepFilePath, m_tempDir);
         if (stepSuccess) {
@@ -474,7 +473,6 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
             status.addDebugLog(QString("WARNING: Failed to copy STEP file from cache: %1").arg(stepFilePath));
         }
     } else if (!status.model3DStepRaw.isEmpty()) {
-        // 内存数据：直接写入原始字节
         QString stepFilePath = QString("%1/%2.step").arg(modelsDirPath, footprintName);
         stepSuccess = AtomicFileWriter::writeAtomically(
             m_tempDir, stepFilePath, ".step.tmp", [&status](const QString& tempPath) -> bool {

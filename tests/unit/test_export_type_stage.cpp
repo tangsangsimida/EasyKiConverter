@@ -1,7 +1,11 @@
 #include "models/ComponentData.h"
 #include "services/export/ExportTypeStage.h"
+#include "services/export/FootprintExportStage.h"
 
+#include <QDir>
+#include <QFile>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QtTest/QtTest>
 
 namespace EasyKiConverter {
@@ -49,6 +53,66 @@ private slots:
         QCOMPARE(progress.completedCount, ids.size());
         QCOMPARE(progress.successCount, ids.size());
         QCOMPARE(progress.failedCount, 0);
+    }
+
+    void footprintLibraryExportPreservesExistingFilesWhenNotOverwriting() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString libName = QStringLiteral("RegressionLib");
+        const QString prettyDir = tempDir.path() + QDir::separator() + libName + QStringLiteral(".pretty");
+        QVERIFY(QDir().mkpath(prettyDir));
+
+        const QString oldFootprintPath = prettyDir + QDir::separator() + QStringLiteral("OldPackage.kicad_mod");
+        QFile oldFootprint(oldFootprintPath);
+        QVERIFY(oldFootprint.open(QIODevice::WriteOnly | QIODevice::Text));
+        oldFootprint.write("(footprint easykiconverter:OldPackage)\n");
+        oldFootprint.close();
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = libName;
+        options.overwriteExistingFiles = false;
+        stage.setOptions(options);
+
+        const QString componentId = QStringLiteral("C2040");
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[componentId] = makeFootprintComponent(componentId, QStringLiteral("NewPackage"));
+
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        stage.start({componentId}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Footprint export should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 1);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
+
+        QVERIFY2(QFile::exists(oldFootprintPath), "Existing footprint should be preserved");
+        QVERIFY(QFile::exists(prettyDir + QDir::separator() + QStringLiteral("NewPackage.kicad_mod")));
+    }
+
+private:
+    static QSharedPointer<ComponentData> makeFootprintComponent(const QString& componentId,
+                                                                const QString& footprintName) {
+        auto componentData = QSharedPointer<ComponentData>::create();
+        componentData->setLcscId(componentId);
+
+        auto footprintData = QSharedPointer<FootprintData>::create();
+        FootprintInfo info;
+        info.name = footprintName;
+        info.type = QStringLiteral("smd");
+        footprintData->setInfo(info);
+
+        FootprintBBox bbox;
+        bbox.x = 0;
+        bbox.y = 0;
+        bbox.width = 1;
+        bbox.height = 1;
+        footprintData->setBbox(bbox);
+
+        componentData->setFootprintData(footprintData);
+        return componentData;
     }
 };
 

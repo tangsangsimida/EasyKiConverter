@@ -164,13 +164,13 @@ private slots:
             "v 0 0 2.54\n"
             "v 1 1 5.08\n"
             "f 1 2 1\n");
-        QCOMPARE(Exporter3DModel::calculateObjMinZ(positiveObj), 2.54);
+        QCOMPARE(Exporter3DModel::calculateObjMinZ(positiveObj), 1.0);
 
         const QByteArray negativeObj(
             "v 0 0 -2.54\n"
             "v 1 1 2.54\n"
             "f 1 2 1\n");
-        QCOMPARE(Exporter3DModel::calculateObjMinZ(negativeObj), -2.54);
+        QCOMPARE(Exporter3DModel::calculateObjMinZ(negativeObj), -1.0);
 
         QCOMPARE(Exporter3DModel::calculateObjMinZ(QByteArray("f 1 2 3\n")), std::numeric_limits<double>::max());
 

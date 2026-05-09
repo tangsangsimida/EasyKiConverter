@@ -131,12 +131,12 @@ double Exporter3DModel::calculateObjMinZ(const QByteArray& objData) {
                 }
             }
 
-            // 解析 Z 分量
+            // 解析 Z 分量（转换为毫米，与 calculateWrlDisplayMinZ 单位一致）
             if (pos < end) {
                 bool ok = false;
                 double z = QByteArray(objData.constData() + pos, end - pos).toDouble(&ok);
                 if (ok) {
-                    minZ = qMin(minZ, z);
+                    minZ = qMin(minZ, z / WRL_UNIT_TO_MM);
                 }
             }
         }

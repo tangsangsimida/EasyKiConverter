@@ -64,13 +64,14 @@ public:
     bool downloadStepDataSync(const QString& uuid, QByteArray* data, QString* errorMessage = nullptr);
 
     /**
-     * @brief 计算 OBJ 顶点数据的最小 Z 坐标
+     * @brief 计算 OBJ 顶点数据的最小 Z 坐标（毫米）
      *
-     * 解析 OBJ 格式的顶点数据，返回原始坐标系下的最小 Z 值（不做钳位）。
+     * 解析 OBJ 格式的顶点数据，返回毫米单位下的最小 Z 值（不做钳位）。
+     * OBJ 原始坐标除以 2.54 转换为毫米，与 calculateWrlDisplayMinZ 单位一致。
      * 调用方负责根据需要对正值进行地板钳位（sitting-on-board 语义）。
      *
      * @param objData OBJ 格式的原始数据
-     * @return 最小 Z 坐标，无有效顶点时返回 numeric_limits<double>::max()
+     * @return 毫米单位下的最小 Z 坐标，无有效顶点时返回 numeric_limits<double>::max()
      */
     static double calculateObjMinZ(const QByteArray& objData);
 

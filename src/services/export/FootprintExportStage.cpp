@@ -11,13 +11,13 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QMutexLocker>
 #include <QRegularExpression>
-#include <QSet>
 #include <QThread>
 
 #include <cmath>
@@ -44,29 +44,18 @@ bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center
     static const QRegularExpression vertexPointRegex(QStringLiteral("VERTEX_POINT\\s*\\([^,]*,\\s*#(\\d+)\\s*\\)"),
                                                      QRegularExpression::CaseInsensitiveOption);
 
-    QSet<int> vertexPointIds;
-    QRegularExpressionMatchIterator vertexMatches = vertexPointRegex.globalMatch(content);
-    while (vertexMatches.hasNext()) {
-        bool ok = false;
-        int id = vertexMatches.next().captured(1).toInt(&ok);
-        if (ok) {
-            vertexPointIds.insert(id);
-        }
-    }
+    // 单次遍历收集所有 CARTESIAN_POINT，避免对整个文件做两次正则扫描
+    struct Vec3 {
+        double x = 0, y = 0, z = 0;
+    };
 
-    double minX = std::numeric_limits<double>::max();
-    double maxX = std::numeric_limits<double>::lowest();
-    double minY = std::numeric_limits<double>::max();
-    double maxY = std::numeric_limits<double>::lowest();
-    double minZ = std::numeric_limits<double>::max();
-    bool hasGeometryPoint = false;
-
-    QRegularExpressionMatchIterator matches = pointRegex.globalMatch(content);
-    while (matches.hasNext()) {
-        const QRegularExpressionMatch match = matches.next();
+    QHash<int, Vec3> allPoints;
+    QRegularExpressionMatchIterator pointMatches = pointRegex.globalMatch(content);
+    while (pointMatches.hasNext()) {
+        const QRegularExpressionMatch match = pointMatches.next();
         bool idOk = false;
         int pointId = match.captured(1).toInt(&idOk);
-        if (!vertexPointIds.isEmpty() && (!idOk || !vertexPointIds.contains(pointId))) {
+        if (!idOk) {
             continue;
         }
 
@@ -85,11 +74,36 @@ bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center
             continue;
         }
 
-        minX = qMin(minX, x);
-        maxX = qMax(maxX, x);
-        minY = qMin(minY, y);
-        maxY = qMax(maxY, y);
-        minZ = qMin(minZ, z);
+        allPoints.insert(pointId, {x, y, z});
+    }
+
+    // 第二次遍历仅扫描 VERTEX_POINT（数量远少于 CARTESIAN_POINT）
+    double minX = std::numeric_limits<double>::max();
+    double maxX = std::numeric_limits<double>::lowest();
+    double minY = std::numeric_limits<double>::max();
+    double maxY = std::numeric_limits<double>::lowest();
+    double minZ = std::numeric_limits<double>::max();
+    bool hasGeometryPoint = false;
+
+    QRegularExpressionMatchIterator vertexMatches = vertexPointRegex.globalMatch(content);
+    while (vertexMatches.hasNext()) {
+        bool ok = false;
+        int id = vertexMatches.next().captured(1).toInt(&ok);
+        if (!ok) {
+            continue;
+        }
+
+        auto it = allPoints.constFind(id);
+        if (it == allPoints.constEnd()) {
+            continue;
+        }
+
+        const Vec3& p = it.value();
+        minX = qMin(minX, p.x);
+        maxX = qMax(maxX, p.x);
+        minY = qMin(minY, p.y);
+        maxY = qMax(maxY, p.y);
+        minZ = qMin(minZ, p.z);
         hasGeometryPoint = true;
     }
 
@@ -99,7 +113,7 @@ bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center
 
     center->x = (minX + maxX) / 2.0;
     center->y = (minY + maxY) / 2.0;
-    center->z = minZ;
+    center->z = minZ;  // 有意取最小值而非中心——用于 Z 轴对齐
     return true;
 }
 
@@ -320,7 +334,6 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
                 Model3DBase geometryCenter;
                 if (calculateStepGeometryCenter(stepData, &geometryCenter)) {
-                    // OBJ/WRL 数据加载优先级参见 Model3DExportWorker
                     QByteArray objData = data->model3DObjRaw();
                     if (objData.isEmpty() && data->model3DData()) {
                         objData = data->model3DData()->rawObj().toUtf8();
@@ -370,7 +383,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                     model3D.setStepOffsetMm(stepOffset);
                     footprint.setModel3D(model3D);
                     qDebug() << "FootprintExportStage: STEP offset for" << componentId << "uuid" << model3D.uuid()
-                             << "center:" << geometryCenter.x << geometryCenter.y << geometryCenter.z
+                             << "xyCenter:" << geometryCenter.x << geometryCenter.y << "minZ:" << geometryCenter.z
                              << "wrlDisplayMinZ:" << wrlDisplayMinZ << "stepMinZ:" << stepMinZ
                              << "sourceZMm:" << sourceZMm << "wrlBaseZOffset:" << wrlBaseZOffset
                              << "offset:" << stepOffset.x << stepOffset.y << stepOffset.z;
@@ -434,10 +447,12 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
-    // 重试模式：将已有封装复制到临时目录，保留之前成功的组件
-    if (m_options.retryMode && QDir(finalDir).exists()) {
+    // 追加/更新封装库时，先将已有 .kicad_mod 复制到临时目录，避免提交临时目录时丢失旧封装。
+    const bool preserveExistingFootprints =
+        QDir(finalDir).exists() && (!m_options.overwriteExistingFiles || m_options.updateMode || m_options.retryMode);
+    if (preserveExistingFootprints) {
         if (!QDir().mkpath(tempDirPath)) {
-            qCritical() << "FootprintExportStage: Failed to create temp dir for retry:" << tempDirPath;
+            qCritical() << "FootprintExportStage: Failed to create temp dir for merge:" << tempDirPath;
             m_isExporting.store(false);
             m_isRunning.store(false);
             emit completed(0, footprintList.size(), 0);
@@ -449,7 +464,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                 qWarning() << "FootprintExportStage: Failed to copy existing footprint:" << file;
             }
         }
-        qDebug() << "FootprintExportStage: Retry mode - copied" << existingFiles.size() << "existing footprints";
+        qDebug() << "FootprintExportStage: Preserved" << existingFiles.size() << "existing footprints";
     }
 
     qDebug() << "FootprintExportStage: Exporting" << footprintList.size() << "footprints to temp:" << tempDirPath;
