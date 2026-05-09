@@ -446,6 +446,7 @@ private:
         bool hasCadData;
         bool fetch3DModel;  // 是否需要获取 3D 模型
         bool hasTriggeredLcscFetch;  // 是否已触发 LCSC 数据获取（防止重复触发）
+        bool requestActive = false;  // 主验证请求仍在进行中，用于区分真实重复请求和陈旧条目
         QString errorMessage;
         int pendingAsyncDownloads;  // 等待的异步下载数量（数据手册、预览图等）
     };
@@ -480,6 +481,45 @@ private:
 
     // 输出路径
     QString m_outputPath;
+
+#ifdef EASYKICONVERTER_TESTING_ACCESS
+public:
+    void testSetFetchingState(const QString& componentId,
+                              const QString& storedComponentId,
+                              bool hasCadData,
+                              bool requestActive) {
+        const QString normalizedId = componentId.toUpper();
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        FetchingComponent& fetching = m_fetchingComponents[normalizedId];
+        fetching.componentId = storedComponentId;
+        fetching.hasCadData = hasCadData;
+        fetching.requestActive = requestActive;
+    }
+
+    bool testHasFetchingState(const QString& componentId) const {
+        const QString normalizedId = componentId.toUpper();
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        return m_fetchingComponents.contains(normalizedId);
+    }
+
+    QString testFetchingComponentId(const QString& componentId) const {
+        const QString normalizedId = componentId.toUpper();
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        return m_fetchingComponents.value(normalizedId).componentId;
+    }
+
+    bool testFetchingRequestActive(const QString& componentId) const {
+        const QString normalizedId = componentId.toUpper();
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        return m_fetchingComponents.value(normalizedId).requestActive;
+    }
+
+    bool testFetchingHasCadData(const QString& componentId) const {
+        const QString normalizedId = componentId.toUpper();
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        return m_fetchingComponents.value(normalizedId).hasCadData;
+    }
+#endif
 };
 
 }  // namespace EasyKiConverter

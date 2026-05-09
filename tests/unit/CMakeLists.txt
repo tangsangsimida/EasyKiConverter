@@ -41,6 +41,20 @@ target_include_directories(test_component_cache_service PRIVATE
 )
 add_test(NAME test_component_cache_service COMMAND test_component_cache_service)
 
+add_executable(test_component_service test_component_service.cpp)
+target_link_libraries(test_component_service PRIVATE
+    Qt6::Test
+    Qt6::Gui
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_component_service PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+target_compile_definitions(test_component_service PRIVATE EASYKICONVERTER_TESTING_ACCESS)
+add_test(NAME test_component_service COMMAND test_component_service)
+
 # 导出阶段测试
 add_executable(test_export_type_stage test_export_type_stage.cpp)
 target_link_libraries(test_export_type_stage PRIVATE

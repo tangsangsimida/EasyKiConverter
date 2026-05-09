@@ -149,6 +149,7 @@ void ComponentService::initializeFetchingComponent(FetchingComponent& fetchingCo
     fetchingComponent.hasComponentInfo = false;
     fetchingComponent.hasCadData = false;
     fetchingComponent.hasTriggeredLcscFetch = false;
+    fetchingComponent.requestActive = true;
     fetchingComponent.errorMessage.clear();
     fetchingComponent.pendingAsyncDownloads = 0;
 }
@@ -182,9 +183,8 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
             if (hasReusableData) {
                 reusableData = existing.data;
                 reuseExistingData = true;
-            } else if (m_parallelContext != nullptr && !hasReusableData) {
-                qDebug() << "ComponentService: Removing stale fetching state for" << normalizedId
-                         << "before parallel preload retry";
+            } else if (m_parallelContext != nullptr || !existing.requestActive) {
+                qDebug() << "ComponentService: Removing stale fetching state for" << normalizedId << "before retry";
                 m_fetchingComponents.remove(normalizedId);
             } else {
                 shouldSkipAsDuplicate = true;
@@ -255,6 +255,7 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
             }
             it->data = result.parsed.componentData;
             it->hasCadData = true;
+            it->requestActive = false;
         }
 
         updateComponentCache(result.componentId, result.parsed.componentData);
@@ -366,7 +367,11 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
             // 缓存加载失败时，回退到网络获取
             {
                 QMutexLocker locker(&m_fetchingComponentsMutex);
-                FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
+                auto it = m_fetchingComponents.find(normalizedId);
+                if (it == m_fetchingComponents.end()) {
+                    return;
+                }
+                FetchingComponent& fetchingComponent = *it;
                 initializeFetchingComponent(fetchingComponent, normalizedId, fetch3DModel);
             }
             auto retryFuture =
@@ -396,6 +401,7 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
                     }
                     it->data = result.parsed.componentData;
                     it->hasCadData = true;
+                    it->requestActive = false;
                 }
 
                 updateComponentCache(result.componentId, result.parsed.componentData);
@@ -434,12 +440,17 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
         // 更新 m_fetchingComponents
         {
             QMutexLocker locker(&m_fetchingComponentsMutex);
-            FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
+            auto it = m_fetchingComponents.find(normalizedId);
+            if (it == m_fetchingComponents.end()) {
+                return;
+            }
+            FetchingComponent& fetchingComponent = *it;
             fetchingComponent.componentId = normalizedId;
             fetchingComponent.data = *result.cachedData;
             fetchingComponent.fetch3DModel = fetch3DModel;
             fetchingComponent.hasCadData =
                 (result.cachedData->symbolData() != nullptr && result.cachedData->footprintData() != nullptr);
+            fetchingComponent.requestActive = false;
         }
 
         // 发送缓存加载的信号
@@ -804,6 +815,7 @@ void ComponentService::handleCadDataFetched(const QString& componentId, const QJ
             }
             it->data = parsed.componentData;
             it->hasCadData = true;
+            it->requestActive = false;
         }
 
         updateComponentCache(parsed.componentId, parsed.componentData);
