@@ -120,7 +120,6 @@ Card {
             columns: 2
             columnSpacing: AppStyle.spacing.xl
             rowSpacing: AppStyle.spacing.md
-
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: AppStyle.spacing.xs
@@ -181,6 +180,7 @@ Card {
                 }
                 TextField {
                     id: diskCacheLimitInput
+                    objectName: "diskCacheLimitInput"
                     Layout.fillWidth: true
                     Layout.preferredHeight: 36
                     text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.diskCacheLimitMB.toString() : "5120"

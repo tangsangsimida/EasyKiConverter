@@ -57,7 +57,7 @@ rm -rf /tmp/cli_test_*
 ### 导出选项
 
 - [ ] 用例 6：默认导出选项验证
-- [ ] 用例 7：禁用 3D 模型导出
+- [ ] 用例 7：启用 3D 模型导出
 - [ ] 用例 8：启用预览图导出
 - [ ] 用例 9：调试模式生成报告
 - [ ] 用例 10：普通模式不生成报告
@@ -77,12 +77,13 @@ rm -rf /tmp/cli_test_*
 ### 缓存功能
 
 - [ ] 用例 17：缓存复用验证
+- [ ] 用例 18：自定义缓存目录与缓存大小参数
 
 ### 错误处理
 
-- [ ] 用例 18：无效输入文件处理
-- [ ] 用例 19：无效 LCSC ID 处理
-- [ ] 用例 20：缺少必需参数处理
+- [ ] 用例 19：无效输入文件处理
+- [ ] 用例 20：无效 LCSC ID 处理
+- [ ] 用例 21：缺少必需参数处理
 
 ---
 
@@ -165,7 +166,7 @@ ls -la /tmp/cli_test_bom/
 - 显示 "转换完成: 成功 X, 失败 Y"
 - 生成 `EasyKiConverter.kicad_sym` 符号库文件
 - 生成 `EasyKiConverter.pretty/` 封装库目录
-- 生成 `EasyKiConverter.3dmodels/` 3D 模型目录
+- 默认不生成 `EasyKiConverter.3dmodels/` 3D 模型目录
 
 **登记**：
 - [ ] 已执行
@@ -195,7 +196,7 @@ mkdir -p /tmp/cli_test_single
 - 显示 "开始转换单个元器件..."
 - 显示 "元器件编号: C23186"
 - 显示 "转换完成: 成功 1, 失败 0"
-- 生成符号库、封装库、3D 模型文件
+- 生成符号库和封装库文件
 
 **登记**：
 - [ ] 已执行
@@ -231,7 +232,7 @@ mkdir -p /tmp/cli_test_batch
 - 显示 "开始批量转换..."
 - 显示 "找到 3 个元器件"
 - 显示 "转换完成: 成功 X, 失败 Y"
-- 生成所有元器件的符号库、封装库、3D 模型文件
+- 生成所有元器件的符号库和封装库文件
 
 **登记**：
 - [ ] 已执行
@@ -244,7 +245,7 @@ mkdir -p /tmp/cli_test_batch
 ## 用例 6：默认导出选项验证
 
 **目的**：
-验证默认导出符号库、封装库、3D 模型（WRL 格式）。
+验证默认导出符号库、封装库，且默认不导出 3D 模型。
 
 **步骤**：
 1. 运行转换并启用调试模式：
@@ -261,18 +262,18 @@ mkdir -p /tmp/cli_test_default
 cat /tmp/cli_test_default/easykiconverter_export_detailed_report.md | grep -E "Export (symbol|footprint|3D model)"
 ```
 
-3. 检查 3D 模型文件格式：
+3. 检查 3D 模型目录：
 
 ```bash
-ls /tmp/cli_test_default/EasyKiConverter.3dmodels/
+ls /tmp/cli_test_default/EasyKiConverter.3dmodels/ 2>/dev/null || echo "目录不存在或为空"
 ```
 
 **预期结果**：
 - 报告显示：
   - `Export symbol: yes`
   - `Export footprint: yes`
-  - `Export 3D model: yes`
-- 3D 模型目录只有 `.wrl` 文件，没有 `.step` 文件
+  - `Export 3D model: no`
+- 3D 模型目录不存在或为空
 
 **登记**：
 - [ ] 已执行
@@ -282,30 +283,30 @@ ls /tmp/cli_test_default/EasyKiConverter.3dmodels/
 
 ---
 
-## 用例 7：禁用 3D 模型导出
+## 用例 7：启用 3D 模型导出
 
 **目的**：
-验证可以通过参数禁用 3D 模型导出。
+验证可以通过参数启用 3D 模型导出，未指定格式时导出 WRL。
 
 **步骤**：
-1. 运行转换并禁用 3D 模型：
+1. 运行转换并启用 3D 模型：
 
 ```bash
-rm -rf /tmp/cli_test_no3d
-mkdir -p /tmp/cli_test_no3d
-./build/bin/easykiconverter convert component -c C23186 -o /tmp/cli_test_no3d --3d-model false --debug
+rm -rf /tmp/cli_test_3d
+mkdir -p /tmp/cli_test_3d
+./build/bin/easykiconverter convert component -c C23186 -o /tmp/cli_test_3d --3d-model --debug
 ```
 
 2. 检查输出目录：
 
 ```bash
-ls /tmp/cli_test_no3d/EasyKiConverter.3dmodels/ 2>/dev/null || echo "目录不存在或为空"
-cat /tmp/cli_test_no3d/easykiconverter_export_detailed_report.md | grep "Export 3D model"
+ls /tmp/cli_test_3d/EasyKiConverter.3dmodels/
+cat /tmp/cli_test_3d/easykiconverter_export_detailed_report.md | grep "Export 3D model"
 ```
 
 **预期结果**：
-- 报告显示 `Export 3D model: no`
-- 3D 模型目录不存在或为空
+- 报告显示 `Export 3D model: yes`
+- 3D 模型目录存在，包含 `.wrl` 文件
 
 **登记**：
 - [ ] 已执行
@@ -612,7 +613,43 @@ time ./build/bin/easykiconverter convert component -c C23186 -o /tmp/cli_test_ca
 
 ---
 
-## 用例 18：无效输入文件处理
+## 用例 18：自定义缓存目录与缓存大小参数
+
+**目的**：
+验证 CLI 模式可以通过命令行指定缓存目录和磁盘缓存大小上限。
+
+**步骤**：
+1. 使用独立缓存目录运行转换：
+
+```bash
+rm -rf /tmp/cli_test_custom_cache /tmp/cli_test_custom_cache_out
+mkdir -p /tmp/cli_test_custom_cache_out
+./build/bin/easykiconverter convert component -c C23186 \
+  -o /tmp/cli_test_custom_cache_out \
+  --cache-dir /tmp/cli_test_custom_cache \
+  --cache-size-mb 512
+```
+
+2. 检查缓存目录：
+
+```bash
+find /tmp/cli_test_custom_cache -maxdepth 2 -type f | head -20
+```
+
+**预期结果**：
+- 转换正常完成
+- `/tmp/cli_test_custom_cache` 中出现元件缓存文件
+- 参数 `--cache-size-mb 512` 被接受且无参数校验错误
+
+**登记**：
+- [ ] 已执行
+- [ ] 通过
+- [ ] 失败
+- [ ] 已记录备注
+
+---
+
+## 用例 19：无效输入文件处理
 
 **目的**：
 验证无效输入文件的错误处理。
@@ -637,7 +674,7 @@ echo "退出码: $?"
 
 ---
 
-## 用例 19：无效 LCSC ID 处理
+## 用例 20：无效 LCSC ID 处理
 
 **目的**：
 验证无效 LCSC ID 的错误处理。
@@ -665,7 +702,7 @@ echo "退出码: $?"
 
 ---
 
-## 用例 20：缺少必需参数处理
+## 用例 21：缺少必需参数处理
 
 **目的**：
 验证缺少必需参数的错误处理。
