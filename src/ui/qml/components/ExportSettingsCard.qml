@@ -30,6 +30,7 @@ Card {
                 Layout.fillWidth: true
                 spacing: AppStyle.spacing.xs
                 Text {
+                    Layout.fillWidth: true
                     text: qsTranslate("MainWindow", "输出路径")
                     font.pixelSize: AppStyle.fontSizes.sm
                     font.bold: true
@@ -77,6 +78,7 @@ Card {
                 Layout.fillWidth: true
                 spacing: AppStyle.spacing.xs
                 Text {
+                    Layout.fillWidth: true
                     text: qsTranslate("MainWindow", "库名称")
                     font.pixelSize: AppStyle.fontSizes.sm
                     font.bold: true
@@ -123,10 +125,12 @@ Card {
                 Layout.fillWidth: true
                 spacing: AppStyle.spacing.xs
                 Text {
+                    Layout.fillWidth: true
                     text: qsTranslate("MainWindow", "缓存目录")
                     font.pixelSize: AppStyle.fontSizes.sm
                     font.bold: true
                     color: AppStyle.colors.textPrimary
+                    horizontalAlignment: Text.AlignHCenter
                 }
                 RowLayout {
                     Layout.fillWidth: true
@@ -168,41 +172,52 @@ Card {
                 Layout.fillWidth: true
                 spacing: AppStyle.spacing.xs
                 Text {
+                    Layout.fillWidth: true
                     text: qsTranslate("MainWindow", "磁盘缓存上限 (MB)")
                     font.pixelSize: AppStyle.fontSizes.sm
                     font.bold: true
                     color: AppStyle.colors.textPrimary
+                    horizontalAlignment: Text.AlignHCenter
                 }
-                SpinBox {
+                TextField {
                     id: diskCacheLimitInput
                     Layout.fillWidth: true
                     Layout.preferredHeight: 36
-                    from: 1
-                    to: 1048576
-                    stepSize: 128
-                    editable: true
-                    value: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.diskCacheLimitMB : 5120
-                    onValueModified: {
+                    text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.diskCacheLimitMB.toString() : "5120"
+                    validator: IntValidator {
+                        bottom: 1
+                        top: 1048576
+                    }
+                    onEditingFinished: {
                         if (exportSettingsCard.exportSettingsController) {
-                            exportSettingsCard.exportSettingsController.setDiskCacheLimitMB(value);
+                            var value = parseInt(text);
+                            if (!isNaN(value)) {
+                                var clamped = Math.max(1, Math.min(1048576, value));
+                                exportSettingsCard.exportSettingsController.setDiskCacheLimitMB(clamped);
+                                text = clamped.toString();
+                            } else {
+                                text = exportSettingsCard.exportSettingsController.diskCacheLimitMB.toString();
+                            }
                         }
                     }
                     font.pixelSize: AppStyle.fontSizes.sm
+                    color: AppStyle.colors.textPrimary
+                    placeholderTextColor: AppStyle.colors.textSecondary
+                    inputMethodHints: Qt.ImhDigitsOnly
+                    rightPadding: AppStyle.spacing.xxl
                     background: Rectangle {
                         color: AppStyle.colors.surface
                         border.color: diskCacheLimitInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
                         border.width: diskCacheLimitInput.focus ? 2 : 1
                         radius: AppStyle.radius.md
                     }
-                    contentItem: TextInput {
-                        text: diskCacheLimitInput.textFromValue(diskCacheLimitInput.value, diskCacheLimitInput.locale)
-                        font: diskCacheLimitInput.font
-                        color: AppStyle.colors.textPrimary
-                        horizontalAlignment: Qt.AlignHCenter
-                        verticalAlignment: Qt.AlignVCenter
-                        readOnly: !diskCacheLimitInput.editable
-                        validator: diskCacheLimitInput.validator
-                        inputMethodHints: Qt.ImhFormattedNumbersOnly
+                    Text {
+                        anchors.right: parent.right
+                        anchors.rightMargin: AppStyle.spacing.md
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "MB"
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        color: AppStyle.colors.textSecondary
                     }
                 }
             }

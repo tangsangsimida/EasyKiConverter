@@ -231,7 +231,7 @@ void ExportSettingsViewModel::setCacheDir(const QString& path) {
 }
 
 void ExportSettingsViewModel::setDiskCacheLimitMB(int maxSizeMB) {
-    const int normalizedSize = qMax(1, maxSizeMB);
+    const int normalizedSize = qBound(1, maxSizeMB, 1048576);
     if (m_diskCacheLimitMB != normalizedSize) {
         m_diskCacheLimitMB = normalizedSize;
         m_configService->setDiskCacheLimitMB(normalizedSize);
@@ -546,6 +546,7 @@ void ExportSettingsViewModel::resetConfig() {
 }
 
 }  // namespace EasyKiConverter
+
 // 《生活千疮百孔，好透气》《人生一波三折，好便宜》《生活一地鸡毛，好蓬松》
 // 《想蒙上被子哭一场，刚蒙上就睡着了》《生活给了我一巴掌，我说没有上次响》
 // 《是金子总会发光，奈何我是老铁》《生活给了我一拳，我一躺就是一整天》
