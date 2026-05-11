@@ -46,26 +46,144 @@ ComponentCacheService* ComponentCacheService::instance() {
     return s_instance.get();
 }
 
-void ComponentCacheService::setCacheDir(const QString& cacheDir) {
+void ComponentCacheService::setCacheDir(const QString& cacheDir, bool migrateExistingCache) {
+    const QString newCacheDir = QDir::cleanPath(cacheDir);
+    QString oldCacheDir;
     {
         QMutexLocker locker(&m_mutex);
-        m_cacheDir = cacheDir;
+        oldCacheDir = m_cacheDir;
+    }
 
-        // 确保缓存目录存在
-        QDir dir;
-        if (!dir.exists(m_cacheDir)) {
-            dir.mkpath(m_cacheDir);
-        }
+    // 迁移在锁外执行，避免递归文件系统操作阻塞其他缓存读写线程
+    if (migrateExistingCache && !oldCacheDir.isEmpty() && oldCacheDir != newCacheDir) {
+        migrateCacheDirectory(oldCacheDir, newCacheDir);
+    }
 
-        // 确保3D模型缓存目录存在
-        QString model3dDir = m_cacheDir + "/model3d";
-        if (!dir.exists(model3dDir)) {
-            dir.mkpath(model3dDir);
-        }
+    // 目录创建也在锁外（mkpath 是线程安全的）
+    QDir dir;
+    if (!dir.exists(newCacheDir)) {
+        dir.mkpath(newCacheDir);
+    }
+    const QString model3dDir = newCacheDir + "/model3d";
+    if (!dir.exists(model3dDir)) {
+        dir.mkpath(model3dDir);
+    }
+
+    // 原子切换缓存目录指针
+    {
+        QMutexLocker locker(&m_mutex);
+        m_cacheDir = newCacheDir;
     }
 
     selfHealCache();
-    LOG_DEBUG(LogModule::Core, "Cache directory set to: {}", m_cacheDir);
+    LOG_DEBUG(LogModule::Core, "Cache directory set to: {}", newCacheDir);
+}
+
+bool ComponentCacheService::migrateCacheDirectory(const QString& oldCacheDir, const QString& newCacheDir) const {
+    if (oldCacheDir.isEmpty() || newCacheDir.isEmpty() || oldCacheDir == newCacheDir) {
+        return true;
+    }
+
+    QDir source(oldCacheDir);
+    if (!source.exists()) {
+        return true;
+    }
+
+    QDir target;
+    if (!target.exists(newCacheDir) && !target.mkpath(newCacheDir)) {
+        LOG_WARN(LogModule::Core, "Failed to create cache migration target directory: {}", newCacheDir);
+        return false;
+    }
+
+    const bool moved = moveDirectoryContents(oldCacheDir, newCacheDir);
+    if (moved) {
+        source.rmdir(oldCacheDir);
+        LOG_DEBUG(LogModule::Core, "Migrated cache directory from {} to {}", oldCacheDir, newCacheDir);
+    } else {
+        LOG_WARN(LogModule::Core,
+                 "Cache directory migration completed with skipped or failed entries: {} -> {}",
+                 oldCacheDir,
+                 newCacheDir);
+    }
+    return moved;
+}
+
+bool ComponentCacheService::moveDirectoryContents(const QString& sourceDir, const QString& targetDir) const {
+    QDir source(sourceDir);
+    if (!source.exists()) {
+        return true;
+    }
+
+    QDir target;
+    if (!target.exists(targetDir) && !target.mkpath(targetDir)) {
+        LOG_WARN(LogModule::Core, "Failed to create cache migration directory: {}", targetDir);
+        return false;
+    }
+
+    bool allMoved = true;
+    const QFileInfoList entries = source.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
+    for (const QFileInfo& entryInfo : entries) {
+        const QString sourcePath = entryInfo.absoluteFilePath();
+        const QString targetPath = QDir(targetDir).filePath(entryInfo.fileName());
+        if (!moveCacheEntry(sourcePath, targetPath)) {
+            allMoved = false;
+        }
+    }
+
+    return allMoved;
+}
+
+bool ComponentCacheService::moveCacheEntry(const QString& sourcePath, const QString& targetPath) const {
+    QFileInfo sourceInfo(sourcePath);
+    if (!sourceInfo.exists()) {
+        return true;
+    }
+
+    QFileInfo targetInfo(targetPath);
+    if (targetInfo.exists()) {
+        if (sourceInfo.isDir() && targetInfo.isDir()) {
+            const bool moved = moveDirectoryContents(sourcePath, targetPath);
+            QDir sourceDir(sourcePath);
+            if (sourceDir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot).isEmpty()) {
+                sourceDir.rmdir(sourcePath);
+            }
+            return moved;
+        }
+
+        LOG_WARN(LogModule::Core, "Skipping cache migration entry because target already exists: {}", targetPath);
+        return false;
+    }
+
+    QDir targetParent(targetInfo.absolutePath());
+    if (!targetParent.exists() && !targetParent.mkpath(QStringLiteral("."))) {
+        LOG_WARN(LogModule::Core, "Failed to create cache migration parent directory: {}", targetInfo.absolutePath());
+        return false;
+    }
+
+    if (sourceInfo.isDir()) {
+        QDir dir;
+        if (dir.rename(sourcePath, targetPath)) {
+            return true;
+        }
+
+        if (!moveDirectoryContents(sourcePath, targetPath)) {
+            return false;
+        }
+
+        QDir sourceDir(sourcePath);
+        return sourceDir.removeRecursively();
+    }
+
+    if (QFile::rename(sourcePath, targetPath)) {
+        return true;
+    }
+
+    if (QFile::copy(sourcePath, targetPath)) {
+        return QFile::remove(sourcePath);
+    }
+
+    LOG_WARN(LogModule::Core, "Failed to migrate cache file: {} -> {}", sourcePath, targetPath);
+    return false;
 }
 
 QString ComponentCacheService::cacheDir() const {
@@ -1211,3 +1329,10 @@ QString ComponentCacheService::model3DPath(const QString& uuid, const QString& e
 }
 
 }  // namespace EasyKiConverter
+// 我攻略了你之后，别人也可以攻略你[惊讶]？！
+// 不是这啥情况啊[疑惑]？我记得旮旯game不是单机游戏吗，
+// 什么时候联网的[思考]？而就算你是玩家[给心心]！
+// 我是这个攻略对象，也不能这样子吧[傲娇]，
+// 是不是有点不道德啊[生气]？他是黑客[doge]。
+// 什么黑客[思考]哪里黑了[大哭]！？哦还是国际服，
+// 我不玩了[灵魂出窍]。

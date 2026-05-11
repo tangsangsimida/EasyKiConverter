@@ -66,6 +66,26 @@ private slots:
         QCOMPARE(loadedData->previewImages().value(0), QStringLiteral("https://image.lceda.cn/components/c.jpg"));
     }
 
+    void testCacheDirMigrationPreservesExistingCache() {
+        const QString componentId = QStringLiteral("C24680");
+        ComponentData data;
+        data.setLcscId(componentId);
+        data.setName(QStringLiteral("Migrated Component"));
+
+        m_cache->saveComponentMetadata(componentId, data);
+        m_cache->savePreviewImage(componentId, QByteArray("preview-data"), 0);
+
+        QTemporaryDir newCacheDir;
+        QVERIFY(newCacheDir.isValid());
+
+        m_cache->setCacheDir(newCacheDir.path(), /*migrateExistingCache=*/true);
+
+        QSharedPointer<ComponentData> loadedData = m_cache->loadComponentData(componentId);
+        QVERIFY(loadedData != nullptr);
+        QCOMPARE(loadedData->name(), QStringLiteral("Migrated Component"));
+        QCOMPARE(m_cache->loadPreviewImage(componentId, 0), QByteArray("preview-data"));
+    }
+
 private:
     QTemporaryDir m_tempDir;
     ComponentCacheService* m_cache = nullptr;

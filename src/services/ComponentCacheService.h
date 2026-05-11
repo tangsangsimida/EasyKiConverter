@@ -75,8 +75,9 @@ public:
     /**
      * @brief 设置缓存根目录
      * @param cacheDir 缓存目录路径
+     * @param migrateExistingCache 是否将旧缓存目录内容迁移到新目录
      */
-    void setCacheDir(const QString& cacheDir);
+    void setCacheDir(const QString& cacheDir, bool migrateExistingCache = false);
 
     /**
      * @brief 获取缓存根目录
@@ -495,6 +496,21 @@ private:
      * @brief 启动时自修复缓存目录
      */
     void selfHealCache();
+
+    /**
+     * @brief 将旧缓存目录内容迁移到新缓存目录
+     */
+    bool migrateCacheDirectory(const QString& oldCacheDir, const QString& newCacheDir) const;
+
+    /**
+     * @brief 移动目录内容，目标中已存在的文件不覆盖
+     */
+    bool moveDirectoryContents(const QString& sourceDir, const QString& targetDir) const;
+
+    /**
+     * @brief 移动单个文件或目录，跨文件系统时回退到复制后删除
+     */
+    bool moveCacheEntry(const QString& sourcePath, const QString& targetPath) const;
 
     /**
      * @brief 根据当前磁盘缓存限制执行清理

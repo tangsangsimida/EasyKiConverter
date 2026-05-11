@@ -223,8 +223,9 @@ void ExportSettingsViewModel::setCacheDir(const QString& path) {
     const QString normalizedPath = QDir::cleanPath(path);
     if (m_cacheDir != normalizedPath) {
         m_cacheDir = normalizedPath;
+        // 先持久化配置，再迁移文件：即使迁移中断，重启后仍使用新路径（旧目录文件保留）
         m_configService->setCacheDir(normalizedPath);
-        ComponentCacheService::instance()->setCacheDir(normalizedPath);
+        ComponentCacheService::instance()->setCacheDir(normalizedPath, /*migrateExistingCache=*/true);
         emit cacheDirChanged();
     }
 }
@@ -545,3 +546,8 @@ void ExportSettingsViewModel::resetConfig() {
 }
 
 }  // namespace EasyKiConverter
+// 《生活千疮百孔，好透气》《人生一波三折，好便宜》《生活一地鸡毛，好蓬松》
+// 《想蒙上被子哭一场，刚蒙上就睡着了》《生活给了我一巴掌，我说没有上次响》
+// 《是金子总会发光，奈何我是老铁》《生活给了我一拳，我一躺就是一整天》
+// 《路见不平，绕道而行》《他们都看不起我，偏偏我也不争气》
+// 《风吹哪页读哪页，哪页不懂撕哪页》
