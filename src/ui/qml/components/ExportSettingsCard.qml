@@ -7,6 +7,7 @@ Card {
     id: exportSettingsCard
     property var exportSettingsController
     signal openOutputFolderDialog
+    signal openCacheFolderDialog
     title: qsTranslate("MainWindow", "导出设置")
     ColumnLayout {
         id: rootLayout
@@ -101,6 +102,107 @@ Card {
                         border.color: libNameInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
                         border.width: libNameInput.focus ? 2 : 1
                         radius: AppStyle.radius.md
+                    }
+                }
+            }
+        }
+
+        // ==================== 缓存配置区块 ====================
+        SectionHeader {
+            id: cacheConfigHeader
+            sectionTitle: qsTranslate("MainWindow", "缓存配置")
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: 2
+            columnSpacing: AppStyle.spacing.xl
+            rowSpacing: AppStyle.spacing.md
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: AppStyle.spacing.xs
+                Text {
+                    text: qsTranslate("MainWindow", "缓存目录")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    font.bold: true
+                    color: AppStyle.colors.textPrimary
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: AppStyle.spacing.md
+                    TextField {
+                        id: cacheDirInput
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 36
+                        text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.cacheDir : ""
+                        onEditingFinished: {
+                            if (exportSettingsCard.exportSettingsController) {
+                                exportSettingsCard.exportSettingsController.setCacheDir(text);
+                            }
+                        }
+                        placeholderText: qsTranslate("MainWindow", "选择缓存目录")
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        color: AppStyle.colors.textPrimary
+                        placeholderTextColor: AppStyle.colors.textSecondary
+                        background: Rectangle {
+                            color: AppStyle.colors.surface
+                            border.color: cacheDirInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                            border.width: cacheDirInput.focus ? 2 : 1
+                            radius: AppStyle.radius.md
+                        }
+                    }
+                    ModernButton {
+                        text: qsTranslate("MainWindow", "浏览")
+                        iconName: "folder"
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        backgroundColor: AppStyle.colors.textSecondary
+                        hoverColor: AppStyle.colors.textPrimary
+                        pressedColor: AppStyle.colors.textPrimary
+                        onClicked: exportSettingsCard.openCacheFolderDialog()
+                    }
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: AppStyle.spacing.xs
+                Text {
+                    text: qsTranslate("MainWindow", "磁盘缓存上限 (MB)")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    font.bold: true
+                    color: AppStyle.colors.textPrimary
+                }
+                SpinBox {
+                    id: diskCacheLimitInput
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    from: 1
+                    to: 1048576
+                    stepSize: 128
+                    editable: true
+                    value: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.diskCacheLimitMB : 5120
+                    onValueModified: {
+                        if (exportSettingsCard.exportSettingsController) {
+                            exportSettingsCard.exportSettingsController.setDiskCacheLimitMB(value);
+                        }
+                    }
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    background: Rectangle {
+                        color: AppStyle.colors.surface
+                        border.color: diskCacheLimitInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                        border.width: diskCacheLimitInput.focus ? 2 : 1
+                        radius: AppStyle.radius.md
+                    }
+                    contentItem: TextInput {
+                        text: diskCacheLimitInput.textFromValue(diskCacheLimitInput.value, diskCacheLimitInput.locale)
+                        font: diskCacheLimitInput.font
+                        color: AppStyle.colors.textPrimary
+                        horizontalAlignment: Qt.AlignHCenter
+                        verticalAlignment: Qt.AlignVCenter
+                        readOnly: !diskCacheLimitInput.editable
+                        validator: diskCacheLimitInput.validator
+                        inputMethodHints: Qt.ImhFormattedNumbersOnly
                     }
                 }
             }

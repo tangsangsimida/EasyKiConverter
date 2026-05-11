@@ -19,6 +19,8 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
     , m_themeOption(QStringList() << "theme", "设置界面主题 (dark/light)", "theme", "dark")
     , m_portableOption(QStringList() << "portable", "便携模式（配置文件保存在程序目录）")
     , m_syncLoggingOption(QStringList() << "sync-logging", "启用同步控制台日志输出（确保彩色日志显示，方便调试）")
+    , m_cacheDirOption(QStringList() << "cache-dir", "设置磁盘缓存目录", "path")
+    , m_diskCacheLimitOption(QStringList() << "cache-size-mb", "设置磁盘缓存大小限制 (MB)", "mb")
     , m_inputOption(QStringList() << "i" << "input", "输入文件路径 (BOM 表或元器件列表文件)", "path")
     , m_outputOption(QStringList() << "o" << "output", "输出目录路径", "path")
     , m_libNameOption("lib-name", "导出库名称", "name", "EasyKiConverter")
@@ -65,6 +67,8 @@ void CommandLineParser::setupOptions() {
     m_parser.addOption(m_themeOption);
     m_parser.addOption(m_portableOption);
     m_parser.addOption(m_syncLoggingOption);
+    m_parser.addOption(m_cacheDirOption);
+    m_parser.addOption(m_diskCacheLimitOption);
 }
 
 void CommandLineParser::setupCliOptions() {
@@ -161,6 +165,22 @@ bool CommandLineParser::isSyncLogging() const {
     return m_parser.isSet(m_syncLoggingOption);
 }
 
+bool CommandLineParser::isCacheDirSet() const {
+    return m_parser.isSet(m_cacheDirOption);
+}
+
+QString CommandLineParser::cacheDir() const {
+    return m_parser.value(m_cacheDirOption);
+}
+
+bool CommandLineParser::isDiskCacheLimitSet() const {
+    return m_parser.isSet(m_diskCacheLimitOption);
+}
+
+int CommandLineParser::diskCacheLimitMB() const {
+    return m_parser.value(m_diskCacheLimitOption).toInt();
+}
+
 QString CommandLineParser::helpText() const {
     return m_parser.helpText();
 }
@@ -205,6 +225,19 @@ bool CommandLineParser::validate() const {
         QString theme = this->theme();
         QStringList validThemes = {"dark", "light"};
         if (!validThemes.contains(theme)) {
+            return false;
+        }
+    }
+
+    // CLI 模式验证
+    if (m_parser.isSet(m_cacheDirOption) && cacheDir().trimmed().isEmpty()) {
+        return false;
+    }
+
+    if (m_parser.isSet(m_diskCacheLimitOption)) {
+        bool ok = false;
+        const int sizeMB = m_parser.value(m_diskCacheLimitOption).toInt(&ok);
+        if (!ok || sizeMB <= 0) {
             return false;
         }
     }
@@ -268,6 +301,19 @@ QString CommandLineParser::validationError() const {
         QStringList validThemes = {"dark", "light"};
         if (!validThemes.contains(theme)) {
             errors.append(QString("无效的主题设置: %1（有效值: %2）").arg(theme).arg(validThemes.join(", ")));
+        }
+    }
+
+    // CLI 模式验证错误
+    if (m_parser.isSet(m_cacheDirOption) && cacheDir().trimmed().isEmpty()) {
+        errors.append("缓存目录不能为空");
+    }
+
+    if (m_parser.isSet(m_diskCacheLimitOption)) {
+        bool ok = false;
+        const int sizeMB = m_parser.value(m_diskCacheLimitOption).toInt(&ok);
+        if (!ok || sizeMB <= 0) {
+            errors.append("磁盘缓存大小必须是大于 0 的整数（单位: MB）");
         }
     }
 
@@ -379,6 +425,8 @@ QString CommandLineParser::cliHelpText() const {
     stream << "  --3d-model              导出 3D 模型\n";
     stream << "  --3d-model-format <fmt> 3D 模型格式（wrl/step/both，默认: wrl）\n";
     stream << "  --preview               导出预览图\n";
+    stream << "  --cache-dir <path>      设置磁盘缓存目录\n";
+    stream << "  --cache-size-mb <mb>    设置磁盘缓存大小限制 (MB)\n";
     stream << "  --progress              显示进度条\n";
     stream << "  -q, --quiet             安静模式，减少输出\n\n";
     stream << "示例:\n";

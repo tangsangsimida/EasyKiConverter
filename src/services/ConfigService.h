@@ -274,6 +274,34 @@ public:
      */
     Q_INVOKABLE void setLanguage(const QString& languageCode);
 
+    /**
+     * @brief 获取磁盘缓存目录
+     *
+     * @return QString 缓存目录路径
+     */
+    Q_INVOKABLE QString getCacheDir() const;
+
+    /**
+     * @brief 设置磁盘缓存目录
+     *
+     * @param path 缓存目录路径
+     */
+    Q_INVOKABLE void setCacheDir(const QString& path);
+
+    /**
+     * @brief 获取磁盘缓存大小限制
+     *
+     * @return int 缓存大小限制（MB）
+     */
+    Q_INVOKABLE int getDiskCacheLimitMB() const;
+
+    /**
+     * @brief 设置磁盘缓存大小限制
+     *
+     * @param maxSizeMB 缓存大小限制（MB）
+     */
+    Q_INVOKABLE void setDiskCacheLimitMB(int maxSizeMB);
+
 signals:
     /**
      * @brief 配置改变信号
@@ -285,6 +313,7 @@ private:
     static constexpr int DEFAULT_WINDOW_HEIGHT = -1;
     static constexpr int DEFAULT_WINDOW_X = -9999;
     static constexpr int DEFAULT_WINDOW_Y = -9999;
+    static constexpr int DEFAULT_DISK_CACHE_LIMIT_MB = 5120;
 
     /**
      * @brief 构造函数

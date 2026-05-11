@@ -30,6 +30,8 @@ private slots:
     void testModel3DFormatDefaultWrl();
     void testModel3DFormatBoth();
     void testModel3DFormatInvalid();
+    void testCacheOptions();
+    void testCacheSizeInvalid();
 
     // 补全脚本契约（验证不再暴露不存在的命令）
     void testCompletionScriptNoHelpVersionSubcommands();
@@ -204,6 +206,36 @@ void TestCommandLineParser::testModel3DFormatInvalid() {
     parser->parse();
     QVERIFY(!parser->validate());
     QVERIFY(parser->validationError().contains(QStringLiteral("无效的 3D 模型格式")));
+    delete parser;
+}
+
+void TestCommandLineParser::testCacheOptions() {
+    auto* parser = makeParser({"easykiconverter",
+                               "convert",
+                               "component",
+                               "-c",
+                               "C12345",
+                               "-o",
+                               "out",
+                               "--cache-dir",
+                               "/tmp/ekc-cache",
+                               "--cache-size-mb",
+                               "256"});
+    parser->parse();
+    QVERIFY(parser->validate());
+    QVERIFY(parser->isCacheDirSet());
+    QCOMPARE(parser->cacheDir(), QStringLiteral("/tmp/ekc-cache"));
+    QVERIFY(parser->isDiskCacheLimitSet());
+    QCOMPARE(parser->diskCacheLimitMB(), 256);
+    delete parser;
+}
+
+void TestCommandLineParser::testCacheSizeInvalid() {
+    auto* parser =
+        makeParser({"easykiconverter", "convert", "component", "-c", "C12345", "-o", "out", "--cache-size-mb", "0"});
+    parser->parse();
+    QVERIFY(!parser->validate());
+    QVERIFY(parser->validationError().contains(QStringLiteral("磁盘缓存大小必须是大于 0 的整数")));
     delete parser;
 }
 

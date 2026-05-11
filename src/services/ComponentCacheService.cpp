@@ -25,7 +25,8 @@ namespace EasyKiConverter {
 std::unique_ptr<ComponentCacheService> ComponentCacheService::s_instance;
 
 ComponentCacheService::ComponentCacheService(QObject* parent)
-    : QObject(parent), m_memoryCacheLimitMB(50), m_memoryCacheSize(0) {
+    : QObject(parent), m_memoryCacheLimitMB(50), m_diskCacheLimitMB(5120), m_memoryCacheSize(0) {
+    m_lastEnforceTimer.start();
     // 默认缓存目录：{用户数据目录}/easykiconverter/cache
     QString defaultCacheDir =
         QDir::cleanPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/cache");
@@ -310,6 +311,7 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId, co
     }
 
     saveMetadata(componentId, metadata);
+    enforceDiskCacheLimit();
     emit memoryCacheSizeChanged(sizeAfterUpdate);
     emit cacheSaved(componentId);
     LOG_DEBUG(LogModule::Core, "Saved component metadata to cache: {}", componentId);
@@ -337,6 +339,7 @@ void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArr
 
     if (writeFileAtomically(symbolPath, data)) {
         LOG_DEBUG(LogModule::Core, "Saved symbol data to disk: {}", symbolPath);
+        enforceDiskCacheLimit();
     } else {
         LOG_WARN(LogModule::Core, "Failed to write symbol data: {}", symbolPath);
     }
@@ -382,6 +385,7 @@ void ComponentCacheService::saveFootprintData(const QString& lcscId, const QByte
 
     if (writeFileAtomically(footprintPath, data)) {
         LOG_DEBUG(LogModule::Core, "Saved footprint data to disk: {}", footprintPath);
+        enforceDiskCacheLimit();
     } else {
         LOG_WARN(LogModule::Core, "Failed to write footprint data: {}", footprintPath);
     }
@@ -427,6 +431,7 @@ void ComponentCacheService::saveCadDataJson(const QString& lcscId, const QByteAr
 
     if (writeFileAtomically(cadDataPath, cadData)) {
         LOG_DEBUG(LogModule::Core, "Saved CAD data JSON to disk: {}", cadDataPath);
+        enforceDiskCacheLimit();
     } else {
         LOG_WARN(LogModule::Core, "Failed to write CAD data JSON: {}", cadDataPath);
     }
@@ -547,6 +552,7 @@ void ComponentCacheService::savePreviewImage(const QString& lcscId, const QByteA
 
     if (writeFileAtomically(previewPath, imageData)) {
         LOG_DEBUG(LogModule::Core, "Saved preview image to disk: {}", previewPath);
+        enforceDiskCacheLimit();
     } else {
         LOG_WARN(LogModule::Core, "Failed to write preview image: {}", previewPath);
     }
@@ -673,6 +679,7 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
 
     if (writeFileAtomically(actualPath, datasheetData)) {
         LOG_DEBUG(LogModule::Core, "Saved datasheet to disk: {}", actualPath);
+        enforceDiskCacheLimit();
     } else {
         LOG_WARN(LogModule::Core, "Failed to write datasheet: {}", actualPath);
     }
@@ -812,6 +819,7 @@ void ComponentCacheService::saveModel3D(const QString& uuid, const QByteArray& d
 
     if (writeFileAtomically(path, data)) {
         LOG_DEBUG(LogModule::Core, "Saved 3D model to disk: {}", path);
+        enforceDiskCacheLimit();
     } else {
         LOG_WARN(LogModule::Core, "Failed to write 3D model: {}", path);
     }
@@ -989,6 +997,53 @@ void ComponentCacheService::setMemoryCacheLimit(int maxSizeMB) {
 int ComponentCacheService::memoryCacheLimit() const {
     QMutexLocker locker(&m_mutex);
     return m_memoryCacheLimitMB;
+}
+
+void ComponentCacheService::setDiskCacheLimit(int maxSizeMB) {
+    {
+        QMutexLocker locker(&m_mutex);
+        m_diskCacheLimitMB = qMax(1, maxSizeMB);
+    }
+
+    // 用户主动修改限制时绕过冷却机制，立即执行清理
+    enforceDiskCacheLimit(/*bypassCooldown=*/true);
+    LOG_DEBUG(LogModule::Core, "Disk cache limit set to: {} MB", maxSizeMB);
+}
+
+int ComponentCacheService::diskCacheLimit() const {
+    QMutexLocker locker(&m_mutex);
+    return m_diskCacheLimitMB;
+}
+
+void ComponentCacheService::enforceDiskCacheLimit(bool bypassCooldown) {
+    // 冷却机制：避免批量保存时频繁扫描目录（每次扫描开销较大）
+    constexpr qint64 kCooldownMs = 3000;
+    if (!bypassCooldown && m_lastEnforceTimer.elapsed() < kCooldownMs) {
+        return;
+    }
+
+    QString cacheDir;
+    qint64 targetSizeBytes = 0;
+    {
+        QMutexLocker locker(&m_mutex);
+        cacheDir = m_cacheDir;
+        targetSizeBytes = static_cast<qint64>(m_diskCacheLimitMB) * 1024 * 1024;
+    }
+
+    if (targetSizeBytes <= 0 || cacheDir.isEmpty()) {
+        return;
+    }
+
+    m_lastEnforceTimer.restart();
+
+    CachePruner pruner(cacheDir);
+    const qint64 currentSize = pruner.calculateDirSize(cacheDir);
+    if (currentSize <= targetSizeBytes) {
+        return;
+    }
+
+    const qint64 newSize = pruner.pruneTo(targetSizeBytes);
+    emit cacheSizeChanged(newSize);
 }
 
 QJsonObject ComponentCacheService::loadMetadata(const QString& lcscId) const {

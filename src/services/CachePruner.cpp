@@ -1,6 +1,7 @@
 #include "CachePruner.h"
 
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QPair>
 #include <QString>
@@ -10,10 +11,6 @@
 namespace EasyKiConverter {
 
 namespace {
-QString _componentCacheDir(const QString& cacheRoot, const QString& lcscId) {
-    return cacheRoot + "/" + lcscId;
-}
-
 qint64 _calculateDirSize(const QString& dirPath) {
     qint64 size = 0;
     QDir dir(dirPath);
@@ -44,36 +41,43 @@ qint64 CachePruner::calculateDirSize(const QString& dirPath) const {
 qint64 CachePruner::currentCacheSize() const {
     qint64 totalSize = 0;
     QDir dir(m_cacheRoot);
-    for (const QString& subDir : dir.entryList(QDir::Dirs)) {
-        if (subDir == "." || subDir == ".." || subDir == "model3d") {
+    for (const QString& entry : dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot)) {
+        if (entry == "model3d") {
             continue;
         }
-        QString dirPath = QDir::cleanPath(m_cacheRoot + "/" + subDir);
-        QFileInfo info(dirPath);
-        if (info.exists()) {
-            totalSize += _calculateDirSize(dirPath);
+        const QString path = QDir::cleanPath(m_cacheRoot + "/" + entry);
+        QFileInfo info(path);
+        if (info.isDir()) {
+            totalSize += _calculateDirSize(path);
+        } else {
+            totalSize += info.size();
         }
     }
     return totalSize;
 }
 
 qint64 CachePruner::pruneTo(qint64 targetSizeBytes) {
-    // 第一阶段：锁外收集所有缓存目录的信息
-    QList<QPair<QString, QDateTime>> cacheList;
+    struct CacheEntry {
+        QString name;
+        QDateTime lastModified;
+        qint64 size;
+    };
+
+    // 第一阶段：收集所有缓存条目信息（排除 model3d）
+    QList<CacheEntry> cacheList;
     qint64 currentSize = 0;
 
     {
         QDir dir(m_cacheRoot);
-        for (const QString& subDir : dir.entryList(QDir::Dirs)) {
-            if (subDir == "." || subDir == ".." || subDir == "model3d") {
+        for (const QString& entry : dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot)) {
+            if (entry == "model3d") {
                 continue;
             }
-            QString dirPath = QDir::cleanPath(m_cacheRoot + "/" + subDir);
-            QFileInfo info(dirPath);
-            if (info.exists()) {
-                cacheList.append(qMakePair(subDir, info.lastModified()));
-                currentSize += _calculateDirSize(dirPath);
-            }
+            const QString path = QDir::cleanPath(m_cacheRoot + "/" + entry);
+            QFileInfo info(path);
+            qint64 entrySize = info.isDir() ? _calculateDirSize(path) : info.size();
+            cacheList.append({entry, info.lastModified(), entrySize});
+            currentSize += entrySize;
         }
     }
 
@@ -82,24 +86,26 @@ qint64 CachePruner::pruneTo(qint64 targetSizeBytes) {
     }
 
     // 按访问时间排序（最老的在前）
-    std::sort(
-        cacheList.begin(), cacheList.end(), [](const QPair<QString, QDateTime>& a, const QPair<QString, QDateTime>& b) {
-            return a.second < b.second;
-        });
+    std::sort(cacheList.begin(), cacheList.end(), [](const CacheEntry& a, const CacheEntry& b) {
+        return a.lastModified < b.lastModified;
+    });
 
-    // 第二阶段：执行删除操作
-    for (const auto& pair : cacheList) {
+    // 第二阶段：执行删除操作（使用缓存的大小值，避免重复扫描）
+    for (const auto& entry : cacheList) {
         if (currentSize <= targetSizeBytes) {
             break;
         }
 
-        QString dirPath = QDir::cleanPath(m_cacheRoot + "/" + pair.first);
-        qint64 dirSize = _calculateDirSize(dirPath);
+        const QString path = QDir::cleanPath(m_cacheRoot + "/" + entry.name);
+        QFileInfo info(path);
 
-        QDir d;
-        if (d.exists(dirPath)) {
-            d.removeRecursively();
-            currentSize -= dirSize;
+        if (info.isDir()) {
+            QDir d(path);
+            if (d.removeRecursively()) {
+                currentSize -= entry.size;
+            }
+        } else if (QFile::remove(path)) {
+            currentSize -= entry.size;
         }
     }
 

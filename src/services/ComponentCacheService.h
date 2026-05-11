@@ -8,6 +8,7 @@
 
 #include <QCache>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QJsonObject>
 #include <QMutex>
 #include <QObject>
@@ -385,6 +386,17 @@ public:
     void pruneCache(qint64 targetSizeBytes);
 
     /**
+     * @brief 设置L2磁盘缓存大小限制
+     * @param maxSizeMB 大小限制（MB）
+     */
+    void setDiskCacheLimit(int maxSizeMB);
+
+    /**
+     * @brief 获取L2磁盘缓存限制
+     */
+    int diskCacheLimit() const;
+
+    /**
      * @brief 设置L1内存缓存大小限制
      * @param maxSizeMB 大小限制（MB）
      */
@@ -485,6 +497,11 @@ private:
     void selfHealCache();
 
     /**
+     * @brief 根据当前磁盘缓存限制执行清理
+     */
+    void enforceDiskCacheLimit(bool bypassCooldown = false);
+
+    /**
      * @brief 生成缓存key
      */
     QString makeMemoryKey(const QString& lcscId, const QString& type) const;
@@ -493,6 +510,8 @@ private:
     mutable QMutex m_mutex;
     QString m_cacheDir;
     int m_memoryCacheLimitMB;
+    int m_diskCacheLimitMB;
+    QElapsedTimer m_lastEnforceTimer;
 
     // L1 内存缓存：QCache 自动 LRU 淘汰
     // Key 格式: "lcscId:type" (如 "C12345:metadata", "C12345:symbol")

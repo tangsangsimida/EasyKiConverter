@@ -7,6 +7,7 @@
 
 #include "ExportSettingsViewModel.h"
 
+#include "services/ComponentCacheService.h"
 #include "services/export/ParallelExportService.h"
 #include "utils/FileUtils.h"
 
@@ -38,6 +39,8 @@ ExportSettingsViewModel::ExportSettingsViewModel(ParallelExportService* exportSe
     , m_symbolLibraryDescription("")
     , m_footprintLibraryDescription("")
     , m_footprintLibraryKeywords("")
+    , m_cacheDir("")
+    , m_diskCacheLimitMB(5120)
     , m_isExporting(false)
     , m_status("Ready") {
     // 初始化时检查调试模式（命令行参数优先，环境变量向后兼容）
@@ -213,6 +216,26 @@ void ExportSettingsViewModel::setFootprintLibraryKeywords(const QString& keyword
     if (m_footprintLibraryKeywords != keywords) {
         m_footprintLibraryKeywords = keywords;
         emit footprintLibraryKeywordsChanged();
+    }
+}
+
+void ExportSettingsViewModel::setCacheDir(const QString& path) {
+    const QString normalizedPath = QDir::cleanPath(path);
+    if (m_cacheDir != normalizedPath) {
+        m_cacheDir = normalizedPath;
+        m_configService->setCacheDir(normalizedPath);
+        ComponentCacheService::instance()->setCacheDir(normalizedPath);
+        emit cacheDirChanged();
+    }
+}
+
+void ExportSettingsViewModel::setDiskCacheLimitMB(int maxSizeMB) {
+    const int normalizedSize = qMax(1, maxSizeMB);
+    if (m_diskCacheLimitMB != normalizedSize) {
+        m_diskCacheLimitMB = normalizedSize;
+        m_configService->setDiskCacheLimitMB(normalizedSize);
+        ComponentCacheService::instance()->setDiskCacheLimit(normalizedSize);
+        emit diskCacheLimitMBChanged();
     }
 }
 
@@ -421,6 +444,8 @@ void ExportSettingsViewModel::loadFromConfig() {
     m_exportDatasheet = m_configService->getExportDatasheet();
     m_overwriteExistingFiles = m_configService->getOverwriteExistingFiles();
     m_weakNetworkSupport = m_configService->getWeakNetworkSupport();
+    m_cacheDir = m_configService->getCacheDir();
+    m_diskCacheLimitMB = m_configService->getDiskCacheLimitMB();
 
     bool envDebugMode = qEnvironmentVariableIsSet("EASYKICONVERTER_DEBUG_MODE");
     if (envDebugMode) {
@@ -430,7 +455,7 @@ void ExportSettingsViewModel::loadFromConfig() {
         m_debugMode = m_configService->getDebugMode();
     }
 
-    // 新字段使用默认值（ConfigService 暂未支持持久化）
+    // 以下字段 ConfigService 暂未支持持久化，使用默认值
     m_exportSymbolDescription = true;
     m_exportFootprintDescription = true;
     m_symbolLibraryDescription.clear();
@@ -453,6 +478,8 @@ void ExportSettingsViewModel::loadFromConfig() {
     emit symbolLibraryDescriptionChanged();
     emit footprintLibraryDescriptionChanged();
     emit footprintLibraryKeywordsChanged();
+    emit cacheDirChanged();
+    emit diskCacheLimitMBChanged();
 }
 
 void ExportSettingsViewModel::saveConfig() {
@@ -477,6 +504,8 @@ void ExportSettingsViewModel::resetConfig() {
     m_symbolLibraryDescription.clear();
     m_footprintLibraryDescription.clear();
     m_footprintLibraryKeywords.clear();
+    m_cacheDir = m_configService->getCacheDir();
+    m_diskCacheLimitMB = m_configService->getDiskCacheLimitMB();
 
     m_configService->setOutputPath(m_outputPath);
     m_configService->setLibName(m_libName);
@@ -489,6 +518,10 @@ void ExportSettingsViewModel::resetConfig() {
     m_configService->setOverwriteExistingFiles(m_overwriteExistingFiles);
     m_configService->setWeakNetworkSupport(m_weakNetworkSupport);
     m_configService->setDebugMode(m_debugMode);
+    m_configService->setCacheDir(m_cacheDir);
+    m_configService->setDiskCacheLimitMB(m_diskCacheLimitMB);
+    ComponentCacheService::instance()->setCacheDir(m_cacheDir);
+    ComponentCacheService::instance()->setDiskCacheLimit(m_diskCacheLimitMB);
 
     emit outputPathChanged();
     emit libNameChanged();
@@ -507,6 +540,8 @@ void ExportSettingsViewModel::resetConfig() {
     emit symbolLibraryDescriptionChanged();
     emit footprintLibraryDescriptionChanged();
     emit footprintLibraryKeywordsChanged();
+    emit cacheDirChanged();
+    emit diskCacheLimitMBChanged();
 }
 
 }  // namespace EasyKiConverter
