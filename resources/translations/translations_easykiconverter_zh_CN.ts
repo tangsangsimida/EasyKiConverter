@@ -824,6 +824,16 @@
         <translation>导出数据手册文件</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="523"/>
+        <source>相对(推荐)</source>
+        <translation>相对(推荐)</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="544"/>
+        <source>绝对</source>
+        <translation>绝对</translation>
+    </message>
+    <message>
         <source>调试模式</source>
         <translation type="vanished">调试模式</translation>
     </message>

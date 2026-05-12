@@ -28,6 +28,7 @@ ExportSettingsViewModel::ExportSettingsViewModel(ParallelExportService* exportSe
     , m_exportFootprint(true)
     , m_exportModel3D(true)
     , m_exportModel3DFormat(ExportOptions::MODEL_3D_FORMAT_BOTH)
+    , m_exportModel3DPathMode(ExportOptions::MODEL_3D_PATH_RELATIVE)
     , m_exportPreviewImages(false)
     , m_exportDatasheet(false)
     , m_overwriteExistingFiles(false)
@@ -125,6 +126,15 @@ void ExportSettingsViewModel::setExportModel3DFormat(int format) {
         m_exportModel3DFormat = format;
         m_configService->setExportModel3DFormat(format);
         emit exportModel3DFormatChanged();
+    }
+}
+
+void ExportSettingsViewModel::setExportModel3DPathMode(int mode) {
+    const int normalizedMode = ExportOptions::normalizePathMode(mode);
+    if (m_exportModel3DPathMode != normalizedMode) {
+        m_exportModel3DPathMode = normalizedMode;
+        m_configService->setExportModel3DPathMode(normalizedMode);
+        emit exportModel3DPathModeChanged();
     }
 }
 
@@ -314,6 +324,7 @@ void ExportSettingsViewModel::buildExportOptions() {
     options.exportFootprint = m_exportFootprint;
     options.exportModel3D = m_exportModel3D;
     options.exportModel3DFormat = m_exportModel3DFormat;
+    options.exportModel3DPathMode = m_exportModel3DPathMode;
     options.exportPreviewImages = m_exportPreviewImages;
     options.exportDatasheet = m_exportDatasheet;
     options.overwriteExistingFiles = m_overwriteExistingFiles;
@@ -329,7 +340,8 @@ void ExportSettingsViewModel::buildExportOptions() {
     qInfo() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
             << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
             << "3D Model:" << options.exportModel3D << "3D Model Format:" << options.exportModel3DFormat
-            << "(1=WRL, 2=STEP, 3=Both)" << "Preview Images:" << options.exportPreviewImages
+            << "(1=WRL, 2=STEP, 3=Both)" << "3D Model Path Mode:" << options.exportModel3DPathMode
+            << "(0=Relative, 1=Absolute)" << "Preview Images:" << options.exportPreviewImages
             << "Datasheet:" << options.exportDatasheet
             << "Client Weak Network Adaptation:" << options.weakNetworkSupport << "Update Mode:" << options.updateMode
             << "Debug Mode:" << options.debugMode << "Symbol Description:" << options.exportSymbolDescription
@@ -442,6 +454,7 @@ void ExportSettingsViewModel::loadFromConfig() {
     m_exportFootprint = m_configService->getExportFootprint();
     m_exportModel3D = m_configService->getExportModel3D();
     m_exportModel3DFormat = m_configService->getExportModel3DFormat();
+    m_exportModel3DPathMode = m_configService->getExportModel3DPathMode();
     m_exportPreviewImages = m_configService->getExportPreviewImages();
     m_exportDatasheet = m_configService->getExportDatasheet();
     m_overwriteExistingFiles = m_configService->getOverwriteExistingFiles();
@@ -471,6 +484,7 @@ void ExportSettingsViewModel::loadFromConfig() {
     emit exportFootprintChanged();
     emit exportModel3DChanged();
     emit exportModel3DFormatChanged();
+    emit exportModel3DPathModeChanged();
     emit exportPreviewImagesChanged();
     emit exportDatasheetChanged();
     emit overwriteExistingFilesChanged();
@@ -497,6 +511,7 @@ void ExportSettingsViewModel::resetConfig() {
     m_exportFootprint = true;
     m_exportModel3D = true;
     m_exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_BOTH;
+    m_exportModel3DPathMode = ExportOptions::MODEL_3D_PATH_RELATIVE;
     m_exportPreviewImages = false;
     m_exportDatasheet = false;
     m_overwriteExistingFiles = false;
@@ -517,6 +532,7 @@ void ExportSettingsViewModel::resetConfig() {
     m_configService->setExportFootprint(m_exportFootprint);
     m_configService->setExportModel3D(m_exportModel3D);
     m_configService->setExportModel3DFormat(m_exportModel3DFormat);
+    m_configService->setExportModel3DPathMode(m_exportModel3DPathMode);
     m_configService->setExportPreviewImages(m_exportPreviewImages);
     m_configService->setExportDatasheet(m_exportDatasheet);
     m_configService->setOverwriteExistingFiles(m_overwriteExistingFiles);
@@ -534,6 +550,7 @@ void ExportSettingsViewModel::resetConfig() {
     emit exportFootprintChanged();
     emit exportModel3DChanged();
     emit exportModel3DFormatChanged();
+    emit exportModel3DPathModeChanged();
     emit exportPreviewImagesChanged();
     emit exportDatasheetChanged();
     emit overwriteExistingFilesChanged();

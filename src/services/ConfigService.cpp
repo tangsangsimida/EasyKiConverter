@@ -1,5 +1,7 @@
 #include "ConfigService.h"
 
+#include "export/ExportProgress.h"
+
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -209,6 +211,21 @@ void ConfigService::setExportModel3DFormat(int format) {
     saveConfig();
 }
 
+int ConfigService::getExportModel3DPathMode() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["exportModel3DPathMode"].toInt(0);
+}
+
+void ConfigService::setExportModel3DPathMode(int mode) {
+    const int normalized = ExportOptions::normalizePathMode(mode);
+    QMutexLocker locker(&m_configMutex);
+    m_config["exportModel3DPathMode"] = normalized;
+    emit configChanged();
+
+    locker.unlock();
+    saveConfig();
+}
+
 bool ConfigService::getExportPreviewImages() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exportPreviewImages"].toBool(false);
@@ -378,6 +395,7 @@ void ConfigService::initializeDefaultConfig() {
     m_config["exportFootprint"] = true;
     m_config["exportModel3D"] = true;
     m_config["exportModel3DFormat"] = 3;  // 默认 3=Both (WRL+STEP)
+    m_config["exportModel3DPathMode"] = 0;  // 默认 0=相对路径
     m_config["exportPreviewImages"] = false;
     m_config["exportDatasheet"] = false;
     m_config["overwriteExistingFiles"] = false;

@@ -67,7 +67,9 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
                                                bool preferWrl,
                                                bool exportStep,
                                                const QString& libraryDescription,
-                                               const QString& libraryKeywords) {
+                                               const QString& libraryKeywords,
+                                               int model3DPathMode,
+                                               const QString& model3DBaseDir) {
     qDebug() << "=== Export Footprint Library ===";
     qDebug() << "Library name:" << libName;
     qDebug() << "Output path:" << filePath;
@@ -95,6 +97,9 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
     }
 
     qDebug() << "Existing footprints count:" << existingFootprintNames.count();
+
+    const QString safeLibName = PathSecurity::sanitizeFilename(libName);
+    const QString resolvedBaseDir = model3DBaseDir.isEmpty() ? QFileInfo(filePath).absolutePath() : model3DBaseDir;
 
     int exportedCount = 0;
     int overwrittenCount = 0;
@@ -124,18 +129,19 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
             const bool useWrl = preferWrl && hasModel3D;
             const bool useStep = exportStep && hasModel3D;
 
-            // libName 也需要sanitize，防止Windows非法字符导致问题
-            QString safeLibName = PathSecurity::sanitizeFilename(libName);
-
             if (useWrl && useStep) {
-                QString wrlPath = QStringLiteral("../%1.3dmodels/%2.wrl").arg(safeLibName, modelName);
-                QString stepPath = QStringLiteral("../%1.3dmodels/%2.step").arg(safeLibName, modelName);
+                QString wrlPath =
+                    buildModel3DPath(safeLibName, modelName, QStringLiteral("wrl"), model3DPathMode, resolvedBaseDir);
+                QString stepPath =
+                    buildModel3DPath(safeLibName, modelName, QStringLiteral("step"), model3DPathMode, resolvedBaseDir);
                 content = generateFootprintContent(footprint, wrlPath, stepPath, libraryDescription, libraryKeywords);
             } else if (useWrl) {
-                QString wrlPath = QStringLiteral("../%1.3dmodels/%2.wrl").arg(safeLibName, modelName);
+                QString wrlPath =
+                    buildModel3DPath(safeLibName, modelName, QStringLiteral("wrl"), model3DPathMode, resolvedBaseDir);
                 content = generateFootprintContent(footprint, wrlPath, libraryDescription, libraryKeywords);
             } else if (useStep) {
-                QString stepPath = QStringLiteral("../%1.3dmodels/%2.step").arg(safeLibName, modelName);
+                QString stepPath =
+                    buildModel3DPath(safeLibName, modelName, QStringLiteral("step"), model3DPathMode, resolvedBaseDir);
                 content = generateFootprintContent(footprint, stepPath, libraryDescription, libraryKeywords);
             } else {
                 content = generateFootprintContent(footprint, QString(), libraryDescription, libraryKeywords);
@@ -178,6 +184,21 @@ QString ExporterFootprint::generateHeader(const QString& libName) const {
                "  (generator \"EasyKiConverter\")\n"
                "  (name \"%1\")\n\n")
         .arg(libName);
+}
+
+QString ExporterFootprint::buildModel3DPath(const QString& safeLibName,
+                                            const QString& modelName,
+                                            const QString& extension,
+                                            int model3DPathMode,
+                                            const QString& resolvedBaseDir) const {
+    const QString modelFileName = QStringLiteral("%1.%2").arg(modelName, extension);
+    const QString modelDirName = QStringLiteral("%1.3dmodels").arg(safeLibName);
+
+    if (model3DPathMode == ExportOptions::MODEL_3D_PATH_ABSOLUTE) {
+        return QDir::cleanPath(QDir(resolvedBaseDir).absoluteFilePath(modelDirName + "/" + modelFileName));
+    }
+
+    return QStringLiteral("../%1/%2").arg(modelDirName, modelFileName);
 }
 
 void ExporterFootprint::generateFootprintBaseContent(const FootprintData& footprintData,

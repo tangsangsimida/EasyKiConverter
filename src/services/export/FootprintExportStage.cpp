@@ -488,8 +488,15 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         const bool preferWrl = m_options.needsModel3DWrl();
         const bool exportStep = m_options.needsModel3DStep();
         QString libraryKeywords = m_options.footprintLibraryKeywords;
-        exportSuccess = exporter.exportFootprintLibrary(
-            footprintList, libName, tempDirPath, preferWrl, exportStep, libraryDescription, libraryKeywords);
+        exportSuccess = exporter.exportFootprintLibrary(footprintList,
+                                                        libName,
+                                                        tempDirPath,
+                                                        preferWrl,
+                                                        exportStep,
+                                                        libraryDescription,
+                                                        libraryKeywords,
+                                                        m_options.exportModel3DPathMode,
+                                                        outputDir);
     }
 
     if (m_cancelled.load()) {

@@ -951,6 +951,16 @@ Conversion completed: %1 succeeded, %2 failed</translation>
         <translation>Export datasheet files</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="523"/>
+        <source>相对(推荐)</source>
+        <translation>Relative (Recommended)</translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/qml/components/ExportSettingsCard.qml" line="544"/>
+        <source>绝对</source>
+        <translation>Absolute</translation>
+    </message>
+    <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="45"/>
         <source>发现新版本 %1</source>
         <translation>New version %1 found</translation>

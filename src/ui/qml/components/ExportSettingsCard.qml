@@ -462,7 +462,7 @@ Card {
                             anchors.centerIn: parent
                             text: "WRL"
                             font.pixelSize: AppStyle.fontSizes.xs
-                            color: parent.wrlActive ? "#ffffff" : AppStyle.colors.textSecondary
+                            color: parent.wrlActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary
                         }
                     }
                     Rectangle {
@@ -493,7 +493,59 @@ Card {
                             anchors.centerIn: parent
                             text: "STEP"
                             font.pixelSize: AppStyle.fontSizes.xs
-                            color: parent.stepActive ? "#ffffff" : AppStyle.colors.textSecondary
+                            color: parent.stepActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary
+                        }
+                    }
+                }
+
+                // 3D模型路径模式按钮组
+                RowLayout {
+                    visible: model3dCheckbox.checked
+                    spacing: AppStyle.spacing.xs
+                    Rectangle {
+                        Layout.preferredWidth: 72
+                        Layout.preferredHeight: 26
+                        radius: AppStyle.radius.xs
+                        property bool relativeActive: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportModel3DPathMode === 0 : true
+                        color: relativeActive ? AppStyle.colors.primary : "transparent"
+                        border.color: relativeActive ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                        border.width: AppStyle.borderWidths.normal
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (exportSettingsCard.exportSettingsController) {
+                                    exportSettingsCard.exportSettingsController.setExportModel3DPathMode(0);
+                                }
+                            }
+                        }
+                        Text {
+                            anchors.centerIn: parent
+                            text: qsTranslate("MainWindow", "相对(推荐)")
+                            font.pixelSize: AppStyle.fontSizes.xs
+                            color: parent.relativeActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary
+                        }
+                    }
+                    Rectangle {
+                        Layout.preferredWidth: 56
+                        Layout.preferredHeight: 26
+                        radius: AppStyle.radius.xs
+                        property bool absoluteActive: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportModel3DPathMode === 1 : false
+                        color: absoluteActive ? AppStyle.colors.primary : "transparent"
+                        border.color: absoluteActive ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                        border.width: AppStyle.borderWidths.normal
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (exportSettingsCard.exportSettingsController) {
+                                    exportSettingsCard.exportSettingsController.setExportModel3DPathMode(1);
+                                }
+                            }
+                        }
+                        Text {
+                            anchors.centerIn: parent
+                            text: qsTranslate("MainWindow", "绝对")
+                            font.pixelSize: AppStyle.fontSizes.xs
+                            color: parent.absoluteActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary
                         }
                     }
                 }

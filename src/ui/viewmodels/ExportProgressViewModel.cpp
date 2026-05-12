@@ -132,6 +132,7 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
                                           bool exportFootprint,
                                           bool exportModel3D,
                                           int exportModel3DFormat,
+                                          int exportModel3DPathMode,
                                           bool exportPreviewImages,
                                           bool exportDatasheet,
                                           bool overwriteExistingFiles,
@@ -203,6 +204,7 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     options.exportFootprint = exportFootprint;
     options.exportModel3D = exportModel3D;
     options.exportModel3DFormat = exportModel3DFormat;
+    options.exportModel3DPathMode = ExportOptions::normalizePathMode(exportModel3DPathMode);
     options.exportPreviewImages = exportPreviewImages;
     options.exportDatasheet = exportDatasheet;
     options.overwriteExistingFiles = overwriteExistingFiles;

@@ -22,6 +22,8 @@ class ExportSettingsViewModel : public QObject {
     Q_PROPERTY(bool exportModel3D READ exportModel3D WRITE setExportModel3D NOTIFY exportModel3DChanged)
     Q_PROPERTY(
         int exportModel3DFormat READ exportModel3DFormat WRITE setExportModel3DFormat NOTIFY exportModel3DFormatChanged)
+    Q_PROPERTY(int exportModel3DPathMode READ exportModel3DPathMode WRITE setExportModel3DPathMode NOTIFY
+                   exportModel3DPathModeChanged)
     Q_PROPERTY(bool exportPreviewImages READ exportPreviewImages WRITE setExportPreviewImages NOTIFY
                    exportPreviewImagesChanged)
     Q_PROPERTY(bool exportDatasheet READ exportDatasheet WRITE setExportDatasheet NOTIFY exportDatasheetChanged)
@@ -75,6 +77,10 @@ public:
     // 3D模型格式(位掩码): 0=NONE, 1=WRL, 2=STEP, 3=BOTH
     int exportModel3DFormat() const {
         return m_exportModel3DFormat;
+    }
+
+    int exportModel3DPathMode() const {
+        return m_exportModel3DPathMode;
     }
 
     bool exportPreviewImages() const {
@@ -148,6 +154,7 @@ public:
     Q_INVOKABLE void setExportFootprint(bool enabled);
     Q_INVOKABLE void setExportModel3D(bool enabled);
     Q_INVOKABLE void setExportModel3DFormat(int format);
+    Q_INVOKABLE void setExportModel3DPathMode(int mode);
     Q_INVOKABLE void setExportPreviewImages(bool enabled);
     Q_INVOKABLE void setExportDatasheet(bool enabled);
     Q_INVOKABLE void setOverwriteExistingFiles(bool enabled);
@@ -176,6 +183,7 @@ signals:
     void exportFootprintChanged();
     void exportModel3DChanged();
     void exportModel3DFormatChanged();
+    void exportModel3DPathModeChanged();
     void exportPreviewImagesChanged();
     void exportDatasheetChanged();
     void overwriteExistingFilesChanged();
@@ -218,6 +226,7 @@ private:
     bool m_exportFootprint;
     bool m_exportModel3D;
     int m_exportModel3DFormat;  // bitmask: 1=WRL, 2=STEP, 3=Both
+    int m_exportModel3DPathMode;  // 0=relative, 1=absolute
     bool m_exportPreviewImages;
     bool m_exportDatasheet;
     bool m_overwriteExistingFiles;

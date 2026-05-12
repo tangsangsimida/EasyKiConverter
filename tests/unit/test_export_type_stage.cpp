@@ -129,9 +129,92 @@ private slots:
         QVERIFY(QFile::exists(prettyDir + QDir::separator() + QStringLiteral("NewPackage.kicad_mod")));
     }
 
+    void footprintLibraryExportCanUseAbsolute3DModelPaths() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString libName = QStringLiteral("PathModeLib");
+        const QString componentId = QStringLiteral("C3001");
+        const QString footprintName = QStringLiteral("PackageWith3D");
+        const QString modelName = QStringLiteral("ModelWith3D");
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = libName;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        options.exportModel3DPathMode = ExportOptions::MODEL_3D_PATH_ABSOLUTE;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[componentId] = makeFootprintComponent(componentId, footprintName, modelName);
+
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        stage.start({componentId}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Footprint export should complete");
+        QCOMPARE(completedSpy.count(), 1);
+
+        const QString footprintPath = tempDir.path() + QDir::separator() + libName + QStringLiteral(".pretty") +
+                                      QDir::separator() + footprintName + QStringLiteral(".kicad_mod");
+        QFile footprintFile(footprintPath);
+        QVERIFY(footprintFile.open(QIODevice::ReadOnly | QIODevice::Text));
+        const QString content = QString::fromUtf8(footprintFile.readAll());
+
+        const QString expectedModelPath =
+            QDir::cleanPath(QDir(tempDir.path())
+                                .absoluteFilePath(libName + QStringLiteral(".3dmodels") + QDir::separator() +
+                                                  modelName + QStringLiteral(".wrl")));
+        QVERIFY2(content.contains(QStringLiteral("(model \"%1\"").arg(expectedModelPath)),
+                 "Footprint should reference the absolute 3D model path");
+        QVERIFY2(!content.contains(QStringLiteral("../%1.3dmodels/%2.wrl").arg(libName, modelName)),
+                 "Footprint should not contain a relative 3D model path in absolute mode");
+    }
+
+    void footprintLibraryExportUsesRelative3DModelPathsByDefault() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString libName = QStringLiteral("RelPathLib");
+        const QString componentId = QStringLiteral("C4001");
+        const QString footprintName = QStringLiteral("RelPackage");
+        const QString modelName = QStringLiteral("RelModel");
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = libName;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        options.exportModel3DPathMode = ExportOptions::MODEL_3D_PATH_RELATIVE;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[componentId] = makeFootprintComponent(componentId, footprintName, modelName);
+
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        stage.start({componentId}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Footprint export should complete");
+
+        const QString footprintPath = tempDir.path() + QDir::separator() + libName + QStringLiteral(".pretty") +
+                                      QDir::separator() + footprintName + QStringLiteral(".kicad_mod");
+        QFile footprintFile(footprintPath);
+        QVERIFY(footprintFile.open(QIODevice::ReadOnly | QIODevice::Text));
+        const QString content = QString::fromUtf8(footprintFile.readAll());
+
+        const QString expectedWrlPath = QStringLiteral("../%1.3dmodels/%2.wrl").arg(libName, modelName);
+        QVERIFY2(content.contains(QStringLiteral("(model \"%1\"").arg(expectedWrlPath)),
+                 "Footprint should contain relative WRL model path");
+
+        const QString absolutePrefix = QDir::cleanPath(tempDir.path());
+        QVERIFY2(!content.contains(absolutePrefix),
+                 "Footprint should not contain absolute paths in relative mode");
+    }
+
 private:
     static QSharedPointer<ComponentData> makeFootprintComponent(const QString& componentId,
-                                                                const QString& footprintName) {
+                                                                const QString& footprintName,
+                                                                const QString& model3DName = QString()) {
         auto componentData = QSharedPointer<ComponentData>::create();
         componentData->setLcscId(componentId);
 
@@ -147,6 +230,13 @@ private:
         bbox.width = 1;
         bbox.height = 1;
         footprintData->setBbox(bbox);
+
+        if (!model3DName.isEmpty()) {
+            Model3DData model3D;
+            model3D.setName(model3DName);
+            model3D.setUuid(QStringLiteral("uuid-%1").arg(componentId));
+            footprintData->setModel3D(model3D);
+        }
 
         componentData->setFootprintData(footprintData);
         return componentData;

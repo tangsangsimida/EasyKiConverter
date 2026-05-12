@@ -21,6 +21,7 @@ TestCase {
         property bool exportFootprint: true
         property bool exportModel3D: true
         property int exportModel3DFormat: 3
+        property int exportModel3DPathMode: 0
         property bool exportPreviewImages: false
         property bool exportDatasheet: false
         property int exportMode: 0
@@ -51,6 +52,9 @@ TestCase {
         }
         function setExportModel3DFormat(format) {
             exportModel3DFormat = format
+        }
+        function setExportModel3DPathMode(mode) {
+            exportModel3DPathMode = mode
         }
         function setExportPreviewImages(enabled) {
             exportPreviewImages = enabled

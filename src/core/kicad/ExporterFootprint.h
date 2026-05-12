@@ -4,6 +4,7 @@
 #include "FootprintGraphicsGenerator.h"
 #include "models/FootprintData.h"
 #include "models/Model3DData.h"
+#include "services/export/ExportProgress.h"
 
 #include <QJsonObject>
 #include <QString>
@@ -66,7 +67,9 @@ public:
                                 bool preferWrl = true,
                                 bool exportStep = false,
                                 const QString& libraryDescription = QString(),
-                                const QString& libraryKeywords = QString());
+                                const QString& libraryKeywords = QString(),
+                                int model3DPathMode = ExportOptions::MODEL_3D_PATH_RELATIVE,
+                                const QString& model3DBaseDir = QString());
 
     /**
      * @brief 生成 fp-lib-table 文件
@@ -84,6 +87,11 @@ public:
 
 private:
     QString generateHeader(const QString& libName) const;
+    QString buildModel3DPath(const QString& safeLibName,
+                             const QString& modelName,
+                             const QString& extension,
+                             int model3DPathMode,
+                             const QString& resolvedBaseDir) const;
     void generateFootprintBaseContent(const FootprintData& footprintData,
                                       QString& content,
                                       double& outBboxX,

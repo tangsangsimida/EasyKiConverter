@@ -134,6 +134,20 @@ public:
     void setExportModel3DFormat(int format);
 
     /**
+     * @brief 获取3D模型路径模式
+     *
+     * @return int 路径模式: 0=相对路径, 1=绝对路径
+     */
+    int getExportModel3DPathMode() const;
+
+    /**
+     * @brief 设置3D模型路径模式
+     *
+     * @param mode 路径模式: 0=相对路径, 1=绝对路径
+     */
+    void setExportModel3DPathMode(int mode);
+
+    /**
      * @brief 是否导出预览图
      *
      * @return bool 是否导出预览图

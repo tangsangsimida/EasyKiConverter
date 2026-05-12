@@ -150,6 +150,7 @@ public slots:
                      bool exportFootprint,
                      bool exportModel3D,
                      int exportModel3DFormat,
+                     int exportModel3DPathMode,
                      bool exportPreviewImages,
                      bool exportDatasheet,
                      bool overwriteExistingFiles,
