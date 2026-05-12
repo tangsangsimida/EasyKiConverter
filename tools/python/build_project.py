@@ -979,6 +979,7 @@ def main():
     )
     parser.add_argument("-i", "--install", action="store_true", help="构建后执行安装")
     parser.add_argument("--test", action="store_true", help="构建后运行测试")
+    parser.add_argument("--coverage", action="store_true", help="构建后生成代码覆盖率报告 (需 gcovr 或 lcov)")
     parser.add_argument(
         "--check", action="store_true", help="仅执行构建环境检查 (CMake/编译器/Qt6)"
     )
@@ -1010,6 +1011,13 @@ def main():
     qt_path = args.qt_path if args.qt_path else None
     manager = BuildManager(verbose=args.verbose, build_dir=build_dir, qt_path=qt_path)
 
+    # Coverage 模式: 启用覆盖率编译选项并强制运行测试
+    run_tests = args.test
+    if args.coverage:
+        manager.cmake_options["ENABLE_COVERAGE"] = True
+        manager.cmake_options["EASYKICONVERTER_BUILD_TESTS"] = True
+        run_tests = True
+
     try:
         if args.env_check:
             success = manager.check_environment(full_check=True)
@@ -1036,8 +1044,27 @@ def main():
         if not manager.build_project(args.type, args.jobs):
             sys.exit(1)
 
-        if args.test:
+        if run_tests:
             manager.run_tests()
+
+        if args.coverage:
+            coverage_script = (
+                Path(__file__).parent / "generate_coverage.py"
+            )
+            manager.logger.info("=" * 60)
+            manager.logger.info("生成覆盖率报告...")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(coverage_script),
+                    "--report-only",
+                    "--build-dir",
+                    str(manager.build_dir),
+                ],
+                capture_output=False,
+            )
+            if result.returncode != 0:
+                manager.logger.warning("覆盖率报告生成失败，但构建已完成")
 
         if args.install:
             manager.install_project()

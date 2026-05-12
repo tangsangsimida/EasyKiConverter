@@ -45,12 +45,39 @@ export QT_QPA_PLATFORM=offscreen
 
 ### 3.1 建立覆盖率报告
 
-当前 CMake 已提供 `ENABLE_COVERAGE`，但还缺少稳定的报告生成入口。建议新增 `build_project.py --coverage` 或独立脚本，完成以下流程：
+CMake 已提供 `ENABLE_COVERAGE`，可通过以下方式生成覆盖率报告：
 
-1. 使用 GCC Debug 构建并打开 `-DENABLE_COVERAGE=ON`。
-2. 运行 `ctest --output-on-failure`。
-3. 通过 `gcovr` 或 `lcov/genhtml` 生成 HTML 和 XML 报告。
-4. 排除 `build/`、`tests/`、第三方依赖和 Qt 自动生成文件。
+**方式一：通过构建脚本（推荐）**
+
+```bash
+python3 tools/python/build_project.py --coverage
+```
+
+这会自动启用 `ENABLE_COVERAGE=ON`、`EASYKICONVERTER_BUILD_TESTS=ON`，并在构建和测试完成后调用 `generate_coverage.py` 生成报告。
+
+**方式二：独立脚本**
+
+```bash
+# 完整流程（配置 → 构建 → 测试 → 报告）
+python3 tools/python/generate_coverage.py
+
+# 仅生成报告（需已有 .gcda 文件）
+python3 tools/python/generate_coverage.py --report-only
+
+# 额外生成 XML 报告
+python3 tools/python/generate_coverage.py --xml
+```
+
+**报告工具优先级**：gcovr > lcov+genhtml。如缺工具会给出明确安装提示：
+
+```bash
+pip install gcovr            # 推荐
+sudo apt install lcov        # 备选
+```
+
+**输出目录**：`tests/reports/coverage/`（HTML: `index.html`，XML: `coverage.xml`）
+
+**排除范围**：`build/`、`tests/`、第三方依赖、Qt 自动生成文件（moc_*, qrc_*, *_autogen/*）等。
 
 覆盖率门槛建议分阶段推进：
 
