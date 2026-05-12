@@ -203,6 +203,20 @@ target_include_directories(test_kicad_exporter_golden PRIVATE
 )
 add_test(NAME test_kicad_exporter_golden COMMAND test_kicad_exporter_golden)
 
+add_executable(test_easyeda_importer_fixtures
+    test_easyeda_importer_fixtures.cpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_easyeda_importer_fixtures PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_easyeda_importer_fixtures PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_easyeda_importer_fixtures COMMAND test_easyeda_importer_fixtures)
+
 # CadDataLoader 业务层错误检查测试
 add_executable(test_cad_data_loader test_cad_data_loader.cpp)
 target_link_libraries(test_cad_data_loader PRIVATE
@@ -247,6 +261,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_file_reader
     test_test_paths
     test_kicad_exporter_golden
+    test_easyeda_importer_fixtures
     test_cad_data_loader
     test_component_list_viewmodel
 )
