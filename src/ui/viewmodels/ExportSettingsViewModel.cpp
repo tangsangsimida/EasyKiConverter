@@ -40,7 +40,7 @@ ExportSettingsViewModel::ExportSettingsViewModel(ParallelExportService* exportSe
     , m_footprintLibraryDescription("")
     , m_footprintLibraryKeywords("")
     , m_cacheDir("")
-    , m_diskCacheLimitMB(5120)
+    , m_diskCacheLimitMB(ConfigService::DEFAULT_DISK_CACHE_LIMIT_MB)
     , m_isExporting(false)
     , m_status("Ready") {
     // 初始化时检查调试模式（命令行参数优先，环境变量向后兼容）
@@ -163,6 +163,7 @@ void ExportSettingsViewModel::setWeakNetworkSupport(bool enabled) {
 void ExportSettingsViewModel::setExportMode(int mode) {
     if (m_exportMode != mode) {
         m_exportMode = mode;
+        m_configService->setExportMode(mode);
         emit exportModeChanged();
         qDebug() << "Export mode changed to:" << mode << "(0=append, 1=update)";
     }
@@ -231,7 +232,7 @@ void ExportSettingsViewModel::setCacheDir(const QString& path) {
 }
 
 void ExportSettingsViewModel::setDiskCacheLimitMB(int maxSizeMB) {
-    const int normalizedSize = qBound(1, maxSizeMB, 1048576);
+    const int normalizedSize = qBound(1, maxSizeMB, ConfigService::MAX_DISK_CACHE_LIMIT_MB);
     if (m_diskCacheLimitMB != normalizedSize) {
         m_diskCacheLimitMB = normalizedSize;
         m_configService->setDiskCacheLimitMB(normalizedSize);
@@ -445,6 +446,7 @@ void ExportSettingsViewModel::loadFromConfig() {
     m_exportDatasheet = m_configService->getExportDatasheet();
     m_overwriteExistingFiles = m_configService->getOverwriteExistingFiles();
     m_weakNetworkSupport = m_configService->getWeakNetworkSupport();
+    m_exportMode = m_configService->getExportMode();
     m_cacheDir = m_configService->getCacheDir();
     m_diskCacheLimitMB = m_configService->getDiskCacheLimitMB();
 
@@ -473,6 +475,7 @@ void ExportSettingsViewModel::loadFromConfig() {
     emit exportDatasheetChanged();
     emit overwriteExistingFilesChanged();
     emit weakNetworkSupportChanged();
+    emit exportModeChanged();
     emit debugModeChanged();
     emit exportSymbolDescriptionChanged();
     emit exportFootprintDescriptionChanged();
@@ -518,6 +521,7 @@ void ExportSettingsViewModel::resetConfig() {
     m_configService->setExportDatasheet(m_exportDatasheet);
     m_configService->setOverwriteExistingFiles(m_overwriteExistingFiles);
     m_configService->setWeakNetworkSupport(m_weakNetworkSupport);
+    m_configService->setExportMode(m_exportMode);
     m_configService->setDebugMode(m_debugMode);
     m_configService->setCacheDir(m_cacheDir);
     m_configService->setDiskCacheLimitMB(m_diskCacheLimitMB);

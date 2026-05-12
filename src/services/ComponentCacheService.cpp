@@ -2,6 +2,7 @@
 
 #include "CacheHealthManager.h"
 #include "CachePruner.h"
+#include "ConfigService.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/UrlUtils.h"
 #include "services/ComponentService.h"
@@ -25,7 +26,10 @@ namespace EasyKiConverter {
 std::unique_ptr<ComponentCacheService> ComponentCacheService::s_instance;
 
 ComponentCacheService::ComponentCacheService(QObject* parent)
-    : QObject(parent), m_memoryCacheLimitMB(50), m_diskCacheLimitMB(5120), m_memoryCacheSize(0) {
+    : QObject(parent)
+    , m_memoryCacheLimitMB(50)
+    , m_diskCacheLimitMB(ConfigService::DEFAULT_DISK_CACHE_LIMIT_MB)
+    , m_memoryCacheSize(0) {
     m_lastEnforceTimer.start();
     // 默认缓存目录：{用户数据目录}/easykiconverter/cache
     QString defaultCacheDir =
@@ -1136,30 +1140,23 @@ int ComponentCacheService::diskCacheLimit() const {
 void ComponentCacheService::enforceDiskCacheLimit(bool bypassCooldown) {
     // 冷却机制：避免批量保存时频繁扫描目录（每次扫描开销较大）
     constexpr qint64 kCooldownMs = 3000;
-    if (!bypassCooldown && m_lastEnforceTimer.elapsed() < kCooldownMs) {
-        return;
-    }
-
     QString cacheDir;
     qint64 targetSizeBytes = 0;
     {
         QMutexLocker locker(&m_mutex);
+        if (!bypassCooldown && m_lastEnforceTimer.elapsed() < kCooldownMs) {
+            return;
+        }
         cacheDir = m_cacheDir;
         targetSizeBytes = static_cast<qint64>(m_diskCacheLimitMB) * 1024 * 1024;
+        m_lastEnforceTimer.restart();
     }
 
     if (targetSizeBytes <= 0 || cacheDir.isEmpty()) {
         return;
     }
 
-    m_lastEnforceTimer.restart();
-
     CachePruner pruner(cacheDir);
-    const qint64 currentSize = pruner.calculateDirSize(cacheDir);
-    if (currentSize <= targetSizeBytes) {
-        return;
-    }
-
     const qint64 newSize = pruner.pruneTo(targetSizeBytes);
     emit cacheSizeChanged(newSize);
 }

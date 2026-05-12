@@ -12,6 +12,7 @@ class TestConfigService : public QObject {
 private slots:
     void testCacheSettingsPersistAcrossLoad();
     void testDiskCacheLimitClamped();
+    void testExportModePersistAcrossLoad();
 };
 
 void TestConfigService::testCacheSettingsPersistAcrossLoad() {
@@ -42,6 +43,27 @@ void TestConfigService::testDiskCacheLimitClamped() {
 
     config->setDiskCacheLimitMB(1048577);
     QCOMPARE(config->getDiskCacheLimitMB(), 1048576);
+}
+
+void TestConfigService::testExportModePersistAcrossLoad() {
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+
+    const QString configPath = QDir(tempDir.path()).filePath(QStringLiteral("config.json"));
+
+    ConfigService* config = ConfigService::instance();
+    config->resetToDefaults();
+    QCOMPARE(config->getExportMode(), 0);
+
+    config->setExportMode(1);
+    QCOMPARE(config->getExportMode(), 1);
+    QVERIFY(config->saveConfig(configPath));
+
+    config->resetToDefaults();
+    QCOMPARE(config->getExportMode(), 0);
+
+    QVERIFY(config->loadConfig(configPath));
+    QCOMPARE(config->getExportMode(), 1);
 }
 
 QTEST_GUILESS_MAIN(TestConfigService)

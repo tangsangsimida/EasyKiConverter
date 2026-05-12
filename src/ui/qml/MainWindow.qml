@@ -198,15 +198,7 @@ Item {
     }
     // 从 FolderDialog URL 中提取本地路径（跨平台处理）
     function urlToLocalPath(url) {
-        var path = url.toString();
-        if (path.startsWith("file://")) {
-            path = path.substring(7);
-            // Windows路径修复：如果路径以 /开头且包含: (如 /C:/)，移除开头的 /
-            if (path.startsWith("/") && path.indexOf(":") > 0) {
-                path = path.substring(1);
-            }
-        }
-        return path;
+        return QUrl(url).toLocalFile();
     }
 
     // BOM 文件选择对话框

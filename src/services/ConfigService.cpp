@@ -276,6 +276,20 @@ void ConfigService::setOverwriteExistingFiles(bool enabled) {
     saveConfig();
 }
 
+int ConfigService::getExportMode() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["exportMode"].toInt(0);  // 默认 0=追加模式
+}
+
+void ConfigService::setExportMode(int mode) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["exportMode"] = mode;
+    emit configChanged();
+
+    locker.unlock();
+    saveConfig();
+}
+
 bool ConfigService::getDarkMode() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["darkMode"].toBool(false);
@@ -367,6 +381,7 @@ void ConfigService::initializeDefaultConfig() {
     m_config["exportPreviewImages"] = false;
     m_config["exportDatasheet"] = false;
     m_config["overwriteExistingFiles"] = false;
+    m_config["exportMode"] = 0;  // 默认 0=追加模式
     m_config["weakNetworkSupport"] = false;
     m_config["darkMode"] = false;
     // 注意：debugMode 不在这里设置，因为它不应该保存在配置文件中
@@ -430,12 +445,12 @@ void ConfigService::setCacheDir(const QString& path) {
 
 int ConfigService::getDiskCacheLimitMB() const {
     QMutexLocker locker(&m_configMutex);
-    return qBound(1, m_config["diskCacheLimitMB"].toInt(DEFAULT_DISK_CACHE_LIMIT_MB), 1048576);
+    return qBound(1, m_config["diskCacheLimitMB"].toInt(DEFAULT_DISK_CACHE_LIMIT_MB), MAX_DISK_CACHE_LIMIT_MB);
 }
 
 void ConfigService::setDiskCacheLimitMB(int maxSizeMB) {
     QMutexLocker locker(&m_configMutex);
-    m_config["diskCacheLimitMB"] = qBound(1, maxSizeMB, 1048576);
+    m_config["diskCacheLimitMB"] = qBound(1, maxSizeMB, MAX_DISK_CACHE_LIMIT_MB);
     emit configChanged();
 
     locker.unlock();

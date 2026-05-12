@@ -138,3 +138,8 @@ temp.md
 squashfs-root/*
 deploy/flatpak/.flatpak-builder/*
 .format_cache.json
+log
+CLAUDE.md
+testbom.xlsx
+GEMINI.md
+.codex

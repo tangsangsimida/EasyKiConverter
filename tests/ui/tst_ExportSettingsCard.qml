@@ -15,6 +15,7 @@ TestCase {
         property string libName: "TestLib"
         property string cacheDir: "/tmp/cache"
         property int diskCacheLimitMB: 5120
+        property int maxDiskCacheLimitMB: 1048576
         property int lastDiskCacheLimit: -1
         property bool exportSymbol: true
         property bool exportFootprint: true

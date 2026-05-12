@@ -43,6 +43,7 @@ class ExportSettingsViewModel : public QObject {
                    footprintLibraryKeywordsChanged)
     Q_PROPERTY(QString cacheDir READ cacheDir WRITE setCacheDir NOTIFY cacheDirChanged)
     Q_PROPERTY(int diskCacheLimitMB READ diskCacheLimitMB WRITE setDiskCacheLimitMB NOTIFY diskCacheLimitMBChanged)
+    Q_PROPERTY(int maxDiskCacheLimitMB READ maxDiskCacheLimitMB CONSTANT)
     Q_PROPERTY(bool isExporting READ isExporting NOTIFY isExportingChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
 
@@ -126,6 +127,10 @@ public:
 
     int diskCacheLimitMB() const {
         return m_diskCacheLimitMB;
+    }
+
+    int maxDiskCacheLimitMB() const {
+        return ConfigService::MAX_DISK_CACHE_LIMIT_MB;
     }
 
     bool isExporting() const {

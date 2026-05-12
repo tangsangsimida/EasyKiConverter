@@ -186,13 +186,14 @@ Card {
                     text: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.diskCacheLimitMB.toString() : "5120"
                     validator: IntValidator {
                         bottom: 1
-                        top: 1048576
+                        top: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.maxDiskCacheLimitMB : 1048576
                     }
                     onEditingFinished: {
                         if (exportSettingsCard.exportSettingsController) {
                             var value = parseInt(text);
                             if (!isNaN(value)) {
-                                var clamped = Math.max(1, Math.min(1048576, value));
+                                var max = exportSettingsCard.exportSettingsController.maxDiskCacheLimitMB;
+                                var clamped = Math.max(1, Math.min(max, value));
                                 exportSettingsCard.exportSettingsController.setDiskCacheLimitMB(clamped);
                                 text = clamped.toString();
                             } else {

@@ -190,6 +190,20 @@ public:
     void setWeakNetworkSupport(bool enabled);
 
     /**
+     * @brief 获取导出模式
+     *
+     * @return int 导出模式: 0=追加模式, 1=更新模式
+     */
+    int getExportMode() const;
+
+    /**
+     * @brief 设置导出模式
+     *
+     * @param mode 导出模式: 0=追加模式, 1=更新模式
+     */
+    void setExportMode(int mode);
+
+    /**
      * @brief 获取验证阶段的并发数
      *
      * @return int 并发数
@@ -308,12 +322,15 @@ signals:
      */
     void configChanged();
 
+public:
+    static constexpr int DEFAULT_DISK_CACHE_LIMIT_MB = 5120;
+    static constexpr int MAX_DISK_CACHE_LIMIT_MB = 1048576;
+
 private:
     static constexpr int DEFAULT_WINDOW_WIDTH = -1;
     static constexpr int DEFAULT_WINDOW_HEIGHT = -1;
     static constexpr int DEFAULT_WINDOW_X = -9999;
     static constexpr int DEFAULT_WINDOW_Y = -9999;
-    static constexpr int DEFAULT_DISK_CACHE_LIMIT_MB = 5120;
 
     /**
      * @brief 构造函数
