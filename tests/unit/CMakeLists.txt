@@ -203,3 +203,27 @@ target_include_directories(test_component_list_viewmodel PRIVATE
     ${CMAKE_SOURCE_DIR}/tests
 )
 add_test(NAME test_component_list_viewmodel COMMAND test_component_list_viewmodel)
+
+set(EASYKICONVERTER_UNIT_TESTS
+    test_easyeda_api
+    test_models
+    test_component_cache_service
+    test_cache_pruner
+    test_config_service
+    test_component_service
+    test_export_type_stage
+    test_export_progress_viewmodel
+    test_export_settings_viewmodel
+    test_logging
+    test_command_line_parser
+    test_language_manager
+    test_completion_generator
+    test_file_reader
+    test_cad_data_loader
+    test_component_list_viewmodel
+)
+
+set_tests_properties(${EASYKICONVERTER_UNIT_TESTS}
+    PROPERTIES
+        LABELS "unit"
+)
