@@ -71,30 +71,14 @@ void DatasheetExportStage::start(const QStringList& componentIds,
         }
     }
 
+    m_isExporting.store(true);
+
     // 调用基类的初始化方法（设置状态，并处理空列表情况）
     ExportTypeStage::start(componentIds, cachedData);
-
-    m_isExporting.store(true);
 }
 
 void DatasheetExportStage::cancel() {
-    if (!m_isExporting.load()) {
-        return;
-    }
-
-    qDebug() << "DatasheetExportStage: Cancelling...";
-
-    ExportTypeStage::cancel();
-
-    // 回滚所有临时文件
-    m_tempManager.rollbackAll();
-
-    m_isExporting.store(false);
-    if (!hasActiveWorkers()) {
-        m_isRunning.store(false);
-    }
-
-    qDebug() << "DatasheetExportStage: Cancelled";
+    cancelWithTempRollback(m_tempManager);
 }
 
 void DatasheetExportStage::commitTempFile(const QString& tempPath, const QString& finalPath) {

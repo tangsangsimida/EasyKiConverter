@@ -47,6 +47,20 @@ public:
      */
     void resetToDefaults();
 
+    /**
+     * @brief 开始批量更新（抑制 saveConfig 调用）
+     *
+     * 与 endBatchUpdate() 配对使用。在批量更新期间，
+     * 所有 setter 不会触发 saveConfig()，而是在 endBatchUpdate() 时统一保存一次。
+     * 支持嵌套调用。
+     */
+    void beginBatchUpdate();
+
+    /**
+     * @brief 结束批量更新，统一保存一次配置
+     */
+    void endBatchUpdate();
+
     // 配置访问方法
 
     /**
@@ -340,6 +354,9 @@ public:
     static constexpr int DEFAULT_DISK_CACHE_LIMIT_MB = 5120;
     static constexpr int MAX_DISK_CACHE_LIMIT_MB = 1048576;
 
+    /** @brief 默认缓存目录路径（静态工具方法，不依赖单例状态） */
+    static QString defaultCacheDir();
+
 private:
     static constexpr int DEFAULT_WINDOW_WIDTH = -1;
     static constexpr int DEFAULT_WINDOW_HEIGHT = -1;
@@ -375,9 +392,13 @@ private:
     static ConfigService* s_instance;
     static QMutex s_mutex;
 
+    void saveIfNotBatching();
+
     QJsonObject m_config;
     QString m_configPath;
     mutable QMutex m_configMutex;
+    int m_batchUpdateDepth = 0;
+    bool m_batchDirty = false;
 };
 
 }  // namespace EasyKiConverter

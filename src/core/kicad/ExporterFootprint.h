@@ -4,7 +4,6 @@
 #include "FootprintGraphicsGenerator.h"
 #include "models/FootprintData.h"
 #include "models/Model3DData.h"
-#include "services/export/ExportProgress.h"
 
 #include <QJsonObject>
 #include <QString>
@@ -57,6 +56,7 @@ public:
      * @param filePath 输出目录路径（.pretty 目录）
      * @param preferWrl 是否优先使用 WRL 格式（默认 true，向后兼容）
      * @param exportStep 是否同时导出 STEP 格式（默认 false，向后兼容）
+     * @param useAbsolutePaths 3D模型路径是否使用绝对路径（默认 false，使用相对路径）
      * @note 默认参数仅导出 WRL，以保持与旧版本的兼容行为。
      *       调用方应显式传入 exportStep=true 以启用双格式导出。
      * @return bool 是否成功
@@ -68,7 +68,7 @@ public:
                                 bool exportStep = false,
                                 const QString& libraryDescription = QString(),
                                 const QString& libraryKeywords = QString(),
-                                int model3DPathMode = ExportOptions::MODEL_3D_PATH_RELATIVE,
+                                bool useAbsolutePaths = false,
                                 const QString& model3DBaseDir = QString());
 
     /**
@@ -90,7 +90,7 @@ private:
     QString buildModel3DPath(const QString& safeLibName,
                              const QString& modelName,
                              const QString& extension,
-                             int model3DPathMode,
+                             bool useAbsolutePaths,
                              const QString& resolvedBaseDir) const;
     void generateFootprintBaseContent(const FootprintData& footprintData,
                                       QString& content,

@@ -68,7 +68,7 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
                                                bool exportStep,
                                                const QString& libraryDescription,
                                                const QString& libraryKeywords,
-                                               int model3DPathMode,
+                                               bool useAbsolutePaths,
                                                const QString& model3DBaseDir) {
     qDebug() << "=== Export Footprint Library ===";
     qDebug() << "Library name:" << libName;
@@ -131,17 +131,17 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
 
             if (useWrl && useStep) {
                 QString wrlPath =
-                    buildModel3DPath(safeLibName, modelName, QStringLiteral("wrl"), model3DPathMode, resolvedBaseDir);
+                    buildModel3DPath(safeLibName, modelName, QStringLiteral("wrl"), useAbsolutePaths, resolvedBaseDir);
                 QString stepPath =
-                    buildModel3DPath(safeLibName, modelName, QStringLiteral("step"), model3DPathMode, resolvedBaseDir);
+                    buildModel3DPath(safeLibName, modelName, QStringLiteral("step"), useAbsolutePaths, resolvedBaseDir);
                 content = generateFootprintContent(footprint, wrlPath, stepPath, libraryDescription, libraryKeywords);
             } else if (useWrl) {
                 QString wrlPath =
-                    buildModel3DPath(safeLibName, modelName, QStringLiteral("wrl"), model3DPathMode, resolvedBaseDir);
+                    buildModel3DPath(safeLibName, modelName, QStringLiteral("wrl"), useAbsolutePaths, resolvedBaseDir);
                 content = generateFootprintContent(footprint, wrlPath, libraryDescription, libraryKeywords);
             } else if (useStep) {
                 QString stepPath =
-                    buildModel3DPath(safeLibName, modelName, QStringLiteral("step"), model3DPathMode, resolvedBaseDir);
+                    buildModel3DPath(safeLibName, modelName, QStringLiteral("step"), useAbsolutePaths, resolvedBaseDir);
                 content = generateFootprintContent(footprint, stepPath, libraryDescription, libraryKeywords);
             } else {
                 content = generateFootprintContent(footprint, QString(), libraryDescription, libraryKeywords);
@@ -189,12 +189,12 @@ QString ExporterFootprint::generateHeader(const QString& libName) const {
 QString ExporterFootprint::buildModel3DPath(const QString& safeLibName,
                                             const QString& modelName,
                                             const QString& extension,
-                                            int model3DPathMode,
+                                            bool useAbsolutePaths,
                                             const QString& resolvedBaseDir) const {
     const QString modelFileName = QStringLiteral("%1.%2").arg(modelName, extension);
     const QString modelDirName = QStringLiteral("%1.3dmodels").arg(safeLibName);
 
-    if (model3DPathMode == ExportOptions::MODEL_3D_PATH_ABSOLUTE) {
+    if (useAbsolutePaths) {
         return QDir::cleanPath(QDir(resolvedBaseDir).absoluteFilePath(modelDirName + "/" + modelFileName));
     }
 

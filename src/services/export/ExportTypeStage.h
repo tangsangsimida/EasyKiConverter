@@ -10,11 +10,14 @@
 #include <QSharedPointer>
 #include <QString>
 #include <QStringList>
+#include <QThread>
 #include <QThreadPool>
 
 #include <atomic>
 
 namespace EasyKiConverter {
+
+class TempFileManager;
 
 class ComponentData;
 
@@ -156,6 +159,27 @@ protected:
     void startNextWorker();
 
     /**
+     * @brief 带临时文件回滚的取消操作（供使用 TempFileManager 的子类调用）
+     * @param tempManager 子类的 TempFileManager 实例引用
+     *
+     * 统一执行：基类取消 → 临时文件回滚 → 状态清理。
+     * DatasheetExportStage、PreviewImagesExportStage、Model3DExportStage 共用此逻辑。
+     * 使用基类 m_isExporting 标志判断是否正在导出。
+     */
+    void cancelWithTempRollback(TempFileManager& tempManager);
+
+    /**
+     * @brief 等待单个工作线程退出（供使用独立 QThread 的子类调用）
+     * @param thread 子类的 m_workerThread 指针引用
+     * @param timeoutMs 超时时间（毫秒），默认 5000
+     * @return true 线程已退出，false 超时
+     *
+     * SymbolExportStage 和 FootprintExportStage 共用此逻辑：
+     * 设置取消标志 → 请求线程退出 → 等待超时 → 置空指针。
+     */
+    bool waitForWorkerThread(QThread*& thread, int timeoutMs = 5000);
+
+    /**
      * @brief 初始化单个元器件的进度状态
      * @param componentId 元器件ID
      *
@@ -187,6 +211,7 @@ public:
     QThreadPool m_threadPool;  ///< 线程池，用于管理并行导出任务
     std::atomic<bool> m_isRunning{false};  ///< 任务是否正在运行的原子标志
     std::atomic<bool> m_cancelled{false};  ///< 取消请求的原子标志
+    std::atomic<bool> m_isExporting{false};  ///< 是否正在导出（子类可直接读写）
     QStringList m_componentIds;  ///< 需要导出的元器件ID列表
     QMap<QString, QSharedPointer<ComponentData>> m_cachedData;  ///< 预加载的元器件数据缓存
     mutable QMutex m_progressMutex;  ///< 保护m_progress的互斥量

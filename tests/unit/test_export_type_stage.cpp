@@ -73,6 +73,22 @@ private slots:
         QCOMPARE(progress.failedCount, 0);
     }
 
+    void completedSignalSeesStageNotRunning() {
+        ImmediateSuccessStage stage;
+        bool wasRunningWhenCompleted = true;
+        connect(&stage, &ExportTypeStage::completed, &stage, [&stage, &wasRunningWhenCompleted]() {
+            wasRunningWhenCompleted = stage.isRunning();
+        });
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C1001")] = QSharedPointer<ComponentData>::create();
+
+        stage.start({QStringLiteral("C1001")}, cachedData);
+
+        QVERIFY(!wasRunningWhenCompleted);
+        QVERIFY(!stage.isRunning());
+    }
+
     void cancelledStageStaysRunningUntilActiveWorkersDrain() {
         DeferredStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
@@ -207,8 +223,7 @@ private slots:
                  "Footprint should contain relative WRL model path");
 
         const QString absolutePrefix = QDir::cleanPath(tempDir.path());
-        QVERIFY2(!content.contains(absolutePrefix),
-                 "Footprint should not contain absolute paths in relative mode");
+        QVERIFY2(!content.contains(absolutePrefix), "Footprint should not contain absolute paths in relative mode");
     }
 
 private:

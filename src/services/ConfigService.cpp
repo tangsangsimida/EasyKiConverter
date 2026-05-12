@@ -10,11 +10,9 @@
 
 namespace EasyKiConverter {
 
-namespace {
-QString defaultCacheDir() {
+QString ConfigService::defaultCacheDir() {
     return QDir::cleanPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/cache");
 }
-}  // namespace
 
 // 静态成员初始化
 ConfigService* ConfigService::s_instance = nullptr;
@@ -121,6 +119,33 @@ void ConfigService::resetToDefaults() {
     qDebug() << "Config reset to defaults";
 }
 
+void ConfigService::beginBatchUpdate() {
+    QMutexLocker locker(&m_configMutex);
+    m_batchUpdateDepth++;
+}
+
+void ConfigService::endBatchUpdate() {
+    QMutexLocker locker(&m_configMutex);
+    if (m_batchUpdateDepth > 0) {
+        m_batchUpdateDepth--;
+        if (m_batchUpdateDepth == 0 && m_batchDirty) {
+            m_batchDirty = false;
+            locker.unlock();
+            saveConfig();
+        }
+    }
+}
+
+void ConfigService::saveIfNotBatching() {
+    QMutexLocker locker(&m_configMutex);
+    if (m_batchUpdateDepth > 0) {
+        m_batchDirty = true;
+        return;
+    }
+    locker.unlock();
+    saveConfig();
+}
+
 QString ConfigService::getOutputPath() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["outputPath"].toString(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
@@ -133,7 +158,7 @@ void ConfigService::setOutputPath(const QString& path) {
 
     // 释放锁后保存（因为 saveConfig 内部也会加锁，避免死锁）
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 QString ConfigService::getLibName() const {
@@ -148,7 +173,7 @@ void ConfigService::setLibName(const QString& name) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 bool ConfigService::getExportSymbol() const {
@@ -163,7 +188,7 @@ void ConfigService::setExportSymbol(bool enabled) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 bool ConfigService::getExportFootprint() const {
@@ -178,7 +203,7 @@ void ConfigService::setExportFootprint(bool enabled) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 bool ConfigService::getExportModel3D() const {
@@ -193,7 +218,7 @@ void ConfigService::setExportModel3D(bool enabled) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 int ConfigService::getExportModel3DFormat() const {
@@ -208,7 +233,7 @@ void ConfigService::setExportModel3DFormat(int format) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 int ConfigService::getExportModel3DPathMode() const {
@@ -223,7 +248,7 @@ void ConfigService::setExportModel3DPathMode(int mode) {
     emit configChanged();
 
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 bool ConfigService::getExportPreviewImages() const {
@@ -238,7 +263,7 @@ void ConfigService::setExportPreviewImages(bool enabled) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 bool ConfigService::getExportDatasheet() const {
@@ -253,7 +278,7 @@ void ConfigService::setExportDatasheet(bool enabled) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 bool ConfigService::getWeakNetworkSupport() const {
@@ -267,7 +292,7 @@ void ConfigService::setWeakNetworkSupport(bool enabled) {
     emit configChanged();
 
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 int ConfigService::getValidationConcurrentCount() const {
@@ -290,7 +315,7 @@ void ConfigService::setOverwriteExistingFiles(bool enabled) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 int ConfigService::getExportMode() const {
@@ -304,7 +329,7 @@ void ConfigService::setExportMode(int mode) {
     emit configChanged();
 
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 bool ConfigService::getDarkMode() const {
@@ -319,7 +344,7 @@ void ConfigService::setDarkMode(bool enabled) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 bool ConfigService::getDebugMode() const {
@@ -370,7 +395,7 @@ void ConfigService::setWindowState(const QVariantMap& state) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 QString ConfigService::getExitPreference() const {
@@ -385,7 +410,7 @@ void ConfigService::setExitPreference(const QString& preference) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 void ConfigService::initializeDefaultConfig() {
@@ -442,7 +467,7 @@ void ConfigService::setLanguage(const QString& languageCode) {
 
     // 释放锁后保存
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 QString ConfigService::getCacheDir() const {
@@ -458,7 +483,7 @@ void ConfigService::setCacheDir(const QString& path) {
     emit configChanged();
 
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 int ConfigService::getDiskCacheLimitMB() const {
@@ -472,7 +497,7 @@ void ConfigService::setDiskCacheLimitMB(int maxSizeMB) {
     emit configChanged();
 
     locker.unlock();
-    saveConfig();
+    saveIfNotBatching();
 }
 
 }  // namespace EasyKiConverter

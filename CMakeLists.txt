@@ -277,6 +277,26 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/icons/app_icon.ico
         resources/icons/app_icon.png
         resources/icons/app_icon.svg
+        resources/icons/app_icon_dark.icns
+        resources/icons/app_icon_dark.ico
+        resources/icons/app_icon_dark.png
+        resources/icons/app_icon_dark.svg
+        resources/icons/hicolor/16x16/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor/24x24/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor/32x32/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor/48x48/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor/64x64/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor/128x128/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor/512x512/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor-dark/16x16/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor-dark/24x24/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor-dark/32x32/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor-dark/48x48/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor-dark/64x64/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor-dark/128x128/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor-dark/256x256/apps/io.github.tangsangsimida.easykiconverter.png
+        resources/icons/hicolor-dark/512x512/apps/io.github.tangsangsimida.easykiconverter.png
         resources/icons/play.svg
         resources/icons/play_black.svg
         resources/icons/folder.svg

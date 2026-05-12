@@ -1,6 +1,7 @@
 #include "ExportTypeStage.h"
 
 #include "IExportWorker.h"
+#include "TempFileManager.h"
 
 #include <QDebug>
 #include <QMutexLocker>
@@ -13,6 +14,9 @@ ExportTypeStage::ExportTypeStage(const QString& typeName, int maxConcurrent, QOb
     m_threadPool.setMaxThreadCount(maxConcurrent);
     m_threadPool.setExpiryTimeout(60000);
     m_progress.typeName = typeName;
+
+    // completed 信号发射时自动清除 m_isExporting 标志（DirectConnection：原子写操作，跨线程安全）
+    connect(this, &ExportTypeStage::completed, this, [this]() { m_isExporting.store(false); }, Qt::DirectConnection);
 }
 
 ExportTypeStage::~ExportTypeStage() {
@@ -164,6 +168,44 @@ void ExportTypeStage::cancel() {
     qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
 }
 
+void ExportTypeStage::cancelWithTempRollback(TempFileManager& tempManager) {
+    if (!m_isExporting.load()) {
+        return;
+    }
+
+    qDebug() << "ExportTypeStage:" << m_typeName << "cancelling (with temp rollback)...";
+
+    cancel();
+    tempManager.rollbackAll();
+
+    m_isExporting.store(false);
+    if (!hasActiveWorkers()) {
+        m_isRunning.store(false);
+    }
+
+    qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
+}
+
+bool ExportTypeStage::waitForWorkerThread(QThread*& thread, int timeoutMs) {
+    m_cancelled.store(true);
+
+    if (!thread || !thread->isRunning()) {
+        thread = nullptr;
+        return true;
+    }
+
+    qDebug() << "ExportTypeStage:" << m_typeName << "waiting for worker thread to finish...";
+    thread->quit();
+    if (!thread->wait(timeoutMs)) {
+        qWarning() << "ExportTypeStage:" << m_typeName << "thread did not finish in" << timeoutMs
+                   << "ms, leaving it to finish asynchronously";
+        return false;
+    }
+
+    thread = nullptr;
+    return true;
+}
+
 ExportTypeProgress ExportTypeStage::getProgress() const {
     QMutexLocker locker(&m_progressMutex);
     return m_progress;
@@ -247,8 +289,8 @@ void ExportTypeStage::completeItemProgress(QObject* worker,
                 << "status:" << (int)statusSnapshot.status;
         qDebug() << "ExportTypeStage:" << m_typeName << "completed. Success:" << progressSnapshot.successCount
                  << "Failed:" << progressSnapshot.failedCount << "Skipped:" << progressSnapshot.skippedCount;
-        emit completed(progressSnapshot.successCount, progressSnapshot.failedCount, progressSnapshot.skippedCount);
         m_isRunning.store(false);
+        emit completed(progressSnapshot.successCount, progressSnapshot.failedCount, progressSnapshot.skippedCount);
         return;
     }
 
