@@ -52,6 +52,17 @@ target_include_directories(test_cache_pruner PRIVATE
 )
 add_test(NAME test_cache_pruner COMMAND test_cache_pruner)
 
+add_executable(test_core_utils test_core_utils.cpp)
+target_link_libraries(test_core_utils PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_core_utils PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_core_utils COMMAND test_core_utils)
+
 add_executable(test_atomic_file_writer test_atomic_file_writer.cpp)
 target_link_libraries(test_atomic_file_writer PRIVATE
     Qt6::Test
@@ -309,6 +320,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_models
     test_component_cache_service
     test_cache_pruner
+    test_core_utils
     test_atomic_file_writer
     test_temp_file_manager
     test_config_service

@@ -8,6 +8,7 @@
 
 - `unit/`: C++ 单元测试项目。针对核心逻辑（Core）、模型（Models）、服务（Services）、CLI 和 ViewModel 进行独立验证。
   - `test_easyeda_api.cpp`: 验证与 EasyEDA 服务器交互的客户端逻辑（支持 Mock）。
+  - `test_core_utils.cpp`: URL、gzip、KiCad 表转义和图层映射等核心工具测试。
   - `test_atomic_file_writer.cpp`: 原子写入和拷贝工具测试。
   - `test_temp_file_manager.cpp`: 导出临时文件提交和清理测试。
   - `test_export_report_generator.cpp`: 导出详细诊断报告生成测试。
