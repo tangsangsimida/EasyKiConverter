@@ -189,6 +189,20 @@ target_include_directories(test_test_paths PRIVATE
 )
 add_test(NAME test_test_paths COMMAND test_test_paths)
 
+add_executable(test_kicad_exporter_golden
+    test_kicad_exporter_golden.cpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_kicad_exporter_golden PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_kicad_exporter_golden PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_kicad_exporter_golden COMMAND test_kicad_exporter_golden)
+
 # CadDataLoader 业务层错误检查测试
 add_executable(test_cad_data_loader test_cad_data_loader.cpp)
 target_link_libraries(test_cad_data_loader PRIVATE
@@ -232,6 +246,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_completion_generator
     test_file_reader
     test_test_paths
+    test_kicad_exporter_golden
     test_cad_data_loader
     test_component_list_viewmodel
 )

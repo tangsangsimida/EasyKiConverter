@@ -20,5 +20,6 @@ target_link_libraries(EasyKiConverterKicad
         Qt6::Core
         EasyKiConverterModels
         EasyKiConverterNetwork
+        EasyKiConverterSafeUtils
         EasyKiConverterUtils
 )

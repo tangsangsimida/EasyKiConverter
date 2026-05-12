@@ -89,11 +89,26 @@ private:
             firstMismatch = maxLength;
         }
 
-        return QStringLiteral("Golden file mismatch for '%1' at offset %2 (expected length %3, actual length %4)")
+        const int contextStart = qMax(0, firstMismatch - 40);
+        const int contextLength = 100;
+        const QString expectedContext = visibleSnippet(expected.mid(contextStart, contextLength));
+        const QString actualContext = visibleSnippet(actual.mid(contextStart, contextLength));
+
+        return QStringLiteral(
+                   "Golden file mismatch for '%1' at offset %2 (expected length %3, actual length %4)\n"
+                   "Expected near mismatch: \"%5\"\n"
+                   "Actual near mismatch:   \"%6\"")
             .arg(expectedPath)
             .arg(firstMismatch)
             .arg(expected.size())
-            .arg(actual.size());
+            .arg(actual.size())
+            .arg(expectedContext, actualContext);
+    }
+
+    static QString visibleSnippet(QString value) {
+        value.replace(QStringLiteral("\n"), QStringLiteral("\\n"));
+        value.replace(QStringLiteral("\t"), QStringLiteral("\\t"));
+        return value;
     }
 };
 
