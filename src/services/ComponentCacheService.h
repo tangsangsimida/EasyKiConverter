@@ -8,6 +8,7 @@
 
 #include <QCache>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QJsonObject>
 #include <QMutex>
 #include <QObject>
@@ -74,8 +75,9 @@ public:
     /**
      * @brief 设置缓存根目录
      * @param cacheDir 缓存目录路径
+     * @param migrateExistingCache 是否将旧缓存目录内容迁移到新目录
      */
-    void setCacheDir(const QString& cacheDir);
+    void setCacheDir(const QString& cacheDir, bool migrateExistingCache = false);
 
     /**
      * @brief 获取缓存根目录
@@ -385,6 +387,17 @@ public:
     void pruneCache(qint64 targetSizeBytes);
 
     /**
+     * @brief 设置L2磁盘缓存大小限制
+     * @param maxSizeMB 大小限制（MB）
+     */
+    void setDiskCacheLimit(int maxSizeMB);
+
+    /**
+     * @brief 获取L2磁盘缓存限制
+     */
+    int diskCacheLimit() const;
+
+    /**
      * @brief 设置L1内存缓存大小限制
      * @param maxSizeMB 大小限制（MB）
      */
@@ -485,6 +498,26 @@ private:
     void selfHealCache();
 
     /**
+     * @brief 将旧缓存目录内容迁移到新缓存目录
+     */
+    bool migrateCacheDirectory(const QString& oldCacheDir, const QString& newCacheDir) const;
+
+    /**
+     * @brief 移动目录内容，目标中已存在的文件不覆盖
+     */
+    bool moveDirectoryContents(const QString& sourceDir, const QString& targetDir) const;
+
+    /**
+     * @brief 移动单个文件或目录，跨文件系统时回退到复制后删除
+     */
+    bool moveCacheEntry(const QString& sourcePath, const QString& targetPath) const;
+
+    /**
+     * @brief 根据当前磁盘缓存限制执行清理
+     */
+    void enforceDiskCacheLimit(bool bypassCooldown = false);
+
+    /**
      * @brief 生成缓存key
      */
     QString makeMemoryKey(const QString& lcscId, const QString& type) const;
@@ -493,6 +526,8 @@ private:
     mutable QMutex m_mutex;
     QString m_cacheDir;
     int m_memoryCacheLimitMB;
+    int m_diskCacheLimitMB;
+    QElapsedTimer m_lastEnforceTimer;
 
     // L1 内存缓存：QCache 自动 LRU 淘汰
     // Key 格式: "lcscId:type" (如 "C12345:metadata", "C12345:symbol")

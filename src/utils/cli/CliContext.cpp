@@ -39,7 +39,7 @@ ExportOptions CliContext::createExportOptions() const {
     options.outputPath = m_parser.outputDir();
     options.libName = m_parser.libName();
 
-    // 设置导出类型（CLI 默认：符号库、封装库、3D模型-WRL格式）
+    // 设置导出类型（CLI 默认：符号库、封装库；3D 模型通过参数启用）
     options.exportSymbol = m_parser.exportSymbol();
     options.exportFootprint = m_parser.exportFootprint();
     options.exportModel3D = m_parser.export3DModel();

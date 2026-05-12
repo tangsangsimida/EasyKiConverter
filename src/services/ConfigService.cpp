@@ -8,6 +8,12 @@
 
 namespace EasyKiConverter {
 
+namespace {
+QString defaultCacheDir() {
+    return QDir::cleanPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/cache");
+}
+}  // namespace
+
 // 静态成员初始化
 ConfigService* ConfigService::s_instance = nullptr;
 QMutex ConfigService::s_mutex;
@@ -376,6 +382,8 @@ void ConfigService::initializeDefaultConfig() {
     m_config["exitPreference"] = "";
     // 语言设置默认值（英文）
     m_config["language"] = "en";
+    m_config["cacheDir"] = defaultCacheDir();
+    m_config["diskCacheLimitMB"] = DEFAULT_DISK_CACHE_LIMIT_MB;
 }
 
 QString ConfigService::getDefaultConfigPath() const {
@@ -404,4 +412,39 @@ void ConfigService::setLanguage(const QString& languageCode) {
     saveConfig();
 }
 
+QString ConfigService::getCacheDir() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config["cacheDir"].toString(defaultCacheDir());
+}
+
+void ConfigService::setCacheDir(const QString& path) {
+    const QString normalizedPath = QDir::cleanPath(path);
+
+    QMutexLocker locker(&m_configMutex);
+    m_config["cacheDir"] = normalizedPath;
+    emit configChanged();
+
+    locker.unlock();
+    saveConfig();
+}
+
+int ConfigService::getDiskCacheLimitMB() const {
+    QMutexLocker locker(&m_configMutex);
+    return qBound(1, m_config["diskCacheLimitMB"].toInt(DEFAULT_DISK_CACHE_LIMIT_MB), 1048576);
+}
+
+void ConfigService::setDiskCacheLimitMB(int maxSizeMB) {
+    QMutexLocker locker(&m_configMutex);
+    m_config["diskCacheLimitMB"] = qBound(1, maxSizeMB, 1048576);
+    emit configChanged();
+
+    locker.unlock();
+    saveConfig();
+}
+
 }  // namespace EasyKiConverter
+
+// 考试没过怎么办？别急别急，你先双击你的太阳穴打开你的个人面板，
+// 找到你的上一个存档，直接读档，你就回到考试之前了。
+// 但是注意啊兄弟们，每天睡觉会自动存档的，而且同时只能存在两个存档，
+// 别不小心睡过去了给弄死档了，不然就只能等考试活动返场了

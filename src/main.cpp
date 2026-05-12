@@ -66,6 +66,34 @@ bool isDebugMode(const EasyKiConverter::CommandLineParser& parser) {
     return false;
 }
 
+QString resolveConfigFilePath(const EasyKiConverter::CommandLineParser& parser) {
+    if (!parser.configFile().isEmpty()) {
+        return parser.configFile();
+    }
+    if (parser.isPortableMode()) {
+        return QCoreApplication::applicationDirPath() + "/easykiconverter_config.json";
+    }
+    return QString();
+}
+
+void applyCacheConfiguration(const EasyKiConverter::CommandLineParser& parser) {
+    auto* configService = EasyKiConverter::ConfigService::instance();
+    auto* cacheService = EasyKiConverter::ComponentCacheService::instance();
+
+    QString cacheDir = configService->getCacheDir();
+    if (parser.isCacheDirSet()) {
+        cacheDir = QDir::cleanPath(parser.cacheDir());
+    }
+
+    int diskCacheLimitMB = configService->getDiskCacheLimitMB();
+    if (parser.isDiskCacheLimitSet()) {
+        diskCacheLimitMB = parser.diskCacheLimitMB();
+    }
+
+    cacheService->setCacheDir(cacheDir);
+    cacheService->setDiskCacheLimit(diskCacheLimitMB);
+}
+
 #ifdef _WIN32
 bool reopenConsoleStream(FILE* stream, const char* device, const char* mode, const char* streamName) {
     FILE* reopened = nullptr;
@@ -307,6 +335,10 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
+        const QString configFilePath = resolveConfigFilePath(cmdParser);
+        EasyKiConverter::ConfigService::instance()->loadConfig(configFilePath);
+        applyCacheConfiguration(cmdParser);
+
         // 处理补全请求
         if (isCompletionMode) {
             QString shell = cmdParser.completionShell();
@@ -454,19 +486,16 @@ int main(int argc, char* argv[]) {
     qDebug() << "应用目录:" << appDir;
 
     // 处理命令行参数 - 配置文件路径
-    QString configFilePath;
+    QString configFilePath = resolveConfigFilePath(cmdParser);
     if (!cmdParser.configFile().isEmpty()) {
-        configFilePath = cmdParser.configFile();
         qDebug() << "使用命令行指定的配置文件:" << configFilePath;
     } else if (cmdParser.isPortableMode()) {
-        // 便携模式：配置文件保存在程序目录
-        QString appDir = QCoreApplication::applicationDirPath();
-        configFilePath = appDir + "/easykiconverter_config.json";
         qDebug() << "便携模式：配置文件保存在程序目录:" << configFilePath;
     }
 
     // 初始化配置服务（必须在加载图标之前，以便获取主题设置）
     EasyKiConverter::ConfigService::instance()->loadConfig(configFilePath);
+    applyCacheConfiguration(cmdParser);
 
     // 处理命令行参数 - 调试模式设置（优先于环境变量）
     // 调试模式只通过命令行参数和环境变量控制，不会保存到配置文件

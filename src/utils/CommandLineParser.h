@@ -120,6 +120,30 @@ public:
     bool isSyncLogging() const;
 
     /**
+     * @brief 是否显式指定了缓存目录
+     * @return 指定返回 true，否则返回 false
+     */
+    bool isCacheDirSet() const;
+
+    /**
+     * @brief 获取缓存目录
+     * @return 缓存目录路径
+     */
+    QString cacheDir() const;
+
+    /**
+     * @brief 是否显式指定了磁盘缓存大小
+     * @return 指定返回 true，否则返回 false
+     */
+    bool isDiskCacheLimitSet() const;
+
+    /**
+     * @brief 获取磁盘缓存大小限制
+     * @return 缓存大小限制（MB）
+     */
+    int diskCacheLimitMB() const;
+
+    /**
      * @brief 获取帮助文本
      * @return 帮助文本
      */
@@ -278,6 +302,8 @@ private:
     QCommandLineOption m_themeOption;
     QCommandLineOption m_portableOption;
     QCommandLineOption m_syncLoggingOption;
+    QCommandLineOption m_cacheDirOption;
+    QCommandLineOption m_diskCacheLimitOption;
 
     // CLI 模式选项
     QCommandLineOption m_inputOption;

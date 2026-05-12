@@ -196,6 +196,19 @@ Item {
         property: "isDarkMode"
         value: themeController ? themeController.isDarkMode : false
     }
+    // 从 FolderDialog URL 中提取本地路径（跨平台处理）
+    function urlToLocalPath(url) {
+        var path = url.toString();
+        if (path.startsWith("file://")) {
+            path = path.substring(7);
+            // Windows路径修复：如果路径以 /开头且包含: (如 /C:/)，移除开头的 /
+            if (path.startsWith("/") && path.indexOf(":") > 0) {
+                path = path.substring(1);
+            }
+        }
+        return path;
+    }
+
     // BOM 文件选择对话框
     FileDialog {
         id: bomFileDialog
@@ -210,16 +223,15 @@ Item {
         id: outputFolderDialog
         title: qsTr("选择输出目录")
         onAccepted: {
-            // 从 URL 中提取本地路径（跨平台处理）
-            var path = selectedFolder.toString();
-            if (path.startsWith("file://")) {
-                path = path.substring(7); // 移除 "file://" 前缀
-                // Windows路径修复：如果路径以 /开头且包含: (如 /C:/)，移除开头的 /
-                if (path.startsWith("/") && path.indexOf(":") > 0) {
-                    path = path.substring(1);
-                }
-            }
-            exportSettingsController.setOutputPath(path);
+            exportSettingsController.setOutputPath(urlToLocalPath(selectedFolder));
+        }
+    }
+
+    FolderDialog {
+        id: cacheFolderDialog
+        title: qsTr("选择缓存目录")
+        onAccepted: {
+            exportSettingsController.setCacheDir(urlToLocalPath(selectedFolder));
         }
     }
 
@@ -365,6 +377,7 @@ Item {
                         Layout.fillHeight: true
                         exportSettingsController: window.exportSettingsController
                         onOpenOutputFolderDialog: outputFolderDialog.open()
+                        onOpenCacheFolderDialog: cacheFolderDialog.open()
                     }
 
                     // 进度显示卡片

@@ -24,8 +24,10 @@ easykiconverter convert batch -i <component_list_file> -o <output_dir> [options]
 | `--component` | `-c` | LCSC 元器件编号 | - |
 | `--symbol` | | 导出符号库 | true |
 | `--footprint` | | 导出封装库 | true |
-| `--3d-model` | | 导出 3D 模型 (WRL 格式) | true |
+| `--3d-model` | | 导出 3D 模型（默认 WRL 格式） | false |
 | `--preview` | | 导出预览图 | false |
+| `--cache-dir` | | 设置磁盘缓存目录 | 配置文件中的缓存目录 |
+| `--cache-size-mb` | | 设置磁盘缓存大小上限（MB） | 配置文件中的缓存上限 |
 | `--progress` | | 显示进度条 | false |
 | `--quiet` | `-q` | 安静模式 | false |
 | `--debug` | `-d` | 调试模式 (生成详细报告) | false |
@@ -36,12 +38,27 @@ easykiconverter convert batch -i <component_list_file> -o <output_dir> [options]
 CLI 模式默认导出以下内容：
 - 符号库 (Symbol)
 - 封装库 (Footprint)
-- 3D 模型 (WRL 格式)
 
 **注意**：
-- 默认不导出预览图和数据手册
-- 默认使用 WRL 格式的 3D 模型
+- 默认不导出 3D 模型、预览图和数据手册
+- 需要 3D 模型时传入 `--3d-model`，未指定格式时使用 WRL 格式
 - 普通模式不生成详细报告，仅在调试模式 (`--debug`) 下生成
+
+## 缓存配置
+
+CLI 模式会复用与 GUI 相同的元器件磁盘缓存。可以通过命令行覆盖本次运行使用的缓存目录和缓存大小上限：
+
+```bash
+easykiconverter convert component -c C12345 -o ./output \
+  --cache-dir /tmp/easykiconverter-cache \
+  --cache-size-mb 2048
+```
+
+说明：
+- `--cache-dir` 指定本次运行使用的缓存根目录。
+- `--cache-size-mb` 的有效范围为 `1` 到 `1048576`。
+- 在 GUI 中修改缓存目录时，应用会尝试将旧缓存迁移到新目录以复用已下载数据；目标目录已有同名文件时不会覆盖。
+- 3D 模型缓存保存在缓存目录的 `model3d` 子目录，默认不参与 LRU 容量淘汰，避免频繁重新下载大文件。
 
 ## 自动补全
 
@@ -89,20 +106,23 @@ easykiconverter --completion fish > ~/.config/fish/completions/easykiconverter.f
 ## 使用示例
 
 ```bash
-# 默认导出 (符号库 + 封装库 + 3D模型-WRL)
+# 默认导出 (符号库 + 封装库)
 easykiconverter convert bom -i my_project.xlsx -o ./kicad_libs
 
-# 仅导出符号库和封装库，不导出 3D 模型
-easykiconverter convert bom -i my_project.xlsx -o ./output --3d-model false
+# 导出符号库、封装库和 3D 模型（默认 WRL 格式）
+easykiconverter convert bom -i my_project.xlsx -o ./output --3d-model
 
 # 导出所有内容，包括预览图
-easykiconverter convert bom -i my_project.xlsx -o ./output --preview
+easykiconverter convert bom -i my_project.xlsx -o ./output --3d-model --preview
 
 # 调试模式 (生成详细报告)
 easykiconverter convert bom -i my_project.xlsx -o ./output --debug
 
 # 带进度条
 easykiconverter convert bom -i bom.xlsx -o ./output --progress
+
+# 使用自定义缓存目录和 2GB 磁盘缓存上限
+easykiconverter convert component -c C12345 -o ./output --cache-dir /tmp/ekc-cache --cache-size-mb 2048
 
 # 转换单个元器件
 easykiconverter convert component -c C12345 -o ./output

@@ -41,6 +41,28 @@ target_include_directories(test_component_cache_service PRIVATE
 )
 add_test(NAME test_component_cache_service COMMAND test_component_cache_service)
 
+add_executable(test_cache_pruner test_cache_pruner.cpp)
+target_link_libraries(test_cache_pruner PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_cache_pruner PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_cache_pruner COMMAND test_cache_pruner)
+
+add_executable(test_config_service test_config_service.cpp)
+target_link_libraries(test_config_service PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_config_service PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_config_service COMMAND test_config_service)
+
 add_executable(test_component_service test_component_service.cpp)
 target_link_libraries(test_component_service PRIVATE
     Qt6::Test
@@ -79,6 +101,19 @@ target_include_directories(test_export_progress_viewmodel PRIVATE
     ${CMAKE_SOURCE_DIR}
 )
 add_test(NAME test_export_progress_viewmodel COMMAND test_export_progress_viewmodel)
+
+add_executable(test_export_settings_viewmodel test_export_settings_viewmodel.cpp)
+target_link_libraries(test_export_settings_viewmodel PRIVATE
+    Qt6::Test
+    Qt6::Gui
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_export_settings_viewmodel PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_export_settings_viewmodel COMMAND test_export_settings_viewmodel)
 
 # 日志系统测试
 add_executable(test_logging test_logging.cpp)

@@ -41,6 +41,8 @@ class ExportSettingsViewModel : public QObject {
                    NOTIFY footprintLibraryDescriptionChanged)
     Q_PROPERTY(QString footprintLibraryKeywords READ footprintLibraryKeywords WRITE setFootprintLibraryKeywords NOTIFY
                    footprintLibraryKeywordsChanged)
+    Q_PROPERTY(QString cacheDir READ cacheDir WRITE setCacheDir NOTIFY cacheDirChanged)
+    Q_PROPERTY(int diskCacheLimitMB READ diskCacheLimitMB WRITE setDiskCacheLimitMB NOTIFY diskCacheLimitMBChanged)
     Q_PROPERTY(bool isExporting READ isExporting NOTIFY isExportingChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
 
@@ -118,6 +120,14 @@ public:
         return m_footprintLibraryKeywords;
     }
 
+    QString cacheDir() const {
+        return m_cacheDir;
+    }
+
+    int diskCacheLimitMB() const {
+        return m_diskCacheLimitMB;
+    }
+
     bool isExporting() const {
         return m_isExporting;
     }
@@ -144,6 +154,8 @@ public:
     Q_INVOKABLE void setSymbolLibraryDescription(const QString& desc);
     Q_INVOKABLE void setFootprintLibraryDescription(const QString& desc);
     Q_INVOKABLE void setFootprintLibraryKeywords(const QString& keywords);
+    Q_INVOKABLE void setCacheDir(const QString& path);
+    Q_INVOKABLE void setDiskCacheLimitMB(int maxSizeMB);
 
 public slots:
     Q_INVOKABLE void saveConfig();
@@ -170,6 +182,8 @@ signals:
     void symbolLibraryDescriptionChanged();
     void footprintLibraryDescriptionChanged();
     void footprintLibraryKeywordsChanged();
+    void cacheDirChanged();
+    void diskCacheLimitMBChanged();
     void isExportingChanged();
     void statusChanged();
     void preloadStarted();
@@ -210,6 +224,8 @@ private:
     QString m_symbolLibraryDescription;
     QString m_footprintLibraryDescription;
     QString m_footprintLibraryKeywords;
+    QString m_cacheDir;
+    int m_diskCacheLimitMB;
     bool m_isExporting;
     QString m_status;
     QStringList m_pendingComponentIds;
