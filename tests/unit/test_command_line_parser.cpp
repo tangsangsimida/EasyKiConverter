@@ -1,3 +1,5 @@
+#include "core/LanguageManager.h"
+#include "services/ConfigService.h"
 #include "utils/CommandLineParser.h"
 #include "utils/cli/CompletionGenerator.h"
 
@@ -39,6 +41,10 @@ private slots:
 
     // hasConvertCommand() 辅助方法
     void testHasConvertCommand();
+
+    // CLI 国际化测试
+    void testValidationErrorTranslated();
+    void testCliHelpTextTranslated();
 
 private:
     // Helper: 构建 argc/argv 并构造 CommandLineParser
@@ -289,6 +295,44 @@ void TestCommandLineParser::testHasConvertCommand() {
     QVERIFY(p2->parse());
     QVERIFY2(!p2->hasConvertCommand(), "--version 不应设置 hasConvertCommand");
     delete p2;
+}
+
+// ========== CLI 国际化测试 ==========
+
+void TestCommandLineParser::testValidationErrorTranslated() {
+    // 安装英文翻译器
+    ConfigService::instance()->setLanguage("en");
+    auto* lang = LanguageManager::instance();
+    lang->setLanguage("en", /*force=*/true);
+
+    // 验证错误消息结构正确（源字符串可读，翻译依赖 .qm 文件可用性）
+    auto* parser =
+        makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o", "--3d-model-format", "obj"});
+    parser->parse();
+    QVERIFY(!parser->validate());
+    QString error = parser->validationError();
+    // 无论语言，错误消息应包含格式标识 "3D" 和有效值列表
+    QVERIFY2(error.contains("3D"), qPrintable("Expected '3D' in error, got: " + error));
+    QVERIFY2(error.contains("wrl"), qPrintable("Expected 'wrl' in error, got: " + error));
+    delete parser;
+}
+
+void TestCommandLineParser::testCliHelpTextTranslated() {
+    // 安装英文翻译器
+    ConfigService::instance()->setLanguage("en");
+    auto* lang = LanguageManager::instance();
+    lang->setLanguage("en", /*force=*/true);
+
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o"});
+    parser->parse();
+
+    QString help = parser->cliHelpText();
+    // 帮助文本应包含关键选项（无论语言）
+    QVERIFY2(help.contains("--input"), qPrintable("Expected '--input' in help, got: " + help.left(200)));
+    QVERIFY2(help.contains("--output"), qPrintable("Expected '--output' in help, got: " + help.left(200)));
+    QVERIFY2(help.contains("--3d-model"), qPrintable("Expected '--3d-model' in help, got: " + help.left(200)));
+    QVERIFY2(help.contains("bom"), qPrintable("Expected 'bom' in help, got: " + help.left(200)));
+    delete parser;
 }
 
 QTEST_MAIN(TestCommandLineParser)

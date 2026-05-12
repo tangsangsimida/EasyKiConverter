@@ -43,17 +43,6 @@ Please visit the [Releases](https://github.com/tangsangsimida/EasyKiConverter_QT
 ### Build from Source
 This project has implemented full-platform CI/CD automated building. If you are a developer or wish to compile yourself, please refer to the [Build Guide](docs/developer/BUILD.md).
 
-## System Architecture
-
-EasyKiConverter adopts a modern MVVM architecture design, supporting both GUI and CLI modes, achieving a clear layered structure and efficient parallel processing.
-
-**Core Architecture Features:**
-- **Dual Mode**: GUI (QApplication + QML) and CLI (QCoreApplication + CliConverter)
-- **MVVM Layering**: QML View ↔ C++ ViewModel ↔ C++ Service ↔ C++ Model
-- **Export Pipeline**: Preload (parallel fetch) → Export (per-type stages with independent thread pools)
-- **Network Architecture**: NetworkClient singleton with dedicated network thread + QNetworkAccessManager, retry/backoff support
-- **Async Logging System**: LogModule categories with multiple output appenders
-
 ## Documentation
 
 **User Guide**

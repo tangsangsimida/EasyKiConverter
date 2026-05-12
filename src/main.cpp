@@ -322,14 +322,23 @@ int main(int argc, char* argv[]) {
 
         if (!parsed) {
             QTextStream err(stderr);
-            err << "错误: 无效的命令行参数\n";
+            err << QCoreApplication::translate("main", "错误: 无效的命令行参数") << "\n";
             err << cmdParser.helpText();
             return 1;
         }
 
+        // 尽早初始化语言管理器，使后续验证错误消息能正确翻译
+        {
+            auto* langManager = EasyKiConverter::LanguageManager::instance();
+            QString cliLang = cmdParser.language();
+            if (!cliLang.isEmpty() && (cliLang == "zh_CN" || cliLang == "en")) {
+                langManager->setLanguage(cliLang, /*force=*/true);
+            }
+        }
+
         if (!cmdParser.validate()) {
             QTextStream err(stderr);
-            err << "错误: 参数值无效\n";
+            err << QCoreApplication::translate("main", "错误: 参数值无效") << "\n";
             err << cmdParser.validationError() << "\n\n";
             err << cmdParser.helpText();
             return 1;
@@ -388,7 +397,7 @@ int main(int argc, char* argv[]) {
 
             if (!success) {
                 QTextStream err(stderr);
-                err << "错误: " << cliConverter.errorMessage() << "\n";
+                err << QCoreApplication::translate("main", "错误: ") << cliConverter.errorMessage() << "\n";
             }
 
             // 清理日志
@@ -405,8 +414,8 @@ int main(int argc, char* argv[]) {
         // convert 命令存在但无效子命令（如 easykiconverter convert abc）
         if (isConvertCommand && !isCliMode) {
             QTextStream err(stderr);
-            err << "错误: 无效的 convert 子命令\n";
-            err << "有效的子命令: bom, component, batch\n\n";
+            err << QCoreApplication::translate("main", "错误: 无效的 convert 子命令") << "\n";
+            err << QCoreApplication::translate("main", "有效的子命令: bom, component, batch") << "\n\n";
             err << cmdParser.cliHelpText();
             return 1;
         }

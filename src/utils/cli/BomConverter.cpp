@@ -6,6 +6,7 @@
 #include "services/ComponentService.h"
 #include "services/export/ParallelExportService.h"
 
+#include <QCoreApplication>
 #include <QEventLoop>
 
 namespace EasyKiConverter {
@@ -13,7 +14,7 @@ namespace EasyKiConverter {
 BomConverter::BomConverter(CliContext* context, QObject* parent) : BaseConverter(context, parent) {}
 
 bool BomConverter::execute() {
-    printMessage("开始转换 BOM 表...");
+    printMessage(QCoreApplication::translate("CliConverter", "开始转换 BOM 表..."));
 
     // 读取 BOM 表文件
     QString readError;
@@ -25,11 +26,11 @@ bool BomConverter::execute() {
     }
 
     if (componentIds.isEmpty()) {
-        setError("BOM 表中没有找到有效的元器件编号");
+        setError(QCoreApplication::translate("CliConverter", "BOM 表中没有找到有效的元器件编号"));
         return false;
     }
 
-    printMessage(QString("找到 %1 个元器件").arg(componentIds.size()));
+    printMessage(QCoreApplication::translate("CliConverter", "找到 %1 个元器件").arg(componentIds.size()));
 
     // 创建导出选项
     ExportOptions options = context()->createExportOptions();
@@ -58,7 +59,7 @@ bool BomConverter::execute() {
 
     // 检查是否预加载成功
     if (errorMessage().isEmpty()) {
-        printMessage("预加载完成，开始导出...");
+        printMessage(QCoreApplication::translate("CliConverter", "预加载完成，开始导出..."));
 
         // 创建事件循环等待导出完成
         QEventLoop exportLoop;
@@ -72,13 +73,16 @@ bool BomConverter::execute() {
         exportLoop.exec();
     }
 
-    printMessage(QString("\n转换完成: 成功 %1, 失败 %2").arg(m_successCount).arg(m_failedCount));
+    printMessage(QCoreApplication::translate("CliConverter", "\n转换完成: 成功 %1, 失败 %2")
+                     .arg(m_successCount)
+                     .arg(m_failedCount));
 
     return m_exportSuccess;
 }
 
 void BomConverter::onPreloadCompleted(int successCount, int failedCount) {
-    printMessage(QString("预加载完成: 成功 %1, 失败 %2").arg(successCount).arg(failedCount));
+    printMessage(
+        QCoreApplication::translate("CliConverter", "预加载完成: 成功 %1, 失败 %2").arg(successCount).arg(failedCount));
 }
 
 void BomConverter::onProgressChanged(const ExportOverallProgress& progress) {

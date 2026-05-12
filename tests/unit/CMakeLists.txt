@@ -141,6 +141,18 @@ target_include_directories(test_command_line_parser PRIVATE
 )
 add_test(NAME test_command_line_parser COMMAND test_command_line_parser)
 
+# 语言管理器测试
+add_executable(test_language_manager test_language_manager.cpp)
+target_link_libraries(test_language_manager PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_language_manager PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_language_manager COMMAND test_language_manager)
+
 add_executable(test_completion_generator test_completion_generator.cpp)
 target_link_libraries(test_completion_generator PRIVATE
     Qt6::Test

@@ -6,6 +6,8 @@
 #include "CliContext.h"
 #include "ComponentConverter.h"
 
+#include <QCoreApplication>
+
 namespace EasyKiConverter {
 
 CliConverter::CliConverter(const CommandLineParser& parser, QObject* parent) : QObject(parent) {
@@ -26,7 +28,7 @@ bool CliConverter::execute() {
 
     m_converter = createConverter(mode);
     if (!m_converter) {
-        m_context->setErrorMessage("未知的 CLI 模式");
+        m_context->setErrorMessage(QCoreApplication::translate("CliConverter", "未知的 CLI 模式"));
         return false;
     }
 
@@ -40,7 +42,7 @@ QString CliConverter::errorMessage() const {
     if (m_context) {
         return m_context->errorMessage();
     }
-    return "未知错误";
+    return QCoreApplication::translate("CliConverter", "未知错误");
 }
 
 BaseConverter* CliConverter::createConverter(CommandLineParser::CliMode mode) {

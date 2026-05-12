@@ -4,6 +4,7 @@
 #include "services/ComponentService.h"
 #include "services/export/ParallelExportService.h"
 
+#include <QCoreApplication>
 #include <QEventLoop>
 
 namespace EasyKiConverter {
@@ -11,15 +12,15 @@ namespace EasyKiConverter {
 ComponentConverter::ComponentConverter(CliContext* context, QObject* parent) : BaseConverter(context, parent) {}
 
 bool ComponentConverter::execute() {
-    printMessage("开始转换单个元器件...");
+    printMessage(QCoreApplication::translate("CliConverter", "开始转换单个元器件..."));
 
     QString componentId = context()->parser().componentId();
     if (componentId.isEmpty()) {
-        setError("未指定元器件编号");
+        setError(QCoreApplication::translate("CliConverter", "未指定元器件编号"));
         return false;
     }
 
-    printMessage(QString("元器件编号: %1").arg(componentId));
+    printMessage(QCoreApplication::translate("CliConverter", "元器件编号: %1").arg(componentId));
 
     // 创建导出选项
     ExportOptions options = context()->createExportOptions();
@@ -49,7 +50,7 @@ bool ComponentConverter::execute() {
 
     // 检查是否预加载成功
     if (errorMessage().isEmpty()) {
-        printMessage("预加载完成，开始导出...");
+        printMessage(QCoreApplication::translate("CliConverter", "预加载完成，开始导出..."));
 
         // 创建事件循环等待导出完成
         QEventLoop exportLoop;
@@ -63,7 +64,9 @@ bool ComponentConverter::execute() {
         exportLoop.exec();
     }
 
-    printMessage(QString("转换完成: 成功 %1, 失败 %2").arg(m_successCount).arg(m_failedCount));
+    printMessage(QCoreApplication::translate("CliConverter", "转换完成: 成功 %1, 失败 %2")
+                     .arg(m_successCount)
+                     .arg(m_failedCount));
 
     return m_exportSuccess;
 }

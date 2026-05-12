@@ -35,9 +35,10 @@ LanguageManager* LanguageManager::instance() {
     return s_instance;
 }
 
-void LanguageManager::setLanguage(const QString& languageCode) {
+void LanguageManager::setLanguage(const QString& languageCode, bool force) {
     qInfo() << "[LanguageManager] setLanguage() called with:" << languageCode << " (current:" << m_currentLanguage
-            << ", initializing:" << m_isInitializing << ", loadedFromConfig:" << m_loadedFromConfig << ")";
+            << ", initializing:" << m_isInitializing << ", loadedFromConfig:" << m_loadedFromConfig
+            << ", force:" << force << ")";
 
     if (m_currentLanguage == languageCode) {
         qInfo() << "[LanguageManager] Language unchanged, returning";
@@ -45,11 +46,9 @@ void LanguageManager::setLanguage(const QString& languageCode) {
         return;
     }
 
-    // 如果正在初始化且已经从配置加载了语言，则拒绝覆盖
-
+    // 如果正在初始化且已经从配置加载了语言，则拒绝覆盖（除非 force=true）
     // 这样可以防止 QML 组件在初始化时覆盖配置文件的语言设置
-
-    if (m_isInitializing && m_loadedFromConfig) {
+    if (m_isInitializing && m_loadedFromConfig && !force) {
         qWarning() << "[LanguageManager] Refusing to override language during initialization after loading from "
                       "config. Requested:"
                    << languageCode << ", Keeping:" << m_currentLanguage;

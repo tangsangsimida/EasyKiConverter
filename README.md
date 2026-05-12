@@ -44,17 +44,6 @@
 ### 从源码构建
 本项目已实现全平台 CI/CD 自动化构建。如果您是开发者或希望自行编译，请参考 [构建指南](docs/developer/BUILD.md)。
 
-## 系统架构
-
-EasyKiConverter 采用现代化的 MVVM 架构设计，支持 GUI 和 CLI 双模式运行，实现了清晰的分层结构和高效的并行处理。
-
-**核心架构特点：**
-- **双模式运行**：GUI 模式 (QApplication + QML) 和 CLI 模式 (QCoreApplication + CliConverter)
-- **MVVM 分层**：QML View ↔ C++ ViewModel ↔ C++ Service ↔ C++ Model
-- **导出流水线**：预加载（并行获取）→ 导出（按类型独立并行，各有线程池）
-- **网络架构**：NetworkClient 单例，专用网络线程 + QNetworkAccessManager，支持重试/退避
-- **异步日志系统**：支持 LogModule 分类和多种输出方式
-
 ## 文档中心
 
 **用户指南**

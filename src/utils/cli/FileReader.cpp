@@ -2,6 +2,7 @@
 
 #include "services/BomParser.h"
 
+#include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
 #include <QTextStream>
@@ -12,7 +13,7 @@ QStringList FileReader::readBomFile(const QString& filePath, QString& errorMessa
     QStringList componentIds;
 
     if (!QFile::exists(filePath)) {
-        errorMessage = QString("输入文件不存在: %1").arg(filePath);
+        errorMessage = QCoreApplication::translate("CliConverter", "输入文件不存在: %1").arg(filePath);
         return componentIds;
     }
 
@@ -21,7 +22,7 @@ QStringList FileReader::readBomFile(const QString& filePath, QString& errorMessa
     componentIds = parser.parse(filePath);
 
     if (componentIds.isEmpty()) {
-        errorMessage = "BOM 表中没有找到有效的元器件编号";
+        errorMessage = QCoreApplication::translate("CliConverter", "BOM 表中没有找到有效的元器件编号");
     }
 
     return componentIds;
@@ -31,13 +32,13 @@ QStringList FileReader::readComponentListFile(const QString& filePath, QString& 
     QStringList componentIds;
 
     if (!QFile::exists(filePath)) {
-        errorMessage = QString("输入文件不存在: %1").arg(filePath);
+        errorMessage = QCoreApplication::translate("CliConverter", "输入文件不存在: %1").arg(filePath);
         return componentIds;
     }
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        errorMessage = QString("无法打开输入文件: %1").arg(filePath);
+        errorMessage = QCoreApplication::translate("CliConverter", "无法打开输入文件: %1").arg(filePath);
         return componentIds;
     }
 

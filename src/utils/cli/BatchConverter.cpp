@@ -5,6 +5,7 @@
 #include "services/ComponentService.h"
 #include "services/export/ParallelExportService.h"
 
+#include <QCoreApplication>
 #include <QEventLoop>
 
 namespace EasyKiConverter {
@@ -12,7 +13,7 @@ namespace EasyKiConverter {
 BatchConverter::BatchConverter(CliContext* context, QObject* parent) : BaseConverter(context, parent) {}
 
 bool BatchConverter::execute() {
-    printMessage("开始批量转换...");
+    printMessage(QCoreApplication::translate("CliConverter", "开始批量转换..."));
 
     // 读取元器件列表文件
     QString readError;
@@ -24,11 +25,11 @@ bool BatchConverter::execute() {
     }
 
     if (componentIds.isEmpty()) {
-        setError("元器件列表文件为空");
+        setError(QCoreApplication::translate("CliConverter", "元器件列表文件为空"));
         return false;
     }
 
-    printMessage(QString("找到 %1 个元器件").arg(componentIds.size()));
+    printMessage(QCoreApplication::translate("CliConverter", "找到 %1 个元器件").arg(componentIds.size()));
 
     // 创建导出选项
     ExportOptions options = context()->createExportOptions();
@@ -57,7 +58,7 @@ bool BatchConverter::execute() {
 
     // 检查是否预加载成功
     if (errorMessage().isEmpty()) {
-        printMessage("预加载完成，开始导出...");
+        printMessage(QCoreApplication::translate("CliConverter", "预加载完成，开始导出..."));
 
         // 创建事件循环等待导出完成
         QEventLoop exportLoop;
@@ -71,13 +72,16 @@ bool BatchConverter::execute() {
         exportLoop.exec();
     }
 
-    printMessage(QString("\n转换完成: 成功 %1, 失败 %2").arg(m_successCount).arg(m_failedCount));
+    printMessage(QCoreApplication::translate("CliConverter", "\n转换完成: 成功 %1, 失败 %2")
+                     .arg(m_successCount)
+                     .arg(m_failedCount));
 
     return m_exportSuccess;
 }
 
 void BatchConverter::onPreloadCompleted(int successCount, int failedCount) {
-    printMessage(QString("预加载完成: 成功 %1, 失败 %2").arg(successCount).arg(failedCount));
+    printMessage(
+        QCoreApplication::translate("CliConverter", "预加载完成: 成功 %1, 失败 %2").arg(successCount).arg(failedCount));
 }
 
 void BatchConverter::onProgressChanged(const ExportOverallProgress& progress) {

@@ -282,7 +282,9 @@ QString CommandLineParser::validationError() const {
         QString level = logLevel();
         QStringList validLevels = {"trace", "debug", "info", "warn", "error", "fatal"};
         if (!validLevels.contains(level)) {
-            errors.append(QString("无效的日志级别: %1（有效值: %2）").arg(level).arg(validLevels.join(", ")));
+            errors.append(QCoreApplication::translate("CommandLineParser", "无效的日志级别: %1（有效值: %2）")
+                              .arg(level)
+                              .arg(validLevels.join(", ")));
         }
     }
 
@@ -291,7 +293,9 @@ QString CommandLineParser::validationError() const {
         QString lang = language();
         QStringList validLangs = {"zh_CN", "en"};
         if (!validLangs.contains(lang)) {
-            errors.append(QString("无效的语言设置: %1（有效值: %2）").arg(lang).arg(validLangs.join(", ")));
+            errors.append(QCoreApplication::translate("CommandLineParser", "无效的语言设置: %1（有效值: %2）")
+                              .arg(lang)
+                              .arg(validLangs.join(", ")));
         }
     }
 
@@ -300,20 +304,23 @@ QString CommandLineParser::validationError() const {
         QString theme = this->theme();
         QStringList validThemes = {"dark", "light"};
         if (!validThemes.contains(theme)) {
-            errors.append(QString("无效的主题设置: %1（有效值: %2）").arg(theme).arg(validThemes.join(", ")));
+            errors.append(QCoreApplication::translate("CommandLineParser", "无效的主题设置: %1（有效值: %2）")
+                              .arg(theme)
+                              .arg(validThemes.join(", ")));
         }
     }
 
     // CLI 模式验证错误
     if (m_parser.isSet(m_cacheDirOption) && cacheDir().trimmed().isEmpty()) {
-        errors.append("缓存目录不能为空");
+        errors.append(QCoreApplication::translate("CommandLineParser", "缓存目录不能为空"));
     }
 
     if (m_parser.isSet(m_diskCacheLimitOption)) {
         bool ok = false;
         const int sizeMB = m_parser.value(m_diskCacheLimitOption).toInt(&ok);
         if (!ok || sizeMB <= 0) {
-            errors.append("磁盘缓存大小必须是大于 0 的整数（单位: MB）");
+            errors.append(
+                QCoreApplication::translate("CommandLineParser", "磁盘缓存大小必须是大于 0 的整数（单位: MB）"));
         }
     }
 
@@ -322,25 +329,27 @@ QString CommandLineParser::validationError() const {
         if (m_parser.isSet(m_3dModelFormatOption)) {
             const QString format = model3DFormat();
             if (!VALID_3D_MODEL_FORMATS.contains(format)) {
-                errors.append(
-                    QString("无效的 3D 模型格式: %1（有效值: %2）").arg(format).arg(VALID_3D_MODEL_FORMATS.join(", ")));
+                errors.append(QCoreApplication::translate("CommandLineParser", "无效的 3D 模型格式: %1（有效值: %2）")
+                                  .arg(format)
+                                  .arg(VALID_3D_MODEL_FORMATS.join(", ")));
             }
         }
 
         if (!m_parser.isSet(m_outputOption)) {
-            errors.append("CLI 模式必须指定输出目录 (-o/--output)");
+            errors.append(QCoreApplication::translate("CommandLineParser", "CLI 模式必须指定输出目录 (-o/--output)"));
         }
 
         if (m_cliMode == CliMode::ConvertBom && !m_parser.isSet(m_inputOption)) {
-            errors.append("BOM 表转换必须指定输入文件 (-i/--input)");
+            errors.append(QCoreApplication::translate("CommandLineParser", "BOM 表转换必须指定输入文件 (-i/--input)"));
         }
 
         if (m_cliMode == CliMode::ConvertComponent && !m_parser.isSet(m_componentOption)) {
-            errors.append("单个元器件转换必须指定 LCSC 编号 (-c/--component)");
+            errors.append(
+                QCoreApplication::translate("CommandLineParser", "单个元器件转换必须指定 LCSC 编号 (-c/--component)"));
         }
 
         if (m_cliMode == CliMode::ConvertBatch && !m_parser.isSet(m_inputOption)) {
-            errors.append("批量转换必须指定输入文件 (-i/--input)");
+            errors.append(QCoreApplication::translate("CommandLineParser", "批量转换必须指定输入文件 (-i/--input)"));
         }
     }
 
@@ -408,33 +417,46 @@ QString CommandLineParser::cliHelpText() const {
     QString help;
     QTextStream stream(&help);
 
-    stream << "EasyKiConverter CLI 模式\n\n";
-    stream << "用法:\n";
-    stream << "  easykiconverter convert <子命令> [选项]\n\n";
-    stream << "子命令:\n";
-    stream << "  bom        转换 BOM 表文件\n";
-    stream << "  component  转换单个元器件（通过 LCSC 编号）\n";
-    stream << "  batch      批量转换元器件（通过元器件列表文件）\n\n";
-    stream << "选项:\n";
-    stream << "  -i, --input <path>      输入文件路径（BOM 表或元器件列表文件）\n";
-    stream << "  -o, --output <path>     输出目录路径（必需）\n";
-    stream << "  --lib-name <name>       导出库名称（默认: EasyKiConverter）\n";
-    stream << "  -c, --component <id>    LCSC 元器件编号\n";
-    stream << "  --symbol                导出符号库（默认: true）\n";
-    stream << "  --footprint             导出封装库（默认: true）\n";
-    stream << "  --3d-model              导出 3D 模型\n";
-    stream << "  --3d-model-format <fmt> 3D 模型格式（wrl/step/both，默认: wrl）\n";
-    stream << "  --preview               导出预览图\n";
-    stream << "  --cache-dir <path>      设置磁盘缓存目录\n";
-    stream << "  --cache-size-mb <mb>    设置磁盘缓存大小限制 (MB)\n";
-    stream << "  --progress              显示进度条\n";
-    stream << "  -q, --quiet             安静模式，减少输出\n\n";
-    stream << "示例:\n";
-    stream << "  # 转换 BOM 表\n";
+    stream << QCoreApplication::translate("CommandLineParser", "EasyKiConverter CLI 模式") << "\n\n";
+    stream << QCoreApplication::translate("CommandLineParser", "用法:") << "\n";
+    stream << "  easykiconverter convert " << QCoreApplication::translate("CommandLineParser", "<子命令> [选项]")
+           << "\n\n";
+    stream << QCoreApplication::translate("CommandLineParser", "子命令:") << "\n";
+    stream << "  bom        " << QCoreApplication::translate("CommandLineParser", "转换 BOM 表文件") << "\n";
+    stream << "  component  " << QCoreApplication::translate("CommandLineParser", "转换单个元器件（通过 LCSC 编号）")
+           << "\n";
+    stream << "  batch      "
+           << QCoreApplication::translate("CommandLineParser", "批量转换元器件（通过元器件列表文件）") << "\n\n";
+    stream << QCoreApplication::translate("CommandLineParser", "选项:") << "\n";
+    stream << "  -i, --input <path>      "
+           << QCoreApplication::translate("CommandLineParser", "输入文件路径（BOM 表或元器件列表文件）") << "\n";
+    stream << "  -o, --output <path>     " << QCoreApplication::translate("CommandLineParser", "输出目录路径（必需）")
+           << "\n";
+    stream << "  --lib-name <name>       "
+           << QCoreApplication::translate("CommandLineParser", "导出库名称（默认: EasyKiConverter）") << "\n";
+    stream << "  -c, --component <id>    " << QCoreApplication::translate("CommandLineParser", "LCSC 元器件编号")
+           << "\n";
+    stream << "  --symbol                "
+           << QCoreApplication::translate("CommandLineParser", "导出符号库（默认: true）") << "\n";
+    stream << "  --footprint             "
+           << QCoreApplication::translate("CommandLineParser", "导出封装库（默认: true）") << "\n";
+    stream << "  --3d-model              " << QCoreApplication::translate("CommandLineParser", "导出 3D 模型") << "\n";
+    stream << "  --3d-model-format <fmt> "
+           << QCoreApplication::translate("CommandLineParser", "3D 模型格式（wrl/step/both，默认: wrl）") << "\n";
+    stream << "  --preview               " << QCoreApplication::translate("CommandLineParser", "导出预览图") << "\n";
+    stream << "  --cache-dir <path>      " << QCoreApplication::translate("CommandLineParser", "设置磁盘缓存目录")
+           << "\n";
+    stream << "  --cache-size-mb <mb>    "
+           << QCoreApplication::translate("CommandLineParser", "设置磁盘缓存大小限制 (MB)") << "\n";
+    stream << "  --progress              " << QCoreApplication::translate("CommandLineParser", "显示进度条") << "\n";
+    stream << "  -q, --quiet             " << QCoreApplication::translate("CommandLineParser", "安静模式，减少输出")
+           << "\n\n";
+    stream << QCoreApplication::translate("CommandLineParser", "示例:") << "\n";
+    stream << "  # " << QCoreApplication::translate("CommandLineParser", "转换 BOM 表") << "\n";
     stream << "  easykiconverter convert bom -i my_project.xlsx -o ./kicad_libs\n\n";
-    stream << "  # 转换单个元器件\n";
+    stream << "  # " << QCoreApplication::translate("CommandLineParser", "转换单个元器件") << "\n";
     stream << "  easykiconverter convert component -c C12345 -o ./output\n\n";
-    stream << "  # 批量转换\n";
+    stream << "  # " << QCoreApplication::translate("CommandLineParser", "批量转换") << "\n";
     stream << "  easykiconverter convert batch -i components.txt -o ./output --3d-model\n";
 
     return help;

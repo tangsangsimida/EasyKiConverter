@@ -29,8 +29,9 @@ public:
     /**
      * @brief 设置语言
      * @param languageCode 语言代码 ("zh_CN", "en")
+     * @param force 是否强制设置（忽略初始化保护，用于命令行参数覆盖）
      */
-    Q_INVOKABLE void setLanguage(const QString& languageCode);
+    Q_INVOKABLE void setLanguage(const QString& languageCode, bool force = false);
 
     /**
      * @brief 获取当前语言代码
