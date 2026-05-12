@@ -96,7 +96,6 @@ private:
     struct ExportOptions m_options;  ///< 导出选项
     TempFileManager m_tempManager;  ///< 临时文件管理器
     QMap<QString, TempFilePaths> m_componentPaths;  ///< componentId -> temp/final paths
-    std::atomic<bool> m_isExporting{false};  ///< 是否正在导出
 };
 
 }  // namespace EasyKiConverter

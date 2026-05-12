@@ -14,6 +14,9 @@ ExportTypeStage::ExportTypeStage(const QString& typeName, int maxConcurrent, QOb
     m_threadPool.setMaxThreadCount(maxConcurrent);
     m_threadPool.setExpiryTimeout(60000);
     m_progress.typeName = typeName;
+
+    // completed 信号发射时自动清除 m_isExporting 标志（DirectConnection：原子写操作，跨线程安全）
+    connect(this, &ExportTypeStage::completed, this, [this]() { m_isExporting.store(false); }, Qt::DirectConnection);
 }
 
 ExportTypeStage::~ExportTypeStage() {
@@ -165,8 +168,8 @@ void ExportTypeStage::cancel() {
     qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
 }
 
-void ExportTypeStage::cancelWithTempRollback(std::atomic<bool>& isExporting, TempFileManager& tempManager) {
-    if (!isExporting.load()) {
+void ExportTypeStage::cancelWithTempRollback(TempFileManager& tempManager) {
+    if (!m_isExporting.load()) {
         return;
     }
 
@@ -175,7 +178,7 @@ void ExportTypeStage::cancelWithTempRollback(std::atomic<bool>& isExporting, Tem
     cancel();
     tempManager.rollbackAll();
 
-    isExporting.store(false);
+    m_isExporting.store(false);
     if (!hasActiveWorkers()) {
         m_isRunning.store(false);
     }
@@ -286,8 +289,8 @@ void ExportTypeStage::completeItemProgress(QObject* worker,
                 << "status:" << (int)statusSnapshot.status;
         qDebug() << "ExportTypeStage:" << m_typeName << "completed. Success:" << progressSnapshot.successCount
                  << "Failed:" << progressSnapshot.failedCount << "Skipped:" << progressSnapshot.skippedCount;
-        emit completed(progressSnapshot.successCount, progressSnapshot.failedCount, progressSnapshot.skippedCount);
         m_isRunning.store(false);
+        emit completed(progressSnapshot.successCount, progressSnapshot.failedCount, progressSnapshot.skippedCount);
         return;
     }
 

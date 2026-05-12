@@ -103,14 +103,14 @@ void Model3DExportStage::start(const QStringList& componentIds,
         }
     }
 
+    m_isExporting.store(true);
+
     // 调用基类的初始化方法（在路径准备完毕后再启动 worker，避免竞态）
     ExportTypeStage::start(componentIds, cachedData);
-
-    m_isExporting.store(true);
 }
 
 void Model3DExportStage::cancel() {
-    cancelWithTempRollback(m_isExporting, m_tempManager);
+    cancelWithTempRollback(m_tempManager);
 }
 
 bool Model3DExportStage::commitTempFile(const QString& tempPath, const QString& finalPath) {

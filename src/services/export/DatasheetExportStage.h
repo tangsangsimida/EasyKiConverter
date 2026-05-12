@@ -88,7 +88,6 @@ private:
     TempFileManager m_tempManager;  ///< 临时文件管理器
     QMap<QString, QString> m_tempPaths;  ///< componentId -> tempPath
     QMap<QString, QString> m_finalPaths;  ///< componentId -> finalPath
-    std::atomic<bool> m_isExporting{false};  ///< 是否正在导出
 };
 
 }  // namespace EasyKiConverter

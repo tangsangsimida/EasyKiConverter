@@ -73,6 +73,22 @@ private slots:
         QCOMPARE(progress.failedCount, 0);
     }
 
+    void completedSignalSeesStageNotRunning() {
+        ImmediateSuccessStage stage;
+        bool wasRunningWhenCompleted = true;
+        connect(&stage, &ExportTypeStage::completed, &stage, [&stage, &wasRunningWhenCompleted]() {
+            wasRunningWhenCompleted = stage.isRunning();
+        });
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C1001")] = QSharedPointer<ComponentData>::create();
+
+        stage.start({QStringLiteral("C1001")}, cachedData);
+
+        QVERIFY(!wasRunningWhenCompleted);
+        QVERIFY(!stage.isRunning());
+    }
+
     void cancelledStageStaysRunningUntilActiveWorkersDrain() {
         DeferredStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
