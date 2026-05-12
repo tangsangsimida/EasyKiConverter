@@ -111,6 +111,18 @@ target_include_directories(test_export_type_stage PRIVATE
 )
 add_test(NAME test_export_type_stage COMMAND test_export_type_stage)
 
+add_executable(test_export_report_generator test_export_report_generator.cpp)
+target_link_libraries(test_export_report_generator PRIVATE
+    Qt6::Test
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_export_report_generator PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_export_report_generator COMMAND test_export_report_generator)
+
 add_executable(test_export_progress_viewmodel test_export_progress_viewmodel.cpp)
 target_link_libraries(test_export_progress_viewmodel PRIVATE
     Qt6::Test
@@ -302,6 +314,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_config_service
     test_component_service
     test_export_type_stage
+    test_export_report_generator
     test_export_progress_viewmodel
     test_export_settings_viewmodel
     test_logging
