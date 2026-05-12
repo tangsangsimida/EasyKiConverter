@@ -12,6 +12,7 @@ class TestTempFileManager : public QObject {
     Q_OBJECT
 
 private slots:
+
     void symbolTempFileCommitMovesFileAndUnregistersIt() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -20,7 +21,8 @@ private slots:
         manager.setOutputPath(tempDir.path());
         QSignalSpy commitSpy(&manager, &TempFileManager::commitCompleted);
 
-        const QString tempPath = manager.createSymbolTempPath(QStringLiteral("FixtureLib"), QStringLiteral(".kicad_sym"));
+        const QString tempPath =
+            manager.createSymbolTempPath(QStringLiteral("FixtureLib"), QStringLiteral(".kicad_sym"));
         QVERIFY(!tempPath.isEmpty());
         QVERIFY(writeFile(tempPath, QByteArrayLiteral("symbol library")));
 
@@ -67,7 +69,8 @@ private slots:
         manager.setOutputPath(tempDir.path());
         QSignalSpy cleanupSpy(&manager, &TempFileManager::cleanupCompleted);
 
-        const QString tempFilePath = manager.createSymbolTempPath(QStringLiteral("RollbackLib"), QStringLiteral(".kicad_sym"));
+        const QString tempFilePath =
+            manager.createSymbolTempPath(QStringLiteral("RollbackLib"), QStringLiteral(".kicad_sym"));
         QVERIFY(writeFile(tempFilePath, QByteArrayLiteral("temp")));
 
         const QString tempDirPath = manager.createTempDirectoryPath(QStringLiteral("Rollback.pretty"));

@@ -14,6 +14,7 @@ class TestExportReportGenerator : public QObject {
     Q_OBJECT
 
 private slots:
+
     void cleanupTestCase() {
         NetworkClient::destroyInstance();
     }
