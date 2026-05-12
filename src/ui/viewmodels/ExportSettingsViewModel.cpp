@@ -448,6 +448,23 @@ void ExportSettingsViewModel::setStatus(const QString& status) {
 }
 
 void ExportSettingsViewModel::loadFromConfig() {
+    // 保存旧值以便比较，仅在值变化时发射信号（避免不必要的 QML 绑定刷新）
+    const QString oldOutputPath = m_outputPath;
+    const QString oldLibName = m_libName;
+    const bool oldExportSymbol = m_exportSymbol;
+    const bool oldExportFootprint = m_exportFootprint;
+    const bool oldExportModel3D = m_exportModel3D;
+    const int oldExportModel3DFormat = m_exportModel3DFormat;
+    const int oldExportModel3DPathMode = m_exportModel3DPathMode;
+    const bool oldExportPreviewImages = m_exportPreviewImages;
+    const bool oldExportDatasheet = m_exportDatasheet;
+    const bool oldOverwriteExistingFiles = m_overwriteExistingFiles;
+    const bool oldWeakNetworkSupport = m_weakNetworkSupport;
+    const int oldExportMode = m_exportMode;
+    const bool oldDebugMode = m_debugMode;
+    const QString oldCacheDir = m_cacheDir;
+    const int oldDiskCacheLimitMB = m_diskCacheLimitMB;
+
     m_outputPath = m_configService->getOutputPath();
     m_libName = m_configService->getLibName();
     m_exportSymbol = m_configService->getExportSymbol();
@@ -478,26 +495,43 @@ void ExportSettingsViewModel::loadFromConfig() {
     m_footprintLibraryDescription.clear();
     m_footprintLibraryKeywords.clear();
 
-    emit outputPathChanged();
-    emit libNameChanged();
-    emit exportSymbolChanged();
-    emit exportFootprintChanged();
-    emit exportModel3DChanged();
-    emit exportModel3DFormatChanged();
-    emit exportModel3DPathModeChanged();
-    emit exportPreviewImagesChanged();
-    emit exportDatasheetChanged();
-    emit overwriteExistingFilesChanged();
-    emit weakNetworkSupportChanged();
-    emit exportModeChanged();
-    emit debugModeChanged();
+    // 仅在值变化时发射信号
+    if (m_outputPath != oldOutputPath)
+        emit outputPathChanged();
+    if (m_libName != oldLibName)
+        emit libNameChanged();
+    if (m_exportSymbol != oldExportSymbol)
+        emit exportSymbolChanged();
+    if (m_exportFootprint != oldExportFootprint)
+        emit exportFootprintChanged();
+    if (m_exportModel3D != oldExportModel3D)
+        emit exportModel3DChanged();
+    if (m_exportModel3DFormat != oldExportModel3DFormat)
+        emit exportModel3DFormatChanged();
+    if (m_exportModel3DPathMode != oldExportModel3DPathMode)
+        emit exportModel3DPathModeChanged();
+    if (m_exportPreviewImages != oldExportPreviewImages)
+        emit exportPreviewImagesChanged();
+    if (m_exportDatasheet != oldExportDatasheet)
+        emit exportDatasheetChanged();
+    if (m_overwriteExistingFiles != oldOverwriteExistingFiles)
+        emit overwriteExistingFilesChanged();
+    if (m_weakNetworkSupport != oldWeakNetworkSupport)
+        emit weakNetworkSupportChanged();
+    if (m_exportMode != oldExportMode)
+        emit exportModeChanged();
+    if (m_debugMode != oldDebugMode)
+        emit debugModeChanged();
+    // 非持久化字段始终发射（首次加载时需要通知 QML）
     emit exportSymbolDescriptionChanged();
     emit exportFootprintDescriptionChanged();
     emit symbolLibraryDescriptionChanged();
     emit footprintLibraryDescriptionChanged();
     emit footprintLibraryKeywordsChanged();
-    emit cacheDirChanged();
-    emit diskCacheLimitMBChanged();
+    if (m_cacheDir != oldCacheDir)
+        emit cacheDirChanged();
+    if (m_diskCacheLimitMB != oldDiskCacheLimitMB)
+        emit diskCacheLimitMBChanged();
 }
 
 void ExportSettingsViewModel::saveConfig() {
@@ -526,6 +560,7 @@ void ExportSettingsViewModel::resetConfig() {
     m_cacheDir = m_configService->getCacheDir();
     m_diskCacheLimitMB = m_configService->getDiskCacheLimitMB();
 
+    m_configService->beginBatchUpdate();
     m_configService->setOutputPath(m_outputPath);
     m_configService->setLibName(m_libName);
     m_configService->setExportSymbol(m_exportSymbol);
@@ -541,6 +576,7 @@ void ExportSettingsViewModel::resetConfig() {
     m_configService->setDebugMode(m_debugMode);
     m_configService->setCacheDir(m_cacheDir);
     m_configService->setDiskCacheLimitMB(m_diskCacheLimitMB);
+    m_configService->endBatchUpdate();
     ComponentCacheService::instance()->setCacheDir(m_cacheDir);
     ComponentCacheService::instance()->setDiskCacheLimit(m_diskCacheLimitMB);
 

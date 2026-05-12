@@ -1,6 +1,7 @@
 #include "ExportTypeStage.h"
 
 #include "IExportWorker.h"
+#include "TempFileManager.h"
 
 #include <QDebug>
 #include <QMutexLocker>
@@ -162,6 +163,44 @@ void ExportTypeStage::cancel() {
     }
 
     qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
+}
+
+void ExportTypeStage::cancelWithTempRollback(std::atomic<bool>& isExporting, TempFileManager& tempManager) {
+    if (!isExporting.load()) {
+        return;
+    }
+
+    qDebug() << "ExportTypeStage:" << m_typeName << "cancelling (with temp rollback)...";
+
+    cancel();
+    tempManager.rollbackAll();
+
+    isExporting.store(false);
+    if (!hasActiveWorkers()) {
+        m_isRunning.store(false);
+    }
+
+    qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
+}
+
+bool ExportTypeStage::waitForWorkerThread(QThread*& thread, int timeoutMs) {
+    m_cancelled.store(true);
+
+    if (!thread || !thread->isRunning()) {
+        thread = nullptr;
+        return true;
+    }
+
+    qDebug() << "ExportTypeStage:" << m_typeName << "waiting for worker thread to finish...";
+    thread->quit();
+    if (!thread->wait(timeoutMs)) {
+        qWarning() << "ExportTypeStage:" << m_typeName << "thread did not finish in" << timeoutMs
+                   << "ms, leaving it to finish asynchronously";
+        return false;
+    }
+
+    thread = nullptr;
+    return true;
 }
 
 ExportTypeProgress ExportTypeStage::getProgress() const {

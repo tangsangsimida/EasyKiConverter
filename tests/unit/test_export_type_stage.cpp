@@ -207,8 +207,7 @@ private slots:
                  "Footprint should contain relative WRL model path");
 
         const QString absolutePrefix = QDir::cleanPath(tempDir.path());
-        QVERIFY2(!content.contains(absolutePrefix),
-                 "Footprint should not contain absolute paths in relative mode");
+        QVERIFY2(!content.contains(absolutePrefix), "Footprint should not contain absolute paths in relative mode");
     }
 
 private:

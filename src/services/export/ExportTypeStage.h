@@ -10,11 +10,14 @@
 #include <QSharedPointer>
 #include <QString>
 #include <QStringList>
+#include <QThread>
 #include <QThreadPool>
 
 #include <atomic>
 
 namespace EasyKiConverter {
+
+class TempFileManager;
 
 class ComponentData;
 
@@ -154,6 +157,27 @@ protected:
      * 线程安全：由m_workerMutex保护。
      */
     void startNextWorker();
+
+    /**
+     * @brief 带临时文件回滚的取消操作（供使用 TempFileManager 的子类调用）
+     * @param isExporting 子类的 m_isExporting 原子标志引用
+     * @param tempManager 子类的 TempFileManager 实例引用
+     *
+     * 统一执行：基类取消 → 临时文件回滚 → 状态清理。
+     * DatasheetExportStage、PreviewImagesExportStage、Model3DExportStage 共用此逻辑。
+     */
+    void cancelWithTempRollback(std::atomic<bool>& isExporting, TempFileManager& tempManager);
+
+    /**
+     * @brief 等待单个工作线程退出（供使用独立 QThread 的子类调用）
+     * @param thread 子类的 m_workerThread 指针引用
+     * @param timeoutMs 超时时间（毫秒），默认 5000
+     * @return true 线程已退出，false 超时
+     *
+     * SymbolExportStage 和 FootprintExportStage 共用此逻辑：
+     * 设置取消标志 → 请求线程退出 → 等待超时 → 置空指针。
+     */
+    bool waitForWorkerThread(QThread*& thread, int timeoutMs = 5000);
 
     /**
      * @brief 初始化单个元器件的进度状态

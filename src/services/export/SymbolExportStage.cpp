@@ -21,10 +21,7 @@ SymbolExportStage::SymbolExportStage(QObject* parent)
 }
 
 SymbolExportStage::~SymbolExportStage() {
-    m_cancelled.store(true);
-    if (m_workerThread && m_workerThread->isRunning()) {
-        m_workerThread->wait();
-    }
+    waitForWorkerThread(m_workerThread, 30000);
 }
 
 void SymbolExportStage::start(const QStringList& componentIds,
@@ -80,23 +77,11 @@ void SymbolExportStage::cancel() {
 
     qDebug() << "SymbolExportStage: Cancelling...";
 
-    // 设置取消标志
-    m_cancelled.store(true);
-
-    // 等待工作线程协作式退出（最多等待 5 秒）。不能 terminate()：强杀线程可能中断 Qt/C++ 对象析构或持锁区。
-    if (m_workerThread && m_workerThread->isRunning()) {
-        qDebug() << "SymbolExportStage: Waiting for worker thread to finish...";
-        m_workerThread->quit();
-        if (!m_workerThread->wait(5000)) {
-            qWarning() << "SymbolExportStage: Thread did not finish in 5s, leaving it to finish asynchronously";
-            return;
-        }
-        m_workerThread = nullptr;
+    if (!waitForWorkerThread(m_workerThread)) {
+        return;  // 超时，交由析构函数再次等待
     }
 
-    // 清理临时文件
     m_tempManager.rollbackAll();
-
     m_isExporting.store(false);
     m_isRunning.store(false);
 

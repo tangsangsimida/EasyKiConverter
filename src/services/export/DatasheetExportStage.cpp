@@ -78,23 +78,7 @@ void DatasheetExportStage::start(const QStringList& componentIds,
 }
 
 void DatasheetExportStage::cancel() {
-    if (!m_isExporting.load()) {
-        return;
-    }
-
-    qDebug() << "DatasheetExportStage: Cancelling...";
-
-    ExportTypeStage::cancel();
-
-    // 回滚所有临时文件
-    m_tempManager.rollbackAll();
-
-    m_isExporting.store(false);
-    if (!hasActiveWorkers()) {
-        m_isRunning.store(false);
-    }
-
-    qDebug() << "DatasheetExportStage: Cancelled";
+    cancelWithTempRollback(m_isExporting, m_tempManager);
 }
 
 void DatasheetExportStage::commitTempFile(const QString& tempPath, const QString& finalPath) {

@@ -59,23 +59,7 @@ void PreviewImagesExportStage::start(const QStringList& componentIds,
 }
 
 void PreviewImagesExportStage::cancel() {
-    if (!m_isExporting.load()) {
-        return;
-    }
-
-    qDebug() << "PreviewImagesExportStage: Cancelling...";
-
-    ExportTypeStage::cancel();
-
-    // 回滚所有临时文件
-    m_tempManager.rollbackAll();
-
-    m_isExporting.store(false);
-    if (!hasActiveWorkers()) {
-        m_isRunning.store(false);
-    }
-
-    qDebug() << "PreviewImagesExportStage: Cancelled";
+    cancelWithTempRollback(m_isExporting, m_tempManager);
 }
 
 QMap<QString, QString> PreviewImagesExportStage::createTempPathsForComponent(const QString& componentId,

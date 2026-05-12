@@ -17,7 +17,6 @@
 #include <QJsonObject>
 #include <QSaveFile>
 #include <QSet>
-#include <QStandardPaths>
 #include <QUrl>
 #include <QtConcurrent>
 
@@ -31,10 +30,7 @@ ComponentCacheService::ComponentCacheService(QObject* parent)
     , m_diskCacheLimitMB(ConfigService::DEFAULT_DISK_CACHE_LIMIT_MB)
     , m_memoryCacheSize(0) {
     m_lastEnforceTimer.start();
-    // 默认缓存目录：{用户数据目录}/easykiconverter/cache
-    QString defaultCacheDir =
-        QDir::cleanPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/cache");
-    setCacheDir(defaultCacheDir);
+    setCacheDir(ConfigService::defaultCacheDir());
 
     // 初始化L1内存缓存，设置大小限制（50MB = 50 * 1024 * 1024 bytes）
     // QCache 的 cost 是存储的字节数
