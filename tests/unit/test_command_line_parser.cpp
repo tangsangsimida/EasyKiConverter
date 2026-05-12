@@ -34,6 +34,8 @@ private slots:
     void testModel3DFormatInvalid();
     void testCacheOptions();
     void testCacheSizeInvalid();
+    void testCliRequiredOptionValidation();
+    void testGlobalOptionValidation();
 
     // 补全脚本契约（验证不再暴露不存在的命令）
     void testCompletionScriptNoHelpVersionSubcommands();
@@ -243,6 +245,52 @@ void TestCommandLineParser::testCacheSizeInvalid() {
     QVERIFY(!parser->validate());
     QVERIFY(parser->validationError().contains(QStringLiteral("磁盘缓存大小必须是大于 0 的整数")));
     delete parser;
+}
+
+void TestCommandLineParser::testCliRequiredOptionValidation() {
+    auto* missingBomInput = makeParser({"easykiconverter", "convert", "bom", "-o", "out"});
+    missingBomInput->parse();
+    QVERIFY(!missingBomInput->validate());
+    QVERIFY(missingBomInput->validationError().contains(QStringLiteral("BOM 表转换必须指定输入文件")));
+    delete missingBomInput;
+
+    auto* missingComponentId = makeParser({"easykiconverter", "convert", "component", "-o", "out"});
+    missingComponentId->parse();
+    QVERIFY(!missingComponentId->validate());
+    QVERIFY(missingComponentId->validationError().contains(QStringLiteral("单个元器件转换必须指定 LCSC 编号")));
+    delete missingComponentId;
+
+    auto* missingBatchInput = makeParser({"easykiconverter", "convert", "batch", "-o", "out"});
+    missingBatchInput->parse();
+    QVERIFY(!missingBatchInput->validate());
+    QVERIFY(missingBatchInput->validationError().contains(QStringLiteral("批量转换必须指定输入文件")));
+    delete missingBatchInput;
+
+    auto* missingOutput = makeParser({"easykiconverter", "convert", "component", "-c", "C12345"});
+    missingOutput->parse();
+    QVERIFY(!missingOutput->validate());
+    QVERIFY(missingOutput->validationError().contains(QStringLiteral("CLI 模式必须指定输出目录")));
+    delete missingOutput;
+}
+
+void TestCommandLineParser::testGlobalOptionValidation() {
+    auto* invalidLogLevel = makeParser({"easykiconverter", "--log-level", "verbose"});
+    invalidLogLevel->parse();
+    QVERIFY(!invalidLogLevel->validate());
+    QVERIFY(invalidLogLevel->validationError().contains(QStringLiteral("无效的日志级别")));
+    delete invalidLogLevel;
+
+    auto* invalidLanguage = makeParser({"easykiconverter", "--language", "fr"});
+    invalidLanguage->parse();
+    QVERIFY(!invalidLanguage->validate());
+    QVERIFY(invalidLanguage->validationError().contains(QStringLiteral("无效的语言设置")));
+    delete invalidLanguage;
+
+    auto* invalidTheme = makeParser({"easykiconverter", "--theme", "blue"});
+    invalidTheme->parse();
+    QVERIFY(!invalidTheme->validate());
+    QVERIFY(invalidTheme->validationError().contains(QStringLiteral("无效的主题设置")));
+    delete invalidTheme;
 }
 
 // ========== 补全脚本契约 ==========

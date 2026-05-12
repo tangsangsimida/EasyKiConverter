@@ -34,6 +34,40 @@ private slots:
         QCOMPARE(ids, QStringList({QStringLiteral("C23186"), QStringLiteral("C23166"), QStringLiteral("C98765")}));
     }
 
+    void parseCsvSkipsEmptyCellsAndReadsQuotedIds() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString filePath = tempDir.filePath(QStringLiteral("quoted.csv"));
+        QFile file(filePath);
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
+        QTextStream stream(&file);
+        stream << "Designator,LCSC Part,Comment\n";
+        stream << "R1,,empty cell\n";
+        stream << "C1,\"c34567\",quoted lowercase\n";
+        stream << "U1,C34567,duplicate canonical\n";
+        stream << "U2,\"C45678\",quoted canonical\n";
+        file.close();
+
+        BomParser parser;
+        QCOMPARE(parser.parse(filePath), QStringList({QStringLiteral("C34567"), QStringLiteral("C45678")}));
+    }
+
+    void parseUnsupportedOrMissingFilesReturnsEmptyList() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString unsupportedPath = tempDir.filePath(QStringLiteral("bom.json"));
+        QFile unsupportedFile(unsupportedPath);
+        QVERIFY(unsupportedFile.open(QIODevice::WriteOnly | QIODevice::Text));
+        unsupportedFile.write("{\"lcsc\":\"C12345\"}\n");
+        unsupportedFile.close();
+
+        BomParser parser;
+        QVERIFY(parser.parse(unsupportedPath).isEmpty());
+        QVERIFY(parser.parse(tempDir.filePath(QStringLiteral("missing.csv"))).isEmpty());
+    }
+
     void fileReaderReadBomFileUsesBomParser() {
         QString error;
         const QString fixturePath = TestPaths::fixturePath(QStringLiteral("bom/mixed_components.csv"));
@@ -63,6 +97,14 @@ private slots:
 
         QVERIFY(ids.isEmpty());
         QVERIFY(error.contains(QStringLiteral("BOM 表中没有找到有效的元器件编号")));
+    }
+
+    void fileReaderReadBomFileReportsMissingInput() {
+        QString error;
+        const QStringList ids = FileReader::readBomFile(QStringLiteral("/nonexistent/bom.csv"), error);
+
+        QVERIFY(ids.isEmpty());
+        QVERIFY(error.contains(QStringLiteral("输入文件不存在")));
     }
 };
 

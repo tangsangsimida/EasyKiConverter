@@ -14,6 +14,7 @@ class TestCoreUtils : public QObject {
     Q_OBJECT
 
 private slots:
+
     void normalizePreviewImageUrls() {
         QCOMPARE(UrlUtils::normalizePreviewImageUrl(QStringLiteral(" //image.lceda.cn/files/a.png ")),
                  QStringLiteral("https://image.lceda.cn/files/a.png"));
@@ -51,8 +52,7 @@ private slots:
         QVERIFY(plainResult.success);
         QCOMPARE(plainResult.data, plain);
 
-        const QByteArray gzipped =
-            QByteArray::fromHex("1f8b08001f3c036a02ffcb48cdc9c95748afca2c0000196ad2df0a000000");
+        const QByteArray gzipped = QByteArray::fromHex("1f8b08001f3c036a02ffcb48cdc9c95748afca2c0000196ad2df0a000000");
         QVERIFY(GzipUtils::isGzipped(gzipped));
 
         const GzipUtils::DecompressResult gzipResult = GzipUtils::decompress(gzipped);
