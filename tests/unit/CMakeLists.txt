@@ -177,6 +177,21 @@ target_include_directories(test_file_reader PRIVATE
 )
 add_test(NAME test_file_reader COMMAND test_file_reader)
 
+add_executable(test_bom_parser
+    test_bom_parser.cpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_bom_parser PRIVATE
+    Qt6::Test
+    EasyKiConverter::Cli
+    EasyKiConverterLib
+)
+target_include_directories(test_bom_parser PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_bom_parser COMMAND test_bom_parser)
+
 add_executable(test_test_paths
     test_test_paths.cpp
     ../common/TestPaths.hpp
@@ -259,6 +274,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_language_manager
     test_completion_generator
     test_file_reader
+    test_bom_parser
     test_test_paths
     test_kicad_exporter_golden
     test_easyeda_importer_fixtures

@@ -11,6 +11,8 @@
   - `test_command_line_parser.cpp`: 命令行参数解析器测试。
   - `test_completion_generator.cpp`: Shell 补全脚本生成器测试。
   - `test_file_reader.cpp`: 文件读取工具测试。
+  - `test_bom_parser.cpp`: BOM/LCSC 编号解析测试。
+- `integration/`: 跨模块集成测试，覆盖 fixture 数据导入到 KiCad 文件输出的离线路径。
 - `ui/`: UI/QML 自动化测试。
 - `benchmark/`: 基准测试，用于观察序列化、反序列化等核心路径的性能趋势。
 - `manual/`: 手动测试清单，供测试人员按步骤执行回归验证。
@@ -19,12 +21,8 @@
 - `common/`: 测试辅助类和通用 Mock 对象。
   - `MockNetworkClient.hpp`: 用于拦截统一网络客户端请求的模拟实现。
 - `reports/`: (Git 忽略) 用于存放构建过程中生成的 XML/HTML 测试报告。
-
-计划补充的测试资产目录：
-
 - `fixtures/`: EasyEDA 响应、CAD JSON、BOM 文件等输入样例。
 - `golden/`: KiCad 输出、库表和报告等期望结果，用于稳定的 golden-file 对比。
-- `integration/`: 从 Mock 数据到输出文件的跨模块集成测试。
 
 ## 如何运行测试
 
