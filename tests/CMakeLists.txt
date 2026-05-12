@@ -7,7 +7,7 @@ add_compile_definitions(EASYKICONVERTER_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_
 
 # 添加子目录
 add_subdirectory(unit)
-# add_subdirectory(integration)
+add_subdirectory(integration)
 add_subdirectory(benchmark)
 add_subdirectory(ui)
 

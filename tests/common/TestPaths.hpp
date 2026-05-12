@@ -4,6 +4,9 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
 #include <QString>
 
 namespace EasyKiConverter::Test {
@@ -37,6 +40,30 @@ public:
 
     static QString readText(const QString& path, QString* errorMessage = nullptr) {
         return QString::fromUtf8(readBytes(path, errorMessage));
+    }
+
+    static QJsonObject readJsonObject(const QString& path, QString* errorMessage = nullptr) {
+        QString readError;
+        const QByteArray bytes = readBytes(path, &readError);
+        if (!readError.isEmpty()) {
+            setError(errorMessage, readError);
+            return {};
+        }
+
+        QJsonParseError parseError;
+        const QJsonDocument document = QJsonDocument::fromJson(bytes, &parseError);
+        if (parseError.error != QJsonParseError::NoError) {
+            setError(errorMessage,
+                     QStringLiteral("Unable to parse JSON file '%1': %2").arg(path, parseError.errorString()));
+            return {};
+        }
+
+        if (!document.isObject()) {
+            setError(errorMessage, QStringLiteral("JSON file '%1' root must be an object").arg(path));
+            return {};
+        }
+
+        return document.object();
     }
 
     static bool compareTextToGolden(const QString& actual,
