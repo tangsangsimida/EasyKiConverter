@@ -9,6 +9,7 @@ class TestTestPaths : public QObject {
     Q_OBJECT
 
 private slots:
+
     void testTestsRootExists() {
         QVERIFY2(QFileInfo::exists(TestPaths::testsRoot()), qPrintable(TestPaths::testsRoot()));
     }
@@ -26,8 +27,9 @@ private slots:
         QVERIFY2(error.isEmpty(), qPrintable(error));
 
         QVERIFY2(TestPaths::compareTextToGolden(expected, QStringLiteral("README.md"), &error), qPrintable(error));
-        QVERIFY2(!TestPaths::compareTextToGolden(expected + QStringLiteral("\nextra"), QStringLiteral("README.md"), &error),
-                 "Mismatch should be reported for modified content");
+        QVERIFY2(
+            !TestPaths::compareTextToGolden(expected + QStringLiteral("\nextra"), QStringLiteral("README.md"), &error),
+            "Mismatch should be reported for modified content");
         QVERIFY2(error.contains(QStringLiteral("Golden file mismatch")), qPrintable(error));
     }
 };

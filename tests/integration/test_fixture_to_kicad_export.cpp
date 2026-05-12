@@ -15,6 +15,7 @@ class TestFixtureToKiCadExport : public QObject {
     Q_OBJECT
 
 private slots:
+
     void testFixtureDataExportsKiCadFiles() {
         QString error;
         const QJsonObject symbolFixture =

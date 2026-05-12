@@ -218,6 +218,17 @@ target_include_directories(test_kicad_exporter_golden PRIVATE
 )
 add_test(NAME test_kicad_exporter_golden COMMAND test_kicad_exporter_golden)
 
+add_executable(test_kicad_library_table_manager test_kicad_library_table_manager.cpp)
+target_link_libraries(test_kicad_library_table_manager PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_kicad_library_table_manager PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_kicad_library_table_manager COMMAND test_kicad_library_table_manager)
+
 add_executable(test_easyeda_importer_fixtures
     test_easyeda_importer_fixtures.cpp
     ../common/TestPaths.hpp
@@ -277,6 +288,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_bom_parser
     test_test_paths
     test_kicad_exporter_golden
+    test_kicad_library_table_manager
     test_easyeda_importer_fixtures
     test_cad_data_loader
     test_component_list_viewmodel

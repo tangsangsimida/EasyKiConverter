@@ -15,6 +15,7 @@ class TestKiCadExporterGolden : public QObject {
     Q_OBJECT
 
 private slots:
+
     void testSymbolLibraryMatchesGolden() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -26,8 +27,9 @@ private slots:
         QString error;
         const QString actual = TestPaths::readText(outputPath, &error);
         QVERIFY2(error.isEmpty(), qPrintable(error));
-        QVERIFY2(TestPaths::compareTextToGolden(actual, QStringLiteral("kicad/golden_symbol_library.kicad_sym"), &error),
-                 qPrintable(error));
+        QVERIFY2(
+            TestPaths::compareTextToGolden(actual, QStringLiteral("kicad/golden_symbol_library.kicad_sym"), &error),
+            qPrintable(error));
     }
 
     void testFootprintMatchesGolden() {

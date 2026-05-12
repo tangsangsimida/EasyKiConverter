@@ -12,6 +12,7 @@
   - `test_completion_generator.cpp`: Shell 补全脚本生成器测试。
   - `test_file_reader.cpp`: 文件读取工具测试。
   - `test_bom_parser.cpp`: BOM/LCSC 编号解析测试。
+  - `test_kicad_library_table_manager.cpp`: KiCad 项目库表注册测试。
 - `integration/`: 跨模块集成测试，覆盖 fixture 数据导入到 KiCad 文件输出的离线路径。
 - `ui/`: UI/QML 自动化测试。
 - `benchmark/`: 基准测试，用于观察序列化、反序列化等核心路径的性能趋势。

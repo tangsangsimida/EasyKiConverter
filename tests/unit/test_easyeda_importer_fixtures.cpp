@@ -13,6 +13,7 @@ class TestEasyedaImporterFixtures : public QObject {
     Q_OBJECT
 
 private slots:
+
     void testSymbolFixtureImportsMetadataAndGeometry() {
         QString error;
         const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/symbol_basic.json"), &error);

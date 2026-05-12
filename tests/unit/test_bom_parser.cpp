@@ -14,6 +14,7 @@ class TestBomParser : public QObject {
     Q_OBJECT
 
 private slots:
+
     void validateIdAcceptsOnlyLcscComponentIds() {
         QVERIFY(BomParser::validateId(QStringLiteral("C1234")));
         QVERIFY(BomParser::validateId(QStringLiteral("c98765")));
