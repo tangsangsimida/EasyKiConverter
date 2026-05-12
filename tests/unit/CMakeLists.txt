@@ -177,6 +177,18 @@ target_include_directories(test_file_reader PRIVATE
 )
 add_test(NAME test_file_reader COMMAND test_file_reader)
 
+add_executable(test_test_paths
+    test_test_paths.cpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_test_paths PRIVATE
+    Qt6::Test
+)
+target_include_directories(test_test_paths PRIVATE
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_test_paths COMMAND test_test_paths)
+
 # CadDataLoader 业务层错误检查测试
 add_executable(test_cad_data_loader test_cad_data_loader.cpp)
 target_link_libraries(test_cad_data_loader PRIVATE
@@ -219,6 +231,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_language_manager
     test_completion_generator
     test_file_reader
+    test_test_paths
     test_cad_data_loader
     test_component_list_viewmodel
 )

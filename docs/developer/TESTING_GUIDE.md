@@ -41,6 +41,8 @@ export QT_QPA_PLATFORM=offscreen
 - `tests/fixtures/bom/`: CSV/XLSX BOM 样例，覆盖列名变化、空行、重复项和非法 ID。
 - `tests/golden/kicad/`: 期望生成的 `.kicad_sym`、`.kicad_mod`、`.wrl`、`.step`、`fp-lib-table` 片段。
 
+测试中读取这些资产时优先使用 `tests/common/TestPaths.hpp`，不要依赖当前工作目录。该 helper 通过 `EASYKICONVERTER_TEST_SOURCE_DIR` 定位 `tests/` 根目录，并提供 fixture/golden 路径解析、UTF-8 文本读取、换行归一化和 golden 文本比较能力。
+
 ## 3. 建设性改进建议
 
 ### 3.1 建立覆盖率报告
