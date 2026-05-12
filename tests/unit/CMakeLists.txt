@@ -63,6 +63,17 @@ target_include_directories(test_atomic_file_writer PRIVATE
 )
 add_test(NAME test_atomic_file_writer COMMAND test_atomic_file_writer)
 
+add_executable(test_temp_file_manager test_temp_file_manager.cpp)
+target_link_libraries(test_temp_file_manager PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_temp_file_manager PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_temp_file_manager COMMAND test_temp_file_manager)
+
 add_executable(test_config_service test_config_service.cpp)
 target_link_libraries(test_config_service PRIVATE
     Qt6::Test
@@ -287,6 +298,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_component_cache_service
     test_cache_pruner
     test_atomic_file_writer
+    test_temp_file_manager
     test_config_service
     test_component_service
     test_export_type_stage
