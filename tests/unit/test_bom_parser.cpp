@@ -13,11 +13,24 @@ using namespace EasyKiConverter::Test;
 class TestBomParser : public QObject {
     Q_OBJECT
 
+private:
+    // 创建临时 CSV 文件并返回路径，避免重复 QTemporaryDir + QFile 样板代码
+    QString createTempCsv(QTemporaryDir& tempDir, const QString& name, const QStringList& lines) {
+        const QString filePath = tempDir.filePath(name);
+        QFile file(filePath);
+        Q_ASSERT(file.open(QIODevice::WriteOnly | QIODevice::Text));
+        QTextStream stream(&file);
+        for (const QString& line : lines) {
+            stream << line << "\n";
+        }
+        return filePath;
+    }
+
 private slots:
 
     void validateIdAcceptsOnlyLcscComponentIds() {
         QVERIFY(BomParser::validateId(QStringLiteral("C1234")));
-        QVERIFY(BomParser::validateId(QStringLiteral("c98765")));
+        QVERIFY(BomParser::validateId(QStringLiteral("c13564")));
 
         QVERIFY(!BomParser::validateId(QStringLiteral("C123")));
         QVERIFY(!BomParser::validateId(QStringLiteral("R12345")));
@@ -31,37 +44,31 @@ private slots:
 
         const QStringList ids = parser.parse(fixturePath);
 
-        QCOMPARE(ids, QStringList({QStringLiteral("C23186"), QStringLiteral("C23166"), QStringLiteral("C98765")}));
+        QCOMPARE(ids, QStringList({QStringLiteral("C23186"), QStringLiteral("C23166"), QStringLiteral("C13564")}));
     }
 
     void parseCsvSkipsEmptyCellsAndReadsQuotedIds() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
 
-        const QString filePath = tempDir.filePath(QStringLiteral("quoted.csv"));
-        QFile file(filePath);
-        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
-        QTextStream stream(&file);
-        stream << "Designator,LCSC Part,Comment\n";
-        stream << "R1,,empty cell\n";
-        stream << "C1,\"c34567\",quoted lowercase\n";
-        stream << "U1,C34567,duplicate canonical\n";
-        stream << "U2,\"C45678\",quoted canonical\n";
-        file.close();
+        const QString filePath = createTempCsv(tempDir,
+                                               QStringLiteral("quoted.csv"),
+                                               {QStringLiteral("Designator,LCSC Part,Comment"),
+                                                QStringLiteral("R1,,empty cell"),
+                                                QStringLiteral("C1,\"c21190\",quoted lowercase"),
+                                                QStringLiteral("U1,C21190,duplicate canonical"),
+                                                QStringLiteral("U2,\"C14663\",quoted canonical")});
 
         BomParser parser;
-        QCOMPARE(parser.parse(filePath), QStringList({QStringLiteral("C34567"), QStringLiteral("C45678")}));
+        QCOMPARE(parser.parse(filePath), QStringList({QStringLiteral("C21190"), QStringLiteral("C14663")}));
     }
 
     void parseUnsupportedOrMissingFilesReturnsEmptyList() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
 
-        const QString unsupportedPath = tempDir.filePath(QStringLiteral("bom.json"));
-        QFile unsupportedFile(unsupportedPath);
-        QVERIFY(unsupportedFile.open(QIODevice::WriteOnly | QIODevice::Text));
-        unsupportedFile.write("{\"lcsc\":\"C12345\"}\n");
-        unsupportedFile.close();
+        const QString unsupportedPath =
+            createTempCsv(tempDir, QStringLiteral("bom.json"), {QStringLiteral("{\"lcsc\":\"C12345\"}")});
 
         BomParser parser;
         QVERIFY(parser.parse(unsupportedPath).isEmpty());
@@ -75,22 +82,19 @@ private slots:
         const QStringList ids = FileReader::readBomFile(fixturePath, error);
 
         QVERIFY2(error.isEmpty(), qPrintable(error));
-        QCOMPARE(ids, QStringList({QStringLiteral("C23186"), QStringLiteral("C23166"), QStringLiteral("C98765")}));
+        QCOMPARE(ids, QStringList({QStringLiteral("C23186"), QStringLiteral("C23166"), QStringLiteral("C13564")}));
     }
 
     void fileReaderReadBomFileReportsNoValidIds() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
 
-        const QString filePath = tempDir.filePath(QStringLiteral("invalid.csv"));
-        QFile file(filePath);
-        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
-        QTextStream stream(&file);
-        stream << "Designator,LCSC Part\n";
-        stream << "R1,C0402\n";
-        stream << "C1,C123\n";
-        stream << "U1,NOT_AN_ID\n";
-        file.close();
+        const QString filePath = createTempCsv(tempDir,
+                                               QStringLiteral("invalid.csv"),
+                                               {QStringLiteral("Designator,LCSC Part"),
+                                                QStringLiteral("R1,C0402"),
+                                                QStringLiteral("C1,C123"),
+                                                QStringLiteral("U1,NOT_AN_ID")});
 
         QString error;
         const QStringList ids = FileReader::readBomFile(filePath, error);
