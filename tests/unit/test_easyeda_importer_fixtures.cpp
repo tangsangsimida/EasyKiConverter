@@ -81,6 +81,71 @@ private slots:
         QCOMPARE(footprint->objectVisibilities().size(), 2);
     }
 
+    void testRealCadFixtureWith3DImportsSymbolAndFootprint() {
+        QString error;
+        const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/cad_basic.json"), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+
+        EasyedaSymbolImporter symbolImporter;
+        const QSharedPointer<SymbolData> symbol = symbolImporter.importSymbolData(fixture);
+
+        QVERIFY(symbol);
+        QCOMPARE(symbol->info().name, QStringLiteral("0603WAF5101T5E"));
+        QCOMPARE(symbol->info().package, QStringLiteral("R0603"));
+        QCOMPARE(symbol->info().manufacturer, QStringLiteral("UNI-ROYAL(厚声)"));
+        QCOMPARE(symbol->info().lcscId, QStringLiteral("C23186"));
+        QVERIFY(symbol->pins().size() >= 2);
+
+        EasyedaFootprintImporter footprintImporter;
+        const QSharedPointer<FootprintData> footprint = footprintImporter.importFootprintData(fixture);
+
+        QVERIFY(footprint);
+        QCOMPARE(footprint->info().name, QStringLiteral("R0603"));
+        QCOMPARE(footprint->info().model3DName, QStringLiteral("R0603"));
+        QCOMPARE(footprint->info().uuid3d, QStringLiteral("e06b23482b894f1ebafac2e1696a59f5"));
+        QCOMPARE(footprint->model3D().uuid(), QStringLiteral("6bd5cd867e9542ebae21caaf5d2d4c4d"));
+        QCOMPARE(footprint->model3D().name(), QStringLiteral("R0603"));
+        QVERIFY(footprint->pads().size() >= 2);
+        QVERIFY(footprint->outlines().size() >= 1);
+    }
+
+    void testRealCadFixtureWithoutUuid3DStillImportsOutlineModel() {
+        QString error;
+        const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/cad_no_3d.json"), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+
+        const QJsonObject packageHead =
+            fixture.value(QStringLiteral("packageDetail"))
+                .toObject()
+                .value(QStringLiteral("dataStr"))
+                .toObject()
+                .value(QStringLiteral("head"))
+                .toObject();
+        QVERIFY(!packageHead.contains(QStringLiteral("uuid_3d")));
+
+        EasyedaFootprintImporter importer;
+        const QSharedPointer<FootprintData> footprint = importer.importFootprintData(fixture);
+
+        QVERIFY(footprint);
+        QCOMPARE(footprint->info().name, QStringLiteral("C0603"));
+        QVERIFY(footprint->info().uuid3d.isEmpty());
+        QCOMPARE(footprint->model3D().uuid(), QStringLiteral("ac9b32e974bc448eab36b1293f859dcb"));
+        QCOMPARE(footprint->model3D().name(), QStringLiteral("C0603_L1.6-W0.8-H0.8"));
+        QVERIFY(footprint->pads().size() >= 2);
+        QVERIFY(footprint->outlines().size() >= 1);
+    }
+
+    void testRealModel3DFixtureIsObjData() {
+        QString error;
+        const QByteArray modelData = TestPaths::readBytes(
+            TestPaths::fixturePath(QStringLiteral("easyeda/model3d_r0603.obj")), &error);
+
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY(modelData.size() > 1024);
+        QVERIFY(modelData.contains("v "));
+        QVERIFY(modelData.contains("newmtl"));
+    }
+
 private:
     QJsonObject loadFixtureObject(const QString& relativePath, QString* errorMessage) const {
         const QByteArray bytes = TestPaths::readBytes(TestPaths::fixturePath(relativePath), errorMessage);

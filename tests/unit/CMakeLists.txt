@@ -288,6 +288,22 @@ target_include_directories(test_easyeda_importer_fixtures PRIVATE
 )
 add_test(NAME test_easyeda_importer_fixtures COMMAND test_easyeda_importer_fixtures)
 
+# NetworkClient 接口和 MockNetworkClient 行为测试
+add_executable(test_network_client
+    test_network_client.cpp
+    ../common/MockNetworkClient.hpp
+)
+target_link_libraries(test_network_client PRIVATE
+    Qt6::Test
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_network_client PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_network_client COMMAND test_network_client)
+
 # CadDataLoader 业务层错误检查测试
 add_executable(test_cad_data_loader test_cad_data_loader.cpp)
 target_link_libraries(test_cad_data_loader PRIVATE
@@ -317,6 +333,7 @@ add_test(NAME test_component_list_viewmodel COMMAND test_component_list_viewmode
 
 set(EASYKICONVERTER_UNIT_TESTS
     test_easyeda_api
+    test_network_client
     test_models
     test_component_cache_service
     test_cache_pruner

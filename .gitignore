@@ -8,6 +8,7 @@
 *.moc
 *.o
 *.obj
+!tests/fixtures/easyeda/*.obj
 *.orig
 *.rej
 *.so
@@ -140,6 +141,6 @@ deploy/flatpak/.flatpak-builder/*
 .format_cache.json
 log
 CLAUDE.md
-testbom.xlsx
+/testbom.xlsx
 GEMINI.md
 .codex

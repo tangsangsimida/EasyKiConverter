@@ -110,6 +110,42 @@ private slots:
         QVERIFY(ids.isEmpty());
         QVERIFY(error.contains(QStringLiteral("输入文件不存在")));
     }
+
+    // === XLSX 测试 ===
+
+    void parseXlsxFiltersComponentIds() {
+        const QString xlsxPath = TestPaths::fixturePath(QStringLiteral("bom/testbom.xlsx"));
+
+        BomParser parser;
+        const QStringList ids = parser.parse(xlsxPath);
+
+        // 验证解析出有效的 LCSC 编号
+        QVERIFY(!ids.isEmpty());
+        for (const QString& id : ids) {
+            QVERIFY2(BomParser::validateId(id), qPrintable(QStringLiteral("Invalid LCSC ID in XLSX: %1").arg(id)));
+        }
+    }
+
+    void parseXlsxDeduplicatesIds() {
+        const QString xlsxPath = TestPaths::fixturePath(QStringLiteral("bom/testbom.xlsx"));
+
+        BomParser parser;
+        const QStringList ids = parser.parse(xlsxPath);
+
+        // 验证去重
+        QSet<QString> uniqueIds(ids.begin(), ids.end());
+        QCOMPARE(ids.size(), uniqueIds.size());
+    }
+
+    void fileReaderReadBomFileXlsx() {
+        const QString xlsxPath = TestPaths::fixturePath(QStringLiteral("bom/testbom.xlsx"));
+
+        QString error;
+        const QStringList ids = FileReader::readBomFile(xlsxPath, error);
+
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY(!ids.isEmpty());
+    }
 };
 
 QTEST_GUILESS_MAIN(TestBomParser)
