@@ -6,6 +6,7 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Loader {
     id: resultsLoader
+    objectName: "exportResultsCard"
     // 外部依赖
     property var exportProgressController
     active: resultsLoader.exportProgressController ? (resultsLoader.exportProgressController.isExporting || resultsLoader.exportProgressController.resultsList.length > 0) : false
@@ -39,6 +40,7 @@ Loader {
 
             Rectangle {
                 id: filterSegmentedControl
+                objectName: "exportResultsFilterSegmentedControl"
                 Layout.preferredWidth: 560
                 Layout.preferredHeight: 40
                 Layout.alignment: Qt.AlignLeft
@@ -99,6 +101,7 @@ Loader {
                     // 全部
 
                     Item {
+                        objectName: "exportResultsFilterAllButton"
                         width: (filterSegmentedControl.width - 8) / 4
                         height: parent.height
                         Text {
@@ -124,6 +127,7 @@ Loader {
                     // 导出中
 
                     Item {
+                        objectName: "exportResultsFilterExportingButton"
                         width: (filterSegmentedControl.width - 8) / 4
                         height: parent.height
                         enabled: resultsLoader.exportProgressController.filteredPendingCount > 0
@@ -151,6 +155,7 @@ Loader {
                     // 成功
 
                     Item {
+                        objectName: "exportResultsFilterSuccessButton"
                         width: (filterSegmentedControl.width - 8) / 4
                         height: parent.height
                         enabled: resultsLoader.exportProgressController.successCount > 0
@@ -178,6 +183,7 @@ Loader {
                     // 失败
 
                     Item {
+                        objectName: "exportResultsFilterFailedButton"
                         width: (filterSegmentedControl.width - 8) / 4
                         height: parent.height
                         enabled: resultsLoader.exportProgressController.failureCount > 0
@@ -207,6 +213,7 @@ Loader {
             // 结果列表（使用 GridView 实现五列显示）
             GridView {
                 id: resultsList
+                objectName: "exportResultsList"
                 Layout.fillWidth: true
                 Layout.minimumHeight: 200
                 Layout.preferredHeight: visible ? 500 : 0
@@ -245,6 +252,7 @@ Loader {
                 ]
                 filterOnGroup: "display"
                 delegate: ResultListItem {
+                    objectName: "exportResultItem_" + (modelData.componentId || "")
                     width: resultsList.cellWidth - AppStyle.spacing.md
                     anchors.horizontalCenter: parent ? undefined : undefined
                     componentId: modelData.componentId || ""

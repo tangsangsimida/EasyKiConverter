@@ -285,6 +285,7 @@ Rectangle {
 
         Item {
             id: retryButton
+            objectName: "retryResultButton"
             visible: status === "failed"
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
@@ -308,6 +309,7 @@ Rectangle {
 
         Item {
             id: deleteButton
+            objectName: "deleteResultButton"
             visible: status === "failed"
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28

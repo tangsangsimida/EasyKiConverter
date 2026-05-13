@@ -37,6 +37,7 @@ set(QML_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportSettingsCard.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportFlow.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportProgressCard.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportResultsCard.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_Card.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ControllerBinding.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ThemeBinding.qml
