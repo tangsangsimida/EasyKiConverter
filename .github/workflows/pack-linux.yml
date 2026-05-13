@@ -571,7 +571,12 @@ jobs:
           echo "✓ AppRun created successfully"
 
       - name: 'CCache Stats'
-        run: ccache -sv
+        run: |
+          ccache -sv
+          echo "## CCache Statistics" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ccache -s >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: 'Build Statistics'
         if: always()

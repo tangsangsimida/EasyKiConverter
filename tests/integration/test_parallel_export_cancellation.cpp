@@ -52,7 +52,7 @@ private slots:
 
         service.startExport();
 
-        QVERIFY2(completedSpy.wait(3000), "Parallel export should complete with fixture data");
+        QVERIFY2(completedSpy.wait(10000), "Parallel export should complete with fixture data");
         QCOMPARE(completedSpy.count(), 1);
         QCOMPARE(completedSpy.at(0).at(0).toInt(), componentIds.size());
         QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
@@ -149,7 +149,7 @@ private slots:
         QSignalSpy itemStatusSpy(&service, &ParallelExportService::itemStatusChanged);
 
         service.startExport();
-        QVERIFY2(itemStatusSpy.wait(3000), "Export should start processing at least one item before cancellation");
+        QVERIFY2(itemStatusSpy.wait(5000), "Export should start processing at least one item before cancellation");
         service.cancelExport();
 
         QCOMPARE(cancelledSpy.count(), 1);

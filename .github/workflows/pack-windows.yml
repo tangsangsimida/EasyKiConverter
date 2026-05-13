@@ -37,8 +37,8 @@ jobs:
         config:
           - {
               arch: 'x64',
-              generator: 'Visual Studio 17 2022',
-              gen_arch: '-A x64',
+              generator: 'Ninja',
+              gen_arch: '',
               vcpkg_triplet: 'x64-windows',
               qt_arch: 'win64_msvc2022_64',
               qt_arch_install: 'msvc2022_64',
@@ -90,6 +90,9 @@ jobs:
           enable-ccache: 'false'
           enable-sccache: 'true'
 
+      - name: 'Install Ninja'
+        run: choco install ninja -y --no-progress
+
       - name: 'Setup Inno Setup'
         if: matrix.type == 'installer'
         shell: pwsh
@@ -120,7 +123,12 @@ jobs:
           cmake --build build --config Release --parallel
 
       - name: 'sccache Stats'
-        run: sccache --show-stats
+        run: |
+          sccache --show-stats
+          echo "## sccache Statistics" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sccache --show-stats >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: 'Build Statistics'
         if: always()
