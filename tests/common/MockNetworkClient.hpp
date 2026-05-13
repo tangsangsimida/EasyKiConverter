@@ -27,6 +27,15 @@ public:
         m_getResponses.insert(url, result);
     }
 
+    void addResponse(const QString& url, const QByteArray& data, int statusCode = 200) {
+        NetworkResult result;
+        result.success = true;
+        result.statusCode = statusCode;
+        result.data = data;
+        result.diagnostic.url = url;
+        m_getResponses.insert(url, result);
+    }
+
     void addErrorResponse(const QString& url, const QString& error, int statusCode = 0) {
         NetworkResult result;
         result.success = false;

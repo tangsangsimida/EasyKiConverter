@@ -122,6 +122,26 @@ target_include_directories(test_export_type_stage PRIVATE
 )
 add_test(NAME test_export_type_stage COMMAND test_export_type_stage)
 
+add_executable(test_fetch_worker
+    test_fetch_worker.cpp
+    ${CMAKE_SOURCE_DIR}/src/workers/FetchWorker.cpp
+    ${CMAKE_SOURCE_DIR}/src/services/ConfigService.cpp
+    ../common/MockNetworkClient.hpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_fetch_worker PRIVATE
+    Qt6::Test
+    Qt6::Network
+    EasyKiConverterNetwork
+    EasyKiConverterModels
+    EasyKiConverterUtils
+)
+target_include_directories(test_fetch_worker PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_fetch_worker COMMAND test_fetch_worker)
+
 add_executable(test_process_worker
     test_process_worker.cpp
     ${CMAKE_SOURCE_DIR}/src/workers/ProcessWorker.cpp
@@ -412,6 +432,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_config_service
     test_component_service
     test_export_type_stage
+    test_fetch_worker
     test_process_worker
     test_write_worker
     test_kicad_graphics_generators

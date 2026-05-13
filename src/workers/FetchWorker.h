@@ -29,12 +29,14 @@ public:
      * @param need3DModel 是否需要3D模型
      * @param fetch3DOnly 是否只获取3D模型（复用已有的符号/封装数据）
      * @param existing3DUuid 已有的3D模型UUID（如果非空，直接下载3D模型，无需获取CAD数据）
+     * @param networkClient 可选网络客户端（测试注入；生产默认使用 NetworkClient 单例）
      * @param parent 父对象
      */
     explicit FetchWorker(const QString& componentId,
                          bool need3DModel,
                          bool fetch3DOnly = false,
                          const QString& existing3DUuid = QString(),
+                         INetworkClient* networkClient = nullptr,
                          QObject* parent = nullptr);
 
     /**
@@ -99,6 +101,7 @@ private:
     bool m_fetch3DOnly;  // 是否只获取3D模型
     QString m_existing3DUuid;  // 已有的3D模型UUID
 
+    INetworkClient* m_networkClient;
     AsyncNetworkRequest* m_currentRequest;
     QMutex m_replyMutex;
     QAtomicInt m_isAborted;
