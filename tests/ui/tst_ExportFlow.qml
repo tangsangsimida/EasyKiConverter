@@ -25,9 +25,19 @@ TestCase {
         property bool lastExportSymbol: false
         property bool lastExportFootprint: false
         property bool lastExportModel3D: false
+        property int lastExportModel3DFormat: -1
+        property int lastExportModel3DPathMode: -1
+        property bool lastExportPreviewImages: false
+        property bool lastExportDatasheet: false
+        property bool lastOverwriteExistingFiles: false
+        property bool lastUpdateMode: false
+        property bool lastDebugMode: false
+        property string lastSymbolLibraryDescription: ""
+        property string lastFootprintLibraryDescription: ""
+        property string lastFootprintLibraryKeywords: ""
         property bool openLastExportedFolderResult: true
 
-        function startExport(componentIds, outputPath, libName, exportSymbol, exportFootprint, exportModel3D) {
+        function startExport(componentIds, outputPath, libName, exportSymbol, exportFootprint, exportModel3D, exportModel3DFormat, exportModel3DPathMode, exportPreviewImages, exportDatasheet, overwriteExistingFiles, updateMode, debugMode, symbolLibraryDescription, footprintLibraryDescription, footprintLibraryKeywords) {
             startExportCallCount += 1
             lastComponentIds = componentIds
             lastOutputPath = outputPath
@@ -35,6 +45,16 @@ TestCase {
             lastExportSymbol = exportSymbol
             lastExportFootprint = exportFootprint
             lastExportModel3D = exportModel3D
+            lastExportModel3DFormat = exportModel3DFormat
+            lastExportModel3DPathMode = exportModel3DPathMode
+            lastExportPreviewImages = exportPreviewImages
+            lastExportDatasheet = exportDatasheet
+            lastOverwriteExistingFiles = overwriteExistingFiles
+            lastUpdateMode = updateMode
+            lastDebugMode = debugMode
+            lastSymbolLibraryDescription = symbolLibraryDescription
+            lastFootprintLibraryDescription = footprintLibraryDescription
+            lastFootprintLibraryKeywords = footprintLibraryKeywords
         }
 
         function cancelExport() {
@@ -104,11 +124,31 @@ TestCase {
         progressController.lastExportSymbol = false
         progressController.lastExportFootprint = false
         progressController.lastExportModel3D = false
+        progressController.lastExportModel3DFormat = -1
+        progressController.lastExportModel3DPathMode = -1
+        progressController.lastExportPreviewImages = false
+        progressController.lastExportDatasheet = false
+        progressController.lastOverwriteExistingFiles = false
+        progressController.lastUpdateMode = false
+        progressController.lastDebugMode = false
+        progressController.lastSymbolLibraryDescription = ""
+        progressController.lastFootprintLibraryDescription = ""
+        progressController.lastFootprintLibraryKeywords = ""
         progressController.openLastExportedFolderResult = true
 
         settingsController.exportSymbol = true
         settingsController.exportFootprint = true
         settingsController.exportModel3D = false
+        settingsController.exportModel3DFormat = 3
+        settingsController.exportModel3DPathMode = 0
+        settingsController.exportPreviewImages = false
+        settingsController.exportDatasheet = false
+        settingsController.overwriteExistingFiles = false
+        settingsController.exportMode = 0
+        settingsController.debugMode = false
+        settingsController.symbolLibraryDescription = ""
+        settingsController.footprintLibraryDescription = ""
+        settingsController.footprintLibraryKeywords = ""
         componentListController.ids = ["C2040", "C25804"]
         buttons.exportErrorDialog.close()
         wait(0)
@@ -184,6 +224,56 @@ TestCase {
         compare(progressController.lastExportSymbol, true)
         compare(progressController.lastExportFootprint, true)
         compare(progressController.lastExportModel3D, false)
+    }
+
+    function test_startExportPassesAdvancedExportSettings() {
+        settingsController.exportSymbol = false
+        settingsController.exportFootprint = true
+        settingsController.exportModel3D = true
+        settingsController.exportModel3DFormat = 1
+        settingsController.exportModel3DPathMode = 2
+        settingsController.exportPreviewImages = true
+        settingsController.exportDatasheet = true
+        settingsController.overwriteExistingFiles = true
+        settingsController.exportMode = 1
+        settingsController.debugMode = true
+        settingsController.symbolLibraryDescription = "symbol library description"
+        settingsController.footprintLibraryDescription = "footprint library description"
+        settingsController.footprintLibraryKeywords = "resistor capacitor"
+        wait(0)
+
+        mouseClick(startButton())
+
+        compare(progressController.startExportCallCount, 1)
+        compare(progressController.lastExportSymbol, false)
+        compare(progressController.lastExportFootprint, true)
+        compare(progressController.lastExportModel3D, true)
+        compare(progressController.lastExportModel3DFormat, 1)
+        compare(progressController.lastExportModel3DPathMode, 2)
+        compare(progressController.lastExportPreviewImages, true)
+        compare(progressController.lastExportDatasheet, true)
+        compare(progressController.lastOverwriteExistingFiles, true)
+        compare(progressController.lastUpdateMode, true)
+        compare(progressController.lastDebugMode, true)
+        compare(progressController.lastSymbolLibraryDescription, "symbol library description")
+        compare(progressController.lastFootprintLibraryDescription, "footprint library description")
+        compare(progressController.lastFootprintLibraryKeywords, "resistor capacitor")
+    }
+
+    function test_model3DOnlyExportIsAllowed() {
+        settingsController.exportSymbol = false
+        settingsController.exportFootprint = false
+        settingsController.exportModel3D = true
+        wait(0)
+
+        compare(startButton().enabled, true)
+
+        mouseClick(startButton())
+
+        compare(progressController.startExportCallCount, 1)
+        compare(progressController.lastExportSymbol, false)
+        compare(progressController.lastExportFootprint, false)
+        compare(progressController.lastExportModel3D, true)
     }
 
     function test_exportingStateShowsStopAndDisablesStart() {

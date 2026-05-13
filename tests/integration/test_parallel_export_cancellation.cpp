@@ -146,8 +146,10 @@ private slots:
         QSignalSpy cancelledSpy(&service, &ParallelExportService::cancelled);
         QSignalSpy completedSpy(&service, &ParallelExportService::completed);
         QSignalSpy failedSpy(&service, &ParallelExportService::failed);
+        QSignalSpy itemStatusSpy(&service, &ParallelExportService::itemStatusChanged);
 
         service.startExport();
+        QVERIFY2(itemStatusSpy.wait(3000), "Export should start processing at least one item before cancellation");
         service.cancelExport();
 
         QCOMPARE(cancelledSpy.count(), 1);

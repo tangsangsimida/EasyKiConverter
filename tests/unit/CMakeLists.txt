@@ -486,5 +486,5 @@ set(EASYKICONVERTER_UNIT_TESTS
 
 set_tests_properties(${EASYKICONVERTER_UNIT_TESTS}
     PROPERTIES
-        LABELS "unit"
+        LABELS "unit;fast"
 )

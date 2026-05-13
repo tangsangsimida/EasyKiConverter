@@ -37,6 +37,16 @@ TestCase {
             getExitPreferenceCount += 1
             return preference
         }
+
+        function getWindowState() {
+            return {
+                "x": -9999,
+                "y": -9999,
+                "width": -1,
+                "height": -1,
+                "maximized": false
+            }
+        }
     }
 
     QtObject {

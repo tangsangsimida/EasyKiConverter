@@ -35,10 +35,10 @@ add_test(NAME test_parallel_export_cancellation COMMAND test_parallel_export_can
 
 set_tests_properties(test_fixture_to_kicad_export
     PROPERTIES
-        LABELS "integration"
+        LABELS "integration;export-flow"
 )
 
 set_tests_properties(test_parallel_export_cancellation
     PROPERTIES
-        LABELS "integration"
+        LABELS "integration;export-flow"
 )
