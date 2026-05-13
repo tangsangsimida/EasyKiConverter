@@ -1,4 +1,4 @@
-﻿# Core 模块
+# Core 模块
 
 add_subdirectory(easyeda)
 add_subdirectory(kicad)
@@ -26,4 +26,5 @@ target_include_directories(EasyKiConverterCore
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../..
+        ${CMAKE_BINARY_DIR}/generated
 )

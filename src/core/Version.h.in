@@ -1,0 +1,5 @@
+#pragma once
+
+namespace EasyKiConverter {
+constexpr const char* APP_VERSION = "@PROJECT_VERSION@";
+}  // namespace EasyKiConverter

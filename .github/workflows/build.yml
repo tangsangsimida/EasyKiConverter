@@ -1,4 +1,4 @@
-﻿name: Build
+name: Build
 
 on:
   push:
@@ -198,10 +198,9 @@ jobs:
         shell: pwsh
         run: |
           choco install ccache -y --no-progress
-          $ccachePath = (Get-Command ccache).Source
           $wrapDir = "C:\ccache-wrap"
           New-Item -ItemType Directory -Force -Path $wrapDir | Out-Null
-          Copy-Item $ccachePath "$wrapDir\cl.exe"
+          Set-Content -Path "$wrapDir\cl.bat" -Value "@echo off`r`nccache cl.exe %*"
           echo "$wrapDir" >> $env:GITHUB_PATH
           echo "CCACHE_DIR=${{ runner.temp }}\ccache" >> $env:GITHUB_ENV
           echo "CCACHE_MAXSIZE=2G" >> $env:GITHUB_ENV

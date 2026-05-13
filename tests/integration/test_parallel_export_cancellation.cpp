@@ -110,7 +110,10 @@ private slots:
 
         service.startExport();
 
-        QVERIFY2(failedSpy.wait(1000), "Export should fail immediately with invalid data");
+        // Service state is set synchronously; always check first
+        QCOMPARE(service.getProgress().currentStage, ExportOverallProgress::Stage::Failed);
+        QVERIFY(!service.isRunning());
+        QTest::qWait(100);
         QCOMPARE(failedSpy.count(), 1);
         QCOMPARE(failedSpy.at(0).at(0).toString(), QStringLiteral("No exportable components after preload"));
         QCOMPARE(completedSpy.count(), 0);

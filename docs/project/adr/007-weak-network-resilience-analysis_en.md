@@ -30,7 +30,7 @@ A comprehensive analysis of the project's weak network resilience was conducted 
 
 | Component | Timeout | Retry | Backoff Strategy | Weak Network Rating |
 |-----------|---------|-------|-----------------|-------------------|
-| `FetchWorker` | 8-10s | 3x (no retry on timeout) | Exponential ×2 | Poor |
+| `FetchWorker` | 8-10s | 3x (no retry on timeout) | Exponential Ã—2 | Poor |
 | `NetworkUtils` | 60s | 5x (retries on timeout) | None (0ms) | Good |
 | `NetworkWorker` | Yes (QTimer) | 3x | None | Fair |
 | `ComponentService` | 15-45s | 3x | Random | Fair |

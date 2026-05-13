@@ -48,6 +48,13 @@ set(PROJECT_VERSION ${PROJECT_VERSION})
 message(STATUS "Project version: ${PROJECT_VERSION}")
 message(STATUS "Major: ${PROJECT_VERSION_MAJOR}, Minor: ${PROJECT_VERSION_MINOR}, Patch: ${PROJECT_VERSION_PATCH}")
 
+# 生成版本头文件，统一版本来源
+configure_file(
+    ${CMAKE_SOURCE_DIR}/src/core/Version.h.in
+    ${CMAKE_BINARY_DIR}/generated/Version.h
+    @ONLY
+)
+
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -352,6 +359,7 @@ endif()
 target_include_directories(appEasyKiconverter_Cpp_Version
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_BINARY_DIR}/generated
 )
 
 # 编译选项

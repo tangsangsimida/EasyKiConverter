@@ -1,4 +1,4 @@
-﻿# EasyKiConverter 源码模块
+# EasyKiConverter 源码模块
 
 # 添加子模块（注意顺序：Utils 需要最先添加，因为其他模块依赖日志系统）
 add_subdirectory(utils)
