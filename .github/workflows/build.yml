@@ -185,7 +185,7 @@ jobs:
         run: |
           cmake -B build -G "Ninja" `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
-            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
@@ -195,7 +195,7 @@ jobs:
 
       - name: 'Build'
         run: |
-          cmake --build build --config $env:BUILD_TYPE --parallel 16
+          cmake --build build --config ${{ env.BUILD_TYPE }} --parallel 16
 
       - name: 'sccache Stats'
         run: |
@@ -221,7 +221,7 @@ jobs:
       - name: 'Run Tests'
         run: |
           $env:QT_QPA_PLATFORM = "offscreen"
-          ctest --test-dir build -C $env:BUILD_TYPE --output-on-failure --no-tests=error
+          ctest --test-dir build -C ${{ env.BUILD_TYPE }} --output-on-failure --no-tests=error
 
   macos-build:
     name: 'Build macOS'
