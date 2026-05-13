@@ -14,11 +14,14 @@ class TestBomParser : public QObject {
     Q_OBJECT
 
 private:
-    // 创建临时 CSV 文件并返回路径，避免重复 QTemporaryDir + QFile 样板代码
+    // 创建临时 CSV 文件并返回路径；失败时返回空字符串
     QString createTempCsv(QTemporaryDir& tempDir, const QString& name, const QStringList& lines) {
         const QString filePath = tempDir.filePath(name);
         QFile file(filePath);
-        Q_ASSERT(file.open(QIODevice::WriteOnly | QIODevice::Text));
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            qWarning() << "Failed to create temp CSV:" << filePath;
+            return {};
+        }
         QTextStream stream(&file);
         for (const QString& line : lines) {
             stream << line << "\n";
@@ -58,6 +61,7 @@ private slots:
                                                 QStringLiteral("C1,\"c21190\",quoted lowercase"),
                                                 QStringLiteral("U1,C21190,duplicate canonical"),
                                                 QStringLiteral("U2,\"C14663\",quoted canonical")});
+        QVERIFY2(!filePath.isEmpty(), "Failed to create temp CSV");
 
         BomParser parser;
         QCOMPARE(parser.parse(filePath), QStringList({QStringLiteral("C21190"), QStringLiteral("C14663")}));
@@ -69,6 +73,7 @@ private slots:
 
         const QString unsupportedPath =
             createTempCsv(tempDir, QStringLiteral("bom.json"), {QStringLiteral("{\"lcsc\":\"C12345\"}")});
+        QVERIFY2(!unsupportedPath.isEmpty(), "Failed to create temp JSON");
 
         BomParser parser;
         QVERIFY(parser.parse(unsupportedPath).isEmpty());
@@ -95,6 +100,7 @@ private slots:
                                                 QStringLiteral("R1,C0402"),
                                                 QStringLiteral("C1,C123"),
                                                 QStringLiteral("U1,NOT_AN_ID")});
+        QVERIFY2(!filePath.isEmpty(), "Failed to create temp CSV");
 
         QString error;
         const QStringList ids = FileReader::readBomFile(filePath, error);

@@ -18,7 +18,7 @@ private slots:
         QVERIFY(tempDir.isValid());
 
         const QString projectRoot = tempDir.path();
-        writeText(QDir(projectRoot).filePath(QStringLiteral("Board.kicad_pro")), QStringLiteral("{}\n"));
+        QVERIFY(writeText(QDir(projectRoot).filePath(QStringLiteral("Board.kicad_pro")), QStringLiteral("{}\n")));
 
         const QString outputDir = QDir(projectRoot).filePath(QStringLiteral("exports"));
         QVERIFY(QDir().mkpath(outputDir));
@@ -54,7 +54,7 @@ private slots:
         QVERIFY(tempDir.isValid());
 
         const QString projectRoot = tempDir.path();
-        writeText(QDir(projectRoot).filePath(QStringLiteral("Board.kicad_pro")), QStringLiteral("{}\n"));
+        QVERIFY(writeText(QDir(projectRoot).filePath(QStringLiteral("Board.kicad_pro")), QStringLiteral("{}\n")));
 
         const QString outputDir = QDir(projectRoot).filePath(QStringLiteral("exports"));
         QVERIFY(QDir().mkpath(outputDir));
@@ -92,12 +92,20 @@ private slots:
     }
 
 private:
-    static void writeText(const QString& path, const QString& content) {
+    static bool writeText(const QString& path, const QString& content) {
         QFile file(path);
-        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTest::qFail(
+                qPrintable(QStringLiteral("Unable to open file for writing '%1': %2").arg(path, file.errorString())),
+                __FILE__,
+                __LINE__);
+            return false;
+        }
         QTextStream out(&file);
         out.setEncoding(QStringConverter::Utf8);
         out << content;
+        file.close();
+        return true;
     }
 
     static QString readText(const QString& path) {
