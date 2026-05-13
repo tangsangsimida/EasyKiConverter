@@ -2,7 +2,6 @@
 
 #include <QByteArray>
 #include <QCoreApplication>
-#include <QThreadStorage>
 
 namespace EasyKiConverter {
 
@@ -10,16 +9,15 @@ QtMessageHandler QtLogAdapter::s_originalHandler = nullptr;
 LogModule QtLogAdapter::s_defaultModule = LogModule::Core;
 bool QtLogAdapter::s_preserveOriginal = false;
 bool QtLogAdapter::s_installed = false;
-QAtomicInt QtLogAdapter::s_inHandler(0);
-
-// 线程本地存储，用于检测递归调用
-static QThreadStorage<bool*> t_recursionGuard;
+thread_local bool QtLogAdapter::s_inHandler = false;
 
 void QtLogAdapter::install() {
     if (s_installed) {
         return;
     }
 
+    // 防止上次 install/uninstall 周期中异常退出留下的脏状态
+    s_inHandler = false;
     s_originalHandler = qInstallMessageHandler(qtMessageHandler);
     s_installed = true;
 }
@@ -32,6 +30,7 @@ void QtLogAdapter::uninstall() {
     qInstallMessageHandler(s_originalHandler);
     s_originalHandler = nullptr;
     s_installed = false;
+    s_inHandler = false;
 }
 
 void QtLogAdapter::setDefaultModule(LogModule module) {
@@ -52,25 +51,22 @@ bool QtLogAdapter::preserveOriginal() {
 
 void QtLogAdapter::qtMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg) {
     // === 递归调用检测 ===
-    // 检查是否已经在处理日志（防止死锁）
-    if (s_inHandler.loadRelaxed()) {
+    // 检查是否已经在处理日志（防止递归栈溢出）
+    if (s_inHandler) {
         // 递归调用检测到，使用原始处理器或直接输出到 stderr
         if (s_originalHandler) {
             s_originalHandler(type, context, msg);
         } else {
-            // 后备方案：直接输出到 stderr
             fprintf(stderr, "[RECURSIVE] %s\n", msg.toUtf8().constData());
         }
         return;
     }
 
-    // 设置递归保护标志
-    s_inHandler.storeRelaxed(1);
+    s_inHandler = true;
 
-    // 使用 RAII 确保标志在退出时被清除
     struct RecursionGuardReset {
         ~RecursionGuardReset() {
-            s_inHandler.storeRelaxed(0);
+            s_inHandler = false;
         }
     } guardReset;
 
@@ -132,10 +128,9 @@ void QtLogAdapter::qtMessageHandler(QtMsgType type, const QMessageLogContext& co
 
     // 如果需要保留原始行为
     if (s_preserveOriginal && s_originalHandler) {
-        // 临时清除递归标志以允许原始处理器工作
-        s_inHandler.storeRelaxed(0);
+        s_inHandler = false;
         s_originalHandler(type, context, msg);
-        s_inHandler.storeRelaxed(1);
+        s_inHandler = true;
     }
 
     // Qt 的 qFatal 默认会终止程序，这里保持这个行为

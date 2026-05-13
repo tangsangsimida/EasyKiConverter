@@ -4,7 +4,6 @@
 #    include "LogMacros.h"
 #    include "Logger.h"
 
-#    include <QAtomicInt>
 #    include <QtGlobal>
 
 namespace EasyKiConverter {
@@ -73,8 +72,8 @@ private:
     static bool s_preserveOriginal;
     static bool s_installed;
 
-    // 线程本地递归检测标志
-    static QAtomicInt s_inHandler;
+    // 线程本地递归检测标志 — thread_local 确保每个线程独立，避免并发线程的 Qt 消息互相阻塞
+    static thread_local bool s_inHandler;
 };
 
 }  // namespace EasyKiConverter

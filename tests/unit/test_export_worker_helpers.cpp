@@ -1,8 +1,7 @@
-#include "services/export/ExportWorkerHelpers.h"
-
 #include "models/ComponentData.h"
 #include "models/Model3DData.h"
 #include "models/SymbolData.h"
+#include "services/export/ExportWorkerHelpers.h"
 
 #include <QDir>
 #include <QTemporaryDir>

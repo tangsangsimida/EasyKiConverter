@@ -399,17 +399,15 @@ void TestLogging::testQtLogAdapter() {
 
     // 安装适配器
     QtLogAdapter::install();
+    QVERIFY2(QtLogAdapter::isInstalled(), "QtLogAdapter should be installed");
     QtLogAdapter::setDefaultModule(LogModule::Core);
 
-    // 使用 Qt 日志
-    qDebug() << "Qt debug message";
+    // 使用 Qt 日志 — 用 qInfo/qWarning 而非 qDebug，因为 CI Qt release 构建下 qDebug 可能是 no-op
+    qInfo() << "Qt info message";
     qWarning() << "Qt warning message";
 
-    // 需要处理事件循环
-    QCoreApplication::processEvents();
-
-    // 验证 Qt 日志被捕获
-    QVERIFY(spy.count() >= 2);
+    // 验证 Qt 日志被捕获 — QTRY_VERIFY 适应 offscreen 平台下可能的异步投递
+    QTRY_VERIFY_WITH_TIMEOUT(spy.count() == 2, 1000);
 
     // 卸载适配器
     QtLogAdapter::uninstall();
