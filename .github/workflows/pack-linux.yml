@@ -69,7 +69,16 @@ jobs:
             libxcb-xfixes0 \
             libxcb-xinerama0 \
             libtiff-dev \
-            ccache
+            ccache \
+            ninja-build
+
+      - name: 'Setup CCache'
+        uses: hendrikmuhs/ccache-action@v1.2.23
+        with:
+          key: ${{ runner.os }}-pack-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+          restore-keys: |
+            ${{ runner.os }}-pack-
+          max-size: '2G'
 
       - name: Install Qt 6.10.2
         run: |
