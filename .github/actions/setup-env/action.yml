@@ -80,7 +80,7 @@ runs:
 
     - name: 'Setup Python for macOS Qt installation'
       if: runner.os == 'macOS'
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.12'
 
@@ -99,7 +99,7 @@ runs:
 
     - name: 'Setup CCache'
       if: inputs.enable-ccache == 'true' && (runner.os == 'Linux' || runner.os == 'macOS')
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@v1.2.23
       with:
         key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
 

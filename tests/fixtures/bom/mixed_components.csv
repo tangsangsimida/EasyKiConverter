@@ -1,0 +1,8 @@
+Designator,Quantity,LCSC Part,Comment
+R1,1,C23186,valid canonical id
+C1,2,c23166,valid lowercase id
+U1,1,C23186,duplicate id
+R2,4,C0402,excluded package placeholder
+J1,1,C123,too short
+TP1,1,NOT_AN_ID,invalid token
+U2,1,"c13564",quoted lowercase id

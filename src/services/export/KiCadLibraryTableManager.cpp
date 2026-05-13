@@ -132,15 +132,17 @@ bool KiCadLibraryTableManager::updateProjectLibraryTable(const QString& projectR
     const QString tablePath = projectDir.filePath(tableFileName);
 
     QString content;
-    QFile existingFile(tablePath);
-    if (existingFile.exists()) {
-        if (!existingFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            qWarning() << "KiCadLibraryTableManager: Failed to read library table:" << tablePath;
-            return false;
+    {
+        QFile existingFile(tablePath);
+        if (existingFile.exists()) {
+            if (!existingFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                qWarning() << "KiCadLibraryTableManager: Failed to read library table:" << tablePath;
+                return false;
+            }
+            QTextStream in(&existingFile);
+            in.setEncoding(QStringConverter::Utf8);
+            content = in.readAll();
         }
-        QTextStream in(&existingFile);
-        in.setEncoding(QStringConverter::Utf8);
-        content = in.readAll();
     }
 
     if (content.trimmed().isEmpty()) {

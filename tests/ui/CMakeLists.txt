@@ -35,6 +35,9 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/ResponsiveHelper.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_BasicComponents.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportSettingsCard.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_Card.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_ControllerBinding.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_ThemeBinding.qml
 )
 
 set(QML_RESOURCES
@@ -86,3 +89,9 @@ target_include_directories(test_ui PRIVATE
 target_compile_definitions(test_ui PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_test(NAME test_ui COMMAND test_ui)
+
+set_tests_properties(test_ui
+    PROPERTIES
+        LABELS "ui"
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)

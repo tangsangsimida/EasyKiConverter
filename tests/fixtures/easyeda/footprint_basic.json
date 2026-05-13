@@ -1,0 +1,45 @@
+{
+  "SMT": true,
+  "packageDetail": {
+    "uuid": "footprint-uuid",
+    "docType": 4,
+    "datastrid": "footprint-datastrid",
+    "writable": false,
+    "updateTime": 1700000002,
+    "dataStr": {
+      "BBox": {
+        "x": 0,
+        "y": 0,
+        "width": 100,
+        "height": 50
+      },
+      "head": {
+        "editorVersion": "6.5.0",
+        "puuid": "project-uuid",
+        "utime": 1700000003,
+        "importFlag": true,
+        "hasIdFlag": true,
+        "newgId": false,
+        "c_para": {
+          "package": "FIXTURE_FOOTPRINT",
+          "3DModel": "FIXTURE_MODEL",
+          "link": "https://example.test/footprint",
+          "Contributor": "Fixture Author"
+        }
+      },
+      "shape": [
+        "PAD~rect~10~20~30~40~1~NET~1~0~~90~pad1~0~~Y~0",
+        "TRACK~1~3~~0 0 100 50~track1~0",
+        "RECT~5~6~20~10~3~rect1~1~0"
+      ],
+      "layers": [
+        "1~TopLayer~#ff0000~true~true~0~0",
+        "3~TopSilkLayer~#ffffff~true~true~0~0"
+      ],
+      "objects": [
+        "Pad~true~true",
+        "Track~true~true"
+      ]
+    }
+  }
+}

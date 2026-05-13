@@ -62,11 +62,13 @@ FetchWorker::FetchWorker(const QString& componentId,
                          bool need3DModel,
                          bool fetch3DOnly,
                          const QString& existing3DUuid,
+                         INetworkClient* networkClient,
                          QObject* parent)
     : m_componentId(componentId)
     , m_need3DModel(need3DModel)
     , m_fetch3DOnly(fetch3DOnly)
     , m_existing3DUuid(existing3DUuid)
+    , m_networkClient(networkClient)
     , m_currentRequest(nullptr)
     , m_isAborted(0) {
     Q_UNUSED(parent);
@@ -264,7 +266,45 @@ QByteArray FetchWorker::httpGet(const QString& url,
     RequestProfile profile = RequestProfiles::fromType(resourceType);
     profile.connectTimeoutMs = timeoutMs;
     profile.readTimeoutMs = qMax(profile.readTimeoutMs, timeoutMs);
-    RetryPolicy policy = RetryPolicy::fromProfile(profile, ConfigService::instance()->getWeakNetworkSupport());
+    bool weakNetworkSupport = false;
+    if (!m_networkClient) {
+        weakNetworkSupport = ConfigService::instance()->getWeakNetworkSupport();
+    }
+    RetryPolicy policy = RetryPolicy::fromProfile(profile, weakNetworkSupport);
+
+    auto finishResult = [this, url, status](const NetworkResult& result) -> QByteArray {
+        if (result.wasCancelled && m_isAborted.loadRelaxed()) {
+            return QByteArray();
+        }
+
+        if (status) {
+            ComponentExportStatus::NetworkDiagnostics diag;
+            diag.url = result.diagnostic.url.isEmpty() ? url : result.diagnostic.url;
+            diag.statusCode = result.statusCode;
+            diag.errorString = result.success ? QString() : result.error;
+            diag.retryCount = result.retryCount;
+            diag.latencyMs = result.elapsedMs;
+            diag.wasRateLimited = result.diagnostic.wasRateLimited;
+            status->networkDiagnostics.append(diag);
+        }
+
+        if (!result.success) {
+            if (result.statusCode == 429) {
+                QMutexLocker locker(&s_rateLimitMutex);
+                s_lastRateLimitTime = QDateTime::currentDateTime();
+                s_backoffMs = qMin(s_backoffMs == 0 ? 1000 : s_backoffMs * 2, 8000);
+            }
+            return QByteArray();
+        }
+
+        // Note: AsyncNetworkRequest already handles gzip decompression internally
+        // based on Content-Encoding header or magic bytes. result.data is already decompressed.
+        return result.data;
+    };
+
+    if (m_networkClient) {
+        return finishResult(m_networkClient->get(QUrl(url), resourceType, policy));
+    }
 
     AsyncNetworkRequest* request = NetworkClient::instance().getAsync(QUrl(url), resourceType, policy);
     if (!request) {
@@ -300,33 +340,7 @@ QByteArray FetchWorker::httpGet(const QString& url,
     }
     QMetaObject::invokeMethod(request, &QObject::deleteLater, Qt::QueuedConnection);
 
-    if (result.wasCancelled && m_isAborted.loadRelaxed()) {
-        return QByteArray();
-    }
-
-    if (status) {
-        ComponentExportStatus::NetworkDiagnostics diag;
-        diag.url = result.diagnostic.url.isEmpty() ? url : result.diagnostic.url;
-        diag.statusCode = result.statusCode;
-        diag.errorString = result.success ? QString() : result.error;
-        diag.retryCount = result.retryCount;
-        diag.latencyMs = result.elapsedMs;
-        diag.wasRateLimited = result.diagnostic.wasRateLimited;
-        status->networkDiagnostics.append(diag);
-    }
-
-    if (!result.success) {
-        if (result.statusCode == 429) {
-            QMutexLocker locker(&s_rateLimitMutex);
-            s_lastRateLimitTime = QDateTime::currentDateTime();
-            s_backoffMs = qMin(s_backoffMs == 0 ? 1000 : s_backoffMs * 2, 8000);
-        }
-        return QByteArray();
-    }
-
-    // Note: AsyncNetworkRequest already handles gzip decompression internally
-    // based on Content-Encoding header or magic bytes. result.data is already decompressed.
-    return result.data;
+    return finishResult(result);
 }
 
 QByteArray FetchWorker::decompressZip(const QByteArray& zipData) {

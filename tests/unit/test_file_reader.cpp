@@ -15,8 +15,10 @@ private slots:
     void cleanupTestCase();
 
     void testReadComponentListFile();
+    void testReadComponentListFileTrimsBlankLinesAndPreservesDuplicates();
     void testReadComponentListFileEmpty();
     void testReadComponentListFileNotFound();
+    void testReadComponentListFileOpenDirectoryFails();
     void testFileExists();
     void testGetFileExtension();
 
@@ -60,6 +62,17 @@ void TestFileReader::testReadComponentListFile() {
     QVERIFY(ids.contains("C23102"));
 }
 
+void TestFileReader::testReadComponentListFileTrimsBlankLinesAndPreservesDuplicates() {
+    QString content = "  C23186  \n\n\tC23166\t\nC23186\n";
+    QString filePath = createTempFile("components_with_spaces.txt", content);
+
+    QString error;
+    QStringList ids = FileReader::readComponentListFile(filePath, error);
+
+    QVERIFY(error.isEmpty());
+    QCOMPARE(ids, QStringList({QStringLiteral("C23186"), QStringLiteral("C23166"), QStringLiteral("C23186")}));
+}
+
 void TestFileReader::testReadComponentListFileEmpty() {
     QString content = "\n\n\n";
     QString filePath = createTempFile("empty.txt", content);
@@ -80,6 +93,15 @@ void TestFileReader::testReadComponentListFileNotFound() {
     QVERIFY(ids.isEmpty());
 }
 
+void TestFileReader::testReadComponentListFileOpenDirectoryFails() {
+    QString error;
+    QStringList ids = FileReader::readComponentListFile(m_tempDir->path(), error);
+
+    QVERIFY(!error.isEmpty());
+    QVERIFY(error.contains(QStringLiteral("无法打开输入文件")));
+    QVERIFY(ids.isEmpty());
+}
+
 void TestFileReader::testFileExists() {
     QString filePath = createTempFile("exists.txt", "test");
 
@@ -93,6 +115,8 @@ void TestFileReader::testGetFileExtension() {
     QCOMPARE(FileReader::getFileExtension("file.CSV"), "csv");
     QCOMPARE(FileReader::getFileExtension("file"), "");
     QCOMPARE(FileReader::getFileExtension("/path/to/file.txt"), "txt");
+    QCOMPARE(FileReader::getFileExtension("/path/to/archive.tar.gz"), "gz");
+    QCOMPARE(FileReader::getFileExtension("/path/to/.env"), "env");
 }
 
 QTEST_MAIN(TestFileReader)

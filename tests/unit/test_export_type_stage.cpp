@@ -1,6 +1,7 @@
 #include "models/ComponentData.h"
 #include "services/export/ExportTypeStage.h"
 #include "services/export/FootprintExportStage.h"
+#include "services/export/SymbolExportStage.h"
 
 #include <QDir>
 #include <QFile>
@@ -226,7 +227,117 @@ private slots:
         QVERIFY2(!content.contains(absolutePrefix), "Footprint should not contain absolute paths in relative mode");
     }
 
+    void symbolLibraryExportMergesMultipleComponentsIntoOneLibrary() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        SymbolExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = QStringLiteral("MergedSymbols");
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C5001")] = makeSymbolComponent(QStringLiteral("C5001"), QStringLiteral("SYM_A"));
+        cachedData[QStringLiteral("C5002")] = makeSymbolComponent(QStringLiteral("C5002"), QStringLiteral("SYM_B"));
+
+        QSignalSpy completedSpy(&stage, &SymbolExportStage::completed);
+        stage.start({QStringLiteral("C5001"), QStringLiteral("C5002")}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Symbol export should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 2);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
+
+        const QString symbolPath = tempDir.path() + QDir::separator() + QStringLiteral("MergedSymbols.kicad_sym");
+        QFile symbolFile(symbolPath);
+        QVERIFY(symbolFile.open(QIODevice::ReadOnly | QIODevice::Text));
+        const QString content = QString::fromUtf8(symbolFile.readAll());
+        QVERIFY(content.contains(QStringLiteral("(symbol \"SYM_A\"")));
+        QVERIFY(content.contains(QStringLiteral("(symbol \"SYM_B\"")));
+        QVERIFY(!QDir(tempDir.path() + QDir::separator() + QStringLiteral(".tmp")).exists());
+    }
+
+    void symbolLibraryExportReportsMissingSymbolData() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        SymbolExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = QStringLiteral("MissingSymbol");
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C6001")] = QSharedPointer<ComponentData>::create();
+
+        QSignalSpy completedSpy(&stage, &SymbolExportStage::completed);
+        QSignalSpy itemSpy(&stage, &SymbolExportStage::itemStatusChanged);
+        stage.start({QStringLiteral("C6001")}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Symbol export should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 1);
+        QVERIFY(!QFile::exists(tempDir.path() + QDir::separator() + QStringLiteral("MissingSymbol.kicad_sym")));
+
+        QVERIFY(itemSpy.count() >= 1);
+        const auto args = itemSpy.takeFirst();
+        QCOMPARE(args.at(0).toString(), QStringLiteral("C6001"));
+        const auto status = qvariant_cast<ExportItemStatus>(args.at(1));
+        QCOMPARE(status.status, ExportItemStatus::Status::Failed);
+        QCOMPARE(status.errorMessage, QStringLiteral("No symbol data"));
+    }
+
+    void symbolLibraryExportRollsBackTempFileOnCommitFailure() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString blockerPath = tempDir.path() + QDir::separator() + QStringLiteral("blocked");
+        QFile blocker(blockerPath);
+        QVERIFY(blocker.open(QIODevice::WriteOnly | QIODevice::Text));
+        blocker.write("not a directory");
+        blocker.close();
+
+        SymbolExportStage stage;
+        ExportOptions options;
+        options.outputPath = blockerPath;
+        options.libName = QStringLiteral("RollbackSymbols");
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C7001")] = makeSymbolComponent(QStringLiteral("C7001"), QStringLiteral("SYM_FAIL"));
+
+        QSignalSpy completedSpy(&stage, &SymbolExportStage::completed);
+        stage.start({QStringLiteral("C7001")}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Symbol export should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 1);
+        QVERIFY(!QFile::exists(blockerPath + QDir::separator() + QStringLiteral("RollbackSymbols.kicad_sym")));
+        QVERIFY(!QDir(blockerPath + QDir::separator() + QStringLiteral(".tmp")).exists());
+    }
+
 private:
+    static QSharedPointer<ComponentData> makeSymbolComponent(const QString& componentId, const QString& symbolName) {
+        auto componentData = QSharedPointer<ComponentData>::create();
+        componentData->setLcscId(componentId);
+
+        auto symbolData = QSharedPointer<SymbolData>::create();
+        SymbolInfo info;
+        info.name = symbolName;
+        info.prefix = QStringLiteral("U");
+        info.package = QStringLiteral("PKG_%1").arg(componentId);
+        symbolData->setInfo(info);
+        symbolData->setBbox({0, 0, 0, 0});
+
+        componentData->setSymbolData(symbolData);
+        return componentData;
+    }
+
     static QSharedPointer<ComponentData> makeFootprintComponent(const QString& componentId,
                                                                 const QString& footprintName,
                                                                 const QString& model3DName = QString()) {

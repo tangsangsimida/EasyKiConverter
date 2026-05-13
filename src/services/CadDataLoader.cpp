@@ -114,14 +114,17 @@ CadParseResult CadDataLoader::parseCadPayload(const QString& componentId, const 
     return parsed;
 }
 
-CadFetchTaskResult CadDataLoader::fetchAndParseCadData(const QString& componentId) {
+CadFetchTaskResult CadDataLoader::fetchAndParseCadData(const QString& componentId, INetworkClient* networkClient) {
     CadFetchTaskResult taskResult;
     taskResult.componentId = componentId;
 
     const RequestProfile profile = RequestProfiles::cadData();
-    const RetryPolicy policy = RetryPolicy::fromProfile(profile, ConfigService::instance()->getWeakNetworkSupport());
+    const bool weakNetworkSupport = networkClient ? false : ConfigService::instance()->getWeakNetworkSupport();
+    const RetryPolicy policy = RetryPolicy::fromProfile(profile, weakNetworkSupport);
     const QUrl url(EASYEDA_COMPONENT_API_ENDPOINT.arg(componentId));
-    const NetworkResult networkResult = NetworkClient::instance().get(url, ResourceType::CadData, policy);
+    const NetworkResult networkResult = networkClient
+                                            ? networkClient->get(url, ResourceType::CadData, policy)
+                                            : NetworkClient::instance().get(url, ResourceType::CadData, policy);
     if (!networkResult.success) {
         taskResult.errorMessage =
             networkResult.error.isEmpty() ? QStringLiteral("CAD request failed") : networkResult.error;

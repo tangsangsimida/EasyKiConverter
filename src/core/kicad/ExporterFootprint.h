@@ -14,7 +14,7 @@ namespace EasyKiConverter {
 /**
  * @brief KiCad 封装导出器类
  *
- * 用于EasyEDA 封装数据导出KiCad 封装格式
+ * 将 EasyEDA 封装数据导出为 KiCad 封装格式。
  */
 class ExporterFootprint {
 public:
@@ -23,11 +23,11 @@ public:
     ~ExporterFootprint();
 
     /**
-     * @brief 导出封装库KiCad 格式（单D模型
+     * @brief 导出单个 KiCad 封装（单 3D 模型）。
      *
      * @param footprintData 封装数据
      * @param filePath 输出文件路径
-     * @param model3DPath 3D模型路径
+     * @param model3DPath 3D 模型路径
      * @return bool 是否成功
      */
     bool exportFootprint(const FootprintData& footprintData,
@@ -35,8 +35,8 @@ public:
                          const QString& model3DPath = QString());
 
     /**
-     * @brief 导出封装库KiCad 格式（两D模型
-         *
+     * @brief 导出单个 KiCad 封装（WRL 和 STEP 两个 3D 模型）。
+     *
      * @param footprintData 封装数据
      * @param filePath 输出文件路径
      * @param model3DWrlPath WRL模型路径

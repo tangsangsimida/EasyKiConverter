@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Test Gui Network)
+find_package(Qt6 REQUIRED COMPONENTS Test Gui Network Concurrent)
 
 add_executable(test_easyeda_api
     test_easyeda_api.cpp
@@ -52,6 +52,39 @@ target_include_directories(test_cache_pruner PRIVATE
 )
 add_test(NAME test_cache_pruner COMMAND test_cache_pruner)
 
+add_executable(test_core_utils test_core_utils.cpp)
+target_link_libraries(test_core_utils PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_core_utils PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_core_utils COMMAND test_core_utils)
+
+add_executable(test_atomic_file_writer test_atomic_file_writer.cpp)
+target_link_libraries(test_atomic_file_writer PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_atomic_file_writer PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_atomic_file_writer COMMAND test_atomic_file_writer)
+
+add_executable(test_temp_file_manager test_temp_file_manager.cpp)
+target_link_libraries(test_temp_file_manager PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_temp_file_manager PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_temp_file_manager COMMAND test_temp_file_manager)
+
 add_executable(test_config_service test_config_service.cpp)
 target_link_libraries(test_config_service PRIVATE
     Qt6::Test
@@ -88,6 +121,107 @@ target_include_directories(test_export_type_stage PRIVATE
     ${CMAKE_SOURCE_DIR}
 )
 add_test(NAME test_export_type_stage COMMAND test_export_type_stage)
+
+add_executable(test_fetch_worker
+    test_fetch_worker.cpp
+    ${CMAKE_SOURCE_DIR}/src/workers/FetchWorker.cpp
+    ${CMAKE_SOURCE_DIR}/src/services/ConfigService.cpp
+    ../common/MockNetworkClient.hpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_fetch_worker PRIVATE
+    Qt6::Test
+    Qt6::Network
+    EasyKiConverterNetwork
+    EasyKiConverterModels
+    EasyKiConverterUtils
+)
+target_include_directories(test_fetch_worker PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_fetch_worker COMMAND test_fetch_worker)
+
+add_executable(test_process_worker
+    test_process_worker.cpp
+    ${CMAKE_SOURCE_DIR}/src/workers/ProcessWorker.cpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_process_worker PRIVATE
+    Qt6::Test
+    EasyKiConverterEasyeda
+    EasyKiConverterNetwork
+    EasyKiConverterModels
+    EasyKiConverterUtils
+)
+target_include_directories(test_process_worker PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_process_worker COMMAND test_process_worker)
+
+add_executable(test_write_worker
+    test_write_worker.cpp
+    ${CMAKE_SOURCE_DIR}/src/workers/WriteWorker.cpp
+)
+target_link_libraries(test_write_worker PRIVATE
+    Qt6::Test
+    Qt6::Concurrent
+    EasyKiConverterKicad
+    EasyKiConverterModels
+    EasyKiConverterUtils
+    EasyKiConverterSafeUtils
+)
+target_include_directories(test_write_worker PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_write_worker COMMAND test_write_worker)
+
+add_executable(test_kicad_graphics_generators test_kicad_graphics_generators.cpp)
+target_link_libraries(test_kicad_graphics_generators PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_kicad_graphics_generators PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_kicad_graphics_generators COMMAND test_kicad_graphics_generators)
+
+add_executable(test_svg_path_parser test_svg_path_parser.cpp)
+target_link_libraries(test_svg_path_parser PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_svg_path_parser PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_svg_path_parser COMMAND test_svg_path_parser)
+
+add_executable(test_path_security test_path_security.cpp)
+target_link_libraries(test_path_security PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_path_security PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_path_security COMMAND test_path_security)
+
+add_executable(test_export_report_generator test_export_report_generator.cpp)
+target_link_libraries(test_export_report_generator PRIVATE
+    Qt6::Test
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_export_report_generator PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_export_report_generator COMMAND test_export_report_generator)
 
 add_executable(test_export_progress_viewmodel test_export_progress_viewmodel.cpp)
 target_link_libraries(test_export_progress_viewmodel PRIVATE
@@ -177,6 +311,115 @@ target_include_directories(test_file_reader PRIVATE
 )
 add_test(NAME test_file_reader COMMAND test_file_reader)
 
+add_executable(test_bom_parser
+    test_bom_parser.cpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_bom_parser PRIVATE
+    Qt6::Test
+    EasyKiConverter::Cli
+    EasyKiConverterLib
+)
+target_include_directories(test_bom_parser PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_bom_parser COMMAND test_bom_parser)
+
+add_executable(test_cli_converters
+    test_cli_converters.cpp
+)
+target_link_libraries(test_cli_converters PRIVATE
+    Qt6::Test
+    EasyKiConverter::Cli
+    EasyKiConverterLib
+)
+target_include_directories(test_cli_converters PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_cli_converters COMMAND test_cli_converters)
+
+add_executable(test_export_worker_helpers
+    test_export_worker_helpers.cpp
+)
+target_link_libraries(test_export_worker_helpers PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_export_worker_helpers PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_export_worker_helpers COMMAND test_export_worker_helpers)
+
+add_executable(test_test_paths
+    test_test_paths.cpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_test_paths PRIVATE
+    Qt6::Test
+)
+target_include_directories(test_test_paths PRIVATE
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_test_paths COMMAND test_test_paths)
+
+add_executable(test_kicad_exporter_golden
+    test_kicad_exporter_golden.cpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_kicad_exporter_golden PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_kicad_exporter_golden PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_kicad_exporter_golden COMMAND test_kicad_exporter_golden)
+
+add_executable(test_kicad_library_table_manager test_kicad_library_table_manager.cpp)
+target_link_libraries(test_kicad_library_table_manager PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_kicad_library_table_manager PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_kicad_library_table_manager COMMAND test_kicad_library_table_manager)
+
+add_executable(test_easyeda_importer_fixtures
+    test_easyeda_importer_fixtures.cpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_easyeda_importer_fixtures PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_easyeda_importer_fixtures PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_easyeda_importer_fixtures COMMAND test_easyeda_importer_fixtures)
+
+# NetworkClient 接口和 MockNetworkClient 行为测试
+add_executable(test_network_client
+    test_network_client.cpp
+    ../common/MockNetworkClient.hpp
+)
+target_link_libraries(test_network_client PRIVATE
+    Qt6::Test
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_network_client PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_network_client COMMAND test_network_client)
+
 # CadDataLoader 业务层错误检查测试
 add_executable(test_cad_data_loader test_cad_data_loader.cpp)
 target_link_libraries(test_cad_data_loader PRIVATE
@@ -203,3 +446,45 @@ target_include_directories(test_component_list_viewmodel PRIVATE
     ${CMAKE_SOURCE_DIR}/tests
 )
 add_test(NAME test_component_list_viewmodel COMMAND test_component_list_viewmodel)
+
+set(EASYKICONVERTER_UNIT_TESTS
+    test_easyeda_api
+    test_network_client
+    test_models
+    test_component_cache_service
+    test_cache_pruner
+    test_core_utils
+    test_atomic_file_writer
+    test_temp_file_manager
+    test_config_service
+    test_component_service
+    test_export_type_stage
+    test_fetch_worker
+    test_process_worker
+    test_write_worker
+    test_kicad_graphics_generators
+    test_svg_path_parser
+    test_path_security
+    test_export_report_generator
+    test_export_progress_viewmodel
+    test_export_settings_viewmodel
+    test_logging
+    test_command_line_parser
+    test_language_manager
+    test_completion_generator
+    test_file_reader
+    test_bom_parser
+    test_cli_converters
+    test_export_worker_helpers
+    test_test_paths
+    test_kicad_exporter_golden
+    test_kicad_library_table_manager
+    test_easyeda_importer_fixtures
+    test_cad_data_loader
+    test_component_list_viewmodel
+)
+
+set_tests_properties(${EASYKICONVERTER_UNIT_TESTS}
+    PROPERTIES
+        LABELS "unit"
+)

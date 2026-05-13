@@ -1,0 +1,117 @@
+; (generator_version "3.1.8")
+(kicad_symbol_lib
+  (version 20211014)
+  (generator EasyKiConverter)
+  (symbol "CAPACITOR_0402"
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "C"
+      (id 0)
+      (at 0.00 7.62 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) )
+    )
+    (property
+      "Value"
+      "CAPACITOR_0402"
+      (id 1)
+      (at 0.00 -15.24 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) )
+    )
+    (property
+      "Footprint"
+      "MultiLib:0402_C"
+      (id 2)
+      (at 0.00 -17.78 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) hide)
+    )
+    (property
+      "LCSC Part"
+      "C23186"
+      (id 5)
+      (at 0.00 -20.32 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) hide)
+    )
+    (polyline
+      (pts (xy -1.52 -3.56) (xy 1.52 -3.56))
+      (stroke (width 0.000) (type default))
+      (fill (type none))
+    )
+    (polyline
+      (pts (xy -1.52 -6.60) (xy 1.52 -6.60))
+      (stroke (width 0.000) (type default))
+      (fill (type none))
+    )
+    (pin unspecified line
+      (at 0.00 -10.16 270)
+      (length 3.56)
+      (name "~" (effects (font (size 1.27 1.27) (thickness 0) )))
+      (number "1" (effects (font (size 1.27 1.27) (thickness 0) )))
+    )
+    (pin unspecified line
+      (at 0.00 0.00 90)
+      (length 3.56)
+      (name "~" (effects (font (size 1.27 1.27) (thickness 0) )))
+      (number "2" (effects (font (size 1.27 1.27) (thickness 0) )))
+    )
+  )
+  (symbol "INDUCTOR_0603"
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "L"
+      (id 0)
+      (at 5.08 7.62 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) )
+    )
+    (property
+      "Value"
+      "INDUCTOR_0603"
+      (id 1)
+      (at 5.08 -7.62 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) )
+    )
+    (property
+      "Footprint"
+      "MultiLib:0603_L"
+      (id 2)
+      (at 5.08 -10.16 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) hide)
+    )
+    (property
+      "LCSC Part"
+      "C34567"
+      (id 5)
+      (at 5.08 -12.70 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) hide)
+    )
+    (arc
+      (start 2.54 0.00)
+      (mid 3.81 1.27)
+      (end 5.08 0.00)
+      (stroke (width 0.000) (type default))
+      (fill (type none))
+    )
+    (arc
+      (start 5.08 0.00)
+      (mid 6.35 1.27)
+      (end 7.62 0.00)
+      (stroke (width 0.000) (type default))
+      (fill (type none))
+    )
+    (pin unspecified line
+      (at 0.00 0.00 180)
+      (length 2.54)
+      (name "~" (effects (font (size 1.27 1.27) (thickness 0) )))
+      (number "1" (effects (font (size 1.27 1.27) (thickness 0) )))
+    )
+    (pin unspecified line
+      (at 10.16 0.00 0)
+      (length 2.54)
+      (name "~" (effects (font (size 1.27 1.27) (thickness 0) )))
+      (number "2" (effects (font (size 1.27 1.27) (thickness 0) )))
+    )
+  )
+)

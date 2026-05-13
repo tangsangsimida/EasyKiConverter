@@ -168,7 +168,7 @@ QList<QPointF> SvgPathParser::parsePath(const QString& path) {
             QPointF startPoint = points.last();
             i++;
 
-            if (i + 6 >= tokens.size()) {
+            if (i + 5 >= tokens.size()) {
                 qWarning() << "Bezier param length error";
                 continue;
             }

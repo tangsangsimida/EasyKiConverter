@@ -1,5 +1,6 @@
 #include "ExporterSymbol.h"
 
+#include "KiCadExportMetadata.h"
 #include "KiCadLibTable.h"
 #include "core/utils/GeometryUtils.h"
 #include "core/utils/SvgPathParser.h"
@@ -29,7 +30,7 @@ bool ExporterSymbol::exportSymbol(const SymbolData& symbolData, const QString& f
     QTextStream out(&file);
     out.setEncoding(QStringConverter::Utf8);
 
-    // 生成符号内容（不包含库头，仅单个符号定义
+    // 生成符号内容（不包含库头，仅单个符号定义）
     QString content = generateSymbolContent(symbolData, "");
 
     out << content;
@@ -74,7 +75,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         // 生成头部
         out << generateHeader(libName);
 
-        // 生成所有符
+        // 生成所有符号
         int index = 0;
         for (const SymbolData& symbol : symbols) {
             qDebug() << "Exporting symbol" << (++index) << "of" << symbols.count() << ":" << symbol.info().name;
@@ -92,7 +93,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     // 文件存在，需要处理追加或更新
     qDebug() << "Existing library found, reading content...";
 
-    // 读取现有库内
+    // 读取现有库内容
     QString existingContent;
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         existingContent = QTextStream(&file).readAll();
@@ -206,7 +207,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                 symbolsToExport.append(symbol);
             }
         } else {
-            // 新符
+            // 新符号
             qDebug() << "New symbol, adding:" << symbolName;
             appendCount++;
             symbolsToExport.append(symbol);
@@ -243,11 +244,11 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         overwrittenSymbolNames.insert(symbol.info().name);
     }
 
-    // 收集要被删除的子符号名称（属于被覆盖的父符号的子符号
+    // 收集要被删除的子符号名称（属于被覆盖的父符号的子符号）
     // 改进的逻辑：准确识别分体式符号的子符号
     QSet<QString> subSymbolsToDelete;
 
-    // 首先分析现有符号，确定哪些是分体式符号（有多个子符号
+    // 首先分析现有符号，确定哪些是分体式符号（有多个子符号）
     QMap<QString, QStringList> parentToSubSymbols;  // 父符号名 -> 子符号列
     for (const QString& subSymbolName : subSymbolNames) {
         // 从子符号名称中提取父符号
@@ -288,7 +289,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         }
     }
 
-    // 先导出未覆盖的现有符号（需要过滤掉被覆盖的子符号和以被覆盖符号名开头的顶层符号
+    // 先导出未覆盖的现有符号（需要过滤掉被覆盖的子符号和以被覆盖符号名开头的顶层符号）
     for (const QString& symbolName : existingSymbols.keys()) {
         bool isOverwritten = overwrittenSymbolNames.contains(symbolName);
 
@@ -375,8 +376,8 @@ QString ExporterSymbol::generateHeader(const QString& libName) const {
     QString header = QString(
                          "(kicad_symbol_lib\n"
                          "  (version %1)\n"
-                         "  (generator https://github.com/tangsangsimida/EasyKiConverter)\n")
-                         .arg(version);
+                         "  (generator %2)\n")
+                         .arg(version, KiCadExportMetadata::generatorName());
 
     return header;
 }
