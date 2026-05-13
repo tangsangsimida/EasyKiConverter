@@ -119,6 +119,9 @@ jobs:
         run: |
           cmake --build build --config Release --parallel
 
+      - name: 'sccache Stats'
+        run: sccache --show-stats
+
       - name: 'Deploy Qt dependencies'
         shell: pwsh
         run: |

@@ -110,6 +110,9 @@ jobs:
           export QT_QML_DISABLE_AOT_COMPILE=1
           cmake --build build --config RelWithDebInfo --parallel 4
 
+      - name: 'CCache Stats'
+        run: ccache -sv
+
       - name: 'Run Tests'
         run: |
           export QT_QPA_PLATFORM=offscreen
@@ -175,6 +178,9 @@ jobs:
         run: |
           cmake --build build --config $env:BUILD_TYPE --parallel 16
 
+      - name: 'sccache Stats'
+        run: sccache --show-stats
+
       - name: 'Run Tests'
         run: |
           $env:QT_QPA_PLATFORM = "offscreen"
@@ -221,6 +227,9 @@ jobs:
       - name: 'Build'
         run: |
           cmake --build build --config $BUILD_TYPE --parallel 4
+
+      - name: 'CCache Stats'
+        run: ccache -sv
 
       - name: 'Run Tests'
         run: |

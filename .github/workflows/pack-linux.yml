@@ -570,6 +570,9 @@ jobs:
           chmod +x ${APPIMAGE_DST_PATH}/AppRun
           echo "✓ AppRun created successfully"
 
+      - name: 'CCache Stats'
+        run: ccache -sv
+
       - name: Verify AppDir Contents
         run: |
           echo "=== Verifying AppDir contents ==="
