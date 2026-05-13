@@ -176,18 +176,16 @@ jobs:
           qt-target: 'desktop'
           qt-arch: 'win64_msvc2022_64'
           enable-ccache: 'false'
-          enable-sccache: 'true'
+          enable-sccache: 'false'
 
       - name: 'Install Ninja'
         run: choco install ninja -y --no-progress
 
-      - name: 'Configure CMake (Ninja) with sccache and vcpkg'
+      - name: 'Configure CMake (Ninja) with vcpkg'
         run: |
           cmake -B build -G "Ninja" `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
-            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
             -DEASYKICONVERTER_BUILD_TESTS=ON `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
@@ -196,14 +194,6 @@ jobs:
       - name: 'Build'
         run: |
           cmake --build build --config ${{ env.BUILD_TYPE }} --parallel 16
-
-      - name: 'sccache Stats'
-        run: |
-          sccache --show-stats
-          echo "## sccache Statistics" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          sccache --show-stats >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: 'Build Statistics'
         if: always()

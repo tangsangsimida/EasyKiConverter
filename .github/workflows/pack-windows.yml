@@ -88,7 +88,7 @@ jobs:
           qt-target: ${{ matrix.qt_target }}
           qt-arch: ${{ matrix.config.qt_arch }}
           enable-ccache: 'false'
-          enable-sccache: 'true'
+          enable-sccache: 'false'
 
       - name: 'Install Ninja'
         run: choco install ninja -y --no-progress
@@ -111,8 +111,6 @@ jobs:
           cmake -B build -G "${{ matrix.config.generator }}" ${{matrix.config.gen_arch}} `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
-            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
             -DVERSION_FROM_CI="${{ env.VERSION }}"
@@ -121,14 +119,6 @@ jobs:
         shell: pwsh
         run: |
           cmake --build build --config Release --parallel
-
-      - name: 'sccache Stats'
-        run: |
-          sccache --show-stats
-          echo "## sccache Statistics" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          sccache --show-stats >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: 'Build Statistics'
         if: always()
