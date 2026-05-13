@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Test Gui Network)
+find_package(Qt6 REQUIRED COMPONENTS Test Gui Network Concurrent)
 
 add_executable(test_easyeda_api
     test_easyeda_api.cpp
@@ -121,6 +121,75 @@ target_include_directories(test_export_type_stage PRIVATE
     ${CMAKE_SOURCE_DIR}
 )
 add_test(NAME test_export_type_stage COMMAND test_export_type_stage)
+
+add_executable(test_process_worker
+    test_process_worker.cpp
+    ${CMAKE_SOURCE_DIR}/src/workers/ProcessWorker.cpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_process_worker PRIVATE
+    Qt6::Test
+    EasyKiConverterEasyeda
+    EasyKiConverterNetwork
+    EasyKiConverterModels
+    EasyKiConverterUtils
+)
+target_include_directories(test_process_worker PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_process_worker COMMAND test_process_worker)
+
+add_executable(test_write_worker
+    test_write_worker.cpp
+    ${CMAKE_SOURCE_DIR}/src/workers/WriteWorker.cpp
+)
+target_link_libraries(test_write_worker PRIVATE
+    Qt6::Test
+    Qt6::Concurrent
+    EasyKiConverterKicad
+    EasyKiConverterModels
+    EasyKiConverterUtils
+    EasyKiConverterSafeUtils
+)
+target_include_directories(test_write_worker PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_write_worker COMMAND test_write_worker)
+
+add_executable(test_kicad_graphics_generators test_kicad_graphics_generators.cpp)
+target_link_libraries(test_kicad_graphics_generators PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_kicad_graphics_generators PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_kicad_graphics_generators COMMAND test_kicad_graphics_generators)
+
+add_executable(test_svg_path_parser test_svg_path_parser.cpp)
+target_link_libraries(test_svg_path_parser PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_svg_path_parser PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_svg_path_parser COMMAND test_svg_path_parser)
+
+add_executable(test_path_security test_path_security.cpp)
+target_link_libraries(test_path_security PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_path_security PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_path_security COMMAND test_path_security)
 
 add_executable(test_export_report_generator test_export_report_generator.cpp)
 target_link_libraries(test_export_report_generator PRIVATE
@@ -343,6 +412,11 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_config_service
     test_component_service
     test_export_type_stage
+    test_process_worker
+    test_write_worker
+    test_kicad_graphics_generators
+    test_svg_path_parser
+    test_path_security
     test_export_report_generator
     test_export_progress_viewmodel
     test_export_settings_viewmodel
