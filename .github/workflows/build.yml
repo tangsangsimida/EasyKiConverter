@@ -194,20 +194,34 @@ jobs:
       - name: 'Install Ninja'
         run: choco install ninja -y --no-progress
 
-      - name: 'Restore Build Cache'
-        id: cache-build
+      - name: 'Setup ccache Wrapper'
+        shell: pwsh
+        run: |
+          choco install ccache -y --no-progress
+          $ccachePath = (Get-Command ccache).Source
+          $wrapDir = "C:\ccache-wrap"
+          New-Item -ItemType Directory -Force -Path $wrapDir | Out-Null
+          Copy-Item $ccachePath "$wrapDir\cl.exe"
+          echo "$wrapDir" >> $env:GITHUB_PATH
+          echo "CCACHE_DIR=${{ runner.temp }}\ccache" >> $env:GITHUB_ENV
+          echo "CCACHE_MAXSIZE=2G" >> $env:GITHUB_ENV
+
+      - name: 'Restore CCache'
+        id: cache-ccache
         uses: actions/cache/restore@v4
         with:
-          path: build
-          key: win-build-${{ runner.os }}-${{ hashFiles('src/**', 'CMakeLists.txt', '**/*.cmake', 'vcpkg.json') }}
+          path: ${{ runner.temp }}\ccache
+          key: win-ccache-${{ hashFiles('src/**', 'CMakeLists.txt', '**/*.cmake') }}
           restore-keys: |
-            win-build-${{ runner.os }}-
+            win-ccache-
 
-      - name: 'Configure CMake (Ninja) with vcpkg'
+      - name: 'Configure CMake (Ninja + ccache) with vcpkg'
         run: |
           cmake -B build -G "Ninja" `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+            -DCMAKE_C_COMPILER=cl.exe `
+            -DCMAKE_CXX_COMPILER=cl.exe `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
             -DEASYKICONVERTER_BUILD_TESTS=ON `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
@@ -217,12 +231,20 @@ jobs:
         run: |
           cmake --build build --config ${{ env.BUILD_TYPE }} --parallel 16
 
-      - name: 'Save Build Cache'
-        if: steps.cache-build.outputs.cache-hit != 'true'
+      - name: 'CCache Stats'
+        run: |
+          ccache -sv
+          echo "## CCache Statistics" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ccache -s >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: 'Save CCache'
+        if: steps.cache-ccache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: build
-          key: ${{ steps.cache-build.outputs.cache-primary-key }}
+          path: ${{ runner.temp }}\ccache
+          key: ${{ steps.cache-ccache.outputs.cache-primary-key }}
 
       - name: 'Build Statistics'
         if: always()
