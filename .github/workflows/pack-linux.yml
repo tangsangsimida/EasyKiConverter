@@ -39,6 +39,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: 'Record Start Time'
+        run: echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
       - name: Get Version
         id: version
         uses: ./.github/actions/get-version
@@ -581,10 +584,16 @@ jobs:
       - name: 'Build Statistics'
         if: always()
         run: |
-          echo "## Build Statistics (Linux Pack)" >> $GITHUB_STEP_SUMMARY
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - BUILD_START_TIME))
+          RATE=0.008
+          COST=$(awk "BEGIN {printf \"%.4f\", $DURATION * $RATE / 60}")
+          echo "## Build Cost Summary (Linux Pack)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Est. cost | \$${COST} (Linux × \$0.008/min) |" >> $GITHUB_STEP_SUMMARY
           echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
           echo "| AppDir size | $(du -sh ${PRODUCT}.AppDir/ 2>/dev/null | cut -f1 || echo N/A) |" >> $GITHUB_STEP_SUMMARY
           echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY

@@ -41,6 +41,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: 'Record Start Time'
+        run: echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
       - name: 'Fix Git Safe Directory'
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
@@ -121,10 +124,16 @@ jobs:
       - name: 'Build Statistics'
         if: always()
         run: |
-          echo "## Build Statistics (Linux)" >> $GITHUB_STEP_SUMMARY
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - BUILD_START_TIME))
+          RATE=0.008
+          COST=$(awk "BEGIN {printf \"%.4f\", $DURATION * $RATE / 60}")
+          echo "## Build Cost Summary (Linux)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Est. cost | \$${COST} (Linux × \$0.008/min) |" >> $GITHUB_STEP_SUMMARY
           echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
           echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
           echo "| Memory used | $(free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
@@ -154,6 +163,10 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+
+      - name: 'Record Start Time'
+        shell: pwsh
+        run: echo "BUILD_START_TIME=$(Get-Date -Format o)" >> $env:GITHUB_ENV
 
       - name: 'Setup MSVC'
         uses: ilammy/msvc-dev-cmd@v1
@@ -220,13 +233,20 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $buildSize = if (Test-Path build) { (Get-ChildItem -Path build -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB } else { 0 }
+          $endTime = Get-Date
+          $startTime = [DateTime]::Parse($env:BUILD_START_TIME)
+          $duration = $endTime - $startTime
+          $rate = 0.016
+          $cost = [math]::Round($duration.TotalMinutes * $rate, 4)
+          $buildSize = if (Test-Path build) { [math]::Round((Get-ChildItem -Path build -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB, 1) } else { 0 }
           $freeDisk = [math]::Round((Get-PSDrive -Name (Get-Location).Drive.Name).Free / 1GB, 1)
-          "## Build Statistics (Windows)" >> $env:GITHUB_STEP_SUMMARY
+          "## Build Cost Summary (Windows)" >> $env:GITHUB_STEP_SUMMARY
           "" >> $env:GITHUB_STEP_SUMMARY
           "| Metric | Value |" >> $env:GITHUB_STEP_SUMMARY
           "|--------|-------|" >> $env:GITHUB_STEP_SUMMARY
-          "| Build dir size | $([math]::Round($buildSize, 1)) MB |" >> $env:GITHUB_STEP_SUMMARY
+          "| Job duration | $([math]::Floor($duration.TotalMinutes))m $($duration.Seconds)s |" >> $env:GITHUB_STEP_SUMMARY
+          "| Est. cost | `$${cost} (Windows × `$0.016/min) |" >> $env:GITHUB_STEP_SUMMARY
+          "| Build dir size | ${buildSize} MB |" >> $env:GITHUB_STEP_SUMMARY
           "| Free disk | ${freeDisk} GB |" >> $env:GITHUB_STEP_SUMMARY
 
       - name: 'Run Tests'
@@ -250,6 +270,9 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+
+      - name: 'Record Start Time'
+        run: echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
 
       - name: 'Setup Build Environment'
         uses: ./.github/actions/setup-env
@@ -287,10 +310,16 @@ jobs:
       - name: 'Build Statistics'
         if: always()
         run: |
-          echo "## Build Statistics (macOS)" >> $GITHUB_STEP_SUMMARY
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - BUILD_START_TIME))
+          RATE=0.08
+          COST=$(awk "BEGIN {printf \"%.4f\", $DURATION * $RATE / 60}")
+          echo "## Build Cost Summary (macOS)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Est. cost | \$${COST} (macOS × \$0.08/min) |" >> $GITHUB_STEP_SUMMARY
           echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
           echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
           echo "| Memory pressure | $(vm_stat 2>/dev/null | awk '/Pages free/ {free=$NF} /Pages active/ {active=$NF} END {printf "free=%d active=%d", free, active}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
