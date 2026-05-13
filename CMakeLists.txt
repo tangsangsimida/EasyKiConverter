@@ -181,8 +181,7 @@ else()
         FetchContent_Declare(
             QXlsx
             GIT_REPOSITORY https://github.com/QtExcel/QXlsx.git
-            GIT_TAG        master
-            GIT_SHALLOW    TRUE
+            GIT_TAG        9f545935a1effa0144ba76598e95a7597210553a
             SOURCE_SUBDIR  QXlsx
         )
         FetchContent_MakeAvailable(QXlsx)
