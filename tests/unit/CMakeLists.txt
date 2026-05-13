@@ -326,6 +326,33 @@ target_include_directories(test_bom_parser PRIVATE
 )
 add_test(NAME test_bom_parser COMMAND test_bom_parser)
 
+add_executable(test_cli_converters
+    test_cli_converters.cpp
+)
+target_link_libraries(test_cli_converters PRIVATE
+    Qt6::Test
+    EasyKiConverter::Cli
+    EasyKiConverterLib
+)
+target_include_directories(test_cli_converters PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_cli_converters COMMAND test_cli_converters)
+
+add_executable(test_export_worker_helpers
+    test_export_worker_helpers.cpp
+)
+target_link_libraries(test_export_worker_helpers PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_export_worker_helpers PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_export_worker_helpers COMMAND test_export_worker_helpers)
+
 add_executable(test_test_paths
     test_test_paths.cpp
     ../common/TestPaths.hpp
@@ -447,6 +474,8 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_completion_generator
     test_file_reader
     test_bom_parser
+    test_cli_converters
+    test_export_worker_helpers
     test_test_paths
     test_kicad_exporter_golden
     test_kicad_library_table_manager

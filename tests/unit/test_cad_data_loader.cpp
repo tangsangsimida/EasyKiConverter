@@ -1,59 +1,143 @@
 #include "../common/MockNetworkClient.hpp"
-#include "core/easyeda/EasyedaApi.h"
+#include "../common/TestPaths.hpp"
 #include "services/CadDataLoader.h"
 
-#include <QSignalSpy>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QtTest>
-
-#include <memory>
 
 using namespace EasyKiConverter;
 using namespace EasyKiConverter::Test;
 
-// 场景1: 不存在元器件返回 {"success":false,"code":404} 时进入 failed
-//
-// 测试策略：由于 CadDataLoader::fetchAndParseCadData() 是 static 方法，直接调用
-// NetworkClient::instance()，无法在不修改生产代码的情况下注入 mock。
-//
-// 我们通过 EasyedaApi 间接验证部分行为：
-// EasyedaApi::handleCadDataResponse 会检查 result 是否存在（这是 CadDataLoader
-// 业务检查的一部分）。完整的 success=false / code=404 检查在 CadDataLoader 中，
-// 需要将 fetchAndParseCadData 改为接受 INetworkClient* 参数才能测试。
-class TestCadDataLoader404Error : public QObject {
+class TestCadDataLoader : public QObject {
     Q_OBJECT
 
 private slots:
 
-    void init() {
-        m_mockClient = std::make_unique<MockNetworkClient>();
-        m_api = std::make_unique<EasyedaApi>(m_mockClient.get());
+    void fetchAndParseCadDataSuccess() {
+        MockNetworkClient mock;
+        const QString componentId = QStringLiteral("C23186");
+        mock.addJsonResponse(componentUrl(componentId),
+                             responseWithResult(readCadFixture(QStringLiteral("cad_basic"))));
+
+        const CadFetchTaskResult result = CadDataLoader::fetchAndParseCadData(componentId, &mock);
+
+        QVERIFY(result.success);
+        QVERIFY(result.parsed.success);
+        QCOMPARE(result.componentId, componentId);
+        QCOMPARE(result.parsed.componentId, componentId);
+        QCOMPARE(result.parsed.componentData.lcscId(), componentId);
+        QCOMPARE(result.parsed.componentData.name(), QStringLiteral("0603WAF5101T5E"));
+        QVERIFY(result.parsed.componentData.symbolData());
+        QCOMPARE(result.parsed.componentData.symbolData()->info().name, QStringLiteral("0603WAF5101T5E"));
+        QVERIFY(result.parsed.componentData.footprintData());
+        QCOMPARE(result.parsed.componentData.footprintData()->info().name, QStringLiteral("R0603"));
+        QVERIFY(result.parsed.componentData.model3DData());
+        QVERIFY(!result.parsed.componentData.model3DData()->uuid().isEmpty());
+        QVERIFY(result.errorMessage.isEmpty());
     }
 
-    // 验证：result 字段缺失时 EasyedaApi 触发 fetchError（CadDataLoader 业务检查的一部分）
-    void testMissingResult_TriggersFetchError() {
-        const QString lcscId = QStringLiteral("C2041");
-        const QString expectedUrl = QStringLiteral("https://easyeda.com/api/products/C2041/components?version=6.5.51");
+    void fetchAndParseCadDataReportsSuccessFalse() {
+        MockNetworkClient mock;
+        const QString componentId = QStringLiteral("C_BAD");
 
-        // API 返回 success=true 但缺少 result 字段
-        QJsonObject mockResponse;
-        mockResponse.insert(QStringLiteral("success"), true);
-        // 故意没有 result 字段
-        m_mockClient->addJsonResponse(expectedUrl, mockResponse);
+        QJsonObject response;
+        response.insert(QStringLiteral("success"), false);
+        response.insert(QStringLiteral("code"), 500);
+        response.insert(QStringLiteral("message"), QStringLiteral("temporary backend failure"));
+        mock.addJsonResponse(componentUrl(componentId), response, 500);
 
-        QSignalSpy spy(m_api.get(), qOverload<const QString&, const QString&>(&EasyedaApi::fetchError));
-        m_api->fetchCadData(lcscId);
-        QVERIFY2(spy.wait(1000), "fetchError 信号应该在 1s 内触发");
-        QCOMPARE(spy.count(), 1);
+        const CadFetchTaskResult result = CadDataLoader::fetchAndParseCadData(componentId, &mock);
 
-        const QString errorMsg = spy.at(0).at(1).toString();
-        QVERIFY2(errorMsg.contains(QStringLiteral("No result")),
-                 qPrintable(QStringLiteral("错误信息应包含 'No result'，实际: ") + errorMsg));
+        QVERIFY(!result.success);
+        QCOMPARE(result.componentId, componentId);
+        QCOMPARE(result.errorMessage, QStringLiteral("temporary backend failure"));
+    }
+
+    void fetchAndParseCadDataReports404AsMissingComponent() {
+        MockNetworkClient mock;
+        const QString componentId = QStringLiteral("C404");
+
+        QJsonObject response;
+        response.insert(QStringLiteral("success"), false);
+        response.insert(QStringLiteral("code"), 404);
+        response.insert(QStringLiteral("message"), QStringLiteral("not found"));
+        mock.addJsonResponse(componentUrl(componentId), response, 404);
+
+        const CadFetchTaskResult result = CadDataLoader::fetchAndParseCadData(componentId, &mock);
+
+        QVERIFY(!result.success);
+        QCOMPARE(result.errorMessage, QStringLiteral("元器件不存在（404）"));
+    }
+
+    void fetchAndParseCadDataReportsMissingResult() {
+        MockNetworkClient mock;
+        const QString componentId = QStringLiteral("C_MISSING_RESULT");
+
+        QJsonObject response;
+        response.insert(QStringLiteral("success"), true);
+        mock.addJsonResponse(componentUrl(componentId), response);
+
+        const CadFetchTaskResult result = CadDataLoader::fetchAndParseCadData(componentId, &mock);
+
+        QVERIFY(!result.success);
+        QCOMPARE(result.errorMessage, QStringLiteral("API response missing result field"));
+    }
+
+    void fetchAndParseCadDataReportsEmptyResult() {
+        MockNetworkClient mock;
+        const QString componentId = QStringLiteral("C_EMPTY_RESULT");
+
+        QJsonObject response;
+        response.insert(QStringLiteral("success"), true);
+        response.insert(QStringLiteral("result"), QJsonObject{});
+        mock.addJsonResponse(componentUrl(componentId), response);
+
+        const CadFetchTaskResult result = CadDataLoader::fetchAndParseCadData(componentId, &mock);
+
+        QVERIFY(!result.success);
+        QCOMPARE(result.errorMessage, QStringLiteral("Empty CAD data"));
+    }
+
+    void fetchAndParseCadDataReportsInvalidJson() {
+        MockNetworkClient mock;
+        const QString componentId = QStringLiteral("C_INVALID_JSON");
+        mock.addResponse(componentUrl(componentId), QByteArrayLiteral("{"));
+
+        const CadFetchTaskResult result = CadDataLoader::fetchAndParseCadData(componentId, &mock);
+
+        QVERIFY(!result.success);
+        QCOMPARE(result.errorMessage, QStringLiteral("Failed to parse CAD response JSON"));
     }
 
 private:
-    std::unique_ptr<MockNetworkClient> m_mockClient;
-    std::unique_ptr<EasyedaApi> m_api;
+    QString componentUrl(const QString& componentId) const {
+        return QStringLiteral("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(componentId);
+    }
+
+    QJsonObject readCadFixture(const QString& name) const {
+        QString error;
+        const QByteArray data =
+            TestPaths::readBytes(TestPaths::fixturePath(QStringLiteral("easyeda/%1.json").arg(name)), &error);
+        if (!error.isEmpty()) {
+            qFatal("%s", qPrintable(error));
+        }
+
+        QJsonParseError parseError;
+        const QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
+        if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+            qFatal("Failed to parse CAD fixture");
+        }
+        return doc.object();
+    }
+
+    QJsonObject responseWithResult(const QJsonObject& result) const {
+        QJsonObject response;
+        response.insert(QStringLiteral("success"), true);
+        response.insert(QStringLiteral("result"), result);
+        return response;
+    }
 };
 
-QTEST_GUILESS_MAIN(TestCadDataLoader404Error)
+QTEST_GUILESS_MAIN(TestCadDataLoader)
 #include "test_cad_data_loader.moc"

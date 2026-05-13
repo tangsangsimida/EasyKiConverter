@@ -10,6 +10,8 @@
 
 namespace EasyKiConverter {
 
+class INetworkClient;
+
 struct CadParseResult {
     QString componentId;
     QJsonObject resultData;
@@ -28,7 +30,7 @@ struct CadFetchTaskResult {
 class CadDataLoader {
 public:
     static CadParseResult parseCadPayload(const QString& componentId, const QJsonObject& rawData);
-    static CadFetchTaskResult fetchAndParseCadData(const QString& componentId);
+    static CadFetchTaskResult fetchAndParseCadData(const QString& componentId, INetworkClient* networkClient = nullptr);
 };
 
 }  // namespace EasyKiConverter

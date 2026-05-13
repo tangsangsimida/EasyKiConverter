@@ -99,11 +99,12 @@ private slots:
 private:
     QSharedPointer<ComponentExportStatus> runWorker(FetchWorker& worker) const {
         QSharedPointer<ComponentExportStatus> captured;
-        QObject::connect(&worker,
-                         &FetchWorker::fetchCompleted,
-                         &worker,
-                         [&captured](const QSharedPointer<ComponentExportStatus>& status) { captured = status; },
-                         Qt::DirectConnection);
+        QObject::connect(
+            &worker,
+            &FetchWorker::fetchCompleted,
+            &worker,
+            [&captured](const QSharedPointer<ComponentExportStatus>& status) { captured = status; },
+            Qt::DirectConnection);
         worker.run();
         return captured;
     }

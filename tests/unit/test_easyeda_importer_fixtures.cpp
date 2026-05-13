@@ -114,13 +114,12 @@ private slots:
         const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/cad_no_3d.json"), &error);
         QVERIFY2(error.isEmpty(), qPrintable(error));
 
-        const QJsonObject packageHead =
-            fixture.value(QStringLiteral("packageDetail"))
-                .toObject()
-                .value(QStringLiteral("dataStr"))
-                .toObject()
-                .value(QStringLiteral("head"))
-                .toObject();
+        const QJsonObject packageHead = fixture.value(QStringLiteral("packageDetail"))
+                                            .toObject()
+                                            .value(QStringLiteral("dataStr"))
+                                            .toObject()
+                                            .value(QStringLiteral("head"))
+                                            .toObject();
         QVERIFY(!packageHead.contains(QStringLiteral("uuid_3d")));
 
         EasyedaFootprintImporter importer;
@@ -137,8 +136,8 @@ private slots:
 
     void testRealModel3DFixtureIsObjData() {
         QString error;
-        const QByteArray modelData = TestPaths::readBytes(
-            TestPaths::fixturePath(QStringLiteral("easyeda/model3d_r0603.obj")), &error);
+        const QByteArray modelData =
+            TestPaths::readBytes(TestPaths::fixturePath(QStringLiteral("easyeda/model3d_r0603.obj")), &error);
 
         QVERIFY2(error.isEmpty(), qPrintable(error));
         QVERIFY(modelData.size() > 1024);
