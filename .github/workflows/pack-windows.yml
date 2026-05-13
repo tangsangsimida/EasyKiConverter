@@ -71,7 +71,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.config.arch }}
-          toolset: '14.2'
+          vsversion: '2022'
 
       - name: 'Setup vcpkg'
         uses: lukka/run-vcpkg@v11
