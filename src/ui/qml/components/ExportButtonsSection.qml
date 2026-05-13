@@ -14,6 +14,7 @@ ColumnLayout {
     // 错误提示对话框
     Dialog {
         id: errorDialog
+        objectName: "exportErrorDialog"
         parent: Overlay.overlay
         modal: true
         title: qsTranslate("MainWindow", "错误")
@@ -41,6 +42,7 @@ ColumnLayout {
     }
     // 打开导出目录按钮（始终显示，只要导出已完成）
     ModernButton {
+        objectName: "openExportFolderButton"
         Layout.fillWidth: true
         Layout.topMargin: AppStyle.spacing.sm
         text: qsTranslate("MainWindow", "打开导出目录")
@@ -65,6 +67,7 @@ ColumnLayout {
         // "开始转换"或"重试"按钮
         ModernButton {
             id: exportButton
+            objectName: "startExportButton"
             Layout.preferredHeight: 56
             Layout.fillWidth: true
             // 根据是否有失败项来决定按钮文本
@@ -132,6 +135,7 @@ ColumnLayout {
         // "停止转换"按钮
         ModernButton {
             id: stopButton
+            objectName: "stopExportButton"
             Layout.preferredHeight: 56
             Layout.preferredWidth: 180
             // 仅在导出进行时可见

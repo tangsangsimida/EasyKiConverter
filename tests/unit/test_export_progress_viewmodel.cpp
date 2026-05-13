@@ -157,6 +157,51 @@ private slots:
         QCOMPARE(second.value("footprintStatus").toString(), QStringLiteral("failed"));
         QCOMPARE(second.value("error").toString(), QStringLiteral("broken"));
     }
+
+    void cancelExportMarksPendingItemsCancelledAndResetsState() {
+        ParallelExportService service;
+        ExportProgressViewModel viewModel(&service, nullptr, nullptr);
+        QSignalSpy stoppingSpy(&viewModel, &ExportProgressViewModel::isStoppingChanged);
+        QSignalSpy exportingSpy(&viewModel, &ExportProgressViewModel::isExportingChanged);
+
+        viewModel.startExport({"C1", "C2"},
+                              "/tmp/easykiconverter-test",
+                              "testlib",
+                              true,
+                              true,
+                              false,
+                              0,
+                              0,
+                              false,
+                              false,
+                              false,
+                              false,
+                              false);
+
+        QVERIFY(viewModel.isExporting());
+        QCOMPARE(viewModel.resultsList().size(), 2);
+
+        viewModel.cancelExport();
+
+        QCOMPARE(viewModel.isStopping(), false);
+        QCOMPARE(viewModel.isExporting(), false);
+        QCOMPARE(viewModel.hasCompletedExport(), false);
+        QCOMPARE(viewModel.progress(), 0);
+        QCOMPARE(viewModel.status(), QStringLiteral("Export cancelled"));
+        QVERIFY(stoppingSpy.count() >= 2);
+        QVERIFY(exportingSpy.count() >= 2);
+
+        const QVariantList results = viewModel.resultsList();
+        QCOMPARE(results.size(), 2);
+        for (const QVariant& resultVariant : results) {
+            const QVariantMap result = resultVariant.toMap();
+            QCOMPARE(result.value("status").toString(), QStringLiteral("failed"));
+            QCOMPARE(result.value("symbolStatus").toString(), QStringLiteral("failed"));
+            QCOMPARE(result.value("footprintStatus").toString(), QStringLiteral("failed"));
+            QCOMPARE(result.value("model3DStatus").toString(), QStringLiteral("disabled"));
+            QCOMPARE(result.value("error").toString(), QStringLiteral("Export cancelled"));
+        }
+    }
 };
 
 }  // namespace EasyKiConverter
