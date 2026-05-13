@@ -35,6 +35,11 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/ResponsiveHelper.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_BasicComponents.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportSettingsCard.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportFlow.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportProgressCard.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportResultsCard.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_WindowControllerClosing.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_MainDialogBindings.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_Card.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ControllerBinding.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ThemeBinding.qml
@@ -92,6 +97,6 @@ add_test(NAME test_ui COMMAND test_ui)
 
 set_tests_properties(test_ui
     PROPERTIES
-        LABELS "ui"
-        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+        LABELS "ui;fast;export-flow"
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=none"
 )

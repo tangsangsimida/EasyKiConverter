@@ -5,6 +5,7 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
 Card {
     id: exportProgressCard
+    objectName: "exportProgressCard"
     // 外部依赖
     property var exportProgressController
     title: qsTranslate("MainWindow", "转换进度")
@@ -82,6 +83,7 @@ Card {
             // 自定义多色进度条容器
             Rectangle {
                 id: progressBar
+                objectName: "exportProgressBar"
                 Layout.fillWidth: true
                 height: 12
                 color: AppStyle.colors.border
@@ -135,6 +137,7 @@ Card {
 
             // 总进度文字 (放在右侧)
             Text {
+                objectName: "exportProgressPercentLabel"
                 text: Math.round(exportProgressCard.exportProgressController ? exportProgressCard.exportProgressController.progress : 0) + "%"
                 font.pixelSize: AppStyle.fontSizes.sm
                 font.bold: true
@@ -145,6 +148,7 @@ Card {
 
         Text {
             id: statusLabel
+            objectName: "exportStatusLabel"
             Layout.fillWidth: true
             text: exportProgressCard.exportProgressController ? exportProgressCard.exportProgressController.status : ""
             font.pixelSize: AppStyle.fontSizes.sm

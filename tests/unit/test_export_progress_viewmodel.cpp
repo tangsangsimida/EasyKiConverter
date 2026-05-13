@@ -157,6 +157,149 @@ private slots:
         QCOMPARE(second.value("footprintStatus").toString(), QStringLiteral("failed"));
         QCOMPARE(second.value("error").toString(), QStringLiteral("broken"));
     }
+
+    void cancelExportMarksPendingItemsCancelledAndResetsState() {
+        ParallelExportService service;
+        ExportProgressViewModel viewModel(&service, nullptr, nullptr);
+        QSignalSpy stoppingSpy(&viewModel, &ExportProgressViewModel::isStoppingChanged);
+        QSignalSpy exportingSpy(&viewModel, &ExportProgressViewModel::isExportingChanged);
+
+        viewModel.startExport({"C1", "C2"},
+                              "/tmp/easykiconverter-test",
+                              "testlib",
+                              true,
+                              true,
+                              false,
+                              0,
+                              0,
+                              false,
+                              false,
+                              false,
+                              false,
+                              false);
+
+        QVERIFY(viewModel.isExporting());
+        QCOMPARE(viewModel.resultsList().size(), 2);
+
+        viewModel.cancelExport();
+
+        QCOMPARE(viewModel.isStopping(), false);
+        QCOMPARE(viewModel.isExporting(), false);
+        QCOMPARE(viewModel.hasCompletedExport(), false);
+        QCOMPARE(viewModel.progress(), 0);
+        QCOMPARE(viewModel.status(), QStringLiteral("Export cancelled"));
+        QVERIFY(stoppingSpy.count() >= 2);
+        QVERIFY(exportingSpy.count() >= 2);
+
+        const QVariantList results = viewModel.resultsList();
+        QCOMPARE(results.size(), 2);
+        for (const QVariant& resultVariant : results) {
+            const QVariantMap result = resultVariant.toMap();
+            QCOMPARE(result.value("status").toString(), QStringLiteral("failed"));
+            QCOMPARE(result.value("symbolStatus").toString(), QStringLiteral("failed"));
+            QCOMPARE(result.value("footprintStatus").toString(), QStringLiteral("failed"));
+            QCOMPARE(result.value("model3DStatus").toString(), QStringLiteral("disabled"));
+            QCOMPARE(result.value("error").toString(), QStringLiteral("Export cancelled"));
+        }
+    }
+
+    void retryFailedComponentsResetsOnlyFailedItems() {
+        ParallelExportService service;
+        ExportProgressViewModel viewModel(&service, nullptr, nullptr);
+
+        viewModel.startExport({"C1", "C2", "C3"},
+                              "/tmp/easykiconverter-test",
+                              "testlib",
+                              true,
+                              true,
+                              false,
+                              0,
+                              0,
+                              false,
+                              false,
+                              false,
+                              false,
+                              false);
+
+        auto makeStatus = [](ExportItemStatus::Status state, const QString& error = QString()) {
+            ExportItemStatus status;
+            status.status = state;
+            status.errorMessage = error;
+            return status;
+        };
+
+        QVERIFY(QMetaObject::invokeMethod(&viewModel,
+                                          "handleItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C1")),
+                                          Q_ARG(QString, QStringLiteral("Symbol")),
+                                          Q_ARG(ExportItemStatus, makeStatus(ExportItemStatus::Status::Success))));
+        QVERIFY(QMetaObject::invokeMethod(&viewModel,
+                                          "handleItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C1")),
+                                          Q_ARG(QString, QStringLiteral("Footprint")),
+                                          Q_ARG(ExportItemStatus, makeStatus(ExportItemStatus::Status::Success))));
+        QVERIFY(QMetaObject::invokeMethod(
+            &viewModel,
+            "handleItemStatusChanged",
+            Qt::DirectConnection,
+            Q_ARG(QString, QStringLiteral("C2")),
+            Q_ARG(QString, QStringLiteral("Symbol")),
+            Q_ARG(ExportItemStatus, makeStatus(ExportItemStatus::Status::Failed, QStringLiteral("symbol failed")))));
+        QVERIFY(QMetaObject::invokeMethod(&viewModel,
+                                          "handleItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C2")),
+                                          Q_ARG(QString, QStringLiteral("Footprint")),
+                                          Q_ARG(ExportItemStatus, makeStatus(ExportItemStatus::Status::Success))));
+        QVERIFY(QMetaObject::invokeMethod(&viewModel,
+                                          "handleItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C3")),
+                                          Q_ARG(QString, QStringLiteral("Symbol")),
+                                          Q_ARG(ExportItemStatus, makeStatus(ExportItemStatus::Status::Success))));
+        QVERIFY(QMetaObject::invokeMethod(
+            &viewModel,
+            "handleItemStatusChanged",
+            Qt::DirectConnection,
+            Q_ARG(QString, QStringLiteral("C3")),
+            Q_ARG(QString, QStringLiteral("Footprint")),
+            Q_ARG(ExportItemStatus, makeStatus(ExportItemStatus::Status::Failed, QStringLiteral("footprint failed")))));
+        QVERIFY(QMetaObject::invokeMethod(&viewModel, "flushPendingUpdates", Qt::DirectConnection));
+
+        QCOMPARE(viewModel.successCount(), 1);
+        QCOMPARE(viewModel.failureCount(), 2);
+
+        viewModel.retryFailedComponents();
+
+        QCOMPARE(viewModel.successCount(), 1);
+        QCOMPARE(viewModel.failureCount(), 0);
+        QCOMPARE(viewModel.filteredPendingCount(), 2);
+
+        const QVariantList results = viewModel.resultsList();
+        QCOMPARE(results.size(), 3);
+
+        const QVariantMap success = results.at(0).toMap();
+        QCOMPARE(success.value("componentId").toString(), QStringLiteral("C1"));
+        QCOMPARE(success.value("status").toString(), QStringLiteral("success"));
+        QCOMPARE(success.value("symbolStatus").toString(), QStringLiteral("success"));
+        QCOMPARE(success.value("footprintStatus").toString(), QStringLiteral("success"));
+
+        const QVariantMap retrySymbol = results.at(1).toMap();
+        QCOMPARE(retrySymbol.value("componentId").toString(), QStringLiteral("C2"));
+        QCOMPARE(retrySymbol.value("status").toString(), QStringLiteral("pending"));
+        QCOMPARE(retrySymbol.value("symbolStatus").toString(), QStringLiteral("pending"));
+        QCOMPARE(retrySymbol.value("footprintStatus").toString(), QStringLiteral("pending"));
+        QCOMPARE(retrySymbol.value("error").toString(), QString());
+
+        const QVariantMap retryFootprint = results.at(2).toMap();
+        QCOMPARE(retryFootprint.value("componentId").toString(), QStringLiteral("C3"));
+        QCOMPARE(retryFootprint.value("status").toString(), QStringLiteral("pending"));
+        QCOMPARE(retryFootprint.value("symbolStatus").toString(), QStringLiteral("pending"));
+        QCOMPARE(retryFootprint.value("footprintStatus").toString(), QStringLiteral("pending"));
+        QCOMPARE(retryFootprint.value("error").toString(), QString());
+    }
 };
 
 }  // namespace EasyKiConverter

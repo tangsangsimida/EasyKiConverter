@@ -19,5 +19,5 @@ add_test(NAME test_benchmark_core COMMAND test_benchmark_core)
 
 set_tests_properties(test_benchmark_core
     PROPERTIES
-        LABELS "benchmark"
+        LABELS "benchmark;slow"
 )
