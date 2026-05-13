@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonParseError>
+#include <QRegularExpression>
 #include <QString>
 
 namespace EasyKiConverter::Test {
@@ -77,8 +78,8 @@ public:
             return false;
         }
 
-        const QString normalizedExpected = normalizeLineEndings(expected);
-        const QString normalizedActual = normalizeLineEndings(actual);
+        const QString normalizedExpected = normalizeGoldenMetadata(normalizeLineEndings(expected));
+        const QString normalizedActual = normalizeGoldenMetadata(normalizeLineEndings(actual));
         if (normalizedExpected == normalizedActual) {
             return true;
         }
@@ -90,6 +91,13 @@ public:
     static QString normalizeLineEndings(QString value) {
         value.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
         value.replace(QChar('\r'), QChar('\n'));
+        return value;
+    }
+
+    static QString normalizeGoldenMetadata(QString value) {
+        static const QRegularExpression metadataLine(QStringLiteral(R"(^;\s*\(generator_version\s+"[^"]+"\)\n?)"),
+                                                     QRegularExpression::MultilineOption);
+        value.remove(metadataLine);
         return value;
     }
 

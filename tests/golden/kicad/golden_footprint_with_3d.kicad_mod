@@ -1,3 +1,4 @@
+; (generator_version "3.1.8")
 (footprint easykiconverter:FOOTPRINT_WITH_3D
   (version 20221018)
   (descr "Footprint with 3D model references")

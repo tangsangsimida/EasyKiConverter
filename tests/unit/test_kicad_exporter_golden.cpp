@@ -62,9 +62,25 @@ private slots:
         QString error;
         const QString actual = TestPaths::readText(outputPath, &error);
         QVERIFY2(error.isEmpty(), qPrintable(error));
-        QVERIFY2(TestPaths::compareTextToGolden(
-                     actual, QStringLiteral("kicad/golden_footprint_with_3d.kicad_mod"), &error),
-                 qPrintable(error));
+        QVERIFY2(
+            TestPaths::compareTextToGolden(actual, QStringLiteral("kicad/golden_footprint_with_3d.kicad_mod"), &error),
+            qPrintable(error));
+    }
+
+    void testComplexFootprintMatchesGolden() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString outputPath = tempDir.filePath(QStringLiteral("COMPLEX_FOOTPRINT.kicad_mod"));
+
+        ExporterFootprint exporter;
+        QVERIFY(exporter.exportFootprint(makeComplexFootprint(), outputPath));
+
+        QString error;
+        const QString actual = TestPaths::readText(outputPath, &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY2(
+            TestPaths::compareTextToGolden(actual, QStringLiteral("kicad/golden_complex_footprint.kicad_mod"), &error),
+            qPrintable(error));
     }
 
     void testMultiComponentLibraryMatchesGolden() {
@@ -82,6 +98,23 @@ private slots:
         QVERIFY2(TestPaths::compareTextToGolden(
                      actual, QStringLiteral("kicad/golden_multi_component_lib.kicad_sym"), &error),
                  qPrintable(error));
+    }
+
+    void testMultiPartSymbolMatchesGolden() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString outputPath = tempDir.filePath(QStringLiteral("MultiPartLib.kicad_sym"));
+
+        ExporterSymbol exporter;
+        QVERIFY(exporter.exportSymbolLibrary(
+            {makeMultiPartSymbol()}, QStringLiteral("MultiPartLib"), outputPath, false, false));
+
+        QString error;
+        const QString actual = TestPaths::readText(outputPath, &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY2(
+            TestPaths::compareTextToGolden(actual, QStringLiteral("kicad/golden_multi_part_symbol.kicad_sym"), &error),
+            qPrintable(error));
     }
 
     void testSymbolWithSpecialCharsMatchesGolden() {
@@ -134,6 +167,64 @@ private:
         pad.number = QStringLiteral("1");
         pad.rotation = 0;
         footprint.addPad(pad);
+
+        return footprint;
+    }
+
+    FootprintData makeComplexFootprint() const {
+        FootprintData footprint;
+
+        FootprintInfo info;
+        info.name = QStringLiteral("COMPLEX_FOOTPRINT");
+        info.description = QStringLiteral("Through-hole and custom pad coverage");
+        footprint.setInfo(info);
+        footprint.setBbox({-20, -15, 40, 30});
+
+        FootprintPad thruHolePad{};
+        thruHolePad.shape = QStringLiteral("circle");
+        thruHolePad.centerX = -10;
+        thruHolePad.centerY = 0;
+        thruHolePad.width = 8;
+        thruHolePad.height = 8;
+        thruHolePad.layerId = 11;
+        thruHolePad.number = QStringLiteral("1");
+        thruHolePad.holeRadius = 2;
+        thruHolePad.rotation = 90;
+        footprint.addPad(thruHolePad);
+
+        FootprintPad customPad{};
+        customPad.shape = QStringLiteral("polygon");
+        customPad.centerX = 10;
+        customPad.centerY = 0;
+        customPad.width = 4;
+        customPad.height = 4;
+        customPad.layerId = 1;
+        customPad.number = QStringLiteral("2");
+        customPad.points = QStringLiteral("8 -2 12 -2 12 2 8 2");
+        footprint.addPad(customPad);
+
+        FootprintText text{};
+        text.type = QStringLiteral("L");
+        text.centerX = 0;
+        text.centerY = -10;
+        text.strokeWidth = 0.6;
+        text.layerId = 3;
+        text.fontSize = 5;
+        text.text = QStringLiteral("PIN1");
+        text.isDisplayed = true;
+        footprint.addText(text);
+
+        FootprintSolidRegion fabRegion{};
+        fabRegion.path = QStringLiteral("M -15 -5 L 15 -5 L 15 5 L -15 5 Z");
+        fabRegion.layerId = 100;
+        fabRegion.fillStyle = QStringLiteral("solid");
+        footprint.addSolidRegion(fabRegion);
+
+        FootprintSolidRegion courtyard{};
+        courtyard.path = QStringLiteral("M -20 -15 L 20 -15 L 20 15 L -20 15 Z");
+        courtyard.layerId = 99;
+        courtyard.fillStyle = QStringLiteral("solid");
+        footprint.addSolidRegion(courtyard);
 
         return footprint;
     }
@@ -278,6 +369,64 @@ private:
         return symbol;
     }
 
+    SymbolData makeMultiPartSymbol() const {
+        SymbolData symbol;
+
+        SymbolInfo info;
+        info.name = QStringLiteral("MULTI_PART_LOGIC");
+        info.prefix = QStringLiteral("U");
+        info.package = QStringLiteral("SOIC-8");
+        info.lcscId = QStringLiteral("C424242");
+        symbol.setInfo(info);
+        symbol.setBbox({0, 0, 40, 40});
+
+        SymbolPart part1{};
+        part1.unitNumber = 0;
+
+        SymbolPolygon polygon{};
+        polygon.points = QStringLiteral("0 0 10 0 10 10 0 10");
+        polygon.strokeWidth = 0;
+        polygon.fillColor = true;
+        part1.polygons.append(polygon);
+
+        SymbolText text{};
+        text.posX = 5;
+        text.posY = 5;
+        text.textSize = 5;
+        text.text = QStringLiteral("A");
+        text.visible = true;
+        part1.texts.append(text);
+
+        SymbolPin invertedPin = makePin(-10, 5, 0, QStringLiteral("IN A"), QStringLiteral("1"), PinType::Input);
+        invertedPin.dot.isDisplayed = true;
+        part1.pins.append(invertedPin);
+
+        SymbolPin clockPin = makePin(20, 5, 180, QStringLiteral("CLK"), QStringLiteral("2"), PinType::Input);
+        clockPin.clock.isDisplayed = true;
+        part1.pins.append(clockPin);
+
+        SymbolPart part2{};
+        part2.unitNumber = 1;
+
+        SymbolPath path{};
+        path.paths = QStringLiteral("M 0 20 L 10 20 L 10 30 L 0 30 Z");
+        path.strokeWidth = 0;
+        path.fillColor = false;
+        part2.paths.append(path);
+
+        SymbolPin invertedClockPin =
+            makePin(-10, 25, 0, QStringLiteral("IN B"), QStringLiteral("3"), PinType::Bidirectional);
+        invertedClockPin.dot.isDisplayed = true;
+        invertedClockPin.clock.isDisplayed = true;
+        part2.pins.append(invertedClockPin);
+
+        SymbolPin outputPin = makePin(20, 25, 180, QStringLiteral("OUT"), QStringLiteral("4"), PinType::Output);
+        part2.pins.append(outputPin);
+
+        symbol.setParts({part1, part2});
+        return symbol;
+    }
+
     SymbolData makeResistorSymbol() const {
         SymbolData symbol;
 
@@ -335,6 +484,19 @@ private:
         symbol.addPin(pin2);
 
         return symbol;
+    }
+
+    SymbolPin makePin(double x, double y, int rotation, const QString& name, const QString& number, PinType type)
+        const {
+        SymbolPin pin{};
+        pin.settings.posX = x;
+        pin.settings.posY = y;
+        pin.settings.rotation = rotation;
+        pin.settings.spicePinNumber = number;
+        pin.settings.type = type;
+        pin.pinPath.path = QStringLiteral("M 0 0 h 10");
+        pin.name.text = name;
+        return pin;
     }
 };
 

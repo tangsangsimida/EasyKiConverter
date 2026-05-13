@@ -32,6 +32,15 @@ private slots:
             "Mismatch should be reported for modified content");
         QVERIFY2(error.contains(QStringLiteral("Golden file mismatch")), qPrintable(error));
     }
+
+    void testNormalizeGoldenMetadataStripsGeneratorVersionComment() {
+        const QString withMetadata =
+            QStringLiteral("; (generator_version \"3.1.8\")\n(kicad_symbol_lib\n  (version 20211014)\n)\n");
+        const QString withoutMetadata = QStringLiteral("(kicad_symbol_lib\n  (version 20211014)\n)\n");
+
+        QCOMPARE(TestPaths::normalizeGoldenMetadata(withMetadata), withoutMetadata);
+        QCOMPARE(TestPaths::normalizeGoldenMetadata(withoutMetadata), withoutMetadata);
+    }
 };
 
 QTEST_GUILESS_MAIN(TestTestPaths)

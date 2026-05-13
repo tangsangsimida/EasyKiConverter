@@ -1,0 +1,80 @@
+; (generator_version "3.1.8")
+(kicad_symbol_lib
+  (version 20211014)
+  (generator EasyKiConverter)
+  (symbol "MULTI_PART_LOGIC"
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "U"
+      (id 0)
+      (at 0.00 7.62 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) )
+    )
+    (property
+      "Value"
+      "MULTI_PART_LOGIC"
+      (id 1)
+      (at 0.00 -7.62 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) )
+    )
+    (property
+      "Footprint"
+      "MultiPartLib:SOIC-8"
+      (id 2)
+      (at 0.00 -10.16 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) hide)
+    )
+    (property
+      "LCSC Part"
+      "C424242"
+      (id 5)
+      (at 0.00 -12.70 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) hide)
+    )
+    (symbol "MULTI_PART_LOGIC_1_1"
+    (polyline
+      (pts (xy 0.00 0.00) (xy 2.54 0.00) (xy 2.54 -2.54) (xy 0.00 -2.54) (xy 0.00 0.00))
+      (stroke (width 0.000) (type default))
+      (fill (type background))
+    )
+    (text
+      "A"
+      (at 1.27 -1.27 0)
+      (effects (font (size 1.76 1.76) (thickness 0.1) normal) )
+    )
+    (pin input inverted
+      (at 0.00 -1.27 180)
+      (length 2.54)
+      (name "INA" (effects (font (size 1.27 1.27) (thickness 0) )))
+      (number "1" (effects (font (size 1.27 1.27) (thickness 0) )))
+    )
+    (pin input clock
+      (at 7.62 -1.27 0)
+      (length 2.54)
+      (name "CLK" (effects (font (size 1.27 1.27) (thickness 0) )))
+      (number "2" (effects (font (size 1.27 1.27) (thickness 0) )))
+    )
+    )
+    (symbol "MULTI_PART_LOGIC_2_1"
+    (polyline
+      (pts (xy 0.00 -5.08) (xy 2.54 -5.08) (xy 2.54 -7.62) (xy 0.00 -7.62) (xy 0.00 -5.08))
+      (stroke (width 0.000) (type default))
+      (fill (type none))
+    )
+    (pin bidirectional inverted_clock
+      (at 0.00 -6.35 180)
+      (length 2.54)
+      (name "INB" (effects (font (size 1.27 1.27) (thickness 0) )))
+      (number "3" (effects (font (size 1.27 1.27) (thickness 0) )))
+    )
+    (pin output line
+      (at 7.62 -6.35 0)
+      (length 2.54)
+      (name "OUT" (effects (font (size 1.27 1.27) (thickness 0) )))
+      (number "4" (effects (font (size 1.27 1.27) (thickness 0) )))
+    )
+    )
+  )
+)

@@ -13,8 +13,8 @@ namespace EasyKiConverter {
 /**
  * @brief KiCad 符号导出器类
  *
- * 用于EasyEDA 符号数据导出KiCad 符号库格
-     */
+ * 将 EasyEDA 符号数据导出为 KiCad 符号库格式。
+ */
 class ExporterSymbol {
 public:
     ExporterSymbol();
@@ -25,7 +25,7 @@ public:
     ~ExporterSymbol();
 
     /**
-     * @brief 导出符号库KiCad 格式
+     * @brief 导出单个 KiCad 符号。
      *
      * @param symbolData 符号数据
      * @param filePath 输出文件路径
@@ -34,14 +34,13 @@ public:
     bool exportSymbol(const SymbolData& symbolData, const QString& filePath);
 
     /**
-     * @brief 导出多个符号KiCad 符号
-         *
+     * @brief 导出多个 KiCad 符号到符号库。
+     *
      * @param symbols 符号列表
      * @param libName 库名称
-         * @param filePath 输出文件路径
+     * @param filePath 输出文件路径
      * @param appendMode 是否使用追加模式（默认true）
-         * @param updateMode
-     * 是否使用更新模式（默false）。如果为 true，则替换已存在的符号
+     * @param updateMode 是否使用更新模式（默认 false）。如果为 true，则替换已存在的符号
      * @return bool 是否成功
      */
     bool exportSymbolLibrary(const QList<SymbolData>& symbols,
@@ -67,10 +66,10 @@ public:
 
 private:
     /**
-     * @brief 生成 KiCad 符号
-         *
+     * @brief 生成 KiCad 符号库头部。
+     *
      * @param libName 库名称
-         * @return QString 头部文本
+     * @return QString 头部文本
      */
     QString generateHeader(const QString& libName) const;
 
@@ -78,7 +77,7 @@ private:
      * @brief 生成 KiCad 符号内容
      *
      * @param symbolData 符号数据
-     * @param libName 库名称（用于 Footprint 前缀
+     * @param libName 库名称（用于 Footprint 前缀）
      * @return QString 符号内容
      */
     QString generateSymbolContent(const SymbolData& symbolData, const QString& libName) const;

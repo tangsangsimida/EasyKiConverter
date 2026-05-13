@@ -1,6 +1,7 @@
+; (generator_version "3.1.8")
 (kicad_symbol_lib
   (version 20211014)
-  (generator https://github.com/tangsangsimida/EasyKiConverter)
+  (generator EasyKiConverter)
   (symbol "CAPACITOR_0402"
     (in_bom yes)
     (on_board yes)

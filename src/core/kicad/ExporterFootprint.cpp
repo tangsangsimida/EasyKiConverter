@@ -1,5 +1,6 @@
 #include "ExporterFootprint.h"
 
+#include "KiCadExportMetadata.h"
 #include "KiCadLibTable.h"
 #include "core/utils/GeometryUtils.h"
 #include "utils/PathSecurity.h"
@@ -179,11 +180,11 @@ bool ExporterFootprint::generateFpLibTable(const QString& libName,
 
 QString ExporterFootprint::generateHeader(const QString& libName) const {
     return QString(
-               "(kicad_pcb (version 20221018) (generator easyeda2kicad)\n"
+               "(kicad_pcb (version 20221018) (generator %2)\n"
                "  (version 6)\n"
-               "  (generator \"EasyKiConverter\")\n"
+               "  (generator \"%2\")\n"
                "  (name \"%1\")\n\n")
-        .arg(libName);
+        .arg(libName, KiCadExportMetadata::generatorName());
 }
 
 QString ExporterFootprint::buildModel3DPath(const QString& safeLibName,

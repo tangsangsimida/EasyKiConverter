@@ -1,3 +1,4 @@
+; (generator_version "3.1.8")
 (footprint easykiconverter:GOLDEN_FOOTPRINT
   (version 20221018)
   (attr smd)
