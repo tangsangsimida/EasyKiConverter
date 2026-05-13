@@ -137,6 +137,7 @@ Card {
 
             // 总进度文字 (放在右侧)
             Text {
+                objectName: "exportProgressPercentLabel"
                 text: Math.round(exportProgressCard.exportProgressController ? exportProgressCard.exportProgressController.progress : 0) + "%"
                 font.pixelSize: AppStyle.fontSizes.sm
                 font.bold: true

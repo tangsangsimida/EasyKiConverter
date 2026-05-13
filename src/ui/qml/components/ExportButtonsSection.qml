@@ -10,6 +10,7 @@ ColumnLayout {
     property var exportProgressController
     property var exportSettingsController
     property var componentListController
+    property alias exportErrorDialog: errorDialog
     spacing: AppStyle.spacing.md
     // 错误提示对话框
     Dialog {

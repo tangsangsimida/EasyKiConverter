@@ -110,6 +110,7 @@ TestCase {
         settingsController.exportFootprint = true
         settingsController.exportModel3D = false
         componentListController.ids = ["C2040", "C25804"]
+        buttons.exportErrorDialog.close()
         wait(0)
     }
 
@@ -146,8 +147,23 @@ TestCase {
         return button
     }
 
+    function errorDialog() {
+        var dialog = buttons.exportErrorDialog
+        verify(dialog !== null, "export error dialog should be discoverable")
+        return dialog
+    }
+
     function test_startExportButtonDisabledWithoutComponents() {
         componentListController.ids = []
+        wait(0)
+
+        compare(startButton().enabled, false)
+    }
+
+    function test_startExportButtonDisabledWithoutLibraryExportType() {
+        settingsController.exportSymbol = false
+        settingsController.exportFootprint = false
+        settingsController.exportModel3D = false
         wait(0)
 
         compare(startButton().enabled, false)
@@ -184,10 +200,13 @@ TestCase {
         progressController.isStopping = false
         wait(0)
 
+        compare(stopButton().text, qsTranslate("MainWindow", "停止转换"))
+
         mouseClick(stopButton())
 
         compare(progressController.cancelExportCallCount, 1)
         compare(stopButton().enabled, false)
+        compare(stopButton().text, qsTranslate("MainWindow", "正在停止..."))
     }
 
     function test_failedStateRetriesInsteadOfStartingNewExport() {
@@ -211,5 +230,22 @@ TestCase {
         button.clicked()
 
         compare(progressController.openFolderCallCount, 1)
+    }
+
+    function test_openFolderFailureShowsErrorDialog() {
+        progressController.hasCompletedExport = true
+        progressController.openLastExportedFolderResult = false
+        wait(0)
+
+        var dialog = errorDialog()
+        compare(dialog.visible, false)
+
+        openFolderButton().clicked()
+        wait(0)
+
+        compare(progressController.openFolderCallCount, 1)
+        compare(dialog.visible, true)
+
+        dialog.close()
     }
 }
