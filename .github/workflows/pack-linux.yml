@@ -573,6 +573,18 @@ jobs:
       - name: 'CCache Stats'
         run: ccache -sv
 
+      - name: 'Build Statistics'
+        if: always()
+        run: |
+          echo "## Build Statistics (Linux Pack)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
+          echo "| AppDir size | $(du -sh ${PRODUCT}.AppDir/ 2>/dev/null | cut -f1 || echo N/A) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Memory used | $(free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
+
       - name: Verify AppDir Contents
         run: |
           echo "=== Verifying AppDir contents ==="

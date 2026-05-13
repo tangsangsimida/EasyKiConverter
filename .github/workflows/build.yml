@@ -113,6 +113,17 @@ jobs:
       - name: 'CCache Stats'
         run: ccache -sv
 
+      - name: 'Build Statistics'
+        if: always()
+        run: |
+          echo "## Build Statistics (Linux)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Memory used | $(free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
+
       - name: 'Run Tests'
         run: |
           export QT_QPA_PLATFORM=offscreen
@@ -181,6 +192,19 @@ jobs:
       - name: 'sccache Stats'
         run: sccache --show-stats
 
+      - name: 'Build Statistics'
+        if: always()
+        shell: pwsh
+        run: |
+          $buildSize = if (Test-Path build) { (Get-ChildItem -Path build -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB } else { 0 }
+          $freeDisk = [math]::Round((Get-PSDrive -Name (Get-Location).Drive.Name).Free / 1GB, 1)
+          "## Build Statistics (Windows)" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "| Metric | Value |" >> $env:GITHUB_STEP_SUMMARY
+          "|--------|-------|" >> $env:GITHUB_STEP_SUMMARY
+          "| Build dir size | $([math]::Round($buildSize, 1)) MB |" >> $env:GITHUB_STEP_SUMMARY
+          "| Free disk | ${freeDisk} GB |" >> $env:GITHUB_STEP_SUMMARY
+
       - name: 'Run Tests'
         run: |
           $env:QT_QPA_PLATFORM = "offscreen"
@@ -230,6 +254,17 @@ jobs:
 
       - name: 'CCache Stats'
         run: ccache -sv
+
+      - name: 'Build Statistics'
+        if: always()
+        run: |
+          echo "## Build Statistics (macOS)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Memory pressure | $(vm_stat 2>/dev/null | awk '/Pages free/ {free=$NF} /Pages active/ {active=$NF} END {printf "free=%d active=%d", free, active}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
 
       - name: 'Run Tests'
         run: |

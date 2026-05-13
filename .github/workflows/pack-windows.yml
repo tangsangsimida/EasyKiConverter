@@ -122,6 +122,19 @@ jobs:
       - name: 'sccache Stats'
         run: sccache --show-stats
 
+      - name: 'Build Statistics'
+        if: always()
+        shell: pwsh
+        run: |
+          $buildSize = if (Test-Path build) { (Get-ChildItem -Path build -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB } else { 0 }
+          $freeDisk = [math]::Round((Get-PSDrive -Name (Get-Location).Drive.Name).Free / 1GB, 1)
+          "## Build Statistics (Windows Pack)" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "| Metric | Value |" >> $env:GITHUB_STEP_SUMMARY
+          "|--------|-------|" >> $env:GITHUB_STEP_SUMMARY
+          "| Build dir size | $([math]::Round($buildSize, 1)) MB |" >> $env:GITHUB_STEP_SUMMARY
+          "| Free disk | ${freeDisk} GB |" >> $env:GITHUB_STEP_SUMMARY
+
       - name: 'Deploy Qt dependencies'
         shell: pwsh
         run: |

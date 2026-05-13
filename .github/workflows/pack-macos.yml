@@ -87,6 +87,20 @@ jobs:
         run: |
           cmake --build "${DIR_BUILD}" --config RelWithDebInfo --parallel
 
+      - name: 'CCache Stats'
+        run: ccache -sv
+
+      - name: 'Build Statistics'
+        if: always()
+        run: |
+          echo "## Build Statistics (macOS Pack)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build dir size | $(du -sh "${DIR_BUILD}"/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Memory pressure | $(vm_stat 2>/dev/null | awk '/Pages free/ {free=$NF} /Pages active/ {active=$NF} END {printf "free=%d active=%d", free, active}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
+
       - name: 'Create App Bundle'
         run: |
           mkdir -p ${APP_NAME}.app/Contents/MacOS
