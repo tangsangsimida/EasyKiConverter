@@ -194,14 +194,10 @@ jobs:
       - name: 'Install Ninja'
         run: choco install ninja -y --no-progress
 
-      - name: 'Setup ccache Wrapper'
+      - name: 'Install ccache'
         shell: pwsh
         run: |
           choco install ccache -y --no-progress
-          $wrapDir = "C:\ccache-wrap"
-          New-Item -ItemType Directory -Force -Path $wrapDir | Out-Null
-          Set-Content -Path "$wrapDir\cl.bat" -Value "@echo off`r`nccache cl.exe %*"
-          echo "$wrapDir" >> $env:GITHUB_PATH
           echo "CCACHE_DIR=${{ runner.temp }}\ccache" >> $env:GITHUB_ENV
           echo "CCACHE_MAXSIZE=2G" >> $env:GITHUB_ENV
 
@@ -221,6 +217,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
             -DCMAKE_C_COMPILER=cl `
             -DCMAKE_CXX_COMPILER=cl `
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
             -DEASYKICONVERTER_BUILD_TESTS=ON `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
