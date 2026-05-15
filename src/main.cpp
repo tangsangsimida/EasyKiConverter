@@ -46,6 +46,8 @@
 #include <QUrl>
 #include <QWindow>
 
+#include <cstdio>
+
 #ifdef _WIN32
 #    include <conio.h>
 #    include <fcntl.h>
@@ -364,8 +366,8 @@ int main(int argc, char* argv[]) {
 #endif
 
     // 设置 stdout 为无缓冲模式，确保日志颜色正常显示
-    setbuf(stdout, nullptr);
-    setbuf(stderr, nullptr);
+    setvbuf(stdout, nullptr, _IONBF, 0);
+    setvbuf(stderr, nullptr, _IONBF, 0);
 
     // 在 QApplication 构造函数之前检查命令行参数
     bool showHelp = false;

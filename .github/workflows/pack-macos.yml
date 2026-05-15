@@ -117,44 +117,82 @@ jobs:
 
       - name: 'Create App Bundle'
         run: |
-          mkdir -p ${APP_NAME}.app/Contents/MacOS
-          mkdir -p ${APP_NAME}.app/Contents/Resources
-          cp -r ${DIR_BUILD}/bin/* ${APP_NAME}.app/Contents/MacOS/
-          cp -r ${DIR_BUILD}/lib/* ${APP_NAME}.app/Contents/MacOS/ 2>/dev/null || echo "No lib directory"
+          set -euo pipefail
 
-          if [ -f "resources/icons/app_icon.icns" ]; then
-            cp resources/icons/app_icon.icns ${APP_NAME}.app/Contents/Resources/AppIcon.icns
+          BUNDLE_PATH=""
+          while IFS= read -r candidate; do
+            BUNDLE_PATH="$candidate"
+            break
+          done < <(find "${DIR_BUILD}/bin" -maxdepth 1 -type d -name "*.app")
+          if [ -z "$BUNDLE_PATH" ]; then
+            echo "No .app bundle found in ${DIR_BUILD}/bin"
+            find "${DIR_BUILD}/bin" -maxdepth 2 -print
+            exit 1
           fi
 
-          cat > ${APP_NAME}.app/Contents/Info.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleExecutable</key>
-              <string>easykiconverter</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.tangsangsimida.EasyKiConverter</string>
-              <key>CFBundleName</key>
-              <string>EasyKiConverter</string>
-              <key>CFBundleDisplayName</key>
-              <string>EasyKiConverter</string>
-              <key>CFBundleVersion</key>
-              <string>${VERSION}</string>
-              <key>CFBundleShortVersionString</key>
-              <string>${VERSION}</string>
-              <key>CFBundleInfoDictionaryVersion</key>
-              <string>6.0</string>
-              <key>NSHighResolutionCapable</key>
-              <true/>
-              <key>NSPrincipalClass</key>
-              <string>NSApplication</string>
-          </dict>
-          </plist>
-          EOF
+          rm -rf "${APP_NAME}.app"
+          cp -R "$BUNDLE_PATH" "${APP_NAME}.app"
+
+          if [ -f "resources/icons/app_icon.icns" ]; then
+            mkdir -p "${APP_NAME}.app/Contents/Resources"
+            cp resources/icons/app_icon.icns "${APP_NAME}.app/Contents/Resources/AppIcon.icns"
+          fi
+
+          plist_set_or_add() {
+            local key="$1"
+            local type="$2"
+            local value="$3"
+            if /usr/libexec/PlistBuddy -c "Print :${key}" "${APP_NAME}.app/Contents/Info.plist" >/dev/null 2>&1; then
+              /usr/libexec/PlistBuddy -c "Set :${key} ${value}" "${APP_NAME}.app/Contents/Info.plist"
+            else
+              /usr/libexec/PlistBuddy -c "Add :${key} ${type} ${value}" "${APP_NAME}.app/Contents/Info.plist"
+            fi
+          }
+
+          plist_set_or_add CFBundleIdentifier string com.tangsangsimida.EasyKiConverter
+          plist_set_or_add CFBundleName string EasyKiConverter
+          plist_set_or_add CFBundleDisplayName string EasyKiConverter
+          plist_set_or_add CFBundleVersion string "${VERSION}"
+          plist_set_or_add CFBundleShortVersionString string "${VERSION}"
+          plist_set_or_add CFBundleIconFile string AppIcon
+          plist_set_or_add NSPrincipalClass string NSApplication
+          if ! /usr/libexec/PlistBuddy -c "Print :NSHighResolutionCapable" "${APP_NAME}.app/Contents/Info.plist" >/dev/null 2>&1; then
+            /usr/libexec/PlistBuddy -c "Add :NSHighResolutionCapable bool true" "${APP_NAME}.app/Contents/Info.plist"
+          fi
+
+          EXECUTABLE_NAME="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "${APP_NAME}.app/Contents/Info.plist")"
+          if [ ! -x "${APP_NAME}.app/Contents/MacOS/${EXECUTABLE_NAME}" ]; then
+            echo "CFBundleExecutable '${EXECUTABLE_NAME}' is missing or not executable"
+            find "${APP_NAME}.app" -maxdepth 4 -print
+            exit 1
+          fi
 
           # 使用 macdeployqt 部署 Qt 运行时库和插件
-          macdeployqt ${APP_NAME}.app -qmldir=src/ui/qml -verbose=1
+          macdeployqt "${APP_NAME}.app" -qmldir="${GITHUB_WORKSPACE}/src/ui/qml" -verbose=1
+
+          # Remove quarantine metadata and ad-hoc sign the final bundle after macdeployqt mutates it.
+          xattr -cr "${APP_NAME}.app"
+          codesign --force --deep --sign - "${APP_NAME}.app"
+          codesign --verify --deep --strict --verbose=2 "${APP_NAME}.app"
+          otool -L "${APP_NAME}.app/Contents/MacOS/${EXECUTABLE_NAME}"
+
+      - name: 'Validate App Bundle'
+        run: |
+          set -euo pipefail
+
+          EXECUTABLE_NAME="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "${APP_NAME}.app/Contents/Info.plist")"
+          test -x "${APP_NAME}.app/Contents/MacOS/${EXECUTABLE_NAME}"
+          test -d "${APP_NAME}.app/Contents/PlugIns/platforms"
+          test -f "${APP_NAME}.app/Contents/PlugIns/platforms/libqcocoa.dylib"
+          codesign --verify --deep --strict --verbose=2 "${APP_NAME}.app"
+
+          ARCHS="$(lipo -archs "${APP_NAME}.app/Contents/MacOS/${EXECUTABLE_NAME}")"
+          echo "Executable architectures: ${ARCHS}"
+          if [ "${{ matrix.dist.arch }}" = "arm64" ]; then
+            echo "$ARCHS" | grep -qw arm64
+          else
+            echo "$ARCHS" | grep -qw x86_64
+          fi
 
       - name: 'Create DMG'
         run: |
@@ -162,6 +200,21 @@ jobs:
             -srcfolder ${APP_NAME}.app \
             -ov -format UDZO \
             ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
+
+      - name: 'Validate DMG'
+        run: |
+          set -euo pipefail
+
+          DMG="${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg"
+          MOUNT_DIR="$(mktemp -d)"
+          hdiutil verify "$DMG"
+          hdiutil attach "$DMG" -readonly -nobrowse -mountpoint "$MOUNT_DIR"
+          trap 'hdiutil detach "$MOUNT_DIR" || true; rmdir "$MOUNT_DIR" || true' EXIT
+
+          test -d "$MOUNT_DIR/${APP_NAME}.app"
+          EXECUTABLE_NAME="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$MOUNT_DIR/${APP_NAME}.app/Contents/Info.plist")"
+          test -x "$MOUNT_DIR/${APP_NAME}.app/Contents/MacOS/${EXECUTABLE_NAME}"
+          codesign --verify --deep --strict --verbose=2 "$MOUNT_DIR/${APP_NAME}.app"
 
       - name: 'SHA256Sum of DMG'
         run: |

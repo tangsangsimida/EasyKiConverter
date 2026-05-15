@@ -190,8 +190,8 @@ QString ConsoleAppender::colorize(const QString& text, LogLevel level) const {
 
 void ConsoleAppender::writerThreadFunc() {
     // 设置线程的 stdout 为无缓冲模式
-    setbuf(stdout, nullptr);
-    setbuf(stderr, nullptr);
+    setvbuf(stdout, nullptr, _IONBF, 0);
+    setvbuf(stderr, nullptr, _IONBF, 0);
 
     while (m_running.loadRelaxed()) {
         QByteArray data;
