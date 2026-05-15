@@ -9,7 +9,7 @@ EasyKiConverter 版本管理工具
     2. 自动更新:
        - vcpkg.json: 更新 "version-string" 字段。
        - CMakeLists.txt: 更新 VERSION_FROM_CI 及 qt_add_qml_module 的版本。
-       - src/main.cpp: 更新 app.setApplicationVersion。
+         (版本通过 configure_file 自动生成 src/core/Version.h，main.cpp 读取该头文件)
        - deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml: 更新截图 URL 和 release 描述。
     3. 智能检查: 在更新前检查每个文件中的版本是否已经是目标版本，避免不必要的修改。
     4. 自动生成 release 描述: 从 Git 提交历史自动提取从上个版本到新版本的所有提交内容。
@@ -50,7 +50,7 @@ PROJECT_ROOT = os.path.dirname(
 )
 VCPKG_JSON_PATH = os.path.join(PROJECT_ROOT, "vcpkg.json")
 CMAKE_LISTS_PATH = os.path.join(PROJECT_ROOT, "CMakeLists.txt")
-MAIN_CPP_PATH = os.path.join(PROJECT_ROOT, "src", "main.cpp")
+VERSION_H_IN_PATH = os.path.join(PROJECT_ROOT, "src", "core", "Version.h.in")
 METAINFO_XML_PATH = os.path.join(
     PROJECT_ROOT,
     "deploy",
@@ -119,23 +119,23 @@ def check_cmake_version(version):
     return False
 
 
-def check_main_cpp_version(version):
-    """检查 src/main.cpp 中的版本是否已经是目标版本"""
-    if not os.path.exists(MAIN_CPP_PATH):
-        return None
+def check_version_header():
+    """
+    检查 Version.h.in 模板是否存在且格式正确。
+
+    版本值由 CMakeLists.txt 的 PROJECT_VERSION 通过 configure_file 注入，
+    此处仅验证模板文件的完整性，不检查具体版本号。
+    """
+    if not os.path.exists(VERSION_H_IN_PATH):
+        return False
 
     try:
-        with open(MAIN_CPP_PATH, "r", encoding="utf-8") as f:
+        with open(VERSION_H_IN_PATH, "r", encoding="utf-8") as f:
             content = f.read()
-            # 检查 app.setApplicationVersion
-            pattern = r'app\.setApplicationVersion\("([^"]+)"\)'
-            match = re.search(pattern, content)
-            if match:
-                return match.group(1) == version
+            return "@PROJECT_VERSION@" in content
     except Exception as e:
-        print(f"检查 src/main.cpp 失败: {e}")
+        print(f"检查 Version.h.in 失败: {e}")
         return None
-    return False
 
 
 def check_metainfo_version(version):
@@ -255,47 +255,6 @@ def update_cmake_lists(new_version, force=False):
         import traceback
 
         traceback.print_exc()
-        return False
-
-
-def update_main_cpp(new_version, force=False):
-    """更新 src/main.cpp 中的版本号"""
-    print(f"正在更新 {MAIN_CPP_PATH}...")
-
-    # 检查版本是否已经是目标版本（除非是强制模式）
-    if not force:
-        check_result = check_main_cpp_version(new_version)
-        if check_result is True:
-            print(f"  ✓ {MAIN_CPP_PATH} 版本已经是 {new_version}，跳过更新")
-            return True
-        elif check_result is None:
-            print(f"  ✗ 无法检查 {MAIN_CPP_PATH} 版本")
-            return False
-
-    try:
-        with open(MAIN_CPP_PATH, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        # app.setApplicationVersion("3.0.2");
-        pattern = r'(app\.setApplicationVersion\(")([^"]+)("\);)'
-        replacement = f"\\g<1>{new_version}\\g<3>"
-
-        new_content = re.sub(pattern, replacement, content)
-
-        if content == new_content:
-            if force:
-                print(f"  ✓ {MAIN_CPP_PATH} 版本已经是 {new_version}")
-                return True
-            else:
-                print(f"  ✗ {MAIN_CPP_PATH} 未发生变化")
-                return False
-        else:
-            with open(MAIN_CPP_PATH, "w", encoding="utf-8") as f:
-                f.write(new_content)
-            print(f"  ✓ 成功更新 {MAIN_CPP_PATH}")
-            return True
-    except Exception as e:
-        print(f"  ✗ 更新 {MAIN_CPP_PATH} 失败: {e}")
         return False
 
 
@@ -747,7 +706,7 @@ def check_all_versions(version):
     results = {
         "vcpkg.json": check_vcpkg_json_version(version),
         "CMakeLists.txt": check_cmake_version(version),
-        "src/main.cpp": check_main_cpp_version(version),
+        "Version.h.in": check_version_header(),
         "metainfo.xml": check_metainfo_version(version),
         "mkdocs.yml": check_mkdocs_version(version),
         "AppxManifest.xml": check_appx_version(version),
@@ -756,7 +715,17 @@ def check_all_versions(version):
 
     all_match = True
     for filename, result in results.items():
-        if result is True:
+        if filename == "Version.h.in":
+            # Version.h.in 只验证模板完整性，版本值由 CMake 注入
+            if result is True:
+                print(f"  ✓ {filename}: 模板正确 (版本由 CMakeLists.txt 注入)")
+            elif result is False:
+                print(f"  ✗ {filename}: 模板缺失或格式错误")
+                all_match = False
+            else:
+                print(f"  ? {filename}: 无法检查模板")
+                all_match = False
+        elif result is True:
             print(f"  ✓ {filename}: 版本是 {version}")
         elif result is False:
             print(f"  ✗ {filename}: 版本不是 {version}")
@@ -923,7 +892,6 @@ def main():
     success = True
     success &= update_vcpkg_json(new_version, force=args.force)
     success &= update_cmake_lists(new_version, force=args.force)
-    success &= update_main_cpp(new_version, force=args.force)
     success &= update_metainfo_xml(
         new_version, generate_release=args.generate_release_notes, force=args.force
     )
