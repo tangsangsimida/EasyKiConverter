@@ -39,6 +39,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: 'Record Start Time'
+        run: echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
       - name: Get Version
         id: version
         uses: ./.github/actions/get-version
@@ -69,7 +72,16 @@ jobs:
             libxcb-xfixes0 \
             libxcb-xinerama0 \
             libtiff-dev \
-            ccache
+            ccache \
+            ninja-build
+
+      - name: 'Setup CCache'
+        uses: hendrikmuhs/ccache-action@v1.2.23
+        with:
+          key: ${{ runner.os }}-pack-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+          restore-keys: |
+            ${{ runner.os }}-pack-
+          max-size: '2G'
 
       - name: Install Qt 6.10.2
         run: |
@@ -560,6 +572,32 @@ jobs:
           EOF
           chmod +x ${APPIMAGE_DST_PATH}/AppRun
           echo "✓ AppRun created successfully"
+
+      - name: 'CCache Stats'
+        run: |
+          ccache -sv
+          echo "## CCache Statistics" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ccache -s >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: 'Build Statistics'
+        if: always()
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - BUILD_START_TIME))
+          RATE=0.008
+          COST=$(awk "BEGIN {printf \"%.4f\", $DURATION * $RATE / 60}")
+          echo "## Build Cost Summary (Linux Pack)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Est. cost | \$${COST} (Linux × \$0.008/min) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
+          echo "| AppDir size | $(du -sh ${PRODUCT}.AppDir/ 2>/dev/null | cut -f1 || echo N/A) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Memory used | $(free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
 
       - name: Verify AppDir Contents
         run: |

@@ -1,4 +1,4 @@
-﻿name: Build
+name: Build
 
 on:
   push:
@@ -41,6 +41,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: 'Record Start Time'
+        run: echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
       - name: 'Fix Git Safe Directory'
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
@@ -73,6 +76,14 @@ jobs:
             ccache \
             ninja-build
 
+      - name: 'Setup CCache'
+        uses: hendrikmuhs/ccache-action@v1.2.23
+        with:
+          key: ${{ runner.os }}-linux-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+          restore-keys: |
+            ${{ runner.os }}-linux-
+          max-size: '2G'
+
       - name: 'Install Qt 6.10.2'
         run: |
           pip3 install --no-cache-dir --break-system-packages aqtinstall
@@ -102,6 +113,31 @@ jobs:
           export QT_QML_DISABLE_AOT_COMPILE=1
           cmake --build build --config RelWithDebInfo --parallel 4
 
+      - name: 'CCache Stats'
+        run: |
+          ccache -sv
+          echo "## CCache Statistics" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ccache -s >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: 'Build Statistics'
+        if: always()
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - BUILD_START_TIME))
+          RATE=0.008
+          COST=$(awk "BEGIN {printf \"%.4f\", $DURATION * $RATE / 60}")
+          echo "## Build Cost Summary (Linux)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Est. cost | \$${COST} (Linux × \$0.008/min) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Memory used | $(free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
+
       - name: 'Run Tests'
         run: |
           export QT_QPA_PLATFORM=offscreen
@@ -120,7 +156,7 @@ jobs:
         include:
           - name: 'Windows MSVC'
             platform: 'msvc2019_64'
-            generator: 'Visual Studio 17 2022'
+            generator: 'Ninja'
             arch: 'x64'
     steps:
       - name: 'Checkout Source code'
@@ -128,11 +164,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: 'Record Start Time'
+        shell: pwsh
+        run: echo "BUILD_START_TIME=$(Get-Date -Format o)" >> $env:GITHUB_ENV
+
       - name: 'Setup MSVC'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.arch }}
-          toolset: '14.2'
+          vsversion: '2022'
 
       - name: 'Setup vcpkg'
         uses: lukka/run-vcpkg@v11
@@ -149,15 +189,43 @@ jobs:
           qt-target: 'desktop'
           qt-arch: 'win64_msvc2022_64'
           enable-ccache: 'false'
-          enable-sccache: 'true'
+          enable-sccache: 'false'
 
-      - name: 'Configure CMake (MSVC) with sccache and vcpkg'
+      - name: 'Install Ninja'
+        run: choco install ninja -y --no-progress
+
+      - name: 'Install ccache'
+        shell: pwsh
         run: |
-          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+          choco install ccache -y --no-progress
+          echo "CCACHE_DIR=${{ runner.temp }}\ccache" >> $env:GITHUB_ENV
+          echo "CCACHE_MAXSIZE=2G" >> $env:GITHUB_ENV
+          echo "CCACHE_BASEDIR=${{ github.workspace }}" >> $env:GITHUB_ENV
+          echo "CCACHE_NOHASHDIR=true" >> $env:GITHUB_ENV
+          echo "CCACHE_COMPILERCHECK=content" >> $env:GITHUB_ENV
+
+      - name: 'Restore CCache'
+        id: cache-ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}\ccache
+          key: win-ccache-${{ matrix.platform }}-${{ env.BUILD_TYPE }}-${{ env.QT_VERSION }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            win-ccache-${{ matrix.platform }}-${{ env.BUILD_TYPE }}-${{ env.QT_VERSION }}-
+            win-ccache-${{ matrix.platform }}-${{ env.BUILD_TYPE }}-
+            win-ccache-${{ matrix.platform }}-
+
+      - name: 'Configure CMake (Ninja + ccache) with vcpkg'
+        run: |
+          cmake -B build -G "Ninja" `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
-            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
-            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+            -DCMAKE_C_FLAGS_RELWITHDEBINFO="/MD /O2 /Ob1 /DNDEBUG /Z7" `
+            -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="/MD /O2 /Ob1 /DNDEBUG /Z7" `
+            -DCMAKE_C_COMPILER=cl `
+            -DCMAKE_CXX_COMPILER=cl `
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache `
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF `
             -DEASYKICONVERTER_BUILD_TESTS=ON `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
@@ -165,12 +233,47 @@ jobs:
 
       - name: 'Build'
         run: |
-          cmake --build build --config $env:BUILD_TYPE --parallel 16
+          cmake --build build --config ${{ env.BUILD_TYPE }} --parallel 16
+
+      - name: 'CCache Stats'
+        run: |
+          ccache -sv
+          echo "## CCache Statistics" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ccache -s >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: 'Save CCache'
+        if: always() && steps.cache-ccache.outputs.cache-primary-key != ''
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}\ccache
+          key: ${{ steps.cache-ccache.outputs.cache-primary-key }}
+
+      - name: 'Build Statistics'
+        if: always()
+        shell: pwsh
+        run: |
+          $endTime = Get-Date
+          $startTime = [DateTime]::Parse($env:BUILD_START_TIME)
+          $duration = $endTime - $startTime
+          $rate = 0.016
+          $cost = [math]::Round($duration.TotalMinutes * $rate, 4)
+          $buildSize = if (Test-Path build) { [math]::Round((Get-ChildItem -Path build -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB, 1) } else { 0 }
+          $freeDisk = [math]::Round((Get-PSDrive -Name (Get-Location).Drive.Name).Free / 1GB, 1)
+          "## Build Cost Summary (Windows)" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "| Metric | Value |" >> $env:GITHUB_STEP_SUMMARY
+          "|--------|-------|" >> $env:GITHUB_STEP_SUMMARY
+          "| Job duration | $([math]::Floor($duration.TotalMinutes))m $($duration.Seconds)s |" >> $env:GITHUB_STEP_SUMMARY
+          "| Est. cost | `$${cost} (Windows × `$0.016/min) |" >> $env:GITHUB_STEP_SUMMARY
+          "| Build dir size | ${buildSize} MB |" >> $env:GITHUB_STEP_SUMMARY
+          "| Free disk | ${freeDisk} GB |" >> $env:GITHUB_STEP_SUMMARY
 
       - name: 'Run Tests'
         run: |
           $env:QT_QPA_PLATFORM = "offscreen"
-          ctest --test-dir build -C $env:BUILD_TYPE --output-on-failure --no-tests=error
+          ctest --test-dir build -C ${{ env.BUILD_TYPE }} --output-on-failure --no-tests=error
 
   macos-build:
     name: 'Build macOS'
@@ -188,6 +291,9 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+
+      - name: 'Record Start Time'
+        run: echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
 
       - name: 'Setup Build Environment'
         uses: ./.github/actions/setup-env
@@ -213,6 +319,31 @@ jobs:
       - name: 'Build'
         run: |
           cmake --build build --config $BUILD_TYPE --parallel 4
+
+      - name: 'CCache Stats'
+        run: |
+          ccache -sv
+          echo "## CCache Statistics" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ccache -s >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: 'Build Statistics'
+        if: always()
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - BUILD_START_TIME))
+          RATE=0.08
+          COST=$(awk "BEGIN {printf \"%.4f\", $DURATION * $RATE / 60}")
+          echo "## Build Cost Summary (macOS)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Est. cost | \$${COST} (macOS × \$0.08/min) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Memory pressure | $(vm_stat 2>/dev/null | awk '/Pages free/ {free=$NF} /Pages active/ {active=$NF} END {printf "free=%d active=%d", free, active}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
 
       - name: 'Run Tests'
         run: |

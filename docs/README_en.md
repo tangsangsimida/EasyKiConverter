@@ -1,4 +1,4 @@
-﻿# Documentation Directory
+# Documentation Directory
 
 This directory contains all documentation for the EasyKiConverter project.
 

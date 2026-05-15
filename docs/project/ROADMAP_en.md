@@ -1,4 +1,4 @@
-﻿# Project Roadmap
+# Project Roadmap
 
 This document shows the future direction of the project and the main features planned for the next few versions.
 

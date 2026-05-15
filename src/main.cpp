@@ -5,6 +5,7 @@
 // 意淫我有多少多少家产，然后怕班里有人会读心术紧急撤回一条意淫，
 // 那这在恋爱小说里我不就是那种…背景板吗，
 // 就每天在学校挂机任务就完成的npc
+#include "Version.h"
 #include "core/LanguageManager.h"
 #include "core/network/NetworkClient.h"
 #include "services/ComponentCacheService.h"
@@ -398,7 +399,7 @@ int main(int argc, char* argv[]) {
         // 纯 CLI 模式：使用 QCoreApplication
         QCoreApplication app(argc, argv);
         app.setApplicationName("EasyKiConverter");
-        app.setApplicationVersion("3.1.8");
+        app.setApplicationVersion(EasyKiConverter::APP_VERSION);
         app.setOrganizationName("EasyKiConverter");
         app.setOrganizationDomain("easykiconverter.com");
 
@@ -570,7 +571,7 @@ int main(int argc, char* argv[]) {
 
     // 设置应用程序信息
     app.setApplicationName("EasyKiConverter");
-    app.setApplicationVersion("3.1.8");
+    app.setApplicationVersion(EasyKiConverter::APP_VERSION);
     app.setOrganizationName("EasyKiConverter");
     app.setOrganizationDomain("easykiconverter.com");
 
