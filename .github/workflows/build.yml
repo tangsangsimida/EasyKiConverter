@@ -200,21 +200,28 @@ jobs:
           choco install ccache -y --no-progress
           echo "CCACHE_DIR=${{ runner.temp }}\ccache" >> $env:GITHUB_ENV
           echo "CCACHE_MAXSIZE=2G" >> $env:GITHUB_ENV
+          echo "CCACHE_BASEDIR=${{ github.workspace }}" >> $env:GITHUB_ENV
+          echo "CCACHE_NOHASHDIR=true" >> $env:GITHUB_ENV
+          echo "CCACHE_COMPILERCHECK=content" >> $env:GITHUB_ENV
 
       - name: 'Restore CCache'
         id: cache-ccache
         uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}\ccache
-          key: win-ccache-${{ hashFiles('src/**', 'CMakeLists.txt', '**/*.cmake') }}
+          key: win-ccache-${{ matrix.platform }}-${{ env.BUILD_TYPE }}-${{ env.QT_VERSION }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            win-ccache-
+            win-ccache-${{ matrix.platform }}-${{ env.BUILD_TYPE }}-${{ env.QT_VERSION }}-
+            win-ccache-${{ matrix.platform }}-${{ env.BUILD_TYPE }}-
+            win-ccache-${{ matrix.platform }}-
 
       - name: 'Configure CMake (Ninja + ccache) with vcpkg'
         run: |
           cmake -B build -G "Ninja" `
             -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+            -DCMAKE_C_FLAGS_RELWITHDEBINFO="/MD /O2 /Ob1 /DNDEBUG /Z7" `
+            -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="/MD /O2 /Ob1 /DNDEBUG /Z7" `
             -DCMAKE_C_COMPILER=cl `
             -DCMAKE_CXX_COMPILER=cl `
             -DCMAKE_C_COMPILER_LAUNCHER=ccache `
@@ -237,7 +244,7 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: 'Save CCache'
-        if: steps.cache-ccache.outputs.cache-hit != 'true'
+        if: always() && steps.cache-ccache.outputs.cache-primary-key != ''
         uses: actions/cache/save@v4
         with:
           path: ${{ runner.temp }}\ccache
