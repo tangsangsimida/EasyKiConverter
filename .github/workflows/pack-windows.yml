@@ -147,7 +147,7 @@ jobs:
       - name: 'Deploy Qt dependencies'
         shell: pwsh
         run: |
-          $exePath = "$env:GITHUB_WORKSPACE\build\bin\Release\easykiconverter.exe"
+          $exePath = "$env:GITHUB_WORKSPACE\build\bin\easykiconverter.exe"
           Write-Host "Running windeployqt on $exePath"
           # Rely on PATH to find windeployqt
           windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw --qmldir "$env:GITHUB_WORKSPACE\src\ui\qml" $exePath
@@ -157,8 +157,8 @@ jobs:
         shell: pwsh
         run: |
           mkdir -p $env:GITHUB_WORKSPACE\build\Package\portable
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\Release\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\Release\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse -ErrorAction SilentlyContinue
+          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse
+          Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\* -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -Recurse -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\README*.md -Destination $env:GITHUB_WORKSPACE\build\Package\portable\ -ErrorAction SilentlyContinue
           Copy-Item -Path $env:GITHUB_WORKSPACE\LICENSE -Destination $env:GITHUB_WORKSPACE\build\Package\portable\
           Compress-Archive -Path $env:GITHUB_WORKSPACE\build\Package\portable\* -DestinationPath $env:GITHUB_WORKSPACE\build\Package\portable\${env:PRODUCT}-${env:VERSION}-g${env:GIT_HASH}-${{ matrix.config.pak_arch }}.zip
@@ -170,10 +170,10 @@ jobs:
           # 1. Prepare Staging Directory
           $stagingDir = "$env:GITHUB_WORKSPACE\build\Staging"
           mkdir -p $stagingDir
-          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\Release\* -Destination $stagingDir -Recurse
+          Copy-Item -Path $env:GITHUB_WORKSPACE\build\bin\* -Destination $stagingDir -Recurse
           # Copy dependencies (if any separate lib dir exists, though windeployqt usually puts them in bin)
-          if (Test-Path "$env:GITHUB_WORKSPACE\build\lib\Release") {
-            Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\Release\* -Destination $stagingDir -Recurse -ErrorAction SilentlyContinue
+          if (Test-Path "$env:GITHUB_WORKSPACE\build\lib") {
+            Copy-Item -Path $env:GITHUB_WORKSPACE\build\lib\* -Destination $stagingDir -Recurse -ErrorAction SilentlyContinue
           }
 
           # 2. Run Inno Setup Compiler
