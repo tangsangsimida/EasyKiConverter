@@ -7,8 +7,8 @@
 #include <QRandomGenerator>
 #include <QThread>
 
-#include <thread>
 #include <chrono>
+#include <thread>
 
 namespace EasyKiConverter {
 
