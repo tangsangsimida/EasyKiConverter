@@ -7,6 +7,9 @@
 #include <QRandomGenerator>
 #include <QThread>
 
+#include <thread>
+#include <chrono>
+
 namespace EasyKiConverter {
 
 TempFileManager::TempFileManager(QObject* parent) : QObject(parent) {}
@@ -146,10 +149,32 @@ bool TempFileManager::commit(const QString& finalPath) {
         }
     }
 
-    // 重命名临时文件为最终路径
-    if (!QFile::rename(tempPath, finalPath)) {
-        qWarning() << "TempFileManager: Failed to rename:" << tempPath << "to" << finalPath;
-        return false;
+    // 重命名临时文件为最终路径（带重试和降级）
+    constexpr int kMaxRetries = 3;
+    bool renameOk = false;
+    for (int attempt = 0; attempt < kMaxRetries; ++attempt) {
+        if (attempt > 0) {
+            // 重试前短暂等待，让文件系统完成挂起操作
+            std::this_thread::sleep_for(std::chrono::milliseconds(50 * attempt));
+            qInfo() << "TempFileManager: Retrying rename (" << attempt + 1 << "/" << kMaxRetries << "):" << tempPath;
+        }
+        renameOk = QFile::rename(tempPath, finalPath);
+        if (renameOk) {
+            break;
+        }
+        qWarning() << "TempFileManager: Rename attempt" << attempt + 1 << "failed:" << tempPath << "to" << finalPath;
+    }
+
+    if (!renameOk) {
+        // rename 失败时降级为复制+删除
+        qWarning() << "TempFileManager: All rename attempts failed, falling back to copy:" << tempPath;
+        if (!QFile::copy(tempPath, finalPath)) {
+            qWarning() << "TempFileManager: Copy fallback also failed:" << tempPath << "to" << finalPath;
+            return false;
+        }
+        if (!QFile::remove(tempPath)) {
+            qWarning() << "TempFileManager: Failed to remove temp file after copy:" << tempPath;
+        }
     }
 
     m_tempFiles.remove(tempPath);
