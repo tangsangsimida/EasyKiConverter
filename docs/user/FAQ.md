@@ -376,6 +376,7 @@ easykiconverter convert bom -i <bom_file> -o <output_dir>
 - [功能特性](FEATURES.md) - 了解所有功能
 - [构建指南](../developer/BUILD.md) - 从源代码构建
 - [贡献指南](../developer/CONTRIBUTING.md) - 贡献代码
+- [开发者常见问题](../developer/FAQ.md) - 技术问题、根因分析和回归预防
 - [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues) - 报告问题
 - [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions) - 问答和讨论
 

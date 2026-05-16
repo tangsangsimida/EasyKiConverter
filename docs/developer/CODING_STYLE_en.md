@@ -127,8 +127,9 @@ This guide is primarily based on the [Qt Coding Style](https://wiki.qt.io/Qt_Cod
 *   **Strongly recommend** using the RAII (Resource Acquisition Is Initialization) idiom.
 *   **Prefer smart pointers** to manage dynamically allocated memory over raw pointers and manual `new`/`delete`.
     *   Use `std::unique_ptr` or `QScopedPointer` to represent exclusive ownership.
-    *   Use `std::shared_ptr` or `QSharedPointer` to represent shared ownership.
-*   **Example**:
+    *   Use `QSharedPointer` to represent shared ownership across thread / Qt signal-slot boundaries.
+    *   **Never** use `std::shared_ptr` in cross-thread Qt signal scenarios — it will break the signal-slot system.
+    *   **Example**:
     ```cpp
     // Recommended
     std::unique_ptr<MyObject> obj = std::make_unique<MyObject>();

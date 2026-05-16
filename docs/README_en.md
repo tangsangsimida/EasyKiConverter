@@ -28,6 +28,7 @@ These documents help other developers (or your future self) understand the proje
 - [Testing Guide](developer/TESTING_GUIDE_en.md) - Testing architecture & Mocking strategy
 - [BOM Parsing Guide](developer/BOM_PARSING_GUIDE_en.md) - BOM file parsing documentation
 - [Coding Style](developer/CODING_STYLE_en.md) - Code style guidelines
+- [Developer FAQ](developer/FAQ_en.md) - Technical issues, root cause analysis, regression prevention
 - [Performance Baseline](developer/performance_baseline_en.md) - Performance benchmarks
 - [i18n Implementation](developer/I18N_IMPLEMENTATION_SUMMARY.md) - Internationalization summary
 - [Flatpak Development](developer/FLATPAK_DEVELOPMENT.md) - Flatpak packaging guide
@@ -39,12 +40,17 @@ These documents record the project's evolution and future direction, helping the
 - [Roadmap](project/ROADMAP_en.md) - Future development directions
 - [Architecture Decision Records](project/adr/README_en.md) - Technical decision records
 - [Logging Architecture](project/LOGGING_ARCHITECTURE.md) - Logging system design
-- [Weak Network Analysis](WEAK_NETWORK_ANALYSIS_en.md) - Network resilience analysis
-- [Performance Optimization Report](PERFORMANCE_OPTIMIZATION_REPORT_en.md) - Optimization history
+
+### Historical Reports (archived)
+
+These reports have been superseded by ADRs and are kept for reference only:
+
+- [Weak Network Analysis](project/archive/WEAK_NETWORK_ANALYSIS_en.md) - v3.0.4 network resilience analysis
+- [Performance Optimization Report](project/archive/PERFORMANCE_OPTIMIZATION_REPORT_en.md) - v3.0.0 optimization history
 
 ### Additional Documentation
 
-- [CLI Usage](CLI_USAGE.md) - Command-line interface usage
+- [CLI Usage](CLI_USAGE_en.md) - Command-line interface usage
 - [API Documentation](api/index.md) - API reference documentation
 
 ## Documentation Languages
@@ -66,7 +72,8 @@ Most documents are available in both Chinese and English:
 1. Read [Build Guide](developer/BUILD_en.md) to learn how to build the project
 2. Review [Architecture](developer/ARCHITECTURE_en.md) to understand the project architecture
 3. Read [Testing Guide](developer/TESTING_GUIDE_en.md) for testing standards and Mock implementation
-4. Read [Contributing Guide](developer/CONTRIBUTING_en.md) to learn how to contribute code
+4. Read [Developer FAQ](developer/FAQ_en.md) for known development issues and regression prevention
+5. Read [Contributing Guide](developer/CONTRIBUTING_en.md) to learn how to contribute code
 
 ### If You Want to Understand Project Planning
 
