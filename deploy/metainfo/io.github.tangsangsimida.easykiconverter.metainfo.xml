@@ -58,22 +58,22 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.8/resources/imgs/screenshot1.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.9/resources/imgs/screenshot1.png</image>
       <caption>Main application window with component conversion interface</caption>
       <caption xml:lang="zh_CN">主应用窗口 - 元件转换界面</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.8/resources/imgs/screenshot2.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.9/resources/imgs/screenshot2.png</image>
       <caption>Component input and list management</caption>
       <caption xml:lang="zh_CN">元件输入和列表管理</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.8/resources/imgs/screenshot3.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.9/resources/imgs/screenshot3.png</image>
       <caption>Export settings and progress tracking</caption>
       <caption xml:lang="zh_CN">导出设置和进度跟踪</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.8/resources/imgs/screenshot4.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.9/resources/imgs/screenshot4.png</image>
       <caption>Dark mode theme support</caption>
       <caption xml:lang="zh_CN">深色主题支持</caption>
     </screenshot>
@@ -105,10 +105,28 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="3.1.9" date="2026-05-16">
+      <description>
+        <p>Version 3.1.9 release</p>
+        <p xml:lang="zh_CN">3.1.9 版本发布</p>
+      </description>
+    </release>
     <release version="3.1.8" date="2026-05-09">
       <description>
-        <p>Version 3.1.8 release</p>
-        <p xml:lang="zh_CN">3.1.8 版本发布</p>
+        <p>Changes from 3.1.7 to 3.1.8</p>
+        <p xml:lang="zh_CN">从 3.1.7 到 3.1.8 的变更</p>
+        <p>Bug Fixes:</p>
+        <p xml:lang="zh_CN">修复:</p>
+        <ul>
+          <li>Fix export stage state management issues when cancellation is triggered</li>
+          <li xml:lang="zh_CN">修复导出阶段在取消时的状态管理问题</li>
+        </ul>
+        <p>Improvements:</p>
+        <p xml:lang="zh_CN">改进:</p>
+        <ul>
+          <li>Add timeout configuration for macOS packaging workflow and optimize release asset upload</li>
+          <li xml:lang="zh_CN">为 macOS 打包工作流添加超时配置并优化发布资产上传</li>
+        </ul>
       </description>
     </release>
     <release version="3.1.7" date="2026-05-05">
