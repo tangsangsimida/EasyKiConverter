@@ -123,8 +123,9 @@
 *   **强烈推荐** 使用 RAII (资源获取即初始化) 技术。
 *   **优先使用智能指针** 管理动态分配的内存，而不是裸指针和手动的 `new`/`delete`。
     *   使用 `std::unique_ptr` 或 `QScopedPointer` 来表示独占所有权。
-    *   使用 `std::shared_ptr` 或 `QSharedPointer` 来表示共享所有权。
-*   **示例**:
+    *   使用 `QSharedPointer` 来表示跨线程 / Qt 信号槽边界的共享所有权。
+    *   **严禁** 在涉及 Qt 信号的跨线程场景中使用 `std::shared_ptr`——它会破坏信号槽系统。
+    *   **示例**:
     ```cpp
     // 推荐
     std::unique_ptr<MyObject> obj = std::make_unique<MyObject>();

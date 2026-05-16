@@ -376,6 +376,7 @@ There are currently no video tutorials. You can learn by:
 - [Features](FEATURES_en.md) - Learn about all features
 - [Build Guide](../developer/BUILD_en.md) - Build from source
 - [Contributing Guide](../developer/CONTRIBUTING_en.md) - Contribute code
+- [Developer FAQ](../developer/FAQ_en.md) - Technical issues, root cause analysis, and regression prevention
 - [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues) - Report issues
 - [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions) - Q&A and discussions
 

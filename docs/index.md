@@ -32,6 +32,7 @@
 - [架构文档](developer/ARCHITECTURE.md) - 项目架构设计
 - [架构文档 (英文)](developer/ARCHITECTURE_en.md) - Architecture
 - [测试开发指南](developer/TESTING_GUIDE.md) - 测试架构与 Mock 策略
+- [开发者常见问题](developer/FAQ.md) - 技术问题、根因分析和回归预防
 - [国际化实现](developer/I18N_IMPLEMENTATION_SUMMARY.md) - 国际化支持说明
 
 ### 面向项目决策 (project/)
@@ -46,12 +47,12 @@
 
 - [代码重构计划](../../REFACTORING_PLAN.md) - 大型源文件重构优化方案
 
-### 分析报告
+### 历史分析报告（归档）
 
-- [弱网支持分析报告](WEAK_NETWORK_ANALYSIS.md) - v3.0.4 弱网容错分析
-- [弱网支持分析报告 (英文)](WEAK_NETWORK_ANALYSIS_en.md) - Weak Network Analysis
-- [性能优化报告](PERFORMANCE_OPTIMIZATION_REPORT.md) - v3.0.0 性能优化
-- [性能优化报告 (英文)](PERFORMANCE_OPTIMIZATION_REPORT_en.md) - Performance Report
+以下报告内容已由 ADR 替代，仅作历史参考：
+
+- [弱网支持分析报告](project/archive/WEAK_NETWORK_ANALYSIS.md) - v3.0.4 弱网容错分析
+- [性能优化报告](project/archive/PERFORMANCE_OPTIMIZATION_REPORT.md) - v3.0.0 性能优化
 
 ## 文档语言
 
@@ -72,7 +73,8 @@
 1. 阅读 [构建指南](developer/BUILD.md) 了解如何构建项目
 2. 查看 [架构文档](developer/ARCHITECTURE.md) 理解项目架构
 3. 阅读 [测试开发指南](developer/TESTING_GUIDE.md) 了解测试规范与 Mock 编写
-4. 阅读 [贡献指南](developer/CONTRIBUTING.md) 了解如何贡献代码
+4. 阅读 [开发者常见问题](developer/FAQ.md) 解决开发中的已知问题
+5. 阅读 [贡献指南](developer/CONTRIBUTING.md) 了解如何贡献代码
 
 ### 如果您想了解项目规划
 

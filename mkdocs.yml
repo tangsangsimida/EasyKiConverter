@@ -69,12 +69,16 @@ nav:
     - 代码风格: developer/CODING_STYLE.md
     - 测试指南: developer/TESTING_GUIDE.md
     - BOM 解析指南: developer/BOM_PARSING_GUIDE.md
-    - 变更日志: developer/CHANGELOG.md
+    - 开发者常见问题: developer/FAQ.md
+    - 变更日志:
+      - 变更日志: developer/CHANGELOG.md
+      - v3.1.x: developer/changelog/3.1.4.md
+      - v3.0.x: developer/changelog/3.0.14.md
+      - v2.0.x: developer/changelog/2.0.0.md
+      - v1.0.x: developer/changelog/1.0.0.md
   - 项目信息:
     - 路线图: project/ROADMAP.md
     - 日志架构: project/LOGGING_ARCHITECTURE.md
-    - 性能报告: PERFORMANCE_OPTIMIZATION_REPORT.md
-    - 弱网分析: WEAK_NETWORK_ANALYSIS.md
   - API 参考:
     - 概述: api/index.md
 
