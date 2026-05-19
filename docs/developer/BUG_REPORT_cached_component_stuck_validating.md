@@ -134,4 +134,8 @@ FetchingComponent& fetchingComponent = *it;
 
 ## 状态
 
-**待修复** — 根因代码确认存在，组合修复方案可行
+**已修复** — commit `d628d8e6` 实施方案 C（组合修复）：
+- 引入 `requestActive` 标志跟踪请求状态
+- 普通模式下遇到非活动陈旧条目时清除并重新发起请求
+- 异步回调中使用 `find()` 替代 `operator[]` 防止条目重建
+- 新增 3 个单元测试覆盖竞态场景
