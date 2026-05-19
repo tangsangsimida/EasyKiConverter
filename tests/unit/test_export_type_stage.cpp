@@ -64,7 +64,10 @@ protected:
 class ConcurrentStage final : public ExportTypeStage {
 public:
     explicit ConcurrentStage(int maxConcurrent) : ExportTypeStage("Concurrent", maxConcurrent, nullptr) {}
-    int maxStartedWorkers() const { return m_maxStartedWorkers; }
+
+    int maxStartedWorkers() const {
+        return m_maxStartedWorkers;
+    }
 
 protected:
     QObject* createWorker() override {
@@ -375,9 +378,9 @@ private slots:
         stage.start(QStringList(), cachedData);
 
         QCOMPARE(completedSpy.count(), 1);
-        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0); // successCount
-        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0); // failedCount
-        QCOMPARE(completedSpy.at(0).at(2).toInt(), 0); // skippedCount
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);  // successCount
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);  // failedCount
+        QCOMPARE(completedSpy.at(0).at(2).toInt(), 0);  // skippedCount
         QVERIFY(!stage.isRunning());
     }
 
@@ -396,10 +399,10 @@ private slots:
         stage.start({QStringLiteral("C8002")}, cachedData);
 
         QVERIFY2(completedSpy.wait(3000), "First start should complete");
-        QCOMPARE(completedSpy.count(), 1); // 只有 1 次 completed
+        QCOMPARE(completedSpy.count(), 1);  // 只有 1 次 completed
 
         const ExportTypeProgress progress = stage.getProgress();
-        QCOMPARE(progress.totalCount, 1); // 只有 C8001，C8002 被忽略
+        QCOMPARE(progress.totalCount, 1);  // 只有 C8001，C8002 被忽略
     }
 
     void failedComponentIncrementsFailedCount() {
@@ -416,8 +419,8 @@ private slots:
         stage.start(ids, cachedData);
 
         QCOMPARE(completedSpy.count(), 1);
-        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0); // successCount
-        QCOMPARE(completedSpy.at(0).at(1).toInt(), 3); // failedCount
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);  // successCount
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 3);  // failedCount
 
         const ExportTypeProgress progress = stage.getProgress();
         QCOMPARE(progress.totalCount, 3);
@@ -450,7 +453,7 @@ private slots:
         stage.start(ids, cachedData);
 
         QVERIFY2(completedSpy.wait(5000), "All components should complete");
-        QCOMPARE(completedSpy.at(0).at(0).toInt(), 5); // all success
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 5);  // all success
 
         // 并发限制为 2，任何时候不应超过 2 个 worker 同时运行
         QVERIFY2(stage.maxStartedWorkers() <= 2,
@@ -478,7 +481,7 @@ private slots:
         int success = args.at(0).toInt();
         int failed = args.at(1).toInt();
         QCOMPARE(success, 0);
-        QCOMPARE(failed, 1); // 仅活跃的 1 个 worker 标记为 failed
+        QCOMPARE(failed, 1);  // 仅活跃的 1 个 worker 标记为 failed
 
         // pending 队列被清空，completedCount 仅反映实际处理的
         const ExportTypeProgress progress = stage.getProgress();

@@ -16,10 +16,10 @@ private slots:
         QTest::addColumn<bool>("wrl");
         QTest::addColumn<bool>("step");
 
-        QTest::newRow("none")  << static_cast<int>(ExportOptions::MODEL_3D_FORMAT_NONE)  << false << false;
-        QTest::newRow("wrl")   << static_cast<int>(ExportOptions::MODEL_3D_FORMAT_WRL)   << true  << false;
-        QTest::newRow("step")  << static_cast<int>(ExportOptions::MODEL_3D_FORMAT_STEP)  << false << true;
-        QTest::newRow("both")  << static_cast<int>(ExportOptions::MODEL_3D_FORMAT_BOTH)  << true  << true;
+        QTest::newRow("none") << static_cast<int>(ExportOptions::MODEL_3D_FORMAT_NONE) << false << false;
+        QTest::newRow("wrl") << static_cast<int>(ExportOptions::MODEL_3D_FORMAT_WRL) << true << false;
+        QTest::newRow("step") << static_cast<int>(ExportOptions::MODEL_3D_FORMAT_STEP) << false << true;
+        QTest::newRow("both") << static_cast<int>(ExportOptions::MODEL_3D_FORMAT_BOTH) << true << true;
     }
 
     void exportOptionsModel3DFormatBitmask() {
@@ -37,10 +37,10 @@ private slots:
         QTest::addColumn<int>("input");
         QTest::addColumn<int>("expected");
 
-        QTest::newRow("relative")   << 0 << 0;
-        QTest::newRow("absolute")   << 1 << 1;
+        QTest::newRow("relative") << 0 << 0;
+        QTest::newRow("absolute") << 1 << 1;
         QTest::newRow("out-of-range") << 2 << 0;
-        QTest::newRow("negative")   << -1 << 0;
+        QTest::newRow("negative") << -1 << 0;
     }
 
     void exportOptionsNormalizePathMode() {
@@ -55,11 +55,11 @@ private slots:
         QTest::addColumn<ExportItemStatus::Status>("status");
         QTest::addColumn<bool>("expected");
 
-        QTest::newRow("Pending")    << ExportItemStatus::Status::Pending    << false;
+        QTest::newRow("Pending") << ExportItemStatus::Status::Pending << false;
         QTest::newRow("InProgress") << ExportItemStatus::Status::InProgress << false;
-        QTest::newRow("Success")    << ExportItemStatus::Status::Success    << true;
-        QTest::newRow("Failed")     << ExportItemStatus::Status::Failed     << true;
-        QTest::newRow("Skipped")    << ExportItemStatus::Status::Skipped    << true;
+        QTest::newRow("Success") << ExportItemStatus::Status::Success << true;
+        QTest::newRow("Failed") << ExportItemStatus::Status::Failed << true;
+        QTest::newRow("Skipped") << ExportItemStatus::Status::Skipped << true;
     }
 
     void itemStatusIsComplete() {
@@ -105,10 +105,10 @@ private slots:
         QTest::addColumn<qint64>("total");
         QTest::addColumn<int>("expected");
 
-        QTest::newRow("zero-total")     << qint64(0)   << qint64(0)   << 0;
-        QTest::newRow("half")           << qint64(50)  << qint64(100) << 50;
-        QTest::newRow("complete")       << qint64(100) << qint64(100) << 100;
-        QTest::newRow("not-started")    << qint64(0)   << qint64(100) << 0;
+        QTest::newRow("zero-total") << qint64(0) << qint64(0) << 0;
+        QTest::newRow("half") << qint64(50) << qint64(100) << 50;
+        QTest::newRow("complete") << qint64(100) << qint64(100) << 100;
+        QTest::newRow("not-started") << qint64(0) << qint64(100) << 0;
     }
 
     void itemStatusPercentage() {
@@ -138,7 +138,7 @@ private slots:
 
     void typeProgressIsComplete() {
         ExportTypeProgress progress;
-        QVERIFY(progress.isComplete()); // 0 >= 0
+        QVERIFY(progress.isComplete());  // 0 >= 0
 
         progress.totalCount = 5;
         QVERIFY(!progress.isComplete());
@@ -146,7 +146,7 @@ private slots:
         progress.completedCount = 5;
         QVERIFY(progress.isComplete());
 
-        progress.completedCount = 6; // 超过也是完成
+        progress.completedCount = 6;  // 超过也是完成
         QVERIFY(progress.isComplete());
     }
 
@@ -163,7 +163,7 @@ private slots:
 
     void preloadProgressIsComplete() {
         PreloadProgress progress;
-        QVERIFY(progress.isComplete()); // 0 >= 0
+        QVERIFY(progress.isComplete());  // 0 >= 0
 
         progress.totalCount = 3;
         QVERIFY(!progress.isComplete());
@@ -232,10 +232,10 @@ private slots:
         QTest::addColumn<ExportOverallProgress::Stage>("stage");
         QTest::addColumn<bool>("expected");
 
-        QTest::newRow("Idle")       << ExportOverallProgress::Stage::Idle       << false;
-        QTest::newRow("Completed")  << ExportOverallProgress::Stage::Completed  << true;
-        QTest::newRow("Cancelled")  << ExportOverallProgress::Stage::Cancelled  << true;
-        QTest::newRow("Failed")     << ExportOverallProgress::Stage::Failed     << true;
+        QTest::newRow("Idle") << ExportOverallProgress::Stage::Idle << false;
+        QTest::newRow("Completed") << ExportOverallProgress::Stage::Completed << true;
+        QTest::newRow("Cancelled") << ExportOverallProgress::Stage::Cancelled << true;
+        QTest::newRow("Failed") << ExportOverallProgress::Stage::Failed << true;
     }
 
     void overallProgressIsComplete() {
