@@ -122,6 +122,17 @@ target_include_directories(test_export_type_stage PRIVATE
 )
 add_test(NAME test_export_type_stage COMMAND test_export_type_stage)
 
+add_executable(test_export_progress test_export_progress.cpp)
+target_link_libraries(test_export_progress PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_export_progress PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_export_progress COMMAND test_export_progress)
+
 add_executable(test_fetch_worker
     test_fetch_worker.cpp
     ${CMAKE_SOURCE_DIR}/src/workers/FetchWorker.cpp
@@ -459,6 +470,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_config_service
     test_component_service
     test_export_type_stage
+    test_export_progress
     test_fetch_worker
     test_process_worker
     test_write_worker

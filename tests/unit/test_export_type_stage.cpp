@@ -45,6 +45,50 @@ protected:
     }
 };
 
+class FailStage final : public ExportTypeStage {
+public:
+    FailStage() : ExportTypeStage("Fail", 1, nullptr) {}
+
+protected:
+    QObject* createWorker() override {
+        return new QObject();
+    }
+
+    void startWorker(QObject* worker, const QString& componentId, const QSharedPointer<ComponentData>& data) override {
+        Q_UNUSED(data);
+        completeItemProgress(worker, componentId, false, QStringLiteral("Export failed: %1").arg(componentId));
+        delete worker;
+    }
+};
+
+class ConcurrentStage final : public ExportTypeStage {
+public:
+    explicit ConcurrentStage(int maxConcurrent) : ExportTypeStage("Concurrent", maxConcurrent, nullptr) {}
+    int maxStartedWorkers() const { return m_maxStartedWorkers; }
+
+protected:
+    QObject* createWorker() override {
+        return new QObject();
+    }
+
+    void startWorker(QObject* worker, const QString& componentId, const QSharedPointer<ComponentData>& data) override {
+        Q_UNUSED(data);
+        Q_UNUSED(componentId);
+        m_startedWorkers++;
+        m_maxStartedWorkers = qMax(m_maxStartedWorkers, m_startedWorkers);
+        // 使用 deferred 完成，以便观察并发限制
+        QTimer::singleShot(50, worker, [this, worker, componentId]() {
+            m_startedWorkers--;
+            completeItemProgress(worker, componentId, true);
+            worker->deleteLater();
+        });
+    }
+
+private:
+    int m_startedWorkers = 0;
+    int m_maxStartedWorkers = 0;
+};
+
 class TestExportTypeStage : public QObject {
     Q_OBJECT
 
@@ -319,6 +363,126 @@ private slots:
         QCOMPARE(completedSpy.at(0).at(1).toInt(), 1);
         QVERIFY(!QFile::exists(blockerPath + QDir::separator() + QStringLiteral("RollbackSymbols.kicad_sym")));
         QVERIFY(!QDir(blockerPath + QDir::separator() + QStringLiteral(".tmp")).exists());
+    }
+
+    // === 新增：ExportTypeStage 基类行为测试 ===
+
+    void emptyListComponentpletesImmediately() {
+        ImmediateSuccessStage stage;
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        stage.start(QStringList(), cachedData);
+
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0); // successCount
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0); // failedCount
+        QCOMPARE(completedSpy.at(0).at(2).toInt(), 0); // skippedCount
+        QVERIFY(!stage.isRunning());
+    }
+
+    void duplicateStartWhileRunningIsIgnored() {
+        DeferredStage stage;
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C8001")] = QSharedPointer<ComponentData>::create();
+        cachedData[QStringLiteral("C8002")] = QSharedPointer<ComponentData>::create();
+
+        stage.start({QStringLiteral("C8001")}, cachedData);
+        QVERIFY(stage.isRunning());
+
+        // 运行中再次 start 应被忽略
+        stage.start({QStringLiteral("C8002")}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "First start should complete");
+        QCOMPARE(completedSpy.count(), 1); // 只有 1 次 completed
+
+        const ExportTypeProgress progress = stage.getProgress();
+        QCOMPARE(progress.totalCount, 1); // 只有 C8001，C8002 被忽略
+    }
+
+    void failedComponentIncrementsFailedCount() {
+        FailStage stage;
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+        QSignalSpy itemSpy(&stage, &ExportTypeStage::itemStatusChanged);
+
+        QStringList ids = {"C9001", "C9002", "C9003"};
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        for (const QString& id : ids) {
+            cachedData[id] = QSharedPointer<ComponentData>::create();
+        }
+
+        stage.start(ids, cachedData);
+
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0); // successCount
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 3); // failedCount
+
+        const ExportTypeProgress progress = stage.getProgress();
+        QCOMPARE(progress.totalCount, 3);
+        QCOMPARE(progress.completedCount, 3);
+        QCOMPARE(progress.successCount, 0);
+        QCOMPARE(progress.failedCount, 3);
+
+        // 验证每个失败项都有错误信息
+        int failedSignals = 0;
+        for (int i = 0; i < itemSpy.count(); i++) {
+            const auto status = qvariant_cast<ExportItemStatus>(itemSpy.at(i).at(1));
+            if (status.status == ExportItemStatus::Status::Failed) {
+                QVERIFY(!status.errorMessage.isEmpty());
+                failedSignals++;
+            }
+        }
+        QCOMPARE(failedSignals, 3);
+    }
+
+    void concurrencyLimitIsRespected() {
+        ConcurrentStage stage(2);
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+
+        QStringList ids = {"CA001", "CA002", "CA003", "CA004", "CA005"};
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        for (const QString& id : ids) {
+            cachedData[id] = QSharedPointer<ComponentData>::create();
+        }
+
+        stage.start(ids, cachedData);
+
+        QVERIFY2(completedSpy.wait(5000), "All components should complete");
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 5); // all success
+
+        // 并发限制为 2，任何时候不应超过 2 个 worker 同时运行
+        QVERIFY2(stage.maxStartedWorkers() <= 2,
+                 qPrintable(QString("Max concurrent workers was %1, expected <= 2").arg(stage.maxStartedWorkers())));
+    }
+
+    void cancelStopsAfterActiveWorkersDrain() {
+        DeferredStage stage;
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+
+        QStringList ids = {"CB001", "CB002", "CB003", "CB004", "CB005"};
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        for (const QString& id : ids) {
+            cachedData[id] = QSharedPointer<ComponentData>::create();
+        }
+
+        stage.start(ids, cachedData);
+        stage.cancel();
+
+        QVERIFY2(completedSpy.wait(3000), "Cancelled stage should complete");
+        QVERIFY(!stage.isRunning());
+
+        // cancel() 清空队列，仅活跃 worker（1个）会完成
+        const auto args = completedSpy.at(0);
+        int success = args.at(0).toInt();
+        int failed = args.at(1).toInt();
+        QCOMPARE(success, 0);
+        QCOMPARE(failed, 1); // 仅活跃的 1 个 worker 标记为 failed
+
+        // pending 队列被清空，completedCount 仅反映实际处理的
+        const ExportTypeProgress progress = stage.getProgress();
+        QCOMPARE(progress.completedCount, 1);
     }
 
 private:
