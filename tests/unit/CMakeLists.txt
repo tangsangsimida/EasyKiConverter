@@ -472,6 +472,17 @@ target_include_directories(test_component_list_viewmodel PRIVATE
 )
 add_test(NAME test_component_list_viewmodel COMMAND test_component_list_viewmodel)
 
+add_executable(test_validation_state_manager test_validation_state_manager.cpp)
+target_link_libraries(test_validation_state_manager PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_validation_state_manager PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_validation_state_manager COMMAND test_validation_state_manager)
+
 set(EASYKICONVERTER_UNIT_TESTS
     test_easyeda_api
     test_network_client
@@ -509,6 +520,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_easyeda_importer_fixtures
     test_cad_data_loader
     test_component_list_viewmodel
+    test_validation_state_manager
 )
 
 set_tests_properties(${EASYKICONVERTER_UNIT_TESTS}
