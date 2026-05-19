@@ -4,9 +4,9 @@ This document shows the future direction of the project and the main features pl
 
 ## Current Status
 
-- **Current Version**: 3.1.4
-- **Development Status**: Refactoring complete, entering optimization phase
-- **Completion**: ~95% (core features implemented, architecture refactoring complete)
+- **Current Version**: 3.1.9 (In Development)
+- **Development Status**: Stable optimization phase, cross-platform support complete
+- **Completion**: ~99% (core features implemented, architecture refactoring complete, test framework integrated, cross-platform packaging mature)
 
 ## Version Planning
 
@@ -22,18 +22,18 @@ This document shows the future direction of the project and the main features pl
 **Export Functionality Enhancements**:
 - [ ] Quick access to export destination folder after completion
 - [x] Network request retry mechanism (implemented in v3.0.2)
-- [ ] Weak network resilience improvements (timeout retry, unified backoff strategy, NetworkWorker timeout protection)
-- [ ] 3D model path export options (relative/absolute)
-  - [ ] Relative path: Use KiCad project path + 3D model path
-  - [ ] Absolute path: Use export path + 3D model path
-- [ ] Export progress bar design
-- [ ] Export statistics design
+- [x] Weak network resilience improvements (timeout retry, unified backoff strategy, NetworkWorker timeout protection) — completed in v3.0.5
+- [x] 3D model path export options (relative/absolute) — completed in v3.1.8
+  - [x] Relative path: Use KiCad project path + 3D model path
+  - [x] Absolute path: Use export path + 3D model path
+- [x] Export progress bar design — completed in v3.0.2
+- [x] Export statistics design — completed in v3.0.2
 - [ ] Export preview functionality (footprint, symbol, 3D model, manual PDF)
 
 **Export Options Optimization**:
 - [x] Overwrite and append export options
 - [x] Export mode UI design optimization (clearer mode selection)
-- [ ] Library description export option (KiCad library description parameter)
+- [x] Library description export option (KiCad library description parameter) — completed in v3.1.7
 - [ ] Footprint attribute enhancements (description, dual 3D model addresses, etc.)
 
 **Data Parsing Improvements**:
@@ -45,31 +45,30 @@ This document shows the future direction of the project and the main features pl
 
 **User Interface Improvements**:
 - [ ] Component list search functionality
-- [ ] Multi-language support (automatic based on system language)
+- [~] Multi-language support (automatic based on system language) — CLI internationalization completed in v3.1.9, GUI translation files configured
 - [ ] UI performance optimization and response speed improvements
 
 **Development Tools and Processes**:
 - [x] GitHub workflow configuration
   - [x] Automated code legal security review
-  - [ ] Automated testing
-  - [ ] Automated compilation and packaging
+  - [x] Automated testing — completed in v3.0.5
+  - [x] Automated compilation and packaging — completed (Linux/Windows/macOS)
   - [ ] Automated version release
 - [x] Contribution guidelines and project documentation improvements
+- [x] Version management tool (manage_version.py) — completed in v3.0.5
 
-### v3.1.0 - Performance Optimization and Stability Improvements (Planned)
+### v3.1.0 - Performance Optimization and Stability Improvements
 
 **Goal**: Optimize performance, improve stability, complete test coverage
 
 **Main Features**:
+- [x] Network request testing and optimization — completed in v3.0.5
+- [x] Error handling improvements — completed in v3.0.5
+- [x] Logging system optimization — completed in v3.0.5
+- [x] UI automation testing — completed in v3.1.8
+- [x] Integration testing improvements — completed in v3.1.8
 - [ ] Performance testing and optimization (compare with Python version)
 - [ ] Memory usage optimization
-- [ ] Network request testing and optimization
-- [ ] UI automation testing
-- [ ] Integration testing improvements
-- [ ] Error handling improvements
-- [ ] Logging system optimization
-
-**Expected Release**: Q2 2026
 
 ## Feature Priorities
 
