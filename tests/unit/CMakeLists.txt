@@ -122,6 +122,17 @@ target_include_directories(test_export_type_stage PRIVATE
 )
 add_test(NAME test_export_type_stage COMMAND test_export_type_stage)
 
+add_executable(test_export_progress test_export_progress.cpp)
+target_link_libraries(test_export_progress PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_export_progress PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_export_progress COMMAND test_export_progress)
+
 add_executable(test_fetch_worker
     test_fetch_worker.cpp
     ${CMAKE_SOURCE_DIR}/src/workers/FetchWorker.cpp
@@ -390,6 +401,20 @@ target_include_directories(test_kicad_library_table_manager PRIVATE
 )
 add_test(NAME test_kicad_library_table_manager COMMAND test_kicad_library_table_manager)
 
+add_executable(test_exporter_3d_model
+    test_exporter_3d_model.cpp
+    ../common/TestPaths.hpp
+)
+target_link_libraries(test_exporter_3d_model PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_exporter_3d_model PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_exporter_3d_model COMMAND test_exporter_3d_model)
+
 add_executable(test_easyeda_importer_fixtures
     test_easyeda_importer_fixtures.cpp
     ../common/TestPaths.hpp
@@ -447,6 +472,17 @@ target_include_directories(test_component_list_viewmodel PRIVATE
 )
 add_test(NAME test_component_list_viewmodel COMMAND test_component_list_viewmodel)
 
+add_executable(test_validation_state_manager test_validation_state_manager.cpp)
+target_link_libraries(test_validation_state_manager PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_validation_state_manager PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_validation_state_manager COMMAND test_validation_state_manager)
+
 set(EASYKICONVERTER_UNIT_TESTS
     test_easyeda_api
     test_network_client
@@ -459,6 +495,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_config_service
     test_component_service
     test_export_type_stage
+    test_export_progress
     test_fetch_worker
     test_process_worker
     test_write_worker
@@ -479,9 +516,11 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_test_paths
     test_kicad_exporter_golden
     test_kicad_library_table_manager
+    test_exporter_3d_model
     test_easyeda_importer_fixtures
     test_cad_data_loader
     test_component_list_viewmodel
+    test_validation_state_manager
 )
 
 set_tests_properties(${EASYKICONVERTER_UNIT_TESTS}

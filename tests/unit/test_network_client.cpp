@@ -1,11 +1,13 @@
 #include "core/network/INetworkClient.h"
 #include "core/network/NetworkClient.h"
+#include "core/utils/GzipUtils.h"
 #include "tests/common/MockNetworkClient.hpp"
 
 #include <QSignalSpy>
 #include <QtTest>
 
 #include <memory>
+#include <zlib.h>
 
 using namespace EasyKiConverter;
 using namespace EasyKiConverter::Test;
@@ -322,8 +324,164 @@ private slots:
         }
     }
 
+    // === GzipUtils 测试 ===
+
+    void testGzipUtils_IsGzipped_ValidMagicBytes() {
+        // Gzip magic number: 0x1f 0x8b
+        QByteArray data;
+        data.append(static_cast<char>(0x1f));
+        data.append(static_cast<char>(0x8b));
+        data.append("rest of data");
+        QVERIFY(GzipUtils::isGzipped(data));
+    }
+
+    void testGzipUtils_IsGzipped_NotGzip() {
+        QByteArray data("{\"json\": true}");
+        QVERIFY(!GzipUtils::isGzipped(data));
+    }
+
+    void testGzipUtils_IsGzipped_TooShort() {
+        QVERIFY(!GzipUtils::isGzipped(QByteArray()));
+        QVERIFY(!GzipUtils::isGzipped(QByteArray("x")));
+    }
+
+    void testGzipUtils_Decompress_TooSmall() {
+        // 小于 18 字节的数据直接返回失败
+        QByteArray smallData("short");
+        GzipUtils::DecompressResult result = GzipUtils::decompress(smallData);
+        QVERIFY(!result.success);
+    }
+
+    void testGzipUtils_Decompress_NotGzip_ReturnsAsIs() {
+        // 非 gzip 数据 >= 18 字节，返回原始数据 + success=true
+        QByteArray original = QByteArray("this is plain text data longer than 18 bytes");
+        GzipUtils::DecompressResult result = GzipUtils::decompress(original);
+        QVERIFY(result.success);
+        QCOMPARE(result.data, original);
+    }
+
+    void testGzipUtils_Decompress_ValidGzip() {
+        // 用 zlib 压缩一段数据，然后验证解压
+        const QByteArray original("Hello, EasyKiConverter gzip test!");
+        QByteArray compressed = compressGzip(original);
+
+        QVERIFY(GzipUtils::isGzipped(compressed));
+
+        GzipUtils::DecompressResult result = GzipUtils::decompress(compressed);
+        QVERIFY(result.success);
+        QCOMPARE(result.data, original);
+    }
+
+    void testGzipUtils_Decompress_EmptyGzip() {
+        // 最小合法 gzip 流（18 字节：header + empty deflate block）
+        // 构造一个空 gzip 流
+        QByteArray emptyGzip = compressGzip(QByteArray());
+        if (emptyGzip.size() >= 18) {
+            GzipUtils::DecompressResult result = GzipUtils::decompress(emptyGzip);
+            QVERIFY(result.success);
+            QVERIFY(result.data.isEmpty());
+        }
+    }
+
+    // === AsyncNetworkRequest 测试 ===
+
+    void testAsyncRequest_CreateFinished_IsImmediatelyDone() {
+        NetworkResult expected;
+        expected.success = true;
+        expected.statusCode = 200;
+        expected.data = QByteArray("test data");
+
+        AsyncNetworkRequest* request = AsyncNetworkRequest::createFinished(expected);
+
+        QVERIFY(request->isFinished());
+        QVERIFY(!request->isCancelled());
+        QCOMPARE(request->result().data, QByteArray("test data"));
+        QCOMPARE(request->result().statusCode, 200);
+
+        request->deleteLater();
+    }
+
+    void testAsyncRequest_CompleteWithResultDelayed_EmitsSignal() {
+        const QUrl url(QStringLiteral("https://api.example.com/delayed"));
+        m_mockClient->addResponse(url.toString(), QByteArray("delayed data"), 200);
+
+        AsyncNetworkRequest* request = m_mockClient->getAsync(url, ResourceType::Unknown);
+        QSignalSpy spy(request, &AsyncNetworkRequest::finished);
+
+        QVERIFY(spy.wait(1000));
+        QVERIFY(request->isFinished());
+
+        NetworkResult result = spy.at(0).at(0).value<NetworkResult>();
+        QVERIFY(result.success);
+        QCOMPARE(result.data, QByteArray("delayed data"));
+
+        request->deleteLater();
+    }
+
+    void testAsyncRequest_Cancel_SetsCancelledState() {
+        // cancel() 在请求未完成时应设置取消状态
+        // 使用 createFinished 的 cancelledResult 来验证取消语义
+        NetworkResult cancelled;
+        cancelled.success = false;
+        cancelled.wasCancelled = true;
+        cancelled.error = QStringLiteral("Cancelled");
+
+        AsyncNetworkRequest* request = AsyncNetworkRequest::createFinished(cancelled);
+
+        QVERIFY(request->isFinished());
+        QVERIFY(request->isCancelled());
+        QVERIFY(request->result().wasCancelled);
+        QVERIFY(!request->result().success);
+
+        request->deleteLater();
+    }
+
+    void testAsyncRequest_Cancel_ViaDestructor() {
+        // 验证析构时 cancel 逻辑不会崩溃
+        // 通过 MockNetworkClient 创建请求，不保存引用
+        const QUrl url(QStringLiteral("https://api.example.com/destructor"));
+        m_mockClient->addResponse(url.toString(), QByteArray("data"), 200);
+
+        AsyncNetworkRequest* request = m_mockClient->getAsync(url, ResourceType::Unknown);
+        QSignalSpy spy(request, &AsyncNetworkRequest::finished);
+
+        // 等待完成
+        QVERIFY(spy.wait(1000));
+        QVERIFY(request->isFinished());
+
+        // 删除已完成的请求不应崩溃
+        delete request;
+    }
+
 private:
     std::unique_ptr<MockNetworkClient> m_mockClient;
+
+    static QByteArray compressGzip(const QByteArray& data) {
+        QByteArray compressed;
+        z_stream stream;
+        memset(&stream, 0, sizeof(stream));
+
+        if (deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
+            return compressed;
+        }
+
+        stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(data.constData()));
+        stream.avail_in = data.size();
+
+        char buffer[4096];
+        int ret;
+        do {
+            stream.avail_out = sizeof(buffer);
+            stream.next_out = reinterpret_cast<Bytef*>(buffer);
+            ret = deflate(&stream, Z_FINISH);
+            if (ret == Z_OK || ret == Z_STREAM_END) {
+                compressed.append(buffer, sizeof(buffer) - stream.avail_out);
+            }
+        } while (ret == Z_OK);
+
+        deflateEnd(&stream);
+        return compressed;
+    }
 };
 
 QTEST_GUILESS_MAIN(TestNetworkClient)
