@@ -10,6 +10,7 @@
 #include "services/ComponentCacheService.h"
 #include "services/export/ParallelExportService.h"
 #include "utils/FileUtils.h"
+#include "utils/PathSecurity.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -90,9 +91,11 @@ void ExportSettingsViewModel::setOutputPath(const QString& path) {
 }
 
 void ExportSettingsViewModel::setLibName(const QString& name) {
-    if (m_libName != name) {
-        m_libName = name;
-        m_configService->setLibName(name);
+    // 清洗 libName，防止路径穿越（如 ../foo）和非法字符
+    const QString safeName = PathSecurity::sanitizeFilename(name);
+    if (m_libName != safeName) {
+        m_libName = safeName;
+        m_configService->setLibName(safeName);
         emit libNameChanged();
     }
 }
@@ -466,7 +469,7 @@ void ExportSettingsViewModel::loadFromConfig() {
     const int oldDiskCacheLimitMB = m_diskCacheLimitMB;
 
     m_outputPath = m_configService->getOutputPath();
-    m_libName = m_configService->getLibName();
+    m_libName = PathSecurity::sanitizeFilename(m_configService->getLibName());
     m_exportSymbol = m_configService->getExportSymbol();
     m_exportFootprint = m_configService->getExportFootprint();
     m_exportModel3D = m_configService->getExportModel3D();

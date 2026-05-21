@@ -7,6 +7,12 @@
 #include <QFileInfo>
 #include <QTextStream>
 
+namespace {
+bool isValidComponentId(const QString& id) {
+    return EasyKiConverter::BomParser::validateId(id);
+}
+}  // namespace
+
 namespace EasyKiConverter {
 
 QStringList FileReader::readBomFile(const QString& filePath, QString& errorMessage) {
@@ -46,7 +52,11 @@ QStringList FileReader::readComponentListFile(const QString& filePath, QString& 
     while (!stream.atEnd()) {
         QString line = stream.readLine().trimmed();
         if (!line.isEmpty()) {
-            componentIds.append(line);
+            if (isValidComponentId(line)) {
+                componentIds.append(line.toUpper());
+            } else {
+                qWarning() << "FileReader: skipping invalid component ID:" << line;
+            }
         }
     }
 

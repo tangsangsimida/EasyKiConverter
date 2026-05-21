@@ -5,6 +5,7 @@
 #include "ConfigService.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/UrlUtils.h"
+#include "services/BomParser.h"
 #include "services/ComponentService.h"
 #include "utils/logging/LogMacros.h"
 
@@ -15,6 +16,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QRegularExpression>
 #include <QSaveFile>
 #include <QSet>
 #include <QUrl>
@@ -194,6 +196,10 @@ QString ComponentCacheService::cacheDir() const {
 QString ComponentCacheService::componentCacheDir(const QString& lcscId) const {
     // 注意：这里不再加锁，因为只是构建路径字符串
     // m_cacheDir 在初始化时设置，之后只读，不需要互斥保护
+    if (!BomParser::validateId(lcscId)) {
+        qWarning() << "componentCacheDir: invalid lcscId, rejecting:" << lcscId;
+        return QString();
+    }
     return QDir::cleanPath(m_cacheDir + "/" + lcscId);
 }
 
@@ -203,6 +209,9 @@ QString ComponentCacheService::ensureComponentDir(const QString& lcscId) const {
     // 2. dir.mkpath 是线程安全的
     // 3. savePreviewImage 已经在持有 m_mutex 的情况下调用此函数
     QString dirPath = componentCacheDir(lcscId);
+    if (dirPath.isEmpty()) {
+        return QString();
+    }
     QDir dir(dirPath);
     if (!dir.exists()) {
         dir.mkpath(dirPath);
@@ -451,7 +460,9 @@ void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArr
     QString symbolPath;
     {
         QMutexLocker locker(&m_mutex);
-        ensureComponentDir(lcscId);
+        if (ensureComponentDir(lcscId).isEmpty()) {
+            return;
+        }
         symbolPath = componentCacheDir(lcscId) + "/symbol.json";
     }
 
@@ -497,7 +508,9 @@ void ComponentCacheService::saveFootprintData(const QString& lcscId, const QByte
     QString footprintPath;
     {
         QMutexLocker locker(&m_mutex);
-        ensureComponentDir(lcscId);
+        if (ensureComponentDir(lcscId).isEmpty()) {
+            return;
+        }
         footprintPath = componentCacheDir(lcscId) + "/footprint.json";
     }
 
@@ -543,7 +556,9 @@ void ComponentCacheService::saveCadDataJson(const QString& lcscId, const QByteAr
     QString cadDataPath;
     {
         QMutexLocker locker(&m_mutex);
-        ensureComponentDir(lcscId);
+        if (ensureComponentDir(lcscId).isEmpty()) {
+            return;
+        }
         cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
     }
 
@@ -664,7 +679,9 @@ void ComponentCacheService::savePreviewImage(const QString& lcscId, const QByteA
     QString previewPath;
     {
         QMutexLocker locker(&m_mutex);
-        ensureComponentDir(lcscId);
+        if (ensureComponentDir(lcscId).isEmpty()) {
+            return;
+        }
         previewPath = previewImagePath(lcscId, imageIndex);
     }
 
@@ -785,7 +802,9 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
     QString actualPath;
     {
         QMutexLocker locker(&m_mutex);
-        ensureComponentDir(lcscId);
+        if (ensureComponentDir(lcscId).isEmpty()) {
+            return;
+        }
         actualPath = resolveDatasheetPath(lcscId, format, true);
         const QString alternatePath = actualPath.endsWith(".pdf")
                                           ? resolveDatasheetPath(lcscId, QStringLiteral("html"), true)
@@ -933,6 +952,9 @@ void ComponentCacheService::saveModel3D(const QString& uuid, const QByteArray& d
         QMutexLocker locker(&m_mutex);
         ensureModel3DCacheDir();
         path = model3DPath(uuid, extension);
+        if (path.isEmpty()) {
+            return;
+        }
     }
 
     if (writeFileAtomically(path, data)) {
@@ -986,6 +1008,9 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
 void ComponentCacheService::removeCache(const QString& lcscId) {
     // 先删除L2磁盘缓存（不需要锁）
     QString dirPath = componentCacheDir(lcscId);
+    if (dirPath.isEmpty()) {
+        return;
+    }
     {
         QDir dir(dirPath);
         if (dir.exists()) {
@@ -1182,7 +1207,9 @@ QJsonObject ComponentCacheService::loadMetadata(const QString& lcscId) const {
 }
 
 void ComponentCacheService::saveMetadata(const QString& lcscId, const QJsonObject& metadata) {
-    ensureComponentDir(lcscId);
+    if (ensureComponentDir(lcscId).isEmpty()) {
+        return;
+    }
     QString metaPath = metadataPath(lcscId);
     QJsonDocument doc(metadata);
     if (!writeFileAtomically(metaPath, doc.toJson(QJsonDocument::Indented))) {
@@ -1306,18 +1333,42 @@ QDateTime ComponentCacheService::getCacheAccessTime(const QString& lcscId) const
 }
 
 QString ComponentCacheService::metadataPath(const QString& lcscId) const {
-    return componentCacheDir(lcscId) + "/component.json";
+    const QString dir = componentCacheDir(lcscId);
+    if (dir.isEmpty()) {
+        return QString();
+    }
+    return dir + "/component.json";
 }
 
 QString ComponentCacheService::previewImagePath(const QString& lcscId, int index) const {
-    return componentCacheDir(lcscId) + "/preview_" + QString::number(index) + ".jpg";
+    const QString dir = componentCacheDir(lcscId);
+    if (dir.isEmpty()) {
+        return QString();
+    }
+    return dir + "/preview_" + QString::number(index) + ".jpg";
 }
 
 QString ComponentCacheService::datasheetPath(const QString& lcscId) const {
-    return componentCacheDir(lcscId) + "/datasheet";
+    const QString dir = componentCacheDir(lcscId);
+    if (dir.isEmpty()) {
+        return QString();
+    }
+    return dir + "/datasheet";
 }
 
 QString ComponentCacheService::model3DPath(const QString& uuid, const QString& extension) const {
+    // 严格校验 uuid 格式：仅允许字母、数字、下划线、短横线，防止路径穿越
+    static const QRegularExpression uuidRe(QStringLiteral("^[A-Za-z0-9_-]+$"));
+    if (uuid.isEmpty() || !uuidRe.match(uuid).hasMatch()) {
+        qWarning() << "model3DPath: invalid uuid, rejecting:" << uuid;
+        return QString();
+    }
+    // 校验 extension：仅允许字母数字
+    static const QRegularExpression extRe(QStringLiteral("^[A-Za-z0-9]+$"));
+    if (extension.isEmpty() || !extRe.match(extension).hasMatch()) {
+        qWarning() << "model3DPath: invalid extension, rejecting:" << extension;
+        return QString();
+    }
     return m_cacheDir + "/model3d/" + uuid + "." + extension;
 }
 

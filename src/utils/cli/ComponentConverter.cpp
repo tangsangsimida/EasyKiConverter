@@ -1,6 +1,7 @@
 #include "ComponentConverter.h"
 
 #include "CliContext.h"
+#include "services/BomParser.h"
 #include "services/ComponentService.h"
 #include "services/export/ParallelExportService.h"
 
@@ -17,6 +18,11 @@ bool ComponentConverter::execute() {
     QString componentId = context()->parser().componentId();
     if (componentId.isEmpty()) {
         setError(QCoreApplication::translate("CliConverter", "未指定元器件编号"));
+        return false;
+    }
+
+    if (!BomParser::validateId(componentId)) {
+        setError(QCoreApplication::translate("CliConverter", "元器件编号格式无效: %1").arg(componentId));
         return false;
     }
 

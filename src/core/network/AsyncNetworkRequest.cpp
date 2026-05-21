@@ -1,6 +1,7 @@
 #include "AsyncNetworkRequest.h"
 
 #include "core/utils/GzipUtils.h"
+#include "core/utils/UrlUtils.h"
 
 #include <QDebug>
 #include <QElapsedTimer>
@@ -20,7 +21,17 @@ AsyncNetworkRequest* AsyncNetworkRequest::createFinished(const NetworkResult& re
     if (result.wasCancelled) {
         request->m_cancelled.storeRelease(1);
     }
-    request->completeWithResult(result);
+    // 设置已完成状态（同步），供调用方立即检查 isFinished() / result()
+    {
+        QMutexLocker locker(&request->m_resultMutex);
+        request->m_result = result;
+    }
+    request->m_finished.storeRelease(1);
+
+    // 延迟发射 finished 信号，确保调用方有机会先 connect
+    // 使用 QTimer::singleShot(0, ...) 投递到当前线程的事件循环
+    // 调用方必须在有事件循环的线程中使用（主线程、QThread 子类）
+    QTimer::singleShot(0, request, [request, result]() { emit request->finished(result); });
     return request;
 }
 
@@ -160,6 +171,8 @@ void AsyncNetworkRequest::startAttempt(int attemptNumber) {
     request.setHeader(QNetworkRequest::UserAgentHeader, "EasyKiConverter/1.0");
     request.setRawHeader("X-Requested-With", "XMLHttpRequest");
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
+    // 禁止不安全的重定向（HTTPS -> HTTP），防止降级攻击
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     // Note: We handle gzip manually in processResponse() since Qt doesn't auto-decompress
 
     // Create the reply - use POST if body is provided
@@ -194,8 +207,11 @@ void AsyncNetworkRequest::startAttempt(int attemptNumber) {
     // Connect signals - use DirectConnection since we want immediate handling
     // The slot will run in this object's thread (main thread where AsyncNetworkRequest lives)
     connect(reply, &QNetworkReply::finished, this, &AsyncNetworkRequest::handleAttemptFinished, Qt::DirectConnection);
-    connect(
-        reply, &QNetworkReply::downloadProgress, this, &AsyncNetworkRequest::downloadProgress, Qt::DirectConnection);
+    connect(reply,
+            &QNetworkReply::downloadProgress,
+            this,
+            &AsyncNetworkRequest::handleDownloadProgress,
+            Qt::DirectConnection);
 
     qDebug() << "AsyncNetworkRequest: Attempt" << attemptNumber << "started for" << m_url;
 }
@@ -238,6 +254,35 @@ void AsyncNetworkRequest::handleTimeout() {
     m_currentAttemptTimedOut.storeRelease(1);
 
     {
+        QMutexLocker locker(&m_repliesMutex);
+        if (m_currentReply) {
+            m_currentReply->abort();
+        }
+    }
+}
+
+void AsyncNetworkRequest::handleDownloadProgress(qint64 bytesReceived, qint64 bytesTotal) {
+    if (isCancelled() || isFinished()) {
+        return;
+    }
+
+    // 转发进度信号
+    emit downloadProgress(bytesReceived, bytesTotal);
+
+    // 检查响应大小限制
+    const RequestProfile profile = RequestProfiles::fromType(m_resourceType);
+    const qint64 maxBytes = profile.maxResponseBytes;
+
+    if (maxBytes <= 0) {
+        return;  // 无限制
+    }
+
+    // 优先使用 Content-Length（bytesTotal），其次用已接收字节数
+    const qint64 checkSize = (bytesTotal > 0) ? bytesTotal : bytesReceived;
+
+    if (checkSize > maxBytes) {
+        qWarning() << "AsyncNetworkRequest: Response too large (" << checkSize << "bytes, limit" << maxBytes
+                   << "), aborting:" << m_url;
         QMutexLocker locker(&m_repliesMutex);
         if (m_currentReply) {
             m_currentReply->abort();
@@ -326,6 +371,39 @@ void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
     // Success - read data
     QByteArray data = reply->readAll();
 
+    // 安全兜底：检查实际读取的数据大小（Content-Length 可能缺失或不准确）
+    {
+        const RequestProfile profile = RequestProfiles::fromType(m_resourceType);
+        if (profile.maxResponseBytes > 0 && data.size() > profile.maxResponseBytes) {
+            result.error = QStringLiteral("Response too large: %1 bytes (limit %2)")
+                               .arg(data.size())
+                               .arg(profile.maxResponseBytes);
+            result.success = false;
+            result.wasCancelled = false;
+            result.diagnostic.errorType = NetworkErrorType::Other;
+            result.diagnostic.errorMessage = result.error;
+            completeWithResult(result);
+            return;
+        }
+    }
+
+    // 校验重定向后的最终 URL 是否仍在白名单内
+    {
+        const QUrl finalUrl = reply->url();
+        if (finalUrl != m_url) {
+            QString errorMsg;
+            if (!UrlUtils::isAllowedUrl(finalUrl, m_resourceType, &errorMsg)) {
+                result.error = QStringLiteral("Redirect to disallowed URL: %1").arg(errorMsg);
+                result.success = false;
+                result.wasCancelled = false;
+                result.diagnostic.errorType = NetworkErrorType::Other;
+                result.diagnostic.errorMessage = result.error;
+                completeWithResult(result);
+                return;
+            }
+        }
+    }
+
     // Check for gzip encoding and decompress if needed
     QVariant encodingVariant = reply->rawHeader("Content-Encoding");
     QString encoding = encodingVariant.toString().toLower();
@@ -335,6 +413,20 @@ void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
         GzipUtils::DecompressResult decompResult = GzipUtils::decompress(data);
         if (decompResult.success) {
             data = decompResult.data;
+
+            // 解压后重新检查大小限制（压缩可能放大数据）
+            const RequestProfile profile = RequestProfiles::fromType(m_resourceType);
+            if (profile.maxResponseBytes > 0 && data.size() > profile.maxResponseBytes) {
+                result.error = QStringLiteral("Decompressed response too large: %1 bytes (limit %2)")
+                                   .arg(data.size())
+                                   .arg(profile.maxResponseBytes);
+                result.success = false;
+                result.wasCancelled = false;
+                result.diagnostic.errorType = NetworkErrorType::Other;
+                result.diagnostic.errorMessage = result.error;
+                completeWithResult(result);
+                return;
+            }
         } else {
             result.error = "Gzip decompression failed";
             result.success = false;

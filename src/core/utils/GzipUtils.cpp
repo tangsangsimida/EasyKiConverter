@@ -9,6 +9,10 @@
 static constexpr int GZIP_MAGIC_1 = 0x1f;
 static constexpr int GZIP_MAGIC_2 = 0x8b;
 
+// 安全限制：防止解压炸弹
+static constexpr qint64 MAX_DECOMPRESSED_SIZE = 500 * 1024 * 1024;  // 500MB
+static constexpr int MAX_COMPRESSION_RATIO = 100;  // 压缩比阈值
+
 bool GzipUtils::isGzipped(const QByteArray& data) {
     if (data.size() < 2) {
         return false;
@@ -54,6 +58,24 @@ GzipUtils::DecompressResult GzipUtils::decompress(const QByteArray& compressedDa
 
         if (ret == Z_OK || ret == Z_STREAM_END) {
             decompressed.append(buffer, bufferSize - stream.avail_out);
+
+            // 安全检查：解压大小上限
+            if (decompressed.size() > MAX_DECOMPRESSED_SIZE) {
+                qWarning() << "Gzip decompression aborted: output exceeds" << MAX_DECOMPRESSED_SIZE << "bytes";
+                inflateEnd(&stream);
+                return DecompressResult();
+            }
+
+            // 安全检查：压缩比阈值（防止解压炸弹）
+            if (compressedData.size() > 0) {
+                int ratio = decompressed.size() / compressedData.size();
+                if (ratio > MAX_COMPRESSION_RATIO) {
+                    qWarning() << "Gzip decompression aborted: compression ratio" << ratio << "exceeds limit of"
+                               << MAX_COMPRESSION_RATIO;
+                    inflateEnd(&stream);
+                    return DecompressResult();
+                }
+            }
         }
     } while (ret == Z_OK);
 

@@ -317,6 +317,13 @@ QByteArray FetchWorker::httpGet(const QString& url,
         return QByteArray();
     }
 
+    // 白名单拒绝等场景：request 已完成，直接返回结果，避免阻塞等待
+    if (request->isFinished()) {
+        const NetworkResult result = request->result();
+        delete request;
+        return finishResult(result);
+    }
+
     {
         QMutexLocker locker(&m_replyMutex);
         m_currentRequest = request;
