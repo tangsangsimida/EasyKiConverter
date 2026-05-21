@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: '0 0 * * 0'  # 每周日运行
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, 'v*' ]
 
 permissions:
   contents: read
