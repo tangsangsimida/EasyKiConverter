@@ -21,7 +21,17 @@ AsyncNetworkRequest* AsyncNetworkRequest::createFinished(const NetworkResult& re
     if (result.wasCancelled) {
         request->m_cancelled.storeRelease(1);
     }
-    request->completeWithResult(result);
+    // 设置已完成状态（同步），供调用方立即检查 isFinished() / result()
+    {
+        QMutexLocker locker(&request->m_resultMutex);
+        request->m_result = result;
+    }
+    request->m_finished.storeRelease(1);
+
+    // 延迟发射 finished 信号，确保调用方有机会先 connect
+    // 使用 QTimer::singleShot(0, ...) 投递到当前线程的事件循环
+    // 调用方必须在有事件循环的线程中使用（主线程、QThread 子类）
+    QTimer::singleShot(0, request, [request, result]() { emit request->finished(result); });
     return request;
 }
 
@@ -403,6 +413,20 @@ void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
         GzipUtils::DecompressResult decompResult = GzipUtils::decompress(data);
         if (decompResult.success) {
             data = decompResult.data;
+
+            // 解压后重新检查大小限制（压缩可能放大数据）
+            const RequestProfile profile = RequestProfiles::fromType(m_resourceType);
+            if (profile.maxResponseBytes > 0 && data.size() > profile.maxResponseBytes) {
+                result.error = QStringLiteral("Decompressed response too large: %1 bytes (limit %2)")
+                                   .arg(data.size())
+                                   .arg(profile.maxResponseBytes);
+                result.success = false;
+                result.wasCancelled = false;
+                result.diagnostic.errorType = NetworkErrorType::Other;
+                result.diagnostic.errorMessage = result.error;
+                completeWithResult(result);
+                return;
+            }
         } else {
             result.error = "Gzip decompression failed";
             result.success = false;

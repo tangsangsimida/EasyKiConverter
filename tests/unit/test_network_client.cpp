@@ -393,10 +393,17 @@ private slots:
 
         AsyncNetworkRequest* request = AsyncNetworkRequest::createFinished(expected);
 
+        // isFinished() 和 result() 应立即可用（同步设置状态）
         QVERIFY(request->isFinished());
         QVERIFY(!request->isCancelled());
         QCOMPARE(request->result().data, QByteArray("test data"));
         QCOMPARE(request->result().statusCode, 200);
+
+        // finished 信号通过 QTimer::singleShot(0) 延迟发射
+        // 先 connect 再等待事件循环处理
+        QSignalSpy spy(request, &AsyncNetworkRequest::finished);
+        QVERIFY(spy.wait(1000));
+        QCOMPARE(spy.count(), 1);
 
         request->deleteLater();
     }
@@ -426,12 +433,55 @@ private slots:
         cancelled.wasCancelled = true;
         cancelled.error = QStringLiteral("Cancelled");
 
+        // 先 connect 再创建，确保能收到延迟信号
         AsyncNetworkRequest* request = AsyncNetworkRequest::createFinished(cancelled);
+        QSignalSpy spy(request, &AsyncNetworkRequest::finished);
 
+        // isFinished() 和 result() 应立即可用（同步设置状态）
         QVERIFY(request->isFinished());
         QVERIFY(request->isCancelled());
         QVERIFY(request->result().wasCancelled);
         QVERIFY(!request->result().success);
+
+        // finished 信号通过 QTimer::singleShot(0) 延迟发射
+        QVERIFY(spy.wait(1000));
+        QCOMPARE(spy.count(), 1);
+
+        request->deleteLater();
+    }
+
+    void testSyncGet_RejectedByWhitelist_ReturnsQuickly() {
+        // 同步 get() 被白名单拒绝时应立即返回失败，不应死锁
+        QElapsedTimer timer;
+        timer.start();
+
+        NetworkResult result =
+            NetworkClient::instance().get(QUrl("https://evil.example/x"), ResourceType::PreviewImage);
+
+        qint64 elapsed = timer.elapsed();
+
+        QVERIFY(!result.success);
+        QVERIFY(result.error.contains("not allowed") || result.error.contains("not in any known allowlist"));
+        QVERIFY(elapsed < 2000);  // 应在 2 秒内返回，而非超时等待
+    }
+
+    void testAsyncGet_RejectedByWhitelist_EmitsFinished() {
+        // 异步 getAsync() 被白名单拒绝时应发出 finished 信号
+        AsyncNetworkRequest* request =
+            NetworkClient::instance().getAsync(QUrl("https://evil.example/x"), ResourceType::PreviewImage);
+
+        QVERIFY(request != nullptr);
+
+        // isFinished() 应立即可用（同步设置状态）
+        QVERIFY(request->isFinished());
+        QVERIFY(!request->result().success);
+        QVERIFY(request->result().error.contains("not allowed") ||
+                request->result().error.contains("not in any known allowlist"));
+
+        // finished 信号通过 QTimer::singleShot(0) 延迟发射
+        QSignalSpy spy(request, &AsyncNetworkRequest::finished);
+        QVERIFY(spy.wait(3000));
+        QCOMPARE(spy.count(), 1);
 
         request->deleteLater();
     }

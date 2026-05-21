@@ -182,6 +182,26 @@ bool NetworkWorker::executeRequest(const QUrl& url,
         return false;
     }
 
+    // 白名单拒绝等场景：request 已完成，直接返回结果，避免阻塞等待
+    if (request->isFinished()) {
+        const NetworkResult doneResult = request->result();
+        delete request;
+        if (doneResult.wasCancelled) {
+            errorMsg = "Request cancelled";
+            return false;
+        }
+        if (!doneResult.success) {
+            errorMsg =
+                doneResult.error.isEmpty()
+                    ? QString("Network error for %1 after %2 retries").arg(url.toString()).arg(doneResult.retryCount)
+                    : doneResult.error;
+            qWarning() << "NetworkWorker:" << errorMsg << "for:" << m_componentId;
+            return false;
+        }
+        outData = doneResult.data;
+        return true;
+    }
+
     {
         QMutexLocker locker(&m_mutex);
         m_currentRequest = request;

@@ -460,7 +460,9 @@ void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArr
     QString symbolPath;
     {
         QMutexLocker locker(&m_mutex);
-        ensureComponentDir(lcscId);
+        if (ensureComponentDir(lcscId).isEmpty()) {
+            return;
+        }
         symbolPath = componentCacheDir(lcscId) + "/symbol.json";
     }
 
@@ -506,7 +508,9 @@ void ComponentCacheService::saveFootprintData(const QString& lcscId, const QByte
     QString footprintPath;
     {
         QMutexLocker locker(&m_mutex);
-        ensureComponentDir(lcscId);
+        if (ensureComponentDir(lcscId).isEmpty()) {
+            return;
+        }
         footprintPath = componentCacheDir(lcscId) + "/footprint.json";
     }
 
@@ -552,7 +556,9 @@ void ComponentCacheService::saveCadDataJson(const QString& lcscId, const QByteAr
     QString cadDataPath;
     {
         QMutexLocker locker(&m_mutex);
-        ensureComponentDir(lcscId);
+        if (ensureComponentDir(lcscId).isEmpty()) {
+            return;
+        }
         cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
     }
 
@@ -673,7 +679,9 @@ void ComponentCacheService::savePreviewImage(const QString& lcscId, const QByteA
     QString previewPath;
     {
         QMutexLocker locker(&m_mutex);
-        ensureComponentDir(lcscId);
+        if (ensureComponentDir(lcscId).isEmpty()) {
+            return;
+        }
         previewPath = previewImagePath(lcscId, imageIndex);
     }
 
@@ -794,7 +802,9 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
     QString actualPath;
     {
         QMutexLocker locker(&m_mutex);
-        ensureComponentDir(lcscId);
+        if (ensureComponentDir(lcscId).isEmpty()) {
+            return;
+        }
         actualPath = resolveDatasheetPath(lcscId, format, true);
         const QString alternatePath = actualPath.endsWith(".pdf")
                                           ? resolveDatasheetPath(lcscId, QStringLiteral("html"), true)
@@ -942,6 +952,9 @@ void ComponentCacheService::saveModel3D(const QString& uuid, const QByteArray& d
         QMutexLocker locker(&m_mutex);
         ensureModel3DCacheDir();
         path = model3DPath(uuid, extension);
+        if (path.isEmpty()) {
+            return;
+        }
     }
 
     if (writeFileAtomically(path, data)) {
@@ -995,6 +1008,9 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
 void ComponentCacheService::removeCache(const QString& lcscId) {
     // 先删除L2磁盘缓存（不需要锁）
     QString dirPath = componentCacheDir(lcscId);
+    if (dirPath.isEmpty()) {
+        return;
+    }
     {
         QDir dir(dirPath);
         if (dir.exists()) {
@@ -1191,7 +1207,9 @@ QJsonObject ComponentCacheService::loadMetadata(const QString& lcscId) const {
 }
 
 void ComponentCacheService::saveMetadata(const QString& lcscId, const QJsonObject& metadata) {
-    ensureComponentDir(lcscId);
+    if (ensureComponentDir(lcscId).isEmpty()) {
+        return;
+    }
     QString metaPath = metadataPath(lcscId);
     QJsonDocument doc(metadata);
     if (!writeFileAtomically(metaPath, doc.toJson(QJsonDocument::Indented))) {

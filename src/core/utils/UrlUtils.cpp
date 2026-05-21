@@ -20,7 +20,6 @@ QSet<QString> allowedHostsForType(ResourceType type) {
                 QStringLiteral("easyeda.com"),
                 QStringLiteral("modules.easyeda.com"),
                 QStringLiteral("lceda.cn"),
-                QStringLiteral("easyeda.com"),
             };
         case ResourceType::ProductSearch:
             return {
@@ -28,6 +27,7 @@ QSet<QString> allowedHostsForType(ResourceType type) {
                 QStringLiteral("www.lcsc.com"),
                 QStringLiteral("so.szlcsc.com"),
                 QStringLiteral("item.szlcsc.com"),
+                QStringLiteral("pro.lceda.cn"),
             };
         case ResourceType::PreviewImage:
             return {
@@ -67,6 +67,7 @@ QSet<QString> allowedHostsForType(ResourceType type) {
                 QStringLiteral("www.lcsc.com"),
                 QStringLiteral("so.szlcsc.com"),
                 QStringLiteral("item.szlcsc.com"),
+                QStringLiteral("pro.lceda.cn"),
                 QStringLiteral("image.lceda.cn"),
                 QStringLiteral("file.elecfans.com"),
                 QStringLiteral("alimg.szlcsc.com"),
@@ -168,12 +169,23 @@ bool isAllowedUrl(const QUrl& url, ResourceType resourceType, QString* errorMess
         return false;
     }
 
-    // Unknown 类型不做 host 校验（向后兼容）
+    const QString host = url.host().toLower();
+
+    // Unknown 类型：仅允许已知域名（拒绝未知 host）
     if (resourceType == ResourceType::Unknown) {
+        static const QSet<QString> allKnown =
+            allowedHostsForType(ResourceType::ComponentInfo) + allowedHostsForType(ResourceType::ProductSearch) +
+            allowedHostsForType(ResourceType::PreviewImage) + allowedHostsForType(ResourceType::Datasheet) +
+            allowedHostsForType(ResourceType::Model3DObj) + allowedHostsForType(ResourceType::UpdateCheck) +
+            allowedHostsForType(ResourceType::WorkerRequest);
+        if (!isHostAllowed(host, allKnown)) {
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("URL host '%1' is not in any known allowlist").arg(host);
+            }
+            return false;
+        }
         return true;
     }
-
-    const QString host = url.host().toLower();
     const QSet<QString> allowed = allowedHostsForType(resourceType);
 
     if (allowed.isEmpty()) {

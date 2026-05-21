@@ -197,6 +197,22 @@ NetworkResult NetworkClient::executeRequest(const QUrl& url,
                                             const QByteArray& body,
                                             ResourceType resourceType,
                                             const RetryPolicy& policy) {
+    // 同步路径：在创建 request 前做 URL 校验，避免白名单拒绝后死锁
+    // （QWaitCondition::wait() 不处理事件循环，queued 完成信号无法到达）
+    {
+        QString errorMsg;
+        if (!UrlUtils::isAllowedUrl(url, resourceType, &errorMsg)) {
+            qWarning() << "NetworkClient: URL rejected by whitelist (sync):" << errorMsg;
+            NetworkResult result;
+            populateDiagnostic(result.diagnostic, url, resourceType);
+            result.error = errorMsg;
+            result.success = false;
+            result.diagnostic.errorType = NetworkErrorType::Other;
+            result.diagnostic.errorMessage = errorMsg;
+            return result;
+        }
+    }
+
     auto* request = enqueueAsyncRequest(url, body, resourceType, policy);
     if (!request) {
         NetworkResult result;
@@ -234,7 +250,18 @@ AsyncNetworkRequest* NetworkClient::enqueueAsyncRequest(const QUrl& url,
         QString errorMsg;
         if (!UrlUtils::isAllowedUrl(url, resourceType, &errorMsg)) {
             qWarning() << "NetworkClient: URL rejected by whitelist:" << errorMsg;
-            return nullptr;
+            // 返回已完成的失败 request，避免调用方需处理 nullptr
+            NetworkResult failResult;
+            failResult.success = false;
+            failResult.wasCancelled = false;
+            failResult.error = errorMsg;
+            failResult.diagnostic.url = url.toString();
+            failResult.diagnostic.host = url.host();
+            failResult.diagnostic.resourceType = resourceType;
+            failResult.diagnostic.profileName = RequestProfiles::fromType(resourceType).name;
+            failResult.diagnostic.errorType = NetworkErrorType::Other;
+            failResult.diagnostic.errorMessage = errorMsg;
+            return AsyncNetworkRequest::createFinished(failResult);
         }
     }
 
