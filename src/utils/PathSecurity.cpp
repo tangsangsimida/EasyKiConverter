@@ -89,6 +89,91 @@ bool PathSecurity::isSafePath(const QString& fullPath, const QString& baseDir) {
     return isSafe;
 }
 
+bool PathSecurity::isSafePathCanonical(const QString& fullPath, const QString& baseDir) {
+    if (fullPath.isEmpty() || baseDir.isEmpty()) {
+        qWarning() << "isSafePathCanonical: received empty path";
+        return false;
+    }
+
+    const QString canonBase = canonicalizePath(baseDir);
+    const QString canonTarget = canonicalizePath(fullPath);
+
+    if (canonBase.isEmpty() || canonTarget.isEmpty()) {
+        qWarning() << "isSafePathCanonical: failed to canonicalize paths";
+        return false;
+    }
+
+    // 确保基准路径以 '/' 结尾
+    QString normalizedBase = canonBase;
+    if (!normalizedBase.endsWith('/')) {
+        normalizedBase += '/';
+    }
+
+    // 允许目标等于基准
+    QString targetNoSlash = canonTarget;
+    while (targetNoSlash.endsWith('/'))
+        targetNoSlash.chop(1);
+
+    if (targetNoSlash + '/' == normalizedBase) {
+        return true;
+    }
+    if (targetNoSlash.compare(normalizedBase.left(normalizedBase.length() - 1), Qt::CaseInsensitive) == 0) {
+        return true;
+    }
+
+    bool isSafe = canonTarget.startsWith(normalizedBase, Qt::CaseInsensitive);
+
+    if (!isSafe) {
+        qWarning() << "isSafePathCanonical: path is outside base directory";
+        qWarning() << "  Target (canonical):" << canonTarget;
+        qWarning() << "  Base   (canonical):" << normalizedBase;
+        qWarning() << "  Raw Target:" << fullPath;
+        qWarning() << "  Raw Base:  " << baseDir;
+    }
+
+    return isSafe;
+}
+
+QString PathSecurity::canonicalizePath(const QString& path) {
+    QFileInfo info(path);
+
+    // 如果路径存在，直接用 canonicalFilePath（解析符号链接）
+    if (info.exists()) {
+        QString canonical = info.canonicalFilePath();
+        if (!canonical.isEmpty()) {
+            return QDir::fromNativeSeparators(canonical);
+        }
+    }
+
+    // 路径不存在：找到最近存在的父目录，对其 canonicalize，再拼接剩余部分
+    QString remaining;
+    QString current = QDir::cleanPath(path);
+
+    // 逐级向上查找存在的父目录
+    while (!QFileInfo::exists(current)) {
+        QDir parent = QDir(current);
+        if (!parent.cdUp()) {
+            // 到达根目录仍不存在，回退到 cleanPath
+            return QDir::fromNativeSeparators(QDir::cleanPath(path));
+        }
+        QString childName = QDir(current).dirName();
+        remaining = remaining.isEmpty() ? childName : (childName + "/" + remaining);
+        current = parent.path();
+    }
+
+    // current 现在是存在的路径，对其 canonicalize
+    QFileInfo currentInfo(current);
+    QString canonCurrent = currentInfo.canonicalFilePath();
+    if (canonCurrent.isEmpty()) {
+        canonCurrent = QDir::cleanPath(current);
+    }
+
+    if (remaining.isEmpty()) {
+        return QDir::fromNativeSeparators(canonCurrent);
+    }
+    return QDir::fromNativeSeparators(canonCurrent + "/" + remaining);
+}
+
 QString PathSecurity::sanitizeFilename(const QString& name) {
     QString safeName = name;
 

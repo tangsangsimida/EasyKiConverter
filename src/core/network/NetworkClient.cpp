@@ -1,6 +1,7 @@
 #include "NetworkClient.h"
 
 #include "core/utils/GzipUtils.h"
+#include "core/utils/UrlUtils.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -226,6 +227,15 @@ AsyncNetworkRequest* NetworkClient::enqueueAsyncRequest(const QUrl& url,
                                                         const RetryPolicy& policy) {
     if (!m_asyncNetworkManager) {
         return nullptr;
+    }
+
+    // URL 白名单校验：拒绝非预期的 scheme 或 host
+    {
+        QString errorMsg;
+        if (!UrlUtils::isAllowedUrl(url, resourceType, &errorMsg)) {
+            qWarning() << "NetworkClient: URL rejected by whitelist:" << errorMsg;
+            return nullptr;
+        }
     }
 
     auto* request = new AsyncNetworkRequest(url, m_asyncNetworkManager, resourceType, policy, body, nullptr);

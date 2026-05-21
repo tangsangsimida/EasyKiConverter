@@ -161,6 +161,11 @@ private:
     void handleTimeout();
 
     /**
+     * @brief 处理下载进度，检查响应大小限制
+     */
+    void handleDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+
+    /**
      * @brief 处理响应数据
      */
     void processResponse(QNetworkReply* reply);

@@ -2,6 +2,7 @@
 
 #include "services/ComponentService.h"
 #include "services/export/ParallelExportService.h"
+#include "utils/PathSecurity.h"
 
 namespace EasyKiConverter {
 
@@ -37,7 +38,8 @@ ExportOptions CliContext::createExportOptions() const {
 
     // 设置输出路径
     options.outputPath = m_parser.outputDir();
-    options.libName = m_parser.libName();
+    // 清洗 libName，防止路径穿越（如 ../foo）
+    options.libName = PathSecurity::sanitizeFilename(m_parser.libName());
 
     // 设置导出类型（CLI 默认：符号库、封装库；3D 模型通过参数启用）
     options.exportSymbol = m_parser.exportSymbol();

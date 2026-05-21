@@ -5,6 +5,7 @@
 #include "ConfigService.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/UrlUtils.h"
+#include "services/BomParser.h"
 #include "services/ComponentService.h"
 #include "utils/logging/LogMacros.h"
 
@@ -15,6 +16,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QRegularExpression>
 #include <QSaveFile>
 #include <QSet>
 #include <QUrl>
@@ -194,6 +196,10 @@ QString ComponentCacheService::cacheDir() const {
 QString ComponentCacheService::componentCacheDir(const QString& lcscId) const {
     // 注意：这里不再加锁，因为只是构建路径字符串
     // m_cacheDir 在初始化时设置，之后只读，不需要互斥保护
+    if (!BomParser::validateId(lcscId)) {
+        qWarning() << "componentCacheDir: invalid lcscId, rejecting:" << lcscId;
+        return QString();
+    }
     return QDir::cleanPath(m_cacheDir + "/" + lcscId);
 }
 
@@ -203,6 +209,9 @@ QString ComponentCacheService::ensureComponentDir(const QString& lcscId) const {
     // 2. dir.mkpath 是线程安全的
     // 3. savePreviewImage 已经在持有 m_mutex 的情况下调用此函数
     QString dirPath = componentCacheDir(lcscId);
+    if (dirPath.isEmpty()) {
+        return QString();
+    }
     QDir dir(dirPath);
     if (!dir.exists()) {
         dir.mkpath(dirPath);
@@ -1306,18 +1315,42 @@ QDateTime ComponentCacheService::getCacheAccessTime(const QString& lcscId) const
 }
 
 QString ComponentCacheService::metadataPath(const QString& lcscId) const {
-    return componentCacheDir(lcscId) + "/component.json";
+    const QString dir = componentCacheDir(lcscId);
+    if (dir.isEmpty()) {
+        return QString();
+    }
+    return dir + "/component.json";
 }
 
 QString ComponentCacheService::previewImagePath(const QString& lcscId, int index) const {
-    return componentCacheDir(lcscId) + "/preview_" + QString::number(index) + ".jpg";
+    const QString dir = componentCacheDir(lcscId);
+    if (dir.isEmpty()) {
+        return QString();
+    }
+    return dir + "/preview_" + QString::number(index) + ".jpg";
 }
 
 QString ComponentCacheService::datasheetPath(const QString& lcscId) const {
-    return componentCacheDir(lcscId) + "/datasheet";
+    const QString dir = componentCacheDir(lcscId);
+    if (dir.isEmpty()) {
+        return QString();
+    }
+    return dir + "/datasheet";
 }
 
 QString ComponentCacheService::model3DPath(const QString& uuid, const QString& extension) const {
+    // 严格校验 uuid 格式：仅允许字母、数字、下划线、短横线，防止路径穿越
+    static const QRegularExpression uuidRe(QStringLiteral("^[A-Za-z0-9_-]+$"));
+    if (uuid.isEmpty() || !uuidRe.match(uuid).hasMatch()) {
+        qWarning() << "model3DPath: invalid uuid, rejecting:" << uuid;
+        return QString();
+    }
+    // 校验 extension：仅允许字母数字
+    static const QRegularExpression extRe(QStringLiteral("^[A-Za-z0-9]+$"));
+    if (extension.isEmpty() || !extRe.match(extension).hasMatch()) {
+        qWarning() << "model3DPath: invalid extension, rejecting:" << extension;
+        return QString();
+    }
     return m_cacheDir + "/model3d/" + uuid + "." + extension;
 }
 

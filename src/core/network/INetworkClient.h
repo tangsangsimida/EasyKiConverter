@@ -59,6 +59,9 @@ struct RequestProfile {
 
     // 此资源类型是否可缓存
     bool cacheable = false;
+
+    // 此资源类型的最大响应字节数（防止恶意/异常响应导致内存耗尽）
+    qint64 maxResponseBytes = 50 * 1024 * 1024;  // 默认 50MB
 };
 
 /**
@@ -81,6 +84,7 @@ struct RequestProfiles {
         profile.maxConcurrent = 10;
         profile.allowCancellation = true;
         profile.cacheable = true;
+        profile.maxResponseBytes = 20 * 1024 * 1024;  // JSON 20MB
         return profile;
     }
 
@@ -103,6 +107,7 @@ struct RequestProfiles {
         profile.maxConcurrent = 10;
         profile.allowCancellation = true;
         profile.cacheable = true;
+        profile.maxResponseBytes = 20 * 1024 * 1024;  // JSON 20MB
         return profile;
     }
 
@@ -122,6 +127,7 @@ struct RequestProfiles {
         profile.maxConcurrent = 5;
         profile.allowCancellation = true;
         profile.cacheable = true;
+        profile.maxResponseBytes = 10 * 1024 * 1024;  // 图片 10MB
         return profile;
     }
 
@@ -141,6 +147,7 @@ struct RequestProfiles {
         profile.maxConcurrent = 5;
         profile.allowCancellation = true;
         profile.cacheable = true;
+        profile.maxResponseBytes = 20 * 1024 * 1024;  // JSON 20MB
         return profile;
     }
 
@@ -160,6 +167,7 @@ struct RequestProfiles {
         profile.maxConcurrent = 3;
         profile.allowCancellation = true;
         profile.cacheable = true;
+        profile.maxResponseBytes = 200 * 1024 * 1024;  // PDF/HTML 200MB
         return profile;
     }
 
@@ -179,6 +187,7 @@ struct RequestProfiles {
         profile.maxConcurrent = 3;
         profile.allowCancellation = true;
         profile.cacheable = true;
+        profile.maxResponseBytes = 200 * 1024 * 1024;  // OBJ 200MB
         return profile;
     }
 
@@ -198,6 +207,7 @@ struct RequestProfiles {
         profile.maxConcurrent = 3;
         profile.allowCancellation = true;
         profile.cacheable = true;
+        profile.maxResponseBytes = 200 * 1024 * 1024;  // STEP 200MB
         return profile;
     }
 
@@ -217,6 +227,7 @@ struct RequestProfiles {
         profile.maxConcurrent = 5;
         profile.allowCancellation = true;
         profile.cacheable = false;
+        profile.maxResponseBytes = 50 * 1024 * 1024;  // 通用 50MB
         return profile;
     }
 
@@ -236,6 +247,7 @@ struct RequestProfiles {
         profile.maxConcurrent = 2;
         profile.allowCancellation = true;
         profile.cacheable = false;
+        profile.maxResponseBytes = 5 * 1024 * 1024;  // GitHub API 5MB
         return profile;
     }
 
