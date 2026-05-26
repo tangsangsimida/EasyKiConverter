@@ -19,10 +19,7 @@ namespace EasyKiConverter {
  *       ├── component1_preview_2.png
  *       └── ...
  *
- * 使用TempFileManager确保:
- * - 临时文件存放在outputPath/.tmp/目录
- * - 导出完成时提交临时文件到最终位置
- * - 取消或失败时回滚所有临时文件
+ * 使用 TempFileManager 进行临时写入、备份提交和失败回滚。
  *
  * 并发配置:
  * - 最大并发数: 4（预览图导出是图像处理+I/O密集型）

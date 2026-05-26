@@ -237,10 +237,8 @@ void FootprintExportStage::start(const QStringList& componentIds,
         }
     }
 
-    // 设置临时文件管理器
     m_tempManager.setOutputPath(m_options.outputPath);
 
-    // 在工作线程中执行库级别的导出
     m_isExporting.store(true);
     m_workerThread = QThread::create([this, componentIds, cachedData]() { doLibraryExport(componentIds, cachedData); });
     connect(m_workerThread, &QThread::finished, this, [this]() { m_workerThread = nullptr; });
@@ -270,7 +268,6 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     qDebug() << "FootprintExportStage: Starting library export in worker thread for" << componentIds.size()
              << "components";
 
-    // 1. 收集所有有效的封装数据
     QList<FootprintData> footprintList;
     QStringList failedIds;
     int successCount = 0;
@@ -286,7 +283,6 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         if (it == cachedData.end() || !it.value()) {
             qWarning() << "FootprintExportStage: No data for component:" << componentId;
             failedIds.append(componentId);
-            // 发射 itemStatusChanged 信号通知 ViewModel
             ExportItemStatus status;
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = "No component data";
@@ -296,11 +292,9 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
         QSharedPointer<ComponentData> data = it.value();
 
-        // 检查封装数据
         if (!data->footprintData()) {
             qWarning() << "FootprintExportStage: No footprint data for component:" << componentId;
             failedIds.append(componentId);
-            // 发射 itemStatusChanged 信号通知 ViewModel
             ExportItemStatus status;
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = "No footprint data";
@@ -386,11 +380,9 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
             }
         }
 
-        // 添加到封装列表
         footprintList.append(footprint);
         successCount++;
 
-        // 发射 itemStatusChanged 信号通知 ViewModel
         ExportItemStatus status;
         status.status = ExportItemStatus::Status::Success;
         emit itemStatusChanged(componentId, status);
@@ -413,7 +405,6 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
-    // 2. 构建输出路径
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
     QString dirName = libName + QStringLiteral(".pretty");
     QString outputDir = m_options.outputPath;
@@ -422,7 +413,6 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     }
     QString finalDir = outputDir + QDir::separator() + dirName;
 
-    // 3. 确保输出目录存在
     QDir dir;
     if (!dir.mkpath(outputDir)) {
         qCritical() << "FootprintExportStage: Failed to create output directory:" << outputDir;
@@ -432,7 +422,6 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
-    // 4. 创建临时目录路径并导出
     QString tempDirPath = m_tempManager.createTempDirectoryPath(dirName);
     if (tempDirPath.isEmpty()) {
         qCritical() << "FootprintExportStage: Failed to create temp dir path";
@@ -464,12 +453,10 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
     qDebug() << "FootprintExportStage: Exporting" << footprintList.size() << "footprints to temp:" << tempDirPath;
 
-    // 5. 执行封装库导出
     bool exportSuccess = false;
     QString libraryDescription = m_options.footprintLibraryDescription;
     {
         ExporterFootprint exporter;
-        // 传入3D模型格式标志：WRL和STEP可以同时导出，生成两个 (model ...) 块
         const bool preferWrl = m_options.needsModel3DWrl();
         const bool exportStep = m_options.needsModel3DStep();
         QString libraryKeywords = m_options.footprintLibraryKeywords;
@@ -502,8 +489,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
-    // 6. 提交临时目录（重命名为最终路径）
-    if (m_tempManager.commitDirectory(finalDir)) {
+    if (m_tempManager.commitDirectoryWithBackup(tempDirPath, finalDir)) {
         qDebug() << "FootprintExportStage: Successfully exported to:" << finalDir;
     } else {
         qCritical() << "FootprintExportStage: Failed to commit temp dir";
@@ -514,17 +500,14 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
-    // 6.1 生成 fp-lib-table 文件（如果提供了库描述）
     if (!libraryDescription.isEmpty()) {
         ExporterFootprint fpTableExporter;
         fpTableExporter.generateFpLibTable(libName, finalDir, outputDir, libraryDescription);
         KiCadLibraryTableManager::registerFootprintLibrary(outputDir, libName, finalDir, libraryDescription);
     }
 
-    // 7. 清理临时目录
     m_tempManager.cleanupTempDirectory();
 
-    // 8. 完成
     qDebug() << "FootprintExportStage: Completed. Success:" << successCount << "Failed:" << failedIds.size();
 
     m_isExporting.store(false);

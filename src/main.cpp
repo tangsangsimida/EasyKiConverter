@@ -13,6 +13,7 @@
 #include "services/UpdateCheckerService.h"
 #include "services/export/ExportProgress.h"
 #include "services/export/ParallelExportService.h"
+#include "services/export/TempFileManager.h"
 #include "ui/viewmodels/ComponentListViewModel.h"
 #include "ui/viewmodels/ExportProgressViewModel.h"
 #include "ui/viewmodels/ExportSettingsViewModel.h"
@@ -444,6 +445,7 @@ int main(int argc, char* argv[]) {
         }
 
         const QString configFilePath = resolveConfigFilePath(cmdParser);
+        EasyKiConverter::TempFileManager::recoverIncompleteTransactions();
         EasyKiConverter::ConfigService::instance()->loadConfig(configFilePath);
         applyCacheConfiguration(cmdParser);
 
@@ -586,6 +588,7 @@ int main(int argc, char* argv[]) {
 
     // 初始化日志系统（在 QApplication 创建后立即初始化）
     setupLogging(debugMode, cmdParser.logLevel(), cmdParser.logFile(), cmdParser.isSyncLogging());
+    EasyKiConverter::TempFileManager::recoverIncompleteTransactions();
 
     // 尝试设置应用程序图标（使用 QGuiApplication::setWindowIcon 确保可靠性）
     QString appImagePath = qgetenv("APPIMAGE");

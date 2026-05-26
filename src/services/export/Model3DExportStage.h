@@ -19,10 +19,7 @@ namespace EasyKiConverter {
  *       ├── component2.wrl
  *       └── ...
  *
- * 使用TempFileManager确保:
- * - 临时文件存放在.outputPath/.tmp/目录
- * - 导出完成时提交临时文件到最终位置
- * - 取消或失败时回滚所有临时文件
+ * 使用 TempFileManager 进行临时写入、备份提交和失败回滚。
  *
  * 并发配置:
  * - 最大并发数: 2（3D模型文件较大，I/O较慢）
@@ -85,13 +82,6 @@ private:
         QString stepTempPath;
         QString stepFinalPath;
     };
-
-    /**
-     * @brief 提交单个临时文件到最终位置
-     * @param tempPath 临时文件路径
-     * @param finalPath 最终文件路径
-     */
-    bool commitTempFile(const QString& tempPath, const QString& finalPath);
 
     struct ExportOptions m_options;  ///< 导出选项
     TempFileManager m_tempManager;  ///< 临时文件管理器

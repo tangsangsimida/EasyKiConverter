@@ -7,40 +7,26 @@
 #include <QObject>
 #include <QSet>
 #include <QString>
+#include <QVector>
 
 namespace EasyKiConverter {
 
 /**
  * @brief 临时文件管理器
  *
- * 负责管理导出过程中的临时文件，确保：
- * 1. 临时文件统一存放在输出目录的 .tmp 子目录中
- * 2. 导出完成时将临时文件重命名为最终文件
- * 3. 导出取消或失败时删除所有临时文件
- * 4. 程序异常退出时，下次启动清理遗留的临时文件
- *
- * 使用方式：
- * @code
- * TempFileManager tempManager;
- * tempManager.setOutputPath("/path/to/output");
- *
- * // 创建临时文件（返回最终文件路径）
- * QString finalPath = tempManager.createTempFile("C12345", ".kicad_sym");
- * QString tempPath = tempManager.tempFilePath(finalPath);
- *
- * // 写入临时文件...
- *
- * // 导出成功：完成（重命名）
- * tempManager.commit(finalPath);
- *
- * // 导出失败/取消：删除
- * tempManager.rollbackAll();
- * @endcode
+ * 管理导出临时路径、备份事务提交、失败回滚和启动恢复。
+ * commit()/commitDirectory() 保留旧调用面，内部同样使用备份事务。
  */
 class TempFileManager : public QObject {
     Q_OBJECT
 
 public:
+    struct CommitItem {
+        QString tempPath;
+        QString finalPath;
+        bool isDirectory = false;
+    };
+
     /**
      * @brief 构造函数
      * @param parent 父对象
@@ -103,8 +89,6 @@ public:
      * @brief 提交临时文件（完成导出）
      * @param finalPath 最终文件路径
      * @return true 提交成功，false 失败
-     *
-     * 将临时文件重命名为最终路径，并从追踪列表中移除
      */
     bool commit(const QString& finalPath);
 
@@ -112,10 +96,37 @@ public:
      * @brief 提交临时目录（完成导出）
      * @param finalDirPath 最终目录路径
      * @return true 提交成功，false 失败
-     *
-     * 将临时目录重命名为最终目录，并从追踪列表中移除
      */
     bool commitDirectory(const QString& finalDirPath);
+
+    /**
+     * @brief 提交指定临时文件
+     * @param tempPath 临时文件路径
+     * @param finalPath 最终文件路径
+     * @return true 提交成功，false 失败且已尽量恢复旧文件
+     */
+    bool commitWithBackup(const QString& tempPath, const QString& finalPath);
+
+    /**
+     * @brief 提交指定临时目录
+     * @param tempDirPath 临时目录路径
+     * @param finalDirPath 最终目录路径
+     * @return true 提交成功，false 失败且已尽量恢复旧目录
+     */
+    bool commitDirectoryWithBackup(const QString& tempDirPath, const QString& finalDirPath);
+
+    /**
+     * @brief 全有或全无地提交一组临时文件/目录
+     * @param items 临时路径与最终路径的映射
+     * @return true 全部提交成功，false 失败且已尽量恢复全部旧版本
+     */
+    bool commitBatch(const QVector<CommitItem>& items);
+
+    /**
+     * @brief 恢复上次崩溃或异常退出留下的未完成提交事务
+     * @return true 扫描和恢复流程完成，false 发生不可恢复错误
+     */
+    static bool recoverIncompleteTransactions();
 
     /**
      * @brief 回滚所有临时文件（取消导出）
@@ -185,6 +196,8 @@ private:
      * @return true 删除成功或文件不存在
      */
     bool deleteFile(const QString& path) const;
+
+    bool commitBatchLocked(const QVector<CommitItem>& items);
 
     QString m_outputPath;  ///< 输出目录路径
     mutable QMutex m_mutex;  ///< 保护临时文件集合

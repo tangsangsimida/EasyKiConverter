@@ -60,10 +60,8 @@ void SymbolExportStage::start(const QStringList& componentIds,
         }
     }
 
-    // 设置临时文件管理器
     m_tempManager.setOutputPath(m_options.outputPath);
 
-    // 在工作线程中执行库级别的导出
     m_isExporting.store(true);
     m_workerThread = QThread::create([this, componentIds, cachedData]() { doLibraryExport(componentIds, cachedData); });
     connect(m_workerThread, &QThread::finished, this, [this]() { m_workerThread = nullptr; });
@@ -93,7 +91,6 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     qDebug() << "SymbolExportStage: Starting library export in worker thread for" << componentIds.size()
              << "components";
 
-    // 1. 收集所有有效的符号数据
     QList<SymbolData> symbolList;
     QStringList collectedIds;
     QStringList failedIds;
@@ -182,7 +179,6 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         emit completed(0, failedIds.size(), 0);
     };
 
-    // 2. 构建输出路径
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
     QString fileName = libName + QStringLiteral(".kicad_sym");
     QString outputDir = m_options.outputPath;
@@ -191,7 +187,6 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     }
     QString finalPath = outputDir + QDir::separator() + fileName;
 
-    // 3. 确保输出目录存在
     QDir dir;
     if (!dir.mkpath(outputDir)) {
         abortExport(QStringLiteral("Failed to create output directory: %1").arg(outputDir));
@@ -200,7 +195,6 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
     const bool finalFileExists = QFile::exists(finalPath);
 
-    // 4. 创建临时文件并导出
     QString tempPath = m_tempManager.createSymbolTempPath(libName, QStringLiteral(".kicad_sym"));
     if (tempPath.isEmpty()) {
         abortExport(QStringLiteral("Failed to create temp file path"));
@@ -260,7 +254,6 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
     qDebug() << "SymbolExportStage: Exporting" << symbolList.size() << "symbols to temp:" << tempPath;
 
-    // 5. 执行符号库导出
     bool exportSuccess = false;
     QString libraryDescription = m_options.symbolLibraryDescription;
     {
@@ -283,24 +276,20 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
-    // 6. 提交临时文件（重命名为最终路径）
-    if (!m_tempManager.commit(finalPath)) {
+    if (!m_tempManager.commitWithBackup(tempPath, finalPath)) {
         abortExport(QStringLiteral("Failed to commit temp file"));
         return;
     }
     qDebug() << "SymbolExportStage: Successfully exported to:" << finalPath;
 
-    // 7. 生成 sym-lib-table 文件（如果提供了库描述）
     if (!libraryDescription.isEmpty()) {
         ExporterSymbol symTableExporter;
         symTableExporter.generateSymLibTable(libName, finalPath, outputDir, libraryDescription);
         KiCadLibraryTableManager::registerSymbolLibrary(outputDir, libName, finalPath, libraryDescription);
     }
 
-    // 8. 清理临时目录
     m_tempManager.cleanupTempDirectory();
 
-    // 9. 完成
     qDebug() << "SymbolExportStage: Completed. Success:" << successCount << "Failed:" << failedIds.size();
 
     m_isExporting.store(false);

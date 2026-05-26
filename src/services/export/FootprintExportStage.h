@@ -24,8 +24,8 @@ namespace EasyKiConverter {
  * 1. start() 被调用时，聚合所有元器件的封装数据
  * 2. 在临时目录创建封装库目录
  * 3. 调用 ExporterFootprint::exportFootprintLibrary() 一次性导出所有封装
- * 4. 导出成功: 将临时目录重命名为最终路径
- * 5. 导出失败/取消: 删除所有临时文件
+ * 4. 导出成功: 通过 TempFileManager 提交并保留旧版本备份
+ * 5. 导出失败/取消: 回滚临时目录
  *
  * 注意：此阶段不使用 worker 池模式，而是在工作线程中同步完成所有导出。
  *      为保持类可实例化，提供了 createWorker() 和 startWorker() 的空实现。

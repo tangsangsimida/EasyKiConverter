@@ -5,7 +5,7 @@
 
 #include <QDebug>
 #include <QDir>
-#include <QFile>
+#include <QFileInfo>
 #include <QPointer>
 
 namespace EasyKiConverter {
@@ -25,7 +25,6 @@ void PreviewImagesExportStage::start(const QStringList& componentIds,
 
     m_threadPool.setMaxThreadCount(m_options.weakNetworkSupport ? 2 : 4);
 
-    // 构建输出目录：outputPath/libName.preview/
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
     QString baseOutputDir = m_options.outputPath;
     if (baseOutputDir.isEmpty()) {
@@ -33,28 +32,24 @@ void PreviewImagesExportStage::start(const QStringList& componentIds,
     }
     QString outputDir = baseOutputDir + QDir::separator() + libName + QStringLiteral(".preview");
 
-    // 确保输出目录存在
     QDir dir;
     if (!dir.mkpath(outputDir)) {
         qCritical() << "PreviewImagesExportStage: Failed to create output directory:" << outputDir;
         m_isExporting.store(false);
-        // 不直接发送completed，让基类处理
         ExportTypeStage::start(QStringList(), cachedData);
         return;
     }
 
-    // 设置临时文件管理器
     m_tempManager.setOutputPath(outputDir);
 
-    // 为每个组件创建临时目录
     m_outputDirs.clear();
+    m_componentTempPaths.clear();
     for (const QString& componentId : componentIds) {
         m_outputDirs[componentId] = outputDir;
     }
 
     m_isExporting.store(true);
 
-    // 调用基类的初始化方法（设置状态，并处理空列表情况）
     ExportTypeStage::start(componentIds, cachedData);
 }
 
@@ -77,8 +72,11 @@ QMap<QString, QString> PreviewImagesExportStage::createTempPathsForComponent(con
         return paths;
     }
 
-    // 构造临时目录路径
-    QString tempDir = outputDir + QDir::separator() + QStringLiteral(".tmp.") + componentId;
+    QString tempDir = m_tempManager.createTempDirectoryPath(componentId + QStringLiteral(".preview.tmp"));
+    if (tempDir.isEmpty()) {
+        qWarning() << "PreviewImagesExportStage: Failed to create temp dir path for" << componentId;
+        return paths;
+    }
     QDir dir;
     if (!dir.mkpath(tempDir)) {
         qWarning() << "PreviewImagesExportStage: Failed to create temp dir for" << componentId << ":" << tempDir;
@@ -90,6 +88,7 @@ QMap<QString, QString> PreviewImagesExportStage::createTempPathsForComponent(con
         QString tempPath = tempDir + QDir::separator() + fileName;
         paths[fileName] = tempPath;
     }
+    m_componentTempPaths[componentId] = paths;
 
     if (paths.size() != previewCount) {
         qWarning() << "PreviewImagesExportStage: Created" << paths.size() << "paths but expected" << previewCount;
@@ -114,18 +113,15 @@ void PreviewImagesExportStage::startWorker(QObject* worker,
     exportWorker->setOptions(m_options);
     exportWorker->setData(componentId, data, m_options);
 
-    // 为组件创建临时路径映射
     int previewCount = data->previewImageData().size();
     QMap<QString, QString> tempPaths = createTempPathsForComponent(componentId, previewCount);
     if (!tempPaths.isEmpty()) {
         exportWorker->setTempPaths(tempPaths);
     } else if (previewCount > 0) {
-        // 临时路径创建失败但有预览图需要导出，记录警告
         qWarning() << "PreviewImagesExportStage: Temp path creation failed for" << componentId
                    << "- will use direct write";
     }
 
-    // 使用QPointer防止stage已销毁时lambda访问悬空指针
     QPointer<PreviewImagesExportStage> stagePtr(this);
     connect(
         exportWorker,
@@ -137,29 +133,19 @@ void PreviewImagesExportStage::startWorker(QObject* worker,
                 return;
             }
 
-            // 如果成功，提交所有临时文件
             if (success) {
                 QString outputDir = stagePtr->m_outputDirs.value(componentId);
-                QString tempDir = outputDir + QDir::separator() + QStringLiteral(".tmp.") + componentId;
+                const QMap<QString, QString> tempPaths = stagePtr->m_componentTempPaths.value(componentId);
 
-                // 移动所有临时文件到最终目录
-                QDir tempQDir(tempDir);
-                if (tempQDir.exists()) {
-                    for (const QFileInfo& info : tempQDir.entryInfoList(QDir::Files)) {
-                        QString fileName = info.fileName();
-                        QString finalPath = outputDir + QDir::separator() + fileName;
-                        QString tempPath = info.absoluteFilePath();
+                QVector<TempFileManager::CommitItem> commitItems;
+                for (auto it = tempPaths.constBegin(); it != tempPaths.constEnd(); ++it) {
+                    commitItems.append({it.value(), outputDir + QDir::separator() + it.key(), false});
+                }
 
-                        // 使用QFile::rename移动文件
-                        if (QFile::exists(finalPath)) {
-                            QFile::remove(finalPath);
-                        }
-                        if (QFile::rename(tempPath, finalPath)) {
-                            qDebug() << "PreviewImagesExportStage: Committed" << finalPath;
-                        }
-                    }
-                    // 删除临时目录
-                    tempQDir.removeRecursively();
+                if (!commitItems.isEmpty()) {
+                    success = stagePtr->m_tempManager.commitBatch(commitItems);
+                    const QString tempDirPath = QFileInfo(commitItems.first().tempPath).absolutePath();
+                    QDir(tempDirPath).removeRecursively();
                 }
             }
 

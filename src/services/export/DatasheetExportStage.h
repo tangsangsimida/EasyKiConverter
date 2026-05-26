@@ -19,10 +19,7 @@ namespace EasyKiConverter {
  *       ├── component2.pdf
  *       └── ...
  *
- * 使用TempFileManager确保:
- * - 临时文件存放在outputPath/.tmp/目录
- * - 导出完成时提交临时文件到最终位置
- * - 取消或失败时回滚所有临时文件
+ * 使用 TempFileManager 进行临时写入、备份提交和失败回滚。
  *
  * 并发配置:
  * - 最大并发数: 2（PDF文件较大，下载+I/O较慢）
@@ -79,11 +76,6 @@ protected:
     void startWorker(QObject* worker, const QString& componentId, const QSharedPointer<ComponentData>& data) override;
 
 private:
-    /**
-     * @brief 提交临时文件到最终位置
-     */
-    void commitTempFile(const QString& tempPath, const QString& finalPath);
-
     struct ExportOptions m_options;  ///< 导出选项
     TempFileManager m_tempManager;  ///< 临时文件管理器
     QMap<QString, QString> m_tempPaths;  ///< componentId -> tempPath

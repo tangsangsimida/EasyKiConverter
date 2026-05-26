@@ -1,16 +1,205 @@
 #include "TempFileManager.h"
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QRandomGenerator>
+#include <QStandardPaths>
 #include <QThread>
 
 #include <chrono>
 #include <thread>
 
 namespace EasyKiConverter {
+
+namespace {
+
+struct BackupEntry {
+    QString finalPath;
+    QString backupPath;
+    QString tempPath;
+    bool isDirectory = false;
+    bool existedBefore = false;
+};
+
+constexpr int kDefaultBackupRetentionDays = 3;
+constexpr int kDefaultMaxBackupSets = 3;
+
+QString backupRootPath() {
+    QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (appDataPath.isEmpty()) {
+        appDataPath = QDir::homePath() + QDir::separator() + QStringLiteral(".easykiconverter");
+    }
+    return QDir(appDataPath).filePath(QStringLiteral("backups"));
+}
+
+QString createTransactionId() {
+    return QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyyMMddTHHmmsszzzZ")) + QStringLiteral("_") +
+           QString::number(QRandomGenerator::global()->generate64(), 16);
+}
+
+bool ensureParentDirectory(const QString& path) {
+    const QFileInfo info(path);
+    const QDir parentDir = info.absoluteDir();
+    return parentDir.exists() || QDir().mkpath(info.absolutePath());
+}
+
+bool copyDirectoryRecursively(const QString& sourcePath, const QString& targetPath) {
+    QDir sourceDir(sourcePath);
+    if (!sourceDir.exists()) {
+        return false;
+    }
+
+    if (!QDir().mkpath(targetPath)) {
+        return false;
+    }
+
+    const QFileInfoList entries =
+        sourceDir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries | QDir::Hidden | QDir::System);
+    for (const QFileInfo& entry : entries) {
+        const QString sourceEntryPath = entry.absoluteFilePath();
+        const QString targetEntryPath = QDir(targetPath).filePath(entry.fileName());
+        if (entry.isDir()) {
+            if (!copyDirectoryRecursively(sourceEntryPath, targetEntryPath)) {
+                return false;
+            }
+        } else {
+            if (QFile::exists(targetEntryPath) && !QFile::remove(targetEntryPath)) {
+                return false;
+            }
+            if (!QFile::copy(sourceEntryPath, targetEntryPath)) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool moveFileWithFallback(const QString& sourcePath, const QString& targetPath) {
+    if (!ensureParentDirectory(targetPath)) {
+        return false;
+    }
+
+    constexpr int kMaxRetries = 3;
+    for (int attempt = 0; attempt < kMaxRetries; ++attempt) {
+        if (attempt > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50 * attempt));
+        }
+        if (QFile::rename(sourcePath, targetPath)) {
+            return true;
+        }
+    }
+
+    if (!QFile::copy(sourcePath, targetPath)) {
+        return false;
+    }
+
+    return QFile::remove(sourcePath);
+}
+
+bool moveDirectoryWithFallback(const QString& sourcePath, const QString& targetPath) {
+    if (!ensureParentDirectory(targetPath)) {
+        return false;
+    }
+
+    if (QDir().rename(sourcePath, targetPath)) {
+        return true;
+    }
+
+    if (!copyDirectoryRecursively(sourcePath, targetPath)) {
+        return false;
+    }
+
+    return QDir(sourcePath).removeRecursively();
+}
+
+bool removePath(const QString& path, bool isDirectory) {
+    if (path.isEmpty()) {
+        return true;
+    }
+    if (isDirectory) {
+        QDir dir(path);
+        return !dir.exists() || dir.removeRecursively();
+    }
+    return !QFile::exists(path) || QFile::remove(path);
+}
+
+bool movePathWithFallback(const QString& sourcePath, const QString& targetPath, bool isDirectory) {
+    return isDirectory ? moveDirectoryWithFallback(sourcePath, targetPath)
+                       : moveFileWithFallback(sourcePath, targetPath);
+}
+
+bool pathExists(const QString& path, bool isDirectory) {
+    return isDirectory ? QDir(path).exists() : QFile::exists(path);
+}
+
+bool writeManifest(const QString& manifestPath,
+                   const QString& transactionId,
+                   const QString& outputRoot,
+                   const QVector<BackupEntry>& entries,
+                   bool committed) {
+    QJsonObject root;
+    root.insert(QStringLiteral("transactionId"), transactionId);
+    root.insert(QStringLiteral("outputRoot"), outputRoot);
+    root.insert(QStringLiteral("createdAt"), QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
+    root.insert(QStringLiteral("appVersion"), QCoreApplication::applicationVersion());
+    root.insert(QStringLiteral("committed"), committed);
+
+    QJsonArray entryArray;
+    for (const BackupEntry& entry : entries) {
+        QJsonObject entryObject;
+        entryObject.insert(QStringLiteral("finalPath"), entry.finalPath);
+        entryObject.insert(QStringLiteral("backupPath"), entry.backupPath);
+        entryObject.insert(QStringLiteral("tempPath"), entry.tempPath);
+        entryObject.insert(QStringLiteral("isDirectory"), entry.isDirectory);
+        entryObject.insert(QStringLiteral("existedBefore"), entry.existedBefore);
+        entryArray.append(entryObject);
+    }
+    root.insert(QStringLiteral("entries"), entryArray);
+
+    QFile manifestFile(manifestPath);
+    if (!manifestFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qWarning() << "TempFileManager: Failed to write manifest:" << manifestPath << manifestFile.errorString();
+        return false;
+    }
+    return manifestFile.write(QJsonDocument(root).toJson(QJsonDocument::Indented)) > 0;
+}
+
+QVector<BackupEntry> readManifestEntries(const QString& manifestPath, bool* committed) {
+    QVector<BackupEntry> entries;
+    QFile manifestFile(manifestPath);
+    if (!manifestFile.open(QIODevice::ReadOnly)) {
+        qWarning() << "TempFileManager: Failed to read manifest:" << manifestPath << manifestFile.errorString();
+        return entries;
+    }
+
+    const QJsonDocument document = QJsonDocument::fromJson(manifestFile.readAll());
+    const QJsonObject root = document.object();
+    if (committed != nullptr) {
+        *committed = root.value(QStringLiteral("committed")).toBool(false);
+    }
+
+    const QJsonArray entryArray = root.value(QStringLiteral("entries")).toArray();
+    for (const QJsonValue& value : entryArray) {
+        const QJsonObject object = value.toObject();
+        BackupEntry entry;
+        entry.finalPath = object.value(QStringLiteral("finalPath")).toString();
+        entry.backupPath = object.value(QStringLiteral("backupPath")).toString();
+        entry.tempPath = object.value(QStringLiteral("tempPath")).toString();
+        entry.isDirectory = object.value(QStringLiteral("isDirectory")).toBool(false);
+        entry.existedBefore = object.value(QStringLiteral("existedBefore")).toBool(false);
+        entries.append(entry);
+    }
+    return entries;
+}
+
+}  // namespace
 
 TempFileManager::TempFileManager(QObject* parent) : QObject(parent) {}
 
@@ -37,7 +226,6 @@ QString TempFileManager::createTempFilePath(const QString& componentId, const QS
         return QString();
     }
 
-    // 生成临时文件名：componentId_uuid.suffix
     QString tempName = generateUniqueTempName(componentId, suffix);
     QString tempPath = tempDirectory() + QDir::separator() + tempName;
 
@@ -54,18 +242,14 @@ QString TempFileManager::tempFilePath(const QString& finalPath) const {
         return QString();
     }
 
-    // 将最终路径转换为临时路径
-    // 例如: /output/C12345.kicad_sym -> /output/.tmp/C12345_uuid.kicad_sym
     QString fileName = QFileInfo(finalPath).fileName();
 
-    // 查找对应的临时文件
     for (const QString& tempPath : m_tempFiles) {
         if (tempPath.endsWith(fileName)) {
             return tempPath;
         }
     }
 
-    // 如果没找到匹配的，返回基于最终路径名的临时路径
     return tempDirectory() + QDir::separator() + fileName;
 }
 
@@ -76,7 +260,6 @@ QString TempFileManager::createSymbolTempPath(const QString& libName, const QStr
         return QString();
     }
 
-    // 符号库临时文件：libName.suffix
     QString tempName = libName + suffix;
     const QString tempDir = tempDirectory();
     QString tempPath = tempDir + QDir::separator() + tempName;
@@ -94,7 +277,6 @@ QString TempFileManager::createTempDirectoryPath(const QString& dirName) {
         return QString();
     }
 
-    // 临时目录路径：.tmp/dirName
     QString tempPath = tempDirectory() + QDir::separator() + dirName;
 
     m_tempFiles.insert(tempPath);
@@ -111,7 +293,6 @@ bool TempFileManager::commit(const QString& finalPath) {
         return false;
     }
 
-    // 查找对应的临时文件
     QString tempPath;
     for (const QString& t : m_tempFiles) {
         if (t.endsWith(QFileInfo(finalPath).fileName())) {
@@ -131,59 +312,12 @@ bool TempFileManager::commit(const QString& finalPath) {
         return false;
     }
 
-    // 确保最终目录存在
-    QFileInfo finalInfo(finalPath);
-    QDir finalDir = finalInfo.absoluteDir();
-    if (!finalDir.exists()) {
-        if (!finalDir.mkpath(finalInfo.absolutePath())) {
-            qWarning() << "TempFileManager: Failed to create directory:" << finalInfo.absolutePath();
-            return false;
-        }
-    }
-
-    // 删除已存在的最终文件（如果允许覆盖应该由调用方处理）
-    if (QFile::exists(finalPath)) {
-        if (!QFile::remove(finalPath)) {
-            qWarning() << "TempFileManager: Failed to remove existing file:" << finalPath;
-            return false;
-        }
-    }
-
-    // 重命名临时文件为最终路径（带重试和降级）
-    constexpr int kMaxRetries = 3;
-    bool renameOk = false;
-    for (int attempt = 0; attempt < kMaxRetries; ++attempt) {
-        if (attempt > 0) {
-            // 重试前短暂等待，让文件系统完成挂起操作
-            std::this_thread::sleep_for(std::chrono::milliseconds(50 * attempt));
-            qInfo() << "TempFileManager: Retrying rename (" << attempt + 1 << "/" << kMaxRetries << "):" << tempPath;
-        }
-        renameOk = QFile::rename(tempPath, finalPath);
-        if (renameOk) {
-            break;
-        }
-        qWarning() << "TempFileManager: Rename attempt" << attempt + 1 << "failed:" << tempPath << "to" << finalPath;
-    }
-
-    if (!renameOk) {
-        // rename 失败时降级为复制+删除
-        qWarning() << "TempFileManager: All rename attempts failed, falling back to copy:" << tempPath;
-        if (!QFile::copy(tempPath, finalPath)) {
-            qWarning() << "TempFileManager: Copy fallback also failed:" << tempPath << "to" << finalPath;
-            return false;
-        }
-        if (!QFile::remove(tempPath)) {
-            qWarning() << "TempFileManager: Failed to remove temp file after copy:" << tempPath;
-        }
-    }
-
-    m_tempFiles.remove(tempPath);
-    qDebug() << "TempFileManager: Committed:" << tempPath << "->" << finalPath;
+    const bool committed = commitBatchLocked({CommitItem{tempPath, finalPath, false}});
 
     locker.unlock();
-    emit commitCompleted(finalPath, true);
+    emit commitCompleted(finalPath, committed);
 
-    return true;
+    return committed;
 }
 
 bool TempFileManager::commitDirectory(const QString& finalDirPath) {
@@ -194,7 +328,6 @@ bool TempFileManager::commitDirectory(const QString& finalDirPath) {
         return false;
     }
 
-    // 查找对应的临时目录
     QString tempPath;
     QString dirName = QFileInfo(finalDirPath).fileName();
     for (const QString& t : m_tempFiles) {
@@ -215,35 +348,203 @@ bool TempFileManager::commitDirectory(const QString& finalDirPath) {
         return false;
     }
 
-    // 确保最终目录的父目录存在
-    QFileInfo finalInfo(finalDirPath);
-    QDir parentDir = finalInfo.absoluteDir();
-    if (!parentDir.exists()) {
-        if (!parentDir.mkpath(finalInfo.absolutePath())) {
-            qWarning() << "TempFileManager: Failed to create parent directory:" << finalInfo.absolutePath();
-            return false;
+    const bool committed = commitBatchLocked({CommitItem{tempPath, finalDirPath, true}});
+
+    locker.unlock();
+    emit commitCompleted(finalDirPath, committed);
+
+    return committed;
+}
+
+bool TempFileManager::commitWithBackup(const QString& tempPath, const QString& finalPath) {
+    QMutexLocker locker(&m_mutex);
+    const bool committed = commitBatchLocked({CommitItem{tempPath, finalPath, false}});
+
+    locker.unlock();
+    emit commitCompleted(finalPath, committed);
+
+    return committed;
+}
+
+bool TempFileManager::commitDirectoryWithBackup(const QString& tempDirPath, const QString& finalDirPath) {
+    QMutexLocker locker(&m_mutex);
+    const bool committed = commitBatchLocked({CommitItem{tempDirPath, finalDirPath, true}});
+
+    locker.unlock();
+    emit commitCompleted(finalDirPath, committed);
+
+    return committed;
+}
+
+bool TempFileManager::commitBatch(const QVector<CommitItem>& items) {
+    QMutexLocker locker(&m_mutex);
+    const bool committed = commitBatchLocked(items);
+
+    locker.unlock();
+    for (const CommitItem& item : items) {
+        emit commitCompleted(item.finalPath, committed);
+    }
+
+    return committed;
+}
+
+bool TempFileManager::recoverIncompleteTransactions() {
+    QDir backupRoot(backupRootPath());
+    if (!backupRoot.exists()) {
+        return true;
+    }
+
+    bool recoveredAll = true;
+    QList<QFileInfo> committedTransactionDirs;
+    const QFileInfoList transactionDirs = backupRoot.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Time);
+    for (const QFileInfo& transactionDirInfo : transactionDirs) {
+        const QString manifestPath =
+            QDir(transactionDirInfo.absoluteFilePath()).filePath(QStringLiteral("manifest.json"));
+        if (!QFile::exists(manifestPath)) {
+            continue;
+        }
+
+        bool committed = false;
+        const QVector<BackupEntry> entries = readManifestEntries(manifestPath, &committed);
+        if (committed) {
+            committedTransactionDirs.append(transactionDirInfo);
+            continue;
+        }
+
+        for (const BackupEntry& entry : entries) {
+            if (!entry.tempPath.isEmpty() && pathExists(entry.tempPath, entry.isDirectory)) {
+                if (!removePath(entry.tempPath, entry.isDirectory)) {
+                    qWarning() << "TempFileManager: Failed to remove orphaned temp path during recovery:"
+                               << entry.tempPath;
+                    recoveredAll = false;
+                }
+            }
+
+            if (entry.existedBefore && !pathExists(entry.finalPath, entry.isDirectory) &&
+                pathExists(entry.backupPath, entry.isDirectory)) {
+                if (!movePathWithFallback(entry.backupPath, entry.finalPath, entry.isDirectory)) {
+                    qWarning() << "TempFileManager: Failed to restore backup during recovery:" << entry.backupPath
+                               << "to" << entry.finalPath;
+                    recoveredAll = false;
+                }
+            }
         }
     }
 
-    // 删除已存在的最终目录（如果允许覆盖应该由调用方处理）
-    if (QDir(finalDirPath).exists()) {
-        if (!QDir(finalDirPath).removeRecursively()) {
-            qWarning() << "TempFileManager: Failed to remove existing directory:" << finalDirPath;
-            return false;
+    const QDateTime expirationCutoff = QDateTime::currentDateTimeUtc().addDays(-kDefaultBackupRetentionDays);
+    for (int i = 0; i < committedTransactionDirs.size(); ++i) {
+        const QFileInfo& transactionDirInfo = committedTransactionDirs.at(i);
+        const bool exceedsMaxSets = i >= kDefaultMaxBackupSets;
+        const bool isExpired = transactionDirInfo.lastModified().toUTC() < expirationCutoff;
+        if ((exceedsMaxSets || isExpired) && !QDir(transactionDirInfo.absoluteFilePath()).removeRecursively()) {
+            qWarning() << "TempFileManager: Failed to prune committed backup set:"
+                       << transactionDirInfo.absoluteFilePath();
+            recoveredAll = false;
         }
     }
 
-    // 重命名临时目录为最终路径
-    if (!QDir().rename(tempPath, finalDirPath)) {
-        qWarning() << "TempFileManager: Failed to rename:" << tempPath << "to" << finalDirPath;
+    return recoveredAll;
+}
+
+bool TempFileManager::commitBatchLocked(const QVector<CommitItem>& items) {
+    if (items.isEmpty()) {
+        return true;
+    }
+
+    const QString transactionId = createTransactionId();
+    const QString transactionDirPath = QDir(backupRootPath()).filePath(transactionId);
+    if (!QDir().mkpath(transactionDirPath)) {
+        qWarning() << "TempFileManager: Failed to create backup transaction directory:" << transactionDirPath;
         return false;
     }
 
-    m_tempFiles.remove(tempPath);
-    qDebug() << "TempFileManager: Committed directory:" << tempPath << "->" << finalDirPath;
+    QVector<BackupEntry> entries;
+    entries.reserve(items.size());
+    for (int i = 0; i < items.size(); ++i) {
+        const CommitItem& item = items[i];
+        if (item.tempPath.isEmpty() || item.finalPath.isEmpty()) {
+            qWarning() << "TempFileManager: Cannot commit empty temp/final path";
+            return false;
+        }
+        if (!pathExists(item.tempPath, item.isDirectory)) {
+            qWarning() << "TempFileManager: Temp path does not exist:" << item.tempPath;
+            m_tempFiles.remove(item.tempPath);
+            return false;
+        }
+        if (!ensureParentDirectory(item.finalPath)) {
+            qWarning() << "TempFileManager: Failed to create final parent directory:" << item.finalPath;
+            return false;
+        }
 
-    locker.unlock();
-    emit commitCompleted(finalDirPath, true);
+        const QString backupName =
+            QStringLiteral("%1_%2").arg(i, 4, 10, QLatin1Char('0')).arg(QFileInfo(item.finalPath).fileName());
+        BackupEntry entry;
+        entry.finalPath = item.finalPath;
+        entry.backupPath = QDir(transactionDirPath).filePath(backupName);
+        entry.tempPath = item.tempPath;
+        entry.isDirectory = item.isDirectory;
+        entry.existedBefore = pathExists(item.finalPath, item.isDirectory);
+        entries.append(entry);
+    }
+
+    const QString manifestPath = QDir(transactionDirPath).filePath(QStringLiteral("manifest.json"));
+    if (!writeManifest(manifestPath, transactionId, m_outputPath, entries, false)) {
+        return false;
+    }
+
+    QVector<BackupEntry> backedUpEntries;
+    for (const BackupEntry& entry : entries) {
+        if (!entry.existedBefore) {
+            backedUpEntries.append(entry);
+            continue;
+        }
+
+        if (!movePathWithFallback(entry.finalPath, entry.backupPath, entry.isDirectory)) {
+            qWarning() << "TempFileManager: Failed to back up existing target:" << entry.finalPath << "to"
+                       << entry.backupPath;
+            for (auto it = backedUpEntries.crbegin(); it != backedUpEntries.crend(); ++it) {
+                if (it->existedBefore && pathExists(it->backupPath, it->isDirectory) &&
+                    !pathExists(it->finalPath, it->isDirectory)) {
+                    movePathWithFallback(it->backupPath, it->finalPath, it->isDirectory);
+                }
+            }
+            return false;
+        }
+
+        backedUpEntries.append(entry);
+    }
+
+    QVector<BackupEntry> promotedEntries;
+    for (const BackupEntry& entry : entries) {
+        if (!movePathWithFallback(entry.tempPath, entry.finalPath, entry.isDirectory)) {
+            qWarning() << "TempFileManager: Failed to promote temp path:" << entry.tempPath << "to" << entry.finalPath;
+
+            removePath(entry.finalPath, entry.isDirectory);
+            for (auto it = promotedEntries.crbegin(); it != promotedEntries.crend(); ++it) {
+                removePath(it->finalPath, it->isDirectory);
+            }
+            for (auto it = backedUpEntries.crbegin(); it != backedUpEntries.crend(); ++it) {
+                if (it->existedBefore && pathExists(it->backupPath, it->isDirectory)) {
+                    if (!movePathWithFallback(it->backupPath, it->finalPath, it->isDirectory)) {
+                        qWarning() << "TempFileManager: Failed to restore backup:" << it->backupPath << "to"
+                                   << it->finalPath;
+                    }
+                }
+            }
+            return false;
+        }
+
+        promotedEntries.append(entry);
+    }
+
+    if (!writeManifest(manifestPath, transactionId, m_outputPath, entries, true)) {
+        qWarning() << "TempFileManager: Commit succeeded but manifest could not be finalized:" << manifestPath;
+    }
+
+    for (const BackupEntry& entry : entries) {
+        m_tempFiles.remove(entry.tempPath);
+        qDebug() << "TempFileManager: Committed with backup:" << entry.tempPath << "->" << entry.finalPath;
+    }
 
     return true;
 }
@@ -288,7 +589,6 @@ void TempFileManager::cleanupTempDirectory() {
         }
     }
 
-    // 删除临时目录本身
     if (dir.isEmpty()) {
         QDir().rmdir(tempDir);
     }
@@ -314,7 +614,6 @@ void TempFileManager::cleanupOrphanedTempFiles() {
         }
     }
 
-    // 如果目录为空，删除目录
     if (dir.isEmpty()) {
         QDir().rmdir(tempDir);
     }
@@ -333,8 +632,6 @@ QSet<QString> TempFileManager::registeredTempFiles() const {
 }
 
 QString TempFileManager::generateUniqueTempName(const QString& prefix, const QString& suffix) const {
-    // 生成唯一的临时文件名避免冲突
-    // 格式: prefix_uuid_suffix
     quint64 random = QRandomGenerator::global()->generate64();
     QString uuid = QString::number(random, 16);
     return prefix + QStringLiteral("_") + uuid + suffix;
@@ -360,7 +657,7 @@ bool TempFileManager::deleteFile(const QString& path) const {
 
     QFile file(path);
     if (!file.exists()) {
-        return true;  // 文件不存在视为删除成功
+        return true;
     }
 
     if (file.remove()) {

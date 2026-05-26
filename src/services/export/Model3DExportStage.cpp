@@ -8,8 +8,6 @@
 
 #include <QDebug>
 #include <QDir>
-#include <QFile>
-#include <QFileInfo>
 #include <QPointer>
 
 namespace EasyKiConverter {
@@ -35,7 +33,6 @@ void Model3DExportStage::start(const QStringList& componentIds,
         return;
     }
 
-    // 构建输出目录：outputPath/libName.3dmodels/
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
     QString baseOutputDir = m_options.outputPath;
     if (baseOutputDir.isEmpty()) {
@@ -43,7 +40,6 @@ void Model3DExportStage::start(const QStringList& componentIds,
     }
     QString outputDir = baseOutputDir + QDir::separator() + libName + QStringLiteral(".3dmodels");
 
-    // 确保输出目录存在
     QDir dir;
     if (!dir.mkpath(outputDir)) {
         qCritical() << "Model3DExportStage: Failed to create output directory:" << outputDir;
@@ -52,11 +48,8 @@ void Model3DExportStage::start(const QStringList& componentIds,
         return;
     }
 
-    // 设置临时文件管理器
     m_tempManager.setOutputPath(outputDir);
 
-    // 预创建所有组件的临时文件路径
-    // 只有在需要导出对应类型时才创建临时文件
     const bool needWrl = m_options.needsModel3DWrl();
     const bool needStep = m_options.needsModel3DStep();
 
@@ -83,8 +76,6 @@ void Model3DExportStage::start(const QStringList& componentIds,
         }
 
         TempFilePaths paths;
-        // 最终文件名会在 startWorker() 中根据模型名称动态设置
-        // 只有在用户选择对应格式时才创建临时路径
         if (needWrl) {
             paths.wrlTempPath =
                 m_tempManager.createTempFilePath(componentId + QStringLiteral("_wrl"), QStringLiteral(".wrl"));
@@ -97,7 +88,6 @@ void Model3DExportStage::start(const QStringList& componentIds,
         if ((needWrl && !paths.wrlTempPath.isEmpty()) || (needStep && !paths.stepTempPath.isEmpty())) {
             m_componentPaths[componentId] = paths;
         } else if (needWrl || needStep) {
-            // 用户请求了导出但临时路径创建失败，记录警告
             qWarning() << "Model3DExportStage: Failed to create temp path for component:" << componentId
                        << "needWrl:" << needWrl << "needStep:" << needStep;
         }
@@ -105,37 +95,12 @@ void Model3DExportStage::start(const QStringList& componentIds,
 
     m_isExporting.store(true);
 
-    // 调用基类的初始化方法（在路径准备完毕后再启动 worker，避免竞态）
+    // Paths must be ready before workers read m_componentPaths.
     ExportTypeStage::start(componentIds, cachedData);
 }
 
 void Model3DExportStage::cancel() {
     cancelWithTempRollback(m_tempManager);
-}
-
-bool Model3DExportStage::commitTempFile(const QString& tempPath, const QString& finalPath) {
-    if (tempPath.isEmpty() || finalPath.isEmpty()) {
-        return false;
-    }
-
-    QFileInfo finalInfo(finalPath);
-    if (!finalInfo.absoluteDir().exists() && !QDir().mkpath(finalInfo.absolutePath())) {
-        qWarning() << "Model3DExportStage: Failed to create output dir for:" << finalPath;
-        return false;
-    }
-
-    if (QFile::exists(finalPath) && !QFile::remove(finalPath)) {
-        qWarning() << "Model3DExportStage: Failed to remove existing file:" << finalPath;
-        return false;
-    }
-
-    if (QFile::rename(tempPath, finalPath)) {
-        qDebug() << "Model3DExportStage: Committed temp file:" << finalPath;
-        return true;
-    }
-
-    qWarning() << "Model3DExportStage: Failed to commit temp file:" << tempPath;
-    return false;
 }
 
 QObject* Model3DExportStage::createWorker() {
@@ -154,7 +119,6 @@ void Model3DExportStage::startWorker(QObject* worker,
     exportWorker->setOptions(m_options);
     exportWorker->setData(componentId, data, m_options);
 
-    // 解析模型名称（优先使用3D模型名称，其次封装名称，最后回退到 componentId）
     QString modelName;
     if (data && data->model3DData()) {
         modelName = data->model3DData()->name();
@@ -167,7 +131,6 @@ void Model3DExportStage::startWorker(QObject* worker,
     }
     modelName = PathSecurity::sanitizeFilename(modelName);
 
-    // 使用模型名称设置最终输出路径
     const bool needWrl = m_options.needsModel3DWrl();
     const bool needStep = m_options.needsModel3DStep();
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
@@ -185,7 +148,6 @@ void Model3DExportStage::startWorker(QObject* worker,
         exportWorker->setOutputPaths({paths.wrlTempPath, paths.stepTempPath});
     }
 
-    // 使用QPointer防止stage已销毁时lambda访问悬空指针
     QPointer<Model3DExportStage> stagePtr(this);
     qInfo() << "Model3DExportStage: Connecting worker completed signal for" << componentId;
     connect(
@@ -201,21 +163,19 @@ void Model3DExportStage::startWorker(QObject* worker,
                 return;
             }
 
-            // 如果成功，提交临时文件
             if (success && stagePtr->m_componentPaths.contains(componentId)) {
                 const TempFilePaths paths = stagePtr->m_componentPaths.value(componentId);
                 const bool needWrl = stagePtr->m_options.needsModel3DWrl();
                 const bool needStep = stagePtr->m_options.needsModel3DStep();
 
-                bool wrlCommitted = true;
-                bool stepCommitted = true;
+                QVector<TempFileManager::CommitItem> commitItems;
                 if (needWrl) {
-                    wrlCommitted = stagePtr->commitTempFile(paths.wrlTempPath, paths.wrlFinalPath);
+                    commitItems.append({paths.wrlTempPath, paths.wrlFinalPath, false});
                 }
                 if (needStep) {
-                    stepCommitted = stagePtr->commitTempFile(paths.stepTempPath, paths.stepFinalPath);
+                    commitItems.append({paths.stepTempPath, paths.stepFinalPath, false});
                 }
-                if ((needWrl && !wrlCommitted) || (needStep && !stepCommitted)) {
+                if (!stagePtr->m_tempManager.commitBatch(commitItems)) {
                     success = false;
                 }
             }

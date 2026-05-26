@@ -2,7 +2,12 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSignalSpy>
+#include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTest>
 
@@ -59,6 +64,89 @@ private slots:
         QVERIFY(!QFile::exists(QDir(finalDirPath).filePath(QStringLiteral("old.kicad_mod"))));
         QCOMPARE(readFile(QDir(finalDirPath).filePath(QStringLiteral("new.kicad_mod"))), QByteArrayLiteral("new"));
         QVERIFY(manager.registeredTempFiles().isEmpty());
+    }
+
+    void fileCommitBacksUpExistingTarget() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        TempFileManager manager;
+        manager.setOutputPath(tempDir.path());
+
+        const QString finalPath = QDir(tempDir.path()).filePath(QStringLiteral("FixtureLib.kicad_sym"));
+        QVERIFY(writeFile(finalPath, QByteArrayLiteral("old symbol library")));
+
+        const QString tempPath =
+            manager.createSymbolTempPath(QStringLiteral("FixtureLib"), QStringLiteral(".kicad_sym"));
+        QVERIFY(writeFile(tempPath, QByteArrayLiteral("new symbol library")));
+
+        QVERIFY(manager.commit(finalPath));
+
+        QCOMPARE(readFile(finalPath), QByteArrayLiteral("new symbol library"));
+        const QString backupPath = committedBackupPathFor(finalPath);
+        QVERIFY2(!backupPath.isEmpty(), "Committed manifest should retain the old file backup");
+        QCOMPARE(readFile(backupPath), QByteArrayLiteral("old symbol library"));
+        QDir(QFileInfo(backupPath).absoluteDir().absolutePath()).removeRecursively();
+    }
+
+    void directoryCommitBacksUpExistingTarget() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        TempFileManager manager;
+        manager.setOutputPath(tempDir.path());
+
+        const QString finalDirPath = QDir(tempDir.path()).filePath(QStringLiteral("Fixture.pretty"));
+        QVERIFY(QDir().mkpath(finalDirPath));
+        QVERIFY(writeFile(QDir(finalDirPath).filePath(QStringLiteral("old.kicad_mod")), QByteArrayLiteral("old")));
+
+        const QString tempDirPath = manager.createTempDirectoryPath(QStringLiteral("Fixture.pretty"));
+        QVERIFY(QDir().mkpath(tempDirPath));
+        QVERIFY(writeFile(QDir(tempDirPath).filePath(QStringLiteral("new.kicad_mod")), QByteArrayLiteral("new")));
+
+        QVERIFY(manager.commitDirectory(finalDirPath));
+
+        QCOMPARE(readFile(QDir(finalDirPath).filePath(QStringLiteral("new.kicad_mod"))), QByteArrayLiteral("new"));
+        const QString backupPath = committedBackupPathFor(finalDirPath);
+        QVERIFY2(!backupPath.isEmpty(), "Committed manifest should retain the old directory backup");
+        QCOMPARE(readFile(QDir(backupPath).filePath(QStringLiteral("old.kicad_mod"))), QByteArrayLiteral("old"));
+        QDir(QFileInfo(backupPath).absoluteDir().absolutePath()).removeRecursively();
+    }
+
+    void recoverIncompleteTransactionRestoresMissingFinalFile() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString backupDir = backupRootPath() + QDir::separator() + QStringLiteral("unit_recovery_tx");
+        QDir(backupDir).removeRecursively();
+        QVERIFY(QDir().mkpath(backupDir));
+
+        const QString finalPath = QDir(tempDir.path()).filePath(QStringLiteral("recover.kicad_sym"));
+        const QString backupPath = QDir(backupDir).filePath(QStringLiteral("recover.kicad_sym"));
+        const QString tempPath = QDir(tempDir.path()).filePath(QStringLiteral("recover.tmp"));
+        QVERIFY(writeFile(backupPath, QByteArrayLiteral("old")));
+        QVERIFY(writeFile(tempPath, QByteArrayLiteral("new")));
+
+        QJsonObject entry;
+        entry.insert(QStringLiteral("finalPath"), finalPath);
+        entry.insert(QStringLiteral("backupPath"), backupPath);
+        entry.insert(QStringLiteral("tempPath"), tempPath);
+        entry.insert(QStringLiteral("isDirectory"), false);
+        entry.insert(QStringLiteral("existedBefore"), true);
+
+        QJsonObject manifest;
+        manifest.insert(QStringLiteral("transactionId"), QStringLiteral("unit_recovery_tx"));
+        manifest.insert(QStringLiteral("outputRoot"), tempDir.path());
+        manifest.insert(QStringLiteral("committed"), false);
+        manifest.insert(QStringLiteral("entries"), QJsonArray{entry});
+        QVERIFY(writeFile(QDir(backupDir).filePath(QStringLiteral("manifest.json")),
+                          QJsonDocument(manifest).toJson(QJsonDocument::Indented)));
+
+        QVERIFY(TempFileManager::recoverIncompleteTransactions());
+
+        QCOMPARE(readFile(finalPath), QByteArrayLiteral("old"));
+        QVERIFY(!QFile::exists(tempPath));
+        QDir(backupDir).removeRecursively();
     }
 
     void rollbackAllDeletesRegisteredFilesAndDirectories() {
@@ -144,6 +232,37 @@ private:
             return {};
         }
         return file.readAll();
+    }
+
+    static QString backupRootPath() {
+        QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        if (appDataPath.isEmpty()) {
+            appDataPath = QDir::homePath() + QDir::separator() + QStringLiteral(".easykiconverter");
+        }
+        return QDir(appDataPath).filePath(QStringLiteral("backups"));
+    }
+
+    static QString committedBackupPathFor(const QString& finalPath) {
+        QDir backupRoot(backupRootPath());
+        const QFileInfoList transactionDirs = backupRoot.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Time);
+        for (const QFileInfo& transactionDir : transactionDirs) {
+            QFile manifestFile(QDir(transactionDir.absoluteFilePath()).filePath(QStringLiteral("manifest.json")));
+            if (!manifestFile.open(QIODevice::ReadOnly)) {
+                continue;
+            }
+            const QJsonObject manifest = QJsonDocument::fromJson(manifestFile.readAll()).object();
+            if (!manifest.value(QStringLiteral("committed")).toBool(false)) {
+                continue;
+            }
+            const QJsonArray entries = manifest.value(QStringLiteral("entries")).toArray();
+            for (const QJsonValue& value : entries) {
+                const QJsonObject entry = value.toObject();
+                if (entry.value(QStringLiteral("finalPath")).toString() == finalPath) {
+                    return entry.value(QStringLiteral("backupPath")).toString();
+                }
+            }
+        }
+        return QString();
     }
 };
 
