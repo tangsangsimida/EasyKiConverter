@@ -105,16 +105,32 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
-    <release version="3.1.9" date="2026-05-16">
+    <release version="3.1.9" date="2026-05-26">
       <description>
-        <p>Version 3.1.9 release</p>
-        <p xml:lang="zh_CN">3.1.9 版本发布</p>
+        <p>Security hardening and test coverage improvements.</p>
+        <p xml:lang="zh_CN">安全加固与测试覆盖提升。</p>
+        <p>Improvements:</p>
+        <p xml:lang="zh_CN">改进:</p>
+        <ul>
+          <li>Security hardening: URL whitelist, path traversal protection, response size limits</li>
+          <li xml:lang="zh_CN">安全加固：URL 白名单、路径穿越防护、响应大小限制</li>
+          <li>Improve temporary file manager rename reliability in export pipeline</li>
+          <li xml:lang="zh_CN">增强导出流水线中临时文件管理器的重命名可靠性</li>
+          <li>Expand unit test coverage for export pipeline, 3D models, network layer, and ViewModels</li>
+          <li xml:lang="zh_CN">补充导出流水线、3D 模型、网络层和 ViewModel 的单元测试覆盖</li>
+        </ul>
+        <p>Bug Fixes:</p>
+        <p xml:lang="zh_CN">修复:</p>
+        <ul>
+          <li>Fix Windows build script path issues</li>
+          <li xml:lang="zh_CN">修复 Windows 构建脚本中的路径问题</li>
+        </ul>
       </description>
     </release>
-    <release version="3.1.8" date="2026-05-09">
+    <release version="3.1.8" date="2026-05-16">
       <description>
-        <p>Changes from 3.1.7 to 3.1.8</p>
-        <p xml:lang="zh_CN">从 3.1.7 到 3.1.8 的变更</p>
+        <p>Bug fixes for export cancellation and macOS packaging improvements.</p>
+        <p xml:lang="zh_CN">修复导出取消问题并改进 macOS 打包流程。</p>
         <p>Bug Fixes:</p>
         <p xml:lang="zh_CN">修复:</p>
         <ul>
@@ -131,8 +147,8 @@
     </release>
     <release version="3.1.7" date="2026-05-05">
       <description>
-        <p>Changes from 3.1.6 to 3.1.7</p>
-        <p xml:lang="zh_CN">从 3.1.6 到 3.1.7 的变更</p>
+        <p>3D model alignment fixes, CLI enhancements, and export retry mode.</p>
+        <p xml:lang="zh_CN">3D 模型对齐修复、CLI 增强及导出重试模式。</p>
         <p>New Features:</p>
         <p xml:lang="zh_CN">新功能:</p>
         <ul>
@@ -183,64 +199,8 @@
         </ul>
       </description>
     </release>
-    <release version="3.1.6" date="2026-04-26">
-      <description>
-        <p>Changes from 3.1.5 to 3.1.6</p>
-        <p xml:lang="zh_CN">从 3.1.5 到 3.1.6 的变更</p>
-        <p>New Features:</p>
-        <p xml:lang="zh_CN">新功能:</p>
-        <ul>
-          <li>Add global alpha buffer configuration for transparent window rendering</li>
-          <li xml:lang="zh_CN">添加全局透明通道(alpha buffer)配置以支持透明窗口渲染</li>
-          <li>Optimize Windows platform rendering backend to Direct3D 11</li>
-          <li xml:lang="zh_CN">将 Windows 平台渲染后端优化为 Direct3D 11</li>
-          <li>Implement window background rendering using Canvas instead of MultiEffect</li>
-          <li xml:lang="zh_CN">使用 Canvas 替代 MultiEffect 实现窗口背景渲染</li>
-        </ul>
-      </description>
-    </release>
-    <release version="3.1.5" date="2026-04-24">
-      <description>
-        <p>Changes from 3.1.4 to 3.1.5</p>
-        <p xml:lang="zh_CN">从 3.1.4 到 3.1.5 的变更</p>
-        <p>New Features:</p>
-        <p xml:lang="zh_CN">新功能:</p>
-        <ul>
-          <li>Add unit tests for CadDataLoader and ComponentListViewModel</li>
-          <li xml:lang="zh_CN">添加 CadDataLoader 和 ComponentListViewModel 的单元测试</li>
-          <li>Add support for multiple graphics APIs including OpenVG, Null, and Direct3D12</li>
-          <li xml:lang="zh_CN">增加对多种图形API的支持，包括OpenVG、Null和Direct3D12</li>
-          <li>Prefer Vulkan rendering backend and add rendering API detection</li>
-          <li xml:lang="zh_CN">优先使用Vulkan渲染后端并添加渲染API检测</li>
-          <li>Improve debug data export with atomic writes</li>
-          <li xml:lang="zh_CN">使用原子写入改进调试数据导出功能</li>
-          <li>Add debug data export functionality</li>
-          <li xml:lang="zh_CN">添加debug数据导出功能</li>
-          <li>Support multi-platform Qt path configuration and build options</li>
-          <li xml:lang="zh_CN">支持多平台Qt路径配置和构建选项</li>
-        </ul>
-        <p>Bug Fixes:</p>
-        <p xml:lang="zh_CN">修复:</p>
-        <ul>
-          <li>Add component request cancellation and fix API business layer error handling</li>
-          <li xml:lang="zh_CN">添加元器件请求取消功能并修复API业务层错误处理</li>
-        </ul>
-        <p>Refactoring:</p>
-        <p xml:lang="zh_CN">重构:</p>
-        <ul>
-          <li>Unify QML component styles using AppStyle</li>
-          <li xml:lang="zh_CN">使用AppStyle统一QML组件样式</li>
-        </ul>
-        <p>Chores:</p>
-        <p xml:lang="zh_CN">其他:</p>
-        <ul>
-          <li>Remove Docker environment build workflow</li>
-          <li xml:lang="zh_CN">移除Docker环境构建工作流</li>
-          <li>Update EasyKiConverter documentation</li>
-          <li xml:lang="zh_CN">更新 EasyKiConverter 文档</li>
-        </ul>
-      </description>
-    </release>
+    <release version="3.1.6" date="2026-04-26"/>
+    <release version="3.1.5" date="2026-04-24"/>
     <release version="3.1.4" date="2026-04-20"/>
     <release version="3.1.3" date="2026-04-19"/>
     <release version="3.1.2" date="2026-03-26"/>

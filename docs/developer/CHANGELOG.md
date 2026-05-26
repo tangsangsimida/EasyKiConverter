@@ -4,7 +4,7 @@
 
 各版本详细更新日志请查看：
 
-- [3.1.9] - 开发中 — 见 [changelog/3.1.9.md](changelog/3.1.9.md)
+- [3.1.9] - 2026-05-26 — 见 [changelog/3.1.9.md](changelog/3.1.9.md)
 - [3.1.8] - 2026-05-16 — 见 [changelog/3.1.8.md](changelog/3.1.8.md)
 - [3.1.7] - 2026-05-09 — 见 [changelog/3.1.7.md](changelog/3.1.7.md)
 - [3.1.6] - 2026-04-26 — 见 [changelog/3.1.6.md](changelog/3.1.6.md)
