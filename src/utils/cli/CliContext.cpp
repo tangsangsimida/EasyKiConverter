@@ -47,7 +47,7 @@ ExportOptions CliContext::createExportOptions() const {
     options.exportModel3D = m_parser.export3DModel();
     options.exportModel3DFormat = model3DFormatFromString(m_parser.model3DFormat());
     options.exportPreviewImages = m_parser.exportPreview();
-    options.exportDatasheet = false;
+    options.exportDatasheet = m_parser.exportDatasheet();
 
     // 设置默认值
     options.overwriteExistingFiles = true;

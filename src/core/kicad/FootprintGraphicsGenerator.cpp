@@ -488,13 +488,7 @@ QString FootprintGraphicsGenerator::generateModel3D(const Model3DData& model3D,
     QString finalPath = model3DPath.isEmpty() ? model3D.name() : model3DPath;
 
     double z = pxToMmRounded(model3D.translation().z);
-
-    if (fpType == "smd") {
-        z = -z;
-
-    } else {
-        z = 0.0;
-    }
+    z = -z;
 
     double rotX = (360.0 - model3D.rotation().x);
     // 使用 fmod 替代 while 循环，避免死循环风险
@@ -517,23 +511,21 @@ QString FootprintGraphicsGenerator::generateModel3D(const Model3DData& model3D,
         rotZ += 360.0;
     }
 
-    // translation 在解析阶段已经统一为 EasyEDA 绝对坐标。
-    const double offsetX = model3D.translation().x - bboxX;
-    const double offsetY = model3D.translation().y - bboxY;
-    double finalOffsetX = pxToMmRounded(offsetX);
-    double finalOffsetY = -pxToMmRounded(offsetY);
-    constexpr double MAX_REASONABLE_MODEL_OFFSET_MM = 50.0;
-    if (qAbs(finalOffsetX) > MAX_REASONABLE_MODEL_OFFSET_MM || qAbs(finalOffsetY) > MAX_REASONABLE_MODEL_OFFSET_MM) {
-        finalOffsetX = 0.0;
-        finalOffsetY = 0.0;
-    }
+    // OBJ→WRL 转换已将模型居中到原点，WRL 几何中心 = (0,0)。
+    // STEP 文件保持原始绝对坐标，几何中心通过 stepOffsetMm 记录。
+    // XY: 两者都需要将几何中心对齐到封装原点。
+    // Z: WRL 使用 API translation.z（已居中），STEP 需要额外的 stepOffset.z 补偿坐标差异。
+    double finalOffsetX = 0.0;
+    double finalOffsetY = 0.0;
 
     if (finalPath.endsWith(QStringLiteral(".step"), Qt::CaseInsensitive) ||
         finalPath.endsWith(QStringLiteral(".stp"), Qt::CaseInsensitive)) {
-        finalOffsetX += model3D.stepOffsetMm().x;
-        finalOffsetY += model3D.stepOffsetMm().y;
+        finalOffsetX = model3D.stepOffsetMm().x;
+        finalOffsetY = model3D.stepOffsetMm().y;
         z += model3D.stepOffsetMm().z;
     }
+    // WRL: z 来自 API translation.z（已在 FootprintExportStage 中通过 wrlBaseZOffset 调整），
+    // 无需额外偏移。STEP: z 额外叠加 stepOffset.z 补偿 STEP 与 WRL 的坐标差异。
 
     content += QString("  (model \"%1\"\n").arg(finalPath);
 

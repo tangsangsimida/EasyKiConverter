@@ -69,7 +69,16 @@ CadParseResult CadDataLoader::parseCadPayload(const QString& componentId, const 
     }
     componentData.setFootprintData(footprintData);
 
-    QString modelUuid = footprintData->model3D().uuid();
+    // 优先使用 head.uuid_3d（EasyEDA API 3D 模型端点使用的规范 UUID），
+    // 其次使用 SVGNODE outline3D 的 uuid（可能是不同 UUID）。
+    QString modelUuid;
+    if (resultData.contains("dataStr")) {
+        const QJsonObject dataStr = resultData.value("dataStr").toObject();
+        modelUuid = dataStr.value("head").toObject().value("uuid_3d").toString();
+    }
+    if (modelUuid.isEmpty()) {
+        modelUuid = footprintData->model3D().uuid();
+    }
     if (modelUuid.isEmpty() && resultData.contains("dataStr")) {
         const QJsonObject dataStr = resultData.value("dataStr").toObject();
         const QJsonArray shapes = dataStr.value("shape").toArray();
@@ -92,10 +101,6 @@ CadParseResult CadDataLoader::parseCadPayload(const QString& componentId, const 
                     break;
                 }
             }
-        }
-
-        if (modelUuid.isEmpty()) {
-            modelUuid = dataStr.value("head").toObject().value("uuid_3d").toString();
         }
     }
 

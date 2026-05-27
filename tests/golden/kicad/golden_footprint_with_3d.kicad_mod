@@ -15,12 +15,12 @@
   (pad 1 smd rect (at -1.53 0.00 0.00) (size 1.27 1.77) (layers F.Cu F.Paste F.Mask))
   (pad 2 smd rect (at 1.52 0.00 0.00) (size 1.27 1.77) (layers F.Cu F.Paste F.Mask))
   (model "../GoldenLib.3dmodels/FOOTPRINT_WITH_3D.wrl"
-    (offset (xyz 0.000 0.030 0.000))
+    (offset (xyz 0.000 0.000 0.000))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 0))
   )
   (model "../GoldenLib.3dmodels/FOOTPRINT_WITH_3D.step"
-    (offset (xyz 0.000 0.030 0.000))
+    (offset (xyz 0.000 0.000 0.000))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 0))
   )

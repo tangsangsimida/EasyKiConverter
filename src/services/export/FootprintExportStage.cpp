@@ -140,39 +140,47 @@ bool readModelSourceZMm(const QByteArray& cadJsonRaw, const QString& modelUuid, 
     const QJsonObject packageData =
         cadDoc.object().value(QStringLiteral("packageDetail")).toObject().value(QStringLiteral("dataStr")).toObject();
     const QJsonArray shapes = packageData.value(QStringLiteral("shape")).toArray();
-    for (const QJsonValue& shapeValue : shapes) {
-        const QString shape = shapeValue.toString();
-        if (!shape.startsWith(QStringLiteral("SVGNODE~"))) {
-            continue;
-        }
 
-        const QByteArray svgNodeJson = shape.mid(QStringLiteral("SVGNODE~").size()).toUtf8();
-        QJsonParseError svgParseError;
-        const QJsonDocument svgDoc = QJsonDocument::fromJson(svgNodeJson, &svgParseError);
-        if (svgParseError.error != QJsonParseError::NoError || !svgDoc.isObject()) {
-            continue;
-        }
+    // 第一遍：精确匹配 UUID（attrs.uuid == modelUuid）
+    // 第二遍：匹配第一个 outline3D SVGNODE（UUID 可能是 head.uuid_3d 而非 attrs.uuid）
+    for (int pass = 0; pass < 2; ++pass) {
+        for (const QJsonValue& shapeValue : shapes) {
+            const QString shape = shapeValue.toString();
+            if (!shape.startsWith(QStringLiteral("SVGNODE~"))) {
+                continue;
+            }
 
-        const QJsonObject attrs = svgDoc.object().value(QStringLiteral("attrs")).toObject();
-        if (attrs.value(QStringLiteral("uuid")).toString() != modelUuid) {
-            continue;
-        }
+            const QByteArray svgNodeJson = shape.mid(QStringLiteral("SVGNODE~").size()).toUtf8();
+            QJsonParseError svgParseError;
+            const QJsonDocument svgDoc = QJsonDocument::fromJson(svgNodeJson, &svgParseError);
+            if (svgParseError.error != QJsonParseError::NoError || !svgDoc.isObject()) {
+                continue;
+            }
 
-        bool ok = false;
-        double z = 0.0;
-        const QJsonValue zValue = attrs.value(QStringLiteral("z"));
-        if (zValue.isString()) {
-            z = zValue.toString().toDouble(&ok);
-        } else if (zValue.isDouble()) {
-            z = zValue.toDouble();
-            ok = true;
-        }
-        if (!ok) {
-            return false;
-        }
+            const QJsonObject attrs = svgDoc.object().value(QStringLiteral("attrs")).toObject();
+            if (pass == 0 && attrs.value(QStringLiteral("uuid")).toString() != modelUuid) {
+                continue;
+            }
+            if (pass == 1 && attrs.value(QStringLiteral("c_etype")).toString() != QLatin1String("outline3D")) {
+                continue;
+            }
 
-        *zMm = GeometryUtils::convertToMm(z);
-        return true;
+            bool ok = false;
+            double z = 0.0;
+            const QJsonValue zValue = attrs.value(QStringLiteral("z"));
+            if (zValue.isString()) {
+                z = zValue.toString().toDouble(&ok);
+            } else if (zValue.isDouble()) {
+                z = zValue.toDouble();
+                ok = true;
+            }
+            if (!ok) {
+                return false;
+            }
+
+            *zMm = GeometryUtils::convertToMm(z);
+            return true;
+        }
     }
 
     return false;
@@ -305,6 +313,11 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         FootprintData footprint = *data->footprintData();
         if (m_options.needsModel3DStep()) {
             Model3DData model3D = footprint.model3D();
+            // 优先使用 CadDataLoader 设置的 head.uuid_3d（规范 3D 模型 UUID），
+            // 因为 SVGNODE 的 attrs.uuid 可能是 outline 形状 UUID 而非 3D 模型 UUID。
+            if (data->model3DData() && !data->model3DData()->uuid().isEmpty()) {
+                model3D.setUuid(data->model3DData()->uuid());
+            }
             if (!model3D.uuid().isEmpty()) {
                 QByteArray stepData;
                 if (data->model3DData() && !data->model3DData()->step().isEmpty()) {
@@ -365,6 +378,9 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                     }
                     const double stepMinZ = geometryCenter.z;
 
+                    // STEP 文件使用绝对坐标系，几何中心不一定在原点。
+                    // stepOffset = -geometryCenter 将 STEP 几何中心移到原点，
+                    // 使 KiCad 偏移正确对齐到封装原点。
                     Model3DBase stepOffset;
                     stepOffset.x = -geometryCenter.x;
                     stepOffset.y = -geometryCenter.y;
