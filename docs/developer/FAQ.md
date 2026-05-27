@@ -479,7 +479,7 @@ EasyEDA API -> FootprintData.model3D().name() = "C0603_L1.6-W0.8-H0.8"
 - `src/utils/CommandLineParser.h` - 添加 `m_datasheetOption` 和 `exportDatasheet()` 方法
 - `src/utils/CommandLineParser.cpp` - 添加 `--datasheet` 选项定义、解析和帮助文本
 - `src/utils/cli/CliContext.cpp` - `exportDatasheet` 使用 parser 值
-- `src/core/utils/UrlUtils.cpp` - Datasheet 白名单添加 `item.szlcsc.com`
+- `src/core/utils/UrlUtils.cpp` - Datasheet 白名单添加 `item.szlcsc.com`、`atta.szlcsc.com`、`www.ti.com`、`www.everlighteurope.com`
 
 **状态**：✅ 已修复 (2026-05-27)
 
