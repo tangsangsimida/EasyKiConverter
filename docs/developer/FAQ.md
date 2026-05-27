@@ -459,7 +459,11 @@ EasyEDA API -> FootprintData.model3D().name() = "C0603_L1.6-W0.8-H0.8"
 
 1. **CLI 模式未启用数据手册导出**：`CliContext.cpp` 硬编码 `options.exportDatasheet = false`，且没有 `--datasheet` CLI 选项。用户无法通过命令行启用数据手册导出。
 
-2. **URL 白名单缺少 `item.szlcsc.com`**：LCSC 数据手册 URL 使用 `item.szlcsc.com` 域名（如 `https://item.szlcsc.com/datasheet/xxx.html`），但 `UrlUtils.cpp` 的 `ResourceType::Datasheet` 白名单中没有该域名。NetworkClient 安全检查拒绝请求，报错：`URL host 'item.szlcsc.com' is not allowed for resource type 4`。
+2. **URL 白名单缺少多个域名**：LCSC 数据手册 URL 来自多个域名，但 `UrlUtils.cpp` 的 `ResourceType::Datasheet` 白名单中缺少以下域名，NetworkClient 安全检查拒绝请求：
+   - `item.szlcsc.com` — LCSC 数据手册页面（HTML 格式）
+   - `atta.szlcsc.com` — LCSC 附件服务器（PDF 格式）
+   - `www.ti.com` — Texas Instruments 官网数据手册
+   - `www.everlighteurope.com` — Everlight Europe 官网数据手册
 
 **修复方案**：
 1. 在 `CommandLineParser` 中添加 `--datasheet` CLI 选项（flag 类型，默认 false）
@@ -767,6 +771,8 @@ DelegateModel {
 - [ ] 重试失败组件后，已有封装/符号未丢失
 - [ ] 3D 模型 WRL/STEP 与封装焊盘对齐（XY 偏移、Z 轴高度一致）
 - [ ] 3D 模型 UUID 使用 head.uuid_3d 优先（非 SVGNODE attrs.uuid）
+- [ ] CLI 模式 `--datasheet` 选项可用，数据手册导出成功
+- [ ] 数据手册 URL 白名单覆盖所有实际域名（item.szlcsc.com、atta.szlcsc.com、www.ti.com 等）
 
 ---
 
