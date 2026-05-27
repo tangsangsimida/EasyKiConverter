@@ -443,6 +443,13 @@ target_include_directories(test_network_client PRIVATE
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}
 )
+# test_network_client.cpp 直接 #include <zlib.h> 构造 gzip 测试数据
+if(TARGET ZLIB::ZLIB)
+    target_link_libraries(test_network_client PRIVATE ZLIB::ZLIB)
+elseif(ZLIB_FOUND)
+    target_link_libraries(test_network_client PRIVATE ${ZLIB_LIBRARIES})
+    target_include_directories(test_network_client PRIVATE ${ZLIB_INCLUDE_DIRS})
+endif()
 add_test(NAME test_network_client COMMAND test_network_client)
 
 # CadDataLoader 业务层错误检查测试
