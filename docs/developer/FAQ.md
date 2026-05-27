@@ -353,6 +353,59 @@
 
 ---
 
+### Q: 3D 模型（WRL/STEP）与封装焊盘位置不对齐
+
+**问题描述**：
+导出的 3D 模型在 KiCad 中与封装焊盘存在位置偏移：
+- WRL 和 STEP 的 XY 偏移不一致
+- 部分组件 Z 轴高度不对齐
+- 多个组件共享同一封装但 3D 模型参数不一致时，偏移更明显
+
+**根本原因**：
+WRL 和 STEP 使用不同的坐标系，但旧代码用同一套公式计算偏移：
+
+1. **WRL XY 偏移错误**：WRL 模型经 OBJ→WRL 转换后已居中到原点 (0,0)，但旧代码使用 `modelTranslation - bboxCenter` 计算偏移，而 `modelTranslation` 来自 `normalizeModelOrigin()` 的启发式判断，对部分组件返回错误值。
+
+2. **STEP XY 偏移叠加错误**：旧代码将 WRL 偏移与 `stepOffsetMm` 相加（`finalOffsetX += stepOffset.x`），但 STEP 使用绝对坐标系，应独立计算。
+
+3. **THT Z 轴强制归零**：旧代码对 THT（通孔）封装强制 `z = 0.0`，忽略了模型的实际 Z 偏移。
+
+4. **UUID 解析优先级错误**：`CadDataLoader` 优先使用 SVGNODE 的 `attrs.uuid`（outline 形状 UUID），而非 `head.uuid_3d`（EasyEDA API 3D 模型端点使用的规范 UUID）。两者可能不同。
+
+**修复方案**：
+
+1. **WRL XY = (0, 0)**：WRL 模型已居中，偏移应为零。
+2. **STEP XY = stepOffsetMm**：STEP 使用独立坐标系，偏移来自 `-stepGeometryCenter`。
+3. **统一 Z 轴处理**：移除 THT 强制归零，所有封装统一使用 `-translation.z`。
+4. **UUID 优先级**：`head.uuid_3d` 优先于 SVGNODE `attrs.uuid`。
+5. **两遍 UUID 匹配**：`readModelSourceZMm` 先精确匹配 UUID，再匹配 `outline3D` SVGNODE。
+
+**关键数据**：
+```
+修复前（CONN-SMD_6P）：WRL=(0.000, -0.100), STEP=(-10.800, -1.380)  ← 不一致
+修复后（CONN-SMD_6P）：WRL=(0.000, 0.000),  STEP=(-10.800, -1.280)  ← WRL 正确
+
+修复前（C0603）：WRL_Z=0.160, STEP_Z=0.403  ← 不一致
+修复后（C0603）：WRL_Z=0.400, STEP_Z=0.400  ← 一致
+```
+
+**回归预防**：
+- WRL 和 STEP 必须视为两个独立坐标系，分别计算偏移
+- 修改 `FootprintGraphicsGenerator::generateModel3D()` 时，必须区分 WRL（居中）和 STEP（绝对坐标）
+- 修改 UUID 解析逻辑时，必须验证 `head.uuid_3d` 和 SVGNODE `attrs.uuid` 不一致的情况
+- 修改 `normalizeModelOrigin()` 时，必须验证：绝对坐标（4000,3000）、相对坐标（1.5,-2）、异常值（400,300）三种场景
+
+**相关文件**：
+- `src/core/kicad/FootprintGraphicsGenerator.cpp` - WRL/STEP 偏移计算
+- `src/services/CadDataLoader.cpp` - UUID 优先级
+- `src/services/export/FootprintExportStage.cpp` - STEP 偏移计算、UUID 使用、readModelSourceZMm
+- `src/core/easyeda/EasyedaFootprintImporter.cpp` - normalizeModelOrigin 启发式
+- `tests/golden/kicad/golden_footprint_with_3d.kicad_mod` - 金色测试期望值
+
+**状态**：✅ 已修复 (2026-05-27)
+
+---
+
 ### Q: 导出的 3D 模型文件名与封装内记录的 3D 模型路径不一致
 
 **问题描述**：
@@ -678,6 +731,8 @@ DelegateModel {
 - [ ] 有缓存时导出 3D 模型不发起网络请求（STEP 缓存优先）
 - [ ] 重试失败元器件后，导出的库中同时包含已成功项和重试项
 - [ ] 重试失败组件后，已有封装/符号未丢失
+- [ ] 3D 模型 WRL/STEP 与封装焊盘对齐（XY 偏移、Z 轴高度一致）
+- [ ] 3D 模型 UUID 使用 head.uuid_3d 优先（非 SVGNODE attrs.uuid）
 
 ---
 
