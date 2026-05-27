@@ -230,6 +230,12 @@ public:
     QString model3DFormat() const;
 
     /**
+     * @brief 是否导出数据手册
+     * @return 导出返回 true，否则返回 false
+     */
+    bool exportDatasheet() const;
+
+    /**
      * @brief 是否导出预览图
      * @return 导出返回 true，否则返回 false
      */
@@ -314,6 +320,7 @@ private:
     QCommandLineOption m_footprintOption;
     QCommandLineOption m_3dModelOption;
     QCommandLineOption m_3dModelFormatOption;
+    QCommandLineOption m_datasheetOption;
     QCommandLineOption m_previewOption;
     QCommandLineOption m_progressOption;
     QCommandLineOption m_quietOption;

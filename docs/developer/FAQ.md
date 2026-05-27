@@ -447,6 +447,40 @@ EasyEDA API -> FootprintData.model3D().name() = "C0603_L1.6-W0.8-H0.8"
 
 ---
 
+## 数据手册相关
+
+### Q: CLI 模式下数据手册导出全部失败
+
+**问题描述**：
+使用 CLI 模式 `convert bom --datasheet` 导出数据手册时，所有组件全部失败（Success: 0, Failed: 58）。
+
+**根本原因**：
+两个独立问题共同导致：
+
+1. **CLI 模式未启用数据手册导出**：`CliContext.cpp` 硬编码 `options.exportDatasheet = false`，且没有 `--datasheet` CLI 选项。用户无法通过命令行启用数据手册导出。
+
+2. **URL 白名单缺少 `item.szlcsc.com`**：LCSC 数据手册 URL 使用 `item.szlcsc.com` 域名（如 `https://item.szlcsc.com/datasheet/xxx.html`），但 `UrlUtils.cpp` 的 `ResourceType::Datasheet` 白名单中没有该域名。NetworkClient 安全检查拒绝请求，报错：`URL host 'item.szlcsc.com' is not allowed for resource type 4`。
+
+**修复方案**：
+1. 在 `CommandLineParser` 中添加 `--datasheet` CLI 选项（flag 类型，默认 false）
+2. 在 `CliContext.cpp` 中使用 `m_parser.exportDatasheet()` 替代硬编码的 `false`
+3. 在 `UrlUtils.cpp` 的 `ResourceType::Datasheet` 白名单中添加 `item.szlcsc.com`
+
+**回归预防**：
+- 新增 ResourceType 或修改 URL 白名单时，必须验证实际 API 返回的 URL 域名
+- CLI 新增导出选项时，必须同步更新：`CommandLineParser.h`（声明）、`CommandLineParser.cpp`（定义+帮助文本）、`CliContext.cpp`（传递到 ExportOptions）
+- 数据手册 URL 可能来自多个域名（`item.szlcsc.com`、`file.elecfans.com`、`www.lcsc.com` 等），白名单需覆盖所有实际使用的域名
+
+**相关文件**：
+- `src/utils/CommandLineParser.h` - 添加 `m_datasheetOption` 和 `exportDatasheet()` 方法
+- `src/utils/CommandLineParser.cpp` - 添加 `--datasheet` 选项定义、解析和帮助文本
+- `src/utils/cli/CliContext.cpp` - `exportDatasheet` 使用 parser 值
+- `src/core/utils/UrlUtils.cpp` - Datasheet 白名单添加 `item.szlcsc.com`
+
+**状态**：✅ 已修复 (2026-05-27)
+
+---
+
 ## 网络相关
 
 ### Q: 在弱网络环境下导出失败率很高

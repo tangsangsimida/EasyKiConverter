@@ -43,6 +43,10 @@ QSet<QString> allowedHostsForType(ResourceType type) {
                 QStringLiteral("image.lceda.cn"),
                 QStringLiteral("lcsc.com"),
                 QStringLiteral("www.lcsc.com"),
+                QStringLiteral("item.szlcsc.com"),
+                QStringLiteral("atta.szlcsc.com"),
+                QStringLiteral("www.ti.com"),
+                QStringLiteral("www.everlighteurope.com"),
             };
         case ResourceType::Model3DObj:
         case ResourceType::Model3DStep:

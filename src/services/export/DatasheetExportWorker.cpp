@@ -37,11 +37,11 @@ void DatasheetExportWorker::run() {
         return;
     }
 
-    qDebug() << "DatasheetExportWorker: Exporting" << m_componentId;
-
     // 检查数据手册数据是否可用（URL或数据二选一）
     QString datasheetUrl = m_data->datasheet();
     QByteArray datasheetData = m_data->datasheetData();
+
+    qDebug() << "DatasheetExportWorker: Exporting" << m_componentId;
 
     // 如果内存中没有数据手册数据，尝试从磁盘缓存加载
     if (datasheetData.isEmpty() && !datasheetUrl.isEmpty()) {

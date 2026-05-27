@@ -29,6 +29,7 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
     , m_footprintOption("footprint", "导出封装库 (默认: true)")
     , m_3dModelOption("3d-model", "导出 3D 模型")
     , m_3dModelFormatOption("3d-model-format", "3D 模型格式 (wrl/step/both，默认: wrl)", "format", "wrl")
+    , m_datasheetOption("datasheet", "导出数据手册")
     , m_previewOption("preview", "导出预览图")
     , m_progressOption("progress", "显示进度条")
     , m_quietOption(QStringList() << "q" << "quiet", "安静模式，减少输出")
@@ -80,6 +81,7 @@ void CommandLineParser::setupCliOptions() {
     m_parser.addOption(m_footprintOption);
     m_parser.addOption(m_3dModelOption);
     m_parser.addOption(m_3dModelFormatOption);
+    m_parser.addOption(m_datasheetOption);
     m_parser.addOption(m_previewOption);
     m_parser.addOption(m_progressOption);
     m_parser.addOption(m_quietOption);
@@ -401,6 +403,10 @@ QString CommandLineParser::model3DFormat() const {
     return m_parser.value(m_3dModelFormatOption).toLower();
 }
 
+bool CommandLineParser::exportDatasheet() const {
+    return m_parser.isSet(m_datasheetOption);
+}
+
 bool CommandLineParser::exportPreview() const {
     return m_parser.isSet(m_previewOption);
 }
@@ -443,6 +449,7 @@ QString CommandLineParser::cliHelpText() const {
     stream << "  --3d-model              " << QCoreApplication::translate("CommandLineParser", "导出 3D 模型") << "\n";
     stream << "  --3d-model-format <fmt> "
            << QCoreApplication::translate("CommandLineParser", "3D 模型格式（wrl/step/both，默认: wrl）") << "\n";
+    stream << "  --datasheet             " << QCoreApplication::translate("CommandLineParser", "导出数据手册") << "\n";
     stream << "  --preview               " << QCoreApplication::translate("CommandLineParser", "导出预览图") << "\n";
     stream << "  --cache-dir <path>      " << QCoreApplication::translate("CommandLineParser", "设置磁盘缓存目录")
            << "\n";
