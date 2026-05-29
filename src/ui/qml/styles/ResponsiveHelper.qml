@@ -4,7 +4,6 @@ import QtQuick
 QtObject {
     // 窗口宽度 — 由 MainWindow 通过 Binding 写入，singleton 自身无法感知 Window
     property int windowWidth: 1200
-
     // 断点系统
     enum Breakpoint {
         Compact,

@@ -644,9 +644,9 @@ Card {
                 width: {
                     if (!parent)
                         return implicitWidth;
-                    var avail = parent.width;
-                    // compact: 占满整行；非 compact: 两个选项并排
-                    return ResponsiveHelper.isCompact ? avail : Math.min(implicitWidth, (avail - AppStyle.spacing.xl) / 2);
+                    var avail = Math.max(0, parent.width);
+                    var half = Math.max(0, (avail - AppStyle.spacing.xl) / 2);
+                    return ResponsiveHelper.isCompact ? avail : Math.min(implicitWidth, half);
                 }
                 spacing: AppStyle.spacing.xs
                 RadioButton {
@@ -703,9 +703,9 @@ Card {
                 width: {
                     if (!parent)
                         return implicitWidth;
-                    var avail = parent.width;
-                    // compact: 占满整行；非 compact: 两个选项并排
-                    return ResponsiveHelper.isCompact ? avail : Math.min(implicitWidth, (avail - AppStyle.spacing.xl) / 2);
+                    var avail = Math.max(0, parent.width);
+                    var half = Math.max(0, (avail - AppStyle.spacing.xl) / 2);
+                    return ResponsiveHelper.isCompact ? avail : Math.min(implicitWidth, half);
                 }
                 spacing: AppStyle.spacing.xs
                 RadioButton {
