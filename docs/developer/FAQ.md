@@ -240,6 +240,72 @@
 
 ---
 
+### Q: 取消导出时程序崩溃（SIGSEGV），崩溃栈停在 std::atomic 的 loadRelaxed
+
+**问题描述**：
+导出过程中点击"停止导出"后程序崩溃，GDB 捕获到 SIGSEGV 信号，崩溃栈显示：
+
+```
+#0  QAtomicOps<int>::loadRelaxed (_q_value=Cannot access memory at address 0x7fffff7feff8)
+#1  QBasicAtomicInteger<int>::loadRelaxed
+#2  EasyKiConverter::Logger::shouldLog
+#3  EasyKiConverter::QtLogAdapter::qtMessageHandler
+#7  EasyKiConverter::ExportTypeStage::cancelWithTempRollback (line 182)
+#8  EasyKiConverter::DatasheetExportStage::cancel (line 72)
+#9  EasyKiConverter::ExportTypeStage::cancelWithTempRollback (line 184)
+#10 EasyKiConverter::DatasheetExportStage::cancel (line 72)
+#11 EasyKiConverter::ExportTypeStage::cancelWithTempRollback (line 184)
+...（无限递归）
+```
+
+**根本原因**：
+`ExportTypeStage::cancelWithTempRollback()` 内部调用虚函数 `cancel()`，而 `DatasheetExportStage::cancel()` 和 `PreviewImagesExportStage::cancel()` 覆盖了 `cancel()` 并反向调用 `cancelWithTempRollback()`，形成无限递归，最终栈溢出导致 SIGSEGV。
+
+调用链：
+```
+ExportTypeStage::cancelWithTempRollback()
+  → cancel()  (虚函数调用)
+    → DatasheetExportStage::cancel()  (子类覆盖)
+      → cancelWithTempRollback(m_tempManager)  (再次调用基类方法)
+        → cancel()  (虚函数调用)
+          → ... 无限递归 → 栈溢出 → SIGSEGV
+```
+
+此问题影响 `DatasheetExportStage` 和 `PreviewImagesExportStage`。`SymbolExportStage`、`FootprintExportStage`、`Model3DExportStage` 的 `cancel()` 实现直接处理取消逻辑，不受影响。
+
+**修复方案**：
+将 `DatasheetExportStage::cancel()` 和 `PreviewImagesExportStage::cancel()` 改为直接实现取消逻辑（与 Symbol/Footprint/Model3D 一致），不再调用 `cancelWithTempRollback()`：
+
+```cpp
+void DatasheetExportStage::cancel() {
+    if (!m_isExporting.load()) {
+        return;
+    }
+    qDebug() << "DatasheetExportStage: Cancelling...";
+    m_cancelled.store(true);
+    m_tempManager.rollbackAll();
+    m_isExporting.store(false);
+    qDebug() << "DatasheetExportStage: Cancelled";
+}
+```
+
+同时移除 `ExportTypeStage::cancelWithTempRollback()` 方法，该方法存在设计缺陷（调用虚函数导致递归风险），且已无调用者。
+
+**回归预防**：
+- 基类方法不要调用虚函数后再由子类覆盖该虚函数反向调用基类方法，否则会形成递归
+- 所有 `ExportTypeStage` 子类的 `cancel()` 实现应直接处理取消逻辑：设置 `m_cancelled` → 回滚临时文件 → 清除 `m_isExporting`
+- 修改导出取消逻辑时，必须验证 Datasheet、PreviewImages、Model3D、Symbol、Footprint 五种类型的取消行为
+
+**相关文件**：
+- `src/services/export/DatasheetExportStage.cpp` - 修复 cancel() 实现
+- `src/services/export/PreviewImagesExportStage.cpp` - 修复 cancel() 实现
+- `src/services/export/ExportTypeStage.h` - 移除 cancelWithTempRollback 声明
+- `src/services/export/ExportTypeStage.cpp` - 移除 cancelWithTempRollback 实现
+
+**状态**：✅ 已修复 (2026-05-30)
+
+---
+
 ## 3D 模型相关
 
 ### Q: 3D 模型选择使用循环切换逻辑而非独立 toggle
@@ -779,6 +845,7 @@ DelegateModel {
 - [ ] 3D 模型 UUID 使用 head.uuid_3d 优先（非 SVGNODE attrs.uuid）
 - [ ] CLI 模式 `--datasheet` 选项可用，数据手册导出成功
 - [ ] 数据手册 URL 白名单覆盖所有实际域名（item.szlcsc.com、atta.szlcsc.com、www.ti.com 等）
+- [ ] 取消导出时不崩溃（Datasheet/PreviewImages/Model3D/Symbol/Footprint 五种类型均验证）
 
 ---
 
