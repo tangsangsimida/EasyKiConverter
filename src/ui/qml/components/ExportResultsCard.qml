@@ -216,7 +216,7 @@ Loader {
                 objectName: "exportResultsList"
                 Layout.fillWidth: true
                 Layout.minimumHeight: 200
-                Layout.preferredHeight: visible ? 500 : 0
+                Layout.preferredHeight: visible ? ResponsiveHelper.responsive(300, 400, 500, 560) : 0
                 Layout.topMargin: AppStyle.spacing.md
                 visible: resultsLoader.exportProgressController.resultsList.length > 0
                 clip: true
@@ -226,7 +226,8 @@ Loader {
                 reuseItems: true
                 cellWidth: {
                     var w = width - AppStyle.spacing.md;
-                    var c = Math.max(1, Math.floor(w / 230));
+                    var minCellW = ResponsiveHelper.responsive(180, 220, 230, 250);
+                    var c = Math.max(1, Math.floor(w / minCellW));
                     return w / c;
                 }
                 cellHeight: 80

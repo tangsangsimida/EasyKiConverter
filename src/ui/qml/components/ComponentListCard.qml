@@ -658,7 +658,7 @@ Card {
         GridView {
             id: componentList
             Layout.fillWidth: true
-            Layout.preferredHeight: 300
+            Layout.preferredHeight: ResponsiveHelper.responsive(240, 300, 360, 400)
             Layout.topMargin: AppStyle.spacing.md
             clip: true
             // 启用虚拟化，缓存上下各一屏的项
@@ -667,7 +667,8 @@ Card {
             reuseItems: true
             cellWidth: {
                 var w = width - AppStyle.spacing.md;
-                var c = Math.max(1, Math.floor(w / 230));
+                var minCellW = ResponsiveHelper.responsive(180, 220, 230, 250);
+                var c = Math.max(1, Math.floor(w / minCellW));
                 return w / c;
             }
             cellHeight: 76

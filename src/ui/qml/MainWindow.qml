@@ -54,10 +54,10 @@ Item {
             flickable.contentY = clampScroll(flickable.contentY + flickable.height * deltaPages);
         }
     }
-    // 用于测量文本宽度的 FontMetrics（考虑 DPI 缩放）
+    // 用于测量文本宽度的 FontMetrics（使用逻辑像素，Qt 自动处理 DPI）
     FontMetrics {
         id: textMetrics
-        font.pixelSize: ResponsiveHelper.fontSizes.md * ResponsiveHelper.scaleFactor  // 应用 DPI 缩放因子
+        font.pixelSize: AppStyle.fontSizes.md
         font.family: "Arial"
     }
 
@@ -196,6 +196,12 @@ Item {
         property: "isDarkMode"
         value: themeController ? themeController.isDarkMode : false
     }
+    // 将窗口实际宽度写入 ResponsiveHelper，驱动断点系统
+    Binding {
+        target: ResponsiveHelper
+        property: "windowWidth"
+        value: window.width
+    }
     // 从 FolderDialog URL 中提取本地路径（跨平台处理）
     function urlToLocalPath(url) {
         return QUrl(url).toLocalFile();
@@ -324,12 +330,12 @@ Item {
                 width: scrollView.width
                 implicitHeight: contentLayout.implicitHeight
                 enabled: true  // 确保能传递鼠标事件
-                // 内容区域
+                // 内容区域（自适应边距 + 最大宽度约束）
                 ColumnLayout {
                     id: contentLayout
-                    width: parent.width - AppStyle.spacing.huge * 2
+                    width: Math.min(parent.width - ResponsiveHelper.contentMargin * 2, ResponsiveHelper.contentMaxWidth)
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 30
+                    spacing: ResponsiveHelper.cardSpacing
                     // 头部区域（标题 + 语言选择器 + GitHub + 主题切换 + 分隔线）
                     HeaderSection {
                         Layout.fillWidth: true
@@ -401,7 +407,7 @@ Item {
 
                     // 底部边距
                     Item {
-                        Layout.preferredHeight: 40
+                        Layout.preferredHeight: ResponsiveHelper.contentMargin
                     }
                 }
             }
