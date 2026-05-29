@@ -641,7 +641,13 @@ Card {
             spacing: AppStyle.spacing.xl
             // 追加模式（Flow 子项需要显式宽度约束，否则 elide 不生效）
             ColumnLayout {
-                width: Math.min(implicitWidth, parent ? parent.width : implicitWidth)
+                width: {
+                    if (!parent)
+                        return implicitWidth;
+                    var avail = parent.width;
+                    // compact: 占满整行；非 compact: 两个选项并排
+                    return ResponsiveHelper.isCompact ? avail : Math.min(implicitWidth, (avail - AppStyle.spacing.xl) / 2);
+                }
                 spacing: AppStyle.spacing.xs
                 RadioButton {
                     id: appendModeRadio
@@ -694,7 +700,13 @@ Card {
 
             // 更新模式
             ColumnLayout {
-                width: Math.min(implicitWidth, parent ? parent.width : implicitWidth)
+                width: {
+                    if (!parent)
+                        return implicitWidth;
+                    var avail = parent.width;
+                    // compact: 占满整行；非 compact: 两个选项并排
+                    return ResponsiveHelper.isCompact ? avail : Math.min(implicitWidth, (avail - AppStyle.spacing.xl) / 2);
+                }
                 spacing: AppStyle.spacing.xs
                 RadioButton {
                     id: updateModeRadio
