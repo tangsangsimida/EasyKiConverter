@@ -49,14 +49,23 @@ ColumnLayout {
             ]
             textRole: "text"
             valueRole: "value"
-            // 直接绑定到 LanguageManager.currentLanguage，避免手动设置
-            currentIndex: {
-                var lang = LanguageManager.currentLanguage;
-                if (lang === "zh_CN")
-                    return 0;
-                if (lang === "en")
-                    return 1;
-                return 0; // 默认
+            // 初始化 currentIndex（不绑定，避免弹窗交互破坏绑定导致 displayText 为空）
+            Component.onCompleted: {
+                currentIndex = langToIndex(LanguageManager.currentLanguage);
+            }
+            // 语言变化时同步 currentIndex
+            Connections {
+                target: LanguageManager
+                function onLanguageChanged(language) {
+                    languageComboBox.currentIndex = langToIndex(language);
+                }
+            }
+            function langToIndex(lang) {
+                for (var i = 0; i < model.length; i++) {
+                    if (model[i].value === lang)
+                        return i;
+                }
+                return 0;
             }
 
             onActivated: function (index) {
