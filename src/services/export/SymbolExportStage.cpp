@@ -75,15 +75,20 @@ void SymbolExportStage::cancel() {
 
     qDebug() << "SymbolExportStage: Cancelling...";
 
-    if (!waitForWorkerThread(m_workerThread)) {
-        return;  // 超时，交由析构函数再次等待
-    }
-
+    m_cancelled.store(true);
     m_tempManager.rollbackAll();
     m_isExporting.store(false);
-    m_isRunning.store(false);
 
     qDebug() << "SymbolExportStage: Cancelled";
+}
+
+bool SymbolExportStage::waitForFinished(int timeoutMs) {
+    const bool finished = waitForWorkerThread(m_workerThread, timeoutMs);
+    if (finished) {
+        m_isRunning.store(false);
+        m_isExporting.store(false);
+    }
+    return finished;
 }
 
 void SymbolExportStage::doLibraryExport(const QStringList& componentIds,

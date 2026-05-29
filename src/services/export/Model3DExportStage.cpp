@@ -100,7 +100,27 @@ void Model3DExportStage::start(const QStringList& componentIds,
 }
 
 void Model3DExportStage::cancel() {
-    cancelWithTempRollback(m_tempManager);
+    if (!m_isRunning.load() && !m_isExporting.load()) {
+        return;
+    }
+
+    qDebug() << "Model3DExportStage: cancelling...";
+    m_cancelled.store(true);
+
+    bool hasActiveWorkers = false;
+    {
+        QMutexLocker locker(&m_workerMutex);
+        m_pendingComponents.clear();
+        hasActiveWorkers = !m_activeWorkers.isEmpty();
+        if (!hasActiveWorkers) {
+            m_isRunning.store(false);
+        }
+    }
+
+    m_tempManager.rollbackAll();
+    m_isExporting.store(false);
+
+    qDebug() << "Model3DExportStage: cancelled";
 }
 
 QObject* Model3DExportStage::createWorker() {
@@ -163,7 +183,7 @@ void Model3DExportStage::startWorker(QObject* worker,
                 return;
             }
 
-            if (success && stagePtr->m_componentPaths.contains(componentId)) {
+            if (success && !stagePtr->m_cancelled.load() && stagePtr->m_componentPaths.contains(componentId)) {
                 const TempFilePaths paths = stagePtr->m_componentPaths.value(componentId);
                 const bool needWrl = stagePtr->m_options.needsModel3DWrl();
                 const bool needStep = stagePtr->m_options.needsModel3DStep();

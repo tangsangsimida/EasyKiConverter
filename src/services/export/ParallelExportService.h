@@ -2,9 +2,11 @@
 
 #include "ExportProgress.h"
 
+#include <QList>
 #include <QMap>
 #include <QMutex>
 #include <QObject>
+#include <QPointer>
 #include <QSharedPointer>
 #include <QString>
 #include <QStringList>
@@ -254,11 +256,14 @@ private:
      */
     void cleanupExportStages();
     void discardExportStage(const QString& typeName, ExportTypeStage* stage);
+    void retireExportStage(ExportTypeStage* stage);
+    void cleanupRetiredExportStages();
 
     ExportOptions m_options;  ///< 导出选项
     QStringList m_componentIds;  ///< 待处理的元器件ID列表
     QMap<QString, QSharedPointer<ComponentData>> m_cachedData;  ///< 缓存的元器件数据
     QMap<QString, ExportTypeStage*> m_exportStages;  ///< 各导出类型的Stage实例
+    QList<QPointer<ExportTypeStage>> m_retiredExportStages;  ///< 取消后仍需等待自然结束的旧Stage
     ComponentService* m_componentService{nullptr};  ///< 元器件服务引用（用于获取已验证的数据）
 
     ExportOverallProgress m_progress;  ///< 整体进度

@@ -1,7 +1,6 @@
 #include "ExportTypeStage.h"
 
 #include "IExportWorker.h"
-#include "TempFileManager.h"
 
 #include <QDebug>
 #include <QMutexLocker>
@@ -143,22 +142,9 @@ void ExportTypeStage::cancel() {
 
     bool hasActiveWorkers = false;
 
-    // 取消所有活跃worker（在锁内完成以避免与 completeItemProgress 竞争）
-    // 使用 QPointer 保护 worker 指针，防止在 cancel 过程中 worker 被删除导致悬空指针
     {
         QMutexLocker locker(&m_workerMutex);
-        for (QObject* worker : m_activeWorkers) {
-            QPointer<QObject> workerPtr(worker);  // 使用 QPointer 保护
-            if (!workerPtr) {
-                continue;  // worker 已删除，跳过
-            }
-            if (auto* exportWorker = dynamic_cast<IExportWorker*>(workerPtr.data())) {
-                exportWorker->cancel();
-            }
-        }
-        // 清空待处理队列
         m_pendingComponents.clear();
-
         hasActiveWorkers = !m_activeWorkers.isEmpty();
         if (!hasActiveWorkers) {
             m_isRunning.store(false);
@@ -168,22 +154,23 @@ void ExportTypeStage::cancel() {
     qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
 }
 
-void ExportTypeStage::cancelWithTempRollback(TempFileManager& tempManager) {
-    if (!m_isExporting.load()) {
-        return;
+bool ExportTypeStage::waitForFinished(int timeoutMs) {
+    m_cancelled.store(true);
+    m_threadPool.clear();
+
+    if (!m_threadPool.waitForDone(timeoutMs)) {
+        qWarning() << "ExportTypeStage:" << m_typeName << "thread pool did not finish in" << timeoutMs << "ms";
+        return false;
     }
 
-    qDebug() << "ExportTypeStage:" << m_typeName << "cancelling (with temp rollback)...";
-
-    cancel();
-    tempManager.rollbackAll();
-
+    {
+        QMutexLocker locker(&m_workerMutex);
+        m_pendingComponents.clear();
+        m_activeWorkers.clear();
+    }
+    m_isRunning.store(false);
     m_isExporting.store(false);
-    if (!hasActiveWorkers()) {
-        m_isRunning.store(false);
-    }
-
-    qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
+    return true;
 }
 
 bool ExportTypeStage::waitForWorkerThread(QThread*& thread, int timeoutMs) {

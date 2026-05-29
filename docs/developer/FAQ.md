@@ -143,6 +143,7 @@
 
 - 导出中点关闭，选择“继续导出”后标题栏按钮失效
 - 导出中选择“强制退出”后程序没有完全结束
+- 3D 模型导出过程中点击“停止导出”后段错误，崩溃栈停在 `std::atomic` 的 `store/load`
 
 **根本原因**：
 这是导出会话生命周期管理不完整导致的回归问题：
@@ -150,11 +151,14 @@
 1. 停止导出时，旧导出会话的 stage/worker 仍可能在后台收尾。
 2. 如果新一轮重试马上开始，错误的清理逻辑会提前销毁这些“仍在运行的旧 stage”，导致悬空对象、事件循环卡死或未响应。
 3. 关闭窗口与强制退出流程会复用同一批导出状态；一旦导出会话进入不一致状态，窗口控制也会连带异常。
+4. 3D 模型导出阶段中，活跃 worker 可能已经进入完成/删除流程；取消路径如果继续直接调用该 worker 的 `cancel()`，就可能访问到已释放对象里的 `std::atomic<bool>`。
 
 **修复方案**：
 - 停止导出时，立即结束**当前 UI 会话**，但旧后台任务只做隔离，不允许再回写当前会话。
 - 使用导出会话代数（generation）隔离迟到回调，旧会话的 `itemStatusChanged/progressChanged/completed` 必须被丢弃。
 - `cleanupExportStages()` 不能提前销毁仍在运行中的旧 stage，只能把它们从当前会话映射中移除，等其自然完成后再安全回收。
+- 3D 模型导出取消时只隔离当前 stage、清空待处理队列并回滚临时文件；不要在取消路径直接调用活跃 `Model3DExportWorker::cancel()`。
+- 3D worker 取消后迟到完成时不得提交临时 WRL/STEP 文件。
 - 标题栏关闭按钮不能直接复用 `window.close()` 作为普通关闭入口，必须走统一的 `WindowController` 关闭决策逻辑。
 - 强制退出时必须显式清理网络单例和后台线程，避免窗口已关但进程未退出。
 
@@ -164,6 +168,7 @@
 - 修改 stage 清理逻辑时，必须区分：
   - 当前会话的活动 stage
   - 旧会话仍在后台收尾的 stage
+- 修改 3D 导出取消逻辑时，不要直接访问活跃 worker 对象；把取消视为 stage 会话隔离和临时文件回滚，等待 worker 自然完成。
 - 修改窗口关闭逻辑时，必须同时验证：
   - 停止导出后立即重试
   - 导出中关闭后选择“继续导出”
@@ -173,6 +178,7 @@
 - `src/services/export/ParallelExportService.cpp`
 - `src/services/export/ParallelExportService.h`
 - `src/services/export/ExportTypeStage.cpp`
+- `src/services/export/Model3DExportStage.cpp`
 - `src/ui/qml/components/WindowController.qml`
 - `src/ui/qml/Main.qml`
 - `src/main.cpp`

@@ -260,15 +260,20 @@ void FootprintExportStage::cancel() {
 
     qDebug() << "FootprintExportStage: Cancelling...";
 
-    if (!waitForWorkerThread(m_workerThread)) {
-        return;  // 超时，交由析构函数再次等待
-    }
-
+    m_cancelled.store(true);
     m_tempManager.rollbackAll();
     m_isExporting.store(false);
-    m_isRunning.store(false);
 
     qDebug() << "FootprintExportStage: Cancelled";
+}
+
+bool FootprintExportStage::waitForFinished(int timeoutMs) {
+    const bool finished = waitForWorkerThread(m_workerThread, timeoutMs);
+    if (finished) {
+        m_isRunning.store(false);
+        m_isExporting.store(false);
+    }
+    return finished;
 }
 
 void FootprintExportStage::doLibraryExport(const QStringList& componentIds,

@@ -54,7 +54,15 @@ void PreviewImagesExportStage::start(const QStringList& componentIds,
 }
 
 void PreviewImagesExportStage::cancel() {
-    cancelWithTempRollback(m_tempManager);
+    if (!m_isExporting.load()) {
+        return;
+    }
+
+    qDebug() << "PreviewImagesExportStage: Cancelling...";
+    m_cancelled.store(true);
+    m_tempManager.rollbackAll();
+    m_isExporting.store(false);
+    qDebug() << "PreviewImagesExportStage: Cancelled";
 }
 
 QMap<QString, QString> PreviewImagesExportStage::createTempPathsForComponent(const QString& componentId,
@@ -133,7 +141,7 @@ void PreviewImagesExportStage::startWorker(QObject* worker,
                 return;
             }
 
-            if (success) {
+            if (success && !stagePtr->m_cancelled.load()) {
                 QString outputDir = stagePtr->m_outputDirs.value(componentId);
                 const QMap<QString, QString> tempPaths = stagePtr->m_componentTempPaths.value(componentId);
 

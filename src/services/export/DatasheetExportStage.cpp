@@ -69,7 +69,15 @@ void DatasheetExportStage::start(const QStringList& componentIds,
 }
 
 void DatasheetExportStage::cancel() {
-    cancelWithTempRollback(m_tempManager);
+    if (!m_isExporting.load()) {
+        return;
+    }
+
+    qDebug() << "DatasheetExportStage: Cancelling...";
+    m_cancelled.store(true);
+    m_tempManager.rollbackAll();
+    m_isExporting.store(false);
+    qDebug() << "DatasheetExportStage: Cancelled";
 }
 
 QObject* DatasheetExportStage::createWorker() {
@@ -103,7 +111,7 @@ void DatasheetExportStage::startWorker(QObject* worker,
                 return;
             }
 
-            if (success && stagePtr->m_finalPaths.contains(componentId)) {
+            if (success && !stagePtr->m_cancelled.load() && stagePtr->m_finalPaths.contains(componentId)) {
                 QString tempPath = stagePtr->m_tempPaths.value(componentId);
                 QString finalPath = stagePtr->m_finalPaths.value(componentId);
                 success = stagePtr->m_tempManager.commitWithBackup(tempPath, finalPath);
