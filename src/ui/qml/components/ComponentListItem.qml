@@ -302,8 +302,8 @@ Rectangle {
                 sourceComponent: Popup {
                     id: previewPopup
                     parent: previewBackground
-                    width: 490 // 三张图片 150x3 + 间距
-                    height: 170
+                    width: ResponsiveHelper.responsive(360, 420, 490, 490)
+                    height: ResponsiveHelper.responsive(130, 150, 170, 170)
                     padding: 0
                     // visible 由 Timer 控制，悬停1秒后显示
                     visible: false
@@ -311,28 +311,36 @@ Rectangle {
                     modal: false
                     focus: false
                     dim: false
-                    // 位置计算
+                    // 位置计算（clamp 到窗口可视范围）
                     onVisibleChanged: {
                         if (visible) {
-                            // 获取缩略图在屏幕上的位置
+                            var win = rootItem.Window ? rootItem.Window.window : null;
+                            var winW = win ? win.width : rootItem.width;
+                            var winH = win ? win.height : rootItem.height;
+                            var gap = AppStyle.spacing.lg;
+                            var thumbW = previewBackground.width;
+                            var thumbH = previewBackground.height;
                             var thumbGlobalPos = previewBackground.mapToGlobal(Qt.point(0, 0));
-                            // 获取窗口在屏幕上的位置
-                            var window = rootItem.Window ? rootItem.Window.window : null;
-                            var windowGlobalX = window ? window.x : 0;
-                            var windowWidth = window ? window.width : rootItem.width;
-                            // 计算缩略图相对于窗口的位置
-                            var thumbRelativeX = thumbGlobalPos.x - windowGlobalX;
-                            // 预览图宽度（490）+ 间距（60）= 550
-                            var popupWidth = width + 60;
-                            // 如果右侧空间不足，显示在左侧
-                            if (thumbRelativeX + popupWidth > windowWidth) {
-                                x = -540; // 显示在缩略图左侧
+                            var winGlobalX = win ? win.x : 0;
+                            var winGlobalY = win ? win.y : 0;
+                            var thumbRelX = thumbGlobalPos.x - winGlobalX;
+                            var thumbRelY = thumbGlobalPos.y - winGlobalY;
+                            // 优先右侧，空间不足则左侧
+                            var spaceRight = winW - (thumbRelX + thumbW);
+                            var spaceLeft = thumbRelX;
+                            var targetX;
+                            if (spaceRight >= width + gap) {
+                                targetX = thumbW + gap;
+                            } else if (spaceLeft >= width + gap) {
+                                targetX = -(width + gap);
                             } else {
-                                x = 60; // 显示在缩略图右侧
+                                // 两侧都不够，贴右侧边缘
+                                targetX = winW - thumbRelX - width - AppStyle.spacing.xs;
                             }
-
-                            // 垂直居中显示
-                            y = (previewBackground.height - height) / 2;
+                            x = Math.max(-thumbRelX + AppStyle.spacing.xs, Math.min(targetX, winW - thumbRelX - width - AppStyle.spacing.xs));
+                            // 垂直居中，clamp 到窗口范围
+                            var targetY = (thumbH - height) / 2;
+                            y = Math.max(-thumbRelY + AppStyle.spacing.xs, Math.min(targetY, winH - thumbRelY - height - AppStyle.spacing.xs));
                         }
                     }
 
@@ -372,18 +380,20 @@ Rectangle {
 
                     contentItem: Item {
                         anchors.fill: parent
-                        anchors.margins: 10
+                        anchors.margins: AppStyle.spacing.md
                         visible: itemData && itemData.isValid
                         // 有预览图时显示所有图片（最多3张）
                         Row {
                             anchors.fill: parent
-                            spacing: 10
+                            spacing: AppStyle.spacing.md
                             visible: itemData && itemData.previewImageCount > 0
+                            property int imageCount: itemData ? Math.min(itemData.previewImageCount, 3) : 0
+                            property int imageSize: Math.floor((width - spacing * Math.max(0, imageCount - 1)) / Math.max(1, imageCount))
                             Repeater {
-                                model: itemData ? Math.min(itemData.previewImageCount, 3) : 0
+                                model: imageCount
                                 Rectangle {
-                                    width: 150
-                                    height: 150
+                                    width: parent.imageSize
+                                    height: parent.imageSize
                                     color: AppStyle.colors.background
                                     radius: AppStyle.radius.sm
                                     border.color: AppStyle.colors.border
@@ -392,7 +402,7 @@ Rectangle {
                                     Image {
                                         anchors.fill: parent
                                         anchors.margins: 5
-                                        sourceSize: Qt.size(150, 150)  // 提示按实际显示大小解码
+                                        sourceSize: Qt.size(parent.imageSize, parent.imageSize)
                                         source: {
                                             if (!itemData || !itemData.previewImages) {
                                                 return "";

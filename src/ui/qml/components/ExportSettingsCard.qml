@@ -22,7 +22,7 @@ Card {
 
         GridLayout {
             Layout.fillWidth: true
-            columns: 2
+            columns: ResponsiveHelper.isCompact ? 1 : 2
             columnSpacing: AppStyle.spacing.xl
             rowSpacing: AppStyle.spacing.md
             // 输出路径
@@ -232,7 +232,7 @@ Card {
 
         GridLayout {
             Layout.fillWidth: true
-            columns: 2
+            columns: ResponsiveHelper.isCompact ? 1 : 2
             columnSpacing: AppStyle.spacing.xl
             rowSpacing: AppStyle.spacing.md
             // 符号库描述：写入 sym-lib-table，不是单个符号描述
@@ -389,8 +389,8 @@ Card {
                 }
             }
 
-            // 3D模型选项
-            RowLayout {
+            // 3D模型选项（Flow 允许子项自动换行，避免英文拥挤）
+            Flow {
                 spacing: AppStyle.spacing.sm
                 CheckBox {
                     id: model3dCheckbox
@@ -435,8 +435,8 @@ Card {
                     visible: model3dCheckbox.checked
                     spacing: AppStyle.spacing.xs
                     Rectangle {
-                        Layout.preferredWidth: 46
-                        Layout.preferredHeight: 26
+                        width: 46
+                        height: 26
                         radius: AppStyle.radius.xs
                         property bool wrlActive: exportSettingsCard.exportSettingsController ? (exportSettingsCard.exportSettingsController.exportModel3DFormat & 1) !== 0 : false
                         color: wrlActive ? AppStyle.colors.primary : "transparent"
@@ -466,8 +466,8 @@ Card {
                         }
                     }
                     Rectangle {
-                        Layout.preferredWidth: 50
-                        Layout.preferredHeight: 26
+                        width: 50
+                        height: 26
                         radius: AppStyle.radius.xs
                         property bool stepActive: exportSettingsCard.exportSettingsController ? (exportSettingsCard.exportSettingsController.exportModel3DFormat & 2) !== 0 : false
                         color: stepActive ? AppStyle.colors.primary : "transparent"
@@ -498,13 +498,13 @@ Card {
                     }
                 }
 
-                // 3D模型路径模式按钮组
-                RowLayout {
+                // 3D模型路径模式按钮组（Flow 允许换行）
+                Flow {
                     visible: model3dCheckbox.checked
                     spacing: AppStyle.spacing.xs
                     Rectangle {
-                        Layout.preferredWidth: 72
-                        Layout.preferredHeight: 26
+                        width: Math.max(72, relPathText.implicitWidth + AppStyle.spacing.lg)
+                        height: 26
                         radius: AppStyle.radius.xs
                         property bool relativeActive: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportModel3DPathMode === 0 : true
                         color: relativeActive ? AppStyle.colors.primary : "transparent"
@@ -519,6 +519,7 @@ Card {
                             }
                         }
                         Text {
+                            id: relPathText
                             anchors.centerIn: parent
                             text: qsTranslate("MainWindow", "相对(推荐)")
                             font.pixelSize: AppStyle.fontSizes.xs
@@ -526,8 +527,8 @@ Card {
                         }
                     }
                     Rectangle {
-                        Layout.preferredWidth: 56
-                        Layout.preferredHeight: 26
+                        width: Math.max(56, absPathText.implicitWidth + AppStyle.spacing.lg)
+                        height: 26
                         radius: AppStyle.radius.xs
                         property bool absoluteActive: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportModel3DPathMode === 1 : false
                         color: absoluteActive ? AppStyle.colors.primary : "transparent"
@@ -542,6 +543,7 @@ Card {
                             }
                         }
                         Text {
+                            id: absPathText
                             anchors.centerIn: parent
                             text: qsTranslate("MainWindow", "绝对")
                             font.pixelSize: AppStyle.fontSizes.xs
@@ -636,101 +638,125 @@ Card {
             sectionTitle: qsTranslate("MainWindow", "导出模式")
         }
 
-        RowLayout {
+        Flow {
             Layout.fillWidth: true
             spacing: AppStyle.spacing.xl
-            // 追加模式
-            RadioButton {
-                id: appendModeRadio
-                text: qsTranslate("MainWindow", "追加模式")
-                checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportMode === 0 : true
-                onCheckedChanged: {
-                    if (checked && exportSettingsCard.exportSettingsController) {
-                        exportSettingsCard.exportSettingsController.setExportMode(0);
-                    }
+            // 追加模式（Flow 子项需要显式宽度约束，否则 elide 不生效）
+            ColumnLayout {
+                width: {
+                    if (!parent)
+                        return implicitWidth;
+                    var avail = Math.max(0, parent.width);
+                    var half = Math.max(0, (avail - AppStyle.spacing.xl) / 2);
+                    return ResponsiveHelper.isCompact ? avail : Math.min(implicitWidth, half);
                 }
-                font.pixelSize: AppStyle.fontSizes.sm
-                ToolTip.visible: hovered
-                ToolTip.text: qsTranslate("MainWindow", "保留已经存在的元器件数据，并追加新的元器件")
-                indicator: Rectangle {
-                    implicitWidth: AppStyle.sizes.radioButton
-                    implicitHeight: AppStyle.sizes.radioButton
-                    x: appendModeRadio.leftPadding
-                    y: parent.height / 2 - height / 2
-                    radius: width / 2
-                    color: "transparent"
-                    border.color: appendModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                    border.width: AppStyle.borderWidths.normal
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: AppStyle.sizes.radioButtonIndicator
-                        height: AppStyle.sizes.radioButtonIndicator
+                spacing: AppStyle.spacing.xs
+                RadioButton {
+                    id: appendModeRadio
+                    text: qsTranslate("MainWindow", "追加模式")
+                    checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportMode === 0 : true
+                    onCheckedChanged: {
+                        if (checked && exportSettingsCard.exportSettingsController) {
+                            exportSettingsCard.exportSettingsController.setExportMode(0);
+                        }
+                    }
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTranslate("MainWindow", "保留已经存在的元器件数据，并追加新的元器件")
+                    indicator: Rectangle {
+                        implicitWidth: AppStyle.sizes.radioButton
+                        implicitHeight: AppStyle.sizes.radioButton
+                        x: appendModeRadio.leftPadding
+                        y: parent.height / 2 - height / 2
                         radius: width / 2
-                        color: AppStyle.colors.primary
-                        visible: appendModeRadio.checked
+                        color: "transparent"
+                        border.color: appendModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                        border.width: AppStyle.borderWidths.normal
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: AppStyle.sizes.radioButtonIndicator
+                            height: AppStyle.sizes.radioButtonIndicator
+                            radius: width / 2
+                            color: AppStyle.colors.primary
+                            visible: appendModeRadio.checked
+                        }
+                    }
+                    contentItem: Text {
+                        text: appendModeRadio.text
+                        font: appendModeRadio.font
+                        color: AppStyle.colors.textPrimary
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: appendModeRadio.indicator.width + appendModeRadio.spacing
                     }
                 }
-                contentItem: Text {
-                    text: appendModeRadio.text
-                    font: appendModeRadio.font
-                    color: AppStyle.colors.textPrimary
-                    verticalAlignment: Text.AlignVCenter
-                    leftPadding: appendModeRadio.indicator.width + appendModeRadio.spacing
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTranslate("MainWindow", "保留已经存在的元器件数据，并追加新的元器件")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    color: AppStyle.colors.textSecondary
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
+                    elide: Text.ElideRight
                 }
-            }
-
-            Text {
-                text: qsTranslate("MainWindow", "保留已经存在的元器件数据，并追加新的元器件")
-                font.pixelSize: AppStyle.fontSizes.sm
-                color: AppStyle.colors.textSecondary
-                verticalAlignment: Text.AlignVCenter
             }
 
             // 更新模式
-            RadioButton {
-                id: updateModeRadio
-                text: qsTranslate("MainWindow", "更新模式")
-                checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportMode === 1 : false
-                onCheckedChanged: {
-                    if (checked && exportSettingsCard.exportSettingsController) {
-                        exportSettingsCard.exportSettingsController.setExportMode(1);
-                    }
+            ColumnLayout {
+                width: {
+                    if (!parent)
+                        return implicitWidth;
+                    var avail = Math.max(0, parent.width);
+                    var half = Math.max(0, (avail - AppStyle.spacing.xl) / 2);
+                    return ResponsiveHelper.isCompact ? avail : Math.min(implicitWidth, half);
                 }
-                font.pixelSize: AppStyle.fontSizes.sm
-                ToolTip.visible: hovered
-                ToolTip.text: qsTranslate("MainWindow", "覆盖已经存在的元器件数据，并追加新的元器件")
-                indicator: Rectangle {
-                    implicitWidth: AppStyle.sizes.radioButton
-                    implicitHeight: AppStyle.sizes.radioButton
-                    x: updateModeRadio.leftPadding
-                    y: parent.height / 2 - height / 2
-                    radius: width / 2
-                    color: "transparent"
-                    border.color: updateModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                    border.width: AppStyle.borderWidths.normal
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: AppStyle.sizes.radioButtonIndicator
-                        height: AppStyle.sizes.radioButtonIndicator
+                spacing: AppStyle.spacing.xs
+                RadioButton {
+                    id: updateModeRadio
+                    text: qsTranslate("MainWindow", "更新模式")
+                    checked: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportMode === 1 : false
+                    onCheckedChanged: {
+                        if (checked && exportSettingsCard.exportSettingsController) {
+                            exportSettingsCard.exportSettingsController.setExportMode(1);
+                        }
+                    }
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTranslate("MainWindow", "覆盖已经存在的元器件数据，并追加新的元器件")
+                    indicator: Rectangle {
+                        implicitWidth: AppStyle.sizes.radioButton
+                        implicitHeight: AppStyle.sizes.radioButton
+                        x: updateModeRadio.leftPadding
+                        y: parent.height / 2 - height / 2
                         radius: width / 2
-                        color: AppStyle.colors.primary
-                        visible: updateModeRadio.checked
+                        color: "transparent"
+                        border.color: updateModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                        border.width: AppStyle.borderWidths.normal
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: AppStyle.sizes.radioButtonIndicator
+                            height: AppStyle.sizes.radioButtonIndicator
+                            radius: width / 2
+                            color: AppStyle.colors.primary
+                            visible: updateModeRadio.checked
+                        }
+                    }
+                    contentItem: Text {
+                        text: updateModeRadio.text
+                        font: updateModeRadio.font
+                        color: AppStyle.colors.textPrimary
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: updateModeRadio.indicator.width + updateModeRadio.spacing
                     }
                 }
-                contentItem: Text {
-                    text: updateModeRadio.text
-                    font: updateModeRadio.font
-                    color: AppStyle.colors.textPrimary
-                    verticalAlignment: Text.AlignVCenter
-                    leftPadding: updateModeRadio.indicator.width + updateModeRadio.spacing
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTranslate("MainWindow", "覆盖已经存在的元器件数据，并追加新的元器件")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    color: AppStyle.colors.textSecondary
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
+                    elide: Text.ElideRight
                 }
-            }
-
-            Text {
-                text: qsTranslate("MainWindow", "覆盖已经存在的元器件数据，并追加新的元器件")
-                font.pixelSize: AppStyle.fontSizes.sm
-                color: AppStyle.colors.textSecondary
-                verticalAlignment: Text.AlignVCenter
             }
         }
     }

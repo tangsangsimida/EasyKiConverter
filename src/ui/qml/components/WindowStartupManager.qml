@@ -15,23 +15,33 @@ QtObject {
             maximized: false
         })
     function availableBounds() {
-        if (window && window.screen) {
+        if (window && window.screen && window.screen.availableGeometry) {
             return window.screen.availableGeometry;
         }
 
-        return Qt.rect(0, 0, window.defaultWidth, window.defaultHeight);
+        var w = window ? window.defaultWidth : 900;
+        var h = window ? window.defaultHeight : 680;
+        return Qt.rect(0, 0, w, h);
     }
 
     function resolveStartupGeometry() {
-        const bounds = availableBounds();
-        const savedWidth = windowState.width;
-        const savedHeight = windowState.height;
-        const savedX = windowState.x;
-        const savedY = windowState.y;
-        const startupWidth = savedWidth > 0 ? savedWidth : window.defaultWidth;
-        const startupHeight = savedHeight > 0 ? savedHeight : window.defaultHeight;
-        const startupX = savedX > 0 ? savedX : bounds.x + Math.round((bounds.width - startupWidth) / 2);
-        const startupY = savedY > 0 ? savedY : bounds.y + Math.round((bounds.height - startupHeight) / 2);
+        var bounds = availableBounds();
+        if (!bounds) {
+            return {
+                x: 0,
+                y: 0,
+                width: 900,
+                height: 680
+            };
+        }
+        var savedWidth = windowState.width;
+        var savedHeight = windowState.height;
+        var savedX = windowState.x;
+        var savedY = windowState.y;
+        var startupWidth = savedWidth > 0 ? savedWidth : (window ? window.defaultWidth : 900);
+        var startupHeight = savedHeight > 0 ? savedHeight : (window ? window.defaultHeight : 680);
+        var startupX = savedX > 0 ? savedX : bounds.x + Math.round((bounds.width - startupWidth) / 2);
+        var startupY = savedY > 0 ? savedY : bounds.y + Math.round((bounds.height - startupHeight) / 2);
         return {
             x: startupX,
             y: startupY,
@@ -40,8 +50,15 @@ QtObject {
         };
     }
 
+    property int _retryCount: 0
     function initializeWindow() {
         if (!window || !configService || !persistenceManager) {
+            if (_retryCount < 20) {
+                _retryCount++;
+                Qt.callLater(initializeWindow);
+            } else {
+                console.error("WindowStartupManager: 依赖在 20 次重试后仍未就绪, window=", !!window, "configService=", !!configService, "persistenceManager=", !!persistenceManager);
+            }
             return;
         }
 
