@@ -49,15 +49,25 @@ ColumnLayout {
             ]
             textRole: "text"
             valueRole: "value"
-            // 初始化 currentIndex（不绑定，避免弹窗交互破坏绑定导致 displayText 为空）
+            // 记录上次有效索引，防止弹窗关闭时 currentIndex 被重置为 -1
+            property int lastValidIndex: 0
             Component.onCompleted: {
                 currentIndex = langToIndex(LanguageManager.currentLanguage);
+                lastValidIndex = currentIndex;
+            }
+            // currentIndex 变为 -1（弹窗关闭未选择）时恢复上次有效值
+            onCurrentIndexChanged: {
+                if (currentIndex < 0) {
+                    currentIndex = lastValidIndex;
+                }
             }
             // 语言变化时同步 currentIndex
             Connections {
                 target: LanguageManager
                 function onLanguageChanged(language) {
-                    languageComboBox.currentIndex = langToIndex(language);
+                    var idx = langToIndex(language);
+                    languageComboBox.lastValidIndex = idx;
+                    languageComboBox.currentIndex = idx;
                 }
             }
             function langToIndex(lang) {
@@ -70,6 +80,7 @@ ColumnLayout {
 
             onActivated: function (index) {
                 if (index >= 0 && index < count) {
+                    lastValidIndex = index;
                     var langValue = model[index].value;
                     LanguageManager.setLanguage(langValue);
                 }
