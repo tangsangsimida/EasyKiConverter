@@ -39,6 +39,7 @@ private slots:
         QCOMPARE(commitSpy.at(0).at(1).toBool(), true);
         QCOMPARE(readFile(finalPath), QByteArrayLiteral("symbol library"));
         QVERIFY(!QFile::exists(tempPath));
+        QVERIFY(!QDir(QDir(tempDir.path()).filePath(QStringLiteral(".tmp"))).exists());
         QVERIFY(manager.registeredTempFiles().isEmpty());
     }
 
@@ -61,6 +62,7 @@ private slots:
         QVERIFY(manager.commitDirectory(finalDirPath));
 
         QVERIFY(!QDir(tempDirPath).exists());
+        QVERIFY(!QDir(QDir(tempDir.path()).filePath(QStringLiteral(".tmp"))).exists());
         QVERIFY(!QFile::exists(QDir(finalDirPath).filePath(QStringLiteral("old.kicad_mod"))));
         QCOMPARE(readFile(QDir(finalDirPath).filePath(QStringLiteral("new.kicad_mod"))), QByteArrayLiteral("new"));
         QVERIFY(manager.registeredTempFiles().isEmpty());
@@ -171,6 +173,7 @@ private slots:
         QCOMPARE(cleanupSpy.at(0).at(0).toInt(), 2);
         QVERIFY(!QFile::exists(tempFilePath));
         QVERIFY(!QDir(tempDirPath).exists());
+        QVERIFY(!QDir(QDir(tempDir.path()).filePath(QStringLiteral(".tmp"))).exists());
         QVERIFY(manager.registeredTempFiles().isEmpty());
     }
 
