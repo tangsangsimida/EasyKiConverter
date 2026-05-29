@@ -23,6 +23,21 @@ Rectangle {
     // 缓存搜索正则以优化性能
     property string cachedSearchText: ""
     property var cachedRegex: null
+    function previewImageSource(imageData) {
+        if (!imageData || imageData === "")
+            return "";
+        if (imageData.indexOf("data:image/") === 0)
+            return imageData;
+        if (imageData.indexOf("/9j/") === 0)
+            return "data:image/jpeg;base64," + imageData;
+        if (imageData.indexOf("iVBOR") === 0)
+            return "data:image/png;base64," + imageData;
+        if (imageData.indexOf("R0lG") === 0)
+            return "data:image/gif;base64," + imageData;
+        if (imageData.indexOf("UklGR") === 0)
+            return "data:image/webp;base64," + imageData;
+        return "data:image/png;base64," + imageData;
+    }
     Timer {
         id: regexUpdateTimer
         interval: 100
@@ -188,9 +203,7 @@ Rectangle {
                         if (!itemData.previewImages || itemData.previewImages.length === 0)
                             return "";
                         var imageData = itemData.previewImages[0];
-                        if (!imageData || imageData === "")
-                            return "";
-                        return "data:image/jpeg;base64," + imageData;
+                        return rootItem.previewImageSource(imageData);
                     }
                     fillMode: Image.PreserveAspectFit
                     cache: true
@@ -408,10 +421,7 @@ Rectangle {
                                                 return "";
                                             }
                                             var imageData = itemData.previewImages[index];
-                                            if (!imageData) {
-                                                return "";
-                                            }
-                                            return "data:image/jpeg;base64," + imageData;
+                                            return rootItem.previewImageSource(imageData);
                                         }
                                         fillMode: Image.PreserveAspectFit
                                         cache: true

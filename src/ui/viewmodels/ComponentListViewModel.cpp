@@ -996,8 +996,19 @@ void ComponentListViewModel::batchUpdatePreviewImages() {
                 images.append(img);
             }
 
-            auto callback = [this](const QString& cid, const QStringList& encoded) {
-                onPreviewImageEncodingDone(cid, encoded);
+            QPointer<ComponentListViewModel> self(this);
+            auto callback = [self](const QString& cid, const QStringList& encoded) {
+                if (!self) {
+                    return;
+                }
+                QMetaObject::invokeMethod(
+                    self,
+                    [self, cid, encoded]() {
+                        if (self) {
+                            self->onPreviewImageEncodingDone(cid, encoded);
+                        }
+                    },
+                    Qt::QueuedConnection);
             };
             PreviewImageEncodeRunnable* runnable = new PreviewImageEncodeRunnable(item, images, callback);
 
