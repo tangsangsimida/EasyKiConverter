@@ -32,6 +32,7 @@
 #include <QIcon>
 #include <QImage>
 #include <QPoint>
+#include <QPointer>
 #include <QProcess>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -739,23 +740,26 @@ int main(int argc, char* argv[]) {
                          refreshTaskbarIcon,
                          Qt::QueuedConnection);
 
-        QTimer::singleShot(500, [window]() {
-            if (!window->isVisible()) {
+        QPointer<QQuickWindow> guardedWindow(window);
+        QTimer::singleShot(500, [guardedWindow]() {
+            if (!guardedWindow)
+                return;
+            if (!guardedWindow->isVisible()) {
                 qDebug() << "Startup fallback: window still hidden after 500ms,"
-                         << "visibility=" << window->visibility() << "position=" << window->position()
-                         << "size=" << window->size()
-                         << "screen=" << (window->screen() ? window->screen()->name() : QStringLiteral("null"));
-                window->show();
+                         << "visibility=" << guardedWindow->visibility() << "position=" << guardedWindow->position()
+                         << "size=" << guardedWindow->size() << "screen="
+                         << (guardedWindow->screen() ? guardedWindow->screen()->name() : QStringLiteral("null"));
+                guardedWindow->show();
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-                window->raise();
-                window->requestActivate();
+                guardedWindow->raise();
+                guardedWindow->requestActivate();
 #endif
                 QCoreApplication::processEvents();
             }
 
             // 窗口显示后再次设置任务栏图标
             const bool isDarkModeForIcon = EasyKiConverter::ConfigService::instance()->getDarkMode();
-            applyTaskbarIcon(isDarkModeForIcon, window, "窗口显示后");
+            applyTaskbarIcon(isDarkModeForIcon, guardedWindow.data(), "窗口显示后");
         });
     }
 

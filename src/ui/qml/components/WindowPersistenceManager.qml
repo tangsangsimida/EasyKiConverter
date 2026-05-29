@@ -38,6 +38,9 @@ QtObject {
         }
 
         const bounds = screen.availableGeometry;
+        if (!bounds) {
+            return;
+        }
         if (window.width > bounds.width) {
             window.width = bounds.width;
         }
