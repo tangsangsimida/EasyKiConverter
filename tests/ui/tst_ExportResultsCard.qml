@@ -142,6 +142,12 @@ TestCase {
         return button
     }
 
+    function resultActionButton(componentId, objectName) {
+        var button = findByObjectName(resultItem(componentId), objectName)
+        verify(button !== null, "result action button should be discoverable: " + objectName)
+        return button
+    }
+
     function test_hiddenWhenIdleWithNoResults() {
         compare(resultsCard.active, false)
         compare(resultsCard.visible, false)
@@ -204,6 +210,16 @@ TestCase {
         compare(progressController.lastRetryComponentId, "C200")
 
         failedItem.deleteClicked()
+        compare(progressController.lastRemovedComponentId, "C200")
+    }
+
+    function test_retryAndDeleteButtonsUseTheirVisualHitAreas() {
+        loadResults()
+
+        mouseClick(resultActionButton("C200", "retryResultButton"))
+        compare(progressController.lastRetryComponentId, "C200")
+
+        mouseClick(resultActionButton("C200", "deleteResultButton"))
         compare(progressController.lastRemovedComponentId, "C200")
     }
 }
