@@ -21,10 +21,12 @@ ApplicationWindow {
     title: "EasyKiConverter - 元器件转换工具"
     color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.CustomizeWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint
+    // 将 context property 显式绑定到 ApplicationWindow 属性，避免 WindowController 内同名属性自引用
+    property var _configService: configService
     WindowController {
         id: appWindowController
         window: appWindow
-        configService: configService
+        configService: appWindow._configService
         exportProgressController: exportProgressViewModel
         closeConfirmDialog: closeConfirmDialog
         exitOptionDialog: exitOptionDialog

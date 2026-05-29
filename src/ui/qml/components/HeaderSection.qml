@@ -65,7 +65,7 @@ ColumnLayout {
             Connections {
                 target: LanguageManager
                 function onLanguageChanged(language) {
-                    var idx = langToIndex(language);
+                    var idx = languageComboBox.langToIndex(language);
                     languageComboBox.lastValidIndex = idx;
                     languageComboBox.currentIndex = idx;
                 }

@@ -739,23 +739,18 @@ int main(int argc, char* argv[]) {
                          refreshTaskbarIcon,
                          Qt::QueuedConnection);
 
-        QTimer::singleShot(100, [window]() {
-            qDebug() << "Startup window state:" << "visible=" << window->isVisible()
-                     << "visibility=" << window->visibility() << "position=" << window->position()
-                     << "size=" << window->size()
-                     << "screen=" << (window->screen() ? window->screen()->name() : QStringLiteral("null"));
-
+        QTimer::singleShot(500, [window]() {
             if (!window->isVisible()) {
-                qWarning() << "检测到根窗口仍为隐藏状态，执行 C++ 侧兜底显示";
+                qDebug() << "Startup fallback: window still hidden after 500ms,"
+                         << "visibility=" << window->visibility() << "position=" << window->position()
+                         << "size=" << window->size()
+                         << "screen=" << (window->screen() ? window->screen()->name() : QStringLiteral("null"));
                 window->show();
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
                 window->raise();
                 window->requestActivate();
 #endif
                 QCoreApplication::processEvents();
-                qDebug() << "Fallback display state:" << "visible=" << window->isVisible()
-                         << "visibility=" << window->visibility() << "position=" << window->position()
-                         << "size=" << window->size();
             }
 
             // 窗口显示后再次设置任务栏图标

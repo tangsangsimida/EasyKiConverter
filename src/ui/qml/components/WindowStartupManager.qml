@@ -40,8 +40,15 @@ QtObject {
         };
     }
 
+    property int _retryCount: 0
     function initializeWindow() {
         if (!window || !configService || !persistenceManager) {
+            if (_retryCount < 20) {
+                _retryCount++;
+                Qt.callLater(initializeWindow);
+            } else {
+                console.error("WindowStartupManager: 依赖在 20 次重试后仍未就绪, window=", !!window, "configService=", !!configService, "persistenceManager=", !!persistenceManager);
+            }
             return;
         }
 
