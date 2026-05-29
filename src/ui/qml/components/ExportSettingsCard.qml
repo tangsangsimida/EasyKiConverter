@@ -389,8 +389,8 @@ Card {
                 }
             }
 
-            // 3D模型选项
-            RowLayout {
+            // 3D模型选项（Flow 允许子项自动换行，避免英文拥挤）
+            Flow {
                 spacing: AppStyle.spacing.sm
                 CheckBox {
                     id: model3dCheckbox
@@ -435,8 +435,8 @@ Card {
                     visible: model3dCheckbox.checked
                     spacing: AppStyle.spacing.xs
                     Rectangle {
-                        Layout.preferredWidth: 46
-                        Layout.preferredHeight: 26
+                        width: 46
+                        height: 26
                         radius: AppStyle.radius.xs
                         property bool wrlActive: exportSettingsCard.exportSettingsController ? (exportSettingsCard.exportSettingsController.exportModel3DFormat & 1) !== 0 : false
                         color: wrlActive ? AppStyle.colors.primary : "transparent"
@@ -466,8 +466,8 @@ Card {
                         }
                     }
                     Rectangle {
-                        Layout.preferredWidth: 50
-                        Layout.preferredHeight: 26
+                        width: 50
+                        height: 26
                         radius: AppStyle.radius.xs
                         property bool stepActive: exportSettingsCard.exportSettingsController ? (exportSettingsCard.exportSettingsController.exportModel3DFormat & 2) !== 0 : false
                         color: stepActive ? AppStyle.colors.primary : "transparent"
@@ -498,13 +498,13 @@ Card {
                     }
                 }
 
-                // 3D模型路径模式按钮组
-                RowLayout {
+                // 3D模型路径模式按钮组（Flow 允许换行）
+                Flow {
                     visible: model3dCheckbox.checked
                     spacing: AppStyle.spacing.xs
                     Rectangle {
-                        Layout.preferredWidth: 72
-                        Layout.preferredHeight: 26
+                        width: Math.max(72, relPathText.implicitWidth + AppStyle.spacing.lg)
+                        height: 26
                         radius: AppStyle.radius.xs
                         property bool relativeActive: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportModel3DPathMode === 0 : true
                         color: relativeActive ? AppStyle.colors.primary : "transparent"
@@ -519,6 +519,7 @@ Card {
                             }
                         }
                         Text {
+                            id: relPathText
                             anchors.centerIn: parent
                             text: qsTranslate("MainWindow", "相对(推荐)")
                             font.pixelSize: AppStyle.fontSizes.xs
@@ -526,8 +527,8 @@ Card {
                         }
                     }
                     Rectangle {
-                        Layout.preferredWidth: 56
-                        Layout.preferredHeight: 26
+                        width: Math.max(56, absPathText.implicitWidth + AppStyle.spacing.lg)
+                        height: 26
                         radius: AppStyle.radius.xs
                         property bool absoluteActive: exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.exportModel3DPathMode === 1 : false
                         color: absoluteActive ? AppStyle.colors.primary : "transparent"
@@ -542,6 +543,7 @@ Card {
                             }
                         }
                         Text {
+                            id: absPathText
                             anchors.centerIn: parent
                             text: qsTranslate("MainWindow", "绝对")
                             font.pixelSize: AppStyle.fontSizes.xs
