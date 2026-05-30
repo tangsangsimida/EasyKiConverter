@@ -18,6 +18,10 @@ Item {
     property var exportProgressController: exportProgressViewModel
     property var themeController: themeSettingsViewModel
     property var updateChecker: updateCheckerService
+    // 对话框引用（供 SidebarPanel 等子组件访问）
+    property alias outputFolderDialog: outputFolderDialog
+    property alias cacheFolderDialog: cacheFolderDialog
+    property alias bomFileDialog: bomFileDialog
     // 窗口状态属性
     readonly property bool isMaximized: Window.window ? (Window.window.visibility === Window.Maximized || Window.window.visibility === Window.FullScreen) : false
     readonly property int windowRadius: isMaximized ? 0 : AppStyle.radius.lg
@@ -260,7 +264,8 @@ Item {
                 Layout.fillHeight: true
                 sourceComponent: Component {
                     SidebarPanel {
-                        window: window
+                        onRequestOutputFolderDialog: outputFolderDialog.open()
+                        onRequestCacheFolderDialog: cacheFolderDialog.open()
                     }
                 }
             }

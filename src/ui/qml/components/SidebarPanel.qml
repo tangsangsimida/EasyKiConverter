@@ -3,19 +3,22 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Effects
 import "../styles"
+import EasyKiconverter_Cpp_Version 1.0
 
 Rectangle {
     id: root
-    property var window: null // Reference to root window for dialogs
     color: "transparent"
-    // 安全代理属性（避免 root.window 为 null 时的 TypeError）
-    readonly property var progressController: root.window ? root.window.exportProgressController : null
-    readonly property var settingsController: root.window ? root.window.exportSettingsController : null
-    readonly property var listController: root.window ? root.window.componentListController : null
+    // 直接使用全局 Context Property（无需通过 window 中转）
+    readonly property var progressController: exportProgressViewModel
+    readonly property var settingsController: exportSettingsViewModel
+    readonly property var listController: componentListViewModel
     readonly property bool isExporting: progressController ? progressController.isExporting : false
     readonly property int progressValue: progressController ? progressController.progress : 0
     readonly property int failureCount: progressController ? progressController.failureCount : 0
     readonly property bool hasCompletedExport: progressController ? progressController.hasCompletedExport : false
+    // 信号：请求打开对话框（由 MainWindow 处理）
+    signal requestOutputFolderDialog
+    signal requestCacheFolderDialog
     // 玻璃态模糊背景（独立层，不模糊内容）
     Rectangle {
         id: glassBg
@@ -72,10 +75,8 @@ Rectangle {
                 SidebarSettingsView {
                     Layout.fillWidth: true
                     exportSettingsController: root.settingsController
-                    onOpenOutputFolderDialog: if (root.window)
-                        root.window.outputFolderDialog.open()
-                    onOpenCacheFolderDialog: if (root.window)
-                        root.window.cacheFolderDialog.open()
+                    onOpenOutputFolderDialog: root.requestOutputFolderDialog()
+                    onOpenCacheFolderDialog: root.requestCacheFolderDialog()
                     // 动感：横向进入
                     opacity: root.visible ? 1 : 0
                     x: root.visible ? 0 : -20
@@ -102,12 +103,12 @@ Rectangle {
                             Layout.fillWidth: true
                             StatItem {
                                 label: qsTranslate("MainWindow", "成功")
-                                value: root.progressController.successCount
+                                value: root.progressController ? root.progressController.successCount : 0
                                 color: AppStyle.colors.success
                             }
                             StatItem {
                                 label: qsTranslate("MainWindow", "失败")
-                                value: root.progressController.failureCount
+                                value: root.progressController ? root.progressController.failureCount : 0
                                 color: AppStyle.colors.danger
                             }
                         }
@@ -150,7 +151,7 @@ Rectangle {
                                 Layout.fillWidth: true
                             }
                             Text {
-                                text: root.progressController.progress + "%"
+                                text: root.progressValue + "%"
                                 font.pixelSize: AppStyle.fontSizes.xs
                                 font.bold: true
                                 color: AppStyle.colors.primary
@@ -162,7 +163,7 @@ Rectangle {
                             radius: 3
                             color: AppStyle.colors.border
                             Rectangle {
-                                width: parent.width * (root.progressController.progress / 100)
+                                width: parent.width * (root.progressValue / 100)
                                 height: parent.height
                                 radius: 3
                                 color: AppStyle.colors.primary
@@ -207,6 +208,15 @@ Rectangle {
                             if (!root.settingsController) return false;
                             return root.settingsController.exportSymbol || root.settingsController.exportFootprint || root.settingsController.exportModel3D;
                         }
+                        ToolTip.visible: hovered && !enabled
+                        ToolTip.text: {
+                            if (root.isExporting) return qsTranslate("MainWindow", "正在导出中...");
+                            if (!root.listController || root.listController.componentCount <= 0) return qsTranslate("MainWindow", "请先添加元器件");
+                            if (!root.settingsController) return "";
+                            if (!root.settingsController.exportSymbol && !root.settingsController.exportFootprint && !root.settingsController.exportModel3D) return qsTranslate("MainWindow", "请至少选择一种导出类型");
+                            return "";
+                        }
+                        ToolTip.delay: 600
                     }
 
                     ModernButton {
@@ -215,7 +225,10 @@ Rectangle {
                         Layout.preferredHeight: 44
                         iconName: "close"
                         backgroundColor: AppStyle.colors.danger
-                        onClicked: root.progressController.cancelExport()
+                        onClicked: {
+                            if (root.progressController)
+                                root.progressController.cancelExport();
+                        }
                     }
                 }
 
@@ -225,7 +238,10 @@ Rectangle {
                     visible: root.hasCompletedExport
                     text: qsTranslate("MainWindow", "查看文件夹")
                     backgroundColor: AppStyle.colors.textSecondary
-                    onClicked: root.progressController.openLastExportedFolder()
+                    onClicked: {
+                        if (root.progressController)
+                            root.progressController.openLastExportedFolder();
+                    }
                 }
             }
         }

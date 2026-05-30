@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import "../styles"
 
 ColumnLayout {
+    id: fieldRoot
     property string label: ""
     property string text: ""
     property string placeholder: ""
@@ -13,7 +14,7 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 2
     Text {
-        text: label
+        text: fieldRoot.label
         font.pixelSize: AppStyle.fontSizes.xs
         color: AppStyle.colors.textSecondary
     }
@@ -23,11 +24,15 @@ ColumnLayout {
         TextField {
             id: tf
             Layout.fillWidth: true
-            text: parent.parent.text
-            placeholderText: parent.parent.placeholder
+            text: fieldRoot.text
+            placeholderText: fieldRoot.placeholder
             font.pixelSize: AppStyle.fontSizes.sm
             color: AppStyle.colors.textPrimary
-            onTextChanged: parent.parent.textEdited(text)
+            onTextChanged: {
+                if (tf.activeFocus) {
+                    fieldRoot.textEdited(text);
+                }
+            }
             background: Rectangle {
                 color: AppStyle.colors.surface
                 border.color: tf.focus ? AppStyle.colors.primary : AppStyle.colors.border
@@ -35,12 +40,12 @@ ColumnLayout {
             }
         }
         ModernButton {
-            visible: browseIcon !== ""
-            iconName: browseIcon
+            visible: fieldRoot.browseIcon !== ""
+            iconName: fieldRoot.browseIcon
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             backgroundColor: AppStyle.colors.border
-            onClicked: parent.parent.browseClicked()
+            onClicked: fieldRoot.browseClicked()
         }
     }
 }

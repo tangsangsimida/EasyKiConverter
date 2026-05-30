@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import "../styles"
 
 ColumnLayout {
+    id: segRoot
     property string label: ""
     property var model: []
     property int currentIndex: 0
@@ -10,8 +11,8 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 2
     Text {
-        visible: label !== ""
-        text: label
+        visible: segRoot.label !== ""
+        text: segRoot.label
         font.pixelSize: AppStyle.fontSizes.xs
         color: AppStyle.colors.textSecondary
     }
@@ -23,25 +24,27 @@ ColumnLayout {
         opacity: 0.5
         radius: AppStyle.radius.sm
         Row {
+            id: segRow
             anchors.fill: parent
             anchors.margins: 2
             Repeater {
-                model: parent.parent.model
+                id: segRepeater
+                model: segRoot.model
                 Rectangle {
-                    width: parent.width / parent.parent.model.length
-                    height: parent.height
+                    width: segRow.width / segRepeater.model.length
+                    height: segRow.height
                     radius: AppStyle.radius.xs - 1
-                    color: index === parent.parent.parent.currentIndex ? AppStyle.colors.surface : "transparent"
+                    color: index === segRoot.currentIndex ? AppStyle.colors.surface : "transparent"
                     Text {
                         anchors.centerIn: parent
                         text: modelData
                         font.pixelSize: AppStyle.fontSizes.xs
-                        color: index === parent.parent.parent.parent.currentIndex ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                        color: index === segRoot.currentIndex ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                     }
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: parent.parent.parent.parent.indexChanged(index)
+                        onClicked: segRoot.indexChanged(index)
                     }
                 }
             }
