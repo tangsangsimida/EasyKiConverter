@@ -276,7 +276,7 @@ Card {
             opacity: 1
             Timer {
                 id: popupHideTimer
-                interval: 100
+                interval: AppStyle.interactions.popupHideDelay
                 repeat: false
                 onTriggered: {
                     if (popupHoverHandler.hovered)
@@ -959,10 +959,9 @@ Card {
     }
 
     function avoidCursorOverlap(x, y, width, height, boundaryWidth, boundaryHeight, cursorX, cursorY) {
-        var safetyGap = 15;
+        var safetyGap = AppStyle.interactions.safeCursorGap;
         if (!cursorOverPopup(x, y, width, height, cursorX, cursorY, safetyGap))
             return Qt.point(x, y);
-
         var candidates = [Qt.point(cursorX + safetyGap, y), Qt.point(cursorX - width - safetyGap, y), Qt.point(x, cursorY + safetyGap), Qt.point(x, cursorY - height - safetyGap)];
         var bestPoint = Qt.point(x, y);
         var bestDistance = Number.MAX_VALUE;

@@ -201,7 +201,7 @@ ColumnLayout {
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             z: 100
             property bool hoverScaleActive: false
-            property int hoverScaleDelay: 180
+            property int hoverScaleDelay: AppStyle.interactions.hoverIntentDelay
             onContainsMouseChanged: {
                 if (containsMouse) {
                     githubHoverScaleTimer.restart();
@@ -297,7 +297,7 @@ ColumnLayout {
             acceptedButtons: Qt.LeftButton
             z: 100
             property bool hoverScaleActive: false
-            property int hoverScaleDelay: 180
+            property int hoverScaleDelay: AppStyle.interactions.hoverIntentDelay
             onContainsMouseChanged: {
                 if (containsMouse) {
                     themeSwitchHoverScaleTimer.restart();

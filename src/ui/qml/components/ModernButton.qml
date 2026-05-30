@@ -11,7 +11,7 @@ Button {
     property color pressedColor: AppStyle.colors.primaryPressed
     property color disabledColor: AppStyle.colors.textDisabled
     property color textColor: "#ffffff"
-    property int hoverScaleDelay: 180
+    property int hoverScaleDelay: AppStyle.interactions.hoverIntentDelay
     property bool delayedHoverActive: false
     property real visualScale: root.pressed ? 0.95 : (root.delayedHoverActive ? 1.02 : 1.0)
     font.pixelSize: AppStyle.fontSizes.md

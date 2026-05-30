@@ -12,7 +12,7 @@ Rectangle {
     // 折叠功能属性
     property bool collapsible: true
     property bool isCollapsed: false
-    property int hoverScaleDelay: 180
+    property int hoverScaleDelay: AppStyle.interactions.hoverIntentDelay
     implicitHeight: contentColumn.implicitHeight + 48
     // 根据主题模式动态计算颜色
     color: {

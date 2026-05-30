@@ -177,10 +177,10 @@ Rectangle {
             Layout.preferredWidth: 48
             Layout.preferredHeight: 48
             Layout.alignment: Qt.AlignVCenter
-            // 悬停延迟（300ms 防抖）
+            // 悬停意图延迟，避免鼠标扫过时触发重型预览浮层。
             Timer {
                 id: hoverDelayTimer
-                interval: 300
+                interval: AppStyle.interactions.previewIntentDelay
                 repeat: false
                 onTriggered: {
                     if (previewMouseArea.containsMouse && itemData && itemData.previewImageCount > 0) {
@@ -197,7 +197,7 @@ Rectangle {
             }
             Timer {
                 id: hideDelayTimer
-                interval: 100
+                interval: AppStyle.interactions.popupHideDelay
                 repeat: false
                 onTriggered: {
                     if (previewMouseArea.containsMouse)
