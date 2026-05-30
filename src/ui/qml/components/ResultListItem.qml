@@ -192,7 +192,7 @@ Rectangle {
                     Rectangle {
                         width: 14
                         height: 14
-                        radius: width / 2  // 声明式圆角
+                        radius: width / 2
                         visible: exportSymbol
                         color: item.badgeColor(symbolStatus)
                         Text {
@@ -202,19 +202,18 @@ Rectangle {
                             color: AppStyle.colors.textOnPrimary
                             font.bold: true
                         }
-                        ToolTip.visible: symMa.containsMouse
                         ToolTip.text: qsTr("符号: %1").arg(item.statusText(symbolStatus, symbolSuccess))
-                        MouseArea {
-                            id: symMa
-                            anchors.fill: parent
-                            hoverEnabled: true
+                        ToolTip.delay: 400
+                        HoverHandler {
+                            id: symHH
                         }
+                        ToolTip.visible: symHH.hovered
                     }
 
                     Rectangle {
                         width: 14
                         height: 14
-                        radius: width / 2  // 声明式圆角
+                        radius: width / 2
                         visible: exportFootprint
                         color: item.badgeColor(footprintStatus)
                         Text {
@@ -224,19 +223,18 @@ Rectangle {
                             color: AppStyle.colors.textOnPrimary
                             font.bold: true
                         }
-                        ToolTip.visible: ftMa.containsMouse
                         ToolTip.text: qsTr("封装: %1").arg(item.statusText(footprintStatus, footprintSuccess))
-                        MouseArea {
-                            id: ftMa
-                            anchors.fill: parent
-                            hoverEnabled: true
+                        ToolTip.delay: 400
+                        HoverHandler {
+                            id: ftHH
                         }
+                        ToolTip.visible: ftHH.hovered
                     }
 
                     Rectangle {
                         width: 14
                         height: 14
-                        radius: width / 2  // 声明式圆角
+                        radius: width / 2
                         visible: exportModel3D
                         color: item.badgeColor(model3DStatus)
                         Text {
@@ -246,19 +244,18 @@ Rectangle {
                             color: AppStyle.colors.textOnPrimary
                             font.bold: true
                         }
-                        ToolTip.visible: m3Ma.containsMouse
                         ToolTip.text: qsTr("3D模型: %1").arg(item.statusText(model3DStatus, model3DSuccess))
-                        MouseArea {
-                            id: m3Ma
-                            anchors.fill: parent
-                            hoverEnabled: true
+                        ToolTip.delay: 400
+                        HoverHandler {
+                            id: m3HH
                         }
+                        ToolTip.visible: m3HH.hovered
                     }
 
                     Rectangle {
                         width: 14
                         height: 14
-                        radius: width / 2  // 声明式圆角
+                        radius: width / 2
                         visible: exportPreviewImages
                         color: item.badgeColor(previewStatus)
                         Text {
@@ -268,19 +265,18 @@ Rectangle {
                             color: AppStyle.colors.textOnPrimary
                             font.bold: true
                         }
-                        ToolTip.visible: prevMa.containsMouse
                         ToolTip.text: qsTr("预览图: %1").arg(item.statusText(previewStatus, previewSuccess))
-                        MouseArea {
-                            id: prevMa
-                            anchors.fill: parent
-                            hoverEnabled: true
+                        ToolTip.delay: 400
+                        HoverHandler {
+                            id: prevHH
                         }
+                        ToolTip.visible: prevHH.hovered
                     }
 
                     Rectangle {
                         width: 14
                         height: 14
-                        radius: width / 2  // 声明式圆角
+                        radius: width / 2
                         visible: exportDatasheet
                         color: item.badgeColor(datasheetStatus)
                         Text {
@@ -290,13 +286,12 @@ Rectangle {
                             color: AppStyle.colors.textOnPrimary
                             font.bold: true
                         }
-                        ToolTip.visible: datasheetMa.containsMouse
                         ToolTip.text: qsTr("手册: %1").arg(item.statusText(datasheetStatus, datasheetSuccess))
-                        MouseArea {
-                            id: datasheetMa
-                            anchors.fill: parent
-                            hoverEnabled: true
+                        ToolTip.delay: 400
+                        HoverHandler {
+                            id: datasheetHH
                         }
+                        ToolTip.visible: datasheetHH.hovered
                     }
                 }
             }
@@ -330,9 +325,12 @@ Rectangle {
                 font.bold: true
                 color: AppStyle.colors.warning
             }
-            ToolTip.visible: retryButtonMouseArea.containsMouse
             ToolTip.text: qsTr("重试")
             ToolTip.delay: 500
+            HoverHandler {
+                id: retryHH
+            }
+            ToolTip.visible: retryHH.hovered
             MouseArea {
                 id: retryButtonMouseArea
                 anchors.fill: parent
@@ -362,9 +360,12 @@ Rectangle {
                 font.bold: true
                 color: AppStyle.colors.danger
             }
-            ToolTip.visible: deleteButtonMouseArea.containsMouse
             ToolTip.text: qsTr("删除")
             ToolTip.delay: 500
+            HoverHandler {
+                id: deleteHH
+            }
+            ToolTip.visible: deleteHH.hovered
             MouseArea {
                 id: deleteButtonMouseArea
                 anchors.fill: parent

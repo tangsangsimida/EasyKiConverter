@@ -11,24 +11,53 @@ Button {
     property color pressedColor: AppStyle.colors.primaryPressed
     property color disabledColor: AppStyle.colors.textDisabled
     property color textColor: "#ffffff"
+    property int hoverScaleDelay: 180
+    property bool delayedHoverActive: false
+    property real visualScale: root.pressed ? 0.95 : (root.delayedHoverActive ? 1.02 : 1.0)
     font.pixelSize: AppStyle.fontSizes.md
     font.bold: true
     implicitHeight: 44
     implicitWidth: contentItem.implicitWidth + AppStyle.spacing.xl * 2
-    scale: root.pressed ? 0.95 : (root.hovered ? 1.02 : 1.0)
-    Behavior on scale {
+    onHoveredChanged: {
+        if (hovered && enabled) {
+            hoverScaleDelayTimer.restart();
+        } else {
+            hoverScaleDelayTimer.stop();
+            delayedHoverActive = false;
+        }
+    }
+    onEnabledChanged: {
+        if (!enabled) {
+            hoverScaleDelayTimer.stop();
+            delayedHoverActive = false;
+        }
+    }
+    Timer {
+        id: hoverScaleDelayTimer
+        interval: root.hoverScaleDelay
+        repeat: false
+        onTriggered: {
+            root.delayedHoverActive = root.hovered && root.enabled;
+        }
+    }
+    Behavior on visualScale {
         NumberAnimation {
             duration: AppStyle.durations.fast
             easing.type: AppStyle.easings.easeOut
         }
     }
-    background: Rectangle {
-        color: !root.enabled ? disabledColor : root.pressed ? pressedColor : root.hovered ? hoverColor : backgroundColor
-        radius: AppStyle.radius.md
-        Behavior on color {
-            ColorAnimation {
-                duration: AppStyle.durations.fast
-                easing.type: AppStyle.easings.easeOut
+    background: Item {
+        Rectangle {
+            anchors.fill: parent
+            transformOrigin: Item.Center
+            scale: root.visualScale
+            color: !root.enabled ? disabledColor : root.pressed ? pressedColor : root.hovered ? hoverColor : backgroundColor
+            radius: AppStyle.radius.md
+            Behavior on color {
+                ColorAnimation {
+                    duration: AppStyle.durations.fast
+                    easing.type: AppStyle.easings.easeOut
+                }
             }
         }
     }
@@ -36,6 +65,8 @@ Button {
         // 关键：透传隐式尺寸，确保 Button 能正确计算大小，防止界面凌乱
         implicitWidth: contentRow.implicitWidth
         implicitHeight: contentRow.implicitHeight
+        transformOrigin: Item.Center
+        scale: root.visualScale
         Row {
             id: contentRow
             anchors.centerIn: parent

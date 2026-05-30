@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import QtQml.Models
 import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 
@@ -242,6 +243,297 @@ Card {
                     to: 0.996
                     duration: 1250
                     easing.type: Easing.InCubic
+                }
+            }
+        },
+        // === 全局单例预览弹窗 ===
+        Popup {
+            id: _previewPopup
+            parent: componentListCard.Window.window ? componentListCard.Window.window.contentItem : componentListCard
+            property var imageSources: []
+            property var currentItemData: null
+            property int mainIndex: 0
+            property real popupScale: 1
+            property real scaleOriginX: 0
+            property real scaleOriginY: 0
+            readonly property bool hasImages: imageSources.length > 0
+            readonly property int panelPadding: AppStyle.spacing.md
+            readonly property int headerHeight: 34
+            readonly property int mainImageSize: Math.min(Math.max(180, parent ? parent.width * 0.22 : 220), 260)
+            readonly property int thumbSize: 42
+            readonly property int thumbGap: AppStyle.spacing.xs
+            readonly property int stripHeight: imageSources.length > 1 ? thumbSize : 0
+            readonly property int galleryWidth: Math.max(mainImageSize, imageSources.length * thumbSize + Math.max(0, imageSources.length - 1) * thumbGap) + panelPadding * 2
+            readonly property int galleryHeight: hasImages ? headerHeight + mainImageSize + stripHeight + panelPadding * 2 + (stripHeight > 0 ? AppStyle.spacing.sm : 0) : 184
+            width: galleryWidth
+            height: galleryHeight
+            padding: 0
+            visible: false
+            closePolicy: Popup.NoAutoClose
+            modal: false
+            focus: false
+            dim: false
+            opacity: 1
+            Timer {
+                id: popupHideTimer
+                interval: 100
+                repeat: false
+                onTriggered: {
+                    if (popupHoverHandler.hovered)
+                        return;
+                    _previewPopup.close();
+                }
+            }
+
+            onVisibleChanged: {
+                if (visible) {
+                    mainIndex = 0;
+                }
+            }
+
+            enter: Transition {
+                ParallelAnimation {
+                    NumberAnimation {
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        duration: AppStyle.durations.fast
+                        easing.type: AppStyle.easings.easeOut
+                    }
+                    NumberAnimation {
+                        property: "popupScale"
+                        from: 0.38
+                        to: 1
+                        duration: AppStyle.durations.normal
+                        easing.type: AppStyle.easings.easeOut
+                    }
+                }
+            }
+
+            exit: Transition {
+                ParallelAnimation {
+                    NumberAnimation {
+                        property: "opacity"
+                        from: 1
+                        to: 0
+                        duration: AppStyle.durations.fast
+                        easing.type: AppStyle.easings.easeIn
+                    }
+                    NumberAnimation {
+                        property: "popupScale"
+                        from: 1
+                        to: 0.92
+                        duration: AppStyle.durations.fast
+                        easing.type: AppStyle.easings.easeIn
+                    }
+                }
+            }
+
+            background: Rectangle {
+                color: "transparent"
+            }
+
+            contentItem: Item {
+                implicitWidth: _previewPopup.width
+                implicitHeight: _previewPopup.height
+                visible: _previewPopup.currentItemData && _previewPopup.currentItemData.isValid
+                transform: Scale {
+                    origin.x: _previewPopup.scaleOriginX
+                    origin.y: _previewPopup.scaleOriginY
+                    xScale: _previewPopup.popupScale
+                    yScale: _previewPopup.popupScale
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: AppStyle.isDarkMode ? Qt.rgba(15 / 255, 23 / 255, 42 / 255, 0.9) : Qt.rgba(1, 1, 1, 0.92)
+                    border.width: AppStyle.borderWidths.thin
+                    border.color: AppStyle.isDarkMode ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(15 / 255, 23 / 255, 42 / 255, 0.08)
+                    radius: AppStyle.radius.lg
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowBlur: 0.82
+                        shadowColor: AppStyle.isDarkMode ? "#cc000000" : "#2a0f172a"
+                        shadowVerticalOffset: 10
+                        shadowHorizontalOffset: 0
+                    }
+                }
+
+                HoverHandler {
+                    id: popupHoverHandler
+                    onHoveredChanged: {
+                        if (hovered) {
+                            popupHideTimer.stop();
+                        } else {
+                            popupHideTimer.restart();
+                        }
+                    }
+                }
+
+                Column {
+                    id: galleryColumn
+                    anchors.fill: parent
+                    anchors.margins: _previewPopup.panelPadding
+                    spacing: _previewPopup.stripHeight > 0 ? AppStyle.spacing.sm : 0
+                    visible: _previewPopup.hasImages
+                    Rectangle {
+                        width: parent.width
+                        height: _previewPopup.headerHeight
+                        color: "transparent"
+                        Text {
+                            anchors.left: parent.left
+                            anchors.right: imageCounter.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.rightMargin: AppStyle.spacing.md
+                            text: _previewPopup.currentItemData ? _previewPopup.currentItemData.componentId : ""
+                            color: AppStyle.colors.textPrimary
+                            font.pixelSize: AppStyle.fontSizes.sm
+                            font.family: "Courier New"
+                            font.bold: true
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            id: imageCounter
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: _previewPopup.imageSources.length > 1 ? (_previewPopup.mainIndex + 1) + "/" + _previewPopup.imageSources.length : ""
+                            color: AppStyle.colors.textSecondary
+                            font.pixelSize: AppStyle.fontSizes.xs
+                        }
+                    }
+
+                    Rectangle {
+                        id: mainImageSurface
+                        width: parent.width
+                        height: _previewPopup.mainImageSize
+                        color: AppStyle.isDarkMode ? Qt.rgba(1, 1, 1, 0.035) : Qt.rgba(15 / 255, 23 / 255, 42 / 255, 0.025)
+                        radius: AppStyle.radius.md
+                        clip: true
+                        border.width: AppStyle.borderWidths.thin
+                        border.color: AppStyle.isDarkMode ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(15 / 255, 23 / 255, 42 / 255, 0.06)
+                        Canvas {
+                            anchors.fill: parent
+                            opacity: AppStyle.isDarkMode ? 0.28 : 0.42
+                            onPaint: {
+                                var ctx = getContext("2d");
+                                ctx.clearRect(0, 0, width, height);
+                                ctx.strokeStyle = AppStyle.isDarkMode ? "rgba(148, 163, 184, 0.24)" : "rgba(100, 116, 139, 0.24)";
+                                ctx.lineWidth = 1;
+                                var step = 16;
+                                for (var xPos = 0; xPos <= width; xPos += step) {
+                                    ctx.beginPath();
+                                    ctx.moveTo(xPos + 0.5, 0);
+                                    ctx.lineTo(xPos + 0.5, height);
+                                    ctx.stroke();
+                                }
+                                for (var yPos = 0; yPos <= height; yPos += step) {
+                                    ctx.beginPath();
+                                    ctx.moveTo(0, yPos + 0.5);
+                                    ctx.lineTo(width, yPos + 0.5);
+                                    ctx.stroke();
+                                }
+                            }
+                        }
+
+                        Image {
+                            anchors.fill: parent
+                            anchors.margins: AppStyle.spacing.sm
+                            sourceSize: Qt.size(_previewPopup.mainImageSize * 1.5, _previewPopup.mainImageSize * 1.5)
+                            source: _previewPopup.imageSources.length > 0 ? _previewPopup.imageSources[Math.min(_previewPopup.mainIndex, _previewPopup.imageSources.length - 1)] : ""
+                            fillMode: Image.PreserveAspectFit
+                            cache: true
+                            asynchronous: true
+                            smooth: true
+                            mipmap: true
+                        }
+                    }
+
+                    Row {
+                        id: thumbnailStrip
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        height: _previewPopup.stripHeight
+                        spacing: _previewPopup.thumbGap
+                        visible: _previewPopup.imageSources.length > 1
+                        Repeater {
+                            model: _previewPopup.imageSources.length
+                            Rectangle {
+                                width: _previewPopup.thumbSize
+                                height: _previewPopup.thumbSize
+                                color: index === _previewPopup.mainIndex ? (AppStyle.isDarkMode ? Qt.rgba(59 / 255, 130 / 255, 246 / 255, 0.18) : Qt.rgba(59 / 255, 130 / 255, 246 / 255, 0.1)) : "transparent"
+                                radius: AppStyle.radius.xs
+                                border.width: AppStyle.borderWidths.thin
+                                border.color: index === _previewPopup.mainIndex ? AppStyle.colors.primary : (AppStyle.isDarkMode ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(15 / 255, 23 / 255, 42 / 255, 0.08))
+                                clip: true
+                                Image {
+                                    anchors.fill: parent
+                                    anchors.margins: 3
+                                    sourceSize: Qt.size(_previewPopup.thumbSize, _previewPopup.thumbSize)
+                                    source: _previewPopup.imageSources[index]
+                                    fillMode: Image.PreserveAspectFit
+                                    cache: true
+                                    asynchronous: true
+                                    smooth: true
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onEntered: _previewPopup.mainIndex = index
+                                    onClicked: _previewPopup.mainIndex = index
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Item {
+                    anchors.fill: parent
+                    visible: !_previewPopup.currentItemData || _previewPopup.imageSources.length === 0
+                    Item {
+                        id: emptyChipShape
+                        anchors.centerIn: parent
+                        anchors.verticalCenterOffset: -AppStyle.spacing.lg
+                        width: 74
+                        height: 54
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: 38
+                            height: 30
+                            radius: AppStyle.radius.xs
+                            color: "transparent"
+                            border.width: AppStyle.borderWidths.thin
+                            border.color: AppStyle.colors.textDisabled
+                        }
+                        Repeater {
+                            model: 4
+                            Rectangle {
+                                x: 8
+                                y: 15 + index * 7
+                                width: 10
+                                height: 1
+                                color: AppStyle.colors.textDisabled
+                            }
+                        }
+                        Repeater {
+                            model: 4
+                            Rectangle {
+                                x: 56
+                                y: 15 + index * 7
+                                width: 10
+                                height: 1
+                                color: AppStyle.colors.textDisabled
+                            }
+                        }
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: emptyChipShape.bottom
+                        anchors.topMargin: AppStyle.spacing.sm
+                        text: "无预览图"
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        color: AppStyle.colors.textSecondary
+                    }
                 }
             }
         }
@@ -652,6 +944,81 @@ Card {
             }
         }
     }
+    // === 全局单例预览弹窗 ===
+    property alias previewPopup: _previewPopup
+    function clampPopupCoordinate(value, size, boundary) {
+        var margin = AppStyle.spacing.xs;
+        var maxValue = Math.max(margin, boundary - size - margin);
+        return Math.max(margin, Math.min(value, maxValue));
+    }
+
+    function cursorOverPopup(x, y, width, height, cursorX, cursorY, safetyGap) {
+        if (cursorX === undefined || cursorY === undefined || isNaN(cursorX) || isNaN(cursorY))
+            return false;
+        return cursorX >= x - safetyGap && cursorX <= x + width + safetyGap && cursorY >= y - safetyGap && cursorY <= y + height + safetyGap;
+    }
+
+    function avoidCursorOverlap(x, y, width, height, boundaryWidth, boundaryHeight, cursorX, cursorY) {
+        var safetyGap = 15;
+        if (!cursorOverPopup(x, y, width, height, cursorX, cursorY, safetyGap))
+            return Qt.point(x, y);
+
+        var candidates = [Qt.point(cursorX + safetyGap, y), Qt.point(cursorX - width - safetyGap, y), Qt.point(x, cursorY + safetyGap), Qt.point(x, cursorY - height - safetyGap)];
+        var bestPoint = Qt.point(x, y);
+        var bestDistance = Number.MAX_VALUE;
+        for (var i = 0; i < candidates.length; ++i) {
+            var candidateX = clampPopupCoordinate(candidates[i].x, width, boundaryWidth);
+            var candidateY = clampPopupCoordinate(candidates[i].y, height, boundaryHeight);
+            if (cursorOverPopup(candidateX, candidateY, width, height, cursorX, cursorY, safetyGap))
+                continue;
+            var distance = Math.abs(candidateX - x) + Math.abs(candidateY - y);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestPoint = Qt.point(candidateX, candidateY);
+            }
+        }
+        return bestPoint;
+    }
+
+    // 弹窗显示/隐藏辅助函数（供 delegate 调用）
+    function showPreviewPopup(imageSources, itemData, thumbX, thumbY, thumbW, thumbH, cursorX, cursorY) {
+        popupHideTimer.stop();
+        _previewPopup.imageSources = imageSources || [];
+        _previewPopup.currentItemData = itemData;
+        // 计算位置
+        var popupParent = _previewPopup.parent || componentListCard;
+        var winW = popupParent.width;
+        var winH = popupParent.height;
+        var gap = AppStyle.spacing.lg + 8; // 额外偏移避开鼠标
+        var popupW = _previewPopup.width;
+        var popupH = _previewPopup.height;
+        var spaceRight = winW - (thumbX + thumbW);
+        var spaceLeft = thumbX;
+        var targetX;
+        if (spaceRight >= popupW + gap) {
+            targetX = thumbX + thumbW + gap;
+        } else if (spaceLeft >= popupW + gap) {
+            targetX = thumbX - popupW - gap;
+        } else {
+            targetX = (winW - popupW) / 2;
+        }
+        targetX = clampPopupCoordinate(targetX, popupW, winW);
+        var targetY = thumbY + (thumbH - popupH) / 2;
+        targetY = clampPopupCoordinate(targetY, popupH, winH);
+        var adjustedPos = avoidCursorOverlap(targetX, targetY, popupW, popupH, winW, winH, cursorX, cursorY);
+        _previewPopup.x = adjustedPos.x;
+        _previewPopup.y = adjustedPos.y;
+        var thumbCenterX = thumbX + thumbW / 2;
+        var thumbCenterY = thumbY + thumbH / 2;
+        _previewPopup.scaleOriginX = Math.max(0, Math.min(popupW, thumbCenterX - _previewPopup.x));
+        _previewPopup.scaleOriginY = Math.max(0, Math.min(popupH, thumbCenterY - _previewPopup.y));
+        _previewPopup.open();
+    }
+
+    function hidePreviewPopup() {
+        popupHideTimer.restart();
+    }
+
     ColumnLayout {
         width: parent.width
         // 元件列表视图（自适应网格）

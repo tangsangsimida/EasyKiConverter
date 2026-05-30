@@ -12,6 +12,7 @@ Rectangle {
     // 折叠功能属性
     property bool collapsible: true
     property bool isCollapsed: false
+    property int hoverScaleDelay: 180
     implicitHeight: contentColumn.implicitHeight + 48
     // 根据主题模式动态计算颜色
     color: {
@@ -93,7 +94,22 @@ Rectangle {
         hoverEnabled: true
         acceptedButtons: Qt.NoButton // 只处理 hover，不拦截点击
         onContainsMouseChanged: {
-            card.state = containsMouse ? "hovered" : "normal";
+            if (containsMouse) {
+                hoverScaleDelayTimer.restart();
+            } else {
+                hoverScaleDelayTimer.stop();
+                card.state = "normal";
+            }
+        }
+    }
+
+    Timer {
+        id: hoverScaleDelayTimer
+        interval: card.hoverScaleDelay
+        repeat: false
+        onTriggered: {
+            if (cardMouseArea.containsMouse)
+                card.state = "hovered";
         }
     }
 

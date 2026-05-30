@@ -200,6 +200,22 @@ ColumnLayout {
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             z: 100
+            property bool hoverScaleActive: false
+            property int hoverScaleDelay: 180
+            onContainsMouseChanged: {
+                if (containsMouse) {
+                    githubHoverScaleTimer.restart();
+                } else {
+                    githubHoverScaleTimer.stop();
+                    hoverScaleActive = false;
+                }
+            }
+            Timer {
+                id: githubHoverScaleTimer
+                interval: githubButton.hoverScaleDelay
+                repeat: false
+                onTriggered: githubButton.hoverScaleActive = githubButton.containsMouse
+            }
             Rectangle {
                 anchors.fill: parent
                 radius: AppStyle.radius.md
@@ -218,8 +234,8 @@ ColumnLayout {
                 height: parent.height + 10
                 radius: AppStyle.radius.lg
                 color: AppStyle.isDarkMode ? "#ffffff" : "#000000"
-                opacity: githubButton.containsMouse ? 0.15 : 0.0
-                scale: githubButton.containsMouse ? 1.3 : 0.8
+                opacity: githubButton.hoverScaleActive ? 0.15 : 0.0
+                scale: githubButton.hoverScaleActive ? 1.3 : 0.8
                 Behavior on opacity {
                     NumberAnimation {
                         duration: AppStyle.durations.fast
@@ -239,9 +255,9 @@ ColumnLayout {
                 height: 22
                 source: AppStyle.isDarkMode ? "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark-white.svg" : "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/github-mark.svg"
                 fillMode: Image.PreserveAspectFit
-                opacity: githubButton.pressed ? 0.7 : (githubButton.containsMouse ? 1.0 : 0.8)
-                scale: githubButton.containsMouse ? 1.2 : 1.0
-                rotation: githubButton.containsMouse ? 8 : 0
+                opacity: githubButton.pressed ? 0.7 : (githubButton.hoverScaleActive ? 1.0 : 0.8)
+                scale: githubButton.hoverScaleActive ? 1.2 : 1.0
+                rotation: githubButton.hoverScaleActive ? 8 : 0
                 Behavior on opacity {
                     NumberAnimation {
                         duration: AppStyle.durations.fast
@@ -280,6 +296,22 @@ ColumnLayout {
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton
             z: 100
+            property bool hoverScaleActive: false
+            property int hoverScaleDelay: 180
+            onContainsMouseChanged: {
+                if (containsMouse) {
+                    themeSwitchHoverScaleTimer.restart();
+                } else {
+                    themeSwitchHoverScaleTimer.stop();
+                    hoverScaleActive = false;
+                }
+            }
+            Timer {
+                id: themeSwitchHoverScaleTimer
+                interval: themeSwitchButton.hoverScaleDelay
+                repeat: false
+                onTriggered: themeSwitchButton.hoverScaleActive = themeSwitchButton.containsMouse
+            }
             Rectangle {
                 id: themeSwitchBackground
                 anchors.fill: parent
@@ -299,8 +331,8 @@ ColumnLayout {
                 height: parent.height + 10
                 radius: AppStyle.radius.lg
                 color: AppStyle.isDarkMode ? "#fbbf24" : "#3b82f6"
-                opacity: themeSwitchButton.containsMouse ? 0.2 : 0.0
-                scale: themeSwitchButton.containsMouse ? 1.3 : 0.8
+                opacity: themeSwitchButton.hoverScaleActive ? 0.2 : 0.0
+                scale: themeSwitchButton.hoverScaleActive ? 1.3 : 0.8
                 Behavior on opacity {
                     NumberAnimation {
                         duration: AppStyle.durations.fast
@@ -321,9 +353,9 @@ ColumnLayout {
                 height: 22
                 source: AppStyle.isDarkMode ? "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/Grey_light_bulb.svg" : "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/Blue_light_bulb.svg"
                 fillMode: Image.PreserveAspectFit
-                opacity: themeSwitchButton.pressed ? 0.7 : (themeSwitchButton.containsMouse ? 1.0 : 0.85)
-                scale: themeSwitchButton.containsMouse ? 1.2 : 1.0
-                rotation: themeSwitchButton.containsMouse ? -12 : 0
+                opacity: themeSwitchButton.pressed ? 0.7 : (themeSwitchButton.hoverScaleActive ? 1.0 : 0.85)
+                scale: themeSwitchButton.hoverScaleActive ? 1.2 : 1.0
+                rotation: themeSwitchButton.hoverScaleActive ? -12 : 0
                 Behavior on opacity {
                     NumberAnimation {
                         duration: AppStyle.durations.fast

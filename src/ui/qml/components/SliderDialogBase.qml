@@ -35,6 +35,7 @@ FocusScope {
     // ===== 共用常量 =====
     readonly property int buttonHeight: 48
     readonly property real sliderOpacity: 0.25
+    readonly property int hoverScaleDelay: 180
     // ===== 子类可使用的属性 =====
     property Item activeButton: null  // 当前悬停的按钮
     property Item selectedButton: null  // 当前键盘选中的按钮（用于 ExitDialog 键盘导航）
@@ -325,20 +326,27 @@ FocusScope {
                 }
             }
 
-            scale: pressed ? 0.95 : ((root.activeButton === btn) || (root.selectedButton === btn)) ? 1.05 : 1.0
-            Behavior on scale {
-                NumberAnimation {
-                    duration: 150
-                    easing.type: Easing.OutCubic
+            visualScale: pressed ? 0.95 : ((root.activeButton === btn) || (root.selectedButton === btn)) ? 1.05 : 1.0
+
+            Timer {
+                id: sliderHoverDelayTimer
+                interval: root.hoverScaleDelay
+                repeat: false
+                onTriggered: {
+                    if (btn.hovered) {
+                        root.activeButton = btn;
+                        root.updateSlider(btn, sliderColor);
+                    }
                 }
             }
 
             onHoveredChanged: {
                 if (hovered) {
-                    root.activeButton = btn;
-                    root.updateSlider(btn, sliderColor);
+                    sliderHoverDelayTimer.restart();
                 } else {
-                    root.hideSlider();
+                    sliderHoverDelayTimer.stop();
+                    if (root.activeButton === btn)
+                        root.hideSlider();
                 }
             }
 
