@@ -509,7 +509,6 @@ Item {
                                         property bool hasFile: window.componentListController && window.componentListController.bomFilePath && window.componentListController.bomFilePath.length > 0
                                         property string fileName: hasFile ? window.componentListController.bomFilePath.split("/").pop() : ""
                                         property string bomResult: window.componentListController ? window.componentListController.bomResult : ""
-
                                         // 文件选择区域
                                         Rectangle {
                                             Layout.fillWidth: true
