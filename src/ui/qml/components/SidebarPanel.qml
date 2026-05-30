@@ -8,6 +8,14 @@ Rectangle {
     id: root
     property var window: null // Reference to root window for dialogs
     color: "transparent"
+    // 安全代理属性（避免 root.window 为 null 时的 TypeError）
+    readonly property var progressController: root.window ? root.window.exportProgressController : null
+    readonly property var settingsController: root.window ? root.window.exportSettingsController : null
+    readonly property var listController: root.window ? root.window.componentListController : null
+    readonly property bool isExporting: progressController ? progressController.isExporting : false
+    readonly property int progressValue: progressController ? progressController.progress : 0
+    readonly property int failureCount: progressController ? progressController.failureCount : 0
+    readonly property bool hasCompletedExport: progressController ? progressController.hasCompletedExport : false
     // 玻璃态模糊背景（独立层，不模糊内容）
     Rectangle {
         id: glassBg
@@ -63,7 +71,7 @@ Rectangle {
                 // 侧边栏导出设置
                 SidebarSettingsView {
                     Layout.fillWidth: true
-                    exportSettingsController: root.window ? root.window.exportSettingsController : null
+                    exportSettingsController: root.settingsController
                     onOpenOutputFolderDialog: if (root.window)
                         root.window.outputFolderDialog.open()
                     onOpenCacheFolderDialog: if (root.window)
@@ -87,19 +95,19 @@ Rectangle {
                 // 统计信息卡片 (侧边栏简化版)
                 Loader {
                     Layout.fillWidth: true
-                    active: root.window && root.window.exportProgressController && root.window.exportProgressController.hasCompletedExport
+                    active: root.hasCompletedExport
                     sourceComponent: SidebarSection {
                         title: qsTranslate("MainWindow", "执行统计")
                         RowLayout {
                             Layout.fillWidth: true
                             StatItem {
                                 label: qsTranslate("MainWindow", "成功")
-                                value: root.window.exportProgressController.successCount
+                                value: root.progressController.successCount
                                 color: AppStyle.colors.success
                             }
                             StatItem {
                                 label: qsTranslate("MainWindow", "失败")
-                                value: root.window.exportProgressController.failureCount
+                                value: root.progressController.failureCount
                                 color: AppStyle.colors.danger
                             }
                         }
@@ -129,12 +137,12 @@ Rectangle {
                 // 进度条
                 Loader {
                     Layout.fillWidth: true
-                    active: root.window && root.window.exportProgressController && (root.window.exportProgressController.isExporting || root.window.exportProgressController.progress > 0)
+                    active: root.isExporting || root.progressValue > 0
                     sourceComponent: ColumnLayout {
                         spacing: 4
                         RowLayout {
                             Text {
-                                text: root.window.exportProgressController.isExporting ? qsTranslate("MainWindow", "导出中...") : qsTranslate("MainWindow", "导出完成")
+                                text: root.isExporting ? qsTranslate("MainWindow", "导出中...") : qsTranslate("MainWindow", "导出完成")
                                 font.pixelSize: AppStyle.fontSizes.xs
                                 color: AppStyle.colors.textSecondary
                             }
@@ -142,7 +150,7 @@ Rectangle {
                                 Layout.fillWidth: true
                             }
                             Text {
-                                text: root.window.exportProgressController.progress + "%"
+                                text: root.progressController.progress + "%"
                                 font.pixelSize: AppStyle.fontSizes.xs
                                 font.bold: true
                                 color: AppStyle.colors.primary
@@ -154,7 +162,7 @@ Rectangle {
                             radius: 3
                             color: AppStyle.colors.border
                             Rectangle {
-                                width: parent.width * (root.window.exportProgressController.progress / 100)
+                                width: parent.width * (root.progressController.progress / 100)
                                 height: parent.height
                                 radius: 3
                                 color: AppStyle.colors.primary
@@ -176,44 +184,48 @@ Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 44
                         text: {
-                            var pc = root.window.exportProgressController;
-                            if (pc && pc.isExporting)
+                            if (root.isExporting)
                                 return qsTranslate("MainWindow", "导出中");
-                            if (pc && pc.failureCount > 0)
+                            if (root.failureCount > 0)
                                 return qsTranslate("MainWindow", "重试失败");
                             return qsTranslate("MainWindow", "开始导出");
                         }
-                        backgroundColor: (root.window.exportProgressController && root.window.exportProgressController.failureCount > 0) ? AppStyle.colors.warning : AppStyle.colors.primary
+                        backgroundColor: root.failureCount > 0 ? AppStyle.colors.warning : AppStyle.colors.primary
                         onClicked: {
-                            var pc = root.window.exportProgressController;
-                            var sc = root.window.exportSettingsController;
-                            var lc = root.window.componentListController;
+                            var pc = root.progressController;
+                            var sc = root.settingsController;
+                            var lc = root.listController;
                             if (pc && pc.failureCount > 0) {
                                 pc.retryFailedComponents();
                             } else if (pc && sc && lc) {
-                                pc.startExport(lc.getAllComponentIds(), sc.outputPath, sc.libName, sc.exportSymbol, sc.exportFootprint, sc.exportModel3D, sc.exportModel3DFormat, sc.exportModel3DPathMode, sc.exportPreviewImages, sc.exportDatasheet, sc.overwriteExistingFiles, sc.exportMode === 1, sc.debugMode);
+                                pc.startExport(lc.getAllComponentIds(), sc.outputPath || "", sc.libName || "", sc.exportSymbol || false, sc.exportFootprint || false, sc.exportModel3D || false, sc.exportModel3DFormat || 3, sc.exportModel3DPathMode || 0, sc.exportPreviewImages || false, sc.exportDatasheet || false, sc.overwriteExistingFiles || false, (sc.exportMode || 0) === 1, sc.debugMode || false, sc.symbolLibraryDescription || "", sc.footprintLibraryDescription || "", sc.footprintLibraryKeywords || "");
                             }
                         }
-                        enabled: root.window && root.window.exportProgressController && !root.window.exportProgressController.isExporting && root.window.componentListController.componentCount > 0
+                        enabled: {
+                            if (root.isExporting) return false;
+                            if (!root.listController || root.listController.componentCount <= 0) return false;
+                            if (!root.settingsController) return false;
+                            return root.settingsController.exportSymbol || root.settingsController.exportFootprint || root.settingsController.exportModel3D;
+                        }
                     }
 
                     ModernButton {
-                        visible: root.window && root.window.exportProgressController && root.window.exportProgressController.isExporting
+                        visible: root.isExporting
                         Layout.preferredWidth: 80
                         Layout.preferredHeight: 44
                         iconName: "close"
                         backgroundColor: AppStyle.colors.danger
-                        onClicked: root.window.exportProgressController.cancelExport()
+                        onClicked: root.progressController.cancelExport()
                     }
                 }
 
                 ModernButton {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 36
-                    visible: root.window && root.window.exportProgressController && root.window.exportProgressController.hasCompletedExport
+                    visible: root.hasCompletedExport
                     text: qsTranslate("MainWindow", "查看文件夹")
                     backgroundColor: AppStyle.colors.textSecondary
-                    onClicked: root.window.exportProgressController.openLastExportedFolder()
+                    onClicked: root.progressController.openLastExportedFolder()
                 }
             }
         }
