@@ -41,8 +41,8 @@ FocusScope {
     property real sliderTargetY: AppStyle.spacing.sm
     property real sliderPreviousY: AppStyle.spacing.sm
     property real sliderVelocity: 0
-    readonly property real sliderStretch: Math.min(buttonHeight * 0.65, Math.abs(sliderBackground.y - sliderTargetY) * 0.4 + sliderVelocity * 0.08)
-    readonly property real sliderMotionAmount: Math.min(1, sliderStretch / (buttonHeight * 0.65))
+    readonly property real sliderStretch: Math.min(buttonHeight * 0.5, Math.abs(sliderBackground.y - sliderTargetY) * 0.15 + sliderVelocity * 0.06)
+    readonly property real sliderMotionAmount: Math.min(1, sliderStretch / (buttonHeight * 0.5))
     readonly property real sliderMovingOpacity: Math.max(0.2, sliderOpacity - sliderMotionAmount * 0.05)
     // ===== 子类可使用的属性 =====
     property Item activeButton: null  // 当前悬停的按钮
@@ -85,10 +85,10 @@ FocusScope {
         sliderTrail.y = Math.min(buttonY, sliderBackground.y);
         sliderTrail.height = Math.max(buttonHeight, travel + buttonHeight);
         sliderTrail.color = targetColor;
-        sliderTrail.opacity = travel > 1 ? 0.12 : 0.04;
+        sliderTrail.opacity = travel > 1 ? 0.06 : 0.025;
         sliderGhost.y = sliderBackground.y;
         sliderGhost.color = targetColor;
-        sliderGhost.opacity = travel > 1 ? 0.11 : 0;
+        sliderGhost.opacity = travel > 1 ? 0.035 : 0;
         sliderBackground.scale = 0.98;
         sliderTargetY = buttonY;
         sliderBackground.y = buttonY;
@@ -298,7 +298,7 @@ FocusScope {
                     layer.effect: MultiEffect {
                         shadowEnabled: true
                         shadowColor: sliderTrail.color
-                        shadowBlur: 0.8 + root.sliderMotionAmount * 0.8
+                        shadowBlur: Math.max(0.25, 0.6 - root.sliderMotionAmount * 0.35)
                         shadowVerticalOffset: 0
                         shadowHorizontalOffset: 0
                     }
@@ -379,10 +379,10 @@ FocusScope {
                     Behavior on y {
                         enabled: sliderBackground.visible
                         SpringAnimation {
-                            spring: 18.0
-                            damping: 0.8
+                            spring: 12.0
+                            damping: 0.95
                             mass: 1.0
-                            epsilon: 0.5
+                            epsilon: 0.1
                         }
                     }
 
@@ -403,7 +403,7 @@ FocusScope {
 
                     Behavior on opacity {
                         NumberAnimation {
-                            duration: 200
+                            duration: 100
                             easing.type: Easing.OutCubic
                         }
                     }
@@ -412,7 +412,7 @@ FocusScope {
                     layer.effect: MultiEffect {
                         shadowEnabled: true
                         shadowColor: sliderBackground.color
-                        shadowBlur: 0.9 + root.sliderMotionAmount * 0.9
+                        shadowBlur: Math.max(0.45, 0.9 - root.sliderMotionAmount * 0.4)
                         shadowVerticalOffset: 0
                         shadowHorizontalOffset: 0
                     }
