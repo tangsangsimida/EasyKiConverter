@@ -14,10 +14,29 @@ Button {
     property int hoverScaleDelay: AppStyle.interactions.hoverIntentDelay
     property bool delayedHoverActive: false
     property real visualScale: root.pressed ? 0.95 : (root.delayedHoverActive ? 1.02 : 1.0)
+    property real visualScaleOriginX: width / 2
+    property real visualScaleOriginY: height / 2
+    property point lastPointerPosition: Qt.point(width / 2, height / 2)
     font.pixelSize: AppStyle.fontSizes.md
     font.bold: true
     implicitHeight: 44
     implicitWidth: contentItem.implicitWidth + AppStyle.spacing.xl * 2
+
+    HoverHandler {
+        id: pointerTracker
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        onPointChanged: {
+            if (!root.pressed) {
+                root.lastPointerPosition = point.position;
+            }
+        }
+    }
+    onPressedChanged: {
+        if (pressed) {
+            visualScaleOriginX = Math.max(0, Math.min(width, lastPointerPosition.x));
+            visualScaleOriginY = Math.max(0, Math.min(height, lastPointerPosition.y));
+        }
+    }
     onHoveredChanged: {
         if (hovered && enabled) {
             hoverScaleDelayTimer.restart();
@@ -49,8 +68,12 @@ Button {
     background: Item {
         Rectangle {
             anchors.fill: parent
-            transformOrigin: Item.Center
-            scale: root.visualScale
+            transform: Scale {
+                origin.x: root.visualScaleOriginX
+                origin.y: root.visualScaleOriginY
+                xScale: root.visualScale
+                yScale: root.visualScale
+            }
             color: !root.enabled ? disabledColor : root.pressed ? pressedColor : root.hovered ? hoverColor : backgroundColor
             radius: AppStyle.radius.md
             Behavior on color {
@@ -65,8 +88,12 @@ Button {
         // 关键：透传隐式尺寸，确保 Button 能正确计算大小，防止界面凌乱
         implicitWidth: contentRow.implicitWidth
         implicitHeight: contentRow.implicitHeight
-        transformOrigin: Item.Center
-        scale: root.visualScale
+        transform: Scale {
+            origin.x: root.visualScaleOriginX
+            origin.y: root.visualScaleOriginY
+            xScale: root.visualScale
+            yScale: root.visualScale
+        }
         Row {
             id: contentRow
             anchors.centerIn: parent

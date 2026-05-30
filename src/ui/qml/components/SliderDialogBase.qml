@@ -35,7 +35,15 @@ FocusScope {
     // ===== 共用常量 =====
     readonly property int buttonHeight: 48
     readonly property real sliderOpacity: 0.25
-    readonly property int hoverScaleDelay: AppStyle.interactions.hoverIntentDelay
+    readonly property int hoverScaleDelay: AppStyle.interactions.sliderIntentDelay
+    readonly property int sliderVelocitySettleDelay: 70
+    property bool sliderVisible: false
+    property real sliderTargetY: AppStyle.spacing.sm
+    property real sliderPreviousY: AppStyle.spacing.sm
+    property real sliderVelocity: 0
+    readonly property real sliderStretch: Math.min(buttonHeight * 0.65, Math.abs(sliderBackground.y - sliderTargetY) * 0.4 + sliderVelocity * 0.08)
+    readonly property real sliderMotionAmount: Math.min(1, sliderStretch / (buttonHeight * 0.65))
+    readonly property real sliderMovingOpacity: Math.max(0.2, sliderOpacity - sliderMotionAmount * 0.05)
     // ===== 子类可使用的属性 =====
     property Item activeButton: null  // 当前悬停的按钮
     property Item selectedButton: null  // 当前键盘选中的按钮（用于 ExitDialog 键盘导航）
@@ -50,22 +58,55 @@ FocusScope {
     // 格式: { text, color, action } 或 { isSeparator: true }
     property list<var> buttonSpecs
     // ===== 公共函数 =====
+    function mixColor(fromColor, toColor, amount) {
+        var t = Math.max(0, Math.min(1, amount));
+        return Qt.rgba(fromColor.r + (toColor.r - fromColor.r) * t, fromColor.g + (toColor.g - fromColor.g) * t, fromColor.b + (toColor.b - fromColor.b) * t, fromColor.a + (toColor.a - fromColor.a) * t);
+    }
+
+    function sliderCoverageForButton(targetButton) {
+        if (!targetButton || !buttonBox || sliderBackground.opacity <= 0)
+            return 0;
+        var buttonY = targetButton.mapToItem(buttonBox, 0, 0).y;
+        var sliderTop = sliderBackground.y;
+        var sliderBottom = sliderBackground.y + sliderBackground.height;
+        var buttonBottom = buttonY + buttonHeight;
+        var overlap = Math.max(0, Math.min(sliderBottom, buttonBottom) - Math.max(sliderTop, buttonY));
+        return Math.max(0, Math.min(1, overlap / buttonHeight));
+    }
 
     function updateSlider(targetButton, targetColor) {
         if (!buttonBox)
             return;
         var buttonY = targetButton.mapToItem(buttonBox, 0, 0).y;
-        var centerY = buttonBox.height / 2;
-        var stretchFactor = 1.0 + Math.abs(buttonY - centerY) / centerY * 0.02;
+        var travel = Math.abs(buttonY - sliderBackground.y);
+        slotHighlight.y = buttonY;
+        slotHighlight.color = targetColor;
+        slotHighlight.opacity = 0.18;
+        sliderTrail.y = Math.min(buttonY, sliderBackground.y);
+        sliderTrail.height = Math.max(buttonHeight, travel + buttonHeight);
+        sliderTrail.color = targetColor;
+        sliderTrail.opacity = travel > 1 ? 0.12 : 0.04;
+        sliderGhost.y = sliderBackground.y;
+        sliderGhost.color = targetColor;
+        sliderGhost.opacity = travel > 1 ? 0.11 : 0;
+        sliderBackground.scale = 0.98;
+        sliderTargetY = buttonY;
         sliderBackground.y = buttonY;
-        sliderBackground.height = buttonHeight * (2.0 - stretchFactor);
         sliderBackground.color = targetColor;
-        sliderBackground.opacity = sliderOpacity;
+        sliderVisible = true;
+        sliderCompressionTimer.restart();
         activeButton = targetButton;
     }
 
     function hideSlider() {
-        sliderBackground.opacity = 0;
+        sliderVisible = false;
+        sliderTrail.opacity = 0;
+        sliderGhost.opacity = 0;
+        slotHighlight.opacity = 0;
+        sliderCompressionTimer.stop();
+        sliderVelocitySettleTimer.stop();
+        sliderBackground.scale = 1.0;
+        sliderVelocity = 0;
         activeButton = null;
     }
 
@@ -88,6 +129,26 @@ FocusScope {
 
     function closeWithAnimation() {
         hideAnim.start();
+    }
+
+    Timer {
+        id: sliderCompressionTimer
+        interval: 45
+        repeat: false
+        onTriggered: {
+            sliderBackground.scale = 1.0;
+        }
+    }
+
+    Timer {
+        id: sliderVelocitySettleTimer
+        interval: root.sliderVelocitySettleDelay
+        repeat: false
+        onTriggered: {
+            root.sliderVelocity = 0;
+            sliderTrail.opacity = 0;
+            sliderGhost.opacity = 0;
+        }
     }
 
     // ===== 遮罩层 =====
@@ -192,9 +253,8 @@ FocusScope {
                 radius: AppStyle.radius.lg
                 border.color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.08)
                 border.width: AppStyle.borderWidths.thin
-                // 滑块背景
                 Rectangle {
-                    id: sliderBackground
+                    id: slotHighlight
                     x: AppStyle.spacing.sm
                     y: AppStyle.spacing.sm
                     width: buttonBox.width - AppStyle.spacing.sm * 2
@@ -202,30 +262,141 @@ FocusScope {
                     radius: AppStyle.radius.md
                     color: AppStyle.colors.primary
                     opacity: 0
-                    z: 2
+                    z: 0
                     Behavior on y {
-                        enabled: sliderBackground.visible
                         SpringAnimation {
-                            spring: 5.0
-                            damping: 0.5
-                            mass: 0.8
+                            spring: 4.5
+                            damping: 0.45
+                            mass: 1.0
                             epsilon: 0.25
                         }
                     }
-
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppStyle.durations.fast
+                            easing.type: AppStyle.easings.easeOut
+                        }
+                    }
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: AppStyle.durations.fast
+                            easing.type: AppStyle.easings.easeOut
+                        }
+                    }
+                }
+                Rectangle {
+                    id: sliderTrail
+                    x: AppStyle.spacing.sm
+                    y: sliderBackground.y
+                    width: buttonBox.width - AppStyle.spacing.sm * 2
+                    height: buttonHeight
+                    radius: AppStyle.radius.md
+                    color: AppStyle.colors.primary
+                    opacity: 0
+                    z: 1
+                    layer.enabled: opacity > 0
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: sliderTrail.color
+                        shadowBlur: 0.8 + root.sliderMotionAmount * 0.8
+                        shadowVerticalOffset: 0
+                        shadowHorizontalOffset: 0
+                    }
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 220
+                            easing.type: AppStyle.easings.easeOut
+                        }
+                    }
+                }
+                Rectangle {
+                    id: sliderGhost
+                    x: AppStyle.spacing.sm
+                    y: sliderBackground.y
+                    width: buttonBox.width - AppStyle.spacing.sm * 2
+                    height: sliderBackground.height
+                    radius: AppStyle.radius.md
+                    color: AppStyle.colors.primary
+                    opacity: 0
+                    z: 1.5
+                    Behavior on y {
+                        NumberAnimation {
+                            duration: 55
+                            easing.type: Easing.OutCubic
+                        }
+                    }
                     Behavior on height {
+                        NumberAnimation {
+                            duration: 55
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 180
+                            easing.type: AppStyle.easings.easeOut
+                        }
+                    }
+                }
+                // 滑块背景
+                Rectangle {
+                    id: sliderBackground
+                    x: AppStyle.spacing.sm
+                    y: AppStyle.spacing.sm
+                    width: buttonBox.width - AppStyle.spacing.sm * 2
+                    height: buttonHeight + root.sliderStretch
+                    radius: AppStyle.radius.md
+                    color: AppStyle.colors.primary
+                    opacity: root.sliderVisible ? root.sliderMovingOpacity : 0
+                    z: 2
+                    onYChanged: {
+                        root.sliderVelocity = Math.min(root.buttonHeight * 2.2, Math.abs(y - root.sliderPreviousY));
+                        root.sliderPreviousY = y;
+                        sliderVelocitySettleTimer.restart();
+                    }
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        color: "#ffffff"
+                        opacity: 0
+                        SequentialAnimation on opacity {
+                            running: root.visible && root.activeButton && root.selectedButton && root.activeButton === root.selectedButton
+                            loops: Animation.Infinite
+                            NumberAnimation {
+                                from: 0.04
+                                to: 0.16
+                                duration: 900
+                                easing.type: Easing.InOutSine
+                            }
+                            NumberAnimation {
+                                from: 0.16
+                                to: 0.04
+                                duration: 900
+                                easing.type: Easing.InOutSine
+                            }
+                        }
+                    }
+                    Behavior on y {
                         enabled: sliderBackground.visible
                         SpringAnimation {
-                            spring: 6.0
-                            damping: 0.4
-                            mass: 0.7
-                            epsilon: 0.25
+                            spring: 18.0
+                            damping: 0.8
+                            mass: 1.0
+                            epsilon: 0.5
+                        }
+                    }
+
+                    Behavior on scale {
+                        enabled: sliderBackground.visible
+                        NumberAnimation {
+                            duration: 130
+                            easing.type: Easing.OutBack
                         }
                     }
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: 250
+                            duration: AppStyle.durations.fast
                             easing.type: Easing.OutCubic
                         }
                     }
@@ -241,7 +412,7 @@ FocusScope {
                     layer.effect: MultiEffect {
                         shadowEnabled: true
                         shadowColor: sliderBackground.color
-                        shadowBlur: 1.0
+                        shadowBlur: 0.9 + root.sliderMotionAmount * 0.9
                         shadowVerticalOffset: 0
                         shadowHorizontalOffset: 0
                     }
@@ -254,7 +425,7 @@ FocusScope {
                     anchors.topMargin: AppStyle.spacing.sm
                     anchors.bottomMargin: AppStyle.spacing.sm
                     spacing: 0
-                    z: 1
+                    z: 3
                     // 动态生成按钮
                     Repeater {
                         model: root.buttonSpecs
@@ -308,6 +479,10 @@ FocusScope {
             text: btnText
             backgroundColor: "transparent"
             textColor: {
+                var coverage = root.sliderCoverageForButton(btn);
+                if (coverage > 0) {
+                    return root.mixColor(AppStyle.colors.textPrimary, Qt.lighter(sliderColor, 1.35), coverage);
+                }
                 // 悬停状态优先
                 if (root.activeButton === btn) {
                     return Qt.lighter(sliderColor, 1.3);

@@ -24,6 +24,11 @@ SliderDialogBase {
     // ===== 属性 =====
     property bool rememberChoice: false
     property string focusArea: "button"  // "button" or "checkbox"
+    property bool exitAnimationRunning: false
+    readonly property int exitFillDuration: AppStyle.durations.normal
+    property real exitFillTargetSize: 0
+    property real exitFillOriginX: 0
+    property real exitFillOriginY: 0
     // ===== 信号 =====
     signal minimizeToTray(bool remember)
     signal exitApp(bool remember)
@@ -44,7 +49,7 @@ SliderDialogBase {
             text: qsTr("退出程序"),
             color: AppStyle.colors.danger,
             action: function () {
-                root.exitApp(rememberChoice);
+                root.playExitFillAndExit();
             }
         },
         {
@@ -116,6 +121,77 @@ SliderDialogBase {
         }
     }
 
+    Rectangle {
+        id: exitFillOverlay
+        parent: root.dialogBox ? root.dialogBox : root
+        x: parent ? parent.width / 2 : 0
+        y: parent ? parent.height / 2 : 0
+        width: 0
+        height: 0
+        radius: width / 2
+        color: AppStyle.colors.danger
+        opacity: 0
+        z: 30
+        visible: opacity > 0 || root.exitAnimationRunning
+    }
+
+    ParallelAnimation {
+        id: exitFillAnimation
+        NumberAnimation {
+            target: exitFillOverlay
+            property: "opacity"
+            from: 0
+            to: 0.92
+            duration: root.exitFillDuration
+            easing.type: Easing.OutCubic
+        }
+        NumberAnimation {
+            target: exitFillOverlay
+            property: "width"
+            to: root.exitFillTargetSize
+            duration: root.exitFillDuration
+            easing.type: Easing.OutCubic
+        }
+        NumberAnimation {
+            target: exitFillOverlay
+            property: "height"
+            to: root.exitFillTargetSize
+            duration: root.exitFillDuration
+            easing.type: Easing.OutCubic
+        }
+        NumberAnimation {
+            target: exitFillOverlay
+            property: "x"
+            to: root.exitFillOriginX - root.exitFillTargetSize / 2
+            duration: root.exitFillDuration
+            easing.type: Easing.OutCubic
+        }
+        NumberAnimation {
+            target: exitFillOverlay
+            property: "y"
+            to: root.exitFillOriginY - root.exitFillTargetSize / 2
+            duration: root.exitFillDuration
+            easing.type: Easing.OutCubic
+        }
+        NumberAnimation {
+            target: root.dialogBox
+            property: "scale"
+            to: 1.015
+            duration: root.exitFillDuration
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    Timer {
+        id: exitFillCommitTimer
+        interval: root.exitFillDuration
+        repeat: false
+        onTriggered: {
+            root.exitAnimationRunning = false;
+            root.exitApp(root.rememberChoice);
+        }
+    }
+
     // ===== 键盘事件 ======
     // 注意：这个对话框没有 Escape 键处理，让 Main.qml 的 Shortcut 处理
     function getButtonByIndex(index) {
@@ -129,6 +205,43 @@ SliderDialogBase {
             }
         }
         return null;
+    }
+
+    function resetExitFill() {
+        exitFillAnimation.stop();
+        exitFillCommitTimer.stop();
+        exitAnimationRunning = false;
+        exitFillOverlay.opacity = 0;
+        exitFillOverlay.width = 0;
+        exitFillOverlay.height = 0;
+        exitFillOverlay.x = root.dialogBox ? root.dialogBox.width / 2 : root.width / 2;
+        exitFillOverlay.y = root.dialogBox ? root.dialogBox.height / 2 : root.height / 2;
+    }
+
+    function exitFillDiameterFromOrigin(originX, originY) {
+        var w = root.dialogBox ? root.dialogBox.width : root.width;
+        var h = root.dialogBox ? root.dialogBox.height : root.height;
+        var distances = [Math.sqrt(originX * originX + originY * originY), Math.sqrt((w - originX) * (w - originX) + originY * originY), Math.sqrt(originX * originX + (h - originY) * (h - originY)), Math.sqrt((w - originX) * (w - originX) + (h - originY) * (h - originY))];
+        return Math.max.apply(Math, distances) * 2 + AppStyle.spacing.xl;
+    }
+
+    function playExitFillAndExit() {
+        if (exitAnimationRunning)
+            return;
+        var exitButton = getButtonByIndex(1);
+        var fillParent = root.dialogBox ? root.dialogBox : root;
+        var origin = exitButton ? exitButton.mapToItem(fillParent, exitButton.width / 2, exitButton.height / 2) : Qt.point(fillParent.width / 2, fillParent.height / 2);
+        exitFillTargetSize = exitFillDiameterFromOrigin(origin.x, origin.y);
+        exitFillOriginX = origin.x;
+        exitFillOriginY = origin.y;
+        exitFillOverlay.x = origin.x;
+        exitFillOverlay.y = origin.y;
+        exitFillOverlay.width = 0;
+        exitFillOverlay.height = 0;
+        exitFillOverlay.opacity = 0;
+        exitAnimationRunning = true;
+        exitFillAnimation.restart();
+        exitFillCommitTimer.restart();
     }
 
     function getButtonSpecByIndex(index) {
@@ -260,6 +373,7 @@ SliderDialogBase {
     // ===== 覆写 open 函数 =====
     function open() {
         visible = true;
+        resetExitFill();
         root.dialogBox.rotation = 0;
         root.dialogBox.scale = 1.0;
         root.dialogBox.opacity = 1.0;

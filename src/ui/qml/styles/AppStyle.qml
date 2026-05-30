@@ -113,6 +113,7 @@ QtObject {
     readonly property var interactions: QtObject {
         // 轻反馈（颜色/边框）可即时触发，重反馈（缩放/浮层/滑块/强阴影）使用 hover intent 延迟。
         readonly property int hoverIntentDelay: 180
+        readonly property int sliderIntentDelay: 55
         readonly property int previewIntentDelay: 300
         readonly property int popupHideDelay: 100
         readonly property int safeCursorGap: 15
