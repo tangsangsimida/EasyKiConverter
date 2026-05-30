@@ -17,6 +17,7 @@ Rectangle {
     readonly property var listController: componentListViewModel
     readonly property bool isExporting: progressController ? progressController.isExporting : false
     readonly property int failureCount: progressController ? progressController.failureCount : 0
+    readonly property bool hasCompletedExport: progressController ? progressController.hasCompletedExport : false
     // 信号
     signal requestOutputFolderDialog
     signal requestCacheFolderDialog
@@ -272,6 +273,20 @@ Rectangle {
                             if (root.progressController)
                                 root.progressController.cancelExport();
                         }
+                    }
+                }
+
+                // 打开导出目录（导出完成后显示）
+                ModernButton {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    visible: root.hasCompletedExport
+                    text: qsTranslate("MainWindow", "打开导出目录")
+                    iconName: "folder"
+                    backgroundColor: AppStyle.colors.textSecondary
+                    onClicked: {
+                        if (root.progressController)
+                            root.progressController.openLastExportedFolder();
                     }
                 }
             }
