@@ -617,10 +617,13 @@ Item {
                         }
 
                         // 元件列表卡片
+                        // 元件列表卡片
                         ComponentListCard {
+                            id: componentListCardItem
                             Layout.fillWidth: true
                             componentListController: window.componentListController
                             exportProgressController: window.exportProgressController
+                            isExporting: window.exportProgressController ? window.exportProgressController.isExporting : false
                         }
 
                         // ==================== 工作区内容（始终可见） ====================

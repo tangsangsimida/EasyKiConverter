@@ -17,9 +17,16 @@ Card {
     property string editingDescriptionComponentId: ""
     // 导出状态查找表（由 exportProgressController 驱动）
     property var exportStatusMap: ({})
+    // 外部传入的导出状态（由 MainWindow 绑定）
+    property bool isExporting: false
     title: qsTranslate("MainWindow", "元器件列表")
-    // 默认折叠，只有在有元器件时才展开
     isCollapsed: componentListController ? componentListController.componentCount === 0 : true
+    // 导出开始时自动折叠（结束后保持折叠，用户点击标题可手动展开）
+    onIsExportingChanged: {
+        if (isExporting) {
+            isCollapsed = true;
+        }
+    }
     resources: [
         // 防抖定时器，避免频繁调用 updateFilter()
         Timer {
