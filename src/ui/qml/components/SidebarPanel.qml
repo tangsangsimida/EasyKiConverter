@@ -41,56 +41,13 @@ Rectangle {
         }
     }
 
-    // 分隔线 + 折叠拨片（z: 100 确保在内容层之上）
+    // 分隔线（纯视觉，无交互）
     Rectangle {
-        id: separator
         anchors.right: parent.right
         width: 1
         height: parent.height
         color: AppStyle.colors.border
         z: 100
-        // 折叠/展开拨片
-        Rectangle {
-            id: grabber
-            anchors.right: parent.right
-            anchors.rightMargin: -16
-            anchors.verticalCenter: parent.verticalCenter
-            width: 32
-            height: 52
-            radius: 4
-            color: grabberMouse.containsMouse ? AppStyle.colors.primary : (AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.08) : Qt.rgba(0, 0, 0, 0.06))
-            border.width: AppStyle.borderWidths.thin
-            border.color: AppStyle.colors.border
-            Behavior on color {
-                ColorAnimation {
-                    duration: AppStyle.durations.fast
-                }
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: root.collapsed ? "▶" : "◀"
-                font.pixelSize: 10
-                color: grabberMouse.containsMouse ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary
-                rotation: 0
-            }
-
-            MouseArea {
-                id: grabberMouse
-                anchors.fill: parent
-                anchors.topMargin: -20
-                anchors.bottomMargin: -20
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                preventStealing: true
-                onClicked: root.toggleCollapsed()
-                onDoubleClicked: root.toggleCollapsed()
-            }
-
-            ToolTip.visible: grabberMouse.containsMouse
-            ToolTip.text: root.collapsed ? qsTranslate("MainWindow", "展开侧边栏") : qsTranslate("MainWindow", "收缩侧边栏")
-            ToolTip.delay: 600
-        }
     }
 
     // ==================== 收缩态：纯导航栏 ====================
@@ -130,7 +87,7 @@ Rectangle {
             }
 
             ToolTip.visible: settingsIconMouse.containsMouse
-            ToolTip.text: qsTranslate("MainWindow", "导出设置")
+            ToolTip.text: qsTranslate("MainWindow", "展开设置")
             ToolTip.delay: 400
         }
 
@@ -150,6 +107,60 @@ Rectangle {
         Behavior on opacity {
             NumberAnimation {
                 duration: 200
+            }
+        }
+
+        // 顶部标题栏（标题 + 收起按钮）
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 40
+            color: "transparent"
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: AppStyle.spacing.md
+                anchors.rightMargin: AppStyle.spacing.xs
+                spacing: AppStyle.spacing.sm
+                Text {
+                    text: qsTranslate("MainWindow", "导出设置")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    font.bold: true
+                    color: AppStyle.colors.textSecondary
+                    Layout.fillWidth: true
+                }
+
+                // 收起按钮
+                Rectangle {
+                    Layout.preferredWidth: 28
+                    Layout.preferredHeight: 28
+                    radius: AppStyle.radius.sm
+                    color: collapseBtnMouse.containsMouse ? (AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.1) : Qt.rgba(0, 0, 0, 0.06)) : "transparent"
+                    Text {
+                        anchors.centerIn: parent
+                        text: "«"
+                        font.pixelSize: 14
+                        font.bold: true
+                        color: collapseBtnMouse.containsMouse ? AppStyle.colors.textPrimary : AppStyle.colors.textSecondary
+                    }
+
+                    MouseArea {
+                        id: collapseBtnMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.toggleCollapsed()
+                    }
+
+                    ToolTip.visible: collapseBtnMouse.hovered
+                    ToolTip.text: qsTranslate("MainWindow", "收起设置")
+                    ToolTip.delay: 400
+                }
+            }
+            // 底部分隔线
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: 1
+                color: AppStyle.colors.border
             }
         }
 
