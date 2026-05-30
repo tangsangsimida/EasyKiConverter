@@ -237,6 +237,18 @@ void ParallelExportService::startExport() {
 
     cleanupExportStages();
     m_cancelRequested = false;
+    // 从 ComponentService 刷新最新的组件数据（确保用户在 UI 中的编辑生效）
+    if (m_componentService) {
+        for (auto it = m_cachedData.begin(); it != m_cachedData.end(); ++it) {
+            ComponentData freshData = m_componentService->getComponentData(it.key());
+            if (freshData.symbolData() && it.value() && it.value()->symbolData()) {
+                it.value()->symbolData()->setInfo(freshData.symbolData()->info());
+            }
+            if (freshData.footprintData() && it.value() && it.value()->footprintData()) {
+                it.value()->footprintData()->setInfo(freshData.footprintData()->info());
+            }
+        }
+    }
     const quint64 runGeneration = m_activeRunGeneration;
 
     qDebug() << "ParallelExportService: Starting export for" << m_componentIds.size() << "components"
