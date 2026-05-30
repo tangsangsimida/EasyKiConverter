@@ -1057,7 +1057,7 @@ Card {
         GridView {
             id: componentList
             Layout.fillWidth: true
-            Layout.preferredHeight: ResponsiveHelper.responsive(240, 300, 360, 400)
+            Layout.preferredHeight: ResponsiveHelper.isShortWindow ? 200 : ResponsiveHelper.responsive(240, 300, 360, 400)
             Layout.topMargin: AppStyle.spacing.md
             clip: true
             // 启用虚拟化，缓存上下各一屏的项
@@ -1070,7 +1070,7 @@ Card {
                 var c = Math.max(1, Math.floor(w / minCellW));
                 return w / c;
             }
-            cellHeight: 76
+            cellHeight: ResponsiveHelper.isShortWindow ? 60 : 76
             flow: GridView.FlowLeftToRight
             layoutDirection: Qt.LeftToRight
             // 使用 DelegateModel

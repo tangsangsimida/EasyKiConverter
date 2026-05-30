@@ -4,6 +4,7 @@ import QtQuick
 QtObject {
     // 窗口宽度 — 由 MainWindow 通过 Binding 写入，singleton 自身无法感知 Window
     property int windowWidth: 1200
+    property int windowHeight: 800
     // 断点系统
     enum Breakpoint {
         Compact,
@@ -28,8 +29,19 @@ QtObject {
     readonly property bool isExtraWide: breakpoint === ResponsiveHelper.Breakpoint.ExtraWide
     readonly property bool isAtLeastMedium: breakpoint >= ResponsiveHelper.Breakpoint.Medium
     readonly property bool isAtLeastWide: breakpoint >= ResponsiveHelper.Breakpoint.Wide
+    // 辅助判断
+    readonly property bool isSmallScreen: windowWidth < 1000 || windowHeight < 650
+    readonly property bool isUltraWide: windowWidth > 1920
+    readonly property bool isShortWindow: windowHeight < 700
     // 兼容旧接口（移除 DPI 缩放，固定为 1.0）
     readonly property real scaleFactor: 1.0
+    // 流式侧边栏宽度（比例 + 约束）
+    readonly property int sidebarWidth: {
+        var proportional = Math.floor(windowWidth * 0.26);
+        return Math.max(280, Math.min(proportional, 420));
+    }
+    // 动态外边距（大屏留白多，小屏紧凑）
+    readonly property int dynamicContentMargin: windowWidth > 1400 ? responsive(16, 24, 32, 40) : responsive(8, 12, 16, 20)
     // 自适应间距（逻辑像素，根据断点插值）
     readonly property var spacing: QtObject {
         readonly property int xs: responsive(2, 4, 4, 4)
@@ -42,10 +54,10 @@ QtObject {
     }
 
     // 自适应边距
-    readonly property int contentMargin: responsive(12, 24, 32, 40)
-    readonly property int cardSpacing: responsive(16, 24, 30, 30)
-    // 内容最大宽度（4K 下不无限拉宽）
-    readonly property int contentMaxWidth: 1320
+    readonly property int contentMargin: dynamicContentMargin
+    readonly property int cardSpacing: responsive(12, 16, 20, 24)
+    // 内容最大宽度（超宽屏下按比例，常规屏固定）
+    readonly property int contentMaxWidth: isUltraWide ? Math.floor(windowWidth * 0.65) : 1320
     // 导出选项布局
     readonly property int exportOptionColumns: isCompact ? 3 : isMedium ? 4 : 6
     // 兼容旧接口

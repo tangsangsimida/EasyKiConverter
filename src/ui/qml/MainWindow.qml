@@ -28,6 +28,7 @@ Item {
     readonly property int calculatedMinimumWindowWidth: ResponsiveHelper.minimumWindowWidth
     // 响应式布局模式
     readonly property bool isSidebarMode: ResponsiveHelper.isAtLeastMedium
+    property bool sidebarCollapsed: false
     // 交互状态
     property int inputMode: 0  // 0=单个, 1=BOM
     // 滚动跟踪（用于 compact 模式下的 sticky bar）
@@ -127,11 +128,17 @@ Item {
         property: "isDarkMode"
         value: themeController ? themeController.isDarkMode : false
     }
-    // 将窗口实际宽度写入 ResponsiveHelper，驱动断点系统
+    // 将窗口实际尺寸写入 ResponsiveHelper，驱动断点系统
     Binding {
         target: ResponsiveHelper
         property: "windowWidth"
         value: window.width
+    }
+
+    Binding {
+        target: ResponsiveHelper
+        property: "windowHeight"
+        value: window.height
     }
     // 从 FolderDialog URL 中提取本地路径（跨平台处理）
     function urlToLocalPath(url) {
@@ -259,11 +266,24 @@ Item {
             // ==================== 侧边栏控制面板 ====================
             Loader {
                 id: sidebarLoader
+                z: 1
                 active: window.isSidebarMode
-                Layout.preferredWidth: active ? 360 : 0
+                Layout.preferredWidth: {
+                    if (!active)
+                        return 0;
+                    return window.sidebarCollapsed ? 48 : ResponsiveHelper.sidebarWidth;
+                }
                 Layout.fillHeight: true
+                Behavior on Layout.preferredWidth {
+                    NumberAnimation {
+                        duration: 280
+                        easing.type: Easing.OutQuart
+                    }
+                }
                 sourceComponent: Component {
                     SidebarPanel {
+                        collapsed: window.sidebarCollapsed
+                        onToggleCollapsed: window.sidebarCollapsed = !window.sidebarCollapsed
                         onRequestOutputFolderDialog: outputFolderDialog.open()
                         onRequestCacheFolderDialog: cacheFolderDialog.open()
                     }
@@ -308,58 +328,64 @@ Item {
                             updateChecker: window.updateChecker
                         }
 
-                        // ==================== 数据源输入卡片（合并） ====================
+                        // ==================== 元器件添加方式 ====================
                         Card {
                             Layout.fillWidth: true
-                            title: qsTranslate("MainWindow", "数据源")
+                            title: qsTranslate("MainWindow", "元器件添加方式")
                             ColumnLayout {
                                 width: parent.width
                                 spacing: AppStyle.spacing.lg
-                                // 模式切换标签
-                                RowLayout {
+                                // 滑块式模式切换
+                                Rectangle {
                                     Layout.fillWidth: true
-                                    spacing: AppStyle.spacing.sm
+                                    height: 36
+                                    radius: AppStyle.radius.sm
+                                    color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.06) : Qt.rgba(0, 0, 0, 0.06)
+                                    // 滑块指示器
                                     Rectangle {
-                                        Layout.fillWidth: true
-                                        Layout.preferredHeight: 34
-                                        radius: AppStyle.radius.sm
-                                        color: inputMode === 0 ? AppStyle.colors.primary : "transparent"
-                                        border.color: inputMode === 0 ? AppStyle.colors.primary : AppStyle.colors.border
+                                        width: parent.width / 2
+                                        height: parent.height - 4
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        radius: AppStyle.radius.sm - 1
+                                        color: AppStyle.colors.surface
                                         border.width: AppStyle.borderWidths.thin
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: qsTranslate("MainWindow", "单个元器件")
-                                            font.pixelSize: AppStyle.fontSizes.sm
-                                            color: inputMode === 0 ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary
-                                            font.bold: inputMode === 0
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: inputMode = 0
+                                        border.color: AppStyle.colors.border
+                                        x: inputMode === 0 ? 2 : parent.width / 2
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: 200
+                                                easing.type: Easing.OutQuart
+                                            }
                                         }
                                     }
 
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        Layout.preferredHeight: 34
-                                        radius: AppStyle.radius.sm
-                                        color: inputMode === 1 ? AppStyle.colors.success : "transparent"
-                                        border.color: inputMode === 1 ? AppStyle.colors.success : AppStyle.colors.border
-                                        border.width: AppStyle.borderWidths.thin
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: qsTranslate("MainWindow", "批量导入 BOM")
-                                            font.pixelSize: AppStyle.fontSizes.sm
-                                            color: inputMode === 1 ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary
-                                            font.bold: inputMode === 1
-                                        }
+                                    Row {
+                                        anchors.fill: parent
+                                        anchors.margins: 2
+                                        Repeater {
+                                            model: [qsTranslate("MainWindow", "手动添加元器件"), qsTranslate("MainWindow", "通过BOM表导入元器件")]
+                                            Item {
+                                                width: parent.width / 2
+                                                height: parent.height
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: modelData
+                                                    font.pixelSize: AppStyle.fontSizes.xs
+                                                    font.bold: index === inputMode
+                                                    color: index === inputMode ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                                    Behavior on color {
+                                                        ColorAnimation {
+                                                            duration: 200
+                                                        }
+                                                    }
+                                                }
 
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: inputMode = 1
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: inputMode = index
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -367,8 +393,14 @@ Item {
                                 // 单个元器件输入 / BOM 导入（带横向滑动切换）
                                 Item {
                                     Layout.fillWidth: true
-                                    Layout.preferredHeight: Math.max(singleInputColumn.implicitHeight, bomImportColumn.implicitHeight)
+                                    Layout.preferredHeight: inputMode === 0 ? singleInputColumn.implicitHeight : bomImportColumn.implicitHeight
                                     clip: true
+                                    Behavior on Layout.preferredHeight {
+                                        NumberAnimation {
+                                            duration: 200
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
                                     // 单个元器件输入
                                     ColumnLayout {
                                         id: singleInputColumn
@@ -454,7 +486,7 @@ Item {
                                         }
                                     }
 
-                                    // BOM 导入
+                                    // BOM 导入（拖拽式卡片）
                                     ColumnLayout {
                                         id: bomImportColumn
                                         width: parent.width
@@ -474,105 +506,111 @@ Item {
                                             }
                                         }
 
-                                        RowLayout {
-                                            width: parent.width
-                                            spacing: 12
-                                            ModernButton {
-                                                text: qsTranslate("MainWindow", "选择BOM文件")
-                                                iconName: "upload"
-                                                backgroundColor: AppStyle.colors.success
-                                                hoverColor: AppStyle.colors.successDark
-                                                pressedColor: AppStyle.colors.successDark
-                                                onClicked: {
-                                                    bomFileDialog.open();
-                                                }
-                                            }
+                                        property bool hasFile: window.componentListController && window.componentListController.bomFilePath && window.componentListController.bomFilePath.length > 0
+                                        property string fileName: hasFile ? window.componentListController.bomFilePath.split("/").pop() : ""
+                                        property string bomResult: window.componentListController ? window.componentListController.bomResult : ""
 
-                                            Text {
-                                                Layout.fillWidth: true
-                                                text: window.componentListController && window.componentListController.bomFilePath && window.componentListController.bomFilePath.length > 0 ? window.componentListController.bomFilePath.split("/").pop() : qsTranslate("MainWindow", "未选择文件")
-                                                font.pixelSize: AppStyle.fontSizes.sm
-                                                color: AppStyle.colors.textSecondary
-                                                horizontalAlignment: Text.AlignHCenter
-                                                elide: Text.ElideMiddle
-                                            }
-                                        }
-
-                                        Text {
+                                        // 文件选择区域
+                                        Rectangle {
                                             Layout.fillWidth: true
-                                            Layout.topMargin: AppStyle.spacing.xs
-                                            text: window.componentListController ? window.componentListController.bomResult : ""
-                                            font.pixelSize: AppStyle.fontSizes.sm
-                                            color: AppStyle.colors.success
-                                            horizontalAlignment: Text.AlignHCenter
-                                            visible: window.componentListController && window.componentListController.bomResult && window.componentListController.bomResult.length > 0
-                                        }
-                                    }
-                                }
-
-                                // 弱网络选项（始终可见）
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 12
-                                    CheckBox {
-                                        id: weakNetworkCheckbox
-                                        Layout.fillWidth: false
-                                        text: qsTranslate("MainWindow", "客户端弱网络适配")
-                                        checked: window.exportSettingsController ? window.exportSettingsController.weakNetworkSupport : false
-                                        onCheckedChanged: {
-                                            if (window.exportSettingsController) {
-                                                window.exportSettingsController.setWeakNetworkSupport(checked);
+                                            Layout.minimumHeight: 100
+                                            radius: AppStyle.radius.md
+                                            color: {
+                                                if (bomImportColumn.hasFile)
+                                                    return AppStyle.isDarkMode ? Qt.rgba(34, 197, 94, 0.08) : Qt.rgba(34, 197, 94, 0.06);
+                                                return AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.03) : Qt.rgba(0, 0, 0, 0.02);
                                             }
-                                        }
-                                        font.pixelSize: AppStyle.fontSizes.sm
-                                        ToolTip.visible: hovered
-                                        ToolTip.text: qsTranslate("MainWindow", "仅影响本机网络请求策略，不代表服务器限流；开启后会使用更保守的并发、超时和重试配置")
-                                        ToolTip.delay: 500
-                                        indicator: Rectangle {
-                                            implicitWidth: 22
-                                            implicitHeight: 22
-                                            x: weakNetworkCheckbox.leftPadding
-                                            y: parent.height / 2 - height / 2
-                                            radius: AppStyle.radius.xs
-                                            color: weakNetworkCheckbox.checked ? AppStyle.colors.primary : "transparent"
-                                            border.color: weakNetworkCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                                            border.width: AppStyle.borderWidths.normal
-                                            Behavior on color {
-                                                ColorAnimation {
-                                                    duration: 150
-                                                }
-                                            }
+                                            border.width: bomImportColumn.hasFile ? 2 : 0
+                                            border.color: bomImportColumn.hasFile ? AppStyle.colors.success : "transparent"
                                             Behavior on border.color {
                                                 ColorAnimation {
-                                                    duration: 150
+                                                    duration: AppStyle.durations.fast
+                                                }
+                                            }
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: AppStyle.durations.fast
                                                 }
                                             }
 
-                                            Text {
+                                            // 虚线边框（未选择文件时显示）
+                                            Canvas {
+                                                id: dashBorder
+                                                anchors.fill: parent
+                                                visible: !bomImportColumn.hasFile
+                                                opacity: bomDropArea.containsMouse ? 0.8 : 0.4
+                                                onPaint: {
+                                                    var ctx = getContext("2d");
+                                                    ctx.clearRect(0, 0, width, height);
+                                                    ctx.strokeStyle = bomDropArea.containsMouse ? AppStyle.colors.primary : AppStyle.colors.textSecondary;
+                                                    ctx.lineWidth = 1.5;
+                                                    ctx.setLineDash([6, 4]);
+                                                    var r = AppStyle.radius.md;
+                                                    ctx.beginPath();
+                                                    ctx.roundedRect(1, 1, width - 2, height - 2, r, r);
+                                                    ctx.stroke();
+                                                }
+                                                Connections {
+                                                    target: bomDropArea
+                                                    function onContainsMouseChanged() {
+                                                        dashBorder.requestPaint();
+                                                    }
+                                                }
+                                            }
+
+                                            ColumnLayout {
                                                 anchors.centerIn: parent
-                                                text: "✓"
-                                                font.pixelSize: AppStyle.fontSizes.sm
-                                                color: AppStyle.colors.textOnPrimary
-                                                visible: weakNetworkCheckbox.checked
+                                                spacing: AppStyle.spacing.sm
+                                                // 文件图标
+                                                Text {
+                                                    Layout.alignment: Qt.AlignHCenter
+                                                    text: bomImportColumn.hasFile ? "📄" : "📁"
+                                                    font.pixelSize: 28
+                                                }
+                                                // 文件名或提示文字
+                                                Text {
+                                                    Layout.alignment: Qt.AlignHCenter
+                                                    text: {
+                                                        if (bomImportColumn.hasFile)
+                                                            return bomImportColumn.fileName;
+                                                        return qsTranslate("MainWindow", "点击选择 BOM 文件");
+                                                    }
+                                                    font.pixelSize: AppStyle.fontSizes.sm
+                                                    font.bold: bomImportColumn.hasFile
+                                                    color: bomImportColumn.hasFile ? AppStyle.colors.textPrimary : AppStyle.colors.textSecondary
+                                                    elide: Text.ElideMiddle
+                                                    Layout.maximumWidth: parent.parent.width - AppStyle.spacing.xl * 2
+                                                }
+                                                // 解析结果
+                                                Text {
+                                                    Layout.alignment: Qt.AlignHCenter
+                                                    text: {
+                                                        if (bomImportColumn.bomResult && bomImportColumn.bomResult.length > 0)
+                                                            return bomImportColumn.bomResult;
+                                                        if (bomImportColumn.hasFile)
+                                                            return qsTranslate("MainWindow", "文件已就绪");
+                                                        return qsTranslate("MainWindow", "支持格式: .xlsx, .csv, .txt");
+                                                    }
+                                                    font.pixelSize: AppStyle.fontSizes.xs
+                                                    color: {
+                                                        if (bomImportColumn.bomResult && bomImportColumn.bomResult.length > 0)
+                                                            return AppStyle.colors.success;
+                                                        if (bomImportColumn.hasFile)
+                                                            return AppStyle.colors.success;
+                                                        return AppStyle.colors.textSecondary;
+                                                    }
+                                                    opacity: 0.8
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                id: bomDropArea
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: bomFileDialog.open()
                                             }
                                         }
-
-                                        contentItem: Text {
-                                            text: parent.text
-                                            font: parent.font
-                                            color: AppStyle.colors.textPrimary
-                                            verticalAlignment: Text.AlignVCenter
-                                            leftPadding: parent.indicator.width + parent.spacing
-                                        }
-                                    }
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: qsTranslate("MainWindow", "导入 BOM 前可先开启，验证和预览图加载也会使用该策略")
-                                        font.pixelSize: AppStyle.fontSizes.xs
-                                        color: AppStyle.colors.textSecondary
-                                        elide: Text.ElideRight
-                                        verticalAlignment: Text.AlignVCenter
                                     }
                                 }
                             }
@@ -585,19 +623,18 @@ Item {
                             exportProgressController: window.exportProgressController
                         }
 
-                        // ==================== Compact 模式独有内容 ====================
+                        // ==================== 工作区内容（始终可见） ====================
                         // 转换进度
                         ExportProgressCard {
                             Layout.fillWidth: true
                             exportProgressController: window.exportProgressController
-                            visible: !window.isSidebarMode && ((window.exportProgressController && window.exportProgressController.isExporting) || (window.exportProgressController && window.exportProgressController.progress > 0))
+                            visible: (window.exportProgressController && window.exportProgressController.isExporting) || (window.exportProgressController && window.exportProgressController.progress > 0)
                         }
 
                         // 转换结果
                         ExportResultsCard {
                             Layout.fillWidth: true
                             exportProgressController: window.exportProgressController
-                            visible: !window.isSidebarMode
                         }
 
                         // 导出统计
@@ -605,7 +642,6 @@ Item {
                             Layout.fillWidth: true
                             exportProgressController: window.exportProgressController
                             exportSettingsController: window.exportSettingsController
-                            visible: !window.isSidebarMode
                         }
 
                         // 导出设置
@@ -817,6 +853,39 @@ Item {
                             window.exportProgressController.cancelExport();
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // 底部进度指示条（2px 全局进度，z: -1 避免遮挡 resize 手柄）
+    Rectangle {
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 2
+        z: -1
+        color: "transparent"
+        visible: window.exportProgressController && (window.exportProgressController.isExporting || window.exportProgressController.progress > 0)
+        Rectangle {
+            width: parent.width * ((window.exportProgressController ? window.exportProgressController.progress : 0) / 100)
+            height: parent.height
+            color: {
+                var pc = window.exportProgressController;
+                if (pc && pc.isExporting)
+                    return AppStyle.colors.warning;
+                if (pc && pc.failureCount > 0)
+                    return AppStyle.colors.danger;
+                return AppStyle.colors.success;
+            }
+            Behavior on width {
+                NumberAnimation {
+                    duration: 150
+                }
+            }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 300
                 }
             }
         }

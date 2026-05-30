@@ -19,7 +19,7 @@ Rectangle {
     signal copyClicked
     signal retryClicked
     signal descriptionEditRequested(string componentId, string description)
-    height: 64 // 增加高度以容纳缩略图和更多信息
+    height: ResponsiveHelper.isShortWindow ? 52 : 64
     // 悬停效果
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
     radius: AppStyle.radius.md
