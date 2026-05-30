@@ -489,20 +489,20 @@ Rectangle {
                     if (exportStatus) {
                         var s = exportStatus.status || "";
                         if (s === "in_progress")
-                            return "正在导出...";
+                            return qsTr("正在导出...");
                         if (s === "success")
-                            return "导出完成";
+                            return qsTr("导出完成");
                         if (s === "failed")
-                            return exportStatus.error || "导出失败";
+                            return exportStatus.error || qsTr("导出失败");
                     }
                     // 使用 validationPhase 显示精确状态
                     var phase = itemData.validationPhase || "idle";
                     if (phase === "validating")
-                        return "正在验证 CAD 数据...";
+                        return qsTr("正在验证 CAD 数据...");
                     if (phase === "fetching_preview")
-                        return "正在获取预览图...";
+                        return qsTr("正在获取预览图...");
                     if (phase === "failed")
-                        return itemData.errorMessage || "验证失败";
+                        return itemData.errorMessage || qsTr("验证失败");
                     if (phase === "completed" || itemData.isValid) {
                         return itemData.description || itemData.name || "";
                     }

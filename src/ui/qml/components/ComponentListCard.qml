@@ -554,7 +554,7 @@ Card {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: emptyChipShape.bottom
                         anchors.topMargin: AppStyle.spacing.sm
-                        text: "无预览图"
+                        text: qsTr("无预览图")
                         font.pixelSize: AppStyle.fontSizes.sm
                         color: AppStyle.colors.textSecondary
                     }

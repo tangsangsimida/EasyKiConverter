@@ -887,7 +887,7 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
                 item->setRetryable(!nonRetryable);
                 if (error.contains("No result", Qt::CaseInsensitive) ||
                     error.contains("not found", Qt::CaseInsensitive) || error.contains("404", Qt::CaseInsensitive)) {
-                    item->setErrorMessage(QStringLiteral("元器件不存在（404）"));
+                    item->setErrorMessage(tr("元器件不存在（404）"));
                 } else if (nonRetryable) {
                     item->setErrorMessage(error);
                 } else {
@@ -901,14 +901,14 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
                 // 只更新错误消息，不改变验证状态
                 if (error.contains("Request timeout", Qt::CaseInsensitive) ||
                     error.contains("timeout", Qt::CaseInsensitive)) {
-                    item->setErrorMessage("预览图获取超时（网络不稳定）");
+                    item->setErrorMessage(tr("预览图获取超时（网络不稳定）"));
                 } else if (error.contains("No result", Qt::CaseInsensitive) || error.contains("404") ||
                            error.contains("not found", Qt::CaseInsensitive)) {
-                    item->setErrorMessage("预览图不存在");
+                    item->setErrorMessage(tr("预览图不存在"));
                 } else if (error.contains("403")) {
-                    item->setErrorMessage("预览图获取被拒绝");
+                    item->setErrorMessage(tr("预览图获取被拒绝"));
                 } else {
-                    item->setErrorMessage("预览图获取失败");
+                    item->setErrorMessage(tr("预览图获取失败"));
                 }
             }
         } else {

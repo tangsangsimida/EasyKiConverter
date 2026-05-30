@@ -272,6 +272,55 @@ Conversion completed: %1 succeeded, %2 failed</translation>
     </message>
 </context>
 <context>
+    <name>SystemTrayManager</name>
+    <message>
+        <source>EasyKiConverter - LCSC 转换工具</source>
+        <translation>EasyKiConverter - LCSC Converter</translation>
+    </message>
+    <message>
+        <source>显示窗口</source>
+        <translation>Show Window</translation>
+    </message>
+    <message>
+        <source>退出</source>
+        <translation>Quit</translation>
+    </message>
+    <message>
+        <source>导出完成</source>
+        <translation>Export Complete</translation>
+    </message>
+    <message>
+        <source>导出失败：%1 个元器件全部失败</source>
+        <translation>Export failed: all %1 components failed</translation>
+    </message>
+    <message>
+        <source>成功 %1 个，失败 %2 个</source>
+        <translation>%1 succeeded, %2 failed</translation>
+    </message>
+    <message>
+        <source>
+输出：符号 %1 · 封装 %2 · 3D %3</source>
+        <translation>
+Output: Symbols %1 · Footprints %2 · 3D %3</translation>
+    </message>
+    <message>
+        <source>成功导出 1 个元器件</source>
+        <translation>Successfully exported 1 component</translation>
+    </message>
+    <message>
+        <source>成功导出 %1 个元器件</source>
+        <translation>Successfully exported %1 components</translation>
+    </message>
+    <message>
+        <source>输出：符号 %1 · 封装 %2 · 3D %3</source>
+        <translation>Output: Symbols %1 · Footprints %2 · 3D %3</translation>
+    </message>
+    <message>
+        <source>耗时：%1</source>
+        <translation>Duration: %1</translation>
+    </message>
+</context>
+<context>
     <name>ComponentListCard</name>
     <message>
         <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="386"/>
@@ -293,6 +342,10 @@ Conversion completed: %1 succeeded, %2 failed</translation>
         <source>无效 (%1)</source>
         <translation>Invalid (%1)</translation>
     </message>
+    <message>
+        <source>无预览图</source>
+        <translation>No Preview</translation>
+    </message>
 </context>
 <context>
     <name>ComponentListItem</name>
@@ -309,6 +362,53 @@ Conversion completed: %1 succeeded, %2 failed</translation>
         <location filename="../../src/ui/qml/components/ComponentListItem.qml" line="590"/>
         <source>编辑元器件描述</source>
         <translation>Edit Component Description</translation>
+    </message>
+    <message>
+        <source>正在导出...</source>
+        <translation>Exporting...</translation>
+    </message>
+    <message>
+        <source>导出完成</source>
+        <translation>Export Complete</translation>
+    </message>
+    <message>
+        <source>导出失败</source>
+        <translation>Export Failed</translation>
+    </message>
+    <message>
+        <source>正在验证 CAD 数据...</source>
+        <translation>Validating CAD data...</translation>
+    </message>
+    <message>
+        <source>正在获取预览图...</source>
+        <translation>Fetching preview...</translation>
+    </message>
+    <message>
+        <source>验证失败</source>
+        <translation>Validation Failed</translation>
+    </message>
+</context>
+<context>
+    <name>ComponentListViewModel</name>
+    <message>
+        <source>元器件不存在（404）</source>
+        <translation>Component not found (404)</translation>
+    </message>
+    <message>
+        <source>预览图获取超时（网络不稳定）</source>
+        <translation>Preview image fetch timeout (unstable network)</translation>
+    </message>
+    <message>
+        <source>预览图不存在</source>
+        <translation>Preview image not found</translation>
+    </message>
+    <message>
+        <source>预览图获取被拒绝</source>
+        <translation>Preview image access denied</translation>
+    </message>
+    <message>
+        <source>预览图获取失败</source>
+        <translation>Preview image fetch failed</translation>
     </message>
 </context>
 <context>
@@ -443,6 +543,10 @@ Conversion completed: %1 succeeded, %2 failed</translation>
 </context>
 <context>
     <name>Main</name>
+    <message>
+        <source>EasyKiConverter - 元器件转换工具</source>
+        <translation>EasyKiConverter - Component Converter</translation>
+    </message>
     <message>
         <location filename="../../src/ui/qml/Main.qml" line="35"/>
         <source>确认退出</source>
@@ -984,6 +1088,154 @@ Conversion completed: %1 succeeded, %2 failed</translation>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="72"/>
         <source>稍后提醒</source>
         <translation>Remind Later</translation>
+    </message>
+    <message>
+        <source>元器件添加方式</source>
+        <translation>Component Input Method</translation>
+    </message>
+    <message>
+        <source>手动添加元器件</source>
+        <translation>Add Component Manually</translation>
+    </message>
+    <message>
+        <source>通过BOM表导入元器件</source>
+        <translation>Import Components from BOM</translation>
+    </message>
+    <message>
+        <source>点击选择 BOM 文件</source>
+        <translation>Click to Select BOM File</translation>
+    </message>
+    <message>
+        <source>文件已就绪</source>
+        <translation>File Ready</translation>
+    </message>
+    <message>
+        <source>支持格式: .xlsx, .csv, .txt</source>
+        <translation>Supported formats: .xlsx, .csv, .txt</translation>
+    </message>
+    <message>
+        <source>输出配置</source>
+        <translation>Output Configuration</translation>
+    </message>
+    <message>
+        <source>路径</source>
+        <translation>Path</translation>
+    </message>
+    <message>
+        <source>选择目录...</source>
+        <translation>Select Directory...</translation>
+    </message>
+    <message>
+        <source>符号库描述</source>
+        <translation>Symbol Library Description</translation>
+    </message>
+    <message>
+        <source>封装库描述</source>
+        <translation>Footprint Library Description</translation>
+    </message>
+    <message>
+        <source>库信息 (可选)</source>
+        <translation>Library Info (Optional)</translation>
+    </message>
+    <message>
+        <source>导出内容</source>
+        <translation>Export Content</translation>
+    </message>
+    <message>
+        <source>3D 模型</source>
+        <translation>3D Model</translation>
+    </message>
+    <message>
+        <source>数据手册</source>
+        <translation>Datasheet</translation>
+    </message>
+    <message>
+        <source>格式</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>相对</source>
+        <translation>Relative</translation>
+    </message>
+    <message>
+        <source>覆盖</source>
+        <translation>Overwrite</translation>
+    </message>
+    <message>
+        <source>保留已有元器件，追加新的</source>
+        <translation>Keep existing components, append new ones</translation>
+    </message>
+    <message>
+        <source>覆盖已有元器件，追加新的</source>
+        <translation>Overwrite existing components, append new ones</translation>
+    </message>
+    <message>
+        <source>运行策略</source>
+        <translation>Runtime Strategy</translation>
+    </message>
+    <message>
+        <source>弱网模式</source>
+        <translation>Weak Network Mode</translation>
+    </message>
+    <message>
+        <source>展开设置</source>
+        <translation>Expand Settings</translation>
+    </message>
+    <message>
+        <source>收起设置</source>
+        <translation>Collapse Settings</translation>
+    </message>
+    <message>
+        <source>请先添加元器件</source>
+        <translation>Please add components first</translation>
+    </message>
+    <message>
+        <source>请至少选择一种导出类型</source>
+        <translation>Please select at least one export type</translation>
+    </message>
+    <message>
+        <source>开始导出</source>
+        <translation>Start Export</translation>
+    </message>
+    <message>
+        <source>正在导出中...</source>
+        <translation>Exporting...</translation>
+    </message>
+    <message>
+        <source>导出中</source>
+        <translation>Exporting</translation>
+    </message>
+    <message>
+        <source>转换中</source>
+        <translation>Converting</translation>
+    </message>
+    <message>
+        <source>停止</source>
+        <translation>Stop</translation>
+    </message>
+    <message>
+        <source>停止中</source>
+        <translation>Stopping</translation>
+    </message>
+    <message>
+        <source>重试</source>
+        <translation>Retry</translation>
+    </message>
+    <message>
+        <source>重试失败</source>
+        <translation>Retry Failed</translation>
+    </message>
+    <message>
+        <source>就绪</source>
+        <translation>Ready</translation>
+    </message>
+    <message>
+        <source>有 %1 项失败</source>
+        <translation>%1 item(s) failed</translation>
+    </message>
+    <message>
+        <source>打开目录</source>
+        <translation>Open Directory</translation>
     </message>
 </context>
 <context>
