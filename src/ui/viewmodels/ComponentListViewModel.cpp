@@ -17,7 +17,7 @@ namespace EasyKiConverter {
 PreviewImageEncodeRunnable::PreviewImageEncodeRunnable(ComponentListItemData* item,
                                                        const QList<QImage>& images,
                                                        std::function<void(const QString&, const QStringList&)> callback)
-    : m_item(item), m_images(images), m_callback(callback) {}
+    : m_componentId(item ? item->componentId() : QString()), m_images(images), m_callback(callback) {}
 
 void PreviewImageEncodeRunnable::run() {
     QStringList encodedList;
@@ -33,9 +33,8 @@ void PreviewImageEncodeRunnable::run() {
         encodedList.append(QString::fromLatin1(byteArray.toBase64().data()));
     }
 
-    QString componentId = m_item ? m_item->componentId() : QString();
     if (m_callback) {
-        m_callback(componentId, encodedList);
+        m_callback(m_componentId, encodedList);
     }
 }
 
@@ -185,6 +184,13 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
 }
 
 ComponentListViewModel::~ComponentListViewModel() {
+    if (m_encodingThreadPool) {
+        m_encodingThreadPool->clear();
+        if (!m_encodingThreadPool->waitForDone(5000)) {
+            qWarning() << "ComponentListViewModel: preview image encoding thread pool did not finish in time";
+        }
+    }
+
     qDeleteAll(m_componentList);
     m_componentList.clear();
 }
@@ -997,7 +1003,8 @@ void ComponentListViewModel::batchUpdatePreviewImages() {
             }
 
             auto callback = [this](const QString& cid, const QStringList& encoded) {
-                onPreviewImageEncodingDone(cid, encoded);
+                QMetaObject::invokeMethod(
+                    this, [this, cid, encoded]() { onPreviewImageEncodingDone(cid, encoded); }, Qt::QueuedConnection);
             };
             PreviewImageEncodeRunnable* runnable = new PreviewImageEncodeRunnable(item, images, callback);
 

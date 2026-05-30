@@ -198,6 +198,7 @@ private:
     bool deleteFile(const QString& path) const;
 
     bool commitBatchLocked(const QVector<CommitItem>& items);
+    bool cleanupEmptyTempDirectoryLocked() const;
 
     QString m_outputPath;  ///< 输出目录路径
     mutable QMutex m_mutex;  ///< 保护临时文件集合

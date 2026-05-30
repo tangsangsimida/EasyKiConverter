@@ -14,6 +14,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QMutexLocker>
+#include <QPointer>
 #include <QSaveFile>
 #include <QTextStream>
 #include <QTimer>
@@ -25,27 +26,48 @@ ParallelExportService::ParallelExportService(QObject* parent) : QObject(parent),
 }
 
 ParallelExportService::~ParallelExportService() {
-    // 取消所有导出阶段，防止worker在stage销毁后访问已释放对象
-    for (auto* stage : m_exportStages) {
-        stage->cancel();
-        stage->deleteLater();  // 使用 deleteLater 确保线程安全清理
+    m_cancelRequested = true;
+    ++m_activeRunGeneration;
+    NetworkClient::instance().cancelAllRequests();
+
+    QList<ExportTypeStage*> stagesToStop;
+    const auto appendUniqueStage = [&stagesToStop](ExportTypeStage* stage) {
+        if (stage && !stagesToStop.contains(stage)) {
+            stagesToStop.append(stage);
+        }
+    };
+
+    for (auto* stage : std::as_const(m_exportStages)) {
+        appendUniqueStage(stage);
+    }
+    for (const QPointer<ExportTypeStage>& stage : std::as_const(m_retiredExportStages)) {
+        appendUniqueStage(stage.data());
     }
 
-    // 清理阶段列表
     m_exportStages.clear();
+    m_retiredExportStages.clear();
+
+    for (ExportTypeStage* stage : std::as_const(stagesToStop)) {
+        stage->cancel();
+    }
+    for (ExportTypeStage* stage : std::as_const(stagesToStop)) {
+        stage->waitForFinished(30000);
+        delete stage;
+    }
 }
 
 void ParallelExportService::cleanupExportStages() {
     for (auto* stage : m_exportStages) {
         if (stage) {
-            if (stage->isRunning()) {
-                stage->setParent(this);
+            if (stage->isRunning() || stage->hasActiveWorkers()) {
+                retireExportStage(stage);
             } else {
                 stage->deleteLater();
             }
         }
     }
     m_exportStages.clear();
+    cleanupRetiredExportStages();
 }
 
 void ParallelExportService::discardExportStage(const QString& typeName, ExportTypeStage* stage) {
@@ -53,6 +75,54 @@ void ParallelExportService::discardExportStage(const QString& typeName, ExportTy
         m_exportStages.remove(typeName);
     }
     if (stage) {
+        if (stage->isRunning() || stage->hasActiveWorkers()) {
+            retireExportStage(stage);
+        } else {
+            for (int i = m_retiredExportStages.size() - 1; i >= 0; --i) {
+                if (m_retiredExportStages.at(i).data() == stage || m_retiredExportStages.at(i).isNull()) {
+                    m_retiredExportStages.removeAt(i);
+                }
+            }
+            stage->deleteLater();
+        }
+    }
+    cleanupRetiredExportStages();
+}
+
+void ParallelExportService::retireExportStage(ExportTypeStage* stage) {
+    if (!stage) {
+        return;
+    }
+
+    stage->setParent(this);
+    for (const QPointer<ExportTypeStage>& retiredStage : std::as_const(m_retiredExportStages)) {
+        if (retiredStage.data() == stage) {
+            return;
+        }
+    }
+    m_retiredExportStages.append(QPointer<ExportTypeStage>(stage));
+
+    QPointer<ExportTypeStage> stagePtr(stage);
+    connect(stage, &ExportTypeStage::completed, this, [this, stagePtr](int, int, int) {
+        if (!stagePtr) {
+            cleanupRetiredExportStages();
+            return;
+        }
+        discardExportStage(stagePtr->typeName(), stagePtr.data());
+    });
+}
+
+void ParallelExportService::cleanupRetiredExportStages() {
+    for (int i = m_retiredExportStages.size() - 1; i >= 0; --i) {
+        ExportTypeStage* stage = m_retiredExportStages.at(i).data();
+        if (!stage) {
+            m_retiredExportStages.removeAt(i);
+            continue;
+        }
+        if (stage->isRunning() || stage->hasActiveWorkers()) {
+            continue;
+        }
+        m_retiredExportStages.removeAt(i);
         stage->deleteLater();
     }
 }
@@ -142,9 +212,9 @@ void ParallelExportService::cancelPreload() {
         m_progress.endTime = QDateTime::currentDateTime();
     }
     updateOverallProgress();
+    emit cancelled();
     logNetworkRuntimeStats(QStringLiteral("preload-cancelled"));
     writeExportDetailedReport(QStringLiteral("preload-cancelled"));
-    emit cancelled();
 }
 
 void ParallelExportService::startExport() {
@@ -266,6 +336,7 @@ void ParallelExportService::startExport() {
     // 创建并启动各导出类型的Stage
     if (enableSymbol) {
         auto* stage = new SymbolExportStage(this);
+        QPointer<ExportTypeStage> stagePtr(stage);
         stage->setOptions(m_options);
         m_exportStages[QStringLiteral("Symbol")] = stage;
 
@@ -290,9 +361,11 @@ void ParallelExportService::startExport() {
         connect(stage,
                 &SymbolExportStage::completed,
                 this,
-                [this, stage, runGeneration](int success, int failed, int skipped) {
+                [this, stagePtr, runGeneration](int success, int failed, int skipped) {
                     if (runGeneration != m_activeRunGeneration) {
-                        discardExportStage(QStringLiteral("Symbol"), stage);
+                        if (stagePtr) {
+                            discardExportStage(QStringLiteral("Symbol"), stagePtr.data());
+                        }
                         return;
                     }
                     onExportTypeCompleted(QStringLiteral("Symbol"), success, failed, skipped);
@@ -302,6 +375,7 @@ void ParallelExportService::startExport() {
 
     if (enableFootprint) {
         auto* stage = new FootprintExportStage(this);
+        QPointer<ExportTypeStage> stagePtr(stage);
         stage->setOptions(m_options);
         m_exportStages[QStringLiteral("Footprint")] = stage;
 
@@ -326,9 +400,11 @@ void ParallelExportService::startExport() {
         connect(stage,
                 &FootprintExportStage::completed,
                 this,
-                [this, stage, runGeneration](int success, int failed, int skipped) {
+                [this, stagePtr, runGeneration](int success, int failed, int skipped) {
                     if (runGeneration != m_activeRunGeneration) {
-                        discardExportStage(QStringLiteral("Footprint"), stage);
+                        if (stagePtr) {
+                            discardExportStage(QStringLiteral("Footprint"), stagePtr.data());
+                        }
                         return;
                     }
                     onExportTypeCompleted(QStringLiteral("Footprint"), success, failed, skipped);
@@ -338,6 +414,7 @@ void ParallelExportService::startExport() {
 
     if (enableModel3D) {
         auto* stage = new Model3DExportStage(this);
+        QPointer<ExportTypeStage> stagePtr(stage);
         stage->setOptions(m_options);
         m_exportStages[QStringLiteral("Model3D")] = stage;
 
@@ -362,9 +439,11 @@ void ParallelExportService::startExport() {
         connect(stage,
                 &Model3DExportStage::completed,
                 this,
-                [this, stage, runGeneration](int success, int failed, int skipped) {
+                [this, stagePtr, runGeneration](int success, int failed, int skipped) {
                     if (runGeneration != m_activeRunGeneration) {
-                        discardExportStage(QStringLiteral("Model3D"), stage);
+                        if (stagePtr) {
+                            discardExportStage(QStringLiteral("Model3D"), stagePtr.data());
+                        }
                         return;
                     }
                     onExportTypeCompleted(QStringLiteral("Model3D"), success, failed, skipped);
@@ -374,6 +453,7 @@ void ParallelExportService::startExport() {
 
     if (enablePreview) {
         auto* stage = new PreviewImagesExportStage(this);
+        QPointer<ExportTypeStage> stagePtr(stage);
         stage->setOptions(m_options);
         m_exportStages[QStringLiteral("PreviewImages")] = stage;
 
@@ -398,9 +478,11 @@ void ParallelExportService::startExport() {
         connect(stage,
                 &PreviewImagesExportStage::completed,
                 this,
-                [this, stage, runGeneration](int success, int failed, int skipped) {
+                [this, stagePtr, runGeneration](int success, int failed, int skipped) {
                     if (runGeneration != m_activeRunGeneration) {
-                        discardExportStage(QStringLiteral("PreviewImages"), stage);
+                        if (stagePtr) {
+                            discardExportStage(QStringLiteral("PreviewImages"), stagePtr.data());
+                        }
                         return;
                     }
                     onExportTypeCompleted(QStringLiteral("PreviewImages"), success, failed, skipped);
@@ -410,6 +492,7 @@ void ParallelExportService::startExport() {
 
     if (enableDatasheet) {
         auto* stage = new DatasheetExportStage(this);
+        QPointer<ExportTypeStage> stagePtr(stage);
         stage->setOptions(m_options);
         m_exportStages[QStringLiteral("Datasheet")] = stage;
 
@@ -434,9 +517,11 @@ void ParallelExportService::startExport() {
         connect(stage,
                 &DatasheetExportStage::completed,
                 this,
-                [this, stage, runGeneration](int success, int failed, int skipped) {
+                [this, stagePtr, runGeneration](int success, int failed, int skipped) {
                     if (runGeneration != m_activeRunGeneration) {
-                        discardExportStage(QStringLiteral("Datasheet"), stage);
+                        if (stagePtr) {
+                            discardExportStage(QStringLiteral("Datasheet"), stagePtr.data());
+                        }
                         return;
                     }
                     onExportTypeCompleted(QStringLiteral("Datasheet"), success, failed, skipped);
@@ -467,15 +552,33 @@ void ParallelExportService::cancelExport() {
         return;
     }
 
-    for (auto* stage : m_exportStages) {
-        stage->cancel();
-    }
-
     m_progress.currentStage = ExportOverallProgress::Stage::Cancelled;
     m_progress.endTime = QDateTime::currentDateTime();
-    logNetworkRuntimeStats(QStringLiteral("export-cancelled"));
-    writeExportDetailedReport(QStringLiteral("export-cancelled"));
     emit cancelled();
+
+    QList<QPointer<ExportTypeStage>> stagesToCancel;
+    for (auto* stage : m_exportStages) {
+        if (stage) {
+            disconnect(stage, nullptr, this, nullptr);
+            retireExportStage(stage);
+            stagesToCancel.append(QPointer<ExportTypeStage>(stage));
+        }
+    }
+    m_exportStages.clear();
+    m_runningExportStages = 0;
+
+    NetworkClient::instance().cancelAllRequests();
+    for (const QPointer<ExportTypeStage>& stage : std::as_const(stagesToCancel)) {
+        if (stage) {
+            stage->cancel();
+        }
+    }
+    cleanupRetiredExportStages();
+
+    QTimer::singleShot(0, this, [this]() {
+        logNetworkRuntimeStats(QStringLiteral("export-cancelled"));
+        writeExportDetailedReport(QStringLiteral("export-cancelled"));
+    });
 }
 
 ExportOverallProgress ParallelExportService::getProgress() const {

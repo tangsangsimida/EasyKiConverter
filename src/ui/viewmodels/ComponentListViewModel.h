@@ -29,7 +29,7 @@ public:
     void run() override;
 
 private:
-    QPointer<ComponentListItemData> m_item;
+    QString m_componentId;
     QList<QImage> m_images;
     std::function<void(const QString&, const QStringList&)> m_callback;
 };

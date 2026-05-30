@@ -85,6 +85,16 @@ public:
     virtual void cancel();
 
     /**
+     * @brief 等待已提交的后台任务结束
+     * @param timeoutMs 最长等待时间（毫秒）
+     * @return true 表示后台任务已结束，false 表示超时
+     *
+     * 仅用于上层服务关闭或回收已取消 stage 时收敛后台线程。
+     * 普通取消流程应调用 cancel()，避免阻塞 UI。
+     */
+    virtual bool waitForFinished(int timeoutMs = 5000);
+
+    /**
      * @brief 获取当前进度
      * @return 线程安全的进度快照
      */
@@ -157,16 +167,6 @@ protected:
      * 线程安全：由m_workerMutex保护。
      */
     void startNextWorker();
-
-    /**
-     * @brief 带临时文件回滚的取消操作（供使用 TempFileManager 的子类调用）
-     * @param tempManager 子类的 TempFileManager 实例引用
-     *
-     * 统一执行：基类取消 → 临时文件回滚 → 状态清理。
-     * DatasheetExportStage、PreviewImagesExportStage、Model3DExportStage 共用此逻辑。
-     * 使用基类 m_isExporting 标志判断是否正在导出。
-     */
-    void cancelWithTempRollback(TempFileManager& tempManager);
 
     /**
      * @brief 等待单个工作线程退出（供使用独立 QThread 的子类调用）

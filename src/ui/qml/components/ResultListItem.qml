@@ -68,7 +68,7 @@ Rectangle {
     }
 
     height: 72
-    color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
+    color: itemHover.hovered ? AppStyle.colors.background : AppStyle.colors.surface
     radius: AppStyle.radius.md
     border.color: AppStyle.colors.border
     border.width: AppStyle.borderWidths.thin
@@ -126,6 +126,34 @@ Rectangle {
         id: copyFeedbackTimer
         interval: 1500
         onTriggered: copyFeedback.visible = false
+    }
+
+    HoverHandler {
+        id: itemHover
+    }
+
+    MouseArea {
+        id: itemMouseArea
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.ArrowCursor
+        acceptedButtons: Qt.RightButton | Qt.LeftButton
+        onClicked: mouse => {
+            if (mouse.button === Qt.RightButton) {
+                if (componentId) {
+                    copyHelper.text = componentId;
+                    copyHelper.selectAll();
+                    copyHelper.copy();
+                    item.copyClicked();
+                    copyFeedback.visible = true;
+                    copyFeedbackTimer.start();
+                }
+            } else if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier)) {
+                if (componentId) {
+                    Qt.openUrlExternally("https://so.szlcsc.com/global.html?k=" + componentId);
+                }
+            }
+        }
     }
 
     RowLayout {
@@ -292,7 +320,7 @@ Rectangle {
             Layout.alignment: Qt.AlignVCenter
             Rectangle {
                 anchors.fill: parent
-                color: retryButtonHovered ? AppStyle.colors.warningLight : "transparent"
+                color: retryButtonMouseArea.containsMouse ? AppStyle.colors.warningLight : "transparent"
                 radius: AppStyle.radius.sm
             }
             Text {
@@ -302,9 +330,17 @@ Rectangle {
                 font.bold: true
                 color: AppStyle.colors.warning
             }
-            ToolTip.visible: retryButtonHovered
+            ToolTip.visible: retryButtonMouseArea.containsMouse
             ToolTip.text: qsTr("重试")
             ToolTip.delay: 500
+            MouseArea {
+                id: retryButtonMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                acceptedButtons: Qt.LeftButton
+                onClicked: item.retryClicked()
+            }
         }
 
         Item {
@@ -316,7 +352,7 @@ Rectangle {
             Layout.alignment: Qt.AlignVCenter
             Rectangle {
                 anchors.fill: parent
-                color: deleteButtonHovered ? AppStyle.colors.dangerLight : "transparent"
+                color: deleteButtonMouseArea.containsMouse ? AppStyle.colors.dangerLight : "transparent"
                 radius: AppStyle.radius.sm
             }
             Text {
@@ -326,71 +362,16 @@ Rectangle {
                 font.bold: true
                 color: AppStyle.colors.danger
             }
-            ToolTip.visible: deleteButtonHovered
+            ToolTip.visible: deleteButtonMouseArea.containsMouse
             ToolTip.text: qsTr("删除")
             ToolTip.delay: 500
-        }
-    }
-
-    property bool retryButtonHovered: false
-    property bool deleteButtonHovered: false
-    MouseArea {
-        id: itemMouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.ArrowCursor
-        acceptedButtons: Qt.RightButton | Qt.LeftButton
-        onMouseXChanged: {
-            var inRetryArea = false;
-            var inDeleteArea = false;
-            if (retryButton.visible) {
-                var retryBtnX = item.width - AppStyle.spacing.lg - retryButton.width - AppStyle.spacing.md - deleteButton.width;
-                var retryBtnY = (item.height - retryButton.height) / 2;
-                if (mouseX >= retryBtnX && mouseX <= retryBtnX + retryButton.width && mouseY >= retryBtnY && mouseY <= retryBtnY + retryButton.height)
-                    inRetryArea = true;
-            }
-            if (deleteButton.visible) {
-                var deleteBtnX = item.width - AppStyle.spacing.lg - deleteButton.width;
-                var deleteBtnY = (item.height - deleteButton.height) / 2;
-                if (mouseX >= deleteBtnX && mouseX <= deleteBtnX + deleteButton.width && mouseY >= deleteBtnY && mouseY <= deleteBtnY + deleteButton.height)
-                    inDeleteArea = true;
-            }
-            retryButtonHovered = inRetryArea;
-            deleteButtonHovered = inDeleteArea;
-        }
-
-        onClicked: mouse => {
-            if (deleteButton.visible) {
-                var deleteBtnX = item.width - AppStyle.spacing.lg - deleteButton.width;
-                var deleteBtnY = (item.height - deleteButton.height) / 2;
-                if (mouse.x >= deleteBtnX && mouse.x <= deleteBtnX + deleteButton.width && mouse.y >= deleteBtnY && mouse.y <= deleteBtnY + deleteButton.height) {
-                    item.deleteClicked();
-                    return;
-                }
-            }
-
-            if (retryButton.visible) {
-                var retryBtnX = item.width - AppStyle.spacing.lg - retryButton.width - AppStyle.spacing.md - deleteButton.width;
-                var retryBtnY = (item.height - retryButton.height) / 2;
-                if (mouse.x >= retryBtnX && mouse.x <= retryBtnX + retryButton.width && mouse.y >= retryBtnY && mouse.y <= retryBtnY + retryButton.height) {
-                    item.retryClicked();
-                    return;
-                }
-            }
-
-            if (mouse.button === Qt.RightButton) {
-                if (componentId) {
-                    copyHelper.text = componentId;
-                    copyHelper.selectAll();
-                    copyHelper.copy();
-                    item.copyClicked();
-                    copyFeedback.visible = true;
-                    copyFeedbackTimer.start();
-                }
-            } else if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier)) {
-                if (componentId) {
-                    Qt.openUrlExternally("https://so.szlcsc.com/global.html?k=" + componentId);
-                }
+            MouseArea {
+                id: deleteButtonMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                acceptedButtons: Qt.LeftButton
+                onClicked: item.deleteClicked()
             }
         }
     }

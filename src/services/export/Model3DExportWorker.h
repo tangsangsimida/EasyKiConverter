@@ -13,7 +13,6 @@
 namespace EasyKiConverter {
 
 class ComponentData;
-class Exporter3DModel;
 
 /**
  * @brief 3D模型导出Worker
@@ -114,7 +113,6 @@ private:
     QSharedPointer<ComponentData> m_data;  ///< 预加载的元器件数据
     ExportOptions m_options;  ///< 导出选项
     std::atomic<bool> m_cancelled{false};  ///< 取消标志
-    Exporter3DModel* m_exporter;  ///< 3D模型导出器
 };
 
 }  // namespace EasyKiConverter

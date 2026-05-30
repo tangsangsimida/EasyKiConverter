@@ -143,6 +143,7 @@
 
 - 导出中点关闭，选择“继续导出”后标题栏按钮失效
 - 导出中选择“强制退出”后程序没有完全结束
+- 3D 模型导出过程中点击“停止导出”后段错误，崩溃栈停在 `std::atomic` 的 `store/load`
 
 **根本原因**：
 这是导出会话生命周期管理不完整导致的回归问题：
@@ -150,11 +151,14 @@
 1. 停止导出时，旧导出会话的 stage/worker 仍可能在后台收尾。
 2. 如果新一轮重试马上开始，错误的清理逻辑会提前销毁这些“仍在运行的旧 stage”，导致悬空对象、事件循环卡死或未响应。
 3. 关闭窗口与强制退出流程会复用同一批导出状态；一旦导出会话进入不一致状态，窗口控制也会连带异常。
+4. 3D 模型导出阶段中，活跃 worker 可能已经进入完成/删除流程；取消路径如果继续直接调用该 worker 的 `cancel()`，就可能访问到已释放对象里的 `std::atomic<bool>`。
 
 **修复方案**：
 - 停止导出时，立即结束**当前 UI 会话**，但旧后台任务只做隔离，不允许再回写当前会话。
 - 使用导出会话代数（generation）隔离迟到回调，旧会话的 `itemStatusChanged/progressChanged/completed` 必须被丢弃。
 - `cleanupExportStages()` 不能提前销毁仍在运行中的旧 stage，只能把它们从当前会话映射中移除，等其自然完成后再安全回收。
+- 3D 模型导出取消时只隔离当前 stage、清空待处理队列并回滚临时文件；不要在取消路径直接调用活跃 `Model3DExportWorker::cancel()`。
+- 3D worker 取消后迟到完成时不得提交临时 WRL/STEP 文件。
 - 标题栏关闭按钮不能直接复用 `window.close()` 作为普通关闭入口，必须走统一的 `WindowController` 关闭决策逻辑。
 - 强制退出时必须显式清理网络单例和后台线程，避免窗口已关但进程未退出。
 
@@ -164,6 +168,7 @@
 - 修改 stage 清理逻辑时，必须区分：
   - 当前会话的活动 stage
   - 旧会话仍在后台收尾的 stage
+- 修改 3D 导出取消逻辑时，不要直接访问活跃 worker 对象；把取消视为 stage 会话隔离和临时文件回滚，等待 worker 自然完成。
 - 修改窗口关闭逻辑时，必须同时验证：
   - 停止导出后立即重试
   - 导出中关闭后选择“继续导出”
@@ -173,6 +178,7 @@
 - `src/services/export/ParallelExportService.cpp`
 - `src/services/export/ParallelExportService.h`
 - `src/services/export/ExportTypeStage.cpp`
+- `src/services/export/Model3DExportStage.cpp`
 - `src/ui/qml/components/WindowController.qml`
 - `src/ui/qml/Main.qml`
 - `src/main.cpp`
@@ -231,6 +237,72 @@
 - `src/services/export/TempFileManager.cpp` — 临时目录提交逻辑
 
 **状态**：✅ 已修复 (2026-05-08)
+
+---
+
+### Q: 取消导出时程序崩溃（SIGSEGV），崩溃栈停在 std::atomic 的 loadRelaxed
+
+**问题描述**：
+导出过程中点击"停止导出"后程序崩溃，GDB 捕获到 SIGSEGV 信号，崩溃栈显示：
+
+```
+#0  QAtomicOps<int>::loadRelaxed (_q_value=Cannot access memory at address 0x7fffff7feff8)
+#1  QBasicAtomicInteger<int>::loadRelaxed
+#2  EasyKiConverter::Logger::shouldLog
+#3  EasyKiConverter::QtLogAdapter::qtMessageHandler
+#7  EasyKiConverter::ExportTypeStage::cancelWithTempRollback (line 182)
+#8  EasyKiConverter::DatasheetExportStage::cancel (line 72)
+#9  EasyKiConverter::ExportTypeStage::cancelWithTempRollback (line 184)
+#10 EasyKiConverter::DatasheetExportStage::cancel (line 72)
+#11 EasyKiConverter::ExportTypeStage::cancelWithTempRollback (line 184)
+...（无限递归）
+```
+
+**根本原因**：
+`ExportTypeStage::cancelWithTempRollback()` 内部调用虚函数 `cancel()`，而 `DatasheetExportStage::cancel()` 和 `PreviewImagesExportStage::cancel()` 覆盖了 `cancel()` 并反向调用 `cancelWithTempRollback()`，形成无限递归，最终栈溢出导致 SIGSEGV。
+
+调用链：
+```
+ExportTypeStage::cancelWithTempRollback()
+  → cancel()  (虚函数调用)
+    → DatasheetExportStage::cancel()  (子类覆盖)
+      → cancelWithTempRollback(m_tempManager)  (再次调用基类方法)
+        → cancel()  (虚函数调用)
+          → ... 无限递归 → 栈溢出 → SIGSEGV
+```
+
+此问题影响 `DatasheetExportStage` 和 `PreviewImagesExportStage`。`SymbolExportStage`、`FootprintExportStage`、`Model3DExportStage` 的 `cancel()` 实现直接处理取消逻辑，不受影响。
+
+**修复方案**：
+将 `DatasheetExportStage::cancel()` 和 `PreviewImagesExportStage::cancel()` 改为直接实现取消逻辑（与 Symbol/Footprint/Model3D 一致），不再调用 `cancelWithTempRollback()`：
+
+```cpp
+void DatasheetExportStage::cancel() {
+    if (!m_isExporting.load()) {
+        return;
+    }
+    qDebug() << "DatasheetExportStage: Cancelling...";
+    m_cancelled.store(true);
+    m_tempManager.rollbackAll();
+    m_isExporting.store(false);
+    qDebug() << "DatasheetExportStage: Cancelled";
+}
+```
+
+同时移除 `ExportTypeStage::cancelWithTempRollback()` 方法，该方法存在设计缺陷（调用虚函数导致递归风险），且已无调用者。
+
+**回归预防**：
+- 基类方法不要调用虚函数后再由子类覆盖该虚函数反向调用基类方法，否则会形成递归
+- 所有 `ExportTypeStage` 子类的 `cancel()` 实现应直接处理取消逻辑：设置 `m_cancelled` → 回滚临时文件 → 清除 `m_isExporting`
+- 修改导出取消逻辑时，必须验证 Datasheet、PreviewImages、Model3D、Symbol、Footprint 五种类型的取消行为
+
+**相关文件**：
+- `src/services/export/DatasheetExportStage.cpp` - 修复 cancel() 实现
+- `src/services/export/PreviewImagesExportStage.cpp` - 修复 cancel() 实现
+- `src/services/export/ExportTypeStage.h` - 移除 cancelWithTempRollback 声明
+- `src/services/export/ExportTypeStage.cpp` - 移除 cancelWithTempRollback 实现
+
+**状态**：✅ 已修复 (2026-05-30)
 
 ---
 
@@ -773,6 +845,7 @@ DelegateModel {
 - [ ] 3D 模型 UUID 使用 head.uuid_3d 优先（非 SVGNODE attrs.uuid）
 - [ ] CLI 模式 `--datasheet` 选项可用，数据手册导出成功
 - [ ] 数据手册 URL 白名单覆盖所有实际域名（item.szlcsc.com、atta.szlcsc.com、www.ti.com 等）
+- [ ] 取消导出时不崩溃（Datasheet/PreviewImages/Model3D/Symbol/Footprint 五种类型均验证）
 
 ---
 

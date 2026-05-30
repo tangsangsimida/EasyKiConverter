@@ -67,6 +67,8 @@ public:
      */
     void cancel() override;
 
+    bool waitForFinished(int timeoutMs = 5000) override;
+
 protected:
     // 以下方法覆盖基类纯虚函数，但在此实现中不使用
     QObject* createWorker() override {

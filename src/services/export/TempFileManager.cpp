@@ -545,6 +545,7 @@ bool TempFileManager::commitBatchLocked(const QVector<CommitItem>& items) {
         m_tempFiles.remove(entry.tempPath);
         qDebug() << "TempFileManager: Committed with backup:" << entry.tempPath << "->" << entry.finalPath;
     }
+    cleanupEmptyTempDirectoryLocked();
 
     return true;
 }
@@ -566,6 +567,7 @@ void TempFileManager::rollbackAll() {
     }
 
     m_tempFiles.clear();
+    cleanupEmptyTempDirectoryLocked();
 
     locker.unlock();
     emit cleanupCompleted(deletedCount);
@@ -666,6 +668,32 @@ bool TempFileManager::deleteFile(const QString& path) const {
     }
 
     qWarning() << "TempFileManager: Failed to delete:" << path;
+    return false;
+}
+
+bool TempFileManager::cleanupEmptyTempDirectoryLocked() const {
+    const QString tempDir = tempDirectory();
+    if (tempDir.isEmpty()) {
+        return true;
+    }
+
+    QDir dir(tempDir);
+    if (!dir.exists()) {
+        return true;
+    }
+
+    const QFileInfoList entries =
+        dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries | QDir::Hidden | QDir::System);
+    if (!entries.isEmpty()) {
+        return false;
+    }
+
+    if (QDir().rmdir(tempDir)) {
+        qDebug() << "TempFileManager: Removed empty temp directory:" << tempDir;
+        return true;
+    }
+
+    qWarning() << "TempFileManager: Failed to remove empty temp directory:" << tempDir;
     return false;
 }
 

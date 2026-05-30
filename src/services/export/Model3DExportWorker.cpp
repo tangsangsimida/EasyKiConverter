@@ -14,15 +14,11 @@
 
 namespace EasyKiConverter {
 
-Model3DExportWorker::Model3DExportWorker(QObject* parent) : QObject(parent), m_exporter(new Exporter3DModel(this)) {
+Model3DExportWorker::Model3DExportWorker(QObject* parent) : QObject(parent) {
     setAutoDelete(false);
 }
 
-Model3DExportWorker::~Model3DExportWorker() {
-    if (m_exporter) {
-        m_exporter->cancel();
-    }
-}
+Model3DExportWorker::~Model3DExportWorker() = default;
 
 void Model3DExportWorker::setData(const QString& componentId,
                                   const QSharedPointer<ComponentData>& data,
@@ -81,6 +77,8 @@ void Model3DExportWorker::run() {
         return;
     }
 
+    Exporter3DModel exporter;
+
     // 获取模型名称用于命名文件（仅在需要时）
     QString modelName;
     if (m_data && m_data->model3DData()) {
@@ -96,7 +94,8 @@ void Model3DExportWorker::run() {
     // 构建输出路径
     QString outputDir = m_options.outputPath;
     if (outputDir.isEmpty()) {
-        outputDir = QDir::currentPath() + QStringLiteral("/export/3dmodels");
+        outputDir =
+            QDir(QDir(QDir::currentPath()).filePath(QStringLiteral("export"))).filePath(QStringLiteral("3dmodels"));
     }
 
     QDir dir;
@@ -105,10 +104,9 @@ void Model3DExportWorker::run() {
         return;
     }
 
-    const QString wrlFinalPath =
-        needWrl ? (outputDir + QStringLiteral("/") + modelName + QStringLiteral(".wrl")) : QString();
-    const QString stepFinalPath =
-        needStep ? (outputDir + QStringLiteral("/") + modelName + QStringLiteral(".step")) : QString();
+    const QDir outputDirectory(outputDir);
+    const QString wrlFinalPath = needWrl ? outputDirectory.filePath(modelName + QStringLiteral(".wrl")) : QString();
+    const QString stepFinalPath = needStep ? outputDirectory.filePath(modelName + QStringLiteral(".step")) : QString();
     const QString wrlWritePath = m_outputPaths.wrlTempPath.isEmpty() ? wrlFinalPath : m_outputPaths.wrlTempPath;
     const QString stepWritePath = m_outputPaths.stepTempPath.isEmpty() ? stepFinalPath : m_outputPaths.stepTempPath;
 
@@ -168,7 +166,7 @@ void Model3DExportWorker::run() {
         if (objData.isEmpty() && cache->hasModel3DCached(uuid, QStringLiteral("wrl")) &&
             cache->copyModel3DToFile(uuid, QStringLiteral("wrl"), wrlWritePath)) {
             qDebug() << "Model3DExportWorker: WRL cache fallback for" << uuid;
-        } else if (objData.isEmpty() && !m_exporter->downloadObjDataSync(uuid, &objData, &error)) {
+        } else if (objData.isEmpty() && !exporter.downloadObjDataSync(uuid, &objData, &error)) {
             if (error.isEmpty()) {
                 error = QStringLiteral("Failed to download OBJ data for WRL export");
             }
@@ -178,7 +176,7 @@ void Model3DExportWorker::run() {
             cache->saveModel3D(uuid, objData, QStringLiteral("obj"));
             Model3DData modelData = buildModelData();
             modelData.setRawObj(QString::fromUtf8(objData));
-            if (!m_exporter->exportToWrl(modelData, wrlWritePath)) {
+            if (!exporter.exportToWrl(modelData, wrlWritePath)) {
                 error = QStringLiteral("Failed to convert OBJ to WRL");
             } else {
                 QFile file(wrlWritePath);
@@ -196,7 +194,7 @@ void Model3DExportWorker::run() {
         if (cache->copyModel3DToFile(uuid, QStringLiteral("step"), stepWritePath)) {
             qDebug() << "Model3DExportWorker: STEP cache hit for" << m_componentId << "uuid" << uuid;
         } else if (!m_cancelled.load()) {
-            if (!m_exporter->downloadStepDataSync(uuid, &stepData, &error)) {
+            if (!exporter.downloadStepDataSync(uuid, &stepData, &error)) {
                 if (error.isEmpty()) {
                     error = QStringLiteral("Failed to download STEP data");
                 }
@@ -205,7 +203,7 @@ void Model3DExportWorker::run() {
             if (!stepData.isEmpty()) {
                 Model3DData modelData = buildModelData();
                 modelData.setStep(stepData);
-                if (!m_exporter->exportToStep(modelData, stepWritePath)) {
+                if (!exporter.exportToStep(modelData, stepWritePath)) {
                     error = QStringLiteral("Failed to write STEP file");
                 } else {
                     cache->saveModel3D(uuid, stepData, QStringLiteral("step"));
@@ -244,9 +242,6 @@ void Model3DExportWorker::onDownloadError(const QString& error) {
 
 void Model3DExportWorker::cancel() {
     m_cancelled.store(true);
-    if (m_exporter) {
-        m_exporter->cancel();
-    }
 }
 
 }  // namespace EasyKiConverter
