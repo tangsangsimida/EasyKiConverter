@@ -15,6 +15,8 @@ Card {
     readonly property bool showPreviewHint: componentListController ? componentListController.previewReadyHint : false
     readonly property color hintColor: showPreviewHint ? "#31c36b" : (showValidationHint ? "#2f7ef8" : "transparent")
     property string editingDescriptionComponentId: ""
+    // 导出状态查找表（由 exportProgressController 驱动）
+    property var exportStatusMap: ({})
     title: qsTranslate("MainWindow", "元器件列表")
     // 默认折叠，只有在有元器件时才展开
     isCollapsed: componentListController ? componentListController.componentCount === 0 : true
@@ -64,6 +66,16 @@ Card {
                 previewPrefetchTimer.restart();
             }
         },
+        // 监听导出结果变化，更新导出状态查找表
+        Connections {
+            target: componentListCard.exportProgressController
+            function onResultsListChanged() {
+                componentListCard.updateExportStatusMap();
+            }
+            function onIsExportingChanged() {
+                componentListCard.updateExportStatusMap();
+            }
+        },
         Connections {
             target: componentListCard.componentListController
             function onListCleared() {
@@ -104,6 +116,11 @@ Card {
                 // 注意：QAbstractListModel 暴露的角色名为 "itemData"
                 itemData: model.itemData
                 searchText: searchInput.text // 传递搜索词用于高亮
+                // 绑定导出状态（由 ComponentListCard 维护的查找表）
+                exportStatus: {
+                    var id = itemData ? itemData.componentId : "";
+                    return id && componentListCard.exportStatusMap[id] ? componentListCard.exportStatusMap[id] : null;
+                }
                 onDeleteClicked: {
                     if (itemData) {
                         componentListCard.componentListController.removeComponentById(itemData.componentId);
@@ -977,6 +994,22 @@ Card {
             }
         }
         return bestPoint;
+    }
+
+    // 更新导出状态查找表
+    function updateExportStatusMap() {
+        var map = {};
+        var pc = componentListCard.exportProgressController;
+        if (pc && pc.resultsList) {
+            var list = pc.resultsList;
+            for (var i = 0; i < list.length; ++i) {
+                var item = list[i];
+                if (item && item.componentId) {
+                    map[item.componentId] = item;
+                }
+            }
+        }
+        exportStatusMap = map;
     }
 
     // 弹窗显示/隐藏辅助函数（供 delegate 调用）

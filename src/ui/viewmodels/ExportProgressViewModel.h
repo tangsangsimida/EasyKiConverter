@@ -141,6 +141,7 @@ public:
     Q_INVOKABLE void retryComponent(const QString& componentId);
     Q_INVOKABLE void retryFailedComponents();
     Q_INVOKABLE void removeResult(const QString& componentId);
+    Q_INVOKABLE QVariantMap getComponentExportStatus(const QString& componentId) const;
 
 public slots:
     void startExport(const QStringList& componentIds,

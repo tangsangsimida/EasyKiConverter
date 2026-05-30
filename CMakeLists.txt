@@ -231,6 +231,12 @@ set(QML_FILES
     src/ui/qml/components/WindowResizeHandles.qml
     src/ui/qml/components/ExitDialog.qml
     src/ui/qml/components/SliderDialogBase.qml
+    src/ui/qml/components/SidebarPanel.qml
+    src/ui/qml/components/SidebarSettingsView.qml
+    src/ui/qml/components/SidebarSection.qml
+    src/ui/qml/components/SidebarToggleRow.qml
+    src/ui/qml/components/SidebarTextField.qml
+    src/ui/qml/components/SidebarSegmentedControl.qml
     src/ui/qml/styles/AppStyle.qml
     src/ui/qml/styles/ResponsiveHelper.qml
 )

@@ -10,6 +10,11 @@ Rectangle {
     // 接收 ComponentListItemData 对象
     property var itemData
     property string searchText: ""
+    // 导出状态（由父级传入，来自 ExportProgressViewModel）
+    property var exportStatus: null
+    readonly property bool isExporting: exportStatus && (exportStatus.status === "in_progress" || exportStatus.status === "pending")
+    readonly property bool exportSuccess: exportStatus && exportStatus.status === "success"
+    readonly property bool exportFailed: exportStatus && exportStatus.status === "failed"
     signal deleteClicked
     signal copyClicked
     signal retryClicked
@@ -18,8 +23,77 @@ Rectangle {
     // 悬停效果
     color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
     radius: AppStyle.radius.md
-    border.color: AppStyle.colors.border
-    border.width: AppStyle.borderWidths.thin
+    border.color: {
+        if (exportSuccess)
+            return AppStyle.colors.success;
+        if (exportFailed)
+            return AppStyle.colors.danger;
+        if (isExporting)
+            return AppStyle.colors.warning;
+        return AppStyle.colors.border;
+    }
+    border.width: exportStatus ? 2 : AppStyle.borderWidths.thin
+    Behavior on border.color {
+        ColorAnimation {
+            duration: AppStyle.durations.fast
+        }
+    }
+
+    // 底部导出状态指示条
+    Rectangle {
+        id: exportStatusBar
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: 1
+        height: 3
+        radius: 1
+        visible: exportStatus !== null
+        color: {
+            if (exportSuccess)
+                return AppStyle.colors.success;
+            if (exportFailed)
+                return AppStyle.colors.danger;
+            if (isExporting)
+                return AppStyle.colors.warning;
+            return AppStyle.colors.border;
+        }
+        clip: true
+        // 导出中：扫光（Shimmer）效果
+        Rectangle {
+            id: shimmerEffect
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: parent.width * 0.4
+            visible: isExporting
+            opacity: 0.6
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop {
+                    position: 0.0
+                    color: "transparent"
+                }
+                GradientStop {
+                    position: 0.5
+                    color: Qt.rgba(1, 1, 1, 0.8)
+                }
+                GradientStop {
+                    position: 1.0
+                    color: "transparent"
+                }
+            }
+            SequentialAnimation on x {
+                running: isExporting
+                loops: Animation.Infinite
+                NumberAnimation {
+                    from: -shimmerEffect.width
+                    to: exportStatusBar.width
+                    duration: 1200
+                    easing.type: Easing.InOutQuad
+                }
+            }
+        }
+    }
     // 缓存搜索正则以优化性能
     property string cachedSearchText: ""
     property var cachedRegex: null
@@ -411,6 +485,16 @@ Rectangle {
                 text: {
                     if (!itemData)
                         return "";
+                    // 导出状态优先显示
+                    if (exportStatus) {
+                        var s = exportStatus.status || "";
+                        if (s === "in_progress")
+                            return "正在导出...";
+                        if (s === "success")
+                            return "导出完成";
+                        if (s === "failed")
+                            return exportStatus.error || "导出失败";
+                    }
                     // 使用 validationPhase 显示精确状态
                     var phase = itemData.validationPhase || "idle";
                     if (phase === "validating")
@@ -425,7 +509,15 @@ Rectangle {
                     return "";
                 }
                 font.pixelSize: AppStyle.fontSizes.sm
-                color: (itemData && itemData.validationPhase === "failed") ? AppStyle.colors.danger : AppStyle.colors.textSecondary
+                color: {
+                    if (exportFailed)
+                        return AppStyle.colors.danger;
+                    if (exportSuccess)
+                        return AppStyle.colors.success;
+                    if (itemData && itemData.validationPhase === "failed")
+                        return AppStyle.colors.danger;
+                    return AppStyle.colors.textSecondary;
+                }
                 elide: Text.ElideRight
             }
         }

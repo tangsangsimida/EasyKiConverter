@@ -752,6 +752,16 @@ void ExportProgressViewModel::removeResult(const QString& componentId) {
     }
 }
 
+QVariantMap ExportProgressViewModel::getComponentExportStatus(const QString& componentId) const {
+    if (m_idToIndexMap.contains(componentId)) {
+        int index = m_idToIndexMap[componentId];
+        if (index >= 0 && index < m_resultsList.size()) {
+            return m_resultsList[index].toMap();
+        }
+    }
+    return {};
+}
+
 void ExportProgressViewModel::setStatus(const QString& status) {
     if (m_status != status) {
         m_status = status;
