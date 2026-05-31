@@ -53,6 +53,12 @@ public:
     ~ComponentService() override;
 
     /**
+     * @brief 中止所有批量获取任务，重置队列和并行上下文
+     * @note 供 ParallelExportService 在取消导出时调用
+     */
+    void abortBatchFetch();
+
+    /**
      * @brief 获取元件数据
      *
      * @param componentId 元件ID

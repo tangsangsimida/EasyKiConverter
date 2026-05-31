@@ -12,9 +12,12 @@
 #include <QJsonObject>
 #include <QMutex>
 #include <QObject>
+#include <QSet>
 #include <QSharedPointer>
 #include <QString>
 
+#include <atomic>
+#include <cstdint>
 #include <memory>
 
 class CacheHealthManager;
@@ -192,7 +195,7 @@ public:
      * @param data 元器件数据
      * @note 适用于测试或需要保存后立即可见的场景
      */
-    void saveComponentMetadata(const QString& componentId, const ComponentData& data);
+    void saveComponentMetadata(const QString& componentId, const ComponentData& data, uint64_t expectedGeneration = 0);
 
     /**
      * @brief 异步保存元器件元数据到L2磁盘缓存（不阻塞UI）
@@ -207,14 +210,14 @@ public:
      * @param lcscId 元器件ID
      * @param data 符号CAD JSON数据
      */
-    void saveSymbolData(const QString& lcscId, const QByteArray& data);
+    void saveSymbolData(const QString& lcscId, const QByteArray& data, uint64_t expectedGeneration = 0);
 
     /**
      * @brief 保存封装CAD数据到L2磁盘缓存
      * @param lcscId 元器件ID
      * @param data 封装CAD JSON数据
      */
-    void saveFootprintData(const QString& lcscId, const QByteArray& data);
+    void saveFootprintData(const QString& lcscId, const QByteArray& data, uint64_t expectedGeneration = 0);
 
     /**
      * @brief 从L2磁盘缓存加载符号CAD JSON
@@ -235,7 +238,7 @@ public:
      * @param lcscId 元器件ID
      * @param cadData CAD数据JSON
      */
-    void saveCadDataJson(const QString& lcscId, const QByteArray& cadData);
+    void saveCadDataJson(const QString& lcscId, const QByteArray& cadData, uint64_t expectedGeneration = 0);
 
     /**
      * @brief 从缓存加载完整的CAD数据JSON
@@ -258,7 +261,10 @@ public:
      * @param imageData 图片数据
      * @param imageIndex 图片索引（0-2）
      */
-    void savePreviewImage(const QString& lcscId, const QByteArray& imageData, int imageIndex);
+    void savePreviewImage(const QString& lcscId,
+                          const QByteArray& imageData,
+                          int imageIndex,
+                          uint64_t expectedGeneration = 0);
 
     /**
      * @brief 加载数据手册
@@ -287,7 +293,10 @@ public:
      * @param datasheetData 数据手册数据
      * @param format 数据格式（pdf/html）
      */
-    void saveDatasheet(const QString& lcscId, const QByteArray& datasheetData, const QString& format);
+    void saveDatasheet(const QString& lcscId,
+                       const QByteArray& datasheetData,
+                       const QString& format,
+                       uint64_t expectedGeneration = 0);
 
     /**
      * @brief 下载数据手册（同步网络请求，支持取消）
@@ -319,7 +328,10 @@ public:
      * @param data 模型数据
      * @param extension 文件扩展名（step/wrl）
      */
-    void saveModel3D(const QString& uuid, const QByteArray& data, const QString& extension);
+    void saveModel3D(const QString& uuid,
+                     const QByteArray& data,
+                     const QString& extension,
+                     uint64_t expectedGeneration = 0);
 
     /**
      * @brief 检查3D模型是否有缓存
@@ -358,9 +370,36 @@ public:
     Q_INVOKABLE void clearAllCache();
 
     /**
-     * @brief 清空L1内存缓存
+     * @brief 获取当前缓存代次（供调用方在请求创建时捕获）
+     */
+    uint64_t currentGeneration() const {
+        return m_cacheGeneration.load();
+    }
+
+    /**
+     * @brief 清除指定组件的 tombstone（新请求开始时调用）
+     */
+    void clearTombstone(const QString& lcscId);
+
+    /**
+     * @brief 检查组件是否被 tombstone
+     */
+    bool isTombstoned(const QString& lcscId) const;
+
+    /**
+     * @brief 解除全局 tombstone（新一轮导出开始时调用）
+     */
+    void clearGlobalTombstone();
+
+    /**
+     * @brief 清空L1内存缓存（同时重置 tombstone）
      */
     void clearMemoryCache();
+
+    /**
+     * @brief 清空L1内存缓存（不重置 tombstone，供 clearAllCache 内部使用）
+     */
+    void clearMemoryCacheInternal();
 
     /**
      * @brief 获取所有缓存的元器件ID列表
@@ -523,7 +562,8 @@ private:
     QString makeMemoryKey(const QString& lcscId, const QString& type) const;
 
     static std::unique_ptr<ComponentCacheService> s_instance;
-    mutable QMutex m_mutex;
+    mutable QMutex m_mutex;  // 保护 L1 内存缓存
+    mutable QMutex m_diskWriteMutex;  // 串行化 generation 检查与磁盘写入
     QString m_cacheDir;
     int m_memoryCacheLimitMB;
     int m_diskCacheLimitMB;
@@ -536,6 +576,12 @@ private:
 
     // 跟踪L1缓存总大小（字节）
     qint64 m_memoryCacheSize;
+    // 缓存代次：clearAllCache 时递增，异步写入前检查，防止清空后旧任务写回
+    std::atomic<uint64_t> m_cacheGeneration{0};
+    // Per-component tombstone：removeCache 后阻止旧回调写回
+    mutable QMutex m_tombstoneMutex;
+    QSet<QString> m_tombstones;
+    bool m_allTombstoned = false;
 };
 
 }  // namespace EasyKiConverter

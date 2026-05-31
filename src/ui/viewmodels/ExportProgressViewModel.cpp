@@ -633,6 +633,15 @@ bool ExportProgressViewModel::openLastExportedFolder() {
 }
 
 void ExportProgressViewModel::clearCache() {
+    // 中止进行中的导出
+    if (m_isExporting) {
+        cancelExport();
+    }
+    // 重置 ComponentService 批处理状态
+    if (m_componentService) {
+        m_componentService->abortBatchFetch();
+    }
+    // 清空 L1 内存 + L2 磁盘缓存
     ComponentCacheService::instance()->clearAllCache();
 }
 

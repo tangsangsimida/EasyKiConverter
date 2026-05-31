@@ -153,6 +153,8 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
     m_runningExportStages = 0;
     ++m_activeRunGeneration;
     m_cancelRequested = false;
+    // 新一轮导出开始，解除全局 tombstone
+    ComponentCacheService::instance()->clearGlobalTombstone();
     qDebug() << "ParallelExportService: Starting preload for" << componentIds.size() << "components";
 
     m_componentIds = componentIds;
@@ -203,6 +205,7 @@ void ParallelExportService::cancelPreload() {
     m_nextPreloadIndex = m_componentIds.size();
     if (m_componentService) {
         disconnect(m_componentService, &ComponentService::allComponentsDataCollected, this, nullptr);
+        m_componentService->abortBatchFetch();
     }
     {
         QMutexLocker locker(&m_progressMutex);
@@ -269,7 +272,8 @@ void ParallelExportService::startExport() {
 
     for (const QString& componentId : std::as_const(m_componentIds)) {
         const auto it = m_cachedData.constFind(componentId);
-        if (it != m_cachedData.cend() && it.value()) {
+        if (it != m_cachedData.cend() && it.value() && it.value()->isValid() && it.value()->symbolData() &&
+            it.value()->footprintData()) {
             exportableComponentIds.append(componentId);
         } else {
             missingDataComponentIds.append(componentId);
@@ -564,6 +568,11 @@ void ParallelExportService::cancelExport() {
         return;
     }
 
+    // 重置 ComponentService 批处理上下文
+    if (m_componentService) {
+        m_componentService->abortBatchFetch();
+    }
+
     m_progress.currentStage = ExportOverallProgress::Stage::Cancelled;
     m_progress.endTime = QDateTime::currentDateTime();
     emit cancelled();
@@ -744,14 +753,17 @@ void ParallelExportService::processNextPreloadBatch() {
 
         {
             QMutexLocker locker(&m_progressMutex);
-            if (!data.lcscId().isEmpty()) {
+            // 严格校验：必须有 lcscId + symbolData + footprintData + isValid 才算有效
+            bool hasValidData = !data.lcscId().isEmpty() && data.isValid() && data.symbolData() != nullptr &&
+                                data.footprintData() != nullptr;
+            if (hasValidData) {
                 auto sharedData = QSharedPointer<ComponentData>::create(data);
                 m_cachedData[componentId] = sharedData;
                 m_progress.preloadProgress.successCount++;
                 qDebug() << "ParallelExportService: Loaded data for" << componentId;
             } else {
                 m_progress.preloadProgress.failedCount++;
-                m_progress.preloadProgress.failedComponents[componentId] = QStringLiteral("No component data found");
+                m_progress.preloadProgress.failedComponents[componentId] = QStringLiteral("Incomplete component data");
                 qWarning() << "ParallelExportService: No data found for component:" << componentId;
             }
 
@@ -816,8 +828,8 @@ void ParallelExportService::onAllComponentDataCollected(const QList<ComponentDat
             continue;
         }
 
-        // 检查数据是否有效（至少需要有 symbol 或 footprint 数据）
-        bool hasValidData = (data.symbolData() != nullptr || data.footprintData() != nullptr);
+        // 严格校验：必须同时有 symbol 和 footprint 数据且通过验证
+        bool hasValidData = data.isValid() && data.symbolData() != nullptr && data.footprintData() != nullptr;
 
         if (hasValidData) {
             auto sharedData = QSharedPointer<ComponentData>::create(data);

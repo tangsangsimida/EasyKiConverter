@@ -421,7 +421,9 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
     return componentData;
 }
 
-void ComponentCacheService::saveComponentMetadata(const QString& componentId, const ComponentData& data) {
+void ComponentCacheService::saveComponentMetadata(const QString& componentId,
+                                                  const ComponentData& data,
+                                                  uint64_t expectedGeneration) {
     QJsonObject metadata = buildMetadata(componentId, data);
     const QJsonObject existingMetadata = loadMetadata(componentId);
     metadata = mergeMetadata(existingMetadata, metadata);
@@ -431,13 +433,28 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId, co
     QByteArray* newData = new QByteArray(doc.toJson(QJsonDocument::Compact));
     qint64 sizeAfterUpdate = 0;
 
+    // 代次检查 + L1 写入 + 磁盘写入在同一个互斥区内，彻底关闭竞态窗口
     {
-        QMutexLocker locker(&m_mutex);
-        m_memoryCache.insert(key, newData, newData->size());
-        sizeAfterUpdate = m_memoryCache.totalCost();
+        QMutexLocker diskLocker(&m_diskWriteMutex);
+        if (expectedGeneration != 0) {
+            if (m_cacheGeneration.load() != expectedGeneration) {
+                LOG_DEBUG(LogModule::Core, "Discarded stale write for {} (generation mismatch)", componentId);
+                delete newData;
+                return;
+            }
+            if (isTombstoned(componentId)) {
+                LOG_DEBUG(LogModule::Core, "Discarded write for tombstoned component {}", componentId);
+                delete newData;
+                return;
+            }
+        }
+        {
+            QMutexLocker locker(&m_mutex);
+            m_memoryCache.insert(key, newData, newData->size());
+            sizeAfterUpdate = m_memoryCache.totalCost();
+        }
+        saveMetadata(componentId, metadata);
     }
-
-    saveMetadata(componentId, metadata);
     enforceDiskCacheLimit();
     emit memoryCacheSizeChanged(sizeAfterUpdate);
     emit cacheSaved(componentId);
@@ -448,15 +465,31 @@ void ComponentCacheService::saveComponentMetadataAsync(const QString& componentI
     // 异步版本：在后台线程执行文件I/O，不阻塞UI
     // 复制需要的数据以供后台线程使用
     const ComponentData dataCopy = data;
+    const uint64_t generation = m_cacheGeneration.load();
 
-    (void)QtConcurrent::run([this, componentId, dataCopy]() { saveComponentMetadata(componentId, dataCopy); });
+    (void)QtConcurrent::run([this, componentId, dataCopy, generation]() {
+        // 写入前检查代次：如果 clearAllCache 已调用，丢弃本次写入
+        if (m_cacheGeneration.load() != generation) {
+            return;
+        }
+        saveComponentMetadata(componentId, dataCopy, generation);
+    });
 }
 
-void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArray& data) {
+void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArray& data, uint64_t expectedGeneration) {
     if (data.isEmpty()) {
         return;
     }
 
+    QMutexLocker diskLocker(&m_diskWriteMutex);
+    if (expectedGeneration != 0) {
+        if (m_cacheGeneration.load() != expectedGeneration) {
+            return;
+        }
+        if (isTombstoned(lcscId)) {
+            return;
+        }
+    }
     QString symbolPath;
     {
         QMutexLocker locker(&m_mutex);
@@ -500,11 +533,22 @@ QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
     return QByteArray();
 }
 
-void ComponentCacheService::saveFootprintData(const QString& lcscId, const QByteArray& data) {
+void ComponentCacheService::saveFootprintData(const QString& lcscId,
+                                              const QByteArray& data,
+                                              uint64_t expectedGeneration) {
     if (data.isEmpty()) {
         return;
     }
 
+    QMutexLocker diskLocker(&m_diskWriteMutex);
+    if (expectedGeneration != 0) {
+        if (m_cacheGeneration.load() != expectedGeneration) {
+            return;
+        }
+        if (isTombstoned(lcscId)) {
+            return;
+        }
+    }
     QString footprintPath;
     {
         QMutexLocker locker(&m_mutex);
@@ -548,11 +592,22 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
     return QByteArray();
 }
 
-void ComponentCacheService::saveCadDataJson(const QString& lcscId, const QByteArray& cadData) {
+void ComponentCacheService::saveCadDataJson(const QString& lcscId,
+                                            const QByteArray& cadData,
+                                            uint64_t expectedGeneration) {
     if (cadData.isEmpty()) {
         return;
     }
 
+    QMutexLocker diskLocker(&m_diskWriteMutex);
+    if (expectedGeneration != 0) {
+        if (m_cacheGeneration.load() != expectedGeneration) {
+            return;
+        }
+        if (isTombstoned(lcscId)) {
+            return;
+        }
+    }
     QString cadDataPath;
     {
         QMutexLocker locker(&m_mutex);
@@ -671,11 +726,23 @@ QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int im
     return QByteArray();
 }
 
-void ComponentCacheService::savePreviewImage(const QString& lcscId, const QByteArray& imageData, int imageIndex) {
+void ComponentCacheService::savePreviewImage(const QString& lcscId,
+                                             const QByteArray& imageData,
+                                             int imageIndex,
+                                             uint64_t expectedGeneration) {
     if (imageIndex < 0 || imageIndex >= 3 || imageData.isEmpty()) {
         return;
     }
 
+    QMutexLocker diskLocker(&m_diskWriteMutex);
+    if (expectedGeneration != 0) {
+        if (m_cacheGeneration.load() != expectedGeneration) {
+            return;
+        }
+        if (isTombstoned(lcscId)) {
+            return;
+        }
+    }
     QString previewPath;
     {
         QMutexLocker locker(&m_mutex);
@@ -794,11 +861,21 @@ QByteArray ComponentCacheService::loadDatasheet(const QString& lcscId) const {
 
 void ComponentCacheService::saveDatasheet(const QString& lcscId,
                                           const QByteArray& datasheetData,
-                                          const QString& format) {
+                                          const QString& format,
+                                          uint64_t expectedGeneration) {
     if (datasheetData.isEmpty()) {
         return;
     }
 
+    QMutexLocker diskLocker(&m_diskWriteMutex);
+    if (expectedGeneration != 0) {
+        if (m_cacheGeneration.load() != expectedGeneration) {
+            return;
+        }
+        if (isTombstoned(lcscId)) {
+            return;
+        }
+    }
     QString actualPath;
     {
         QMutexLocker locker(&m_mutex);
@@ -942,11 +1019,18 @@ QByteArray ComponentCacheService::loadModel3D(const QString& uuid, const QString
     return QByteArray();
 }
 
-void ComponentCacheService::saveModel3D(const QString& uuid, const QByteArray& data, const QString& extension) {
+void ComponentCacheService::saveModel3D(const QString& uuid,
+                                        const QByteArray& data,
+                                        const QString& extension,
+                                        uint64_t expectedGeneration) {
     if (data.isEmpty()) {
         return;
     }
 
+    QMutexLocker diskLocker(&m_diskWriteMutex);
+    if (expectedGeneration != 0 && m_cacheGeneration.load() != expectedGeneration) {
+        return;
+    }
     QString path;
     {
         QMutexLocker locker(&m_mutex);
@@ -1006,7 +1090,14 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
 // ==================== 缓存管理 ====================
 
 void ComponentCacheService::removeCache(const QString& lcscId) {
-    // 先删除L2磁盘缓存（不需要锁）
+    // 锁顺序：先 disk，后 tombstone（与其他方法一致）
+    QMutexLocker diskLocker(&m_diskWriteMutex);
+    // 标记为 tombstone，阻止旧回调写回
+    {
+        QMutexLocker tombLocker(&m_tombstoneMutex);
+        m_tombstones.insert(lcscId.toUpper());
+    }
+    // 先删除L2磁盘缓存
     QString dirPath = componentCacheDir(lcscId);
     if (dirPath.isEmpty()) {
         return;
@@ -1039,7 +1130,32 @@ void ComponentCacheService::removeCache(const QString& lcscId) {
     emit memoryCacheSizeChanged(sizeAfterUpdate);
 }
 
+void ComponentCacheService::clearTombstone(const QString& lcscId) {
+    QMutexLocker tombLocker(&m_tombstoneMutex);
+    m_tombstones.remove(lcscId.toUpper());
+}
+
+void ComponentCacheService::clearGlobalTombstone() {
+    QMutexLocker tombLocker(&m_tombstoneMutex);
+    m_allTombstoned = false;
+    m_tombstones.clear();
+}
+
+bool ComponentCacheService::isTombstoned(const QString& lcscId) const {
+    QMutexLocker tombLocker(&m_tombstoneMutex);
+    return m_allTombstoned || m_tombstones.contains(lcscId.toUpper());
+}
+
 void ComponentCacheService::clearAllCache() {
+    // 递增代次，使所有正在排队的异步写入任务失效
+    m_cacheGeneration.fetch_add(1);
+    // 锁顺序：先 disk，后 tombstone（与 save 方法一致，避免死锁）
+    QMutexLocker diskLocker(&m_diskWriteMutex);
+    // 全局 tombstone：阻止所有旧回调写入
+    {
+        QMutexLocker tombLocker(&m_tombstoneMutex);
+        m_allTombstoned = true;
+    }
     // 先清空L2磁盘缓存（不需要锁）
     {
         QDir dir(m_cacheDir);
@@ -1056,19 +1172,24 @@ void ComponentCacheService::clearAllCache() {
         }
     }
 
-    // 再清空L1内存缓存（需要锁）
-    clearMemoryCache();
+    // 再清空L1内存缓存（不重置 tombstone）
+    clearMemoryCacheInternal();
 
     emit cacheSizeChanged(0);
 }
 
+void ComponentCacheService::clearMemoryCacheInternal() {
+    QMutexLocker locker(&m_mutex);
+    m_memoryCache.clear();
+}
+
 void ComponentCacheService::clearMemoryCache() {
     {
-        QMutexLocker locker(&m_mutex);
-
-        // QCache::clear() 会删除所有对象并重置 totalCost() 为 0
-        m_memoryCache.clear();
+        QMutexLocker tombLocker(&m_tombstoneMutex);
+        m_allTombstoned = false;
+        m_tombstones.clear();
     }
+    clearMemoryCacheInternal();
     LOG_DEBUG(LogModule::Core, "Cleared memory cache");
     emit memoryCacheSizeChanged(0);
 }

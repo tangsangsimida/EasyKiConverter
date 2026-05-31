@@ -161,6 +161,9 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     // 确保 componentId 格式统一（大写）
     QString normalizedId = componentId.toUpper();
 
+    // 新请求开始，清除该组件的 tombstone 以允许缓存写入
+    ComponentCacheService::instance()->clearTombstone(normalizedId);
+
     // 使用互斥锁保护 m_currentComponentId 的并发访问
     {
         QMutexLocker locker(&m_currentIdMutex);
@@ -1097,6 +1100,14 @@ void ComponentService::handleQueueTimeout() {
 
         resetQueueState();
     }
+}
+
+void ComponentService::abortBatchFetch() {
+    // 取消所有网络请求（包括预览图、数据手册、CAD数据）
+    cancelAllPendingRequests();
+    // 重置队列和并行上下文
+    resetQueueState();
+    qDebug() << "ComponentService: Batch fetch aborted, all state cleared";
 }
 
 void ComponentService::resetQueueState() {
