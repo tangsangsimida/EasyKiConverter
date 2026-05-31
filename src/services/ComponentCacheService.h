@@ -579,7 +579,7 @@ private:
     // 跟踪L1缓存总大小（字节）
     qint64 m_memoryCacheSize;
     // 缓存代次：clearAllCache 时递增，异步写入前检查，防止清空后旧任务写回
-    std::atomic<uint64_t> m_cacheGeneration{0};
+    std::atomic<uint64_t> m_cacheGeneration{1};
     // Per-component tombstone：removeCache 后阻止旧回调写回
     mutable QMutex m_tombstoneMutex;
     QSet<QString> m_tombstones;
