@@ -169,6 +169,7 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     }
 
     ComponentData reusableData;
+    uint64_t gen = 0;  // 请求创建时的缓存 generation，用于过滤旧回调
     bool reuseExistingData = false;
     bool shouldSkipAsDuplicate = false;
 
@@ -232,7 +233,18 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     }
 
     // 符号封装缓存不存在，改为后台线程直接获取并解析 CAD 数据，避免主线程卡顿。
-    const uint64_t gen = ComponentCacheService::instance()->currentGeneration();
+    // 从 FetchingComponent 读取请求创建时的 generation
+    {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        auto it = m_fetchingComponents.find(normalizedId);
+        if (it != m_fetchingComponents.end()) {
+            gen = it->cacheGeneration;
+        }
+    }
+    if (gen == 0) {
+        qWarning() << "fetchComponentDataInternal: No FetchingComponent for" << normalizedId << ", aborting";
+        return;
+    }
     auto future = QtConcurrent::run([normalizedId]() { return CadDataLoader::fetchAndParseCadData(normalizedId); });
     auto* watcher = new QFutureWatcher<CadFetchTaskResult>(this);
     connect(watcher, &QFutureWatcher<CadFetchTaskResult>::finished, this, [this, watcher, gen]() {
@@ -280,6 +292,19 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
 void ComponentService::loadComponentDataFromCacheAsync(const QString& normalizedId,
                                                        bool fetch3DModel,
                                                        ComponentCacheService* cache) {
+    // 从 FetchingComponent 读取请求创建时的 generation
+    uint64_t gen = 0;
+    {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        auto it = m_fetchingComponents.find(normalizedId);
+        if (it != m_fetchingComponents.end()) {
+            gen = it->cacheGeneration;
+        }
+    }
+    if (gen == 0) {
+        qWarning() << "loadComponentDataFromCacheAsync: No FetchingComponent for" << normalizedId << ", aborting";
+        return;
+    }
     // 在后台线程执行缓存加载（I/O 密集型）
     QFuture<CacheLoadResult> future = QtConcurrent::run([normalizedId, fetch3DModel, cache]() -> CacheLoadResult {
         CacheLoadResult result;
@@ -361,7 +386,6 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
     });
 
     // 等待后台任务完成并在主线程处理结果
-    const uint64_t gen = ComponentCacheService::instance()->currentGeneration();
     QFutureWatcher<CacheLoadResult>* watcher = new QFutureWatcher<CacheLoadResult>(this);
     connect(
         watcher, &QFutureWatcher<CacheLoadResult>::finished, this, [this, watcher, normalizedId, fetch3DModel, gen]() {
@@ -372,6 +396,7 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
                 qWarning() << "ComponentService: Failed to load cache for" << normalizedId
                            << ", falling back to network fetch";
                 // 缓存加载失败时，回退到网络获取
+                uint64_t retryGen = 0;
                 {
                     QMutexLocker locker(&m_fetchingComponentsMutex);
                     auto it = m_fetchingComponents.find(normalizedId);
@@ -380,11 +405,17 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
                     }
                     FetchingComponent& fetchingComponent = *it;
                     initializeFetchingComponent(fetchingComponent, normalizedId, fetch3DModel);
+                    // retry 视为新请求，使用新的 generation
+                    retryGen = fetchingComponent.cacheGeneration;
+                }
+                if (retryGen == 0) {
+                    qWarning() << "Cache retry: No FetchingComponent for" << normalizedId << ", aborting";
+                    return;
                 }
                 auto retryFuture =
                     QtConcurrent::run([normalizedId]() { return CadDataLoader::fetchAndParseCadData(normalizedId); });
                 auto* retryWatcher = new QFutureWatcher<CadFetchTaskResult>(this);
-                connect(retryWatcher, &QFutureWatcher<CadFetchTaskResult>::finished, this, [this, retryWatcher, gen]() {
+                connect(retryWatcher, &QFutureWatcher<CadFetchTaskResult>::finished, this, [this, retryWatcher, retryGen]() {
                     const CadFetchTaskResult result = retryWatcher->result();
                     retryWatcher->deleteLater();
 
@@ -415,11 +446,11 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
                     emit cadDataReady(result.componentId, result.parsed.componentData);
                     // 使用异步保存，不阻塞UI
                     ComponentCacheService::instance()->saveComponentMetadataAsync(
-                        result.componentId, result.parsed.componentData, gen);
+                        result.componentId, result.parsed.componentData, retryGen);
                     ComponentCacheService::instance()->saveCadDataJson(
                         result.componentId,
                         QJsonDocument(result.parsed.resultData).toJson(QJsonDocument::Compact),
-                        gen);
+                        retryGen);
 
                     if (m_parallelContext != nullptr) {
                         handleParallelDataCollected(result.componentId, result.parsed.componentData);
