@@ -37,6 +37,7 @@ void Model3DExportWorker::run() {
         emit completed(m_componentId, false, QStringLiteral("Cancelled"));
         return;
     }
+    const uint64_t gen = ComponentCacheService::instance()->currentGeneration();
 
     if (!m_data) {
         emit completed(m_componentId, false, QStringLiteral("No data available"));
@@ -173,7 +174,7 @@ void Model3DExportWorker::run() {
         } else if (objData.isEmpty()) {
             error = QStringLiteral("OBJ data is empty for WRL export");
         } else {
-            cache->saveModel3D(uuid, objData, QStringLiteral("obj"));
+            cache->saveModel3D(uuid, objData, QStringLiteral("obj"), gen);
             Model3DData modelData = buildModelData();
             modelData.setRawObj(QString::fromUtf8(objData));
             if (!exporter.exportToWrl(modelData, wrlWritePath)) {
@@ -181,7 +182,7 @@ void Model3DExportWorker::run() {
             } else {
                 QFile file(wrlWritePath);
                 if (file.open(QIODevice::ReadOnly)) {
-                    cache->saveModel3D(uuid, file.readAll(), QStringLiteral("wrl"));
+                    cache->saveModel3D(uuid, file.readAll(), QStringLiteral("wrl"), gen);
                     qDebug() << "Model3DExportWorker: Saved WRL to cache for" << m_componentId << "uuid" << uuid;
                 }
             }
@@ -206,7 +207,7 @@ void Model3DExportWorker::run() {
                 if (!exporter.exportToStep(modelData, stepWritePath)) {
                     error = QStringLiteral("Failed to write STEP file");
                 } else {
-                    cache->saveModel3D(uuid, stepData, QStringLiteral("step"));
+                    cache->saveModel3D(uuid, stepData, QStringLiteral("step"), gen);
                     qDebug() << "Model3DExportWorker: Saved STEP to cache for" << m_componentId << "uuid" << uuid;
                 }
             }

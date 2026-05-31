@@ -461,11 +461,14 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId,
     LOG_DEBUG(LogModule::Core, "Saved component metadata to cache: {}", componentId);
 }
 
-void ComponentCacheService::saveComponentMetadataAsync(const QString& componentId, const ComponentData& data) {
+void ComponentCacheService::saveComponentMetadataAsync(const QString& componentId,
+                                                       const ComponentData& data,
+                                                       uint64_t expectedGeneration) {
     // 异步版本：在后台线程执行文件I/O，不阻塞UI
     // 复制需要的数据以供后台线程使用
     const ComponentData dataCopy = data;
-    const uint64_t generation = m_cacheGeneration.load();
+    // 如果调用方没有传入 generation，则在入队时捕获当前值
+    const uint64_t generation = (expectedGeneration != 0) ? expectedGeneration : m_cacheGeneration.load();
 
     (void)QtConcurrent::run([this, componentId, dataCopy, generation]() {
         // 写入前检查代次：如果 clearAllCache 已调用，丢弃本次写入
@@ -770,6 +773,7 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
     if (imageUrl.isEmpty() || imageIndex < 0) {
         return QByteArray();
     }
+    const uint64_t gen = currentGeneration();
 
     QElapsedTimer timer;
     timer.start();
@@ -834,7 +838,7 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
 
     if (errorString.isEmpty() && !data.isEmpty()) {
         // 保存到磁盘缓存
-        savePreviewImage(lcscId, data, imageIndex);
+        savePreviewImage(lcscId, data, imageIndex, gen);
     } else if (!errorString.isEmpty() && errorString != "Cancelled") {
         LOG_WARN(LogModule::Core, "Preview image download failed for {}: {}", lcscId, errorString);
     }
@@ -909,6 +913,7 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
     if (datasheetUrl.isEmpty()) {
         return QByteArray();
     }
+    const uint64_t gen = currentGeneration();
 
     QElapsedTimer timer;
     timer.start();
@@ -985,7 +990,7 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
 
     if (errorString.isEmpty() && !data.isEmpty()) {
         // 保存到磁盘缓存
-        saveDatasheet(lcscId, data, ext);
+        saveDatasheet(lcscId, data, ext, gen);
     } else if (!errorString.isEmpty() && errorString != "Cancelled") {
         LOG_WARN(LogModule::Core, "Datasheet download failed for {}: {}", lcscId, errorString);
     }

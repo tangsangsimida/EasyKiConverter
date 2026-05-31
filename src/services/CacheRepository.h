@@ -58,6 +58,7 @@ public:
         }
 
         const RetryPolicy policy = RetryPolicy::fromProfile(RequestProfiles::previewImage(), weakNetwork);
+        const uint64_t gen = cache->currentGeneration();
         AsyncNetworkRequest* request =
             NetworkClient::instance().getAsync(QUrl(imageUrl), ResourceType::PreviewImage, policy);
 
@@ -73,7 +74,7 @@ public:
                 diag.errorString = QStringLiteral("Cancelled");
                 onComplete(QByteArray(), diag);
             } else if (result.success) {
-                cache->savePreviewImage(lcscId, result.data, imageIndex);
+                cache->savePreviewImage(lcscId, result.data, imageIndex, gen);
                 onComplete(result.data, diag);
             } else {
                 diag.errorString = result.error;
@@ -120,6 +121,7 @@ public:
         }
 
         const RetryPolicy policy = RetryPolicy::fromProfile(RequestProfiles::datasheet(), weakNetwork);
+        const uint64_t gen = cache->currentGeneration();
         AsyncNetworkRequest* request =
             NetworkClient::instance().getAsync(QUrl(datasheetUrl), ResourceType::Datasheet, policy);
 
@@ -138,7 +140,7 @@ public:
                 if (ext == QStringLiteral("pdf") && result.data.size() >= 5 && !result.data.startsWith("%PDF-")) {
                     ext = QStringLiteral("html");
                 }
-                cache->saveDatasheet(lcscId, result.data, ext);
+                cache->saveDatasheet(lcscId, result.data, ext, gen);
                 onComplete(result.data, diag);
             } else {
                 diag.errorString = result.error;

@@ -153,7 +153,8 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
     m_runningExportStages = 0;
     ++m_activeRunGeneration;
     m_cancelRequested = false;
-    // 新一轮导出开始，解除全局 tombstone
+    // 新一轮验证/导出开始，解除全局 tombstone
+    // 旧回调靠 generation token 被拒绝，新请求携带新 token 可正常写入
     ComponentCacheService::instance()->clearGlobalTombstone();
     qDebug() << "ParallelExportService: Starting preload for" << componentIds.size() << "components";
 
@@ -240,6 +241,8 @@ void ParallelExportService::startExport() {
 
     cleanupExportStages();
     m_cancelRequested = false;
+    // 预加载完成，旧回调已全部处理，解除全局 tombstone
+    ComponentCacheService::instance()->clearGlobalTombstone();
     // 从 ComponentService 刷新最新的组件数据（确保用户在 UI 中的编辑生效）
     if (m_componentService) {
         for (auto it = m_cachedData.begin(); it != m_cachedData.end(); ++it) {

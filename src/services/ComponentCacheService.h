@@ -203,7 +203,9 @@ public:
      * @param data 元器件数据
      * @note 适用于批量操作，避免频繁的同步文件I/O阻塞UI
      */
-    void saveComponentMetadataAsync(const QString& componentId, const ComponentData& data);
+    void saveComponentMetadataAsync(const QString& componentId,
+                                    const ComponentData& data,
+                                    uint64_t expectedGeneration = 0);
 
     /**
      * @brief 保存符号CAD数据到L2磁盘缓存

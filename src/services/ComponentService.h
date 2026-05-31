@@ -455,6 +455,7 @@ private:
         bool requestActive = false;  // 主验证请求仍在进行中，用于区分真实重复请求和陈旧条目
         QString errorMessage;
         int pendingAsyncDownloads;  // 等待的异步下载数量（数据手册、预览图等）
+        uint64_t cacheGeneration = 0;  // 请求创建时的缓存代次，用于过滤旧回调
     };
 
     QMap<QString, FetchingComponent> m_fetchingComponents;
