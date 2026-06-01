@@ -21,7 +21,6 @@ Rectangle {
     // 信号
     signal requestOutputFolderDialog
     signal requestCacheFolderDialog
-
     function resetScrollPosition() {
         if (scrollArea) {
             scrollArea.cancelFlick();

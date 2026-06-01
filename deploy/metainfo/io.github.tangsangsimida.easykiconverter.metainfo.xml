@@ -105,6 +105,48 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="3.1.10" date="2026-06-01">
+      <description>
+        <p>Responsive UI redesign, export stability improvements, and cache write-back protection.</p>
+        <p xml:lang="zh_CN">响应式 UI 重构、导出稳定性提升及缓存写入保护机制。</p>
+        <p>New Features:</p>
+        <p xml:lang="zh_CN">新功能:</p>
+        <ul>
+          <li>Add responsive sidebar layout with export control components for improved main window UX</li>
+          <li xml:lang="zh_CN">添加响应式侧边栏布局及导出控制组件，优化主窗口交互体验</li>
+          <li>Add cache write-back protection mechanism to prevent stale data from overwriting fresh entries</li>
+          <li xml:lang="zh_CN">添加缓存写入保护机制，防止过期数据覆盖新条目</li>
+          <li>Introduce TempFileManager for safe temporary file management with backup and commit semantics</li>
+          <li xml:lang="zh_CN">引入 TempFileManager 进行安全的临时文件管理，支持备份和提交语义</li>
+          <li>Add hover scale delay timer for card components</li>
+          <li xml:lang="zh_CN">为卡片组件添加悬停缩放延迟定时器功能</li>
+          <li>Add exit animation effects and optimize button interaction experience</li>
+          <li xml:lang="zh_CN">添加退出动画效果并优化按钮交互体验</li>
+          <li>Add zlib dependency support for network client tests</li>
+          <li xml:lang="zh_CN">为网络客户端测试添加 zlib 依赖支持</li>
+        </ul>
+        <p>Bug Fixes:</p>
+        <p xml:lang="zh_CN">修复:</p>
+        <ul>
+          <li>Fix export cancellation crash and redesign preview image hover UI</li>
+          <li xml:lang="zh_CN">修复导出取消崩溃问题并重新设计预览图悬停 UI</li>
+          <li>Fix Windows deployment ICU shim DLL issues and add verification steps</li>
+          <li xml:lang="zh_CN">修复 Windows 部署中 ICU shim DLL 问题并添加验证步骤</li>
+          <li>Fix 3D model offset alignment and add CLI datasheet export support</li>
+          <li xml:lang="zh_CN">修复 3D 模型偏移对齐问题并新增 CLI 数据手册导出支持</li>
+        </ul>
+        <p>Improvements:</p>
+        <p xml:lang="zh_CN">改进:</p>
+        <ul>
+          <li>Unify interaction delay configuration across UI components</li>
+          <li xml:lang="zh_CN">统一 UI 组件的交互延迟配置</li>
+          <li>Optimize slider dialog base component animation effects</li>
+          <li xml:lang="zh_CN">优化滑块对话框基础组件的动画效果</li>
+          <li>Responsive layout optimization and UI stability fixes</li>
+          <li xml:lang="zh_CN">响应式布局优化与 UI 稳定性修复</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.1.9" date="2026-05-26">
       <description>
         <p>Security hardening and test coverage improvements.</p>
@@ -145,60 +187,7 @@
         </ul>
       </description>
     </release>
-    <release version="3.1.7" date="2026-05-05">
-      <description>
-        <p>3D model alignment fixes, CLI enhancements, and export retry mode.</p>
-        <p xml:lang="zh_CN">3D 模型对齐修复、CLI 增强及导出重试模式。</p>
-        <p>New Features:</p>
-        <p xml:lang="zh_CN">新功能:</p>
-        <ul>
-          <li>Add symbol library description and keyword export for KiCad library files</li>
-          <li xml:lang="zh_CN">为 KiCad 库文件添加符号库描述和关键词导出</li>
-          <li>Add component description editing dialog for customizing export descriptions</li>
-          <li xml:lang="zh_CN">添加元器件描述编辑对话框，支持自定义导出描述</li>
-          <li>Add STEP model Z-axis offset alignment to match WRL model pad positioning in KiCad</li>
-          <li xml:lang="zh_CN">添加 STEP 模型 Z 轴偏移对齐，确保在 KiCad 中与 WRL 模型焊盘位置一致</li>
-          <li>Add CLI --3d-model-format option to select 3D model export format (wrl/step/both)</li>
-          <li xml:lang="zh_CN">添加 CLI --3d-model-format 选项，支持选择 3D 模型导出格式（wrl/step/both）</li>
-          <li>Add CLI --lib-name option to customize exported library name</li>
-          <li xml:lang="zh_CN">添加 CLI --lib-name 选项，支持自定义导出库名称</li>
-          <li>Add retry mode for export to preserve existing library content and only update failed components</li>
-          <li xml:lang="zh_CN">为导出功能添加重试模式，保留已有库内容并仅更新失败的组件</li>
-        </ul>
-        <p>Bug Fixes:</p>
-        <p xml:lang="zh_CN">修复:</p>
-        <ul>
-          <li>Fix STEP/WRL 3D model offset misalignment causing models to land at different pad positions in KiCad</li>
-          <li xml:lang="zh_CN">修复 STEP/WRL 3D 模型偏移不一致导致在 KiCad 中模型落在不同焊盘位置的问题</li>
-          <li>Fix stale fetchingComponent entry causing validation requests to be silently skipped in ComponentService</li>
-          <li xml:lang="zh_CN">修复 ComponentService 中陈旧的 fetchingComponent 条目导致验证请求被静默跳过的问题</li>
-          <li>Fix 3D model cache using corrupted empty files as valid cache hits</li>
-          <li xml:lang="zh_CN">修复 3D 模型缓存将损坏的空文件误判为有效缓存的问题</li>
-          <li>Fix STEP export logic to use cache-first strategy instead of network-first</li>
-          <li xml:lang="zh_CN">修复 STEP 导出逻辑，从"先网络后缓存"改为"先缓存后网络"策略</li>
-          <li>Fix export error handling to properly clear stale component state on fetch failures</li>
-          <li xml:lang="zh_CN">修复导出错误处理，在获取失败时正确清除陈旧组件状态</li>
-          <li>Fix async request cancellation thread safety in NetworkClient</li>
-          <li xml:lang="zh_CN">修复 NetworkClient 中异步请求取消的线程安全问题</li>
-          <li>Fix footprint library export to preserve existing footprints when not in overwrite mode</li>
-          <li xml:lang="zh_CN">修复封装库导出在非覆盖模式下保留已有封装的问题</li>
-        </ul>
-        <p>Improvements:</p>
-        <p xml:lang="zh_CN">改进:</p>
-        <ul>
-          <li>Optimize STEP geometry parsing with single-pass CARTESIAN_POINT collection and VERTEX_POINT lookup</li>
-          <li xml:lang="zh_CN">优化 STEP 几何解析，采用单次遍历收集 CARTESIAN_POINT 并通过 VERTEX_POINT 查找</li>
-          <li>Unify 3D model coordinate units to millimeters and extract WRL_UNIT_TO_MM constant</li>
-          <li xml:lang="zh_CN">统一 3D 模型坐标单位为毫米并提取 WRL_UNIT_TO_MM 常量</li>
-          <li>Preload OBJ binary data during cache loading to avoid repeated disk I/O in export stage</li>
-          <li xml:lang="zh_CN">在缓存加载阶段预加载 OBJ 二进制数据，避免导出阶段重复磁盘 I/O</li>
-          <li>WRL files are regenerated from OBJ when available instead of using stale cached WRL</li>
-          <li xml:lang="zh_CN">有 OBJ 数据时始终重新生成 WRL 文件，避免使用过期的缓存 WRL</li>
-          <li>Improve NetworkClient with cancelAllRequests() API and proper thread-safe request lifecycle</li>
-          <li xml:lang="zh_CN">改进 NetworkClient，添加 cancelAllRequests() API 并完善线程安全的请求生命周期管理</li>
-        </ul>
-      </description>
-    </release>
+    <release version="3.1.7" date="2026-05-05"/>
     <release version="3.1.6" date="2026-04-26"/>
     <release version="3.1.5" date="2026-04-24"/>
     <release version="3.1.4" date="2026-04-20"/>

@@ -5,28 +5,22 @@ import "../styles"
 
 Rectangle {
     id: root
-
     property var exportProgressController
     property var exportSettingsController
     property var componentListController
-
     readonly property bool isExporting: exportProgressController ? exportProgressController.isExporting : false
     readonly property int failureCount: exportProgressController ? exportProgressController.failureCount : 0
     readonly property bool hasCompletedExport: exportProgressController ? exportProgressController.hasCompletedExport : false
-
     implicitHeight: controlColumn.implicitHeight + AppStyle.spacing.lg * 2
     color: AppStyle.isDarkMode ? Qt.rgba(30 / 255, 41 / 255, 59 / 255, 0.5) : Qt.rgba(241 / 255, 245 / 255, 249 / 255, 0.5)
-
     ColumnLayout {
         id: controlColumn
         anchors.fill: parent
         anchors.margins: AppStyle.spacing.lg
         spacing: AppStyle.spacing.md
-
         RowLayout {
             Layout.fillWidth: true
             spacing: AppStyle.spacing.md
-
             ModernButton {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 44

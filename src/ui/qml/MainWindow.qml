@@ -67,7 +67,6 @@ Item {
 
     onIsSidebarModeChanged: resetWorkspaceAfterSidebarRestore()
     onSidebarCollapsedChanged: resetWorkspaceAfterSidebarRestore()
-
     function scrollToBottom() {
         var flickable = mainFlickable();
         if (flickable) {
