@@ -148,9 +148,50 @@ jobs:
         shell: pwsh
         run: |
           $exePath = "$env:GITHUB_WORKSPACE\build\bin\easykiconverter.exe"
+          $deployDir = Split-Path -Parent $exePath
           Write-Host "Running windeployqt on $exePath"
           # Rely on PATH to find windeployqt
           windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw --qmldir "$env:GITHUB_WORKSPACE\src\ui\qml" $exePath
+
+          # Qt 6.10 windeployqt can copy Windows ICU shim DLLs from the runner.
+          # On older Windows 10/LTSC systems, a bundled icuuc.dll may depend on
+          # icu.dll that is not present, causing startup to fail before Qt loads.
+          foreach ($icuShim in @("icu.dll", "icuin.dll", "icuuc.dll")) {
+            $icuShimPath = Join-Path $deployDir $icuShim
+            if (Test-Path $icuShimPath) {
+              Remove-Item $icuShimPath -Force
+              Write-Host "Removed Windows system ICU shim from package: $icuShim"
+            }
+          }
+
+      - name: 'Verify Windows deployment contents'
+        shell: pwsh
+        run: |
+          $deployDir = "$env:GITHUB_WORKSPACE\build\bin"
+          $requiredFiles = @(
+            "easykiconverter.exe",
+            "Qt6Core.dll",
+            "Qt6Gui.dll",
+            "Qt6Qml.dll",
+            "platforms\qwindows.dll"
+          )
+
+          foreach ($relativePath in $requiredFiles) {
+            $path = Join-Path $deployDir $relativePath
+            if (-not (Test-Path $path)) {
+              Write-Error "Required deployment file is missing: $relativePath"
+              exit 1
+            }
+          }
+
+          $unsafeIcuDlls = Get-ChildItem -Path $deployDir -Filter "icu*.dll" -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -in @("icu.dll", "icuin.dll", "icuuc.dll") }
+          if ($unsafeIcuDlls) {
+            Write-Error "Unsafe Windows system ICU shim DLLs remain in deployment: $($unsafeIcuDlls.Name -join ', ')"
+            exit 1
+          }
+
+          Write-Host "Windows deployment verification passed."
 
       - name: 'Create portable package'
         if: matrix.type == 'portable'
