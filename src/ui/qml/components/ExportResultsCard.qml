@@ -41,8 +41,9 @@ Loader {
             Rectangle {
                 id: filterSegmentedControl
                 objectName: "exportResultsFilterSegmentedControl"
-                Layout.preferredWidth: 560
+                Layout.fillWidth: true
                 Layout.preferredHeight: 40
+                Layout.maximumWidth: 560
                 Layout.alignment: Qt.AlignLeft
                 color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.05) : Qt.rgba(0, 0, 0, 0.05)
                 radius: AppStyle.radius.lg

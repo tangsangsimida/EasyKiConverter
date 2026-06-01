@@ -280,6 +280,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                                            const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
     qDebug() << "FootprintExportStage: Starting library export in worker thread for" << componentIds.size()
              << "components";
+    const uint64_t gen = ComponentCacheService::instance()->currentGeneration();
 
     QList<FootprintData> footprintList;
     QStringList failedIds;
@@ -335,7 +336,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                     Exporter3DModel modelExporter;
                     if (modelExporter.downloadStepDataSync(model3D.uuid(), &stepData) && !stepData.isEmpty()) {
                         ComponentCacheService::instance()->saveModel3D(
-                            model3D.uuid(), stepData, QStringLiteral("step"));
+                            model3D.uuid(), stepData, QStringLiteral("step"), gen);
                     }
                 }
 
@@ -356,7 +357,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                         Exporter3DModel modelExporter;
                         if (modelExporter.downloadObjDataSync(model3D.uuid(), &objData) && !objData.isEmpty()) {
                             ComponentCacheService::instance()->saveModel3D(
-                                model3D.uuid(), objData, QStringLiteral("obj"));
+                                model3D.uuid(), objData, QStringLiteral("obj"), gen);
                         }
                     }
 

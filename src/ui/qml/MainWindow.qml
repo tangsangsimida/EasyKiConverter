@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Window
+import QtQuick.Effects
 import QtQml.Models
 import "styles"
 import "components"
@@ -17,12 +18,24 @@ Item {
     property var exportProgressController: exportProgressViewModel
     property var themeController: themeSettingsViewModel
     property var updateChecker: updateCheckerService
+    // 对话框引用（供 SidebarPanel 等子组件访问）
+    property alias outputFolderDialog: outputFolderDialog
+    property alias cacheFolderDialog: cacheFolderDialog
+    property alias bomFileDialog: bomFileDialog
     // 窗口状态属性
     readonly property bool isMaximized: Window.window ? (Window.window.visibility === Window.Maximized || Window.window.visibility === Window.FullScreen) : false
     readonly property int windowRadius: isMaximized ? 0 : AppStyle.radius.lg
     readonly property int calculatedMinimumWindowWidth: ResponsiveHelper.minimumWindowWidth
+    // 响应式布局模式
+    readonly property bool isSidebarMode: ResponsiveHelper.isAtLeastMedium
+    property bool sidebarCollapsed: false
+    // 交互状态
+    property int inputMode: 0  // 0=单个, 1=BOM
+    // 滚动跟踪（用于 compact 模式下的 sticky bar）
+    property bool compactScrolledPastThreshold: false
+    property real stickyBarOpacity: 0
     function mainFlickable() {
-        return scrollView.contentItem;
+        return workspaceFlickable;
     }
 
     function clampScroll(targetY) {
@@ -115,11 +128,17 @@ Item {
         property: "isDarkMode"
         value: themeController ? themeController.isDarkMode : false
     }
-    // 将窗口实际宽度写入 ResponsiveHelper，驱动断点系统
+    // 将窗口实际尺寸写入 ResponsiveHelper，驱动断点系统
     Binding {
         target: ResponsiveHelper
         property: "windowWidth"
         value: window.width
+    }
+
+    Binding {
+        target: ResponsiveHelper
+        property: "windowHeight"
+        value: window.height
     }
     // 从 FolderDialog URL 中提取本地路径（跨平台处理）
     function urlToLocalPath(url) {
@@ -158,52 +177,55 @@ Item {
         anchors.fill: parent
         color: "transparent"
         radius: AppStyle.radius.lg
-        // 使用 Canvas 裁剪顶层窗口背景，避免 Windows + Vulkan 透明窗口下的 mask 区域变黑。
+        // GPU 渲染背景（替代 Canvas）
         Image {
             id: bgSource
             visible: false
             source: "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/imgs/background.jpg"
             asynchronous: true
             cache: true
-            onStatusChanged: if (status === Image.Ready) {
-                backgroundCanvas.requestPaint();
+        }
+
+        Image {
+            id: backgroundImage
+            anchors.fill: parent
+            source: bgSource.source
+            fillMode: Image.PreserveAspectCrop
+            visible: bgSource.status === Image.Ready
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: bgMask
             }
         }
 
-        Canvas {
-            id: backgroundCanvas
+        ShaderEffectSource {
+            id: bgMask
+            sourceItem: bgMaskRect
+            visible: false
+            live: window.isMaximized !== undefined
+        }
+
+        Rectangle {
+            id: bgMaskRect
+            width: mainContainer.width
+            height: mainContainer.height
+            radius: windowRadius
+            visible: false
+        }
+
+        // 背景填充（图片未加载时的纯色背景）
+        Rectangle {
             anchors.fill: parent
-            onPaint: {
-                const ctx = getContext("2d");
-                ctx.reset();
-                const r = windowRadius;
-                ctx.beginPath();
-                ctx.roundedRect(0, 0, width, height, r, r);
-                ctx.closePath();
-                ctx.clip();
-                ctx.fillStyle = AppStyle.colors.background;
-                ctx.fill();
-                if (bgSource.status === Image.Ready) {
-                    const sw = bgSource.sourceSize.width;
-                    const sh = bgSource.sourceSize.height;
-                    if (sw > 0 && sh > 0) {
-                        const scale = Math.max(width / sw, height / sh);
-                        const dw = sw * scale;
-                        const dh = sh * scale;
-                        const dx = (width - dw) / 2;
-                        const dy = (height - dh) / 2;
-                        ctx.drawImage(bgSource, dx, dy, dw, dh);
-                    }
+            color: AppStyle.colors.background
+            radius: windowRadius
+            z: -1
+            Behavior on color {
+                ColorAnimation {
+                    duration: AppStyle.durations.themeSwitch
+                    easing.type: AppStyle.easings.easeOut
                 }
             }
-
-            onWidthChanged: requestPaint()
-            onHeightChanged: requestPaint()
-            onVisibleChanged: requestPaint()
-            property int radiusTrigger: windowRadius
-            onRadiusTriggerChanged: requestPaint()
-            property color backgroundTrigger: AppStyle.colors.background
-            onBackgroundTriggerChanged: requestPaint()
         }
         // 半透明遮罩层（确保内容可读性）
         Rectangle {
@@ -233,101 +255,639 @@ Item {
             windowController: Window.window ? Window.window.windowController : null
         }
 
-        // 主滚动区域
-        ScrollView {
-            id: scrollView
+        // 主布局：侧边栏 + 工作区
+        RowLayout {
+            id: mainLayout
             anchors.top: titleBar.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            clip: true
-            enabled: true  // 确保能传递鼠标事件
-            ScrollBar.vertical.policy: ScrollBar.AlwaysOff
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-            // 内容容器（添加左右边距）
-            Item {
-                width: scrollView.width
-                implicitHeight: contentLayout.implicitHeight
-                enabled: true  // 确保能传递鼠标事件
-                // 内容区域（自适应边距 + 最大宽度约束）
-                ColumnLayout {
-                    id: contentLayout
-                    width: Math.max(0, Math.min(parent.width - ResponsiveHelper.contentMargin * 2, ResponsiveHelper.contentMaxWidth))
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: ResponsiveHelper.cardSpacing
-                    // 头部区域（标题 + 语言选择器 + GitHub + 主题切换 + 分隔线）
-                    HeaderSection {
-                        Layout.fillWidth: true
-                        themeController: window.themeController
-                        componentListController: window.componentListController
+            spacing: 0
+            // ==================== 侧边栏控制面板 ====================
+            Loader {
+                id: sidebarLoader
+                z: 1
+                active: window.isSidebarMode
+                Layout.preferredWidth: {
+                    if (!active)
+                        return 0;
+                    return window.sidebarCollapsed ? 48 : ResponsiveHelper.sidebarWidth;
+                }
+                Layout.fillHeight: true
+                Behavior on Layout.preferredWidth {
+                    NumberAnimation {
+                        duration: 280
+                        easing.type: Easing.OutQuart
                     }
+                }
+                sourceComponent: Component {
+                    SidebarPanel {
+                        collapsed: window.sidebarCollapsed
+                        onToggleCollapsed: window.sidebarCollapsed = !window.sidebarCollapsed
+                        onRequestOutputFolderDialog: outputFolderDialog.open()
+                        onRequestCacheFolderDialog: cacheFolderDialog.open()
+                    }
+                }
+            }
 
-                    UpdateBanner {
-                        Layout.fillWidth: true
-                        updateChecker: window.updateChecker
-                    }
+            // ==================== 工作区（始终可见） ====================
+            Flickable {
+                id: workspaceFlickable
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                contentWidth: width
+                contentHeight: workspaceContentItem.implicitHeight
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AlwaysOff
+                }
 
-                    // 元件输入卡片
-                    ComponentInputCard {
-                        Layout.fillWidth: true
-                        componentListController: window.componentListController
-                    }
+                onContentYChanged: {
+                    window.updateCompactScrollState();
+                }
 
-                    // BOM导入卡片
-                    BomImportCard {
-                        Layout.fillWidth: true
-                        componentListController: window.componentListController
-                        exportSettingsController: window.exportSettingsController
-                        onOpenBomFileDialog: bomFileDialog.open()
-                    }
+                Item {
+                    id: workspaceContentItem
+                    width: workspaceFlickable.width
+                    implicitHeight: workspaceColumn.implicitHeight
+                    ColumnLayout {
+                        id: workspaceColumn
+                        width: Math.max(0, Math.min(parent.width - ResponsiveHelper.contentMargin * 2, ResponsiveHelper.contentMaxWidth))
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: ResponsiveHelper.cardSpacing
+                        // 头部区域
+                        HeaderSection {
+                            Layout.fillWidth: true
+                            themeController: window.themeController
+                            componentListController: window.componentListController
+                        }
 
-                    // 元件列表卡片
-                    ComponentListCard {
-                        Layout.fillWidth: true
-                        componentListController: window.componentListController
-                        exportProgressController: window.exportProgressController
-                    }
+                        UpdateBanner {
+                            Layout.fillWidth: true
+                            updateChecker: window.updateChecker
+                        }
 
-                    // 导出设置卡片
-                    ExportSettingsCard {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        exportSettingsController: window.exportSettingsController
-                        onOpenOutputFolderDialog: outputFolderDialog.open()
-                        onOpenCacheFolderDialog: cacheFolderDialog.open()
-                    }
+                        // ==================== 元器件添加方式 ====================
+                        Card {
+                            Layout.fillWidth: true
+                            title: qsTranslate("MainWindow", "元器件添加方式")
+                            ColumnLayout {
+                                width: parent.width
+                                spacing: AppStyle.spacing.lg
+                                // 滑块式模式切换
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 36
+                                    radius: AppStyle.radius.sm
+                                    color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.06) : Qt.rgba(0, 0, 0, 0.06)
+                                    // 滑块指示器
+                                    Rectangle {
+                                        width: parent.width / 2
+                                        height: parent.height - 4
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        radius: AppStyle.radius.sm - 1
+                                        color: AppStyle.colors.surface
+                                        border.width: AppStyle.borderWidths.thin
+                                        border.color: AppStyle.colors.border
+                                        x: inputMode === 0 ? 2 : parent.width / 2
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: 200
+                                                easing.type: Easing.OutQuart
+                                            }
+                                        }
+                                    }
 
-                    // 进度显示卡片
-                    ExportProgressCard {
-                        Layout.fillWidth: true
-                        exportProgressController: window.exportProgressController
-                    }
+                                    Row {
+                                        anchors.fill: parent
+                                        anchors.margins: 2
+                                        Repeater {
+                                            model: [qsTranslate("MainWindow", "手动添加元器件"), qsTranslate("MainWindow", "通过BOM表导入元器件")]
+                                            Item {
+                                                width: parent.width / 2
+                                                height: parent.height
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: modelData
+                                                    font.pixelSize: AppStyle.fontSizes.xs
+                                                    font.bold: index === inputMode
+                                                    color: index === inputMode ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                                                    Behavior on color {
+                                                        ColorAnimation {
+                                                            duration: 200
+                                                        }
+                                                    }
+                                                }
 
-                    // 转换结果卡片（延迟加载）
-                    ExportResultsCard {
-                        Layout.fillWidth: true
-                        exportProgressController: window.exportProgressController
-                    }
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: inputMode = index
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
 
-                    // 导出统计卡片（仅在导出完成后显示）
-                    ExportStatisticsCard {
-                        Layout.fillWidth: true
-                        exportProgressController: window.exportProgressController
-                        exportSettingsController: window.exportSettingsController
-                    }
+                                // 单个元器件输入 / BOM 导入（带横向滑动切换）
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: inputMode === 0 ? singleInputColumn.implicitHeight : bomImportColumn.implicitHeight
+                                    clip: true
+                                    Behavior on Layout.preferredHeight {
+                                        NumberAnimation {
+                                            duration: 200
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
+                                    // 单个元器件输入
+                                    ColumnLayout {
+                                        id: singleInputColumn
+                                        width: parent.width
+                                        spacing: AppStyle.spacing.sm
+                                        opacity: inputMode === 0 ? 1 : 0
+                                        x: inputMode === 0 ? 0 : -20
+                                        visible: opacity > 0 || inputMode === 0
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: AppStyle.durations.fast
+                                            }
+                                        }
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: AppStyle.durations.fast
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
 
-                    // 导出按钮组
-                    ExportButtonsSection {
-                        Layout.fillWidth: true
-                        exportProgressController: window.exportProgressController
-                        exportSettingsController: window.exportSettingsController
-                        componentListController: window.componentListController
-                    }
+                                        RowLayout {
+                                            width: parent.width
+                                            spacing: 12
+                                            TextField {
+                                                id: componentInput
+                                                objectName: "componentInputField"
+                                                Layout.fillWidth: true
+                                                placeholderText: qsTranslate("MainWindow", "输入LCSC元件编号 (例如: C2040)")
+                                                font.pixelSize: AppStyle.fontSizes.md
+                                                color: AppStyle.colors.textPrimary
+                                                placeholderTextColor: AppStyle.colors.textSecondary
+                                                Component.onCompleted: {
+                                                    Qt.callLater(function () {
+                                                        forceActiveFocus();
+                                                    });
+                                                }
+                                                background: Rectangle {
+                                                    color: componentInput.enabled ? AppStyle.colors.surface : AppStyle.colors.background
+                                                    border.color: componentInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                                                    border.width: componentInput.focus ? 2 : 1
+                                                    radius: AppStyle.radius.md
+                                                    Behavior on border.color {
+                                                        ColorAnimation {
+                                                            duration: AppStyle.durations.fast
+                                                        }
+                                                    }
+                                                    Behavior on border.width {
+                                                        NumberAnimation {
+                                                            duration: AppStyle.durations.fast
+                                                        }
+                                                    }
+                                                }
+                                                onAccepted: {
+                                                    if (componentInput.text.length > 0) {
+                                                        window.componentListController.addComponent(componentInput.text);
+                                                        componentInput.text = "";
+                                                    }
+                                                }
+                                            }
 
-                    // 底部边距
-                    Item {
-                        Layout.preferredHeight: ResponsiveHelper.contentMargin
+                                            ModernButton {
+                                                text: qsTranslate("MainWindow", "添加")
+                                                iconName: "add"
+                                                enabled: componentInput.text.length > 0
+                                                onClicked: {
+                                                    if (componentInput.text.length > 0) {
+                                                        window.componentListController.addComponent(componentInput.text);
+                                                        componentInput.text = "";
+                                                    }
+                                                }
+                                            }
+
+                                            ModernButton {
+                                                text: qsTranslate("MainWindow", "粘贴")
+                                                iconName: "folder"
+                                                backgroundColor: AppStyle.colors.textSecondary
+                                                hoverColor: AppStyle.colors.textPrimary
+                                                pressedColor: AppStyle.colors.textPrimary
+                                                onClicked: {
+                                                    window.componentListController.pasteFromClipboard();
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // BOM 导入（拖拽式卡片）
+                                    ColumnLayout {
+                                        id: bomImportColumn
+                                        width: parent.width
+                                        spacing: AppStyle.spacing.sm
+                                        opacity: inputMode === 1 ? 1 : 0
+                                        x: inputMode === 1 ? 0 : 20
+                                        visible: opacity > 0 || inputMode === 1
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: AppStyle.durations.fast
+                                            }
+                                        }
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: AppStyle.durations.fast
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+
+                                        property bool hasFile: window.componentListController && window.componentListController.bomFilePath && window.componentListController.bomFilePath.length > 0
+                                        property string fileName: hasFile ? window.componentListController.bomFilePath.split("/").pop() : ""
+                                        property string bomResult: window.componentListController ? window.componentListController.bomResult : ""
+                                        // 文件选择区域
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.minimumHeight: 100
+                                            radius: AppStyle.radius.md
+                                            color: {
+                                                if (bomImportColumn.hasFile)
+                                                    return AppStyle.isDarkMode ? Qt.rgba(34, 197, 94, 0.08) : Qt.rgba(34, 197, 94, 0.06);
+                                                return AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.03) : Qt.rgba(0, 0, 0, 0.02);
+                                            }
+                                            border.width: bomImportColumn.hasFile ? 2 : 0
+                                            border.color: bomImportColumn.hasFile ? AppStyle.colors.success : "transparent"
+                                            Behavior on border.color {
+                                                ColorAnimation {
+                                                    duration: AppStyle.durations.fast
+                                                }
+                                            }
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: AppStyle.durations.fast
+                                                }
+                                            }
+
+                                            // 虚线边框（未选择文件时显示）
+                                            Canvas {
+                                                id: dashBorder
+                                                anchors.fill: parent
+                                                visible: !bomImportColumn.hasFile
+                                                opacity: bomDropArea.containsMouse ? 0.8 : 0.4
+                                                onPaint: {
+                                                    var ctx = getContext("2d");
+                                                    ctx.clearRect(0, 0, width, height);
+                                                    ctx.strokeStyle = bomDropArea.containsMouse ? AppStyle.colors.primary : AppStyle.colors.textSecondary;
+                                                    ctx.lineWidth = 1.5;
+                                                    ctx.setLineDash([6, 4]);
+                                                    var r = AppStyle.radius.md;
+                                                    ctx.beginPath();
+                                                    ctx.roundedRect(1, 1, width - 2, height - 2, r, r);
+                                                    ctx.stroke();
+                                                }
+                                                Connections {
+                                                    target: bomDropArea
+                                                    function onContainsMouseChanged() {
+                                                        dashBorder.requestPaint();
+                                                    }
+                                                }
+                                            }
+
+                                            ColumnLayout {
+                                                anchors.centerIn: parent
+                                                spacing: AppStyle.spacing.sm
+                                                // 文件图标
+                                                Text {
+                                                    Layout.alignment: Qt.AlignHCenter
+                                                    text: bomImportColumn.hasFile ? "📄" : "📁"
+                                                    font.pixelSize: 28
+                                                }
+                                                // 文件名或提示文字
+                                                Text {
+                                                    Layout.alignment: Qt.AlignHCenter
+                                                    text: {
+                                                        if (bomImportColumn.hasFile)
+                                                            return bomImportColumn.fileName;
+                                                        return qsTranslate("MainWindow", "点击选择 BOM 文件");
+                                                    }
+                                                    font.pixelSize: AppStyle.fontSizes.sm
+                                                    font.bold: bomImportColumn.hasFile
+                                                    color: bomImportColumn.hasFile ? AppStyle.colors.textPrimary : AppStyle.colors.textSecondary
+                                                    elide: Text.ElideMiddle
+                                                    Layout.maximumWidth: parent.parent.width - AppStyle.spacing.xl * 2
+                                                }
+                                                // 解析结果
+                                                Text {
+                                                    Layout.alignment: Qt.AlignHCenter
+                                                    text: {
+                                                        if (bomImportColumn.bomResult && bomImportColumn.bomResult.length > 0)
+                                                            return bomImportColumn.bomResult;
+                                                        if (bomImportColumn.hasFile)
+                                                            return qsTranslate("MainWindow", "文件已就绪");
+                                                        return qsTranslate("MainWindow", "支持格式: .xlsx, .csv, .txt");
+                                                    }
+                                                    font.pixelSize: AppStyle.fontSizes.xs
+                                                    color: {
+                                                        if (bomImportColumn.bomResult && bomImportColumn.bomResult.length > 0)
+                                                            return AppStyle.colors.success;
+                                                        if (bomImportColumn.hasFile)
+                                                            return AppStyle.colors.success;
+                                                        return AppStyle.colors.textSecondary;
+                                                    }
+                                                    opacity: 0.8
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                id: bomDropArea
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: bomFileDialog.open()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // 元件列表卡片
+                        // 元件列表卡片
+                        ComponentListCard {
+                            id: componentListCardItem
+                            Layout.fillWidth: true
+                            componentListController: window.componentListController
+                            exportProgressController: window.exportProgressController
+                            isExporting: window.exportProgressController ? window.exportProgressController.isExporting : false
+                        }
+
+                        // ==================== 工作区内容（始终可见） ====================
+                        // 转换进度
+                        ExportProgressCard {
+                            Layout.fillWidth: true
+                            exportProgressController: window.exportProgressController
+                            visible: (window.exportProgressController && window.exportProgressController.isExporting) || (window.exportProgressController && window.exportProgressController.progress > 0)
+                        }
+
+                        // 转换结果
+                        ExportResultsCard {
+                            Layout.fillWidth: true
+                            exportProgressController: window.exportProgressController
+                        }
+
+                        // 导出统计
+                        ExportStatisticsCard {
+                            Layout.fillWidth: true
+                            exportProgressController: window.exportProgressController
+                            exportSettingsController: window.exportSettingsController
+                        }
+
+                        // 导出设置
+                        Loader {
+                            id: compactSettingsLoader
+                            Layout.fillWidth: true
+                            active: !window.isSidebarMode
+                            sourceComponent: ExportSettingsCard {
+                                exportSettingsController: window.exportSettingsController
+                            }
+                        }
+
+                        Connections {
+                            target: compactSettingsLoader.item
+                            function onOpenOutputFolderDialog() {
+                                outputFolderDialog.open();
+                            }
+                            function onOpenCacheFolderDialog() {
+                                cacheFolderDialog.open();
+                            }
+                        }
+
+                        // 导出按钮组
+                        Loader {
+                            id: compactButtonsLoader
+                            Layout.fillWidth: true
+                            active: !window.isSidebarMode
+                            sourceComponent: ExportButtonsSection {
+                                exportProgressController: window.exportProgressController
+                                exportSettingsController: window.exportSettingsController
+                                componentListController: window.componentListController
+                            }
+                        }
+
+                        // 底部间距（为 sticky bar 预留空间）
+                        Item {
+                            Layout.preferredHeight: window.compactScrolledPastThreshold ? 80 : ResponsiveHelper.contentMargin
+                        }
                     }
+                }
+            }
+        }
+
+        // ==================== Compact 模式浮动操作栏 ====================
+        Rectangle {
+            id: stickyActionBar
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 64
+            color: AppStyle.isDarkMode ? Qt.rgba(15 / 255, 23 / 255, 42 / 255, 0.95) : Qt.rgba(255, 255, 255, 0.95)
+            visible: !window.isSidebarMode && window.compactScrolledPastThreshold
+            opacity: window.stickyBarOpacity
+            z: 500
+            // 顶部边框
+            Rectangle {
+                anchors.top: parent.top
+                width: parent.width
+                height: 1
+                color: AppStyle.colors.border
+            }
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowBlur: 0.6
+                shadowColor: AppStyle.isDarkMode ? "#80000000" : "#20000000"
+                shadowVerticalOffset: -4
+                shadowHorizontalOffset: 0
+            }
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: AppStyle.durations.fast
+                    easing.type: AppStyle.easings.easeOut
+                }
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: ResponsiveHelper.contentMargin
+                anchors.rightMargin: ResponsiveHelper.contentMargin
+                spacing: AppStyle.spacing.md
+                Text {
+                    text: {
+                        var lang = window.currentLanguage;
+                        var pc = window.exportProgressController;
+                        if (pc && pc.isExporting)
+                            return qsTranslate("MainWindow", "正在转换...");
+                        if (pc && pc.failureCount > 0)
+                            return qsTranslate("MainWindow", "有 %1 项失败").arg(pc.failureCount);
+                        return qsTranslate("MainWindow", "就绪");
+                    }
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    color: AppStyle.colors.textSecondary
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                // 进度条
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 6
+                    Layout.alignment: Qt.AlignVCenter
+                    radius: 3
+                    color: AppStyle.colors.border
+                    visible: window.exportProgressController && window.exportProgressController.isExporting
+                    Rectangle {
+                        width: parent.width * (window.exportProgressController ? window.exportProgressController.progress / 100 : 0)
+                        height: parent.height
+                        radius: 3
+                        color: AppStyle.colors.primary
+                        Behavior on width {
+                            NumberAnimation {
+                                duration: 100
+                            }
+                        }
+                    }
+                }
+
+                // 打开目录按钮
+                ModernButton {
+                    objectName: "stickyOpenFolderButton"
+                    text: qsTranslate("MainWindow", "打开目录")
+                    iconName: "folder"
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    backgroundColor: AppStyle.colors.primary
+                    hoverColor: AppStyle.colors.primaryHover
+                    pressedColor: AppStyle.colors.primaryPressed
+                    visible: window.exportProgressController && window.exportProgressController.hasCompletedExport
+                    onClicked: {
+                        if (window.exportProgressController) {
+                            window.exportProgressController.openLastExportedFolder();
+                        }
+                    }
+                }
+
+                // 开始/重试按钮
+                ModernButton {
+                    objectName: "stickyStartButton"
+                    text: {
+                        var pc = window.exportProgressController;
+                        if (pc && pc.isExporting)
+                            return qsTranslate("MainWindow", "转换中");
+                        if (pc && pc.failureCount > 0)
+                            return qsTranslate("MainWindow", "重试");
+                        return qsTranslate("MainWindow", "开始转换");
+                    }
+                    iconName: "play"
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    Layout.preferredHeight: 40
+                    backgroundColor: {
+                        var pc = window.exportProgressController;
+                        if (pc && pc.isExporting)
+                            return AppStyle.colors.textDisabled;
+                        if (pc && pc.failureCount > 0)
+                            return AppStyle.colors.warning;
+                        return AppStyle.colors.primary;
+                    }
+                    hoverColor: {
+                        var pc = window.exportProgressController;
+                        if (pc && pc.failureCount > 0 && !(pc && pc.isExporting))
+                            return AppStyle.colors.warningDark;
+                        return AppStyle.colors.primaryHover;
+                    }
+                    pressedColor: {
+                        var pc = window.exportProgressController;
+                        if (pc && pc.failureCount > 0 && !(pc && pc.isExporting))
+                            return AppStyle.colors.warningDark;
+                        return AppStyle.colors.primaryPressed;
+                    }
+                    enabled: {
+                        var pc = window.exportProgressController;
+                        var lc = window.componentListController;
+                        var sc = window.exportSettingsController;
+                        if (pc && pc.isExporting)
+                            return false;
+                        if (!lc || lc.componentCount <= 0)
+                            return false;
+                        if (!sc)
+                            return false;
+                        return sc.exportSymbol || sc.exportFootprint || sc.exportModel3D;
+                    }
+                    onClicked: {
+                        var pc = window.exportProgressController;
+                        var sc = window.exportSettingsController;
+                        if (pc && pc.failureCount > 0) {
+                            pc.retryFailedComponents();
+                        } else if (pc && sc) {
+                            var idList = window.componentListController ? window.componentListController.getAllComponentIds() : [];
+                            pc.startExport(idList, sc.outputPath || "", sc.libName || "", sc.exportSymbol || false, sc.exportFootprint || false, sc.exportModel3D || false, sc.exportModel3DFormat || 3, sc.exportModel3DPathMode || 0, sc.exportPreviewImages || false, sc.exportDatasheet || false, sc.overwriteExistingFiles || false, (sc.exportMode || 0) === 1, sc.debugMode || false, sc.symbolLibraryDescription || "", sc.footprintLibraryDescription || "", sc.footprintLibraryKeywords || "");
+                        }
+                    }
+                }
+
+                // 停止按钮
+                ModernButton {
+                    objectName: "stickyStopButton"
+                    text: (window.exportProgressController && window.exportProgressController.isStopping) ? qsTranslate("MainWindow", "停止中") : qsTranslate("MainWindow", "停止")
+                    iconName: "close"
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    Layout.preferredHeight: 40
+                    backgroundColor: AppStyle.colors.danger
+                    hoverColor: AppStyle.colors.dangerDark
+                    pressedColor: AppStyle.colors.dangerDark
+                    visible: window.exportProgressController && window.exportProgressController.isExporting
+                    enabled: window.exportProgressController ? !window.exportProgressController.isStopping : false
+                    onClicked: {
+                        if (window.exportProgressController) {
+                            window.exportProgressController.cancelExport();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 底部进度指示条（2px 全局进度，z: -1 避免遮挡 resize 手柄）
+    Rectangle {
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 2
+        z: -1
+        color: "transparent"
+        visible: window.exportProgressController && (window.exportProgressController.isExporting || window.exportProgressController.progress > 0)
+        Rectangle {
+            width: parent.width * ((window.exportProgressController ? window.exportProgressController.progress : 0) / 100)
+            height: parent.height
+            color: {
+                var pc = window.exportProgressController;
+                if (pc && pc.isExporting)
+                    return AppStyle.colors.warning;
+                if (pc && pc.failureCount > 0)
+                    return AppStyle.colors.danger;
+                return AppStyle.colors.success;
+            }
+            Behavior on width {
+                NumberAnimation {
+                    duration: 150
+                }
+            }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 300
                 }
             }
         }
@@ -336,5 +896,23 @@ Item {
     // 窗口边缘调整大小手柄
     WindowResizeHandles {
         isMaximized: window.isMaximized
+    }
+
+    // ==================== 辅助函数 ====================
+    // Compact 模式滚动状态跟踪（用于 sticky bar 显示/隐藏）
+    function updateCompactScrollState() {
+        var flickable = mainFlickable();
+        if (!flickable || window.isSidebarMode) {
+            compactScrolledPastThreshold = false;
+            stickyBarOpacity = 0;
+            return;
+        }
+        // 仅在内容确实可滚动且超过阈值时激活
+        var canScroll = flickable.contentHeight > flickable.height + 10;
+        var scrolled = canScroll && flickable.contentY > 200;
+        if (scrolled !== compactScrolledPastThreshold) {
+            compactScrolledPastThreshold = scrolled;
+            stickyBarOpacity = scrolled ? 1 : 0;
+        }
     }
 }

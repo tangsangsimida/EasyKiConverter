@@ -70,7 +70,7 @@ void SystemTrayManager::initialize() {
     m_trayIcon->setIcon(appIcon);
     qDebug() << "System tray icon set successfully";
 
-    m_trayIcon->setToolTip(QStringLiteral("EasyKiConverter - LCSC 转换工具"));
+    m_trayIcon->setToolTip(tr("EasyKiConverter - LCSC 转换工具"));
 
     setupContextMenu();
     setupConnections();
@@ -91,14 +91,14 @@ void SystemTrayManager::setupContextMenu() {
     m_contextMenu = new QMenu();
     m_contextMenu->setWindowFlags(m_contextMenu->windowFlags() | Qt::Popup);
 
-    QAction* showAction = m_contextMenu->addAction(QStringLiteral("显示窗口"));
+    QAction* showAction = m_contextMenu->addAction(tr("显示窗口"));
     connect(showAction, &QAction::triggered, this, [this]() {
         qDebug() << "Show window action triggered";
         QTimer::singleShot(0, m_contextMenu, &QMenu::close);
         emit showWindowRequested();
     });
 
-    QAction* quitAction = m_contextMenu->addAction(QStringLiteral("退出"));
+    QAction* quitAction = m_contextMenu->addAction(tr("退出"));
     connect(quitAction, &QAction::triggered, this, [this]() {
         qDebug() << "Quit action triggered";
         QTimer::singleShot(0, m_contextMenu, &QMenu::close);
@@ -138,7 +138,7 @@ void SystemTrayManager::showExportNotification(int successCount,
     QSystemTrayIcon::MessageIcon iconType = QSystemTrayIcon::Information;
 
     if (failureCount > 0) {
-        title = QStringLiteral("导出完成");
+        title = tr("导出完成");
 
         double successRate = 0.0;
         if (successCount + failureCount > 0) {
@@ -147,36 +147,32 @@ void SystemTrayManager::showExportNotification(int successCount,
 
         if (successCount == 0) {
             iconType = QSystemTrayIcon::Critical;
-            message = QStringLiteral("导出失败：%1 个元器件全部失败").arg(successCount + failureCount);
+            message = tr("导出失败：%1 个元器件全部失败").arg(successCount + failureCount);
         } else if (successRate < 50.0) {
             iconType = QSystemTrayIcon::Warning;
-            message = QStringLiteral("成功 %1 个，失败 %2 个").arg(successCount).arg(failureCount);
+            message = tr("成功 %1 个，失败 %2 个").arg(successCount).arg(failureCount);
         } else {
-            message = QStringLiteral("成功 %1 个，失败 %2 个").arg(successCount).arg(failureCount);
+            message = tr("成功 %1 个，失败 %2 个").arg(successCount).arg(failureCount);
         }
 
         if (successCount > 0) {
-            message += QStringLiteral("\n输出：符号 %1 · 封装 %2 · 3D %3")
-                           .arg(symbolCount)
-                           .arg(footprintCount)
-                           .arg(model3DCount);
+            message += tr("\n输出：符号 %1 · 封装 %2 · 3D %3").arg(symbolCount).arg(footprintCount).arg(model3DCount);
         }
     } else {
         iconType = QSystemTrayIcon::Information;
-        title = QStringLiteral("导出完成");
+        title = tr("导出完成");
 
         if (successCount == 1) {
-            message = QStringLiteral("成功导出 1 个元器件");
+            message = tr("成功导出 1 个元器件");
         } else {
-            message = QStringLiteral("成功导出 %1 个元器件").arg(successCount);
+            message = tr("成功导出 %1 个元器件").arg(successCount);
         }
 
         QStringList stats;
-        stats
-            << QStringLiteral("输出：符号 %1 · 封装 %2 · 3D %3").arg(symbolCount).arg(footprintCount).arg(model3DCount);
+        stats << tr("输出：符号 %1 · 封装 %2 · 3D %3").arg(symbolCount).arg(footprintCount).arg(model3DCount);
 
         if (!duration.isEmpty()) {
-            stats << QStringLiteral("耗时：%1").arg(duration);
+            stats << tr("耗时：%1").arg(duration);
         }
 
         message += "\n" + stats.join("\n");

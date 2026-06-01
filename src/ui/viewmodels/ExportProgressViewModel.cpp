@@ -633,6 +633,15 @@ bool ExportProgressViewModel::openLastExportedFolder() {
 }
 
 void ExportProgressViewModel::clearCache() {
+    // 中止进行中的导出
+    if (m_isExporting) {
+        cancelExport();
+    }
+    // 重置 ComponentService 批处理状态
+    if (m_componentService) {
+        m_componentService->abortBatchFetch();
+    }
+    // 清空 L1 内存 + L2 磁盘缓存
     ComponentCacheService::instance()->clearAllCache();
 }
 
@@ -750,6 +759,16 @@ void ExportProgressViewModel::removeResult(const QString& componentId) {
         // Update counts first, then notify UI of list change
         markResultsDirty();
     }
+}
+
+QVariantMap ExportProgressViewModel::getComponentExportStatus(const QString& componentId) const {
+    if (m_idToIndexMap.contains(componentId)) {
+        int index = m_idToIndexMap[componentId];
+        if (index >= 0 && index < m_resultsList.size()) {
+            return m_resultsList[index].toMap();
+        }
+    }
+    return {};
 }
 
 void ExportProgressViewModel::setStatus(const QString& status) {

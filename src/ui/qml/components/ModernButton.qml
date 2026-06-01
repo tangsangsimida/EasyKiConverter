@@ -21,7 +21,6 @@ Button {
     font.bold: true
     implicitHeight: 44
     implicitWidth: contentItem.implicitWidth + AppStyle.spacing.xl * 2
-
     HoverHandler {
         id: pointerTracker
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad

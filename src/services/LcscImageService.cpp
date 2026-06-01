@@ -425,16 +425,16 @@ void LcscImageService::performDownload(const QString& componentId, const QString
         return;
     }
 
+    const uint64_t gen = ComponentCacheService::instance()->currentGeneration();
     AsyncNetworkRequest* request = NetworkClient::instance().getAsync(
         QUrl(imageUrl),
         ResourceType::PreviewImage,
         RetryPolicy::fromProfile(RequestProfiles::previewImage(), isWeakNetworkEnabled()));
     trackAsyncRequest(request);
-
     connect(request,
             &AsyncNetworkRequest::finished,
             this,
-            [this, request, componentId, imageIndex](const NetworkResult& result) {
+            [this, request, componentId, imageIndex, gen](const NetworkResult& result) {
                 untrackAsyncRequest(request);
 
                 if (m_isCancelled) {
@@ -457,7 +457,7 @@ void LcscImageService::performDownload(const QString& componentId, const QString
 
                 const QByteArray imageData = result.data;
                 if (!imageData.isEmpty() && !QString::fromUtf8(imageData).contains("<!DOCTYPE", Qt::CaseInsensitive)) {
-                    ComponentCacheService::instance()->savePreviewImage(componentId, imageData, imageIndex);
+                    ComponentCacheService::instance()->savePreviewImage(componentId, imageData, imageIndex, gen);
                     m_downloadCounts[componentId]++;
                     emit imageReady(componentId, imageData, imageIndex);
                     checkDownloadCompletion(componentId);
@@ -511,16 +511,16 @@ void LcscImageService::performDatasheetDownload(const QString& componentId, cons
         return;
     }
 
+    const uint64_t gen = ComponentCacheService::instance()->currentGeneration();
     AsyncNetworkRequest* request = NetworkClient::instance().getAsync(
         QUrl(datasheetUrl),
         ResourceType::Datasheet,
         RetryPolicy::fromProfile(RequestProfiles::datasheet(), isWeakNetworkEnabled()));
     trackAsyncRequest(request);
-
     connect(request,
             &AsyncNetworkRequest::finished,
             this,
-            [this, request, componentId, datasheetUrl](const NetworkResult& result) {
+            [this, request, componentId, datasheetUrl, gen](const NetworkResult& result) {
                 untrackAsyncRequest(request);
 
                 if (m_isCancelled) {
@@ -537,7 +537,7 @@ void LcscImageService::performDatasheetDownload(const QString& componentId, cons
                 const QByteArray datasheetData = result.data;
                 if (!datasheetData.isEmpty()) {
                     QString format = datasheetUrl.toLower().contains(".html") ? "html" : "pdf";
-                    ComponentCacheService::instance()->saveDatasheet(componentId, datasheetData, format);
+                    ComponentCacheService::instance()->saveDatasheet(componentId, datasheetData, format, gen);
                     QByteArray savedData = ComponentCacheService::instance()->loadDatasheet(componentId);
                     emit datasheetReady(componentId, savedData);
                 } else {

@@ -271,6 +271,55 @@
     </message>
 </context>
 <context>
+    <name>SystemTrayManager</name>
+    <message>
+        <source>EasyKiConverter - LCSC 转换工具</source>
+        <translation>EasyKiConverter - LCSC 转换工具</translation>
+    </message>
+    <message>
+        <source>显示窗口</source>
+        <translation>显示窗口</translation>
+    </message>
+    <message>
+        <source>退出</source>
+        <translation>退出</translation>
+    </message>
+    <message>
+        <source>导出完成</source>
+        <translation>导出完成</translation>
+    </message>
+    <message>
+        <source>导出失败：%1 个元器件全部失败</source>
+        <translation>导出失败：%1 个元器件全部失败</translation>
+    </message>
+    <message>
+        <source>成功 %1 个，失败 %2 个</source>
+        <translation>成功 %1 个，失败 %2 个</translation>
+    </message>
+    <message>
+        <source>
+输出：符号 %1 · 封装 %2 · 3D %3</source>
+        <translation>
+输出：符号 %1 · 封装 %2 · 3D %3</translation>
+    </message>
+    <message>
+        <source>成功导出 1 个元器件</source>
+        <translation>成功导出 1 个元器件</translation>
+    </message>
+    <message>
+        <source>成功导出 %1 个元器件</source>
+        <translation>成功导出 %1 个元器件</translation>
+    </message>
+    <message>
+        <source>输出：符号 %1 · 封装 %2 · 3D %3</source>
+        <translation>输出：符号 %1 · 封装 %2 · 3D %3</translation>
+    </message>
+    <message>
+        <source>耗时：%1</source>
+        <translation>耗时：%1</translation>
+    </message>
+</context>
+<context>
     <name>ComponentListCard</name>
     <message>
         <location filename="../../src/ui/qml/components/ComponentListCard.qml" line="386"/>
@@ -292,6 +341,10 @@
         <source>无效 (%1)</source>
         <translation>无效 (%1)</translation>
     </message>
+    <message>
+        <source>无预览图</source>
+        <translation>无预览图</translation>
+    </message>
 </context>
 <context>
     <name>ComponentListItem</name>
@@ -303,7 +356,54 @@
     <message>
         <location filename="../../src/ui/qml/components/ComponentListItem.qml" line="590"/>
         <source>编辑元器件描述</source>
-        <translation type="unfinished"></translation>
+        <translation>编辑元器件描述</translation>
+    </message>
+    <message>
+        <source>正在导出...</source>
+        <translation>正在导出...</translation>
+    </message>
+    <message>
+        <source>导出完成</source>
+        <translation>导出完成</translation>
+    </message>
+    <message>
+        <source>导出失败</source>
+        <translation>导出失败</translation>
+    </message>
+    <message>
+        <source>正在验证 CAD 数据...</source>
+        <translation>正在验证 CAD 数据...</translation>
+    </message>
+    <message>
+        <source>正在获取预览图...</source>
+        <translation>正在获取预览图...</translation>
+    </message>
+    <message>
+        <source>验证失败</source>
+        <translation>验证失败</translation>
+    </message>
+</context>
+<context>
+    <name>ComponentListViewModel</name>
+    <message>
+        <source>元器件不存在（404）</source>
+        <translation>元器件不存在（404）</translation>
+    </message>
+    <message>
+        <source>预览图获取超时（网络不稳定）</source>
+        <translation>预览图获取超时（网络不稳定）</translation>
+    </message>
+    <message>
+        <source>预览图不存在</source>
+        <translation>预览图不存在</translation>
+    </message>
+    <message>
+        <source>预览图获取被拒绝</source>
+        <translation>预览图获取被拒绝</translation>
+    </message>
+    <message>
+        <source>预览图获取失败</source>
+        <translation>预览图获取失败</translation>
     </message>
 </context>
 <context>
@@ -530,6 +630,10 @@
 </context>
 <context>
     <name>Main</name>
+    <message>
+        <source>EasyKiConverter - 元器件转换工具</source>
+        <translation>EasyKiConverter - 元器件转换工具</translation>
+    </message>
     <message>
         <location filename="../../src/ui/qml/Main.qml" line="35"/>
         <source>确认退出</source>
@@ -1071,6 +1175,154 @@
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="72"/>
         <source>稍后提醒</source>
         <translation>稍后提醒</translation>
+    </message>
+    <message>
+        <source>元器件添加方式</source>
+        <translation>元器件添加方式</translation>
+    </message>
+    <message>
+        <source>手动添加元器件</source>
+        <translation>手动添加元器件</translation>
+    </message>
+    <message>
+        <source>通过BOM表导入元器件</source>
+        <translation>通过BOM表导入元器件</translation>
+    </message>
+    <message>
+        <source>点击选择 BOM 文件</source>
+        <translation>点击选择 BOM 文件</translation>
+    </message>
+    <message>
+        <source>文件已就绪</source>
+        <translation>文件已就绪</translation>
+    </message>
+    <message>
+        <source>支持格式: .xlsx, .csv, .txt</source>
+        <translation>支持格式: .xlsx, .csv, .txt</translation>
+    </message>
+    <message>
+        <source>输出配置</source>
+        <translation>输出配置</translation>
+    </message>
+    <message>
+        <source>路径</source>
+        <translation>路径</translation>
+    </message>
+    <message>
+        <source>选择目录...</source>
+        <translation>选择目录...</translation>
+    </message>
+    <message>
+        <source>符号库描述</source>
+        <translation>符号库描述</translation>
+    </message>
+    <message>
+        <source>封装库描述</source>
+        <translation>封装库描述</translation>
+    </message>
+    <message>
+        <source>库信息 (可选)</source>
+        <translation>库信息 (可选)</translation>
+    </message>
+    <message>
+        <source>导出内容</source>
+        <translation>导出内容</translation>
+    </message>
+    <message>
+        <source>3D 模型</source>
+        <translation>3D 模型</translation>
+    </message>
+    <message>
+        <source>数据手册</source>
+        <translation>数据手册</translation>
+    </message>
+    <message>
+        <source>格式</source>
+        <translation>格式</translation>
+    </message>
+    <message>
+        <source>相对</source>
+        <translation>相对</translation>
+    </message>
+    <message>
+        <source>覆盖</source>
+        <translation>覆盖</translation>
+    </message>
+    <message>
+        <source>保留已有元器件，追加新的</source>
+        <translation>保留已有元器件，追加新的</translation>
+    </message>
+    <message>
+        <source>覆盖已有元器件，追加新的</source>
+        <translation>覆盖已有元器件，追加新的</translation>
+    </message>
+    <message>
+        <source>运行策略</source>
+        <translation>运行策略</translation>
+    </message>
+    <message>
+        <source>弱网模式</source>
+        <translation>弱网模式</translation>
+    </message>
+    <message>
+        <source>展开设置</source>
+        <translation>展开设置</translation>
+    </message>
+    <message>
+        <source>收起设置</source>
+        <translation>收起设置</translation>
+    </message>
+    <message>
+        <source>请先添加元器件</source>
+        <translation>请先添加元器件</translation>
+    </message>
+    <message>
+        <source>请至少选择一种导出类型</source>
+        <translation>请至少选择一种导出类型</translation>
+    </message>
+    <message>
+        <source>开始导出</source>
+        <translation>开始导出</translation>
+    </message>
+    <message>
+        <source>正在导出中...</source>
+        <translation>正在导出中...</translation>
+    </message>
+    <message>
+        <source>导出中</source>
+        <translation>导出中</translation>
+    </message>
+    <message>
+        <source>转换中</source>
+        <translation>转换中</translation>
+    </message>
+    <message>
+        <source>停止</source>
+        <translation>停止</translation>
+    </message>
+    <message>
+        <source>停止中</source>
+        <translation>停止中</translation>
+    </message>
+    <message>
+        <source>重试</source>
+        <translation>重试</translation>
+    </message>
+    <message>
+        <source>重试失败</source>
+        <translation>重试失败</translation>
+    </message>
+    <message>
+        <source>就绪</source>
+        <translation>就绪</translation>
+    </message>
+    <message>
+        <source>有 %1 项失败</source>
+        <translation>有 %1 项失败</translation>
+    </message>
+    <message>
+        <source>打开目录</source>
+        <translation>打开目录</translation>
     </message>
 </context>
 <context>

@@ -15,9 +15,18 @@ Card {
     readonly property bool showPreviewHint: componentListController ? componentListController.previewReadyHint : false
     readonly property color hintColor: showPreviewHint ? "#31c36b" : (showValidationHint ? "#2f7ef8" : "transparent")
     property string editingDescriptionComponentId: ""
+    // 导出状态查找表（由 exportProgressController 驱动）
+    property var exportStatusMap: ({})
+    // 外部传入的导出状态（由 MainWindow 绑定）
+    property bool isExporting: false
     title: qsTranslate("MainWindow", "元器件列表")
-    // 默认折叠，只有在有元器件时才展开
     isCollapsed: componentListController ? componentListController.componentCount === 0 : true
+    // 导出开始时自动折叠（结束后保持折叠，用户点击标题可手动展开）
+    onIsExportingChanged: {
+        if (isExporting) {
+            isCollapsed = true;
+        }
+    }
     resources: [
         // 防抖定时器，避免频繁调用 updateFilter()
         Timer {
@@ -64,6 +73,16 @@ Card {
                 previewPrefetchTimer.restart();
             }
         },
+        // 监听导出结果变化，更新导出状态查找表
+        Connections {
+            target: componentListCard.exportProgressController
+            function onResultsListChanged() {
+                componentListCard.updateExportStatusMap();
+            }
+            function onIsExportingChanged() {
+                componentListCard.updateExportStatusMap();
+            }
+        },
         Connections {
             target: componentListCard.componentListController
             function onListCleared() {
@@ -104,6 +123,11 @@ Card {
                 // 注意：QAbstractListModel 暴露的角色名为 "itemData"
                 itemData: model.itemData
                 searchText: searchInput.text // 传递搜索词用于高亮
+                // 绑定导出状态（由 ComponentListCard 维护的查找表）
+                exportStatus: {
+                    var id = itemData ? itemData.componentId : "";
+                    return id && componentListCard.exportStatusMap[id] ? componentListCard.exportStatusMap[id] : null;
+                }
                 onDeleteClicked: {
                     if (itemData) {
                         componentListCard.componentListController.removeComponentById(itemData.componentId);
@@ -530,7 +554,7 @@ Card {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: emptyChipShape.bottom
                         anchors.topMargin: AppStyle.spacing.sm
-                        text: "无预览图"
+                        text: qsTr("无预览图")
                         font.pixelSize: AppStyle.fontSizes.sm
                         color: AppStyle.colors.textSecondary
                     }
@@ -979,6 +1003,22 @@ Card {
         return bestPoint;
     }
 
+    // 更新导出状态查找表
+    function updateExportStatusMap() {
+        var map = {};
+        var pc = componentListCard.exportProgressController;
+        if (pc && pc.resultsList) {
+            var list = pc.resultsList;
+            for (var i = 0; i < list.length; ++i) {
+                var item = list[i];
+                if (item && item.componentId) {
+                    map[item.componentId] = item;
+                }
+            }
+        }
+        exportStatusMap = map;
+    }
+
     // 弹窗显示/隐藏辅助函数（供 delegate 调用）
     function showPreviewPopup(imageSources, itemData, thumbX, thumbY, thumbW, thumbH, cursorX, cursorY) {
         popupHideTimer.stop();
@@ -1024,7 +1064,7 @@ Card {
         GridView {
             id: componentList
             Layout.fillWidth: true
-            Layout.preferredHeight: ResponsiveHelper.responsive(240, 300, 360, 400)
+            Layout.preferredHeight: ResponsiveHelper.isShortWindow ? 200 : ResponsiveHelper.responsive(240, 300, 360, 400)
             Layout.topMargin: AppStyle.spacing.md
             clip: true
             // 启用虚拟化，缓存上下各一屏的项
@@ -1037,7 +1077,7 @@ Card {
                 var c = Math.max(1, Math.floor(w / minCellW));
                 return w / c;
             }
-            cellHeight: 76
+            cellHeight: ResponsiveHelper.isShortWindow ? 60 : 76
             flow: GridView.FlowLeftToRight
             layoutDirection: Qt.LeftToRight
             // 使用 DelegateModel

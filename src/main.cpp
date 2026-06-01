@@ -532,6 +532,8 @@ int main(int argc, char* argv[]) {
     // GUI 模式：使用完整的 QApplication
     // 设置 QML 样式为 Basic，以消除原生样式自定义警告
     QQuickStyle::setStyle("Basic");
+    // High DPI 适配：使用 PassThrough 策略避免分数缩放下的模糊和舍入误差
+    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
 
     QApplication app(argc, argv);
 
