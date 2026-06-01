@@ -15,6 +15,7 @@ ExportProgressCard 1.0 ExportProgressCard.qml
 ExportResultsCard 1.0 ExportResultsCard.qml
 ExportStatisticsCard 1.0 ExportStatisticsCard.qml
 ExportButtonsSection 1.0 ExportButtonsSection.qml
+SidebarExportControls 1.0 SidebarExportControls.qml
 UpdateBanner 1.0 UpdateBanner.qml
 WindowController 1.0 WindowController.qml
 WindowPersistenceManager 1.0 WindowPersistenceManager.qml

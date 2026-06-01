@@ -22,6 +22,7 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExportResultsCard.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExportStatisticsCard.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExportButtonsSection.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/SidebarExportControls.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/UpdateBanner.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowController.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowPersistenceManager.qml
@@ -31,6 +32,12 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowResizeHandles.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExitDialog.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/SliderDialogBase.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/SidebarPanel.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/SidebarSettingsView.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/SidebarSection.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/SidebarToggleRow.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/SidebarTextField.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/SidebarSegmentedControl.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/AppStyle.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/ResponsiveHelper.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_BasicComponents.qml

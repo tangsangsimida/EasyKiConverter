@@ -34,6 +34,10 @@ Item {
     // 滚动跟踪（用于 compact 模式下的 sticky bar）
     property bool compactScrolledPastThreshold: false
     property real stickyBarOpacity: 0
+    readonly property bool compactStickyActive: {
+        var pc = window.exportProgressController;
+        return !window.isSidebarMode && window.compactScrolledPastThreshold && pc && (pc.isExporting || pc.hasCompletedExport);
+    }
     function mainFlickable() {
         return workspaceFlickable;
     }
@@ -50,9 +54,19 @@ Item {
     function scrollToTop() {
         var flickable = mainFlickable();
         if (flickable) {
+            flickable.cancelFlick();
             flickable.contentY = 0;
         }
     }
+
+    function resetWorkspaceAfterSidebarRestore() {
+        if (window.isSidebarMode && !window.sidebarCollapsed) {
+            Qt.callLater(scrollToTop);
+        }
+    }
+
+    onIsSidebarModeChanged: resetWorkspaceAfterSidebarRestore()
+    onSidebarCollapsedChanged: resetWorkspaceAfterSidebarRestore()
 
     function scrollToBottom() {
         var flickable = mainFlickable();
@@ -680,7 +694,7 @@ Item {
 
                         // 底部间距（为 sticky bar 预留空间）
                         Item {
-                            Layout.preferredHeight: window.compactScrolledPastThreshold ? 80 : ResponsiveHelper.contentMargin
+                            Layout.preferredHeight: window.compactStickyActive ? 80 : ResponsiveHelper.contentMargin
                         }
                     }
                 }
@@ -695,7 +709,7 @@ Item {
             anchors.bottom: parent.bottom
             height: 64
             color: AppStyle.isDarkMode ? Qt.rgba(15 / 255, 23 / 255, 42 / 255, 0.95) : Qt.rgba(255, 255, 255, 0.95)
-            visible: !window.isSidebarMode && window.compactScrolledPastThreshold
+            visible: window.compactStickyActive
             opacity: window.stickyBarOpacity
             z: 500
             // 顶部边框
@@ -733,9 +747,7 @@ Item {
                         var pc = window.exportProgressController;
                         if (pc && pc.isExporting)
                             return qsTranslate("MainWindow", "正在转换...");
-                        if (pc && pc.failureCount > 0)
-                            return qsTranslate("MainWindow", "有 %1 项失败").arg(pc.failureCount);
-                        return qsTranslate("MainWindow", "就绪");
+                        return qsTranslate("MainWindow", "转换完成");
                     }
                     font.pixelSize: AppStyle.fontSizes.sm
                     color: AppStyle.colors.textSecondary
@@ -776,64 +788,6 @@ Item {
                     onClicked: {
                         if (window.exportProgressController) {
                             window.exportProgressController.openLastExportedFolder();
-                        }
-                    }
-                }
-
-                // 开始/重试按钮
-                ModernButton {
-                    objectName: "stickyStartButton"
-                    text: {
-                        var pc = window.exportProgressController;
-                        if (pc && pc.isExporting)
-                            return qsTranslate("MainWindow", "转换中");
-                        if (pc && pc.failureCount > 0)
-                            return qsTranslate("MainWindow", "重试");
-                        return qsTranslate("MainWindow", "开始转换");
-                    }
-                    iconName: "play"
-                    font.pixelSize: AppStyle.fontSizes.sm
-                    Layout.preferredHeight: 40
-                    backgroundColor: {
-                        var pc = window.exportProgressController;
-                        if (pc && pc.isExporting)
-                            return AppStyle.colors.textDisabled;
-                        if (pc && pc.failureCount > 0)
-                            return AppStyle.colors.warning;
-                        return AppStyle.colors.primary;
-                    }
-                    hoverColor: {
-                        var pc = window.exportProgressController;
-                        if (pc && pc.failureCount > 0 && !(pc && pc.isExporting))
-                            return AppStyle.colors.warningDark;
-                        return AppStyle.colors.primaryHover;
-                    }
-                    pressedColor: {
-                        var pc = window.exportProgressController;
-                        if (pc && pc.failureCount > 0 && !(pc && pc.isExporting))
-                            return AppStyle.colors.warningDark;
-                        return AppStyle.colors.primaryPressed;
-                    }
-                    enabled: {
-                        var pc = window.exportProgressController;
-                        var lc = window.componentListController;
-                        var sc = window.exportSettingsController;
-                        if (pc && pc.isExporting)
-                            return false;
-                        if (!lc || lc.componentCount <= 0)
-                            return false;
-                        if (!sc)
-                            return false;
-                        return sc.exportSymbol || sc.exportFootprint || sc.exportModel3D;
-                    }
-                    onClicked: {
-                        var pc = window.exportProgressController;
-                        var sc = window.exportSettingsController;
-                        if (pc && pc.failureCount > 0) {
-                            pc.retryFailedComponents();
-                        } else if (pc && sc) {
-                            var idList = window.componentListController ? window.componentListController.getAllComponentIds() : [];
-                            pc.startExport(idList, sc.outputPath || "", sc.libName || "", sc.exportSymbol || false, sc.exportFootprint || false, sc.exportModel3D || false, sc.exportModel3DFormat || 3, sc.exportModel3DPathMode || 0, sc.exportPreviewImages || false, sc.exportDatasheet || false, sc.overwriteExistingFiles || false, (sc.exportMode || 0) === 1, sc.debugMode || false, sc.symbolLibraryDescription || "", sc.footprintLibraryDescription || "", sc.footprintLibraryKeywords || "");
                         }
                     }
                 }

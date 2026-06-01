@@ -222,6 +222,7 @@ set(QML_FILES
     src/ui/qml/components/ExportResultsCard.qml
     src/ui/qml/components/ExportStatisticsCard.qml
     src/ui/qml/components/ExportButtonsSection.qml
+    src/ui/qml/components/SidebarExportControls.qml
     src/ui/qml/components/UpdateBanner.qml
     src/ui/qml/components/WindowController.qml
     src/ui/qml/components/WindowPersistenceManager.qml

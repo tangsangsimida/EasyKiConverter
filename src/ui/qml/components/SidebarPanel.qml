@@ -21,6 +21,26 @@ Rectangle {
     // 信号
     signal requestOutputFolderDialog
     signal requestCacheFolderDialog
+
+    function resetScrollPosition() {
+        if (scrollArea) {
+            scrollArea.cancelFlick();
+            scrollArea.contentY = 0;
+        }
+    }
+
+    onCollapsedChanged: {
+        if (!collapsed) {
+            Qt.callLater(resetScrollPosition);
+        }
+    }
+
+    onVisibleChanged: {
+        if (visible && !collapsed) {
+            Qt.callLater(resetScrollPosition);
+        }
+    }
+
     // 玻璃态模糊背景
     Rectangle {
         id: glassBg
@@ -150,7 +170,7 @@ Rectangle {
                         onClicked: root.toggleCollapsed()
                     }
 
-                    ToolTip.visible: collapseBtnMouse.hovered
+                    ToolTip.visible: collapseBtnMouse.containsMouse
                     ToolTip.text: qsTranslate("MainWindow", "收起设置")
                     ToolTip.delay: 400
                 }
@@ -204,101 +224,12 @@ Rectangle {
                         }
                     }
                 }
-            }
-        }
 
-        // 分隔线
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: AppStyle.colors.border
-        }
-
-        // 固定底部控制面板
-        Rectangle {
-            id: controlPanel
-            Layout.fillWidth: true
-            implicitHeight: controlColumn.implicitHeight + AppStyle.spacing.lg * 2
-            color: AppStyle.isDarkMode ? Qt.rgba(30 / 255, 41 / 255, 59 / 255, 0.5) : Qt.rgba(241 / 255, 245 / 255, 249 / 255, 0.5)
-            ColumnLayout {
-                id: controlColumn
-                anchors.fill: parent
-                anchors.margins: AppStyle.spacing.lg
-                spacing: AppStyle.spacing.md
-                // 按钮组
-                RowLayout {
+                SidebarExportControls {
                     Layout.fillWidth: true
-                    spacing: AppStyle.spacing.md
-                    ModernButton {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 44
-                        text: {
-                            if (root.isExporting)
-                                return qsTranslate("MainWindow", "导出中");
-                            if (root.failureCount > 0)
-                                return qsTranslate("MainWindow", "重试失败");
-                            return qsTranslate("MainWindow", "开始导出");
-                        }
-                        backgroundColor: root.failureCount > 0 ? AppStyle.colors.warning : AppStyle.colors.primary
-                        onClicked: {
-                            var pc = root.progressController;
-                            var sc = root.settingsController;
-                            var lc = root.listController;
-                            if (pc && pc.failureCount > 0) {
-                                pc.retryFailedComponents();
-                            } else if (pc && sc && lc) {
-                                pc.startExport(lc.getAllComponentIds(), sc.outputPath || "", sc.libName || "", sc.exportSymbol || false, sc.exportFootprint || false, sc.exportModel3D || false, sc.exportModel3DFormat || 3, sc.exportModel3DPathMode || 0, sc.exportPreviewImages || false, sc.exportDatasheet || false, sc.overwriteExistingFiles || false, (sc.exportMode || 0) === 1, sc.debugMode || false, sc.symbolLibraryDescription || "", sc.footprintLibraryDescription || "", sc.footprintLibraryKeywords || "");
-                            }
-                        }
-                        enabled: {
-                            if (root.isExporting)
-                                return false;
-                            if (!root.listController || root.listController.componentCount <= 0)
-                                return false;
-                            if (!root.settingsController)
-                                return false;
-                            return root.settingsController.exportSymbol || root.settingsController.exportFootprint || root.settingsController.exportModel3D;
-                        }
-                        ToolTip.visible: hovered && !enabled
-                        ToolTip.text: {
-                            if (root.isExporting)
-                                return qsTranslate("MainWindow", "正在导出中...");
-                            if (!root.listController || root.listController.componentCount <= 0)
-                                return qsTranslate("MainWindow", "请先添加元器件");
-                            if (!root.settingsController)
-                                return "";
-                            if (!root.settingsController.exportSymbol && !root.settingsController.exportFootprint && !root.settingsController.exportModel3D)
-                                return qsTranslate("MainWindow", "请至少选择一种导出类型");
-                            return "";
-                        }
-                        ToolTip.delay: 600
-                    }
-
-                    ModernButton {
-                        visible: root.isExporting
-                        Layout.preferredWidth: 80
-                        Layout.preferredHeight: 44
-                        iconName: "close"
-                        backgroundColor: AppStyle.colors.danger
-                        onClicked: {
-                            if (root.progressController)
-                                root.progressController.cancelExport();
-                        }
-                    }
-                }
-
-                // 打开导出目录（导出完成后显示）
-                ModernButton {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 36
-                    visible: root.hasCompletedExport
-                    text: qsTranslate("MainWindow", "打开导出目录")
-                    iconName: "folder"
-                    backgroundColor: AppStyle.colors.textSecondary
-                    onClicked: {
-                        if (root.progressController)
-                            root.progressController.openLastExportedFolder();
-                    }
+                    exportProgressController: root.progressController
+                    exportSettingsController: root.settingsController
+                    componentListController: root.listController
                 }
             }
         }
