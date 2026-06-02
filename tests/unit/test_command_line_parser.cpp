@@ -44,6 +44,28 @@ private slots:
     // hasConvertCommand() 辅助方法
     void testHasConvertCommand();
 
+    // 新增 CLI 标志：默认值
+    void testWeakNetworkDefaultFalse();
+    void testUpdateModeDefaultFalse();
+    void test3dPathModeDefaultRelative();
+    void testOverwriteDefaultTrue();
+    void testNoOverwriteExplicit();
+    void testSymbolDescriptionDefaultEmpty();
+    void testFootprintDescriptionDefaultEmpty();
+
+    // 新增 CLI 标志：显式值
+    void testWeakNetworkExplicit();
+    void testUpdateModeExplicit();
+    void test3dPathModeAbsolute();
+    void testSymbolDescriptionExplicit();
+    void testFootprintDescriptionExplicit();
+
+    // 新增 CLI 标志：验证
+    void test3dPathModeInvalid();
+
+    // 补全脚本包含新选项
+    void testCompletionScriptContainsNewOptions();
+
     // CLI 国际化测试
     void testValidationErrorTranslated();
     void testCliHelpTextTranslated();
@@ -345,6 +367,156 @@ void TestCommandLineParser::testHasConvertCommand() {
     delete p2;
 }
 
+// ========== 新增 CLI 标志：默认值 ==========
+
+void TestCommandLineParser::testWeakNetworkDefaultFalse() {
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o"});
+    parser->parse();
+    QVERIFY2(parser->weakNetworkSupport() == false, "--weak-network 未设置时默认关闭");
+    delete parser;
+}
+
+void TestCommandLineParser::testUpdateModeDefaultFalse() {
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o"});
+    parser->parse();
+    QVERIFY2(parser->updateMode() == false, "--update-mode 未设置时默认关闭");
+    delete parser;
+}
+
+void TestCommandLineParser::test3dPathModeDefaultRelative() {
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o"});
+    parser->parse();
+    QVERIFY(parser->validate());
+    QCOMPARE(parser->model3DPathMode(), QStringLiteral("relative"));
+    delete parser;
+}
+
+void TestCommandLineParser::testOverwriteDefaultTrue() {
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o"});
+    parser->parse();
+    QVERIFY2(parser->overwriteExistingFiles() == true, "--no-overwrite 未设置时默认 true");
+    delete parser;
+}
+
+void TestCommandLineParser::testSymbolDescriptionDefaultEmpty() {
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o"});
+    parser->parse();
+    QVERIFY(parser->symbolDescription().isEmpty());
+    delete parser;
+}
+
+void TestCommandLineParser::testFootprintDescriptionDefaultEmpty() {
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o"});
+    parser->parse();
+    QVERIFY(parser->footprintDescription().isEmpty());
+    delete parser;
+}
+
+// ========== 新增 CLI 标志：显式值 ==========
+
+void TestCommandLineParser::testWeakNetworkExplicit() {
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o", "--weak-network"});
+    parser->parse();
+    QVERIFY(parser->weakNetworkSupport() == true);
+    delete parser;
+}
+
+void TestCommandLineParser::testUpdateModeExplicit() {
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o", "--update-mode"});
+    parser->parse();
+    QVERIFY(parser->updateMode() == true);
+    delete parser;
+}
+
+void TestCommandLineParser::test3dPathModeAbsolute() {
+    auto* parser =
+        makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o", "--3d-path-mode", "absolute"});
+    parser->parse();
+    QVERIFY(parser->validate());
+    QCOMPARE(parser->model3DPathMode(), QStringLiteral("absolute"));
+    delete parser;
+}
+
+void TestCommandLineParser::testNoOverwriteExplicit() {
+    // --no-overwrite 设置时，overwriteExistingFiles() 返回 false
+    auto* parser = makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o", "--no-overwrite"});
+    parser->parse();
+    QVERIFY(parser->overwriteExistingFiles() == false);
+    delete parser;
+}
+
+void TestCommandLineParser::testSymbolDescriptionExplicit() {
+    auto* parser = makeParser(
+        {"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o", "--symbol-description", "My Symbol Lib"});
+    parser->parse();
+    QCOMPARE(parser->symbolDescription(), QStringLiteral("My Symbol Lib"));
+    delete parser;
+}
+
+void TestCommandLineParser::testFootprintDescriptionExplicit() {
+    auto* parser = makeParser({"easykiconverter",
+                               "convert",
+                               "bom",
+                               "-i",
+                               "b.xlsx",
+                               "-o",
+                               "o",
+                               "--footprint-description",
+                               "My Footprint Lib"});
+    parser->parse();
+    QCOMPARE(parser->footprintDescription(), QStringLiteral("My Footprint Lib"));
+    delete parser;
+}
+
+// ========== 新增 CLI 标志：验证 ==========
+
+void TestCommandLineParser::test3dPathModeInvalid() {
+    auto* parser =
+        makeParser({"easykiconverter", "convert", "bom", "-i", "b.xlsx", "-o", "o", "--3d-path-mode", "relativee"});
+    parser->parse();
+    QVERIFY(!parser->validate());
+    QVERIFY(parser->validationError().contains(QStringLiteral("无效的 3D 模型路径模式")));
+    delete parser;
+}
+
+// ========== 补全脚本包含新选项 ==========
+
+void TestCommandLineParser::testCompletionScriptContainsNewOptions() {
+    QString bashScript = CompletionGenerator::generate(CompletionGenerator::Shell::Bash);
+    QString zshScript = CompletionGenerator::generate(CompletionGenerator::Shell::Zsh);
+    QString fishScript = CompletionGenerator::generate(CompletionGenerator::Shell::Fish);
+
+    // Bash: convert_opts 应包含新选项
+    QVERIFY2(bashScript.contains("--weak-network"), "Bash 补全应包含 --weak-network");
+    QVERIFY2(bashScript.contains("--update-mode"), "Bash 补全应包含 --update-mode");
+    QVERIFY2(bashScript.contains("--3d-path-mode"), "Bash 补全应包含 --3d-path-mode");
+    QVERIFY2(bashScript.contains("--no-overwrite"), "Bash 补全应包含 --no-overwrite");
+    QVERIFY2(bashScript.contains("--symbol-description"), "Bash 补全应包含 --symbol-description");
+    QVERIFY2(bashScript.contains("--footprint-description"), "Bash 补全应包含 --footprint-description");
+
+    // Bash: --3d-path-mode 应有值补全
+    QVERIFY2(bashScript.contains("relative absolute"), "Bash 补全 --3d-path-mode 应有 relative/absolute 值");
+
+    // Zsh: convert_opts 应包含新选项
+    QVERIFY2(zshScript.contains("--weak-network"), "Zsh 补全应包含 --weak-network");
+    QVERIFY2(zshScript.contains("--update-mode"), "Zsh 补全应包含 --update-mode");
+    QVERIFY2(zshScript.contains("--3d-path-mode"), "Zsh 补全应包含 --3d-path-mode");
+    QVERIFY2(zshScript.contains("--no-overwrite"), "Zsh 补全应包含 --no-overwrite");
+    QVERIFY2(zshScript.contains("--symbol-description"), "Zsh 补全应包含 --symbol-description");
+    QVERIFY2(zshScript.contains("--footprint-description"), "Zsh 补全应包含 --footprint-description");
+
+    // Zsh: --3d-path-mode 应有值补全
+    QVERIFY2(zshScript.contains("(relative absolute)"), "Zsh 补全 --3d-path-mode 应有 (relative absolute) 值");
+
+    // Fish: 应包含新选项
+    QVERIFY2(fishScript.contains("weak-network"), "Fish 补全应包含 weak-network");
+    QVERIFY2(fishScript.contains("update-mode"), "Fish 补全应包含 update-mode");
+    QVERIFY2(fishScript.contains("3d-path-mode"), "Fish 补全应包含 3d-path-mode");
+    QVERIFY2(fishScript.contains("overwrite"), "Fish 补全应包含 overwrite");
+    QVERIFY2(fishScript.contains("symbol-description"), "Fish 补全应包含 symbol-description");
+    QVERIFY2(fishScript.contains("footprint-description"), "Fish 补全应包含 footprint-description");
+}
+
 // ========== CLI 国际化测试 ==========
 
 void TestCommandLineParser::testValidationErrorTranslated() {
@@ -380,6 +552,13 @@ void TestCommandLineParser::testCliHelpTextTranslated() {
     QVERIFY2(help.contains("--output"), qPrintable("Expected '--output' in help, got: " + help.left(200)));
     QVERIFY2(help.contains("--3d-model"), qPrintable("Expected '--3d-model' in help, got: " + help.left(200)));
     QVERIFY2(help.contains("bom"), qPrintable("Expected 'bom' in help, got: " + help.left(200)));
+    // 新增选项
+    QVERIFY2(help.contains("--weak-network"), qPrintable("Expected '--weak-network' in help"));
+    QVERIFY2(help.contains("--update-mode"), qPrintable("Expected '--update-mode' in help"));
+    QVERIFY2(help.contains("--3d-path-mode"), qPrintable("Expected '--3d-path-mode' in help"));
+    QVERIFY2(help.contains("--no-overwrite"), qPrintable("Expected '--no-overwrite' in help"));
+    QVERIFY2(help.contains("--symbol-description"), qPrintable("Expected '--symbol-description' in help"));
+    QVERIFY2(help.contains("--footprint-description"), qPrintable("Expected '--footprint-description' in help"));
     delete parser;
 }
 

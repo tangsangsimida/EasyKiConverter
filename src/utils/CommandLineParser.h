@@ -272,7 +272,7 @@ public:
     QString model3DPathMode() const;
 
     /**
-     * @brief 是否覆盖已存在的文件
+     * @brief 是否覆盖已存在的文件（默认 true，--no-overwrite 禁用）
      * @return 覆盖返回 true，否则返回 false
      */
     bool overwriteExistingFiles() const;

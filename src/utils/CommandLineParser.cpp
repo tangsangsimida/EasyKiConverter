@@ -36,7 +36,7 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
     , m_weakNetworkOption("weak-network", "启用弱网模式（超时翻倍、增加重试次数、降低并发）")
     , m_updateModeOption("update-mode", "更新模式（仅导出缺失或已更改的文件）")
     , m_3dPathModeOption("3d-path-mode", "3D 模型路径模式 (relative/absolute，默认: relative)", "mode", "relative")
-    , m_overwriteOption("overwrite", "覆盖已存在的文件 (默认: true)")
+    , m_overwriteOption("no-overwrite", "不覆盖已存在的文件（默认: 覆盖）")
     , m_symbolDescriptionOption("symbol-description", "符号库描述文本", "text")
     , m_footprintDescriptionOption("footprint-description", "封装库描述文本", "text")
     , m_completionOption("completion", "生成 Shell 补全脚本 (bash/zsh/fish)", "shell")
@@ -460,8 +460,8 @@ QString CommandLineParser::model3DPathMode() const {
 }
 
 bool CommandLineParser::overwriteExistingFiles() const {
-    // 默认为 true，除非显式设置为 false
-    return !m_parser.isSet(m_overwriteOption) || m_parser.value(m_overwriteOption).toLower() != "false";
+    // 默认 true，--no-overwrite 禁用
+    return !m_parser.isSet(m_overwriteOption);
 }
 
 QString CommandLineParser::symbolDescription() const {
@@ -518,8 +518,8 @@ QString CommandLineParser::cliHelpText() const {
     stream << "  --3d-path-mode <mode>   "
            << QCoreApplication::translate("CommandLineParser", "3D 模型路径模式（relative/absolute，默认: relative）")
            << "\n";
-    stream << "  --overwrite             "
-           << QCoreApplication::translate("CommandLineParser", "覆盖已存在的文件（默认: true）") << "\n";
+    stream << "  --no-overwrite          "
+           << QCoreApplication::translate("CommandLineParser", "不覆盖已存在的文件（默认: 覆盖）") << "\n";
     stream << "  --symbol-description <t> " << QCoreApplication::translate("CommandLineParser", "符号库描述文本")
            << "\n";
     stream << "  --footprint-description <t> " << QCoreApplication::translate("CommandLineParser", "封装库描述文本")
