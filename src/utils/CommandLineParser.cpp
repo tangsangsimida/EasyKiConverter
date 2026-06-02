@@ -33,6 +33,12 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
     , m_previewOption("preview", "导出预览图")
     , m_progressOption("progress", "显示进度条")
     , m_quietOption(QStringList() << "q" << "quiet", "安静模式，减少输出")
+    , m_weakNetworkOption("weak-network", "启用弱网模式（超时翻倍、增加重试次数、降低并发）")
+    , m_updateModeOption("update-mode", "更新模式（仅导出缺失或已更改的文件）")
+    , m_3dPathModeOption("3d-path-mode", "3D 模型路径模式 (relative/absolute，默认: relative)", "mode", "relative")
+    , m_overwriteOption("overwrite", "覆盖已存在的文件 (默认: true)")
+    , m_symbolDescriptionOption("symbol-description", "符号库描述文本", "text")
+    , m_footprintDescriptionOption("footprint-description", "封装库描述文本", "text")
     , m_completionOption("completion", "生成 Shell 补全脚本 (bash/zsh/fish)", "shell")
     , m_completeOption("complete", "内部选项：输出动态补全数据", "type") {
     m_parser.setApplicationDescription(
@@ -85,6 +91,12 @@ void CommandLineParser::setupCliOptions() {
     m_parser.addOption(m_previewOption);
     m_parser.addOption(m_progressOption);
     m_parser.addOption(m_quietOption);
+    m_parser.addOption(m_weakNetworkOption);
+    m_parser.addOption(m_updateModeOption);
+    m_parser.addOption(m_3dPathModeOption);
+    m_parser.addOption(m_overwriteOption);
+    m_parser.addOption(m_symbolDescriptionOption);
+    m_parser.addOption(m_footprintDescriptionOption);
 }
 
 bool CommandLineParser::parse() {
@@ -252,6 +264,13 @@ bool CommandLineParser::validate() const {
             }
         }
 
+        if (m_parser.isSet(m_3dPathModeOption)) {
+            QString pathMode = model3DPathMode();
+            if (pathMode != "relative" && pathMode != "absolute") {
+                return false;
+            }
+        }
+
         // 验证输出目录
         if (!m_parser.isSet(m_outputOption)) {
             return false;
@@ -337,6 +356,15 @@ QString CommandLineParser::validationError() const {
             }
         }
 
+        if (m_parser.isSet(m_3dPathModeOption)) {
+            const QString pathMode = model3DPathMode();
+            if (pathMode != "relative" && pathMode != "absolute") {
+                errors.append(QCoreApplication::translate("CommandLineParser",
+                                                          "无效的 3D 模型路径模式: %1（有效值: relative, absolute）")
+                                  .arg(pathMode));
+            }
+        }
+
         if (!m_parser.isSet(m_outputOption)) {
             errors.append(QCoreApplication::translate("CommandLineParser", "CLI 模式必须指定输出目录 (-o/--output)"));
         }
@@ -419,6 +447,31 @@ bool CommandLineParser::isQuietMode() const {
     return m_parser.isSet(m_quietOption);
 }
 
+bool CommandLineParser::weakNetworkSupport() const {
+    return m_parser.isSet(m_weakNetworkOption);
+}
+
+bool CommandLineParser::updateMode() const {
+    return m_parser.isSet(m_updateModeOption);
+}
+
+QString CommandLineParser::model3DPathMode() const {
+    return m_parser.value(m_3dPathModeOption).toLower();
+}
+
+bool CommandLineParser::overwriteExistingFiles() const {
+    // 默认为 true，除非显式设置为 false
+    return !m_parser.isSet(m_overwriteOption) || m_parser.value(m_overwriteOption).toLower() != "false";
+}
+
+QString CommandLineParser::symbolDescription() const {
+    return m_parser.value(m_symbolDescriptionOption);
+}
+
+QString CommandLineParser::footprintDescription() const {
+    return m_parser.value(m_footprintDescriptionOption);
+}
+
 QString CommandLineParser::cliHelpText() const {
     QString help;
     QTextStream stream(&help);
@@ -457,6 +510,19 @@ QString CommandLineParser::cliHelpText() const {
            << QCoreApplication::translate("CommandLineParser", "设置磁盘缓存大小限制 (MB)") << "\n";
     stream << "  --progress              " << QCoreApplication::translate("CommandLineParser", "显示进度条") << "\n";
     stream << "  -q, --quiet             " << QCoreApplication::translate("CommandLineParser", "安静模式，减少输出")
+           << "\n";
+    stream << "  --weak-network          "
+           << QCoreApplication::translate("CommandLineParser", "启用弱网模式（超时翻倍、增加重试、降低并发）") << "\n";
+    stream << "  --update-mode           "
+           << QCoreApplication::translate("CommandLineParser", "更新模式（仅导出缺失或已更改的文件）") << "\n";
+    stream << "  --3d-path-mode <mode>   "
+           << QCoreApplication::translate("CommandLineParser", "3D 模型路径模式（relative/absolute，默认: relative）")
+           << "\n";
+    stream << "  --overwrite             "
+           << QCoreApplication::translate("CommandLineParser", "覆盖已存在的文件（默认: true）") << "\n";
+    stream << "  --symbol-description <t> " << QCoreApplication::translate("CommandLineParser", "符号库描述文本")
+           << "\n";
+    stream << "  --footprint-description <t> " << QCoreApplication::translate("CommandLineParser", "封装库描述文本")
            << "\n\n";
     stream << QCoreApplication::translate("CommandLineParser", "示例:") << "\n";
     stream << "  # " << QCoreApplication::translate("CommandLineParser", "转换 BOM 表") << "\n";
