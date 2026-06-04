@@ -63,7 +63,7 @@ ExportOptions CliContext::createExportOptions() const {
     options.exportModel3DPathMode = (pathMode == QStringLiteral("absolute")) ? ExportOptions::MODEL_3D_PATH_ABSOLUTE
                                                                              : ExportOptions::MODEL_3D_PATH_RELATIVE;
 
-    // 覆盖模式（默认 true，可通过 --overwrite false 禁用）
+    // 覆盖模式（默认 true，--no-overwrite 禁用）
     options.overwriteExistingFiles = m_parser.overwriteExistingFiles();
 
     // 库描述

@@ -512,7 +512,7 @@ void TestCommandLineParser::testCompletionScriptContainsNewOptions() {
     QVERIFY2(fishScript.contains("weak-network"), "Fish 补全应包含 weak-network");
     QVERIFY2(fishScript.contains("update-mode"), "Fish 补全应包含 update-mode");
     QVERIFY2(fishScript.contains("3d-path-mode"), "Fish 补全应包含 3d-path-mode");
-    QVERIFY2(fishScript.contains("overwrite"), "Fish 补全应包含 overwrite");
+    QVERIFY2(fishScript.contains("no-overwrite"), "Fish 补全应包含 no-overwrite");
     QVERIFY2(fishScript.contains("symbol-description"), "Fish 补全应包含 symbol-description");
     QVERIFY2(fishScript.contains("footprint-description"), "Fish 补全应包含 footprint-description");
 }
