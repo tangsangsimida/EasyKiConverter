@@ -6,6 +6,7 @@
 namespace EasyKiConverter {
 
 static const QStringList VALID_3D_MODEL_FORMATS = {"wrl", "step", "both"};
+static const QStringList VALID_3D_PATH_MODES = {"relative", "absolute"};
 
 CommandLineParser::CommandLineParser(int argc, char* argv[])
     : m_debugOption(QStringList() << "d" << "debug", "启用调试模式（显示详细日志和控制台窗口）")
@@ -265,8 +266,7 @@ bool CommandLineParser::validate() const {
         }
 
         if (m_parser.isSet(m_3dPathModeOption)) {
-            QString pathMode = model3DPathMode();
-            if (pathMode != "relative" && pathMode != "absolute") {
+            if (!VALID_3D_PATH_MODES.contains(model3DPathMode())) {
                 return false;
             }
         }
@@ -358,10 +358,10 @@ QString CommandLineParser::validationError() const {
 
         if (m_parser.isSet(m_3dPathModeOption)) {
             const QString pathMode = model3DPathMode();
-            if (pathMode != "relative" && pathMode != "absolute") {
-                errors.append(QCoreApplication::translate("CommandLineParser",
-                                                          "无效的 3D 模型路径模式: %1（有效值: relative, absolute）")
-                                  .arg(pathMode));
+            if (!VALID_3D_PATH_MODES.contains(pathMode)) {
+                errors.append(
+                    QCoreApplication::translate("CommandLineParser", "无效的 3D 模型路径模式: %1（有效值: %2）")
+                        .arg(pathMode, VALID_3D_PATH_MODES.join(", ")));
             }
         }
 

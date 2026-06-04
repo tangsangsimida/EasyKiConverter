@@ -21,11 +21,20 @@ easykiconverter convert batch -i <component_list_file> -o <output_dir> [options]
 |------|------|------|--------|
 | `--input` | `-i` | 输入文件路径 | - |
 | `--output` | `-o` | 输出目录路径 | - |
+| `--lib-name` | | 导出库名称 | EasyKiConverter |
 | `--component` | `-c` | LCSC 元器件编号 | - |
 | `--symbol` | | 导出符号库 | true |
 | `--footprint` | | 导出封装库 | true |
 | `--3d-model` | | 导出 3D 模型（默认 WRL 格式） | false |
+| `--3d-model-format` | | 3D 模型格式（wrl/step/both） | wrl |
+| `--datasheet` | | 导出数据手册 | false |
 | `--preview` | | 导出预览图 | false |
+| `--3d-path-mode` | | 3D 模型路径模式（relative/absolute） | relative |
+| `--symbol-description` | | 符号库描述文本 | - |
+| `--footprint-description` | | 封装库描述文本 | - |
+| `--weak-network` | | 弱网模式（超时翻倍、增加重试、降低并发） | false |
+| `--update-mode` | | 更新模式（仅导出缺失或已更改的文件） | false |
+| `--no-overwrite` | | 不覆盖已存在的文件 | false |
 | `--cache-dir` | | 设置磁盘缓存目录 | 配置文件中的缓存目录 |
 | `--cache-size-mb` | | 设置磁盘缓存大小上限（MB） | 配置文件中的缓存上限 |
 | `--progress` | | 显示进度条 | false |
@@ -42,6 +51,7 @@ CLI 模式默认导出以下内容：
 **注意**：
 - 默认不导出 3D 模型、预览图和数据手册
 - 需要 3D 模型时传入 `--3d-model`，未指定格式时使用 WRL 格式
+- 需要数据手册时传入 `--datasheet`
 - 普通模式不生成详细报告，仅在调试模式 (`--debug`) 下生成
 
 ## 缓存配置
@@ -129,6 +139,30 @@ easykiconverter convert component -c C12345 -o ./output
 
 # 批量转换
 easykiconverter convert batch -i components.txt -o ./output
+
+# 导出 STEP 格式 3D 模型
+easykiconverter convert bom -i my_project.xlsx -o ./output --3d-model --3d-model-format step
+
+# 导出数据手册
+easykiconverter convert bom -i my_project.xlsx -o ./output --datasheet
+
+# 使用绝对路径引用 3D 模型
+easykiconverter convert bom -i my_project.xlsx -o ./output --3d-model --3d-path-mode absolute
+
+# 不覆盖已存在的文件
+easykiconverter convert bom -i my_project.xlsx -o ./output --no-overwrite
+
+# 仅导出缺失或已更改的文件（更新模式）
+easykiconverter convert bom -i my_project.xlsx -o ./output --update-mode
+
+# 弱网模式（超时翻倍、增加重试、降低并发）
+easykiconverter convert bom -i my_project.xlsx -o ./output --weak-network
+
+# 指定库描述文本
+easykiconverter convert bom -i my_project.xlsx -o ./output --symbol-description "My Symbol Lib" --footprint-description "My Footprint Lib"
+
+# 指定库名称
+easykiconverter convert bom -i my_project.xlsx -o ./output --lib-name my_lib
 ```
 
 ## 架构说明

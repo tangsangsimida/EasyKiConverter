@@ -148,12 +148,16 @@ private slots:
         QCOMPARE(service.cachedData().size(), componentIds.size());
 
         QSignalSpy failedSpy(&service, &ParallelExportService::failed);
+        QSignalSpy cancelledSpy(&service, &ParallelExportService::cancelled);
 
         service.startExport();
+        // 等待处理开始，确保测试的是"停止进行中的任务"路径
+        QTest::qWait(100);
         service.cancelExport();
 
         // cancelExport() 无条件将状态转为 Cancelled 并发射 cancelled 信号
         QCOMPARE(failedSpy.count(), 0);
+        QCOMPARE(cancelledSpy.count(), 1);
         QCOMPARE(service.getProgress().currentStage, ExportOverallProgress::Stage::Cancelled);
         QVERIFY(!service.isRunning());
     }
