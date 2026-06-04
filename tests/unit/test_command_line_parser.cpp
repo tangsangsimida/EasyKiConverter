@@ -493,9 +493,15 @@ void TestCommandLineParser::testCompletionScriptContainsNewOptions() {
     QVERIFY2(bashScript.contains("--no-overwrite"), "Bash 补全应包含 --no-overwrite");
     QVERIFY2(bashScript.contains("--symbol-description"), "Bash 补全应包含 --symbol-description");
     QVERIFY2(bashScript.contains("--footprint-description"), "Bash 补全应包含 --footprint-description");
+    QVERIFY2(bashScript.contains("--3d-model-format"), "Bash 补全应包含 --3d-model-format");
+    QVERIFY2(bashScript.contains("--datasheet"), "Bash 补全应包含 --datasheet");
+    QVERIFY2(bashScript.contains("--lib-name"), "Bash 补全应包含 --lib-name");
 
     // Bash: --3d-path-mode 应有值补全
     QVERIFY2(bashScript.contains("relative absolute"), "Bash 补全 --3d-path-mode 应有 relative/absolute 值");
+
+    // Bash: --3d-model-format 应有值补全
+    QVERIFY2(bashScript.contains("wrl step both"), "Bash 补全 --3d-model-format 应有 wrl/step/both 值");
 
     // Zsh: convert_opts 应包含新选项
     QVERIFY2(zshScript.contains("--weak-network"), "Zsh 补全应包含 --weak-network");
@@ -504,9 +510,15 @@ void TestCommandLineParser::testCompletionScriptContainsNewOptions() {
     QVERIFY2(zshScript.contains("--no-overwrite"), "Zsh 补全应包含 --no-overwrite");
     QVERIFY2(zshScript.contains("--symbol-description"), "Zsh 补全应包含 --symbol-description");
     QVERIFY2(zshScript.contains("--footprint-description"), "Zsh 补全应包含 --footprint-description");
+    QVERIFY2(zshScript.contains("--3d-model-format"), "Zsh 补全应包含 --3d-model-format");
+    QVERIFY2(zshScript.contains("--datasheet"), "Zsh 补全应包含 --datasheet");
+    QVERIFY2(zshScript.contains("--lib-name"), "Zsh 补全应包含 --lib-name");
 
     // Zsh: --3d-path-mode 应有值补全
     QVERIFY2(zshScript.contains("(relative absolute)"), "Zsh 补全 --3d-path-mode 应有 (relative absolute) 值");
+
+    // Zsh: --3d-model-format 应有值补全
+    QVERIFY2(zshScript.contains("(wrl step both)"), "Zsh 补全 --3d-model-format 应有 (wrl step both) 值");
 
     // Fish: 应包含新选项
     QVERIFY2(fishScript.contains("weak-network"), "Fish 补全应包含 weak-network");
@@ -515,6 +527,12 @@ void TestCommandLineParser::testCompletionScriptContainsNewOptions() {
     QVERIFY2(fishScript.contains("no-overwrite"), "Fish 补全应包含 no-overwrite");
     QVERIFY2(fishScript.contains("symbol-description"), "Fish 补全应包含 symbol-description");
     QVERIFY2(fishScript.contains("footprint-description"), "Fish 补全应包含 footprint-description");
+    QVERIFY2(fishScript.contains("3d-model-format"), "Fish 补全应包含 3d-model-format");
+    QVERIFY2(fishScript.contains("datasheet"), "Fish 补全应包含 datasheet");
+    QVERIFY2(fishScript.contains("lib-name"), "Fish 补全应包含 lib-name");
+
+    // Fish: --3d-model-format 应有值补全
+    QVERIFY2(fishScript.contains("wrl step both"), "Fish 补全 --3d-model-format 应有 wrl/step/both 值");
 }
 
 // ========== CLI 国际化测试 ==========

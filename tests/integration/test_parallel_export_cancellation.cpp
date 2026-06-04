@@ -149,10 +149,13 @@ private slots:
 
         QSignalSpy failedSpy(&service, &ParallelExportService::failed);
         QSignalSpy cancelledSpy(&service, &ParallelExportService::cancelled);
+        QSignalSpy progressSpy(&service, &ParallelExportService::progressChanged);
 
         service.startExport();
-        // 等待处理开始，确保测试的是"停止进行中的任务"路径
-        QTest::qWait(100);
+        // 等待进度变化，确保导出已真正开始
+        QVERIFY2(progressSpy.wait(5000), "Export did not start within 5s");
+        QVERIFY(service.isRunning());
+
         service.cancelExport();
 
         // cancelExport() 无条件将状态转为 Cancelled 并发射 cancelled 信号
