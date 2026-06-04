@@ -1,0 +1,23 @@
+# GitHub 语言统计配置 - 只保留 C++ 作为主要语言
+# 排除构建系统、脚本和工具文件的语言统计
+
+# CMake
+*.cmake linguist-detectable=false
+CMakeLists.txt linguist-detectable=false
+
+# Python
+# *.py linguist-detectable=false
+
+# Shell scripts
+*.sh linguist-detectable=false
+
+# Windows batch files
+*.bat linguist-detectable=false
+*.cmd linguist-detectable=false
+
+# QML (标记为生成的代码，不计入语言统计)
+*.qml linguist-generated=true
+
+# 翻译文件 (标记为生成的代码)
+*.ts linguist-generated=true
+*.qm linguist-vendored=true
