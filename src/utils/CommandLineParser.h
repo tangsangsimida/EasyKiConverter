@@ -254,6 +254,42 @@ public:
     bool isQuietMode() const;
 
     /**
+     * @brief 是否启用弱网模式
+     * @return 启用返回 true，否则返回 false
+     */
+    bool weakNetworkSupport() const;
+
+    /**
+     * @brief 是否启用更新模式（仅导出缺失或已更改的文件）
+     * @return 启用返回 true，否则返回 false
+     */
+    bool updateMode() const;
+
+    /**
+     * @brief 获取 3D 模型路径模式
+     * @return 路径模式名称 (relative/absolute)
+     */
+    QString model3DPathMode() const;
+
+    /**
+     * @brief 是否覆盖已存在的文件（默认 true，--no-overwrite 禁用）
+     * @return 覆盖返回 true，否则返回 false
+     */
+    bool overwriteExistingFiles() const;
+
+    /**
+     * @brief 获取符号库描述文本
+     * @return 描述文本
+     */
+    QString symbolDescription() const;
+
+    /**
+     * @brief 获取封装库描述文本
+     * @return 描述文本
+     */
+    QString footprintDescription() const;
+
+    /**
      * @brief 获取 CLI 帮助文本
      * @return CLI 帮助文本
      */
@@ -324,6 +360,12 @@ private:
     QCommandLineOption m_previewOption;
     QCommandLineOption m_progressOption;
     QCommandLineOption m_quietOption;
+    QCommandLineOption m_weakNetworkOption;
+    QCommandLineOption m_updateModeOption;
+    QCommandLineOption m_3dPathModeOption;
+    QCommandLineOption m_overwriteOption;
+    QCommandLineOption m_symbolDescriptionOption;
+    QCommandLineOption m_footprintDescriptionOption;
 
     // 补全选项
     QCommandLineOption m_completionOption;

@@ -50,8 +50,25 @@ ExportOptions CliContext::createExportOptions() const {
     options.exportDatasheet = m_parser.exportDatasheet();
 
     // 设置默认值
-    options.overwriteExistingFiles = true;
     options.debugMode = m_parser.isDebugMode();
+
+    // 弱网模式
+    options.weakNetworkSupport = m_parser.weakNetworkSupport();
+
+    // 更新模式
+    options.updateMode = m_parser.updateMode();
+
+    // 3D 模型路径模式
+    const QString pathMode = m_parser.model3DPathMode();
+    options.exportModel3DPathMode = (pathMode == QStringLiteral("absolute")) ? ExportOptions::MODEL_3D_PATH_ABSOLUTE
+                                                                             : ExportOptions::MODEL_3D_PATH_RELATIVE;
+
+    // 覆盖模式（默认 true，--no-overwrite 禁用）
+    options.overwriteExistingFiles = m_parser.overwriteExistingFiles();
+
+    // 库描述
+    options.symbolLibraryDescription = m_parser.symbolDescription();
+    options.footprintLibraryDescription = m_parser.footprintDescription();
 
     return options;
 }

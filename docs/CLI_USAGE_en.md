@@ -21,11 +21,20 @@ easykiconverter convert batch -i <component_list_file> -o <output_dir> [options]
 |----------|-------|-------------|---------|
 | `--input` | `-i` | Input file path | - |
 | `--output` | `-o` | Output directory path | - |
+| `--lib-name` | | Export library name | EasyKiConverter |
 | `--component` | `-c` | LCSC component ID | - |
 | `--symbol` | | Export symbol library | true |
 | `--footprint` | | Export footprint library | true |
 | `--3d-model` | | Export 3D models (default WRL format) | false |
+| `--3d-model-format` | | 3D model format (wrl/step/both) | wrl |
+| `--datasheet` | | Export datasheets | false |
 | `--preview` | | Export preview images | false |
+| `--3d-path-mode` | | 3D model path mode (relative/absolute) | relative |
+| `--symbol-description` | | Symbol library description text | - |
+| `--footprint-description` | | Footprint library description text | - |
+| `--weak-network` | | Weak network mode (double timeout, more retries, lower concurrency) | false |
+| `--update-mode` | | Update mode (only export missing or changed files) | false |
+| `--no-overwrite` | | Do not overwrite existing files | false |
 | `--cache-dir` | | Set disk cache directory | Cache directory from config |
 | `--cache-size-mb` | | Set disk cache size limit (MB) | Cache size limit from config |
 | `--progress` | | Show progress bar | false |
@@ -42,6 +51,7 @@ CLI mode exports the following by default:
 **Note**:
 - 3D models, preview images, and datasheets are not exported by default
 - Use `--3d-model` when needed; defaults to WRL format if not specified
+- Use `--datasheet` when datasheets are needed
 - Normal mode does not generate detailed reports; only in debug mode (`--debug`)
 
 ## Cache Configuration
@@ -129,6 +139,30 @@ easykiconverter convert component -c C12345 -o ./output
 
 # Batch conversion
 easykiconverter convert batch -i components.txt -o ./output
+
+# Export STEP format 3D models
+easykiconverter convert bom -i my_project.xlsx -o ./output --3d-model --3d-model-format step
+
+# Export datasheets
+easykiconverter convert bom -i my_project.xlsx -o ./output --datasheet
+
+# Use absolute paths for 3D model references
+easykiconverter convert bom -i my_project.xlsx -o ./output --3d-model --3d-path-mode absolute
+
+# Do not overwrite existing files
+easykiconverter convert bom -i my_project.xlsx -o ./output --no-overwrite
+
+# Only export missing or changed files (update mode)
+easykiconverter convert bom -i my_project.xlsx -o ./output --update-mode
+
+# Weak network mode (double timeout, more retries, lower concurrency)
+easykiconverter convert bom -i my_project.xlsx -o ./output --weak-network
+
+# Specify library description text
+easykiconverter convert bom -i my_project.xlsx -o ./output --symbol-description "My Symbol Lib" --footprint-description "My Footprint Lib"
+
+# Specify library name
+easykiconverter convert bom -i my_project.xlsx -o ./output --lib-name my_lib
 ```
 
 ## Architecture
