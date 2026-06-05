@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-- **当前版本**: 3.1.9（开发中）
+- **当前版本**: 3.1.10
 - **开发状态**: 稳定优化阶段，跨平台支持完善
 - **完成进度**: 约 99%（核心功能已实现，架构重构完成，测试框架已集成，跨平台打包完善）
 
@@ -71,8 +71,8 @@
 
 我们欢迎您的反馈和建议：
 
-- 在 [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues) 提交问题
-- 在 [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions) 参与讨论
+- 在 [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter/issues) 提交问题
+- 在 [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter/discussions) 参与讨论
 - 通过邮件联系项目维护者
 
 ## 更新日志

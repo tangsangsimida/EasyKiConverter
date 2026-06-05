@@ -4,7 +4,7 @@ This document shows the future direction of the project and the main features pl
 
 ## Current Status
 
-- **Current Version**: 3.1.9 (In Development)
+- **Current Version**: 3.1.10
 - **Development Status**: Stable optimization phase, cross-platform support complete
 - **Completion**: ~99% (core features implemented, architecture refactoring complete, test framework integrated, cross-platform packaging mature)
 
@@ -133,8 +133,8 @@ If you want to participate in project development:
 
 We welcome your feedback and suggestions:
 
-- Submit issues on [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues)
-- Participate in discussions on [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions)
+- Submit issues on [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter/issues)
+- Participate in discussions on [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter/discussions)
 - Contact project maintainers via email
 
 ## Changelog

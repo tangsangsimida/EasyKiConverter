@@ -170,8 +170,8 @@ sudo pacman -S zlib
 ### Clone 仓库
 
 ```bash
-git clone https://github.com/tangsangsimida/EasyKiConverter_QT.git
-cd EasyKiConverter_QT
+git clone https://github.com/tangsangsimida/EasyKiConverter.git
+cd EasyKiConverter
 ```
 
 ### Fork 并 Clone（如果您计划贡献）
@@ -180,8 +180,8 @@ cd EasyKiConverter_QT
 2. Clone 您的 Fork：
 
 ```bash
-git clone https://github.com/your-username/EasyKiConverter_QT.git
-cd EasyKiConverter_QT
+git clone https://github.com/your-username/EasyKiConverter.git
+cd EasyKiConverter
 ```
 
 ## 编译项目

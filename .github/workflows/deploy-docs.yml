@@ -42,5 +42,10 @@ jobs:
           mkdir -p build/docs/api
           doxygen Doxyfile
 
+      - name: Copy API docs to MkDocs site
+        run: |
+          mkdir -p docs/api/html
+          cp -r build/docs/api/html/* docs/api/html/
+
       - name: Build and Deploy
         run: mkdocs gh-deploy --force --no-strict

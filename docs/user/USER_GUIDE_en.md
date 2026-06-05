@@ -24,19 +24,19 @@ This manual provides detailed instructions for using all features of EasyKiConve
 
 #### Windows
 
-1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases)
+1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter/releases)
 2. Extract the downloaded archive
 3. Double-click `EasyKiConverter.exe` to run the application
 
 #### macOS
 
-1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases)
+1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter/releases)
 2. Extract the downloaded archive
 3. Double-click `EasyKiConverter.app` to run the application
 
 #### Linux
 
-1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases)
+1. Download the latest version from [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter/releases)
 2. Extract the downloaded archive
 3. Run `./EasyKiConverter` to launch the application
 
@@ -378,7 +378,7 @@ For more details, please see the [Debug Mode Documentation](DEBUG_MODE_en.md).
 - [Getting Started](GETTING_STARTED_en.md) - Quick start guide
 - [Features](FEATURES_en.md) - Learn about all features
 - [FAQ](FAQ_en.md) - Frequently asked questions
-- [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues) - Report bugs and request features
+- [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter/issues) - Report bugs and request features
 
 ## Support
 

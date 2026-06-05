@@ -29,8 +29,8 @@ Before contributing, make sure you:
 1. Fork the repository on GitHub
 2. Clone your fork locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/EasyKiConverter_QT.git
-   cd EasyKiConverter_QT
+   git clone https://github.com/YOUR_USERNAME/EasyKiConverter.git
+   cd EasyKiConverter
    ```
 
 ### 2. Configure Remotes
@@ -38,7 +38,7 @@ Before contributing, make sure you:
 Add the upstream repository:
 
 ```bash
-git remote add upstream https://github.com/tangsangsimida/EasyKiConverter_QT.git
+git remote add upstream https://github.com/tangsangsimida/EasyKiConverter.git
 ```
 
 ### 3. Create a Development Branch

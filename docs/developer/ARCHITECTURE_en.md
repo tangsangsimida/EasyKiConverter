@@ -285,7 +285,7 @@ Use Qt signal-slot mechanism to implement the observer pattern, achieving loose 
 ## Directory Structure
 
 ```
-EasyKiConverter_QT/
+EasyKiConverter/
 ├── src/                        # Source code
 │   ├── main.cpp                # Application entry point
 │   ├── core/                   # Core conversion engine

@@ -133,8 +133,8 @@ sudo apt-get install zlib1g-dev
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/tangsangsimida/EasyKiConverter_QT.git
-cd EasyKiConverter_QT
+git clone https://github.com/tangsangsimida/EasyKiConverter.git
+cd EasyKiConverter
 ```
 
 ### Windows + MinGW

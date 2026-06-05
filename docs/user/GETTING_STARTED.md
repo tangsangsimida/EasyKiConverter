@@ -93,8 +93,8 @@ sudo pacman -S qt6-base qt6-declarative cmake gcc
 ### Clone 仓库
 
 ```bash
-git clone https://github.com/tangsangsimida/EasyKiConverter_QT.git
-cd EasyKiConverter_QT
+git clone https://github.com/tangsangsimida/EasyKiConverter.git
+cd EasyKiConverter
 ```
 
 ### Fork 并 Clone（如果您计划贡献）
@@ -103,8 +103,8 @@ cd EasyKiConverter_QT
 2. Clone 您的 Fork：
 
 ```bash
-git clone https://github.com/your-username/EasyKiConverter_QT.git
-cd EasyKiConverter_QT
+git clone https://github.com/your-username/EasyKiConverter.git
+cd EasyKiConverter
 ```
 
 ## 编译项目
@@ -369,7 +369,7 @@ export PATH="/path/to/Qt/6.10.1/gcc_64/bin:$PATH"
 
 1. 查阅项目文档
 2. 查看 [常见问题](FAQ.md)
-3. 搜索 [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues)
+3. 搜索 [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter/issues)
 4. 提交新的 Issue
 
 ## 下一步
@@ -385,4 +385,4 @@ export PATH="/path/to/Qt/6.10.1/gcc_64/bin:$PATH"
 - [KiCad 官网](https://www.kicad.org/)
 - [Qt 官网](https://www.qt.io/)
 - [CMake 官网](https://cmake.org/)
-- [项目主页](https://github.com/tangsangsimida/EasyKiConverter_QT)
+- [项目主页](https://github.com/tangsangsimida/EasyKiConverter)

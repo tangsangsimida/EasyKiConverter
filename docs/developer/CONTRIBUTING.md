@@ -36,14 +36,14 @@
 2. Clone 您的 Fork 到本地：
 
 ```bash
-git clone https://github.com/your-username/EasyKiConverter_QT.git
-cd EasyKiConverter_QT
+git clone https://github.com/your-username/EasyKiConverter.git
+cd EasyKiConverter
 ```
 
 3. 添加上游仓库：
 
 ```bash
-git remote add upstream https://github.com/tangsangsimida/EasyKiConverter_QT.git
+git remote add upstream https://github.com/tangsangsimida/EasyKiConverter.git
 ```
 
 4. 创建新的分支：

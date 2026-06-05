@@ -26,7 +26,7 @@ Before using EasyKiConverter, ensure you have:
 
 ### Option 1: Download Pre-built Binary
 
-1. Go to the [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) page
+1. Go to the [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter/releases) page
 2. Download the latest release for your operating system
 3. Extract the downloaded archive
 4. Run the application:
@@ -322,8 +322,8 @@ Integrate EasyKiConverter into your build workflow:
 
 ### Community
 
-- [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues) - Report bugs and request features
-- [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions) - Ask questions and share ideas
+- [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter/issues) - Report bugs and request features
+- [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter/discussions) - Ask questions and share ideas
 
 ### Support
 

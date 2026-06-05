@@ -144,3 +144,4 @@ CLAUDE.md
 /testbom.xlsx
 GEMINI.md
 .codex
+.codegraph/daemon.pid

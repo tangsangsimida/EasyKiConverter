@@ -8,13 +8,13 @@
 <p align="center">
     <a href="https://flathub.org/apps/details/io.github.tangsangsimida.easykiconverter"><img width="200" alt="Download on Flathub" src="https://flathub.org/assets/badges/flathub-badge-i-en.svg"/></a>
     <br/>
-    <img src="https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Build/badge.svg" alt="Build Status" />
-    <img src="https://github.com/tangsangsimida/EasyKiConverter_QT/workflows/Security/badge.svg" alt="Security Scan" />
-    <img src="https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter_QT" alt="GitHub release" />
-    <img src="https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter_QT/total" alt="GitHub downloads (total)" />
-    <img src="https://img.shields.io/github/license/tangsangsimida/EasyKiConverter_QT" alt="License" />
-    <img src="https://img.shields.io/github/stars/tangsangsimida/EasyKiConverter_QT" alt="Stars" />
-    <img src="https://img.shields.io/github/issues/tangsangsimida/EasyKiConverter_QT" alt="Issues" />
+    <img src="https://github.com/tangsangsimida/EasyKiConverter/workflows/Build/badge.svg" alt="Build Status" />
+    <img src="https://github.com/tangsangsimida/EasyKiConverter/workflows/Security/badge.svg" alt="Security Scan" />
+    <img src="https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter" alt="GitHub release" />
+    <img src="https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter/total" alt="GitHub downloads (total)" />
+    <img src="https://img.shields.io/github/license/tangsangsimida/EasyKiConverter" alt="License" />
+    <img src="https://img.shields.io/github/stars/tangsangsimida/EasyKiConverter" alt="Stars" />
+    <img src="https://img.shields.io/github/issues/tangsangsimida/EasyKiConverter" alt="Issues" />
 </p>
 
 
@@ -35,7 +35,7 @@
 ## 快速开始
 
 ### 安装
-请前往 [Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 页面下载适用于您平台的版本：
+请前往 [Releases](https://github.com/tangsangsimida/EasyKiConverter/releases) 页面下载适用于您平台的版本：
 
 *   **Windows**: 推荐下载 `.exe` 安装程序（包含完整运行时），或下载 `.zip` 便携版。
 *   **Linux**: 推荐下载 `.AppImage`（无需安装，赋予执行权限即可运行），或 `.tar.gz` 归档。
@@ -61,8 +61,8 @@
 
 感谢以下开发者对 EasyKiConverter 的贡献：
 
-<a href="https://github.com/tangsangsimida/EasyKiConverter_QT/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=tangsangsimida/EasyKiConverter_QT&max=50" />
+<a href="https://github.com/tangsangsimida/EasyKiConverter/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=tangsangsimida/EasyKiConverter&max=50" />
 </a>
 
 欢迎提交 Issue 或 Pull Request 参与改进！详细请阅 [贡献指南](docs/developer/CONTRIBUTING.md)。

@@ -558,7 +558,7 @@ ParallelExportService::startPreload() + startExport()
 ## 目录结构
 
 ```
-EasyKiConverter_QT/
+EasyKiConverter/
 ├── src/                        # 源代码
 │   ├── main.cpp                # 应用程序入口
 │   ├── core/                   # 核心转换引擎
