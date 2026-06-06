@@ -6,7 +6,7 @@
 CMakeLists.txt linguist-detectable=false
 
 # Python
-# *.py linguist-detectable=false
+*.py linguist-detectable=false
 
 # Shell scripts
 *.sh linguist-detectable=false
