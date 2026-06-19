@@ -17,6 +17,24 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
+HOST_ARCH="$(uname -m)"
+case "$HOST_ARCH" in
+    x86_64|amd64)
+        LINUXDEPLOY_ARCH="x86_64"
+        APPIMAGE_ARCH="x86_64"
+        NFPM_ARCH="amd64"
+        ;;
+    aarch64|arm64)
+        LINUXDEPLOY_ARCH="aarch64"
+        APPIMAGE_ARCH="aarch64"
+        NFPM_ARCH="arm64"
+        ;;
+    *)
+        echo "不支持的架构: $HOST_ARCH" >&2
+        exit 1
+        ;;
+esac
+
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -79,21 +97,21 @@ check_tools() {
             echo ""
             echo "1. 安装 linuxdeploy（从 AppImage 提取，与 CI 一致）:"
             echo "   sudo mkdir -p /opt/linuxdeploy"
-            echo "   wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
-            echo "   chmod +x linuxdeploy-x86_64.AppImage"
-            echo "   ./linuxdeploy-x86_64.AppImage --appimage-extract"
+            echo "   wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage"
+            echo "   chmod +x linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage"
+            echo "   ./linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage --appimage-extract"
             echo "   sudo cp -r squashfs-root/* /opt/linuxdeploy/"
             echo "   sudo ln -s /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy"
-            echo "   rm -rf squashfs-root linuxdeploy-x86_64.AppImage"
+            echo "   rm -rf squashfs-root linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage"
             echo ""
             echo "2. 安装 linuxdeploy Qt 插件:"
             echo "   sudo mkdir -p /opt/linuxdeploy-plugin-qt"
-            echo "   wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
-            echo "   chmod +x linuxdeploy-plugin-qt-x86_64.AppImage"
-            echo "   ./linuxdeploy-plugin-qt-x86_64.AppImage --appimage-extract"
+            echo "   wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage"
+            echo "   chmod +x linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage"
+            echo "   ./linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage --appimage-extract"
             echo "   sudo cp -r squashfs-root/* /opt/linuxdeploy-plugin-qt/"
             echo "   sudo ln -s /opt/linuxdeploy-plugin-qt/AppRun /usr/local/bin/linuxdeploy-plugin-qt"
-            echo "   rm -rf squashfs-root linuxdeploy-plugin-qt-x86_64.AppImage"
+            echo "   rm -rf squashfs-root linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage"
             echo ""
             echo "3. 安装 nfpm（从 goreleaser 官方源）:"
             echo "   echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list"
@@ -179,16 +197,16 @@ install_tools() {
     if ! command -v linuxdeploy &> /dev/null; then
         print_info "安装 linuxdeploy（从 AppImage 提取）..."
         
-        wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
-            -O linuxdeploy-x86_64.AppImage || {
+        wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage \
+            -O linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage || {
             print_error "下载 linuxdeploy 失败"
             cd "$PROJECT_ROOT"
             rm -rf "$temp_dir"
             return 1
         }
         
-        chmod +x linuxdeploy-x86_64.AppImage
-        ./linuxdeploy-x86_64.AppImage --appimage-extract || {
+        chmod +x linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage
+        ./linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage --appimage-extract || {
             print_error "提取 linuxdeploy 失败"
             cd "$PROJECT_ROOT"
             rm -rf "$temp_dir"
@@ -200,7 +218,7 @@ install_tools() {
         sudo ln -sf /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy
         sudo chmod +x /opt/linuxdeploy/AppRun
         
-        rm -rf squashfs-root linuxdeploy-x86_64.AppImage
+        rm -rf squashfs-root linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage
         print_info "linuxdeploy 安装完成"
     fi
     
@@ -208,16 +226,16 @@ install_tools() {
     if ! command -v linuxdeploy-plugin-qt &> /dev/null; then
         print_info "安装 linuxdeploy-plugin-qt（从 AppImage 提取）..."
         
-        wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage \
-            -O linuxdeploy-plugin-qt-x86_64.AppImage || {
+        wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage \
+            -O linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage || {
             print_error "下载 linuxdeploy-plugin-qt 失败"
             cd "$PROJECT_ROOT"
             rm -rf "$temp_dir"
             return 1
         }
         
-        chmod +x linuxdeploy-plugin-qt-x86_64.AppImage
-        ./linuxdeploy-plugin-qt-x86_64.AppImage --appimage-extract || {
+        chmod +x linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage
+        ./linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage --appimage-extract || {
             print_error "提取 linuxdeploy-plugin-qt 失败"
             cd "$PROJECT_ROOT"
             rm -rf "$temp_dir"
@@ -229,7 +247,7 @@ install_tools() {
         sudo ln -sf /opt/linuxdeploy-plugin-qt/AppRun /usr/local/bin/linuxdeploy-plugin-qt
         sudo chmod +x /opt/linuxdeploy-plugin-qt/AppRun
         
-        rm -rf squashfs-root linuxdeploy-plugin-qt-x86_64.AppImage
+        rm -rf squashfs-root linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage
         print_info "linuxdeploy-plugin-qt 安装完成"
     fi
     
@@ -643,13 +661,13 @@ build_appimage() {
     local output_dir="${PROJECT_ROOT}/build/packages"
     mkdir -p "$output_dir"
     
-    mv EasyKiConverter-*.AppImage "$output_dir/EasyKiConverter-${VERSION}-g${GIT_HASH}.x86_64.AppImage"
+    mv EasyKiConverter-*.AppImage "$output_dir/EasyKiConverter-${VERSION}-g${GIT_HASH}.${APPIMAGE_ARCH}.AppImage"
     
     # 生成校验和
     cd "$output_dir"
-    sha256sum EasyKiConverter-${VERSION}-g${GIT_HASH}.x86_64.AppImage > EasyKiConverter-${VERSION}-g${GIT_HASH}.x86_64.AppImage.sha256sum
+    sha256sum EasyKiConverter-${VERSION}-g${GIT_HASH}.${APPIMAGE_ARCH}.AppImage > EasyKiConverter-${VERSION}-g${GIT_HASH}.${APPIMAGE_ARCH}.AppImage.sha256sum
     
-    print_info "AppImage 构建完成: $output_dir/EasyKiConverter-${VERSION}-g${GIT_HASH}.x86_64.AppImage"
+    print_info "AppImage 构建完成: $output_dir/EasyKiConverter-${VERSION}-g${GIT_HASH}.${APPIMAGE_ARCH}.AppImage"
 }
 
 # 构建 DEB 包
@@ -673,6 +691,7 @@ build_deb() {
     local temp_nfpm_config="${output_dir}/nfpm_temp.yaml"
     sed -e "s|\${APP_DIR}|$APP_DIR|g" \
         -e "s|\${VERSION}|$VERSION|g" \
+        -e "s|\${NFPM_ARCH}|$NFPM_ARCH|g" \
         -e "s|deploy/scripts/postinstall.sh|$PROJECT_ROOT/deploy/scripts/postinstall.sh|g" \
         -e "s|deploy/scripts/prerm.sh|$PROJECT_ROOT/deploy/scripts/prerm.sh|g" \
         -e "s|deploy/scripts/postrm.sh|$PROJECT_ROOT/deploy/scripts/postrm.sh|g" \
@@ -685,6 +704,7 @@ build_deb() {
         "$PROJECT_ROOT/deploy/nfpm.yaml" > "$temp_nfpm_config"
     
     # 运行 nfpm 构建（必须指定 --packager）
+    export NFPM_ARCH
     nfpm package --packager deb --config "$temp_nfpm_config" --target "$output_dir" || {
         print_error "nfpm 构建失败，请检查 nfpm.yaml 配置"
         print_info "临时配置文件保留在: $temp_nfpm_config"
@@ -697,10 +717,10 @@ build_deb() {
     
     # 重命名
     cd "$output_dir"
-    if [ -f "easykiconverter_${VERSION}-1_amd64.deb" ]; then
-        mv "easykiconverter_${VERSION}-1_amd64.deb" "EasyKiConverter-${VERSION}-g${GIT_HASH}.amd64.deb"
-        sha256sum "EasyKiConverter-${VERSION}-g${GIT_HASH}.amd64.deb" > "EasyKiConverter-${VERSION}-g${GIT_HASH}.amd64.deb.sha256sum"
-        print_info "DEB 包构建完成: $output_dir/EasyKiConverter-${VERSION}-g${GIT_HASH}.amd64.deb"
+    if [ -f "easykiconverter_${VERSION}-1_${NFPM_ARCH}.deb" ]; then
+        mv "easykiconverter_${VERSION}-1_${NFPM_ARCH}.deb" "EasyKiConverter-${VERSION}-g${GIT_HASH}.${NFPM_ARCH}.deb"
+        sha256sum "EasyKiConverter-${VERSION}-g${GIT_HASH}.${NFPM_ARCH}.deb" > "EasyKiConverter-${VERSION}-g${GIT_HASH}.${NFPM_ARCH}.deb.sha256sum"
+        print_info "DEB 包构建完成: $output_dir/EasyKiConverter-${VERSION}-g${GIT_HASH}.${NFPM_ARCH}.deb"
     else
         print_warn "DEB 包文件未找到，查看生成的文件："
         ls -la *.deb 2>/dev/null || print_error "没有生成 DEB 文件"

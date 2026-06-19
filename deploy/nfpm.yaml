@@ -1,5 +1,5 @@
 name: "easykiconverter"
-arch: "amd64"
+arch: "${NFPM_ARCH}"
 platform: "linux"
 version: "${VERSION}"
 release: "1"
@@ -94,4 +94,3 @@ overrides:
       postinstall: deploy/scripts/postinstall.sh
       preremove: deploy/scripts/prerm.sh
       postremove: deploy/scripts/postrm.sh
-

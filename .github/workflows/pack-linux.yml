@@ -27,12 +27,36 @@ env:
 
 jobs:
   # ===========================================================================
-  # 阶段 1: 核心构建 (Build Once)
-  # 编译代码，处理依赖，生成 AppDir 目录结构，供后续打包任务使用
+  # 阶段 1: 核心构建
+  # 按架构原生编译代码，处理依赖，生成 AppDir 目录结构，供后续打包任务使用
   # ===========================================================================
   build-core:
-    name: 'Build Core (Compile & Prepare)'
-    runs-on: ubuntu-latest
+    name: 'Build Core (${{ matrix.dist.name }})'
+    runs-on: ${{ matrix.dist.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        dist:
+          - name: amd64
+            runner: ubuntu-latest
+            qt_host: linux
+            qt_arch: linux_gcc_64
+            qt_dir: gcc_64
+            linuxdeploy_arch: x86_64
+            deb_arch: amd64
+            rpm_arch: x86_64
+            archlinux_arch: x86_64
+            appimage_arch: x86_64
+          - name: arm64
+            runner: ubuntu-24.04-arm
+            qt_host: linux_arm64
+            qt_arch: linux_gcc_arm64
+            qt_dir: gcc_arm64
+            linuxdeploy_arch: aarch64
+            deb_arch: arm64
+            rpm_arch: aarch64
+            archlinux_arch: aarch64
+            appimage_arch: aarch64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -76,6 +100,7 @@ jobs:
             ninja-build
 
       - name: 'Setup CCache'
+        if: matrix.dist.name == 'amd64'
         uses: hendrikmuhs/ccache-action@v1.2.23
         with:
           key: ${{ runner.os }}-pack-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
@@ -87,9 +112,9 @@ jobs:
         run: |
           QT_VERSION="6.10.2"
           pip3 install --no-cache-dir --break-system-packages aqtinstall
-          aqt install-qt linux desktop $QT_VERSION linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats
-          echo "/opt/qt/$QT_VERSION/gcc_64/bin" >> $GITHUB_PATH
-          echo "Qt6_DIR=/opt/qt/$QT_VERSION/gcc_64/lib/cmake/Qt6" >> $GITHUB_ENV
+          aqt install-qt ${{ matrix.dist.qt_host }} desktop $QT_VERSION ${{ matrix.dist.qt_arch }} --outputdir /opt/qt --modules qtshadertools qtimageformats
+          echo "/opt/qt/$QT_VERSION/${{ matrix.dist.qt_dir }}/bin" >> $GITHUB_PATH
+          echo "Qt6_DIR=/opt/qt/$QT_VERSION/${{ matrix.dist.qt_dir }}/lib/cmake/Qt6" >> $GITHUB_ENV
 
       - name: Install QXlsx
         run: |
@@ -102,14 +127,14 @@ jobs:
           sudo mkdir -p /opt/linuxdeploy /opt/linuxdeploy-plugin-qt
           
           # 安装 linuxdeploy
-          wget -q -O /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget -q -O /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.dist.linuxdeploy_arch }}.AppImage
           chmod +x /tmp/linuxdeploy
           /tmp/linuxdeploy --appimage-extract
           sudo cp -r squashfs-root/* /opt/linuxdeploy/
           sudo ln -sf /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy
           
           # 安装 linuxdeploy Qt 插件
-          wget -q -O /tmp/linuxdeploy-plugin-qt https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          wget -q -O /tmp/linuxdeploy-plugin-qt https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${{ matrix.dist.linuxdeploy_arch }}.AppImage
           chmod +x /tmp/linuxdeploy-plugin-qt
           /tmp/linuxdeploy-plugin-qt --appimage-extract
           sudo cp -r squashfs-root/* /opt/linuxdeploy-plugin-qt/
@@ -130,7 +155,7 @@ jobs:
           echo "=============================================="
           echo "  Qt Plugins Inventory (before cleanup)"
           echo "=============================================="
-          QT_PLUGINS_DIR="/opt/qt/6.10.2/gcc_64/plugins"
+          QT_PLUGINS_DIR="/opt/qt/6.10.2/${{ matrix.dist.qt_dir }}/plugins"
           if [ -d "$QT_PLUGINS_DIR" ]; then
             for plugin_type in "$QT_PLUGINS_DIR"/*/; do
               plugin_name=$(basename "$plugin_type")
@@ -145,7 +170,7 @@ jobs:
           echo "=============================================="
           
           # 删除所有 Qt SQL 驱动
-          for qt_lib_dir in /opt/qt/*/gcc_64/plugins/sqldrivers; do
+          for qt_lib_dir in /opt/qt/*/${{ matrix.dist.qt_dir }}/plugins/sqldrivers; do
             if [ -d "$qt_lib_dir" ]; then
               echo "检查 SQL 驱动目录: $qt_lib_dir"
               ls -la "$qt_lib_dir" 2>/dev/null || true
@@ -249,10 +274,11 @@ jobs:
           fi
 
           # 设置 LD_LIBRARY_PATH 让 linuxdeploy 能够找到 Qt 库
-          export LD_LIBRARY_PATH="/opt/qt/6.10.2/gcc_64/lib:$LD_LIBRARY_PATH"
+          export LD_LIBRARY_PATH="/opt/qt/6.10.2/${{ matrix.dist.qt_dir }}/lib:$LD_LIBRARY_PATH"
           
           # 创建 libtiff 兼容性符号链接 (Qt 6.10.2 需 libtiff.so.5，Ubuntu 24.04 提供 libtiff.so.6)
-          sudo ln -sf /usr/lib/x86_64-linux-gnu/libtiff.so.6 /usr/lib/x86_64-linux-gnu/libtiff.so.5
+          DEB_MULTIARCH="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
+          sudo ln -sf /usr/lib/${DEB_MULTIARCH}/libtiff.so.6 /usr/lib/${DEB_MULTIARCH}/libtiff.so.5
 
           # 关键步骤：运行 linuxdeploy 填充依赖库 (Qt libs 等) 到 AppDir
           # 注意：这里不生成 AppImage 文件，只处理目录内容
@@ -327,7 +353,8 @@ jobs:
           if [ "$QML_FOUND" = false ]; then
             echo "ERROR: QML directory not found via qmake!"
             # 尝试备用路径
-            for qml_dir in /usr/lib/qt6/qml /usr/lib/*/qt6/qml /usr/lib/x86_64-linux-gnu/qt6/qml /opt/qt/*/gcc_64/qml; do
+            DEB_MULTIARCH="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
+            for qml_dir in /usr/lib/qt6/qml /usr/lib/*/qt6/qml /usr/lib/${DEB_MULTIARCH}/qt6/qml /opt/qt/*/${{ matrix.dist.qt_dir }}/qml; do
               if [ -d "$qml_dir" ]; then
                 echo "Trying fallback QML directory: $qml_dir"
                 rm -rf ${APPIMAGE_DST_PATH}/usr/qml
@@ -674,7 +701,7 @@ jobs:
       - name: Upload AppDir Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: built-appdir
+          name: built-appdir-${{ matrix.dist.deb_arch }}
           path: ${{ github.workspace }}/${{ env.PRODUCT }}.AppDir
           retention-days: 1
 
@@ -684,9 +711,23 @@ jobs:
   # ===========================================================================
 
   pack-appimage:
-    name: 'Package: AppImage'
+    name: 'Package: AppImage (${{ matrix.dist.name }})'
     needs: build-core
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.dist.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        dist:
+          - name: amd64
+            runner: ubuntu-latest
+            linuxdeploy_arch: x86_64
+            deb_arch: amd64
+            appimage_arch: x86_64
+          - name: arm64
+            runner: ubuntu-24.04-arm
+            linuxdeploy_arch: aarch64
+            deb_arch: arm64
+            appimage_arch: aarch64
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/get-version
@@ -703,14 +744,14 @@ jobs:
           sudo mkdir -p /opt/linuxdeploy /opt/linuxdeploy-plugin-qt
           
           # 安装 linuxdeploy
-          wget -q -O /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget -q -O /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.dist.linuxdeploy_arch }}.AppImage
           chmod +x /tmp/linuxdeploy
           /tmp/linuxdeploy --appimage-extract
           sudo cp -r squashfs-root/* /opt/linuxdeploy/
           sudo ln -sf /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy
           
           # 安装 linuxdeploy Qt 插件
-          wget -q -O /tmp/linuxdeploy-plugin-qt https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          wget -q -O /tmp/linuxdeploy-plugin-qt https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${{ matrix.dist.linuxdeploy_arch }}.AppImage
           chmod +x /tmp/linuxdeploy-plugin-qt
           /tmp/linuxdeploy-plugin-qt --appimage-extract
           sudo cp -r squashfs-root/* /opt/linuxdeploy-plugin-qt/
@@ -728,7 +769,7 @@ jobs:
       - name: Download AppDir
         uses: actions/download-artifact@v4
         with:
-          name: built-appdir
+          name: built-appdir-${{ matrix.dist.deb_arch }}
           path: ${{ env.PRODUCT }}.AppDir
 
       - name: Debug - List AppDir
@@ -754,7 +795,7 @@ jobs:
           # 删除宿主机上的 Qt SQL 驱动，避免 linuxdeploy 扫描到它们
           # 注意：pack-appimage 运行在不同的容器，需要单独删除
           echo "=== 删除宿主机 Qt SQL 驱动 ==="
-          for qt_lib_dir in /opt/qt/*/gcc_64/plugins/sqldrivers; do
+          for qt_lib_dir in /opt/qt/*/*/plugins/sqldrivers; do
             if [ -d "$qt_lib_dir" ]; then
               echo "检查并删除: $qt_lib_dir"
               ls -la "$qt_lib_dir" 2>/dev/null || true
@@ -795,23 +836,33 @@ jobs:
 
           # 重命名
           mv EasyKiConverter-*.AppImage \
-             ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}.x86_64.AppImage
+             ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}.${{ matrix.dist.appimage_arch }}.AppImage
 
           # Checksum
-          sha256sum *.AppImage | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}.x86_64.AppImage.sha256sum
+          sha256sum *.AppImage | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}.${{ matrix.dist.appimage_arch }}.AppImage.sha256sum
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-x86_64.AppImage
+          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-${{ matrix.dist.appimage_arch }}.AppImage
           path: |
             *.AppImage
             *.sha256sum
 
   pack-deb:
-    name: 'Package: DEB (Debian/Ubuntu)'
+    name: 'Package: DEB (Debian/Ubuntu, ${{ matrix.dist.name }})'
     needs: build-core
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.dist.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        dist:
+          - name: amd64
+            runner: ubuntu-latest
+            deb_arch: amd64
+          - name: arm64
+            runner: ubuntu-24.04-arm
+            deb_arch: arm64
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/get-version
@@ -831,12 +882,13 @@ jobs:
       - name: Download AppDir
         uses: actions/download-artifact@v4
         with:
-          name: built-appdir
+          name: built-appdir-${{ matrix.dist.deb_arch }}
           path: ${{ env.PRODUCT }}.AppDir
 
       - name: Generate DEB
         run: |
           export VERSION="${{ steps.version.outputs.VERSION}}"
+          export NFPM_ARCH="${{ matrix.dist.deb_arch }}"
 
           if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
             export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
@@ -893,23 +945,37 @@ jobs:
           nfpm pkg --packager deb --target . --config nfpm_temp.yaml
 
           # 重命名
-          find . -name "*.deb" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_amd64.deb \;
+          find . -name "*.deb" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.deb_arch }}.deb \;
 
           # Checksum
-          sha256sum *.deb | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_amd64.deb.sha256sum
+          sha256sum *.deb | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.deb_arch }}.deb.sha256sum
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-amd64.deb
+          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-${{ matrix.dist.deb_arch }}.deb
           path: |
             *.deb
             *.sha256sum
 
   pack-rpm:
-    name: 'Package: RPM (RedHat/Fedora)'
+    name: 'Package: RPM (RedHat/Fedora, ${{ matrix.dist.name }})'
     needs: build-core
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.dist.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        dist:
+          - name: amd64
+            runner: ubuntu-latest
+            nfpm_arch: amd64
+            deb_arch: amd64
+            rpm_arch: x86_64
+          - name: arm64
+            runner: ubuntu-24.04-arm
+            nfpm_arch: arm64
+            deb_arch: arm64
+            rpm_arch: aarch64
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/get-version
@@ -929,12 +995,13 @@ jobs:
       - name: Download AppDir
         uses: actions/download-artifact@v4
         with:
-          name: built-appdir
+          name: built-appdir-${{ matrix.dist.deb_arch }}
           path: ${{ env.PRODUCT }}.AppDir
 
       - name: Generate RPM
         run: |
           export VERSION="${{ steps.version.outputs.VERSION}}"
+          export NFPM_ARCH="${{ matrix.dist.nfpm_arch }}"
 
           if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
             export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
@@ -976,21 +1043,35 @@ jobs:
 
           nfpm pkg --packager rpm --target . --config nfpm_temp.yaml
 
-          find . -name "*.rpm" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.rpm \;
-          sha256sum *.rpm | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.rpm.sha256sum
+          find . -name "*.rpm" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.rpm_arch }}.rpm \;
+          sha256sum *.rpm | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.rpm_arch }}.rpm.sha256sum
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-x86_64.rpm
+          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-${{ matrix.dist.rpm_arch }}.rpm
           path: |
             *.rpm
             *.sha256sum
 
   pack-arch:
-    name: 'Package: Arch Linux'
+    name: 'Package: Arch Linux (${{ matrix.dist.name }})'
     needs: build-core
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.dist.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        dist:
+          - name: amd64
+            runner: ubuntu-latest
+            nfpm_arch: amd64
+            deb_arch: amd64
+            archlinux_arch: x86_64
+          - name: arm64
+            runner: ubuntu-24.04-arm
+            nfpm_arch: arm64
+            deb_arch: arm64
+            archlinux_arch: aarch64
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/get-version
@@ -1010,12 +1091,13 @@ jobs:
       - name: Download AppDir
         uses: actions/download-artifact@v4
         with:
-          name: built-appdir
+          name: built-appdir-${{ matrix.dist.deb_arch }}
           path: ${{ env.PRODUCT }}.AppDir
 
       - name: Generate Arch Package
         run: |
           export VERSION="${{ steps.version.outputs.VERSION}}"
+          export NFPM_ARCH="${{ matrix.dist.nfpm_arch }}"
 
           if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
             export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
@@ -1057,13 +1139,13 @@ jobs:
 
           nfpm pkg --packager archlinux --target . --config nfpm_temp.yaml
 
-          find . -name "*.pkg.tar.zst" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.pkg.tar.zst \;
-          sha256sum *.pkg.tar.zst | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_x86_64.pkg.tar.zst.sha256sum
+          find . -name "*.pkg.tar.zst" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.archlinux_arch }}.pkg.tar.zst \;
+          sha256sum *.pkg.tar.zst | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.archlinux_arch }}.pkg.tar.zst.sha256sum
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-x86_64.pkg.tar.zst
+          name: EasyKiConverter-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}-${{ matrix.dist.archlinux_arch }}.pkg.tar.zst
           path: |
             *.pkg.tar.zst
             *.sha256sum

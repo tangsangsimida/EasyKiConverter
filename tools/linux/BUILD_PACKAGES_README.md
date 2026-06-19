@@ -57,19 +57,25 @@ sudo apt install -y cmake ninja-build
 # 创建安装目录
 sudo mkdir -p /opt/linuxdeploy
 
-# 下载 AppImage
-wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-chmod +x linuxdeploy-x86_64.AppImage
+# 下载 AppImage（x86_64 主机用 x86_64，arm64/aarch64 主机用 aarch64）
+ARCH=$(uname -m)
+case "$ARCH" in
+  x86_64|amd64) LINUXDEPLOY_ARCH=x86_64 ;;
+  aarch64|arm64) LINUXDEPLOY_ARCH=aarch64 ;;
+  *) echo "Unsupported arch: $ARCH" >&2; exit 1 ;;
+esac
+wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage
+chmod +x linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage
 
 # 提取 AppImage 内容
-./linuxdeploy-x86_64.AppImage --appimage-extract
+./linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage --appimage-extract
 
 # 复制到系统目录并创建符号链接
 sudo cp -r squashfs-root/* /opt/linuxdeploy/
 sudo ln -s /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy
 
 # 清理临时文件
-rm -rf squashfs-root linuxdeploy-x86_64.AppImage
+rm -rf squashfs-root linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage
 
 # 验证安装
 linuxdeploy --version
@@ -83,19 +89,19 @@ linuxdeploy --version
 # 创建安装目录
 sudo mkdir -p /opt/linuxdeploy-plugin-qt
 
-# 下载 AppImage
-wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
-chmod +x linuxdeploy-plugin-qt-x86_64.AppImage
+# 下载 AppImage（复用上一步的 LINUXDEPLOY_ARCH）
+wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage
+chmod +x linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage
 
 # 提取 AppImage 内容
-./linuxdeploy-plugin-qt-x86_64.AppImage --appimage-extract
+./linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage --appimage-extract
 
 # 复制到系统目录并创建符号链接
 sudo cp -r squashfs-root/* /opt/linuxdeploy-plugin-qt/
 sudo ln -s /opt/linuxdeploy-plugin-qt/AppRun /usr/local/bin/linuxdeploy-plugin-qt
 
 # 清理临时文件
-rm -rf squashfs-root linuxdeploy-plugin-qt-x86_64.AppImage
+rm -rf squashfs-root linuxdeploy-plugin-qt-${LINUXDEPLOY_ARCH}.AppImage
 
 # 验证安装
 linuxdeploy-plugin-qt --version
@@ -153,7 +159,11 @@ build/packages/
 ├── EasyKiConverter-3.0.7-g34ba7df.x86_64.AppImage
 ├── EasyKiConverter-3.0.7-g34ba7df.x86_64.AppImage.sha256sum
 ├── EasyKiConverter-3.0.7-g34ba7df.amd64.deb
-└── EasyKiConverter-3.0.7-g34ba7df.amd64.deb.sha256sum
+├── EasyKiConverter-3.0.7-g34ba7df.amd64.deb.sha256sum
+├── EasyKiConverter-3.0.7-g34ba7df.aarch64.AppImage
+├── EasyKiConverter-3.0.7-g34ba7df.aarch64.AppImage.sha256sum
+├── EasyKiConverter-3.0.7-g34ba7df.arm64.deb
+└── EasyKiConverter-3.0.7-g34ba7df.arm64.deb.sha256sum
 ```
 
 ## 测试打包结果
@@ -225,9 +235,15 @@ ping -c 3 github.com
 
 # 手动安装工具
 cd /tmp
-wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-chmod +x linuxdeploy-x86_64.AppImage
-./linuxdeploy-x86_64.AppImage --appimage-extract
+ARCH=$(uname -m)
+case "$ARCH" in
+  x86_64|amd64) LINUXDEPLOY_ARCH=x86_64 ;;
+  aarch64|arm64) LINUXDEPLOY_ARCH=aarch64 ;;
+  *) echo "Unsupported arch: $ARCH" >&2; exit 1 ;;
+esac
+wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage
+chmod +x linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage
+./linuxdeploy-${LINUXDEPLOY_ARCH}.AppImage --appimage-extract
 sudo cp -r squashfs-root/* /opt/linuxdeploy/
 sudo ln -s /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy
 ```
