@@ -17,7 +17,7 @@ assignees: ''
 
 ## 环境信息
 - 操作系统版本：[例如：Windows 11, macOS 14, Ubuntu 22.04]
-- Qt 版本：[例如：6.10.1]
+- Qt 版本：[例如：6.10.2]
 - EasyKiConverter 版本：[例如：3.0.0]
 
 ## 附加信息

@@ -31,9 +31,23 @@ env:
 
 jobs:
   linux-build:
-    name: 'Build Linux'
-    runs-on: ubuntu-latest
+    name: 'Build Linux (${{ matrix.dist.name }})'
+    runs-on: ${{ matrix.dist.runner }}
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        dist:
+          - name: amd64
+            runner: ubuntu-latest
+            qt_host: linux
+            qt_arch: linux_gcc_64
+            qt_dir: gcc_64
+          - name: arm64
+            runner: ubuntu-24.04-arm
+            qt_host: linux_arm64
+            qt_arch: linux_gcc_arm64
+            qt_dir: gcc_arm64
 
     steps:
       - name: 'Checkout Source code'
@@ -79,22 +93,17 @@ jobs:
       - name: 'Setup CCache'
         uses: hendrikmuhs/ccache-action@v1.2.23
         with:
-          key: ${{ runner.os }}-linux-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+          key: ${{ runner.os }}-${{ matrix.dist.name }}-linux-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
           restore-keys: |
-            ${{ runner.os }}-linux-
+            ${{ runner.os }}-${{ matrix.dist.name }}-linux-
           max-size: '2G'
 
       - name: 'Install Qt 6.10.2'
         run: |
           pip3 install --no-cache-dir --break-system-packages aqtinstall
-          aqt install-qt linux desktop 6.10.2 linux_gcc_64 --outputdir /opt/qt --modules qtshadertools qtimageformats
-          echo "/opt/qt/6.10.2/gcc_64/bin" >> $GITHUB_PATH
-          echo "Qt6_DIR=/opt/qt/6.10.2/gcc_64/lib/cmake/Qt6" >> $GITHUB_ENV
-
-      - name: 'Clone QXlsx'
-        run: |
-          git clone --depth 1 https://github.com/QtExcel/QXlsx.git /opt/QXlsx
-          echo "QXLSX_ROOT=/opt/QXlsx/QXlsx" >> $GITHUB_ENV
+          aqt install-qt ${{ matrix.dist.qt_host }} desktop 6.10.2 ${{ matrix.dist.qt_arch }} --outputdir /opt/qt --modules qtshadertools qtimageformats
+          echo "/opt/qt/6.10.2/${{ matrix.dist.qt_dir }}/bin" >> $GITHUB_PATH
+          echo "Qt6_DIR=/opt/qt/6.10.2/${{ matrix.dist.qt_dir }}/lib/cmake/Qt6" >> $GITHUB_ENV
 
       - name: 'Configure CMake'
         run: |

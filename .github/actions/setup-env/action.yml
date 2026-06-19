@@ -9,7 +9,7 @@ inputs:
   qt-version:
     description: 'Qt version to install'
     required: false
-    default: '6.10.1'
+    default: '6.10.2'
   qt-host:
     description: 'Qt host platform'
     required: false

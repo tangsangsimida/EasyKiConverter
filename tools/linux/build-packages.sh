@@ -686,22 +686,15 @@ build_deb() {
     local output_dir="${PROJECT_ROOT}/build/packages"
     mkdir -p "$output_dir"
     
-    # 使用 sed 动态替换 nfpm.yaml 中的环境变量和相对路径
-    # nfpm 不能直接解析环境变量，需要先替换
+    # 渲染 nfpm.yaml 中的环境变量和相对路径
     local temp_nfpm_config="${output_dir}/nfpm_temp.yaml"
-    sed -e "s|\${APP_DIR}|$APP_DIR|g" \
-        -e "s|\${VERSION}|$VERSION|g" \
-        -e "s|\${NFPM_ARCH}|$NFPM_ARCH|g" \
-        -e "s|deploy/scripts/postinstall.sh|$PROJECT_ROOT/deploy/scripts/postinstall.sh|g" \
-        -e "s|deploy/scripts/prerm.sh|$PROJECT_ROOT/deploy/scripts/prerm.sh|g" \
-        -e "s|deploy/scripts/postrm.sh|$PROJECT_ROOT/deploy/scripts/postrm.sh|g" \
-        -e "s|deploy/scripts/easykiconverter-wrapper.sh|$PROJECT_ROOT/deploy/scripts/easykiconverter-wrapper.sh|g" \
-        -e "s|deploy/scripts/easykiconverter-register.sh|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.sh|g" \
-        -e "s|deploy/scripts/easykiconverter-register.desktop|$PROJECT_ROOT/deploy/scripts/easykiconverter-register.desktop|g" \
-        -e "s|deploy/scripts/trigger-gnome-refresh.sh|$PROJECT_ROOT/deploy/scripts/trigger-gnome-refresh.sh|g" \
-        -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$PROJECT_ROOT/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
-        -e "s|deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|$PROJECT_ROOT/deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|g" \
-        "$PROJECT_ROOT/deploy/nfpm.yaml" > "$temp_nfpm_config"
+    python3 "$PROJECT_ROOT/tools/python/render_nfpm_config.py" \
+        --template "$PROJECT_ROOT/deploy/nfpm.yaml" \
+        --output "$temp_nfpm_config" \
+        --project-root "$PROJECT_ROOT" \
+        --app-dir "$APP_DIR" \
+        --version "$VERSION" \
+        --arch "$NFPM_ARCH"
     
     # 运行 nfpm 构建（必须指定 --packager）
     export NFPM_ARCH

@@ -6,19 +6,13 @@ on:
       - 'v*'
       - 'V*'
   workflow_dispatch:
-    inputs:
-      create_release:
-        description: 'Create GitHub Release'
-        required: false
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
   packages: read
 
 env:
@@ -116,38 +110,9 @@ jobs:
           echo "/opt/qt/$QT_VERSION/${{ matrix.dist.qt_dir }}/bin" >> $GITHUB_PATH
           echo "Qt6_DIR=/opt/qt/$QT_VERSION/${{ matrix.dist.qt_dir }}/lib/cmake/Qt6" >> $GITHUB_ENV
 
-      - name: Install QXlsx
-        run: |
-          git clone https://github.com/QtExcel/QXlsx.git /opt/QXlsx
-          echo "QXLSX_ROOT=/opt/QXlsx/QXlsx" >> $GITHUB_ENV
-
       - name: Install LinuxDeploy
         run: |
-          # 创建目标目录
-          sudo mkdir -p /opt/linuxdeploy /opt/linuxdeploy-plugin-qt
-          
-          # 安装 linuxdeploy
-          wget -q -O /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.dist.linuxdeploy_arch }}.AppImage
-          chmod +x /tmp/linuxdeploy
-          /tmp/linuxdeploy --appimage-extract
-          sudo cp -r squashfs-root/* /opt/linuxdeploy/
-          sudo ln -sf /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy
-          
-          # 安装 linuxdeploy Qt 插件
-          wget -q -O /tmp/linuxdeploy-plugin-qt https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${{ matrix.dist.linuxdeploy_arch }}.AppImage
-          chmod +x /tmp/linuxdeploy-plugin-qt
-          /tmp/linuxdeploy-plugin-qt --appimage-extract
-          sudo cp -r squashfs-root/* /opt/linuxdeploy-plugin-qt/
-          sudo ln -sf /opt/linuxdeploy-plugin-qt/AppRun /usr/local/bin/linuxdeploy-plugin-qt
-          
-          # 验证安装
-          which linuxdeploy || echo "ERROR: linuxdeploy not found"
-          /opt/linuxdeploy/AppRun --version || echo "ERROR: linuxdeploy not executable"
-          
-          # 设置环境变量
-          echo "/opt/linuxdeploy" >> $GITHUB_PATH
-          echo "/opt/linuxdeploy-plugin-qt" >> $GITHUB_PATH
-          echo "DEPLOY_MODE=unpackaged" >> $GITHUB_ENV
+          tools/linux/ci-package.sh install-linuxdeploy ${{ matrix.dist.linuxdeploy_arch }}
 
       - name: Remove Unused Qt Plugins
         run: |
@@ -740,31 +705,7 @@ jobs:
 
       - name: Install LinuxDeploy
         run: |
-          # 创建目标目录
-          sudo mkdir -p /opt/linuxdeploy /opt/linuxdeploy-plugin-qt
-          
-          # 安装 linuxdeploy
-          wget -q -O /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.dist.linuxdeploy_arch }}.AppImage
-          chmod +x /tmp/linuxdeploy
-          /tmp/linuxdeploy --appimage-extract
-          sudo cp -r squashfs-root/* /opt/linuxdeploy/
-          sudo ln -sf /opt/linuxdeploy/AppRun /usr/local/bin/linuxdeploy
-          
-          # 安装 linuxdeploy Qt 插件
-          wget -q -O /tmp/linuxdeploy-plugin-qt https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${{ matrix.dist.linuxdeploy_arch }}.AppImage
-          chmod +x /tmp/linuxdeploy-plugin-qt
-          /tmp/linuxdeploy-plugin-qt --appimage-extract
-          sudo cp -r squashfs-root/* /opt/linuxdeploy-plugin-qt/
-          sudo ln -sf /opt/linuxdeploy-plugin-qt/AppRun /usr/local/bin/linuxdeploy-plugin-qt
-          
-          # 验证安装
-          which linuxdeploy || echo "ERROR: linuxdeploy not found"
-          /opt/linuxdeploy/AppRun --version || echo "ERROR: linuxdeploy not executable"
-          
-          # 刷新 PATH 并设置环境变量
-          echo "/opt/linuxdeploy" >> $GITHUB_PATH
-          echo "/opt/linuxdeploy-plugin-qt" >> $GITHUB_PATH
-          echo "DEPLOY_MODE=unpackaged" >> $GITHUB_ENV
+          tools/linux/ci-package.sh install-linuxdeploy ${{ matrix.dist.linuxdeploy_arch }}
 
       - name: Download AppDir
         uses: actions/download-artifact@v4
@@ -792,54 +733,12 @@ jobs:
 
       - name: Generate AppImage
         run: |
-          # 删除宿主机上的 Qt SQL 驱动，避免 linuxdeploy 扫描到它们
-          # 注意：pack-appimage 运行在不同的容器，需要单独删除
-          echo "=== 删除宿主机 Qt SQL 驱动 ==="
-          for qt_lib_dir in /opt/qt/*/*/plugins/sqldrivers; do
-            if [ -d "$qt_lib_dir" ]; then
-              echo "检查并删除: $qt_lib_dir"
-              ls -la "$qt_lib_dir" 2>/dev/null || true
-              rm -f "$qt_lib_dir"/libqsql*.so* 2>/dev/null || true
-              echo "[-] 已删除 SQL 驱动"
-            fi
-          done
-          echo "=== SQL 驱动清理完成 ==="
-          echo ""
-
-          # 确保可执行文件有执行权限（在 linuxdeploy 重新打包前）
-          chmod +x ${{ env.PRODUCT }}.AppDir/usr/bin/easykiconverter
-          find ${{ env.PRODUCT }}.AppDir/usr/bin -type f -exec chmod +x {} \; 2>/dev/null || true
-          find ${{ env.PRODUCT }}.AppDir/usr/libexec -type f -exec chmod +x {} \; 2>/dev/null || true
-          chmod +x ${{ env.PRODUCT }}.AppDir/AppRun 2>/dev/null || true
-          echo "✓ Permissions set before linuxdeploy"
-
-          # 重新运行 linuxdeploy 以生成 AppImage
-          # Qt 已在 build-core 中部署，不需要再次运行 qt 插件
-          # 注意：SQL 驱动已在前面步骤中删除（build-core + 本步骤开始时）
-          /opt/linuxdeploy/AppRun --appdir ${{ env.PRODUCT }}.AppDir \
-            --executable ${{ env.PRODUCT }}.AppDir/usr/bin/easykiconverter \
-            --desktop-file ${{ env.PRODUCT }}.AppDir/io.github.tangsangsimida.easykiconverter.desktop \
-            --output appimage
-
-          # linuxdeploy 会覆盖 desktop 文件的 Exec 字段，需要手动修复
-          echo "修复 desktop 文件的 Exec 字段..."
-          sed -i "s|^Exec=.*easykiconverter|Exec=AppRun|" ${{ env.PRODUCT }}.AppDir/io.github.tangsangsimida.easykiconverter.desktop
-          sed -i "s|^Exec=.*easykiconverter|Exec=AppRun|" ${{ env.PRODUCT }}.AppDir/usr/share/applications/io.github.tangsangsimida.easykiconverter.desktop
-
-          # 重新打包（使用修复后的 desktop 文件）
-          echo "使用修复后的 AppDir 重新生成 AppImage..."
-          /opt/linuxdeploy/AppRun --appdir ${{ env.PRODUCT }}.AppDir --output appimage
-
-          # linuxdeploy 可能会改变文件权限，重新设置
-          chmod +x EasyKiConverter-*.AppImage
-          echo "✓ AppImage permissions fixed"
-
-          # 重命名
-          mv EasyKiConverter-*.AppImage \
-             ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}.${{ matrix.dist.appimage_arch }}.AppImage
-
-          # Checksum
-          sha256sum *.AppImage | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}.${{ matrix.dist.appimage_arch }}.AppImage.sha256sum
+          tools/linux/ci-package.sh package-appimage \
+            ${{ env.PRODUCT }}.AppDir \
+            ${{ env.PRODUCT }} \
+            ${{ steps.version.outputs.VERSION }} \
+            ${{ steps.version.outputs.GIT_HASH }} \
+            ${{ matrix.dist.appimage_arch }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -887,68 +786,15 @@ jobs:
 
       - name: Generate DEB
         run: |
-          export VERSION="${{ steps.version.outputs.VERSION}}"
-          export NFPM_ARCH="${{ matrix.dist.deb_arch }}"
-
-          if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
-            export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
-          else
-            echo "ERROR: AppDir not found!"
-            exit 1
-          fi
-
-          echo "=== APP_DIR = $APP_DIR ==="
-          ls -la "$APP_DIR" | head -20
-
-          # 检查 desktop 文件是否存在
-          if [ -f "$APP_DIR/io.github.tangsangsimida.easykiconverter.desktop" ]; then
-            echo "✓ Desktop file found in AppDir root"
-          else
-            echo "WARNING: Desktop file not found in AppDir root"
-          fi
-          if [ -f "$APP_DIR/usr/share/applications/io.github.tangsangsimida.easykiconverter.desktop" ]; then
-            echo "✓ Desktop file found in usr/share/applications"
-          else
-            echo "WARNING: Desktop file not found in usr/share/applications"
-          fi
-
-          # 准备脚本（复制项目中的脚本文件）
-          mkdir -p scripts
-          cp deploy/scripts/postinstall.sh scripts/postinstall.sh
-          cp deploy/scripts/prerm.sh scripts/preremove.sh
-          cp deploy/scripts/postrm.sh scripts/postrm.sh
-          cp deploy/scripts/uninstall-common.sh scripts/uninstall-common.sh
-          chmod +x scripts/*.sh
-
-          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
-          sed -e "s|\${APP_DIR}|$APP_DIR|g" \
-              -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
-              -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
-              -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
-              -e "s|deploy/scripts/uninstall-common.sh|$(pwd)/deploy/scripts/uninstall-common.sh|g" \
-              -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
-              -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
-              -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
-              -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
-              -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$(pwd)/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
-              -e "s|deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|$(pwd)/deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|g" \
-              deploy/nfpm.yaml > nfpm_temp.yaml
-
-          # 确保 AppDir 中所有二进制文件有执行权限（解决 root 用户创建文件的问题）
-          find "$APP_DIR" -type f -name "easykiconverter" -exec chmod 755 {} \;
-          find "$APP_DIR/usr/bin" -type f -exec chmod 755 {} \; 2>/dev/null || true
-          find "$APP_DIR/usr/libexec" -type f -exec chmod 755 {} \; 2>/dev/null || true
-          chmod 755 "$APP_DIR/AppRun" 2>/dev/null || true
-          echo "✓ Permissions fixed before nfpm packaging"
-
-          # 打包
-          nfpm pkg --packager deb --target . --config nfpm_temp.yaml
-
-          # 重命名
-          find . -name "*.deb" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.deb_arch }}.deb \;
-
-          # Checksum
-          sha256sum *.deb | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.deb_arch }}.deb.sha256sum
+          tools/linux/ci-package.sh package-nfpm \
+            deb \
+            ${{ env.PRODUCT }}.AppDir \
+            ${{ env.PRODUCT }} \
+            ${{ steps.version.outputs.VERSION }} \
+            ${{ steps.version.outputs.GIT_HASH }} \
+            ${{ matrix.dist.deb_arch }} \
+            ${{ matrix.dist.deb_arch }} \
+            deb
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -1000,51 +846,15 @@ jobs:
 
       - name: Generate RPM
         run: |
-          export VERSION="${{ steps.version.outputs.VERSION}}"
-          export NFPM_ARCH="${{ matrix.dist.nfpm_arch }}"
-
-          if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
-            export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
-          else
-            echo "ERROR: AppDir not found!"
-            exit 1
-          fi
-
-          echo "=== APP_DIR = $APP_DIR ==="
-          ls -la "$APP_DIR" | head -20
-
-          # 准备脚本（复制项目中的脚本文件）
-          mkdir -p scripts
-          cp deploy/scripts/postinstall.sh scripts/postinstall.sh
-          cp deploy/scripts/prerm.sh scripts/preremove.sh
-          cp deploy/scripts/postrm.sh scripts/postrm.sh
-          cp deploy/scripts/uninstall-common.sh scripts/uninstall-common.sh
-          chmod +x scripts/*.sh
-
-          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
-          sed -e "s|\${APP_DIR}|$APP_DIR|g" \
-              -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
-              -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
-              -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
-              -e "s|deploy/scripts/uninstall-common.sh|$(pwd)/deploy/scripts/uninstall-common.sh|g" \
-              -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
-              -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
-              -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
-              -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
-              -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$(pwd)/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
-              -e "s|deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|$(pwd)/deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|g" \
-              deploy/nfpm.yaml > nfpm_temp.yaml
-
-          # 确保 AppDir 中所有二进制文件有执行权限
-          find "$APP_DIR" -type f -name "easykiconverter" -exec chmod 755 {} \;
-          find "$APP_DIR/usr/bin" -type f -exec chmod 755 {} \; 2>/dev/null || true
-          find "$APP_DIR/usr/libexec" -type f -exec chmod 755 {} \; 2>/dev/null || true
-          chmod 755 "$APP_DIR/AppRun" 2>/dev/null || true
-
-          nfpm pkg --packager rpm --target . --config nfpm_temp.yaml
-
-          find . -name "*.rpm" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.rpm_arch }}.rpm \;
-          sha256sum *.rpm | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.rpm_arch }}.rpm.sha256sum
+          tools/linux/ci-package.sh package-nfpm \
+            rpm \
+            ${{ env.PRODUCT }}.AppDir \
+            ${{ env.PRODUCT }} \
+            ${{ steps.version.outputs.VERSION }} \
+            ${{ steps.version.outputs.GIT_HASH }} \
+            ${{ matrix.dist.nfpm_arch }} \
+            ${{ matrix.dist.rpm_arch }} \
+            rpm
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -1096,51 +906,15 @@ jobs:
 
       - name: Generate Arch Package
         run: |
-          export VERSION="${{ steps.version.outputs.VERSION}}"
-          export NFPM_ARCH="${{ matrix.dist.nfpm_arch }}"
-
-          if [ -d "${{ env.PRODUCT }}.AppDir" ]; then
-            export APP_DIR="${GITHUB_WORKSPACE}/${{ env.PRODUCT }}.AppDir"
-          else
-            echo "ERROR: AppDir not found!"
-            exit 1
-          fi
-
-          echo "=== APP_DIR = $APP_DIR ==="
-          ls -la "$APP_DIR" | head -20
-
-          # 准备脚本（复制项目中的脚本文件）
-          mkdir -p scripts
-          cp deploy/scripts/postinstall.sh scripts/postinstall.sh
-          cp deploy/scripts/prerm.sh scripts/preremove.sh
-          cp deploy/scripts/postrm.sh scripts/postrm.sh
-          cp deploy/scripts/uninstall-common.sh scripts/uninstall-common.sh
-          chmod +x scripts/*.sh
-
-          # 使用 sed 动态替换 nfpm.yaml 中的 ${APP_DIR} 变量和其他路径
-          sed -e "s|\${APP_DIR}|$APP_DIR|g" \
-              -e "s|deploy/scripts/postinstall.sh|$(pwd)/deploy/scripts/postinstall.sh|g" \
-              -e "s|deploy/scripts/prerm.sh|$(pwd)/deploy/scripts/prerm.sh|g" \
-              -e "s|deploy/scripts/postrm.sh|$(pwd)/deploy/scripts/postrm.sh|g" \
-              -e "s|deploy/scripts/uninstall-common.sh|$(pwd)/deploy/scripts/uninstall-common.sh|g" \
-              -e "s|deploy/scripts/easykiconverter-wrapper.sh|$(pwd)/deploy/scripts/easykiconverter-wrapper.sh|g" \
-              -e "s|deploy/scripts/easykiconverter-register.sh|$(pwd)/deploy/scripts/easykiconverter-register.sh|g" \
-              -e "s|deploy/scripts/easykiconverter-register.desktop|$(pwd)/deploy/scripts/easykiconverter-register.desktop|g" \
-              -e "s|deploy/scripts/trigger-gnome-refresh.sh|$(pwd)/deploy/scripts/trigger-gnome-refresh.sh|g" \
-              -e "s|deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|$(pwd)/deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml|g" \
-              -e "s|deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|$(pwd)/deploy/linux/io.github.tangsangsimida.easykiconverter.desktop|g" \
-              deploy/nfpm.yaml > nfpm_temp.yaml
-
-          # 确保 AppDir 中所有二进制文件有执行权限
-          find "$APP_DIR" -type f -name "easykiconverter" -exec chmod 755 {} \;
-          find "$APP_DIR/usr/bin" -type f -exec chmod 755 {} \; 2>/dev/null || true
-          find "$APP_DIR/usr/libexec" -type f -exec chmod 755 {} \; 2>/dev/null || true
-          chmod 755 "$APP_DIR/AppRun" 2>/dev/null || true
-
-          nfpm pkg --packager archlinux --target . --config nfpm_temp.yaml
-
-          find . -name "*.pkg.tar.zst" -exec mv {} ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.archlinux_arch }}.pkg.tar.zst \;
-          sha256sum *.pkg.tar.zst | tee ${{ env.PRODUCT }}-${{ steps.version.outputs.VERSION }}-g${{ steps.version.outputs.GIT_HASH }}_${{ matrix.dist.archlinux_arch }}.pkg.tar.zst.sha256sum
+          tools/linux/ci-package.sh package-nfpm \
+            archlinux \
+            ${{ env.PRODUCT }}.AppDir \
+            ${{ env.PRODUCT }} \
+            ${{ steps.version.outputs.VERSION }} \
+            ${{ steps.version.outputs.GIT_HASH }} \
+            ${{ matrix.dist.nfpm_arch }} \
+            ${{ matrix.dist.archlinux_arch }} \
+            pkg.tar.zst
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -1149,67 +923,3 @@ jobs:
           path: |
             *.pkg.tar.zst
             *.sha256sum
-
-  # ===========================================================================
-  # 阶段 3: 发布
-  # 汇总所有工件并发布
-  # 注意：Flatpak 打包已移除，将提交到 Flathub
-  # ===========================================================================
-  release:
-    name: 'Publish Release'
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: [pack-appimage, pack-deb, pack-rpm, pack-arch]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get Version
-        id: version
-        uses: ./.github/actions/get-version
-
-      - name: Generate Changelog
-        id: changelog
-        shell: bash
-        run: |
-          PREV_TAG="${{ steps.version.outputs.PREVIOUS_TAG }}"
-          CURR_TAG="${{ github.ref_name }}"
-
-          echo "### 变更内容 / Changes" > changelog.md
-          echo "" >> changelog.md
-
-          if [ -z "$PREV_TAG" ]; then
-            echo "首次发布 / Initial release" >> changelog.md
-          else
-            echo "对比版本: $PREV_TAG -> $CURR_TAG" >> changelog.md
-            echo "" >> changelog.md
-            git log ${PREV_TAG}..${CURR_TAG} --oneline --pretty=format:"* %s (%h)" >> changelog.md
-          fi
-
-          # 处理特殊字符
-          body=$(cat changelog.md)
-          echo "BODY<<EOF" >> $GITHUB_OUTPUT
-          echo "$body" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Download All Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: EasyKiConverter-*
-          merge-multiple: true
-          path: release_assets
-
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2
-        with:
-          files: release_assets/*
-          body: ${{ steps.changelog.outputs.BODY }}
-          generate_release_notes: false
-          draft: true
-          prerelease: false
-          fail_on_unmatched_files: false

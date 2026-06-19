@@ -27,7 +27,7 @@ assignees: ''
 
 ## 环境信息
 - 操作系统版本：[例如：Windows 11, macOS 14, Ubuntu 22.04]
-- Qt 版本：[例如：6.10.1]
+- Qt 版本：[例如：6.10.2]
 - CMake 版本：[例如：3.28.0]
 - 编译器版本：[例如：MinGW 13.10, MSVC 2022, GCC 13]
 - EasyKiConverter 版本：[例如：3.0.0]

@@ -6,23 +6,17 @@ on:
       - 'v*'
       - 'V*'
   workflow_dispatch:
-    inputs:
-      create_release:
-        description: 'Create GitHub Release'
-        required: false
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   PRODUCT: EasyKiConverter
-  QT_VERSION: '6.10.1'
+  QT_VERSION: '6.10.2'
   CMAKE_VERSION: '3.22'
 
 jobs:
@@ -32,7 +26,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        qt_ver: ['6.10.1']
         qt_target: [desktop]
         config:
           - {
@@ -87,7 +80,7 @@ jobs:
         uses: ./.github/actions/setup-env
         with:
           cmake-version: ${{ env.CMAKE_VERSION }}
-          qt-version: ${{ matrix.qt_ver }}
+          qt-version: ${{ env.QT_VERSION }}
           qt-host: 'windows'
           qt-target: ${{ matrix.qt_target }}
           qt-arch: ${{ matrix.config.qt_arch }}
@@ -396,29 +389,3 @@ jobs:
             ${{ github.workspace }}/build/Package/msix/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.msix.sha256sum
           overwrite: true
           if-no-files-found: warn
-
-      - name: 'Upload Release Asset (portable)'
-        if: startsWith(github.ref, 'refs/tags/') && matrix.type == 'portable'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip
-            ${{ github.workspace }}/build/Package/portable/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.config.pak_arch }}.zip.sha256sum
-          generate_release_notes: false
-          draft: true
-          prerelease: false
-          fail_on_unmatched_files: false
-
-      - name: 'Upload Release Asset (installer)'
-        if: startsWith(github.ref, 'refs/tags/') && matrix.type == 'installer'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe
-            ${{ github.workspace }}/build/Package/installer/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-setup.exe.sha256sum
-            ${{ github.workspace }}/build/Package/msix/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.msix
-            ${{ github.workspace }}/build/Package/msix/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}.msix.sha256sum
-          generate_release_notes: false
-          draft: true
-          prerelease: false
-          fail_on_unmatched_files: false

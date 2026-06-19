@@ -277,7 +277,7 @@ class CodeFormatter:
                     match = re.search(r"version\s+(\d+\.\d+\.\d+)", output)
                     return match.group(1) if match else output.split("\n")[0]
                 elif tool == "qmlformat":
-                    # qmlformat 6.10.1
+                    # qmlformat 6.10.2
                     import re
 
                     match = re.search(r"(\d+\.\d+\.\d+)", output)

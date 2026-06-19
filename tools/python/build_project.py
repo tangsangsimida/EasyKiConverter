@@ -21,7 +21,7 @@ EasyKiConverter 项目构建管理工具
 环境要求:
     - Python: 3.6+
     - CMake: 3.16+
-    - Qt6: 6.6+ (推荐 6.10.1)
+    - Qt6: 6.6+ (推荐 6.10.2)
     - 编译器: MSVC 2019/2022 (Windows), GCC/Clang (Linux/macOS)
 
 =========================================================================
@@ -98,8 +98,8 @@ Qt6 路径环境变量（按优先级排序）:
     6. CMAKE_PREFIX_PATH CMake 查找路径
 
 示例:
-    export Qt6_ROOT=/opt/Qt6/6.10.1
-    export Qt6_DIR=/opt/Qt6/6.10.1/lib/cmake/Qt6
+    export Qt6_ROOT=/opt/Qt6/6.10.2
+    export Qt6_DIR=/opt/Qt6/6.10.2/lib/cmake/Qt6
     python tools/python/build_project.py -t Release
 
 =========================================================================
@@ -337,7 +337,7 @@ class BuildManager:
         """加载构建配置，支持平台特定设置"""
         config_file = self.project_root / "tools" / "config" / "build_config.json"
         default_config = {
-            "qt_version": "6.10.1",
+            "qt_version": "6.10.2",
             "cmake_options": {
                 "ENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT": True,
                 "EASYKICONVERTER_BUILD_TESTS": False,
@@ -474,9 +474,9 @@ class BuildManager:
                         for arch in ["msvc2019_64", "msvc2022_64", "mingw_64"]:
                             qt_candidates.append(str(v / arch))
         else:
-            qt_candidates.extend(["/usr/lib/qt6", "/usr/local/Qt-6.10.1", "/opt/Qt6"])
+            qt_candidates.extend(["/usr/lib/qt6", "/usr/local/Qt-6.10.2", "/opt/Qt6"])
 
-        expected_version = str(self.config.get("qt_version", "6.10.1"))
+        expected_version = str(self.config.get("qt_version", "6.10.2"))
 
         # 2. 尝试从 PATH 中的 qmake 查找
         qmake_path = shutil.which("qmake")

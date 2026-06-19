@@ -1,0 +1,181 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'V*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag to publish, required when running from a branch'
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    name: 'Collect Artifacts and Publish'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve Release Target
+        id: target
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG_NAME="${{ inputs.tag_name }}"
+          if [ -z "$TAG_NAME" ]; then
+            if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+              TAG_NAME="${GITHUB_REF#refs/tags/}"
+            else
+              echo "tag_name is required when this workflow is not running on a tag"
+              exit 1
+            fi
+          fi
+
+          if ! git rev-parse -q --verify "refs/tags/${TAG_NAME}" >/dev/null; then
+            echo "Tag not found: ${TAG_NAME}"
+            exit 1
+          fi
+
+          TARGET_SHA="$(git rev-list -n 1 "${TAG_NAME}")"
+          VERSION="${TAG_NAME#[vV]}"
+          GIT_HASH="$(git rev-parse --short "${TARGET_SHA}")"
+
+          echo "TAG_NAME=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "TARGET_SHA=${TARGET_SHA}" >> "$GITHUB_OUTPUT"
+          echo "VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "GIT_HASH=${GIT_HASH}" >> "$GITHUB_OUTPUT"
+
+          echo "Release tag: ${TAG_NAME}"
+          echo "Target SHA:  ${TARGET_SHA}"
+
+      - name: Generate Changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG_NAME="${{ steps.target.outputs.TAG_NAME }}"
+          PREV_TAG="$(git describe --tags --abbrev=0 "${TAG_NAME}^" 2>/dev/null || true)"
+
+          {
+            echo "### 变更内容 / Changes"
+            echo
+            if [ -z "$PREV_TAG" ]; then
+              echo "首次发布 / Initial release"
+            else
+              echo "对比版本: ${PREV_TAG} -> ${TAG_NAME}"
+              echo
+              git log "${PREV_TAG}..${TAG_NAME}" --oneline --pretty=format:"* %s (%h)"
+              echo
+            fi
+          } > changelog.md
+
+      - name: Wait for Packaging Artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_SHA: ${{ steps.target.outputs.TARGET_SHA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p release_assets
+          workflows=(
+            "pack-linux.yml"
+            "pack-windows.yml"
+            "pack-macos.yml"
+          )
+
+          for workflow in "${workflows[@]}"; do
+            echo "Waiting for ${workflow} on ${TARGET_SHA}..."
+            run_id=""
+            run_ready=false
+
+            for attempt in $(seq 1 90); do
+              runs_json="$(gh run list \
+                --workflow "$workflow" \
+                --limit 50 \
+                --json databaseId,headSha,status,conclusion,createdAt,url)"
+
+              run_id="$(jq -r --arg sha "$TARGET_SHA" \
+                '[.[] | select(.headSha == $sha)] | sort_by(.createdAt) | reverse | .[0].databaseId // empty' \
+                <<< "$runs_json")"
+
+              if [ -z "$run_id" ]; then
+                echo "No run found for ${workflow} yet (${attempt}/90)"
+                sleep 30
+                continue
+              fi
+
+              run_status="$(jq -r --argjson id "$run_id" '.[] | select(.databaseId == $id) | .status' <<< "$runs_json")"
+              run_conclusion="$(jq -r --argjson id "$run_id" '.[] | select(.databaseId == $id) | .conclusion // ""' <<< "$runs_json")"
+              run_url="$(jq -r --argjson id "$run_id" '.[] | select(.databaseId == $id) | .url' <<< "$runs_json")"
+
+              echo "${workflow} run ${run_id}: status=${run_status} conclusion=${run_conclusion}"
+              echo "${run_url}"
+
+              if [ "$run_status" = "completed" ]; then
+                if [ "$run_conclusion" = "success" ]; then
+                  run_ready=true
+                  break
+                fi
+                echo "${workflow} failed with conclusion: ${run_conclusion}"
+                exit 1
+              fi
+
+              sleep 30
+            done
+
+            if [ "$run_ready" != "true" ]; then
+              echo "Timed out waiting for ${workflow}"
+              exit 1
+            fi
+
+            gh run download "$run_id" --dir release_assets
+          done
+
+          find release_assets -mindepth 2 -type f -exec mv -f {} release_assets/ \;
+          find release_assets -mindepth 1 -type d -empty -delete
+
+          echo "Collected release assets:"
+          find release_assets -maxdepth 1 -type f -printf '%f\n' | sort
+
+      - name: Publish Draft Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.target.outputs.TAG_NAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! find release_assets -maxdepth 1 -type f | grep -q .; then
+            echo "No release assets found"
+            exit 1
+          fi
+
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release edit "$TAG_NAME" \
+              --notes-file changelog.md
+          else
+            gh release create "$TAG_NAME" \
+              --draft \
+              --title "$TAG_NAME" \
+              --notes-file changelog.md
+          fi
+
+          gh release upload "$TAG_NAME" release_assets/* --clobber

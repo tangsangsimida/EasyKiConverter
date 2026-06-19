@@ -6,23 +6,17 @@ on:
       - 'v*'
       - 'V*'
   workflow_dispatch:
-    inputs:
-      create_release:
-        description: 'Create GitHub Release'
-        required: false
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   PRODUCT: EasyKiConverter
-  QT_VERSION: '6.10.1'
+  QT_VERSION: '6.10.2'
   CMAKE_VERSION: '3.22'
 
 jobs:
@@ -229,37 +223,3 @@ jobs:
             ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
             ${{ github.workspace }}/${{ env.PRODUCT }}-${{ env.VERSION }}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
           overwrite: true
-
-      - name: 'Upload Release Asset'
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          DMG="${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg"
-          SHA="${DMG}.sha256sum"
-          TAG="${GITHUB_REF#refs/tags/}"
-
-          # 显示文件大小便于排查
-          ls -lh "$DMG" "$SHA"
-
-          # softprops/action-gh-release 会自动创建 release；切换到 gh CLI 后需要显式确保存在。
-          # 两个 macOS matrix job 可能同时到达这里，因此 create 失败后再 view 一次处理竞态。
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG not found, creating draft release..."
-            gh release create "$TAG" --draft --title "$TAG" --notes "" || gh release view "$TAG" >/dev/null
-          fi
-
-          # 重试上传，处理大文件 EPIPE 问题
-          for attempt in 1 2 3; do
-            echo "Upload attempt $attempt/3..."
-            if gh release upload "$TAG" "$DMG" "$SHA" --clobber; then
-              echo "Upload succeeded on attempt $attempt"
-              break
-            fi
-            if [ "$attempt" -eq 3 ]; then
-              echo "Upload failed after 3 attempts"
-              exit 1
-            fi
-            echo "Upload failed, retrying in 10s..."
-            sleep 10
-          done
