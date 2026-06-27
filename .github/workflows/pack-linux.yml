@@ -126,24 +126,24 @@ jobs:
               plugin_name=$(basename "$plugin_type")
               echo ""
               echo ">>> [$plugin_name]"
-              ls -la "$plugin_type" 2>/dev/null | tail -n +2 | head -20 || echo "(empty)"
+              find "$plugin_type" -maxdepth 1 -type f -printf '%f\n' 2>/dev/null | head -20 || echo "(empty)"
             done
           fi
           echo ""
           echo "=============================================="
           echo "  Cleaning up unused plugins..."
           echo "=============================================="
-          
+
           # 删除所有 Qt SQL 驱动
           for qt_lib_dir in /opt/qt/*/${{ matrix.dist.qt_dir }}/plugins/sqldrivers; do
             if [ -d "$qt_lib_dir" ]; then
               echo "检查 SQL 驱动目录: $qt_lib_dir"
-              ls -la "$qt_lib_dir" 2>/dev/null || true
+              find "$qt_lib_dir" -maxdepth 1 -type f -printf '%f\n' 2>/dev/null || true
               rm -f "$qt_lib_dir"/libqsql*.so* 2>/dev/null || true
               echo "[-] 已删除所有 SQL 驱动"
             fi
           done
-          
+
           echo ""
           echo "=============================================="
           echo "  Qt Plugins Inventory (after cleanup)"
@@ -153,7 +153,7 @@ jobs:
               plugin_name=$(basename "$plugin_type")
               echo ""
               echo ">>> [$plugin_name]"
-              ls -la "$plugin_type" 2>/dev/null | tail -n +2 | head -20 || echo "(empty)"
+              find "$plugin_type" -maxdepth 1 -type f -printf '%f\n' 2>/dev/null | head -20 || echo "(empty)"
             done
           fi
           echo ""
