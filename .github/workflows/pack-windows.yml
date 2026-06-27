@@ -98,10 +98,16 @@ jobs:
         run: |
           # 安装 Inno Setup (最新版本)
           choco install innosetup --no-progress
-          # 下载并安装简体中文语言文件
+          # 下载并安装简体中文语言文件（可选，失败不影响构建）
           $langDir = "${env:ProgramFiles(x86)}\Inno Setup 6\Languages"
-          $langUrl = "https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/Unofficial/ChineseSimplified.isl"
-          Invoke-WebRequest -Uri $langUrl -OutFile "$langDir\ChineseSimplified.isl" -UseBasicParsing
+          $langUrl = "https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/ChineseSimplified.isl"
+          try {
+            Invoke-WebRequest -Uri $langUrl -OutFile "$langDir\ChineseSimplified.isl" -UseBasicParsing -ErrorAction Stop
+            Write-Host "✓ Chinese Simplified language file installed"
+          } catch {
+            Write-Warning "⚠ Failed to download Chinese Simplified language file: $_"
+            Write-Warning "The installer will use default language only"
+          }
 
       - name: 'Configure'
         shell: pwsh
