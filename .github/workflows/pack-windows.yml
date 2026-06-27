@@ -60,9 +60,11 @@ jobs:
       - name: 'Export Version to Env'
         shell: bash
         run: |
-          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
-          echo "VER_INFO=${{ steps.version.outputs.VER_INFO }}" >> $GITHUB_ENV
-          echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}" >> $GITHUB_ENV
+          {
+            echo "VERSION=${{ steps.version.outputs.VERSION }}"
+            echo "VER_INFO=${{ steps.version.outputs.VER_INFO }}"
+            echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}"
+          } >> "$GITHUB_ENV"
 
       - name: 'Setup MSVC'
         uses: ilammy/msvc-dev-cmd@v1

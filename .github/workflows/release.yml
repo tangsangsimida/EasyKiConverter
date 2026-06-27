@@ -57,10 +57,12 @@ jobs:
           VERSION="${TAG_NAME#[vV]}"
           GIT_HASH="$(git rev-parse --short "${TARGET_SHA}")"
 
-          echo "TAG_NAME=${TAG_NAME}" >> "$GITHUB_OUTPUT"
-          echo "TARGET_SHA=${TARGET_SHA}" >> "$GITHUB_OUTPUT"
-          echo "VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "GIT_HASH=${GIT_HASH}" >> "$GITHUB_OUTPUT"
+          {
+            echo "TAG_NAME=${TAG_NAME}"
+            echo "TARGET_SHA=${TARGET_SHA}"
+            echo "VERSION=${VERSION}"
+            echo "GIT_HASH=${GIT_HASH}"
+          } >> "$GITHUB_OUTPUT"
 
           echo "Release tag: ${TAG_NAME}"
           echo "Target SHA:  ${TARGET_SHA}"

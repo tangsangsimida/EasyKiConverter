@@ -125,10 +125,12 @@ jobs:
       - name: 'CCache Stats'
         run: |
           ccache -sv
-          echo "## CCache Statistics" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          ccache -s >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## CCache Statistics"
+            echo '```'
+            ccache -s
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 'Build Statistics'
         if: always()
@@ -137,15 +139,17 @@ jobs:
           DURATION=$((END_TIME - BUILD_START_TIME))
           RATE=0.008
           COST=$(awk "BEGIN {printf \"%.4f\", $DURATION * $RATE / 60}")
-          echo "## Build Cost Summary (Linux)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Est. cost | \$${COST} (Linux × \$0.008/min) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
-          echo "| Memory used | $(free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Build Cost Summary (Linux)"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|--------|-------|"
+            echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |"
+            echo "| Est. cost | \$${COST} (Linux × \$0.008/min) |"
+            echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |"
+            echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |"
+            echo "| Memory used | $(free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}' || echo N/A) |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 'Run Tests'
         run: |

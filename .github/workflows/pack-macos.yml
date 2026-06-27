@@ -87,10 +87,12 @@ jobs:
       - name: 'CCache Stats'
         run: |
           ccache -sv
-          echo "## CCache Statistics" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          ccache -s >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## CCache Statistics"
+            echo '```'
+            ccache -s
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 'Build Statistics'
         if: always()
@@ -99,15 +101,17 @@ jobs:
           DURATION=$((END_TIME - BUILD_START_TIME))
           RATE=0.08
           COST=$(awk "BEGIN {printf \"%.4f\", $DURATION * $RATE / 60}")
-          echo "## Build Cost Summary (macOS Pack)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Est. cost | \$${COST} (macOS × \$0.08/min) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build dir size | $(du -sh "${DIR_BUILD}"/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
-          echo "| Memory pressure | $(vm_stat 2>/dev/null | awk '/Pages free/ {free=$NF} /Pages active/ {active=$NF} END {printf "free=%d active=%d", free, active}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Build Cost Summary (macOS Pack)"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|--------|-------|"
+            echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |"
+            echo "| Est. cost | \$${COST} (macOS × \$0.08/min) |"
+            echo "| Build dir size | $(du -sh "${DIR_BUILD}"/ 2>/dev/null | cut -f1) |"
+            echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |"
+            echo "| Memory pressure | $(vm_stat 2>/dev/null | awk '/Pages free/ {free=$NF} /Pages active/ {active=$NF} END {printf "free=%d active=%d", free, active}' || echo N/A) |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 'Create App Bundle'
         run: |
@@ -191,9 +195,9 @@ jobs:
       - name: 'Create DMG'
         run: |
           hdiutil create -volname EasyKiConverter \
-            -srcfolder ${APP_NAME}.app \
+            -srcfolder "${APP_NAME}.app" \
             -ov -format UDZO \
-            ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg
+            "${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg"
 
       - name: 'Validate DMG'
         run: |
@@ -213,7 +217,7 @@ jobs:
       - name: 'SHA256Sum of DMG'
         run: |
           cd "$GITHUB_WORKSPACE/" || { >&2 echo "Cannot cd to '$GITHUB_WORKSPACE/'!"; exit 11 ; }
-          shasum -a 256 ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg | tee ${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum
+          shasum -a 256 "${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg" | tee "${PRODUCT}-${VERSION}-g${{ env.GIT_HASH }}-${{ matrix.dist.arch }}.dmg.sha256sum"
 
       - name: 'Artifact Upload'
         uses: actions/upload-artifact@v4
