@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: services/CacheHealthManager.h 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('CacheHealthManager_8h_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">CacheHealthManager.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="CacheHealthManager_8h.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#pragma once</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &lt;QJsonObject&gt;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;QString&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="keyword">class </span>ComponentCacheService;</div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="foldopen" id="foldopen00020" data-start="{" data-end="};">
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CacheHealthManager.html">   20</a></span><span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1CacheHealthManager.html">CacheHealthManager</a> {</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keyword">explicit</span> <a class="code hl_class" href="classEasyKiConverter_1_1CacheHealthManager.html">CacheHealthManager</a>(<span class="keyword">const</span> QString&amp; cacheRoot);</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CacheHealthManager.html#acb87383cf5bc964ba7baa1da0b87dbcc">   23</a></span>    <a class="code hl_function" href="classEasyKiConverter_1_1CacheHealthManager.html#acb87383cf5bc964ba7baa1da0b87dbcc">~CacheHealthManager</a>() = <span class="keywordflow">default</span>;</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keywordtype">int</span> <a class="code hl_function" href="classEasyKiConverter_1_1CacheHealthManager.html#ace8ca8fe56a525e670bdb11db6a4d65f">healAll</a>();</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1CacheHealthManager.html#acd264494fcc4a0b4386a22d9e5cda518">repairComponentCache</a>(<span class="keyword">const</span> QString&amp; lcscId);</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1CacheHealthManager.html#a7c1ab520862330014dffe4074f9fad9b">repairModel3DCache</a>();</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1CacheHealthManager.html#ab833b939cdab651dff4d8d27c1d42793">componentCacheDir</a>(<span class="keyword">const</span> QString&amp; lcscId) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1CacheHealthManager.html#aec26814fbed01218e899f5d2415c4321">metadataPath</a>(<span class="keyword">const</span> QString&amp; lcscId) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    QJsonObject <a class="code hl_function" href="classEasyKiConverter_1_1CacheHealthManager.html#a5fde6ad00f62d0028a4cd5fa686a7228">loadMetadata</a>(<span class="keyword">const</span> QString&amp; lcscId) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1CacheHealthManager.html#a8b7e63762b50a001e5425a24ec766d8e">saveMetadata</a>(<span class="keyword">const</span> QString&amp; lcscId, <span class="keyword">const</span> QJsonObject&amp; metadata);</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1CacheHealthManager.html#a82411c0750bd6c9d86bd5ea14a3c2738">datasheetPath</a>(<span class="keyword">const</span> QString&amp; lcscId) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1CacheHealthManager.html#af2b1ae39b311bb7317ca42a3b1dc22a5">resolveDatasheetPath</a>(<span class="keyword">const</span> QString&amp; lcscId, <span class="keyword">const</span> QString&amp; format, <span class="keywordtype">bool</span> migrate) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1CacheHealthManager.html#a9338d6b1e9e0ca20f8c7a5105aa7df6f">previewImagePath</a>(<span class="keyword">const</span> QString&amp; lcscId, <span class="keywordtype">int</span> index) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CacheHealthManager.html#ab569512a6bd7e30404c1b24714d4265a">   79</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1CacheHealthManager.html#ab569512a6bd7e30404c1b24714d4265a">m_cacheRoot</a>;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>};</div>
+</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html">EasyKiConverter::CacheHealthManager</a></div><div class="ttdoc">缓存自愈管理器</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8h_source.html#l00020">CacheHealthManager.h:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_a5fde6ad00f62d0028a4cd5fa686a7228"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#a5fde6ad00f62d0028a4cd5fa686a7228">EasyKiConverter::CacheHealthManager::loadMetadata</a></div><div class="ttdeci">QJsonObject loadMetadata(const QString &amp;lcscId) const</div><div class="ttdoc">加载元数据</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8cpp_source.html#l00123">CacheHealthManager.cpp:123</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_a7c1ab520862330014dffe4074f9fad9b"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#a7c1ab520862330014dffe4074f9fad9b">EasyKiConverter::CacheHealthManager::repairModel3DCache</a></div><div class="ttdeci">void repairModel3DCache()</div><div class="ttdoc">修复3D模型缓存目录</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8cpp_source.html#l00249">CacheHealthManager.cpp:249</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_a82411c0750bd6c9d86bd5ea14a3c2738"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#a82411c0750bd6c9d86bd5ea14a3c2738">EasyKiConverter::CacheHealthManager::datasheetPath</a></div><div class="ttdeci">QString datasheetPath(const QString &amp;lcscId) const</div><div class="ttdoc">获取数据手册路径</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8cpp_source.html#l00111">CacheHealthManager.cpp:111</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_a8b7e63762b50a001e5425a24ec766d8e"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#a8b7e63762b50a001e5425a24ec766d8e">EasyKiConverter::CacheHealthManager::saveMetadata</a></div><div class="ttdeci">bool saveMetadata(const QString &amp;lcscId, const QJsonObject &amp;metadata)</div><div class="ttdoc">保存元数据</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8cpp_source.html#l00127">CacheHealthManager.cpp:127</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_a9338d6b1e9e0ca20f8c7a5105aa7df6f"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#a9338d6b1e9e0ca20f8c7a5105aa7df6f">EasyKiConverter::CacheHealthManager::previewImagePath</a></div><div class="ttdeci">QString previewImagePath(const QString &amp;lcscId, int index) const</div><div class="ttdoc">预览图路径</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8cpp_source.html#l00115">CacheHealthManager.cpp:115</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_ab569512a6bd7e30404c1b24714d4265a"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#ab569512a6bd7e30404c1b24714d4265a">EasyKiConverter::CacheHealthManager::m_cacheRoot</a></div><div class="ttdeci">QString m_cacheRoot</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8h_source.html#l00079">CacheHealthManager.h:79</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_ab833b939cdab651dff4d8d27c1d42793"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#ab833b939cdab651dff4d8d27c1d42793">EasyKiConverter::CacheHealthManager::componentCacheDir</a></div><div class="ttdeci">QString componentCacheDir(const QString &amp;lcscId) const</div><div class="ttdoc">获取元器件缓存目录路径</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8cpp_source.html#l00103">CacheHealthManager.cpp:103</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_acb87383cf5bc964ba7baa1da0b87dbcc"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#acb87383cf5bc964ba7baa1da0b87dbcc">EasyKiConverter::CacheHealthManager::~CacheHealthManager</a></div><div class="ttdeci">~CacheHealthManager()=default</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_acd264494fcc4a0b4386a22d9e5cda518"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#acd264494fcc4a0b4386a22d9e5cda518">EasyKiConverter::CacheHealthManager::repairComponentCache</a></div><div class="ttdeci">bool repairComponentCache(const QString &amp;lcscId)</div><div class="ttdoc">修复单个元器件缓存目录</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8cpp_source.html#l00131">CacheHealthManager.cpp:131</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_ace8ca8fe56a525e670bdb11db6a4d65f"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#ace8ca8fe56a525e670bdb11db6a4d65f">EasyKiConverter::CacheHealthManager::healAll</a></div><div class="ttdeci">int healAll()</div><div class="ttdoc">执行完整缓存自愈</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8cpp_source.html#l00070">CacheHealthManager.cpp:70</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_aec26814fbed01218e899f5d2415c4321"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#aec26814fbed01218e899f5d2415c4321">EasyKiConverter::CacheHealthManager::metadataPath</a></div><div class="ttdeci">QString metadataPath(const QString &amp;lcscId) const</div><div class="ttdoc">获取元数据文件路径</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8cpp_source.html#l00107">CacheHealthManager.cpp:107</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CacheHealthManager_html_af2b1ae39b311bb7317ca42a3b1dc22a5"><div class="ttname"><a href="classEasyKiConverter_1_1CacheHealthManager.html#af2b1ae39b311bb7317ca42a3b1dc22a5">EasyKiConverter::CacheHealthManager::resolveDatasheetPath</a></div><div class="ttdeci">QString resolveDatasheetPath(const QString &amp;lcscId, const QString &amp;format, bool migrate) const</div><div class="ttdoc">解析数据手册路径</div><div class="ttdef"><b>Definition</b> <a href="CacheHealthManager_8cpp_source.html#l00119">CacheHealthManager.cpp:119</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00009">EasyedaApi.cpp:9</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_056ec8f0377ddc4293192cbc6b19c99c.html">services</a></li><li class="navelem"><a class="el" href="CacheHealthManager_8h.html">CacheHealthManager.h</a></li>
+    <li class="footer">制作者 <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<map id="models/ComponentListItemData.h" name="models/ComponentListItemData.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="123,5,325,45"/>
+<area shape="rect" id="Node000002" href="$ComponentListItemData_8cpp.html" title=" " alt="" coords="5,93,208,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,56,134,95,131,91,185,52"/>
+<area shape="rect" id="Node000003" href="$ComponentListViewModel_8h.html" title=" " alt="" coords="232,93,451,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="263,52,317,91,314,95,260,56"/>
+<area shape="rect" id="Node000004" href="$main_8cpp.html" title=" " alt="" coords="52,277,135,302"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="228,140,186,158,148,183,129,206,115,232,99,277,94,275,110,229,125,203,145,179,183,153,225,135"/>
+<area shape="rect" id="Node000005" href="$PipelineCompletionHandler_8cpp.html" title=" " alt="" coords="402,269,609,309"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="370,142,442,219,488,267,484,271,438,223,366,145"/>
+<area shape="rect" id="Node000006" href="$ComponentListViewModel_8cpp.html" title=" " alt="" coords="452,181,671,221"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="403,136,514,179,512,184,401,141"/>
+<area shape="rect" id="Node000007" href="$ExportProgressViewModel_8h.html" title=" " alt="" coords="159,181,377,221"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="318,146,286,183,282,179,314,142"/>
+<area shape="poly" id="edge7_Node000007_Node000004" title=" " alt="" coords="219,230,118,279,115,274,216,225"/>
+<area shape="poly" id="edge8_Node000007_Node000005" title=" " alt="" coords="334,224,454,267,452,272,332,229"/>
+<area shape="rect" id="Node000008" href="$ExportProgressViewModel_8cpp.html" title=" " alt="" coords="159,269,377,309"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="271,235,271,269,265,269,265,235"/>
+</map>

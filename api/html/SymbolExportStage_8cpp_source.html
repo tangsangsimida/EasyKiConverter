@@ -1,0 +1,497 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: services/export/SymbolExportStage.cpp 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('SymbolExportStage_8cpp_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">SymbolExportStage.cpp</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="SymbolExportStage_8cpp.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#include &quot;<a class="code" href="SymbolExportStage_8h.html">SymbolExportStage.h</a>&quot;</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &quot;<a class="code" href="DebugExportHelper_8h.html">DebugExportHelper.h</a>&quot;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="KiCadLibraryTableManager_8h.html">KiCadLibraryTableManager.h</a>&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;<a class="code" href="ExporterSymbol_8h.html">core/kicad/ExporterSymbol.h</a>&quot;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;<a class="code" href="ComponentData_8h.html">models/ComponentData.h</a>&quot;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;QDateTime&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;QDebug&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;QDir&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;QFile&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;QFileInfo&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;QMutexLocker&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;QThread&gt;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;QThreadPool&gt;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
+<div class="foldopen" id="foldopen00019" data-start="{" data-end="}">
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolExportStage.html#ad050cc32e9b865235fd5f1ba725d9d24">   19</a></span><a class="code hl_function" href="classEasyKiConverter_1_1SymbolExportStage.html#ad050cc32e9b865235fd5f1ba725d9d24">SymbolExportStage::SymbolExportStage</a>(QObject* parent)</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    : <a class="code hl_class" href="classEasyKiConverter_1_1ExportTypeStage.html">ExportTypeStage</a>(<span class="stringliteral">&quot;Symbol&quot;</span>, 1, parent) {  <span class="comment">// maxConcurrent=1 因为是库级别导出</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>}</div>
+</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="foldopen" id="foldopen00023" data-start="{" data-end="}">
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolExportStage.html#ad19c2284500203d6535e088b5f70d3e6">   23</a></span><a class="code hl_function" href="classEasyKiConverter_1_1SymbolExportStage.html#ad19c2284500203d6535e088b5f70d3e6">SymbolExportStage::~SymbolExportStage</a>() {</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#aebfdbe32d023a4d72d92b5740697e26e">waitForWorkerThread</a>(<a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a60dc02f7a7dfeffa9cd6083af5b90d50">m_workerThread</a>, 30000);</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>}</div>
+</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="foldopen" id="foldopen00027" data-start="{" data-end="}">
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolExportStage.html#af00ec3e8d70f7071e0dd1c31483dea73">   27</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolExportStage.html#af00ec3e8d70f7071e0dd1c31483dea73">SymbolExportStage::start</a>(<span class="keyword">const</span> QStringList&amp; componentIds,</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>                              <span class="keyword">const</span> QMap&lt;QString, QSharedPointer&lt;ComponentData&gt;&gt;&amp; cachedData) {</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#aab0dfedf6f4be568acf32b6b6bc849f0">m_isExporting</a>.load()) {</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>        qWarning() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: Export already in progress&quot;</span>;</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    }</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    <span class="keywordflow">if</span> (componentIds.isEmpty()) {</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        qWarning() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: No components to export&quot;</span>;</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>        emit <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#ae05ea51e278743c40ccaaeecd8e4c181">completed</a>(0, 0, 0);</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    }</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#abd2e0a8b39cb89547c5ebdbbfd7d3a1f">m_componentIds</a> = componentIds;</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a7eb9a73d4c2f03d8b4f2661f13b138a4">m_cachedData</a> = cachedData;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a96b65083d76dc60dace2dc85416a3ede">m_cancelled</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a955feb47e85cf0d1bea786014df944ed">m_isRunning</a>.store(<span class="keyword">true</span>);</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    {</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        QMutexLocker locker(&amp;<a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#ad4373ae5c0cc508a9b90c054f7d66570">m_progressMutex</a>);</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#ac3ca12b5ef27e834c9014e029dc17b17">m_progress</a> = <a class="code hl_struct" href="structEasyKiConverter_1_1ExportTypeProgress.html">ExportTypeProgress</a>();</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#ac3ca12b5ef27e834c9014e029dc17b17">m_progress</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportTypeProgress.html#a910eac26dc52cecd64ca94c891f262f9">typeName</a> = QStringLiteral(<span class="stringliteral">&quot;Symbol&quot;</span>);</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#ac3ca12b5ef27e834c9014e029dc17b17">m_progress</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportTypeProgress.html#ae3e4ee01ffc90ce723e1381f29acc767">totalCount</a> = componentIds.size();</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#ac3ca12b5ef27e834c9014e029dc17b17">m_progress</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportTypeProgress.html#a2403d75fb1365677ada91ea2dc2a1df7">completedCount</a> = 0;</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#ac3ca12b5ef27e834c9014e029dc17b17">m_progress</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportTypeProgress.html#addde3691219025df3660913b43cf8304">successCount</a> = 0;</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#ac3ca12b5ef27e834c9014e029dc17b17">m_progress</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportTypeProgress.html#a26fe0899711870c80528ee11a696feb9">failedCount</a> = 0;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#ac3ca12b5ef27e834c9014e029dc17b17">m_progress</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportTypeProgress.html#af2fc800a103be610e95d9da97a47f82c">skippedCount</a> = 0;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#ac3ca12b5ef27e834c9014e029dc17b17">m_progress</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportTypeProgress.html#a9442b9f2fb53434ca8b90aa280a40433">inProgressCount</a> = componentIds.size();</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> QString&amp; componentId : componentIds) {</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>            <a class="code hl_struct" href="structEasyKiConverter_1_1ExportItemStatus.html">ExportItemStatus</a> itemStatus;</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>            itemStatus.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportItemStatus.html#a40902e11bbf85d2399e28c129f7927af">status</a> = <a class="code hl_enumvalue" href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8a12d868c18cb29bf58f02b504be9033fd">ExportItemStatus::Status::InProgress</a>;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>            itemStatus.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportItemStatus.html#ac3f562c6f02b594ae43af82db8882131">startTime</a> = QDateTime::currentDateTime();</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#ac3ca12b5ef27e834c9014e029dc17b17">m_progress</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportTypeProgress.html#a3f8a5ddc713dd3f13c4c5068ab331ade">itemStatus</a>[componentId] = itemStatus;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        }</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    }</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a0f1588ad6002d053b6d4f9c482dddba8">m_tempManager</a>.<a class="code hl_function" href="classEasyKiConverter_1_1TempFileManager.html#a8b8591fbfead930c23a57e5f2c8a1aab">setOutputPath</a>(<a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">outputPath</a>);</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#aab0dfedf6f4be568acf32b6b6bc849f0">m_isExporting</a>.store(<span class="keyword">true</span>);</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a60dc02f7a7dfeffa9cd6083af5b90d50">m_workerThread</a> = QThread::create([<span class="keyword">this</span>, componentIds, cachedData]() { <a class="code hl_function" href="classEasyKiConverter_1_1SymbolExportStage.html#a780b7afcdd0b614960c6d5c90fba3c5d">doLibraryExport</a>(componentIds, cachedData); });</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    connect(<a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a60dc02f7a7dfeffa9cd6083af5b90d50">m_workerThread</a>, &amp;QThread::finished, <span class="keyword">this</span>, [<span class="keyword">this</span>]() { <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a60dc02f7a7dfeffa9cd6083af5b90d50">m_workerThread</a> = <span class="keyword">nullptr</span>; });</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a60dc02f7a7dfeffa9cd6083af5b90d50">m_workerThread</a>-&gt;start();</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>}</div>
+</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
+<div class="foldopen" id="foldopen00071" data-start="{" data-end="}">
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolExportStage.html#a616b89603a959a3eb5298c3a352159d7">   71</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolExportStage.html#a616b89603a959a3eb5298c3a352159d7">SymbolExportStage::cancel</a>() {</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#aab0dfedf6f4be568acf32b6b6bc849f0">m_isExporting</a>.load()) {</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    }</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    qDebug() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: Cancelling...&quot;</span>;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a96b65083d76dc60dace2dc85416a3ede">m_cancelled</a>.store(<span class="keyword">true</span>);</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a0f1588ad6002d053b6d4f9c482dddba8">m_tempManager</a>.<a class="code hl_function" href="classEasyKiConverter_1_1TempFileManager.html#ab00c36b4482d572cec3196964cb25ab7">rollbackAll</a>();</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#aab0dfedf6f4be568acf32b6b6bc849f0">m_isExporting</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    qDebug() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: Cancelled&quot;</span>;</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>}</div>
+</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span> </div>
+<div class="foldopen" id="foldopen00085" data-start="{" data-end="}">
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolExportStage.html#a651816ffd2b08d6a947ea48aa793b5f0">   85</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolExportStage.html#a651816ffd2b08d6a947ea48aa793b5f0">SymbolExportStage::waitForFinished</a>(<span class="keywordtype">int</span> timeoutMs) {</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keyword">const</span> <span class="keywordtype">bool</span> <a class="code hl_variable" href="NetworkClient_8cpp.html#a9324389a5cdc532c6417a87ccafe18ce">finished</a> = <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#aebfdbe32d023a4d72d92b5740697e26e">waitForWorkerThread</a>(<a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a60dc02f7a7dfeffa9cd6083af5b90d50">m_workerThread</a>, timeoutMs);</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="NetworkClient_8cpp.html#a9324389a5cdc532c6417a87ccafe18ce">finished</a>) {</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a955feb47e85cf0d1bea786014df944ed">m_isRunning</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#aab0dfedf6f4be568acf32b6b6bc849f0">m_isExporting</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    }</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="NetworkClient_8cpp.html#a9324389a5cdc532c6417a87ccafe18ce">finished</a>;</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>}</div>
+</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
+<div class="foldopen" id="foldopen00094" data-start="{" data-end="}">
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1SymbolExportStage.html#a780b7afcdd0b614960c6d5c90fba3c5d">   94</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1SymbolExportStage.html#a780b7afcdd0b614960c6d5c90fba3c5d">SymbolExportStage::doLibraryExport</a>(<span class="keyword">const</span> QStringList&amp; componentIds,</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                                        <span class="keyword">const</span> QMap&lt;QString, QSharedPointer&lt;ComponentData&gt;&gt;&amp; cachedData) {</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    qDebug() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: Starting library export in worker thread for&quot;</span> &lt;&lt; componentIds.size()</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>             &lt;&lt; <span class="stringliteral">&quot;components&quot;</span>;</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    QList&lt;SymbolData&gt; symbolList;</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    QStringList collectedIds;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    QStringList failedIds;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keywordtype">int</span> successCount = 0;</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordtype">int</span> skippedCount = 0;</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keywordflow">for</span> (<span class="keyword">const</span> QString&amp; componentId : componentIds) {</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a96b65083d76dc60dace2dc85416a3ede">m_cancelled</a>.load()) {</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>            qDebug() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: Export cancelled during data collection&quot;</span>;</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>            <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>        }</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>        <span class="keyword">auto</span> it = cachedData.find(componentId);</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>        <span class="keywordflow">if</span> (it == cachedData.end() || !it.value()) {</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>            qWarning() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: No data for component:&quot;</span> &lt;&lt; componentId;</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>            failedIds.append(componentId);</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            <a class="code hl_struct" href="structEasyKiConverter_1_1ExportItemStatus.html">ExportItemStatus</a> status;</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>            status.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportItemStatus.html#a40902e11bbf85d2399e28c129f7927af">status</a> = <a class="code hl_enumvalue" href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8ad7c8c85bf79bbe1b7188497c32c3b0ca">ExportItemStatus::Status::Failed</a>;</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>            status.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportItemStatus.html#adbd305a8854b3b12e733c626f34d8aba">errorMessage</a> = <span class="stringliteral">&quot;No component data&quot;</span>;</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>            emit <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#aaa3c31e03e947336ee6402abaeba5529">itemStatusChanged</a>(componentId, status);</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>            <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        }</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        QSharedPointer&lt;ComponentData&gt; data = it.value();</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>        <span class="keywordflow">if</span> (!data-&gt;symbolData()) {</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>            qWarning() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: No symbol data for component:&quot;</span> &lt;&lt; componentId;</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>            failedIds.append(componentId);</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>            <a class="code hl_struct" href="structEasyKiConverter_1_1ExportItemStatus.html">ExportItemStatus</a> status;</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>            status.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportItemStatus.html#a40902e11bbf85d2399e28c129f7927af">status</a> = <a class="code hl_enumvalue" href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8ad7c8c85bf79bbe1b7188497c32c3b0ca">ExportItemStatus::Status::Failed</a>;</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>            status.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportItemStatus.html#adbd305a8854b3b12e733c626f34d8aba">errorMessage</a> = <span class="stringliteral">&quot;No symbol data&quot;</span>;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>            emit <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#aaa3c31e03e947336ee6402abaeba5529">itemStatusChanged</a>(componentId, status);</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>            <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>        }</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span> </div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>        symbolList.append(*data-&gt;symbolData());</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>        collectedIds.append(componentId);</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>        successCount++;</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>        <a class="code hl_struct" href="structEasyKiConverter_1_1ExportItemStatus.html">ExportItemStatus</a> status;</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        status.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportItemStatus.html#a40902e11bbf85d2399e28c129f7927af">status</a> = <a class="code hl_enumvalue" href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8a505a83f220c02df2f85c3810cd9ceb38">ExportItemStatus::Status::Success</a>;</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>        emit <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#aaa3c31e03e947336ee6402abaeba5529">itemStatusChanged</a>(componentId, status);</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span> </div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a7c3c0c8c45a5be0a6bf6cb19aba33392">debugMode</a>) {</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>            QThreadPool::globalInstance()-&gt;start([componentId, data, outputPath = <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">outputPath</a>]() {</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>                DebugExportHelper::exportDebugData(componentId, data, outputPath);</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>            });</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>        }</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span> </div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        qDebug() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: Collected symbol for&quot;</span> &lt;&lt; componentId;</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    }</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a96b65083d76dc60dace2dc85416a3ede">m_cancelled</a>.load()) {</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#aab0dfedf6f4be568acf32b6b6bc849f0">m_isExporting</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a955feb47e85cf0d1bea786014df944ed">m_isRunning</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        emit <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#ae05ea51e278743c40ccaaeecd8e4c181">completed</a>(0, componentIds.size(), 0);</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    }</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span> </div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    <span class="keywordflow">if</span> (symbolList.isEmpty()) {</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        qWarning() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: No valid symbols to export&quot;</span>;</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#aab0dfedf6f4be568acf32b6b6bc849f0">m_isExporting</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a955feb47e85cf0d1bea786014df944ed">m_isRunning</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>        emit <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#ae05ea51e278743c40ccaaeecd8e4c181">completed</a>(0, componentIds.size(), 0);</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    }</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span> </div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    <span class="keyword">const</span> <span class="keyword">auto</span> failCollectedSymbols = [<span class="keyword">this</span>, &amp;collectedIds, &amp;failedIds, &amp;successCount](<span class="keyword">const</span> QString&amp; errorMessage) {</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> QString&amp; componentId : collectedIds) {</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>            failedIds.append(componentId);</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>            <a class="code hl_struct" href="structEasyKiConverter_1_1ExportItemStatus.html">ExportItemStatus</a> status;</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>            status.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportItemStatus.html#a40902e11bbf85d2399e28c129f7927af">status</a> = <a class="code hl_enumvalue" href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8ad7c8c85bf79bbe1b7188497c32c3b0ca">ExportItemStatus::Status::Failed</a>;</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>            status.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportItemStatus.html#adbd305a8854b3b12e733c626f34d8aba">errorMessage</a> = errorMessage;</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>            status.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportItemStatus.html#a81032e77939526c082c61f4d41727296">endTime</a> = QDateTime::currentDateTime();</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>            emit <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#aaa3c31e03e947336ee6402abaeba5529">itemStatusChanged</a>(componentId, status);</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>        }</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>        successCount = 0;</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    };</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span> </div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <span class="keyword">const</span> <span class="keyword">auto</span> abortExport = [&amp;](<span class="keyword">const</span> QString&amp; errorMessage) {</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>        qCritical() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage:&quot;</span> &lt;&lt; errorMessage;</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>        failCollectedSymbols(errorMessage);</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a0f1588ad6002d053b6d4f9c482dddba8">m_tempManager</a>.<a class="code hl_function" href="classEasyKiConverter_1_1TempFileManager.html#ab00c36b4482d572cec3196964cb25ab7">rollbackAll</a>();</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#aab0dfedf6f4be568acf32b6b6bc849f0">m_isExporting</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a955feb47e85cf0d1bea786014df944ed">m_isRunning</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>        emit <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#ae05ea51e278743c40ccaaeecd8e4c181">completed</a>(0, failedIds.size(), 0);</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    };</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span> </div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    QString libName = <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a37b6e25e2e8a105952358019348c3fc4">libName</a>.isEmpty() ? QStringLiteral(<span class="stringliteral">&quot;EasyKiConverter&quot;</span>) : <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a37b6e25e2e8a105952358019348c3fc4">libName</a>;</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    QString fileName = libName + QStringLiteral(<span class="stringliteral">&quot;.kicad_sym&quot;</span>);</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    QString outputDir = <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">outputPath</a>;</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    <span class="keywordflow">if</span> (outputDir.isEmpty()) {</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>        outputDir = QDir::currentPath() + QStringLiteral(<span class="stringliteral">&quot;/export&quot;</span>);</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    }</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    QString <a class="code hl_variable" href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a> = outputDir + QDir::separator() + fileName;</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span> </div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    QDir dir;</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    <span class="keywordflow">if</span> (!dir.mkpath(outputDir)) {</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>        abortExport(QStringLiteral(<span class="stringliteral">&quot;Failed to create output directory: %1&quot;</span>).arg(outputDir));</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>    }</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span> </div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>    <span class="keyword">const</span> <span class="keywordtype">bool</span> finalFileExists = QFile::exists(<a class="code hl_variable" href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a>);</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span> </div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    QString <a class="code hl_variable" href="TempFileManager_8cpp.html#a6a67b482a412b8fa4b84b6fc227b2e9b">tempPath</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a0f1588ad6002d053b6d4f9c482dddba8">m_tempManager</a>.<a class="code hl_function" href="classEasyKiConverter_1_1TempFileManager.html#ae5419a929c46712580b4853c2d53baeb">createSymbolTempPath</a>(libName, QStringLiteral(<span class="stringliteral">&quot;.kicad_sym&quot;</span>));</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="TempFileManager_8cpp.html#a6a67b482a412b8fa4b84b6fc227b2e9b">tempPath</a>.isEmpty()) {</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>        abortExport(QStringLiteral(<span class="stringliteral">&quot;Failed to create temp file path&quot;</span>));</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>    }</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span> </div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>    <span class="comment">// 追加/更新到现有符号库时，先把最终文件复制到临时文件，再在临时文件上执行 merge。</span></div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>    <span class="keywordflow">if</span> (finalFileExists &amp;&amp; (!<a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#ac920adcf9ebcdfe6dd8cf8d6e0a0c544">overwriteExistingFiles</a> || <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aec93dbdeb235b46f5d3eb25bb35faf09">updateMode</a> || <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#ab5c705f473ce3c8f2dac6adc1a119ddc">retryMode</a>)) {</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>        <span class="keyword">const</span> QString tempDirPath = QFileInfo(<a class="code hl_variable" href="TempFileManager_8cpp.html#a6a67b482a412b8fa4b84b6fc227b2e9b">tempPath</a>).absolutePath();</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>        <span class="keywordflow">if</span> (!QDir().mkpath(tempDirPath)) {</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>            abortExport(QStringLiteral(<span class="stringliteral">&quot;Failed to create temp symbol library directory: %1&quot;</span>).arg(tempDirPath));</div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        }</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span> </div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>        QFile tempFile(<a class="code hl_variable" href="TempFileManager_8cpp.html#a6a67b482a412b8fa4b84b6fc227b2e9b">tempPath</a>);</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>        <span class="keywordflow">if</span> (tempFile.exists() &amp;&amp; !tempFile.remove()) {</div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>            abortExport(QStringLiteral(<span class="stringliteral">&quot;Failed to remove stale temp symbol library: %1&quot;</span>).arg(<a class="code hl_variable" href="TempFileManager_8cpp.html#a6a67b482a412b8fa4b84b6fc227b2e9b">tempPath</a>));</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>        }</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span> </div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>        QFile sourceFile(<a class="code hl_variable" href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a>);</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>        <span class="keywordflow">if</span> (!sourceFile.open(QIODevice::ReadOnly)) {</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>            <span class="keywordflow">if</span> (!QFileInfo::exists(<a class="code hl_variable" href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a>)) {</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>                qWarning()</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>                    &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: Existing symbol library disappeared before copy, creating new library:&quot;</span></div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>                    &lt;&lt; <a class="code hl_variable" href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a>;</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>                abortExport(QStringLiteral(<span class="stringliteral">&quot;Failed to open existing symbol library for copy: %1&quot;</span>).arg(<a class="code hl_variable" href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a>));</div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>                <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>            }</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (!tempFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>            abortExport(QStringLiteral(<span class="stringliteral">&quot;Failed to create temp symbol library for copy: %1&quot;</span>).arg(<a class="code hl_variable" href="TempFileManager_8cpp.html#a6a67b482a412b8fa4b84b6fc227b2e9b">tempPath</a>));</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>            <span class="keyword">constexpr</span> qint64 kChunkSize = 65536;</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>            <span class="keywordtype">char</span> buf[kChunkSize];</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>            <span class="keywordtype">bool</span> copyError = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>            <span class="keywordflow">while</span> (!sourceFile.atEnd()) {</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>                qint64 bytesRead = sourceFile.read(buf, kChunkSize);</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>                <span class="keywordflow">if</span> (bytesRead &lt; 0) {</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>                    abortExport(QStringLiteral(<span class="stringliteral">&quot;Failed to read existing symbol library: %1&quot;</span>).arg(<a class="code hl_variable" href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a>));</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>                    copyError = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>                    <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>                }</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>                <span class="keywordflow">if</span> (tempFile.write(buf, bytesRead) != bytesRead) {</div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>                    abortExport(QStringLiteral(<span class="stringliteral">&quot;Failed to write temp symbol library copy: %1&quot;</span>).arg(<a class="code hl_variable" href="TempFileManager_8cpp.html#a6a67b482a412b8fa4b84b6fc227b2e9b">tempPath</a>));</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>                    copyError = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>                    <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>                }</div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>            }</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>            <span class="keywordflow">if</span> (copyError) {</div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>                <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>            }</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>            tempFile.close();</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>        }</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>    }</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span> </div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>    qDebug() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: Exporting&quot;</span> &lt;&lt; symbolList.size() &lt;&lt; <span class="stringliteral">&quot;symbols to temp:&quot;</span> &lt;&lt; <a class="code hl_variable" href="TempFileManager_8cpp.html#a6a67b482a412b8fa4b84b6fc227b2e9b">tempPath</a>;</div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span> </div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>    <span class="keywordtype">bool</span> exportSuccess = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>    QString libraryDescription = <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#afc4d023ea67291384066ebc4cc970195">symbolLibraryDescription</a>;</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>    {</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>        <a class="code hl_class" href="classEasyKiConverter_1_1ExporterSymbol.html">ExporterSymbol</a> exporter;</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>        <span class="keywordtype">bool</span> appendMode = !<a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#ac920adcf9ebcdfe6dd8cf8d6e0a0c544">overwriteExistingFiles</a>;</div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>        exportSuccess = exporter.<a class="code hl_function" href="classEasyKiConverter_1_1ExporterSymbol.html#a59e33f10420dc26197c295cb30014f07">exportSymbolLibrary</a>(</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>            symbolList, libName, <a class="code hl_variable" href="TempFileManager_8cpp.html#a6a67b482a412b8fa4b84b6fc227b2e9b">tempPath</a>, appendMode, <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">m_options</a>.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aec93dbdeb235b46f5d3eb25bb35faf09">updateMode</a>, libraryDescription);</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>    }</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span> </div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a96b65083d76dc60dace2dc85416a3ede">m_cancelled</a>.load()) {</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a0f1588ad6002d053b6d4f9c482dddba8">m_tempManager</a>.<a class="code hl_function" href="classEasyKiConverter_1_1TempFileManager.html#ab00c36b4482d572cec3196964cb25ab7">rollbackAll</a>();</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#aab0dfedf6f4be568acf32b6b6bc849f0">m_isExporting</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a955feb47e85cf0d1bea786014df944ed">m_isRunning</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>        emit <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#ae05ea51e278743c40ccaaeecd8e4c181">completed</a>(0, symbolList.size(), 0);</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>    }</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span> </div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>    <span class="keywordflow">if</span> (!exportSuccess) {</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>        abortExport(QStringLiteral(<span class="stringliteral">&quot;Failed to export symbol library&quot;</span>));</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>    }</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span> </div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>    <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a0f1588ad6002d053b6d4f9c482dddba8">m_tempManager</a>.<a class="code hl_function" href="classEasyKiConverter_1_1TempFileManager.html#a29ea60f7200dfdec0b46bac56d7a35bf">commitWithBackup</a>(<a class="code hl_variable" href="TempFileManager_8cpp.html#a6a67b482a412b8fa4b84b6fc227b2e9b">tempPath</a>, <a class="code hl_variable" href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a>)) {</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>        abortExport(QStringLiteral(<span class="stringliteral">&quot;Failed to commit temp file&quot;</span>));</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>    }</div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>    qDebug() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: Successfully exported to:&quot;</span> &lt;&lt; <a class="code hl_variable" href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a>;</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span> </div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>    <span class="keywordflow">if</span> (!libraryDescription.isEmpty()) {</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>        <a class="code hl_class" href="classEasyKiConverter_1_1ExporterSymbol.html">ExporterSymbol</a> symTableExporter;</div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>        symTableExporter.<a class="code hl_function" href="classEasyKiConverter_1_1ExporterSymbol.html#ac425b4c0a236ccecf4abb1f588526af0">generateSymLibTable</a>(libName, <a class="code hl_variable" href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a>, outputDir, libraryDescription);</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>        <a class="code hl_function" href="classEasyKiConverter_1_1KiCadLibraryTableManager.html#a079029150052408809b685d445a92f71">KiCadLibraryTableManager::registerSymbolLibrary</a>(outputDir, libName, <a class="code hl_variable" href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a>, libraryDescription);</div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>    }</div>
+<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span> </div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1SymbolExportStage.html#a0f1588ad6002d053b6d4f9c482dddba8">m_tempManager</a>.<a class="code hl_function" href="classEasyKiConverter_1_1TempFileManager.html#a86f3851e8b4aae929bfbedc48b9b1749">cleanupTempDirectory</a>();</div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span> </div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>    qDebug() &lt;&lt; <span class="stringliteral">&quot;SymbolExportStage: Completed. Success:&quot;</span> &lt;&lt; successCount &lt;&lt; <span class="stringliteral">&quot;Failed:&quot;</span> &lt;&lt; failedIds.size();</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span> </div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#aab0dfedf6f4be568acf32b6b6bc849f0">m_isExporting</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1ExportTypeStage.html#a955feb47e85cf0d1bea786014df944ed">m_isRunning</a>.store(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>    emit <a class="code hl_function" href="classEasyKiConverter_1_1ExportTypeStage.html#ae05ea51e278743c40ccaaeecd8e4c181">completed</a>(successCount, failedIds.size(), skippedCount);</div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>}</div>
+</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span> </div>
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="ttc" id="aComponentData_8h_html"><div class="ttname"><a href="ComponentData_8h.html">ComponentData.h</a></div></div>
+<div class="ttc" id="aDebugExportHelper_8h_html"><div class="ttname"><a href="DebugExportHelper_8h.html">DebugExportHelper.h</a></div></div>
+<div class="ttc" id="aExporterSymbol_8h_html"><div class="ttname"><a href="ExporterSymbol_8h.html">ExporterSymbol.h</a></div></div>
+<div class="ttc" id="aKiCadLibraryTableManager_8h_html"><div class="ttname"><a href="KiCadLibraryTableManager_8h.html">KiCadLibraryTableManager.h</a></div></div>
+<div class="ttc" id="aNetworkClient_8cpp_html_a9324389a5cdc532c6417a87ccafe18ce"><div class="ttname"><a href="NetworkClient_8cpp.html#a9324389a5cdc532c6417a87ccafe18ce">finished</a></div><div class="ttdeci">bool finished</div><div class="ttdef"><b>Definition</b> <a href="NetworkClient_8cpp_source.html#l00048">NetworkClient.cpp:48</a></div></div>
+<div class="ttc" id="aSymbolExportStage_8h_html"><div class="ttname"><a href="SymbolExportStage_8h.html">SymbolExportStage.h</a></div></div>
+<div class="ttc" id="aTempFileManager_8cpp_html_a6a67b482a412b8fa4b84b6fc227b2e9b"><div class="ttname"><a href="TempFileManager_8cpp.html#a6a67b482a412b8fa4b84b6fc227b2e9b">tempPath</a></div><div class="ttdeci">QString tempPath</div><div class="ttdef"><b>Definition</b> <a href="TempFileManager_8cpp_source.html#l00025">TempFileManager.cpp:25</a></div></div>
+<div class="ttc" id="aTempFileManager_8cpp_html_ae6179d96426dbf58e725cdfee47efb35"><div class="ttname"><a href="TempFileManager_8cpp.html#ae6179d96426dbf58e725cdfee47efb35">finalPath</a></div><div class="ttdeci">QString finalPath</div><div class="ttdef"><b>Definition</b> <a href="TempFileManager_8cpp_source.html#l00023">TempFileManager.cpp:23</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExportTypeStage_html"><div class="ttname"><a href="classEasyKiConverter_1_1ExportTypeStage.html">EasyKiConverter::ExportTypeStage</a></div><div class="ttdoc">导出类型阶段基类</div><div class="ttdef"><b>Definition</b> <a href="ExportTypeStage_8h_source.html#l00051">ExportTypeStage.h:51</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExportTypeStage_html_a7eb9a73d4c2f03d8b4f2661f13b138a4"><div class="ttname"><a href="classEasyKiConverter_1_1ExportTypeStage.html#a7eb9a73d4c2f03d8b4f2661f13b138a4">EasyKiConverter::ExportTypeStage::m_cachedData</a></div><div class="ttdeci">QMap&lt; QString, QSharedPointer&lt; ComponentData &gt; &gt; m_cachedData</div><div class="ttdoc">预加载的元器件数据缓存</div><div class="ttdef"><b>Definition</b> <a href="ExportTypeStage_8h_source.html#l00216">ExportTypeStage.h:216</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExportTypeStage_html_a955feb47e85cf0d1bea786014df944ed"><div class="ttname"><a href="classEasyKiConverter_1_1ExportTypeStage.html#a955feb47e85cf0d1bea786014df944ed">EasyKiConverter::ExportTypeStage::m_isRunning</a></div><div class="ttdeci">std::atomic&lt; bool &gt; m_isRunning</div><div class="ttdoc">任务是否正在运行的原子标志</div><div class="ttdef"><b>Definition</b> <a href="ExportTypeStage_8h_source.html#l00212">ExportTypeStage.h:212</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExportTypeStage_html_a96b65083d76dc60dace2dc85416a3ede"><div class="ttname"><a href="classEasyKiConverter_1_1ExportTypeStage.html#a96b65083d76dc60dace2dc85416a3ede">EasyKiConverter::ExportTypeStage::m_cancelled</a></div><div class="ttdeci">std::atomic&lt; bool &gt; m_cancelled</div><div class="ttdoc">取消请求的原子标志</div><div class="ttdef"><b>Definition</b> <a href="ExportTypeStage_8h_source.html#l00213">ExportTypeStage.h:213</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExportTypeStage_html_aaa3c31e03e947336ee6402abaeba5529"><div class="ttname"><a href="classEasyKiConverter_1_1ExportTypeStage.html#aaa3c31e03e947336ee6402abaeba5529">EasyKiConverter::ExportTypeStage::itemStatusChanged</a></div><div class="ttdeci">void itemStatusChanged(const QString &amp;componentId, const ExportItemStatus &amp;status)</div><div class="ttdoc">单个元器件状态更新信号</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExportTypeStage_html_aab0dfedf6f4be568acf32b6b6bc849f0"><div class="ttname"><a href="classEasyKiConverter_1_1ExportTypeStage.html#aab0dfedf6f4be568acf32b6b6bc849f0">EasyKiConverter::ExportTypeStage::m_isExporting</a></div><div class="ttdeci">std::atomic&lt; bool &gt; m_isExporting</div><div class="ttdoc">是否正在导出（子类可直接读写）</div><div class="ttdef"><b>Definition</b> <a href="ExportTypeStage_8h_source.html#l00214">ExportTypeStage.h:214</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExportTypeStage_html_abd2e0a8b39cb89547c5ebdbbfd7d3a1f"><div class="ttname"><a href="classEasyKiConverter_1_1ExportTypeStage.html#abd2e0a8b39cb89547c5ebdbbfd7d3a1f">EasyKiConverter::ExportTypeStage::m_componentIds</a></div><div class="ttdeci">QStringList m_componentIds</div><div class="ttdoc">需要导出的元器件ID列表</div><div class="ttdef"><b>Definition</b> <a href="ExportTypeStage_8h_source.html#l00215">ExportTypeStage.h:215</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExportTypeStage_html_ac3ca12b5ef27e834c9014e029dc17b17"><div class="ttname"><a href="classEasyKiConverter_1_1ExportTypeStage.html#ac3ca12b5ef27e834c9014e029dc17b17">EasyKiConverter::ExportTypeStage::m_progress</a></div><div class="ttdeci">ExportTypeProgress m_progress</div><div class="ttdoc">当前进度信息</div><div class="ttdef"><b>Definition</b> <a href="ExportTypeStage_8h_source.html#l00218">ExportTypeStage.h:218</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExportTypeStage_html_ad4373ae5c0cc508a9b90c054f7d66570"><div class="ttname"><a href="classEasyKiConverter_1_1ExportTypeStage.html#ad4373ae5c0cc508a9b90c054f7d66570">EasyKiConverter::ExportTypeStage::m_progressMutex</a></div><div class="ttdeci">QMutex m_progressMutex</div><div class="ttdoc">保护m_progress的互斥量</div><div class="ttdef"><b>Definition</b> <a href="ExportTypeStage_8h_source.html#l00217">ExportTypeStage.h:217</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExportTypeStage_html_ae05ea51e278743c40ccaaeecd8e4c181"><div class="ttname"><a href="classEasyKiConverter_1_1ExportTypeStage.html#ae05ea51e278743c40ccaaeecd8e4c181">EasyKiConverter::ExportTypeStage::completed</a></div><div class="ttdeci">void completed(int successCount, int failedCount, int skippedCount)</div><div class="ttdoc">该导出类型全部完成信号</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExportTypeStage_html_aebfdbe32d023a4d72d92b5740697e26e"><div class="ttname"><a href="classEasyKiConverter_1_1ExportTypeStage.html#aebfdbe32d023a4d72d92b5740697e26e">EasyKiConverter::ExportTypeStage::waitForWorkerThread</a></div><div class="ttdeci">bool waitForWorkerThread(QThread *&amp;thread, int timeoutMs=5000)</div><div class="ttdoc">等待单个工作线程退出（供使用独立 QThread 的子类调用）</div><div class="ttdef"><b>Definition</b> <a href="ExportTypeStage_8cpp_source.html#l00176">ExportTypeStage.cpp:176</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterSymbol_html"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterSymbol.html">EasyKiConverter::ExporterSymbol</a></div><div class="ttdoc">KiCad 符号导出器类</div><div class="ttdef"><b>Definition</b> <a href="ExporterSymbol_8h_source.html#l00018">ExporterSymbol.h:18</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterSymbol_html_a59e33f10420dc26197c295cb30014f07"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterSymbol.html#a59e33f10420dc26197c295cb30014f07">EasyKiConverter::ExporterSymbol::exportSymbolLibrary</a></div><div class="ttdeci">bool exportSymbolLibrary(const QList&lt; SymbolData &gt; &amp;symbols, const QString &amp;libName, const QString &amp;filePath, bool appendMode=true, bool updateMode=false, const QString &amp;libraryDescription=QString())</div><div class="ttdoc">导出多个 KiCad 符号到符号库。</div><div class="ttdef"><b>Definition</b> <a href="ExporterSymbol_8cpp_source.html#l00043">ExporterSymbol.cpp:43</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterSymbol_html_ac425b4c0a236ccecf4abb1f588526af0"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterSymbol.html#ac425b4c0a236ccecf4abb1f588526af0">EasyKiConverter::ExporterSymbol::generateSymLibTable</a></div><div class="ttdeci">bool generateSymLibTable(const QString &amp;libName, const QString &amp;libFilePath, const QString &amp;outputDir, const QString &amp;libraryDescription=QString())</div><div class="ttdoc">生成 sym-lib-table 文件</div><div class="ttdef"><b>Definition</b> <a href="ExporterSymbol_8cpp_source.html#l00687">ExporterSymbol.cpp:687</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1KiCadLibraryTableManager_html_a079029150052408809b685d445a92f71"><div class="ttname"><a href="classEasyKiConverter_1_1KiCadLibraryTableManager.html#a079029150052408809b685d445a92f71">EasyKiConverter::KiCadLibraryTableManager::registerSymbolLibrary</a></div><div class="ttdeci">static RegistrationResult registerSymbolLibrary(const QString &amp;outputDir, const QString &amp;libName, const QString &amp;libFilePath, const QString &amp;libraryDescription)</div><div class="ttdef"><b>Definition</b> <a href="KiCadLibraryTableManager_8cpp_source.html#l00015">KiCadLibraryTableManager.cpp:15</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolExportStage_html_a0f1588ad6002d053b6d4f9c482dddba8"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolExportStage.html#a0f1588ad6002d053b6d4f9c482dddba8">EasyKiConverter::SymbolExportStage::m_tempManager</a></div><div class="ttdeci">TempFileManager m_tempManager</div><div class="ttdoc">临时文件管理器</div><div class="ttdef"><b>Definition</b> <a href="SymbolExportStage_8h_source.html#l00088">SymbolExportStage.h:88</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolExportStage_html_a4fca40e44c068bfb795e6968bad7bfbc"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolExportStage.html#a4fca40e44c068bfb795e6968bad7bfbc">EasyKiConverter::SymbolExportStage::m_options</a></div><div class="ttdeci">struct ExportOptions m_options</div><div class="ttdoc">导出选项（库级别）</div><div class="ttdef"><b>Definition</b> <a href="SymbolExportStage_8h_source.html#l00087">SymbolExportStage.h:87</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolExportStage_html_a60dc02f7a7dfeffa9cd6083af5b90d50"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolExportStage.html#a60dc02f7a7dfeffa9cd6083af5b90d50">EasyKiConverter::SymbolExportStage::m_workerThread</a></div><div class="ttdeci">QThread * m_workerThread</div><div class="ttdoc">工作线程指针</div><div class="ttdef"><b>Definition</b> <a href="SymbolExportStage_8h_source.html#l00089">SymbolExportStage.h:89</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolExportStage_html_a616b89603a959a3eb5298c3a352159d7"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolExportStage.html#a616b89603a959a3eb5298c3a352159d7">EasyKiConverter::SymbolExportStage::cancel</a></div><div class="ttdeci">void cancel() override</div><div class="ttdoc">取消导出</div><div class="ttdef"><b>Definition</b> <a href="SymbolExportStage_8cpp_source.html#l00071">SymbolExportStage.cpp:71</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolExportStage_html_a651816ffd2b08d6a947ea48aa793b5f0"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolExportStage.html#a651816ffd2b08d6a947ea48aa793b5f0">EasyKiConverter::SymbolExportStage::waitForFinished</a></div><div class="ttdeci">bool waitForFinished(int timeoutMs=5000) override</div><div class="ttdoc">等待已提交的后台任务结束</div><div class="ttdef"><b>Definition</b> <a href="SymbolExportStage_8cpp_source.html#l00085">SymbolExportStage.cpp:85</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolExportStage_html_a780b7afcdd0b614960c6d5c90fba3c5d"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolExportStage.html#a780b7afcdd0b614960c6d5c90fba3c5d">EasyKiConverter::SymbolExportStage::doLibraryExport</a></div><div class="ttdeci">void doLibraryExport(const QStringList &amp;componentIds, const QMap&lt; QString, QSharedPointer&lt; ComponentData &gt; &gt; &amp;cachedData)</div><div class="ttdoc">在工作线程中执行库级别的导出</div><div class="ttdef"><b>Definition</b> <a href="SymbolExportStage_8cpp_source.html#l00094">SymbolExportStage.cpp:94</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolExportStage_html_ad050cc32e9b865235fd5f1ba725d9d24"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolExportStage.html#ad050cc32e9b865235fd5f1ba725d9d24">EasyKiConverter::SymbolExportStage::SymbolExportStage</a></div><div class="ttdeci">SymbolExportStage(QObject *parent=nullptr)</div><div class="ttdoc">构造函数</div><div class="ttdef"><b>Definition</b> <a href="SymbolExportStage_8cpp_source.html#l00019">SymbolExportStage.cpp:19</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolExportStage_html_ad19c2284500203d6535e088b5f70d3e6"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolExportStage.html#ad19c2284500203d6535e088b5f70d3e6">EasyKiConverter::SymbolExportStage::~SymbolExportStage</a></div><div class="ttdeci">~SymbolExportStage() override</div><div class="ttdoc">析构函数</div><div class="ttdef"><b>Definition</b> <a href="SymbolExportStage_8cpp_source.html#l00023">SymbolExportStage.cpp:23</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1SymbolExportStage_html_af00ec3e8d70f7071e0dd1c31483dea73"><div class="ttname"><a href="classEasyKiConverter_1_1SymbolExportStage.html#af00ec3e8d70f7071e0dd1c31483dea73">EasyKiConverter::SymbolExportStage::start</a></div><div class="ttdeci">void start(const QStringList &amp;componentIds, const QMap&lt; QString, QSharedPointer&lt; ComponentData &gt; &gt; &amp;cachedData) override</div><div class="ttdoc">开始符号库导出</div><div class="ttdef"><b>Definition</b> <a href="SymbolExportStage_8cpp_source.html#l00027">SymbolExportStage.cpp:27</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1TempFileManager_html_a29ea60f7200dfdec0b46bac56d7a35bf"><div class="ttname"><a href="classEasyKiConverter_1_1TempFileManager.html#a29ea60f7200dfdec0b46bac56d7a35bf">EasyKiConverter::TempFileManager::commitWithBackup</a></div><div class="ttdeci">bool commitWithBackup(const QString &amp;tempPath, const QString &amp;finalPath)</div><div class="ttdoc">提交指定临时文件</div><div class="ttdef"><b>Definition</b> <a href="TempFileManager_8cpp_source.html#l00359">TempFileManager.cpp:359</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1TempFileManager_html_a86f3851e8b4aae929bfbedc48b9b1749"><div class="ttname"><a href="classEasyKiConverter_1_1TempFileManager.html#a86f3851e8b4aae929bfbedc48b9b1749">EasyKiConverter::TempFileManager::cleanupTempDirectory</a></div><div class="ttdeci">void cleanupTempDirectory()</div><div class="ttdoc">仅删除临时目录（保留其他文件）</div><div class="ttdef"><b>Definition</b> <a href="TempFileManager_8cpp_source.html#l00578">TempFileManager.cpp:578</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1TempFileManager_html_a8b8591fbfead930c23a57e5f2c8a1aab"><div class="ttname"><a href="classEasyKiConverter_1_1TempFileManager.html#a8b8591fbfead930c23a57e5f2c8a1aab">EasyKiConverter::TempFileManager::setOutputPath</a></div><div class="ttdeci">void setOutputPath(const QString &amp;outputPath)</div><div class="ttdoc">设置输出目录</div><div class="ttdef"><b>Definition</b> <a href="TempFileManager_8cpp_source.html#l00210">TempFileManager.cpp:210</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1TempFileManager_html_ab00c36b4482d572cec3196964cb25ab7"><div class="ttname"><a href="classEasyKiConverter_1_1TempFileManager.html#ab00c36b4482d572cec3196964cb25ab7">EasyKiConverter::TempFileManager::rollbackAll</a></div><div class="ttdeci">void rollbackAll()</div><div class="ttdoc">回滚所有临时文件（取消导出）</div><div class="ttdef"><b>Definition</b> <a href="TempFileManager_8cpp_source.html#l00553">TempFileManager.cpp:553</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1TempFileManager_html_ae5419a929c46712580b4853c2d53baeb"><div class="ttname"><a href="classEasyKiConverter_1_1TempFileManager.html#ae5419a929c46712580b4853c2d53baeb">EasyKiConverter::TempFileManager::createSymbolTempPath</a></div><div class="ttdeci">QString createSymbolTempPath(const QString &amp;libName, const QString &amp;suffix)</div><div class="ttdoc">获取符号库临时文件路径</div><div class="ttdef"><b>Definition</b> <a href="TempFileManager_8cpp_source.html#l00256">TempFileManager.cpp:256</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00009">EasyedaApi.cpp:9</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportItemStatus_html"><div class="ttname"><a href="structEasyKiConverter_1_1ExportItemStatus.html">EasyKiConverter::ExportItemStatus</a></div><div class="ttdoc">单个导出项的状态信息</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00078">ExportProgress.h:78</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportItemStatus_html_a40902e11bbf85d2399e28c129f7927af"><div class="ttname"><a href="structEasyKiConverter_1_1ExportItemStatus.html#a40902e11bbf85d2399e28c129f7927af">EasyKiConverter::ExportItemStatus::status</a></div><div class="ttdeci">Status status</div><div class="ttdoc">当前状态</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00088">ExportProgress.h:88</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportItemStatus_html_a760395f6f596146bd6582acf79ae16c8a12d868c18cb29bf58f02b504be9033fd"><div class="ttname"><a href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8a12d868c18cb29bf58f02b504be9033fd">EasyKiConverter::ExportItemStatus::Status::InProgress</a></div><div class="ttdeci">@ InProgress</div><div class="ttdoc">处理中 - 正在导出</div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportItemStatus_html_a760395f6f596146bd6582acf79ae16c8a505a83f220c02df2f85c3810cd9ceb38"><div class="ttname"><a href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8a505a83f220c02df2f85c3810cd9ceb38">EasyKiConverter::ExportItemStatus::Status::Success</a></div><div class="ttdeci">@ Success</div><div class="ttdoc">成功 - 导出完成且成功</div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportItemStatus_html_a760395f6f596146bd6582acf79ae16c8ad7c8c85bf79bbe1b7188497c32c3b0ca"><div class="ttname"><a href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8ad7c8c85bf79bbe1b7188497c32c3b0ca">EasyKiConverter::ExportItemStatus::Status::Failed</a></div><div class="ttdeci">@ Failed</div><div class="ttdoc">失败 - 导出过程中发生错误</div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportItemStatus_html_a81032e77939526c082c61f4d41727296"><div class="ttname"><a href="structEasyKiConverter_1_1ExportItemStatus.html#a81032e77939526c082c61f4d41727296">EasyKiConverter::ExportItemStatus::endTime</a></div><div class="ttdeci">QDateTime endTime</div><div class="ttdoc">结束时间</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00094">ExportProgress.h:94</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportItemStatus_html_ac3f562c6f02b594ae43af82db8882131"><div class="ttname"><a href="structEasyKiConverter_1_1ExportItemStatus.html#ac3f562c6f02b594ae43af82db8882131">EasyKiConverter::ExportItemStatus::startTime</a></div><div class="ttdeci">QDateTime startTime</div><div class="ttdoc">开始时间</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00093">ExportProgress.h:93</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportItemStatus_html_adbd305a8854b3b12e733c626f34d8aba"><div class="ttname"><a href="structEasyKiConverter_1_1ExportItemStatus.html#adbd305a8854b3b12e733c626f34d8aba">EasyKiConverter::ExportItemStatus::errorMessage</a></div><div class="ttdeci">QString errorMessage</div><div class="ttdoc">错误信息（当status为Failed时有效）</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00089">ExportProgress.h:89</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a37b6e25e2e8a105952358019348c3fc4"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a37b6e25e2e8a105952358019348c3fc4">EasyKiConverter::ExportOptions::libName</a></div><div class="ttdeci">QString libName</div><div class="ttdoc">库名称（用于构建子目录路径）</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00045">ExportProgress.h:45</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a7c3c0c8c45a5be0a6bf6cb19aba33392"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a7c3c0c8c45a5be0a6bf6cb19aba33392">EasyKiConverter::ExportOptions::debugMode</a></div><div class="ttdeci">bool debugMode</div><div class="ttdoc">调试模式：输出详细调试信息</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00057">ExportProgress.h:57</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_aaa78da68c28f17c71ba42d1ff433e623"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">EasyKiConverter::ExportOptions::outputPath</a></div><div class="ttdeci">QString outputPath</div><div class="ttdoc">导出文件输出目录路径</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00044">ExportProgress.h:44</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_ab5c705f473ce3c8f2dac6adc1a119ddc"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#ab5c705f473ce3c8f2dac6adc1a119ddc">EasyKiConverter::ExportOptions::retryMode</a></div><div class="ttdeci">bool retryMode</div><div class="ttdoc">重试模式：保留已有库内容，仅更新重试的组件</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00054">ExportProgress.h:54</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_ac920adcf9ebcdfe6dd8cf8d6e0a0c544"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#ac920adcf9ebcdfe6dd8cf8d6e0a0c544">EasyKiConverter::ExportOptions::overwriteExistingFiles</a></div><div class="ttdeci">bool overwriteExistingFiles</div><div class="ttdoc">是否覆盖已存在的文件</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00053">ExportProgress.h:53</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_aec93dbdeb235b46f5d3eb25bb35faf09"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#aec93dbdeb235b46f5d3eb25bb35faf09">EasyKiConverter::ExportOptions::updateMode</a></div><div class="ttdeci">bool updateMode</div><div class="ttdoc">更新模式：仅导出缺失或已更改的文件</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00056">ExportProgress.h:56</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_afc4d023ea67291384066ebc4cc970195"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#afc4d023ea67291384066ebc4cc970195">EasyKiConverter::ExportOptions::symbolLibraryDescription</a></div><div class="ttdeci">QString symbolLibraryDescription</div><div class="ttdoc">用户输入的符号库描述文本</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00060">ExportProgress.h:60</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportTypeProgress_html"><div class="ttname"><a href="structEasyKiConverter_1_1ExportTypeProgress.html">EasyKiConverter::ExportTypeProgress</a></div><div class="ttdoc">单个导出类型的总体进度</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00139">ExportProgress.h:139</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportTypeProgress_html_a2403d75fb1365677ada91ea2dc2a1df7"><div class="ttname"><a href="structEasyKiConverter_1_1ExportTypeProgress.html#a2403d75fb1365677ada91ea2dc2a1df7">EasyKiConverter::ExportTypeProgress::completedCount</a></div><div class="ttdeci">int completedCount</div><div class="ttdoc">已完成的元器件数量</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00142">ExportProgress.h:142</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportTypeProgress_html_a26fe0899711870c80528ee11a696feb9"><div class="ttname"><a href="structEasyKiConverter_1_1ExportTypeProgress.html#a26fe0899711870c80528ee11a696feb9">EasyKiConverter::ExportTypeProgress::failedCount</a></div><div class="ttdeci">int failedCount</div><div class="ttdoc">导出失败的元器件数量</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00144">ExportProgress.h:144</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportTypeProgress_html_a3f8a5ddc713dd3f13c4c5068ab331ade"><div class="ttname"><a href="structEasyKiConverter_1_1ExportTypeProgress.html#a3f8a5ddc713dd3f13c4c5068ab331ade">EasyKiConverter::ExportTypeProgress::itemStatus</a></div><div class="ttdeci">QMap&lt; QString, ExportItemStatus &gt; itemStatus</div><div class="ttdoc">所有元器件的导出状态映射</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00147">ExportProgress.h:147</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportTypeProgress_html_a910eac26dc52cecd64ca94c891f262f9"><div class="ttname"><a href="structEasyKiConverter_1_1ExportTypeProgress.html#a910eac26dc52cecd64ca94c891f262f9">EasyKiConverter::ExportTypeProgress::typeName</a></div><div class="ttdeci">QString typeName</div><div class="ttdoc">导出类型名称（如 &quot;Symbol&quot;, &quot;Footprint&quot;, &quot;Model3D&quot;）</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00140">ExportProgress.h:140</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportTypeProgress_html_a9442b9f2fb53434ca8b90aa280a40433"><div class="ttname"><a href="structEasyKiConverter_1_1ExportTypeProgress.html#a9442b9f2fb53434ca8b90aa280a40433">EasyKiConverter::ExportTypeProgress::inProgressCount</a></div><div class="ttdeci">int inProgressCount</div><div class="ttdoc">当前正在导出的元器件数量</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00146">ExportProgress.h:146</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportTypeProgress_html_addde3691219025df3660913b43cf8304"><div class="ttname"><a href="structEasyKiConverter_1_1ExportTypeProgress.html#addde3691219025df3660913b43cf8304">EasyKiConverter::ExportTypeProgress::successCount</a></div><div class="ttdeci">int successCount</div><div class="ttdoc">成功导出的元器件数量</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00143">ExportProgress.h:143</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportTypeProgress_html_ae3e4ee01ffc90ce723e1381f29acc767"><div class="ttname"><a href="structEasyKiConverter_1_1ExportTypeProgress.html#ae3e4ee01ffc90ce723e1381f29acc767">EasyKiConverter::ExportTypeProgress::totalCount</a></div><div class="ttdeci">int totalCount</div><div class="ttdoc">需要导出的元器件总数</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00141">ExportProgress.h:141</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportTypeProgress_html_af2fc800a103be610e95d9da97a47f82c"><div class="ttname"><a href="structEasyKiConverter_1_1ExportTypeProgress.html#af2fc800a103be610e95d9da97a47f82c">EasyKiConverter::ExportTypeProgress::skippedCount</a></div><div class="ttdeci">int skippedCount</div><div class="ttdoc">被跳过的元器件数量</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00145">ExportProgress.h:145</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_056ec8f0377ddc4293192cbc6b19c99c.html">services</a></li><li class="navelem"><a class="el" href="dir_a384dc2a66e9a2b9e112fff859fd4142.html">export</a></li><li class="navelem"><a class="el" href="SymbolExportStage_8cpp.html">SymbolExportStage.cpp</a></li>
+    <li class="footer">制作者 <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

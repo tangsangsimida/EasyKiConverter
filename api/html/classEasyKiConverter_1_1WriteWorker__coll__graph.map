@@ -1,0 +1,20 @@
+<map id="EasyKiConverter::WriteWorker" name="EasyKiConverter::WriteWorker">
+<area shape="rect" id="Node000001" title="写入工作线程" alt="" coords="242,1119,453,1684"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="37,301,104,366"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="61,380,34,501,21,581,12,671,8,766,12,865,26,962,53,1055,89,1130,137,1199,190,1260,244,1313,240,1316,187,1264,133,1202,85,1132,48,1057,21,963,7,865,3,766,7,671,16,581,29,500,55,379"/>
+<area shape="rect" id="Node000009" href="$classEasyKiConverter_1_1Exporter3DModel.html" title="3D 模型导出器类" alt="" coords="63,536,280,1056"/>
+<area shape="poly" id="edge9_Node000009_Node000002" title=" " alt="" coords="83,379,117,535,112,536,78,380"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="305,763,390,829"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="350,843,350,1118,345,1118,345,843"/>
+<area shape="rect" id="Node000004" href="$classEasyKiConverter_1_1ExporterSymbol.html" title="KiCad 符号导出器类" alt="" coords="414,676,612,916"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="483,917,432,1103,427,1102,478,915"/>
+<area shape="rect" id="Node000005" href="$classEasyKiConverter_1_1SymbolGraphicsGenerator.html" title="符号图形元素生成器" alt="" coords="388,193,624,473"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="511,474,514,659,508,660,506,474"/>
+<area shape="rect" id="Node000006" href="$structEasyKiConverter_1_1SymbolBBox.html" title="边界" alt="" coords="400,5,613,131"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="509,131,509,177,504,177,504,131"/>
+<area shape="rect" id="Node000007" href="$classEasyKiConverter_1_1ExporterFootprint.html" title="KiCad 封装导出器类" alt="" coords="642,636,880,956"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="685,957,626,1057,547,1167,466,1269,462,1266,543,1164,622,1055,681,955"/>
+<area shape="rect" id="Node000008" href="$classEasyKiConverter_1_1FootprintGraphicsGenerator.html" title="封装图形生成器" alt="" coords="648,193,876,473"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="765,474,764,620,759,620,759,474"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="192,1056,201,1094,218,1145,238,1196,233,1198,213,1147,196,1095,187,1057"/>
+</map>

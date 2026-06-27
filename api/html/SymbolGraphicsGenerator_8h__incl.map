@@ -1,0 +1,18 @@
+<map id="core/kicad/SymbolGraphicsGenerator.h" name="core/kicad/SymbolGraphicsGenerator.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="327,5,525,45"/>
+<area shape="rect" id="Node000002" href="$SymbolData_8h.html" title=" " alt="" coords="283,93,449,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="414,47,385,84,381,81,409,44"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="521,167,592,192"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="445,44,540,154,536,158,441,48"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,167,100,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="316,121,114,167,113,162,315,116"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="125,167,226,192"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="336,121,220,164,218,159,334,116"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="251,167,305,192"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="354,121,305,160,301,156,350,117"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="329,167,403,192"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="369,119,369,153,363,153,363,119"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="427,167,497,192"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="383,117,437,156,434,160,380,121"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="398,116,514,159,512,164,396,121"/>
+</map>

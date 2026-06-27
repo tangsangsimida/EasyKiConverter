@@ -1,0 +1,249 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: services/UpdateCheckerService.h 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('UpdateCheckerService_8h_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">UpdateCheckerService.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="UpdateCheckerService_8h.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef UPDATECHECKERSERVICE_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define UPDATECHECKERSERVICE_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="AsyncNetworkRequest_8h.html">core/network/AsyncNetworkRequest.h</a>&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;QObject&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;QString&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="foldopen" id="foldopen00011" data-start="{" data-end="};">
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html">   11</a></span><span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1UpdateCheckerService.html">UpdateCheckerService</a> : <span class="keyword">public</span> QObject {</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>    Q_OBJECT</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>    Q_PROPERTY(<span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a84a8e559b28b6b56b0abd83e1187770c">checking</a> READ <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a84a8e559b28b6b56b0abd83e1187770c">checking</a> NOTIFY <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a131102ca34b860bfaf3ab29ecf27b41c">checkingChanged</a>)</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>    Q_PROPERTY(<span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a25f078df33b76545d6932bf846bd860d">hasUpdate</a> READ <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a25f078df33b76545d6932bf846bd860d">hasUpdate</a> NOTIFY <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a7059467cdc2e09e83c9517aec9150296">updateStateChanged</a>)</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    Q_PROPERTY(<span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a146ace1dacb766adeeb7c748c9dd7e92">dismissed</a> READ <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a146ace1dacb766adeeb7c748c9dd7e92">dismissed</a> NOTIFY <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a7059467cdc2e09e83c9517aec9150296">updateStateChanged</a>)</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    Q_PROPERTY(QString <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a29d8e1a910d5e72261a46fe64fe11966">currentVersion</a> READ <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a29d8e1a910d5e72261a46fe64fe11966">currentVersion</a> CONSTANT)</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    Q_PROPERTY(QString <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a38d025c5a7b9ac00312011df25ccf964">latestVersion</a> READ <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a38d025c5a7b9ac00312011df25ccf964">latestVersion</a> NOTIFY <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a7059467cdc2e09e83c9517aec9150296">updateStateChanged</a>)</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>    Q_PROPERTY(QString <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#ad0656d8f884a9170945aa794596d2905">releaseName</a> READ <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#ad0656d8f884a9170945aa794596d2905">releaseName</a> NOTIFY <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a7059467cdc2e09e83c9517aec9150296">updateStateChanged</a>)</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    Q_PROPERTY(QString <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a0dd98977fc085a1ab6f09200fdc68b92">releaseUrl</a> READ <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a0dd98977fc085a1ab6f09200fdc68b92">releaseUrl</a> NOTIFY <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a7059467cdc2e09e83c9517aec9150296">updateStateChanged</a>)</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    Q_PROPERTY(QString <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a52caf4a944928777391a1760ba977433">error</a> READ <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a52caf4a944928777391a1760ba977433">error</a> NOTIFY <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a7059467cdc2e09e83c9517aec9150296">updateStateChanged</a>)</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">explicit</span> <a class="code hl_class" href="classEasyKiConverter_1_1UpdateCheckerService.html">UpdateCheckerService</a>(QObject* parent = <span class="keyword">nullptr</span>);</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a88e4f1fa2c696124d117f15aaa3fc504">~UpdateCheckerService</a>() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
+<div class="foldopen" id="foldopen00026" data-start="{" data-end="}">
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#a84a8e559b28b6b56b0abd83e1187770c">   26</a></span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a84a8e559b28b6b56b0abd83e1187770c">checking</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#ad7e1c0111df8dd645b419a4836c50f53">m_checking</a>;</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    }</div>
+</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
+<div class="foldopen" id="foldopen00030" data-start="{" data-end="}">
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#a25f078df33b76545d6932bf846bd860d">   30</a></span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a25f078df33b76545d6932bf846bd860d">hasUpdate</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#a1ead55e557edcd913cf4439326d6dc28">m_hasUpdate</a>;</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    }</div>
+</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="foldopen" id="foldopen00034" data-start="{" data-end="}">
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#a146ace1dacb766adeeb7c748c9dd7e92">   34</a></span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a146ace1dacb766adeeb7c748c9dd7e92">dismissed</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#acbddf4a26cc7285cee0def9567da61f8">m_dismissed</a>;</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    }</div>
+</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a29d8e1a910d5e72261a46fe64fe11966">currentVersion</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
+<div class="foldopen" id="foldopen00040" data-start="{" data-end="}">
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#a38d025c5a7b9ac00312011df25ccf964">   40</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a38d025c5a7b9ac00312011df25ccf964">latestVersion</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#a0d40211e05f4ad898f931dbdd3d56fdb">m_latestVersion</a>;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    }</div>
+</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
+<div class="foldopen" id="foldopen00044" data-start="{" data-end="}">
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#ad0656d8f884a9170945aa794596d2905">   44</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#ad0656d8f884a9170945aa794596d2905">releaseName</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#a1116dac3070204d3bd19428fecf6d563">m_releaseName</a>;</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    }</div>
+</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
+<div class="foldopen" id="foldopen00048" data-start="{" data-end="}">
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#a0dd98977fc085a1ab6f09200fdc68b92">   48</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a0dd98977fc085a1ab6f09200fdc68b92">releaseUrl</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#aebe6d7ef339a0398f8f1cbacb0f7dd71">m_releaseUrl</a>;</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    }</div>
+</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
+<div class="foldopen" id="foldopen00052" data-start="{" data-end="}">
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#a52caf4a944928777391a1760ba977433">   52</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a52caf4a944928777391a1760ba977433">error</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#aee798aa70d5d71ecdfe9829b229d1f3e">m_error</a>;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    }</div>
+</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#ae1b06feed1254364849503321e4f3574">checkForUpdates</a>();</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#ab1ef373c5b155dbc76458db70243cc5b">dismissUpdate</a>();</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    Q_INVOKABLE <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a6674ae5f60b9c0196cb95d948eb2ac61">resetDismissed</a>();</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>signals:</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#a131102ca34b860bfaf3ab29ecf27b41c">   61</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a131102ca34b860bfaf3ab29ecf27b41c">checkingChanged</a>();</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#a7059467cdc2e09e83c9517aec9150296">   62</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a7059467cdc2e09e83c9517aec9150296">updateStateChanged</a>();</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <span class="keyword">static</span> QString <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#ad10e8ff408578b4b646ca27891d5ec50">normalizeVersion</a>(<span class="keyword">const</span> QString&amp; version);</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    <span class="keyword">static</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a756e8a1b003d32fe98aeb1b2b7caca02">isRemoteVersionNewer</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a29d8e1a910d5e72261a46fe64fe11966">currentVersion</a>, <span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a38d025c5a7b9ac00312011df25ccf964">latestVersion</a>);</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a026de86ac9cdfa88c1bf2ba49020fe7d">setChecking</a>(<span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a84a8e559b28b6b56b0abd83e1187770c">checking</a>);</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#aea464426b491cf5f1268dcbac7022123">applyUpdateInfo</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a38d025c5a7b9ac00312011df25ccf964">latestVersion</a>, <span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#ad0656d8f884a9170945aa794596d2905">releaseName</a>, <span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a0dd98977fc085a1ab6f09200fdc68b92">releaseUrl</a>);</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a1e93e0c5056541ec7e2a89b644addebf">setError</a>(<span class="keyword">const</span> QString&amp; <a class="code hl_function" href="classEasyKiConverter_1_1UpdateCheckerService.html#a52caf4a944928777391a1760ba977433">error</a>);</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#aa908838b8540ad06387902f22a05286a">   72</a></span>    <a class="code hl_class" href="classEasyKiConverter_1_1AsyncNetworkRequest.html">AsyncNetworkRequest</a>* <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#aa908838b8540ad06387902f22a05286a">m_activeRequest</a>{<span class="keyword">nullptr</span>};</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#ad7e1c0111df8dd645b419a4836c50f53">   73</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#ad7e1c0111df8dd645b419a4836c50f53">m_checking</a>{<span class="keyword">false</span>};</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#a1ead55e557edcd913cf4439326d6dc28">   74</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#a1ead55e557edcd913cf4439326d6dc28">m_hasUpdate</a>{<span class="keyword">false</span>};</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#acbddf4a26cc7285cee0def9567da61f8">   75</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#acbddf4a26cc7285cee0def9567da61f8">m_dismissed</a>{<span class="keyword">false</span>};</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#a0d40211e05f4ad898f931dbdd3d56fdb">   76</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#a0d40211e05f4ad898f931dbdd3d56fdb">m_latestVersion</a>;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#a1116dac3070204d3bd19428fecf6d563">   77</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#a1116dac3070204d3bd19428fecf6d563">m_releaseName</a>;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#aebe6d7ef339a0398f8f1cbacb0f7dd71">   78</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#aebe6d7ef339a0398f8f1cbacb0f7dd71">m_releaseUrl</a>;</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1UpdateCheckerService.html#aee798aa70d5d71ecdfe9829b229d1f3e">   79</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1UpdateCheckerService.html#aee798aa70d5d71ecdfe9829b229d1f3e">m_error</a>;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>};</div>
+</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="preprocessor">#endif  </span><span class="comment">// UPDATECHECKERSERVICE_H</span></div>
+<div class="ttc" id="aAsyncNetworkRequest_8h_html"><div class="ttname"><a href="AsyncNetworkRequest_8h.html">AsyncNetworkRequest.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1AsyncNetworkRequest_html"><div class="ttname"><a href="classEasyKiConverter_1_1AsyncNetworkRequest.html">EasyKiConverter::AsyncNetworkRequest</a></div><div class="ttdoc">异步网络请求，支持取消</div><div class="ttdef"><b>Definition</b> <a href="AsyncNetworkRequest_8h_source.html#l00045">AsyncNetworkRequest.h:45</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html">EasyKiConverter::UpdateCheckerService</a></div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00011">UpdateCheckerService.h:11</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a026de86ac9cdfa88c1bf2ba49020fe7d"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a026de86ac9cdfa88c1bf2ba49020fe7d">EasyKiConverter::UpdateCheckerService::setChecking</a></div><div class="ttdeci">void setChecking(bool checking)</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8cpp_source.html#l00143">UpdateCheckerService.cpp:143</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a0d40211e05f4ad898f931dbdd3d56fdb"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a0d40211e05f4ad898f931dbdd3d56fdb">EasyKiConverter::UpdateCheckerService::m_latestVersion</a></div><div class="ttdeci">QString m_latestVersion</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00076">UpdateCheckerService.h:76</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a0dd98977fc085a1ab6f09200fdc68b92"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a0dd98977fc085a1ab6f09200fdc68b92">EasyKiConverter::UpdateCheckerService::releaseUrl</a></div><div class="ttdeci">QString releaseUrl() const</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00048">UpdateCheckerService.h:48</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a1116dac3070204d3bd19428fecf6d563"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a1116dac3070204d3bd19428fecf6d563">EasyKiConverter::UpdateCheckerService::m_releaseName</a></div><div class="ttdeci">QString m_releaseName</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00077">UpdateCheckerService.h:77</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a131102ca34b860bfaf3ab29ecf27b41c"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a131102ca34b860bfaf3ab29ecf27b41c">EasyKiConverter::UpdateCheckerService::checkingChanged</a></div><div class="ttdeci">void checkingChanged()</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a146ace1dacb766adeeb7c748c9dd7e92"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a146ace1dacb766adeeb7c748c9dd7e92">EasyKiConverter::UpdateCheckerService::dismissed</a></div><div class="ttdeci">bool dismissed() const</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00034">UpdateCheckerService.h:34</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a1e93e0c5056541ec7e2a89b644addebf"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a1e93e0c5056541ec7e2a89b644addebf">EasyKiConverter::UpdateCheckerService::setError</a></div><div class="ttdeci">void setError(const QString &amp;error)</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8cpp_source.html#l00174">UpdateCheckerService.cpp:174</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a1ead55e557edcd913cf4439326d6dc28"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a1ead55e557edcd913cf4439326d6dc28">EasyKiConverter::UpdateCheckerService::m_hasUpdate</a></div><div class="ttdeci">bool m_hasUpdate</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00074">UpdateCheckerService.h:74</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a25f078df33b76545d6932bf846bd860d"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a25f078df33b76545d6932bf846bd860d">EasyKiConverter::UpdateCheckerService::hasUpdate</a></div><div class="ttdeci">bool hasUpdate() const</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00030">UpdateCheckerService.h:30</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a29d8e1a910d5e72261a46fe64fe11966"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a29d8e1a910d5e72261a46fe64fe11966">EasyKiConverter::UpdateCheckerService::currentVersion</a></div><div class="ttdeci">QString currentVersion() const</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8cpp_source.html#l00034">UpdateCheckerService.cpp:34</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a38d025c5a7b9ac00312011df25ccf964"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a38d025c5a7b9ac00312011df25ccf964">EasyKiConverter::UpdateCheckerService::latestVersion</a></div><div class="ttdeci">QString latestVersion() const</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00040">UpdateCheckerService.h:40</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a52caf4a944928777391a1760ba977433"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a52caf4a944928777391a1760ba977433">EasyKiConverter::UpdateCheckerService::error</a></div><div class="ttdeci">QString error() const</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00052">UpdateCheckerService.h:52</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a6674ae5f60b9c0196cb95d948eb2ac61"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a6674ae5f60b9c0196cb95d948eb2ac61">EasyKiConverter::UpdateCheckerService::resetDismissed</a></div><div class="ttdeci">void resetDismissed()</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8cpp_source.html#l00102">UpdateCheckerService.cpp:102</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a7059467cdc2e09e83c9517aec9150296"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a7059467cdc2e09e83c9517aec9150296">EasyKiConverter::UpdateCheckerService::updateStateChanged</a></div><div class="ttdeci">void updateStateChanged()</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a756e8a1b003d32fe98aeb1b2b7caca02"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a756e8a1b003d32fe98aeb1b2b7caca02">EasyKiConverter::UpdateCheckerService::isRemoteVersionNewer</a></div><div class="ttdeci">static bool isRemoteVersionNewer(const QString &amp;currentVersion, const QString &amp;latestVersion)</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8cpp_source.html#l00124">UpdateCheckerService.cpp:124</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a84a8e559b28b6b56b0abd83e1187770c"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a84a8e559b28b6b56b0abd83e1187770c">EasyKiConverter::UpdateCheckerService::checking</a></div><div class="ttdeci">bool checking() const</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00026">UpdateCheckerService.h:26</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_a88e4f1fa2c696124d117f15aaa3fc504"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#a88e4f1fa2c696124d117f15aaa3fc504">EasyKiConverter::UpdateCheckerService::~UpdateCheckerService</a></div><div class="ttdeci">~UpdateCheckerService() override</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8cpp_source.html#l00026">UpdateCheckerService.cpp:26</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_aa908838b8540ad06387902f22a05286a"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#aa908838b8540ad06387902f22a05286a">EasyKiConverter::UpdateCheckerService::m_activeRequest</a></div><div class="ttdeci">AsyncNetworkRequest * m_activeRequest</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00072">UpdateCheckerService.h:72</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_ab1ef373c5b155dbc76458db70243cc5b"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#ab1ef373c5b155dbc76458db70243cc5b">EasyKiConverter::UpdateCheckerService::dismissUpdate</a></div><div class="ttdeci">void dismissUpdate()</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8cpp_source.html#l00095">UpdateCheckerService.cpp:95</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_acbddf4a26cc7285cee0def9567da61f8"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#acbddf4a26cc7285cee0def9567da61f8">EasyKiConverter::UpdateCheckerService::m_dismissed</a></div><div class="ttdeci">bool m_dismissed</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00075">UpdateCheckerService.h:75</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_ad0656d8f884a9170945aa794596d2905"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#ad0656d8f884a9170945aa794596d2905">EasyKiConverter::UpdateCheckerService::releaseName</a></div><div class="ttdeci">QString releaseName() const</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00044">UpdateCheckerService.h:44</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_ad10e8ff408578b4b646ca27891d5ec50"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#ad10e8ff408578b4b646ca27891d5ec50">EasyKiConverter::UpdateCheckerService::normalizeVersion</a></div><div class="ttdeci">static QString normalizeVersion(const QString &amp;version)</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8cpp_source.html#l00109">UpdateCheckerService.cpp:109</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_ad7e1c0111df8dd645b419a4836c50f53"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#ad7e1c0111df8dd645b419a4836c50f53">EasyKiConverter::UpdateCheckerService::m_checking</a></div><div class="ttdeci">bool m_checking</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00073">UpdateCheckerService.h:73</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_ae1b06feed1254364849503321e4f3574"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#ae1b06feed1254364849503321e4f3574">EasyKiConverter::UpdateCheckerService::checkForUpdates</a></div><div class="ttdeci">void checkForUpdates()</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8cpp_source.html#l00038">UpdateCheckerService.cpp:38</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_aea464426b491cf5f1268dcbac7022123"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#aea464426b491cf5f1268dcbac7022123">EasyKiConverter::UpdateCheckerService::applyUpdateInfo</a></div><div class="ttdeci">void applyUpdateInfo(const QString &amp;latestVersion, const QString &amp;releaseName, const QString &amp;releaseUrl)</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8cpp_source.html#l00150">UpdateCheckerService.cpp:150</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_aebe6d7ef339a0398f8f1cbacb0f7dd71"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#aebe6d7ef339a0398f8f1cbacb0f7dd71">EasyKiConverter::UpdateCheckerService::m_releaseUrl</a></div><div class="ttdeci">QString m_releaseUrl</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00078">UpdateCheckerService.h:78</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1UpdateCheckerService_html_aee798aa70d5d71ecdfe9829b229d1f3e"><div class="ttname"><a href="classEasyKiConverter_1_1UpdateCheckerService.html#aee798aa70d5d71ecdfe9829b229d1f3e">EasyKiConverter::UpdateCheckerService::m_error</a></div><div class="ttdeci">QString m_error</div><div class="ttdef"><b>Definition</b> <a href="UpdateCheckerService_8h_source.html#l00079">UpdateCheckerService.h:79</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00009">EasyedaApi.cpp:9</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_056ec8f0377ddc4293192cbc6b19c99c.html">services</a></li><li class="navelem"><a class="el" href="UpdateCheckerService_8h.html">UpdateCheckerService.h</a></li>
+    <li class="footer">制作者 <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

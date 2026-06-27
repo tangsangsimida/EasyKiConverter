@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['data_0',['data',['../structGzipUtils_1_1DecompressResult.html#ab4a181bdfaf93e772e36f8a450b9ca8b',1,'GzipUtils::DecompressResult::data'],['../structEasyKiConverter_1_1ComponentService_1_1FetchingComponent.html#afd7968731195cab91fff90ae8c678e13',1,'EasyKiConverter::ComponentService::FetchingComponent::data'],['../structEasyKiConverter_1_1NetworkResult.html#a344a35d8adf3b083ed8cbe80663880f0',1,'EasyKiConverter::NetworkResult::data']]],
+  ['datasheet_1',['datasheet',['../structEasyKiConverter_1_1SymbolInfo.html#a6ef1d6b71127d6f34bc056f73eb80d89',1,'EasyKiConverter::SymbolInfo']]],
+  ['datasheetdata_2',['datasheetdata',['../structEasyKiConverter_1_1ComponentExportStatus.html#acdd1c69aca9441e15578ea50fb126104',1,'EasyKiConverter::ComponentExportStatus::datasheetData'],['../structEasyKiConverter_1_1ComponentService_1_1CacheLoadResult.html#a0bfa104aa18246e520c2d22c954e98ed',1,'EasyKiConverter::ComponentService::CacheLoadResult::datasheetData']]],
+  ['datasheetwritten_3',['datasheetWritten',['../structEasyKiConverter_1_1ComponentExportStatus.html#a10785f29befd28733d5f31fc0bb45643',1,'EasyKiConverter::ComponentExportStatus']]],
+  ['datastrid_4',['datastrid',['../structEasyKiConverter_1_1FootprintInfo.html#ae9264d60784c3779c200b5393eab21b7',1,'EasyKiConverter::FootprintInfo::datastrid'],['../structEasyKiConverter_1_1SymbolInfo.html#aea2b997665e80afa7f9765ae440e0110',1,'EasyKiConverter::SymbolInfo::datastrid']]],
+  ['debuglog_5',['debugLog',['../structEasyKiConverter_1_1ComponentExportStatus.html#a82371688c8c5572559bf69f9b5fabe42',1,'EasyKiConverter::ComponentExportStatus']]],
+  ['debugmode_6',['debugMode',['../structEasyKiConverter_1_1ExportOptions.html#a7c3c0c8c45a5be0a6bf6cb19aba33392',1,'EasyKiConverter::ExportOptions']]],
+  ['default_5fdisk_5fcache_5flimit_5fmb_7',['DEFAULT_DISK_CACHE_LIMIT_MB',['../classEasyKiConverter_1_1ConfigService.html#ac0fc1fab5eb6da2ef27d2cc8a16a8677',1,'EasyKiConverter::ConfigService']]],
+  ['default_5ftimeout_5fms_8',['DEFAULT_TIMEOUT_MS',['../classEasyKiConverter_1_1NetworkWorker.html#af49faae6b3423e2caf8332d7a44a2d72',1,'EasyKiConverter::NetworkWorker']]],
+  ['default_5fwindow_5fheight_9',['DEFAULT_WINDOW_HEIGHT',['../classEasyKiConverter_1_1ConfigService.html#a37b9f3afd0889f814669156c5f410bb8',1,'EasyKiConverter::ConfigService']]],
+  ['default_5fwindow_5fwidth_10',['DEFAULT_WINDOW_WIDTH',['../classEasyKiConverter_1_1ConfigService.html#a7fe2df319e52ad2553a96953442ed7d2',1,'EasyKiConverter::ConfigService']]],
+  ['default_5fwindow_5fx_11',['DEFAULT_WINDOW_X',['../classEasyKiConverter_1_1ConfigService.html#a97733af8d5d892b5b4f017905df498d4',1,'EasyKiConverter::ConfigService']]],
+  ['default_5fwindow_5fy_12',['DEFAULT_WINDOW_Y',['../classEasyKiConverter_1_1ConfigService.html#a20a337d356f71fb643dd2e00b3e2a337',1,'EasyKiConverter::ConfigService']]],
+  ['delays_13',['delays',['../structEasyKiConverter_1_1RetryPolicy.html#a7a48901ba860851dd758c4449063347c',1,'EasyKiConverter::RetryPolicy']]],
+  ['deltaangle_14',['deltaAngle',['../structEasyKiConverter_1_1GeometryUtils_1_1SvgArcResult.html#a8a8b4f7f982bb767a6f8237a7319f89d',1,'EasyKiConverter::GeometryUtils::SvgArcResult']]],
+  ['description_15',['description',['../structEasyKiConverter_1_1FootprintInfo.html#a3180e1057eb9291b9dd22d7e300ecff6',1,'EasyKiConverter::FootprintInfo::description'],['../structEasyKiConverter_1_1SymbolInfo.html#a32b542ea40a5b8086e6698d070e6709b',1,'EasyKiConverter::SymbolInfo::description']]],
+  ['details_16',['details',['../classEasyKiConverter_1_1NetworkError.html#aa490067c3c8b72cf586ddcdc6c8740fa',1,'EasyKiConverter::NetworkError']]],
+  ['diagnostic_17',['diagnostic',['../structEasyKiConverter_1_1NetworkResult.html#ac95911193fcfd1eb8cadf507b5366975',1,'EasyKiConverter::NetworkResult']]],
+  ['dnslookupms_18',['dnsLookupMs',['../structEasyKiConverter_1_1NetworkDiagnostic.html#a3345ee6462080389cad5ce3b7d2fb1b2',1,'EasyKiConverter::NetworkDiagnostic']]],
+  ['doctype_19',['doctype',['../structEasyKiConverter_1_1FootprintInfo.html#ae7b8e3aa68334a836dad19252b8e9a5c',1,'EasyKiConverter::FootprintInfo::docType'],['../structEasyKiConverter_1_1SymbolInfo.html#ac4f0f200910eb48863c11368eb6c7577',1,'EasyKiConverter::SymbolInfo::docType']]],
+  ['dot_20',['dot',['../structEasyKiConverter_1_1SymbolPin.html#a1e93220df803ceae9166c0db34628443',1,'EasyKiConverter::SymbolPin']]],
+  ['dotx_21',['dotX',['../structEasyKiConverter_1_1SymbolPinDot.html#a3e2c2822b7ae99c046ddfd4a6654e69c',1,'EasyKiConverter::SymbolPinDot']]],
+  ['doty_22',['dotY',['../structEasyKiConverter_1_1SymbolPinDot.html#a36a621069e55890a95e5ab4d650f0905',1,'EasyKiConverter::SymbolPinDot']]]
+];

@@ -1,0 +1,22 @@
+<map id="core/easyeda/EasyedaSymbolImporter.h" name="core/easyeda/EasyedaSymbolImporter.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="253,5,470,45"/>
+<area shape="rect" id="Node000002" href="$SymbolData_8h.html" title=" " alt="" coords="194,93,361,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="343,48,302,86,298,82,339,44"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,167,107,192"/>
+<area shape="poly" id="edge8_Node000001_Node000004" title=" " alt="" coords="302,48,244,69,184,96,129,128,83,161,80,156,126,124,181,91,242,64,300,43"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="385,93,508,119"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="384,44,426,82,422,86,380,48"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="532,93,625,119"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="414,43,535,86,533,91,412,48"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="131,167,226,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="263,121,207,161,204,156,260,117"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="243,121,105,165,104,160,241,116"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="250,167,305,192"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="280,119,280,153,275,153,275,119"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="329,167,402,192"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="293,117,342,156,339,160,290,121"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="427,167,496,192"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="308,116,419,159,417,164,306,121"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="521,167,591,192"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="323,116,508,163,507,168,321,121"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="EasyKiConverter::FootprintExportStage" name="EasyKiConverter::FootprintExportStage">
+<area shape="rect" id="Node000001" title="封装库导出阶段" alt="" coords="13,807,201,1087"/>
+<area shape="rect" id="Node000002" href="$classEasyKiConverter_1_1ExportTypeStage.html" title="导出类型阶段基类" alt="" coords="5,119,208,759"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,773,109,806,104,806,104,773"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="73,5,140,71"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="109,84,109,118,104,118,104,84"/>
+</map>

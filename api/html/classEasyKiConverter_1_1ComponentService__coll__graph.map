@@ -1,0 +1,19 @@
+<map id="EasyKiConverter::ComponentService" name="EasyKiConverter::ComponentService">
+<area shape="rect" id="Node000001" title="元件服务类" alt="" coords="525,1051,763,1751"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="611,93,677,158"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="691,132,763,151,849,184,892,207,933,235,969,268,998,307,1048,399,1080,483,1095,562,1097,639,1086,717,1065,799,998,989,978,1036,954,1081,895,1166,830,1241,765,1304,761,1301,826,1237,891,1162,949,1078,974,1033,994,987,1060,798,1081,716,1092,638,1090,562,1075,484,1043,401,994,309,965,271,929,239,889,211,847,189,762,156,690,137"/>
+<area shape="rect" id="Node000003" href="$classEasyKiConverter_1_1EasyedaApi.html" title=" " alt="" coords="5,335,251,961"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="598,140,526,161,437,195,390,217,345,244,302,275,265,310,242,337,238,333,261,306,299,271,342,239,388,213,434,190,524,155,596,134"/>
+<area shape="rect" id="Node000005" href="$classEasyKiConverter_1_1LcscImageService.html" title="LCSC 图片服务类" alt="" coords="275,308,528,988"/>
+<area shape="poly" id="edge6_Node000005_Node000002" title=" " alt="" coords="619,171,582,235,542,309,531,334,526,332,538,307,577,233,615,168"/>
+<area shape="rect" id="Node000006" href="$classEasyKiConverter_1_1ParallelFetchContext.html" title=" " alt="" coords="552,468,736,828"/>
+<area shape="poly" id="edge8_Node000006_Node000002" title=" " alt="" coords="647,171,647,468,641,468,641,171"/>
+<area shape="rect" id="Node000007" href="$classEasyKiConverter_1_1ComponentQueueManager.html" title=" " alt="" coords="760,378,984,918"/>
+<area shape="poly" id="edge10_Node000007_Node000002" title=" " alt="" coords="674,169,712,233,750,307,781,377,776,379,746,309,707,236,669,171"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="249,959,265,987,322,1068,386,1146,452,1218,515,1281,512,1285,448,1221,382,1149,318,1071,260,989,244,962"/>
+<area shape="rect" id="Node000004" href="$classEasyKiConverter_1_1INetworkClient.html" title="网络客户端接口" alt="" coords="33,5,223,245"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="131,246,131,319,125,319,125,246"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="510,987,523,1026,525,1034,520,1036,517,1027,505,989"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="647,828,647,1034,641,1034,641,828"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="812,919,781,1027,770,1063,765,1061,776,1026,807,918"/>
+</map>

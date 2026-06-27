@@ -1,0 +1,15 @@
+<map id="EasyKiConverter::ExportTypeStage" name="EasyKiConverter::ExportTypeStage">
+<area shape="rect" id="Node000001" title="导出类型阶段基类" alt="" coords="453,119,656,759"/>
+<area shape="rect" id="Node000003" href="$classEasyKiConverter_1_1DatasheetExportStage.html" title="数据手册导出阶段" alt="" coords="5,817,203,1077"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="446,557,334,677,217,808,205,822,201,819,213,805,330,673,442,553"/>
+<area shape="rect" id="Node000004" href="$classEasyKiConverter_1_1FootprintExportStage.html" title="封装库导出阶段" alt="" coords="227,807,415,1087"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="450,673,388,808,383,805,445,671"/>
+<area shape="rect" id="Node000005" href="$classEasyKiConverter_1_1Model3DExportStage.html" title="3D模型导出阶段" alt="" coords="439,827,670,1067"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="557,773,557,826,552,826,552,773"/>
+<area shape="rect" id="Node000006" href="$classEasyKiConverter_1_1PreviewImagesExportStage.html" title="预览图导出阶段" alt="" coords="695,807,940,1087"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="665,646,748,805,743,808,660,648"/>
+<area shape="rect" id="Node000007" href="$classEasyKiConverter_1_1SymbolExportStage.html" title="符号库导出阶段" alt="" coords="964,807,1185,1087"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="668,536,807,662,954,805,966,817,962,821,950,809,803,666,665,540"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="521,5,588,71"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="557,84,557,118,552,118,552,84"/>
+</map>

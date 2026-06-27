@@ -1,0 +1,15 @@
+<map id="ui" name="ui">
+<area shape="rect" id="node2" href="dir_bca27b33d063458119eb74a541acc445.html" title="qml" alt="" coords="291,27,337,52"/>
+<area shape="rect" id="node3" href="dir_bef512c0463b543d9b1c6d3451eba227.html" title="utils" alt="" coords="215,27,266,52"/>
+<area shape="rect" id="node4" href="dir_fea4d5651ef76d72b143e7607c90e565.html" title="viewmodels" alt="" coords="90,27,191,52"/>
+<area shape="rect" id="node5" href="dir_056ec8f0377ddc4293192cbc6b19c99c.html" title="services" alt="" coords="5,100,81,125"/>
+<area shape="poly" id="edge1" href="dir_000016_000010.html" alt="" coords="127,54,72,94,69,89,123,50"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000016_000010.html" title="12" alt="" coords="70,89,88,103"/>
+<area shape="rect" id="node6" href="dir_1ae4179d5e953611aae20c997279e02c.html" title="models" alt="" coords="105,100,176,125"/>
+<area shape="poly" id="edge2" href="dir_000016_000007.html" alt="" coords="143,52,143,86,138,86,138,52"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000016_000007.html" title="1" alt="" coords="144,74,154,89"/>
+<area shape="rect" id="node7" href="dir_cbdb8362360e11eafe2fa3bc74cf0ffd.html" title="utils" alt="" coords="201,100,251,125"/>
+<area shape="poly" id="edge3" href="dir_000016_000015.html" alt="" coords="156,50,203,89,200,93,153,54"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000016_000015.html" title="4" alt="" coords="199,74,208,89"/>
+<area shape="rect" id="clust1" href="dir_1788f8309b1a812dcb800a185471cf6c.html" alt="" coords="79,16,411,63"/>
+</map>

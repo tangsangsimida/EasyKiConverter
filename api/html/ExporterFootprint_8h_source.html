@@ -1,0 +1,217 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: core/kicad/ExporterFootprint.h 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('ExporterFootprint_8h_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">ExporterFootprint.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="ExporterFootprint_8h.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef EXPORTERFOOTPRINT_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define EXPORTERFOOTPRINT_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="FootprintGraphicsGenerator_8h.html">FootprintGraphicsGenerator.h</a>&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;<a class="code" href="FootprintData_8h.html">models/FootprintData.h</a>&quot;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;<a class="code" href="Model3DData_8h.html">models/Model3DData.h</a>&quot;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;QJsonObject&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;QString&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;QTextStream&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
+<div class="foldopen" id="foldopen00019" data-start="{" data-end="};">
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ExporterFootprint.html">   19</a></span><span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1ExporterFootprint.html">ExporterFootprint</a> {</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#a40865cf6fd86a79dad8a568a78063cad">ExporterFootprint</a>();</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#a904aaa0473b7c6c852840cd55ab6cb60">~ExporterFootprint</a>();</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#aa2e6205d9dd16122aba9649fd1d5ea6e">exportFootprint</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1FootprintData.html">FootprintData</a>&amp; footprintData,</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>                         <span class="keyword">const</span> QString&amp; filePath,</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>                         <span class="keyword">const</span> QString&amp; model3DPath = QString());</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#aa2e6205d9dd16122aba9649fd1d5ea6e">exportFootprint</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1FootprintData.html">FootprintData</a>&amp; footprintData,</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                         <span class="keyword">const</span> QString&amp; filePath,</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>                         <span class="keyword">const</span> QString&amp; model3DWrlPath,</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>                         <span class="keyword">const</span> QString&amp; model3DStepPath);</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#a634aa6890b6239fd56362cffc4319e1b">exportFootprintLibrary</a>(<span class="keyword">const</span> QList&lt;FootprintData&gt;&amp; footprints,</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                                <span class="keyword">const</span> QString&amp; libName,</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                                <span class="keyword">const</span> QString&amp; filePath,</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                                <span class="keywordtype">bool</span> preferWrl = <span class="keyword">true</span>,</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                                <span class="keywordtype">bool</span> exportStep = <span class="keyword">false</span>,</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                                <span class="keyword">const</span> QString&amp; libraryDescription = QString(),</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                                <span class="keyword">const</span> QString&amp; libraryKeywords = QString(),</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>                                <span class="keywordtype">bool</span> useAbsolutePaths = <span class="keyword">false</span>,</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>                                <span class="keyword">const</span> QString&amp; model3DBaseDir = QString());</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#a9ffb0f22d99054abfe0e3127a12dab9b">generateFpLibTable</a>(<span class="keyword">const</span> QString&amp; libName,</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>                            <span class="keyword">const</span> QString&amp; libDirPath,</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>                            <span class="keyword">const</span> QString&amp; outputDir,</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>                            <span class="keyword">const</span> QString&amp; libraryDescription = QString());</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span> </div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#a76c1d1c0ba0e972250173b7eb5950a98">generateHeader</a>(<span class="keyword">const</span> QString&amp; libName) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#ad386a93ec54d8aa9d73c8f6dda121e41">buildModel3DPath</a>(<span class="keyword">const</span> QString&amp; safeLibName,</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                             <span class="keyword">const</span> QString&amp; modelName,</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>                             <span class="keyword">const</span> QString&amp; extension,</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>                             <span class="keywordtype">bool</span> useAbsolutePaths,</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>                             <span class="keyword">const</span> QString&amp; resolvedBaseDir) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#a985dec499e992b0d700398dbd3495188">generateFootprintBaseContent</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1FootprintData.html">FootprintData</a>&amp; footprintData,</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                                      QString&amp; content,</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>                                      <span class="keywordtype">double</span>&amp; outBboxX,</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                                      <span class="keywordtype">double</span>&amp; outBboxY,</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                                      <span class="keyword">const</span> QString&amp; libraryDescription = QString(),</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                                      <span class="keyword">const</span> QString&amp; libraryKeywords = QString()) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="comment">// 基础版本：支持描述和关键词，内部委托到双路径重载</span></div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#a5e495fbb71e5c8a848683de1f89e2dd5">generateFootprintContent</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1FootprintData.html">FootprintData</a>&amp; footprintData,</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                                     <span class="keyword">const</span> QString&amp; model3DPath,</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                                     <span class="keyword">const</span> QString&amp; libraryDescription,</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                                     <span class="keyword">const</span> QString&amp; libraryKeywords) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="comment">// 双3D模型路径版本：支持描述和关键词</span></div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#a5e495fbb71e5c8a848683de1f89e2dd5">generateFootprintContent</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1FootprintData.html">FootprintData</a>&amp; footprintData,</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                                     <span class="keyword">const</span> QString&amp; model3DWrlPath,</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                                     <span class="keyword">const</span> QString&amp; model3DStepPath,</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                                     <span class="keyword">const</span> QString&amp; libraryDescription,</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                                     <span class="keyword">const</span> QString&amp; libraryKeywords) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="comment">// 兼容旧调用：无描述/关键词，内部委托到基础版本</span></div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#a5e495fbb71e5c8a848683de1f89e2dd5">generateFootprintContent</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1FootprintData.html">FootprintData</a>&amp; footprintData, <span class="keyword">const</span> QString&amp; model3DPath = QString()) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1ExporterFootprint.html#a5e495fbb71e5c8a848683de1f89e2dd5">generateFootprintContent</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1FootprintData.html">FootprintData</a>&amp; footprintData,</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>                                     <span class="keyword">const</span> QString&amp; model3DWrlPath,</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>                                     <span class="keyword">const</span> QString&amp; model3DStepPath) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1ExporterFootprint.html#abda2206bcc892f3a814406444a4252de">  119</a></span>    <span class="keyword">mutable</span> <a class="code hl_class" href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html">FootprintGraphicsGenerator</a> <a class="code hl_variable" href="classEasyKiConverter_1_1ExporterFootprint.html#abda2206bcc892f3a814406444a4252de">m_graphicsGenerator</a>;</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>};</div>
+</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="preprocessor">#endif  </span><span class="comment">// EXPORTERFOOTPRINT_H</span></div>
+<div class="ttc" id="aFootprintData_8h_html"><div class="ttname"><a href="FootprintData_8h.html">FootprintData.h</a></div></div>
+<div class="ttc" id="aFootprintGraphicsGenerator_8h_html"><div class="ttname"><a href="FootprintGraphicsGenerator_8h.html">FootprintGraphicsGenerator.h</a></div></div>
+<div class="ttc" id="aModel3DData_8h_html"><div class="ttname"><a href="Model3DData_8h.html">Model3DData.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html">EasyKiConverter::ExporterFootprint</a></div><div class="ttdoc">KiCad 封装导出器类</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8h_source.html#l00019">ExporterFootprint.h:19</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html_a40865cf6fd86a79dad8a568a78063cad"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html#a40865cf6fd86a79dad8a568a78063cad">EasyKiConverter::ExporterFootprint::ExporterFootprint</a></div><div class="ttdeci">ExporterFootprint()</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8cpp_source.html#l00016">ExporterFootprint.cpp:16</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html_a5e495fbb71e5c8a848683de1f89e2dd5"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html#a5e495fbb71e5c8a848683de1f89e2dd5">EasyKiConverter::ExporterFootprint::generateFootprintContent</a></div><div class="ttdeci">QString generateFootprintContent(const FootprintData &amp;footprintData, const QString &amp;model3DPath, const QString &amp;libraryDescription, const QString &amp;libraryKeywords) const</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8cpp_source.html#l00333">ExporterFootprint.cpp:333</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html_a634aa6890b6239fd56362cffc4319e1b"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html#a634aa6890b6239fd56362cffc4319e1b">EasyKiConverter::ExporterFootprint::exportFootprintLibrary</a></div><div class="ttdeci">bool exportFootprintLibrary(const QList&lt; FootprintData &gt; &amp;footprints, const QString &amp;libName, const QString &amp;filePath, bool preferWrl=true, bool exportStep=false, const QString &amp;libraryDescription=QString(), const QString &amp;libraryKeywords=QString(), bool useAbsolutePaths=false, const QString &amp;model3DBaseDir=QString())</div><div class="ttdoc">批量导出封装库（KiCad .kicad_mod 格式）</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8cpp_source.html#l00065">ExporterFootprint.cpp:65</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html_a76c1d1c0ba0e972250173b7eb5950a98"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html#a76c1d1c0ba0e972250173b7eb5950a98">EasyKiConverter::ExporterFootprint::generateHeader</a></div><div class="ttdeci">QString generateHeader(const QString &amp;libName) const</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8cpp_source.html#l00181">ExporterFootprint.cpp:181</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html_a904aaa0473b7c6c852840cd55ab6cb60"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html#a904aaa0473b7c6c852840cd55ab6cb60">EasyKiConverter::ExporterFootprint::~ExporterFootprint</a></div><div class="ttdeci">~ExporterFootprint()</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8cpp_source.html#l00018">ExporterFootprint.cpp:18</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html_a985dec499e992b0d700398dbd3495188"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html#a985dec499e992b0d700398dbd3495188">EasyKiConverter::ExporterFootprint::generateFootprintBaseContent</a></div><div class="ttdeci">void generateFootprintBaseContent(const FootprintData &amp;footprintData, QString &amp;content, double &amp;outBboxX, double &amp;outBboxY, const QString &amp;libraryDescription=QString(), const QString &amp;libraryKeywords=QString()) const</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8cpp_source.html#l00205">ExporterFootprint.cpp:205</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html_a9ffb0f22d99054abfe0e3127a12dab9b"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html#a9ffb0f22d99054abfe0e3127a12dab9b">EasyKiConverter::ExporterFootprint::generateFpLibTable</a></div><div class="ttdeci">bool generateFpLibTable(const QString &amp;libName, const QString &amp;libDirPath, const QString &amp;outputDir, const QString &amp;libraryDescription=QString())</div><div class="ttdoc">生成 fp-lib-table 文件</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8cpp_source.html#l00174">ExporterFootprint.cpp:174</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html_aa2e6205d9dd16122aba9649fd1d5ea6e"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html#aa2e6205d9dd16122aba9649fd1d5ea6e">EasyKiConverter::ExporterFootprint::exportFootprint</a></div><div class="ttdeci">bool exportFootprint(const FootprintData &amp;footprintData, const QString &amp;filePath, const QString &amp;model3DPath=QString())</div><div class="ttdoc">导出单个 KiCad 封装（单 3D 模型）。</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8cpp_source.html#l00020">ExporterFootprint.cpp:20</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html_abda2206bcc892f3a814406444a4252de"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html#abda2206bcc892f3a814406444a4252de">EasyKiConverter::ExporterFootprint::m_graphicsGenerator</a></div><div class="ttdeci">FootprintGraphicsGenerator m_graphicsGenerator</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8h_source.html#l00119">ExporterFootprint.h:119</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ExporterFootprint_html_ad386a93ec54d8aa9d73c8f6dda121e41"><div class="ttname"><a href="classEasyKiConverter_1_1ExporterFootprint.html#ad386a93ec54d8aa9d73c8f6dda121e41">EasyKiConverter::ExporterFootprint::buildModel3DPath</a></div><div class="ttdeci">QString buildModel3DPath(const QString &amp;safeLibName, const QString &amp;modelName, const QString &amp;extension, bool useAbsolutePaths, const QString &amp;resolvedBaseDir) const</div><div class="ttdef"><b>Definition</b> <a href="ExporterFootprint_8cpp_source.html#l00190">ExporterFootprint.cpp:190</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintData_html"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintData.html">EasyKiConverter::FootprintData</a></div><div class="ttdef"><b>Definition</b> <a href="FootprintData_8h_source.html#l00211">FootprintData.h:211</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1FootprintGraphicsGenerator_html"><div class="ttname"><a href="classEasyKiConverter_1_1FootprintGraphicsGenerator.html">EasyKiConverter::FootprintGraphicsGenerator</a></div><div class="ttdoc">封装图形生成器</div><div class="ttdef"><b>Definition</b> <a href="FootprintGraphicsGenerator_8h_source.html#l00016">FootprintGraphicsGenerator.h:16</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00009">EasyedaApi.cpp:9</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_4270bfced15e0e73154b13468c7c9ad9.html">core</a></li><li class="navelem"><a class="el" href="dir_ad1ddbc3e0d75829e0afe087a249d2ba.html">kicad</a></li><li class="navelem"><a class="el" href="ExporterFootprint_8h.html">ExporterFootprint.h</a></li>
+    <li class="footer">制作者 <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

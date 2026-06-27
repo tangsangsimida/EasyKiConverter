@@ -1,0 +1,26 @@
+<map id="core/easyeda/EasyedaFootprintImporter.h" name="core/easyeda/EasyedaFootprintImporter.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="521,5,747,45"/>
+<area shape="rect" id="Node000002" href="$FootprintData_8h.html" title=" " alt="" coords="284,93,459,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="572,48,424,92,422,87,570,43"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="483,240,585,265"/>
+<area shape="poly" id="edge11_Node000001_Node000005" title=" " alt="" coords="628,47,547,228,542,226,623,44"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="622,93,745,119"/>
+<area shape="poly" id="edge12_Node000001_Node000010" title=" " alt="" coords="648,44,671,80,667,83,644,47"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="769,93,862,119"/>
+<area shape="poly" id="edge13_Node000001_Node000011" title=" " alt="" coords="678,43,777,85,775,90,676,48"/>
+<area shape="rect" id="Node000003" href="$Model3DData_8h.html" title=" " alt="" coords="78,167,201,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="335,121,191,165,189,160,333,116"/>
+<area shape="poly" id="edge7_Node000002_Node000005" title=" " alt="" coords="425,116,470,134,492,148,511,165,527,194,535,225,529,226,522,196,507,168,489,152,468,139,423,121"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="5,240,76,265"/>
+<area shape="poly" id="edge10_Node000002_Node000006" title=" " alt="" coords="284,117,158,135,103,150,68,169,58,181,51,196,44,226,39,225,46,194,53,178,64,165,101,145,157,130,283,112"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="225,167,320,192"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="357,121,301,161,298,156,354,117"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="344,167,399,192"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="374,119,374,153,369,153,369,119"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="423,167,496,192"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="387,117,436,156,433,160,384,121"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="100,240,197,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="144,192,148,226,143,227,138,193"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="201,189,470,237,469,242,201,194"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="125,194,69,234,66,230,122,190"/>
+</map>

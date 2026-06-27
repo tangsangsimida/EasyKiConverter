@@ -1,0 +1,24 @@
+<map id="utils/logging/Logger.h" name="utils/logging/Logger.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="498,5,659,31"/>
+<area shape="rect" id="Node000002" href="$Log_8h.html" title="EasyKiConverter 日志系统统一入口" alt="" coords="5,240,147,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="485,33,373,51,250,76,193,93,143,111,104,131,78,154,69,174,67,198,74,239,69,240,61,198,64,173,74,150,101,127,141,106,192,88,249,71,372,45,484,28"/>
+<area shape="rect" id="Node000004" href="$LogMacros_8h.html" title=" " alt="" coords="419,79,607,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="561,43,526,80,522,77,557,39"/>
+<area shape="rect" id="Node000008" href="$QtLogAdapter_8h.html" title=" " alt="" coords="886,159,1093,185"/>
+<area shape="poly" id="edge12_Node000001_Node000008" title=" " alt="" coords="598,39,630,72,672,102,709,113,775,127,926,157,925,162,774,133,707,118,669,106,627,76,594,43"/>
+<area shape="rect" id="Node000010" href="$Logger_8cpp.html" title=" " alt="" coords="683,79,859,104"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="623,33,740,76,738,81,622,38"/>
+<area shape="rect" id="Node000003" href="$main_8cpp.html" title=" " alt="" coords="35,313,117,339"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="79,279,79,313,73,313,73,279"/>
+<area shape="poly" id="edge7_Node000004_Node000002" title=" " alt="" coords="406,98,319,103,230,113,153,130,124,141,103,154,89,174,81,197,78,240,73,240,76,196,84,171,100,150,121,136,152,125,229,108,319,98,406,92"/>
+<area shape="rect" id="Node000005" href="$ComponentCacheService_8cpp.html" title=" " alt="" coords="114,159,385,185"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="463,110,289,162,287,157,461,105"/>
+<area shape="rect" id="Node000006" href="$ExportReportGenerator_8cpp.html" title=" " alt="" coords="408,152,619,192"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="516,118,516,152,511,152,511,118"/>
+<area shape="rect" id="Node000007" href="$ExportProgressViewModel_8cpp.html" title=" " alt="" coords="643,152,861,192"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="562,106,695,149,694,154,560,111"/>
+<area shape="poly" id="edge8_Node000004_Node000008" title=" " alt="" coords="597,104,920,157,920,162,596,109"/>
+<area shape="poly" id="edge9_Node000008_Node000002" title=" " alt="" coords="912,189,874,195,667,216,463,232,147,251,147,245,462,227,667,210,873,189,911,184"/>
+<area shape="rect" id="Node000009" href="$QtLogAdapter_8cpp.html" title=" " alt="" coords="879,240,1100,265"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="992,198,992,240,987,240,987,198"/>
+</map>

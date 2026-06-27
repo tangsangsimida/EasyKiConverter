@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: utils/cli/CliContext.cpp 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('CliContext_8cpp_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">CliContext.cpp</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="CliContext_8cpp.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#include &quot;<a class="code" href="CliContext_8h.html">CliContext.h</a>&quot;</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &quot;<a class="code" href="ComponentService_8h.html">services/ComponentService.h</a>&quot;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="ParallelExportService_8h.html">services/export/ParallelExportService.h</a>&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;<a class="code" href="PathSecurity_8h.html">utils/PathSecurity.h</a>&quot;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="foldopen" id="foldopen00009" data-start="{" data-end="}">
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno"><a class="line" href="namespaceEasyKiConverter.html#a056c70c2f5195b681761dfc77fbd3caf">    9</a></span><span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code hl_function" href="namespaceEasyKiConverter.html#a056c70c2f5195b681761dfc77fbd3caf">model3DFormatFromString</a>(<span class="keyword">const</span> QString&amp; format) {</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span>    <span class="keywordflow">if</span> (format == QStringLiteral(<span class="stringliteral">&quot;step&quot;</span>)) {</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#ad9d21a9896cd322c7e51cd5d53f06fb6">ExportOptions::MODEL_3D_FORMAT_STEP</a>;</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>    }</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>    <span class="keywordflow">if</span> (format == QStringLiteral(<span class="stringliteral">&quot;both&quot;</span>)) {</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a749efb3c3b1ce1ec5ae4e92d1c69a146">ExportOptions::MODEL_3D_FORMAT_BOTH</a>;</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    }</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    <span class="keywordflow">return</span> <a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a9de3e752afa417872809be3535ba4889">ExportOptions::MODEL_3D_FORMAT_WRL</a>;</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>}</div>
+</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
+<div class="foldopen" id="foldopen00019" data-start="{" data-end="}">
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CliContext.html#a9b13af0ac0cab44e6afb65383ff4188a">   19</a></span><a class="code hl_function" href="classEasyKiConverter_1_1CliContext.html#a9b13af0ac0cab44e6afb65383ff4188a">CliContext::CliContext</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1CommandLineParser.html">CommandLineParser</a>&amp; parser) : m_parser(parser) {</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="comment">// 创建服务实例</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a2527472f5e716d2a4c8fe05308407a40">m_componentService</a> = <span class="keyword">new</span> <a class="code hl_class" href="classEasyKiConverter_1_1ComponentService.html">ComponentService</a>();</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a5b25d7498b0f8b3c6917b5eb8035253c">m_exportService</a> = <span class="keyword">new</span> <a class="code hl_class" href="classEasyKiConverter_1_1ParallelExportService.html">ParallelExportService</a>();</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a5b25d7498b0f8b3c6917b5eb8035253c">m_exportService</a>-&gt;<a class="code hl_function" href="classEasyKiConverter_1_1ParallelExportService.html#a2e054aefae5e8b18f1da0debb7429d49">setComponentService</a>(<a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a2527472f5e716d2a4c8fe05308407a40">m_componentService</a>);</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>}</div>
+</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
+<div class="foldopen" id="foldopen00026" data-start="{" data-end="}">
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CliContext.html#a58d1b9273d517af63330038827a92fcf">   26</a></span><a class="code hl_function" href="classEasyKiConverter_1_1CliContext.html#a58d1b9273d517af63330038827a92fcf">CliContext::~CliContext</a>() {</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a5b25d7498b0f8b3c6917b5eb8035253c">m_exportService</a>) {</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a5b25d7498b0f8b3c6917b5eb8035253c">m_exportService</a>-&gt;<a class="code hl_function" href="classEasyKiConverter_1_1ParallelExportService.html#ab49b1805bf6dd37e179f50ba4d6c707b">cancelExport</a>();</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>        <span class="keyword">delete</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a5b25d7498b0f8b3c6917b5eb8035253c">m_exportService</a>;</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    }</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a2527472f5e716d2a4c8fe05308407a40">m_componentService</a>) {</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>        <span class="keyword">delete</span> <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a2527472f5e716d2a4c8fe05308407a40">m_componentService</a>;</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    }</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>}</div>
+</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
+<div class="foldopen" id="foldopen00036" data-start="{" data-end="}">
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1CliContext.html#a9f671c4d589170f22e1e61f246f1ac17">   36</a></span><a class="code hl_struct" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> <a class="code hl_function" href="classEasyKiConverter_1_1CliContext.html#a9f671c4d589170f22e1e61f246f1ac17">CliContext::createExportOptions</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    <a class="code hl_struct" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> options;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="comment">// 设置输出路径</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">outputPath</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#aea4ff37935de46c1b460efa82a42c1b8">outputDir</a>();</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="comment">// 清洗 libName，防止路径穿越（如 ../foo）</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a37b6e25e2e8a105952358019348c3fc4">libName</a> = <a class="code hl_function" href="classEasyKiConverter_1_1PathSecurity.html#a0e86f8194398ed73f0392f2470fca5b6">PathSecurity::sanitizeFilename</a>(<a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a5be4f5ec88f080dd856cb2ea585c1db7">libName</a>());</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="comment">// 设置导出类型（CLI 默认：符号库、封装库；3D 模型通过参数启用）</span></div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a13878d45419fd1f21742d39efadd4d6d">exportSymbol</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ac39890a342c537d1f4ffeea44a244fa1">exportSymbol</a>();</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a96a1ae24c16e82474835a8b8e4c568c4">exportFootprint</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a0503ae577b57d9ab4b51c5d611b1b44b">exportFootprint</a>();</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a507344fb716c53145ee5a112cf22835d">exportModel3D</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#aff4eab7672b65e12d40bf23d1bfe942c">export3DModel</a>();</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aec7440f33a5ceb65f5f466f14bcc8e36">exportModel3DFormat</a> = <a class="code hl_function" href="namespaceEasyKiConverter.html#a056c70c2f5195b681761dfc77fbd3caf">model3DFormatFromString</a>(<a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ad6ca6abd9d64fa01a7a6cbb3e4e749f2">model3DFormat</a>());</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a475e36e51b17625d7ac61e283fa66a42">exportPreviewImages</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a116eaae3c4c5a314ba8e8368ef51150b">exportPreview</a>();</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aaf868726c30ea172727dfcf4c6882b6c">exportDatasheet</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#ad241182ffccdee7f8ac4ca4d999ebe9a">exportDatasheet</a>();</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <span class="comment">// 设置默认值</span></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a7c3c0c8c45a5be0a6bf6cb19aba33392">debugMode</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a8c32743b0a6c3475bdbd01ca77538672">isDebugMode</a>();</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    <span class="comment">// 弱网模式</span></div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a0444686d2393404df2c0f4d8be44de38">weakNetworkSupport</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a9ab1c43cc17adad855684ae5027fcc00">weakNetworkSupport</a>();</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span> </div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="comment">// 更新模式</span></div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#aec93dbdeb235b46f5d3eb25bb35faf09">updateMode</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a95709bee5b5829aa98bc36cbab0d6fb8">updateMode</a>();</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="comment">// 3D 模型路径模式</span></div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    <span class="keyword">const</span> QString pathMode = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a08f13e697592700d555360b1d1cb8302">model3DPathMode</a>();</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a959428f29122fd537cea36fd3d0aa1d1">exportModel3DPathMode</a> = (pathMode == QStringLiteral(<span class="stringliteral">&quot;absolute&quot;</span>)) ? <a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a2c0c5f8f32dac52029983e5ee191db73">ExportOptions::MODEL_3D_PATH_ABSOLUTE</a></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                                                                             : <a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#adbf3104ee34b113f067ce057af74d67f">ExportOptions::MODEL_3D_PATH_RELATIVE</a>;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    <span class="comment">// 覆盖模式（默认 true，--no-overwrite 禁用）</span></div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#ac920adcf9ebcdfe6dd8cf8d6e0a0c544">overwriteExistingFiles</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#aa159197b5ac79f85c3a245d9a090a3d4">overwriteExistingFiles</a>();</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <span class="comment">// 库描述</span></div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#afc4d023ea67291384066ebc4cc970195">symbolLibraryDescription</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a77377a4aad33082c85e5d5d34b7f401d">symbolDescription</a>();</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    options.<a class="code hl_variable" href="structEasyKiConverter_1_1ExportOptions.html#a03f355e9dc39831e38e3a67cb72426d0">footprintLibraryDescription</a> = <a class="code hl_variable" href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">m_parser</a>.<a class="code hl_function" href="classEasyKiConverter_1_1CommandLineParser.html#a817a705133f5b6ab86aab743574152a7">footprintDescription</a>();</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="keywordflow">return</span> options;</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>}</div>
+</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="ttc" id="aCliContext_8h_html"><div class="ttname"><a href="CliContext_8h.html">CliContext.h</a></div></div>
+<div class="ttc" id="aComponentService_8h_html"><div class="ttname"><a href="ComponentService_8h.html">ComponentService.h</a></div></div>
+<div class="ttc" id="aParallelExportService_8h_html"><div class="ttname"><a href="ParallelExportService_8h.html">ParallelExportService.h</a></div></div>
+<div class="ttc" id="aPathSecurity_8h_html"><div class="ttname"><a href="PathSecurity_8h.html">PathSecurity.h</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CliContext_html_a2527472f5e716d2a4c8fe05308407a40"><div class="ttname"><a href="classEasyKiConverter_1_1CliContext.html#a2527472f5e716d2a4c8fe05308407a40">EasyKiConverter::CliContext::m_componentService</a></div><div class="ttdeci">ComponentService * m_componentService</div><div class="ttdef"><b>Definition</b> <a href="CliContext_8h_source.html#l00084">CliContext.h:84</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CliContext_html_a3ff783126a1a2bd06ba1dff8b731c148"><div class="ttname"><a href="classEasyKiConverter_1_1CliContext.html#a3ff783126a1a2bd06ba1dff8b731c148">EasyKiConverter::CliContext::m_parser</a></div><div class="ttdeci">const CommandLineParser &amp; m_parser</div><div class="ttdef"><b>Definition</b> <a href="CliContext_8h_source.html#l00083">CliContext.h:83</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CliContext_html_a58d1b9273d517af63330038827a92fcf"><div class="ttname"><a href="classEasyKiConverter_1_1CliContext.html#a58d1b9273d517af63330038827a92fcf">EasyKiConverter::CliContext::~CliContext</a></div><div class="ttdeci">~CliContext()</div><div class="ttdoc">析构函数</div><div class="ttdef"><b>Definition</b> <a href="CliContext_8cpp_source.html#l00026">CliContext.cpp:26</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CliContext_html_a5b25d7498b0f8b3c6917b5eb8035253c"><div class="ttname"><a href="classEasyKiConverter_1_1CliContext.html#a5b25d7498b0f8b3c6917b5eb8035253c">EasyKiConverter::CliContext::m_exportService</a></div><div class="ttdeci">ParallelExportService * m_exportService</div><div class="ttdef"><b>Definition</b> <a href="CliContext_8h_source.html#l00085">CliContext.h:85</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CliContext_html_a9b13af0ac0cab44e6afb65383ff4188a"><div class="ttname"><a href="classEasyKiConverter_1_1CliContext.html#a9b13af0ac0cab44e6afb65383ff4188a">EasyKiConverter::CliContext::CliContext</a></div><div class="ttdeci">CliContext(const CommandLineParser &amp;parser)</div><div class="ttdoc">构造函数</div><div class="ttdef"><b>Definition</b> <a href="CliContext_8cpp_source.html#l00019">CliContext.cpp:19</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CliContext_html_a9f671c4d589170f22e1e61f246f1ac17"><div class="ttname"><a href="classEasyKiConverter_1_1CliContext.html#a9f671c4d589170f22e1e61f246f1ac17">EasyKiConverter::CliContext::createExportOptions</a></div><div class="ttdeci">ExportOptions createExportOptions() const</div><div class="ttdoc">创建导出选项</div><div class="ttdef"><b>Definition</b> <a href="CliContext_8cpp_source.html#l00036">CliContext.cpp:36</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html">EasyKiConverter::CommandLineParser</a></div><div class="ttdoc">命令行参数解析器</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8h_source.html#l00031">CommandLineParser.h:31</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a0503ae577b57d9ab4b51c5d611b1b44b"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a0503ae577b57d9ab4b51c5d611b1b44b">EasyKiConverter::CommandLineParser::exportFootprint</a></div><div class="ttdeci">bool exportFootprint() const</div><div class="ttdoc">是否导出封装库</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00420">CommandLineParser.cpp:420</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a08f13e697592700d555360b1d1cb8302"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a08f13e697592700d555360b1d1cb8302">EasyKiConverter::CommandLineParser::model3DPathMode</a></div><div class="ttdeci">QString model3DPathMode() const</div><div class="ttdoc">获取 3D 模型路径模式</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00458">CommandLineParser.cpp:458</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a116eaae3c4c5a314ba8e8368ef51150b"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a116eaae3c4c5a314ba8e8368ef51150b">EasyKiConverter::CommandLineParser::exportPreview</a></div><div class="ttdeci">bool exportPreview() const</div><div class="ttdoc">是否导出预览图</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00438">CommandLineParser.cpp:438</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a5be4f5ec88f080dd856cb2ea585c1db7"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a5be4f5ec88f080dd856cb2ea585c1db7">EasyKiConverter::CommandLineParser::libName</a></div><div class="ttdeci">QString libName() const</div><div class="ttdoc">获取导出库名称</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00407">CommandLineParser.cpp:407</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a77377a4aad33082c85e5d5d34b7f401d"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a77377a4aad33082c85e5d5d34b7f401d">EasyKiConverter::CommandLineParser::symbolDescription</a></div><div class="ttdeci">QString symbolDescription() const</div><div class="ttdoc">获取符号库描述文本</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00467">CommandLineParser.cpp:467</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a817a705133f5b6ab86aab743574152a7"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a817a705133f5b6ab86aab743574152a7">EasyKiConverter::CommandLineParser::footprintDescription</a></div><div class="ttdeci">QString footprintDescription() const</div><div class="ttdoc">获取封装库描述文本</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00471">CommandLineParser.cpp:471</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a8c32743b0a6c3475bdbd01ca77538672"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a8c32743b0a6c3475bdbd01ca77538672">EasyKiConverter::CommandLineParser::isDebugMode</a></div><div class="ttdeci">bool isDebugMode() const</div><div class="ttdoc">是否启用调试模式</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00147">CommandLineParser.cpp:147</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a95709bee5b5829aa98bc36cbab0d6fb8"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a95709bee5b5829aa98bc36cbab0d6fb8">EasyKiConverter::CommandLineParser::updateMode</a></div><div class="ttdeci">bool updateMode() const</div><div class="ttdoc">是否启用更新模式（仅导出缺失或已更改的文件）</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00454">CommandLineParser.cpp:454</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_a9ab1c43cc17adad855684ae5027fcc00"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#a9ab1c43cc17adad855684ae5027fcc00">EasyKiConverter::CommandLineParser::weakNetworkSupport</a></div><div class="ttdeci">bool weakNetworkSupport() const</div><div class="ttdoc">是否启用弱网模式</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00450">CommandLineParser.cpp:450</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_aa159197b5ac79f85c3a245d9a090a3d4"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#aa159197b5ac79f85c3a245d9a090a3d4">EasyKiConverter::CommandLineParser::overwriteExistingFiles</a></div><div class="ttdeci">bool overwriteExistingFiles() const</div><div class="ttdoc">是否覆盖已存在的文件（默认 true，–no-overwrite 禁用）</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00462">CommandLineParser.cpp:462</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_ac39890a342c537d1f4ffeea44a244fa1"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#ac39890a342c537d1f4ffeea44a244fa1">EasyKiConverter::CommandLineParser::exportSymbol</a></div><div class="ttdeci">bool exportSymbol() const</div><div class="ttdoc">是否导出符号库</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00415">CommandLineParser.cpp:415</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_ad241182ffccdee7f8ac4ca4d999ebe9a"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#ad241182ffccdee7f8ac4ca4d999ebe9a">EasyKiConverter::CommandLineParser::exportDatasheet</a></div><div class="ttdeci">bool exportDatasheet() const</div><div class="ttdoc">是否导出数据手册</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00434">CommandLineParser.cpp:434</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_ad6ca6abd9d64fa01a7a6cbb3e4e749f2"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#ad6ca6abd9d64fa01a7a6cbb3e4e749f2">EasyKiConverter::CommandLineParser::model3DFormat</a></div><div class="ttdeci">QString model3DFormat() const</div><div class="ttdoc">获取 3D 模型导出格式</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00430">CommandLineParser.cpp:430</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_aea4ff37935de46c1b460efa82a42c1b8"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#aea4ff37935de46c1b460efa82a42c1b8">EasyKiConverter::CommandLineParser::outputDir</a></div><div class="ttdeci">QString outputDir() const</div><div class="ttdoc">获取输出目录路径</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00403">CommandLineParser.cpp:403</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CommandLineParser_html_aff4eab7672b65e12d40bf23d1bfe942c"><div class="ttname"><a href="classEasyKiConverter_1_1CommandLineParser.html#aff4eab7672b65e12d40bf23d1bfe942c">EasyKiConverter::CommandLineParser::export3DModel</a></div><div class="ttdeci">bool export3DModel() const</div><div class="ttdoc">是否导出 3D 模型</div><div class="ttdef"><b>Definition</b> <a href="CommandLineParser_8cpp_source.html#l00425">CommandLineParser.cpp:425</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ComponentService_html"><div class="ttname"><a href="classEasyKiConverter_1_1ComponentService.html">EasyKiConverter::ComponentService</a></div><div class="ttdoc">元件服务类</div><div class="ttdef"><b>Definition</b> <a href="ComponentService_8h_source.html#l00031">ComponentService.h:31</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ParallelExportService_html"><div class="ttname"><a href="classEasyKiConverter_1_1ParallelExportService.html">EasyKiConverter::ParallelExportService</a></div><div class="ttdoc">并行导出服务</div><div class="ttdef"><b>Definition</b> <a href="ParallelExportService_8h_source.html#l00051">ParallelExportService.h:51</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ParallelExportService_html_a2e054aefae5e8b18f1da0debb7429d49"><div class="ttname"><a href="classEasyKiConverter_1_1ParallelExportService.html#a2e054aefae5e8b18f1da0debb7429d49">EasyKiConverter::ParallelExportService::setComponentService</a></div><div class="ttdeci">void setComponentService(ComponentService *componentService)</div><div class="ttdoc">设置元器件服务引用</div><div class="ttdef"><b>Definition</b> <a href="ParallelExportService_8cpp_source.html#l00138">ParallelExportService.cpp:138</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ParallelExportService_html_ab49b1805bf6dd37e179f50ba4d6c707b"><div class="ttname"><a href="classEasyKiConverter_1_1ParallelExportService.html#ab49b1805bf6dd37e179f50ba4d6c707b">EasyKiConverter::ParallelExportService::cancelExport</a></div><div class="ttdeci">void cancelExport()</div><div class="ttdoc">取消导出</div><div class="ttdef"><b>Definition</b> <a href="ParallelExportService_8cpp_source.html#l00564">ParallelExportService.cpp:564</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1PathSecurity_html_a0e86f8194398ed73f0392f2470fca5b6"><div class="ttname"><a href="classEasyKiConverter_1_1PathSecurity.html#a0e86f8194398ed73f0392f2470fca5b6">EasyKiConverter::PathSecurity::sanitizeFilename</a></div><div class="ttdeci">static QString sanitizeFilename(const QString &amp;name)</div><div class="ttdoc">清洗文件名，将非法字符替换为下划线</div><div class="ttdef"><b>Definition</b> <a href="PathSecurity_8cpp_source.html#l00177">PathSecurity.cpp:177</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00009">EasyedaApi.cpp:9</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html_a056c70c2f5195b681761dfc77fbd3caf"><div class="ttname"><a href="namespaceEasyKiConverter.html#a056c70c2f5195b681761dfc77fbd3caf">EasyKiConverter::model3DFormatFromString</a></div><div class="ttdeci">static int model3DFormatFromString(const QString &amp;format)</div><div class="ttdef"><b>Definition</b> <a href="CliContext_8cpp_source.html#l00009">CliContext.cpp:9</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html">EasyKiConverter::ExportOptions</a></div><div class="ttdoc">导出选项配置</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00022">ExportProgress.h:22</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a03f355e9dc39831e38e3a67cb72426d0"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a03f355e9dc39831e38e3a67cb72426d0">EasyKiConverter::ExportOptions::footprintLibraryDescription</a></div><div class="ttdeci">QString footprintLibraryDescription</div><div class="ttdoc">用户输入的封装库描述文本</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00061">ExportProgress.h:61</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a0444686d2393404df2c0f4d8be44de38"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a0444686d2393404df2c0f4d8be44de38">EasyKiConverter::ExportOptions::weakNetworkSupport</a></div><div class="ttdeci">bool weakNetworkSupport</div><div class="ttdoc">是否启用客户端弱网络适配</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00055">ExportProgress.h:55</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a13878d45419fd1f21742d39efadd4d6d"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a13878d45419fd1f21742d39efadd4d6d">EasyKiConverter::ExportOptions::exportSymbol</a></div><div class="ttdeci">bool exportSymbol</div><div class="ttdoc">是否导出符号 (Symbol)</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00046">ExportProgress.h:46</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a2c0c5f8f32dac52029983e5ee191db73"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a2c0c5f8f32dac52029983e5ee191db73">EasyKiConverter::ExportOptions::MODEL_3D_PATH_ABSOLUTE</a></div><div class="ttdeci">static constexpr int MODEL_3D_PATH_ABSOLUTE</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00029">ExportProgress.h:29</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a37b6e25e2e8a105952358019348c3fc4"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a37b6e25e2e8a105952358019348c3fc4">EasyKiConverter::ExportOptions::libName</a></div><div class="ttdeci">QString libName</div><div class="ttdoc">库名称（用于构建子目录路径）</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00045">ExportProgress.h:45</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a475e36e51b17625d7ac61e283fa66a42"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a475e36e51b17625d7ac61e283fa66a42">EasyKiConverter::ExportOptions::exportPreviewImages</a></div><div class="ttdeci">bool exportPreviewImages</div><div class="ttdoc">是否导出预览图 (Preview Images)</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00051">ExportProgress.h:51</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a507344fb716c53145ee5a112cf22835d"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a507344fb716c53145ee5a112cf22835d">EasyKiConverter::ExportOptions::exportModel3D</a></div><div class="ttdeci">bool exportModel3D</div><div class="ttdoc">是否导出3D模型 (3D Model)</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00048">ExportProgress.h:48</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a749efb3c3b1ce1ec5ae4e92d1c69a146"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a749efb3c3b1ce1ec5ae4e92d1c69a146">EasyKiConverter::ExportOptions::MODEL_3D_FORMAT_BOTH</a></div><div class="ttdeci">static constexpr int MODEL_3D_FORMAT_BOTH</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00027">ExportProgress.h:27</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a7c3c0c8c45a5be0a6bf6cb19aba33392"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a7c3c0c8c45a5be0a6bf6cb19aba33392">EasyKiConverter::ExportOptions::debugMode</a></div><div class="ttdeci">bool debugMode</div><div class="ttdoc">调试模式：输出详细调试信息</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00057">ExportProgress.h:57</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a959428f29122fd537cea36fd3d0aa1d1"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a959428f29122fd537cea36fd3d0aa1d1">EasyKiConverter::ExportOptions::exportModel3DPathMode</a></div><div class="ttdeci">int exportModel3DPathMode</div><div class="ttdoc">3D模型在封装中的路径模式</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00050">ExportProgress.h:50</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a96a1ae24c16e82474835a8b8e4c568c4"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a96a1ae24c16e82474835a8b8e4c568c4">EasyKiConverter::ExportOptions::exportFootprint</a></div><div class="ttdeci">bool exportFootprint</div><div class="ttdoc">是否导出封装 (Footprint)</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00047">ExportProgress.h:47</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_a9de3e752afa417872809be3535ba4889"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#a9de3e752afa417872809be3535ba4889">EasyKiConverter::ExportOptions::MODEL_3D_FORMAT_WRL</a></div><div class="ttdeci">static constexpr int MODEL_3D_FORMAT_WRL</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00025">ExportProgress.h:25</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_aaa78da68c28f17c71ba42d1ff433e623"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#aaa78da68c28f17c71ba42d1ff433e623">EasyKiConverter::ExportOptions::outputPath</a></div><div class="ttdeci">QString outputPath</div><div class="ttdoc">导出文件输出目录路径</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00044">ExportProgress.h:44</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_aaf868726c30ea172727dfcf4c6882b6c"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#aaf868726c30ea172727dfcf4c6882b6c">EasyKiConverter::ExportOptions::exportDatasheet</a></div><div class="ttdeci">bool exportDatasheet</div><div class="ttdoc">是否导出数据手册 (Datasheet)</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00052">ExportProgress.h:52</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_ac920adcf9ebcdfe6dd8cf8d6e0a0c544"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#ac920adcf9ebcdfe6dd8cf8d6e0a0c544">EasyKiConverter::ExportOptions::overwriteExistingFiles</a></div><div class="ttdeci">bool overwriteExistingFiles</div><div class="ttdoc">是否覆盖已存在的文件</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00053">ExportProgress.h:53</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_ad9d21a9896cd322c7e51cd5d53f06fb6"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#ad9d21a9896cd322c7e51cd5d53f06fb6">EasyKiConverter::ExportOptions::MODEL_3D_FORMAT_STEP</a></div><div class="ttdeci">static constexpr int MODEL_3D_FORMAT_STEP</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00026">ExportProgress.h:26</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_adbf3104ee34b113f067ce057af74d67f"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#adbf3104ee34b113f067ce057af74d67f">EasyKiConverter::ExportOptions::MODEL_3D_PATH_RELATIVE</a></div><div class="ttdeci">static constexpr int MODEL_3D_PATH_RELATIVE</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00028">ExportProgress.h:28</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_aec7440f33a5ceb65f5f466f14bcc8e36"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#aec7440f33a5ceb65f5f466f14bcc8e36">EasyKiConverter::ExportOptions::exportModel3DFormat</a></div><div class="ttdeci">int exportModel3DFormat</div><div class="ttdoc">3D模型格式</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00049">ExportProgress.h:49</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_aec93dbdeb235b46f5d3eb25bb35faf09"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#aec93dbdeb235b46f5d3eb25bb35faf09">EasyKiConverter::ExportOptions::updateMode</a></div><div class="ttdeci">bool updateMode</div><div class="ttdoc">更新模式：仅导出缺失或已更改的文件</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00056">ExportProgress.h:56</a></div></div>
+<div class="ttc" id="astructEasyKiConverter_1_1ExportOptions_html_afc4d023ea67291384066ebc4cc970195"><div class="ttname"><a href="structEasyKiConverter_1_1ExportOptions.html#afc4d023ea67291384066ebc4cc970195">EasyKiConverter::ExportOptions::symbolLibraryDescription</a></div><div class="ttdeci">QString symbolLibraryDescription</div><div class="ttdoc">用户输入的符号库描述文本</div><div class="ttdef"><b>Definition</b> <a href="ExportProgress_8h_source.html#l00060">ExportProgress.h:60</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_cbdb8362360e11eafe2fa3bc74cf0ffd.html">utils</a></li><li class="navelem"><a class="el" href="dir_c802a52f71a9867085062b6c590fa632.html">cli</a></li><li class="navelem"><a class="el" href="CliContext_8cpp.html">CliContext.cpp</a></li>
+    <li class="footer">制作者 <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

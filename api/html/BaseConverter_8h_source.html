@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: utils/cli/BaseConverter.h 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('BaseConverter_8h_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">BaseConverter.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="BaseConverter_8h.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef BASECONVERTER_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define BASECONVERTER_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;QObject&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;QString&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceEasyKiConverter.html">EasyKiConverter</a> {</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="keyword">class </span>CliContext;</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">class </span>CliPrinter;</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="foldopen" id="foldopen00017" data-start="{" data-end="};">
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html">   17</a></span><span class="keyword">class </span><a class="code hl_class" href="classEasyKiConverter_1_1BaseConverter.html">BaseConverter</a> : <span class="keyword">public</span> QObject {</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>    Q_OBJECT</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keyword">explicit</span> <a class="code hl_class" href="classEasyKiConverter_1_1BaseConverter.html">BaseConverter</a>(<a class="code hl_class" href="classEasyKiConverter_1_1CliContext.html">CliContext</a>* <a class="code hl_function" href="classEasyKiConverter_1_1BaseConverter.html#a559cb7fd17665c52b65f12272d510c4b">context</a>, QObject* parent = <span class="keyword">nullptr</span>);</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html#a569f6a6ff6010fe3a74505bd1069991f">   31</a></span>    <a class="code hl_function" href="classEasyKiConverter_1_1BaseConverter.html#a569f6a6ff6010fe3a74505bd1069991f">~BaseConverter</a>() <span class="keyword">override</span> = <span class="keywordflow">default</span>;</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html#a9ba190aed7493298fa0aca471fc89625">   37</a></span>    <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="classEasyKiConverter_1_1BaseConverter.html#a9ba190aed7493298fa0aca471fc89625">execute</a>() = 0;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="foldopen" id="foldopen00043" data-start="{" data-end="}">
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html#a44a614299082a77b851e36870e0acf72">   43</a></span>    QString <a class="code hl_function" href="classEasyKiConverter_1_1BaseConverter.html#a44a614299082a77b851e36870e0acf72">errorMessage</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1BaseConverter.html#a6812dcfa26edd97e5d6f61a6e80f0106">m_errorMessage</a>;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    }</div>
+</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>signals:</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html#a43aa256bb5738a105872b6c1efdd0ac5">   53</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1BaseConverter.html#a43aa256bb5738a105872b6c1efdd0ac5">progressUpdated</a>(<span class="keywordtype">int</span> progress, <span class="keyword">const</span> QString&amp; message);</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html#a427453aedddacacf782a9ae304c12e6c">   60</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1BaseConverter.html#a427453aedddacacf782a9ae304c12e6c">conversionFinished</a>(<span class="keywordtype">bool</span> success, <span class="keyword">const</span> QString&amp; message);</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span> </div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span><span class="keyword">protected</span>:</div>
+<div class="foldopen" id="foldopen00067" data-start="{" data-end="}">
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html#a559cb7fd17665c52b65f12272d510c4b">   67</a></span>    <a class="code hl_class" href="classEasyKiConverter_1_1CliContext.html">CliContext</a>* <a class="code hl_function" href="classEasyKiConverter_1_1BaseConverter.html#a559cb7fd17665c52b65f12272d510c4b">context</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1BaseConverter.html#a90030efbf0f80ac340a25e0daa428cc6">m_context</a>;</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    }</div>
+</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
+<div class="foldopen" id="foldopen00075" data-start="{" data-end="}">
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html#ac4e4cb96f9007edc0d37e7e8fe9328af">   75</a></span>    <span class="keyword">const</span> <a class="code hl_class" href="classEasyKiConverter_1_1CliPrinter.html">CliPrinter</a>* <a class="code hl_function" href="classEasyKiConverter_1_1BaseConverter.html#ac4e4cb96f9007edc0d37e7e8fe9328af">printer</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classEasyKiConverter_1_1BaseConverter.html#a2d9f34fc025e44e02f9b556f7318dc48">m_printer</a>;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    }</div>
+</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="foldopen" id="foldopen00083" data-start="{" data-end="}">
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html#a663245162eed89de1df25a2492ab2ea9">   83</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1BaseConverter.html#a663245162eed89de1df25a2492ab2ea9">setError</a>(<span class="keyword">const</span> QString&amp; message) {</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        <a class="code hl_variable" href="classEasyKiConverter_1_1BaseConverter.html#a6812dcfa26edd97e5d6f61a6e80f0106">m_errorMessage</a> = message;</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    }</div>
+</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1BaseConverter.html#a783fd66ca41172e288016bb1fa65eb5b">printMessage</a>(<span class="keyword">const</span> QString&amp; message) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classEasyKiConverter_1_1BaseConverter.html#a3b41f35e9d347a83fb64fc4c5ce64cba">printProgressBar</a>(<span class="keywordtype">int</span> progress) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html#a90030efbf0f80ac340a25e0daa428cc6">  100</a></span>    <a class="code hl_class" href="classEasyKiConverter_1_1CliContext.html">CliContext</a>* <a class="code hl_variable" href="classEasyKiConverter_1_1BaseConverter.html#a90030efbf0f80ac340a25e0daa428cc6">m_context</a>;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html#a2d9f34fc025e44e02f9b556f7318dc48">  101</a></span>    <a class="code hl_class" href="classEasyKiConverter_1_1CliPrinter.html">CliPrinter</a>* <a class="code hl_variable" href="classEasyKiConverter_1_1BaseConverter.html#a2d9f34fc025e44e02f9b556f7318dc48">m_printer</a>;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="classEasyKiConverter_1_1BaseConverter.html#a6812dcfa26edd97e5d6f61a6e80f0106">  102</a></span>    QString <a class="code hl_variable" href="classEasyKiConverter_1_1BaseConverter.html#a6812dcfa26edd97e5d6f61a6e80f0106">m_errorMessage</a>;</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>};</div>
+</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>}  <span class="comment">// namespace EasyKiConverter</span></div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="preprocessor">#endif  </span><span class="comment">// BASECONVERTER_H</span></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html">EasyKiConverter::BaseConverter</a></div><div class="ttdoc">转换器基类</div><div class="ttdef"><b>Definition</b> <a href="BaseConverter_8h_source.html#l00017">BaseConverter.h:17</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a2d9f34fc025e44e02f9b556f7318dc48"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a2d9f34fc025e44e02f9b556f7318dc48">EasyKiConverter::BaseConverter::m_printer</a></div><div class="ttdeci">CliPrinter * m_printer</div><div class="ttdef"><b>Definition</b> <a href="BaseConverter_8h_source.html#l00101">BaseConverter.h:101</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a3b41f35e9d347a83fb64fc4c5ce64cba"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a3b41f35e9d347a83fb64fc4c5ce64cba">EasyKiConverter::BaseConverter::printProgressBar</a></div><div class="ttdeci">void printProgressBar(int progress) const</div><div class="ttdoc">输出进度条</div><div class="ttdef"><b>Definition</b> <a href="BaseConverter_8cpp_source.html#l00017">BaseConverter.cpp:17</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a427453aedddacacf782a9ae304c12e6c"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a427453aedddacacf782a9ae304c12e6c">EasyKiConverter::BaseConverter::conversionFinished</a></div><div class="ttdeci">void conversionFinished(bool success, const QString &amp;message)</div><div class="ttdoc">转换完成</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a43aa256bb5738a105872b6c1efdd0ac5"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a43aa256bb5738a105872b6c1efdd0ac5">EasyKiConverter::BaseConverter::progressUpdated</a></div><div class="ttdeci">void progressUpdated(int progress, const QString &amp;message)</div><div class="ttdoc">进度更新</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a44a614299082a77b851e36870e0acf72"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a44a614299082a77b851e36870e0acf72">EasyKiConverter::BaseConverter::errorMessage</a></div><div class="ttdeci">QString errorMessage() const</div><div class="ttdoc">获取错误信息</div><div class="ttdef"><b>Definition</b> <a href="BaseConverter_8h_source.html#l00043">BaseConverter.h:43</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a559cb7fd17665c52b65f12272d510c4b"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a559cb7fd17665c52b65f12272d510c4b">EasyKiConverter::BaseConverter::context</a></div><div class="ttdeci">CliContext * context() const</div><div class="ttdoc">获取 CLI 上下文</div><div class="ttdef"><b>Definition</b> <a href="BaseConverter_8h_source.html#l00067">BaseConverter.h:67</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a569f6a6ff6010fe3a74505bd1069991f"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a569f6a6ff6010fe3a74505bd1069991f">EasyKiConverter::BaseConverter::~BaseConverter</a></div><div class="ttdeci">~BaseConverter() override=default</div><div class="ttdoc">析构函数</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a663245162eed89de1df25a2492ab2ea9"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a663245162eed89de1df25a2492ab2ea9">EasyKiConverter::BaseConverter::setError</a></div><div class="ttdeci">void setError(const QString &amp;message)</div><div class="ttdoc">设置错误信息</div><div class="ttdef"><b>Definition</b> <a href="BaseConverter_8h_source.html#l00083">BaseConverter.h:83</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a6812dcfa26edd97e5d6f61a6e80f0106"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a6812dcfa26edd97e5d6f61a6e80f0106">EasyKiConverter::BaseConverter::m_errorMessage</a></div><div class="ttdeci">QString m_errorMessage</div><div class="ttdef"><b>Definition</b> <a href="BaseConverter_8h_source.html#l00102">BaseConverter.h:102</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a783fd66ca41172e288016bb1fa65eb5b"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a783fd66ca41172e288016bb1fa65eb5b">EasyKiConverter::BaseConverter::printMessage</a></div><div class="ttdeci">void printMessage(const QString &amp;message) const</div><div class="ttdoc">输出消息</div><div class="ttdef"><b>Definition</b> <a href="BaseConverter_8cpp_source.html#l00011">BaseConverter.cpp:11</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a90030efbf0f80ac340a25e0daa428cc6"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a90030efbf0f80ac340a25e0daa428cc6">EasyKiConverter::BaseConverter::m_context</a></div><div class="ttdeci">CliContext * m_context</div><div class="ttdef"><b>Definition</b> <a href="BaseConverter_8h_source.html#l00100">BaseConverter.h:100</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_a9ba190aed7493298fa0aca471fc89625"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#a9ba190aed7493298fa0aca471fc89625">EasyKiConverter::BaseConverter::execute</a></div><div class="ttdeci">virtual bool execute()=0</div><div class="ttdoc">执行转换</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1BaseConverter_html_ac4e4cb96f9007edc0d37e7e8fe9328af"><div class="ttname"><a href="classEasyKiConverter_1_1BaseConverter.html#ac4e4cb96f9007edc0d37e7e8fe9328af">EasyKiConverter::BaseConverter::printer</a></div><div class="ttdeci">const CliPrinter * printer() const</div><div class="ttdoc">获取打印机</div><div class="ttdef"><b>Definition</b> <a href="BaseConverter_8h_source.html#l00075">BaseConverter.h:75</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CliContext_html"><div class="ttname"><a href="classEasyKiConverter_1_1CliContext.html">EasyKiConverter::CliContext</a></div><div class="ttdoc">CLI 上下文</div><div class="ttdef"><b>Definition</b> <a href="CliContext_8h_source.html#l00019">CliContext.h:19</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1CliPrinter_html"><div class="ttname"><a href="classEasyKiConverter_1_1CliPrinter.html">EasyKiConverter::CliPrinter</a></div><div class="ttdoc">CLI 输出工具</div><div class="ttdef"><b>Definition</b> <a href="CliPrinter_8h_source.html#l00013">CliPrinter.h:13</a></div></div>
+<div class="ttc" id="anamespaceEasyKiConverter_html"><div class="ttname"><a href="namespaceEasyKiConverter.html">EasyKiConverter</a></div><div class="ttdef"><b>Definition</b> <a href="EasyedaApi_8cpp_source.html#l00009">EasyedaApi.cpp:9</a></div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_cbdb8362360e11eafe2fa3bc74cf0ffd.html">utils</a></li><li class="navelem"><a class="el" href="dir_c802a52f71a9867085062b6c590fa632.html">cli</a></li><li class="navelem"><a class="el" href="BaseConverter_8h.html">BaseConverter.h</a></li>
+    <li class="footer">制作者 <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>
