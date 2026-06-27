@@ -181,4 +181,24 @@ jobs:
               --notes-file changelog.md
           fi
 
-          gh release upload "$TAG_NAME" release_assets/* --clobber
+          # 逐个上传文件，带重试逻辑以应对速率限制
+          for asset in release_assets/*; do
+            filename=$(basename "$asset")
+            echo "Uploading: $filename"
+            for attempt in 1 2 3; do
+              if gh release upload "$TAG_NAME" "$asset" --clobber 2>/dev/null; then
+                echo "  ✓ Uploaded: $filename"
+                break
+              fi
+              if [ "$attempt" -lt 3 ]; then
+                wait_time=$((attempt * 30))
+                echo "  ⚠ Rate limited, waiting ${wait_time}s before retry..."
+                sleep "$wait_time"
+              else
+                echo "  ✗ Failed to upload: $filename after 3 attempts"
+                exit 1
+              fi
+            done
+            # 每次上传后等待 5 秒，避免触发速率限制
+            sleep 5
+          done
