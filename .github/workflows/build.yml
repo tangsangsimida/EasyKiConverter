@@ -56,10 +56,10 @@ jobs:
           fetch-depth: 0
 
       - name: 'Record Start Time'
-        run: echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+        run: echo "BUILD_START_TIME=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: 'Fix Git Safe Directory'
-        run: git config --global --add safe.directory $GITHUB_WORKSPACE
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: 'Get Version'
         id: version
@@ -67,7 +67,7 @@ jobs:
 
       - name: 'Export Version'
         run: |
-          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
+          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> "$GITHUB_ENV"
 
       - name: 'Install System Dependencies'
         run: |
@@ -102,8 +102,8 @@ jobs:
         run: |
           pip3 install --no-cache-dir --break-system-packages aqtinstall
           aqt install-qt ${{ matrix.dist.qt_host }} desktop 6.10.2 ${{ matrix.dist.qt_arch }} --outputdir /opt/qt --modules qtshadertools qtimageformats
-          echo "/opt/qt/6.10.2/${{ matrix.dist.qt_dir }}/bin" >> $GITHUB_PATH
-          echo "Qt6_DIR=/opt/qt/6.10.2/${{ matrix.dist.qt_dir }}/lib/cmake/Qt6" >> $GITHUB_ENV
+          echo "/opt/qt/6.10.2/${{ matrix.dist.qt_dir }}/bin" >> "$GITHUB_PATH"
+          echo "Qt6_DIR=/opt/qt/6.10.2/${{ matrix.dist.qt_dir }}/lib/cmake/Qt6" >> "$GITHUB_ENV"
 
       - name: 'Configure CMake'
         run: |
@@ -306,7 +306,7 @@ jobs:
           fetch-depth: 0
 
       - name: 'Record Start Time'
-        run: echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+        run: echo "BUILD_START_TIME=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: 'Setup Build Environment'
         uses: ./.github/actions/setup-env
@@ -322,7 +322,7 @@ jobs:
         run: |
           cmake -B build \
             -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
-            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_SYMBOL_FOOTPRINT_DEBUG_EXPORT=OFF \
@@ -331,15 +331,17 @@ jobs:
 
       - name: 'Build'
         run: |
-          cmake --build build --config $BUILD_TYPE --parallel 4
+          cmake --build build --config "$BUILD_TYPE" --parallel 4
 
       - name: 'CCache Stats'
         run: |
           ccache -sv
-          echo "## CCache Statistics" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          ccache -s >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## CCache Statistics"
+            echo '```'
+            ccache -s
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 'Build Statistics'
         if: always()
@@ -348,20 +350,22 @@ jobs:
           DURATION=$((END_TIME - BUILD_START_TIME))
           RATE=0.08
           COST=$(awk "BEGIN {printf \"%.4f\", $DURATION * $RATE / 60}")
-          echo "## Build Cost Summary (macOS)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Est. cost | \$${COST} (macOS × \$0.08/min) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
-          echo "| Memory pressure | $(vm_stat 2>/dev/null | awk '/Pages free/ {free=$NF} /Pages active/ {active=$NF} END {printf "free=%d active=%d", free, active}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Build Cost Summary (macOS)"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|--------|-------|"
+            echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |"
+            echo "| Est. cost | \$${COST} (macOS × \$0.08/min) |"
+            echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |"
+            echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |"
+            echo "| Memory pressure | $(vm_stat 2>/dev/null | awk '/Pages free/ {free=$NF} /Pages active/ {active=$NF} END {printf "free=%d active=%d", free, active}' || echo N/A) |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 'Run Tests'
         run: |
           export QT_QPA_PLATFORM=offscreen
-          ctest --test-dir build -C $BUILD_TYPE --output-on-failure --no-tests=error
+          ctest --test-dir build -C "$BUILD_TYPE" --output-on-failure --no-tests=error
 
 # 我觉得咱们的关系已经淡了，
 # 为了防止这种事情发生，我建议，

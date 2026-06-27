@@ -58,7 +58,7 @@ jobs:
           fetch-depth: 0
 
       - name: 'Record Start Time'
-        run: echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+        run: echo "BUILD_START_TIME=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Get Version
         id: version
@@ -66,11 +66,11 @@ jobs:
 
       - name: Export Version
         run: |
-          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
-          echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}" >> $GITHUB_ENV
+          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> "$GITHUB_ENV"
+          echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}" >> "$GITHUB_ENV"
 
       - name: Fix Git Safe Directory
-        run: git config --global --add safe.directory $GITHUB_WORKSPACE
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Install System Dependencies
         run: |
@@ -107,8 +107,8 @@ jobs:
           QT_VERSION="6.10.2"
           pip3 install --no-cache-dir --break-system-packages aqtinstall
           aqt install-qt ${{ matrix.dist.qt_host }} desktop $QT_VERSION ${{ matrix.dist.qt_arch }} --outputdir /opt/qt --modules qtshadertools qtimageformats
-          echo "/opt/qt/$QT_VERSION/${{ matrix.dist.qt_dir }}/bin" >> $GITHUB_PATH
-          echo "Qt6_DIR=/opt/qt/$QT_VERSION/${{ matrix.dist.qt_dir }}/lib/cmake/Qt6" >> $GITHUB_ENV
+          echo "/opt/qt/$QT_VERSION/${{ matrix.dist.qt_dir }}/bin" >> "$GITHUB_PATH"
+          echo "Qt6_DIR=/opt/qt/$QT_VERSION/${{ matrix.dist.qt_dir }}/lib/cmake/Qt6" >> "$GITHUB_ENV"
 
       - name: Install LinuxDeploy
         run: |
@@ -126,7 +126,7 @@ jobs:
               plugin_name=$(basename "$plugin_type")
               echo ""
               echo ">>> [$plugin_name]"
-              ls -la "$plugin_type" 2>/dev/null | grep -v "^total" | head -20 || echo "(empty)"
+              ls -la "$plugin_type" 2>/dev/null | tail -n +2 | head -20 || echo "(empty)"
             done
           fi
           echo ""
@@ -153,7 +153,7 @@ jobs:
               plugin_name=$(basename "$plugin_type")
               echo ""
               echo ">>> [$plugin_name]"
-              ls -la "$plugin_type" 2>/dev/null | grep -v "^total" | head -20 || echo "(empty)"
+              ls -la "$plugin_type" 2>/dev/null | tail -n +2 | head -20 || echo "(empty)"
             done
           fi
           echo ""
@@ -178,8 +178,8 @@ jobs:
       - name: Compile & Install
         run: |
           set -x
-          APPIMAGE_DST_PATH=$GITHUB_WORKSPACE/${PRODUCT}.AppDir
-          mkdir -p ${APPIMAGE_DST_PATH}
+          APPIMAGE_DST_PATH="$GITHUB_WORKSPACE/${PRODUCT}.AppDir"
+          mkdir -p "${APPIMAGE_DST_PATH}"
 
           # 禁用 QML AOT 编译以减少内存使用
           export QT_QML_DISABLE_AOT_COMPILE=1
@@ -187,16 +187,16 @@ jobs:
 
           # 使用多核编译
           cmake --build build --config RelWithDebInfo --parallel 4
-          cmake --install build --prefix ${APPIMAGE_DST_PATH}/usr
-          rm -rf ${APPIMAGE_DST_PATH}/usr/include
+          cmake --install build --prefix "${APPIMAGE_DST_PATH}/usr"
+          rm -rf "${APPIMAGE_DST_PATH}/usr/include"
 
           # 确保可执行文件有执行权限
-          chmod +x ${APPIMAGE_DST_PATH}/usr/bin/easykiconverter
-          find ${APPIMAGE_DST_PATH}/usr/bin -type f -exec chmod +x {} \; 2>/dev/null || true
-          find ${APPIMAGE_DST_PATH}/usr/libexec -type f -exec chmod +x {} \; 2>/dev/null || true
+          chmod +x "${APPIMAGE_DST_PATH}/usr/bin/easykiconverter"
+          find "${APPIMAGE_DST_PATH}/usr/bin" -type f -exec chmod +x {} \; 2>/dev/null || true
+          find "${APPIMAGE_DST_PATH}/usr/libexec" -type f -exec chmod +x {} \; 2>/dev/null || true
 
           # 配置元数据
-          cat > ${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.desktop <<EOF
+          cat > "${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.desktop" <<EOF
           [Desktop Entry]
           Type=Application
           Name=EasyKiConverter
@@ -214,13 +214,13 @@ jobs:
           EOF
 
           # 复制图标到 AppDir 根目录（使用 256x256 尺寸，确保任务栏显示正常）
-          cp resources/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png ${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.png
+          cp resources/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png "${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.png"
 
           # 安装 hicolor 图标到 AppDir（确保所有尺寸的图标都可用）
           for size in 16 24 32 48 64 128 256 512; do
-            mkdir -p ${APPIMAGE_DST_PATH}/usr/share/icons/hicolor/${size}x${size}/apps
-            cp resources/icons/hicolor/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png \
-               ${APPIMAGE_DST_PATH}/usr/share/icons/hicolor/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png
+            mkdir -p "${APPIMAGE_DST_PATH}/usr/share/icons/hicolor/${size}x${size}/apps"
+            cp "resources/icons/hicolor/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png" \
+               "${APPIMAGE_DST_PATH}/usr/share/icons/hicolor/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png"
           done
 
           # 安装 hicolor-dark 图标到 AppDir（暗色主题）
@@ -228,9 +228,9 @@ jobs:
             echo "安装暗色主题图标..."
             for size in 16 24 32 48 64 128 256 512; do
               if [ -f "resources/icons/hicolor-dark/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png" ]; then
-                mkdir -p ${APPIMAGE_DST_PATH}/usr/share/icons/hicolor-dark/${size}x${size}/apps
-                cp resources/icons/hicolor-dark/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png \
-                   ${APPIMAGE_DST_PATH}/usr/share/icons/hicolor-dark/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png
+                mkdir -p "${APPIMAGE_DST_PATH}/usr/share/icons/hicolor-dark/${size}x${size}/apps"
+                cp "resources/icons/hicolor-dark/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png" \
+                   "${APPIMAGE_DST_PATH}/usr/share/icons/hicolor-dark/${size}x${size}/apps/io.github.tangsangsimida.easykiconverter.png"
               fi
             done
             echo "✓ 暗色主题图标已安装"
@@ -243,26 +243,26 @@ jobs:
           
           # 创建 libtiff 兼容性符号链接 (Qt 6.10.2 需 libtiff.so.5，Ubuntu 24.04 提供 libtiff.so.6)
           DEB_MULTIARCH="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
-          sudo ln -sf /usr/lib/${DEB_MULTIARCH}/libtiff.so.6 /usr/lib/${DEB_MULTIARCH}/libtiff.so.5
+          sudo ln -sf "/usr/lib/${DEB_MULTIARCH}/libtiff.so.6" "/usr/lib/${DEB_MULTIARCH}/libtiff.so.5"
 
           # 关键步骤：运行 linuxdeploy 填充依赖库 (Qt libs 等) 到 AppDir
           # 注意：这里不生成 AppImage 文件，只处理目录内容
           # --icon-file 参数必须指向 AppDir 中的图标文件，而不是源路径
-          /opt/linuxdeploy/AppRun --appdir ${APPIMAGE_DST_PATH} --plugin qt \
-            --executable ${APPIMAGE_DST_PATH}/usr/bin/easykiconverter \
-            --desktop-file ${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.desktop \
-            --icon-file ${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.png
+          /opt/linuxdeploy/AppRun --appdir "${APPIMAGE_DST_PATH}" --plugin qt \
+            --executable "${APPIMAGE_DST_PATH}/usr/bin/easykiconverter" \
+            --desktop-file "${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.desktop" \
+            --icon-file "${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.png"
 
           # 修复图标文件（linuxdeploy 可能创建了符号链接，替换为实际文件）
           if [ -L "${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.png" ]; then
-            rm -f ${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.png
-            cp ${APPIMAGE_DST_PATH}/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png \
-               ${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.png
+            rm -f "${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.png"
+            cp "${APPIMAGE_DST_PATH}/usr/share/icons/hicolor/256x256/apps/io.github.tangsangsimida.easykiconverter.png" \
+               "${APPIMAGE_DST_PATH}/io.github.tangsangsimida.easykiconverter.png"
           fi
           
           # 修复：设置库文件权限（确保动态链接器能够正确加载）
           echo "设置库文件权限..."
-          find ${APPIMAGE_DST_PATH}/usr/lib -name "*.so*" -type f -exec chmod +x {} \; 2>/dev/null || true
+          find "${APPIMAGE_DST_PATH}/usr/lib" -name "*.so*" -type f -exec chmod +x {} \; 2>/dev/null || true
           echo "✓ 库文件权限设置完成"
           
           # 复制 QML 模块到 AppDir（使用 qmake 动态获取路径）
@@ -270,15 +270,15 @@ jobs:
           QT_INSTALL_QML=$(qmake -query QT_INSTALL_QML 2>/dev/null || echo "")
           if [ -n "$QT_INSTALL_QML" ] && [ -d "$QT_INSTALL_QML" ]; then
             echo "Found QML directory via qmake: $QT_INSTALL_QML"
-            rm -rf ${APPIMAGE_DST_PATH}/usr/qml
-            mkdir -p ${APPIMAGE_DST_PATH}/usr/qml
+            rm -rf "${APPIMAGE_DST_PATH}/usr/qml"
+            mkdir -p "${APPIMAGE_DST_PATH}/usr/qml"
             
             # 使用 rsync 保留符号链接和权限
-            rsync -a --copy-links "$QT_INSTALL_QML"/ ${APPIMAGE_DST_PATH}/usr/qml/
+            rsync -a --copy-links "$QT_INSTALL_QML"/ "${APPIMAGE_DST_PATH}/usr/qml/"
             
             # 修复：创建插件符号链接（Qt 6 使用 lib 前缀，但 qmldir 引用无前缀名称）
             echo "Creating QML plugin symlinks..."
-            find ${APPIMAGE_DST_PATH}/usr/qml -name "lib*.so" -type f | while read libfile; do
+            find "${APPIMAGE_DST_PATH}/usr/qml" -name "lib*.so" -type f | while read -r libfile; do
               plugin_name=$(basename "$libfile" | sed 's/^lib//')
               plugin_dir=$(dirname "$libfile")
               
@@ -299,12 +299,14 @@ jobs:
               
               # 修复：复制所有缺失的 Qt 库
               echo "复制缺失的 Qt 库..."
-              find "${APPIMAGE_DST_PATH}/usr/qml" -name "lib*.so" -type f 2>/dev/null | while read plugin; do
-                ldd "$plugin" 2>/dev/null | grep "$QT_LIBS" | awk '{print $3}' | sort -u | while read lib; do
+              find "${APPIMAGE_DST_PATH}/usr/qml" -name "lib*.so" -type f 2>/dev/null | while read -r plugin; do
+                ldd "$plugin" 2>/dev/null | grep "$QT_LIBS" | awk '{print $3}' | sort -u | while read -r lib; do
                   if [ -f "$lib" ]; then
                     libname=$(basename "$lib")
                     if [ ! -f "${APPIMAGE_DST_PATH}/usr/lib/$libname" ]; then
-                      cp "$lib" "${APPIMAGE_DST_PATH}/usr/lib/" 2>/dev/null && echo "  复制: $libname" || true
+                      if cp "$lib" "${APPIMAGE_DST_PATH}/usr/lib/" 2>/dev/null; then
+                        echo "  复制: $libname"
+                      fi
                     fi
                   fi
                 done
@@ -322,9 +324,9 @@ jobs:
             for qml_dir in /usr/lib/qt6/qml /usr/lib/*/qt6/qml /usr/lib/${DEB_MULTIARCH}/qt6/qml /opt/qt/*/${{ matrix.dist.qt_dir }}/qml; do
               if [ -d "$qml_dir" ]; then
                 echo "Trying fallback QML directory: $qml_dir"
-                rm -rf ${APPIMAGE_DST_PATH}/usr/qml
-                mkdir -p ${APPIMAGE_DST_PATH}/usr/qml
-                rsync -a --copy-links "$qml_dir"/ ${APPIMAGE_DST_PATH}/usr/qml/
+                rm -rf "${APPIMAGE_DST_PATH}/usr/qml"
+                mkdir -p "${APPIMAGE_DST_PATH}/usr/qml"
+                rsync -a --copy-links "$qml_dir"/ "${APPIMAGE_DST_PATH}/usr/qml/"
                 QML_FOUND=true
                 break
               fi
@@ -363,16 +365,16 @@ jobs:
           if [ -L "${APPIMAGE_DST_PATH}/AppRun" ]; then
             # AppRun 是符号链接，删除后重新创建
             echo "AppRun is a symlink, replacing with shell script..."
-            rm -f ${APPIMAGE_DST_PATH}/AppRun
+            rm -f "${APPIMAGE_DST_PATH}/AppRun"
           elif [ -f "${APPIMAGE_DST_PATH}/AppRun" ]; then
             if file "${APPIMAGE_DST_PATH}/AppRun" | grep -q "ELF"; then
               echo "AppRun is ELF binary, replacing with shell script..."
-              mv ${APPIMAGE_DST_PATH}/AppRun ${APPIMAGE_DST_PATH}/AppRun.real
+              mv "${APPIMAGE_DST_PATH}/AppRun" "${APPIMAGE_DST_PATH}/AppRun.real"
             else
               # 如果已经是 shell 脚本但没有正确配置，备份并重新创建
               if ! grep -q "LD_LIBRARY_PATH" "${APPIMAGE_DST_PATH}/AppRun" 2>/dev/null; then
                 echo "AppRun exists but not properly configured, recreating..."
-                mv ${APPIMAGE_DST_PATH}/AppRun ${APPIMAGE_DST_PATH}/AppRun.bak
+                mv "${APPIMAGE_DST_PATH}/AppRun" "${APPIMAGE_DST_PATH}/AppRun.bak"
               else
                 echo "AppRun is already a valid shell script"
               fi
@@ -382,7 +384,7 @@ jobs:
           fi
 
           # 创建正确的 AppRun shell 脚本
-          cat > ${APPIMAGE_DST_PATH}/AppRun << 'EOF'
+          cat > "${APPIMAGE_DST_PATH}/AppRun" << 'EOF'
           #!/bin/bash
           set -e
           APPDIR="$(dirname "$(readlink -f "$0")")"
@@ -562,16 +564,18 @@ jobs:
           # 启动应用
           exec "${APPDIR}/usr/bin/easykiconverter" "$@"
           EOF
-          chmod +x ${APPIMAGE_DST_PATH}/AppRun
+          chmod +x "${APPIMAGE_DST_PATH}/AppRun"
           echo "✓ AppRun created successfully"
 
       - name: 'CCache Stats'
         run: |
           ccache -sv
-          echo "## CCache Statistics" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          ccache -s >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## CCache Statistics"
+            echo '```'
+            ccache -s
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 'Build Statistics'
         if: always()
@@ -580,16 +584,18 @@ jobs:
           DURATION=$((END_TIME - BUILD_START_TIME))
           RATE=0.008
           COST=$(awk "BEGIN {printf \"%.4f\", $DURATION * $RATE / 60}")
-          echo "## Build Cost Summary (Linux Pack)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Est. cost | \$${COST} (Linux × \$0.008/min) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |" >> $GITHUB_STEP_SUMMARY
-          echo "| AppDir size | $(du -sh ${PRODUCT}.AppDir/ 2>/dev/null | cut -f1 || echo N/A) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |" >> $GITHUB_STEP_SUMMARY
-          echo "| Memory used | $(free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}' || echo N/A) |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Build Cost Summary (Linux Pack)"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|--------|-------|"
+            echo "| Job duration | ${DURATION}s ($((DURATION/60))m $((DURATION%60))s) |"
+            echo "| Est. cost | \$${COST} (Linux × \$0.008/min) |"
+            echo "| Build dir size | $(du -sh build/ 2>/dev/null | cut -f1) |"
+            echo "| AppDir size | $(du -sh "${PRODUCT}.AppDir/" 2>/dev/null | cut -f1 || echo N/A) |"
+            echo "| Free disk | $(df -h . | tail -1 | awk '{print $4}') |"
+            echo "| Memory used | $(free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}' || echo N/A) |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify AppDir Contents
         run: |
@@ -644,13 +650,13 @@ jobs:
           if [ -d "${APPIMAGE_DST_PATH}/usr/plugins/platforms" ]; then
             PLATFORM_COUNT=$(find "${APPIMAGE_DST_PATH}/usr/plugins/platforms" -name "*.so" 2>/dev/null | wc -l)
             echo "Found $PLATFORM_COUNT platform plugins"
-            ls "${APPIMAGE_DST_PATH}/usr/plugins/platforms/" 2>/dev/null || true
+            find "${APPIMAGE_DST_PATH}/usr/plugins/platforms" -maxdepth 1 -type f -printf '%f\n' 2>/dev/null || true
           else
             echo "WARNING: No platforms directory found!"
           fi
 
           # 验证 OpenGL 库
-          OPENGL_LIBS=$(ls ${APPIMAGE_DST_PATH}/usr/lib/libQt6OpenGL*.so* 2>/dev/null | wc -l)
+          OPENGL_LIBS=$(find "${APPIMAGE_DST_PATH}/usr/lib" -name "libQt6OpenGL*.so*" 2>/dev/null | wc -l)
           echo "Found $OPENGL_LIBS OpenGL libraries"
 
           # 验证 hicolor 图标
