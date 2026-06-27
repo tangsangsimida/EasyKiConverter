@@ -148,12 +148,16 @@ jobs:
               exit 1
             fi
 
-            # 下载到临时目录，然后移动文件
+            # 下载到临时目录，然后移动文件（排除中间构建产物）
             tmp_dir=$(mktemp -d)
             gh run download "$run_id" --dir "$tmp_dir"
-            find "$tmp_dir" -type f -exec mv -f {} release_assets/ \;
+            # 只移动最终发布文件，排除 built-appdir 等中间产物
+            find "$tmp_dir" -type f -not -name "built-appdir*" -exec mv -f {} release_assets/ \;
             rm -rf "$tmp_dir"
           done
+
+          # 删除可能遗漏的中间产物
+          rm -f release_assets/built-appdir* 2>/dev/null || true
 
           echo "Collected release assets:"
           find release_assets -maxdepth 1 -type f -printf '%f\n' | sort
