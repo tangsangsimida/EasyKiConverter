@@ -62,6 +62,8 @@ APPX_MANIFEST_PATH = os.path.join(PROJECT_ROOT, "deploy", "windows", "AppxManife
 FLATPAK_MANIFEST_PATH = os.path.join(
     PROJECT_ROOT, "deploy", "flatpak", "io.github.tangsangsimida.easykiconverter.yml"
 )
+PKGBUILD_PATH = os.path.join(PROJECT_ROOT, "deploy", "archlinux", "PKGBUILD")
+SRCINFO_PATH = os.path.join(PROJECT_ROOT, "deploy", "archlinux", ".SRCINFO")
 
 
 def get_current_version():
@@ -699,6 +701,80 @@ def update_flatpak_manifest(new_version, force=False):
         return False
 
 
+def update_pkgbuild(new_version, force=False):
+    """更新 PKGBUILD 和 .SRCINFO 中的版本号"""
+    print(f"正在更新 {PKGBUILD_PATH}...")
+
+    if not os.path.exists(PKGBUILD_PATH):
+        print(f"  ℹ  文件 {PKGBUILD_PATH} 不存在，跳过更新")
+        return True
+
+    try:
+        # 更新 PKGBUILD
+        with open(PKGBUILD_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # pkgver=3.1.11
+        pattern = r"(pkgver=)([^\s\n]+)"
+        match = re.search(pattern, content)
+        if match:
+            current_version = match.group(2)
+            if current_version == new_version and not force:
+                print(f"  ✓ {PKGBUILD_PATH} 版本已经是 {new_version}，跳过更新")
+            else:
+                new_content = re.sub(pattern, f"\\g<1>{new_version}", content)
+                with open(PKGBUILD_PATH, "w", encoding="utf-8") as f:
+                    f.write(new_content)
+                print(f"  ✓ 成功更新 {PKGBUILD_PATH}")
+        else:
+            print(f"  ⚠  未找到 pkgver 字段")
+            return False
+
+        # 更新 .SRCINFO
+        if os.path.exists(SRCINFO_PATH):
+            with open(SRCINFO_PATH, "r", encoding="utf-8") as f:
+                srcinfo_content = f.read()
+
+            # pkgver = 3.1.11
+            pattern = r"(pkgver\s*=\s*)([^\s\n]+)"
+            match = re.search(pattern, srcinfo_content)
+            if match:
+                current_version = match.group(2)
+                if current_version == new_version and not force:
+                    print(f"  ✓ {SRCINFO_PATH} 版本已经是 {new_version}，跳过更新")
+                else:
+                    new_content = re.sub(pattern, f"\\g<1>{new_version}", srcinfo_content)
+                    with open(SRCINFO_PATH, "w", encoding="utf-8") as f:
+                        f.write(new_content)
+                    print(f"  ✓ 成功更新 {SRCINFO_PATH}")
+            else:
+                print(f"  ⚠  未找到 pkgver 字段")
+                return False
+
+        return True
+    except Exception as e:
+        print(f"  ✗ 更新 {PKGBUILD_PATH} 失败: {e}")
+        return False
+
+
+def check_pkgbuild_version(version):
+    """检查 PKGBUILD 中的版本是否匹配"""
+    if not os.path.exists(PKGBUILD_PATH):
+        return None  # 文件不存在
+
+    try:
+        with open(PKGBUILD_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        pattern = r"pkgver=([^\s\n]+)"
+        match = re.search(pattern, content)
+        if match:
+            return match.group(1) == version
+        return False
+    except Exception:
+        return False
+
+
 def check_all_versions(version):
     """检查所有文件中的版本是否一致"""
     print(f"检查所有文件中的版本是否为 {version}...")
@@ -711,6 +787,7 @@ def check_all_versions(version):
         "mkdocs.yml": check_mkdocs_version(version),
         "AppxManifest.xml": check_appx_version(version),
         "Flatpak manifest": check_flatpak_version(version),
+        "PKGBUILD": check_pkgbuild_version(version),
     }
 
     all_match = True
@@ -898,6 +975,7 @@ def main():
     success &= update_mkdocs_yaml(new_version, force=args.force)
     success &= update_appx_manifest(new_version, force=args.force)
     success &= update_flatpak_manifest(new_version, force=args.force)
+    success &= update_pkgbuild(new_version, force=args.force)
 
     if success:
         print("\n✓ 所有文件更新完成！")

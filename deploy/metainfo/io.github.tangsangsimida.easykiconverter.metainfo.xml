@@ -58,22 +58,22 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.11/resources/imgs/screenshot1.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.12/resources/imgs/screenshot1.png</image>
       <caption>Main application window with component conversion interface</caption>
       <caption xml:lang="zh_CN">主应用窗口 - 元件转换界面</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.11/resources/imgs/screenshot2.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.12/resources/imgs/screenshot2.png</image>
       <caption>Component input and list management</caption>
       <caption xml:lang="zh_CN">元件输入和列表管理</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.11/resources/imgs/screenshot3.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.12/resources/imgs/screenshot3.png</image>
       <caption>Export settings and progress tracking</caption>
       <caption xml:lang="zh_CN">导出设置和进度跟踪</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.11/resources/imgs/screenshot4.png</image>
+      <image type="source" width="1200" height="800">https://raw.githubusercontent.com/tangsangsimida/EasyKiConverter/v3.1.12/resources/imgs/screenshot4.png</image>
       <caption>Dark mode theme support</caption>
       <caption xml:lang="zh_CN">深色主题支持</caption>
     </screenshot>
@@ -105,10 +105,44 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
-    <release version="3.1.11" date="2026-06-05">
+    <release version="3.1.11" date="2026-06-27">
       <description>
-        <p>Version 3.1.11 release</p>
-        <p xml:lang="zh_CN">3.1.11 版本发布</p>
+        <p>Arch Linux packaging support, CI/CD improvements, and documentation synchronization.</p>
+        <p xml:lang="zh_CN">Arch Linux 打包支持、CI/CD 改进及文档同步。</p>
+        <p>New Features:</p>
+        <p xml:lang="zh_CN">新功能:</p>
+        <ul>
+          <li>Add Arch Linux packaging support (PKGBUILD for AUR)</li>
+          <li xml:lang="zh_CN">添加 Arch Linux 打包支持（AUR PKGBUILD）</li>
+          <li>Add bilingual (Chinese/English) GitHub labels system</li>
+          <li xml:lang="zh_CN">添加中英文双语 GitHub 标签体系</li>
+          <li>Add label management documentation</li>
+          <li xml:lang="zh_CN">添加标签管理文档</li>
+        </ul>
+        <p>Bug Fixes:</p>
+        <p xml:lang="zh_CN">修复:</p>
+        <ul>
+          <li>Fix folder dialog path binding issue (ADR-011)</li>
+          <li xml:lang="zh_CN">修复文件夹对话框路径绑定问题 (ADR-011)</li>
+          <li>Fix Inno Setup Chinese language file URL</li>
+          <li xml:lang="zh_CN">修复 Inno Setup 中文语言文件 URL</li>
+          <li>Fix release workflow artifact download and upload issues</li>
+          <li xml:lang="zh_CN">修复 release 工作流 artifact 下载和上传问题</li>
+          <li>Fix shellcheck issues in GitHub Actions workflows</li>
+          <li xml:lang="zh_CN">修复 GitHub Actions 工作流中的 shellcheck 问题</li>
+        </ul>
+        <p>Improvements:</p>
+        <p xml:lang="zh_CN">改进:</p>
+        <ul>
+          <li>Optimize workflow trigger branches for version branch development</li>
+          <li xml:lang="zh_CN">优化工作流触发分支以适应版本分支开发模式</li>
+          <li>Add retry logic for release asset upload to handle rate limiting</li>
+          <li xml:lang="zh_CN">添加 release 资源上传重试逻辑以应对速率限制</li>
+          <li>Upgrade actions/labeler to v5</li>
+          <li xml:lang="zh_CN">升级 actions/labeler 至 v5</li>
+          <li>Synchronize Chinese and English documentation</li>
+          <li xml:lang="zh_CN">同步中英文文档</li>
+        </ul>
       </description>
     </release>
     <release version="3.1.10" date="2026-06-01">
@@ -175,24 +209,7 @@
         </ul>
       </description>
     </release>
-    <release version="3.1.8" date="2026-05-16">
-      <description>
-        <p>Bug fixes for export cancellation and macOS packaging improvements.</p>
-        <p xml:lang="zh_CN">修复导出取消问题并改进 macOS 打包流程。</p>
-        <p>Bug Fixes:</p>
-        <p xml:lang="zh_CN">修复:</p>
-        <ul>
-          <li>Fix export stage state management issues when cancellation is triggered</li>
-          <li xml:lang="zh_CN">修复导出阶段在取消时的状态管理问题</li>
-        </ul>
-        <p>Improvements:</p>
-        <p xml:lang="zh_CN">改进:</p>
-        <ul>
-          <li>Add timeout configuration for macOS packaging workflow and optimize release asset upload</li>
-          <li xml:lang="zh_CN">为 macOS 打包工作流添加超时配置并优化发布资产上传</li>
-        </ul>
-      </description>
-    </release>
+    <release version="3.1.8" date="2026-05-16"/>
     <release version="3.1.7" date="2026-05-05"/>
     <release version="3.1.6" date="2026-04-26"/>
     <release version="3.1.5" date="2026-04-24"/>
