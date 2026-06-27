@@ -68,7 +68,12 @@ Card {
                         backgroundColor: AppStyle.colors.textSecondary
                         hoverColor: AppStyle.colors.textPrimary
                         pressedColor: AppStyle.colors.textPrimary
-                        onClicked: exportSettingsCard.openOutputFolderDialog()
+                        onClicked: {
+                            outputPathInput.text = Qt.binding(function () {
+                                return exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.outputPath : "";
+                            });
+                            exportSettingsCard.openOutputFolderDialog();
+                        }
                     }
                 }
             }
@@ -162,7 +167,12 @@ Card {
                         backgroundColor: AppStyle.colors.textSecondary
                         hoverColor: AppStyle.colors.textPrimary
                         pressedColor: AppStyle.colors.textPrimary
-                        onClicked: exportSettingsCard.openCacheFolderDialog()
+                        onClicked: {
+                            cacheDirInput.text = Qt.binding(function () {
+                                return exportSettingsCard.exportSettingsController ? exportSettingsCard.exportSettingsController.cacheDir : "";
+                            });
+                            exportSettingsCard.openCacheFolderDialog();
+                        }
                     }
                 }
             }

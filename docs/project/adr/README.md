@@ -67,6 +67,7 @@ ADR 文件应使用以下命名格式：
 - [ADR 008: 显式对象生命周期管理](008-explicit-object-lifecycle-management.md)
 - [ADR 009: 网络层架构整合与状态管理统一](009-network-layer-consolidation.md)
 - [ADR 010: 组件缓存架构](010-component-cache-architecture.md)
+- [ADR 011: 文件夹对话框路径绑定修复](011-folder-dialog-path-binding-fix.md)
 
 ## 参考资料
 

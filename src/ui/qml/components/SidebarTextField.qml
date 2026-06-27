@@ -29,7 +29,7 @@ ColumnLayout {
             font.pixelSize: AppStyle.fontSizes.sm
             color: AppStyle.colors.textPrimary
             onTextChanged: {
-                if (tf.activeFocus) {
+                if (tf.activeFocus && text !== fieldRoot.text) {
                     fieldRoot.textEdited(text);
                 }
             }
@@ -45,7 +45,12 @@ ColumnLayout {
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             backgroundColor: AppStyle.colors.border
-            onClicked: fieldRoot.browseClicked()
+            onClicked: {
+                tf.text = Qt.binding(function () {
+                    return fieldRoot.text;
+                });
+                fieldRoot.browseClicked();
+            }
         }
     }
 }

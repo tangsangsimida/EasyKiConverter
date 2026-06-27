@@ -155,7 +155,17 @@ Item {
     }
     // 从 FolderDialog URL 中提取本地路径（跨平台处理）
     function urlToLocalPath(url) {
-        return QUrl(url).toLocalFile();
+        if (!url)
+            return "";
+        var s = url.toString();
+        // file:///C:/Users/... → Windows 需要去掉第三个 /
+        // file:///home/...     → Linux 第三个 / 是路径的一部分
+        if (Qt.platform.os === "windows") {
+            s = s.replace(/^file:\/\/\//, "");
+        } else {
+            s = s.replace(/^file:\/\//, "");
+        }
+        return decodeURIComponent(s);
     }
 
     // BOM 文件选择对话框
@@ -171,16 +181,32 @@ Item {
     FolderDialog {
         id: outputFolderDialog
         title: qsTr("选择输出目录")
+        currentFolder: {
+            var p = exportSettingsController ? exportSettingsController.outputPath : "";
+            return p ? "file://" + p : "";
+        }
         onAccepted: {
-            exportSettingsController.setOutputPath(urlToLocalPath(selectedFolder));
+            var localPath = urlToLocalPath(selectedFolder);
+            console.log("[FolderDialog] output selectedFolder:", selectedFolder, "→ localPath:", localPath);
+            if (localPath) {
+                exportSettingsController.setOutputPath(localPath);
+            }
         }
     }
 
     FolderDialog {
         id: cacheFolderDialog
         title: qsTr("选择缓存目录")
+        currentFolder: {
+            var p = exportSettingsController ? exportSettingsController.cacheDir : "";
+            return p ? "file://" + p : "";
+        }
         onAccepted: {
-            exportSettingsController.setCacheDir(urlToLocalPath(selectedFolder));
+            var localPath = urlToLocalPath(selectedFolder);
+            console.log("[FolderDialog] cache selectedFolder:", selectedFolder, "→ localPath:", localPath);
+            if (localPath) {
+                exportSettingsController.setCacheDir(localPath);
+            }
         }
     }
 
