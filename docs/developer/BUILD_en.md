@@ -128,6 +128,13 @@ sudo apt-get install build-essential
 sudo apt-get install zlib1g-dev
 ```
 
+### Linux (Arch Linux)
+
+```bash
+# Install all dependencies
+sudo pacman -S --needed base-devel cmake ninja qt6-base qt6-declarative qt6-svg qt6-shadertools qt6-tools zlib
+```
+
 ## Building the Project
 
 ### Clone the Repository

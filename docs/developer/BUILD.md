@@ -152,17 +152,8 @@ sudo dnf install zlib-devel
 **Arch Linux**
 
 ```bash
-# 安装 Qt 6
-sudo pacman -S qt6-base qt6-declarative qt6-tools qt6-networkauth
-
-# 安装 CMake
-sudo pacman -S cmake
-
-# 安装编译器
-sudo pacman -S gcc
-
-# 安装 zlib
-sudo pacman -S zlib
+# 安装所有依赖
+sudo pacman -S --needed base-devel cmake ninja qt6-base qt6-declarative qt6-svg qt6-shadertools qt6-tools zlib
 ```
 
 ## 获取源代码

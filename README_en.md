@@ -39,25 +39,10 @@ Please visit the [Releases](https://github.com/tangsangsimida/EasyKiConverter/re
 *   **Windows**: Recommended to download `.exe` installer (includes complete runtime), or download `.zip` portable version.
 *   **Linux**: Recommended to download `.AppImage` (no installation required, just grant execute permission and run), or `.tar.gz` archive.
 *   **macOS**: Download `.dmg` image file.
-*   **Arch Linux**: Install from AUR with `yay -S easykiconverter` or build from source (see below).
-
-#### Arch Linux Build from Source
-
-```bash
-# Install dependencies
-sudo pacman -S --needed base-devel cmake ninja qt6-base qt6-declarative qt6-quickcontrols2 qt6-svg qt6-shadertools qt6-tools zlib
-
-# Clone the project
-git clone https://github.com/tangsangsimida/EasyKiConverter.git
-cd EasyKiConverter
-
-# Build using PKGBUILD
-cd deploy/archlinux
-makepkg -si
-```
+*   **Arch Linux**: `yay -S easykiconverter`
 
 ### Build from Source
-This project has implemented full-platform CI/CD automated building. If you are a developer or wish to compile yourself, please refer to the [Build Guide](docs/developer/BUILD.md).
+If you are a developer or wish to compile yourself, please refer to the [Build Guide](docs/developer/BUILD_en.md).
 
 ## Documentation
 

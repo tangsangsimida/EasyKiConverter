@@ -40,25 +40,10 @@
 *   **Windows**: 推荐下载 `.exe` 安装程序（包含完整运行时），或下载 `.zip` 便携版。
 *   **Linux**: 推荐下载 `.AppImage`（无需安装，赋予执行权限即可运行），或 `.tar.gz` 归档。
 *   **macOS**: 下载 `.dmg` 镜像文件。
-*   **Arch Linux**: 使用 AUR 安装 `yay -S easykiconverter` 或从源码构建（见下方说明）。
-
-#### Arch Linux 从源码构建
-
-```bash
-# 安装依赖
-sudo pacman -S --needed base-devel cmake ninja qt6-base qt6-declarative qt6-quickcontrols2 qt6-svg qt6-shadertools qt6-tools zlib
-
-# 克隆项目
-git clone https://github.com/tangsangsimida/EasyKiConverter.git
-cd EasyKiConverter
-
-# 使用 PKGBUILD 构建
-cd deploy/archlinux
-makepkg -si
-```
+*   **Arch Linux**: `yay -S easykiconverter`
 
 ### 从源码构建
-本项目已实现全平台 CI/CD 自动化构建。如果您是开发者或希望自行编译，请参考 [构建指南](docs/developer/BUILD.md)。
+如果您是开发者或希望自行编译，请参考 [构建指南](docs/developer/BUILD.md)。
 
 ## 文档中心
 
