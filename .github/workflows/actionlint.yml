@@ -2,7 +2,7 @@ name: Workflow Lint
 
 on:
   push:
-    branches: ['master', 'ci_test']
+    branches: ['v*', 'ci_test']
     paths:
       - '.github/workflows/**'
       - '.github/actions/**'

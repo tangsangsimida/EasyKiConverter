@@ -46,7 +46,7 @@ jobs:
           fetch-depth: 0
 
       - name: 'Record Start Time'
-        run: echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+        run: echo "BUILD_START_TIME=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: 'Get Version Info'
         id: version
@@ -55,9 +55,11 @@ jobs:
       - name: 'Export Version to Env'
         shell: bash
         run: |
-          echo "VERSION=${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
-          echo "VER_INFO=${{ steps.version.outputs.VER_INFO }}" >> $GITHUB_ENV
-          echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}" >> $GITHUB_ENV
+          {
+            echo "VERSION=${{ steps.version.outputs.VERSION }}"
+            echo "VER_INFO=${{ steps.version.outputs.VER_INFO }}"
+            echo "GIT_HASH=${{ steps.version.outputs.GIT_HASH }}"
+          } >> "$GITHUB_ENV"
 
       - name: 'Setup Build Environment'
         uses: ./.github/actions/setup-env

@@ -600,10 +600,10 @@ jobs:
           echo "Checking AppDir at: $APPIMAGE_DST_PATH"
 
           # 修复可执行文件权限（确保上传前权限正确）
-          chmod +x ${APPIMAGE_DST_PATH}/usr/bin/easykiconverter
-          find ${APPIMAGE_DST_PATH}/usr/bin -type f -exec chmod +x {} \; 2>/dev/null || true
-          find ${APPIMAGE_DST_PATH}/usr/libexec -type f -exec chmod +x {} \; 2>/dev/null || true
-          chmod +x ${APPIMAGE_DST_PATH}/AppRun 2>/dev/null || true
+          chmod +x "${APPIMAGE_DST_PATH}/usr/bin/easykiconverter"
+          find "${APPIMAGE_DST_PATH}/usr/bin" -type f -exec chmod +x {} \; 2>/dev/null || true
+          find "${APPIMAGE_DST_PATH}/usr/libexec" -type f -exec chmod +x {} \; 2>/dev/null || true
+          chmod +x "${APPIMAGE_DST_PATH}/AppRun" 2>/dev/null || true
           echo "✓ Permissions fixed"
 
           # 验证 AppRun
@@ -718,16 +718,16 @@ jobs:
           echo "=== AppDir Library Inventory ==="
           echo ""
           echo "--- Qt Libraries ---"
-          find ${{ env.PRODUCT }}.AppDir/usr/lib -name "libQt6*.so*" -type f 2>/dev/null | head -30
+          find "${{ env.PRODUCT }}.AppDir/usr/lib" -name "libQt6*.so*" -type f 2>/dev/null | head -30
           echo ""
           echo "--- Qt Plugins (sqldrivers) ---"
-          ls -la ${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers/ 2>/dev/null || echo "(empty)"
+          find "${{ env.PRODUCT }}.AppDir/usr/plugins/sqldrivers" -type f 2>/dev/null | head -20 || echo "(empty)"
           echo ""
           echo "--- Qt Plugins (platforms) ---"
-          ls -la ${{ env.PRODUCT }}.AppDir/usr/plugins/platforms/ 2>/dev/null || echo "(empty)"
+          find "${{ env.PRODUCT }}.AppDir/usr/plugins/platforms" -type f 2>/dev/null | head -20 || echo "(empty)"
           echo ""
           echo "--- QML Modules ---"
-          ls -la ${{ env.PRODUCT }}.AppDir/usr/qml/ 2>/dev/null | head -20
+          find "${{ env.PRODUCT }}.AppDir/usr/qml" -type f 2>/dev/null | head -20
           echo ""
           echo "=== End of Inventory ==="
 

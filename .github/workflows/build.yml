@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: ['master', 'ci_test']
+    branches: ['v*', 'ci_test']
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
