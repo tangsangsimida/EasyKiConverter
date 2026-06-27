@@ -13,7 +13,6 @@ pkgbase = easykiconverter
 	makedepends = qt6-tools
 	depends = qt6-base
 	depends = qt6-declarative
-	depends = qt6-quickcontrols2
 	depends = qt6-svg
 	depends = qt6-shadertools
 	depends = zlib
