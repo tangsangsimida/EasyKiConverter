@@ -59,12 +59,12 @@ inline QList<QPointF> parsePointsString(const QString& pointsStr) {
 inline QList<QPointF> parsePathString(const QString& pathStr) {
     QList<QPointF> result;
     QString cleaned = pathStr;
-    // 将 SVG 路径命令字母替换为空格
-    for (const QChar& c : QString("MmLlHhVvCcSsQqTtAaZz")) {
-        cleaned.replace(c, ' ');
+    // 单遍替换：SVG 路径命令字母和逗号统一替换为空格
+    for (int i = 0; i < cleaned.size(); ++i) {
+        QChar c = cleaned[i];
+        if (c == ',' || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+            cleaned[i] = ' ';
     }
-    // 将逗号替换为空格
-    cleaned.replace(',', ' ');
     QStringList nums = cleaned.split(' ', Qt::SkipEmptyParts);
     for (int i = 0; i + 1 < nums.size(); i += 2) {
         bool ok1, ok2;

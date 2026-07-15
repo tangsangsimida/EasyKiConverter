@@ -12,7 +12,7 @@ CheckBox {
     id: control
 
     font.pixelSize: AppStyle.fontSizes.sm
-    ToolTip.visible: hovered
+    ToolTip.visible: hovered && ToolTip.text !== ""
 
     indicator: Rectangle {
         implicitWidth: AppStyle.sizes.checkbox

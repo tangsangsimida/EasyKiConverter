@@ -60,10 +60,6 @@ public:
      * @param libraryDescription 库描述
      * @return bool 是否成功
      */
-    bool generateSymLibTable(const QString& libName,
-                             const QString& libFilePath,
-                             const QString& outputDir,
-                             const QString& libraryDescription = QString());
 
 private:
     /**

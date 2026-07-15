@@ -16,26 +16,75 @@ Item {
         spacing: AppStyle.spacing.lg
 
         // ==================== 目标格式选择 ====================
-        SidebarSection {
-            title: qsTranslate("MainWindow", "目标格式")
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: AppStyle.spacing.sm
             visible: root.exportTargetModel !== null && root.exportTargetModel !== undefined
 
-            SidebarSegmentedControl {
+            Text {
+                text: qsTranslate("MainWindow", "目标格式")
+                font.pixelSize: AppStyle.fontSizes.sm
+                font.bold: true
+                color: AppStyle.colors.textPrimary
+            }
+
+            RowLayout {
                 Layout.fillWidth: true
-                label: ""
-                model: {
-                    if (!root.exportTargetModel) return [];
-                    var targets = root.exportTargetModel.availableTargets;
-                    var names = [];
-                    for (var i = 0; i < targets.length; i++) {
-                        names.push(targets[i].displayName);
-                    }
-                    return names;
-                }
-                currentIndex: root.exportTargetModel ? root.exportTargetModel.currentIndex : 0
-                onIndexChanged: function(idx) {
-                    if (root.exportTargetModel) {
-                        root.exportTargetModel.currentIndex = idx;
+                spacing: AppStyle.spacing.sm
+
+                Repeater {
+                    model: root.exportTargetModel ? root.exportTargetModel.availableTargets : []
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 52
+                        radius: AppStyle.radius.md
+                        property bool isActive: root.exportTargetModel
+                                                ? root.exportTargetModel.currentIndex === index
+                                                : false
+                        property string targetId: modelData.id || ""
+
+                        color: isActive ? Qt.rgba(AppStyle.colors.primary.r, AppStyle.colors.primary.g, AppStyle.colors.primary.b, 0.12) : AppStyle.colors.surface
+                        border.color: isActive ? AppStyle.colors.primary : AppStyle.colors.border
+                        border.width: isActive ? 2 : 1
+
+                        Behavior on color { ColorAnimation { duration: AppStyle.durations.fast } }
+                        Behavior on border.color { ColorAnimation { duration: AppStyle.durations.fast } }
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: AppStyle.spacing.sm
+                            spacing: 1
+
+                            Text {
+                                text: modelData.displayName || ""
+                                font.pixelSize: AppStyle.fontSizes.xs
+                                font.bold: true
+                                color: isActive ? AppStyle.colors.primary : AppStyle.colors.textPrimary
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+
+                            Text {
+                                text: {
+                                    if (targetId === "kicad") return ".kicad_sym";
+                                    if (targetId === "altium") return ".SchLib";
+                                    return "";
+                                }
+                                font.pixelSize: 9
+                                color: AppStyle.colors.textSecondary
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (root.exportTargetModel) {
+                                    root.exportTargetModel.currentIndex = index;
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -81,10 +81,6 @@ public:
      * @param libraryDescription 库描述
      * @return bool 是否成功
      */
-    bool generateFpLibTable(const QString& libName,
-                            const QString& libDirPath,
-                            const QString& outputDir,
-                            const QString& libraryDescription = QString());
 
 private:
     QString generateHeader(const QString& libName) const;

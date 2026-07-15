@@ -348,6 +348,10 @@ void ExportSettingsViewModel::buildExportOptions() {
         ? static_cast<TargetEdaFormat>(m_targetModel->currentIndex())
         : TargetEdaFormat::KiCad;
 
+    qDebug() << "ExportSettingsViewModel::buildExportOptions - targetModel:" << m_targetModel
+             << "currentIndex:" << (m_targetModel ? m_targetModel->currentIndex() : -1)
+             << "targetFormat:" << static_cast<int>(options.targetFormat);
+
     qInfo() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
             << "TargetFormat:" << (options.targetFormat == TargetEdaFormat::Altium ? "Altium" : "KiCad")
             << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint

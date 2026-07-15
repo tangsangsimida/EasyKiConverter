@@ -1,7 +1,6 @@
 #include "ExporterFootprint.h"
 
 #include "KiCadExportMetadata.h"
-#include "KiCadLibTable.h"
 #include "core/utils/GeometryUtils.h"
 #include "utils/PathSecurity.h"
 
@@ -169,13 +168,6 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
     qDebug() << "Footprint library exported to:" << filePath;
 
     return true;
-}
-
-bool ExporterFootprint::generateFpLibTable(const QString& libName,
-                                           const QString& libDirPath,
-                                           const QString& outputDir,
-                                           const QString& libraryDescription) {
-    return generateKiCadLibTable("fp_lib_table", "fp-lib-table", libName, libDirPath, outputDir, libraryDescription);
 }
 
 QString ExporterFootprint::generateHeader(const QString& libName) const {

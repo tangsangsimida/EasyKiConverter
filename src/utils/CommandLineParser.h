@@ -290,6 +290,12 @@ public:
     QString footprintDescription() const;
 
     /**
+     * @brief 获取目标 EDA 格式
+     * @return 格式字符串（"kicad" 或 "altium"），默认 "kicad"
+     */
+    QString targetFormat() const;
+
+    /**
      * @brief 获取 CLI 帮助文本
      * @return CLI 帮助文本
      */
@@ -366,6 +372,7 @@ private:
     QCommandLineOption m_overwriteOption;
     QCommandLineOption m_symbolDescriptionOption;
     QCommandLineOption m_footprintDescriptionOption;
+    QCommandLineOption m_targetFormatOption;
 
     // 补全选项
     QCommandLineOption m_completionOption;

@@ -29,53 +29,94 @@ Card {
         anchors.margins: AppStyle.spacing.md
 
         // ==================== 目标格式选择 ====================
-        SettingsSectionHeader {
-            title: qsTranslate("MainWindow", "目标格式")
+        Text {
+            Layout.fillWidth: true
+            text: qsTranslate("MainWindow", "目标格式")
+            font.pixelSize: AppStyle.fontSizes.md
+            font.bold: true
+            color: AppStyle.colors.textPrimary
         }
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: AppStyle.spacing.md
+            spacing: AppStyle.spacing.lg
 
             Repeater {
                 model: baseCard.exportTargetModel ? baseCard.exportTargetModel.availableTargets : []
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 44
-                    radius: AppStyle.radius.md
+                    Layout.preferredHeight: 72
+                    radius: AppStyle.radius.lg
                     property bool isActive: baseCard.exportTargetModel
                                             ? baseCard.exportTargetModel.currentIndex === index
                                             : false
+                    property string targetId: modelData.id || ""
 
-                    color: isActive ? AppStyle.colors.primary : AppStyle.colors.surface
+                    color: isActive ? Qt.rgba(AppStyle.colors.primary.r, AppStyle.colors.primary.g, AppStyle.colors.primary.b, 0.12) : AppStyle.colors.surface
                     border.color: isActive ? AppStyle.colors.primary : AppStyle.colors.border
                     border.width: isActive ? 2 : 1
 
-                    Behavior on color {
-                        ColorAnimation { duration: AppStyle.durations.fast }
-                    }
-                    Behavior on border.color {
-                        ColorAnimation { duration: AppStyle.durations.fast }
+                    Behavior on color { ColorAnimation { duration: AppStyle.durations.fast } }
+                    Behavior on border.color { ColorAnimation { duration: AppStyle.durations.fast } }
+
+                    // 选中指示条
+                    Rectangle {
+                        width: 3; height: parent.height * 0.5
+                        anchors.left: parent.left
+                        anchors.leftMargin: 6
+                        anchors.verticalCenter: parent.verticalCenter
+                        radius: 2
+                        color: AppStyle.colors.primary
+                        visible: isActive
+                        opacity: isActive ? 1 : 0
+                        Behavior on opacity { NumberAnimation { duration: AppStyle.durations.fast } }
                     }
 
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: AppStyle.spacing.sm
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: AppStyle.spacing.md
+                        anchors.leftMargin: AppStyle.spacing.lg
+                        spacing: 2
 
                         Text {
                             text: modelData.displayName || ""
-                            font.pixelSize: AppStyle.fontSizes.sm
-                            font.bold: parent.parent.isActive
-                            color: parent.parent.isActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textPrimary
+                            font.pixelSize: AppStyle.fontSizes.md
+                            font.bold: true
+                            color: isActive ? AppStyle.colors.primary : AppStyle.colors.textPrimary
                         }
+
+                        Text {
+                            text: {
+                                if (targetId === "kicad") return qsTranslate("MainWindow", ".kicad_sym / .kicad_mod");
+                                if (targetId === "altium") return qsTranslate("MainWindow", ".SchLib / .PcbLib");
+                                return "";
+                            }
+                            font.pixelSize: AppStyle.fontSizes.xs
+                            color: AppStyle.colors.textSecondary
+                        }
+                    }
+
+                    // 选中勾
+                    Text {
+                        anchors.right: parent.right
+                        anchors.rightMargin: AppStyle.spacing.md
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "✓"
+                        font.pixelSize: AppStyle.fontSizes.lg
+                        font.bold: true
+                        color: AppStyle.colors.primary
+                        visible: isActive
+                        opacity: isActive ? 1 : 0
+                        scale: isActive ? 1 : 0.5
+                        Behavior on opacity { NumberAnimation { duration: AppStyle.durations.fast } }
+                        Behavior on scale { NumberAnimation { duration: AppStyle.durations.fast; easing.type: Easing.BackOut } }
                     }
 
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            // 唯一真相源：ExportTargetModel
                             if (baseCard.exportTargetModel) {
                                 baseCard.exportTargetModel.currentIndex = index;
                             }
@@ -83,6 +124,13 @@ Card {
                     }
                 }
             }
+        }
+
+        // 分隔线
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 1
+            color: AppStyle.colors.border
         }
 
         // ==================== 基础配置 ====================

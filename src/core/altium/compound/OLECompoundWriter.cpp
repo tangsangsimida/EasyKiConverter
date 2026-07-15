@@ -1,7 +1,10 @@
 #include "OLECompoundWriter.h"
 
 #include <QDataStream>
+#include <QDebug>
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 
 namespace EasyKiConverter {
 
@@ -535,13 +538,30 @@ void OLECompoundWriter::finalize() {
  */
 bool OLECompoundWriter::saveToFile(const QString& filePath) {
     if (!m_initialized) {
+        qWarning() << "OLECompoundWriter::saveToFile: Not initialized";
         return false;
     }
 
     finalize();
 
+    qDebug() << "OLECompoundWriter::saveToFile: Writing to" << filePath
+             << "streams:" << m_streams.size()
+             << "directory:" << m_directory.size()
+             << "fat:" << m_fat.size();
+
+    // 确保父目录存在
+    QFileInfo fileInfo(filePath);
+    if (!fileInfo.dir().exists()) {
+        qDebug() << "OLECompoundWriter::saveToFile: Creating parent directory:" << fileInfo.path();
+        QDir().mkpath(fileInfo.path());
+    }
+
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly)) {
+        qWarning() << "OLECompoundWriter::saveToFile: Failed to open file:" << filePath
+                   << "error:" << file.errorString()
+                   << "exists:" << QFile::exists(filePath)
+                   << "isDir:" << QFileInfo(filePath).isDir();
         return false;
     }
 

@@ -4,6 +4,7 @@
 #include "utils/AltiumLayerMap.h"
 #include "utils/AltiumWriterUtils.h"
 
+#include <QDebug>
 #include <QRandomGenerator>
 #include <QtEndian>
 
@@ -49,8 +50,11 @@ bool AltiumPcbLibWriter::write(const QList<AltiumPcbComponent>& components,
                                 const QString& libraryName) {
     m_wideStrings.clear();
 
+    qDebug() << "AltiumPcbLibWriter::write: components:" << components.size() << "filePath:" << filePath;
+
     OLECompoundWriter ole;
     if (!ole.create()) {
+        qWarning() << "AltiumPcbLibWriter::write: Failed to create OLE compound document";
         return false;
     }
 
@@ -65,7 +69,9 @@ bool AltiumPcbLibWriter::write(const QList<AltiumPcbComponent>& components,
         writeFootprintStorage(ole, component);
     }
 
-    return ole.saveToFile(filePath);
+    bool result = ole.saveToFile(filePath);
+    qDebug() << "AltiumPcbLibWriter::write: saveToFile result:" << result << "filePath:" << filePath;
+    return result;
 }
 
 /**

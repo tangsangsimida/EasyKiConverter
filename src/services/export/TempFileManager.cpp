@@ -204,7 +204,18 @@ QVector<BackupEntry> readManifestEntries(const QString& manifestPath, bool* comm
 TempFileManager::TempFileManager(QObject* parent) : QObject(parent) {}
 
 TempFileManager::~TempFileManager() {
-    rollbackAll();
+    // 析构时不调用 rollbackAll()，避免删除其他 Stage 共享的 .tmp 目录
+    // 只清理本实例注册的临时文件（如果还存在的话）
+    QMutexLocker locker(&m_mutex);
+    for (const QString& tempPath : m_tempFiles) {
+        if (QFileInfo(tempPath).isDir()) {
+            QDir(tempPath).removeRecursively();
+        } else {
+            QFile::remove(tempPath);
+        }
+    }
+    m_tempFiles.clear();
+    // 注意：不调用 cleanupEmptyTempDirectoryLocked()，因为其他 Stage 可能还在使用 .tmp 目录
 }
 
 void TempFileManager::setOutputPath(const QString& outputPath) {
@@ -642,6 +653,7 @@ QString TempFileManager::generateUniqueTempName(const QString& prefix, const QSt
 bool TempFileManager::ensureTempDirectory() const {
     QString tempDir = tempDirectory();
     if (tempDir.isEmpty()) {
+        qWarning() << "TempFileManager::ensureTempDirectory: tempDir is empty, m_outputPath:" << m_outputPath;
         return false;
     }
 
@@ -649,7 +661,9 @@ bool TempFileManager::ensureTempDirectory() const {
         return true;
     }
 
-    return QDir().mkpath(tempDir);
+    bool result = QDir().mkpath(tempDir);
+    qDebug() << "TempFileManager::ensureTempDirectory: Created" << tempDir << "result:" << result;
+    return result;
 }
 
 bool TempFileManager::deleteFile(const QString& path) const {

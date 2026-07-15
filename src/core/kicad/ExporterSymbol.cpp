@@ -1,7 +1,6 @@
 #include "ExporterSymbol.h"
 
 #include "KiCadExportMetadata.h"
-#include "KiCadLibTable.h"
 #include "core/utils/GeometryUtils.h"
 #include "core/utils/SvgPathParser.h"
 
@@ -682,13 +681,6 @@ QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
     content += "    )\n";  // 结束子符号
 
     return content;
-}
-
-bool ExporterSymbol::generateSymLibTable(const QString& libName,
-                                         const QString& libFilePath,
-                                         const QString& outputDir,
-                                         const QString& libraryDescription) {
-    return generateKiCadLibTable("sym_lib_table", "sym-lib-table", libName, libFilePath, outputDir, libraryDescription);
 }
 
 }  // namespace EasyKiConverter
