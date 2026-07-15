@@ -2,6 +2,7 @@
 #define EXPORTERFOOTPRINT_H
 
 #include "FootprintGraphicsGenerator.h"
+#include "core/interfaces/IFootprintExporter.h"
 #include "models/FootprintData.h"
 #include "models/Model3DData.h"
 
@@ -16,7 +17,7 @@ namespace EasyKiConverter {
  *
  * 将 EasyEDA 封装数据导出为 KiCad 封装格式。
  */
-class ExporterFootprint {
+class ExporterFootprint : public IFootprintExporter {
 public:
     ExporterFootprint();
 
@@ -32,7 +33,7 @@ public:
      */
     bool exportFootprint(const FootprintData& footprintData,
                          const QString& filePath,
-                         const QString& model3DPath = QString());
+                         const QString& model3DPath = QString()) override;
 
     /**
      * @brief 导出单个 KiCad 封装（WRL 和 STEP 两个 3D 模型）。
@@ -69,7 +70,7 @@ public:
                                 const QString& libraryDescription = QString(),
                                 const QString& libraryKeywords = QString(),
                                 bool useAbsolutePaths = false,
-                                const QString& model3DBaseDir = QString());
+                                const QString& model3DBaseDir = QString()) override;
 
     /**
      * @brief 生成 fp-lib-table 文件

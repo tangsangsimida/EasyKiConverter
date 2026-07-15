@@ -1,6 +1,7 @@
 #ifndef EXPORTER3DMODEL_H
 #define EXPORTER3DMODEL_H
 
+#include "core/interfaces/IModel3DExporter.h"
 #include "models/Model3DData.h"
 
 #include <QByteArray>
@@ -14,7 +15,7 @@ namespace EasyKiConverter {
  *
  * 用于处理 EasyEDA 3D 模型数据的下载和转换
  */
-class Exporter3DModel : public QObject {
+class Exporter3DModel : public QObject, public IModel3DExporter {
     Q_OBJECT
 
 public:
@@ -93,7 +94,7 @@ public:
      * @param savePath 保存路径
      * @return bool 是否成功
      */
-    bool exportToWrl(const Model3DData& modelData, const QString& savePath);
+    bool exportToWrl(const Model3DData& modelData, const QString& savePath) override;
 
     /**
      * @brief 导出模型STEP 格式
@@ -102,7 +103,7 @@ public:
      * @param savePath 保存路径
      * @return bool 是否成功
      */
-    bool exportToStep(const Model3DData& modelData, const QString& savePath);
+    bool exportToStep(const Model3DData& modelData, const QString& savePath) override;
 
     /**
      * @brief 符号部分数据3D 模型转换KiCad 坐标

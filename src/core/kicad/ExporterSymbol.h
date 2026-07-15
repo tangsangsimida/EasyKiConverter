@@ -2,6 +2,7 @@
 #define EXPORTERSYMBOL_H
 
 #include "SymbolGraphicsGenerator.h"
+#include "core/interfaces/ISymbolExporter.h"
 #include "models/SymbolData.h"
 
 #include <QJsonObject>
@@ -15,7 +16,7 @@ namespace EasyKiConverter {
  *
  * 将 EasyEDA 符号数据导出为 KiCad 符号库格式。
  */
-class ExporterSymbol {
+class ExporterSymbol : public ISymbolExporter {
 public:
     ExporterSymbol();
 
@@ -31,7 +32,7 @@ public:
      * @param filePath 输出文件路径
      * @return bool 是否成功
      */
-    bool exportSymbol(const SymbolData& symbolData, const QString& filePath);
+    bool exportSymbol(const SymbolData& symbolData, const QString& filePath) override;
 
     /**
      * @brief 导出多个 KiCad 符号到符号库。
@@ -48,7 +49,7 @@ public:
                              const QString& filePath,
                              bool appendMode = true,
                              bool updateMode = false,
-                             const QString& libraryDescription = QString());
+                             const QString& libraryDescription = QString()) override;
 
     /**
      * @brief 生成 sym-lib-table 文件

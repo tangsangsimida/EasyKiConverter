@@ -11,6 +11,11 @@ target_sources(EasyKiConverterCore
     PRIVATE
         LanguageManager.cpp
         LanguageManager.h
+        ExporterFactory.cpp
+        ExporterFactory.h
+        interfaces/ISymbolExporter.h
+        interfaces/IFootprintExporter.h
+        interfaces/IModel3DExporter.h
 )
 
 target_link_libraries(EasyKiConverterCore

@@ -8,6 +8,17 @@
 namespace EasyKiConverter {
 
 /**
+ * @brief 支持的目标 EDA 格式枚举
+ * @details 用于指定导出文件的目标 EDA 工具格式。
+ *          枚举值用于持久化存储和 UI 下拉索引，从 0 递增。
+ */
+enum class TargetEdaFormat {
+    KiCad = 0,  /**< KiCad 格式（默认） */
+    Altium = 1  /**< Altium Designer 格式 */
+    // 后续扩展: Allegro = 2, Eagle = 3, ...
+};
+
+/**
  * @brief 导出选项配置
  * @details 用户在导出对话框中选择的导出选项，决定哪些类型的资源需要导出
  *
@@ -43,6 +54,7 @@ struct ExportOptions {
 
     QString outputPath;  ///< 导出文件输出目录路径
     QString libName;  ///< 库名称（用于构建子目录路径）
+    TargetEdaFormat targetFormat = TargetEdaFormat::KiCad;  ///< 目标 EDA 格式
     bool exportSymbol = true;  ///< 是否导出符号 (Symbol)
     bool exportFootprint = true;  ///< 是否导出封装 (Footprint)
     bool exportModel3D = false;  ///< 是否导出3D模型 (3D Model)
