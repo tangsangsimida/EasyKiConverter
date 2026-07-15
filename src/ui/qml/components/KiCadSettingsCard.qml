@@ -19,122 +19,38 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: AppStyle.spacing.lg
 
-        // 符号库选项
-        CheckBox {
+        StyledCheckBox {
             id: symbolCheckbox
             text: qsTranslate("MainWindow", "符号库")
+            ToolTip.text: qsTranslate("MainWindow", "导出 .kicad_sym 符号库文件")
             checked: kiCadCard.exportSettingsController ? kiCadCard.exportSettingsController.exportSymbol : false
             onCheckedChanged: {
-                if (kiCadCard.exportSettingsController) {
+                if (kiCadCard.exportSettingsController)
                     kiCadCard.exportSettingsController.setExportSymbol(checked);
-                }
-            }
-            font.pixelSize: AppStyle.fontSizes.sm
-            ToolTip.visible: hovered
-            ToolTip.text: qsTranslate("MainWindow", "导出 .kicad_sym 符号库文件")
-            indicator: Rectangle {
-                implicitWidth: AppStyle.sizes.checkbox
-                implicitHeight: AppStyle.sizes.checkbox
-                x: symbolCheckbox.leftPadding
-                y: parent.height / 2 - height / 2
-                radius: AppStyle.radius.xs
-                color: symbolCheckbox.checked ? AppStyle.colors.primary : "transparent"
-                border.color: symbolCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                border.width: AppStyle.borderWidths.normal
-                Text {
-                    anchors.centerIn: parent
-                    text: "✓"
-                    font.pixelSize: AppStyle.fontSizes.sm
-                    color: AppStyle.colors.textOnPrimary
-                    visible: symbolCheckbox.checked
-                }
-            }
-            contentItem: Text {
-                text: symbolCheckbox.text
-                font: symbolCheckbox.font
-                color: AppStyle.colors.textPrimary
-                verticalAlignment: Text.AlignVCenter
-                leftPadding: symbolCheckbox.indicator.width + symbolCheckbox.spacing
             }
         }
 
-        // 封装库选项
-        CheckBox {
+        StyledCheckBox {
             id: footprintCheckbox
             text: qsTranslate("MainWindow", "封装库")
+            ToolTip.text: qsTranslate("MainWindow", "导出 .kicad_mod 封装库文件")
             checked: kiCadCard.exportSettingsController ? kiCadCard.exportSettingsController.exportFootprint : false
             onCheckedChanged: {
-                if (kiCadCard.exportSettingsController) {
+                if (kiCadCard.exportSettingsController)
                     kiCadCard.exportSettingsController.setExportFootprint(checked);
-                }
-            }
-            font.pixelSize: AppStyle.fontSizes.sm
-            ToolTip.visible: hovered
-            ToolTip.text: qsTranslate("MainWindow", "导出 .kicad_mod 封装库文件")
-            indicator: Rectangle {
-                implicitWidth: AppStyle.sizes.checkbox
-                implicitHeight: AppStyle.sizes.checkbox
-                x: footprintCheckbox.leftPadding
-                y: parent.height / 2 - height / 2
-                radius: AppStyle.radius.xs
-                color: footprintCheckbox.checked ? AppStyle.colors.primary : "transparent"
-                border.color: footprintCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                border.width: AppStyle.borderWidths.normal
-                Text {
-                    anchors.centerIn: parent
-                    text: "✓"
-                    font.pixelSize: AppStyle.fontSizes.sm
-                    color: AppStyle.colors.textOnPrimary
-                    visible: footprintCheckbox.checked
-                }
-            }
-            contentItem: Text {
-                text: footprintCheckbox.text
-                font: footprintCheckbox.font
-                color: AppStyle.colors.textPrimary
-                verticalAlignment: Text.AlignVCenter
-                leftPadding: footprintCheckbox.indicator.width + footprintCheckbox.spacing
             }
         }
 
-        // 3D模型选项
         Flow {
             spacing: AppStyle.spacing.sm
-            CheckBox {
+            StyledCheckBox {
                 id: model3dCheckbox
                 text: qsTranslate("MainWindow", "3D模型")
+                ToolTip.text: qsTranslate("MainWindow", "导出 WRL/STEP 3D 模型文件")
                 checked: kiCadCard.exportSettingsController ? kiCadCard.exportSettingsController.exportModel3D : false
                 onCheckedChanged: {
-                    if (kiCadCard.exportSettingsController) {
+                    if (kiCadCard.exportSettingsController)
                         kiCadCard.exportSettingsController.setExportModel3D(checked);
-                    }
-                }
-                font.pixelSize: AppStyle.fontSizes.sm
-                ToolTip.visible: hovered
-                ToolTip.text: qsTranslate("MainWindow", "导出 WRL/STEP 3D 模型文件")
-                indicator: Rectangle {
-                    implicitWidth: AppStyle.sizes.checkbox
-                    implicitHeight: AppStyle.sizes.checkbox
-                    x: model3dCheckbox.leftPadding
-                    y: parent.height / 2 - height / 2
-                    radius: AppStyle.radius.xs
-                    color: model3dCheckbox.checked ? AppStyle.colors.primary : "transparent"
-                    border.color: model3dCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                    border.width: AppStyle.borderWidths.normal
-                    Text {
-                        anchors.centerIn: parent
-                        text: "✓"
-                        font.pixelSize: AppStyle.fontSizes.sm
-                        color: AppStyle.colors.textOnPrimary
-                        visible: model3dCheckbox.checked
-                    }
-                }
-                contentItem: Text {
-                    text: model3dCheckbox.text
-                    font: model3dCheckbox.font
-                    color: AppStyle.colors.textPrimary
-                    verticalAlignment: Text.AlignVCenter
-                    leftPadding: model3dCheckbox.indicator.width + model3dCheckbox.spacing
                 }
             }
 
@@ -143,65 +59,51 @@ ColumnLayout {
                 visible: model3dCheckbox.checked
                 spacing: AppStyle.spacing.xs
                 Rectangle {
-                    width: 46
-                    height: 26
-                    radius: AppStyle.radius.xs
+                    width: 46; height: 26; radius: AppStyle.radius.xs
                     property bool wrlActive: kiCadCard.exportSettingsController ? (kiCadCard.exportSettingsController.exportModel3DFormat & 1) !== 0 : false
                     color: wrlActive ? AppStyle.colors.primary : "transparent"
                     border.color: wrlActive ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                     border.width: AppStyle.borderWidths.normal
                     MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
+                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             var current = kiCadCard.exportSettingsController.exportModel3DFormat;
                             if ((current & 1) !== 0) {
                                 var newFormat = current & ~1;
-                                if (newFormat === 0) {
-                                    kiCadCard.exportSettingsController.setExportModel3D(false);
-                                } else {
-                                    kiCadCard.exportSettingsController.setExportModel3DFormat(newFormat);
-                                }
+                                if (newFormat === 0) kiCadCard.exportSettingsController.setExportModel3D(false);
+                                else kiCadCard.exportSettingsController.setExportModel3DFormat(newFormat);
                             } else {
                                 kiCadCard.exportSettingsController.setExportModel3DFormat(current | 1);
                             }
                         }
                     }
                     Text {
-                        anchors.centerIn: parent
-                        text: "WRL"
+                        anchors.centerIn: parent; text: "WRL"
                         font.pixelSize: AppStyle.fontSizes.xs
                         color: parent.wrlActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary
                     }
                 }
                 Rectangle {
-                    width: 50
-                    height: 26
-                    radius: AppStyle.radius.xs
+                    width: 50; height: 26; radius: AppStyle.radius.xs
                     property bool stepActive: kiCadCard.exportSettingsController ? (kiCadCard.exportSettingsController.exportModel3DFormat & 2) !== 0 : false
                     color: stepActive ? AppStyle.colors.primary : "transparent"
                     border.color: stepActive ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                     border.width: AppStyle.borderWidths.normal
                     MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
+                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             var current = kiCadCard.exportSettingsController.exportModel3DFormat;
                             if ((current & 2) !== 0) {
                                 var newFormat = current & ~2;
-                                if (newFormat === 0) {
-                                    kiCadCard.exportSettingsController.setExportModel3D(false);
-                                } else {
-                                    kiCadCard.exportSettingsController.setExportModel3DFormat(newFormat);
-                                }
+                                if (newFormat === 0) kiCadCard.exportSettingsController.setExportModel3D(false);
+                                else kiCadCard.exportSettingsController.setExportModel3DFormat(newFormat);
                             } else {
                                 kiCadCard.exportSettingsController.setExportModel3DFormat(current | 2);
                             }
                         }
                     }
                     Text {
-                        anchors.centerIn: parent
-                        text: "STEP"
+                        anchors.centerIn: parent; text: "STEP"
                         font.pixelSize: AppStyle.fontSizes.xs
                         color: parent.stepActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary
                     }
@@ -213,52 +115,22 @@ ColumnLayout {
                 visible: model3dCheckbox.checked
                 spacing: AppStyle.spacing.xs
                 Rectangle {
-                    width: 56
-                    height: 26
-                    radius: AppStyle.radius.xs
+                    width: 56; height: 26; radius: AppStyle.radius.xs
                     property bool isActive: kiCadCard.exportSettingsController ? kiCadCard.exportSettingsController.exportModel3DPathMode === 0 : true
                     color: isActive ? AppStyle.colors.primary : "transparent"
                     border.color: isActive ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                     border.width: AppStyle.borderWidths.normal
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (kiCadCard.exportSettingsController) {
-                                kiCadCard.exportSettingsController.setExportModel3DPathMode(0);
-                            }
-                        }
-                    }
-                    Text {
-                        anchors.centerIn: parent
-                        text: qsTranslate("MainWindow", "相对")
-                        font.pixelSize: AppStyle.fontSizes.xs
-                        color: parent.isActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary
-                    }
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { if (kiCadCard.exportSettingsController) kiCadCard.exportSettingsController.setExportModel3DPathMode(0); } }
+                    Text { anchors.centerIn: parent; text: qsTranslate("MainWindow", "相对"); font.pixelSize: AppStyle.fontSizes.xs; color: parent.isActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary }
                 }
                 Rectangle {
-                    width: 56
-                    height: 26
-                    radius: AppStyle.radius.xs
+                    width: 56; height: 26; radius: AppStyle.radius.xs
                     property bool isActive: kiCadCard.exportSettingsController ? kiCadCard.exportSettingsController.exportModel3DPathMode === 1 : false
                     color: isActive ? AppStyle.colors.primary : "transparent"
                     border.color: isActive ? AppStyle.colors.primary : AppStyle.colors.textSecondary
                     border.width: AppStyle.borderWidths.normal
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (kiCadCard.exportSettingsController) {
-                                kiCadCard.exportSettingsController.setExportModel3DPathMode(1);
-                            }
-                        }
-                    }
-                    Text {
-                        anchors.centerIn: parent
-                        text: qsTranslate("MainWindow", "绝对")
-                        font.pixelSize: AppStyle.fontSizes.xs
-                        color: parent.isActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary
-                    }
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { if (kiCadCard.exportSettingsController) kiCadCard.exportSettingsController.setExportModel3DPathMode(1); } }
+                    Text { anchors.centerIn: parent; text: qsTranslate("MainWindow", "绝对"); font.pixelSize: AppStyle.fontSizes.xs; color: parent.isActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textSecondary }
                 }
             }
         }
@@ -272,70 +144,28 @@ ColumnLayout {
         rowSpacing: AppStyle.spacing.md
 
         ColumnLayout {
-            Layout.fillWidth: true
-            spacing: AppStyle.spacing.xs
-            Text {
-                Layout.fillWidth: true
-                text: qsTranslate("MainWindow", "符号库描述")
-                font.pixelSize: AppStyle.fontSizes.sm
-                font.bold: true
-                color: AppStyle.colors.textPrimary
-                horizontalAlignment: Text.AlignHCenter
-            }
+            Layout.fillWidth: true; spacing: AppStyle.spacing.xs
+            Text { Layout.fillWidth: true; text: qsTranslate("MainWindow", "符号库描述"); font.pixelSize: AppStyle.fontSizes.sm; font.bold: true; color: AppStyle.colors.textPrimary; horizontalAlignment: Text.AlignHCenter }
             TextField {
-                id: symbolDescInput
-                Layout.fillWidth: true
-                Layout.preferredHeight: 36
+                id: symbolDescInput; Layout.fillWidth: true; Layout.preferredHeight: 36
                 text: kiCadCard.exportSettingsController ? kiCadCard.exportSettingsController.symbolLibraryDescription : ""
-                onTextChanged: {
-                    if (kiCadCard.exportSettingsController) {
-                        kiCadCard.exportSettingsController.setSymbolLibraryDescription(text);
-                    }
-                }
+                onTextChanged: { if (kiCadCard.exportSettingsController) kiCadCard.exportSettingsController.setSymbolLibraryDescription(text); }
                 placeholderText: qsTranslate("MainWindow", "输入符号库描述")
-                font.pixelSize: AppStyle.fontSizes.sm
-                color: AppStyle.colors.textPrimary
-                placeholderTextColor: AppStyle.colors.textSecondary
-                background: Rectangle {
-                    color: AppStyle.colors.surface
-                    border.color: symbolDescInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
-                    border.width: symbolDescInput.focus ? 2 : 1
-                    radius: AppStyle.radius.md
-                }
+                font.pixelSize: AppStyle.fontSizes.sm; color: AppStyle.colors.textPrimary; placeholderTextColor: AppStyle.colors.textSecondary
+                background: Rectangle { color: AppStyle.colors.surface; border.color: symbolDescInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border; border.width: symbolDescInput.focus ? 2 : 1; radius: AppStyle.radius.md }
             }
         }
 
         ColumnLayout {
-            Layout.fillWidth: true
-            spacing: AppStyle.spacing.xs
-            Text {
-                Layout.fillWidth: true
-                text: qsTranslate("MainWindow", "封装库描述")
-                font.pixelSize: AppStyle.fontSizes.sm
-                font.bold: true
-                color: AppStyle.colors.textPrimary
-                horizontalAlignment: Text.AlignHCenter
-            }
+            Layout.fillWidth: true; spacing: AppStyle.spacing.xs
+            Text { Layout.fillWidth: true; text: qsTranslate("MainWindow", "封装库描述"); font.pixelSize: AppStyle.fontSizes.sm; font.bold: true; color: AppStyle.colors.textPrimary; horizontalAlignment: Text.AlignHCenter }
             TextField {
-                id: footprintDescInput
-                Layout.fillWidth: true
-                Layout.preferredHeight: 36
+                id: footprintDescInput; Layout.fillWidth: true; Layout.preferredHeight: 36
                 text: kiCadCard.exportSettingsController ? kiCadCard.exportSettingsController.footprintLibraryDescription : ""
-                onTextChanged: {
-                    if (kiCadCard.exportSettingsController) {
-                        kiCadCard.exportSettingsController.setFootprintLibraryDescription(text);
-                    }
-                }
+                onTextChanged: { if (kiCadCard.exportSettingsController) kiCadCard.exportSettingsController.setFootprintLibraryDescription(text); }
                 placeholderText: qsTranslate("MainWindow", "输入封装库描述")
-                font.pixelSize: AppStyle.fontSizes.sm
-                color: AppStyle.colors.textPrimary
-                placeholderTextColor: AppStyle.colors.textSecondary
-                background: Rectangle {
-                    color: AppStyle.colors.surface
-                    border.color: footprintDescInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
-                    border.width: footprintDescInput.focus ? 2 : 1
-                    radius: AppStyle.radius.md
-                }
+                font.pixelSize: AppStyle.fontSizes.sm; color: AppStyle.colors.textPrimary; placeholderTextColor: AppStyle.colors.textSecondary
+                background: Rectangle { color: AppStyle.colors.surface; border.color: footprintDescInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border; border.width: footprintDescInput.focus ? 2 : 1; radius: AppStyle.radius.md }
             }
         }
     }

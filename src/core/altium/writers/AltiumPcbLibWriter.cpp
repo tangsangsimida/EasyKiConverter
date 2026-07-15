@@ -2,6 +2,7 @@
 
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumLayerMap.h"
+#include "utils/AltiumWriterUtils.h"
 
 #include <QRandomGenerator>
 #include <QtEndian>
@@ -10,12 +11,10 @@ namespace EasyKiConverter {
 
 /**
  * @brief 获取封装的 Section Key
+ * @details 委托给 AltiumWriterUtils::getSectionKey()
  */
 QString AltiumPcbLibWriter::getSectionKey(const QString& name) const {
-    if (name.isEmpty()) return "_";
-    QString key = name.left(31);
-    key.replace('/', '_');
-    return key;
+    return AltiumWriterUtils::getSectionKey(name);
 }
 
 /**

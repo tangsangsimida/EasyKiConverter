@@ -679,7 +679,7 @@ int main(int argc, char* argv[]) {
     EasyKiConverter::ThemeSettingsViewModel* themeSettingsViewModel = new EasyKiConverter::ThemeSettingsViewModel();
     EasyKiConverter::UpdateCheckerService* updateCheckerService = new EasyKiConverter::UpdateCheckerService();
     EasyKiConverter::ExportTargetModel* exportTargetModel = new EasyKiConverter::ExportTargetModel();
-    exportTargetModel->loadPlugins(":/resources/export_plugins.json");
+    exportTargetModel->loadPlugins(":/qt/qml/EasyKiconverter_Cpp_Version/src/resources/export_plugins.json");
     exportSettingsViewModel->setTargetModel(exportTargetModel);
 
     // 创建 QML 引擎
@@ -826,10 +826,10 @@ int main(int argc, char* argv[]) {
     themeSettingsViewModel = nullptr;
     delete exportProgressViewModel;
     exportProgressViewModel = nullptr;
-    delete exportSettingsViewModel;
-    exportSettingsViewModel = nullptr;
     delete exportTargetModel;
     exportTargetModel = nullptr;
+    delete exportSettingsViewModel;
+    exportSettingsViewModel = nullptr;
     delete componentListViewModel;
     componentListViewModel = nullptr;
 

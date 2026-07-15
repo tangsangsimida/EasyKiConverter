@@ -49,7 +49,6 @@ class ExportSettingsViewModel : public QObject {
     Q_PROPERTY(int maxDiskCacheLimitMB READ maxDiskCacheLimitMB CONSTANT)
     Q_PROPERTY(bool isExporting READ isExporting NOTIFY isExportingChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
-    Q_PROPERTY(int targetFormat READ targetFormat WRITE setTargetFormat NOTIFY targetFormatChanged)
 
 public:
     explicit ExportSettingsViewModel(ParallelExportService* exportService, QObject* parent = nullptr);
@@ -155,11 +154,6 @@ public:
         return m_status;
     }
 
-    /** @brief 获取目标格式（0=KiCad, 1=Altium） */
-    int targetFormat() const {
-        return m_targetFormat;
-    }
-
     // Setter 方法（标记为 Q_INVOKABLE 以便QML 中调用）
     Q_INVOKABLE void setOutputPath(const QString& path);
     Q_INVOKABLE void setLibName(const QString& name);
@@ -181,7 +175,6 @@ public:
     Q_INVOKABLE void setFootprintLibraryKeywords(const QString& keywords);
     Q_INVOKABLE void setCacheDir(const QString& path);
     Q_INVOKABLE void setDiskCacheLimitMB(int maxSizeMB);
-    Q_INVOKABLE void setTargetFormat(int format);
 
 public slots:
     Q_INVOKABLE void saveConfig();
@@ -213,7 +206,6 @@ signals:
     void diskCacheLimitMBChanged();
     void isExportingChanged();
     void statusChanged();
-    void targetFormatChanged();
     void preloadStarted();
     void exportStarted();
 
@@ -258,7 +250,6 @@ private:
     int m_diskCacheLimitMB;
     bool m_isExporting;
     QString m_status;
-    int m_targetFormat = 0;  // 0=KiCad, 1=Altium
     QStringList m_pendingComponentIds;
 };
 

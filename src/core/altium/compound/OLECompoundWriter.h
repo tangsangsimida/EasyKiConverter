@@ -116,20 +116,10 @@ private:
     void buildRedBlackTree();
     uint32_t buildChildTree(int parentIndex, const QVector<int>& children);
 
-    // ---- 扇区分配 ----
-    uint32_t allocateSector();
-    uint32_t allocateMiniSector();
-
     // ---- 数据写入 ----
     void serializeDirectoryEntry(const DirectoryEntry& entry, QByteArray& buffer) const;
     void serializeFileHeader(QByteArray& header) const;
     void finalize();
-
-    // ---- 序列化辅助 ----
-    void writeUInt16LE(QByteArray& buffer, uint16_t value) const;
-    void writeUInt32LE(QByteArray& buffer, uint32_t value) const;
-    void writeUInt64LE(QByteArray& buffer, uint64_t value) const;
-    void writeBytes(QByteArray& buffer, const uint8_t* data, int size) const;
 
     // ---- 内部状态 ----
     bool m_initialized = false;

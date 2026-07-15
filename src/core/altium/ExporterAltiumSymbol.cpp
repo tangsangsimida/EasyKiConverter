@@ -2,6 +2,7 @@
 
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumLayerMap.h"
+#include "utils/AltiumStringUtils.h"
 
 namespace EasyKiConverter {
 
@@ -29,53 +30,6 @@ bool ExporterAltiumSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         components.append(convertSymbol(symbol));
     }
     return m_writer.write(components, filePath, libName);
-}
-
-/**
- * @brief 解析 SVG 路径点字符串为 QPointF 列表
- * @details 点字符串格式：空格分隔的 "x,y" 对，如 "0,0 100,200 300,400"
- */
-static QList<QPointF> parsePointsString(const QString& pointsStr) {
-    QList<QPointF> result;
-    QStringList pairs = pointsStr.trimmed().split(' ', Qt::SkipEmptyParts);
-    for (const QString& pair : pairs) {
-        QStringList coords = pair.split(',');
-        if (coords.size() >= 2) {
-            bool ok1, ok2;
-            double x = coords[0].toDouble(&ok1);
-            double y = coords[1].toDouble(&ok2);
-            if (ok1 && ok2) {
-                result.append(QPointF(x, y));
-            }
-        }
-    }
-    return result;
-}
-
-/**
- * @brief 解析 SVG 路径命令为 QPointF 列表
- * @details 简化处理：提取路径中的所有坐标点
- */
-static QList<QPointF> parsePathString(const QString& pathStr) {
-    QList<QPointF> result;
-    // 简化：提取所有数字对
-    QString cleaned = pathStr;
-    // 将命令字母替换为空格
-    for (const QChar& c : QString("MmLlHhVvCcSsQqTtAaZz")) {
-        cleaned.replace(c, ' ');
-    }
-    // 将逗号替换为空格
-    cleaned.replace(',', ' ');
-    QStringList nums = cleaned.split(' ', Qt::SkipEmptyParts);
-    for (int i = 0; i + 1 < nums.size(); i += 2) {
-        bool ok1, ok2;
-        double x = nums[i].toDouble(&ok1);
-        double y = nums[i + 1].toDouble(&ok2);
-        if (ok1 && ok2) {
-            result.append(QPointF(x, y));
-        }
-    }
-    return result;
 }
 
 /**
@@ -207,7 +161,7 @@ AltiumSchPolygon ExporterAltiumSymbol::convertPolygon(const SymbolPolygon& polyg
     altiumPolygon.lineWidth = AltiumCoord::lineWidthToIndex(static_cast<int>(polygon.strokeWidth));
     altiumPolygon.isSolid = polygon.fillColor;
 
-    QList<QPointF> points = parsePointsString(polygon.points);
+    QList<QPointF> points = AltiumStringUtils::parsePointsString(polygon.points);
     for (const QPointF& point : points) {
         altiumPolygon.vertices.append(QPointF(
             AltiumCoord::toSchematicUnits(static_cast<int>(point.x())),
@@ -224,7 +178,7 @@ AltiumSchPolyline ExporterAltiumSymbol::convertPolyline(const SymbolPolyline& po
     AltiumSchPolyline altiumPolyline;
     altiumPolyline.lineWidth = AltiumCoord::lineWidthToIndex(static_cast<int>(polyline.strokeWidth));
 
-    QList<QPointF> points = parsePointsString(polyline.points);
+    QList<QPointF> points = AltiumStringUtils::parsePointsString(polyline.points);
     for (const QPointF& point : points) {
         altiumPolyline.vertices.append(QPointF(
             AltiumCoord::toSchematicUnits(static_cast<int>(point.x())),
@@ -242,7 +196,7 @@ AltiumSchPath ExporterAltiumSymbol::convertPath(const SymbolPath& path) {
     AltiumSchPath altiumPath;
     altiumPath.lineWidth = AltiumCoord::lineWidthToIndex(static_cast<int>(path.strokeWidth));
 
-    QList<QPointF> points = parsePathString(path.paths);
+    QList<QPointF> points = AltiumStringUtils::parsePathString(path.paths);
     for (const QPointF& point : points) {
         altiumPath.vertices.append(QPointF(
             AltiumCoord::toSchematicUnits(static_cast<int>(point.x())),

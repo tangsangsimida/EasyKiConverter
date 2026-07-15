@@ -66,8 +66,9 @@ private:
         QString optionsComponent; ///< QML 设置组件文件名
     };
 
-    QList<TargetInfo> m_targets;  ///< 可用目标列表
-    int m_currentIndex = 0;       ///< 当前选中索引
+    QList<TargetInfo> m_targets;         ///< 可用目标列表
+    QVariantList m_availableTargetsCache; ///< 可用目标列表缓存（避免每次调用重建）
+    int m_currentIndex = 0;              ///< 当前选中索引
 };
 
 }  // namespace EasyKiConverter

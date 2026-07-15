@@ -1,6 +1,6 @@
 #include "SymbolExportWorker.h"
 
-#include "../../core/kicad/ExporterSymbol.h"
+#include "../../core/ExporterFactory.h"
 #include "../../models/ComponentData.h"
 #include "DebugExportHelper.h"
 
@@ -68,8 +68,12 @@ void SymbolExportWorker::run() {
 
     // 执行符号导出
     try {
-        ExporterSymbol exporter;
-        bool success = exporter.exportSymbol(*m_data->symbolData(), filePath);
+        auto exporter = ExporterFactory::createSymbolExporter(m_options.targetFormat);
+        if (!exporter) {
+            emit completed(m_componentId, false, QStringLiteral("Failed to create symbol exporter"));
+            return;
+        }
+        bool success = exporter->exportSymbol(*m_data->symbolData(), filePath);
 
         if (m_cancelled.load()) {
             emit completed(m_componentId, false, QStringLiteral("Cancelled"));

@@ -2,6 +2,7 @@
 
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumLayerMap.h"
+#include "utils/AltiumWriterUtils.h"
 
 #include <QRandomGenerator>
 
@@ -9,13 +10,10 @@ namespace EasyKiConverter {
 
 /**
  * @brief 获取元件的 Section Key（存储键）
- * @details 截断到 31 字符，替换 '/' 为 '_'
+ * @details 委托给 AltiumWriterUtils::getSectionKey()
  */
 QString AltiumSchLibWriter::getSectionKey(const QString& name) const {
-    if (name.isEmpty()) return "_";
-    QString key = name.left(31);
-    key.replace('/', '_');
-    return key;
+    return AltiumWriterUtils::getSectionKey(name);
 }
 
 /**

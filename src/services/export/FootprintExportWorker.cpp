@@ -1,6 +1,6 @@
 #include "FootprintExportWorker.h"
 
-#include "../../core/kicad/ExporterFootprint.h"
+#include "../../core/ExporterFactory.h"
 #include "../../models/ComponentData.h"
 #include "DebugExportHelper.h"
 
@@ -68,9 +68,13 @@ void FootprintExportWorker::run() {
 
     // 执行封装导出
     try {
-        ExporterFootprint exporter;
+        auto exporter = ExporterFactory::createFootprintExporter(m_options.targetFormat);
+        if (!exporter) {
+            emit completed(m_componentId, false, QStringLiteral("Failed to create footprint exporter"));
+            return;
+        }
         // 3D模型路径为空字符串表示不导出3D模型
-        bool success = exporter.exportFootprint(*m_data->footprintData(), filePath, QString());
+        bool success = exporter->exportFootprint(*m_data->footprintData(), filePath, QString());
 
         if (m_cancelled.load()) {
             emit completed(m_componentId, false, QStringLiteral("Cancelled"));

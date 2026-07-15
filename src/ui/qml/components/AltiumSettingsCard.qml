@@ -19,124 +19,35 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: AppStyle.spacing.lg
 
-        // 符号库选项
-        CheckBox {
-            id: symbolCheckbox
+        StyledCheckBox {
             text: qsTranslate("MainWindow", "符号库 (.SchLib)")
+            ToolTip.text: qsTranslate("MainWindow", "导出 Altium .SchLib 符号库文件")
             checked: altiumCard.exportSettingsController ? altiumCard.exportSettingsController.exportSymbol : false
             onCheckedChanged: {
-                if (altiumCard.exportSettingsController) {
+                if (altiumCard.exportSettingsController)
                     altiumCard.exportSettingsController.setExportSymbol(checked);
-                }
-            }
-            font.pixelSize: AppStyle.fontSizes.sm
-            ToolTip.visible: hovered
-            ToolTip.text: qsTranslate("MainWindow", "导出 Altium .SchLib 符号库文件")
-            indicator: Rectangle {
-                implicitWidth: AppStyle.sizes.checkbox
-                implicitHeight: AppStyle.sizes.checkbox
-                x: symbolCheckbox.leftPadding
-                y: parent.height / 2 - height / 2
-                radius: AppStyle.radius.xs
-                color: symbolCheckbox.checked ? AppStyle.colors.primary : "transparent"
-                border.color: symbolCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                border.width: AppStyle.borderWidths.normal
-                Text {
-                    anchors.centerIn: parent
-                    text: "✓"
-                    font.pixelSize: AppStyle.fontSizes.sm
-                    color: AppStyle.colors.textOnPrimary
-                    visible: symbolCheckbox.checked
-                }
-            }
-            contentItem: Text {
-                text: symbolCheckbox.text
-                font: symbolCheckbox.font
-                color: AppStyle.colors.textPrimary
-                verticalAlignment: Text.AlignVCenter
-                leftPadding: symbolCheckbox.indicator.width + symbolCheckbox.spacing
             }
         }
 
-        // 封装库选项
-        CheckBox {
-            id: footprintCheckbox
+        StyledCheckBox {
             text: qsTranslate("MainWindow", "封装库 (.PcbLib)")
+            ToolTip.text: qsTranslate("MainWindow", "导出 Altium .PcbLib 封装库文件")
             checked: altiumCard.exportSettingsController ? altiumCard.exportSettingsController.exportFootprint : false
             onCheckedChanged: {
-                if (altiumCard.exportSettingsController) {
+                if (altiumCard.exportSettingsController)
                     altiumCard.exportSettingsController.setExportFootprint(checked);
-                }
-            }
-            font.pixelSize: AppStyle.fontSizes.sm
-            ToolTip.visible: hovered
-            ToolTip.text: qsTranslate("MainWindow", "导出 Altium .PcbLib 封装库文件")
-            indicator: Rectangle {
-                implicitWidth: AppStyle.sizes.checkbox
-                implicitHeight: AppStyle.sizes.checkbox
-                x: footprintCheckbox.leftPadding
-                y: parent.height / 2 - height / 2
-                radius: AppStyle.radius.xs
-                color: footprintCheckbox.checked ? AppStyle.colors.primary : "transparent"
-                border.color: footprintCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                border.width: AppStyle.borderWidths.normal
-                Text {
-                    anchors.centerIn: parent
-                    text: "✓"
-                    font.pixelSize: AppStyle.fontSizes.sm
-                    color: AppStyle.colors.textOnPrimary
-                    visible: footprintCheckbox.checked
-                }
-            }
-            contentItem: Text {
-                text: footprintCheckbox.text
-                font: footprintCheckbox.font
-                color: AppStyle.colors.textPrimary
-                verticalAlignment: Text.AlignVCenter
-                leftPadding: footprintCheckbox.indicator.width + footprintCheckbox.spacing
             }
         }
 
-        // 3D模型选项
-        CheckBox {
-            id: model3dCheckbox
+        StyledCheckBox {
             text: qsTranslate("MainWindow", "3D模型 (STEP)")
+            ToolTip.text: qsTranslate("MainWindow", "导出 STEP 格式 3D 模型")
             checked: altiumCard.exportSettingsController ? altiumCard.exportSettingsController.exportModel3D : false
             onCheckedChanged: {
                 if (altiumCard.exportSettingsController) {
                     altiumCard.exportSettingsController.setExportModel3D(checked);
-                    // Altium 优先使用 STEP 格式
-                    if (checked) {
-                        altiumCard.exportSettingsController.setExportModel3DFormat(2);  // STEP only
-                    }
+                    if (checked) altiumCard.exportSettingsController.setExportModel3DFormat(2);
                 }
-            }
-            font.pixelSize: AppStyle.fontSizes.sm
-            ToolTip.visible: hovered
-            ToolTip.text: qsTranslate("MainWindow", "导出 STEP 格式 3D 模型（Altium 原生支持）")
-            indicator: Rectangle {
-                implicitWidth: AppStyle.sizes.checkbox
-                implicitHeight: AppStyle.sizes.checkbox
-                x: model3dCheckbox.leftPadding
-                y: parent.height / 2 - height / 2
-                radius: AppStyle.radius.xs
-                color: model3dCheckbox.checked ? AppStyle.colors.primary : "transparent"
-                border.color: model3dCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                border.width: AppStyle.borderWidths.normal
-                Text {
-                    anchors.centerIn: parent
-                    text: "✓"
-                    font.pixelSize: AppStyle.fontSizes.sm
-                    color: AppStyle.colors.textOnPrimary
-                    visible: model3dCheckbox.checked
-                }
-            }
-            contentItem: Text {
-                text: model3dCheckbox.text
-                font: model3dCheckbox.font
-                color: AppStyle.colors.textPrimary
-                verticalAlignment: Text.AlignVCenter
-                leftPadding: model3dCheckbox.indicator.width + model3dCheckbox.spacing
             }
         }
     }

@@ -29,8 +29,8 @@ Card {
         anchors.margins: AppStyle.spacing.md
 
         // ==================== 目标格式选择 ====================
-        SectionHeader {
-            sectionTitle: qsTranslate("MainWindow", "目标格式")
+        SettingsSectionHeader {
+            title: qsTranslate("MainWindow", "目标格式")
         }
 
         RowLayout {
@@ -75,9 +75,9 @@ Card {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            if (baseCard.exportSettingsController) {
-                                // 只更新 ViewModel，由 ViewModel 同步 ExportTargetModel
-                                baseCard.exportSettingsController.setTargetFormat(index);
+                            // 唯一真相源：ExportTargetModel
+                            if (baseCard.exportTargetModel) {
+                                baseCard.exportTargetModel.currentIndex = index;
                             }
                         }
                     }
@@ -86,8 +86,8 @@ Card {
         }
 
         // ==================== 基础配置 ====================
-        SectionHeader {
-            sectionTitle: qsTranslate("MainWindow", "基础配置")
+        SettingsSectionHeader {
+            title: qsTranslate("MainWindow", "基础配置")
         }
 
         GridLayout {
@@ -181,8 +181,8 @@ Card {
         }
 
         // ==================== 缓存配置 ====================
-        SectionHeader {
-            sectionTitle: qsTranslate("MainWindow", "缓存配置")
+        SettingsSectionHeader {
+            title: qsTranslate("MainWindow", "缓存配置")
         }
 
         GridLayout {
@@ -282,31 +282,40 @@ Card {
         }
 
         // ==================== 目标特定设置（动态加载） ====================
-        SectionHeader {
-            sectionTitle: baseCard.exportTargetModel
+        SettingsSectionHeader {
+            title: baseCard.exportTargetModel
                         ? baseCard.exportTargetModel.currentDisplayName + qsTranslate("MainWindow", " 设置")
                         : qsTranslate("MainWindow", "导出选项")
         }
 
+        // 目标特定设置（动态加载，使用 Qt.createComponent 避免硬编码映射）
         Loader {
             id: targetOptionsLoader
             Layout.fillWidth: true
-            active: baseCard.exportTargetModel !== null && baseCard.exportTargetModel.currentOptionsComponent !== ""
-            sourceComponent: {
-                if (!baseCard.exportTargetModel) return null;
+            active: baseCard.exportTargetModel !== null
+                    && baseCard.exportTargetModel.currentOptionsComponent !== ""
+            source: {
+                if (!baseCard.exportTargetModel) return "";
                 var component = baseCard.exportTargetModel.currentOptionsComponent;
-                if (component === "KiCadSettingsCard.qml") return kiCadSettingsComponent;
-                if (component === "AltiumSettingsCard.qml") return altiumSettingsComponent;
-                return null;
+                if (!component) return "";
+                // 动态构建路径：与 export_plugins.json 中的 optionsComponent 对应
+                return "qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/components/" + component;
             }
 
-            // 淡入淡出动画
             onStatusChanged: {
-                if (status === Loader.Ready) {
+                if (status === Loader.Ready && item) {
                     item.opacity = 0;
                     fadeInAnimation.target = item;
                     fadeInAnimation.start();
                 }
+            }
+
+            // 将 exportSettingsController 传递给动态加载的子卡片
+            Binding {
+                target: targetOptionsLoader.item
+                property: "exportSettingsController"
+                value: baseCard.exportSettingsController
+                when: targetOptionsLoader.status === Loader.Ready
             }
         }
 
@@ -320,96 +329,38 @@ Card {
         }
 
         // ==================== 通用导出选项 ====================
-        SectionHeader {
-            sectionTitle: qsTranslate("MainWindow", "通用选项")
+        SettingsSectionHeader {
+            title: qsTranslate("MainWindow", "通用选项")
         }
 
         Flow {
             Layout.fillWidth: true
             spacing: AppStyle.spacing.lg
 
-            // 预览图
-            CheckBox {
-                id: previewCheckbox
+            StyledCheckBox {
                 text: qsTranslate("MainWindow", "预览图")
+                ToolTip.text: qsTranslate("MainWindow", "导出元件预览图")
                 checked: baseCard.exportSettingsController ? baseCard.exportSettingsController.exportPreviewImages : false
                 onCheckedChanged: {
-                    if (baseCard.exportSettingsController) {
+                    if (baseCard.exportSettingsController)
                         baseCard.exportSettingsController.setExportPreviewImages(checked);
-                    }
-                }
-                font.pixelSize: AppStyle.fontSizes.sm
-                ToolTip.visible: hovered
-                ToolTip.text: qsTranslate("MainWindow", "导出元件预览图")
-                indicator: Rectangle {
-                    implicitWidth: AppStyle.sizes.checkbox
-                    implicitHeight: AppStyle.sizes.checkbox
-                    x: previewCheckbox.leftPadding
-                    y: parent.height / 2 - height / 2
-                    radius: AppStyle.radius.xs
-                    color: previewCheckbox.checked ? AppStyle.colors.primary : "transparent"
-                    border.color: previewCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                    border.width: AppStyle.borderWidths.normal
-                    Text {
-                        anchors.centerIn: parent
-                        text: "✓"
-                        font.pixelSize: AppStyle.fontSizes.sm
-                        color: AppStyle.colors.textOnPrimary
-                        visible: previewCheckbox.checked
-                    }
-                }
-                contentItem: Text {
-                    text: previewCheckbox.text
-                    font: previewCheckbox.font
-                    color: AppStyle.colors.textPrimary
-                    verticalAlignment: Text.AlignVCenter
-                    leftPadding: previewCheckbox.indicator.width + previewCheckbox.spacing
                 }
             }
 
-            // 数据手册
-            CheckBox {
-                id: datasheetCheckbox
+            StyledCheckBox {
                 text: qsTranslate("MainWindow", "数据手册")
+                ToolTip.text: qsTranslate("MainWindow", "导出元件数据手册")
                 checked: baseCard.exportSettingsController ? baseCard.exportSettingsController.exportDatasheet : false
                 onCheckedChanged: {
-                    if (baseCard.exportSettingsController) {
+                    if (baseCard.exportSettingsController)
                         baseCard.exportSettingsController.setExportDatasheet(checked);
-                    }
-                }
-                font.pixelSize: AppStyle.fontSizes.sm
-                ToolTip.visible: hovered
-                ToolTip.text: qsTranslate("MainWindow", "导出元件数据手册")
-                indicator: Rectangle {
-                    implicitWidth: AppStyle.sizes.checkbox
-                    implicitHeight: AppStyle.sizes.checkbox
-                    x: datasheetCheckbox.leftPadding
-                    y: parent.height / 2 - height / 2
-                    radius: AppStyle.radius.xs
-                    color: datasheetCheckbox.checked ? AppStyle.colors.primary : "transparent"
-                    border.color: datasheetCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
-                    border.width: AppStyle.borderWidths.normal
-                    Text {
-                        anchors.centerIn: parent
-                        text: "✓"
-                        font.pixelSize: AppStyle.fontSizes.sm
-                        color: AppStyle.colors.textOnPrimary
-                        visible: datasheetCheckbox.checked
-                    }
-                }
-                contentItem: Text {
-                    text: datasheetCheckbox.text
-                    font: datasheetCheckbox.font
-                    color: AppStyle.colors.textPrimary
-                    verticalAlignment: Text.AlignVCenter
-                    leftPadding: datasheetCheckbox.indicator.width + datasheetCheckbox.spacing
                 }
             }
         }
 
         // ==================== 导出模式 ====================
-        SectionHeader {
-            sectionTitle: qsTranslate("MainWindow", "导出模式")
+        SettingsSectionHeader {
+            title: qsTranslate("MainWindow", "导出模式")
         }
 
         RowLayout {
@@ -489,43 +440,6 @@ Card {
                     leftPadding: updateModeRadio.indicator.width + updateModeRadio.spacing
                 }
             }
-        }
-    }
-
-    // ==================== 子卡片组件定义 ====================
-    // 使用 data 属性显式声明，避免被 default property 捕获到 contentLayout
-    data: [
-        Component {
-            id: kiCadSettingsComponent
-            KiCadSettingsCard {
-                exportSettingsController: baseCard.exportSettingsController
-            }
-        },
-        Component {
-            id: altiumSettingsComponent
-            AltiumSettingsCard {
-                exportSettingsController: baseCard.exportSettingsController
-            }
-        }
-    ]
-
-    // ==================== 内联 SectionHeader 组件 ====================
-    component SectionHeader: ColumnLayout {
-        property string sectionTitle
-        Layout.fillWidth: true
-        spacing: AppStyle.spacing.xs
-
-        Text {
-            Layout.fillWidth: true
-            text: sectionTitle
-            font.pixelSize: AppStyle.fontSizes.md
-            font.bold: true
-            color: AppStyle.colors.textPrimary
-        }
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: AppStyle.colors.border
         }
     }
 }

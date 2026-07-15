@@ -58,16 +58,7 @@ QString ExportTargetModel::currentOptionsComponent() const {
 }
 
 QVariantList ExportTargetModel::availableTargets() const {
-    QVariantList list;
-    for (const TargetInfo& info : m_targets) {
-        QVariantMap map;
-        map["id"] = info.id;
-        map["displayName"] = info.displayName;
-        map["icon"] = info.icon;
-        map["optionsComponent"] = info.optionsComponent;
-        list.append(map);
-    }
-    return list;
+    return m_availableTargetsCache;
 }
 
 /**
@@ -76,6 +67,7 @@ QVariantList ExportTargetModel::availableTargets() const {
 void ExportTargetModel::loadPlugins(const QString& configPath) {
     QFile file(configPath);
     if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "ExportTargetModel: Failed to open plugin config:" << configPath;
         return;
     }
 
@@ -84,6 +76,7 @@ void ExportTargetModel::loadPlugins(const QString& configPath) {
 
     QJsonDocument doc = QJsonDocument::fromJson(data);
     if (doc.isNull() || !doc.isObject()) {
+        qWarning() << "ExportTargetModel: Invalid JSON in plugin config:" << configPath;
         return;
     }
 
@@ -103,13 +96,28 @@ void ExportTargetModel::loadPlugins(const QString& configPath) {
         }
     }
 
+    // 重建缓存
+    m_availableTargetsCache.clear();
+    for (const TargetInfo& info : m_targets) {
+        QVariantMap map;
+        map["id"] = info.id;
+        map["displayName"] = info.displayName;
+        map["icon"] = info.icon;
+        map["optionsComponent"] = info.optionsComponent;
+        m_availableTargetsCache.append(map);
+    }
+
     // 确保索引有效
+    bool indexChanged = false;
     if (m_currentIndex >= m_targets.size()) {
         m_currentIndex = 0;
+        indexChanged = true;
     }
 
     emit availableTargetsChanged();
-    emit currentTargetChanged();
+    if (indexChanged) {
+        emit currentTargetChanged();
+    }
 }
 
 }  // namespace EasyKiConverter

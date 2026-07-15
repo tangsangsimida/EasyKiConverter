@@ -18,49 +18,24 @@ Item {
         // ==================== 目标格式选择 ====================
         SidebarSection {
             title: qsTranslate("MainWindow", "目标格式")
-            visible: root.exportTargetModel && root.exportTargetModel.availableTargets.length > 1
+            visible: root.exportTargetModel !== null && root.exportTargetModel !== undefined
 
-            RowLayout {
+            SidebarSegmentedControl {
                 Layout.fillWidth: true
-                spacing: AppStyle.spacing.xs
-
-                Repeater {
-                    model: root.exportTargetModel ? root.exportTargetModel.availableTargets : []
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 32
-                        radius: AppStyle.radius.sm
-                        property bool isActive: root.exportTargetModel
-                                                ? root.exportTargetModel.currentIndex === index
-                                                : false
-
-                        color: isActive ? AppStyle.colors.primary : "transparent"
-                        border.color: isActive ? AppStyle.colors.primary : AppStyle.colors.border
-                        border.width: 1
-
-                        Behavior on color {
-                            ColorAnimation { duration: AppStyle.durations.fast }
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: modelData.displayName || ""
-                            font.pixelSize: AppStyle.fontSizes.xs
-                            font.bold: parent.isActive
-                            color: parent.isActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textPrimary
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (root.exportSettingsController) {
-                                    // 只更新 ViewModel，由 ViewModel 同步 ExportTargetModel
-                                    root.exportSettingsController.setTargetFormat(index);
-                                }
-                            }
-                        }
+                label: ""
+                model: {
+                    if (!root.exportTargetModel) return [];
+                    var targets = root.exportTargetModel.availableTargets;
+                    var names = [];
+                    for (var i = 0; i < targets.length; i++) {
+                        names.push(targets[i].displayName);
+                    }
+                    return names;
+                }
+                currentIndex: root.exportTargetModel ? root.exportTargetModel.currentIndex : 0
+                onIndexChanged: function(idx) {
+                    if (root.exportTargetModel) {
+                        root.exportTargetModel.currentIndex = idx;
                     }
                 }
             }

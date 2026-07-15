@@ -2,53 +2,12 @@
 
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumLayerMap.h"
+#include "utils/AltiumStringUtils.h"
 
 #include <QFile>
 #include <QFileInfo>
 
 namespace EasyKiConverter {
-
-/**
- * @brief 解析空格分隔的 "x,y" 点字符串为 QPointF 列表
- */
-static QList<QPointF> parsePointsString(const QString& pointsStr) {
-    QList<QPointF> result;
-    QStringList pairs = pointsStr.trimmed().split(' ', Qt::SkipEmptyParts);
-    for (const QString& pair : pairs) {
-        QStringList coords = pair.split(',');
-        if (coords.size() >= 2) {
-            bool ok1, ok2;
-            double x = coords[0].toDouble(&ok1);
-            double y = coords[1].toDouble(&ok2);
-            if (ok1 && ok2) {
-                result.append(QPointF(x, y));
-            }
-        }
-    }
-    return result;
-}
-
-/**
- * @brief 解析 SVG 路径命令为 QPointF 列表
- */
-static QList<QPointF> parsePathString(const QString& pathStr) {
-    QList<QPointF> result;
-    QString cleaned = pathStr;
-    for (const QChar& c : QString("MmLlHhVvCcSsQqTtAaZz")) {
-        cleaned.replace(c, ' ');
-    }
-    cleaned.replace(',', ' ');
-    QStringList nums = cleaned.split(' ', Qt::SkipEmptyParts);
-    for (int i = 0; i + 1 < nums.size(); i += 2) {
-        bool ok1, ok2;
-        double x = nums[i].toDouble(&ok1);
-        double y = nums[i + 1].toDouble(&ok2);
-        if (ok1 && ok2) {
-            result.append(QPointF(x, y));
-        }
-    }
-    return result;
-}
 
 /**
  * @brief 导出单个封装
@@ -193,7 +152,7 @@ AltiumPcbTrack ExporterAltiumFootprint::convertTrack(const FootprintTrack& track
     altiumTrack.layer = static_cast<uint8_t>(track.layerId > 0 ? track.layerId : 1);
     altiumTrack.width = AltiumCoord::toPcbRaw(static_cast<int>(track.strokeWidth));
 
-    QList<QPointF> points = parsePointsString(track.points);
+    QList<QPointF> points = AltiumStringUtils::parsePointsString(track.points);
     if (points.size() >= 2) {
         altiumTrack.startX = AltiumCoord::toPcbRaw(static_cast<int>(points.first().x()));
         altiumTrack.startY = AltiumCoord::toPcbRaw(static_cast<int>(points.first().y()));
@@ -267,7 +226,7 @@ AltiumPcbRegion ExporterAltiumFootprint::convertSolidRegion(const FootprintSolid
     altiumRegion.layer = static_cast<uint8_t>(region.layerId > 0 ? region.layerId : 1);
     altiumRegion.isBoardCutout = region.isKeepOut;
 
-    QList<QPointF> points = parsePathString(region.path);
+    QList<QPointF> points = AltiumStringUtils::parsePathString(region.path);
     for (const QPointF& point : points) {
         altiumRegion.vertices.append(QPointF(
             static_cast<double>(AltiumCoord::toPcbRaw(static_cast<int>(point.x()))),

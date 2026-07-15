@@ -134,24 +134,6 @@ bool OLECompoundWriter::writeStream(const QString& name, const QByteArray& data)
 }
 
 /**
- * @brief 分配一个普通扇区，返回扇区号
- */
-uint32_t OLECompoundWriter::allocateSector() {
-    uint32_t sectorNum = static_cast<uint32_t>(m_dataSectors.size());
-    m_dataSectors.append(QByteArray(SECTOR_SIZE, 0));
-    return sectorNum;
-}
-
-/**
- * @brief 分配一个 Mini 扇区，返回 Mini 扇区号
- */
-uint32_t OLECompoundWriter::allocateMiniSector() {
-    uint32_t miniSectorNum = static_cast<uint32_t>(m_miniStream.size() / MINI_SECTOR_SIZE);
-    m_miniStream.append(QByteArray(MINI_SECTOR_SIZE, 0));
-    return miniSectorNum;
-}
-
-/**
  * @brief 将目录条目序列化为 128 字节
  */
 void OLECompoundWriter::serializeDirectoryEntry(const DirectoryEntry& entry,
@@ -615,27 +597,5 @@ bool OLECompoundWriter::saveToFile(const QString& filePath) {
 }
 
 // ---- 序列化辅助方法 ----
-
-void OLECompoundWriter::writeUInt16LE(QByteArray& buffer, uint16_t value) const {
-    buffer.append(static_cast<char>(value & 0xFF));
-    buffer.append(static_cast<char>((value >> 8) & 0xFF));
-}
-
-void OLECompoundWriter::writeUInt32LE(QByteArray& buffer, uint32_t value) const {
-    buffer.append(static_cast<char>(value & 0xFF));
-    buffer.append(static_cast<char>((value >> 8) & 0xFF));
-    buffer.append(static_cast<char>((value >> 16) & 0xFF));
-    buffer.append(static_cast<char>((value >> 24) & 0xFF));
-}
-
-void OLECompoundWriter::writeUInt64LE(QByteArray& buffer, uint64_t value) const {
-    for (int i = 0; i < 8; ++i) {
-        buffer.append(static_cast<char>((value >> (i * 8)) & 0xFF));
-    }
-}
-
-void OLECompoundWriter::writeBytes(QByteArray& buffer, const uint8_t* data, int size) const {
-    buffer.append(reinterpret_cast<const char*>(data), size);
-}
 
 }  // namespace EasyKiConverter

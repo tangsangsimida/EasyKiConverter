@@ -2,7 +2,7 @@
 
 #include "DebugExportHelper.h"
 #include "KiCadLibraryTableManager.h"
-#include "core/kicad/ExporterSymbol.h"
+#include "core/ExporterFactory.h"
 #include "models/ComponentData.h"
 
 #include <QDateTime>
@@ -262,9 +262,13 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     bool exportSuccess = false;
     QString libraryDescription = m_options.symbolLibraryDescription;
     {
-        ExporterSymbol exporter;
+        auto exporter = ExporterFactory::createSymbolExporter(m_options.targetFormat);
+        if (!exporter) {
+            abortExport(QStringLiteral("Failed to create symbol exporter for target format"));
+            return;
+        }
         bool appendMode = !m_options.overwriteExistingFiles;
-        exportSuccess = exporter.exportSymbolLibrary(
+        exportSuccess = exporter->exportSymbolLibrary(
             symbolList, libName, tempPath, appendMode, m_options.updateMode, libraryDescription);
     }
 
@@ -287,9 +291,8 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     }
     qDebug() << "SymbolExportStage: Successfully exported to:" << finalPath;
 
-    if (!libraryDescription.isEmpty()) {
-        ExporterSymbol symTableExporter;
-        symTableExporter.generateSymLibTable(libName, finalPath, outputDir, libraryDescription);
+    // KiCad 特有：生成 sym-lib-table 并注册库
+    if (m_options.targetFormat == TargetEdaFormat::KiCad && !libraryDescription.isEmpty()) {
         KiCadLibraryTableManager::registerSymbolLibrary(outputDir, libName, finalPath, libraryDescription);
     }
 

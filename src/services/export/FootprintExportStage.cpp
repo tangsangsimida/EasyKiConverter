@@ -1,8 +1,8 @@
 #include "FootprintExportStage.h"
 
 #include "KiCadLibraryTableManager.h"
+#include "core/ExporterFactory.h"
 #include "core/kicad/Exporter3DModel.h"
-#include "core/kicad/ExporterFootprint.h"
 #include "core/utils/GeometryUtils.h"
 #include "models/ComponentData.h"
 #include "services/ComponentCacheService.h"
@@ -427,6 +427,15 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
+    // 统一的中止导出 lambda（参照 SymbolExportStage 模式）
+    const auto abortExport = [&](const QString& errorMessage) {
+        qCritical() << "FootprintExportStage:" << errorMessage;
+        m_tempManager.rollbackAll();
+        m_isExporting.store(false);
+        m_isRunning.store(false);
+        emit completed(0, footprintList.size(), 0);
+    };
+
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
     QString dirName = libName + QStringLiteral(".pretty");
     QString outputDir = m_options.outputPath;
@@ -437,19 +446,13 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
     QDir dir;
     if (!dir.mkpath(outputDir)) {
-        qCritical() << "FootprintExportStage: Failed to create output directory:" << outputDir;
-        m_isExporting.store(false);
-        m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+        abortExport(QStringLiteral("Failed to create output directory: %1").arg(outputDir));
         return;
     }
 
     QString tempDirPath = m_tempManager.createTempDirectoryPath(dirName);
     if (tempDirPath.isEmpty()) {
-        qCritical() << "FootprintExportStage: Failed to create temp dir path";
-        m_isExporting.store(false);
-        m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+        abortExport(QStringLiteral("Failed to create temp dir path"));
         return;
     }
 
@@ -458,10 +461,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         QDir(finalDir).exists() && (!m_options.overwriteExistingFiles || m_options.updateMode || m_options.retryMode);
     if (preserveExistingFootprints) {
         if (!QDir().mkpath(tempDirPath)) {
-            qCritical() << "FootprintExportStage: Failed to create temp dir for merge:" << tempDirPath;
-            m_isExporting.store(false);
-            m_isRunning.store(false);
-            emit completed(0, footprintList.size(), 0);
+            abortExport(QStringLiteral("Failed to create temp dir for merge: %1").arg(tempDirPath));
             return;
         }
         const QStringList existingFiles = QDir(finalDir).entryList({"*.kicad_mod"}, QDir::Files);
@@ -478,53 +478,45 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     bool exportSuccess = false;
     QString libraryDescription = m_options.footprintLibraryDescription;
     {
-        ExporterFootprint exporter;
+        auto exporter = ExporterFactory::createFootprintExporter(m_options.targetFormat);
+        if (!exporter) {
+            abortExport(QStringLiteral("Failed to create footprint exporter for target format"));
+            return;
+        }
         const bool preferWrl = m_options.needsModel3DWrl();
         const bool exportStep = m_options.needsModel3DStep();
         QString libraryKeywords = m_options.footprintLibraryKeywords;
         exportSuccess =
-            exporter.exportFootprintLibrary(footprintList,
-                                            libName,
-                                            tempDirPath,
-                                            preferWrl,
-                                            exportStep,
-                                            libraryDescription,
-                                            libraryKeywords,
-                                            m_options.exportModel3DPathMode == ExportOptions::MODEL_3D_PATH_ABSOLUTE,
-                                            outputDir);
+            exporter->exportFootprintLibrary(footprintList,
+                                             libName,
+                                             tempDirPath,
+                                             preferWrl,
+                                             exportStep,
+                                             libraryDescription,
+                                             libraryKeywords,
+                                             m_options.exportModel3DPathMode == ExportOptions::MODEL_3D_PATH_ABSOLUTE,
+                                             outputDir);
     }
 
     if (m_cancelled.load()) {
-        m_tempManager.rollbackAll();
-        m_isExporting.store(false);
-        m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+        abortExport(QStringLiteral("Export cancelled"));
         return;
     }
 
     if (!exportSuccess) {
-        qCritical() << "FootprintExportStage: Failed to export footprint library";
-        m_tempManager.rollbackAll();
-        m_isExporting.store(false);
-        m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+        abortExport(QStringLiteral("Failed to export footprint library"));
         return;
     }
 
     if (m_tempManager.commitDirectoryWithBackup(tempDirPath, finalDir)) {
         qDebug() << "FootprintExportStage: Successfully exported to:" << finalDir;
     } else {
-        qCritical() << "FootprintExportStage: Failed to commit temp dir";
-        m_tempManager.rollbackAll();
-        m_isExporting.store(false);
-        m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+        abortExport(QStringLiteral("Failed to commit temp dir"));
         return;
     }
 
-    if (!libraryDescription.isEmpty()) {
-        ExporterFootprint fpTableExporter;
-        fpTableExporter.generateFpLibTable(libName, finalDir, outputDir, libraryDescription);
+    // KiCad 特有：生成 fp-lib-table 并注册库
+    if (m_options.targetFormat == TargetEdaFormat::KiCad && !libraryDescription.isEmpty()) {
         KiCadLibraryTableManager::registerFootprintLibrary(outputDir, libName, finalDir, libraryDescription);
     }
 
