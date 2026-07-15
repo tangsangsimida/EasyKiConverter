@@ -336,7 +336,7 @@ Card {
                         : qsTranslate("MainWindow", "导出选项")
         }
 
-        // 目标特定设置（动态加载，使用 Qt.createComponent 避免硬编码映射）
+        // 目标特定设置（动态加载）
         Loader {
             id: targetOptionsLoader
             Layout.fillWidth: true
@@ -346,15 +346,20 @@ Card {
                 if (!baseCard.exportTargetModel) return "";
                 var component = baseCard.exportTargetModel.currentOptionsComponent;
                 if (!component) return "";
-                // 动态构建路径：与 export_plugins.json 中的 optionsComponent 对应
-                return "qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/components/" + component;
+                var url = "qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/components/" + component;
+                console.log("ExportSettingsBaseCard: Loading component:", component, "URL:", url);
+                return url;
             }
 
             onStatusChanged: {
+                console.log("ExportSettingsBaseCard: Loader status:", status, "source:", source);
                 if (status === Loader.Ready && item) {
+                    console.log("ExportSettingsBaseCard: Component loaded successfully");
                     item.opacity = 0;
                     fadeInAnimation.target = item;
                     fadeInAnimation.start();
+                } else if (status === Loader.Error) {
+                    console.log("ExportSettingsBaseCard: Loader ERROR:", source);
                 }
             }
 

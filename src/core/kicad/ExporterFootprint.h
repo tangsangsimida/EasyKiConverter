@@ -72,16 +72,6 @@ public:
                                 bool useAbsolutePaths = false,
                                 const QString& model3DBaseDir = QString()) override;
 
-    /**
-     * @brief 生成 fp-lib-table 文件
-     *
-     * @param libName 库名称
-     * @param libDirPath 封装库目录路径（.pretty 目录）
-     * @param outputDir 输出目录
-     * @param libraryDescription 库描述
-     * @return bool 是否成功
-     */
-
 private:
     QString generateHeader(const QString& libName) const;
     QString buildModel3DPath(const QString& safeLibName,

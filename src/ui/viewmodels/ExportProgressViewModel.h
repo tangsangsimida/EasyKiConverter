@@ -159,7 +159,8 @@ public slots:
                      bool debugMode,
                      const QString& symbolLibraryDescription = QString(),
                      const QString& footprintLibraryDescription = QString(),
-                     const QString& footprintLibraryKeywords = QString());
+                     const QString& footprintLibraryKeywords = QString(),
+                     int targetFormat = 0);
     void cancelExport();
     void handleCloseRequest();
     void updateComponentExportStatus(const QString& componentId, int previewImageExported, int datasheetExported);

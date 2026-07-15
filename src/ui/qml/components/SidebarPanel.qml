@@ -230,6 +230,7 @@ Rectangle {
                     Layout.fillWidth: true
                     exportProgressController: root.progressController
                     exportSettingsController: root.settingsController
+                    exportTargetModel: root.targetModel
                     componentListController: root.listController
                 }
             }

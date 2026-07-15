@@ -51,16 +51,6 @@ public:
                              bool updateMode = false,
                              const QString& libraryDescription = QString()) override;
 
-    /**
-     * @brief 生成 sym-lib-table 文件
-     *
-     * @param libName 库名称
-     * @param libFilePath 符号库文件路径
-     * @param outputDir 输出目录
-     * @param libraryDescription 库描述
-     * @return bool 是否成功
-     */
-
 private:
     /**
      * @brief 生成 KiCad 符号库头部。

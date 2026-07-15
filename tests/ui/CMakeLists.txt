@@ -45,8 +45,6 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/AppStyle.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/ResponsiveHelper.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_BasicComponents.qml
-    # tst_ExportSettingsCard.qml 已废弃，由 ExportSettingsBaseCard 替代
-    # ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportSettingsCard.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportFlow.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportProgressCard.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportResultsCard.qml

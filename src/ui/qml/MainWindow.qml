@@ -715,6 +715,7 @@ Item {
                             sourceComponent: ExportButtonsSection {
                                 exportProgressController: window.exportProgressController
                                 exportSettingsController: window.exportSettingsController
+                                exportTargetModel: window.exportTargetController
                                 componentListController: window.componentListController
                             }
                         }

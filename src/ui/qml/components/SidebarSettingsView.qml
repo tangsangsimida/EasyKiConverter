@@ -463,6 +463,32 @@ Item {
             }
         }
 
+        // ==================== Altium 导出说明（仅 Altium 格式显示） ====================
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: altiumInfoText.implicitHeight + AppStyle.spacing.md * 2
+            radius: AppStyle.radius.sm
+            color: AppStyle.colors.surface
+            border.color: AppStyle.colors.border
+            border.width: 1
+            visible: root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1
+
+            Text {
+                id: altiumInfoText
+                anchors.fill: parent
+                anchors.margins: AppStyle.spacing.md
+                text: qsTranslate("MainWindow", "Altium 导出说明：\n"
+                                  + "- 符号库导出为 .SchLib 格式\n"
+                                  + "- 封装库导出为 .PcbLib 格式\n"
+                                  + "- 3D 模型以 STEP 格式嵌入封装\n"
+                                  + "- 生成的文件可直接在 Altium Designer 中打开")
+                font.pixelSize: AppStyle.fontSizes.xs
+                color: AppStyle.colors.textSecondary
+                wrapMode: Text.WordWrap
+                lineHeight: 1.4
+            }
+        }
+
         // ==================== 运行策略（滑块式导出模式选择） ====================
         SidebarSection {
             title: qsTranslate("MainWindow", "运行策略")
@@ -552,10 +578,11 @@ Item {
             }
         }
 
-        // ==================== 库信息（短窗口时自动隐藏） ====================
+        // ==================== 库信息（短窗口时自动隐藏，仅 KiCad 格式显示） ====================
         SidebarSection {
             title: qsTranslate("MainWindow", "库信息 (可选)")
             visible: !ResponsiveHelper.isShortWindow
+                    && (root.exportTargetModel === null || root.exportTargetModel.currentIndex === 0)
             SidebarTextField {
                 label: qsTranslate("MainWindow", "符号库描述")
                 text: root.exportSettingsController ? root.exportSettingsController.symbolLibraryDescription : ""
