@@ -336,49 +336,78 @@ Card {
                         : qsTranslate("MainWindow", "导出选项")
         }
 
-        // 目标特定设置（动态加载）
-        Loader {
-            id: targetOptionsLoader
+        // 目标特定设置（动态加载，带明显过渡动画）
+        Item {
+            id: targetOptionsContainer
             Layout.fillWidth: true
-            active: baseCard.exportTargetModel !== null
-                    && baseCard.exportTargetModel.currentOptionsComponent !== ""
-            source: {
-                if (!baseCard.exportTargetModel) return "";
-                var component = baseCard.exportTargetModel.currentOptionsComponent;
-                if (!component) return "";
-                var url = "qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/components/" + component;
-                console.log("ExportSettingsBaseCard: Loading component:", component, "URL:", url);
-                return url;
-            }
+            Layout.preferredHeight: targetOptionsLoader.item ? targetOptionsLoader.item.implicitHeight : 0
+            clip: true
 
-            onStatusChanged: {
-                console.log("ExportSettingsBaseCard: Loader status:", status, "source:", source);
-                if (status === Loader.Ready && item) {
-                    console.log("ExportSettingsBaseCard: Component loaded successfully");
-                    item.opacity = 0;
-                    fadeInAnimation.target = item;
-                    fadeInAnimation.start();
-                } else if (status === Loader.Error) {
-                    console.log("ExportSettingsBaseCard: Loader ERROR:", source);
+            Behavior on Layout.preferredHeight {
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.OutQuart
                 }
             }
 
-            // 将 exportSettingsController 传递给动态加载的子卡片
-            Binding {
-                target: targetOptionsLoader.item
-                property: "exportSettingsController"
-                value: baseCard.exportSettingsController
-                when: targetOptionsLoader.status === Loader.Ready
-            }
-        }
+            Loader {
+                id: targetOptionsLoader
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                active: baseCard.exportTargetModel !== null
+                        && baseCard.exportTargetModel.currentOptionsComponent !== ""
+                source: {
+                    if (!baseCard.exportTargetModel) return "";
+                    var component = baseCard.exportTargetModel.currentOptionsComponent;
+                    if (!component) return "";
+                    return "qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/components/" + component;
+                }
 
-        NumberAnimation {
-            id: fadeInAnimation
-            property: "opacity"
-            from: 0
-            to: 1
-            duration: AppStyle.durations.fast
-            easing.type: AppStyle.easings.easeOut
+                onStatusChanged: {
+                    if (status === Loader.Ready && item) {
+                        // 初始状态：透明 + 下移 + 轻微缩放
+                        item.opacity = 0;
+                        item.y = 20;
+                        item.scale = 0.97;
+
+                        // 启动入场动画
+                        enterAnimation.target = item;
+                        enterAnimation.start();
+                    }
+                }
+
+                Binding {
+                    target: targetOptionsLoader.item
+                    property: "exportSettingsController"
+                    value: baseCard.exportSettingsController
+                    when: targetOptionsLoader.status === Loader.Ready
+                }
+            }
+
+            // 入场动画：淡入 + 上滑 + 缩放恢复
+            ParallelAnimation {
+                id: enterAnimation
+
+                NumberAnimation {
+                    property: "opacity"
+                    from: 0; to: 1
+                    duration: 500
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    property: "y"
+                    from: 20; to: 0
+                    duration: 500
+                    easing.type: Easing.OutQuart
+                }
+                NumberAnimation {
+                    property: "scale"
+                    from: 0.97; to: 1.0
+                    duration: 500
+                    easing.type: Easing.OutQuart
+                }
+            }
         }
 
         // ==================== 通用导出选项 ====================

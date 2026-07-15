@@ -463,29 +463,55 @@ Item {
             }
         }
 
-        // ==================== Altium 导出说明（仅 Altium 格式显示） ====================
-        Rectangle {
+        // ==================== Altium 导出说明（仅 Altium 格式显示，带动画） ====================
+        Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: altiumInfoText.implicitHeight + AppStyle.spacing.md * 2
-            radius: AppStyle.radius.sm
-            color: AppStyle.colors.surface
-            border.color: AppStyle.colors.border
-            border.width: 1
-            visible: root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1
+            Layout.preferredHeight: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1)
+                                    ? altiumInfoBox.implicitHeight + AppStyle.spacing.md * 2 : 0
+            clip: true
 
-            Text {
-                id: altiumInfoText
-                anchors.fill: parent
-                anchors.margins: AppStyle.spacing.md
-                text: qsTranslate("MainWindow", "Altium 导出说明：\n"
-                                  + "- 符号库导出为 .SchLib 格式\n"
-                                  + "- 封装库导出为 .PcbLib 格式\n"
-                                  + "- 3D 模型以 STEP 格式嵌入封装\n"
-                                  + "- 生成的文件可直接在 Altium Designer 中打开")
-                font.pixelSize: AppStyle.fontSizes.xs
-                color: AppStyle.colors.textSecondary
-                wrapMode: Text.WordWrap
-                lineHeight: 1.4
+            Behavior on Layout.preferredHeight {
+                NumberAnimation { duration: 400; easing.type: Easing.OutQuart }
+            }
+
+            Rectangle {
+                id: altiumInfoBox
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                implicitHeight: altiumInfoText.implicitHeight + AppStyle.spacing.md * 2
+                radius: AppStyle.radius.sm
+                color: AppStyle.colors.surface
+                border.color: AppStyle.colors.border
+                border.width: 1
+                opacity: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? 1 : 0
+                scale: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? 1 : 0.97
+                y: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? 0 : 20
+
+                Behavior on opacity {
+                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    NumberAnimation { duration: 500; easing.type: Easing.OutQuart }
+                }
+                Behavior on y {
+                    NumberAnimation { duration: 500; easing.type: Easing.OutQuart }
+                }
+
+                Text {
+                    id: altiumInfoText
+                    anchors.fill: parent
+                    anchors.margins: AppStyle.spacing.md
+                    text: qsTranslate("MainWindow", "Altium 导出说明：\n"
+                                      + "- 符号库导出为 .SchLib 格式\n"
+                                      + "- 封装库导出为 .PcbLib 格式\n"
+                                      + "- 3D 模型以 STEP 格式嵌入封装\n"
+                                      + "- 生成的文件可直接在 Altium Designer 中打开")
+                    font.pixelSize: AppStyle.fontSizes.xs
+                    color: AppStyle.colors.textSecondary
+                    wrapMode: Text.WordWrap
+                    lineHeight: 1.4
+                }
             }
         }
 
