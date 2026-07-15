@@ -1,0 +1,531 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
+
+/**
+ * @brief 通用导出设置卡片
+ * @details 包含所有目标格式共享的设置项，以及目标格式切换下拉框。
+ *          目标特定的设置通过 Loader 动态加载对应子卡片组件。
+ */
+Card {
+    id: baseCard
+
+    /** @brief 导出设置控制器（ExportSettingsViewModel） */
+    property var exportSettingsController
+
+    /** @brief 导出目标模型（ExportTargetModel） */
+    property var exportTargetModel
+
+    signal openOutputFolderDialog
+    signal openCacheFolderDialog
+
+    title: qsTranslate("MainWindow", "导出设置")
+
+    ColumnLayout {
+        id: rootLayout
+        width: parent.width
+        spacing: AppStyle.spacing.lg
+        anchors.margins: AppStyle.spacing.md
+
+        // ==================== 目标格式选择 ====================
+        SectionHeader {
+            sectionTitle: qsTranslate("MainWindow", "目标格式")
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: AppStyle.spacing.md
+
+            Repeater {
+                model: baseCard.exportTargetModel ? baseCard.exportTargetModel.availableTargets : []
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 44
+                    radius: AppStyle.radius.md
+                    property bool isActive: baseCard.exportTargetModel
+                                            ? baseCard.exportTargetModel.currentIndex === index
+                                            : false
+
+                    color: isActive ? AppStyle.colors.primary : AppStyle.colors.surface
+                    border.color: isActive ? AppStyle.colors.primary : AppStyle.colors.border
+                    border.width: isActive ? 2 : 1
+
+                    Behavior on color {
+                        ColorAnimation { duration: AppStyle.durations.fast }
+                    }
+                    Behavior on border.color {
+                        ColorAnimation { duration: AppStyle.durations.fast }
+                    }
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: AppStyle.spacing.sm
+
+                        Text {
+                            text: modelData.displayName || ""
+                            font.pixelSize: AppStyle.fontSizes.sm
+                            font.bold: parent.parent.isActive
+                            color: parent.parent.isActive ? AppStyle.colors.textOnPrimary : AppStyle.colors.textPrimary
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (baseCard.exportSettingsController) {
+                                // 只更新 ViewModel，由 ViewModel 同步 ExportTargetModel
+                                baseCard.exportSettingsController.setTargetFormat(index);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ==================== 基础配置 ====================
+        SectionHeader {
+            sectionTitle: qsTranslate("MainWindow", "基础配置")
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: ResponsiveHelper.isCompact ? 1 : 2
+            columnSpacing: AppStyle.spacing.xl
+            rowSpacing: AppStyle.spacing.md
+
+            // 输出路径
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: AppStyle.spacing.xs
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTranslate("MainWindow", "输出路径")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    font.bold: true
+                    color: AppStyle.colors.textPrimary
+                    horizontalAlignment: Text.AlignHCenter
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: AppStyle.spacing.md
+                    TextField {
+                        id: outputPathInput
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 36
+                        text: baseCard.exportSettingsController ? baseCard.exportSettingsController.outputPath : ""
+                        onTextChanged: {
+                            if (baseCard.exportSettingsController) {
+                                baseCard.exportSettingsController.setOutputPath(text);
+                            }
+                        }
+                        placeholderText: qsTranslate("MainWindow", "选择输出目录")
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        color: AppStyle.colors.textPrimary
+                        placeholderTextColor: AppStyle.colors.textSecondary
+                        background: Rectangle {
+                            color: AppStyle.colors.surface
+                            border.color: outputPathInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                            border.width: outputPathInput.focus ? 2 : 1
+                            radius: AppStyle.radius.md
+                        }
+                    }
+                    ModernButton {
+                        text: qsTranslate("MainWindow", "浏览")
+                        iconName: "folder"
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        backgroundColor: AppStyle.colors.textSecondary
+                        hoverColor: AppStyle.colors.textPrimary
+                        pressedColor: AppStyle.colors.textPrimary
+                        onClicked: baseCard.openOutputFolderDialog()
+                    }
+                }
+            }
+
+            // 库名称
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: AppStyle.spacing.xs
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTranslate("MainWindow", "库名称")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    font.bold: true
+                    color: AppStyle.colors.textPrimary
+                    horizontalAlignment: Text.AlignHCenter
+                }
+                TextField {
+                    id: libNameInput
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    text: baseCard.exportSettingsController ? baseCard.exportSettingsController.libName : ""
+                    onTextChanged: {
+                        if (baseCard.exportSettingsController) {
+                            baseCard.exportSettingsController.setLibName(text);
+                        }
+                    }
+                    placeholderText: qsTranslate("MainWindow", "输入库名称")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    color: AppStyle.colors.textPrimary
+                    placeholderTextColor: AppStyle.colors.textSecondary
+                    background: Rectangle {
+                        color: AppStyle.colors.surface
+                        border.color: libNameInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                        border.width: libNameInput.focus ? 2 : 1
+                        radius: AppStyle.radius.md
+                    }
+                }
+            }
+        }
+
+        // ==================== 缓存配置 ====================
+        SectionHeader {
+            sectionTitle: qsTranslate("MainWindow", "缓存配置")
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: ResponsiveHelper.isCompact ? 1 : 2
+            columnSpacing: AppStyle.spacing.xl
+            rowSpacing: AppStyle.spacing.md
+
+            // 缓存目录
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: AppStyle.spacing.xs
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTranslate("MainWindow", "缓存目录")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    font.bold: true
+                    color: AppStyle.colors.textPrimary
+                    horizontalAlignment: Text.AlignHCenter
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: AppStyle.spacing.md
+                    TextField {
+                        id: cacheDirInput
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 36
+                        text: baseCard.exportSettingsController ? baseCard.exportSettingsController.cacheDir : ""
+                        onTextChanged: {
+                            if (baseCard.exportSettingsController) {
+                                baseCard.exportSettingsController.setCacheDir(text);
+                            }
+                        }
+                        placeholderText: qsTranslate("MainWindow", "默认缓存目录")
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        color: AppStyle.colors.textPrimary
+                        placeholderTextColor: AppStyle.colors.textSecondary
+                        background: Rectangle {
+                            color: AppStyle.colors.surface
+                            border.color: cacheDirInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                            border.width: cacheDirInput.focus ? 2 : 1
+                            radius: AppStyle.radius.md
+                        }
+                    }
+                    ModernButton {
+                        text: qsTranslate("MainWindow", "浏览")
+                        iconName: "folder"
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        backgroundColor: AppStyle.colors.textSecondary
+                        hoverColor: AppStyle.colors.textPrimary
+                        pressedColor: AppStyle.colors.textPrimary
+                        onClicked: baseCard.openCacheFolderDialog()
+                    }
+                }
+            }
+
+            // 磁盘缓存上限
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: AppStyle.spacing.xs
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTranslate("MainWindow", "磁盘缓存上限 (MB)")
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    font.bold: true
+                    color: AppStyle.colors.textPrimary
+                    horizontalAlignment: Text.AlignHCenter
+                }
+                TextField {
+                    id: diskCacheLimitInput
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    text: baseCard.exportSettingsController ? baseCard.exportSettingsController.diskCacheLimitMB : ""
+                    onTextChanged: {
+                        if (baseCard.exportSettingsController) {
+                            var val = parseInt(text);
+                            if (!isNaN(val)) {
+                                baseCard.exportSettingsController.setDiskCacheLimitMB(val);
+                            }
+                        }
+                    }
+                    validator: IntValidator {
+                        bottom: 1
+                        top: baseCard.exportSettingsController ? baseCard.exportSettingsController.maxDiskCacheLimitMB : 10240
+                    }
+                    font.pixelSize: AppStyle.fontSizes.sm
+                    color: AppStyle.colors.textPrimary
+                    placeholderTextColor: AppStyle.colors.textSecondary
+                    background: Rectangle {
+                        color: AppStyle.colors.surface
+                        border.color: diskCacheLimitInput.focus ? AppStyle.colors.borderFocus : AppStyle.colors.border
+                        border.width: diskCacheLimitInput.focus ? 2 : 1
+                        radius: AppStyle.radius.md
+                    }
+                }
+            }
+        }
+
+        // ==================== 目标特定设置（动态加载） ====================
+        SectionHeader {
+            sectionTitle: baseCard.exportTargetModel
+                        ? baseCard.exportTargetModel.currentDisplayName + qsTranslate("MainWindow", " 设置")
+                        : qsTranslate("MainWindow", "导出选项")
+        }
+
+        Loader {
+            id: targetOptionsLoader
+            Layout.fillWidth: true
+            active: baseCard.exportTargetModel !== null && baseCard.exportTargetModel.currentOptionsComponent !== ""
+            sourceComponent: {
+                if (!baseCard.exportTargetModel) return null;
+                var component = baseCard.exportTargetModel.currentOptionsComponent;
+                if (component === "KiCadSettingsCard.qml") return kiCadSettingsComponent;
+                if (component === "AltiumSettingsCard.qml") return altiumSettingsComponent;
+                return null;
+            }
+
+            // 淡入淡出动画
+            onStatusChanged: {
+                if (status === Loader.Ready) {
+                    item.opacity = 0;
+                    fadeInAnimation.target = item;
+                    fadeInAnimation.start();
+                }
+            }
+        }
+
+        NumberAnimation {
+            id: fadeInAnimation
+            property: "opacity"
+            from: 0
+            to: 1
+            duration: AppStyle.durations.fast
+            easing.type: AppStyle.easings.easeOut
+        }
+
+        // ==================== 通用导出选项 ====================
+        SectionHeader {
+            sectionTitle: qsTranslate("MainWindow", "通用选项")
+        }
+
+        Flow {
+            Layout.fillWidth: true
+            spacing: AppStyle.spacing.lg
+
+            // 预览图
+            CheckBox {
+                id: previewCheckbox
+                text: qsTranslate("MainWindow", "预览图")
+                checked: baseCard.exportSettingsController ? baseCard.exportSettingsController.exportPreviewImages : false
+                onCheckedChanged: {
+                    if (baseCard.exportSettingsController) {
+                        baseCard.exportSettingsController.setExportPreviewImages(checked);
+                    }
+                }
+                font.pixelSize: AppStyle.fontSizes.sm
+                ToolTip.visible: hovered
+                ToolTip.text: qsTranslate("MainWindow", "导出元件预览图")
+                indicator: Rectangle {
+                    implicitWidth: AppStyle.sizes.checkbox
+                    implicitHeight: AppStyle.sizes.checkbox
+                    x: previewCheckbox.leftPadding
+                    y: parent.height / 2 - height / 2
+                    radius: AppStyle.radius.xs
+                    color: previewCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                    border.color: previewCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                    border.width: AppStyle.borderWidths.normal
+                    Text {
+                        anchors.centerIn: parent
+                        text: "✓"
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        color: AppStyle.colors.textOnPrimary
+                        visible: previewCheckbox.checked
+                    }
+                }
+                contentItem: Text {
+                    text: previewCheckbox.text
+                    font: previewCheckbox.font
+                    color: AppStyle.colors.textPrimary
+                    verticalAlignment: Text.AlignVCenter
+                    leftPadding: previewCheckbox.indicator.width + previewCheckbox.spacing
+                }
+            }
+
+            // 数据手册
+            CheckBox {
+                id: datasheetCheckbox
+                text: qsTranslate("MainWindow", "数据手册")
+                checked: baseCard.exportSettingsController ? baseCard.exportSettingsController.exportDatasheet : false
+                onCheckedChanged: {
+                    if (baseCard.exportSettingsController) {
+                        baseCard.exportSettingsController.setExportDatasheet(checked);
+                    }
+                }
+                font.pixelSize: AppStyle.fontSizes.sm
+                ToolTip.visible: hovered
+                ToolTip.text: qsTranslate("MainWindow", "导出元件数据手册")
+                indicator: Rectangle {
+                    implicitWidth: AppStyle.sizes.checkbox
+                    implicitHeight: AppStyle.sizes.checkbox
+                    x: datasheetCheckbox.leftPadding
+                    y: parent.height / 2 - height / 2
+                    radius: AppStyle.radius.xs
+                    color: datasheetCheckbox.checked ? AppStyle.colors.primary : "transparent"
+                    border.color: datasheetCheckbox.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                    border.width: AppStyle.borderWidths.normal
+                    Text {
+                        anchors.centerIn: parent
+                        text: "✓"
+                        font.pixelSize: AppStyle.fontSizes.sm
+                        color: AppStyle.colors.textOnPrimary
+                        visible: datasheetCheckbox.checked
+                    }
+                }
+                contentItem: Text {
+                    text: datasheetCheckbox.text
+                    font: datasheetCheckbox.font
+                    color: AppStyle.colors.textPrimary
+                    verticalAlignment: Text.AlignVCenter
+                    leftPadding: datasheetCheckbox.indicator.width + datasheetCheckbox.spacing
+                }
+            }
+        }
+
+        // ==================== 导出模式 ====================
+        SectionHeader {
+            sectionTitle: qsTranslate("MainWindow", "导出模式")
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: AppStyle.spacing.xl
+
+            RadioButton {
+                id: appendModeRadio
+                text: qsTranslate("MainWindow", "追加模式")
+                checked: baseCard.exportSettingsController ? baseCard.exportSettingsController.exportMode === 0 : true
+                onCheckedChanged: {
+                    if (checked && baseCard.exportSettingsController) {
+                        baseCard.exportSettingsController.setExportMode(0);
+                    }
+                }
+                font.pixelSize: AppStyle.fontSizes.sm
+                indicator: Rectangle {
+                    implicitWidth: AppStyle.sizes.radioButton
+                    implicitHeight: AppStyle.sizes.radioButton
+                    x: appendModeRadio.leftPadding
+                    y: parent.height / 2 - height / 2
+                    radius: AppStyle.sizes.radioButton / 2
+                    color: "transparent"
+                    border.color: appendModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                    border.width: AppStyle.borderWidths.normal
+                    Rectangle {
+                        width: AppStyle.sizes.radioButtonIndicator
+                        height: AppStyle.sizes.radioButtonIndicator
+                        anchors.centerIn: parent
+                        radius: AppStyle.sizes.radioButtonIndicator / 2
+                        color: AppStyle.colors.primary
+                        visible: appendModeRadio.checked
+                    }
+                }
+                contentItem: Text {
+                    text: appendModeRadio.text
+                    font: appendModeRadio.font
+                    color: AppStyle.colors.textPrimary
+                    verticalAlignment: Text.AlignVCenter
+                    leftPadding: appendModeRadio.indicator.width + appendModeRadio.spacing
+                }
+            }
+
+            RadioButton {
+                id: updateModeRadio
+                text: qsTranslate("MainWindow", "更新模式")
+                checked: baseCard.exportSettingsController ? baseCard.exportSettingsController.exportMode === 1 : false
+                onCheckedChanged: {
+                    if (checked && baseCard.exportSettingsController) {
+                        baseCard.exportSettingsController.setExportMode(1);
+                    }
+                }
+                font.pixelSize: AppStyle.fontSizes.sm
+                indicator: Rectangle {
+                    implicitWidth: AppStyle.sizes.radioButton
+                    implicitHeight: AppStyle.sizes.radioButton
+                    x: updateModeRadio.leftPadding
+                    y: parent.height / 2 - height / 2
+                    radius: AppStyle.sizes.radioButton / 2
+                    color: "transparent"
+                    border.color: updateModeRadio.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
+                    border.width: AppStyle.borderWidths.normal
+                    Rectangle {
+                        width: AppStyle.sizes.radioButtonIndicator
+                        height: AppStyle.sizes.radioButtonIndicator
+                        anchors.centerIn: parent
+                        radius: AppStyle.sizes.radioButtonIndicator / 2
+                        color: AppStyle.colors.primary
+                        visible: updateModeRadio.checked
+                    }
+                }
+                contentItem: Text {
+                    text: updateModeRadio.text
+                    font: updateModeRadio.font
+                    color: AppStyle.colors.textPrimary
+                    verticalAlignment: Text.AlignVCenter
+                    leftPadding: updateModeRadio.indicator.width + updateModeRadio.spacing
+                }
+            }
+        }
+    }
+
+    // ==================== 子卡片组件定义 ====================
+    // 使用 data 属性显式声明，避免被 default property 捕获到 contentLayout
+    data: [
+        Component {
+            id: kiCadSettingsComponent
+            KiCadSettingsCard {
+                exportSettingsController: baseCard.exportSettingsController
+            }
+        },
+        Component {
+            id: altiumSettingsComponent
+            AltiumSettingsCard {
+                exportSettingsController: baseCard.exportSettingsController
+            }
+        }
+    ]
+
+    // ==================== 内联 SectionHeader 组件 ====================
+    component SectionHeader: ColumnLayout {
+        property string sectionTitle
+        Layout.fillWidth: true
+        spacing: AppStyle.spacing.xs
+
+        Text {
+            Layout.fillWidth: true
+            text: sectionTitle
+            font.pixelSize: AppStyle.fontSizes.md
+            font.bold: true
+            color: AppStyle.colors.textPrimary
+        }
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 1
+            color: AppStyle.colors.border
+        }
+    }
+}

@@ -198,6 +198,24 @@ void ExportSettingsViewModel::setDebugMode(bool enabled) {
     }
 }
 
+void ExportSettingsViewModel::setTargetFormat(int format) {
+    if (format < 0 || format > 1) {
+        return;
+    }
+    if (m_targetFormat != format) {
+        m_targetFormat = format;
+        // 同步更新 ExportTargetModel 的 currentIndex
+        if (m_targetModel) {
+            m_targetModel->setCurrentIndex(format);
+        }
+        emit targetFormatChanged();
+    }
+}
+
+void ExportSettingsViewModel::setTargetModel(ExportTargetModel* model) {
+    m_targetModel = model;
+}
+
 void ExportSettingsViewModel::setExportSymbolDescription(bool enabled) {
     if (m_exportSymbolDescription != enabled) {
         m_exportSymbolDescription = enabled;
@@ -339,8 +357,10 @@ void ExportSettingsViewModel::buildExportOptions() {
     options.symbolLibraryDescription = m_symbolLibraryDescription;
     options.footprintLibraryDescription = m_footprintLibraryDescription;
     options.footprintLibraryKeywords = m_footprintLibraryKeywords;
+    options.targetFormat = static_cast<TargetEdaFormat>(m_targetFormat);
 
     qInfo() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
+            << "TargetFormat:" << (m_targetFormat == 0 ? "KiCad" : "Altium")
             << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
             << "3D Model:" << options.exportModel3D << "3D Model Format:" << options.exportModel3DFormat
             << "(1=WRL, 2=STEP, 3=Both)" << "3D Model Path Mode:" << options.exportModel3DPathMode
