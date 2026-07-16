@@ -36,8 +36,7 @@ private:
     /**
      * @brief FootprintData → AltiumPcbComponent 转换
      */
-    AltiumPcbComponent convertFootprint(const FootprintData& data,
-                                         const QString& model3DPath = QString());
+    AltiumPcbComponent convertFootprint(const FootprintData& data, const QString& model3DPath = QString());
 
     /**
      * @brief FootprintPad → AltiumPcbPad 转换

@@ -17,19 +17,29 @@ namespace EasyKiConverter {
 namespace AltiumCoord {
 
 /** @brief 原始单位 → Altium PCB 原始单位（1:1 映射，无需转换） */
-constexpr int32_t toPcbRaw(int raw) { return static_cast<int32_t>(raw); }
+constexpr int32_t toPcbRaw(int raw) {
+    return static_cast<int32_t>(raw);
+}
 
 /** @brief 原始单位 → DXP 整数部分（SchLib 参数记录使用） */
-constexpr int16_t toDxpInt(int raw) { return static_cast<int16_t>(raw / 100000); }
+constexpr int16_t toDxpInt(int raw) {
+    return static_cast<int16_t>(raw / 100000);
+}
 
 /** @brief 原始单位 → DXP 小数部分（SchLib 参数记录使用） */
-constexpr int32_t toDxpFrac(int raw) { return raw % 100000; }
+constexpr int32_t toDxpFrac(int raw) {
+    return raw % 100000;
+}
 
 /** @brief 原始单位 → Schematic Units（多边形/折线顶点使用） */
-constexpr int32_t toSchematicUnits(int raw) { return raw / 1000; }
+constexpr int32_t toSchematicUnits(int raw) {
+    return raw / 1000;
+}
 
 /** @brief 原始单位 → mil 值 */
-constexpr double toMils(int raw) { return raw / 10000.0; }
+constexpr double toMils(int raw) {
+    return raw / 10000.0;
+}
 
 /** @brief 毫米 → Altium mil 字符串（如 "100mil"） */
 inline QString mmToMilString(double mm) {
@@ -48,9 +58,12 @@ inline QString rawToMilString(int raw) {
  */
 constexpr int lineWidthToIndex(int rawWidth) {
     double mils = rawWidth / 10000.0;
-    if (mils >= 5.0) return 3;
-    if (mils >= 3.0) return 2;
-    if (mils >= 1.5) return 1;
+    if (mils >= 5.0)
+        return 3;
+    if (mils >= 3.0)
+        return 2;
+    if (mils >= 1.5)
+        return 1;
     return 0;
 }
 

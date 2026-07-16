@@ -7,9 +7,7 @@ namespace EasyKiConverter {
 /**
  * @brief 构造函数
  */
-AltiumBinaryWriter::AltiumBinaryWriter(QByteArray& buffer)
-    : m_buffer(buffer) {
-}
+AltiumBinaryWriter::AltiumBinaryWriter(QByteArray& buffer) : m_buffer(buffer) {}
 
 void AltiumBinaryWriter::writeInt8(int8_t value) {
     m_buffer.append(static_cast<char>(value));
@@ -87,8 +85,7 @@ void AltiumBinaryWriter::endBlock() {
     uint8_t flags = static_cast<uint8_t>(m_buffer[blockStart]);
 
     // 回填大小：(flags << 24) | payload_size
-    uint32_t sizeHeader = (static_cast<uint32_t>(flags) << 24)
-                          | (static_cast<uint32_t>(payloadSize) & 0x00FFFFFF);
+    uint32_t sizeHeader = (static_cast<uint32_t>(flags) << 24) | (static_cast<uint32_t>(payloadSize) & 0x00FFFFFF);
     m_buffer[blockStart] = static_cast<char>(sizeHeader & 0xFF);
     m_buffer[blockStart + 1] = static_cast<char>((sizeHeader >> 8) & 0xFF);
     m_buffer[blockStart + 2] = static_cast<char>((sizeHeader >> 16) & 0xFF);

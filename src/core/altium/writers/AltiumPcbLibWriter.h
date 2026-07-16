@@ -1,7 +1,7 @@
 #pragma once
 
-#include "models/AltiumPcbComponent.h"
 #include "compound/OLECompoundWriter.h"
+#include "models/AltiumPcbComponent.h"
 #include "utils/AltiumBinaryWriter.h"
 
 #include <QList>
@@ -55,9 +55,11 @@ private:
     void writeRegion(AltiumBinaryWriter& writer, const AltiumPcbRegion& region, int componentIndex);
 
     // ---- 辅助 ----
-    void writeCommonPrimitiveHeader(AltiumBinaryWriter& writer, uint8_t layer,
-                                     uint16_t flags, uint16_t netIndex,
-                                     uint16_t componentIndex);
+    void writeCommonPrimitiveHeader(AltiumBinaryWriter& writer,
+                                    uint8_t layer,
+                                    uint16_t flags,
+                                    uint16_t netIndex,
+                                    uint16_t componentIndex);
     uint32_t toV7LayerId(uint8_t layer) const;
     int countPrimitives(const AltiumPcbComponent& component) const;
     QString getSectionKey(const QString& name) const;

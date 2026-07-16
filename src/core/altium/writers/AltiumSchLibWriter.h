@@ -1,7 +1,7 @@
 #pragma once
 
-#include "models/AltiumSchComponent.h"
 #include "compound/OLECompoundWriter.h"
+#include "models/AltiumSchComponent.h"
 #include "utils/AltiumBinaryWriter.h"
 
 #include <QList>
@@ -52,13 +52,15 @@ private:
     void writeEllipseRecord(AltiumBinaryWriter& writer, const AltiumSchEllipse& ellipse);
     void writePolylineRecord(AltiumBinaryWriter& writer, const AltiumSchPolyline& polyline);
     void writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text);
-    void writeImplementationRecords(AltiumBinaryWriter& writer,
-                                     const AltiumSchComponent& component);
+    void writeImplementationRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
 
     // ---- 辅助 ----
     QString getSectionKey(const QString& name) const;
-    int getOrAddFont(const QString& fontName, int fontSize,
-                     bool bold = false, bool italic = false, bool underline = false);
+    int getOrAddFont(const QString& fontName,
+                     int fontSize,
+                     bool bold = false,
+                     bool italic = false,
+                     bool underline = false);
     void addCoordParam(QMap<QString, QString>& params, const QString& key, int raw);
     void addColorParam(QMap<QString, QString>& params, const QString& key, uint32_t color);
     void addUniqueID(QMap<QString, QString>& params);

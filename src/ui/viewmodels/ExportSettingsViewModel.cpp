@@ -344,9 +344,8 @@ void ExportSettingsViewModel::buildExportOptions() {
     options.footprintLibraryDescription = m_footprintLibraryDescription;
     options.footprintLibraryKeywords = m_footprintLibraryKeywords;
     // 从 ExportTargetModel 读取目标格式（唯一真相源）
-    options.targetFormat = m_targetModel
-        ? static_cast<TargetEdaFormat>(m_targetModel->currentIndex())
-        : TargetEdaFormat::KiCad;
+    options.targetFormat =
+        m_targetModel ? static_cast<TargetEdaFormat>(m_targetModel->currentIndex()) : TargetEdaFormat::KiCad;
 
     qInfo() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
             << "TargetFormat:" << (options.targetFormat == TargetEdaFormat::Altium ? "Altium" : "KiCad")

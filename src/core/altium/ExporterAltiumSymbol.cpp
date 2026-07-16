@@ -9,8 +9,7 @@ namespace EasyKiConverter {
 /**
  * @brief 导出单个符号
  */
-bool ExporterAltiumSymbol::exportSymbol(const SymbolData& symbolData,
-                                         const QString& filePath) {
+bool ExporterAltiumSymbol::exportSymbol(const SymbolData& symbolData, const QString& filePath) {
     QList<AltiumSchComponent> components;
     components.append(convertSymbol(symbolData));
     return m_writer.write(components, filePath);
@@ -20,11 +19,11 @@ bool ExporterAltiumSymbol::exportSymbol(const SymbolData& symbolData,
  * @brief 导出符号库
  */
 bool ExporterAltiumSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
-                                                const QString& libName,
-                                                const QString& filePath,
-                                                bool appendMode,
-                                                bool updateMode,
-                                                const QString& libraryDescription) {
+                                               const QString& libName,
+                                               const QString& filePath,
+                                               bool appendMode,
+                                               bool updateMode,
+                                               const QString& libraryDescription) {
     QList<AltiumSchComponent> components;
     for (const SymbolData& symbol : symbols) {
         components.append(convertSymbol(symbol));
@@ -51,22 +50,37 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const SymbolData& data) {
     // 转换图形元素
     if (data.isMultiPart()) {
         const SymbolPart& part = data.parts().first();
-        for (const SymbolRectangle& r : part.rectangles) component.rectangles.append(convertRectangle(r));
-        for (const SymbolCircle& c : part.circles) component.ellipses.append(convertCircle(c));
-        for (const SymbolArc& a : part.arcs) component.arcs.append(convertArc(a));
-        for (const SymbolPolygon& p : part.polygons) component.polygons.append(convertPolygon(p));
-        for (const SymbolPolyline& p : part.polylines) component.polylines.append(convertPolyline(p));
-        for (const SymbolPath& p : part.paths) component.paths.append(convertPath(p));
-        for (const SymbolText& t : part.texts) component.texts.append(convertText(t));
+        for (const SymbolRectangle& r : part.rectangles)
+            component.rectangles.append(convertRectangle(r));
+        for (const SymbolCircle& c : part.circles)
+            component.ellipses.append(convertCircle(c));
+        for (const SymbolArc& a : part.arcs)
+            component.arcs.append(convertArc(a));
+        for (const SymbolPolygon& p : part.polygons)
+            component.polygons.append(convertPolygon(p));
+        for (const SymbolPolyline& p : part.polylines)
+            component.polylines.append(convertPolyline(p));
+        for (const SymbolPath& p : part.paths)
+            component.paths.append(convertPath(p));
+        for (const SymbolText& t : part.texts)
+            component.texts.append(convertText(t));
     } else {
-        for (const SymbolRectangle& r : data.rectangles()) component.rectangles.append(convertRectangle(r));
-        for (const SymbolCircle& c : data.circles()) component.ellipses.append(convertCircle(c));
-        for (const SymbolArc& a : data.arcs()) component.arcs.append(convertArc(a));
-        for (const SymbolPolygon& p : data.polygons()) component.polygons.append(convertPolygon(p));
-        for (const SymbolPolyline& p : data.polylines()) component.polylines.append(convertPolyline(p));
-        for (const SymbolPath& p : data.paths()) component.paths.append(convertPath(p));
-        for (const SymbolText& t : data.texts()) component.texts.append(convertText(t));
-        for (const SymbolEllipse& e : data.ellipses()) component.ellipses.append(convertEllipse(e));
+        for (const SymbolRectangle& r : data.rectangles())
+            component.rectangles.append(convertRectangle(r));
+        for (const SymbolCircle& c : data.circles())
+            component.ellipses.append(convertCircle(c));
+        for (const SymbolArc& a : data.arcs())
+            component.arcs.append(convertArc(a));
+        for (const SymbolPolygon& p : data.polygons())
+            component.polygons.append(convertPolygon(p));
+        for (const SymbolPolyline& p : data.polylines())
+            component.polylines.append(convertPolyline(p));
+        for (const SymbolPath& p : data.paths())
+            component.paths.append(convertPath(p));
+        for (const SymbolText& t : data.texts())
+            component.texts.append(convertText(t));
+        for (const SymbolEllipse& e : data.ellipses())
+            component.ellipses.append(convertEllipse(e));
     }
 
     // 添加封装链接
@@ -93,8 +107,8 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const SymbolPin& pin) {
     altiumPin.length = 100000;  // 默认 10mil
     altiumPin.electricalType = static_cast<AltiumModels::PinElectricalType>(
         AltiumLayerMap::toAltiumElectricalType(static_cast<int>(pin.settings.type)));
-    altiumPin.orientation = static_cast<AltiumModels::PinOrientation>(
-        AltiumLayerMap::toAltiumPinOrientation(pin.settings.rotation));
+    altiumPin.orientation =
+        static_cast<AltiumModels::PinOrientation>(AltiumLayerMap::toAltiumPinOrientation(pin.settings.rotation));
     altiumPin.showName = pin.settings.isDisplayed;
     altiumPin.showDesignator = pin.settings.isDisplayed;
     altiumPin.isHidden = !pin.settings.isDisplayed;
@@ -163,10 +177,8 @@ AltiumSchPolygon ExporterAltiumSymbol::convertPolygon(const SymbolPolygon& polyg
 
     QList<QPointF> points = AltiumStringUtils::parsePointsString(polygon.points);
     for (const QPointF& point : points) {
-        altiumPolygon.vertices.append(QPointF(
-            AltiumCoord::toSchematicUnits(static_cast<int>(point.x())),
-            AltiumCoord::toSchematicUnits(static_cast<int>(point.y()))
-        ));
+        altiumPolygon.vertices.append(QPointF(AltiumCoord::toSchematicUnits(static_cast<int>(point.x())),
+                                              AltiumCoord::toSchematicUnits(static_cast<int>(point.y()))));
     }
     return altiumPolygon;
 }
@@ -180,10 +192,8 @@ AltiumSchPolyline ExporterAltiumSymbol::convertPolyline(const SymbolPolyline& po
 
     QList<QPointF> points = AltiumStringUtils::parsePointsString(polyline.points);
     for (const QPointF& point : points) {
-        altiumPolyline.vertices.append(QPointF(
-            AltiumCoord::toSchematicUnits(static_cast<int>(point.x())),
-            AltiumCoord::toSchematicUnits(static_cast<int>(point.y()))
-        ));
+        altiumPolyline.vertices.append(QPointF(AltiumCoord::toSchematicUnits(static_cast<int>(point.x())),
+                                               AltiumCoord::toSchematicUnits(static_cast<int>(point.y()))));
     }
     return altiumPolyline;
 }
@@ -198,10 +208,8 @@ AltiumSchPath ExporterAltiumSymbol::convertPath(const SymbolPath& path) {
 
     QList<QPointF> points = AltiumStringUtils::parsePathString(path.paths);
     for (const QPointF& point : points) {
-        altiumPath.vertices.append(QPointF(
-            AltiumCoord::toSchematicUnits(static_cast<int>(point.x())),
-            AltiumCoord::toSchematicUnits(static_cast<int>(point.y()))
-        ));
+        altiumPath.vertices.append(QPointF(AltiumCoord::toSchematicUnits(static_cast<int>(point.x())),
+                                           AltiumCoord::toSchematicUnits(static_cast<int>(point.y()))));
     }
     return altiumPath;
 }

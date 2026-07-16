@@ -60,15 +60,15 @@ signals:
 private:
     /** @brief 目标信息结构 */
     struct TargetInfo {
-        QString id;               ///< 目标标识符
-        QString displayName;      ///< 显示名称
-        QString icon;             ///< 图标资源名
-        QString optionsComponent; ///< QML 设置组件文件名
+        QString id;  ///< 目标标识符
+        QString displayName;  ///< 显示名称
+        QString icon;  ///< 图标资源名
+        QString optionsComponent;  ///< QML 设置组件文件名
     };
 
-    QList<TargetInfo> m_targets;         ///< 可用目标列表
-    QVariantList m_availableTargetsCache; ///< 可用目标列表缓存（避免每次调用重建）
-    int m_currentIndex = 0;              ///< 当前选中索引
+    QList<TargetInfo> m_targets;  ///< 可用目标列表
+    QVariantList m_availableTargetsCache;  ///< 可用目标列表缓存（避免每次调用重建）
+    int m_currentIndex = 0;  ///< 当前选中索引
 };
 
 }  // namespace EasyKiConverter

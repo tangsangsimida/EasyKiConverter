@@ -13,8 +13,8 @@ namespace EasyKiConverter {
  * @brief 导出单个封装
  */
 bool ExporterAltiumFootprint::exportFootprint(const FootprintData& footprintData,
-                                               const QString& filePath,
-                                               const QString& model3DPath) {
+                                              const QString& filePath,
+                                              const QString& model3DPath) {
     QList<AltiumPcbComponent> components;
     components.append(convertFootprint(footprintData, model3DPath));
     return m_writer.write(components, filePath);
@@ -24,14 +24,14 @@ bool ExporterAltiumFootprint::exportFootprint(const FootprintData& footprintData
  * @brief 导出封装库
  */
 bool ExporterAltiumFootprint::exportFootprintLibrary(const QList<FootprintData>& footprints,
-                                                      const QString& libName,
-                                                      const QString& filePath,
-                                                      bool preferWrl,
-                                                      bool exportStep,
-                                                      const QString& libraryDescription,
-                                                      const QString& libraryKeywords,
-                                                      bool useAbsolutePaths,
-                                                      const QString& model3DBaseDir) {
+                                                     const QString& libName,
+                                                     const QString& filePath,
+                                                     bool preferWrl,
+                                                     bool exportStep,
+                                                     const QString& libraryDescription,
+                                                     const QString& libraryKeywords,
+                                                     bool useAbsolutePaths,
+                                                     const QString& model3DBaseDir) {
     QList<AltiumPcbComponent> components;
     for (const FootprintData& fp : footprints) {
         // 对于库级别导出，3D 模型路径在后续处理
@@ -43,8 +43,7 @@ bool ExporterAltiumFootprint::exportFootprintLibrary(const QList<FootprintData>&
 /**
  * @brief FootprintData → AltiumPcbComponent
  */
-AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const FootprintData& data,
-                                                              const QString& model3DPath) {
+AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const FootprintData& data, const QString& model3DPath) {
     AltiumPcbComponent component;
     component.name = data.info().name;
     component.description = data.info().description;
@@ -228,10 +227,8 @@ AltiumPcbRegion ExporterAltiumFootprint::convertSolidRegion(const FootprintSolid
 
     QList<QPointF> points = AltiumStringUtils::parsePathString(region.path);
     for (const QPointF& point : points) {
-        altiumRegion.vertices.append(QPointF(
-            static_cast<double>(AltiumCoord::toPcbRaw(static_cast<int>(point.x()))),
-            static_cast<double>(AltiumCoord::toPcbRaw(static_cast<int>(point.y())))
-        ));
+        altiumRegion.vertices.append(QPointF(static_cast<double>(AltiumCoord::toPcbRaw(static_cast<int>(point.x()))),
+                                             static_cast<double>(AltiumCoord::toPcbRaw(static_cast<int>(point.y())))));
     }
 
     return altiumRegion;

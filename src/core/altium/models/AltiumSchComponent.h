@@ -12,28 +12,28 @@ namespace EasyKiConverter {
  * @brief Altium 符号引脚
  */
 struct AltiumSchPin {
-    QString name;                           ///< 显示名称
-    QString designator;                     ///< 引脚编号
-    int locationX = 0;                      ///< X 坐标（原始单位）
-    int locationY = 0;                      ///< Y 坐标（原始单位）
-    int length = 100000;                    ///< 引脚长度（原始单位，默认 10mil）
+    QString name;  ///< 显示名称
+    QString designator;  ///< 引脚编号
+    int locationX = 0;  ///< X 坐标（原始单位）
+    int locationY = 0;  ///< Y 坐标（原始单位）
+    int length = 100000;  ///< 引脚长度（原始单位，默认 10mil）
     AltiumModels::PinElectricalType electricalType = AltiumModels::PinElectricalType::Passive;
     AltiumModels::PinOrientation orientation = AltiumModels::PinOrientation::Right;
     bool showName = true;
     bool showDesignator = true;
     bool isHidden = false;
-    uint32_t color = 0x000000;              ///< 颜色（0x00BBGGRR）
+    uint32_t color = 0x000000;  ///< 颜色（0x00BBGGRR）
 };
 
 /**
  * @brief Altium 符号矩形
  */
 struct AltiumSchRectangle {
-    int locationX = 0, locationY = 0;      ///< 左上角（原始单位）
-    int cornerX = 0, cornerY = 0;           ///< 右下角（原始单位）
-    int lineWidth = 0;                      ///< 线宽索引 (0-3)
+    int locationX = 0, locationY = 0;  ///< 左上角（原始单位）
+    int cornerX = 0, cornerY = 0;  ///< 右下角（原始单位）
+    int lineWidth = 0;  ///< 线宽索引 (0-3)
     uint32_t color = 0x000000;
-    uint32_t areaColor = 0xFFFFFF;          ///< 填充色
+    uint32_t areaColor = 0xFFFFFF;  ///< 填充色
     bool isSolid = true;
 };
 
@@ -41,8 +41,8 @@ struct AltiumSchRectangle {
  * @brief Altium 符号线段
  */
 struct AltiumSchLine {
-    int locationX = 0, locationY = 0;      ///< 起点
-    int cornerX = 0, cornerY = 0;           ///< 终点
+    int locationX = 0, locationY = 0;  ///< 起点
+    int cornerX = 0, cornerY = 0;  ///< 终点
     int lineWidth = 0;
     uint32_t color = 0x000000;
 };
@@ -51,10 +51,10 @@ struct AltiumSchLine {
  * @brief Altium 符号弧线
  */
 struct AltiumSchArc {
-    int centerX = 0, centerY = 0;           ///< 圆心（原始单位）
-    int radius = 0;                         ///< 半径（原始单位）
-    double startAngle = 0.0;                ///< 起始角度
-    double endAngle = 360.0;                ///< 结束角度
+    int centerX = 0, centerY = 0;  ///< 圆心（原始单位）
+    int radius = 0;  ///< 半径（原始单位）
+    double startAngle = 0.0;  ///< 起始角度
+    double endAngle = 360.0;  ///< 结束角度
     int lineWidth = 0;
     uint32_t color = 0x000000;
 };
@@ -63,7 +63,7 @@ struct AltiumSchArc {
  * @brief Altium 符号多边形
  */
 struct AltiumSchPolygon {
-    QList<QPointF> vertices;                ///< 顶点列表（Schematic Units）
+    QList<QPointF> vertices;  ///< 顶点列表（Schematic Units）
     int lineWidth = 0;
     uint32_t color = 0x000000;
     uint32_t areaColor = 0xFFFFFF;
@@ -75,7 +75,7 @@ struct AltiumSchPolygon {
  */
 struct AltiumSchEllipse {
     int centerX = 0, centerY = 0;
-    int radiusX = 0, radiusY = 0;           ///< X/Y 半径（原始单位）
+    int radiusX = 0, radiusY = 0;  ///< X/Y 半径（原始单位）
     int lineWidth = 0;
     uint32_t color = 0x000000;
     uint32_t areaColor = 0xFFFFFF;
@@ -86,7 +86,7 @@ struct AltiumSchEllipse {
  * @brief Altium 符号折线
  */
 struct AltiumSchPolyline {
-    QList<QPointF> vertices;                ///< 顶点列表（Schematic Units）
+    QList<QPointF> vertices;  ///< 顶点列表（Schematic Units）
     int lineWidth = 0;
     uint32_t color = 0x000000;
 };
@@ -95,7 +95,7 @@ struct AltiumSchPolyline {
  * @brief Altium 符号路径
  */
 struct AltiumSchPath {
-    QList<QPointF> vertices;                ///< 路径顶点（Schematic Units）
+    QList<QPointF> vertices;  ///< 路径顶点（Schematic Units）
     int lineWidth = 0;
     uint32_t color = 0x000000;
 };
@@ -109,7 +109,7 @@ struct AltiumSchText {
     int fontId = 1;
     uint32_t color = 0x000000;
     bool isHidden = false;
-    int orientation = 0;                    ///< 0-3，表示 0°/90°/180°/270°
+    int orientation = 0;  ///< 0-3，表示 0°/90°/180°/270°
 };
 
 /**
@@ -117,10 +117,10 @@ struct AltiumSchText {
  * @details 对应 AltiumSharp SchComponent，包含所有图元和引脚
  */
 struct AltiumSchComponent {
-    QString name;                           ///< 元件名称（LibReference）
-    QString description;                    ///< 元件描述
-    QString designatorPrefix = "?";         ///< 位号前缀（如 "R", "C", "U"）
-    int partCount = 1;                      ///< 部件数量
+    QString name;  ///< 元件名称（LibReference）
+    QString description;  ///< 元件描述
+    QString designatorPrefix = "?";  ///< 位号前缀（如 "R", "C", "U"）
+    int partCount = 1;  ///< 部件数量
 
     QList<AltiumSchPin> pins;
     QList<AltiumSchRectangle> rectangles;
@@ -134,9 +134,10 @@ struct AltiumSchComponent {
 
     /** @brief 封装链接（实现记录） */
     struct Implementation {
-        QString modelName;                  ///< 封装名称
-        QString modelType = "PCBLIB";       ///< 模型类型
+        QString modelName;  ///< 封装名称
+        QString modelType = "PCBLIB";  ///< 模型类型
     };
+
     QList<Implementation> implementations;
 };
 

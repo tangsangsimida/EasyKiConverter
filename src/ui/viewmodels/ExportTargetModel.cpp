@@ -10,9 +10,7 @@ namespace EasyKiConverter {
 /**
  * @brief 构造函数
  */
-ExportTargetModel::ExportTargetModel(QObject* parent)
-    : QObject(parent) {
-}
+ExportTargetModel::ExportTargetModel(QObject* parent) : QObject(parent) {}
 
 int ExportTargetModel::currentIndex() const {
     return m_currentIndex;

@@ -481,7 +481,8 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     // KiCad: 追加/更新封装库时，先将已有 .kicad_mod 复制到临时目录
     if (!isAltium) {
         const bool preserveExistingFootprints =
-            QDir(finalPath).exists() && (!m_options.overwriteExistingFiles || m_options.updateMode || m_options.retryMode);
+            QDir(finalPath).exists() &&
+            (!m_options.overwriteExistingFiles || m_options.updateMode || m_options.retryMode);
         if (preserveExistingFootprints) {
             if (!QDir().mkpath(tempPath)) {
                 abortExport(QStringLiteral("Failed to create temp dir for merge: %1").arg(tempPath));
@@ -498,8 +499,8 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     }
 
     qDebug() << "FootprintExportStage: Exporting" << footprintList.size() << "footprints to temp:" << tempPath;
-    qDebug() << "FootprintExportStage: targetFormat:" << static_cast<int>(m_options.targetFormat)
-             << "(" << (m_options.targetFormat == TargetEdaFormat::Altium ? "Altium" : "KiCad") << ")";
+    qDebug() << "FootprintExportStage: targetFormat:" << static_cast<int>(m_options.targetFormat) << "("
+             << (m_options.targetFormat == TargetEdaFormat::Altium ? "Altium" : "KiCad") << ")";
 
     bool exportSuccess = false;
     QString libraryDescription = m_options.footprintLibraryDescription;

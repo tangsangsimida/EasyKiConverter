@@ -10,10 +10,8 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
  */
 CheckBox {
     id: control
-
     font.pixelSize: AppStyle.fontSizes.sm
     ToolTip.visible: hovered && ToolTip.text !== ""
-
     indicator: Rectangle {
         implicitWidth: AppStyle.sizes.checkbox
         implicitHeight: AppStyle.sizes.checkbox
@@ -23,7 +21,6 @@ CheckBox {
         color: control.checked ? AppStyle.colors.primary : "transparent"
         border.color: control.checked ? AppStyle.colors.primary : AppStyle.colors.textSecondary
         border.width: AppStyle.borderWidths.normal
-
         Text {
             anchors.centerIn: parent
             text: "✓"

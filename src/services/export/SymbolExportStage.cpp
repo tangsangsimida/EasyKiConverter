@@ -186,9 +186,8 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
     // 根据目标格式选择文件扩展名
-    const QString fileExt = (m_options.targetFormat == TargetEdaFormat::Altium)
-                                ? QStringLiteral(".SchLib")
-                                : QStringLiteral(".kicad_sym");
+    const QString fileExt =
+        (m_options.targetFormat == TargetEdaFormat::Altium) ? QStringLiteral(".SchLib") : QStringLiteral(".kicad_sym");
     QString fileName = libName + fileExt;
     QString outputDir = m_options.outputPath;
     if (outputDir.isEmpty()) {
@@ -262,8 +261,8 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     }
 
     qDebug() << "SymbolExportStage: Exporting" << symbolList.size() << "symbols to temp:" << tempPath;
-    qDebug() << "SymbolExportStage: targetFormat:" << static_cast<int>(m_options.targetFormat)
-             << "(" << (m_options.targetFormat == TargetEdaFormat::Altium ? "Altium" : "KiCad") << ")";
+    qDebug() << "SymbolExportStage: targetFormat:" << static_cast<int>(m_options.targetFormat) << "("
+             << (m_options.targetFormat == TargetEdaFormat::Altium ? "Altium" : "KiCad") << ")";
 
     bool exportSuccess = false;
     QString libraryDescription = m_options.symbolLibraryDescription;

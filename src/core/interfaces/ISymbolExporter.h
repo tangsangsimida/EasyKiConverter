@@ -1,9 +1,9 @@
 #pragma once
 
+#include "models/SymbolData.h"
+
 #include <QList>
 #include <QString>
-
-#include "models/SymbolData.h"
 
 namespace EasyKiConverter {
 

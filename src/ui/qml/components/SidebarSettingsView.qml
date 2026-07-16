@@ -14,13 +14,11 @@ Item {
         id: mainColumn
         width: parent.width
         spacing: AppStyle.spacing.lg
-
         // ==================== 目标格式选择 ====================
         ColumnLayout {
             Layout.fillWidth: true
             spacing: AppStyle.spacing.sm
             visible: root.exportTargetModel !== null && root.exportTargetModel !== undefined
-
             Text {
                 text: qsTranslate("MainWindow", "目标格式")
                 font.pixelSize: AppStyle.fontSizes.sm
@@ -31,31 +29,32 @@ Item {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: AppStyle.spacing.sm
-
                 Repeater {
                     model: root.exportTargetModel ? root.exportTargetModel.availableTargets : []
-
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 52
                         radius: AppStyle.radius.md
-                        property bool isActive: root.exportTargetModel
-                                                ? root.exportTargetModel.currentIndex === index
-                                                : false
+                        property bool isActive: root.exportTargetModel ? root.exportTargetModel.currentIndex === index : false
                         property string targetId: modelData.id || ""
-
                         color: isActive ? Qt.rgba(AppStyle.colors.primary.r, AppStyle.colors.primary.g, AppStyle.colors.primary.b, 0.12) : AppStyle.colors.surface
                         border.color: isActive ? AppStyle.colors.primary : AppStyle.colors.border
                         border.width: isActive ? 2 : 1
-
-                        Behavior on color { ColorAnimation { duration: AppStyle.durations.fast } }
-                        Behavior on border.color { ColorAnimation { duration: AppStyle.durations.fast } }
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: AppStyle.durations.fast
+                            }
+                        }
+                        Behavior on border.color {
+                            ColorAnimation {
+                                duration: AppStyle.durations.fast
+                            }
+                        }
 
                         ColumnLayout {
                             anchors.fill: parent
                             anchors.margins: AppStyle.spacing.sm
                             spacing: 1
-
                             Text {
                                 text: modelData.displayName || ""
                                 font.pixelSize: AppStyle.fontSizes.xs
@@ -66,8 +65,10 @@ Item {
 
                             Text {
                                 text: {
-                                    if (targetId === "kicad") return ".kicad_sym";
-                                    if (targetId === "altium") return ".SchLib";
+                                    if (targetId === "kicad")
+                                        return ".kicad_sym";
+                                    if (targetId === "altium")
+                                        return ".SchLib";
                                     return "";
                                 }
                                 font.pixelSize: 9
@@ -466,12 +467,13 @@ Item {
         // ==================== Altium 导出说明（仅 Altium 格式显示，带动画） ====================
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1)
-                                    ? altiumInfoBox.implicitHeight + AppStyle.spacing.md * 2 : 0
+            Layout.preferredHeight: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? altiumInfoBox.implicitHeight + AppStyle.spacing.md * 2 : 0
             clip: true
-
             Behavior on Layout.preferredHeight {
-                NumberAnimation { duration: 400; easing.type: Easing.OutQuart }
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.OutQuart
+                }
             }
 
             Rectangle {
@@ -487,26 +489,30 @@ Item {
                 opacity: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? 1 : 0
                 scale: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? 1 : 0.97
                 y: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? 0 : 20
-
                 Behavior on opacity {
-                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutCubic
+                    }
                 }
                 Behavior on scale {
-                    NumberAnimation { duration: 500; easing.type: Easing.OutQuart }
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutQuart
+                    }
                 }
                 Behavior on y {
-                    NumberAnimation { duration: 500; easing.type: Easing.OutQuart }
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutQuart
+                    }
                 }
 
                 Text {
                     id: altiumInfoText
                     anchors.fill: parent
                     anchors.margins: AppStyle.spacing.md
-                    text: qsTranslate("MainWindow", "Altium 导出说明：\n"
-                                      + "- 符号库导出为 .SchLib 格式\n"
-                                      + "- 封装库导出为 .PcbLib 格式\n"
-                                      + "- 3D 模型以 STEP 格式嵌入封装\n"
-                                      + "- 生成的文件可直接在 Altium Designer 中打开")
+                    text: qsTranslate("MainWindow", "Altium 导出说明：\n" + "- 符号库导出为 .SchLib 格式\n" + "- 封装库导出为 .PcbLib 格式\n" + "- 3D 模型以 STEP 格式嵌入封装\n" + "- 生成的文件可直接在 Altium Designer 中打开")
                     font.pixelSize: AppStyle.fontSizes.xs
                     color: AppStyle.colors.textSecondary
                     wrapMode: Text.WordWrap
@@ -607,8 +613,7 @@ Item {
         // ==================== 库信息（短窗口时自动隐藏，仅 KiCad 格式显示） ====================
         SidebarSection {
             title: qsTranslate("MainWindow", "库信息 (可选)")
-            visible: !ResponsiveHelper.isShortWindow
-                    && (root.exportTargetModel === null || root.exportTargetModel.currentIndex === 0)
+            visible: !ResponsiveHelper.isShortWindow && (root.exportTargetModel === null || root.exportTargetModel.currentIndex === 0)
             SidebarTextField {
                 label: qsTranslate("MainWindow", "符号库描述")
                 text: root.exportSettingsController ? root.exportSettingsController.symbolLibraryDescription : ""

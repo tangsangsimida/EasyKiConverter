@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <QString>
+
+#include <cstdint>
 
 namespace EasyKiConverter {
 
@@ -11,12 +12,7 @@ namespace EasyKiConverter {
 namespace AltiumModels {
 
 /** @brief Altium 焊盘形状枚举 */
-enum class PadShape : uint8_t {
-    Round = 1,
-    Rectangular = 2,
-    Octagonal = 3,
-    RoundedRectangle = 9
-};
+enum class PadShape : uint8_t { Round = 1, Rectangular = 2, Octagonal = 3, RoundedRectangle = 9 };
 
 /** @brief Altium 引脚电气类型 */
 enum class PinElectricalType : uint8_t {
@@ -32,10 +28,10 @@ enum class PinElectricalType : uint8_t {
 
 /** @brief Altium 引脚方向 */
 enum class PinOrientation : uint8_t {
-    Right = 0,   ///< 0°（引脚向右延伸）
-    Up = 1,      ///< 90°（引脚向上延伸）
-    Left = 2,    ///< 180°（引脚向左延伸）
-    Down = 3     ///< 270°（引脚向下延伸）
+    Right = 0,  ///< 0°（引脚向右延伸）
+    Up = 1,  ///< 90°（引脚向上延伸）
+    Left = 2,  ///< 180°（引脚向左延伸）
+    Down = 3  ///< 270°（引脚向下延伸）
 };
 
 /** @brief 字体表条目 */
@@ -48,11 +44,7 @@ struct FontEntry {
 };
 
 /** @brief 焊盘模式 */
-enum class PadMode : uint8_t {
-    Simple = 0,
-    TopMidBot = 1,
-    FullStack = 2
-};
+enum class PadMode : uint8_t { Simple = 0, TopMidBot = 1, FullStack = 2 };
 
 }  // namespace AltiumModels
 }  // namespace EasyKiConverter

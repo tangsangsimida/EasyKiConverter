@@ -9,16 +9,12 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
  */
 ColumnLayout {
     id: altiumCard
-
     /** @brief 导出设置控制器 */
     property var exportSettingsController
-
     spacing: AppStyle.spacing.md
-
     Flow {
         Layout.fillWidth: true
         spacing: AppStyle.spacing.lg
-
         StyledCheckBox {
             text: qsTranslate("MainWindow", "符号库 (.SchLib)")
             ToolTip.text: qsTranslate("MainWindow", "导出 Altium .SchLib 符号库文件")
@@ -46,7 +42,8 @@ ColumnLayout {
             onCheckedChanged: {
                 if (altiumCard.exportSettingsController) {
                     altiumCard.exportSettingsController.setExportModel3D(checked);
-                    if (checked) altiumCard.exportSettingsController.setExportModel3DFormat(2);
+                    if (checked)
+                        altiumCard.exportSettingsController.setExportModel3DFormat(2);
                 }
             }
         }
@@ -60,16 +57,11 @@ ColumnLayout {
         color: AppStyle.colors.surface
         border.color: AppStyle.colors.border
         border.width: 1
-
         Text {
             id: altiumInfoText
             anchors.fill: parent
             anchors.margins: AppStyle.spacing.md
-            text: qsTranslate("MainWindow", "Altium 导出说明：\n"
-                              + "- 符号库导出为 .SchLib 格式\n"
-                              + "- 封装库导出为 .PcbLib 格式\n"
-                              + "- 3D 模型以 STEP 格式嵌入封装\n"
-                              + "- 生成的文件可直接在 Altium Designer 中打开")
+            text: qsTranslate("MainWindow", "Altium 导出说明：\n" + "- 符号库导出为 .SchLib 格式\n" + "- 封装库导出为 .PcbLib 格式\n" + "- 3D 模型以 STEP 格式嵌入封装\n" + "- 生成的文件可直接在 Altium Designer 中打开")
             font.pixelSize: AppStyle.fontSizes.xs
             color: AppStyle.colors.textSecondary
             wrapMode: Text.WordWrap

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <memory>
-
+#include "core/interfaces/IFootprintExporter.h"
 #include "core/interfaces/IModel3DExporter.h"
 #include "core/interfaces/ISymbolExporter.h"
-#include "core/interfaces/IFootprintExporter.h"
 #include "services/export/ExportProgress.h"
+
+#include <memory>
 
 namespace EasyKiConverter {
 
@@ -37,8 +37,7 @@ public:
      * @param parent QObject 父对象（3D 导出器需要 QObject 以支持信号槽）
      * @return 3D 模型导出器实例，调用方拥有所有权
      */
-    static std::unique_ptr<IModel3DExporter> createModel3DExporter(TargetEdaFormat format,
-                                                                   QObject* parent = nullptr);
+    static std::unique_ptr<IModel3DExporter> createModel3DExporter(TargetEdaFormat format, QObject* parent = nullptr);
 };
 
 }  // namespace EasyKiConverter

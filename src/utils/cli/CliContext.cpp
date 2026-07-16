@@ -72,8 +72,7 @@ ExportOptions CliContext::createExportOptions() const {
 
     // 目标 EDA 格式
     const QString format = m_parser.targetFormat();
-    options.targetFormat = (format == QStringLiteral("altium")) ? TargetEdaFormat::Altium
-                                                                : TargetEdaFormat::KiCad;
+    options.targetFormat = (format == QStringLiteral("altium")) ? TargetEdaFormat::Altium : TargetEdaFormat::KiCad;
 
     return options;
 }

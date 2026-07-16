@@ -114,8 +114,7 @@ bool OLECompoundWriter::addStorage(const QString& name) {
 /**
  * @brief 在指定存储下写入流数据
  */
-bool OLECompoundWriter::writeStream(const QString& storagePath, const QString& streamName,
-                                    const QByteArray& data) {
+bool OLECompoundWriter::writeStream(const QString& storagePath, const QString& streamName, const QByteArray& data) {
     if (!m_initialized) {
         return false;
     }
@@ -139,8 +138,7 @@ bool OLECompoundWriter::writeStream(const QString& name, const QByteArray& data)
 /**
  * @brief 将目录条目序列化为 128 字节
  */
-void OLECompoundWriter::serializeDirectoryEntry(const DirectoryEntry& entry,
-                                                 QByteArray& buffer) const {
+void OLECompoundWriter::serializeDirectoryEntry(const DirectoryEntry& entry, QByteArray& buffer) const {
     buffer.resize(DIR_ENTRY_SIZE);
     buffer.fill(0);
     int offset = 0;
@@ -250,8 +248,9 @@ void OLECompoundWriter::buildRedBlackTree() {
 
     // 排序子节点
     QVector<int> sortedChildren = rootNode.children;
-    std::sort(sortedChildren.begin(), sortedChildren.end(),
-              [this](int a, int b) { return m_nodes[a].name < m_nodes[b].name; });
+    std::sort(sortedChildren.begin(), sortedChildren.end(), [this](int a, int b) {
+        return m_nodes[a].name < m_nodes[b].name;
+    });
 
     // 设置 Root Entry 的子节点
     m_directory[0].child = buildChildTree(0, sortedChildren);
@@ -262,13 +261,11 @@ void OLECompoundWriter::buildRedBlackTree() {
         if (!node.children.isEmpty()) {
             // 更新目录条目索引
             for (int& childNodeIdx : node.children) {
-                m_nodes[childNodeIdx].dirIndex = createDirectoryEntry(
-                    m_nodes[childNodeIdx].name, ObjectType::Storage);
+                m_nodes[childNodeIdx].dirIndex = createDirectoryEntry(m_nodes[childNodeIdx].name, ObjectType::Storage);
             }
 
             QVector<int> sorted = node.children;
-            std::sort(sorted.begin(), sorted.end(),
-                      [this](int a, int b) { return m_nodes[a].name < m_nodes[b].name; });
+            std::sort(sorted.begin(), sorted.end(), [this](int a, int b) { return m_nodes[a].name < m_nodes[b].name; });
 
             m_directory[node.dirIndex].child = buildChildTree(node.dirIndex, sorted);
         }
@@ -350,8 +347,8 @@ void OLECompoundWriter::serializeFileHeader(QByteArray& header) const {
     uint32_t firstMiniFatSector = ENDOFCHAIN;
     if (!m_miniFat.isEmpty()) {
         // Mini FAT 在目录之后
-        uint32_t dirSectors = (static_cast<uint32_t>(m_directory.size()) * DIR_ENTRY_SIZE
-                               + SECTOR_SIZE - 1) / SECTOR_SIZE;
+        uint32_t dirSectors =
+            (static_cast<uint32_t>(m_directory.size()) * DIR_ENTRY_SIZE + SECTOR_SIZE - 1) / SECTOR_SIZE;
         firstMiniFatSector = totalFatSectors + 1 + dirSectors;
     }
     header[offset++] = static_cast<char>(firstMiniFatSector & 0xFF);
@@ -360,8 +357,7 @@ void OLECompoundWriter::serializeFileHeader(QByteArray& header) const {
     header[offset++] = static_cast<char>((firstMiniFatSector >> 24) & 0xFF);
 
     // Total mini FAT sectors
-    uint32_t totalMiniFatSectors = static_cast<uint32_t>(
-        (m_miniFat.size() * 4 + SECTOR_SIZE - 1) / SECTOR_SIZE);
+    uint32_t totalMiniFatSectors = static_cast<uint32_t>((m_miniFat.size() * 4 + SECTOR_SIZE - 1) / SECTOR_SIZE);
     header[offset++] = static_cast<char>(totalMiniFatSectors & 0xFF);
     header[offset++] = static_cast<char>((totalMiniFatSectors >> 8) & 0xFF);
     header[offset++] = static_cast<char>((totalMiniFatSectors >> 16) & 0xFF);
@@ -416,8 +412,7 @@ void OLECompoundWriter::finalize() {
 
         if (dataSize < MINI_STREAM_CUTOFF) {
             // 小数据写入 Mini-Stream
-            uint32_t miniSectorStart = static_cast<uint32_t>(
-                m_miniStream.size() / MINI_SECTOR_SIZE);
+            uint32_t miniSectorStart = static_cast<uint32_t>(m_miniStream.size() / MINI_SECTOR_SIZE);
             m_miniStream.append(stream.data);
             // 对齐到 mini 扇区边界
             int remainder = stream.data.size() % MINI_SECTOR_SIZE;
@@ -474,9 +469,7 @@ void OLECompoundWriter::finalize() {
         // 但节点还未添加到 m_nodes，这里补充
         StorageNode streamNode;
         streamNode.name = stream.streamName;
-        streamNode.fullPath = parentPath.isEmpty()
-                                  ? stream.streamName
-                                  : parentPath + "/" + stream.streamName;
+        streamNode.fullPath = parentPath.isEmpty() ? stream.streamName : parentPath + "/" + stream.streamName;
         streamNode.dirIndex = dirIndex;
         m_nodes.append(streamNode);
     }
@@ -498,8 +491,7 @@ void OLECompoundWriter::finalize() {
         m_directory[0].streamSize = static_cast<uint64_t>(m_miniStream.size());
 
         // 更新 FAT
-        uint32_t miniStreamSectors = (static_cast<uint32_t>(m_miniStream.size())
-                                       + SECTOR_SIZE - 1) / SECTOR_SIZE;
+        uint32_t miniStreamSectors = (static_cast<uint32_t>(m_miniStream.size()) + SECTOR_SIZE - 1) / SECTOR_SIZE;
         for (uint32_t i = 0; i < miniStreamSectors; ++i) {
             if (i < miniStreamSectors - 1) {
                 m_fat.append(miniStreamSectorStart + i + 1);
@@ -523,8 +515,7 @@ void OLECompoundWriter::finalize() {
     }
 
     // 确保目录大小是扇区对齐的
-    uint32_t dirSectors = (static_cast<uint32_t>(m_directory.size()) * DIR_ENTRY_SIZE
-                            + SECTOR_SIZE - 1) / SECTOR_SIZE;
+    uint32_t dirSectors = (static_cast<uint32_t>(m_directory.size()) * DIR_ENTRY_SIZE + SECTOR_SIZE - 1) / SECTOR_SIZE;
     while (m_directory.size() < static_cast<int>(dirSectors * (SECTOR_SIZE / DIR_ENTRY_SIZE))) {
         DirectoryEntry empty;
         empty.objectType = ObjectType::Unknown;
@@ -544,10 +535,8 @@ bool OLECompoundWriter::saveToFile(const QString& filePath) {
 
     finalize();
 
-    qDebug() << "OLECompoundWriter::saveToFile: Writing to" << filePath
-             << "streams:" << m_streams.size()
-             << "directory:" << m_directory.size()
-             << "fat:" << m_fat.size();
+    qDebug() << "OLECompoundWriter::saveToFile: Writing to" << filePath << "streams:" << m_streams.size()
+             << "directory:" << m_directory.size() << "fat:" << m_fat.size();
 
     // 确保父目录存在
     QFileInfo fileInfo(filePath);
@@ -559,8 +548,7 @@ bool OLECompoundWriter::saveToFile(const QString& filePath) {
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly)) {
         qWarning() << "OLECompoundWriter::saveToFile: Failed to open file:" << filePath
-                   << "error:" << file.errorString()
-                   << "exists:" << QFile::exists(filePath)
+                   << "error:" << file.errorString() << "exists:" << QFile::exists(filePath)
                    << "isDir:" << QFileInfo(filePath).isDir();
         return false;
     }

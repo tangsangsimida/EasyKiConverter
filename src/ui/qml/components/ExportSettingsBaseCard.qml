@@ -10,24 +10,18 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
  */
 Card {
     id: baseCard
-
     /** @brief 导出设置控制器（ExportSettingsViewModel） */
     property var exportSettingsController
-
     /** @brief 导出目标模型（ExportTargetModel） */
     property var exportTargetModel
-
     signal openOutputFolderDialog
     signal openCacheFolderDialog
-
     title: qsTranslate("MainWindow", "导出设置")
-
     ColumnLayout {
         id: rootLayout
         width: parent.width
         spacing: AppStyle.spacing.lg
         anchors.margins: AppStyle.spacing.md
-
         // ==================== 目标格式选择 ====================
         Text {
             Layout.fillWidth: true
@@ -40,29 +34,32 @@ Card {
         RowLayout {
             Layout.fillWidth: true
             spacing: AppStyle.spacing.lg
-
             Repeater {
                 model: baseCard.exportTargetModel ? baseCard.exportTargetModel.availableTargets : []
-
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 72
                     radius: AppStyle.radius.lg
-                    property bool isActive: baseCard.exportTargetModel
-                                            ? baseCard.exportTargetModel.currentIndex === index
-                                            : false
+                    property bool isActive: baseCard.exportTargetModel ? baseCard.exportTargetModel.currentIndex === index : false
                     property string targetId: modelData.id || ""
-
                     color: isActive ? Qt.rgba(AppStyle.colors.primary.r, AppStyle.colors.primary.g, AppStyle.colors.primary.b, 0.12) : AppStyle.colors.surface
                     border.color: isActive ? AppStyle.colors.primary : AppStyle.colors.border
                     border.width: isActive ? 2 : 1
-
-                    Behavior on color { ColorAnimation { duration: AppStyle.durations.fast } }
-                    Behavior on border.color { ColorAnimation { duration: AppStyle.durations.fast } }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppStyle.durations.fast
+                        }
+                    }
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: AppStyle.durations.fast
+                        }
+                    }
 
                     // 选中指示条
                     Rectangle {
-                        width: 3; height: parent.height * 0.5
+                        width: 3
+                        height: parent.height * 0.5
                         anchors.left: parent.left
                         anchors.leftMargin: 6
                         anchors.verticalCenter: parent.verticalCenter
@@ -70,7 +67,11 @@ Card {
                         color: AppStyle.colors.primary
                         visible: isActive
                         opacity: isActive ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: AppStyle.durations.fast } }
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: AppStyle.durations.fast
+                            }
+                        }
                     }
 
                     ColumnLayout {
@@ -78,7 +79,6 @@ Card {
                         anchors.margins: AppStyle.spacing.md
                         anchors.leftMargin: AppStyle.spacing.lg
                         spacing: 2
-
                         Text {
                             text: modelData.displayName || ""
                             font.pixelSize: AppStyle.fontSizes.md
@@ -88,8 +88,10 @@ Card {
 
                         Text {
                             text: {
-                                if (targetId === "kicad") return qsTranslate("MainWindow", ".kicad_sym / .kicad_mod");
-                                if (targetId === "altium") return qsTranslate("MainWindow", ".SchLib / .PcbLib");
+                                if (targetId === "kicad")
+                                    return qsTranslate("MainWindow", ".kicad_sym / .kicad_mod");
+                                if (targetId === "altium")
+                                    return qsTranslate("MainWindow", ".SchLib / .PcbLib");
                                 return "";
                             }
                             font.pixelSize: AppStyle.fontSizes.xs
@@ -109,8 +111,17 @@ Card {
                         visible: isActive
                         opacity: isActive ? 1 : 0
                         scale: isActive ? 1 : 0.5
-                        Behavior on opacity { NumberAnimation { duration: AppStyle.durations.fast } }
-                        Behavior on scale { NumberAnimation { duration: AppStyle.durations.fast; easing.type: Easing.BackOut } }
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: AppStyle.durations.fast
+                            }
+                        }
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: AppStyle.durations.fast
+                                easing.type: Easing.BackOut
+                            }
+                        }
                     }
 
                     MouseArea {
@@ -143,7 +154,6 @@ Card {
             columns: ResponsiveHelper.isCompact ? 1 : 2
             columnSpacing: AppStyle.spacing.xl
             rowSpacing: AppStyle.spacing.md
-
             // 输出路径
             ColumnLayout {
                 Layout.fillWidth: true
@@ -238,7 +248,6 @@ Card {
             columns: ResponsiveHelper.isCompact ? 1 : 2
             columnSpacing: AppStyle.spacing.xl
             rowSpacing: AppStyle.spacing.md
-
             // 缓存目录
             ColumnLayout {
                 Layout.fillWidth: true
@@ -331,9 +340,7 @@ Card {
 
         // ==================== 目标特定设置（动态加载） ====================
         SettingsSectionHeader {
-            title: baseCard.exportTargetModel
-                        ? baseCard.exportTargetModel.currentDisplayName + qsTranslate("MainWindow", " 设置")
-                        : qsTranslate("MainWindow", "导出选项")
+            title: baseCard.exportTargetModel ? baseCard.exportTargetModel.currentDisplayName + qsTranslate("MainWindow", " 设置") : qsTranslate("MainWindow", "导出选项")
         }
 
         // 目标特定设置（动态加载，带明显过渡动画）
@@ -342,7 +349,6 @@ Card {
             Layout.fillWidth: true
             Layout.preferredHeight: targetOptionsLoader.item ? targetOptionsLoader.item.implicitHeight : 0
             clip: true
-
             Behavior on Layout.preferredHeight {
                 NumberAnimation {
                     duration: 400
@@ -355,12 +361,13 @@ Card {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                active: baseCard.exportTargetModel !== null
-                        && baseCard.exportTargetModel.currentOptionsComponent !== ""
+                active: baseCard.exportTargetModel !== null && baseCard.exportTargetModel.currentOptionsComponent !== ""
                 source: {
-                    if (!baseCard.exportTargetModel) return "";
+                    if (!baseCard.exportTargetModel)
+                        return "";
                     var component = baseCard.exportTargetModel.currentOptionsComponent;
-                    if (!component) return "";
+                    if (!component)
+                        return "";
                     return "qrc:/qt/qml/EasyKiconverter_Cpp_Version/src/ui/qml/components/" + component;
                 }
 
@@ -370,7 +377,6 @@ Card {
                         item.opacity = 0;
                         item.y = 20;
                         item.scale = 0.97;
-
                         // 启动入场动画
                         enterAnimation.target = item;
                         enterAnimation.start();
@@ -388,22 +394,24 @@ Card {
             // 入场动画：淡入 + 上滑 + 缩放恢复
             ParallelAnimation {
                 id: enterAnimation
-
                 NumberAnimation {
                     property: "opacity"
-                    from: 0; to: 1
+                    from: 0
+                    to: 1
                     duration: 500
                     easing.type: Easing.OutCubic
                 }
                 NumberAnimation {
                     property: "y"
-                    from: 20; to: 0
+                    from: 20
+                    to: 0
                     duration: 500
                     easing.type: Easing.OutQuart
                 }
                 NumberAnimation {
                     property: "scale"
-                    from: 0.97; to: 1.0
+                    from: 0.97
+                    to: 1.0
                     duration: 500
                     easing.type: Easing.OutQuart
                 }
@@ -418,7 +426,6 @@ Card {
         Flow {
             Layout.fillWidth: true
             spacing: AppStyle.spacing.lg
-
             StyledCheckBox {
                 text: qsTranslate("MainWindow", "预览图")
                 ToolTip.text: qsTranslate("MainWindow", "导出元件预览图")
@@ -448,7 +455,6 @@ Card {
         RowLayout {
             Layout.fillWidth: true
             spacing: AppStyle.spacing.xl
-
             RadioButton {
                 id: appendModeRadio
                 text: qsTranslate("MainWindow", "追加模式")

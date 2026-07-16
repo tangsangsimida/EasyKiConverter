@@ -55,8 +55,7 @@ public:
      * @param data 流数据
      * @return 是否成功
      */
-    bool writeStream(const QString& storagePath, const QString& streamName,
-                     const QByteArray& data);
+    bool writeStream(const QString& storagePath, const QString& streamName, const QByteArray& data);
 
     /**
      * @brief 在根存储下写入流数据
@@ -77,19 +76,14 @@ private:
     static constexpr uint32_t DIR_ENTRY_SIZE = 128;
 
     /** @brief 目录条目对象类型 */
-    enum class ObjectType : uint8_t {
-        Unknown = 0,
-        Storage = 1,
-        Stream = 2,
-        Root = 5
-    };
+    enum class ObjectType : uint8_t { Unknown = 0, Storage = 1, Stream = 2, Root = 5 };
 
     /** @brief 目录条目结构（128 字节） */
     struct DirectoryEntry {
-        uint16_t name[32] = {0};       ///< UTF-16LE 名称（最大 31 字符 + null）
-        uint16_t nameSize = 0;         ///< 名称字节数（含 null 终止符）
+        uint16_t name[32] = {0};  ///< UTF-16LE 名称（最大 31 字符 + null）
+        uint16_t nameSize = 0;  ///< 名称字节数（含 null 终止符）
         ObjectType objectType = ObjectType::Unknown;
-        uint8_t colorFlag = 1;         ///< 0=Red, 1=Black（红黑树节点颜色）
+        uint8_t colorFlag = 1;  ///< 0=Red, 1=Black（红黑树节点颜色）
         uint32_t leftChild = NOSTREAM;
         uint32_t rightChild = NOSTREAM;
         uint32_t child = NOSTREAM;
@@ -105,10 +99,10 @@ private:
      * @brief 内部节点结构，用于跟踪存储树
      */
     struct StorageNode {
-        QString name;                      ///< 节点名称
-        QString fullPath;                  ///< 完整路径
-        int dirIndex = -1;                 ///< 目录条目索引
-        QVector<int> children;             ///< 子节点索引列表
+        QString name;  ///< 节点名称
+        QString fullPath;  ///< 完整路径
+        int dirIndex = -1;  ///< 目录条目索引
+        QVector<int> children;  ///< 子节点索引列表
     };
 
     // ---- 目录操作 ----
@@ -123,9 +117,9 @@ private:
 
     // ---- 内部状态 ----
     bool m_initialized = false;
-    QVector<DirectoryEntry> m_directory;     ///< 目录条目列表
-    QVector<StorageNode> m_nodes;            ///< 存储节点树
-    QHash<QString, int> m_pathToNode;        ///< 路径 → 节点索引映射
+    QVector<DirectoryEntry> m_directory;  ///< 目录条目列表
+    QVector<StorageNode> m_nodes;  ///< 存储节点树
+    QHash<QString, int> m_pathToNode;  ///< 路径 → 节点索引映射
 
     // 流数据（按存储路径+流名索引）
     struct StreamData {
@@ -133,13 +127,14 @@ private:
         QString streamName;
         QByteArray data;
     };
+
     QVector<StreamData> m_streams;
 
     // 扇区数据
-    QVector<QByteArray> m_dataSectors;       ///< 普通数据扇区
-    QByteArray m_miniStream;                 ///< Mini-Stream 数据
-    QVector<uint32_t> m_fat;                 ///< FAT 表
-    QVector<uint32_t> m_miniFat;             ///< Mini-FAT 表
+    QVector<QByteArray> m_dataSectors;  ///< 普通数据扇区
+    QByteArray m_miniStream;  ///< Mini-Stream 数据
+    QVector<uint32_t> m_fat;  ///< FAT 表
+    QVector<uint32_t> m_miniFat;  ///< Mini-FAT 表
 };
 
 }  // namespace EasyKiConverter

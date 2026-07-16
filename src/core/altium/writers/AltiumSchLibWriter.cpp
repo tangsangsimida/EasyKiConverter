@@ -19,12 +19,10 @@ QString AltiumSchLibWriter::getSectionKey(const QString& name) const {
 /**
  * @brief 获取或添加字体到字体表
  */
-int AltiumSchLibWriter::getOrAddFont(const QString& fontName, int fontSize,
-                                      bool bold, bool italic, bool underline) {
+int AltiumSchLibWriter::getOrAddFont(const QString& fontName, int fontSize, bool bold, bool italic, bool underline) {
     for (int i = 0; i < m_fonts.size(); ++i) {
-        if (m_fonts[i].name == fontName && m_fonts[i].size == fontSize
-            && m_fonts[i].bold == bold && m_fonts[i].italic == italic
-            && m_fonts[i].underline == underline) {
+        if (m_fonts[i].name == fontName && m_fonts[i].size == fontSize && m_fonts[i].bold == bold &&
+            m_fonts[i].italic == italic && m_fonts[i].underline == underline) {
             return i + 1;  // 1-based
         }
     }
@@ -41,8 +39,7 @@ int AltiumSchLibWriter::getOrAddFont(const QString& fontName, int fontSize,
 /**
  * @brief 添加坐标参数（DXP 单位 + 小数部分）
  */
-void AltiumSchLibWriter::addCoordParam(QMap<QString, QString>& params,
-                                        const QString& key, int raw) {
+void AltiumSchLibWriter::addCoordParam(QMap<QString, QString>& params, const QString& key, int raw) {
     int16_t dxp = AltiumCoord::toDxpInt(raw);
     int32_t frac = AltiumCoord::toDxpFrac(raw);
     params[key] = QString::number(dxp);
@@ -54,8 +51,7 @@ void AltiumSchLibWriter::addCoordParam(QMap<QString, QString>& params,
 /**
  * @brief 添加颜色参数
  */
-void AltiumSchLibWriter::addColorParam(QMap<QString, QString>& params,
-                                        const QString& key, uint32_t color) {
+void AltiumSchLibWriter::addColorParam(QMap<QString, QString>& params, const QString& key, uint32_t color) {
     if (color != 0) {
         params[key] = QString::number(color);
     }
@@ -74,8 +70,8 @@ void AltiumSchLibWriter::addUniqueID(QMap<QString, QString>& params) {
  * @brief 写入 SchLib 文件
  */
 bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
-                                const QString& filePath,
-                                const QString& libraryName) {
+                               const QString& filePath,
+                               const QString& libraryName) {
     m_fonts.clear();
     m_uniqueIdCounter = 0;
 
@@ -107,8 +103,7 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
 /**
  * @brief 写入 FileHeader 流
  */
-void AltiumSchLibWriter::writeFileHeader(OLECompoundWriter& ole,
-                                          const QList<AltiumSchComponent>& components) {
+void AltiumSchLibWriter::writeFileHeader(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components) {
     QMap<QString, QString> params;
     params["HEADER"] = "Protel for Windows - Schematic Library Editor Binary File Version 5.0";
     params["WEIGHT"] = QString::number(components.size());
@@ -127,9 +122,12 @@ void AltiumSchLibWriter::writeFileHeader(OLECompoundWriter& ole,
         int idx = i + 1;
         params[QString("FontName%1").arg(idx)] = m_fonts[i].name;
         params[QString("Size%1").arg(idx)] = QString::number(m_fonts[i].size);
-        if (m_fonts[i].bold) params[QString("Bold%1").arg(idx)] = "T";
-        if (m_fonts[i].italic) params[QString("Italic%1").arg(idx)] = "T";
-        if (m_fonts[i].underline) params[QString("Underline%1").arg(idx)] = "T";
+        if (m_fonts[i].bold)
+            params[QString("Bold%1").arg(idx)] = "T";
+        if (m_fonts[i].italic)
+            params[QString("Italic%1").arg(idx)] = "T";
+        if (m_fonts[i].underline)
+            params[QString("Underline%1").arg(idx)] = "T";
     }
 
     params["UseMBCS"] = "T";
@@ -166,8 +164,7 @@ void AltiumSchLibWriter::writeFileHeader(OLECompoundWriter& ole,
 /**
  * @brief 写入 SectionKeys 流
  */
-void AltiumSchLibWriter::writeSectionKeys(OLECompoundWriter& ole,
-                                           const QList<AltiumSchComponent>& components) {
+void AltiumSchLibWriter::writeSectionKeys(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components) {
     QMap<QString, QString> params;
     int keyCount = 0;
 
@@ -192,8 +189,7 @@ void AltiumSchLibWriter::writeSectionKeys(OLECompoundWriter& ole,
 /**
  * @brief 写入元件存储
  */
-void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
-                                                const AltiumSchComponent& component) {
+void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole, const AltiumSchComponent& component) {
     QString sectionKey = getSectionKey(component.name);
 
     // 创建存储区
@@ -256,8 +252,7 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
 /**
  * @brief 写入元件记录 (RECORD=1)
  */
-void AltiumSchLibWriter::writeComponentRecord(AltiumBinaryWriter& writer,
-                                               const AltiumSchComponent& component) {
+void AltiumSchLibWriter::writeComponentRecord(AltiumBinaryWriter& writer, const AltiumSchComponent& component) {
     QMap<QString, QString> params;
     params["RECORD"] = "1";
     params["LibReference"] = component.name;
@@ -283,8 +278,7 @@ void AltiumSchLibWriter::writeComponentRecord(AltiumBinaryWriter& writer,
 /**
  * @brief 写入引脚记录 (RECORD=2, 二进制格式)
  */
-void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer,
-                                         const AltiumSchPin& pin, int partId) {
+void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const AltiumSchPin& pin, int partId) {
     writer.beginBlock(0x01);  // flags = 0x01 表示二进制引脚记录
 
     writer.writeInt32(2);  // Record type = 2
@@ -306,9 +300,12 @@ void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer,
 
     // PinConglomerate 字节
     uint8_t conglomerate = static_cast<uint8_t>(pin.orientation);  // Bit 0-1: orientation
-    if (pin.isHidden) conglomerate |= 0x04;          // Bit 2: hidden
-    if (pin.showName) conglomerate |= 0x08;          // Bit 3: show name
-    if (pin.showDesignator) conglomerate |= 0x10;    // Bit 4: show designator
+    if (pin.isHidden)
+        conglomerate |= 0x04;  // Bit 2: hidden
+    if (pin.showName)
+        conglomerate |= 0x08;  // Bit 3: show name
+    if (pin.showDesignator)
+        conglomerate |= 0x10;  // Bit 4: show designator
     writer.writeUInt8(conglomerate);
 
     // PinLength (DXP 整数单位)
@@ -343,8 +340,7 @@ void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer,
 /**
  * @brief 写入矩形记录 (RECORD=14)
  */
-void AltiumSchLibWriter::writeRectangleRecord(AltiumBinaryWriter& writer,
-                                               const AltiumSchRectangle& rect) {
+void AltiumSchLibWriter::writeRectangleRecord(AltiumBinaryWriter& writer, const AltiumSchRectangle& rect) {
     QMap<QString, QString> params;
     params["RECORD"] = "14";
     addCoordParam(params, "Location.X", rect.locationX);
@@ -352,10 +348,13 @@ void AltiumSchLibWriter::writeRectangleRecord(AltiumBinaryWriter& writer,
     addCoordParam(params, "Corner.X", rect.cornerX);
     addCoordParam(params, "Corner.Y", rect.cornerY);
 
-    if (rect.lineWidth != 0) params["LineWidth"] = QString::number(rect.lineWidth);
+    if (rect.lineWidth != 0)
+        params["LineWidth"] = QString::number(rect.lineWidth);
     addColorParam(params, "Color", rect.color);
-    if (rect.areaColor != 0xFFFFFF) params["AreaColor"] = QString::number(rect.areaColor);
-    if (rect.isSolid) params["IsSolid"] = "T";
+    if (rect.areaColor != 0xFFFFFF)
+        params["AreaColor"] = QString::number(rect.areaColor);
+    if (rect.isSolid)
+        params["IsSolid"] = "T";
 
     addUniqueID(params);
     writer.writeCStringParameterBlock(params);
@@ -364,8 +363,7 @@ void AltiumSchLibWriter::writeRectangleRecord(AltiumBinaryWriter& writer,
 /**
  * @brief 写入线段记录 (RECORD=13)
  */
-void AltiumSchLibWriter::writeLineRecord(AltiumBinaryWriter& writer,
-                                          const AltiumSchLine& line) {
+void AltiumSchLibWriter::writeLineRecord(AltiumBinaryWriter& writer, const AltiumSchLine& line) {
     QMap<QString, QString> params;
     params["RECORD"] = "13";
     addCoordParam(params, "Location.X", line.locationX);
@@ -383,16 +381,17 @@ void AltiumSchLibWriter::writeLineRecord(AltiumBinaryWriter& writer,
 /**
  * @brief 写入弧线记录 (RECORD=12)
  */
-void AltiumSchLibWriter::writeArcRecord(AltiumBinaryWriter& writer,
-                                         const AltiumSchArc& arc) {
+void AltiumSchLibWriter::writeArcRecord(AltiumBinaryWriter& writer, const AltiumSchArc& arc) {
     QMap<QString, QString> params;
     params["RECORD"] = "12";
     addCoordParam(params, "Location.X", arc.centerX);
     addCoordParam(params, "Location.Y", arc.centerY);
     addCoordParam(params, "Radius", arc.radius);
 
-    if (arc.lineWidth != 0) params["LineWidth"] = QString::number(arc.lineWidth);
-    if (arc.startAngle != 0.0) params["StartAngle"] = QString::number(arc.startAngle, 'f', 3);
+    if (arc.lineWidth != 0)
+        params["LineWidth"] = QString::number(arc.lineWidth);
+    if (arc.startAngle != 0.0)
+        params["StartAngle"] = QString::number(arc.startAngle, 'f', 3);
     params["EndAngle"] = QString::number(arc.endAngle, 'f', 3);
     addColorParam(params, "Color", arc.color);
 
@@ -403,22 +402,25 @@ void AltiumSchLibWriter::writeArcRecord(AltiumBinaryWriter& writer,
 /**
  * @brief 写入多边形记录 (RECORD=7)
  */
-void AltiumSchLibWriter::writePolygonRecord(AltiumBinaryWriter& writer,
-                                             const AltiumSchPolygon& polygon) {
+void AltiumSchLibWriter::writePolygonRecord(AltiumBinaryWriter& writer, const AltiumSchPolygon& polygon) {
     QMap<QString, QString> params;
     params["RECORD"] = "7";
     params["LineWidth"] = QString::number(polygon.lineWidth);
     addColorParam(params, "Color", polygon.color);
-    if (polygon.areaColor != 0xFFFFFF) params["AreaColor"] = QString::number(polygon.areaColor);
-    if (polygon.isSolid) params["IsSolid"] = "T";
+    if (polygon.areaColor != 0xFFFFFF)
+        params["AreaColor"] = QString::number(polygon.areaColor);
+    if (polygon.isSolid)
+        params["IsSolid"] = "T";
 
     params["LocationCount"] = QString::number(polygon.vertices.size());
     for (int i = 0; i < polygon.vertices.size(); ++i) {
         int idx = i + 1;
         int32_t x = AltiumCoord::toSchematicUnits(static_cast<int>(polygon.vertices[i].x()));
         int32_t y = AltiumCoord::toSchematicUnits(static_cast<int>(polygon.vertices[i].y()));
-        if (x != 0) params[QString("X%1").arg(idx)] = QString::number(x);
-        if (y != 0) params[QString("Y%1").arg(idx)] = QString::number(y);
+        if (x != 0)
+            params[QString("X%1").arg(idx)] = QString::number(x);
+        if (y != 0)
+            params[QString("Y%1").arg(idx)] = QString::number(y);
     }
 
     addUniqueID(params);
@@ -428,8 +430,7 @@ void AltiumSchLibWriter::writePolygonRecord(AltiumBinaryWriter& writer,
 /**
  * @brief 写入椭圆记录 (RECORD=8)
  */
-void AltiumSchLibWriter::writeEllipseRecord(AltiumBinaryWriter& writer,
-                                             const AltiumSchEllipse& ellipse) {
+void AltiumSchLibWriter::writeEllipseRecord(AltiumBinaryWriter& writer, const AltiumSchEllipse& ellipse) {
     QMap<QString, QString> params;
     params["RECORD"] = "8";
     addCoordParam(params, "Location.X", ellipse.centerX);
@@ -437,10 +438,13 @@ void AltiumSchLibWriter::writeEllipseRecord(AltiumBinaryWriter& writer,
     addCoordParam(params, "Radius", ellipse.radiusX);
     addCoordParam(params, "SecondaryRadius", ellipse.radiusY);
 
-    if (ellipse.lineWidth != 0) params["LineWidth"] = QString::number(ellipse.lineWidth);
+    if (ellipse.lineWidth != 0)
+        params["LineWidth"] = QString::number(ellipse.lineWidth);
     addColorParam(params, "Color", ellipse.color);
-    if (ellipse.areaColor != 0xFFFFFF) params["AreaColor"] = QString::number(ellipse.areaColor);
-    if (ellipse.isSolid) params["IsSolid"] = "T";
+    if (ellipse.areaColor != 0xFFFFFF)
+        params["AreaColor"] = QString::number(ellipse.areaColor);
+    if (ellipse.isSolid)
+        params["IsSolid"] = "T";
 
     addUniqueID(params);
     writer.writeCStringParameterBlock(params);
@@ -449,8 +453,7 @@ void AltiumSchLibWriter::writeEllipseRecord(AltiumBinaryWriter& writer,
 /**
  * @brief 写入折线记录 (RECORD=6)
  */
-void AltiumSchLibWriter::writePolylineRecord(AltiumBinaryWriter& writer,
-                                              const AltiumSchPolyline& polyline) {
+void AltiumSchLibWriter::writePolylineRecord(AltiumBinaryWriter& writer, const AltiumSchPolyline& polyline) {
     QMap<QString, QString> params;
     params["RECORD"] = "6";
     params["LineWidth"] = QString::number(polyline.lineWidth);
@@ -461,8 +464,10 @@ void AltiumSchLibWriter::writePolylineRecord(AltiumBinaryWriter& writer,
         int idx = i + 1;
         int32_t x = AltiumCoord::toSchematicUnits(static_cast<int>(polyline.vertices[i].x()));
         int32_t y = AltiumCoord::toSchematicUnits(static_cast<int>(polyline.vertices[i].y()));
-        if (x != 0) params[QString("X%1").arg(idx)] = QString::number(x);
-        if (y != 0) params[QString("Y%1").arg(idx)] = QString::number(y);
+        if (x != 0)
+            params[QString("X%1").arg(idx)] = QString::number(x);
+        if (y != 0)
+            params[QString("Y%1").arg(idx)] = QString::number(y);
     }
 
     addUniqueID(params);
@@ -472,18 +477,19 @@ void AltiumSchLibWriter::writePolylineRecord(AltiumBinaryWriter& writer,
 /**
  * @brief 写入文本记录 (RECORD=4, Label)
  */
-void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer,
-                                          const AltiumSchText& text) {
+void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text) {
     QMap<QString, QString> params;
     params["RECORD"] = "4";
     addCoordParam(params, "Location.X", text.locationX);
     addCoordParam(params, "Location.Y", text.locationY);
 
-    if (text.orientation != 0) params["Orientation"] = QString::number(text.orientation);
+    if (text.orientation != 0)
+        params["Orientation"] = QString::number(text.orientation);
     addColorParam(params, "Color", text.color);
     params["FontID"] = QString::number(text.fontId);
     params["Text"] = text.text;
-    if (text.isHidden) params["IsHidden"] = "T";
+    if (text.isHidden)
+        params["IsHidden"] = "T";
 
     addUniqueID(params);
     writer.writeCStringParameterBlock(params);
@@ -492,8 +498,7 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer,
 /**
  * @brief 写入实现记录 (RECORD=44-48)
  */
-void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer,
-                                                     const AltiumSchComponent& component) {
+void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component) {
     // RECORD=44: ImplementationList（容器，始终写入）
     {
         QMap<QString, QString> params;

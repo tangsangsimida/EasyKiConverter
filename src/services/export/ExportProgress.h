@@ -13,8 +13,8 @@ namespace EasyKiConverter {
  *          枚举值用于持久化存储和 UI 下拉索引，从 0 递增。
  */
 enum class TargetEdaFormat {
-    KiCad = 0,  /**< KiCad 格式（默认） */
-    Altium = 1  /**< Altium Designer 格式 */
+    KiCad = 0, /**< KiCad 格式（默认） */
+    Altium = 1 /**< Altium Designer 格式 */
     // 后续扩展: Allegro = 2, Eagle = 3, ...
 };
 

@@ -25,7 +25,8 @@ namespace AltiumWriterUtils {
  * @endcode
  */
 inline QString getSectionKey(const QString& name) {
-    if (name.isEmpty()) return "_";
+    if (name.isEmpty())
+        return "_";
     QString key = name.left(31);
     key.replace('/', '_');
     return key;

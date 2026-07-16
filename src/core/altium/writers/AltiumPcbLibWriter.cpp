@@ -22,8 +22,8 @@ QString AltiumPcbLibWriter::getSectionKey(const QString& name) const {
  * @brief 统计封装中的图元数量
  */
 int AltiumPcbLibWriter::countPrimitives(const AltiumPcbComponent& component) const {
-    return component.pads.size() + component.tracks.size() + component.arcs.size()
-           + component.texts.size() + component.fills.size() + component.regions.size();
+    return component.pads.size() + component.tracks.size() + component.arcs.size() + component.texts.size() +
+           component.fills.size() + component.regions.size();
 }
 
 /**
@@ -46,8 +46,8 @@ uint32_t AltiumPcbLibWriter::toV7LayerId(uint8_t layer) const {
  * @brief 写入 PcbLib 文件
  */
 bool AltiumPcbLibWriter::write(const QList<AltiumPcbComponent>& components,
-                                const QString& filePath,
-                                const QString& libraryName) {
+                               const QString& filePath,
+                               const QString& libraryName) {
     m_wideStrings.clear();
 
     qDebug() << "AltiumPcbLibWriter::write: components:" << components.size() << "filePath:" << filePath;
@@ -106,8 +106,7 @@ void AltiumPcbLibWriter::writeFileHeader(OLECompoundWriter& ole) {
 /**
  * @brief 写入 SectionKeys 流
  */
-void AltiumPcbLibWriter::writeSectionKeys(OLECompoundWriter& ole,
-                                           const QList<AltiumPcbComponent>& components) {
+void AltiumPcbLibWriter::writeSectionKeys(OLECompoundWriter& ole, const QList<AltiumPcbComponent>& components) {
     QByteArray data;
     AltiumBinaryWriter writer(data);
 
@@ -155,8 +154,7 @@ void AltiumPcbLibWriter::writeFileVersionInfo(OLECompoundWriter& ole) {
 /**
  * @brief 写入 Library 存储
  */
-void AltiumPcbLibWriter::writeLibraryStorage(OLECompoundWriter& ole,
-                                              const QList<AltiumPcbComponent>& components) {
+void AltiumPcbLibWriter::writeLibraryStorage(OLECompoundWriter& ole, const QList<AltiumPcbComponent>& components) {
     ole.addStorage("Library");
 
     // Header 流
@@ -236,8 +234,7 @@ void AltiumPcbLibWriter::writeLibraryStorage(OLECompoundWriter& ole,
 /**
  * @brief 写入 Library/Data 流
  */
-void AltiumPcbLibWriter::writeLibraryData(QByteArray& buffer,
-                                           const QList<AltiumPcbComponent>& components) {
+void AltiumPcbLibWriter::writeLibraryData(QByteArray& buffer, const QList<AltiumPcbComponent>& components) {
     AltiumBinaryWriter writer(buffer);
 
     // 库头参数块
@@ -258,8 +255,7 @@ void AltiumPcbLibWriter::writeLibraryData(QByteArray& buffer,
 /**
  * @brief 写入 Models 存储
  */
-void AltiumPcbLibWriter::writeModelsStorage(OLECompoundWriter& ole,
-                                             const QList<AltiumPcbComponent>& components) {
+void AltiumPcbLibWriter::writeModelsStorage(OLECompoundWriter& ole, const QList<AltiumPcbComponent>& components) {
     ole.addStorage("Library", "Models");
 
     // 收集所有 3D 模型
@@ -337,8 +333,7 @@ void AltiumPcbLibWriter::writePadViaLibrary(QByteArray& buffer) {
 /**
  * @brief 写入 ComponentParamsTOC
  */
-void AltiumPcbLibWriter::writeComponentParamsToc(QByteArray& buffer,
-                                                   const QList<AltiumPcbComponent>& components) {
+void AltiumPcbLibWriter::writeComponentParamsToc(QByteArray& buffer, const QList<AltiumPcbComponent>& components) {
     AltiumBinaryWriter writer(buffer);
 
     QString toc;
@@ -357,8 +352,7 @@ void AltiumPcbLibWriter::writeComponentParamsToc(QByteArray& buffer,
 /**
  * @brief 写入封装存储
  */
-void AltiumPcbLibWriter::writeFootprintStorage(OLECompoundWriter& ole,
-                                                const AltiumPcbComponent& component) {
+void AltiumPcbLibWriter::writeFootprintStorage(OLECompoundWriter& ole, const AltiumPcbComponent& component) {
     QString sectionKey = getSectionKey(component.name);
     ole.addStorage(sectionKey);
     QString basePath = sectionKey;
@@ -388,8 +382,7 @@ void AltiumPcbLibWriter::writeFootprintStorage(OLECompoundWriter& ole,
 /**
  * @brief 写入封装参数
  */
-void AltiumPcbLibWriter::writeFootprintParameters(QByteArray& buffer,
-                                                    const AltiumPcbComponent& component) {
+void AltiumPcbLibWriter::writeFootprintParameters(QByteArray& buffer, const AltiumPcbComponent& component) {
     AltiumBinaryWriter writer(buffer);
 
     QMap<QString, QString> params;
@@ -407,8 +400,7 @@ void AltiumPcbLibWriter::writeFootprintParameters(QByteArray& buffer,
 /**
  * @brief 写入封装数据（二进制图元）
  */
-void AltiumPcbLibWriter::writeFootprintData(QByteArray& buffer,
-                                             const AltiumPcbComponent& component) {
+void AltiumPcbLibWriter::writeFootprintData(QByteArray& buffer, const AltiumPcbComponent& component) {
     AltiumBinaryWriter writer(buffer);
 
     // 写入封装名称
@@ -438,8 +430,7 @@ void AltiumPcbLibWriter::writeFootprintData(QByteArray& buffer,
 /**
  * @brief 写入广字符串流
  */
-void AltiumPcbLibWriter::writeWideStrings(QByteArray& buffer,
-                                            const AltiumPcbComponent& component) {
+void AltiumPcbLibWriter::writeWideStrings(QByteArray& buffer, const AltiumPcbComponent& component) {
     AltiumBinaryWriter writer(buffer);
 
     // 收集所有需要广字符串的文本
@@ -453,7 +444,8 @@ void AltiumPcbLibWriter::writeWideStrings(QByteArray& buffer,
         QString encoded;
         const QString& text = m_wideStrings[i];
         for (int j = 0; j < text.size(); ++j) {
-            if (j > 0) encoded += ",";
+            if (j > 0)
+                encoded += ",";
             encoded += QString::number(static_cast<int>(text.at(j).unicode()));
         }
         params[QString("ENCODEDTEXT%1").arg(i)] = encoded;
@@ -466,10 +458,10 @@ void AltiumPcbLibWriter::writeWideStrings(QByteArray& buffer,
  * @brief 写入通用图元头部（13 字节）
  */
 void AltiumPcbLibWriter::writeCommonPrimitiveHeader(AltiumBinaryWriter& writer,
-                                                      uint8_t layer,
-                                                      uint16_t flags,
-                                                      uint16_t netIndex,
-                                                      uint16_t componentIndex) {
+                                                    uint8_t layer,
+                                                    uint16_t flags,
+                                                    uint16_t netIndex,
+                                                    uint16_t componentIndex) {
     writer.writeUInt8(layer);
     writer.writeUInt16(flags);
     writer.writeUInt16(netIndex);
@@ -481,9 +473,7 @@ void AltiumPcbLibWriter::writeCommonPrimitiveHeader(AltiumBinaryWriter& writer,
 /**
  * @brief 写入焊盘记录 (Object ID = 2)
  */
-void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer,
-                                   const AltiumPcbPad& pad,
-                                   int componentIndex) {
+void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad& pad, int componentIndex) {
     // Object ID
     writer.writeUInt8(2);
 
@@ -510,8 +500,7 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer,
         // 通用头部（13 字节）
         uint8_t layer = pad.isSMD ? pad.layer : 74;  // SMD 用指定层，TH 用 MultiLayer
         uint16_t flags = 0x08;  // FlagSaved
-        writeCommonPrimitiveHeader(writer, layer, flags, pad.netIndex,
-                                   static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, layer, flags, pad.netIndex, static_cast<uint16_t>(componentIndex));
 
         // 位置
         writer.writeInt32(pad.locationX);
@@ -593,16 +582,13 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer,
 /**
  * @brief 写入走线记录 (Object ID = 4, 49 字节)
  */
-void AltiumPcbLibWriter::writeTrack(AltiumBinaryWriter& writer,
-                                     const AltiumPcbTrack& track,
-                                     int componentIndex) {
+void AltiumPcbLibWriter::writeTrack(AltiumBinaryWriter& writer, const AltiumPcbTrack& track, int componentIndex) {
     writer.writeUInt8(4);  // Object ID
 
     writer.beginBlock();
     {
         uint16_t flags = 0x08;  // FlagSaved
-        writeCommonPrimitiveHeader(writer, track.layer, flags, track.netIndex,
-                                   static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, track.layer, flags, track.netIndex, static_cast<uint16_t>(componentIndex));
 
         writer.writeInt32(track.startX);
         writer.writeInt32(track.startY);
@@ -623,16 +609,13 @@ void AltiumPcbLibWriter::writeTrack(AltiumBinaryWriter& writer,
 /**
  * @brief 写入弧线记录 (Object ID = 1, 60 字节)
  */
-void AltiumPcbLibWriter::writeArc(AltiumBinaryWriter& writer,
-                                   const AltiumPcbArc& arc,
-                                   int componentIndex) {
+void AltiumPcbLibWriter::writeArc(AltiumBinaryWriter& writer, const AltiumPcbArc& arc, int componentIndex) {
     writer.writeUInt8(1);  // Object ID
 
     writer.beginBlock();
     {
         uint16_t flags = 0x08;
-        writeCommonPrimitiveHeader(writer, arc.layer, flags, arc.netIndex,
-                                   static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, arc.layer, flags, arc.netIndex, static_cast<uint16_t>(componentIndex));
 
         writer.writeInt32(arc.centerX);
         writer.writeInt32(arc.centerY);
@@ -654,16 +637,13 @@ void AltiumPcbLibWriter::writeArc(AltiumBinaryWriter& writer,
 /**
  * @brief 写入文本记录 (Object ID = 5)
  */
-void AltiumPcbLibWriter::writeText(AltiumBinaryWriter& writer,
-                                    const AltiumPcbText& text,
-                                    int componentIndex) {
+void AltiumPcbLibWriter::writeText(AltiumBinaryWriter& writer, const AltiumPcbText& text, int componentIndex) {
     writer.writeUInt8(5);  // Object ID
 
     writer.beginBlock();
     {
         uint16_t flags = 0x08;
-        writeCommonPrimitiveHeader(writer, text.layer, flags, 0xFFFF,
-                                   static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, text.layer, flags, 0xFFFF, static_cast<uint16_t>(componentIndex));
 
         writer.writeInt32(text.locationX);
         writer.writeInt32(text.locationY);
@@ -678,7 +658,7 @@ void AltiumPcbLibWriter::writeText(AltiumBinaryWriter& writer,
         writer.writeUInt8(0);  // base font type (Stroke)
 
         // 剩余填充到 252 字节（从偏移 44 开始）
-        QByteArray padding(252 - (13 + 4*2 + 4 + 2 + 8 + 1 + 4 + 3), 0);
+        QByteArray padding(252 - (13 + 4 * 2 + 4 + 2 + 8 + 1 + 4 + 3), 0);
         // wide string index
         int wsIdx = addWideString(text.text);
         padding[115 - 44] = static_cast<char>(wsIdx & 0xFF);
@@ -705,16 +685,13 @@ void AltiumPcbLibWriter::writeText(AltiumBinaryWriter& writer,
 /**
  * @brief 写入填充记录 (Object ID = 6, 50 字节)
  */
-void AltiumPcbLibWriter::writeFill(AltiumBinaryWriter& writer,
-                                    const AltiumPcbFill& fill,
-                                    int componentIndex) {
+void AltiumPcbLibWriter::writeFill(AltiumBinaryWriter& writer, const AltiumPcbFill& fill, int componentIndex) {
     writer.writeUInt8(6);  // Object ID
 
     writer.beginBlock();
     {
         uint16_t flags = 0x08;
-        writeCommonPrimitiveHeader(writer, fill.layer, flags, fill.netIndex,
-                                   static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, fill.layer, flags, fill.netIndex, static_cast<uint16_t>(componentIndex));
 
         writer.writeInt32(fill.corner1X);
         writer.writeInt32(fill.corner1Y);
@@ -733,16 +710,13 @@ void AltiumPcbLibWriter::writeFill(AltiumBinaryWriter& writer,
 /**
  * @brief 写入区域记录 (Object ID = 11)
  */
-void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer,
-                                      const AltiumPcbRegion& region,
-                                      int componentIndex) {
+void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer, const AltiumPcbRegion& region, int componentIndex) {
     writer.writeUInt8(11);  // Object ID
 
     writer.beginBlock();
     {
         uint16_t flags = 0x08;
-        writeCommonPrimitiveHeader(writer, region.layer, flags, 0xFFFF,
-                                   static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, region.layer, flags, 0xFFFF, static_cast<uint16_t>(componentIndex));
 
         writer.writeUInt8(0);  // reserved
         writer.writeUInt16(static_cast<uint16_t>(region.holes.size()));
@@ -757,7 +731,8 @@ void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer,
         params["ARCRESOLUTION"] = "0mil";
         params["ISSHAPEBASED"] = "TRUE";
         params["CAVITYHEIGHT"] = "0mil";
-        if (region.isBoardCutout) params["ISBOARDCUTOUT"] = "TRUE";
+        if (region.isBoardCutout)
+            params["ISBOARDCUTOUT"] = "TRUE";
         writer.writeCStringParameterBlock(params);
 
         // 轮廓顶点

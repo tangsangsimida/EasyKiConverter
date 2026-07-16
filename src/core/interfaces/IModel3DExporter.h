@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QString>
-
 #include "models/Model3DData.h"
+
+#include <QString>
 
 namespace EasyKiConverter {
 

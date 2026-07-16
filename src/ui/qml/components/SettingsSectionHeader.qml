@@ -11,7 +11,6 @@ ColumnLayout {
     property string title
     Layout.fillWidth: true
     spacing: AppStyle.spacing.xs
-
     Text {
         Layout.fillWidth: true
         text: title

@@ -1,9 +1,9 @@
 #pragma once
 
+#include "models/FootprintData.h"
+
 #include <QList>
 #include <QString>
-
-#include "models/FootprintData.h"
 
 namespace EasyKiConverter {
 
