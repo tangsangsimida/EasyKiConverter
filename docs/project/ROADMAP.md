@@ -58,6 +58,37 @@
 - [x] 贡献指南和项目文档完善
 - [x] 版本管理工具（manage_version.py）- v3.0.5 已完成
 
+### v3.2.0 - 中间表示层架构重构（规划中）
+
+**目标**: 引入通用中间表示层 (IR)，解耦数据源与导出器，为多数据源接入奠定基础
+
+**决策文档**: [ADR 012: IR 架构重构](adr/012-intermediate-representation-refactor.md)
+
+**阶段 1: IR 类型和几何解析**（1 周，低风险）
+- [ ] 创建 `src/core/ir/` 目录和 `IRTypes.h`（PadShape/LayerType/PinElectricalType 等枚举）
+- [ ] 创建 `SymbolIR.h`（通用符号数据，QList\<QPointF\> 等已解析几何）
+- [ ] 创建 `FootprintIR.h`（通用封装数据，枚举化层 ID 和焊盘形状）
+- [ ] 创建 `ComponentIR.h`、`Model3DIR.h`
+- [ ] 创建 EasyEDA 层 ID/焊盘形状/引脚类型映射表
+
+**阶段 2: Importer 迁移**（1 周，中风险）
+- [ ] 迁移 `EasyedaSymbolImporter` 输出为 `SymbolComponentIR`
+- [ ] 迁移 `EasyedaFootprintImporter` 输出为 `FootprintComponentIR`
+- [ ] 几何字符串解析从导出器提取到 Importer
+- [ ] 移除 `src/models/` 旧结构体（SymbolData/FootprintData 等）
+- [ ] Golden file 全量回归验证
+
+**阶段 3: 导出器适配**（1 周，中风险）
+- [ ] 导出器接口改为消费 IR
+- [ ] ViewModel/Service/CLI/BOM 路径适配
+- [ ] 缓存序列化格式迁移
+- [ ] 端到端测试验证
+
+**代码质量改进**（见 [代码规模分析](CODE_SIZE_ANALYSIS.md)）:
+- [ ] QML 组件拆分（7 个过长文件，最大 1,128 行）
+- [ ] 服务层拆分（ComponentCacheService 1,509 行 / ComponentService 1,184 行）
+- [ ] ViewModel 拆分（ComponentListViewModel 1,385 行）
+
 ## 如何参与
 
 如果您想参与项目开发，请：
