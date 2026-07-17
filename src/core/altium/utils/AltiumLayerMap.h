@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/ir/IRTypes.h"
+
 #include <QString>
 
 #include <cstdint>
@@ -63,6 +65,73 @@ uint8_t toAltiumElectricalType(int easyedaPinType);
  *   EasyEDA: 0° → Right(0), 90° → Up(1), 180° → Left(2), 270° → Down(3)
  */
 uint8_t toAltiumPinOrientation(int easyedaRotation);
+
+/**
+ * @brief IR PadShape 枚举 → Altium 焊盘形状字节
+ * @param shape IR 焊盘形状枚举
+ * @return Altium 焊盘形状字节 (1=Round, 2=Rect, 9=RoundedRectangle)
+ */
+inline uint8_t toAltiumPadShape(IR::PadShape shape) {
+    switch (shape) {
+        case IR::PadShape::Ellipse:
+        case IR::PadShape::Oval:
+            return 1;  // Round
+        case IR::PadShape::Rect:
+            return 2;  // Rectangular
+        case IR::PadShape::Polygon:
+        case IR::PadShape::RoundRect:
+        case IR::PadShape::Trapezoid:
+            return 9;  // RoundedRectangle
+        default:
+            return 1;  // 默认 Round
+    }
+}
+
+/**
+ * @brief IR PinElectricalType 枚举 → Altium 电气类型字节
+ * @param type IR 引脚电气类型枚举
+ * @return Altium 引脚电气类型字节
+ */
+inline uint8_t toAltiumElectricalType(IR::PinElectricalType type) {
+    switch (type) {
+        case IR::PinElectricalType::Input:
+            return 0;  // Input
+        case IR::PinElectricalType::Output:
+            return 2;  // Output
+        case IR::PinElectricalType::Bidirectional:
+            return 1;  // IO
+        case IR::PinElectricalType::Power:
+            return 7;  // Power
+        case IR::PinElectricalType::OpenCollector:
+            return 3;  // OpenCollector
+        case IR::PinElectricalType::OpenEmitter:
+            return 6;  // OpenEmitter
+        case IR::PinElectricalType::Passive:
+            return 4;  // Passive
+        default:
+            return 4;  // Unspecified → Passive
+    }
+}
+
+/**
+ * @brief IR PinDirection 枚举 → Altium 引脚方向字节
+ * @param dir IR 引脚方向枚举
+ * @return Altium 引脚方向字节 (0=Right, 1=Up, 2=Left, 3=Down)
+ */
+inline uint8_t toAltiumPinOrientation(IR::PinDirection dir) {
+    switch (dir) {
+        case IR::PinDirection::Right:
+            return 0;
+        case IR::PinDirection::Up:
+            return 1;
+        case IR::PinDirection::Left:
+            return 2;
+        case IR::PinDirection::Down:
+            return 3;
+        default:
+            return 0;
+    }
+}
 
 }  // namespace AltiumLayerMap
 }  // namespace EasyKiConverter

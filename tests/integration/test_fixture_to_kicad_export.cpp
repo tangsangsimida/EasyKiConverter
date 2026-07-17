@@ -1,5 +1,7 @@
 #include "core/easyeda/EasyedaFootprintImporter.h"
 #include "core/easyeda/EasyedaSymbolImporter.h"
+#include "core/ir/FootprintDataConverter.h"
+#include "core/ir/SymbolDataConverter.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
 #include "tests/common/TestPaths.hpp"
@@ -40,11 +42,13 @@ private slots:
         const QString footprintPath = tempDir.filePath(QStringLiteral("FIXTURE_FOOTPRINT.kicad_mod"));
 
         ExporterSymbol symbolExporter;
+        auto irSymbol = IR::toSymbolIR(*symbol);
         QVERIFY(symbolExporter.exportSymbolLibrary(
-            {*symbol}, QStringLiteral("FixtureLib"), symbolLibraryPath, false, false));
+            {irSymbol}, QStringLiteral("FixtureLib"), symbolLibraryPath, false, false));
 
         ExporterFootprint footprintExporter;
-        QVERIFY(footprintExporter.exportFootprint(*footprint, footprintPath));
+        auto irFootprint = IR::toFootprintIR(*footprint);
+        QVERIFY(footprintExporter.exportFootprint(irFootprint, footprintPath));
 
         QVERIFY2(QFileInfo::exists(symbolLibraryPath), qPrintable(symbolLibraryPath));
         QVERIFY2(QFileInfo::exists(footprintPath), qPrintable(footprintPath));

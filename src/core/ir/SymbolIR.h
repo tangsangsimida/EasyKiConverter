@@ -14,6 +14,7 @@
 
 #include <QColor>
 #include <QList>
+#include <QMap>
 #include <QPointF>
 #include <QRectF>
 #include <QString>
@@ -37,6 +38,9 @@ struct SymbolPinIR {
     PinElectricalType electricalType = PinElectricalType::Unspecified;  ///< 电气类型
     bool showName = true;  ///< 是否显示引脚名称
     bool showDesignator = true;  ///< 是否显示引脚编号
+    bool hasDot = false;  ///< 是否有取反圆圈（用于 KiCad 引脚样式）
+    bool hasClock = false;  ///< 是否有时钟三角（用于 KiCad 引脚样式）
+    int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 
 /**
@@ -48,6 +52,7 @@ struct SymbolRectangleIR {
     double strokeWidth = 0.0;  ///< 边框宽度（mm）
     QColor fillColor = Qt::transparent;  ///< 填充颜色
     bool isFilled = false;  ///< 是否填充
+    int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 
 /**
@@ -60,6 +65,7 @@ struct SymbolCircleIR {
     double strokeWidth = 0.0;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
+    int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 
 /**
@@ -77,6 +83,7 @@ struct SymbolArcIR {
     double strokeWidth = 0.0;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
+    int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 
 /**
@@ -90,6 +97,7 @@ struct SymbolEllipseIR {
     double strokeWidth = 0.0;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
+    int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 
 /**
@@ -102,6 +110,7 @@ struct SymbolPolylineIR {
     double strokeWidth = 0.0;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
+    int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 
 /**
@@ -114,6 +123,7 @@ struct SymbolPolygonIR {
     double strokeWidth = 0.0;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
+    int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 
 /**
@@ -126,6 +136,7 @@ struct SymbolPathIR {
     double strokeWidth = 0.0;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
+    int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 
 /**
@@ -142,6 +153,7 @@ struct SymbolTextIR {
     bool bold = false;  ///< 是否粗体
     bool italic = false;  ///< 是否斜体（替代原始字符串 "1"/"Italic"）
     bool visible = true;  ///< 是否可见
+    int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 
 /**
@@ -171,6 +183,9 @@ struct SymbolComponentIR {
 
     /** @brief 封装关联名称 */
     QString footprintName;
+
+    /** @brief 来源平台特有元数据（如 LCSC ID、制造商等） */
+    QMap<QString, QString> sourceMetadata;
 
     /** @brief 是否为多部件符号 */
     bool isMultiPart() const {

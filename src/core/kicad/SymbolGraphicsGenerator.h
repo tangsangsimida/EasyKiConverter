@@ -1,7 +1,8 @@
 #ifndef SYMBOLGRAPHICSGENERATOR_H
 #define SYMBOLGRAPHICSGENERATOR_H
 
-#include "models/SymbolData.h"
+#include "core/ir/EasyedaPinTypeMap.h"
+#include "core/ir/SymbolIR.h"
 
 #include <QString>
 
@@ -18,46 +19,42 @@ public:
     SymbolGraphicsGenerator() = default;
 
     /**
-     * @brief 设置当前边界框（用于坐标偏移计算）
+     * @brief 设置当前原点偏移（用于坐标计算）
+     *
+     * @param originX 原点 X 坐标（mm）
+     * @param originY 原点 Y 坐标（mm）
      */
-    void setCurrentBBox(const SymbolBBox& bbox) {
-        m_currentBBox = bbox;
+    void setCurrentOrigin(double originX, double originY) {
+        m_originX = originX;
+        m_originY = originY;
     }
 
-    const SymbolBBox& currentBBox() const {
-        return m_currentBBox;
+    double originX() const {
+        return m_originX;
+    }
+
+    double originY() const {
+        return m_originY;
     }
 
     // 批量生成函数
-    QString generateDrawings(const SymbolData& data) const;
-    QString generateDrawings(const SymbolPart& part) const;
-    QString generatePins(const QList<SymbolPin>& pins, const SymbolBBox& bbox) const;
+    QString generateDrawings(const IR::SymbolComponentIR& data) const;
+    QString generatePins(const QList<IR::SymbolPinIR>& pins) const;
 
     // 单个图形元素生成函数
-    QString generatePin(const SymbolPin& pin, const SymbolBBox& bbox) const;
-    QString generateRectangle(const SymbolRectangle& rect) const;
-    QString generateCircle(const SymbolCircle& circle) const;
-    QString generateArc(const SymbolArc& arc) const;
-    QString generateEllipse(const SymbolEllipse& ellipse) const;
-    QString generatePolygon(const SymbolPolygon& polygon) const;
-    QString generatePolyline(const SymbolPolyline& polyline) const;
-    QString generatePath(const SymbolPath& path) const;
-    QString generateText(const SymbolText& text) const;
-
-    // 单位转换
-    double pxToMil(double px) const;
-    double pxToMm(double px) const;
-
-    // 类型映射
-    QString pinTypeToKicad(PinType pinType) const;
-    QString pinStyleToKicad(PinStyle pinStyle) const;
-    QString rotationToKicadOrientation(int rotation) const;
-
-    // 边界框计算
-    SymbolBBox calculatePartBBox(const SymbolPart& part) const;
+    QString generatePin(const IR::SymbolPinIR& pin) const;
+    QString generateRectangle(const IR::SymbolRectangleIR& rect) const;
+    QString generateCircle(const IR::SymbolCircleIR& circle) const;
+    QString generateArc(const IR::SymbolArcIR& arc) const;
+    QString generateEllipse(const IR::SymbolEllipseIR& ellipse) const;
+    QString generatePolygon(const IR::SymbolPolygonIR& polygon) const;
+    QString generatePolyline(const IR::SymbolPolylineIR& polyline) const;
+    QString generatePath(const IR::SymbolPathIR& path) const;
+    QString generateText(const IR::SymbolTextIR& text) const;
 
 private:
-    SymbolBBox m_currentBBox{};
+    double m_originX = 0.0;  ///< 当前原点 X（mm）
+    double m_originY = 0.0;  ///< 当前原点 Y（mm）
 };
 
 }  // namespace EasyKiConverter

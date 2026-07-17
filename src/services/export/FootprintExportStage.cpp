@@ -2,6 +2,7 @@
 
 #include "KiCadLibraryTableManager.h"
 #include "core/ExporterFactory.h"
+#include "core/ir/FootprintDataConverter.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/utils/GeometryUtils.h"
 #include "models/ComponentData.h"
@@ -514,8 +515,14 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         const bool preferWrl = m_options.needsModel3DWrl();
         const bool exportStep = m_options.needsModel3DStep();
         QString libraryKeywords = m_options.footprintLibraryKeywords;
+        // 转换旧类型列表到 IR 类型
+        QList<IR::FootprintComponentIR> irFootprintList;
+        irFootprintList.reserve(footprintList.size());
+        for (const FootprintData& fd : footprintList) {
+            irFootprintList.append(IR::toFootprintIR(fd));
+        }
         exportSuccess =
-            exporter->exportFootprintLibrary(footprintList,
+            exporter->exportFootprintLibrary(irFootprintList,
                                              libName,
                                              tempPath,
                                              preferWrl,

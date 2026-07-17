@@ -1,7 +1,7 @@
 #include "ExporterFootprint.h"
 
 #include "KiCadExportMetadata.h"
-#include "core/utils/GeometryUtils.h"
+#include "core/ir/SymbolDataConverter.h"
 #include "utils/PathSecurity.h"
 
 #include <QDebug>
@@ -10,13 +10,87 @@
 #include <QFileInfo>
 #include <QTextStream>
 
+#include <limits>
+
 namespace EasyKiConverter {
+
+/**
+ * @brief 从 IR 封装数据计算边界框（mm 单位）
+ * @param footprint 封装 IR 数据
+ * @param outMinX 输出最小 X
+ * @param outMinY 输出最小 Y
+ * @param outMaxX 输出最大 X
+ * @param outMaxY 输出最大 Y
+ */
+static void computeBBox(const IR::FootprintComponentIR& footprint,
+                        double& outMinX,
+                        double& outMinY,
+                        double& outMaxX,
+                        double& outMaxY) {
+    outMinX = std::numeric_limits<double>::max();
+    outMinY = std::numeric_limits<double>::max();
+    outMaxX = std::numeric_limits<double>::lowest();
+    outMaxY = std::numeric_limits<double>::lowest();
+
+    for (const auto& pad : footprint.pads) {
+        outMinX = qMin(outMinX, pad.position.x() - pad.size.width() / 2.0);
+        outMinY = qMin(outMinY, pad.position.y() - pad.size.height() / 2.0);
+        outMaxX = qMax(outMaxX, pad.position.x() + pad.size.width() / 2.0);
+        outMaxY = qMax(outMaxY, pad.position.y() + pad.size.height() / 2.0);
+    }
+    for (const auto& track : footprint.tracks) {
+        for (const QPointF& pt : track.points) {
+            outMinX = qMin(outMinX, pt.x());
+            outMinY = qMin(outMinY, pt.y());
+            outMaxX = qMax(outMaxX, pt.x());
+            outMaxY = qMax(outMaxY, pt.y());
+        }
+    }
+    for (const auto& hole : footprint.holes) {
+        outMinX = qMin(outMinX, hole.center.x() - hole.radius);
+        outMinY = qMin(outMinY, hole.center.y() - hole.radius);
+        outMaxX = qMax(outMaxX, hole.center.x() + hole.radius);
+        outMaxY = qMax(outMaxY, hole.center.y() + hole.radius);
+    }
+    for (const auto& circle : footprint.circles) {
+        outMinX = qMin(outMinX, circle.center.x() - circle.radius);
+        outMinY = qMin(outMinY, circle.center.y() - circle.radius);
+        outMaxX = qMax(outMaxX, circle.center.x() + circle.radius);
+        outMaxY = qMax(outMaxY, circle.center.y() + circle.radius);
+    }
+    for (const auto& rect : footprint.rectangles) {
+        outMinX = qMin(outMinX, rect.bounds.left());
+        outMinY = qMin(outMinY, rect.bounds.top());
+        outMaxX = qMax(outMaxX, rect.bounds.right());
+        outMaxY = qMax(outMaxY, rect.bounds.bottom());
+    }
+    for (const auto& arc : footprint.arcs) {
+        outMinX = qMin(outMinX, arc.center.x() - arc.radius);
+        outMinY = qMin(outMinY, arc.center.y() - arc.radius);
+        outMaxX = qMax(outMaxX, arc.center.x() + arc.radius);
+        outMaxY = qMax(outMaxY, arc.center.y() + arc.radius);
+    }
+    for (const auto& text : footprint.texts) {
+        outMinX = qMin(outMinX, text.position.x());
+        outMinY = qMin(outMinY, text.position.y());
+        outMaxX = qMax(outMaxX, text.position.x());
+        outMaxY = qMax(outMaxY, text.position.y());
+    }
+    for (const auto& region : footprint.regions) {
+        for (const QPointF& pt : region.vertices) {
+            outMinX = qMin(outMinX, pt.x());
+            outMinY = qMin(outMinY, pt.y());
+            outMaxX = qMax(outMaxX, pt.x());
+            outMaxY = qMax(outMaxY, pt.y());
+        }
+    }
+}
 
 ExporterFootprint::ExporterFootprint() {}
 
 ExporterFootprint::~ExporterFootprint() {}
 
-bool ExporterFootprint::exportFootprint(const FootprintData& footprintData,
+bool ExporterFootprint::exportFootprint(const IR::FootprintComponentIR& footprint,
                                         const QString& filePath,
                                         const QString& model3DPath) {
     QFile file(filePath);
@@ -28,7 +102,7 @@ bool ExporterFootprint::exportFootprint(const FootprintData& footprintData,
     QTextStream out(&file);
     out.setEncoding(QStringConverter::Utf8);
 
-    QString content = generateFootprintContent(footprintData, model3DPath);
+    QString content = generateFootprintContent(footprint, model3DPath);
 
     out << content;
     file.flush();
@@ -38,7 +112,7 @@ bool ExporterFootprint::exportFootprint(const FootprintData& footprintData,
     return true;
 }
 
-bool ExporterFootprint::exportFootprint(const FootprintData& footprintData,
+bool ExporterFootprint::exportFootprint(const IR::FootprintComponentIR& footprint,
                                         const QString& filePath,
                                         const QString& model3DWrlPath,
                                         const QString& model3DStepPath) {
@@ -51,7 +125,7 @@ bool ExporterFootprint::exportFootprint(const FootprintData& footprintData,
     QTextStream out(&file);
     out.setEncoding(QStringConverter::Utf8);
 
-    QString content = generateFootprintContent(footprintData, model3DWrlPath, model3DStepPath);
+    QString content = generateFootprintContent(footprint, model3DWrlPath, model3DStepPath);
 
     out << content;
     file.flush();
@@ -61,7 +135,7 @@ bool ExporterFootprint::exportFootprint(const FootprintData& footprintData,
     return true;
 }
 
-bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footprints,
+bool ExporterFootprint::exportFootprintLibrary(const QList<IR::FootprintComponentIR>& footprints,
                                                const QString& libName,
                                                const QString& filePath,
                                                bool preferWrl,
@@ -90,10 +164,10 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
     QSet<QString> existingFootprintNames;
     QStringList existingFiles = libDir.entryList(QStringList("*.kicad_mod"), QDir::Files);
     for (const QString& fileName : existingFiles) {
-        QString footprintName = fileName;
-        footprintName.remove(".kicad_mod");
-        existingFootprintNames.insert(footprintName);
-        qDebug() << "Found existing footprint:" << footprintName;
+        QString fpName = fileName;
+        fpName.remove(".kicad_mod");
+        existingFootprintNames.insert(fpName);
+        qDebug() << "Found existing footprint:" << fpName;
     }
 
     qDebug() << "Existing footprints count:" << existingFootprintNames.count();
@@ -103,49 +177,51 @@ bool ExporterFootprint::exportFootprintLibrary(const QList<FootprintData>& footp
 
     int exportedCount = 0;
     int overwrittenCount = 0;
-    for (const FootprintData& footprint : footprints) {
-        QString footprintName = footprint.info().name;
-        QString fileName = footprintName + ".kicad_mod";
+    for (const IR::FootprintComponentIR& footprint : footprints) {
+        QString fpName = footprint.name;
+        QString fileName = fpName + ".kicad_mod";
         QString fullPath = libDir.filePath(fileName);
 
-        bool exists = existingFootprintNames.contains(footprintName);
+        bool exists = existingFootprintNames.contains(fpName);
         if (exists) {
-            qDebug() << "Overwriting existing footprint:" << footprintName;
+            qDebug() << "Overwriting existing footprint:" << fpName;
             overwrittenCount++;
         } else {
-            qDebug() << "Exporting new footprint:" << footprintName;
+            qDebug() << "Exporting new footprint:" << fpName;
             exportedCount++;
         }
 
-        QString content;
-        if (!footprint.model3D().name().isEmpty() || !footprint.model3D().uuid().isEmpty()) {
-            QString modelName = footprint.model3D().name();
+        // 确定 3D 模型路径
+        // 只要 models3d 非空且有名称即视为有 3D 模型引用（不依赖 isValid()，
+        // 因为 isValid() 要求有实际 OBJ/STEP 数据，而路径生成仅需名称）
+        bool hasModel3D = !footprint.models3d.isEmpty() && !footprint.models3d.first().name().isEmpty();
+        QString modelName;
+        if (hasModel3D) {
+            modelName = footprint.models3d.first().name();
             if (modelName.isEmpty()) {
-                modelName = footprint.info().name;
+                modelName = fpName;
             }
             modelName = PathSecurity::sanitizeFilename(modelName);
+        }
 
-            const bool hasModel3D = !footprint.model3D().name().isEmpty();
-            const bool useWrl = preferWrl && hasModel3D;
-            const bool useStep = exportStep && hasModel3D;
+        QString content;
+        const bool useWrl = preferWrl && hasModel3D;
+        const bool useStep = exportStep && hasModel3D;
 
-            if (useWrl && useStep) {
-                QString wrlPath =
-                    buildModel3DPath(safeLibName, modelName, QStringLiteral("wrl"), useAbsolutePaths, resolvedBaseDir);
-                QString stepPath =
-                    buildModel3DPath(safeLibName, modelName, QStringLiteral("step"), useAbsolutePaths, resolvedBaseDir);
-                content = generateFootprintContent(footprint, wrlPath, stepPath, libraryDescription, libraryKeywords);
-            } else if (useWrl) {
-                QString wrlPath =
-                    buildModel3DPath(safeLibName, modelName, QStringLiteral("wrl"), useAbsolutePaths, resolvedBaseDir);
-                content = generateFootprintContent(footprint, wrlPath, libraryDescription, libraryKeywords);
-            } else if (useStep) {
-                QString stepPath =
-                    buildModel3DPath(safeLibName, modelName, QStringLiteral("step"), useAbsolutePaths, resolvedBaseDir);
-                content = generateFootprintContent(footprint, stepPath, libraryDescription, libraryKeywords);
-            } else {
-                content = generateFootprintContent(footprint, QString(), libraryDescription, libraryKeywords);
-            }
+        if (useWrl && useStep) {
+            QString wrlPath =
+                buildModel3DPath(safeLibName, modelName, QStringLiteral("wrl"), useAbsolutePaths, resolvedBaseDir);
+            QString stepPath =
+                buildModel3DPath(safeLibName, modelName, QStringLiteral("step"), useAbsolutePaths, resolvedBaseDir);
+            content = generateFootprintContent(footprint, wrlPath, stepPath, libraryDescription, libraryKeywords);
+        } else if (useWrl) {
+            QString wrlPath =
+                buildModel3DPath(safeLibName, modelName, QStringLiteral("wrl"), useAbsolutePaths, resolvedBaseDir);
+            content = generateFootprintContent(footprint, wrlPath, libraryDescription, libraryKeywords);
+        } else if (useStep) {
+            QString stepPath =
+                buildModel3DPath(safeLibName, modelName, QStringLiteral("step"), useAbsolutePaths, resolvedBaseDir);
+            content = generateFootprintContent(footprint, stepPath, libraryDescription, libraryKeywords);
         } else {
             content = generateFootprintContent(footprint, QString(), libraryDescription, libraryKeywords);
         }
@@ -194,69 +270,69 @@ QString ExporterFootprint::buildModel3DPath(const QString& safeLibName,
     return QStringLiteral("../%1/%2").arg(modelDirName, modelFileName);
 }
 
-void ExporterFootprint::generateFootprintBaseContent(const FootprintData& footprintData,
+void ExporterFootprint::generateFootprintBaseContent(const IR::FootprintComponentIR& footprint,
                                                      QString& content,
-                                                     double& outBboxX,
-                                                     double& outBboxY,
+                                                     double& outOriginX,
+                                                     double& outOriginY,
                                                      const QString& libraryDescription,
                                                      const QString& libraryKeywords) const {
-    content += QString("(footprint easykiconverter:%1\n").arg(footprintData.info().name);
+    content += QString("(footprint easykiconverter:%1\n").arg(footprint.name);
     content += "  (version 20221018)\n";
 
-    // 导出封装描述 (descr) - 单个元器件描述；库描述写入 fp-lib-table
-    const QString footprintDescription = footprintData.info().description.trimmed();
-    if (!footprintDescription.isEmpty()) {
-        content += QString("  (descr \"%1\")\n").arg(footprintDescription);
+    // 导出封装描述 (descr)
+    const QString fpDescription = footprint.description.trimmed();
+    if (!fpDescription.isEmpty()) {
+        content += QString("  (descr \"%1\")\n").arg(fpDescription);
     }
 
-    // 导出封装标签 (tags) - 用户输入
+    // 导出封装标签 (tags)
     if (!libraryKeywords.isEmpty()) {
         content += QString("  (tags \"%1\")\n").arg(libraryKeywords);
     }
 
-    bool isThroughHole = false;
-    for (const FootprintPad& pad : footprintData.pads()) {
-        if (pad.holeRadius > 0) {
-            isThroughHole = true;
-            break;
-        }
-    }
-
-    if (isThroughHole) {
+    // 判断是否有通孔焊盘
+    if (footprint.hasThroughHolePads()) {
         content += "  (attr through_hole)\n";
     } else {
         content += "  (attr smd)\n";
     }
 
+    // 计算边界框（mm 单位）
+    double bboxMinX, bboxMinY, bboxMaxX, bboxMaxY;
+    computeBBox(footprint, bboxMinX, bboxMinY, bboxMaxX, bboxMaxY);
+
+    // 如果没有有效的边界框，使用默认值
+    bool hasValidBBox = (bboxMinX <= bboxMaxX && bboxMinY <= bboxMaxY);
+    if (!hasValidBBox) {
+        bboxMinX = bboxMinY = 0.0;
+        bboxMaxX = bboxMaxY = 1.0;
+    }
+
+    // 计算边界框中心作为原点
+    double originX = (bboxMinX + bboxMaxX) / 2.0;
+    double originY = (bboxMinY + bboxMaxY) / 2.0;
+
+    // 计算 pad Y 范围（相对于原点）
     double yLow = 0;
     double yHigh = 0;
-    if (!footprintData.pads().isEmpty()) {
-        yLow = footprintData.pads().first().centerY;
-        yHigh = footprintData.pads().first().centerY;
-        for (const FootprintPad& pad : footprintData.pads()) {
-            if (pad.centerY < yLow)
-                yLow = pad.centerY;
-            if (pad.centerY > yHigh)
-                yHigh = pad.centerY;
+    if (!footprint.pads.isEmpty()) {
+        yLow = footprint.pads.first().position.y() - originY;
+        yHigh = yLow;
+        for (const IR::FootprintPadIR& pad : footprint.pads) {
+            double padY = pad.position.y() - originY;
+            if (padY < yLow)
+                yLow = padY;
+            if (padY > yHigh)
+                yHigh = padY;
         }
     }
 
-    double bboxX = footprintData.bbox().x;
-    double bboxY = footprintData.bbox().y;
-
-    double centerX = bboxX + footprintData.bbox().width / 2.0;
-    double centerY = bboxY + footprintData.bbox().height / 2.0;
-    bboxX = centerX;
-    bboxY = centerY;
-
-    content += QString("  (fp_text reference REF** (at 0 %1) (layer F.SilkS)\n")
-                   .arg(m_graphicsGenerator.pxToMm(yLow - bboxY - 4));
+    content += QString("  (fp_text reference REF** (at 0 %1) (layer F.SilkS)\n").arg(yLow - 4 * IR::PX_TO_MM);
     content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
     content += "  )\n";
 
-    content += QString("  (fp_text value %1 (at 0 %2) (layer F.Fab)\n")
-                   .arg(footprintData.info().name)
-                   .arg(m_graphicsGenerator.pxToMm(yHigh - bboxY + 4));
+    content +=
+        QString("  (fp_text value %1 (at 0 %2) (layer F.Fab)\n").arg(footprint.name).arg(yHigh + 4 * IR::PX_TO_MM);
     content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
     content += "  )\n";
 
@@ -264,99 +340,102 @@ void ExporterFootprint::generateFootprintBaseContent(const FootprintData& footpr
     content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
     content += "  )\n";
 
-    for (const FootprintTrack& track : footprintData.tracks()) {
-        content += m_graphicsGenerator.generateTrack(track, bboxX, bboxY);
+    for (const IR::FootprintTrackIR& track : footprint.tracks) {
+        content += m_graphicsGenerator.generateTrack(track, originX, originY);
     }
-    for (const FootprintRectangle& rect : footprintData.rectangles()) {
-        content += m_graphicsGenerator.generateRectangle(rect, bboxX, bboxY);
-    }
-
-    for (const FootprintPad& pad : footprintData.pads()) {
-        content += m_graphicsGenerator.generatePad(pad, bboxX, bboxY);
+    for (const IR::FootprintRectangleIR& rect : footprint.rectangles) {
+        content += m_graphicsGenerator.generateRectangle(rect, originX, originY);
     }
 
-    for (const FootprintHole& hole : footprintData.holes()) {
-        content += m_graphicsGenerator.generateHole(hole, bboxX, bboxY);
+    for (const IR::FootprintPadIR& pad : footprint.pads) {
+        content += m_graphicsGenerator.generatePad(pad, originX, originY);
     }
 
-    for (const FootprintCircle& circle : footprintData.circles()) {
-        content += m_graphicsGenerator.generateCircle(circle, bboxX, bboxY);
+    for (const IR::FootprintHoleIR& hole : footprint.holes) {
+        content += m_graphicsGenerator.generateHole(hole, originX, originY);
     }
 
-    for (const FootprintArc& arc : footprintData.arcs()) {
-        content += m_graphicsGenerator.generateArc(arc, bboxX, bboxY);
+    for (const IR::FootprintCircleIR& circle : footprint.circles) {
+        content += m_graphicsGenerator.generateCircle(circle, originX, originY);
     }
 
-    for (const FootprintText& text : footprintData.texts()) {
-        content += m_graphicsGenerator.generateText(text, bboxX, bboxY);
+    for (const IR::FootprintArcIR& arc : footprint.arcs) {
+        content += m_graphicsGenerator.generateArc(arc, originX, originY);
+    }
+
+    for (const IR::FootprintTextIR& text : footprint.texts) {
+        content += m_graphicsGenerator.generateText(text, originX, originY);
     }
 
     bool hasCourtYard = false;
-    for (const FootprintSolidRegion& region : footprintData.solidRegions()) {
-        QString regionContent = m_graphicsGenerator.generateSolidRegion(region, bboxX, bboxY);
+    for (const IR::FootprintRegionIR& region : footprint.regions) {
+        QString regionContent = m_graphicsGenerator.generateSolidRegion(region, originX, originY);
         content += regionContent;
-        if (region.layerId == 99) {
+        if (region.layer == IR::LayerType::KeepOut) {
             hasCourtYard = true;
         }
     }
 
-    if (!hasCourtYard && footprintData.bbox().width > 0 && footprintData.bbox().height > 0) {
-        content += m_graphicsGenerator.generateCourtyardFromBBox(footprintData.bbox(), bboxX, bboxY);
+    if (!hasCourtYard && hasValidBBox) {
+        double x1 = std::floor((bboxMinX - originX) * 100.0) / 100.0;
+        double y1 = std::floor((bboxMinY - originY) * 100.0) / 100.0;
+        double x2 = std::floor((bboxMaxX - originX) * 100.0) / 100.0;
+        double y2 = std::floor((bboxMaxY - originY) * 100.0) / 100.0;
+        content += m_graphicsGenerator.generateCourtyardFromBBox(x1, y1, x2, y2);
         qWarning() << "Warning: No courtyard found, generated from BBox";
     }
 
-    outBboxX = bboxX;
-    outBboxY = bboxY;
+    outOriginX = originX;
+    outOriginY = originY;
 }
 
-QString ExporterFootprint::generateFootprintContent(const FootprintData& footprintData,
+QString ExporterFootprint::generateFootprintContent(const IR::FootprintComponentIR& footprint,
                                                     const QString& model3DPath) const {
-    // 委托给带 libraryDescription/libraryKeywords 参数的版本
-    return generateFootprintContent(footprintData, model3DPath, QString(), QString());
+    return generateFootprintContent(footprint, model3DPath, QString(), QString());
 }
 
-QString ExporterFootprint::generateFootprintContent(const FootprintData& footprintData,
+QString ExporterFootprint::generateFootprintContent(const IR::FootprintComponentIR& footprint,
                                                     const QString& model3DWrlPath,
                                                     const QString& model3DStepPath) const {
-    // 委托给带 libraryDescription/libraryKeywords 参数的版本
-    return generateFootprintContent(footprintData, model3DWrlPath, model3DStepPath, QString(), QString());
+    return generateFootprintContent(footprint, model3DWrlPath, model3DStepPath, QString(), QString());
 }
 
-QString ExporterFootprint::generateFootprintContent(const FootprintData& footprintData,
+QString ExporterFootprint::generateFootprintContent(const IR::FootprintComponentIR& footprint,
                                                     const QString& model3DPath,
                                                     const QString& libraryDescription,
                                                     const QString& libraryKeywords) const {
     QString content;
-    double bboxX = 0, bboxY = 0;
-    generateFootprintBaseContent(footprintData, content, bboxX, bboxY, libraryDescription, libraryKeywords);
+    double originX = 0, originY = 0;
+    generateFootprintBaseContent(footprint, content, originX, originY, libraryDescription, libraryKeywords);
 
-    if (!footprintData.model3D().name().isEmpty() || !model3DPath.isEmpty()) {
-        content += m_graphicsGenerator.generateModel3D(
-            footprintData.model3D(), bboxX, bboxY, model3DPath, footprintData.info().type);
+    const bool hasModel = !footprint.models3d.isEmpty() && !footprint.models3d.first().name().isEmpty();
+    if (hasModel || !model3DPath.isEmpty()) {
+        const IR::Model3DIR& model3D = footprint.models3d.isEmpty() ? IR::Model3DIR() : footprint.models3d.first();
+        content += m_graphicsGenerator.generateModel3D(model3D, model3DPath);
     }
 
     content += ")\n";
     return content;
 }
 
-QString ExporterFootprint::generateFootprintContent(const FootprintData& footprintData,
+QString ExporterFootprint::generateFootprintContent(const IR::FootprintComponentIR& footprint,
                                                     const QString& model3DWrlPath,
                                                     const QString& model3DStepPath,
                                                     const QString& libraryDescription,
                                                     const QString& libraryKeywords) const {
     QString content;
-    double bboxX = 0, bboxY = 0;
-    generateFootprintBaseContent(footprintData, content, bboxX, bboxY, libraryDescription, libraryKeywords);
+    double originX = 0, originY = 0;
+    generateFootprintBaseContent(footprint, content, originX, originY, libraryDescription, libraryKeywords);
 
-    if (!footprintData.model3D().name().isEmpty() || !model3DWrlPath.isEmpty() || !model3DStepPath.isEmpty()) {
+    const bool hasModel = !footprint.models3d.isEmpty() && !footprint.models3d.first().name().isEmpty();
+    if (hasModel || !model3DWrlPath.isEmpty() || !model3DStepPath.isEmpty()) {
+        const IR::Model3DIR& model3D = footprint.models3d.isEmpty() ? IR::Model3DIR() : footprint.models3d.first();
         if (!model3DWrlPath.isEmpty()) {
-            content += m_graphicsGenerator.generateModel3D(
-                footprintData.model3D(), bboxX, bboxY, model3DWrlPath, footprintData.info().type);
+            content += m_graphicsGenerator.generateModel3D(model3D, model3DWrlPath);
         }
 
         if (!model3DStepPath.isEmpty()) {
-            content += m_graphicsGenerator.generateModel3D(
-                footprintData.model3D(), bboxX, bboxY, model3DStepPath, footprintData.info().type);
+            content += m_graphicsGenerator.generateModel3D(model3D, model3DStepPath);
         }
     }
 

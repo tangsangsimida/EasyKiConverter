@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/interfaces/ISymbolExporter.h"
+#include "core/ir/SymbolIR.h"
 #include "models/AltiumSchComponent.h"
 #include "writers/AltiumSchLibWriter.h"
 
@@ -8,19 +9,19 @@ namespace EasyKiConverter {
 
 /**
  * @brief Altium 符号导出器
- * @details 实现 ISymbolExporter 接口，将 SymbolData 转换为 Altium SchLib 格式
+ * @details 实现 ISymbolExporter 接口，将 SymbolComponentIR 转换为 Altium SchLib 格式
  */
 class ExporterAltiumSymbol : public ISymbolExporter {
 public:
     /**
      * @brief 导出单个符号到 SchLib 文件
      */
-    bool exportSymbol(const SymbolData& symbolData, const QString& filePath) override;
+    bool exportSymbol(const IR::SymbolComponentIR& symbol, const QString& filePath) override;
 
     /**
      * @brief 导出符号库（多个符号合并到一个 SchLib 文件）
      */
-    bool exportSymbolLibrary(const QList<SymbolData>& symbols,
+    bool exportSymbolLibrary(const QList<IR::SymbolComponentIR>& symbols,
                              const QString& libName,
                              const QString& filePath,
                              bool appendMode = true,
@@ -29,54 +30,54 @@ public:
 
 private:
     /**
-     * @brief SymbolData → AltiumSchComponent 转换
+     * @brief SymbolComponentIR → AltiumSchComponent 转换
      */
-    AltiumSchComponent convertSymbol(const SymbolData& data);
+    AltiumSchComponent convertSymbol(const IR::SymbolComponentIR& data);
 
     /**
-     * @brief SymbolPin → AltiumSchPin 转换
+     * @brief SymbolPinIR → AltiumSchPin 转换
      */
-    AltiumSchPin convertPin(const SymbolPin& pin);
+    AltiumSchPin convertPin(const IR::SymbolPinIR& pin);
 
     /**
-     * @brief SymbolRectangle → AltiumSchRectangle 转换
+     * @brief SymbolRectangleIR → AltiumSchRectangle 转换
      */
-    AltiumSchRectangle convertRectangle(const SymbolRectangle& rect);
+    AltiumSchRectangle convertRectangle(const IR::SymbolRectangleIR& rect);
 
     /**
-     * @brief SymbolCircle → AltiumSchEllipse 转换
+     * @brief SymbolCircleIR → AltiumSchEllipse 转换
      */
-    AltiumSchEllipse convertCircle(const SymbolCircle& circle);
+    AltiumSchEllipse convertCircle(const IR::SymbolCircleIR& circle);
 
     /**
-     * @brief SymbolArc → AltiumSchArc 转换
+     * @brief SymbolArcIR → AltiumSchArc 转换
      */
-    AltiumSchArc convertArc(const SymbolArc& arc);
+    AltiumSchArc convertArc(const IR::SymbolArcIR& arc);
 
     /**
-     * @brief SymbolPolygon → AltiumSchPolygon 转换
+     * @brief SymbolPolygonIR → AltiumSchPolygon 转换
      */
-    AltiumSchPolygon convertPolygon(const SymbolPolygon& polygon);
+    AltiumSchPolygon convertPolygon(const IR::SymbolPolygonIR& polygon);
 
     /**
-     * @brief SymbolPolyline → AltiumSchPolyline 转换
+     * @brief SymbolPolylineIR → AltiumSchPolyline 转换
      */
-    AltiumSchPolyline convertPolyline(const SymbolPolyline& polyline);
+    AltiumSchPolyline convertPolyline(const IR::SymbolPolylineIR& polyline);
 
     /**
-     * @brief SymbolPath → AltiumSchPath 转换
+     * @brief SymbolPathIR → AltiumSchPath 转换
      */
-    AltiumSchPath convertPath(const SymbolPath& path);
+    AltiumSchPath convertPath(const IR::SymbolPathIR& path);
 
     /**
-     * @brief SymbolText → AltiumSchText 转换
+     * @brief SymbolTextIR → AltiumSchText 转换
      */
-    AltiumSchText convertText(const SymbolText& text);
+    AltiumSchText convertText(const IR::SymbolTextIR& text);
 
     /**
-     * @brief SymbolEllipse → AltiumSchEllipse 转换
+     * @brief SymbolEllipseIR → AltiumSchEllipse 转换
      */
-    AltiumSchEllipse convertEllipse(const SymbolEllipse& ellipse);
+    AltiumSchEllipse convertEllipse(const IR::SymbolEllipseIR& ellipse);
 
     AltiumSchLibWriter m_writer;
 };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "models/SymbolData.h"
+#include "core/ir/SymbolIR.h"
 
 #include <QList>
 #include <QString>
@@ -9,7 +9,7 @@ namespace EasyKiConverter {
 
 /**
  * @brief 符号导出器通用接口
- * @details 定义将中间模型数据导出为目标 EDA 符号库格式的通用接口。
+ * @details 定义将 IR 符号数据导出为目标 EDA 符号库格式的通用接口。
  *          KiCad、Altium 等不同目标格式各自实现此接口。
  */
 class ISymbolExporter {
@@ -18,15 +18,15 @@ public:
 
     /**
      * @brief 导出单个符号到文件
-     * @param symbolData 符号数据
+     * @param symbol 符号 IR 数据
      * @param filePath 输出文件路径
      * @return 是否成功
      */
-    virtual bool exportSymbol(const SymbolData& symbolData, const QString& filePath) = 0;
+    virtual bool exportSymbol(const IR::SymbolComponentIR& symbol, const QString& filePath) = 0;
 
     /**
      * @brief 导出符号库（多个符号合并到一个库文件）
-     * @param symbols 符号列表
+     * @param symbols 符号 IR 列表
      * @param libName 库名称
      * @param filePath 输出文件路径
      * @param appendMode 是否追加模式
@@ -34,7 +34,7 @@ public:
      * @param libraryDescription 库描述文本
      * @return 是否成功
      */
-    virtual bool exportSymbolLibrary(const QList<SymbolData>& symbols,
+    virtual bool exportSymbolLibrary(const QList<IR::SymbolComponentIR>& symbols,
                                      const QString& libName,
                                      const QString& filePath,
                                      bool appendMode = true,

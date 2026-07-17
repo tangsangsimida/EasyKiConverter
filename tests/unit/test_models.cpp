@@ -1,4 +1,5 @@
 #include "core/easyeda/EasyedaFootprintImporter.h"
+#include "core/ir/Model3DDataConverter.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "models/FootprintData.h"
 #include "models/FootprintDataSerializer.h"
@@ -147,7 +148,8 @@ private slots:
         const QString stepPath = tempDir.filePath(QStringLiteral("model.step"));
 
         Exporter3DModel exporter;
-        QVERIFY(exporter.exportToStep(modelData, stepPath));
+        auto irModel = IR::toModel3DIR(modelData);
+        QVERIFY(exporter.exportToStep(irModel, stepPath));
 
         QFile stepFile(stepPath);
         QVERIFY(stepFile.open(QIODevice::ReadOnly));

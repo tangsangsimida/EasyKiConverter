@@ -3,6 +3,7 @@
 #include "DebugExportHelper.h"
 #include "KiCadLibraryTableManager.h"
 #include "core/ExporterFactory.h"
+#include "core/ir/SymbolDataConverter.h"
 #include "models/ComponentData.h"
 
 #include <QDateTime>
@@ -273,8 +274,14 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
             return;
         }
         bool appendMode = !m_options.overwriteExistingFiles;
+        // 转换旧类型列表到 IR 类型
+        QList<IR::SymbolComponentIR> irSymbolList;
+        irSymbolList.reserve(symbolList.size());
+        for (const SymbolData& sd : symbolList) {
+            irSymbolList.append(IR::toSymbolIR(sd));
+        }
         exportSuccess = exporter->exportSymbolLibrary(
-            symbolList, libName, tempPath, appendMode, m_options.updateMode, libraryDescription);
+            irSymbolList, libName, tempPath, appendMode, m_options.updateMode, libraryDescription);
     }
 
     if (m_cancelled.load()) {

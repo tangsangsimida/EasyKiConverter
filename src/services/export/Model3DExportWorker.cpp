@@ -5,6 +5,7 @@
 #include "../../services/ComponentCacheService.h"
 #include "../../utils/PathSecurity.h"
 #include "DebugExportHelper.h"
+#include "core/ir/Model3DDataConverter.h"
 
 #include <QDebug>
 #include <QDir>
@@ -177,7 +178,8 @@ void Model3DExportWorker::run() {
             cache->saveModel3D(uuid, objData, QStringLiteral("obj"), gen);
             Model3DData modelData = buildModelData();
             modelData.setRawObj(QString::fromUtf8(objData));
-            if (!exporter.exportToWrl(modelData, wrlWritePath)) {
+            IR::Model3DIR modelIR = IR::toModel3DIR(modelData);
+            if (!exporter.exportToWrl(modelIR, wrlWritePath)) {
                 error = QStringLiteral("Failed to convert OBJ to WRL");
             } else {
                 QFile file(wrlWritePath);
@@ -204,7 +206,8 @@ void Model3DExportWorker::run() {
             if (!stepData.isEmpty()) {
                 Model3DData modelData = buildModelData();
                 modelData.setStep(stepData);
-                if (!exporter.exportToStep(modelData, stepWritePath)) {
+                IR::Model3DIR modelIR = IR::toModel3DIR(modelData);
+                if (!exporter.exportToStep(modelIR, stepWritePath)) {
                     error = QStringLiteral("Failed to write STEP file");
                 } else {
                     cache->saveModel3D(uuid, stepData, QStringLiteral("step"), gen);

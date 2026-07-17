@@ -192,6 +192,7 @@ add_test(NAME test_write_worker COMMAND test_write_worker)
 add_executable(test_kicad_graphics_generators test_kicad_graphics_generators.cpp)
 target_link_libraries(test_kicad_graphics_generators PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 target_include_directories(test_kicad_graphics_generators PRIVATE
@@ -382,6 +383,7 @@ add_executable(test_kicad_exporter_golden
 )
 target_link_libraries(test_kicad_exporter_golden PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 target_include_directories(test_kicad_exporter_golden PRIVATE

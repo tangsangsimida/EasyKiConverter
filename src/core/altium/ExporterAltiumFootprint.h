@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/interfaces/IFootprintExporter.h"
+#include "core/ir/FootprintIR.h"
 #include "models/AltiumPcbComponent.h"
 #include "writers/AltiumPcbLibWriter.h"
 
@@ -8,21 +9,21 @@ namespace EasyKiConverter {
 
 /**
  * @brief Altium 封装导出器
- * @details 实现 IFootprintExporter 接口，将 FootprintData 转换为 Altium PcbLib 格式
+ * @details 实现 IFootprintExporter 接口，将 FootprintComponentIR 转换为 Altium PcbLib 格式
  */
 class ExporterAltiumFootprint : public IFootprintExporter {
 public:
     /**
      * @brief 导出单个封装到 PcbLib 文件
      */
-    bool exportFootprint(const FootprintData& footprintData,
+    bool exportFootprint(const IR::FootprintComponentIR& footprint,
                          const QString& filePath,
                          const QString& model3DPath = QString()) override;
 
     /**
      * @brief 导出封装库（多个封装）
      */
-    bool exportFootprintLibrary(const QList<FootprintData>& footprints,
+    bool exportFootprintLibrary(const QList<IR::FootprintComponentIR>& footprints,
                                 const QString& libName,
                                 const QString& filePath,
                                 bool preferWrl = true,
@@ -34,44 +35,44 @@ public:
 
 private:
     /**
-     * @brief FootprintData → AltiumPcbComponent 转换
+     * @brief FootprintComponentIR → AltiumPcbComponent 转换
      */
-    AltiumPcbComponent convertFootprint(const FootprintData& data, const QString& model3DPath = QString());
+    AltiumPcbComponent convertFootprint(const IR::FootprintComponentIR& data, const QString& model3DPath = QString());
 
     /**
-     * @brief FootprintPad → AltiumPcbPad 转换
+     * @brief FootprintPadIR → AltiumPcbPad 转换
      */
-    AltiumPcbPad convertPad(const FootprintPad& pad);
+    AltiumPcbPad convertPad(const IR::FootprintPadIR& pad);
 
     /**
-     * @brief FootprintTrack → AltiumPcbTrack 转换
+     * @brief FootprintTrackIR → AltiumPcbTrack 转换
      */
-    AltiumPcbTrack convertTrack(const FootprintTrack& track);
+    AltiumPcbTrack convertTrack(const IR::FootprintTrackIR& track);
 
     /**
-     * @brief FootprintCircle → AltiumPcbArc 转换
+     * @brief FootprintCircleIR → AltiumPcbArc 转换
      */
-    AltiumPcbArc convertCircle(const FootprintCircle& circle);
+    AltiumPcbArc convertCircle(const IR::FootprintCircleIR& circle);
 
     /**
-     * @brief FootprintArc → AltiumPcbArc 转换
+     * @brief FootprintArcIR → AltiumPcbArc 转换
      */
-    AltiumPcbArc convertArc(const FootprintArc& arc);
+    AltiumPcbArc convertArc(const IR::FootprintArcIR& arc);
 
     /**
-     * @brief FootprintRectangle → AltiumPcbFill 转换
+     * @brief FootprintRectangleIR → AltiumPcbFill 转换
      */
-    AltiumPcbFill convertRectangle(const FootprintRectangle& rect);
+    AltiumPcbFill convertRectangle(const IR::FootprintRectangleIR& rect);
 
     /**
-     * @brief FootprintText → AltiumPcbText 转换
+     * @brief FootprintTextIR → AltiumPcbText 转换
      */
-    AltiumPcbText convertText(const FootprintText& text);
+    AltiumPcbText convertText(const IR::FootprintTextIR& text);
 
     /**
-     * @brief FootprintSolidRegion → AltiumPcbRegion 转换
+     * @brief FootprintRegionIR → AltiumPcbRegion 转换
      */
-    AltiumPcbRegion convertSolidRegion(const FootprintSolidRegion& region);
+    AltiumPcbRegion convertSolidRegion(const IR::FootprintRegionIR& region);
 
     /**
      * @brief 加载 STEP 文件数据

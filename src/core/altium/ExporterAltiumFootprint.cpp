@@ -1,8 +1,8 @@
 #include "ExporterAltiumFootprint.h"
 
+#include "core/ir/EasyedaLayerMap.h"
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumLayerMap.h"
-#include "utils/AltiumStringUtils.h"
 
 #include <QFile>
 #include <QFileInfo>
@@ -12,18 +12,18 @@ namespace EasyKiConverter {
 /**
  * @brief 导出单个封装
  */
-bool ExporterAltiumFootprint::exportFootprint(const FootprintData& footprintData,
+bool ExporterAltiumFootprint::exportFootprint(const IR::FootprintComponentIR& footprint,
                                               const QString& filePath,
                                               const QString& model3DPath) {
     QList<AltiumPcbComponent> components;
-    components.append(convertFootprint(footprintData, model3DPath));
+    components.append(convertFootprint(footprint, model3DPath));
     return m_writer.write(components, filePath);
 }
 
 /**
  * @brief 导出封装库
  */
-bool ExporterAltiumFootprint::exportFootprintLibrary(const QList<FootprintData>& footprints,
+bool ExporterAltiumFootprint::exportFootprintLibrary(const QList<IR::FootprintComponentIR>& footprints,
                                                      const QString& libName,
                                                      const QString& filePath,
                                                      bool preferWrl,
@@ -33,7 +33,7 @@ bool ExporterAltiumFootprint::exportFootprintLibrary(const QList<FootprintData>&
                                                      bool useAbsolutePaths,
                                                      const QString& model3DBaseDir) {
     QList<AltiumPcbComponent> components;
-    for (const FootprintData& fp : footprints) {
+    for (const IR::FootprintComponentIR& fp : footprints) {
         // 对于库级别导出，3D 模型路径在后续处理
         components.append(convertFootprint(fp));
     }
@@ -41,45 +41,47 @@ bool ExporterAltiumFootprint::exportFootprintLibrary(const QList<FootprintData>&
 }
 
 /**
- * @brief FootprintData → AltiumPcbComponent
+ * @brief FootprintComponentIR → AltiumPcbComponent
  */
-AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const FootprintData& data, const QString& model3DPath) {
+AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const IR::FootprintComponentIR& data,
+                                                             const QString& model3DPath) {
     AltiumPcbComponent component;
-    component.name = data.info().name;
-    component.description = data.info().description;
+    component.name = data.name;
+    component.description = data.description;
+    component.height = data.height;  // IR height 已经是 mm
 
     // 转换焊盘
-    for (const FootprintPad& pad : data.pads()) {
+    for (const IR::FootprintPadIR& pad : data.pads) {
         component.pads.append(convertPad(pad));
     }
 
     // 转换走线
-    for (const FootprintTrack& track : data.tracks()) {
+    for (const IR::FootprintTrackIR& track : data.tracks) {
         component.tracks.append(convertTrack(track));
     }
 
     // 转换圆
-    for (const FootprintCircle& circle : data.circles()) {
+    for (const IR::FootprintCircleIR& circle : data.circles) {
         component.arcs.append(convertCircle(circle));
     }
 
     // 转换弧线
-    for (const FootprintArc& arc : data.arcs()) {
+    for (const IR::FootprintArcIR& arc : data.arcs) {
         component.arcs.append(convertArc(arc));
     }
 
     // 转换矩形
-    for (const FootprintRectangle& rect : data.rectangles()) {
+    for (const IR::FootprintRectangleIR& rect : data.rectangles) {
         component.fills.append(convertRectangle(rect));
     }
 
     // 转换文本
-    for (const FootprintText& text : data.texts()) {
+    for (const IR::FootprintTextIR& text : data.texts) {
         component.texts.append(convertText(text));
     }
 
     // 转换区域
-    for (const FootprintSolidRegion& region : data.solidRegions()) {
+    for (const IR::FootprintRegionIR& region : data.regions) {
         component.regions.append(convertSolidRegion(region));
     }
 
@@ -92,50 +94,64 @@ AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const FootprintData
             model.stepData = stepData;
             component.models.append(model);
         }
+    } else if (!data.models3d.isEmpty()) {
+        // 从 IR 的 3D 模型中加载 STEP 数据
+        for (const IR::Model3DIR& model3d : data.models3d) {
+            if (model3d.hasStepData()) {
+                AltiumPcbComponent::Model3D model;
+                model.name = model3d.name();
+                model.stepData = model3d.stepData();
+                const auto& rot = model3d.rotation();
+                model.rotX = rot.x;
+                model.rotY = rot.y;
+                model.rotZ = rot.z;
+                component.models.append(model);
+            }
+        }
     }
 
     return component;
 }
 
 /**
- * @brief FootprintPad → AltiumPcbPad
+ * @brief FootprintPadIR → AltiumPcbPad
  */
-AltiumPcbPad ExporterAltiumFootprint::convertPad(const FootprintPad& pad) {
+AltiumPcbPad ExporterAltiumFootprint::convertPad(const IR::FootprintPadIR& pad) {
     AltiumPcbPad altiumPad;
     altiumPad.designator = pad.number;
-    altiumPad.locationX = AltiumCoord::toPcbRaw(static_cast<int>(pad.centerX));
-    altiumPad.locationY = AltiumCoord::toPcbRaw(static_cast<int>(pad.centerY));
+    altiumPad.locationX = AltiumCoord::mmToPcbRaw(pad.position.x());
+    altiumPad.locationY = AltiumCoord::mmToPcbRaw(pad.position.y());
 
-    int width = static_cast<int>(pad.width);
-    int height = static_cast<int>(pad.height);
+    // IR size 已经是 mm
+    int width = AltiumCoord::mmToPcbRaw(pad.size.width());
+    int height = AltiumCoord::mmToPcbRaw(pad.size.height());
 
     // 确定焊盘类型
-    bool hasHole = pad.holeRadius > 0;
-    altiumPad.isSMD = !hasHole;
-    altiumPad.isPlated = hasHole;
+    altiumPad.isSMD = pad.isSmd();
+    altiumPad.isPlated = pad.isPlated;
 
-    if (hasHole) {
+    if (pad.isThroughHole()) {
         // 通孔焊盘
         altiumPad.layer = 74;  // MultiLayer
-        altiumPad.holeSize = AltiumCoord::toPcbRaw(static_cast<int>(pad.holeRadius * 2));
+        altiumPad.holeSize = AltiumCoord::mmToPcbRaw(pad.holeSize);
     } else {
-        // 表贴焊盘
-        altiumPad.layer = static_cast<uint8_t>(pad.layerId > 0 ? pad.layerId : 1);
+        // 表贴焊盘：从 IR LayerType 映射到 Altium 层字节
+        altiumPad.layer = static_cast<uint8_t>(IR::EasyedaLayerMap::fromLayerTypeToAltium(pad.layer));
     }
 
-    // 形状
+    // 形状：从 IR PadShape 映射到 Altium 焊盘形状字节
     uint8_t shape = AltiumLayerMap::toAltiumPadShape(pad.shape);
     altiumPad.shapeTop = shape;
     altiumPad.shapeMid = shape;
     altiumPad.shapeBot = shape;
 
     // 尺寸
-    altiumPad.sizeTopX = AltiumCoord::toPcbRaw(width);
-    altiumPad.sizeTopY = AltiumCoord::toPcbRaw(height);
-    altiumPad.sizeMidX = altiumPad.sizeTopX;
-    altiumPad.sizeMidY = altiumPad.sizeTopY;
-    altiumPad.sizeBotX = altiumPad.sizeTopX;
-    altiumPad.sizeBotY = altiumPad.sizeTopY;
+    altiumPad.sizeTopX = width;
+    altiumPad.sizeTopY = height;
+    altiumPad.sizeMidX = width;
+    altiumPad.sizeMidY = height;
+    altiumPad.sizeBotX = width;
+    altiumPad.sizeBotY = height;
 
     altiumPad.rotation = pad.rotation;
 
@@ -143,92 +159,95 @@ AltiumPcbPad ExporterAltiumFootprint::convertPad(const FootprintPad& pad) {
 }
 
 /**
- * @brief FootprintTrack → AltiumPcbTrack
- * @details FootprintTrack.points 是空格分隔的 "x,y" 字符串
+ * @brief FootprintTrackIR → AltiumPcbTrack
  */
-AltiumPcbTrack ExporterAltiumFootprint::convertTrack(const FootprintTrack& track) {
+AltiumPcbTrack ExporterAltiumFootprint::convertTrack(const IR::FootprintTrackIR& track) {
     AltiumPcbTrack altiumTrack;
-    altiumTrack.layer = static_cast<uint8_t>(track.layerId > 0 ? track.layerId : 1);
-    altiumTrack.width = AltiumCoord::toPcbRaw(static_cast<int>(track.strokeWidth));
+    altiumTrack.layer = static_cast<uint8_t>(IR::EasyedaLayerMap::fromLayerTypeToAltium(track.layer));
+    altiumTrack.width = AltiumCoord::mmToPcbRaw(track.width);
 
-    QList<QPointF> points = AltiumStringUtils::parsePointsString(track.points);
-    if (points.size() >= 2) {
-        altiumTrack.startX = AltiumCoord::toPcbRaw(static_cast<int>(points.first().x()));
-        altiumTrack.startY = AltiumCoord::toPcbRaw(static_cast<int>(points.first().y()));
-        altiumTrack.endX = AltiumCoord::toPcbRaw(static_cast<int>(points.last().x()));
-        altiumTrack.endY = AltiumCoord::toPcbRaw(static_cast<int>(points.last().y()));
+    // IR points 已经是解析后的 QList<QPointF>，单位 mm
+    if (track.points.size() >= 2) {
+        altiumTrack.startX = AltiumCoord::mmToPcbRaw(track.points.first().x());
+        altiumTrack.startY = AltiumCoord::mmToPcbRaw(track.points.first().y());
+        altiumTrack.endX = AltiumCoord::mmToPcbRaw(track.points.last().x());
+        altiumTrack.endY = AltiumCoord::mmToPcbRaw(track.points.last().y());
     }
 
     return altiumTrack;
 }
 
 /**
- * @brief FootprintCircle → AltiumPcbArc（360° 圆弧）
+ * @brief FootprintCircleIR → AltiumPcbArc（360° 圆弧）
  */
-AltiumPcbArc ExporterAltiumFootprint::convertCircle(const FootprintCircle& circle) {
+AltiumPcbArc ExporterAltiumFootprint::convertCircle(const IR::FootprintCircleIR& circle) {
     AltiumPcbArc altiumArc;
-    altiumArc.centerX = AltiumCoord::toPcbRaw(static_cast<int>(circle.cx));
-    altiumArc.centerY = AltiumCoord::toPcbRaw(static_cast<int>(circle.cy));
-    altiumArc.radius = AltiumCoord::toPcbRaw(static_cast<int>(circle.radius));
+    altiumArc.centerX = AltiumCoord::mmToPcbRaw(circle.center.x());
+    altiumArc.centerY = AltiumCoord::mmToPcbRaw(circle.center.y());
+    altiumArc.radius = AltiumCoord::mmToPcbRaw(circle.radius);
     altiumArc.startAngle = 0.0;
     altiumArc.endAngle = 360.0;
-    altiumArc.width = AltiumCoord::toPcbRaw(static_cast<int>(circle.strokeWidth));
-    altiumArc.layer = static_cast<uint8_t>(circle.layerId > 0 ? circle.layerId : 1);
+    altiumArc.width = AltiumCoord::mmToPcbRaw(circle.strokeWidth);
+    altiumArc.layer = static_cast<uint8_t>(IR::EasyedaLayerMap::fromLayerTypeToAltium(circle.layer));
     return altiumArc;
 }
 
 /**
- * @brief FootprintArc → AltiumPcbArc
+ * @brief FootprintArcIR → AltiumPcbArc
  */
-AltiumPcbArc ExporterAltiumFootprint::convertArc(const FootprintArc& arc) {
+AltiumPcbArc ExporterAltiumFootprint::convertArc(const IR::FootprintArcIR& arc) {
     AltiumPcbArc altiumArc;
-    // EasyEDA 弧线使用 path 数据，这里简化处理
-    altiumArc.layer = static_cast<uint8_t>(arc.layerId > 0 ? arc.layerId : 1);
-    altiumArc.width = AltiumCoord::toPcbRaw(static_cast<int>(arc.strokeWidth));
+    altiumArc.centerX = AltiumCoord::mmToPcbRaw(arc.center.x());
+    altiumArc.centerY = AltiumCoord::mmToPcbRaw(arc.center.y());
+    altiumArc.radius = AltiumCoord::mmToPcbRaw(arc.radius);
+    altiumArc.startAngle = arc.startAngle;
+    altiumArc.endAngle = arc.endAngle;
+    altiumArc.width = AltiumCoord::mmToPcbRaw(arc.width);
+    altiumArc.layer = static_cast<uint8_t>(IR::EasyedaLayerMap::fromLayerTypeToAltium(arc.layer));
     return altiumArc;
 }
 
 /**
- * @brief FootprintRectangle → AltiumPcbFill
+ * @brief FootprintRectangleIR → AltiumPcbFill
  */
-AltiumPcbFill ExporterAltiumFootprint::convertRectangle(const FootprintRectangle& rect) {
+AltiumPcbFill ExporterAltiumFootprint::convertRectangle(const IR::FootprintRectangleIR& rect) {
     AltiumPcbFill altiumFill;
-    altiumFill.corner1X = AltiumCoord::toPcbRaw(static_cast<int>(rect.x));
-    altiumFill.corner1Y = AltiumCoord::toPcbRaw(static_cast<int>(rect.y));
-    altiumFill.corner2X = AltiumCoord::toPcbRaw(static_cast<int>(rect.x + rect.width));
-    altiumFill.corner2Y = AltiumCoord::toPcbRaw(static_cast<int>(rect.y + rect.height));
-    altiumFill.layer = static_cast<uint8_t>(rect.layerId > 0 ? rect.layerId : 1);
+    altiumFill.corner1X = AltiumCoord::mmToPcbRaw(rect.bounds.left());
+    altiumFill.corner1Y = AltiumCoord::mmToPcbRaw(rect.bounds.top());
+    altiumFill.corner2X = AltiumCoord::mmToPcbRaw(rect.bounds.right());
+    altiumFill.corner2Y = AltiumCoord::mmToPcbRaw(rect.bounds.bottom());
+    altiumFill.layer = static_cast<uint8_t>(IR::EasyedaLayerMap::fromLayerTypeToAltium(rect.layer));
     return altiumFill;
 }
 
 /**
- * @brief FootprintText → AltiumPcbText
+ * @brief FootprintTextIR → AltiumPcbText
  */
-AltiumPcbText ExporterAltiumFootprint::convertText(const FootprintText& text) {
+AltiumPcbText ExporterAltiumFootprint::convertText(const IR::FootprintTextIR& text) {
     AltiumPcbText altiumText;
-    altiumText.locationX = AltiumCoord::toPcbRaw(static_cast<int>(text.centerX));
-    altiumText.locationY = AltiumCoord::toPcbRaw(static_cast<int>(text.centerY));
+    altiumText.locationX = AltiumCoord::mmToPcbRaw(text.position.x());
+    altiumText.locationY = AltiumCoord::mmToPcbRaw(text.position.y());
     altiumText.text = text.text;
     altiumText.rotation = text.rotation;
-    altiumText.height = AltiumCoord::toPcbRaw(static_cast<int>(text.fontSize));
-    altiumText.strokeWidth = AltiumCoord::toPcbRaw(static_cast<int>(text.strokeWidth));
-    altiumText.layer = static_cast<uint8_t>(text.layerId > 0 ? text.layerId : 33);
+    altiumText.height = AltiumCoord::mmToPcbRaw(text.fontSize);
+    altiumText.strokeWidth = AltiumCoord::mmToPcbRaw(text.strokeWidth);
+    altiumText.isMirrored = text.mirror;
+    altiumText.layer = static_cast<uint8_t>(IR::EasyedaLayerMap::fromLayerTypeToAltium(text.layer));
     return altiumText;
 }
 
 /**
- * @brief FootprintSolidRegion → AltiumPcbRegion
- * @details FootprintSolidRegion.path 是 SVG 路径命令字符串
+ * @brief FootprintRegionIR → AltiumPcbRegion
  */
-AltiumPcbRegion ExporterAltiumFootprint::convertSolidRegion(const FootprintSolidRegion& region) {
+AltiumPcbRegion ExporterAltiumFootprint::convertSolidRegion(const IR::FootprintRegionIR& region) {
     AltiumPcbRegion altiumRegion;
-    altiumRegion.layer = static_cast<uint8_t>(region.layerId > 0 ? region.layerId : 1);
+    altiumRegion.layer = static_cast<uint8_t>(IR::EasyedaLayerMap::fromLayerTypeToAltium(region.layer));
     altiumRegion.isBoardCutout = region.isKeepOut;
 
-    QList<QPointF> points = AltiumStringUtils::parsePathString(region.path);
-    for (const QPointF& point : points) {
-        altiumRegion.vertices.append(QPointF(static_cast<double>(AltiumCoord::toPcbRaw(static_cast<int>(point.x()))),
-                                             static_cast<double>(AltiumCoord::toPcbRaw(static_cast<int>(point.y())))));
+    // IR vertices 已经是解析后的 QList<QPointF>，单位 mm
+    for (const QPointF& point : region.vertices) {
+        altiumRegion.vertices.append(QPointF(static_cast<double>(AltiumCoord::mmToPcbRaw(point.x())),
+                                             static_cast<double>(AltiumCoord::mmToPcbRaw(point.y()))));
     }
 
     return altiumRegion;

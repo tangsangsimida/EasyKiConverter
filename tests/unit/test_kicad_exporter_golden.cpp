@@ -1,3 +1,6 @@
+#include "core/ir/FootprintDataConverter.h"
+#include "core/ir/Model3DDataConverter.h"
+#include "core/ir/SymbolDataConverter.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
 #include "models/FootprintData.h"
@@ -23,7 +26,8 @@ private slots:
         const QString outputPath = tempDir.filePath(QStringLiteral("GoldenLib.kicad_sym"));
 
         ExporterSymbol exporter;
-        QVERIFY(exporter.exportSymbolLibrary({makeSymbol()}, QStringLiteral("GoldenLib"), outputPath, false, false));
+        auto irSymbol = IR::toSymbolIR(makeSymbol());
+        QVERIFY(exporter.exportSymbolLibrary({irSymbol}, QStringLiteral("GoldenLib"), outputPath, false, false));
 
         QString error;
         const QString actual = TestPaths::readText(outputPath, &error);
@@ -39,7 +43,8 @@ private slots:
         const QString outputPath = tempDir.filePath(QStringLiteral("GOLDEN_FOOTPRINT.kicad_mod"));
 
         ExporterFootprint exporter;
-        QVERIFY(exporter.exportFootprint(makeFootprint(), outputPath));
+        auto irFootprint = IR::toFootprintIR(makeFootprint());
+        QVERIFY(exporter.exportFootprint(irFootprint, outputPath));
 
         QString error;
         const QString actual = TestPaths::readText(outputPath, &error);
@@ -54,7 +59,8 @@ private slots:
         const QString outputPath = tempDir.filePath(QStringLiteral("FOOTPRINT_WITH_3D.kicad_mod"));
 
         ExporterFootprint exporter;
-        QVERIFY(exporter.exportFootprint(makeFootprintWith3D(),
+        auto irFootprint = IR::toFootprintIR(makeFootprintWith3D());
+        QVERIFY(exporter.exportFootprint(irFootprint,
                                          outputPath,
                                          QStringLiteral("../GoldenLib.3dmodels/FOOTPRINT_WITH_3D.wrl"),
                                          QStringLiteral("../GoldenLib.3dmodels/FOOTPRINT_WITH_3D.step")));
@@ -73,7 +79,8 @@ private slots:
         const QString outputPath = tempDir.filePath(QStringLiteral("COMPLEX_FOOTPRINT.kicad_mod"));
 
         ExporterFootprint exporter;
-        QVERIFY(exporter.exportFootprint(makeComplexFootprint(), outputPath));
+        auto irComplexFootprint = IR::toFootprintIR(makeComplexFootprint());
+        QVERIFY(exporter.exportFootprint(irComplexFootprint, outputPath));
 
         QString error;
         const QString actual = TestPaths::readText(outputPath, &error);
@@ -89,8 +96,9 @@ private slots:
         const QString outputPath = tempDir.filePath(QStringLiteral("MultiLib.kicad_sym"));
 
         ExporterSymbol exporter;
-        QVERIFY(exporter.exportSymbolLibrary(
-            {makeCapacitorSymbol(), makeInductorSymbol()}, QStringLiteral("MultiLib"), outputPath, false, false));
+        auto irCap = IR::toSymbolIR(makeCapacitorSymbol());
+        auto irInd = IR::toSymbolIR(makeInductorSymbol());
+        QVERIFY(exporter.exportSymbolLibrary({irCap, irInd}, QStringLiteral("MultiLib"), outputPath, false, false));
 
         QString error;
         const QString actual = TestPaths::readText(outputPath, &error);
@@ -106,8 +114,8 @@ private slots:
         const QString outputPath = tempDir.filePath(QStringLiteral("MultiPartLib.kicad_sym"));
 
         ExporterSymbol exporter;
-        QVERIFY(exporter.exportSymbolLibrary(
-            {makeMultiPartSymbol()}, QStringLiteral("MultiPartLib"), outputPath, false, false));
+        auto irMultiPart = IR::toSymbolIR(makeMultiPartSymbol());
+        QVERIFY(exporter.exportSymbolLibrary({irMultiPart}, QStringLiteral("MultiPartLib"), outputPath, false, false));
 
         QString error;
         const QString actual = TestPaths::readText(outputPath, &error);
@@ -123,8 +131,8 @@ private slots:
         const QString outputPath = tempDir.filePath(QStringLiteral("SpecialLib.kicad_sym"));
 
         ExporterSymbol exporter;
-        QVERIFY(exporter.exportSymbolLibrary(
-            {makeResistorSymbol()}, QStringLiteral("SpecialLib"), outputPath, false, false));
+        auto irResistor = IR::toSymbolIR(makeResistorSymbol());
+        QVERIFY(exporter.exportSymbolLibrary({irResistor}, QStringLiteral("SpecialLib"), outputPath, false, false));
 
         QString error;
         const QString actual = TestPaths::readText(outputPath, &error);

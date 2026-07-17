@@ -43,4 +43,5 @@ target_link_libraries(EasyKiConverterAltium
     PUBLIC
         Qt6::Core
         EasyKiConverterModels
+        EasyKiConverterIR
 )

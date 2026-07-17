@@ -1,3 +1,4 @@
+#include "core/ir/Model3DDataConverter.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "models/Model3DData.h"
 #include "tests/common/TestPaths.hpp"
@@ -122,63 +123,6 @@ private slots:
         QCOMPARE(Exporter3DModel::calculateWrlDisplayMinZ(wrl), 0.762);
     }
 
-    // === convertToKiCadCoordinates 测试 ===
-
-    void convertToKiCadCoordinatesRotatesX180() {
-        Model3DData model;
-        model.setRotation({0.0, 0.0, 0.0});
-
-        Exporter3DModel exporter;
-        exporter.convertToKiCadCoordinates(model);
-
-        Model3DBase rot = model.rotation();
-        QCOMPARE(rot.x, 180.0);
-        QCOMPARE(rot.y, 0.0);
-        QCOMPARE(rot.z, 0.0);
-    }
-
-    void convertToKiCadCoordinatesNegatesYZ() {
-        Model3DData model;
-        model.setRotation({0.0, 30.0, 45.0});
-
-        Exporter3DModel exporter;
-        exporter.convertToKiCadCoordinates(model);
-
-        Model3DBase rot = model.rotation();
-        QCOMPARE(rot.x, 180.0);
-        QCOMPARE(rot.y, -30.0);
-        QCOMPARE(rot.z, -45.0);
-    }
-
-    void convertToKiCadCoordinatesPreservesTranslation() {
-        Model3DData model;
-        model.setTranslation({1.5, -2.5, 3.0});
-        model.setRotation({10.0, 20.0, 30.0});
-
-        Exporter3DModel exporter;
-        exporter.convertToKiCadCoordinates(model);
-
-        Model3DBase trans = model.translation();
-        QCOMPARE(trans.x, 1.5);
-        QCOMPARE(trans.y, -2.5);
-        QCOMPARE(trans.z, 3.0);
-    }
-
-    void convertToKiCadCoordinatesIdempotent() {
-        // 两次转换应该恢复原始旋转（180+180=360，-(-y)=y，-(-z)=z）
-        Model3DData model;
-        model.setRotation({10.0, 20.0, 30.0});
-
-        Exporter3DModel exporter;
-        exporter.convertToKiCadCoordinates(model);
-        exporter.convertToKiCadCoordinates(model);
-
-        Model3DBase rot = model.rotation();
-        QCOMPARE(rot.x, 370.0);  // 10 + 180 + 180
-        QCOMPARE(rot.y, 20.0);  // -(-20) = 20
-        QCOMPARE(rot.z, 30.0);  // -(-30) = 30
-    }
-
     // === exportToStep 测试 ===
 
     void exportToStepWritesRawBytes() {
@@ -192,7 +136,8 @@ private slots:
         const QString savePath = tempDir.filePath(QStringLiteral("test.step"));
 
         Exporter3DModel exporter;
-        QVERIFY(exporter.exportToStep(model, savePath));
+        auto irModel = IR::toModel3DIR(model);
+        QVERIFY(exporter.exportToStep(irModel, savePath));
 
         QFile file(savePath);
         QVERIFY(file.open(QIODevice::ReadOnly));
@@ -207,7 +152,8 @@ private slots:
         const QString savePath = tempDir.filePath(QStringLiteral("empty.step"));
 
         Exporter3DModel exporter;
-        QVERIFY(exporter.exportToStep(model, savePath));
+        auto irModel = IR::toModel3DIR(model);
+        QVERIFY(exporter.exportToStep(irModel, savePath));
 
         QFile file(savePath);
         QVERIFY(file.open(QIODevice::ReadOnly));
@@ -237,7 +183,8 @@ private slots:
         const QString savePath = tempDir.filePath(QStringLiteral("TRIANGLE.wrl"));
 
         Exporter3DModel exporter;
-        QVERIFY(exporter.exportToWrl(model, savePath));
+        auto irModel = IR::toModel3DIR(model);
+        QVERIFY(exporter.exportToWrl(irModel, savePath));
 
         QString error;
         const QString actual = TestPaths::readText(savePath, &error);
@@ -256,7 +203,8 @@ private slots:
         const QString savePath = tempDir.filePath(QStringLiteral("header.wrl"));
 
         Exporter3DModel exporter;
-        QVERIFY(exporter.exportToWrl(model, savePath));
+        auto irModel = IR::toModel3DIR(model);
+        QVERIFY(exporter.exportToWrl(irModel, savePath));
 
         QFile file(savePath);
         QVERIFY(file.open(QIODevice::ReadOnly | QIODevice::Text));
@@ -268,16 +216,14 @@ private slots:
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
 
-        // OBJ 顶点 Z=254 => WRL 应为 254/2.54 - normalizeZ mm
-        // 三个顶点 Z 都是 254，所以 normalizeZ = 254/2.54 = 100
-        // WRL Z = 100 - 100 = 0
         Model3DData model;
         model.setRawObj(QStringLiteral("v 0 0 254\nv 254 0 254\nv 127 254 254\nf 1 2 3\n"));
 
         const QString savePath = tempDir.filePath(QStringLiteral("normalize.wrl"));
 
         Exporter3DModel exporter;
-        QVERIFY(exporter.exportToWrl(model, savePath));
+        auto irModel = IR::toModel3DIR(model);
+        QVERIFY(exporter.exportToWrl(irModel, savePath));
 
         QFile file(savePath);
         QVERIFY(file.open(QIODevice::ReadOnly | QIODevice::Text));

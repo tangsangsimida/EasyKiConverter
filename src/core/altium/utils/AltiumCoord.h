@@ -67,5 +67,48 @@ constexpr int lineWidthToIndex(int rawWidth) {
     return 0;
 }
 
+/**
+ * @brief 毫米 → 线宽索引
+ * @param mm 线宽（mm）
+ * @return Altium SchLib 线宽索引 (0-3)
+ */
+constexpr int lineWidthMmToIndex(double mm) {
+    double mils = mm / 0.0254;
+    if (mils >= 5.0)
+        return 3;
+    if (mils >= 3.0)
+        return 2;
+    if (mils >= 1.5)
+        return 1;
+    return 0;
+}
+
+/**
+ * @brief IR 坐标单位（mm）→ Altium 原始单位
+ * @details 原始单位: 1 mil = 10,000 raw
+ *          换算: mm / 0.0254 * 10000
+ */
+constexpr int32_t mmToRaw(double mm) {
+    return static_cast<int32_t>(mm / 0.0254 * 10000.0);
+}
+
+/**
+ * @brief IR 坐标单位（mm）→ Altium Schematic Units
+ * @details Schematic Units: 1 mil = 10 units (raw / 1000)
+ *          换算: mm / 0.0254 * 10
+ */
+constexpr int32_t mmToSchematicUnits(double mm) {
+    return static_cast<int32_t>(mm / 0.0254 * 10.0);
+}
+
+/**
+ * @brief IR 坐标单位（mm）→ Altium PCB 原始单位
+ * @details PCB 原始单位: 1 mil = 10,000 raw（与 Schematic raw 相同）
+ *          换算: mm / 0.0254 * 10000
+ */
+constexpr int32_t mmToPcbRaw(double mm) {
+    return static_cast<int32_t>(mm / 0.0254 * 10000.0);
+}
+
 }  // namespace AltiumCoord
 }  // namespace EasyKiConverter

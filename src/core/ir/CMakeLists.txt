@@ -16,6 +16,10 @@ target_sources(EasyKiConverterIR
         EasyedaLayerMap.cpp
         EasyedaPadShapeMap.h
         EasyedaPinTypeMap.h
+        Model3DDataConverter.h
+        SymbolDataConverter.h
+        FootprintDataConverter.h
+        ComponentDataConverter.h
 )
 
 target_include_directories(EasyKiConverterIR
@@ -28,4 +32,5 @@ target_link_libraries(EasyKiConverterIR
     PUBLIC
         Qt6::Core
         Qt6::Gui
+        EasyKiConverterModels
 )

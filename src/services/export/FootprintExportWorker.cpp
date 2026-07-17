@@ -3,6 +3,7 @@
 #include "../../core/ExporterFactory.h"
 #include "../../models/ComponentData.h"
 #include "DebugExportHelper.h"
+#include "core/ir/FootprintDataConverter.h"
 
 #include <QDebug>
 #include <QDir>
@@ -74,7 +75,8 @@ void FootprintExportWorker::run() {
             return;
         }
         // 3D模型路径为空字符串表示不导出3D模型
-        bool success = exporter->exportFootprint(*m_data->footprintData(), filePath, QString());
+        IR::FootprintComponentIR footprintIR = IR::toFootprintIR(*m_data->footprintData());
+        bool success = exporter->exportFootprint(footprintIR, filePath, QString());
 
         if (m_cancelled.load()) {
             emit completed(m_componentId, false, QStringLiteral("Cancelled"));

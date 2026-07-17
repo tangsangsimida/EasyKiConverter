@@ -3,6 +3,7 @@
 #include "../../core/ExporterFactory.h"
 #include "../../models/ComponentData.h"
 #include "DebugExportHelper.h"
+#include "core/ir/SymbolDataConverter.h"
 
 #include <QDebug>
 #include <QDir>
@@ -73,7 +74,8 @@ void SymbolExportWorker::run() {
             emit completed(m_componentId, false, QStringLiteral("Failed to create symbol exporter"));
             return;
         }
-        bool success = exporter->exportSymbol(*m_data->symbolData(), filePath);
+        IR::SymbolComponentIR symbolIR = IR::toSymbolIR(*m_data->symbolData());
+        bool success = exporter->exportSymbol(symbolIR, filePath);
 
         if (m_cancelled.load()) {
             emit completed(m_componentId, false, QStringLiteral("Cancelled"));

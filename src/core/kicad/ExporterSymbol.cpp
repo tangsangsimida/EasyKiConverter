@@ -1,8 +1,6 @@
 #include "ExporterSymbol.h"
 
 #include "KiCadExportMetadata.h"
-#include "core/utils/GeometryUtils.h"
-#include "core/utils/SvgPathParser.h"
 
 #include <QDebug>
 #include <QFile>
@@ -19,7 +17,7 @@ ExporterSymbol::ExporterSymbol() {}
 
 ExporterSymbol::~ExporterSymbol() {}
 
-bool ExporterSymbol::exportSymbol(const SymbolData& symbolData, const QString& filePath) {
+bool ExporterSymbol::exportSymbol(const IR::SymbolComponentIR& symbol, const QString& filePath) {
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qWarning() << "Failed to open file for writing:" << filePath;
@@ -30,7 +28,7 @@ bool ExporterSymbol::exportSymbol(const SymbolData& symbolData, const QString& f
     out.setEncoding(QStringConverter::Utf8);
 
     // 生成符号内容（不包含库头，仅单个符号定义）
-    QString content = generateSymbolContent(symbolData, "");
+    QString content = generateSymbolContent(symbol, "");
 
     out << content;
     file.close();
@@ -39,7 +37,7 @@ bool ExporterSymbol::exportSymbol(const SymbolData& symbolData, const QString& f
     return true;
 }
 
-bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
+bool ExporterSymbol::exportSymbolLibrary(const QList<IR::SymbolComponentIR>& symbols,
                                          const QString& libName,
                                          const QString& filePath,
                                          bool appendMode,
@@ -76,8 +74,8 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
 
         // 生成所有符号
         int index = 0;
-        for (const SymbolData& symbol : symbols) {
-            qDebug() << "Exporting symbol" << (++index) << "of" << symbols.count() << ":" << symbol.info().name;
+        for (const IR::SymbolComponentIR& symbol : symbols) {
+            qDebug() << "Exporting symbol" << (++index) << "of" << symbols.count() << ":" << symbol.name;
             out << generateSymbolContent(symbol, libName);
         }
 
@@ -115,7 +113,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     }
 
     // 提取现有符号
-    QMap<QString, QString> existingSymbols;  // 符号-> 符号内容
+    QMap<QString, QString> existingSymbols;  // 符号名-> 符号内容
     QSet<QString> subSymbolNames;  // 属于分体式符号的子符号名称
 
     // 使用栈来正确追踪符号的嵌套关系
@@ -160,7 +158,6 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         }
 
         // 检查是否有符号结束 - 当 braceCount 回到符号开始后的值时
-        // 注意：可能有多个符号同时结束
         while (!symbolStack.isEmpty() && braceCount < symbolStack.last().braceAfterStart) {
             SymbolInfo info = symbolStack.last();
             symbolStack.removeLast();
@@ -186,13 +183,13 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     qDebug() << "Sub-symbol names:" << subSymbolNames;
 
     // 确定要导出的符号
-    QList<SymbolData> symbolsToExport;
+    QList<IR::SymbolComponentIR> symbolsToExport;
     int overwriteCount = 0;
     int appendCount = 0;
     int skipCount = 0;
 
-    for (const SymbolData& symbol : symbols) {
-        QString symbolName = symbol.info().name;
+    for (const IR::SymbolComponentIR& symbol : symbols) {
+        QString symbolName = symbol.name;
 
         if (existingSymbols.contains(symbolName)) {
             if (appendMode && !updateMode) {
@@ -239,18 +236,16 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
 
     // 收集要被覆盖的符号名
     QSet<QString> overwrittenSymbolNames;
-    for (const SymbolData& symbol : symbolsToExport) {
-        overwrittenSymbolNames.insert(symbol.info().name);
+    for (const IR::SymbolComponentIR& symbol : symbolsToExport) {
+        overwrittenSymbolNames.insert(symbol.name);
     }
 
     // 收集要被删除的子符号名称（属于被覆盖的父符号的子符号）
-    // 改进的逻辑：准确识别分体式符号的子符号
     QSet<QString> subSymbolsToDelete;
 
     // 首先分析现有符号，确定哪些是分体式符号（有多个子符号）
     QMap<QString, QStringList> parentToSubSymbols;  // 父符号名 -> 子符号列
     for (const QString& subSymbolName : subSymbolNames) {
-        // 从子符号名称中提取父符号
         // 子符号格式：{parentName}_{unitNumber}_1
         int lastUnderscore = subSymbolName.lastIndexOf('_');
         if (lastUnderscore > 0) {
@@ -273,7 +268,6 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
             }
         } else {
             // 这是一个单体符号，查找其子符号
-            // KiCad 使用 _1_1 格式，旧版本 exporter 使用 _0_1 格式
             QString expectedSubSymbolName_v1 = parentSymbolName + "_0_1";
             QString expectedSubSymbolName_v2 = parentSymbolName + "_1_1";
             if (subSymbolNames.contains(expectedSubSymbolName_v1)) {
@@ -292,7 +286,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     for (const QString& symbolName : existingSymbols.keys()) {
         bool isOverwritten = overwrittenSymbolNames.contains(symbolName);
 
-        // 检查是否是以被覆盖符号名开头的顶层符号（可能是之前错误导出的子符号
+        // 检查是否是以被覆盖符号名开头的顶层符号
         bool isOrphanedSubSymbol = false;
         if (!isOverwritten) {
             for (const QString& parentSymbolName : overwrittenSymbolNames) {
@@ -308,12 +302,12 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
         if (!isOverwritten && !isOrphanedSubSymbol) {
             // 导出未覆盖的符号，但需要过滤掉子符号
             QString symbolContent = existingSymbols[symbolName];
-            QStringList lines = symbolContent.split('\n');
+            QStringList contentLines = symbolContent.split('\n');
             QString filteredContent;
             bool skipNextSymbol = false;
-            int braceCount = 0;
+            int nestedBraceCount = 0;
 
-            for (const QString& line : lines) {
+            for (const QString& line : contentLines) {
                 QString trimmedLine = line.trimmed();
 
                 // 检查是否是子符号定义的开始
@@ -324,7 +318,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                         QString subSymbolName = trimmedLine.mid(nameStart, nameEnd - nameStart);
                         if (subSymbolsToDelete.contains(subSymbolName)) {
                             skipNextSymbol = true;
-                            braceCount = 1;
+                            nestedBraceCount = 1;
                             qDebug() << "Skipping deleted sub-symbol:" << subSymbolName;
                             continue;
                         }
@@ -335,10 +329,10 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
                     // 计算括号数量
                     for (int j = 0; j < line.length(); ++j) {
                         if (line[j] == '(')
-                            braceCount++;
+                            nestedBraceCount++;
                         else if (line[j] == ')') {
-                            braceCount--;
-                            if (braceCount == 0) {
+                            nestedBraceCount--;
+                            if (nestedBraceCount == 0) {
                                 skipNextSymbol = false;
                                 break;
                             }
@@ -356,8 +350,8 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
     }
 
     // 再导出新符号和被覆盖的符号
-    for (const SymbolData& symbol : symbolsToExport) {
-        qDebug() << "Exporting symbol" << (++index) << "of" << symbolsToExport.count() << ":" << symbol.info().name;
+    for (const IR::SymbolComponentIR& symbol : symbolsToExport) {
+        qDebug() << "Exporting symbol" << (++index) << "of" << symbolsToExport.count() << ":" << symbol.name;
         out << generateSymbolContent(symbol, libName);
     }
 
@@ -370,7 +364,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<SymbolData>& symbols,
 }
 
 QString ExporterSymbol::generateHeader(const QString& libName) const {
-    Q_UNUSED(libName);  // 库名在符号内容中使用，不在头部使用
+    Q_UNUSED(libName);
     QString version = m_detectedVersion.isEmpty() ? "20211014" : m_detectedVersion;
     QString header = QString(
                          "(kicad_symbol_lib\n"
@@ -381,52 +375,33 @@ QString ExporterSymbol::generateHeader(const QString& libName) const {
     return header;
 }
 
-QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, const QString& libName) const {
+QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbol, const QString& libName) const {
     QString content;
 
     // V6 格式 - 主符号定义（包含属性）
-    // 在更新模式下，保持符号名称不变；在新符号中，替换空格为下划线
-    QString cleanSymbolName = symbolData.info().name;
-    // 注意：KiCad 6.x 允许符号名称中包含空格，所以不需要替换
-    // 保持原始名称以确保更新模式下能正确匹配和替换
+    QString cleanSymbolName = symbol.name;
     content += QString("  (symbol \"%1\"\n").arg(cleanSymbolName);
     content += "    (in_bom yes)\n";
     content += "    (on_board yes)\n";
 
-    // 设置当前边界框，用于图形元素的相对坐标计算
-    SymbolBBox originalBBox = symbolData.bbox();
-    m_graphicsGenerator.setCurrentBBox(originalBBox);
-    qDebug() << "BBox - x:" << originalBBox.x << "y:" << originalBBox.y;
-
     // 找到最左上角的引脚（x最小且y最小），将其位置作为新的坐标原点
-    double originX = originalBBox.x;
-    double originY = originalBBox.y;
-    QList<SymbolPin> pins = symbolData.pins();
+    double originX = 0.0;
+    double originY = 0.0;
+    const QList<IR::SymbolPinIR>& pins = symbol.pins;
     if (!pins.isEmpty()) {
-        bool firstPin = true;
-        for (const SymbolPin& pin : pins) {
-            // 最左上角：x最小（最左），y最小（KiCad中y小=上方）
-            if (firstPin) {
-                originX = pin.settings.posX;
-                originY = pin.settings.posY;
-                firstPin = false;
-            } else {
-                // x更小，或者x相同但y更小（更上方）
-                if (pin.settings.posX < originX || (pin.settings.posX == originX && pin.settings.posY < originY)) {
-                    originX = pin.settings.posX;
-                    originY = pin.settings.posY;
-                }
+        originX = pins.first().position.x();
+        originY = pins.first().position.y();
+        for (const IR::SymbolPinIR& pin : pins) {
+            if (pin.position.x() < originX || (pin.position.x() == originX && pin.position.y() < originY)) {
+                originX = pin.position.x();
+                originY = pin.position.y();
             }
         }
         qDebug() << "Top-left pin at:" << originX << originY;
     }
 
-    // 修改边界框原点为最近引脚位置，使所有图形元素相对于该点定位
-    SymbolBBox currentBBox = originalBBox;
-    currentBBox.x = originX;
-    currentBBox.y = originY;
-    m_graphicsGenerator.setCurrentBBox(currentBBox);
-    qDebug() << "Adjusted BBox to nearest pin origin - x:" << currentBBox.x << "y:" << currentBBox.y;
+    // 设置原点偏移，使所有图形元素相对于该点定位
+    m_graphicsGenerator.setCurrentOrigin(originX, originY);
 
     // 计算所有图形元素的实际边界，用于文本左右居中对齐
     double minX = std::numeric_limits<double>::max();
@@ -435,63 +410,57 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         minX = qMin(minX, x);
         maxX = qMax(maxX, x + w);
     };
-    auto parseAndUpdatePoints = [&](const QString& pointsStr) {
-        QStringList points = pointsStr.split(" ");
-        points.removeAll("");
-        for (int i = 0; i + 1 < points.size(); i += 2) {
-            double px = points[i].toDouble();
-            minX = qMin(minX, px);
-            maxX = qMax(maxX, px);
-        }
-    };
-    for (const auto& rect : symbolData.rectangles()) {
-        updateBounds(rect.posX, rect.width);
+    for (const auto& rect : symbol.rectangles) {
+        updateBounds(rect.bounds.left(), rect.bounds.width());
     }
-    for (const auto& circle : symbolData.circles()) {
+    for (const auto& circle : symbol.circles) {
         double r = circle.radius;
-        minX = qMin(minX, circle.centerX - r);
-        maxX = qMax(maxX, circle.centerX + r);
+        minX = qMin(minX, circle.center.x() - r);
+        maxX = qMax(maxX, circle.center.x() + r);
     }
-    for (const auto& ellipse : symbolData.ellipses()) {
-        minX = qMin(minX, ellipse.centerX - ellipse.radiusX);
-        maxX = qMax(maxX, ellipse.centerX + ellipse.radiusX);
+    for (const auto& ellipse : symbol.ellipses) {
+        minX = qMin(minX, ellipse.center.x() - ellipse.radiusX);
+        maxX = qMax(maxX, ellipse.center.x() + ellipse.radiusX);
     }
-    for (const auto& arc : symbolData.arcs()) {
-        for (const auto& pt : arc.path) {
+    for (const auto& arc : symbol.arcs) {
+        minX = qMin(minX, arc.center.x() - arc.radius);
+        maxX = qMax(maxX, arc.center.x() + arc.radius);
+    }
+    for (const auto& polyline : symbol.polylines) {
+        for (const QPointF& pt : polyline.points) {
             minX = qMin(minX, pt.x());
             maxX = qMax(maxX, pt.x());
         }
     }
-    for (const auto& polyline : symbolData.polylines()) {
-        parseAndUpdatePoints(polyline.points);
+    for (const auto& polygon : symbol.polygons) {
+        for (const QPointF& pt : polygon.points) {
+            minX = qMin(minX, pt.x());
+            maxX = qMax(maxX, pt.x());
+        }
     }
-    for (const auto& polygon : symbolData.polygons()) {
-        parseAndUpdatePoints(polygon.points);
-    }
-    for (const auto& text : symbolData.texts()) {
-        minX = qMin(minX, text.posX);
-        maxX = qMax(maxX, text.posX);
+    for (const auto& text : symbol.texts) {
+        minX = qMin(minX, text.position.x());
+        maxX = qMax(maxX, text.position.x());
     }
     for (const auto& pin : pins) {
-        minX = qMin(minX, pin.settings.posX);
-        maxX = qMax(maxX, pin.settings.posX);
+        minX = qMin(minX, pin.position.x());
+        maxX = qMax(maxX, pin.position.x());
     }
     // 如果没有任何图形元素，使用默认宽度
     double graphWidth = (minX <= maxX) ? (maxX - minX) : 0.0;
     double graphCenterOffsetX = 0.0;
     if (minX <= maxX) {
-        graphCenterOffsetX = m_graphicsGenerator.pxToMm(minX + graphWidth / 2.0 - originX);
+        graphCenterOffsetX = minX + graphWidth / 2.0 - originX;
     }
     qDebug() << "Graph bounds - minX:" << minX << "maxX:" << maxX << "width:" << graphWidth
              << "centerOffsetX(mm):" << graphCenterOffsetX;
 
-    // 计算 y_high 和 y_low（使用引脚坐标，与 Python 版本保持一致）
-    // 如果没有引脚，使用默认值以确保属性位置正确
+    // 计算 y_high 和 y_low（使用引脚坐标，应用 Y 轴翻转）
     double yHigh = 2.54;  // 默认值：100mil
     double yLow = -2.54;  // 默认值：-100mil
     if (!pins.isEmpty()) {
-        for (const SymbolPin& pin : pins) {
-            double pinY = -m_graphicsGenerator.pxToMm(pin.settings.posY - originY);
+        for (const IR::SymbolPinIR& pin : pins) {
+            double pinY = -(pin.position.y() - originY);  // Y 轴翻转
             yHigh = qMax(yHigh, pinY);
             yLow = qMin(yLow, pinY);
         }
@@ -504,15 +473,15 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     // 辅助函数：转义属性值
     auto escapePropertyValue = [](const QString& value) -> QString {
         QString escaped = value;
-        escaped.replace("\"", "\\\"");  // 转义引号
-        escaped.replace("\n", " ");  // 移除换行符
-        escaped.replace("\t", " ");  // 移除制表符
+        escaped.replace("\"", "\\\"");
+        escaped.replace("\n", " ");
+        escaped.replace("\t", " ");
         return escaped.trimmed();
     };
 
     // Reference 属性
-    QString refPrefix = symbolData.info().prefix;
-    refPrefix.replace("?", "");  // 移除 "?" 后缀
+    QString refPrefix = symbol.designatorPrefix;
+    refPrefix.replace("?", "");
     content += QString("    (property\n");
     content += QString("      \"Reference\"\n");
     content += QString("      \"%1\"\n").arg(escapePropertyValue(refPrefix));
@@ -526,7 +495,7 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     // Value 属性
     content += QString("    (property\n");
     content += QString("      \"Value\"\n");
-    content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().name));
+    content += QString("      \"%1\"\n").arg(escapePropertyValue(symbol.name));
     content += "      (id 1)\n";
     content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
     content += QString("      (effects (font (size %1 %2) (thickness 0) ) )\n")
@@ -535,12 +504,12 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     content += "    )\n";
 
     // Footprint 属性
-    if (!symbolData.info().package.isEmpty()) {
+    if (!symbol.footprintName.isEmpty()) {
         fieldOffset += 2.54;  // FIELD_OFFSET_INCREMENT
         content += QString("    (property\n");
         content += QString("      \"Footprint\"\n");
         // KiCad 符号需要库前缀格式
-        QString footprintPath = QString("%1:%2").arg(libName, symbolData.info().package);
+        QString footprintPath = QString("%1:%2").arg(libName, symbol.footprintName);
         content += QString("      \"%1\"\n").arg(escapePropertyValue(footprintPath));
         content += "      (id 2)\n";
         content +=
@@ -551,42 +520,13 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += "    )\n";
     }
 
-    // Datasheet 属性
-    if (!symbolData.info().datasheet.isEmpty()) {
-        fieldOffset += 2.54;
-        content += QString("    (property\n");
-        content += QString("      \"Datasheet\"\n");
-        content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().datasheet));
-        content += "      (id 3)\n";
-        content +=
-            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
-        content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
-                       .arg(fontSize, 0, 'f', 2)
-                       .arg(fontSize, 0, 'f', 2);
-        content += "    )\n";
-    }
-
-    // Manufacturer 属性
-    if (!symbolData.info().manufacturer.isEmpty()) {
-        fieldOffset += 2.54;
-        content += QString("    (property\n");
-        content += QString("      \"Manufacturer\"\n");
-        content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().manufacturer));
-        content += "      (id 4)\n";
-        content +=
-            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
-        content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
-                       .arg(fontSize, 0, 'f', 2)
-                       .arg(fontSize, 0, 'f', 2);
-        content += "    )\n";
-    }
-
-    // LCSC Part 属性
-    if (!symbolData.info().lcscId.isEmpty()) {
+    // LCSC Part 属性（从 sourceMetadata 读取）
+    const QString lcscId = symbol.sourceMetadata.value("lcscId");
+    if (!lcscId.isEmpty()) {
         fieldOffset += 2.54;
         content += QString("    (property\n");
         content += QString("      \"LCSC Part\"\n");
-        content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolData.info().lcscId));
+        content += QString("      \"%1\"\n").arg(escapePropertyValue(lcscId));
         content += "      (id 5)\n";
         content +=
             QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
@@ -596,8 +536,8 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += "    )\n";
     }
 
-    // ki_description 属性 - 单个元器件描述；库描述写入 sym-lib-table
-    const QString symbolDescription = symbolData.info().description.trimmed();
+    // ki_description 属性
+    const QString symbolDescription = symbol.description.trimmed();
     if (!symbolDescription.isEmpty()) {
         fieldOffset += 2.54;
         content += QString("    (property\n");
@@ -612,30 +552,64 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
         content += "    )\n";
     }
 
-    // 检查是否为多部分符
-    bool isMultiPart = symbolData.isMultiPart();
+    // 检查是否为多部分符号
+    bool isMultiPart = symbol.isMultiPart();
     qDebug() << "=== Symbol Type Check ===";
     qDebug() << "Symbol name:" << cleanSymbolName;
-    qDebug() << "Parts count:" << symbolData.parts().size();
     qDebug() << "Is multi-part:" << isMultiPart;
+    qDebug() << "Part count:" << symbol.partCount;
 
     if (isMultiPart) {
-        qDebug() << "Exporting multi-part symbol with" << symbolData.parts().size() << "parts";
+        // 多部分符号：为每个 part 生成子符号
+        qDebug() << "Exporting multi-part symbol with" << symbol.partCount << "parts";
 
-        // 为每个部分生成子符号
-        for (const SymbolPart& part : symbolData.parts()) {
-            qDebug() << "Generating sub-symbol" << part.unitNumber << "with" << part.pins.size() << "pins";
-            content += generateSubSymbol(symbolData, part, cleanSymbolName, libName);
+        for (int partIdx = 0; partIdx < symbol.partCount; ++partIdx) {
+            qDebug() << "Generating sub-symbol for part" << partIdx + 1;
+
+            // 子符号名称：_{partNumber}_1（partNumber 从 1 开始）
+            content += QString("    (symbol \"%1_%2_1\"\n").arg(cleanSymbolName).arg(partIdx + 1);
+
+            // 收集属于此 part 的引脚和图形
+            QList<IR::SymbolPinIR> partPins;
+            for (const auto& pin : pins) {
+                if (pin.partIndex == partIdx) {
+                    partPins.append(pin);
+                }
+            }
+
+            // 设置原点为属于此 part 的最左上角引脚
+            double partOriginX = 0.0;
+            double partOriginY = 0.0;
+            if (!partPins.isEmpty()) {
+                partOriginX = partPins.first().position.x();
+                partOriginY = partPins.first().position.y();
+                for (const auto& pin : partPins) {
+                    if (pin.position.x() < partOriginX ||
+                        (pin.position.x() == partOriginX && pin.position.y() < partOriginY)) {
+                        partOriginX = pin.position.x();
+                        partOriginY = pin.position.y();
+                    }
+                }
+            }
+            m_graphicsGenerator.setCurrentOrigin(partOriginX, partOriginY);
+
+            // 生成属于此 part 的图形元素
+            content += generatePartDrawings(symbol, partIdx);
+
+            // 生成属于此 part 的引脚
+            content += m_graphicsGenerator.generatePins(partPins);
+
+            content += "    )\n";  // 结束子符号
         }
     } else {
         // 单部分符号：直接在主符号中包含图形元素，不使用子符号
         qDebug() << "Exporting single-part symbol";
 
         // 生成图形元素
-        content += m_graphicsGenerator.generateDrawings(symbolData);
+        content += m_graphicsGenerator.generateDrawings(symbol);
 
         // 生成引脚
-        content += m_graphicsGenerator.generatePins(symbolData.pins(), m_graphicsGenerator.currentBBox());
+        content += m_graphicsGenerator.generatePins(pins);
     }
 
     content += "  )\n";  // 结束主符号
@@ -643,43 +617,40 @@ QString ExporterSymbol::generateSymbolContent(const SymbolData& symbolData, cons
     return content;
 }
 
-QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
-                                          const QString& symbolName,
-                                          const QString& libName) const {
-    Q_UNUSED(libName);
+QString ExporterSymbol::generatePartDrawings(const IR::SymbolComponentIR& symbol, int partIdx) const {
     QString content;
-    // 单部分符号：使用 _0_1 作为子符号名称
-    content += QString("    (symbol \"%1_0_1\"\n").arg(symbolName);
-    // 生成图形元素（直接生成，不添加任何属性）
-    content += m_graphicsGenerator.generateDrawings(symbolData);
-    // 生成引脚
-    content += m_graphicsGenerator.generatePins(symbolData.pins(), symbolData.bbox());
-    content += "    )\n";  // 结束子符号
-    return content;
-}
-
-QString ExporterSymbol::generateSubSymbol(const SymbolData& symbolData,
-                                          const SymbolPart& part,
-                                          const QString& symbolName,
-                                          const QString& libName) const {
-    Q_UNUSED(libName);
-    QString content;
-
-    // 多部分符号：使用 _{unitNumber}_1 作为子符号名称
-    // 注意：Unit 编号必须从1 开始，而不是从 0 开始
-    content += QString("    (symbol \"%1_%2_1\"\n").arg(symbolName).arg(part.unitNumber + 1);
-
-    // 计算子部分的边界框
-    SymbolBBox partBBox = m_graphicsGenerator.calculatePartBBox(part);
-
-    // 生成图形元素（直接生成，不添加任何属性）
-    content += m_graphicsGenerator.generateDrawings(part);
-
-    // 生成引脚
-    content += m_graphicsGenerator.generatePins(part.pins, partBBox);
-
-    content += "    )\n";  // 结束子符号
-
+    for (const auto& rect : symbol.rectangles) {
+        if (rect.partIndex == partIdx)
+            content += m_graphicsGenerator.generateRectangle(rect);
+    }
+    for (const auto& circle : symbol.circles) {
+        if (circle.partIndex == partIdx)
+            content += m_graphicsGenerator.generateCircle(circle);
+    }
+    for (const auto& arc : symbol.arcs) {
+        if (arc.partIndex == partIdx)
+            content += m_graphicsGenerator.generateArc(arc);
+    }
+    for (const auto& ellipse : symbol.ellipses) {
+        if (ellipse.partIndex == partIdx)
+            content += m_graphicsGenerator.generateEllipse(ellipse);
+    }
+    for (const auto& polygon : symbol.polygons) {
+        if (polygon.partIndex == partIdx)
+            content += m_graphicsGenerator.generatePolygon(polygon);
+    }
+    for (const auto& polyline : symbol.polylines) {
+        if (polyline.partIndex == partIdx)
+            content += m_graphicsGenerator.generatePolyline(polyline);
+    }
+    for (const auto& path : symbol.paths) {
+        if (path.partIndex == partIdx)
+            content += m_graphicsGenerator.generatePath(path);
+    }
+    for (const auto& text : symbol.texts) {
+        if (text.partIndex == partIdx)
+            content += m_graphicsGenerator.generateText(text);
+    }
     return content;
 }
 
