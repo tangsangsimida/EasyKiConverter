@@ -145,3 +145,6 @@ CLAUDE.md
 GEMINI.md
 .codex
 .codegraph/daemon.pid
+
+# Altium Designer 测试用导出库（本地测试，不入库）
+tests/fixtures/altium/

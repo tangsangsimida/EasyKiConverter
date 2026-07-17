@@ -56,6 +56,8 @@ If the decision changes:
 
 - [ADR 001: Choose MVVM Architecture](001-mvvm-architecture_en.md)
 - [ADR 001: 选择 MVVM 架构](001-mvvm-architecture.md) (中文)
+- [ADR 012: Intermediate Representation (IR) Architecture Refactoring](012-intermediate-representation-refactor_en.md)
+- [ADR 012: 中间表示层 (IR) 架构重构](012-intermediate-representation-refactor.md) (中文)
 
 ## References
 
