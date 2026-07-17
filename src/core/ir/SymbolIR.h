@@ -45,9 +45,13 @@ struct SymbolPinIR {
 
 /**
  * @brief 通用符号矩形
+ * @note 使用未归一化的起点/终点坐标，而非 QRectF（QRectF 会归一化负宽高导致坐标信息丢失）
  */
 struct SymbolRectangleIR {
-    QRectF bounds;  ///< 边界矩形（已解析，单位 mm）
+    double x0 = 0.0;  ///< 起点 X（mm，已转换）
+    double y0 = 0.0;  ///< 起点 Y（mm，已转换，KiCad Y 翻转后）
+    double x1 = 0.0;  ///< 终点 X（mm，已转换）
+    double y1 = 0.0;  ///< 终点 Y（mm，已转换，KiCad Y 翻转后）
     QColor strokeColor = Qt::black;  ///< 边框颜色
     double strokeWidth = 0.0;  ///< 边框宽度（mm）
     QColor fillColor = Qt::transparent;  ///< 填充颜色
@@ -71,14 +75,13 @@ struct SymbolCircleIR {
 /**
  * @brief 通用符号圆弧
  *
- * @note EasyEDA 的 SymbolArc.path 存储 3 个 QPointF（起点、终点、圆心），
- *       这里已解析为标准的圆心+半径+角度表示。
+ * @note EasyEDA 的 SymbolArc.path 存储 3 个 QPointF（起点、中点、终点），
+ *       保留原始三点表示以便直接生成 KiCad 三点式圆弧。
  */
 struct SymbolArcIR {
-    QPointF center;  ///< 圆心（已解析，单位 mm）
-    double radius = 0.0;  ///< 半径（mm）
-    double startAngle = 0.0;  ///< 起始角度（度）
-    double endAngle = 0.0;  ///< 终止角度（度）
+    QPointF startPoint;  ///< 起点（已解析，单位 mm）
+    QPointF midPoint;  ///< 中点（已解析，单位 mm）
+    QPointF endPoint;  ///< 终点（已解析，单位 mm）
     QColor strokeColor = Qt::black;
     double strokeWidth = 0.0;
     QColor fillColor = Qt::transparent;

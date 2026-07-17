@@ -168,10 +168,11 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
     auto convertRectangles = [&](const QList<SymbolRectangle>& rects, double originX, double originY, int partIdx = 0) {
         for (const auto& rect : rects) {
             SymbolRectangleIR rir;
-            rir.bounds = QRectF((rect.posX - originX) * PX_TO_MM,
-                                -(rect.posY - originY + rect.height) * PX_TO_MM,  // Y 翻转
-                                rect.width * PX_TO_MM,
-                                rect.height * PX_TO_MM);
+            // 使用与旧代码相同的坐标计算方式：先减去原点，再转换单位并翻转 Y
+            rir.x0 = (rect.posX - originX) * PX_TO_MM;
+            rir.y0 = -(rect.posY - originY) * PX_TO_MM;  // Y 翻转
+            rir.x1 = (rect.posX + rect.width - originX) * PX_TO_MM;
+            rir.y1 = -(rect.posY + rect.height - originY) * PX_TO_MM;  // Y 翻转
             rir.strokeColor = parseColor(rect.strokeColor);
             rir.strokeWidth = rect.strokeWidth * PX_TO_MM;
             rir.isFilled = !rect.fillColor.isEmpty() && rect.fillColor != "none";
@@ -251,6 +252,12 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                 pt.setX(pt.x() - originX * PX_TO_MM);
                 pt.setY(-(pt.y() - originY * PX_TO_MM));
             }
+            // SVG Z 命令闭合路径：如果原始路径包含 Z，添加起点作为终点
+            if (path.paths.contains('Z', Qt::CaseInsensitive) && pathIR.points.size() >= 2) {
+                if (pathIR.points.first() != pathIR.points.last()) {
+                    pathIR.points.append(pathIR.points.first());
+                }
+            }
             pathIR.strokeColor = parseColor(path.strokeColor);
             pathIR.strokeWidth = path.strokeWidth * PX_TO_MM;
             pathIR.isFilled = path.fillColor;
@@ -276,21 +283,98 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         }
     };
 
+    auto convertArcs = [&](const QList<SymbolArc>& arcs, double originX, double originY, int partIdx = 0) {
+        for (const auto& arc : arcs) {
+            SymbolArcIR air;
+            // SymbolArc.path 存储3 个点：起点、中点、终点
+            if (arc.path.size() >= 3) {
+                int midIdx = arc.path.size() / 2;
+                air.startPoint =
+                    QPointF((arc.path.first().x() - originX) * PX_TO_MM, -(arc.path.first().y() - originY) * PX_TO_MM);
+                air.midPoint =
+                    QPointF((arc.path[midIdx].x() - originX) * PX_TO_MM, -(arc.path[midIdx].y() - originY) * PX_TO_MM);
+                air.endPoint =
+                    QPointF((arc.path.last().x() - originX) * PX_TO_MM, -(arc.path.last().y() - originY) * PX_TO_MM);
+            } else if (arc.path.size() == 2) {
+                air.startPoint =
+                    QPointF((arc.path.first().x() - originX) * PX_TO_MM, -(arc.path.first().y() - originY) * PX_TO_MM);
+                QPointF mid = (arc.path.first() + arc.path.last()) / 2.0;
+                air.midPoint = QPointF((mid.x() - originX) * PX_TO_MM, -(mid.y() - originY) * PX_TO_MM);
+                air.endPoint =
+                    QPointF((arc.path.last().x() - originX) * PX_TO_MM, -(arc.path.last().y() - originY) * PX_TO_MM);
+            }
+            air.strokeColor = parseColor(arc.strokeColor);
+            air.strokeWidth = arc.strokeWidth * PX_TO_MM;
+            air.isFilled = arc.fillColor;
+            air.partIndex = partIdx;
+            ir.arcs.append(air);
+        }
+    };
+
     // 处理单部件或多部件符号
     if (data.isMultiPart()) {
         ir.partCount = data.parts().size();
         int partIdx = 0;
         for (const auto& part : data.parts()) {
-            const double ox = part.originX;
-            const double oy = part.originY;
-            convertPins(part.pins, ox, oy, partIdx);
-            convertRectangles(part.rectangles, ox, oy, partIdx);
-            convertCircles(part.circles, ox, oy, partIdx);
-            convertEllipses(part.ellipses, ox, oy, partIdx);
-            convertPolylines(part.polylines, ox, oy, partIdx);
-            convertPolygons(part.polygons, ox, oy, partIdx);
-            convertPaths(part.paths, ox, oy, partIdx);
-            convertTexts(part.texts, ox, oy, partIdx);
+            // 图形使用 part 的显式原点（通常为0,0）
+            const double gox = part.originX;
+            const double goy = part.originY;
+
+            // 引脚使用 part 的几何边界框原点（与旧代码的 calculatePartBBox 一致）
+            double pox = part.originX;
+            double poy = part.originY;
+            {
+                double minX = part.originX;
+                double minY = part.originY;
+                for (const auto& pin : part.pins) {
+                    minX = qMin(minX, pin.settings.posX);
+                    minY = qMin(minY, pin.settings.posY);
+                }
+                for (const auto& rect : part.rectangles) {
+                    minX = qMin(minX, rect.posX);
+                    minY = qMin(minY, rect.posY);
+                }
+                for (const auto& circle : part.circles) {
+                    minX = qMin(minX, circle.centerX - circle.radius);
+                    minY = qMin(minY, circle.centerY - circle.radius);
+                }
+                for (const auto& pg : part.polygons) {
+                    QStringList pts = pg.points.split(" ");
+                    pts.removeAll("");
+                    for (int i = 0; i + 1 < pts.size(); i += 2) {
+                        minX = qMin(minX, pts[i].toDouble());
+                        minY = qMin(minY, pts[i + 1].toDouble());
+                    }
+                }
+                for (const auto& pl : part.polylines) {
+                    QStringList pts = pl.points.split(" ");
+                    pts.removeAll("");
+                    for (int i = 0; i + 1 < pts.size(); i += 2) {
+                        minX = qMin(minX, pts[i].toDouble());
+                        minY = qMin(minY, pts[i + 1].toDouble());
+                    }
+                }
+                for (const auto& text : part.texts) {
+                    minX = qMin(minX, text.posX);
+                    minY = qMin(minY, text.posY);
+                }
+                if (minX < 1e30)
+                    pox = minX;
+                if (minY < 1e30)
+                    poy = minY;
+            }
+
+            // 引脚使用几何边界框原点
+            convertPins(part.pins, pox, poy, partIdx);
+            // 图形使用 part 显式原点
+            convertRectangles(part.rectangles, gox, goy, partIdx);
+            convertCircles(part.circles, gox, goy, partIdx);
+            convertEllipses(part.ellipses, gox, goy, partIdx);
+            convertArcs(part.arcs, gox, goy, partIdx);
+            convertPolylines(part.polylines, gox, goy, partIdx);
+            convertPolygons(part.polygons, gox, goy, partIdx);
+            convertPaths(part.paths, gox, goy, partIdx);
+            convertTexts(part.texts, gox, goy, partIdx);
             ++partIdx;
         }
     } else {
@@ -300,6 +384,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         convertRectangles(data.rectangles(), ox, oy);
         convertCircles(data.circles(), ox, oy);
         convertEllipses(data.ellipses(), ox, oy);
+        convertArcs(data.arcs(), ox, oy);
         convertPolylines(data.polylines(), ox, oy);
         convertPolygons(data.polygons(), ox, oy);
         convertPaths(data.paths(), ox, oy);

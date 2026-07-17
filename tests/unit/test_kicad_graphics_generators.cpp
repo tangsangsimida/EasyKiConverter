@@ -79,7 +79,7 @@ private slots:
         const QString output = generator.generatePin(pin);
 
         QVERIFY(output.contains(QStringLiteral("(pin bidirectional line")));
-        QVERIFY(output.contains(QStringLiteral("(at 10.00 -10.00 90)")));
+        QVERIFY(output.contains(QStringLiteral("(at 10.00 -10.00 270)")));
         QVERIFY(output.contains(QStringLiteral("(length 0.51)")));
         QVERIFY(output.contains(QStringLiteral("(name \"INA\"")));
         QVERIFY(output.contains(QStringLiteral("(number \"1\"")));

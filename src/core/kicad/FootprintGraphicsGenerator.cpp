@@ -44,9 +44,10 @@ QString FootprintGraphicsGenerator::generatePad(const IR::FootprintPadIR& pad, d
             rotation = 0.0;
 
             QString path;
+            // customShapePoints 已经是相对于焊盘中心的坐标（在 FootprintDataConverter 中计算）
             for (const QPointF& pt : pad.customShapePoints) {
-                double relX = roundTo2(pt.x() - originX) - x;
-                double relY = roundTo2(pt.y() - originY) - y;
+                double relX = roundTo2(pt.x());
+                double relY = roundTo2(pt.y());
                 path += QString("(xy %1 %2) ").arg(relX, 0, 'f', 2).arg(relY, 0, 'f', 2);
             }
 
@@ -67,7 +68,7 @@ QString FootprintGraphicsGenerator::generatePad(const IR::FootprintPadIR& pad, d
 
     QString drillStr;
     if (pad.isThroughHole()) {
-        double holeRadiusMm = pad.holeSize / 2.0;
+        double holeRadiusMm = roundTo2(pad.holeSize / 2.0);
         if (holeRadiusMm > 0 && pad.holeLength > 0) {
             double holeLengthMm = roundTo2(pad.holeLength);
             double maxDistanceHole = qMax(holeRadiusMm * 2, holeLengthMm);

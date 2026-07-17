@@ -376,7 +376,7 @@ void ExporterFootprint::generateFootprintBaseContent(const IR::FootprintComponen
         }
     }
 
-    if (!hasCourtYard && hasValidBBox) {
+    if (!hasCourtYard && footprint.shouldGenerateCourtyard && hasValidBBox) {
         double x1 = std::floor((bboxMinX - originX) * 100.0) / 100.0;
         double y1 = std::floor((bboxMinY - originY) * 100.0) / 100.0;
         double x2 = std::floor((bboxMaxX - originX) * 100.0) / 100.0;

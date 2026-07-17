@@ -384,7 +384,8 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
     content += "    (in_bom yes)\n";
     content += "    (on_board yes)\n";
 
-    // 找到最左上角的引脚（x最小且y最小），将其位置作为新的坐标原点
+    // 找到最左上角的引脚（x最小且y最大），将其位置作为新的坐标原点
+    // 注意：KiCad Y 轴已翻转，"最上方"对应最大 Y 值
     double originX = 0.0;
     double originY = 0.0;
     const QList<IR::SymbolPinIR>& pins = symbol.pins;
@@ -392,7 +393,7 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         originX = pins.first().position.x();
         originY = pins.first().position.y();
         for (const IR::SymbolPinIR& pin : pins) {
-            if (pin.position.x() < originX || (pin.position.x() == originX && pin.position.y() < originY)) {
+            if (pin.position.x() < originX || (pin.position.x() == originX && pin.position.y() > originY)) {
                 originX = pin.position.x();
                 originY = pin.position.y();
             }
@@ -404,65 +405,76 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
     m_graphicsGenerator.setCurrentOrigin(originX, originY);
 
     // 计算所有图形元素的实际边界，用于文本左右居中对齐
-    double minX = std::numeric_limits<double>::max();
-    double maxX = -std::numeric_limits<double>::max();
-    auto updateBounds = [&](double x, double w) {
-        minX = qMin(minX, x);
-        maxX = qMax(maxX, x + w);
-    };
-    for (const auto& rect : symbol.rectangles) {
-        updateBounds(rect.bounds.left(), rect.bounds.width());
-    }
-    for (const auto& circle : symbol.circles) {
-        double r = circle.radius;
-        minX = qMin(minX, circle.center.x() - r);
-        maxX = qMax(maxX, circle.center.x() + r);
-    }
-    for (const auto& ellipse : symbol.ellipses) {
-        minX = qMin(minX, ellipse.center.x() - ellipse.radiusX);
-        maxX = qMax(maxX, ellipse.center.x() + ellipse.radiusX);
-    }
-    for (const auto& arc : symbol.arcs) {
-        minX = qMin(minX, arc.center.x() - arc.radius);
-        maxX = qMax(maxX, arc.center.x() + arc.radius);
-    }
-    for (const auto& polyline : symbol.polylines) {
-        for (const QPointF& pt : polyline.points) {
-            minX = qMin(minX, pt.x());
-            maxX = qMax(maxX, pt.x());
-        }
-    }
-    for (const auto& polygon : symbol.polygons) {
-        for (const QPointF& pt : polygon.points) {
-            minX = qMin(minX, pt.x());
-            maxX = qMax(maxX, pt.x());
-        }
-    }
-    for (const auto& text : symbol.texts) {
-        minX = qMin(minX, text.position.x());
-        maxX = qMax(maxX, text.position.x());
-    }
-    for (const auto& pin : pins) {
-        minX = qMin(minX, pin.position.x());
-        maxX = qMax(maxX, pin.position.x());
-    }
-    // 如果没有任何图形元素，使用默认宽度
-    double graphWidth = (minX <= maxX) ? (maxX - minX) : 0.0;
+    // 多部件符号的属性使用默认值，不计算图形边界
     double graphCenterOffsetX = 0.0;
-    if (minX <= maxX) {
-        graphCenterOffsetX = minX + graphWidth / 2.0 - originX;
-    }
-    qDebug() << "Graph bounds - minX:" << minX << "maxX:" << maxX << "width:" << graphWidth
-             << "centerOffsetX(mm):" << graphCenterOffsetX;
-
-    // 计算 y_high 和 y_low（使用引脚坐标，应用 Y 轴翻转）
     double yHigh = 2.54;  // 默认值：100mil
     double yLow = -2.54;  // 默认值：-100mil
-    if (!pins.isEmpty()) {
-        for (const IR::SymbolPinIR& pin : pins) {
-            double pinY = -(pin.position.y() - originY);  // Y 轴翻转
-            yHigh = qMax(yHigh, pinY);
-            yLow = qMin(yLow, pinY);
+
+    if (!symbol.isMultiPart()) {
+        double minX = std::numeric_limits<double>::max();
+        double maxX = -std::numeric_limits<double>::max();
+        auto updateBounds = [&](double x, double w) {
+            minX = qMin(minX, x);
+            maxX = qMax(maxX, x + w);
+        };
+        for (const auto& rect : symbol.rectangles) {
+            minX = qMin(minX, rect.x0);
+            maxX = qMax(maxX, rect.x0);
+            minX = qMin(minX, rect.x1);
+            maxX = qMax(maxX, rect.x1);
+        }
+        for (const auto& circle : symbol.circles) {
+            double r = circle.radius;
+            minX = qMin(minX, circle.center.x() - r);
+            maxX = qMax(maxX, circle.center.x() + r);
+        }
+        for (const auto& ellipse : symbol.ellipses) {
+            minX = qMin(minX, ellipse.center.x() - ellipse.radiusX);
+            maxX = qMax(maxX, ellipse.center.x() + ellipse.radiusX);
+        }
+        for (const auto& arc : symbol.arcs) {
+            minX = qMin(minX, arc.startPoint.x());
+            maxX = qMax(maxX, arc.startPoint.x());
+            minX = qMin(minX, arc.midPoint.x());
+            maxX = qMax(maxX, arc.midPoint.x());
+            minX = qMin(minX, arc.endPoint.x());
+            maxX = qMax(maxX, arc.endPoint.x());
+        }
+        for (const auto& polyline : symbol.polylines) {
+            for (const QPointF& pt : polyline.points) {
+                minX = qMin(minX, pt.x());
+                maxX = qMax(maxX, pt.x());
+            }
+        }
+        for (const auto& polygon : symbol.polygons) {
+            for (const QPointF& pt : polygon.points) {
+                minX = qMin(minX, pt.x());
+                maxX = qMax(maxX, pt.x());
+            }
+        }
+        for (const auto& text : symbol.texts) {
+            minX = qMin(minX, text.position.x());
+            maxX = qMax(maxX, text.position.x());
+        }
+        for (const auto& pin : pins) {
+            minX = qMin(minX, pin.position.x());
+            maxX = qMax(maxX, pin.position.x());
+        }
+        // 如果没有任何图形元素，使用默认宽度
+        double graphWidth = (minX <= maxX) ? (maxX - minX) : 0.0;
+        if (minX <= maxX) {
+            graphCenterOffsetX = minX + graphWidth / 2.0 - originX;
+        }
+        qDebug() << "Graph bounds - minX:" << minX << "maxX:" << maxX << "width:" << graphWidth
+                 << "centerOffsetX(mm):" << graphCenterOffsetX;
+
+        // 计算 y_high 和 y_low（坐标已在 KiCad 空间，无需再次翻转）
+        if (!pins.isEmpty()) {
+            for (const IR::SymbolPinIR& pin : pins) {
+                double pinY = pin.position.y() - originY;
+                yHigh = qMax(yHigh, pinY);
+                yLow = qMin(yLow, pinY);
+            }
         }
     }
 
@@ -577,20 +589,9 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
                 }
             }
 
-            // 设置原点为属于此 part 的最左上角引脚
+            // 设置原点为 part 的坐标原点（在 IR 中为0,0，因为转换器已减去 part 原点）
             double partOriginX = 0.0;
             double partOriginY = 0.0;
-            if (!partPins.isEmpty()) {
-                partOriginX = partPins.first().position.x();
-                partOriginY = partPins.first().position.y();
-                for (const auto& pin : partPins) {
-                    if (pin.position.x() < partOriginX ||
-                        (pin.position.x() == partOriginX && pin.position.y() < partOriginY)) {
-                        partOriginX = pin.position.x();
-                        partOriginY = pin.position.y();
-                    }
-                }
-            }
             m_graphicsGenerator.setCurrentOrigin(partOriginX, partOriginY);
 
             // 生成属于此 part 的图形元素

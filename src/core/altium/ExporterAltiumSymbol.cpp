@@ -99,10 +99,10 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
  */
 AltiumSchRectangle ExporterAltiumSymbol::convertRectangle(const IR::SymbolRectangleIR& rect) {
     AltiumSchRectangle altiumRect;
-    altiumRect.locationX = AltiumCoord::mmToRaw(rect.bounds.left());
-    altiumRect.locationY = AltiumCoord::mmToRaw(rect.bounds.top());
-    altiumRect.cornerX = AltiumCoord::mmToRaw(rect.bounds.right());
-    altiumRect.cornerY = AltiumCoord::mmToRaw(rect.bounds.bottom());
+    altiumRect.locationX = AltiumCoord::mmToRaw(rect.x0);
+    altiumRect.locationY = AltiumCoord::mmToRaw(rect.y0);
+    altiumRect.cornerX = AltiumCoord::mmToRaw(rect.x1);
+    altiumRect.cornerY = AltiumCoord::mmToRaw(rect.y1);
     altiumRect.lineWidth = AltiumCoord::lineWidthMmToIndex(rect.strokeWidth);
     altiumRect.isSolid = true;
     return altiumRect;
@@ -127,11 +127,16 @@ AltiumSchEllipse ExporterAltiumSymbol::convertCircle(const IR::SymbolCircleIR& c
  */
 AltiumSchArc ExporterAltiumSymbol::convertArc(const IR::SymbolArcIR& arc) {
     AltiumSchArc altiumArc;
-    altiumArc.centerX = AltiumCoord::mmToRaw(arc.center.x());
-    altiumArc.centerY = AltiumCoord::mmToRaw(arc.center.y());
-    altiumArc.radius = AltiumCoord::mmToRaw(arc.radius);
-    altiumArc.startAngle = arc.startAngle;
-    altiumArc.endAngle = arc.endAngle;
+    // 从三点表示估算圆心和半径
+    QPointF center = (arc.startPoint + arc.endPoint) / 2.0;
+    double dx = arc.startPoint.x() - center.x();
+    double dy = arc.startPoint.y() - center.y();
+    double radius = std::sqrt(dx * dx + dy * dy);
+    altiumArc.centerX = AltiumCoord::mmToRaw(center.x());
+    altiumArc.centerY = AltiumCoord::mmToRaw(center.y());
+    altiumArc.radius = AltiumCoord::mmToRaw(radius);
+    altiumArc.startAngle = std::atan2(arc.startPoint.y() - center.y(), arc.startPoint.x() - center.x()) * 180.0 / M_PI;
+    altiumArc.endAngle = std::atan2(arc.endPoint.y() - center.y(), arc.endPoint.x() - center.x()) * 180.0 / M_PI;
     altiumArc.lineWidth = AltiumCoord::lineWidthMmToIndex(arc.strokeWidth);
     return altiumArc;
 }

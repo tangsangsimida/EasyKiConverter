@@ -105,10 +105,10 @@ QString SymbolGraphicsGenerator::generateRectangle(const IR::SymbolRectangleIR& 
     QString content;
 
     // 坐标已为 mm，计算相对位置
-    double x0 = rect.bounds.left() - m_originX;
-    double y0 = rect.bounds.top() - m_originY;
-    double x1 = rect.bounds.right() - m_originX;
-    double y1 = rect.bounds.bottom() - m_originY;
+    double x0 = rect.x0 - m_originX;
+    double y0 = rect.y0 - m_originY;
+    double x1 = rect.x1 - m_originX;
+    double y1 = rect.y1 - m_originY;
     double strokeWidth = rect.strokeWidth;
 
     content += "    (rectangle\n";
@@ -144,36 +144,27 @@ QString SymbolGraphicsGenerator::generateArc(const IR::SymbolArcIR& arc) const {
     QString content;
     double strokeWidth = arc.strokeWidth;
 
-    // IR 弧线存储为 center/radius/startAngle/endAngle
-    // KiCad V6 使用三点法：start、mid、end
-    if (arc.radius > 0.01) {
-        double radStart = arc.startAngle * M_PI / 180.0;
-        double radEnd = arc.endAngle * M_PI / 180.0;
-        double radMid = (radStart + radEnd) / 2.0;
+    // 使用三点法生成 KiCad 圆弧（与旧代码一致）
+    double startX = arc.startPoint.x() - m_originX;
+    double startY = arc.startPoint.y() - m_originY;
+    double midX = arc.midPoint.x() - m_originX;
+    double midY = arc.midPoint.y() - m_originY;
+    double endX = arc.endPoint.x() - m_originX;
+    double endY = arc.endPoint.y() - m_originY;
 
-        double startPtX = arc.center.x() + arc.radius * std::cos(radStart) - m_originX;
-        double startPtY = arc.center.y() + arc.radius * std::sin(radStart) - m_originY;
-        double midPtX = arc.center.x() + arc.radius * std::cos(radMid) - m_originX;
-        double midPtY = arc.center.y() + arc.radius * std::sin(radMid) - m_originY;
-        double endPtX = arc.center.x() + arc.radius * std::cos(radEnd) - m_originX;
-        double endPtY = arc.center.y() + arc.radius * std::sin(radEnd) - m_originY;
+    content += "    (arc\n";
+    content += QString("      (start %1 %2)\n").arg(startX, 0, 'f', 2).arg(startY, 0, 'f', 2);
+    content += QString("      (mid %1 %2)\n").arg(midX, 0, 'f', 2).arg(midY, 0, 'f', 2);
+    content += QString("      (end %1 %2)\n").arg(endX, 0, 'f', 2).arg(endY, 0, 'f', 2);
+    content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
 
-        content += "    (arc\n";
-        content += QString("      (start %1 %2)\n").arg(startPtX, 0, 'f', 2).arg(startPtY, 0, 'f', 2);
-        content += QString("      (mid %1 %2)\n").arg(midPtX, 0, 'f', 2).arg(midPtY, 0, 'f', 2);
-        content += QString("      (end %1 %2)\n").arg(endPtX, 0, 'f', 2).arg(endPtY, 0, 'f', 2);
-        content += QString("      (stroke (width %1) (type default))\n").arg(strokeWidth, 0, 'f', 3);
-
-        if (arc.isFilled) {
-            content += "      (fill (type background))\n";
-        } else {
-            content += "      (fill (type none))\n";
-        }
-
-        content += "    )\n";
+    if (arc.isFilled) {
+        content += "      (fill (type background))\n";
     } else {
-        qWarning() << "Warning: Arc has zero radius, skipping";
+        content += "      (fill (type none))\n";
     }
+
+    content += "    )\n";
 
     return content;
 }

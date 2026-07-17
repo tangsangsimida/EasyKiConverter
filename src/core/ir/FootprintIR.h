@@ -200,6 +200,9 @@ struct FootprintComponentIR {
     // 3D 模型
     QList<Model3DIR> models3d;
 
+    /** @brief 是否应自动生成 courtyard（当无显式 courtyard 区域且原始 bbox 有效时） */
+    bool shouldGenerateCourtyard = false;
+
     /** @brief 是否包含通孔焊盘 */
     bool hasThroughHolePads() const {
         for (const auto& pad : pads) {

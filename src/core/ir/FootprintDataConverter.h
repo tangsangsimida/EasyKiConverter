@@ -39,7 +39,7 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     for (const auto& pad : data.pads()) {
         FootprintPadIR pir;
         pir.number = pad.number;
-        pir.position = QPointF(pad.centerX * PX_TO_MM, -pad.centerY * PX_TO_MM);
+        pir.position = QPointF(pad.centerX * PX_TO_MM, pad.centerY * PX_TO_MM);
         pir.shape = EasyedaPadShapeMap::toPadShape(pad.shape);
         pir.size = QSizeF(pad.width * PX_TO_MM, pad.height * PX_TO_MM);
         pir.layer = EasyedaLayerMap::toLayerType(pad.layerId);
@@ -54,9 +54,10 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
         // 异形焊盘自定义形状
         if (pir.shape == PadShape::Polygon && !pad.points.isEmpty()) {
             pir.customShapePoints = parseFlatPointString(pad.points);
+            // 注意：自定义形状点相对于焊盘中心，但不翻转 Y（与旧代码一致）
             for (auto& pt : pir.customShapePoints) {
                 pt.setX(pt.x() - pad.centerX * PX_TO_MM);
-                pt.setY(-(pt.y() - pad.centerY * PX_TO_MM));
+                pt.setY(pt.y() - pad.centerY * PX_TO_MM);
             }
         }
 
@@ -67,9 +68,6 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     for (const auto& track : data.tracks()) {
         FootprintTrackIR tir;
         tir.points = parseFlatPointString(track.points);
-        for (auto& pt : tir.points) {
-            pt.setY(-pt.y());  // Y 翻转
-        }
         tir.width = track.strokeWidth * PX_TO_MM;
         tir.layer = EasyedaLayerMap::toLayerType(track.layerId);
         tir.netName = track.net;
@@ -80,7 +78,7 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     // 转换安装孔
     for (const auto& hole : data.holes()) {
         FootprintHoleIR hir;
-        hir.center = QPointF(hole.centerX * PX_TO_MM, -hole.centerY * PX_TO_MM);
+        hir.center = QPointF(hole.centerX * PX_TO_MM, hole.centerY * PX_TO_MM);
         hir.radius = hole.radius * PX_TO_MM;
         hir.isLocked = hole.isLocked;
         ir.holes.append(hir);
@@ -89,7 +87,7 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     // 转换圆
     for (const auto& circle : data.circles()) {
         FootprintCircleIR cir;
-        cir.center = QPointF(circle.cx * PX_TO_MM, -circle.cy * PX_TO_MM);
+        cir.center = QPointF(circle.cx * PX_TO_MM, circle.cy * PX_TO_MM);
         cir.radius = circle.radius * PX_TO_MM;
         cir.strokeWidth = circle.strokeWidth * PX_TO_MM;
         cir.layer = EasyedaLayerMap::toLayerType(circle.layerId);
@@ -100,10 +98,7 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     // 转换矩形
     for (const auto& rect : data.rectangles()) {
         FootprintRectangleIR rir;
-        rir.bounds = QRectF(rect.x * PX_TO_MM,
-                            -(rect.y + rect.height) * PX_TO_MM,  // Y 翻转
-                            rect.width * PX_TO_MM,
-                            rect.height * PX_TO_MM);
+        rir.bounds = QRectF(rect.x * PX_TO_MM, rect.y * PX_TO_MM, rect.width * PX_TO_MM, rect.height * PX_TO_MM);
         rir.strokeWidth = rect.strokeWidth * PX_TO_MM;
         rir.layer = EasyedaLayerMap::toLayerType(rect.layerId);
         rir.isLocked = rect.isLocked;
@@ -133,7 +128,7 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     for (const auto& text : data.texts()) {
         FootprintTextIR tir;
         tir.text = text.text;
-        tir.position = QPointF(text.centerX * PX_TO_MM, -text.centerY * PX_TO_MM);
+        tir.position = QPointF(text.centerX * PX_TO_MM, text.centerY * PX_TO_MM);
         tir.rotation = text.rotation;
         tir.mirror = (text.mirror == "1" || text.mirror.toLower() == "true");
         tir.strokeWidth = text.strokeWidth * PX_TO_MM;
@@ -146,9 +141,6 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
         // 非 ASCII 文本路径
         if (!text.textPath.isEmpty()) {
             tir.textPathPoints = parseSimpleSvgPath(text.textPath);
-            for (auto& pt : tir.textPathPoints) {
-                pt.setY(-pt.y());
-            }
         }
 
         ir.texts.append(tir);
@@ -158,9 +150,6 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     for (const auto& region : data.solidRegions()) {
         FootprintRegionIR rir;
         rir.vertices = parseSimpleSvgPath(region.path);
-        for (auto& pt : rir.vertices) {
-            pt.setY(-pt.y());
-        }
         rir.layer = EasyedaLayerMap::toLayerType(region.layerId);
         rir.isKeepOut = region.isKeepOut || (region.layerId == 99);
         rir.isLocked = region.isLocked;
@@ -171,9 +160,6 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     for (const auto& outline : data.outlines()) {
         FootprintOutlineIR oir;
         oir.points = parseSimpleSvgPath(outline.path);
-        for (auto& pt : oir.points) {
-            pt.setY(-pt.y());
-        }
         oir.strokeWidth = outline.strokeWidth * PX_TO_MM;
         oir.layer = EasyedaLayerMap::toLayerType(outline.layerId);
         oir.isLocked = outline.isLocked;
@@ -182,6 +168,10 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
 
     // 转换 3D 模型
     ir.models3d.append(toModel3DIR(data.model3D()));
+
+    // 设置 courtyard 生成标志：当原始 bbox 有有效尺寸时生成
+    const auto& bbox = data.bbox();
+    ir.shouldGenerateCourtyard = (bbox.width > 0 && bbox.height > 0);
 
     return ir;
 }
