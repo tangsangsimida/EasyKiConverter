@@ -1,6 +1,7 @@
 # Core 模块
 
 add_subdirectory(easyeda)
+add_subdirectory(ir)
 add_subdirectory(kicad)
 add_subdirectory(network)
 add_subdirectory(utils)
@@ -22,6 +23,7 @@ target_sources(EasyKiConverterCore
 target_link_libraries(EasyKiConverterCore
     PUBLIC
         EasyKiConverterEasyeda
+        EasyKiConverterIR
         EasyKiConverterKicad
         EasyKiConverterNetwork
         EasyKiConverterUtils

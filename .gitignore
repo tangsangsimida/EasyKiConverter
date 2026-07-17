@@ -148,3 +148,5 @@ GEMINI.md
 
 # Altium Designer 测试用导出库（本地测试，不入库）
 tests/fixtures/altium/
+Testing/Temporary/CTestCostData.txt
+Testing/Temporary/LastTest.log
