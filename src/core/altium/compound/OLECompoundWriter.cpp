@@ -494,6 +494,7 @@ void OLECompoundWriter::finalize() {
 
     // 为 Root Entry 分配 Mini-Stream 的存储扇区
     if (!m_miniStream.isEmpty()) {
+        // miniStreamSectorStart 是大数据扇区数量（数据区内的相对偏移）
         uint32_t miniStreamSectorStart = static_cast<uint32_t>(m_dataSectors.size());
         int remaining = m_miniStream.size();
         int srcOffset = 0;
@@ -505,10 +506,11 @@ void OLECompoundWriter::finalize() {
             srcOffset += chunkSize;
             remaining -= chunkSize;
         }
+        // startSector 在 post-processing 中会加 dataOffset 转为绝对扇区号
         m_directory[0].startSector = miniStreamSectorStart;
         m_directory[0].streamSize = static_cast<uint64_t>(m_miniStream.size());
 
-        // 更新 FAT
+        // 更新 FAT（链式指针使用数据区相对值，post-processing 会加 dataOffset）
         uint32_t miniStreamSectors = (static_cast<uint32_t>(m_miniStream.size()) + SECTOR_SIZE - 1) / SECTOR_SIZE;
         for (uint32_t i = 0; i < miniStreamSectors; ++i) {
             if (i < miniStreamSectors - 1) {
@@ -592,8 +594,9 @@ void OLECompoundWriter::finalize() {
         }
     }
 
-    // 填充 FREESECT 到 totalEntries（未使用的数据扇区 + FAT 对齐）
-    while (static_cast<uint32_t>(fullFat.size()) < totalEntries) {
+    // 填充 FREESECT 到刚好 fatSectors 个扇区（不多不少，保证 header 和实际一致）
+    uint32_t fatCapacity = fatSectors * entriesPerSector;
+    while (static_cast<uint32_t>(fullFat.size()) < fatCapacity) {
         fullFat.append(FREESECT);
     }
 
