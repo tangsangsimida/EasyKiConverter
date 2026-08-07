@@ -290,11 +290,11 @@ void AltiumPcbLibWriter::writeModelsStorage(OLECompoundWriter& ole, const QList<
     }
     ole.writeStream("Library/Models", "Data", modelData);
 
-    // 写入压缩的 STEP 数据
+    // 写入压缩的 STEP 数据（去掉 qCompress 的 4 字节头，Altium 期望原始 zlib 流）
     for (int i = 0; i < allModels.size(); ++i) {
         if (!allModels[i].stepData.isEmpty()) {
             QByteArray compressed = qCompress(allModels[i].stepData, 9);
-            ole.writeStream("Library/Models", QString::number(i), compressed);
+            ole.writeStream("Library/Models", QString::number(i), compressed.mid(4));
         }
     }
 }

@@ -47,7 +47,7 @@ inline PinElectricalType toPinElectricalType(int easyedaPinType) {
         case 3:
             return PinElectricalType::Bidirectional;
         case 4:
-            return PinElectricalType::Passive;
+            return PinElectricalType::Power;
         default:
             return PinElectricalType::Unspecified;
     }

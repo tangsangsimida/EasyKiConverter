@@ -87,6 +87,11 @@ private:
      */
     AltiumSchEllipse convertEllipse(const IR::SymbolEllipseIR& ellipse);
 
+    /**
+     * @brief 将符号图元坐标归一化到原点
+     */
+    void centerComponent(AltiumSchComponent& component);
+
     AltiumSchLibWriter m_writer;
 };
 

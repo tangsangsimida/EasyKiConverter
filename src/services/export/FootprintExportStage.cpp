@@ -393,6 +393,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                     stepOffset.y = -geometryCenter.y;
                     stepOffset.z = calculateStepZOffset(wrlDisplayMinZ, stepMinZ);
                     model3D.setStepOffsetMm(stepOffset);
+                    model3D.setStep(stepData);
                     footprint.setModel3D(model3D);
                     qDebug() << "FootprintExportStage: STEP offset for" << componentId << "uuid" << model3D.uuid()
                              << "xyCenter:" << geometryCenter.x << geometryCenter.y << "minZ:" << geometryCenter.z

@@ -81,6 +81,9 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         component.implementations.append(impl);
     }
 
+    // 坐标归一化：将符号中心移到原点
+    centerComponent(component);
+
     return component;
 }
 
@@ -220,6 +223,65 @@ AltiumSchEllipse ExporterAltiumSymbol::convertEllipse(const IR::SymbolEllipseIR&
     altiumEllipse.lineWidth = AltiumCoord::lineWidthMmToIndex(ellipse.strokeWidth);
     altiumEllipse.isSolid = ellipse.isFilled;
     return altiumEllipse;
+}
+
+/**
+ * @brief 将符号坐标归一化，以第一个引脚为原点
+ * @details 用第一个引脚的位置作为偏移量，确保至少有一个引脚在原点（网格交叉点），
+ *          方便用户在 Altium Designer 中连线。
+ */
+void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
+    if (component.pins.isEmpty()) return;
+
+    // 以第一个引脚位置为原点
+    int offsetX = component.pins[0].locationX;
+    int offsetY = component.pins[0].locationY;
+    int offsetPolyX = offsetX / 1000;
+    int offsetPolyY = offsetY / 1000;
+
+    // 平移引脚
+    for (auto& pin : component.pins) {
+        pin.locationX -= offsetX;
+        pin.locationY -= offsetY;
+    }
+    // 平移矩形
+    for (auto& rect : component.rectangles) {
+        rect.locationX -= offsetX;
+        rect.locationY -= offsetY;
+        rect.cornerX -= offsetX;
+        rect.cornerY -= offsetY;
+    }
+    // 平移弧线
+    for (auto& arc : component.arcs) {
+        arc.centerX -= offsetX;
+        arc.centerY -= offsetY;
+    }
+    // 平移椭圆
+    for (auto& ellipse : component.ellipses) {
+        ellipse.centerX -= offsetX;
+        ellipse.centerY -= offsetY;
+    }
+    // 平移多边形（mmToSchematicUnits 坐标系）
+    for (auto& poly : component.polygons) {
+        for (QPointF& v : poly.vertices) {
+            v = QPointF(v.x() - offsetPolyX, v.y() - offsetPolyY);
+        }
+    }
+    for (auto& polyline : component.polylines) {
+        for (QPointF& v : polyline.vertices) {
+            v = QPointF(v.x() - offsetPolyX, v.y() - offsetPolyY);
+        }
+    }
+    for (auto& path : component.paths) {
+        for (QPointF& v : path.vertices) {
+            v = QPointF(v.x() - offsetPolyX, v.y() - offsetPolyY);
+        }
+    }
+    // 平移文本
+    for (auto& text : component.texts) {
+        text.locationX -= offsetX;
+        text.locationY -= offsetY;
+    }
 }
 
 }  // namespace EasyKiConverter
